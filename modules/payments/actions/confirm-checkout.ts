@@ -173,7 +173,6 @@ export async function confirmCheckout(
 				finalEmail,
 				discountCode: v.discountCode,
 				newsletterOptIn: v.newsletterOptIn,
-				smsOptIn: v.smsOptIn,
 				paymentIntentId: v.paymentIntentId,
 			});
 

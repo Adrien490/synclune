@@ -232,7 +232,6 @@ function createValidData(overrides: Partial<ConfirmCheckoutData> = {}): ConfirmC
 		discountCode: undefined,
 		paymentIntentId: "pi_test_123",
 		newsletterOptIn: false,
-		smsOptIn: false,
 		saveInfo: false,
 		...overrides,
 	};
@@ -458,7 +457,6 @@ describe("confirmCheckout", () => {
 					finalEmail: "marie@example.com",
 					paymentIntentId: "pi_test_123",
 					newsletterOptIn: false,
-					smsOptIn: false,
 				}),
 			);
 		});

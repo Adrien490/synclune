@@ -608,7 +608,6 @@ model Order {
 
   // === CONSENTEMENT (RGPD) ===
   newsletterOptIn Boolean @default(false)
-  smsOptIn        Boolean @default(false)
 
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)

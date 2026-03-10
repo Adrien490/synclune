@@ -164,7 +164,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 			discountCode,
 			paymentIntentId: pi.paymentIntentId!,
 			newsletterOptIn: values.newsletterOptIn,
-			smsOptIn: values.smsOptIn,
 			saveInfo: values.saveInfo,
 		};
 	}
@@ -522,13 +521,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 													)}
 												</form.AppField>
 											)}
-
-											{/* SMS opt-in */}
-											<form.AppField name="smsOptIn">
-												{(field) => (
-													<field.CheckboxField label="J'accepte de recevoir des notifications par SMS (suivi de commande)" />
-												)}
-											</form.AppField>
 										</fieldset>
 									</CheckoutSection>
 

@@ -60,14 +60,13 @@ Un compte Stripe TEST existe deja avec les informations de Leane (TADDEI LEANE, 
 
 ### CRITIQUE - Tarifs de Livraison
 
-Creer 4 tarifs dans **Stripe Dashboard > Products > Shipping rates**:
+Les IDs des shipping rates Stripe sont hardcodés dans `modules/orders/constants/stripe-shipping-rates.ts`.
 
-| Zone                  | Prix      | Variable env                   | A creer      |
-| --------------------- | --------- | ------------------------------ | ------------ |
-| France Metropolitaine | 6,00 EUR  | `STRIPE_SHIPPING_RATE_FRANCE`  | [ ]          |
-| Corse                 | 10,00 EUR | `STRIPE_SHIPPING_RATE_CORSE`   | [ ] MANQUANT |
-| DOM-TOM               | ?         | `STRIPE_SHIPPING_RATE_DOM_TOM` | [ ]          |
-| Europe                | 15,00 EUR | `STRIPE_SHIPPING_RATE_EUROPE`  | [ ]          |
+| Zone                  | Prix     | ID Stripe                      | Statut                               |
+| --------------------- | -------- | ------------------------------ | ------------------------------------ |
+| France Metropolitaine | 4,99 EUR | `shr_1SYOf8KjFZ5SF8XKdI4fL8wL` | [x]                                  |
+| Europe                | 9,50 EUR | `shr_1SYOgiKjFZ5SF8XKfg5lytq7` | [x]                                  |
+| Corse                 | —        | `shr_1SYOfyKjFZ5SF8XKMD1lNXvK` | Non utilise (livraison indisponible) |
 
 ### IMPORTANT - Informations Vendeur (Factures)
 
@@ -410,10 +409,6 @@ Ajouter dans `next.config.ts` pour forcer HTTPS:
 | `STRIPE_SECRET_KEY`                  | `sk_live_...`            | CRITIQUE   |
 | `STRIPE_WEBHOOK_SECRET`              | `whsec_...`              | CRITIQUE   |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | `pk_live_...`            | CRITIQUE   |
-| `STRIPE_SHIPPING_RATE_FRANCE`        | `shr_...`                | CRITIQUE   |
-| `STRIPE_SHIPPING_RATE_CORSE`         | `shr_...`                | CRITIQUE   |
-| `STRIPE_SHIPPING_RATE_DOM_TOM`       | `shr_...`                | CRITIQUE   |
-| `STRIPE_SHIPPING_RATE_EUROPE`        | `shr_...`                | CRITIQUE   |
 | `GOOGLE_CLIENT_ID`                   | ID OAuth production      | IMPORTANT  |
 | `GOOGLE_CLIENT_SECRET`               | Secret OAuth production  | IMPORTANT  |
 | `RESEND_API_KEY`                     | `re_...`                 | CRITIQUE   |

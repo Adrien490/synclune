@@ -8,56 +8,22 @@
  * - Stripe filtre automatiquement les tarifs selon le pays du client
  * - Gestion centralisée des prix dans le Dashboard
  * - Pas de recréation de tarif à chaque checkout
- *
- * INSTRUCTIONS :
- * 1. Aller sur https://dashboard.stripe.com/shipping-rates
- * 2. Créer les tarifs suivants avec les pays autorisés appropriés
- * 3. Copier les IDs (shr_xxx) et les coller ci-dessous
  */
 
 import { getShippingZoneFromPostalCode } from "@/modules/orders/services/shipping-zone.service";
 import { type ShippingCountry } from "@/shared/constants/countries";
 
 // ==============================================================================
-// IDS DES TARIFS STRIPE (À CONFIGURER DANS LE DASHBOARD)
+// IDS DES TARIFS STRIPE
 // ==============================================================================
 
-/**
- * IDs des Shipping Rates créés dans le Dashboard Stripe
- *
- * IMPORTANT : Remplacer ces placeholders par les vrais IDs après création
- * dans le Dashboard Stripe.
- *
- * Uses getters to defer env var reads to runtime (avoids build-time crashes
- * when env vars are not yet available during Next.js page data collection).
- */
-function requireEnv(name: string): string {
-	const value = process.env[name];
-	if (!value) {
-		throw new Error(`Missing required environment variable: ${name}`);
-	}
-	return value;
-}
-
 export const STRIPE_SHIPPING_RATE_IDS = {
-	/**
-	 * Livraison France Métropolitaine (hors Corse)
-	 * Prix : 4,99€ | Délai : 2-3 jours ouvrés
-	 * Pays autorisés dans Stripe : FR
-	 */
-	get FRANCE() {
-		return requireEnv("STRIPE_SHIPPING_RATE_FRANCE");
-	},
-	/**
-	 * Livraison Union Européenne
-	 * Prix : 9,50€ | Délai : 4-7 jours ouvrés
-	 * Pays autorisés dans Stripe : BE, DE, NL, LU, IT, ES, PT, AT, IE, FI, SE, DK, GR,
-	 *                              BG, HR, CY, CZ, EE, HU, LV, LT, MT, PL, RO, SK, SI, MC
-	 */
-	get EUROPE() {
-		return requireEnv("STRIPE_SHIPPING_RATE_EUROPE");
-	},
-};
+	/** Livraison France Métropolitaine (hors Corse) — 4,99€, 2-3 jours ouvrés */
+	FRANCE: "shr_1SYOf8KjFZ5SF8XKdI4fL8wL",
+	/** Livraison Union Européenne — 9,50€, 4-7 jours ouvrés */
+	EUROPE: "shr_1SYOgiKjFZ5SF8XKfg5lytq7",
+	// Corse (référence future) : shr_1SYOfyKjFZ5SF8XKMD1lNXvK
+} as const;
 
 // ==============================================================================
 // HELPERS POUR LA CONSTRUCTION DES SHIPPING OPTIONS

@@ -33,7 +33,6 @@ export interface CreateOrderParams {
 	finalEmail: string | null;
 	discountCode?: string;
 	newsletterOptIn?: boolean;
-	smsOptIn?: boolean;
 	paymentIntentId?: string;
 }
 
@@ -67,7 +66,6 @@ export async function createOrderInTransaction(
 		finalEmail,
 		discountCode,
 		newsletterOptIn = false,
-		smsOptIn = false,
 		paymentIntentId,
 	} = params;
 
@@ -277,7 +275,6 @@ export async function createOrderInTransaction(
 					fulfillmentStatus: "UNFULFILLED",
 					...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
 					newsletterOptIn,
-					smsOptIn,
 				},
 			});
 

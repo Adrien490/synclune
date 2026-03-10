@@ -34,7 +34,6 @@ export const confirmCheckoutSchema = z.object({
 	discountCode: discountCodeSchema.optional(),
 	paymentIntentId: z.string().startsWith("pi_", "Payment Intent ID invalide"),
 	newsletterOptIn: z.boolean(),
-	smsOptIn: z.boolean(),
 	saveInfo: z.boolean(),
 });
 
