@@ -3,7 +3,6 @@ import { Separator } from "@/shared/components/ui/separator";
 import { ExportDataButton } from "./export-data-button";
 import { DeleteAccountDialog } from "./delete-account-dialog";
 import { CancelDeletionBanner } from "./cancel-deletion-banner";
-import { Shield } from "lucide-react";
 
 interface GdprSectionProps {
 	accountStatus: AccountStatus;
@@ -16,8 +15,7 @@ export function GdprSection({ accountStatus, daysRemaining }: GdprSectionProps) 
 	return (
 		<section className="space-y-4" aria-labelledby="gdpr-heading">
 			<div>
-				<h2 id="gdpr-heading" className="flex items-center gap-2 text-base font-semibold">
-					<Shield className="text-muted-foreground size-4" />
+				<h2 id="gdpr-heading" className="text-base font-semibold">
 					Données personnelles
 				</h2>
 				<p className="text-muted-foreground mt-0.5 text-sm">

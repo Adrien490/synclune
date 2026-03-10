@@ -2,7 +2,6 @@ import { Separator } from "@/shared/components/ui/separator";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Receipt } from "lucide-react";
 
 interface OrderSummaryCardProps {
 	order: {
@@ -21,10 +20,7 @@ interface OrderSummaryCardProps {
 export function OrderSummaryCard({ order }: OrderSummaryCardProps) {
 	return (
 		<section className="space-y-4">
-			<h2 className="flex items-center gap-2 text-base font-semibold">
-				<Receipt className="text-muted-foreground size-4" />
-				Récapitulatif
-			</h2>
+			<h2 className="text-base font-semibold">Récapitulatif</h2>
 			<div className="border-border/60 space-y-4 border-t pt-4">
 				{/* Order info */}
 				<div className="space-y-1 text-sm">

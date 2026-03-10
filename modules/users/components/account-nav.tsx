@@ -109,7 +109,6 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 					<nav className="flex flex-col gap-1" aria-label="Navigation espace client">
 						{navItems.map((item) => {
 							const active = isActive(item.href);
-							const Icon = item.icon;
 
 							return (
 								<Link
@@ -117,13 +116,12 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 									href={item.href}
 									aria-current={active ? "page" : undefined}
 									className={cn(
-										"flex items-center gap-2.5 rounded-lg border-l-2 px-4 py-2.5 text-sm font-medium transition-colors",
+										"rounded-lg border-l-2 px-4 py-2.5 text-sm font-medium transition-colors",
 										active
 											? "bg-muted text-foreground border-primary"
 											: "text-muted-foreground hover:bg-muted hover:text-foreground border-transparent",
 									)}
 								>
-									<Icon className="size-4 shrink-0" aria-hidden="true" />
 									{item.label}
 								</Link>
 							);
@@ -134,9 +132,8 @@ export function AccountNav({ variant = "full" }: AccountNavProps) {
 						<LogoutAlertDialog>
 							<button
 								type="button"
-								className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-2.5 rounded-lg border-l-2 border-transparent px-4 py-2.5 text-left text-sm font-medium transition-colors"
+								className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full rounded-lg border-l-2 border-transparent px-4 py-2.5 text-left text-sm font-medium transition-colors"
 							>
-								<LogOut className="size-4 shrink-0" aria-hidden="true" />
 								Se déconnecter
 							</button>
 						</LogoutAlertDialog>

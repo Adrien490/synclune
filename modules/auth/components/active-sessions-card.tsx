@@ -64,8 +64,7 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 	return (
 		<section className="space-y-4" aria-labelledby="sessions-heading">
 			<div>
-				<h2 id="sessions-heading" className="flex items-center gap-2 text-base font-semibold">
-					<Monitor className="text-muted-foreground size-4" />
+				<h2 id="sessions-heading" className="text-base font-semibold">
 					Appareils connectés
 				</h2>
 				<p className="text-muted-foreground mt-0.5 text-sm">

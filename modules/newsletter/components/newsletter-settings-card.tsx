@@ -15,8 +15,7 @@ export function NewsletterSettingsCard({ isSubscribed }: NewsletterSettingsCardP
 	return (
 		<section className="space-y-4" aria-labelledby="newsletter-heading">
 			<div>
-				<h2 id="newsletter-heading" className="flex items-center gap-2 text-base font-semibold">
-					<Bell className="text-muted-foreground size-4" />
+				<h2 id="newsletter-heading" className="text-base font-semibold">
 					Newsletter
 				</h2>
 				<p className="text-muted-foreground mt-0.5 text-sm">

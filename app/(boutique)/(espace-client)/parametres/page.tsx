@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
-import { Bell, LockKeyhole, Monitor, User } from "lucide-react";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserProviders } from "@/modules/auth/data/get-user-providers";
 import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
@@ -32,8 +31,7 @@ export default async function SettingsPage() {
 				<div className="space-y-6 lg:col-span-2">
 					<section className="space-y-4" aria-labelledby="profile-heading">
 						<div>
-							<h2 id="profile-heading" className="flex items-center gap-2 text-base font-semibold">
-								<User className="text-muted-foreground size-4" />
+							<h2 id="profile-heading" className="text-base font-semibold">
 								Profil
 							</h2>
 							<p className="text-muted-foreground mt-0.5 text-sm">
@@ -92,10 +90,7 @@ function SecuritySkeleton() {
 		<SkeletonGroup label="Chargement des paramètres de sécurité">
 			<section className="space-y-4">
 				<div>
-					<div className="flex items-center gap-2">
-						<LockKeyhole className="text-muted-foreground size-4" />
-						<Skeleton className="h-5 w-24" />
-					</div>
+					<Skeleton className="h-5 w-24" />
 					<Skeleton className="mt-0.5 h-4 w-64" />
 				</div>
 				<div className="border-border/60 space-y-6 border-t pt-4">
@@ -118,10 +113,7 @@ function NewsletterSkeleton() {
 		<SkeletonGroup label="Chargement des paramètres newsletter">
 			<section className="space-y-4">
 				<div>
-					<div className="flex items-center gap-2">
-						<Bell className="text-muted-foreground size-4" />
-						<Skeleton className="h-5 w-32" />
-					</div>
+					<Skeleton className="h-5 w-32" />
 					<Skeleton className="mt-0.5 h-4 w-48" />
 				</div>
 				<div className="border-border/60 space-y-3 border-t pt-4">
@@ -138,10 +130,7 @@ function SessionsSkeleton() {
 		<SkeletonGroup label="Chargement des sessions actives">
 			<section className="space-y-4">
 				<div>
-					<div className="flex items-center gap-2">
-						<Monitor className="text-muted-foreground size-4" />
-						<Skeleton className="h-5 w-40" />
-					</div>
+					<Skeleton className="h-5 w-40" />
 					<Skeleton className="mt-0.5 h-4 w-28" />
 				</div>
 				<div className="border-border/60 border-t pt-4">

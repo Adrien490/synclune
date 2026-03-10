@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { FileText, Download, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -49,10 +49,7 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 
 	return (
 		<section className="space-y-4">
-			<h2 className="flex items-center gap-2 text-base font-semibold">
-				<FileText className="text-muted-foreground size-4" />
-				Facture
-			</h2>
+			<h2 className="text-base font-semibold">Facture</h2>
 			<div className="border-border/60 border-t pt-4">
 				<Button
 					variant="outline"

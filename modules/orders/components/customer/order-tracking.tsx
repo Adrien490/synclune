@@ -1,7 +1,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ExternalLink, Package, Truck } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 
 interface OrderTrackingProps {
@@ -21,20 +21,14 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 
 	return (
 		<section className="space-y-4">
-			<h2 className="flex items-center gap-2 text-base font-semibold">
-				<Truck className="text-muted-foreground size-4" />
-				Suivi de livraison
-			</h2>
+			<h2 className="text-base font-semibold">Suivi de livraison</h2>
 			<div className="border-border/60 space-y-4 border-t pt-4">
 				{/* Carrier & Tracking */}
 				<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
 					{order.shippingCarrier && (
-						<div className="flex items-center gap-2">
-							<Package className="text-muted-foreground h-4 w-4" />
-							<span className="text-sm font-medium">
-								{getCarrierLabel(order.shippingCarrier.toLowerCase() as Carrier)}
-							</span>
-						</div>
+						<span className="text-sm font-medium">
+							{getCarrierLabel(order.shippingCarrier.toLowerCase() as Carrier)}
+						</span>
 					)}
 					<div className="flex items-center gap-2">
 						<span className="text-muted-foreground text-sm">N° de suivi :</span>

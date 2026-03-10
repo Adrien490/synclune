@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LockKeyhole, Lock, CircleCheck } from "lucide-react";
+import { Lock, CircleCheck } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -29,8 +29,7 @@ export function SecuritySection({ emailVerified, providers, email }: SecuritySec
 		<>
 			<section className="space-y-4" aria-labelledby="security-heading">
 				<div>
-					<h2 id="security-heading" className="flex items-center gap-2 text-base font-semibold">
-						<LockKeyhole className="text-muted-foreground size-4" />
+					<h2 id="security-heading" className="text-base font-semibold">
 						Sécurité
 					</h2>
 					<p className="text-muted-foreground mt-0.5 text-sm">

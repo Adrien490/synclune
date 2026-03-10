@@ -69,10 +69,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 	return (
 		<section className="space-y-4">
 			<div className="flex items-center justify-between">
-				<h2 className="flex items-center gap-2 text-base font-semibold">
-					<Clock className="text-muted-foreground size-4" />
-					Suivi de commande
-				</h2>
+				<h2 className="text-base font-semibold">Suivi de commande</h2>
 				<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
 					{ORDER_STATUS_LABELS[order.status]}
 				</Badge>

@@ -39,10 +39,7 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 
 	return (
 		<section className="space-y-4">
-			<h2 className="flex items-center gap-2 text-base font-semibold">
-				<XCircle className="text-muted-foreground size-4" />
-				Annulation
-			</h2>
+			<h2 className="text-base font-semibold">Annulation</h2>
 			<div className="border-border/60 border-t pt-4">
 				<Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
 					<XCircle className="mr-2 h-4 w-4" />
