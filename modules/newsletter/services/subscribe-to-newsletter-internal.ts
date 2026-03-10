@@ -11,7 +11,7 @@ interface SubscribeToNewsletterInternalParams {
 	email: string;
 	ipAddress: string;
 	userAgent: string;
-	consentSource: "newsletter_form" | "contact_form" | "account_settings";
+	consentSource: "newsletter_form" | "contact_form" | "account_settings" | "checkout_form";
 }
 
 interface SubscribeToNewsletterInternalResult {

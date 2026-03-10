@@ -10,6 +10,7 @@ import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
+import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { RootProviders } from "@/shared/providers/root-providers";
@@ -53,6 +54,7 @@ export default async function RootLayout({
 					</ErrorBoundary>
 					<RootProviders>
 						<ConditionalAnalytics />
+						<WebVitalsReporter />
 						{children}
 						<UnsavedChangesDialog />
 						<CookieBanner />

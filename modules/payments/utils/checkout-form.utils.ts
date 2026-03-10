@@ -1,5 +1,5 @@
 /**
- * Utilitaires pour le formulaire de checkout
+ * Utilities for the checkout form
  */
 
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -7,29 +7,27 @@ import type { Session } from "@/modules/auth/lib/auth";
 import type { AppliedDiscount } from "@/modules/discounts/types/discount.types";
 
 /**
- * Génère les options du formulaire de checkout avec pré-remplissage dynamique
+ * Generates checkout form options with dynamic pre-filling.
  *
  * localStorage draft is NOT read here to avoid hydration mismatch (server has
  * no localStorage). Draft restoration happens in useCheckoutForm via useEffect.
  *
- * @param session - Session utilisateur (null si invité)
- * @param addresses - Adresses enregistrées (null si invité ou aucune adresse)
- * @returns Options du formulaire avec defaultValues pré-remplies
+ * @param session - User session (null if guest)
+ * @param addresses - Saved addresses (null if guest or no addresses)
+ * @returns Form options with pre-filled defaultValues
  */
 export function getCheckoutFormOptions(
 	session: Session | null,
 	addresses: GetUserAddressesReturn | null,
 ) {
-	// Trouver l'adresse par défaut ou la première adresse
+	// Find default address or first address
 	const defaultAddress =
 		addresses && addresses.length > 0
 			? (addresses.find((addr) => addr.isDefault) ?? addresses[0])
 			: null;
 
-	// Déterminer si l'utilisateur est connecté
 	const isGuest = !session;
 
-	// Construire fullName depuis les données existantes
 	const buildFullName = () => {
 		if (defaultAddress?.firstName || defaultAddress?.lastName) {
 			return `${defaultAddress.firstName || ""} ${defaultAddress.lastName || ""}`.trim();
@@ -51,7 +49,12 @@ export function getCheckoutFormOptions(
 				phoneNumber: defaultAddress?.phone ?? "",
 			},
 
-			termsAccepted: false,
+			// Newsletter/SMS consent
+			newsletterOptIn: false,
+			smsOptIn: false,
+
+			// Save info checkbox (logged-in users only)
+			saveInfo: false,
 
 			// Discount (replaces DiscountCodeInput state)
 			discountCode: "",

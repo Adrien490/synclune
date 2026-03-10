@@ -30,8 +30,43 @@ vi.mock("@/modules/discounts/actions/validate-discount-code", () => ({
 	validateDiscountCode: vi.fn(),
 }));
 
+vi.mock("@/modules/payments/hooks/use-payment-intent", () => ({
+	usePaymentIntent: vi.fn().mockReturnValue({
+		clientSecret: null,
+		paymentIntentId: null,
+		isLoading: false,
+		error: null,
+	}),
+}));
+
 vi.mock("@/shared/components/error-boundary", () => ({
 	ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@stripe/react-stripe-js", () => ({
+	Elements: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	PaymentElement: () => <div data-testid="payment-element" />,
+}));
+
+vi.mock("@/shared/lib/stripe-client", () => ({
+	getStripe: vi.fn(),
+}));
+
+vi.mock("@/modules/payments/components/pay-button", () => ({
+	PayButton: () => <div data-testid="pay-button" />,
+}));
+
+vi.mock("@/modules/payments/components/shipping-method-section", () => ({
+	ShippingMethodSection: () => <div data-testid="shipping-method" />,
+}));
+
+vi.mock("@/modules/payments/components/checkout-section", () => ({
+	CheckoutSection: ({ children, title }: { children: React.ReactNode; title: string }) => (
+		<div data-testid={`section-${title}`}>
+			<h2>{title}</h2>
+			{children}
+		</div>
+	),
 }));
 
 // ─── Import under test ────────────────────────────────────────────────────────
@@ -59,7 +94,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 				_selectedAddressId: null,
 				_showAddressLine2: false,
 				_discountOpen: false,
-				termsAccepted: false,
 				discountCode: "",
 			},
 		},
@@ -89,7 +123,6 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 						_selectedAddressId: null,
 						_showAddressLine2: false,
 						_discountOpen: false,
-						termsAccepted: false,
 						discountCode: "",
 					},
 					canSubmit: true,
@@ -139,9 +172,6 @@ afterEach(cleanup);
 beforeEach(() => {
 	vi.mocked(useCheckoutForm).mockReturnValue({
 		form: createMockForm() as unknown as ReturnType<typeof useCheckoutForm>["form"],
-		action: vi.fn() as ReturnType<typeof useCheckoutForm>["action"],
-		isPending: false,
-		state: undefined,
 	});
 });
 
@@ -226,7 +256,6 @@ describe("CheckoutForm", () => {
 				expect.objectContaining({
 					session,
 					addresses,
-					onSuccess: expect.any(Function),
 				}),
 			);
 		});

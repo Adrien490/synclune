@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useSyncExternalStore } from "react";
+import { useRef, useSyncExternalStore } from "react";
+import { Elements } from "@stripe/react-stripe-js";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
-import { Button } from "@/shared/components/ui/button";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
@@ -25,26 +25,33 @@ import {
 	type ShippingCountry,
 } from "@/shared/constants/countries";
 import Link from "next/link";
-import { ActionStatus } from "@/shared/types/server-action";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
+import { usePaymentIntent } from "../hooks/use-payment-intent";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
-import type { CreateCheckoutSessionResult } from "../types/checkout.types";
 import type {
 	AppliedDiscount,
 	ValidateDiscountCodeReturn,
 } from "@/modules/discounts/types/discount.types";
 import { CheckoutSummary } from "./checkout-summary";
+import { CheckoutSection } from "./checkout-section";
+import { ShippingMethodSection } from "./shipping-method-section";
+import { PayButton } from "./pay-button";
 import { AddressSelector } from "./address-selector";
-import { PaymentStep } from "./payment-step";
-import type { SubmittedAddress } from "./address-summary";
+import { StripeWordmark } from "./stripe-wordmark";
+import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
 import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
+import { Button } from "@/shared/components/ui/button";
 import {
 	Collapsible,
 	CollapsibleContent,
 	CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { cn } from "@/shared/utils/cn";
+import { getStripe } from "@/shared/lib/stripe-client";
+import { stripeAppearance } from "../constants/stripe-appearance";
+import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
+import { PaymentElement } from "@stripe/react-stripe-js";
 
 // Offline detection via useSyncExternalStore for SSR safety
 function subscribeOnline(callback: () => void) {
@@ -75,7 +82,6 @@ const CHECKOUT_FIELD_LABELS: Record<string, string> = {
 	"shipping.city": "Ville",
 	"shipping.country": "Pays",
 	"shipping.phoneNumber": "Téléphone",
-	termsAccepted: "Conditions générales de vente",
 };
 
 interface CheckoutFormProps {
@@ -85,64 +91,32 @@ interface CheckoutFormProps {
 }
 
 /**
- * Checkout orchestration component.
+ * Single-page checkout form (Shopify-style).
  *
- * Manages shared state (discount, payment step, submitted address) and
- * renders the address form (step 1) and PaymentStep (step 2).
+ * All sections visible at once: shipping address, payment (PaymentElement),
+ * and pay button. No multi-step flow.
  */
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
-
-	const [checkoutResult, setCheckoutResult] = useState<{
-		clientSecret: string;
-		orderId: string;
-		orderNumber: string;
-		address: SubmittedAddress;
-	} | null>(null);
-
 	const headingRef = useRef<HTMLHeadingElement>(null);
 
-	const { form, action, isPending, state } = useCheckoutForm({
-		session,
-		addresses,
-		onSuccess: handleSuccess,
-	});
+	const { form } = useCheckoutForm({ session, addresses });
+
+	const cartItems = cart.items.map((item) => ({
+		skuId: item.sku.id,
+		quantity: item.quantity,
+		priceAtAdd: item.priceAtAdd,
+	}));
 
 	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 
 	const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, getServerSnapshot);
 
-	function handleSuccess(data: CreateCheckoutSessionResult) {
-		const s = form.state.values.shipping;
-		setCheckoutResult({
-			clientSecret: data.clientSecret,
-			orderId: data.orderId,
-			orderNumber: data.orderNumber,
-			address: {
-				fullName: s.fullName,
-				addressLine1: s.addressLine1,
-				addressLine2: s.addressLine2 || undefined,
-				city: s.city,
-				postalCode: s.postalCode,
-				country: ((s.country as string) || "FR") as ShippingCountry,
-				phoneNumber: s.phoneNumber,
-				email: isGuest ? (form.state.values.email as unknown as string) || undefined : undefined,
-			},
-		});
-
-		window.scrollTo({ top: 0, behavior: "smooth" });
-		requestAnimationFrame(() => headingRef.current?.focus());
-	}
-
-	function handleEdit() {
-		setCheckoutResult(null);
-		requestAnimationFrame(() => {
-			const firstInput = document.querySelector<HTMLInputElement>(
-				'input[name="email"], input[name="shipping.fullName"]',
-			);
-			firstInput?.focus();
-		});
-	}
+	// Initialize Payment Intent
+	const pi = usePaymentIntent({
+		cartItems,
+		email: isGuest ? undefined : session.user.email || undefined,
+	});
 
 	function handleSelectAddress(address: UserAddress) {
 		form.setFieldValue("_selectedAddressId", address.id);
@@ -155,6 +129,45 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		form.setFieldValue("shipping.country", address.country);
 		form.setFieldValue("shipping.phoneNumber", address.phone);
 		if (address.address2) form.setFieldValue("_showAddressLine2", true);
+	}
+
+	/**
+	 * Builds ConfirmCheckoutData from the current form state.
+	 * Called by PayButton before submission.
+	 * Returns null if validation fails (triggers form errors).
+	 */
+	function getFormData(): ConfirmCheckoutData | null {
+		const values = form.state.values;
+		const s = values.shipping;
+
+		// Trigger validation
+		if (!form.state.canSubmit) return null;
+
+		const appliedDiscount = values._appliedDiscount as AppliedDiscount | null;
+
+		// If there's an unapplied discount code (typed but not blurred), use it directly
+		// The server will validate it in createOrderInTransaction
+		const rawDiscountCode = (values.discountCode as string).trim().toUpperCase();
+		const discountCode = appliedDiscount?.code ?? (rawDiscountCode || undefined);
+
+		return {
+			cartItems,
+			shippingAddress: {
+				fullName: s.fullName,
+				addressLine1: s.addressLine1,
+				addressLine2: s.addressLine2 || undefined,
+				city: s.city,
+				postalCode: s.postalCode,
+				country: ((s.country as string) || "FR") as ShippingCountry,
+				phoneNumber: s.phoneNumber,
+			},
+			email: isGuest ? (values.email as string) || undefined : undefined,
+			discountCode,
+			paymentIntentId: pi.paymentIntentId!,
+			newsletterOptIn: values.newsletterOptIn,
+			smsOptIn: values.smsOptIn,
+			saveInfo: values.saveInfo,
+		};
 	}
 
 	return (
@@ -176,7 +189,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 				return (
 					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
-						<div className="space-y-6">
+						<div className="space-y-8">
 							<h1 ref={headingRef} tabIndex={-1} className="sr-only">
 								Paiement sécurisé
 							</h1>
@@ -192,89 +205,25 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								</Alert>
 							)}
 
+							{pi.error && (
+								<Alert variant="destructive" role="alert">
+									<AlertCircle className="size-4" />
+									<AlertDescription>{pi.error}</AlertDescription>
+								</Alert>
+							)}
+
 							<ErrorBoundary
 								errorMessage="Impossible de charger le formulaire"
 								className="bg-muted/50 rounded-lg border p-8"
 							>
-								{checkoutResult ? (
-									<PaymentStep
-										submittedAddress={checkoutResult.address}
-										onEdit={handleEdit}
-										clientSecret={checkoutResult.clientSecret}
-										orderNumber={checkoutResult.orderNumber}
-									/>
-								) : (
-									<form
-										action={action}
-										className="space-y-6"
-										onSubmit={() => {
-											void form.handleSubmit();
-										}}
-									>
-										{/* Hidden inputs */}
-										<input
-											type="hidden"
-											name="cartItems"
-											value={JSON.stringify(
-												cart.items.map((item) => ({
-													skuId: item.sku.id,
-													quantity: item.quantity,
-													priceAtAdd: item.priceAtAdd,
-												})),
-											)}
-										/>
-
-										<form.Subscribe selector={(state) => [state.values]}>
-											{([values]) => {
-												const v = values as Record<string, unknown>;
-												const shippingValues = v.shipping as Record<string, string> | undefined;
-												const appliedDiscount = v._appliedDiscount as { code: string } | null;
-												return (
-													<>
-														<input
-															type="hidden"
-															name="shippingAddress"
-															value={JSON.stringify({
-																fullName: shippingValues?.fullName ?? "",
-																addressLine1: shippingValues?.addressLine1 ?? "",
-																addressLine2: shippingValues?.addressLine2 ?? "",
-																city: shippingValues?.city ?? "",
-																postalCode: shippingValues?.postalCode ?? "",
-																country: shippingValues?.country ?? "FR",
-																phoneNumber: shippingValues?.phoneNumber ?? "",
-															})}
-														/>
-														{isGuest && (
-															<input type="hidden" name="email" value={(v.email as string) || ""} />
-														)}
-														<input
-															type="hidden"
-															name="discountCode"
-															value={appliedDiscount?.code ?? ""}
-														/>
-													</>
-												);
-											}}
-										</form.Subscribe>
-
-										<fieldset disabled={isPending} className="space-y-5 disabled:opacity-60">
-											<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">
-												Adresse de livraison
-											</h2>
-
+								<div className="space-y-8">
+									{/* === SECTION 1: Shipping Address === */}
+									<CheckoutSection title="Adresse de livraison">
+										<fieldset className="space-y-5">
 											<p className="text-muted-foreground text-sm">
 												Les champs marqués d'un <span className="text-destructive">*</span> sont
 												obligatoires.
 											</p>
-
-											{/* Server-side error (ignore validation errors handled by field validators) */}
-											{state?.status !== ActionStatus.SUCCESS &&
-												state?.status !== ActionStatus.VALIDATION_ERROR &&
-												state?.message && (
-													<Alert variant="destructive" role="alert" aria-live="assertive">
-														<AlertDescription>{state.message}</AlertDescription>
-													</Alert>
-												)}
 
 											{/* Error summary for screen readers */}
 											<form.Subscribe
@@ -404,7 +353,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												</form.Subscribe>
 											)}
 
-											{/* Full name (Baymard: single field reduces friction) */}
+											{/* Full name */}
 											<form.AppField
 												name="shipping.fullName"
 												validators={{
@@ -568,139 +517,178 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 													</form.AppField>
 												)}
 											</form.Subscribe>
+										</fieldset>
+									</CheckoutSection>
 
-											{/* Discount code */}
-											<form.Subscribe selector={(s) => s.values._appliedDiscount}>
-												{(appliedDiscount) => {
-													if (appliedDiscount) {
-														return (
-															<div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5">
-																<div className="flex min-w-0 items-center gap-2">
-																	<Check
-																		className="h-4 w-4 shrink-0 text-green-600"
-																		aria-hidden="true"
-																	/>
-																	<span className="truncate text-sm font-medium text-green-700">
-																		{appliedDiscount.code}
-																	</span>
-																	<span className="text-sm text-green-600">
-																		-{formatEuro(appliedDiscount.discountAmount)}
-																	</span>
-																</div>
-																<button
-																	type="button"
-																	onClick={() => {
-																		form.setFieldValue("_appliedDiscount", null);
-																		form.setFieldValue("discountCode", "");
-																	}}
-																	className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-sm p-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-																	aria-label="Supprimer le code promo"
-																>
-																	<X className="h-4 w-4" />
-																</button>
-															</div>
-														);
-													}
+									{/* === SECTION 2: Shipping Method === */}
+									<CheckoutSection title="Livraison">
+										<ShippingMethodSection
+											shipping={shipping}
+											shippingUnavailable={shippingUnavailable}
+											shippingInfo={shippingInfo}
+										/>
+									</CheckoutSection>
 
-													return (
-														<form.Subscribe selector={(s) => s.values._discountOpen}>
-															{(isOpen) => (
-																<Collapsible
-																	open={isOpen}
-																	onOpenChange={(v) => form.setFieldValue("_discountOpen", v)}
-																>
-																	<CollapsibleTrigger className="text-muted-foreground hover:text-foreground -mx-3 inline-flex min-h-11 items-center gap-1 px-3 text-sm transition-colors">
-																		<ChevronRight
-																			className={cn(
-																				"h-3.5 w-3.5 transition-transform",
-																				isOpen && "rotate-90",
-																			)}
-																		/>
-																		J'ai un code promo
-																	</CollapsibleTrigger>
-																	<CollapsibleContent>
-																		<div className="space-y-2 pt-1">
-																			<form.AppField
-																				name="discountCode"
-																				validators={{
-																					onBlurAsync: async ({ value, fieldApi }) => {
-																						const code = (value as string).trim().toUpperCase();
-																						if (!code) return undefined;
-																						const result = await validateDiscountCode(
-																							code,
-																							subtotal,
-																						);
-																						if (result.valid && result.discount) {
-																							fieldApi.form.setFieldValue(
-																								"_appliedDiscount",
-																								result.discount,
-																							);
-																							fieldApi.form.setFieldValue("discountCode", "");
-																							return undefined;
+									{/* === SECTION 3: Discount Code === */}
+									<form.Subscribe selector={(s) => s.values._appliedDiscount}>
+										{(appliedDiscount) => {
+											if (appliedDiscount) {
+												return (
+													<div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5">
+														<div className="flex min-w-0 items-center gap-2">
+															<Check
+																className="h-4 w-4 shrink-0 text-green-600"
+																aria-hidden="true"
+															/>
+															<span className="truncate text-sm font-medium text-green-700">
+																{appliedDiscount.code}
+															</span>
+															<span className="text-sm text-green-600">
+																-{formatEuro(appliedDiscount.discountAmount)}
+															</span>
+														</div>
+														<button
+															type="button"
+															onClick={() => {
+																form.setFieldValue("_appliedDiscount", null);
+																form.setFieldValue("discountCode", "");
+															}}
+															className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-sm p-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+															aria-label="Supprimer le code promo"
+														>
+															<X className="h-4 w-4" />
+														</button>
+													</div>
+												);
+											}
+
+											return (
+												<form.Subscribe selector={(s) => s.values._discountOpen}>
+													{(isOpen) => (
+														<Collapsible
+															open={isOpen}
+															onOpenChange={(v) => form.setFieldValue("_discountOpen", v)}
+														>
+															<CollapsibleTrigger className="text-muted-foreground hover:text-foreground -mx-3 inline-flex min-h-11 items-center gap-1 px-3 text-sm transition-colors">
+																<ChevronRight
+																	className={cn(
+																		"h-3.5 w-3.5 transition-transform",
+																		isOpen && "rotate-90",
+																	)}
+																/>
+																J'ai un code promo
+															</CollapsibleTrigger>
+															<CollapsibleContent>
+																<div className="space-y-2 pt-1">
+																	<form.AppField
+																		name="discountCode"
+																		validators={{
+																			onBlurAsync: async ({ value, fieldApi }) => {
+																				const code = (value as string).trim().toUpperCase();
+																				if (!code) return undefined;
+																				const result = await validateDiscountCode(code, subtotal);
+																				if (result.valid && result.discount) {
+																					fieldApi.form.setFieldValue(
+																						"_appliedDiscount",
+																						result.discount,
+																					);
+																					fieldApi.form.setFieldValue("discountCode", "");
+																					return undefined;
+																				}
+																				return result.error ?? "Code invalide";
+																			},
+																		}}
+																	>
+																		{(field) => (
+																			<div className="flex gap-2">
+																				<field.InputField
+																					placeholder="Entrer un code"
+																					className="uppercase"
+																					aria-label="Code promo"
+																					onKeyDown={(e: React.KeyboardEvent) => {
+																						if (e.key === "Enter") {
+																							e.preventDefault();
+																							field.handleBlur();
 																						}
-																						return result.error ?? "Code invalide";
-																					},
-																				}}
-																			>
-																				{(field) => (
-																					<div className="flex gap-2">
-																						<field.InputField
-																							placeholder="Entrer un code"
-																							className="uppercase"
-																							aria-label="Code promo"
-																							onKeyDown={(e: React.KeyboardEvent) => {
-																								if (e.key === "Enter") {
-																									e.preventDefault();
-																									field.handleBlur();
-																								}
-																							}}
-																						/>
-																						<Button
-																							type="button"
-																							variant="outline"
-																							disabled={
-																								field.state.meta.isValidating ||
-																								!(field.state.value as string).trim()
-																							}
-																							onClick={() => field.handleBlur()}
-																						>
-																							{field.state.meta.isValidating ? (
-																								<Loader2 className="h-4 w-4 motion-safe:animate-spin" />
-																							) : (
-																								"Appliquer"
-																							)}
-																						</Button>
-																					</div>
-																				)}
-																			</form.AppField>
-																		</div>
-																	</CollapsibleContent>
-																</Collapsible>
-															)}
-														</form.Subscribe>
-													);
-												}}
-											</form.Subscribe>
+																					}}
+																				/>
+																				<Button
+																					type="button"
+																					variant="outline"
+																					disabled={
+																						field.state.meta.isValidating ||
+																						!(field.state.value as string).trim()
+																					}
+																					onClick={() => field.handleBlur()}
+																				>
+																					{field.state.meta.isValidating ? (
+																						<Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+																					) : (
+																						"Appliquer"
+																					)}
+																				</Button>
+																			</div>
+																		)}
+																	</form.AppField>
+																</div>
+															</CollapsibleContent>
+														</Collapsible>
+													)}
+												</form.Subscribe>
+											);
+										}}
+									</form.Subscribe>
 
-											<form.AppField
-												name="termsAccepted"
-												validators={{
-													onChange: ({ value }: { value: boolean }) => {
-														if (!value) {
-															return "Vous devez accepter les conditions générales de vente";
-														}
-														return undefined;
-													},
+									{/* === SECTION 5: Payment === */}
+									<CheckoutSection title="Paiement">
+										{pi.isLoading ? (
+											<div
+												className="animate-pulse space-y-4 rounded-xl border p-6"
+												aria-busy="true"
+												role="status"
+											>
+												<span className="sr-only">Chargement du formulaire de paiement…</span>
+												<div className="bg-muted h-4 w-40 rounded" />
+												<div className="bg-muted h-10 w-full rounded" />
+												<div className="grid grid-cols-2 gap-4">
+													<div className="bg-muted h-10 rounded" />
+													<div className="bg-muted h-10 rounded" />
+												</div>
+											</div>
+										) : pi.clientSecret ? (
+											<Elements
+												stripe={getStripe()}
+												options={{
+													clientSecret: pi.clientSecret,
+													appearance: stripeAppearance,
+													locale: "fr",
 												}}
 											>
-												{(field) => (
-													<div className="space-y-2">
-														<field.CheckboxField
-															label="J'accepte les conditions générales de vente"
-															required
-														/>
-														<div className="text-muted-foreground ml-8 text-sm">
-															Consultez nos{" "}
+												<div className="space-y-6">
+													<div className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm">
+														<PaymentElement />
+													</div>
+
+													{/* Save info (logged-in users only) */}
+													{!isGuest && (
+														<form.AppField name="saveInfo">
+															{(field) => (
+																<field.CheckboxField label="Enregistrer mes informations pour mes prochaines commandes" />
+															)}
+														</form.AppField>
+													)}
+
+													{/* Newsletter opt-in */}
+													<form.AppField name="newsletterOptIn">
+														{(field) => (
+															<field.CheckboxField label="Je souhaite recevoir les offres et nouveautés par email" />
+														)}
+													</form.AppField>
+
+													{/* Terms notice + Pay button */}
+													<div className="space-y-3">
+														<p className="text-muted-foreground text-center text-xs">
+															En passant commande, vous acceptez nos{" "}
 															<Link
 																href="/cgv"
 																className="text-foreground underline hover:no-underline"
@@ -718,48 +706,48 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 															>
 																politique de confidentialité
 															</Link>
+															.
+														</p>
+														<form.Subscribe selector={(s) => s.canSubmit}>
+															{(canSubmit) => (
+																<PayButton
+																	total={total}
+																	disabled={!canSubmit}
+																	shippingUnavailable={shippingUnavailable}
+																	getFormData={getFormData}
+																/>
+															)}
+														</form.Subscribe>
+													</div>
+
+													{/* Trust badges */}
+													<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
+														<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
+															<span className="inline-flex items-center gap-1">
+																<Lock className="h-3 w-3" />
+																Paiement sécurisé
+															</span>
+															<span aria-hidden="true" className="text-border hidden sm:inline">
+																|
+															</span>
+															<span className="inline-flex items-center gap-1.5">
+																<VisaIcon className="h-4 w-auto" />
+																<MastercardIcon className="h-4 w-auto" />
+																<CBIcon className="h-4 w-auto" />
+															</span>
+															<span aria-hidden="true" className="text-border hidden sm:inline">
+																|
+															</span>
+															<span className="inline-flex items-center gap-1">
+																Propulsé par <StripeWordmark className="h-4 w-auto opacity-50" />
+															</span>
 														</div>
 													</div>
-												)}
-											</form.AppField>
-										</fieldset>
-
-										{/* Baymard: lock icon on CTA reinforces perceived security for premium purchases */}
-										<form.Subscribe selector={(s) => [s.canSubmit, s.values.termsAccepted]}>
-											{([canSubmit, termsAccepted]) => (
-												<>
-													<Button
-														type="submit"
-														size="lg"
-														className="w-full text-base shadow-md transition-shadow hover:shadow-lg"
-														disabled={
-															!canSubmit || !termsAccepted || isPending || shippingUnavailable
-														}
-														aria-busy={isPending}
-													>
-														{isPending ? (
-															<>
-																<Loader2 className="size-4 animate-spin" aria-hidden="true" />
-																<span>Validation...</span>
-															</>
-														) : (
-															<>
-																<Lock className="size-4" aria-hidden="true" />
-																<span>Paiement sécurisé · {formatEuro(total)}</span>
-															</>
-														)}
-													</Button>
-													{shippingUnavailable && (
-														<p className="text-destructive text-center text-sm" role="alert">
-															Nous ne livrons pas encore dans cette zone. Contactez-nous pour
-															trouver une solution.
-														</p>
-													)}
-												</>
-											)}
-										</form.Subscribe>
-									</form>
-								)}
+												</div>
+											</Elements>
+										) : null}
+									</CheckoutSection>
+								</div>
 							</ErrorBoundary>
 						</div>
 

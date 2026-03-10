@@ -1,0 +1,421 @@
+/* ========================================================================
+   ANIMATIONS & KEYFRAMES
+   ======================================================================== */
+@layer utilities {
+	/* Animation shimmer sweep for announcement bar */
+	@keyframes announcement-shimmer {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(100%);
+		}
+	}
+
+	/* Animation sparkle */
+	@keyframes sparkle-pulse {
+		0%,
+		100% {
+			opacity: 1;
+			transform: rotate(0deg) scale(1);
+		}
+		50% {
+			opacity: 0.7;
+			transform: rotate(15deg) scale(1.1);
+		}
+	}
+
+	.animate-sparkle-pulse {
+		animation: sparkle-pulse 2s ease-in-out infinite;
+	}
+
+	/* Animation heart-beat pour toast error */
+	@keyframes heart-beat {
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.05);
+		}
+	}
+
+	.animate-heart-beat {
+		animation: heart-beat 2s ease-in-out infinite;
+	}
+
+	/* Animation wishlist button - single pop subtil (200ms) */
+	@keyframes wishlist-pop {
+		0% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.12);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	/* Animation wave pour emoji main */
+	@keyframes wave {
+		0% {
+			transform: rotate(0deg);
+		}
+		10% {
+			transform: rotate(14deg);
+		}
+		20% {
+			transform: rotate(-8deg);
+		}
+		30% {
+			transform: rotate(14deg);
+		}
+		40% {
+			transform: rotate(-4deg);
+		}
+		50% {
+			transform: rotate(10deg);
+		}
+		60% {
+			transform: rotate(0deg);
+		}
+		100% {
+			transform: rotate(0deg);
+		}
+	}
+
+	.animate-wave {
+		animation: wave 2.5s ease-in-out infinite;
+	}
+
+	/* Progress bar indeterminate for filter sheet */
+	@keyframes progress-indeterminate {
+		0% {
+			transform: translateX(-100%);
+		}
+		100% {
+			transform: translateX(400%);
+		}
+	}
+
+	/* Animation shimmer pour skeleton loading */
+	@keyframes shimmer {
+		0% {
+			background-position: -200% 0;
+		}
+		100% {
+			background-position: 200% 0;
+		}
+	}
+
+	.animate-shimmer {
+		--shimmer-base: var(--accent);
+		--shimmer-highlight: oklch(0.96 0.01 270);
+		background: linear-gradient(
+			90deg,
+			var(--shimmer-base) 0%,
+			var(--shimmer-highlight) 50%,
+			var(--shimmer-base) 100%
+		);
+		background-size: 200% 100%;
+		animation: shimmer 1.5s ease-in-out infinite;
+	}
+
+	/* Animation draw-line pour SVG dessinés à la main (Tendance 2026: Hand-drawn aesthetic) */
+	@keyframes draw-line {
+		to {
+			stroke-dashoffset: 0;
+		}
+	}
+
+	.hand-drawn-underline {
+		stroke-dasharray: 200;
+		stroke-dashoffset: 200;
+		animation: draw-line 0.8s ease-out forwards;
+	}
+
+	.doodle-draw {
+		stroke-dashoffset: var(--path-length);
+		stroke-dasharray: var(--path-length);
+		animation: draw-line 0.8s ease-out forwards;
+		animation-delay: var(--draw-delay, 0s);
+	}
+
+	/* ==========================================
+	   ANIMATION BADGE PULSE (Navbar badges)
+	   ========================================== */
+	@keyframes badge-pulse {
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.2);
+		}
+	}
+
+	.animate-badge-pulse {
+		animation: badge-pulse 0.3s ease-out;
+	}
+
+	/* ==========================================
+	   ANIMATIONS MULTISELECT
+	   ========================================== */
+	@keyframes wiggle {
+		0%,
+		100% {
+			transform: rotate(-3deg);
+		}
+		50% {
+			transform: rotate(3deg);
+		}
+	}
+
+	@keyframes scaleIn {
+		from {
+			opacity: 0;
+			transform: scale(0.95);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes slideInDown {
+		from {
+			opacity: 0;
+			transform: translateY(-10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+		}
+		to {
+			opacity: 1;
+		}
+	}
+
+	@keyframes menu-item-in {
+		from {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@keyframes flipIn {
+		from {
+			opacity: 0;
+			transform: perspective(400px) rotateX(-10deg);
+		}
+		to {
+			opacity: 1;
+			transform: perspective(400px) rotateX(0);
+		}
+	}
+
+	.animate-wiggle {
+		animation: wiggle 0.3s ease-in-out;
+	}
+	.animate-scaleIn {
+		animation: scaleIn 0.2s ease-out;
+	}
+	.animate-slideInDown {
+		animation: slideInDown 0.2s ease-out;
+	}
+	.animate-fadeIn {
+		animation: fadeIn 0.2s ease-out;
+	}
+	.animate-flipIn {
+		animation: flipIn 0.3s ease-out;
+	}
+
+	/* ==========================================
+	   DRIFT — Offline page decorative shapes
+	   ========================================== */
+	@keyframes drift {
+		0%,
+		100% {
+			transform: translate(0, 0) rotate(0deg);
+		}
+		25% {
+			transform: translate(10px, -15px) rotate(5deg);
+		}
+		50% {
+			transform: translate(-5px, 10px) rotate(-3deg);
+		}
+		75% {
+			transform: translate(15px, 5px) rotate(3deg);
+		}
+	}
+
+	/* ==========================================
+	   HERO IDLE FLOAT — Floating product images
+	   ========================================== */
+	@keyframes hero-idle-float-1 {
+		0%,
+		100% {
+			transform: translate(0, 0) rotate(-8deg);
+		}
+		20% {
+			transform: translate(4px, -8px) rotate(-9.5deg);
+		}
+		45% {
+			transform: translate(-3px, 2px) rotate(-7.5deg);
+		}
+		70% {
+			transform: translate(-4px, 8px) rotate(-6.5deg);
+		}
+		90% {
+			transform: translate(3px, -2px) rotate(-8.5deg);
+		}
+	}
+
+	@keyframes hero-idle-float-2 {
+		0%,
+		100% {
+			transform: translate(0, 0) rotate(5deg);
+		}
+		20% {
+			transform: translate(4px, -8px) rotate(3.5deg);
+		}
+		45% {
+			transform: translate(-3px, 2px) rotate(5.5deg);
+		}
+		70% {
+			transform: translate(-4px, 8px) rotate(6.5deg);
+		}
+		90% {
+			transform: translate(3px, -2px) rotate(4.5deg);
+		}
+	}
+
+	@keyframes hero-idle-float-3 {
+		0%,
+		100% {
+			transform: translate(0, 0) rotate(3deg);
+		}
+		20% {
+			transform: translate(4px, -8px) rotate(1.5deg);
+		}
+		45% {
+			transform: translate(-3px, 2px) rotate(3.5deg);
+		}
+		70% {
+			transform: translate(-4px, 8px) rotate(4.5deg);
+		}
+		90% {
+			transform: translate(3px, -2px) rotate(2.5deg);
+		}
+	}
+
+	@keyframes hero-idle-float-4 {
+		0%,
+		100% {
+			transform: translate(0, 0) rotate(-4deg);
+		}
+		20% {
+			transform: translate(4px, -8px) rotate(-5.5deg);
+		}
+		45% {
+			transform: translate(-3px, 2px) rotate(-3.5deg);
+		}
+		70% {
+			transform: translate(-4px, 8px) rotate(-2.5deg);
+		}
+		90% {
+			transform: translate(3px, -2px) rotate(-4.5deg);
+		}
+	}
+
+	/* ==========================================
+	   GLITTER TWINKLE — GlitterSparkles component
+	   ========================================== */
+	@keyframes glitter-twinkle {
+		0% {
+			opacity: 0.15;
+			transform: rotate(0deg) scale(0.3);
+		}
+		33%,
+		66% {
+			opacity: 1;
+			transform: rotate(180deg) scale(1);
+		}
+		100% {
+			opacity: 0.15;
+			transform: rotate(360deg) scale(0.3);
+		}
+	}
+
+	@keyframes glitter-twinkle-reduced {
+		0%,
+		100% {
+			opacity: 0.5;
+		}
+		50% {
+			opacity: 1;
+		}
+	}
+
+	.animate-glitter-twinkle {
+		animation: glitter-twinkle var(--sparkle-duration, 3s) cubic-bezier(0.25, 0.1, 0.25, 1)
+			var(--sparkle-delay, 0s) infinite;
+	}
+
+	/* ==========================================
+	   REDUCED MOTION — Disable all animations
+	   ========================================== */
+	@media (prefers-reduced-motion: reduce) {
+		.animate-in {
+			animation: none !important;
+		}
+
+		.animate-pulse,
+		.animate-sparkle-pulse,
+		.animate-wave {
+			animation: none;
+		}
+
+		/* Fallback statique pour shimmer: couleur unie au lieu du gradient animé */
+		.animate-shimmer {
+			animation: none;
+			background: var(--accent);
+		}
+
+		/* Hand-drawn: afficher directement sans animation */
+		.hand-drawn-underline,
+		.doodle-draw,
+		.doodle-draw-scroll {
+			animation: none;
+			stroke-dashoffset: 0;
+		}
+
+		.animate-wiggle,
+		.animate-scaleIn,
+		.animate-slideInDown,
+		.animate-fadeIn,
+		.animate-flipIn,
+		.animate-badge-pulse {
+			animation: none;
+		}
+
+		[style*="hero-idle-float"] {
+			animation: none !important;
+		}
+
+		.animate-glitter-twinkle {
+			animation-name: glitter-twinkle-reduced;
+		}
+	}
+}

@@ -45,7 +45,6 @@ describe("getCheckoutFormOptions", () => {
 		expect(result.defaultValues.shipping.city).toBe("");
 		expect(result.defaultValues.shipping.postalCode).toBe("");
 		expect(result.defaultValues.shipping.country).toBe("FR");
-		expect(result.defaultValues.termsAccepted).toBe(false);
 	});
 
 	// ---- Logged-in user ----
@@ -89,12 +88,5 @@ describe("getCheckoutFormOptions", () => {
 		const result = getCheckoutFormOptions(null, null);
 		expect(result.defaultValues.email).toBe("");
 		expect(result.defaultValues.shipping.fullName).toBe("");
-	});
-
-	// ---- termsAccepted ----
-
-	it("always sets termsAccepted to false", () => {
-		const result = getCheckoutFormOptions(makeSession(), null);
-		expect(result.defaultValues.termsAccepted).toBe(false);
 	});
 });

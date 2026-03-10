@@ -595,6 +595,21 @@ model Order {
   history        OrderHistory[] // Audit trail (conformite legale)
   disputes       Dispute[]
 
+  // === ADRESSE DE FACTURATION (DENORMALISEE - SNAPSHOT) ===
+  billingSameAsShipping Boolean  @default(true)
+  billingFirstName      String?  @db.VarChar(50)
+  billingLastName       String?  @db.VarChar(50)
+  billingAddress1       String?  @db.VarChar(255)
+  billingAddress2       String?  @db.VarChar(255)
+  billingPostalCode     String?  @db.VarChar(10)
+  billingCity           String?  @db.VarChar(100)
+  billingCountry        String?  @db.VarChar(2)
+  billingPhone          String?  @db.VarChar(20)
+
+  // === CONSENTEMENT (RGPD) ===
+  newsletterOptIn Boolean @default(false)
+  smsOptIn        Boolean @default(false)
+
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
   deletedAt DateTime?

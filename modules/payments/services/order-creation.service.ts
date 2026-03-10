@@ -32,6 +32,9 @@ export interface CreateOrderParams {
 	userId: string | null;
 	finalEmail: string | null;
 	discountCode?: string;
+	newsletterOptIn?: boolean;
+	smsOptIn?: boolean;
+	paymentIntentId?: string;
 }
 
 export interface CreateOrderResult {
@@ -47,7 +50,7 @@ export interface CreateOrderResult {
  * Verifies stock with FOR UPDATE row locking, applies discount code, and
  * creates the order + order items + discount usage record in a single transaction.
  *
- * Called from createCheckoutSession before Stripe session creation.
+ * Called from confirmCheckout before Stripe PI update.
  * On Stripe failure, the caller is responsible for rolling back via cleanupFailedCheckout.
  */
 export async function createOrderInTransaction(
@@ -63,6 +66,9 @@ export async function createOrderInTransaction(
 		userId,
 		finalEmail,
 		discountCode,
+		newsletterOptIn = false,
+		smsOptIn = false,
+		paymentIntentId,
 	} = params;
 
 	return prisma.$transaction(
@@ -269,6 +275,9 @@ export async function createOrderInTransaction(
 					status: "PENDING",
 					paymentStatus: "PENDING",
 					fulfillmentStatus: "UNFULFILLED",
+					...(paymentIntentId && { stripePaymentIntentId: paymentIntentId }),
+					newsletterOptIn,
+					smsOptIn,
 				},
 			});
 

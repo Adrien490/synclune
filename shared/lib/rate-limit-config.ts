@@ -365,11 +365,23 @@ export const AUTH_LIMITS = {
 } as const;
 
 /**
+ * Limite pour la mise à jour du montant Payment Intent
+ *
+ * Plus permissif que CREATE_SESSION car déclenché par changement de pays/code promo
+ * Protège contre spam de l'API Stripe
+ */
+export const PAYMENT_UPDATE_AMOUNT_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
  * Toutes les limites de paiement
  */
 export const PAYMENT_LIMITS = {
 	CREATE_SESSION: CHECKOUT_CREATE_SESSION_LIMIT,
 	VALIDATE_DISCOUNT: DISCOUNT_CODE_VALIDATE_LIMIT,
+	UPDATE_AMOUNT: PAYMENT_UPDATE_AMOUNT_LIMIT,
 } as const;
 
 /**

@@ -16,44 +16,77 @@ import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult } from "../types/webhook.types";
+import {
+	processOrderFromPaymentIntent,
+	buildPostCheckoutTasksFromPI,
+} from "../services/checkout.service";
 
 /**
- * Gère le succès d'un paiement via Payment Intent
- * NOTE: Ce handler ne gère pas les emails car checkout.session.completed le fait déjà
+ * Resolves orderId from PI metadata.
+ * Supports both new flow (camelCase `orderId`) and old flow (snake_case `order_id`).
  */
-export async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent): Promise<void> {
-	const orderId = paymentIntent.metadata.order_id;
-
-	if (!orderId) {
-		// Log pour debugging - pas d'erreur car certains PaymentIntent n'ont pas d'order_id (ex: paiements hors checkout)
-		logger.warn(
-			`⚠️ [WEBHOOK] payment_intent.succeeded without order_id in metadata (PI: ${paymentIntent.id})`,
-			{ service: "webhook" },
-		);
-		return;
-	}
-
-	await markOrderAsPaid(orderId, paymentIntent.id);
+function resolveOrderId(metadata: Stripe.Metadata): string | undefined {
+	return metadata.orderId ?? metadata.order_id;
 }
 
 /**
- * Gère l'échec d'un paiement
- * Restaure le stock réservé et initie un remboursement si nécessaire
+ * Handles successful payment via Payment Intent.
+ *
+ * New PI flow (no checkoutSessionId): processes order via processOrderFromPaymentIntent.
+ * Old Checkout Session flow: only marks as paid (checkout.session.completed handles the rest).
+ */
+export async function handlePaymentSuccess(
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<WebhookHandlerResult> {
+	const orderId = resolveOrderId(paymentIntent.metadata);
+
+	if (!orderId) {
+		logger.warn(
+			`⚠️ [WEBHOOK] payment_intent.succeeded without orderId in metadata (PI: ${paymentIntent.id})`,
+			{ service: "webhook" },
+		);
+		return { success: true, skipped: true, reason: "no_order_id" };
+	}
+
+	// New PI flow: no checkoutSessionId means this PI was created directly (not via Checkout Session)
+	const isNewPIFlow = !paymentIntent.metadata.checkoutSessionId;
+
+	if (isNewPIFlow) {
+		try {
+			const order = await processOrderFromPaymentIntent(orderId, paymentIntent);
+			const tasks = buildPostCheckoutTasksFromPI(order, paymentIntent);
+			return { success: true, tasks };
+		} catch (error) {
+			logger.error(`❌ [WEBHOOK] Error processing PI flow for order ${orderId}:`, error, {
+				service: "webhook",
+			});
+			throw error;
+		}
+	}
+
+	// Old flow: checkout.session.completed handles everything, just mark as paid
+	await markOrderAsPaid(orderId, paymentIntent.id);
+	return { success: true };
+}
+
+/**
+ * Handles payment failure.
+ * Restores reserved stock and initiates automatic refund if necessary.
  */
 export async function handlePaymentFailure(
 	paymentIntent: Stripe.PaymentIntent,
 ): Promise<WebhookHandlerResult> {
-	const orderId = paymentIntent.metadata.order_id;
+	const orderId = resolveOrderId(paymentIntent.metadata);
 
 	if (!orderId) {
-		logger.error("❌ [WEBHOOK] No order_id in payment intent metadata", undefined, {
+		logger.error("❌ [WEBHOOK] No orderId in payment intent metadata", undefined, {
 			service: "webhook",
 		});
-		throw new Error("No order_id in payment intent metadata");
+		throw new Error("No orderId in payment intent metadata");
 	}
 
 	try {
-		// 1. Extraire les détails d'échec
+		// 1. Extract failure details
 		const failureDetails = extractPaymentFailureDetails(paymentIntent);
 
 		logger.info(`[AUDIT] Payment failure detected`, {
@@ -62,13 +95,13 @@ export async function handlePaymentFailure(
 			failureCode: failureDetails.code,
 		});
 
-		// 2. Restaurer le stock si nécessaire
+		// 2. Restore stock if necessary
 		const { restoredSkuIds } = await restoreStockForOrder(orderId);
 
-		// 3. Marquer la commande comme échouée
+		// 3. Mark order as failed
 		await markOrderAsFailed(orderId, paymentIntent.id, failureDetails);
 
-		// 4. Remboursement automatique si de l'argent a été capturé
+		// 4. Automatic refund if money was captured
 		if (paymentIntent.amount_received > 0) {
 			logger.info(
 				`💰 [WEBHOOK] Initiating automatic refund for order ${orderId} (${paymentIntent.amount_received} cents captured)`,
@@ -119,29 +152,29 @@ export async function handlePaymentFailure(
 }
 
 /**
- * Gère l'annulation d'un paiement
- * Annule la commande et initie un remboursement si nécessaire
+ * Handles payment cancellation.
+ * Cancels the order and initiates automatic refund if necessary.
  */
 export async function handlePaymentCanceled(
 	paymentIntent: Stripe.PaymentIntent,
 ): Promise<WebhookHandlerResult> {
-	const orderId = paymentIntent.metadata.order_id;
+	const orderId = resolveOrderId(paymentIntent.metadata);
 
 	if (!orderId) {
-		logger.error("❌ [WEBHOOK] No order_id in payment intent metadata", undefined, {
+		logger.error("❌ [WEBHOOK] No orderId in payment intent metadata", undefined, {
 			service: "webhook",
 		});
-		throw new Error("No order_id in payment intent metadata");
+		throw new Error("No orderId in payment intent metadata");
 	}
 
 	try {
 		// 1. Restore stock if it was decremented (order was PROCESSING/PAID)
 		const { restoredSkuIds } = await restoreStockForOrder(orderId);
 
-		// 2. Marquer la commande comme annulée
+		// 2. Mark order as cancelled
 		await markOrderAsCancelled(orderId, paymentIntent.id);
 
-		// 3. Remboursement automatique si paiement a été capturé
+		// 3. Automatic refund if payment was captured
 		if (paymentIntent.status === "canceled" && paymentIntent.amount_received > 0) {
 			logger.info(`💰 [WEBHOOK] Initiating automatic refund for canceled order ${orderId}`, {
 				service: "webhook",

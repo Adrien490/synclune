@@ -66,10 +66,7 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	"checkout.session.expired": async (e) => handleCheckoutSessionExpired(getCheckoutSession(e)),
 
 	// === PAYMENT INTENT ===
-	"payment_intent.succeeded": async (e) => {
-		await handlePaymentSuccess(getPaymentIntent(e));
-		return null;
-	},
+	"payment_intent.succeeded": async (e) => handlePaymentSuccess(getPaymentIntent(e)),
 	"payment_intent.payment_failed": async (e) => handlePaymentFailure(getPaymentIntent(e)),
 	"payment_intent.canceled": async (e) => handlePaymentCanceled(getPaymentIntent(e)),
 

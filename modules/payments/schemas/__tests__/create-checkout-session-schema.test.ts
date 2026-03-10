@@ -38,7 +38,6 @@ const validCartItem = {
 const validInput = {
 	cartItems: [validCartItem],
 	shippingAddress: validAddress,
-	termsAccepted: "true" as const,
 };
 
 // ============================================================================

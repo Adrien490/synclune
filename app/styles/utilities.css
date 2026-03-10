@@ -1,0 +1,90 @@
+/* ========================================================================
+   LAYOUT & GENERAL UTILITIES
+   ======================================================================== */
+@layer utilities {
+	/* Gestion word-wrap pour longs textes (titres, descriptions) */
+	.wrap-break-words {
+		overflow-wrap: break-word;
+		word-break: break-word;
+	}
+
+	/* Gradient Hero avec couleurs logo */
+	.bg-linear-organic {
+		background: linear-gradient(
+			to bottom right,
+			oklch(0.8593 0.097 340.78 / 0.2) 0%,
+			transparent 50%,
+			oklch(0.9221 0.0871 86.29 / 0.3) 100%
+		);
+	}
+
+	/* ==========================================
+	   PWA SAFE AREA UTILITIES
+	   ========================================== */
+
+	/* Navigation/éléments fixés en bas - respecte safe-area */
+	.fixed-bottom-safe {
+		padding-bottom: env(safe-area-inset-bottom, 0);
+	}
+
+	/* Padding bottom combiné avec safe-area */
+	.pb-safe {
+		padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+	}
+
+	/* ==========================================
+	   VIEWPORT UNITS STABLES (svh/lvh)
+	   ========================================== */
+
+	/* Small viewport height - stable, ne change pas au scroll */
+	.min-h-svh {
+		min-height: 100svh;
+	}
+
+	.h-svh {
+		height: 100svh;
+	}
+
+	/* Large viewport height - taille maximale du viewport */
+	.min-h-lvh {
+		min-height: 100lvh;
+	}
+
+	.h-lvh {
+		height: 100lvh;
+	}
+
+	/* ==========================================
+	   SCROLL SNAP NAVIGATION (Carousel mobile)
+	   ========================================== */
+	.scroll-snap-x {
+		scroll-snap-type: x mandatory;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.snap-start {
+		scroll-snap-align: start;
+	}
+
+	.snap-center {
+		scroll-snap-align: center;
+	}
+
+	/* Masquer scrollbar mais garder fonctionnalité */
+	.scrollbar-none {
+		-ms-overflow-style: none;
+		scrollbar-width: none;
+	}
+
+	.scrollbar-none::-webkit-scrollbar {
+		display: none;
+	}
+
+	/* ==========================================
+	   CONTENT VISIBILITY — Defer below-fold rendering
+	   ========================================== */
+	.content-defer {
+		content-visibility: auto;
+		contain-intrinsic-size: auto 600px;
+	}
+}

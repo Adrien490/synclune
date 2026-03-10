@@ -33,6 +33,11 @@ import { createOrderInTransaction } from "@/modules/payments/services/order-crea
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
+/**
+ * @deprecated Use initializePayment + confirmCheckout flow instead.
+ * This Checkout Session flow is no longer used. Kept temporarily for reference.
+ * TODO: Remove entirely after production validation of the Payment Intent flow.
+ */
 export const createCheckoutSession = async (
 	_prevState: ActionState | undefined,
 	formData: FormData,
@@ -88,7 +93,6 @@ export const createCheckoutSession = async (
 				const shippingAddress = safeFormGetJSON<unknown>(formData, "shippingAddress");
 				const email = safeFormGet(formData, "email") ?? undefined;
 				const discountCode = safeFormGet(formData, "discountCode") ?? undefined;
-				const termsAccepted = safeFormGet(formData, "termsAccepted") ?? undefined;
 
 				if (!cartItems || !shippingAddress) {
 					return error("Format JSON invalide pour les donnees du panier.");
@@ -99,7 +103,6 @@ export const createCheckoutSession = async (
 					shippingAddress,
 					email,
 					discountCode,
-					termsAccepted,
 				};
 				const validated = validateInput(createCheckoutSessionSchema, rawData);
 				if ("error" in validated) return validated.error;
