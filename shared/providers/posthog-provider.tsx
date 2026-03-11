@@ -1,16 +1,16 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { initPostHog, getPostHogInstance } from "@/shared/lib/posthog";
+import { PostHogProvider as PHProvider } from "posthog-js/react";
+import { posthog } from "@/shared/lib/posthog";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
-import type { PostHog } from "posthog-js";
 import type { ReactNode } from "react";
 
 /**
  * Captures pageview events on route changes
  */
-function PostHogPageview({ ph }: { ph: PostHog }) {
+function PostHogPageview() {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 
@@ -21,9 +21,9 @@ function PostHogPageview({ ph }: { ph: PostHog }) {
 			if (search) {
 				url += `?${search}`;
 			}
-			ph.capture("$pageview", { $current_url: url });
+			posthog.capture("$pageview", { $current_url: url });
 		}
-	}, [pathname, searchParams, ph]);
+	}, [pathname, searchParams]);
 
 	return null;
 }
@@ -31,16 +31,16 @@ function PostHogPageview({ ph }: { ph: PostHog }) {
 /**
  * Manages PostHog opt-in/opt-out based on cookie consent
  */
-function PostHogConsentSync({ ph }: { ph: PostHog }) {
+function PostHogConsentSync() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
 
 	useEffect(() => {
 		if (accepted === true) {
-			ph.opt_in_capturing();
+			posthog.opt_in_capturing();
 		} else {
-			ph.opt_out_capturing();
+			posthog.opt_out_capturing();
 		}
-	}, [accepted, ph]);
+	}, [accepted]);
 
 	return null;
 }
@@ -50,55 +50,17 @@ interface PostHogProviderProps {
 }
 
 export function PostHogProvider({ children }: PostHogProviderProps) {
-	const [ph, setPh] = useState<PostHog | null>(getPostHogInstance);
-
-	useEffect(() => {
-		if (ph) return;
-		void initPostHog().then((instance) => {
-			if (instance) setPh(instance);
-		});
-	}, [ph]);
-
-	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY || !ph) {
+	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
 		return <>{children}</>;
 	}
 
-	// Dynamically import PHProvider only when PostHog is ready
 	return (
-		<PostHogProviderInner ph={ph}>
+		<PHProvider client={posthog}>
 			<Suspense fallback={null}>
-				<PostHogPageview ph={ph} />
+				<PostHogPageview />
 			</Suspense>
-			<PostHogConsentSync ph={ph} />
+			<PostHogConsentSync />
 			{children}
-		</PostHogProviderInner>
+		</PHProvider>
 	);
-}
-
-/**
- * Lazy wrapper around posthog-js/react PHProvider.
- * We pass the PostHog instance directly to children instead of using PHProvider
- * to avoid importing posthog-js/react statically.
- */
-function PostHogProviderInner({ ph, children }: { ph: PostHog; children: ReactNode }) {
-	// posthog-js/react's PHProvider just puts the instance in context.
-	// Since we already pass ph as props, we skip the PHProvider import entirely
-	// to avoid pulling in posthog-js/react bundle.
-	// If any downstream code uses usePostHog(), we need the provider.
-	const [PHProvider, setPHProvider] = useState<React.ComponentType<{
-		client: PostHog;
-		children: ReactNode;
-	}> | null>(null);
-
-	useEffect(() => {
-		void import("posthog-js/react").then((mod) => {
-			setPHProvider(() => mod.PostHogProvider);
-		});
-	}, []);
-
-	if (!PHProvider) {
-		return <>{children}</>;
-	}
-
-	return <PHProvider client={ph}>{children}</PHProvider>;
 }

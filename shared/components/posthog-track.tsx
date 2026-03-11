@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { initPostHog } from "@/shared/lib/posthog";
+import { getPostHog } from "@/shared/lib/posthog";
 
 interface PostHogTrackProps {
 	event: string;
@@ -19,9 +19,7 @@ export function PostHogTrack({ event, properties }: PostHogTrackProps) {
 		if (tracked.current) return;
 		tracked.current = true;
 
-		void initPostHog().then((ph) => {
-			ph?.capture(event, properties);
-		});
+		getPostHog()?.capture(event, properties);
 	}, [event, properties]);
 
 	return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { getPostHogInstance } from "@/shared/lib/posthog";
+import { getPostHog } from "@/shared/lib/posthog";
 
 /**
  * PostHog e-commerce event helpers
@@ -8,7 +8,7 @@ import { getPostHogInstance } from "@/shared/lib/posthog";
  */
 export const posthogEvents = {
 	productViewed(product: { id: string; name: string; price: number; collection?: string }) {
-		getPostHogInstance()?.capture("product_viewed", {
+		getPostHog()?.capture("product_viewed", {
 			product_id: product.id,
 			product_name: product.name,
 			price: product.price,
@@ -17,7 +17,7 @@ export const posthogEvents = {
 	},
 
 	addedToCart(product: { id: string; name: string; price: number; quantity: number }) {
-		getPostHogInstance()?.capture("added_to_cart", {
+		getPostHog()?.capture("added_to_cart", {
 			product_id: product.id,
 			product_name: product.name,
 			price: product.price,
@@ -26,21 +26,21 @@ export const posthogEvents = {
 	},
 
 	removedFromCart(product: { id: string; name: string }) {
-		getPostHogInstance()?.capture("removed_from_cart", {
+		getPostHog()?.capture("removed_from_cart", {
 			product_id: product.id,
 			product_name: product.name,
 		});
 	},
 
 	checkoutStarted(cart: { total: number; itemCount: number }) {
-		getPostHogInstance()?.capture("checkout_started", {
+		getPostHog()?.capture("checkout_started", {
 			total: cart.total,
 			item_count: cart.itemCount,
 		});
 	},
 
 	purchaseCompleted(order: { id: string; total: number; itemCount: number }) {
-		getPostHogInstance()?.capture("purchase_completed", {
+		getPostHog()?.capture("purchase_completed", {
 			order_id: order.id,
 			revenue: order.total,
 			item_count: order.itemCount,
@@ -48,18 +48,18 @@ export const posthogEvents = {
 	},
 
 	searchPerformed(query: string, resultCount: number) {
-		getPostHogInstance()?.capture("search_performed", {
+		getPostHog()?.capture("search_performed", {
 			query,
 			result_count: resultCount,
 		});
 	},
 
 	newsletterSubscribed() {
-		getPostHogInstance()?.capture("newsletter_subscribed");
+		getPostHog()?.capture("newsletter_subscribed");
 	},
 
 	wishlistToggled(product: { id: string; name: string }, added: boolean) {
-		getPostHogInstance()?.capture(added ? "added_to_wishlist" : "removed_from_wishlist", {
+		getPostHog()?.capture(added ? "added_to_wishlist" : "removed_from_wishlist", {
 			product_id: product.id,
 			product_name: product.name,
 		});

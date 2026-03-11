@@ -1,4 +1,21 @@
 import * as Sentry from "@sentry/nextjs";
+import posthog from "posthog-js";
+
+if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+	posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+		api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "/ingest",
+		ui_host: "https://eu.posthog.com",
+		person_profiles: "identified_only",
+		capture_pageview: false,
+		capture_pageleave: true,
+		persistence: "localStorage+cookie",
+		opt_out_capturing_by_default: true,
+		session_recording: {
+			maskAllInputs: true,
+			maskTextSelector: "*",
+		},
+	});
+}
 
 Sentry.init({
 	dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
