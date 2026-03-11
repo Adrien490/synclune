@@ -13,7 +13,6 @@ import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { cn } from "@/shared/utils/cn";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { toast } from "sonner";
 
 import { useCustomizationForm } from "../hooks/use-customization-form";
@@ -341,37 +340,6 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 						defaultCountry="FR"
 						placeholder="06 12 34 56 78"
 					/>
-				)}
-			</form.AppField>
-
-			{/* Consentement RGPD */}
-			<form.AppField
-				name="rgpdConsent"
-				validators={{
-					onChange: ({ value }) => {
-						if (!value) {
-							return "Vous devez accepter la politique de confidentialité pour continuer";
-						}
-						return undefined;
-					},
-				}}
-			>
-				{(field) => (
-					<div className="space-y-1">
-						<field.CheckboxField label="J'accepte la politique de confidentialité" required />
-						<p className="text-muted-foreground ml-7 text-sm leading-relaxed">
-							Consultez notre{" "}
-							<Link
-								href="/confidentialite"
-								className="text-foreground underline hover:no-underline"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								Politique de confidentialité
-								<span className="sr-only"> (ouvre dans un nouvel onglet)</span>
-							</Link>
-						</p>
-					</div>
 				)}
 			</form.AppField>
 

@@ -16,9 +16,6 @@ export const CUSTOMIZATION_DEFAULT_VALUES = {
 	// Images d'inspiration
 	inspirationMedias: [] as Array<{ url: string; blurDataUrl?: string; altText?: string }>,
 
-	// Consentements
-	rgpdConsent: false,
-
 	// URLs of uploaded images removed before submission (for UploadThing cleanup)
 	deletedImageUrls: [] as string[],
 

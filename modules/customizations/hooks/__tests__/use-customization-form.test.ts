@@ -44,7 +44,6 @@ const { mockSendCustomizationRequest, mockSetFieldValue, mockStoreSubscribe, moc
 				productTypeLabel: "",
 				details: "",
 				inspirationMedias: [] as Array<{ url: string; blurDataUrl?: string; altText?: string }>,
-				rgpdConsent: false,
 				website: "",
 			},
 		},
@@ -117,7 +116,6 @@ vi.mock("../../constants/customization-form-options", () => ({
 			productTypeLabel: "",
 			details: "",
 			inspirationMedias: [],
-			rgpdConsent: false,
 			website: "",
 		},
 	},
@@ -152,7 +150,6 @@ describe("useCustomizationForm", () => {
 			productTypeLabel: "",
 			details: "",
 			inspirationMedias: [],
-			rgpdConsent: false,
 			website: "",
 		};
 		// Default: subscribe returns a Subscription object (TanStack Store 0.9.1 API)
@@ -321,7 +318,6 @@ describe("useCustomizationForm", () => {
 			productTypeLabel: "",
 			details: "",
 			inspirationMedias: [],
-			rgpdConsent: true,
 			website: "",
 		};
 
@@ -338,7 +334,7 @@ describe("useCustomizationForm", () => {
 		expect(parsed.email).toBe("marie@test.com");
 	});
 
-	it("excludes rgpdConsent and website from saved draft", () => {
+	it("excludes website from saved draft", () => {
 		let storeCallback: (() => void) | undefined;
 		mockStoreSubscribe.mockImplementation((cb: () => void) => {
 			storeCallback = cb;
@@ -351,7 +347,6 @@ describe("useCustomizationForm", () => {
 			productTypeLabel: "",
 			details: "",
 			inspirationMedias: [],
-			rgpdConsent: true,
 			website: "bot-value",
 		};
 
@@ -364,7 +359,6 @@ describe("useCustomizationForm", () => {
 		const saved = localStorageMock.getItem(DRAFT_KEY);
 		expect(saved).not.toBeNull();
 		const parsed = JSON.parse(saved!);
-		expect(parsed).not.toHaveProperty("rgpdConsent");
 		expect(parsed).not.toHaveProperty("website");
 	});
 
@@ -384,7 +378,6 @@ describe("useCustomizationForm", () => {
 			productTypeLabel: "",
 			details: "",
 			inspirationMedias: [],
-			rgpdConsent: false,
 			website: "",
 		};
 

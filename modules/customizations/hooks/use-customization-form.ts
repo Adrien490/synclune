@@ -38,8 +38,8 @@ function loadDraft(): Partial<typeof CUSTOMIZATION_DEFAULT_VALUES> | null {
 
 function saveDraft(values: typeof CUSTOMIZATION_DEFAULT_VALUES) {
 	try {
-		// Don't save consent, honeypot, or ephemeral upload state
-		const { rgpdConsent: _, website: __, inspirationMedias: ___, ...toSave } = values;
+		// Don't save honeypot or ephemeral upload state
+		const { website: _, inspirationMedias: __, ...toSave } = values;
 		const hasContent = toSave.firstName || toSave.email || toSave.details || toSave.phone;
 		if (!hasContent) {
 			localStorage.removeItem(DRAFT_STORAGE_KEY);

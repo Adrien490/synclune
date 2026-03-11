@@ -66,7 +66,6 @@ export async function sendCustomizationRequest(
 					formData,
 					"inspirationMedias",
 				) ?? [],
-			rgpdConsent: formData.get("rgpdConsent") === "true",
 			website: safeFormGet(formData, "website") ?? "",
 		};
 

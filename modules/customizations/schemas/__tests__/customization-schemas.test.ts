@@ -40,7 +40,6 @@ describe("customizationSchema", () => {
 		phone: "",
 		productTypeLabel: "Bague",
 		details: "Je souhaite une bague en or avec gravure personnalisee sur l'interieur",
-		rgpdConsent: true,
 		website: "",
 	};
 
@@ -212,17 +211,6 @@ describe("customizationSchema", () => {
 			if (result.success) {
 				expect(result.data.inspirationMedias).toEqual([]);
 			}
-		});
-	});
-
-	describe("rgpdConsent", () => {
-		it("should reject when rgpdConsent is false", () => {
-			const result = customizationSchema.safeParse({
-				...validData,
-				rgpdConsent: false,
-			});
-
-			expect(result.success).toBe(false);
 		});
 	});
 

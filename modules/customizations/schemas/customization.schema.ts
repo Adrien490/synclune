@@ -68,13 +68,6 @@ export const customizationSchema = z.object({
 		.optional()
 		.default([]),
 
-	// Consentements
-	rgpdConsent: z
-		.boolean({ message: "Vous devez accepter la politique de confidentialité" })
-		.refine((val) => val === true, {
-			message: "Vous devez accepter la politique de confidentialité pour continuer",
-		}),
-
 	// Anti-spam (honeypot)
 	website: z.string().optional().or(z.literal("")),
 });
@@ -83,7 +76,7 @@ export type CustomizationFormData = z.infer<typeof customizationSchema>;
 
 /**
  * Partial schema for validating localStorage draft data
- * Only validates the saveable fields (excludes rgpdConsent, website, inspirationMedias)
+ * Only validates the saveable fields (excludes website, inspirationMedias)
  */
 export const customizationDraftSchema = z
 	.object({

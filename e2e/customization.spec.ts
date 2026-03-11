@@ -26,10 +26,6 @@ test.describe("Personnalisation - Demande sur mesure", { tag: ["@regression"] },
 		if ((await phoneField.count()) > 0) {
 			await expect(phoneField).toBeVisible();
 		}
-
-		// Consent checkbox
-		const consentCheckbox = page.getByLabel(/politique de confidentialité/i);
-		await expect(consentCheckbox).toBeVisible();
 	});
 
 	test("le formulaire valide les champs obligatoires", async ({ page }) => {
@@ -103,12 +99,6 @@ test.describe("Personnalisation - Demande sur mesure", { tag: ["@regression"] },
 		await descriptionField.fill(
 			"Je souhaite une bague sur mesure en argent avec une pierre naturelle.",
 		);
-
-		// Accept consent
-		const consentCheckbox = page.getByLabel(/politique de confidentialité/i);
-		if ((await consentCheckbox.count()) > 0) {
-			await consentCheckbox.check();
-		}
 
 		const submitButton = page.getByRole("button", { name: /Envoyer/i });
 		test.skip((await submitButton.count()) === 0, "No submit button found");
