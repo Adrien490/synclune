@@ -117,6 +117,7 @@ function AddressAutocompleteField({
 						form.setFieldValue("shipping.postalCode", item.postcode);
 						form.setFieldValue("shipping.city", item.city);
 					}}
+					placeholder=""
 					minQueryLength={3}
 					showSearchIcon={false}
 					showEmptyState={false}

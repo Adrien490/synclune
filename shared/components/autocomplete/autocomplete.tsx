@@ -482,7 +482,7 @@ export function Autocomplete<T>({
 										<SearchIcon className="text-muted-foreground size-4" />
 									) : undefined
 								}
-								clearable={showClearButton && localValue.length > 0 && !isLoading}
+								clearable={showClearButton}
 								onClear={handleClear}
 								endIcon={isLoading ? <Spinner className="size-5" /> : undefined}
 								className="flex-1"
@@ -551,7 +551,7 @@ export function Autocomplete<T>({
 						startIcon={
 							showSearchIcon ? <SearchIcon className="text-muted-foreground size-4" /> : undefined
 						}
-						clearable={showClearButton && localValue.length > 0 && !isLoading}
+						clearable={showClearButton}
 						onClear={handleClear}
 						endIcon={isLoading ? <Spinner className="size-5" /> : undefined}
 						className={inputClassName}

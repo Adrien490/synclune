@@ -73,7 +73,6 @@ function Input({
 
 	return (
 		<div className="relative w-full">
-			{/* Icône de début */}
 			{hasStartIcon && (
 				<div
 					className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 [&>svg]:size-4"
@@ -96,7 +95,6 @@ function Input({
 				{...props}
 			/>
 
-			{/* Bouton effacer ou icône de fin */}
 			{(showClearButton ?? hasEndIcon) && (
 				<div className="absolute top-1/2 right-3 -translate-y-1/2">
 					{showClearButton ? (
