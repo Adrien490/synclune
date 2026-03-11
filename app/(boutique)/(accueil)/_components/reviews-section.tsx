@@ -104,6 +104,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 							opts={{
 								align: "center",
 								containScroll: "trimSnaps",
+								loop: true,
 							}}
 							className="w-full"
 							aria-label={`Carrousel de ${Math.min(reviews.length, 4)} avis clients`}

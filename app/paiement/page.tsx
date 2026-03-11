@@ -103,7 +103,7 @@ export default async function CheckoutPage() {
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 
-			<section className="py-8 sm:py-10">
+			<section className="py-4 sm:py-8 md:py-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					<div className="mb-6 hidden sm:mb-8 sm:block">
 						<h1 className="font-display text-2xl font-medium tracking-wide sm:text-3xl">
