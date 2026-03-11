@@ -68,3 +68,18 @@ export const searchAddressSchema = z.object({
  * Type inféré du schéma de recherche
  */
 export type SearchAddressInput = z.infer<typeof searchAddressSchema>;
+
+/**
+ * Schéma de validation pour les paramètres Geoapify
+ * Utilisé pour la recherche d'adresses dans les pays EU (hors France)
+ */
+export const geoapifySearchSchema = z.object({
+	text: z
+		.string()
+		.min(1, "Le texte de recherche est requis")
+		.max(200, "La recherche ne peut pas dépasser 200 caractères"),
+	countryCode: z.string().length(2, "Le code pays doit contenir 2 caractères").toUpperCase(),
+	limit: z.number().int().min(1).max(20).optional(),
+});
+
+export type GeoapifySearchInput = z.infer<typeof geoapifySearchSchema>;

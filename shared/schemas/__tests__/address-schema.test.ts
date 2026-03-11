@@ -78,23 +78,23 @@ describe("addressSchema", () => {
 		}
 	});
 
-	it("should reject an invalid postal code (letters)", () => {
-		const result = addressSchema.safeParse({ ...validAddress, postalCode: "ABCDE" });
+	it("should accept a 4-digit postal code (BE/AT/DK)", () => {
+		const result = addressSchema.safeParse({ ...validAddress, postalCode: "1000" });
+		expect(result.success).toBe(true);
+	});
+
+	it("should accept a postal code with space (NL format)", () => {
+		const result = addressSchema.safeParse({ ...validAddress, postalCode: "1234 AB" });
+		expect(result.success).toBe(true);
+	});
+
+	it("should reject a single character postal code", () => {
+		const result = addressSchema.safeParse({ ...validAddress, postalCode: "7" });
 		expect(result.success).toBe(false);
 		if (!result.success) {
 			const messages = result.error.issues.map((e) => e.message);
 			expect(messages).toContain(ADDRESS_ERROR_MESSAGES.INVALID_POSTAL_CODE);
 		}
-	});
-
-	it("should reject a postal code with fewer than 5 digits", () => {
-		const result = addressSchema.safeParse({ ...validAddress, postalCode: "7500" });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject a postal code with more than 5 digits", () => {
-		const result = addressSchema.safeParse({ ...validAddress, postalCode: "750011" });
-		expect(result.success).toBe(false);
 	});
 
 	it("should reject city shorter than 2 characters", () => {

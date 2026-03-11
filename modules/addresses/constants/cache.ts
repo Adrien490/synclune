@@ -13,7 +13,7 @@ export const ADDRESSES_CACHE_TAGS = {
 	USER_ADDRESSES: (userId: string) => `addresses-user-${userId}`,
 
 	/** Recherche d'adresses via l'API BAN (autocomplete) */
-	ADDRESS_SEARCH: (query: string) => `address-search-${query}`,
+	ADDRESS_SEARCH: (query: string) => `address-search-${query.toLowerCase().trim()}`,
 } as const;
 
 // ============================================

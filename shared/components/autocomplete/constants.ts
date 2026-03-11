@@ -20,6 +20,8 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	blurDelayMobile: 300,
 	/** Nombre de skeletons pendant le chargement */
 	loadingSkeletonCount: 3,
+	/** Nombre de skeletons pendant le chargement sur mobile (plus discret) */
+	loadingSkeletonCountMobile: 2,
 	/** Afficher l'icone de recherche */
 	showSearchIcon: true,
 	/** Afficher le bouton clear */

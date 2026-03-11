@@ -155,40 +155,44 @@ describe("addressFormSchema", () => {
 	});
 
 	describe("postalCode field", () => {
-		it("rejects a 4-digit postal code", () => {
-			const result = addressFormSchema.safeParse({
-				...VALID_ADDRESS,
-				postalCode: "7500",
-			});
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				const paths = result.error.issues.map((i) => i.path.join("."));
-				expect(paths).toContain("postalCode");
-			}
-		});
-
-		it("rejects a 6-digit postal code", () => {
-			const result = addressFormSchema.safeParse({
-				...VALID_ADDRESS,
-				postalCode: "750011",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("rejects a postal code containing letters", () => {
-			const result = addressFormSchema.safeParse({
-				...VALID_ADDRESS,
-				postalCode: "A5001",
-			});
-			expect(result.success).toBe(false);
-		});
-
-		it("accepts a valid 5-digit postal code", () => {
+		it("accepts a valid 5-digit postal code (FR)", () => {
 			const result = addressFormSchema.safeParse({
 				...VALID_ADDRESS,
 				postalCode: "06000",
 			});
 			expect(result.success).toBe(true);
+		});
+
+		it("accepts a 4-digit postal code (BE/AT/DK)", () => {
+			const result = addressFormSchema.safeParse({
+				...VALID_ADDRESS,
+				postalCode: "1000",
+			});
+			expect(result.success).toBe(true);
+		});
+
+		it("accepts a postal code with space (NL format)", () => {
+			const result = addressFormSchema.safeParse({
+				...VALID_ADDRESS,
+				postalCode: "1234 AB",
+			});
+			expect(result.success).toBe(true);
+		});
+
+		it("rejects a single character postal code", () => {
+			const result = addressFormSchema.safeParse({
+				...VALID_ADDRESS,
+				postalCode: "7",
+			});
+			expect(result.success).toBe(false);
+		});
+
+		it("rejects an empty postal code", () => {
+			const result = addressFormSchema.safeParse({
+				...VALID_ADDRESS,
+				postalCode: "",
+			});
+			expect(result.success).toBe(false);
 		});
 	});
 

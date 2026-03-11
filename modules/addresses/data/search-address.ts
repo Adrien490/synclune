@@ -1,7 +1,7 @@
 "use server";
 
 import { logger } from "@/shared/lib/logger";
-import { searchAddressSchema } from "../schemas/search-address.schema";
+import { geoapifySearchSchema, searchAddressSchema } from "../schemas/search-address.schema";
 import type { SearchAddressParams, SearchAddressReturn } from "../types/search-address.types";
 import { fetchAddresses } from "./fetch-addresses";
 import { fetchGeoapifyAddresses } from "./fetch-geoapify-addresses";
@@ -88,10 +88,11 @@ export async function searchAddressForCheckout(
 			return await fetchAddresses(validatedParams);
 		}
 
-		return await fetchGeoapifyAddresses({
+		const validatedGeoapifyParams = geoapifySearchSchema.parse({
 			text: params.text,
 			countryCode: params.country,
 		});
+		return await fetchGeoapifyAddresses(validatedGeoapifyParams);
 	} catch (error) {
 		logger.error("Checkout address search failed", error, {
 			service: "searchAddressForCheckout",
