@@ -51,6 +51,7 @@ describe("syncAsyncPayments", () => {
 		vi.useFakeTimers({ shouldAdvanceTime: true });
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
+		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
 	});
 
 	it("should return null when Stripe is not configured", async () => {

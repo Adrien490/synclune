@@ -238,13 +238,7 @@ function BentoGridLayout({
 			)}
 		>
 			{/* Image principale - span rows */}
-			<div
-				className={cn(
-					"bg-muted relative overflow-hidden",
-					"aspect-square",
-					"sm:row-span-3 sm:aspect-auto",
-				)}
-			>
+			<div className={cn("bg-muted relative overflow-hidden", "row-span-2 sm:row-span-3")}>
 				<CollectionImageItem
 					image={images[0]!}
 					collectionName={collectionName}

@@ -14,6 +14,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { CUSTOMIZATION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeForEmail } from "@/shared/lib/sanitize";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import {
 	validateInput,
 	success,
@@ -68,6 +69,12 @@ export async function sendCustomizationRequest(
 			rgpdConsent: formData.get("rgpdConsent") === "true",
 			website: safeFormGet(formData, "website") ?? "",
 		};
+
+		// Parse deleted image URLs for UploadThing cleanup (outside Zod schema)
+		const rawDeletedImageUrls = safeFormGetJSON<unknown[]>(formData, "deletedImageUrls") ?? [];
+		const deletedImageUrls = rawDeletedImageUrls.filter(
+			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
+		);
 
 		// 3. Validation avec Zod
 		const validation = validateInput(customizationSchema, rawData);
@@ -141,14 +148,23 @@ export async function sendCustomizationRequest(
 			return request;
 		});
 
-		// 9. Sanitize PII for email injection prevention (defense-in-depth)
+		// 9. Delete removed images from UploadThing (non-blocking, cron acts as safety net)
+		if (deletedImageUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(deletedImageUrls).catch((e) => {
+				logger.error("Failed to delete UploadThing files", e, {
+					action: "sendCustomizationRequest",
+				});
+			});
+		}
+
+		// 10. Sanitize PII for email injection prevention (defense-in-depth)
 		const sanitizedEmail = sanitizeForEmail(validatedData.email);
 		const sanitizedFirstName = sanitizeForEmail(validatedData.firstName);
 		const sanitizedDetails = sanitizeForEmail(validatedData.details);
 		const sanitizedProductTypeLabel = sanitizeForEmail(validatedData.productTypeLabel);
 		const sanitizedPhone = validatedData.phone ? sanitizeForEmail(validatedData.phone) : undefined;
 
-		// 10. Envoyer l'email de notification à l'admin
+		// 11. Envoyer l'email de notification à l'admin
 		try {
 			const emailResult = await sendCustomizationRequestEmail({
 				firstName: sanitizedFirstName,
@@ -169,7 +185,7 @@ export async function sendCustomizationRequest(
 			});
 		}
 
-		// 11. Envoyer l'email de confirmation au client
+		// 12. Envoyer l'email de confirmation au client
 		try {
 			await sendCustomizationConfirmationEmail({
 				firstName: sanitizedFirstName,
@@ -181,14 +197,14 @@ export async function sendCustomizationRequest(
 			// Silence - email confirmation non critique
 		}
 
-		// 12. Invalider le cache admin + user cache if logged in
+		// 13. Invalider le cache admin + user cache if logged in
 		const tags = getCustomizationInvalidationTags();
 		if (userId) {
 			tags.push(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(userId));
 		}
 		tags.forEach((tag) => updateTag(tag));
 
-		// 13. Success
+		// 14. Success
 		return success(CUSTOMIZATION_SUCCESS_MESSAGES.REQUEST_SENT, {
 			id: customizationRequest.id,
 		});

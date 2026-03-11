@@ -28,6 +28,8 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	debounceMs: 300,
 	/** Afficher le compteur de resultats */
 	showResultsCount: false,
+	/** Afficher l'etat vide quand aucun resultat */
+	showEmptyState: true,
 } as const;
 
 /**

@@ -41,8 +41,6 @@ const ALLOWED_IMAGE_TYPES = [
 
 const ALLOWED_VIDEO_TYPES = ["video/mp4"] as const;
 
-const ALLOWED_DOCUMENT_TYPES = ["application/pdf", "text/plain"] as const;
-
 /**
  * Valide le type MIME d'un fichier côté serveur
  * Protection contre les fichiers malveillants renommés
@@ -86,53 +84,6 @@ const f = createUploadthing({
 
 // FileRouter pour l'application
 export const ourFileRouter = {
-	// Route pour les images de témoignages (photo de l'auteur)
-	testimonialMedia: f({
-		image: { maxFileSize: "4MB", maxFileCount: 1 },
-	})
-		.middleware(async ({ files }) => {
-			// 1. Vérifier l'authentification et les permissions admin (DB re-verification)
-			const admin = await requireAdminApiRoute();
-			if ("response" in admin) {
-				throw new UploadThingError(
-					"Seuls les administrateurs peuvent uploader des photos de témoignages",
-				);
-			}
-
-			// 2. Rate limiting
-			const headersList = await headers();
-			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(admin.user.id, null, clientIp);
-			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.TESTIMONIAL, clientIp);
-
-			if (!rateLimit.success) {
-				throw new UploadThingError(
-					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
-				);
-			}
-
-			// 3. Validation MIME et taille côté serveur
-			for (const file of files) {
-				validateMimeType(file, ALLOWED_IMAGE_TYPES);
-				validateFileSize(file, 4 * 1024 * 1024); // 4MB
-			}
-
-			return {
-				userId: admin.user.id,
-				userName: admin.user.name,
-			};
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			// Générer le blur placeholder pour les photos de témoignages (avec retry)
-			const blurDataUrl = await generateBlurSafe(file.ufsUrl);
-
-			return {
-				url: file.ufsUrl,
-				blurDataUrl,
-				uploadedBy: metadata.userId,
-			};
-		}),
-
 	// Route pour les médias de catalogue (produits et SKUs) - images et vidéos
 	catalogMedia: f({
 		image: { maxFileSize: "16MB", maxFileCount: 6 },
@@ -203,68 +154,6 @@ export const ourFileRouter = {
 				url: file.ufsUrl,
 				thumbnailUrl: null,
 				blurDataUrl: null,
-				uploadedBy: metadata.userId,
-			};
-		}),
-
-	// Route pour les pièces jointes du formulaire de contact (tous types de fichiers)
-	// Accessible à tous les utilisateurs (pas besoin d'être admin)
-	// ⚠️ PROTECTION ABUS: Rate limiting strict car endpoint public
-	contactAttachment: f({
-		image: { maxFileSize: "4MB", maxFileCount: 3 },
-		pdf: { maxFileSize: "4MB", maxFileCount: 3 },
-		text: { maxFileSize: "4MB", maxFileCount: 3 },
-	})
-		.middleware(async ({ files }) => {
-			// 1. Authentification optionnelle
-			const session = await getSession();
-
-			// 2. Rate limiting STRICT pour endpoint public
-			const headersList = await headers();
-			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session?.user.id ?? null, null, clientIp);
-			const rateLimit = await checkRateLimit(
-				rateLimitId,
-				UPLOAD_LIMITS.CONTACT_ATTACHMENT,
-				clientIp,
-			);
-
-			if (!rateLimit.success) {
-				throw new UploadThingError(
-					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
-				);
-			}
-
-			// 3. Validation MIME et taille côté serveur
-			for (const file of files) {
-				const isImage = file.type.startsWith("image/");
-				const isPdf = file.type === "application/pdf";
-				const isText = file.type === "text/plain";
-
-				if (isImage) {
-					validateMimeType(file, ALLOWED_IMAGE_TYPES);
-				} else if (isPdf || isText) {
-					validateMimeType(file, ALLOWED_DOCUMENT_TYPES);
-				} else {
-					throw new UploadThingError(`Type de fichier non autorisé: ${file.name} (${file.type})`);
-				}
-
-				validateFileSize(file, 4 * 1024 * 1024); // 4MB max
-			}
-
-			return {
-				userId: session?.user.id ?? null,
-				userName: session?.user.name ?? "Anonymous",
-			};
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			// console.log("Contact attachment upload complete:", {
-			// 	url: file.ufsUrl,
-			// 	uploadedBy: metadata.userId || "anonymous",
-			// 	type: file.type,
-			// });
-			return {
-				url: file.ufsUrl,
 				uploadedBy: metadata.userId,
 			};
 		}),

@@ -101,9 +101,8 @@ export function CollectionCard({
 						)
 					) : (
 						<div
-							role="img"
+							role="presentation"
 							className="from-primary/5 to-primary/10 relative flex aspect-square flex-col items-center justify-center gap-3 overflow-hidden rounded-t-lg bg-linear-to-br"
-							aria-label={`Collection ${name} - Aucune image disponible`}
 						>
 							<Gem
 								className="text-primary/30 h-12 w-12 motion-safe:animate-pulse sm:h-16 sm:w-16"

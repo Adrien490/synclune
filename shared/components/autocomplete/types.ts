@@ -17,6 +17,8 @@ export interface AutocompleteProps<T> {
 	items: T[];
 	/** Fonction pour obtenir le label d'un item */
 	getItemLabel: (item: T) => string;
+	/** Fonction pour obtenir une cle unique par item (defaut: getItemLabel) */
+	getItemKey?: (item: T) => string;
 	/** Fonction pour obtenir la description d'un item */
 	getItemDescription?: (item: T) => string | null;
 	/** Fonction pour obtenir l'image d'un item */
@@ -55,6 +57,8 @@ export interface AutocompleteProps<T> {
 	debounceMs?: number;
 	/** Afficher le nombre de resultats (defaut: false) */
 	showResultsCount?: boolean;
+	/** Afficher l'etat vide quand aucun resultat (defaut: true) */
+	showEmptyState?: boolean;
 	/** ARIA: marks the input as invalid */
 	"aria-invalid"?: boolean;
 	/** ARIA: associates the input with an error message element */

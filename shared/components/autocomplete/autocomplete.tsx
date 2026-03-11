@@ -30,6 +30,7 @@ export function Autocomplete<T>({
 	onSelect,
 	items,
 	getItemLabel,
+	getItemKey,
 	getItemDescription,
 	getItemImage,
 	imageSize = AUTOCOMPLETE_DEFAULTS.imageSize,
@@ -47,6 +48,7 @@ export function Autocomplete<T>({
 	showClearButton = AUTOCOMPLETE_DEFAULTS.showClearButton,
 	debounceMs = AUTOCOMPLETE_DEFAULTS.debounceMs,
 	showResultsCount = AUTOCOMPLETE_DEFAULTS.showResultsCount,
+	showEmptyState = AUTOCOMPLETE_DEFAULTS.showEmptyState,
 	"aria-invalid": ariaInvalid,
 	"aria-describedby": ariaDescribedBy,
 	"aria-required": ariaRequired,
@@ -76,7 +78,8 @@ export function Autocomplete<T>({
 	// Calculs derives
 	const hasValidQuery = localValue.length >= minQueryLength;
 	const hasResults = items.length > 0;
-	const showResults = isOpen && hasValidQuery;
+	const hasContent = hasResults || isLoading || !!error || showEmptyState;
+	const showResults = isOpen && hasValidQuery && hasContent;
 	const showMinQueryHint = localValue.length > 0 && localValue.length < minQueryLength;
 	const remainingChars = minQueryLength - localValue.length;
 
@@ -244,8 +247,8 @@ export function Autocomplete<T>({
 		const imageData = getItemImage?.(item);
 
 		return (
-			<m.div
-				key={getItemLabel(item)}
+			<m.li
+				key={getItemKey?.(item) ?? `${getItemLabel(item)}-${index}`}
 				id={getItemId(index)}
 				role="option"
 				aria-selected={isActive}
@@ -296,7 +299,7 @@ export function Autocomplete<T>({
 						)}
 					</div>
 				</div>
-			</m.div>
+			</m.li>
 		);
 	};
 
@@ -400,7 +403,11 @@ export function Autocomplete<T>({
 			);
 		}
 
-		return renderEmptyState();
+		if (showEmptyState) {
+			return renderEmptyState();
+		}
+
+		return null;
 	};
 
 	// Live region pour les annonces accessibles
@@ -421,25 +428,24 @@ export function Autocomplete<T>({
 	// ========================================
 	if (isMobile) {
 		return (
-			<>
+			<MotionConfig reducedMotion="user">
 				{/* Input trigger (readonly sur mobile) */}
 				<div className={cn("relative w-full", className)}>
 					<Input
 						name={name}
 						type="text"
-						role="combobox"
 						disabled={disabled}
 						value={localValue}
 						readOnly
 						onClick={() => !disabled && setIsOpen(true)}
-						placeholder={localValue ? placeholder : "Appuyer pour rechercher..."}
+						placeholder="Appuyer pour rechercher..."
 						startIcon={
 							showSearchIcon ? <SearchIcon className="text-muted-foreground size-4" /> : undefined
 						}
 						className={cn("cursor-pointer", inputClassName)}
+						role="button"
 						aria-haspopup="listbox"
 						aria-expanded={isOpen}
-						aria-controls={isOpen ? listboxId : undefined}
 						aria-invalid={ariaInvalid}
 						aria-describedby={ariaDescribedBy}
 						aria-required={ariaRequired}
@@ -464,6 +470,9 @@ export function Autocomplete<T>({
 							</DrawerClose>
 							<Input
 								type="text"
+								// eslint-disable-next-line jsx-a11y/no-autofocus -- Drawer opens with intent to search, autofocus is expected UX
+								autoFocus
+								role="combobox"
 								value={localValue}
 								onChange={handleInputChange}
 								onKeyDown={handleKeyDown}
@@ -478,6 +487,7 @@ export function Autocomplete<T>({
 								endIcon={isLoading ? <Spinner className="size-5" /> : undefined}
 								className="flex-1"
 								aria-autocomplete="list"
+								aria-expanded={true}
 								aria-controls={listboxId}
 								aria-activedescendant={activeIndex >= 0 ? getItemId(activeIndex) : undefined}
 								aria-describedby={showMinQueryHint ? hintId : undefined}
@@ -505,17 +515,17 @@ export function Autocomplete<T>({
 						{renderLiveRegion()}
 
 						{/* Liste des resultats */}
-						<div
+						<ul
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
 							className="flex-1 overflow-auto"
 						>
 							{renderListContent()}
-						</div>
+						</ul>
 					</DrawerContent>
 				</Drawer>
-			</>
+			</MotionConfig>
 		);
 	}
 
@@ -530,6 +540,7 @@ export function Autocomplete<T>({
 						ref={inputRef}
 						name={name}
 						type="text"
+						role="combobox"
 						disabled={disabled}
 						value={localValue}
 						onChange={handleInputChange}
@@ -581,7 +592,7 @@ export function Autocomplete<T>({
 
 				<AnimatePresence>
 					{showResults && (
-						<m.div
+						<m.ul
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
@@ -592,7 +603,7 @@ export function Autocomplete<T>({
 							transition={AUTOCOMPLETE_ANIMATIONS.dropdown.transition}
 						>
 							{renderListContent()}
-						</m.div>
+						</m.ul>
 					)}
 				</AnimatePresence>
 			</div>

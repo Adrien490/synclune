@@ -207,6 +207,7 @@ vi.mock("@/modules/payments/utils/parse-full-name", () => ({
 
 import { confirmCheckout } from "../confirm-checkout";
 import type { ConfirmCheckoutData } from "../../schemas/checkout.schema";
+import StripeModule from "stripe";
 
 // ============================================================================
 // TEST DATA
@@ -790,11 +791,17 @@ describe("confirmCheckout", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	describe("PI already succeeded", () => {
-		it("should return error when PI status is succeeded", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "succeeded",
+		function setupSucceededError() {
+			const error = new StripeModule.errors.StripeInvalidRequestError({
+				message:
+					"This PaymentIntent's amount could not be updated because it has a status of succeeded.",
+				type: "invalid_request_error",
 			});
+			mockStripe.paymentIntents.update.mockRejectedValue(error);
+		}
+
+		it("should return error when PI update fails with succeeded status", async () => {
+			setupSucceededError();
 
 			const result = await confirmCheckout(createValidData());
 
@@ -805,10 +812,7 @@ describe("confirmCheckout", () => {
 		});
 
 		it("should cleanup order when PI is already succeeded", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "succeeded",
-			});
+			setupSucceededError();
 
 			await confirmCheckout(createValidData());
 
@@ -818,15 +822,12 @@ describe("confirmCheckout", () => {
 			});
 		});
 
-		it("should not update PI when status is succeeded", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "succeeded",
-			});
+		it("should attempt PI update before detecting succeeded status", async () => {
+			setupSucceededError();
 
 			await confirmCheckout(createValidData());
 
-			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
+			expect(mockStripe.paymentIntents.update).toHaveBeenCalled();
 		});
 	});
 
@@ -835,11 +836,17 @@ describe("confirmCheckout", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	describe("PI already canceled", () => {
-		it("should return error when PI status is canceled", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "canceled",
+		function setupCanceledError() {
+			const error = new StripeModule.errors.StripeInvalidRequestError({
+				message:
+					"This PaymentIntent's amount could not be updated because it has a status of canceled.",
+				type: "invalid_request_error",
 			});
+			mockStripe.paymentIntents.update.mockRejectedValue(error);
+		}
+
+		it("should return error when PI update fails with canceled status", async () => {
+			setupCanceledError();
 
 			const result = await confirmCheckout(createValidData());
 
@@ -850,10 +857,7 @@ describe("confirmCheckout", () => {
 		});
 
 		it("should cleanup order when PI is already canceled", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "canceled",
-			});
+			setupCanceledError();
 
 			await confirmCheckout(createValidData());
 
@@ -863,15 +867,12 @@ describe("confirmCheckout", () => {
 			});
 		});
 
-		it("should not update PI when status is canceled", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "canceled",
-			});
+		it("should attempt PI update before detecting canceled status", async () => {
+			setupCanceledError();
 
 			await confirmCheckout(createValidData());
 
-			expect(mockStripe.paymentIntents.update).not.toHaveBeenCalled();
+			expect(mockStripe.paymentIntents.update).toHaveBeenCalled();
 		});
 	});
 
@@ -889,10 +890,11 @@ describe("confirmCheckout", () => {
 		});
 
 		it("should rollback discount usage when cleanup triggered by succeeded PI", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "succeeded",
+			const error = new StripeModule.errors.StripeInvalidRequestError({
+				message: "This PaymentIntent has a status of succeeded.",
+				type: "invalid_request_error",
 			});
+			mockStripe.paymentIntents.update.mockRejectedValue(error);
 
 			await confirmCheckout(createValidData({ discountCode: "SAVE10" }));
 
@@ -906,10 +908,11 @@ describe("confirmCheckout", () => {
 		});
 
 		it("should rollback discount usage when cleanup triggered by canceled PI", async () => {
-			mockStripe.paymentIntents.retrieve.mockResolvedValue({
-				...MOCK_PAYMENT_INTENT,
-				status: "canceled",
+			const error = new StripeModule.errors.StripeInvalidRequestError({
+				message: "This PaymentIntent has a status of canceled.",
+				type: "invalid_request_error",
 			});
+			mockStripe.paymentIntents.update.mockRejectedValue(error);
 
 			await confirmCheckout(createValidData({ discountCode: "SAVE10" }));
 
@@ -1121,14 +1124,6 @@ describe("confirmCheckout", () => {
 				success: false,
 				error: "Une erreur est survenue lors de la validation de la commande.",
 			});
-		});
-
-		it("should return error when stripe.paymentIntents.retrieve throws", async () => {
-			mockStripe.paymentIntents.retrieve.mockRejectedValue(new Error("Stripe retrieve failed"));
-
-			const result = await confirmCheckout(createValidData());
-
-			expect(result.success).toBe(false);
 		});
 	});
 });

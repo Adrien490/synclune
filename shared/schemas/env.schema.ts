@@ -58,6 +58,11 @@ export const envSchema = z
 		BING_SITE_VERIFICATION: z.string().optional(),
 
 		// ========================================
+		// Address Autocomplete (Geoapify - EU countries)
+		// ========================================
+		GEOAPIFY_API_KEY: z.string().optional(),
+
+		// ========================================
 		// Rate Limiting — Listes IP (optionnel, comma-separated)
 		// ========================================
 		RATE_LIMIT_WHITELIST: z.string().optional(),

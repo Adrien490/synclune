@@ -56,6 +56,10 @@ vi.mock("@/modules/payments/components/pay-button", () => ({
 	PayButton: () => <div data-testid="pay-button" />,
 }));
 
+vi.mock("@/modules/addresses/data/search-address", () => ({
+	searchAddressForCheckout: vi.fn(),
+}));
+
 vi.mock("@/modules/payments/components/shipping-method-section", () => ({
 	ShippingMethodSection: () => <div data-testid="shipping-method" />,
 }));
@@ -134,6 +138,7 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 				CheckboxField: () => null,
 				SelectField: () => null,
 				PhoneField: () => null,
+				AutocompleteField: () => null,
 				state: { value: "", meta: { errors: [], isValidating: false } },
 				handleBlur: vi.fn(),
 			}),

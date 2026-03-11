@@ -22,17 +22,6 @@ const minutes = (n: number) => n * 60 * 1000;
 // ========================================
 
 /**
- * Rate limit for testimonial photos (admin only)
- *
- * Context: Testimonial author photos
- * Moderate limit since admin = trusted user
- */
-export const UPLOAD_TESTIMONIAL_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 uploads maximum
-	windowMs: minutes(1), // per minute
-};
-
-/**
  * Rate limit for catalog media (admin only)
  *
  * Context: Product/SKU images and videos
@@ -46,20 +35,6 @@ export const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
 // ========================================
 // PUBLIC UPLOADS
 // ========================================
-
-/**
- * Rate limit for contact form attachments
- *
- * VERY STRICT: Public endpoint, high abuse risk
- * Protects against:
- * - File spam
- * - Storage saturation
- * - Malicious usage
- */
-export const UPLOAD_CONTACT_ATTACHMENT_LIMIT: RateLimitConfig = {
-	limit: 3, // 3 uploads maximum
-	windowMs: minutes(10), // per 10 minutes
-};
 
 // ========================================
 // USER UPLOADS
@@ -110,10 +85,8 @@ export const UPLOAD_CUSTOMIZATION_LIMIT: RateLimitConfig = {
  */
 export const UPLOAD_LIMITS = {
 	// Admin
-	TESTIMONIAL: UPLOAD_TESTIMONIAL_LIMIT,
 	CATALOG: UPLOAD_CATALOG_LIMIT,
 	// Public
-	CONTACT_ATTACHMENT: UPLOAD_CONTACT_ATTACHMENT_LIMIT,
 	CUSTOMIZATION: UPLOAD_CUSTOMIZATION_LIMIT,
 	// Users
 	REVIEW_MEDIA: UPLOAD_REVIEW_MEDIA_LIMIT,

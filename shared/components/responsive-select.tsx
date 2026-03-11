@@ -78,48 +78,50 @@ function ResponsiveSelect({
 	return (
 		<>
 			{/* Mobile: NativeSelect */}
-			<NativeSelect
-				id={id}
-				value={value}
-				defaultValue={defaultValue}
-				onChange={(e) => onValueChange?.(e.target.value)}
-				disabled={disabled}
-				name={name}
-				required={required}
-				size={size}
-				className={cn("w-full md:hidden", className, triggerClassName)}
-				aria-invalid={ariaInvalid}
-				aria-describedby={ariaDescribedby}
-			>
-				{placeholder && (
-					<NativeSelectOption value="" disabled>
-						{placeholder}
-					</NativeSelectOption>
-				)}
-				{isGroupedOptions(options)
-					? options.map((group) => (
-							<NativeSelectOptGroup key={group.label} label={group.label}>
-								{group.options.map((option) => (
-									<NativeSelectOption
-										key={option.value}
-										value={option.value}
-										disabled={option.disabled}
-									>
-										{option.label}
-									</NativeSelectOption>
-								))}
-							</NativeSelectOptGroup>
-						))
-					: options.map((option) => (
-							<NativeSelectOption
-								key={option.value}
-								value={option.value}
-								disabled={option.disabled}
-							>
-								{option.label}
-							</NativeSelectOption>
-						))}
-			</NativeSelect>
+			<div className="md:hidden">
+				<NativeSelect
+					id={id}
+					value={value}
+					defaultValue={defaultValue}
+					onChange={(e) => onValueChange?.(e.target.value)}
+					disabled={disabled}
+					name={name}
+					required={required}
+					size={size}
+					className={cn("w-full", className, triggerClassName)}
+					aria-invalid={ariaInvalid}
+					aria-describedby={ariaDescribedby}
+				>
+					{placeholder && (
+						<NativeSelectOption value="" disabled>
+							{placeholder}
+						</NativeSelectOption>
+					)}
+					{isGroupedOptions(options)
+						? options.map((group) => (
+								<NativeSelectOptGroup key={group.label} label={group.label}>
+									{group.options.map((option) => (
+										<NativeSelectOption
+											key={option.value}
+											value={option.value}
+											disabled={option.disabled}
+										>
+											{option.label}
+										</NativeSelectOption>
+									))}
+								</NativeSelectOptGroup>
+							))
+						: options.map((option) => (
+								<NativeSelectOption
+									key={option.value}
+									value={option.value}
+									disabled={option.disabled}
+								>
+									{option.label}
+								</NativeSelectOption>
+							))}
+				</NativeSelect>
+			</div>
 
 			{/* Desktop: Radix Select */}
 			<div className="hidden md:block">

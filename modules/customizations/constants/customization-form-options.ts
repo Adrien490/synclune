@@ -19,6 +19,9 @@ export const CUSTOMIZATION_DEFAULT_VALUES = {
 	// Consentements
 	rgpdConsent: false,
 
+	// URLs of uploaded images removed before submission (for UploadThing cleanup)
+	deletedImageUrls: [] as string[],
+
 	// Anti-spam (honeypot)
 	website: "",
 };

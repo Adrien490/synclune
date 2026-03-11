@@ -101,6 +101,10 @@ vi.mock("@/modules/emails/services/customization-emails", () => ({
 	sendCustomizationConfirmationEmail: mockSendCustomizationConfirmationEmail,
 }));
 
+vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
+	deleteUploadThingFilesFromUrls: vi.fn(),
+}));
+
 vi.mock("../../constants/cache", () => ({
 	getCustomizationInvalidationTags: mockGetCustomizationInvalidationTags,
 	CUSTOMIZATION_CACHE_TAGS: {

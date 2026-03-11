@@ -129,9 +129,7 @@ export async function cleanupOrphanMedia(): Promise<{
  * - reviewMedia         → ReviewMedia (url)
  * - customizationMedia  → CustomizationMedia (url)
  * - (user avatars)      → User.image
- * - testimonialMedia    → Testimonial (imageUrl)
- *
- * Note: contactAttachment is ephemeral by design (forwarded via email). 24h guard sufficient.
+ * - (testimonials)      → Testimonial (imageUrl)
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();

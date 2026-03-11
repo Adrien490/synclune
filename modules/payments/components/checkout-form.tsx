@@ -25,7 +25,7 @@ import {
 	type ShippingCountry,
 } from "@/shared/constants/countries";
 import Link from "next/link";
-import { useCheckoutForm } from "../hooks/use-checkout-form";
+import { useCheckoutForm, type CheckoutFormInstance } from "../hooks/use-checkout-form";
 import { usePaymentIntent } from "../hooks/use-payment-intent";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import type {
@@ -51,6 +51,8 @@ import { getStripe } from "@/shared/lib/stripe-client";
 import { stripeAppearance } from "../constants/stripe-appearance";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { PaymentElement } from "@stripe/react-stripe-js";
+import { useAddressAutocomplete } from "../hooks/use-address-autocomplete";
+import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 
 // Offline detection via useSyncExternalStore for SSR safety
 function subscribeOnline(callback: () => void) {
@@ -82,6 +84,47 @@ const CHECKOUT_FIELD_LABELS: Record<string, string> = {
 	"shipping.country": "Pays",
 	"shipping.phoneNumber": "Téléphone",
 };
+
+/**
+ * Extracted sub-component for the address autocomplete field.
+ * Must live outside CheckoutForm to avoid re-mounting on every keystroke.
+ */
+function AddressAutocompleteField({
+	form,
+	query,
+	country,
+}: {
+	form: CheckoutFormInstance;
+	query: string;
+	country: ShippingCountry;
+}) {
+	const { suggestions, isSearching } = useAddressAutocomplete(query, country);
+
+	return (
+		<form.AppField name="shipping.addressLine1">
+			{(field) => (
+				<field.AutocompleteField<SearchAddressResult>
+					label="Adresse"
+					required
+					items={suggestions}
+					isLoading={isSearching}
+					getItemLabel={(item) => item.label}
+					getItemDescription={(item) => [item.postcode, item.city].filter(Boolean).join(" ")}
+					onSelect={(item) => {
+						const addressLine1 =
+							item.housenumber && item.street ? `${item.housenumber} ${item.street}` : item.label;
+						field.handleChange(addressLine1);
+						form.setFieldValue("shipping.postalCode", item.postcode);
+						form.setFieldValue("shipping.city", item.city);
+					}}
+					minQueryLength={3}
+					showSearchIcon={false}
+					showEmptyState={false}
+				/>
+			)}
+		</form.AppField>
+	);
+}
 
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
@@ -408,26 +451,23 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 												)}
 											</form.AppField>
 
-											<form.AppField
-												name="shipping.addressLine1"
-												validators={{
-													onChange: ({ value }: { value: string }) => {
-														if (!value || value.trim().length < 5) {
-															return "L'adresse doit contenir au moins 5 caractères";
-														}
-														return undefined;
-													},
-												}}
+											<form.Subscribe
+												selector={(s) => ({
+													addressLine1: s.values.shipping.addressLine1,
+													country: s.values.shipping.country,
+												})}
 											>
-												{(field) => (
-													<field.InputField
-														label="Adresse"
-														required
-														autoComplete="address-line1"
-														enterKeyHint="next"
-													/>
-												)}
-											</form.AppField>
+												{({ addressLine1, country: rawCtry }) => {
+													const ctry = ((rawCtry as string) || "FR") as ShippingCountry;
+													return (
+														<AddressAutocompleteField
+															form={form}
+															query={addressLine1}
+															country={ctry}
+														/>
+													);
+												}}
+											</form.Subscribe>
 
 											<form.AppField name="shipping.addressLine2">
 												{(field) => (

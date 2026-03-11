@@ -220,13 +220,14 @@ describe("initializePayment", () => {
 			);
 		});
 
-		it("should create Payment Intent with automatic payment methods", async () => {
+		it("should create Payment Intent with card payment method", async () => {
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({
-					automatic_payment_methods: { enabled: true },
+					payment_method_types: ["card"],
 				}),
+				expect.anything(),
 			);
 		});
 
@@ -237,6 +238,7 @@ describe("initializePayment", () => {
 				expect.objectContaining({
 					customer: "cus_existing",
 				}),
+				expect.anything(),
 			);
 		});
 
@@ -247,6 +249,7 @@ describe("initializePayment", () => {
 				expect.objectContaining({
 					metadata: expect.objectContaining({ userId: "user-123" }),
 				}),
+				expect.anything(),
 			);
 		});
 
@@ -257,6 +260,7 @@ describe("initializePayment", () => {
 				expect.objectContaining({
 					metadata: expect.not.objectContaining({ guestSessionId: expect.anything() }),
 				}),
+				expect.anything(),
 			);
 		});
 
@@ -342,6 +346,7 @@ describe("initializePayment", () => {
 						guestSessionId: "session-guest-abc",
 					}),
 				}),
+				expect.anything(),
 			);
 		});
 
@@ -371,6 +376,7 @@ describe("initializePayment", () => {
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.not.objectContaining({ customer: expect.anything() }),
+				expect.anything(),
 			);
 		});
 	});
@@ -558,6 +564,7 @@ describe("initializePayment", () => {
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({ amount: 9600 }),
+				expect.anything(),
 			);
 		});
 	});
@@ -594,6 +601,7 @@ describe("initializePayment", () => {
 			// Payment Intent created without customer key
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.not.objectContaining({ customer: expect.anything() }),
+				expect.anything(),
 			);
 		});
 	});
@@ -712,6 +720,7 @@ describe("initializePayment", () => {
 
 			expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
 				expect.objectContaining({ currency: "eur" }),
+				expect.anything(),
 			);
 		});
 	});

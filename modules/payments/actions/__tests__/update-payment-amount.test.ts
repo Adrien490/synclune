@@ -234,7 +234,7 @@ describe("updatePaymentAmount", () => {
 
 			expect(result.success).toBe(true);
 			if (result.success) {
-				expect(result.newTotal).toBe(0); // Math.max(0, 1000 - 1000 + 0)
+				expect(result.newTotal).toBe(50); // Math.max(50, 1000 - 1000 + 0) — MIN_STRIPE_AMOUNT = 50
 			}
 		});
 

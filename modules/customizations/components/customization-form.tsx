@@ -10,6 +10,7 @@ import {
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
+import { cn } from "@/shared/utils/cn";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -156,26 +157,33 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 						{medias.length > 0 && (
 							<div className="flex flex-wrap gap-2">
 								{medias.map((media, index) => (
-									<div key={media.url} className="group relative">
+									<div
+										key={media.url}
+										className="group relative size-20 overflow-hidden rounded-lg border"
+									>
 										<Image
 											src={media.url}
 											alt={media.altText ?? `Inspiration ${index + 1}`}
-											width={80}
-											height={80}
+											fill
+											className="object-cover"
+											sizes="80px"
 											placeholder={media.blurDataUrl ? "blur" : undefined}
 											blurDataURL={media.blurDataUrl}
-											className="h-20 w-20 rounded-md border object-cover"
 										/>
 										<button
 											type="button"
 											onClick={() => {
 												const newMedias = medias.filter((_, i) => i !== index);
 												form.setFieldValue("inspirationMedias", newMedias);
+												form.setFieldValue("deletedImageUrls", [
+													...form.getFieldValue("deletedImageUrls"),
+													media.url,
+												]);
 											}}
-											className="bg-destructive text-destructive-foreground absolute -top-1.5 -right-1.5 rounded-full p-0.5 opacity-0 transition-opacity group-hover:opacity-100"
+											className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
 											aria-label={`Supprimer l'image ${index + 1}`}
 										>
-											<X className="h-3 w-3" />
+											<X className="size-5 text-white" aria-hidden="true" />
 										</button>
 									</div>
 								))}
@@ -199,6 +207,22 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 									toast.error(error.message || "Erreur lors de l'upload");
 								}}
 								config={{ mode: "auto" }}
+								aria-label="Zone d'upload pour images d'inspiration"
+								appearance={{
+									container: ({ isDragActive, isUploading }) =>
+										cn(
+											"border-2 border-dashed rounded-lg p-6 transition-colors relative min-h-[140px]",
+											isDragActive
+												? "border-primary bg-primary/5"
+												: "border-border/50 hover:border-primary/50 hover:bg-muted/50",
+											isUploading && "border-primary/50 bg-primary/5 cursor-not-allowed",
+											!isUploading && "cursor-pointer",
+										),
+									uploadIcon: "hidden",
+									label: "hidden",
+									allowedContent: "hidden",
+									button: "hidden",
+								}}
 								content={{
 									uploadIcon: ({ isDragActive, isUploading, uploadProgress }) => {
 										if (isUploading) {
@@ -217,9 +241,10 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 										}
 										return (
 											<Upload
-												className={
-													isDragActive ? "text-primary size-8" : "text-muted-foreground size-8"
-												}
+												className={cn(
+													"size-10 transition-all duration-200",
+													isDragActive ? "text-primary scale-110" : "text-muted-foreground",
+												)}
 												aria-hidden="true"
 											/>
 										);
@@ -235,14 +260,25 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 										const remaining = 5 - medias.length;
 										return `${remaining} image${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} — JPEG, PNG, WebP — 4 Mo max`;
 									},
+									button: () => (
+										<span className="sr-only">Sélectionner des images d&apos;inspiration</span>
+									),
 								}}
-								className="border-border/50 ut-uploading:border-primary/50 relative rounded-lg border-2 border-dashed"
 							/>
 						)}
 
 						<input type="hidden" name="inspirationMedias" value={JSON.stringify(medias)} />
 					</div>
 				)}
+			</form.Subscribe>
+
+			{/* Hidden input for deleted image URLs (UploadThing cleanup on submit) */}
+			<form.Subscribe selector={(state) => state.values.deletedImageUrls}>
+				{(deletedUrls) =>
+					deletedUrls.length > 0 ? (
+						<input type="hidden" name="deletedImageUrls" value={JSON.stringify(deletedUrls)} />
+					) : null
+				}
 			</form.Subscribe>
 
 			{/* Prénom */}
