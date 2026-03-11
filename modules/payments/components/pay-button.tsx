@@ -118,7 +118,7 @@ export function PayButton({
 				) : (
 					<>
 						<Lock className="size-4" aria-hidden="true" />
-						<span>Payer {formatEuro(total)}</span>
+						<span>Commander et payer {formatEuro(total)}</span>
 					</>
 				)}
 			</Button>

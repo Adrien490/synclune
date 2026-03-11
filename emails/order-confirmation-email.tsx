@@ -1,6 +1,6 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderItem, ShippingAddress } from "@/modules/emails/types/email.types";
-import { Button, Hr, Section, Text } from "@react-email/components";
+import { Button, Hr, Link, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 import { FlexRow } from "./_components/flex-row";
@@ -202,6 +202,38 @@ export const OrderConfirmationEmail = ({
 				<Button href={trackingUrl} style={EMAIL_STYLES.button.primary}>
 					Suivre ma commande
 				</Button>
+			</Section>
+
+			{/* Informations légales */}
+			<Section style={{ marginBottom: "24px" }}>
+				<Hr style={{ ...EMAIL_STYLES.hr, margin: "0 0 16px 0" }} />
+				<Text style={EMAIL_STYLES.text.small}>
+					Conformément à l'article L221-18 du Code de la consommation, vous disposez d'un délai de
+					14 jours à compter de la réception de votre commande pour exercer votre droit de
+					rétractation, sans avoir à justifier de motifs ni à payer de pénalités.
+				</Text>
+				<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
+					<Link
+						href="https://synclune.fr/cgv"
+						style={{ color: EMAIL_COLORS.text.secondary, textDecoration: "underline" }}
+					>
+						Conditions générales de vente
+					</Link>
+					{" · "}
+					<Link
+						href="https://synclune.fr/retractation"
+						style={{ color: EMAIL_COLORS.text.secondary, textDecoration: "underline" }}
+					>
+						Formulaire de rétractation
+					</Link>
+					{" · "}
+					<Link
+						href="https://synclune.fr/confidentialite"
+						style={{ color: EMAIL_COLORS.text.secondary, textDecoration: "underline" }}
+					>
+						Politique de confidentialité
+					</Link>
+				</Text>
 			</Section>
 		</EmailLayout>
 	);
