@@ -27,6 +27,8 @@ export const CheckboxField = ({
 				<Checkbox
 					disabled={disabled}
 					id={field.name}
+					name={field.name}
+					value="true"
 					checked={checked ?? field.state.value}
 					onCheckedChange={(checked) => {
 						field.handleChange(Boolean(checked));
@@ -39,7 +41,7 @@ export const CheckboxField = ({
 					className={cn("mt-1", className)}
 					{...props}
 				/>
-				<input type="hidden" name={field.name} value={field.state.value ? "true" : "false"} />
+
 				{label && (
 					<FieldLabel htmlFor={field.name}>
 						{label}

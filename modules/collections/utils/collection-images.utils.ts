@@ -2,9 +2,17 @@ import type { Collection, CollectionImage } from "../types/collection.types";
 
 export function extractCollectionImages(products: Collection["products"]): CollectionImage[] {
 	if (!products.length) return [];
+
+	const seen = new Set<string>();
+
 	return products
 		.map((p) => p.product.skus[0]?.images[0])
 		.filter((img): img is NonNullable<typeof img> => Boolean(img))
+		.filter((img) => {
+			if (seen.has(img.url)) return false;
+			seen.add(img.url);
+			return true;
+		})
 		.map((img) => ({
 			url: img.url,
 			blurDataUrl: img.blurDataUrl,
