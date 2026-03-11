@@ -1,6 +1,6 @@
 "use client";
 
-import posthog from "posthog-js";
+import { getPostHogInstance } from "@/shared/lib/posthog";
 
 /**
  * Feature flag keys - centralized definition
@@ -18,7 +18,7 @@ export const FEATURE_FLAGS = {
  */
 export function isFeatureEnabled(flag: string): boolean {
 	if (typeof window === "undefined") return false;
-	return posthog.isFeatureEnabled(flag) ?? false;
+	return getPostHogInstance()?.isFeatureEnabled(flag) ?? false;
 }
 
 /**
@@ -26,5 +26,5 @@ export function isFeatureEnabled(flag: string): boolean {
  */
 export function getFeatureFlagPayload(flag: string): unknown {
 	if (typeof window === "undefined") return undefined;
-	return posthog.getFeatureFlagPayload(flag);
+	return getPostHogInstance()?.getFeatureFlagPayload(flag);
 }

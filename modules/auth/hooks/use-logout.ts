@@ -2,6 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { getPostHogInstance } from "@/shared/lib/posthog";
 import { useActionState, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { logout } from "../actions/logout";
@@ -21,6 +22,8 @@ export function useLogout(options?: UseLogoutOptions) {
 			createToastCallbacks({
 				showSuccessToast: false,
 				onSuccess: () => {
+					// Reset PostHog identity to prevent session bleeding
+					getPostHogInstance()?.reset();
 					options?.onSuccess?.();
 					// Redirection après un court délai pour feedback visuel
 					setTimeout(() => {

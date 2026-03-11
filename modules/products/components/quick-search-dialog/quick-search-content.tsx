@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { ChevronRight, Search } from "lucide-react";
+import { posthogEvents } from "@/shared/lib/posthog-events";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -48,6 +50,15 @@ export function QuickSearchContent({
 	const products = results.kind === "success" ? results.products : [];
 	const suggestion = results.kind === "success" ? results.suggestion : null;
 	const totalCount = results.kind === "success" ? results.totalCount : 0;
+
+	// Track search in PostHog (once per query)
+	const lastTrackedQuery = useRef("");
+	useEffect(() => {
+		if (results.kind === "success" && query && query !== lastTrackedQuery.current) {
+			lastTrackedQuery.current = query;
+			posthogEvents.searchPerformed(query, totalCount);
+		}
+	}, [results.kind, query, totalCount]);
 
 	// Client-side filtering of collections/categories (word-start match)
 	const lowerQuery = query.toLowerCase();

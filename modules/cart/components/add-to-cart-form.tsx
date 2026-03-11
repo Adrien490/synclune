@@ -21,7 +21,13 @@ interface AddToCartFormProps {
  * La quantité est toujours 1, modifiable ensuite dans le panier.
  */
 export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
-	const { action, isPending, state } = useAddToCart();
+	const { action, isPending, state } = useAddToCart({
+		trackingData: {
+			productId: product.id,
+			productName: product.title,
+			price: selectedSku?.priceInclTax ?? product.skus[0]?.priceInclTax ?? 0,
+		},
+	});
 	const searchParams = useSearchParams();
 
 	// Validation des variantes pour message explicite

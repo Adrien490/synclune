@@ -42,6 +42,12 @@ export function RemoveCartItemAlertDialog() {
 			// 1. Fermer le dialog
 			removeDialog.close();
 		},
+		trackingData: removeDialog.data
+			? {
+					productId: removeDialog.data.cartItemId,
+					productName: removeDialog.data.itemName,
+				}
+			: undefined,
 	});
 	// Note : Les erreurs sont déjà gérées par createToastCallbacks dans le hook
 

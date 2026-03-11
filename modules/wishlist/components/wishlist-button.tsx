@@ -45,6 +45,7 @@ export function WishlistButton({
 }: WishlistButtonProps) {
 	const { isInWishlist, action, isPending } = useWishlistToggle({
 		initialIsInWishlist,
+		trackingData: { productId, productName: productTitle ?? "Produit" },
 	});
 
 	const { button: buttonSize, icon: iconSize } = sizeConfig[size];

@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { toggleWishlistItem } from "@/modules/wishlist/actions/toggle-wishlist-item";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { posthogEvents } from "@/shared/lib/posthog-events";
 import { ActionStatus } from "@/shared/types/server-action";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
@@ -12,26 +13,14 @@ import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
 	onSuccess?: (action: "added" | "removed") => void;
+	/** Product data for PostHog tracking */
+	trackingData?: { productId: string; productName: string };
 }
 
 /**
  * Hook pour toggle un article dans la wishlist
  *
  * Utilise useOptimistic pour une UX réactive avec rollback automatique en cas d'erreur
- *
- * @example
- * ```tsx
- * const { isInWishlist, action, isPending } = useWishlistToggle({
- *   initialIsInWishlist: false,
- * });
- *
- * <form action={action}>
- *   <input type="hidden" name="productId" value={productId} />
- *   <button disabled={isPending}>
- *     <HeartIcon variant={isInWishlist ? 'filled' : 'outline'} />
- *   </button>
- * </form>
- * ```
  */
 export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const { initialIsInWishlist = false, onSuccess } = options ?? {};
@@ -52,7 +41,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const isInWishlistRef = useRef(initialIsInWishlist);
 
 	// Ref pour protéger contre les clics rapides (race condition)
-	// Empêche un nouveau toggle tant que le précédent n'est pas terminé
 	const isProcessingRef = useRef(false);
 
 	// Mise à jour de la ref dans useEffect pour éviter setState pendant le render
@@ -76,6 +64,15 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						"action" in result.data
 					) {
 						const actionType = result.data.action as "added" | "removed";
+						if (options?.trackingData) {
+							posthogEvents.wishlistToggled(
+								{
+									id: options.trackingData.productId,
+									name: options.trackingData.productName,
+								},
+								actionType === "added",
+							);
+						}
 						onSuccess?.(actionType);
 					}
 				},
@@ -118,7 +115,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 
 	const action = (formData: FormData) => {
 		// Protection contre les clics rapides (race condition)
-		// Si une action est déjà en cours, on ignore le nouveau clic
 		if (isProcessingRef.current) {
 			return;
 		}

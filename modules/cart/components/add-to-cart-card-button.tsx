@@ -45,7 +45,13 @@ export function AddToCartCardButton({
 	className,
 }: AddToCartCardButtonProps) {
 	const isMobileFull = variant === "mobile-full";
-	const { action, isPending } = useAddToCart();
+	const { action, isPending } = useAddToCart({
+		trackingData: {
+			productId: product.id,
+			productName: productTitle ?? product.title,
+			price: product.skus[0]?.priceInclTax ?? 0,
+		},
+	});
 	const { open: openSkuSelector } = useDialog(SKU_SELECTOR_DIALOG_ID);
 
 	// Détermine si le produit a plusieurs variantes actives (SKUs)

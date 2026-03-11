@@ -1,29 +1,31 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { posthogEvents } from "@/shared/lib/posthog-events";
 import { addRecentProduct } from "../actions/add-recent-product";
 
 interface RecordProductViewProps {
-	/** Slug du produit a enregistrer */
 	slug: string;
+	productId: string;
+	productName: string;
+	price: number;
+	collection?: string;
 }
 
 /**
  * Composant invisible qui enregistre une vue produit
- *
- * Utilise useEffect pour appeler la server action une seule fois
- * lors du montage du composant.
- *
- * @example
- * ```tsx
- * <RecordProductView slug={product.slug} />
- * ```
+ * et envoie un evenement PostHog product_viewed.
  */
-export function RecordProductView({ slug }: RecordProductViewProps) {
+export function RecordProductView({
+	slug,
+	productId,
+	productName,
+	price,
+	collection,
+}: RecordProductViewProps) {
 	const hasRecorded = useRef(false);
 
 	useEffect(() => {
-		// Eviter les doubles enregistrements (StrictMode, re-renders)
 		if (hasRecorded.current) return;
 		hasRecorded.current = true;
 
@@ -31,7 +33,15 @@ export function RecordProductView({ slug }: RecordProductViewProps) {
 		const formData = new FormData();
 		formData.set("slug", slug);
 		void addRecentProduct(undefined, formData);
-	}, [slug]);
+
+		// Track in PostHog
+		posthogEvents.productViewed({
+			id: productId,
+			name: productName,
+			price,
+			collection,
+		});
+	}, [slug, productId, productName, price, collection]);
 
 	return null;
 }

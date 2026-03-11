@@ -2,6 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { posthogEvents } from "@/shared/lib/posthog-events";
 import { useActionState, useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { removeFromCart } from "@/modules/cart/actions/remove-from-cart";
@@ -12,6 +13,8 @@ interface UseRemoveFromCartOptions {
 	/** Quantité de l'item à supprimer (pour optimistic UI du badge) */
 	quantity?: number;
 	onSuccess?: (message: string) => void;
+	/** Product data for PostHog tracking */
+	trackingData?: { productId: string; productName: string };
 }
 
 /**
@@ -38,6 +41,12 @@ export const useRemoveFromCart = (options?: UseRemoveFromCartOptions) => {
 				createToastCallbacks({
 					showSuccessToast: false,
 					onSuccess: (result: unknown) => {
+						if (options?.trackingData) {
+							posthogEvents.removedFromCart({
+								id: options.trackingData.productId,
+								name: options.trackingData.productName,
+							});
+						}
 						if (
 							result &&
 							typeof result === "object" &&

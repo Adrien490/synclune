@@ -303,6 +303,7 @@ export function ProductCard({ product, index, isInWishlist = false, sectionId }:
 							fill
 							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-lg object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500 sm:rounded-xl"
 							loading="lazy"
+							quality={70}
 							sizes={IMAGE_SIZES.PRODUCT_CARD}
 						/>
 					)}

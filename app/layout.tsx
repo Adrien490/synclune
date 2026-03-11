@@ -7,6 +7,7 @@ const InstallPromptBanner = dynamic(() =>
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
+import { PostHogIdentifyAsync } from "@/shared/components/posthog-identify-async";
 import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
@@ -23,7 +24,7 @@ import "./globals.css";
 export const metadata: Metadata = rootMetadata;
 export const viewport: Viewport = rootViewport;
 
-export default async function RootLayout({
+export default function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
@@ -53,6 +54,9 @@ export default async function RootLayout({
 						</Suspense>
 					</ErrorBoundary>
 					<RootProviders>
+						<Suspense fallback={null}>
+							<PostHogIdentifyAsync />
+						</Suspense>
 						<ConditionalAnalytics />
 						<WebVitalsReporter />
 						{children}

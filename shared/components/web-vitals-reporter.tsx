@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import posthog from "posthog-js";
+import { getPostHogInstance } from "@/shared/lib/posthog";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
 
 /**
@@ -65,8 +65,8 @@ export function WebVitalsReporter() {
 
 			queue.push(report);
 
-			// Forward to PostHog for persistent storage
-			posthog.capture("web_vital", {
+			// Forward to PostHog for persistent storage (if loaded)
+			getPostHogInstance()?.capture("web_vital", {
 				metric_name: name,
 				metric_value: value,
 				metric_rating: rating,

@@ -685,6 +685,13 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 	const { action, isPending } = useAddToCart({
 		openSheetOnSuccess: true,
 		onSuccess: close,
+		trackingData: data?.product
+			? {
+					productId: data.product.id,
+					productName: data.product.title,
+					price: data.product.skus[0]?.priceInclTax ?? 0,
+				}
+			: undefined,
 	});
 	const shouldReduceMotion = useReducedMotion();
 

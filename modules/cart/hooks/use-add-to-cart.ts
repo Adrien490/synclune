@@ -2,6 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { posthogEvents } from "@/shared/lib/posthog-events";
 import { useActionState, useRef, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
@@ -12,6 +13,8 @@ interface UseAddToCartOptions {
 	onSuccess?: (message: string) => void;
 	/** Ouvrir le cart sheet apres ajout reussi (defaut: true) */
 	openSheetOnSuccess?: boolean;
+	/** Product data for PostHog tracking */
+	trackingData?: { productId: string; productName: string; price: number };
 }
 
 /**
@@ -43,6 +46,14 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 					onSuccess: (result: unknown) => {
 						if (shouldOpenSheet) {
 							openSheet("cart");
+						}
+						if (options?.trackingData) {
+							posthogEvents.addedToCart({
+								id: options.trackingData.productId,
+								name: options.trackingData.productName,
+								price: options.trackingData.price,
+								quantity: pendingQuantityRef.current,
+							});
 						}
 						if (
 							result &&

@@ -3,6 +3,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Fade } from "@/shared/components/animations/fade";
 import { Stagger } from "@/shared/components/animations/stagger";
+import { PostHogTrack } from "@/shared/components/posthog-track";
 import { SuccessIcon } from "./_components/success-icon";
 import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
 import { getShippingInfo } from "@/modules/orders/services/shipping.service";
@@ -101,6 +102,14 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 	return (
 		<div className="relative min-h-screen">
+			<PostHogTrack
+				event="purchase_completed"
+				properties={{
+					order_id: order.id,
+					revenue: order.total,
+					item_count: order.items.length,
+				}}
+			/>
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<h1 className="sr-only">Confirmation de commande</h1>

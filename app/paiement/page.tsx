@@ -5,6 +5,7 @@ import { validateCart } from "@/modules/cart/actions/validate-cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
+import { PostHogTrack } from "@/shared/components/posthog-track";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -98,8 +99,18 @@ export default async function CheckoutPage() {
 		);
 	}
 
+	// Compute cart totals for tracking
+	const cartTotal = cart.items.reduce(
+		(sum, item) => sum + item.sku.priceInclTax * item.quantity,
+		0,
+	);
+
 	return (
 		<div className="relative min-h-screen">
+			<PostHogTrack
+				event="checkout_started"
+				properties={{ total: cartTotal, item_count: cart.items.length }}
+			/>
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 

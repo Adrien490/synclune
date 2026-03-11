@@ -2,6 +2,7 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { posthogEvents } from "@/shared/lib/posthog-events";
 import { useActionState } from "react";
 import { subscribeToNewsletter } from "@/modules/newsletter/actions/subscribe-to-newsletter";
 
@@ -23,6 +24,7 @@ export function useSubscribeToNewsletter(options?: UseSubscribeToNewsletterOptio
 				showSuccessToast: false, // Pas de toast de succès car on utilise le dialog
 				showErrorToast: false, // Toasts d'erreur désactivés
 				onSuccess: (result: unknown) => {
+					posthogEvents.newsletterSubscribed();
 					// Appeler le callback personnalisé de succès si fourni
 					if (
 						result &&
