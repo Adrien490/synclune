@@ -83,9 +83,8 @@ const nextConfig: NextConfig = {
 		minimumCacheTTL: 2678400,
 		formats: ["image/avif", "image/webp"],
 		remotePatterns: [
-			{ protocol: "https", hostname: "x1ain1wpub.ufs.sh", pathname: "/f/**" },
+			{ protocol: "https", hostname: "*.ufs.sh", pathname: "/f/**" },
 			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
-			{ protocol: "https", hostname: "ufs.sh", pathname: "/f/**" },
 			{ protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
 			{
 				protocol: "https",
