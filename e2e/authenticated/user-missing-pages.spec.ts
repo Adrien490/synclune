@@ -83,6 +83,21 @@ test.describe("Pages manquantes - Couverture", { tag: ["@regression"] }, () => {
 				.or(page.getByRole("heading", { level: 1 }));
 			await expect(content.first()).toBeVisible();
 		});
+
+		test("le bouton 'Nouvelle demande' redirige vers /personnalisation", async ({ page }) => {
+			await page.goto("/compte/mes-demandes");
+			await page.waitForLoadState("domcontentloaded");
+
+			const newRequestButton = page
+				.getByRole("link", { name: /Nouvelle demande|Demander/i })
+				.or(page.getByRole("button", { name: /Nouvelle demande|Demander/i }));
+			const hasButton = (await newRequestButton.count()) > 0;
+			test.skip(!hasButton, "Pas de bouton nouvelle demande visible");
+
+			await newRequestButton.first().click();
+			await page.waitForLoadState("domcontentloaded");
+			await expect(page).toHaveURL(/\/personnalisation/);
+		});
 	});
 
 	test.describe("Mes avis", () => {
@@ -103,6 +118,18 @@ test.describe("Pages manquantes - Couverture", { tag: ["@regression"] }, () => {
 				.getByText(/avis|évaluation|aucun|vide/i)
 				.or(page.getByRole("heading", { level: 1 }));
 			await expect(content.first()).toBeVisible();
+		});
+
+		test("l'état vide affiche un CTA vers les créations", async ({ page }) => {
+			await page.goto("/compte/mes-avis");
+			await page.waitForLoadState("domcontentloaded");
+
+			const emptyState = page.getByText(/aucun avis/i);
+			const hasEmptyState = (await emptyState.count()) > 0;
+			test.skip(!hasEmptyState, "L'utilisateur a des avis - pas d'état vide");
+
+			const ctaLink = page.getByRole("link", { name: /Découvrir|créations|boutique/i });
+			await expect(ctaLink.first()).toBeVisible();
 		});
 	});
 });

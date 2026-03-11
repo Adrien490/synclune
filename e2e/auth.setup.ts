@@ -43,9 +43,30 @@ async function authenticateViaAPI(
 	await page.goto("/connexion");
 	await page.waitForLoadState("domcontentloaded");
 
-	await page.getByRole("textbox", { name: /Email/i }).fill(email);
-	await page.locator('input[type="password"]').fill(password);
-	await page.getByRole("button", { name: /Se connecter/i }).click();
+	// Dismiss cookie consent banner if present
+	const cookieRefuse = page.getByRole("button", { name: /Refuser/i });
+	if (await cookieRefuse.isVisible({ timeout: 2000 }).catch(() => false)) {
+		await cookieRefuse.click();
+	}
+
+	const emailField = page.getByRole("textbox", { name: /Email/i });
+	await emailField.waitFor({ state: "visible" });
+	// Use click + fill + dispatch to ensure TanStack Form picks up values
+	await emailField.click();
+	await emailField.fill(email);
+	await emailField.dispatchEvent("blur");
+
+	const passwordField = page.locator('input[type="password"]');
+	await passwordField.click();
+	await passwordField.fill(password);
+	await passwordField.dispatchEvent("blur");
+
+	const submitButton = page.getByRole("button", {
+		name: "Se connecter",
+		exact: true,
+	});
+	await expect(submitButton).toBeEnabled({ timeout: 5000 });
+	await submitButton.click();
 
 	await expect(page).not.toHaveURL(/\/connexion/, { timeout: 15000 });
 	await page.context().storageState({ path: storagePath });

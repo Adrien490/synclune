@@ -1,5 +1,8 @@
 import arcjet, { detectBot, shield, tokenBucket } from "@arcjet/next";
 
+// DRY_RUN mode: logs only, never blocks (for E2E tests / development)
+const mode = process.env.ARCJET_MODE === "DRY_RUN" ? ("DRY_RUN" as const) : ("LIVE" as const);
+
 /**
  * Configuration Arcjet pour la protection de l'application
  *
@@ -17,11 +20,11 @@ export const aj = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield protège contre les attaques courantes (SQL injection, XSS, etc.)
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 
 		// Détection de bots - Autorise uniquement les crawlers légitimes
 		detectBot({
-			mode: "LIVE", // Bloque les requêtes. Utiliser "DRY_RUN" pour logs uniquement
+			mode, // Bloque les requêtes. Utiliser "DRY_RUN" pour logs uniquement
 			allow: [
 				"CATEGORY:SEARCH_ENGINE", // Google, Bing, DuckDuckGo, etc.
 				"CATEGORY:MONITOR", // Services de monitoring (Uptime Robot, etc.)
@@ -31,7 +34,7 @@ export const aj = arcjet({
 
 		// Rate limiting global : 10 requêtes par 10 secondes par IP
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			refillRate: 10, // Recharge 10 tokens par intervalle
 			interval: 10, // Intervalle de 10 secondes
 			capacity: 20, // Capacité max du bucket
@@ -51,18 +54,18 @@ export const ajNewsletter = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield contre les attaques
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 
 		// Bot detection stricte - Bloque TOUS les bots pour éviter le spam
 		detectBot({
-			mode: "LIVE",
+			mode,
 			allow: [], // Aucun bot autorisé sur le formulaire d'inscription
 		}),
 
 		// Rate limiting strict pour les inscriptions newsletter
 		// 5 inscriptions par heure par IP (cohérent avec notre rate-limit.ts)
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			characteristics: ["ip.src"], // Track par IP source
 			refillRate: 5, // 5 tokens par intervalle
 			interval: 3600, // Intervalle de 1 heure (3600 secondes)
@@ -82,13 +85,13 @@ export const ajNewsletter = arcjet({
 export const ajPayment = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 		detectBot({
-			mode: "LIVE",
+			mode,
 			allow: [],
 		}),
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			characteristics: ["ip.src"],
 			refillRate: 15,
 			interval: 3600,
@@ -108,11 +111,11 @@ export const ajNewsletterConfirm = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield contre les attaques
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 
 		// Rate limiting : 10 tentatives de confirmation par heure par IP
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			characteristics: ["ip.src"],
 			refillRate: 10, // 10 tokens par intervalle
 			interval: 3600, // Intervalle de 1 heure (3600 secondes)
@@ -133,12 +136,12 @@ export const ajNewsletterUnsubscribe = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield contre les attaques
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 
 		// Rate limiting : 10 désinscriptions par heure par IP
 		// Plus permissif que subscribe (5/h) car légitime pour utilisateurs frustrés
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			characteristics: ["ip.src"],
 			refillRate: 10, // 10 tokens par intervalle
 			interval: 3600, // Intervalle de 1 heure (3600 secondes)
@@ -159,17 +162,17 @@ export const ajDiscountValidation = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield contre les attaques
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 
 		// Bot detection stricte - Aucun bot autorise
 		detectBot({
-			mode: "LIVE",
+			mode,
 			allow: [],
 		}),
 
 		// Rate limiting : 10 tentatives par 15 minutes par IP
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			characteristics: ["ip.src"],
 			refillRate: 10, // 10 tokens par intervalle
 			interval: 900, // Intervalle de 15 minutes (900 secondes)
@@ -195,18 +198,18 @@ export const ajAuth = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield contre les attaques courantes
-		shield({ mode: "LIVE" }),
+		shield({ mode }),
 
 		// Bot detection stricte - Aucun bot autorisé sur les formulaires auth
 		detectBot({
-			mode: "LIVE",
+			mode,
 			allow: [], // Bloquer tous les bots
 		}),
 
 		// Rate limiting strict pour l'authentification
 		// 5 tentatives par 15 minutes par IP
 		tokenBucket({
-			mode: "LIVE",
+			mode,
 			characteristics: ["ip.src"], // Track par IP source
 			refillRate: 5, // 5 tokens par intervalle
 			interval: 900, // Intervalle de 15 minutes (900 secondes)

@@ -44,6 +44,7 @@ export const envSchema = z
 		// Rate Limiting (Arcjet - required in production)
 		// ========================================
 		ARCJET_KEY: z.string().optional(),
+		ARCJET_MODE: z.enum(["LIVE", "DRY_RUN"]).optional(),
 
 		// ========================================
 		// Cron Jobs

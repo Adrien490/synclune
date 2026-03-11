@@ -245,6 +245,17 @@ test.describe("SEO - robots.txt et sitemap.xml", { tag: ["@slow"] }, () => {
 		expect(body).toContain("/produits");
 		expect(body).toContain("/collections");
 	});
+
+	test("sitemap-images.xml est accessible et contient les produits", async ({ page }) => {
+		const response = await page.goto("/sitemap-images.xml");
+
+		expect(response?.status()).toBe(200);
+
+		const body = await response?.text();
+		expect(body).toBeTruthy();
+		expect(body).toContain("<urlset");
+		expect(body).toContain("/creations/");
+	});
 });
 
 test.describe("SEO - noindex sur pages privees", { tag: ["@slow"] }, () => {
