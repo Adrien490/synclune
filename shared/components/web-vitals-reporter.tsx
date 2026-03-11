@@ -153,7 +153,7 @@ export function WebVitalsReporter() {
 							resourceLoadDelay: metric.attribution.resourceLoadDelay,
 							resourceLoadDuration: metric.attribution.resourceLoadDuration,
 							elementRenderDelay: metric.attribution.elementRenderDelay,
-							url: metric.attribution.url,
+							resourceUrl: metric.attribution.url,
 						},
 					);
 				});

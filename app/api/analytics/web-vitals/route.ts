@@ -40,6 +40,10 @@ export async function POST(request: Request) {
 			return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
 		}
 
+		if (metrics.length > 25) {
+			return NextResponse.json({ error: "Too many metrics" }, { status: 400 });
+		}
+
 		for (const metric of metrics) {
 			const parsed = metricSchema.safeParse(metric);
 			if (!parsed.success) continue;
