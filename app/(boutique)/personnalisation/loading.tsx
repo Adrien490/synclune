@@ -19,13 +19,13 @@ export default function CustomizationLoading() {
 		>
 			<span className="sr-only">Chargement du formulaire de personnalisation...</span>
 
-			<PageHeaderSkeleton hasDescription />
+			<PageHeaderSkeleton hasDescription className="hidden sm:block" />
 
 			{/* Main Content */}
 			<section className={`bg-background ${SECTION_SPACING.compact} relative z-10`}>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					{/* Layout split : formulaire + sidebar sur desktop */}
-					<div className="lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
+					<div className="flex flex-col lg:grid lg:grid-cols-[1fr_380px] lg:gap-12">
 						{/* Formulaire de personnalisation */}
 						<div className="max-w-xl space-y-6">
 							{/* Required fields note */}

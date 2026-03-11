@@ -94,11 +94,12 @@ export default async function CustomizationPage() {
 				animationDelay={2}
 			/>
 
-			{/* Header standard avec breadcrumbs */}
+			{/* Header standard avec breadcrumbs - masqué sur mobile */}
 			<PageHeader
 				title="Créons votre bijou"
 				description="Vous avez une idée de bijou en tête ? Dites-moi tout !"
 				breadcrumbs={[{ label: "Personnalisation", href: "/personnalisation" }]}
+				className="hidden sm:block"
 			/>
 
 			{/* Section principale avec formulaire */}
