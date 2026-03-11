@@ -2,7 +2,6 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { error, success, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
-import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { signUpEmailSchema } from "../schemas/auth.schemas";
@@ -47,17 +46,9 @@ export const signUpEmail = async (
 		}
 
 		try {
-			const response = await auth.api.signUpEmail({
+			await auth.api.signUpEmail({
 				body: { email, password, name },
 			});
-
-			// Persist terms acceptance timestamp (RGPD proof of consent)
-			if (response.user.id) {
-				await prisma.user.update({
-					where: { id: response.user.id },
-					data: { termsAcceptedAt: new Date() },
-				});
-			}
 
 			return success(
 				"Inscription réussie ! Un email de vérification vous a été envoyé. Veuillez vérifier votre boîte de réception pour activer votre compte.",

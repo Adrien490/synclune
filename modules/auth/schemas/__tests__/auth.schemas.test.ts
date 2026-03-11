@@ -202,26 +202,11 @@ describe("signUpEmailSchema", () => {
 		email: "newuser@example.com",
 		password: "SecurePass1XYZ",
 		name: "Alice",
-		termsAccepted: true as const,
 	};
 
-	it("accepts valid signup data with termsAccepted true", () => {
+	it("accepts valid signup data", () => {
 		const result = signUpEmailSchema.safeParse(validInput);
 		expect(result.success).toBe(true);
-	});
-
-	it("rejects when termsAccepted is false", () => {
-		const result = signUpEmailSchema.safeParse({
-			...validInput,
-			termsAccepted: false,
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects when termsAccepted is missing", () => {
-		const { termsAccepted: _terms, ...withoutTerms } = validInput;
-		const result = signUpEmailSchema.safeParse(withoutTerms);
-		expect(result.success).toBe(false);
 	});
 
 	it("rejects when name is too short (less than 2 chars)", () => {

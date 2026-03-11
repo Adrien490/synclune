@@ -137,12 +137,6 @@ describe("signUpEmail", () => {
 		expect(result.message).not.toContain("already");
 	});
 
-	it("should return error when signUpEmail returns null", async () => {
-		mockAuth.api.signUpEmail.mockResolvedValue(null);
-		const result = await signUpEmail(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
-	});
-
 	it("should handle unexpected error gracefully", async () => {
 		mockHeaders.mockRejectedValue(new Error("Headers error"));
 		const result = await signUpEmail(undefined, validFormData);
