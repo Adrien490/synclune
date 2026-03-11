@@ -55,8 +55,13 @@ function AddressAutocompleteField({
 					getItemLabel={(item) => item.label}
 					getItemDescription={(item) => [item.postcode, item.city].filter(Boolean).join(" ")}
 					onSelect={(item) => {
-						const addressLine1 =
-							item.housenumber && item.street ? `${item.housenumber} ${item.street}` : item.label;
+						let addressLine1: string;
+						if (item.housenumber && item.street) {
+							addressLine1 = `${item.housenumber} ${item.street}`;
+						} else {
+							// Strip ", {postcode} {city}" suffix from fulltext
+							addressLine1 = item.fulltext.replace(`, ${item.postcode} ${item.city}`, "");
+						}
 						field.handleChange(addressLine1);
 						form.setFieldValue("shipping.postalCode", item.postcode);
 						form.setFieldValue("shipping.city", item.city);

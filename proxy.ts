@@ -83,6 +83,7 @@ const apiRoutes = [
 	"/api/orders",
 	"/api/admin",
 	"/api/search",
+	"/api/analytics",
 ];
 
 // Helper function pour vérifier les routes (exactes ou sous-routes)
