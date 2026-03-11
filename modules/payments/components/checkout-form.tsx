@@ -298,13 +298,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 													<span className="font-medium">{session.user.email}</span>
 												</div>
 											)}
-
-											{/* Newsletter opt-in */}
-											<form.AppField name="newsletterOptIn">
-												{(field) => (
-													<field.CheckboxField label="Je souhaite recevoir les offres et nouveautés par email" />
-												)}
-											</form.AppField>
 										</div>
 									</CheckoutSection>
 
@@ -411,7 +404,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 														autoCapitalize="words"
 														autoCorrect="off"
 														enterKeyHint="next"
-														placeholder="Jean Dupont"
 													/>
 												)}
 											</form.AppField>
@@ -433,7 +425,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 														required
 														autoComplete="address-line1"
 														enterKeyHint="next"
-														placeholder="12 rue des Fleurs"
 													/>
 												)}
 											</form.AppField>
@@ -443,7 +434,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 													<field.InputField
 														label="Complément d'adresse"
 														optional
-														placeholder="Appartement, bâtiment, etc."
 														autoComplete="address-line2"
 														enterKeyHint="next"
 													/>
@@ -472,7 +462,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 															autoComplete="postal-code"
 															autoCorrect="off"
 															enterKeyHint="next"
-															placeholder="75001"
 														/>
 													)}
 												</form.AppField>
@@ -494,7 +483,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 															required
 															autoComplete="address-level2"
 															enterKeyHint="next"
-															placeholder="Paris"
 														/>
 													)}
 												</form.AppField>
@@ -528,7 +516,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 																	label="Téléphone"
 																	required
 																	defaultCountry={((country as string) || "FR") as ShippingCountry}
-																	placeholder="06 12 34 56 78"
 																	enterKeyHint="done"
 																/>
 																<p className="text-muted-foreground text-sm">

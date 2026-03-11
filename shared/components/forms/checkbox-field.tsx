@@ -2,7 +2,7 @@ import { Checkbox } from "@/shared/components/ui/checkbox";
 import { Field, FieldError, FieldLabel } from "@/shared/components/ui/field";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
-import { type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 interface CheckboxFieldProps extends React.ComponentProps<typeof Checkbox> {
 	label?: ReactNode;
@@ -20,6 +20,7 @@ export const CheckboxField = ({
 	...props
 }: CheckboxFieldProps) => {
 	const field = useFieldContext<boolean>();
+	const hiddenRef = useRef<HTMLInputElement>(null);
 
 	return (
 		<Field orientation="vertical" data-invalid={field.state.meta.errors.length > 0}>
@@ -27,12 +28,14 @@ export const CheckboxField = ({
 				<Checkbox
 					disabled={disabled}
 					id={field.name}
-					name={field.name}
-					value="true"
 					checked={checked ?? field.state.value}
 					onCheckedChange={(checked) => {
-						field.handleChange(Boolean(checked));
-						onCheckedChange?.(Boolean(checked));
+						const isChecked = Boolean(checked);
+						field.handleChange(isChecked);
+						onCheckedChange?.(isChecked);
+						if (hiddenRef.current) {
+							hiddenRef.current.value = isChecked ? "true" : "false";
+						}
 					}}
 					onBlur={field.handleBlur}
 					aria-invalid={field.state.meta.errors.length > 0}
@@ -40,6 +43,12 @@ export const CheckboxField = ({
 					aria-required={required}
 					className={cn("mt-1", className)}
 					{...props}
+				/>
+				<input
+					ref={hiddenRef}
+					type="hidden"
+					name={field.name}
+					value={field.state.value ? "true" : "false"}
 				/>
 
 				{label && (

@@ -3,7 +3,7 @@ import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-c
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
-import { NewsletterSection } from "@/app/(boutique)/(accueil)/_components/newsletter-section";
+
 import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
@@ -121,11 +121,6 @@ export default async function Page() {
 			{/* 6. FAQ - Frequently asked questions with JSON-LD */}
 			<div className="content-defer">
 				<FaqSection />
-			</div>
-
-			{/* 7. Newsletter - Subscription with gift incentive */}
-			<div className="content-defer">
-				<NewsletterSection />
 			</div>
 		</>
 	);

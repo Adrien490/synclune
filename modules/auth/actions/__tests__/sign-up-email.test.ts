@@ -62,7 +62,6 @@ const validFormData = createMockFormData({
 	email: "new@example.com",
 	password: "SecureP@ss123",
 	name: "Marie Dupont",
-	termsAccepted: "true",
 });
 
 const validatedData = {

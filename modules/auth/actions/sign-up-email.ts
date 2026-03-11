@@ -31,7 +31,6 @@ export const signUpEmail = async (
 			email: safeFormGet(formData, "email"),
 			password: safeFormGet(formData, "password"),
 			name: safeFormGet(formData, "name"),
-			termsAccepted: formData.get("termsAccepted") === "true",
 		};
 
 		const validation = validateInput(signUpEmailSchema, rawData);

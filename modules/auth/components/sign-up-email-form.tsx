@@ -41,7 +41,6 @@ export function SignUpEmailForm() {
 			email: "",
 			password: "",
 			name: "",
-			termsAccepted: false,
 		},
 	});
 
@@ -89,19 +88,13 @@ export function SignUpEmailForm() {
 						}}
 					>
 						{(field) => (
-							<div className="space-y-2">
-								<field.InputField
-									label="Prénom"
-									type="text"
-									autoComplete="given-name"
-									disabled={isPending}
-									required
-									aria-describedby="name-hint"
-								/>
-								<p id="name-hint" className="text-muted-foreground text-xs">
-									Sera utilisé pour personnaliser vos communications
-								</p>
-							</div>
+							<field.InputField
+								label="Prénom"
+								type="text"
+								autoComplete="given-name"
+								disabled={isPending}
+								required
+							/>
 						)}
 					</form.AppField>
 
@@ -118,21 +111,15 @@ export function SignUpEmailForm() {
 						}}
 					>
 						{(field) => (
-							<div className="space-y-2">
-								<field.InputField
-									label="Email"
-									type="email"
-									inputMode="email"
-									autoComplete="email"
-									spellCheck={false}
-									disabled={isPending}
-									required
-									aria-describedby="email-hint"
-								/>
-								<p id="email-hint" className="text-muted-foreground text-xs">
-									Utilisé uniquement pour la confirmation de compte et les notifications de commande
-								</p>
-							</div>
+							<field.InputField
+								label="Email"
+								type="email"
+								inputMode="email"
+								autoComplete="email"
+								spellCheck={false}
+								disabled={isPending}
+								required
+							/>
 						)}
 					</form.AppField>
 
@@ -167,48 +154,27 @@ export function SignUpEmailForm() {
 					</form.AppField>
 				</div>
 
-				{/* Checkbox consentement RGPD */}
-				<form.AppField
-					name="termsAccepted"
-					validators={{
-						onChange: ({ value }: { value: boolean }) => {
-							if (!value) {
-								return "Vous devez accepter les conditions générales et la politique de confidentialité";
-							}
-							return undefined;
-						},
-					}}
-				>
-					{(field) => (
-						<div className="space-y-2">
-							<field.CheckboxField
-								label={
-									<span>
-										J'accepte les{" "}
-										<Link
-											href="/cgv"
-											className="underline hover:no-underline"
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											conditions générales
-										</Link>{" "}
-										et la{" "}
-										<Link
-											href="/confidentialite"
-											className="underline hover:no-underline"
-											target="_blank"
-											rel="noopener noreferrer"
-										>
-											politique de confidentialité
-										</Link>
-									</span>
-								}
-								required
-							/>
-						</div>
-					)}
-				</form.AppField>
+				<p className="text-muted-foreground text-xs">
+					En vous inscrivant, vous acceptez les{" "}
+					<Link
+						href="/cgv"
+						className="underline hover:no-underline"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						conditions générales
+					</Link>{" "}
+					et la{" "}
+					<Link
+						href="/confidentialite"
+						className="underline hover:no-underline"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						politique de confidentialité
+					</Link>
+					.
+				</p>
 
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
