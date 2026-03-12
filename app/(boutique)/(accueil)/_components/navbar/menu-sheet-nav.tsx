@@ -10,12 +10,12 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion, type Variants } from "motion/react";
 import { Heart } from "lucide-react";
 import { useEffect, useRef } from "react";
-import { UserHeader } from "./user-header";
 import {
 	AccountSection,
 	CollectionsSection,
 	CreationsSection,
 	DiscoverSection,
+	UserHeader,
 } from "./menu-sheet-nav-sections";
 
 // Motion variants for staggered menu items (enter + exit)

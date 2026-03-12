@@ -42,6 +42,13 @@ export async function getNavbarMenuData() {
 		}),
 	]);
 
+	if (collectionsData.status === "rejected") {
+		console.error("[navbar] Failed to fetch collections:", collectionsData.reason);
+	}
+	if (productTypesData.status === "rejected") {
+		console.error("[navbar] Failed to fetch product types:", productTypesData.reason);
+	}
+
 	return {
 		collectionsData:
 			collectionsData.status === "fulfilled"

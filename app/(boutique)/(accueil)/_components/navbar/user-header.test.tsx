@@ -23,7 +23,7 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-import { UserHeader } from "./user-header";
+import { UserHeader } from "./menu-sheet-nav-sections";
 
 afterEach(cleanup);
 

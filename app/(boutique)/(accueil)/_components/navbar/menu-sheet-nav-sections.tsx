@@ -1,6 +1,7 @@
 "use client";
 
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
+import type { NavbarSessionData } from "@/shared/types/session.types";
 import { Badge } from "@/shared/components/ui/badge";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
@@ -11,7 +12,6 @@ import type { Variants } from "motion/react";
 import { m } from "motion/react";
 import Link from "next/link";
 import { CollectionMiniGrid } from "./collection-mini-grid";
-import { SectionHeader } from "./section-header";
 
 // Shared link styles (must match menu-sheet-nav.tsx)
 const linkClassName = cn(
@@ -42,6 +42,105 @@ function getLinkClass(
 	return cn(isMenuItemActive(href, options) ? activeLinkClassName : linkClassName, extra);
 }
 
+// --- Section Header (inline — no separate file needed) ---
+
+function SectionHeader({
+	children,
+	id,
+	as: Tag = "h3",
+}: {
+	children: React.ReactNode;
+	id?: string;
+	as?: "h2" | "h3";
+}) {
+	return (
+		<Tag
+			id={id}
+			className="text-muted-foreground px-4 py-2 text-xs font-semibold tracking-wider uppercase"
+		>
+			{children}
+		</Tag>
+	);
+}
+
+// --- NavLink (shared pattern: m.li + SheetClose + Link + aria-current) ---
+
+interface NavLinkProps {
+	href: string;
+	isMenuItemActive: SectionProps["isMenuItemActive"];
+	itemVariants: Variants;
+	customDelay: number;
+	children: React.ReactNode;
+	className?: string;
+	exact?: boolean;
+}
+
+function NavLink({
+	href,
+	isMenuItemActive,
+	itemVariants,
+	customDelay,
+	children,
+	className,
+	exact,
+}: NavLinkProps) {
+	return (
+		<m.li variants={itemVariants} custom={customDelay}>
+			<SheetClose asChild>
+				<Link
+					href={href}
+					className={getLinkClass(href, isMenuItemActive, className, { exact })}
+					aria-current={isMenuItemActive(href, { exact }) ? "page" : undefined}
+				>
+					{children}
+				</Link>
+			</SheetClose>
+		</m.li>
+	);
+}
+
+// --- User Header (mobile menu personalized greeting) ---
+
+interface UserHeaderProps {
+	session: NavbarSessionData;
+	wishlistCount: number;
+	cartCount: number;
+}
+
+export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProps) {
+	const firstName = session.user.name?.split(" ")[0] || "vous";
+
+	return (
+		<div className="bg-primary/5 mb-4 rounded-xl px-4 py-4">
+			<SheetClose asChild>
+				<Link
+					href={ROUTES.ACCOUNT.ROOT}
+					className="group block"
+					aria-label={`Mon compte - ${firstName}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
+				>
+					<div>
+						<p className="text-foreground text-base font-semibold">Bonjour {firstName}</p>
+						<p className="text-muted-foreground mt-0.5 text-sm">
+							{wishlistCount > 0 && (
+								<span>
+									{wishlistCount} favori{wishlistCount > 1 ? "s" : ""}
+								</span>
+							)}
+							{wishlistCount > 0 && cartCount > 0 && <span aria-hidden="true"> • </span>}
+							{cartCount > 0 && (
+								<span>
+									{cartCount} article{cartCount > 1 ? "s" : ""}
+								</span>
+							)}
+							{wishlistCount === 0 && cartCount === 0 && <span>Mon espace personnel</span>}
+						</p>
+					</div>
+				</Link>
+			</SheetClose>
+		</div>
+	);
+}
+
 // --- Discover Section ---
 
 interface DiscoverSectionProps extends SectionProps {
@@ -60,17 +159,14 @@ export function DiscoverSection({
 		<section aria-labelledby="section-discover" className="mb-4">
 			<SectionHeader id="section-discover">Découvrir</SectionHeader>
 			<ul className="space-y-1">
-				<m.li variants={itemVariants} custom={delay(70, 0)}>
-					<SheetClose asChild>
-						<Link
-							href={homeItem.href}
-							className={getLinkClass(homeItem.href, isMenuItemActive)}
-							aria-current={isMenuItemActive(homeItem.href) ? "page" : undefined}
-						>
-							{homeItem.label}
-						</Link>
-					</SheetClose>
-				</m.li>
+				<NavLink
+					href={homeItem.href}
+					isMenuItemActive={isMenuItemActive}
+					itemVariants={itemVariants}
+					customDelay={delay(70, 0)}
+				>
+					{homeItem.label}
+				</NavLink>
 			</ul>
 		</section>
 	);
@@ -97,48 +193,35 @@ export function CreationsSection({
 			<SectionHeader id="section-creations">Nos créations</SectionHeader>
 			<ul className="space-y-1">
 				{/* "All jewelry" link prominent first (Baymard UX) */}
-				<m.li variants={itemVariants} custom={delay(90, 0)}>
-					<SheetClose asChild>
-						<Link
-							href={ROUTES.SHOP.PRODUCTS}
-							className={getLinkClass(ROUTES.SHOP.PRODUCTS, isMenuItemActive, undefined, {
-								exact: true,
-							})}
-							aria-current={
-								isMenuItemActive(ROUTES.SHOP.PRODUCTS, { exact: true }) ? "page" : undefined
-							}
-						>
-							Tous les bijoux
-						</Link>
-					</SheetClose>
-				</m.li>
+				<NavLink
+					href={ROUTES.SHOP.PRODUCTS}
+					isMenuItemActive={isMenuItemActive}
+					itemVariants={itemVariants}
+					customDelay={delay(90, 0)}
+					exact
+				>
+					Tous les bijoux
+				</NavLink>
 				{productTypes.map((type, i) => (
-					<m.li key={type.slug} variants={itemVariants} custom={delay(90, i + 1)}>
-						<SheetClose asChild>
-							<Link
-								href={ROUTES.SHOP.PRODUCT_TYPE(type.slug)}
-								className={getLinkClass(ROUTES.SHOP.PRODUCT_TYPE(type.slug), isMenuItemActive)}
-								aria-current={
-									isMenuItemActive(ROUTES.SHOP.PRODUCT_TYPE(type.slug)) ? "page" : undefined
-								}
-							>
-								{type.label}
-							</Link>
-						</SheetClose>
-					</m.li>
+					<NavLink
+						key={type.slug}
+						href={ROUTES.SHOP.PRODUCT_TYPE(type.slug)}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(90, i + 1)}
+					>
+						{type.label}
+					</NavLink>
 				))}
 				{personalizationItem && (
-					<m.li variants={itemVariants} custom={delay(90, productTypes.length + 1)}>
-						<SheetClose asChild>
-							<Link
-								href={personalizationItem.href}
-								className={getLinkClass(personalizationItem.href, isMenuItemActive)}
-								aria-current={isMenuItemActive(personalizationItem.href) ? "page" : undefined}
-							>
-								{personalizationItem.label}
-							</Link>
-						</SheetClose>
-					</m.li>
+					<NavLink
+						href={personalizationItem.href}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(90, productTypes.length + 1)}
+					>
+						{personalizationItem.label}
+					</NavLink>
 				)}
 			</ul>
 		</section>
@@ -170,49 +253,36 @@ export function CollectionsSection({
 			<SectionHeader id="section-collections">Collections</SectionHeader>
 			<ul className="space-y-1">
 				{/* "All collections" link prominent first */}
-				<m.li variants={itemVariants} custom={delay(110, 0)}>
-					<SheetClose asChild>
-						<Link
-							href={ROUTES.SHOP.COLLECTIONS}
-							className={getLinkClass(ROUTES.SHOP.COLLECTIONS, isMenuItemActive, undefined, {
-								exact: true,
-							})}
-							aria-current={
-								isMenuItemActive(ROUTES.SHOP.COLLECTIONS, { exact: true }) ? "page" : undefined
-							}
-						>
-							Toutes les collections
-						</Link>
-					</SheetClose>
-				</m.li>
+				<NavLink
+					href={ROUTES.SHOP.COLLECTIONS}
+					isMenuItemActive={isMenuItemActive}
+					itemVariants={itemVariants}
+					customDelay={delay(110, 0)}
+					exact
+				>
+					Toutes les collections
+				</NavLink>
 				{displayedCollections.map((collection, i) => (
-					<m.li key={collection.slug} variants={itemVariants} custom={delay(110, i + 1)}>
-						<SheetClose asChild>
-							<Link
-								href={ROUTES.SHOP.COLLECTION(collection.slug)}
-								className={getLinkClass(
-									ROUTES.SHOP.COLLECTION(collection.slug),
-									isMenuItemActive,
-									"gap-3",
-								)}
-								aria-current={
-									isMenuItemActive(ROUTES.SHOP.COLLECTION(collection.slug)) ? "page" : undefined
-								}
+					<NavLink
+						key={collection.slug}
+						href={ROUTES.SHOP.COLLECTION(collection.slug)}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(110, i + 1)}
+						className="gap-3"
+					>
+						{collection.images.length > 0 ? (
+							<CollectionMiniGrid images={collection.images} />
+						) : (
+							<div
+								className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg"
+								aria-hidden="true"
 							>
-								{collection.images.length > 0 ? (
-									<CollectionMiniGrid images={collection.images} />
-								) : (
-									<div
-										className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg"
-										aria-hidden="true"
-									>
-										<Gem className="text-primary/40 h-5 w-5" />
-									</div>
-								)}
-								<span className="flex-1">{collection.label}</span>
-							</Link>
-						</SheetClose>
-					</m.li>
+								<Gem className="text-primary/40 h-5 w-5" />
+							</div>
+						)}
+						<span className="flex-1">{collection.label}</span>
+					</NavLink>
 				))}
 			</ul>
 		</section>
@@ -245,55 +315,44 @@ export function AccountSection({
 			<ul className="space-y-1">
 				{/* Account link - adapts to session state */}
 				{accountItem && (
-					<m.li variants={itemVariants} custom={delay(150, 0)}>
-						<SheetClose asChild>
-							<Link
-								href={accountItem.href}
-								className={getLinkClass(accountItem.href, isMenuItemActive)}
-								aria-current={isMenuItemActive(accountItem.href) ? "page" : undefined}
-							>
-								{accountItem.label}
-							</Link>
-						</SheetClose>
-					</m.li>
+					<NavLink
+						href={accountItem.href}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(150, 0)}
+					>
+						{accountItem.label}
+					</NavLink>
 				)}
 
 				{/* Favorites with badge count */}
 				{favoritesItem && isLoggedIn && (
-					<m.li variants={itemVariants} custom={delay(150, 1)}>
-						<SheetClose asChild>
-							<Link
-								href={favoritesItem.href}
-								className={getLinkClass(favoritesItem.href, isMenuItemActive, "justify-between")}
-								aria-current={isMenuItemActive(favoritesItem.href) ? "page" : undefined}
-								aria-label={
-									wishlistCount > 0 ? `${favoritesItem.label} (${wishlistCount})` : undefined
-								}
-							>
-								{favoritesItem.label}
-								{wishlistCount > 0 && (
-									<Badge variant="secondary" className="px-1.5 py-0 text-xs">
-										{wishlistCount}
-									</Badge>
-								)}
-							</Link>
-						</SheetClose>
-					</m.li>
+					<NavLink
+						href={favoritesItem.href}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(150, 1)}
+						className="justify-between"
+					>
+						{favoritesItem.label}
+						{wishlistCount > 0 && (
+							<Badge variant="secondary" className="px-1.5 py-0 text-xs">
+								{wishlistCount}
+							</Badge>
+						)}
+					</NavLink>
 				)}
 
 				{/* Orders (logged in only) */}
 				{isLoggedIn && (
-					<m.li variants={itemVariants} custom={delay(150, 2)}>
-						<SheetClose asChild>
-							<Link
-								href={ROUTES.ACCOUNT.ORDERS}
-								className={getLinkClass(ROUTES.ACCOUNT.ORDERS, isMenuItemActive)}
-								aria-current={isMenuItemActive(ROUTES.ACCOUNT.ORDERS) ? "page" : undefined}
-							>
-								Mes commandes
-							</Link>
-						</SheetClose>
-					</m.li>
+					<NavLink
+						href={ROUTES.ACCOUNT.ORDERS}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(150, 2)}
+					>
+						Mes commandes
+					</NavLink>
 				)}
 
 				{/* Logout (logged in only) — closes menu before opening dialog */}
@@ -314,21 +373,15 @@ export function AccountSection({
 
 				{/* Sign up link for non-logged-in users */}
 				{!isLoggedIn && (
-					<m.li variants={itemVariants} custom={delay(150, 1)}>
-						<SheetClose asChild>
-							<Link
-								href={ROUTES.AUTH.SIGN_UP}
-								className={getLinkClass(
-									ROUTES.AUTH.SIGN_UP,
-									isMenuItemActive,
-									"text-muted-foreground hover:text-foreground",
-								)}
-								aria-current={isMenuItemActive(ROUTES.AUTH.SIGN_UP) ? "page" : undefined}
-							>
-								Créer un compte
-							</Link>
-						</SheetClose>
-					</m.li>
+					<NavLink
+						href={ROUTES.AUTH.SIGN_UP}
+						isMenuItemActive={isMenuItemActive}
+						itemVariants={itemVariants}
+						customDelay={delay(150, 1)}
+						className="text-muted-foreground hover:text-foreground"
+					>
+						Créer un compte
+					</NavLink>
 				)}
 			</ul>
 		</section>
