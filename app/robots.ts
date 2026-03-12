@@ -14,13 +14,10 @@ export default function robots(): MetadataRoute.Robots {
 				disallow: [
 					"/api/",
 					"/admin/",
-					"/compte/",
 					"/commandes/",
 					"/favoris/",
 					"/adresses/",
 					"/parametres/",
-					"/mes-avis/",
-					"/mes-demandes/",
 					"/connexion",
 					"/inscription",
 					"/mot-de-passe-oublie",

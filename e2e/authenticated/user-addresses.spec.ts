@@ -71,7 +71,7 @@ test.describe("Gestion des adresses", { tag: ["@regression"] }, () => {
 	});
 
 	test("la navigation vers les adresses depuis le compte fonctionne", async ({ page }) => {
-		await page.goto("/compte");
+		await page.goto("/commandes");
 		await page.waitForLoadState("domcontentloaded");
 
 		const addressesLink = page.getByRole("link", { name: /Adresses|Gérer mes adresses/i });

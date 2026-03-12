@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/modules/auth/lib/auth";
-import { AccountNav } from "@/modules/users/components/account-nav";
+import { AccountTabsNav } from "@/modules/users/components/account-tabs-nav";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { TriangleAlert } from "lucide-react";
 
@@ -13,7 +13,7 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 	});
 
 	if (!session?.user) {
-		redirect("/connexion?callbackURL=/compte");
+		redirect("/connexion?callbackURL=/commandes");
 	}
 
 	const user = await getCurrentUser();
@@ -36,10 +36,8 @@ export async function EspaceClientContent({ children }: { children: React.ReactN
 					</p>
 				</div>
 			)}
-			<div className="lg:flex lg:gap-10">
-				<AccountNav />
-				<div className="min-w-0 flex-1">{children}</div>
-			</div>
+			<AccountTabsNav />
+			<div>{children}</div>
 		</div>
 	);
 }

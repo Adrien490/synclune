@@ -1,47 +1,13 @@
 import { test, expect } from "../fixtures";
 
-test.describe("Compte utilisateur - Tableau de bord", { tag: ["@regression"] }, () => {
-	test.beforeEach(async ({ page }) => {
-		await page.goto("/compte");
-		await page.waitForLoadState("domcontentloaded");
-	});
-
-	test("accède au tableau de bord sans redirection vers connexion", async ({ page }) => {
-		await expect(page).toHaveURL(/\/compte/);
-		await expect(page).not.toHaveURL(/\/connexion/);
-	});
-
-	test("affiche le message de bienvenue", async ({ page }) => {
-		const heading = page.getByRole("heading", { name: /Tableau de bord/i });
-		await expect(heading).toBeVisible();
-
-		// Should show greeting with user's first name
-		const greeting = page.getByText(/Bonjour/i);
-		await expect(greeting).toBeVisible();
-	});
-
-	test("affiche les liens rapides", async ({ page }) => {
-		await expect(page.getByRole("link", { name: /Mes commandes/i })).toBeVisible();
-		await expect(page.getByRole("link", { name: /Mes favoris/i })).toBeVisible();
-		await expect(page.getByRole("link", { name: /Paramètres/i })).toBeVisible();
-	});
-
-	test("le lien 'Mes commandes' navigue correctement", async ({ page }) => {
-		await page.getByRole("link", { name: /Mes commandes/i }).click();
-		await expect(page).toHaveURL(/\/compte\/commandes|\/commandes/);
-	});
-});
-
 test.describe("Compte utilisateur - Navigation", () => {
-	test("la navigation du compte contient tous les liens", async ({ page }) => {
-		await page.goto("/compte");
+	test("la navigation du compte contient les tabs", async ({ page }) => {
+		await page.goto("/commandes");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Desktop navigation items
 		const navLinks = [
-			{ name: /Tableau de bord|Accueil/i, href: "/compte" },
 			{ name: /Commandes/i, href: "/commandes" },
-			{ name: /Mes avis/i, href: "/mes-avis" },
+			{ name: /Adresses/i, href: "/adresses" },
 			{ name: /Paramètres/i, href: "/parametres" },
 		];
 
@@ -53,10 +19,9 @@ test.describe("Compte utilisateur - Navigation", () => {
 
 	test("naviguer entre les sections du compte", async ({ page }) => {
 		const sections = [
-			{ url: "/compte", waitFor: /Tableau de bord/i },
-			{ url: "/compte/commandes", waitFor: /Mes commandes|Commandes/i },
-			{ url: "/compte/parametres", waitFor: /Paramètres/i },
-			{ url: "/compte/adresses", waitFor: /Mes adresses|Adresses/i },
+			{ url: "/commandes", waitFor: /Mes commandes|Commandes/i },
+			{ url: "/parametres", waitFor: /Paramètres/i },
+			{ url: "/adresses", waitFor: /Mes adresses|Adresses/i },
 		];
 
 		for (const section of sections) {
@@ -72,7 +37,7 @@ test.describe("Compte utilisateur - Navigation", () => {
 
 test.describe("Compte utilisateur - Commandes", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/compte/commandes");
+		await page.goto("/commandes");
 		await page.waitForLoadState("domcontentloaded");
 	});
 
@@ -90,7 +55,7 @@ test.describe("Compte utilisateur - Commandes", () => {
 
 test.describe("Compte utilisateur - Adresses", () => {
 	test.beforeEach(async ({ page }) => {
-		await page.goto("/compte/adresses");
+		await page.goto("/adresses");
 		await page.waitForLoadState("domcontentloaded");
 	});
 

@@ -42,13 +42,11 @@ export const ROUTES = {
 
 	// Customer account
 	ACCOUNT: {
-		ROOT: "/compte",
+		ROOT: "/commandes",
 		ORDERS: "/commandes",
 		ORDER_DETAIL: (orderIdOrNumber: string) => `/commandes/${orderIdOrNumber}`,
 		FAVORITES: "/favoris",
-		REVIEWS: "/mes-avis",
 		ADDRESSES: "/adresses",
-		CUSTOMIZATIONS: "/mes-demandes",
 		SETTINGS: "/parametres",
 	},
 

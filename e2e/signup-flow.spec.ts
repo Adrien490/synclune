@@ -37,7 +37,7 @@ test.describe("Parcours inscription complète", { tag: ["@critical"] }, () => {
 
 		// Verify we're on a valid post-signup page
 		const url = page.url();
-		const validDestinations = [/\/verification/, /\/connexion/, /\/compte/, /\/$/];
+		const validDestinations = [/\/verification/, /\/connexion/, /\/commandes/, /\/$/];
 
 		const isValidDestination = validDestinations.some((pattern) => pattern.test(url));
 

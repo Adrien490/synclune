@@ -452,7 +452,7 @@ describe("ReviewRequestEmail", () => {
 				skuVariants: "Argent 925",
 			},
 		],
-		reviewUrl: "https://synclune.fr/mes-avis",
+		reviewUrl: "https://synclune.fr/commandes",
 		unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 	};
 

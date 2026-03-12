@@ -1,5 +1,6 @@
 import { HeroFloatingImages } from "./floating-images";
 import { SectionTitle } from "@/shared/components/section-title";
+import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { Button } from "@/shared/components/ui/button";
 import { RotatingWord } from "@/shared/components/ui/rotating-word";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
@@ -45,34 +46,39 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 		<section
 			id="hero-section"
 			aria-labelledby="hero-title"
+			aria-describedby="hero-subtitle"
 			className="relative flex min-h-[calc(60dvh-4rem)] items-center mask-b-from-90% mask-b-to-100% pt-16 pb-10 sm:min-h-[calc(90dvh-5rem)] sm:mask-b-from-85% sm:pt-20 sm:pb-16 md:pt-28 md:pb-24 lg:min-h-screen"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-x-0 top-0 bottom-0 -z-10" aria-hidden="true">
 				{/* Single instance — component handles responsive internally
             (desktop: count particles, mobile: ceil(count/2) with reduced blur) */}
-				<ParticleBackground
-					shape={["heart", "pearl", "drop", "diamond", "circle"]}
-					colors={[
-						"var(--primary)",
-						"var(--secondary)",
-						"oklch(0.92 0.08 350)",
-						"oklch(0.75 0.12 280)",
-					]}
-					count={10}
-					size={[25, 90]}
-					opacity={[0.3, 0.7]}
-					blur={[4, 12]}
-					animationStyle="drift"
-					depthParallax={true}
-				/>
+				<ErrorBoundary fallback={null}>
+					<ParticleBackground
+						shape={["heart", "pearl", "drop", "diamond", "circle"]}
+						colors={[
+							"var(--primary)",
+							"var(--secondary)",
+							"oklch(0.92 0.08 350)",
+							"oklch(0.75 0.12 280)",
+						]}
+						count={10}
+						size={[25, 90]}
+						opacity={[0.3, 0.7]}
+						blur={[4, 12]}
+						animationStyle="drift"
+						depthParallax={true}
+					/>
+				</ErrorBoundary>
 				<div className="bg-background/10 absolute inset-0" />
 			</div>
 
 			{/* Floating product images - Desktop only, streams in after products load */}
-			<Suspense fallback={null}>
-				<HeroFloatingImagesAsync productsPromise={productsPromise} />
-			</Suspense>
+			<ErrorBoundary fallback={null}>
+				<Suspense fallback={null}>
+					<HeroFloatingImagesAsync productsPromise={productsPromise} />
+				</Suspense>
+			</ErrorBoundary>
 
 			<div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 2xl:max-w-7xl">
 				<div className="flex flex-col items-center">

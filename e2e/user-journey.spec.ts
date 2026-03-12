@@ -35,7 +35,7 @@ test.describe("Parcours utilisateur authentifie", { tag: ["@regression"] }, () =
 		});
 	});
 
-	const accountRoutes = ["/compte", "/compte/commandes", "/compte/adresses", "/compte/favoris"];
+	const accountRoutes = ["/commandes", "/adresses", "/favoris"];
 
 	for (const route of accountRoutes) {
 		test(`${route} redirects unauthenticated users to login`, async ({ page }) => {

@@ -29,7 +29,7 @@ export async function getNavbarMenuData() {
 	cacheLife("collections");
 	cacheTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
-	const [collectionsData, productTypesData] = await Promise.all([
+	const [collectionsData, productTypesData] = await Promise.allSettled([
 		getCollections({
 			perPage: 4,
 			sortBy: "products-descending",
@@ -42,5 +42,14 @@ export async function getNavbarMenuData() {
 		}),
 	]);
 
-	return { collectionsData, productTypesData };
+	return {
+		collectionsData:
+			collectionsData.status === "fulfilled"
+				? collectionsData.value
+				: { collections: [], totalCount: 0 },
+		productTypesData:
+			productTypesData.status === "fulfilled"
+				? productTypesData.value
+				: { productTypes: [], totalCount: 0 },
+	};
 }

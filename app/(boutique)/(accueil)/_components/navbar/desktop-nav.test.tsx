@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock next/font/google (imported transitively via barrel → unsaved-changes-dialog → alert-dialog → fonts)
@@ -34,8 +34,9 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock next/navigation
+const mockPush = vi.fn();
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn() }),
+	useRouter: () => ({ push: mockPush }),
 	usePathname: () => "/produits",
 }));
 
@@ -163,5 +164,26 @@ describe("DesktopNav", () => {
 
 		expect(screen.getByTestId("mega-menu-creations")).toBeInTheDocument();
 		expect(screen.getByTestId("mega-menu-collections")).toBeInTheDocument();
+	});
+
+	describe("keyboard navigation", () => {
+		it("navigates on Enter key press on dropdown trigger", () => {
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			fireEvent.keyDown(trigger, { key: "Enter" });
+
+			expect(mockPush).toHaveBeenCalledWith("/produits");
+		});
+
+		it("does not navigate on Space key press (toggles dropdown)", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			fireEvent.keyDown(trigger, { key: " " });
+
+			expect(mockPush).not.toHaveBeenCalled();
+		});
 	});
 });

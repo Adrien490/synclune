@@ -56,14 +56,7 @@ const authRoutes = [
 
 // Routes protégées par authentification (utilisateur connecté requis)
 // Note: Couvre les routes exactes ET leurs sous-routes (ex: /compte/*)
-const protectedRoutes = [
-	"/compte",
-	"/commandes",
-	"/adresses",
-	"/mes-avis",
-	"/mes-demandes",
-	"/parametres",
-] as const;
+const protectedRoutes = ["/commandes", "/adresses", "/parametres"] as const;
 
 // Routes protégées par admin (admin requis)
 const adminRoutes = ["/admin"] as const;
@@ -105,6 +98,11 @@ export async function proxy(request: NextRequest) {
 	const sessionCookie = getSessionCookie(request);
 	const isLoggedIn = !!sessionCookie;
 
+	// ===== 0. REDIRECT /compte → /commandes =====
+	if (pathname === "/compte" || pathname.startsWith("/compte/")) {
+		return NextResponse.redirect(new URL("/commandes", nextUrl.origin));
+	}
+
 	// ===== 1. ROUTES API =====
 	// Toutes les routes API gèrent leur propre authentification côté serveur
 	if (matchesAnyRoute(pathname, apiRoutes)) {
@@ -112,11 +110,10 @@ export async function proxy(request: NextRequest) {
 	}
 
 	// ===== 2. ROUTES D'AUTHENTIFICATION (AVANT les routes publiques) =====
-	// Rediriger les utilisateurs connectés vers /compte
+	// Rediriger les utilisateurs connectés vers /commandes
 	if (matchesAnyRoute(pathname, authRoutes)) {
 		if (isLoggedIn) {
-			// Rediriger vers /compte
-			return NextResponse.redirect(new URL("/compte", nextUrl.origin));
+			return NextResponse.redirect(new URL("/commandes", nextUrl.origin));
 		}
 		// Utilisateur non connecté -> autoriser l'accès aux pages d'auth
 		return NextResponse.next();

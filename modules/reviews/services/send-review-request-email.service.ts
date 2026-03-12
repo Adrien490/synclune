@@ -64,8 +64,8 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 
 	const products = Array.from(productsMap.values());
 
-	// 4. URL vers la page "Mes avis"
-	const reviewUrl = `${SITE_URL}/mes-avis`;
+	// 4. URL vers les commandes
+	const reviewUrl = `${SITE_URL}/commandes`;
 
 	// 5. Mark reviewRequestSentAt BEFORE sending (optimistic lock to prevent duplicates on crash/timeout)
 	await prisma.order.update({

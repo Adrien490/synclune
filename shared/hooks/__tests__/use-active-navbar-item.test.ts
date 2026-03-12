@@ -103,10 +103,10 @@ describe("useActiveNavbarItem", () => {
 				expect(result.current.isMenuItemActive("/collections")).toBe(true);
 			});
 
-			it("is active for /compte subpaths", () => {
-				setPath("/compte/profil");
+			it("is active for /commandes subpaths", () => {
+				setPath("/commandes/ORD-001");
 				const { result } = renderHook(() => useActiveNavbarItem());
-				expect(result.current.isMenuItemActive("/compte")).toBe(true);
+				expect(result.current.isMenuItemActive("/commandes")).toBe(true);
 			});
 		});
 
@@ -271,14 +271,6 @@ describe("useActiveNavbarItem", () => {
 			expect(scope).toBeNull();
 		});
 
-		it("returns 'Mon compte' scope for /compte", () => {
-			setPath("/compte");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Mon compte");
-			expect(scope?.href).toBe("/compte");
-		});
-
 		it("returns 'Mon compte' scope for /commandes", () => {
 			setPath("/commandes/ORD-001");
 			const { result } = renderHook(() => useActiveNavbarItem());
@@ -302,13 +294,6 @@ describe("useActiveNavbarItem", () => {
 
 		it("returns 'Mon compte' scope for /parametres", () => {
 			setPath("/parametres");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Mon compte");
-		});
-
-		it("returns 'Mon compte' scope for /mes-avis", () => {
-			setPath("/mes-avis");
 			const { result } = renderHook(() => useActiveNavbarItem());
 			const scope = result.current.getCurrentScope();
 			expect(scope?.label).toBe("Mon compte");

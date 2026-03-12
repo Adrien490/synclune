@@ -28,8 +28,8 @@ async function authenticateViaAPI(
 		await page.goto("/");
 		await page.waitForLoadState("domcontentloaded");
 
-		// Verify we're authenticated by checking we can access /compte
-		await page.goto("/compte");
+		// Verify we're authenticated by checking we can access /commandes
+		await page.goto("/commandes");
 		await page.waitForLoadState("domcontentloaded");
 
 		if (!page.url().includes("/connexion")) {

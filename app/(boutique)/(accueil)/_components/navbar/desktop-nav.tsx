@@ -78,8 +78,16 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								data-active={itemIsActive}
 								aria-current={itemIsActive ? "page" : undefined}
 								onClick={(e) => {
-									// Only navigate on mouse click, not keyboard activation
+									// Navigate on mouse click (detail > 0), not keyboard activation
+									// Keyboard users use the dropdown content links instead
 									if (e.detail > 0 && !e.defaultPrevented) {
+										router.push(item.href);
+									}
+								}}
+								onKeyDown={(e) => {
+									// Enter navigates to the section page, Space toggles dropdown
+									if (e.key === "Enter") {
+										e.preventDefault();
 										router.push(item.href);
 									}
 								}}

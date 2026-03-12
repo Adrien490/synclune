@@ -145,7 +145,7 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 			count: ordersToRemind.length,
 		});
 
-		const reviewUrl = `${SITE_URL}/mes-avis`;
+		const reviewUrl = `${SITE_URL}/commandes`;
 		const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 
 		for (const order of ordersToRemind) {

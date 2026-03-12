@@ -11,10 +11,10 @@ import Image from "next/image";
  */
 export function CollectionMiniGrid({
 	images,
-	collectionName: _collectionName,
 }: {
 	images: CollectionImage[];
-	collectionName: string;
+	/** @deprecated No longer used — kept for backwards compatibility */
+	collectionName?: string;
 }) {
 	const count = images.length;
 

@@ -53,7 +53,7 @@ describe("sendReviewRequestEmail", () => {
 			customerName: "Marie Dupont",
 			orderNumber: "CMD-001",
 			products: mockProducts,
-			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
+			reviewUrl: "https://test.com/commandes?order=CMD-001",
 			unsubscribeUrl: "https://test.com/newsletter/desabonnement?token=abc",
 		});
 
@@ -64,7 +64,7 @@ describe("sendReviewRequestEmail", () => {
 					customerName: "Marie Dupont",
 					orderNumber: "CMD-001",
 					products: mockProducts,
-					reviewUrl: "https://test.com/mes-avis?order=CMD-001",
+					reviewUrl: "https://test.com/commandes?order=CMD-001",
 				}),
 			}),
 			expect.objectContaining({
@@ -84,7 +84,7 @@ describe("sendReviewRequestEmail", () => {
 			customerName: "Marie Dupont",
 			orderNumber: "CMD-001",
 			products: mockProducts,
-			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
+			reviewUrl: "https://test.com/commandes?order=CMD-001",
 			unsubscribeUrl,
 		});
 
@@ -105,7 +105,7 @@ describe("sendReviewRequestEmail", () => {
 			customerName: "Marie Dupont",
 			orderNumber: "CMD-001",
 			products: mockProducts,
-			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
+			reviewUrl: "https://test.com/commandes?order=CMD-001",
 			unsubscribeUrl: "https://test.com/newsletter/desabonnement?token=abc",
 		});
 
@@ -122,7 +122,7 @@ describe("sendReviewRequestEmail", () => {
 			customerName: "Marie Dupont",
 			orderNumber: "CMD-001",
 			products: mockProducts,
-			reviewUrl: "https://test.com/mes-avis?order=CMD-001",
+			reviewUrl: "https://test.com/commandes?order=CMD-001",
 			unsubscribeUrl: "https://test.com/newsletter/desabonnement?token=abc",
 		});
 

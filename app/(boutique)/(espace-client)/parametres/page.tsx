@@ -13,6 +13,7 @@ import { SecuritySection } from "@/modules/users/components/security-section";
 import { GdprSection } from "@/modules/users/components/gdpr-section";
 import { NewsletterSettingsCard } from "@/modules/newsletter/components/newsletter-settings-card";
 import { ActiveSessionsCard } from "@/modules/auth/components/active-sessions-card";
+import { LogoutCard } from "@/modules/auth/components/logout-card";
 export const metadata: Metadata = {
 	title: "Paramètres",
 };
@@ -58,6 +59,8 @@ export default async function SettingsPage() {
 					<Suspense fallback={<SessionsSkeleton />}>
 						<SessionsWrapper />
 					</Suspense>
+
+					<LogoutCard />
 				</div>
 			</div>
 		</>

@@ -37,7 +37,7 @@ export default function OrdersError({ reset }: ErrorPageProps) {
 							Réessayer
 						</Button>
 						<Button asChild variant="outline" size="lg">
-							<Link href={ROUTES.ACCOUNT.ROOT}>Tableau de bord</Link>
+							<Link href={ROUTES.ACCOUNT.ORDERS}>Mes commandes</Link>
 						</Button>
 					</div>
 				</EmptyContent>

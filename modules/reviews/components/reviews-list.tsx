@@ -74,7 +74,7 @@ export function ReviewsList({
 				{isAuthenticated && (
 					<EmptyActions>
 						<Button variant="outline" asChild>
-							<Link href="/mes-avis">Donner mon avis</Link>
+							<Link href="/commandes">Donner mon avis</Link>
 						</Button>
 					</EmptyActions>
 				)}

@@ -27,10 +27,7 @@ export default function EspaceClientNotFound() {
 					</p>
 					<EmptyActions>
 						<Button asChild size="lg">
-							<Link href={ROUTES.ACCOUNT.ROOT}>Retour au tableau de bord</Link>
-						</Button>
-						<Button asChild variant="outline" size="lg">
-							<Link href={ROUTES.ACCOUNT.ORDERS}>Voir mes commandes</Link>
+							<Link href={ROUTES.ACCOUNT.ORDERS}>Mes commandes</Link>
 						</Button>
 					</EmptyActions>
 				</EmptyContent>

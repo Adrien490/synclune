@@ -64,7 +64,7 @@ export const ReviewReminderEmail = ({
 ReviewReminderEmail.PreviewProps = {
 	customerName: "Marie",
 	orderNumber: "CMD-1730000000-ABCD",
-	reviewUrl: "https://synclune.fr/mes-avis",
+	reviewUrl: "https://synclune.fr/commandes",
 	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as ReviewReminderEmailProps;
 

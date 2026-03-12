@@ -4,13 +4,9 @@ import { expectNoA11yViolations } from "../helpers/axe";
 
 test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () => {
 	const authenticatedPages = [
-		{ path: "/compte", name: "Compte" },
-		{ path: "/compte/commandes", name: "Commandes" },
-		{ path: "/compte/adresses", name: "Adresses" },
+		{ path: "/commandes", name: "Commandes" },
+		{ path: "/adresses", name: "Adresses" },
 		{ path: "/parametres", name: "Paramètres" },
-		// P2 - Additional authenticated pages
-		{ path: "/mes-avis", name: "Mes avis" },
-		{ path: "/mes-demandes", name: "Mes demandes" },
 	];
 
 	for (const { path, name } of authenticatedPages) {
@@ -46,7 +42,7 @@ test.describe("Accessibilité - Pages authentifiées", { tag: ["@slow"] }, () =>
 	});
 
 	test("Détail commande passe l'audit axe-core WCAG AA", async ({ page }) => {
-		await page.goto("/compte/commandes");
+		await page.goto("/commandes");
 		await page.waitForLoadState("domcontentloaded");
 
 		const firstOrderLink = page.locator("a[href*='/commandes/']").first();
@@ -71,12 +67,9 @@ async function enableDarkMode(page: Page) {
 
 test.describe("Accessibilité - Pages authentifiées (dark mode)", { tag: ["@slow"] }, () => {
 	const authenticatedDarkPages = [
-		{ path: "/compte", name: "Compte" },
-		{ path: "/compte/commandes", name: "Commandes" },
-		{ path: "/compte/adresses", name: "Adresses" },
+		{ path: "/commandes", name: "Commandes" },
+		{ path: "/adresses", name: "Adresses" },
 		{ path: "/parametres", name: "Paramètres" },
-		{ path: "/mes-avis", name: "Mes avis" },
-		{ path: "/mes-demandes", name: "Mes demandes" },
 	];
 
 	for (const { path, name } of authenticatedDarkPages) {
@@ -131,7 +124,7 @@ test.describe("Accessibilité - Pages authentifiées (dark mode)", { tag: ["@slo
 	});
 
 	test("Détail commande passe l'audit axe-core WCAG AA en dark mode", async ({ page }) => {
-		await page.goto("/compte/commandes");
+		await page.goto("/commandes");
 		await page.waitForLoadState("domcontentloaded");
 
 		const firstOrderLink = page.locator("a[href*='/commandes/']").first();

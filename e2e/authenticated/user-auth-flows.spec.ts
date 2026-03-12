@@ -22,7 +22,7 @@ test.describe("Flux d'authentification", { tag: ["@critical"] }, () => {
 
 			// Should be on account or home page
 			const url = page.url();
-			expect(url).toMatch(/\/(compte|$)/);
+			expect(url).toMatch(/\/(commandes|compte|$)/);
 		},
 	);
 
@@ -42,8 +42,8 @@ test.describe("Flux d'authentification", { tag: ["@critical"] }, () => {
 	});
 
 	test("deconnexion redirige vers l'accueil ou la connexion", async ({ page }) => {
-		// Start on the account page (authenticated via storage state)
-		await page.goto("/compte");
+		// Start on the settings page (authenticated via storage state)
+		await page.goto("/parametres");
 		await page.waitForLoadState("domcontentloaded");
 		await expect(page).not.toHaveURL(/\/connexion/);
 
@@ -64,12 +64,12 @@ test.describe("Flux d'authentification", { tag: ["@critical"] }, () => {
 		}).toPass({ timeout: TIMEOUTS.AUTH_REDIRECT });
 	});
 
-	test("acces a /compte sans auth redirige vers la connexion", async ({ browser }) => {
+	test("acces a /commandes sans auth redirige vers la connexion", async ({ browser }) => {
 		// Create a fresh context without auth state
 		const context = await browser.newContext();
 		const page = await context.newPage();
 
-		await page.goto("http://localhost:3000/compte");
+		await page.goto("http://localhost:3000/commandes");
 		await page.waitForLoadState("domcontentloaded");
 
 		await expect(page).toHaveURL(/\/connexion/, { timeout: TIMEOUTS.AUTH_REDIRECT });

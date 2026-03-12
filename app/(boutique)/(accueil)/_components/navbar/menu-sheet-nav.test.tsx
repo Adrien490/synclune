@@ -95,7 +95,7 @@ const baseNavItems = [
 		hasDropdown: true,
 	},
 	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" as const },
-	{ href: "/compte", label: "Mon compte", icon: "user" as const },
+	{ href: "/commandes", label: "Mon compte", icon: "user" as const },
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
 ];
 
@@ -155,7 +155,7 @@ describe("MenuSheetNav", () => {
 	describe("logged out", () => {
 		it("shows sign-in link and sign-up link", () => {
 			const loggedOutNavItems = baseNavItems.map((item) =>
-				item.href === "/compte"
+				item.href === "/commandes"
 					? { ...item, href: "/connexion", label: "Se connecter", icon: "log-in" as const }
 					: item,
 			);

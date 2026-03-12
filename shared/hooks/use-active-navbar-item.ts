@@ -94,14 +94,12 @@ export function useActiveNavbarItem() {
 
 		// Pages espace client
 		if (
-			pathname.startsWith("/compte") ||
 			pathname.startsWith("/commandes") ||
 			pathname.startsWith("/favoris") ||
 			pathname.startsWith("/adresses") ||
-			pathname.startsWith("/parametres") ||
-			pathname.startsWith("/mes-avis")
+			pathname.startsWith("/parametres")
 		) {
-			return { label: "Mon compte", href: "/compte" };
+			return { label: "Mon compte", href: "/commandes" };
 		}
 
 		// Pages paiement
