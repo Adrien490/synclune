@@ -1,3 +1,5 @@
+"use client";
+
 import { COLLECTION_IMAGE_QUALITY } from "@/modules/collections/constants/image-sizes.constants";
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import Image from "next/image";
@@ -9,13 +11,7 @@ import Image from "next/image";
  * Uses role="img" with aria-label on the container so screen readers
  * announce a single description instead of each individual image.
  */
-export function CollectionMiniGrid({
-	images,
-}: {
-	images: CollectionImage[];
-	/** @deprecated No longer used — kept for backwards compatibility */
-	collectionName?: string;
-}) {
+export function CollectionMiniGrid({ images }: { images: CollectionImage[] }) {
 	const count = images.length;
 
 	// 1 image: pleine taille

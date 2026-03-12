@@ -108,6 +108,7 @@ interface UserHeaderProps {
 }
 
 export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProps) {
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string should fall back to "vous"
 	const firstName = session.user.name?.split(" ")[0] || "vous";
 
 	return (

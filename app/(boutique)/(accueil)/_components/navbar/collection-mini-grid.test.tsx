@@ -23,7 +23,7 @@ const makeImages = (count: number) =>
 describe("CollectionMiniGrid", () => {
 	describe("1 image layout", () => {
 		it("renders a single full-size image", () => {
-			render(<CollectionMiniGrid images={makeImages(1)} collectionName="Mariage" />);
+			render(<CollectionMiniGrid images={makeImages(1)} />);
 
 			const images = screen.getAllByRole("img", { hidden: true });
 			// Container role="img" + 1 actual img
@@ -31,9 +31,7 @@ describe("CollectionMiniGrid", () => {
 		});
 
 		it("uses role='img' with descriptive aria-label", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(1)} collectionName="Mariage" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(1)} />);
 
 			const imgContainer = container.querySelector("[role='img']");
 			expect(imgContainer).toBeInTheDocument();
@@ -41,9 +39,7 @@ describe("CollectionMiniGrid", () => {
 		});
 
 		it("renders blur placeholder when blurDataUrl is provided", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(1)} collectionName="Test" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(1)} />);
 
 			const img = container.querySelector("img");
 			expect(img?.getAttribute("placeholder")).toBe("blur");
@@ -52,18 +48,14 @@ describe("CollectionMiniGrid", () => {
 
 	describe("2 images layout", () => {
 		it("renders two images in a 2-column grid", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(2)} collectionName="Bohème" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(2)} />);
 
 			const imgs = container.querySelectorAll("img");
 			expect(imgs).toHaveLength(2);
 		});
 
 		it("uses 'Aperçu' as aria-label", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(2)} collectionName="Bohème" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(2)} />);
 
 			const imgContainer = container.querySelector("[role='img']");
 			expect(imgContainer?.getAttribute("aria-label")).toBe("Aperçu");
@@ -72,9 +64,7 @@ describe("CollectionMiniGrid", () => {
 
 	describe("3-4 images layout (2x2 grid)", () => {
 		it("renders 3 images in a 2x2 grid", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(3)} collectionName="Minimale" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(3)} />);
 
 			const imgs = container.querySelectorAll("img");
 			expect(imgs).toHaveLength(3);
@@ -84,18 +74,14 @@ describe("CollectionMiniGrid", () => {
 		});
 
 		it("renders max 4 images even when more are provided", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(5)} collectionName="Test" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(5)} />);
 
 			const imgs = container.querySelectorAll("img");
 			expect(imgs).toHaveLength(4);
 		});
 
 		it("marks all images as aria-hidden", () => {
-			const { container } = render(
-				<CollectionMiniGrid images={makeImages(3)} collectionName="Test" />,
-			);
+			const { container } = render(<CollectionMiniGrid images={makeImages(3)} />);
 
 			const imgs = container.querySelectorAll("img");
 			for (const img of imgs) {

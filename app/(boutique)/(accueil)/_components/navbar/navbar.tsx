@@ -23,16 +23,8 @@ import { cn } from "@/shared/utils/cn";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
+import { iconButtonClassName } from "./navbar-styles";
 import { NavbarWrapper } from "./navbar-wrapper";
-
-/** Classes communes pour les boutons icônes de la navbar */
-const iconButtonClassName = cn(
-	"relative items-center justify-center size-11 rounded-xl group",
-	"text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-	"transition-[transform,color,background-color] duration-300 ease-out",
-	"motion-safe:hover:scale-105 motion-safe:active:scale-95",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-);
 
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB

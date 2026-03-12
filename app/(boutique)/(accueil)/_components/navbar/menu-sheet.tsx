@@ -19,15 +19,13 @@ import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
+import { iconButtonClassName } from "./navbar-styles";
 
-/** Trigger button classes (mirrors iconButtonClassName from navbar.tsx) */
+/** Trigger button classes — extends shared iconButtonClassName with mobile-specific overrides */
 const triggerClassName = cn(
-	"relative -ml-3 inline-flex items-center justify-center size-11 rounded-xl lg:hidden",
-	"bg-transparent hover:bg-accent text-muted-foreground hover:text-accent-foreground",
-	"transition-[transform,color,background-color] duration-300 ease-out",
-	"motion-safe:hover:scale-105 motion-safe:active:scale-95",
-	"cursor-pointer group",
-	"focus-visible:outline-none focus-visible:outline-2 focus-visible:outline-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
+	iconButtonClassName,
+	"-ml-3 inline-flex lg:hidden bg-transparent cursor-pointer",
+	"focus-visible:outline-2 focus-visible:outline-primary",
 );
 
 /**

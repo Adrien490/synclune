@@ -40,21 +40,13 @@ vi.mock("./collection-mini-grid", () => ({
 	CollectionMiniGrid: () => <div data-testid="collection-grid" />,
 }));
 
-vi.mock("./section-header", () => ({
-	SectionHeader: ({
-		children,
-		id,
-		as: Tag = "h3",
-	}: {
-		children: React.ReactNode;
-		id: string;
-		as?: "h2" | "h3";
-	}) => <Tag id={id}>{children}</Tag>,
-}));
-
-vi.mock("./user-header", () => ({
-	UserHeader: () => <div data-testid="user-header" />,
-}));
+vi.mock("./menu-sheet-nav-sections", async (importOriginal) => {
+	const original = (await importOriginal()) as Record<string, unknown>;
+	return {
+		...original,
+		UserHeader: () => <div data-testid="user-header" />,
+	};
+});
 
 // Mock hooks
 vi.mock("@/shared/hooks/use-active-navbar-item", () => ({
