@@ -17,7 +17,6 @@ import {
  * - ReviewMedia (url)
  * - CustomizationMedia (url)
  * - User.image (avatars)
- * - Testimonial.imageUrl
  *
  * Runs monthly to limit orphan file accumulation.
  */
@@ -129,7 +128,6 @@ export async function cleanupOrphanMedia(): Promise<{
  * - reviewMedia         → ReviewMedia (url)
  * - customizationMedia  → CustomizationMedia (url)
  * - (user avatars)      → User.image
- * - (testimonials)      → Testimonial (imageUrl)
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();
@@ -210,34 +208,7 @@ async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> 
 		customizationCursor = batch[batch.length - 1]!.id;
 	}
 
-	// 4. Testimonial images - paginated
-	let testimonialCursor: string | undefined;
-
-	for (;;) {
-		if (Date.now() > deadline) {
-			logger.warn("Deadline reached during DB key scan, aborting safely", {
-				cronJob: "cleanup-orphan-media",
-			});
-			throw new Error("Deadline exceeded during DB key scan");
-		}
-		const batch = await prisma.testimonial.findMany({
-			where: { imageUrl: { not: null } },
-			select: { id: true, imageUrl: true },
-			take: DB_QUERY_BATCH_SIZE,
-			...(testimonialCursor && { skip: 1, cursor: { id: testimonialCursor } }),
-			orderBy: { id: "asc" },
-		});
-		for (const t of batch) {
-			if (t.imageUrl) {
-				const key = extractFileKeyFromUrl(t.imageUrl);
-				if (key) keys.add(key);
-			}
-		}
-		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		testimonialCursor = batch[batch.length - 1]!.id;
-	}
-
-	// 5. User avatars (only those with non-null image) - paginated
+	// 4. User avatars (only those with non-null image) - paginated
 	let userCursor: string | undefined;
 
 	for (;;) {

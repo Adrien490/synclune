@@ -144,7 +144,6 @@ async function cleanup(): Promise<void> {
 	await prisma.auditLog.deleteMany();
 	await prisma.dispute.deleteMany();
 	await prisma.failedEmail.deleteMany();
-	await prisma.testimonial.deleteMany();
 	await prisma.customizationMedia.deleteMany();
 
 	await prisma.reviewMedia.deleteMany();
@@ -3383,27 +3382,6 @@ async function main(): Promise<void> {
 
 	await prisma.auditLog.createMany({ data: auditLogData });
 	console.log(`✅ ${auditLogData.length} entrées d'audit log créées`);
-
-	// ============================================
-	// TESTIMONIALS (missing model)
-	// ============================================
-	const testimonialData: Prisma.TestimonialCreateManyInput[] = [
-		{
-			imageUrl:
-				"https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
-			blurDataUrl:
-				"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAADklEQVQI12P4z8BQDwAEgAF/QualzQAAAABJRU5ErkJggg==",
-		},
-		{
-			imageUrl:
-				"https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=200&h=200&fit=crop&crop=face",
-		},
-		{
-			imageUrl: null,
-		},
-	];
-	await prisma.testimonial.createMany({ data: testimonialData });
-	console.log(`✅ ${testimonialData.length} témoignages créés`);
 
 	// ============================================
 	// FAILED EMAILS (for retry-failed-emails cron)

@@ -5,7 +5,7 @@ const steps = [
 	},
 	{
 		title: "On échange ensemble",
-		description: "Je vous recontacte pour affiner les détails et vous proposer un devis.",
+		description: "Je vous recontacte pour affiner les détails.",
 	},
 	{
 		title: "Je crée votre bijou",

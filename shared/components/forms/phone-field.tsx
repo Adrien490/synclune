@@ -103,7 +103,10 @@ export const PhoneField = ({
 				defaultCountry={defaultCountry}
 				placeholder={placeholder}
 				value={field.state.value ?? ""}
-				onChange={(value) => field.handleChange(value ?? undefined)}
+				onChange={(value) => {
+					const normalized = value && /^\+\d{1,4}$/.test(value) ? "" : (value ?? "");
+					field.handleChange(normalized);
+				}}
 				onBlur={field.handleBlur}
 				disabled={disabled}
 				inputComponent={CustomInput}

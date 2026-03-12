@@ -72,7 +72,6 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 			sendCustomizationRequest,
 			createToastCallbacks({
 				showSuccessToast: false,
-				showErrorToast: false,
 				onSuccess: (result) => {
 					clearDraft();
 					if (result.message) {

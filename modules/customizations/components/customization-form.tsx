@@ -31,7 +31,7 @@ export function CustomizationForm({ productTypes, userInfo, onSuccess }: Customi
 			form.reset();
 			onSuccess?.();
 			toast.success("Message envoyé !", {
-				description: "Je vous réponds sous 24-48h avec un devis personnalisé",
+				description: "Je vous réponds prochainement",
 				duration: 8000,
 			});
 		},

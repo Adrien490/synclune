@@ -18,7 +18,13 @@ export async function GET() {
 	const startTime = cronTimer();
 	try {
 		const unconfirmedResult = await cleanupUnconfirmedNewsletterSubscriptions();
-		const inactiveResult = await unsubscribeInactiveNewsletterSubscribers();
+
+		// Check deadline before second operation (maxDuration=30s, leave 10s margin)
+		const elapsed = Date.now() - startTime;
+		let inactiveResult = { unsubscribed: 0, hasMore: false };
+		if (elapsed < 20_000) {
+			inactiveResult = await unsubscribeInactiveNewsletterSubscribers();
+		}
 
 		return cronSuccess(
 			{

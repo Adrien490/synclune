@@ -27,6 +27,7 @@ export const customizationSchema = z.object({
 
 	phone: z
 		.string()
+		.transform((val) => (val && /^\+\d{1,4}$/.test(val) ? "" : val))
 		.refine((val) => !val || isValidPhoneNumber(val), {
 			message: "Numéro de téléphone invalide",
 		})

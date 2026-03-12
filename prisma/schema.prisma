@@ -1058,7 +1058,7 @@ model ReviewMedia {
 
   // === MEDIA (Pattern SkuMedia) ===
   url         String  @db.VarChar(2048) // URL UploadThing
-  blurDataUrl String? @db.Text // Base64 blur placeholder (~200 bytes)
+  blurDataUrl String? @db.Text // ThumbHash base64 placeholder (~35-50 chars)
   altText     String? @db.VarChar(255) // Alt text pour accessibilite
 
   // Position pour ordre d'affichage (0, 1, 2)
@@ -1254,15 +1254,6 @@ model CustomizationMedia {
 
   // === INDEXES ===
   @@index([customizationRequestId, position])
-}
-
-model Testimonial {
-  id          String    @id @default(cuid())
-  imageUrl    String?   @db.VarChar(2048)
-  blurDataUrl String?   @db.Text
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  deletedAt   DateTime?
 }
 
 // ============================================================================

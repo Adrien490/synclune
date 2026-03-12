@@ -65,8 +65,8 @@ export function cronSuccess(data: Record<string, unknown>, startTime?: number): 
 /**
  * Standard error response for cron jobs
  */
-export function cronError(message: string, status = 500): NextResponse {
-	logger.error(`Cron error: ${message}`, undefined, { cronJob: "unknown" });
+export function cronError(message: string, status = 500, jobName?: string): NextResponse {
+	logger.error(`Cron error: ${message}`, undefined, { cronJob: jobName ?? "unknown" });
 	return NextResponse.json(
 		{
 			success: false,

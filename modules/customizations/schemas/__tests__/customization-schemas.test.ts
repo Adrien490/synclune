@@ -132,6 +132,27 @@ describe("customizationSchema", () => {
 			expect(result.success).toBe(true);
 		});
 
+		it("should treat country-code-only values as empty (optional)", () => {
+			const result = customizationSchema.safeParse({
+				...validData,
+				phone: "+33",
+			});
+
+			expect(result.success).toBe(true);
+			if (result.success) {
+				expect(result.data.phone).toBe("");
+			}
+		});
+
+		it("should treat other country codes as empty", () => {
+			const result = customizationSchema.safeParse({
+				...validData,
+				phone: "+1",
+			});
+
+			expect(result.success).toBe(true);
+		});
+
 		it("should reject invalid phone number", () => {
 			const result = customizationSchema.safeParse({
 				...validData,

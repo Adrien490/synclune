@@ -160,7 +160,7 @@ function createMetrics(overrides: Partial<ProcessMetrics> = {}): ProcessMetrics 
  */
 async function processImage(
 	image: MediaItemWithBlur,
-	table: "SkuMedia" | "ReviewMedia",
+	table: "SkuMedia" | "ReviewMedia" | "CustomizationMedia",
 ): Promise<ThumbHashProcessResult> {
 	const startTime = performance.now();
 	const previousFormat = detectFormat(image.blurDataUrl);
@@ -180,8 +180,13 @@ async function processImage(
 					where: { id: image.id },
 					data: { blurDataUrl: result.dataUrl },
 				});
-			} else {
+			} else if (table === "ReviewMedia") {
 				await prisma.reviewMedia.update({
+					where: { id: image.id },
+					data: { blurDataUrl: result.dataUrl },
+				});
+			} else {
+				await prisma.customizationMedia.update({
 					where: { id: image.id },
 					data: { blurDataUrl: result.dataUrl },
 				});
@@ -216,7 +221,7 @@ async function processImage(
  */
 async function processBatch(
 	images: MediaItemWithBlur[],
-	table: "SkuMedia" | "ReviewMedia",
+	table: "SkuMedia" | "ReviewMedia" | "CustomizationMedia",
 ): Promise<ThumbHashProcessResult[]> {
 	return Promise.all(images.map((image) => processImage(image, table)));
 }
@@ -225,7 +230,7 @@ async function processBatch(
  * Migre une table vers ThumbHash
  */
 async function migrateTable(
-	table: "SkuMedia" | "ReviewMedia",
+	table: "SkuMedia" | "ReviewMedia" | "CustomizationMedia",
 ): Promise<{ success: number; error: number; skipped: number }> {
 	logInfo(`\n📊 Migration ${table}...`);
 
@@ -238,7 +243,7 @@ async function migrateTable(
 			select: { id: true, url: true, skuId: true, blurDataUrl: true },
 		});
 		images = allImages.map((img) => ({ ...img, blurDataUrl: img.blurDataUrl }));
-	} else {
+	} else if (table === "ReviewMedia") {
 		const allImages = await prisma.reviewMedia.findMany({
 			select: { id: true, url: true, reviewId: true, blurDataUrl: true },
 		});
@@ -246,6 +251,16 @@ async function migrateTable(
 			id: img.id,
 			url: img.url,
 			skuId: img.reviewId,
+			blurDataUrl: img.blurDataUrl,
+		}));
+	} else {
+		const allImages = await prisma.customizationMedia.findMany({
+			select: { id: true, url: true, customizationRequestId: true, blurDataUrl: true },
+		});
+		images = allImages.map((img) => ({
+			id: img.id,
+			url: img.url,
+			skuId: img.customizationRequestId,
 			blurDataUrl: img.blurDataUrl,
 		}));
 	}
@@ -327,6 +342,9 @@ async function main() {
 	// Migrer ReviewMedia
 	const reviewResult = await migrateTable("ReviewMedia");
 
+	// Migrer CustomizationMedia
+	const customizationResult = await migrateTable("CustomizationMedia");
+
 	const totalMs = Math.round(performance.now() - startTime);
 
 	// Résumé
@@ -344,8 +362,13 @@ async function main() {
 	logInfo(`   ❌ Erreurs: ${reviewResult.error}`);
 	logInfo(`   ⏭️  Déjà ThumbHash: ${reviewResult.skipped}`);
 
-	const totalSuccess = skuResult.success + reviewResult.success;
-	const totalError = skuResult.error + reviewResult.error;
+	logInfo("\n📊 CustomizationMedia:");
+	logInfo(`   ✅ Succès: ${customizationResult.success}`);
+	logInfo(`   ❌ Erreurs: ${customizationResult.error}`);
+	logInfo(`   ⏭️  Déjà ThumbHash: ${customizationResult.skipped}`);
+
+	const totalSuccess = skuResult.success + reviewResult.success + customizationResult.success;
+	const totalError = skuResult.error + reviewResult.error + customizationResult.error;
 
 	logInfo(`\n⏱️  Durée totale: ${(totalMs / 1000).toFixed(1)}s`);
 
