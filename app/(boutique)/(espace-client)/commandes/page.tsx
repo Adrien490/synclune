@@ -1,4 +1,3 @@
-import { PageHeader } from "@/shared/components/page-header";
 import { CustomerOrdersTable } from "@/modules/orders/components/customer/customer-orders-table";
 import { CustomerOrdersTableSkeleton } from "@/modules/orders/components/customer/customer-orders-table-skeleton";
 import { getUserOrders } from "@/modules/orders/data/get-user-orders";
@@ -46,12 +45,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
 	return (
 		<>
-			<PageHeader
-				title="Mes commandes"
-				description="Suivez l'état de vos commandes"
-				variant="compact"
-			/>
-
 			<Suspense fallback={<CustomerOrdersTableSkeleton />}>
 				<CustomerOrdersTable ordersPromise={ordersPromise} perPage={perPage} />
 			</Suspense>

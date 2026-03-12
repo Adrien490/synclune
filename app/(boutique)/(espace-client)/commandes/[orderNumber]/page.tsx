@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 
-import { PageHeader } from "@/shared/components/page-header";
 import { OrderDetailContent } from "./_components/order-detail-content";
 import { OrderDetailSkeleton } from "./_components/order-detail-skeleton";
 
@@ -29,15 +28,8 @@ async function OrderPageContent({
 	const { orderNumber } = await paramsPromise;
 
 	return (
-		<>
-			<PageHeader
-				variant="compact"
-				title={`Commande ${orderNumber}`}
-				breadcrumbs={[{ label: "Commandes", href: "/commandes" }]}
-			/>
-			<Suspense fallback={<OrderDetailSkeleton />}>
-				<OrderDetailContent orderNumber={orderNumber} />
-			</Suspense>
-		</>
+		<Suspense fallback={<OrderDetailSkeleton />}>
+			<OrderDetailContent orderNumber={orderNumber} />
+		</Suspense>
 	);
 }

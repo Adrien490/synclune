@@ -7,7 +7,6 @@ import { AddressListSkeleton } from "@/modules/addresses/components/address-list
 import { DeleteAddressAlertDialog } from "@/modules/addresses/components/delete-address-alert-dialog";
 import { DiscardAddressChangesAlertDialog } from "@/modules/addresses/components/discard-address-changes-alert-dialog";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
-import { PageHeader } from "@/shared/components/page-header";
 
 export const metadata: Metadata = {
 	title: "Mes adresses",
@@ -18,12 +17,6 @@ export default function AddressesPage() {
 
 	return (
 		<>
-			<PageHeader
-				title="Mes adresses"
-				description="Gérez vos adresses de livraison"
-				variant="compact"
-			/>
-
 			<Suspense fallback={<AddressListSkeleton />}>
 				<AddressList addressesPromise={addressesPromise} />
 			</Suspense>

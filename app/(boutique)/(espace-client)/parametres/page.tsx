@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 
-import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserProviders } from "@/modules/auth/data/get-user-providers";
@@ -26,8 +25,6 @@ export default async function SettingsPage() {
 
 	return (
 		<>
-			<PageHeader title="Paramètres" variant="compact" />
-
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<div className="space-y-6 lg:col-span-2">
 					<section className="space-y-4" aria-labelledby="profile-heading">

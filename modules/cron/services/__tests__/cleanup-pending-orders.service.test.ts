@@ -492,7 +492,7 @@ describe("cleanupPendingOrders", () => {
 			await cleanupPendingOrders();
 
 			const discountTagCalls = mockUpdateTag.mock.calls.filter(
-				([tag]: [string]) => tag === `discount-usage-${sharedDiscountId}`,
+				(args: unknown[]) => args[0] === `discount-usage-${sharedDiscountId}`,
 			);
 			expect(discountTagCalls).toHaveLength(1);
 		});
