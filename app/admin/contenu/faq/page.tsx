@@ -5,17 +5,17 @@ import { connection } from "next/server";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { FaqList } from "@/modules/content/components/admin/faq-list";
-import { getAdminFaqItems } from "@/modules/content/data/get-admin-faq-items";
+import { FaqList } from "@/modules/faq/components/admin/faq-list";
+import { getAdminFaqItems } from "@/modules/faq/data/get-admin-faq-items";
 
 import { CreateFaqButton } from "./create-faq-button";
 
 const FaqFormDialog = dynamic(() =>
-	import("@/modules/content/components/admin/faq-form-dialog").then((mod) => mod.FaqFormDialog),
+	import("@/modules/faq/components/admin/faq-form-dialog").then((mod) => mod.FaqFormDialog),
 );
 
 const DeleteFaqAlertDialog = dynamic(() =>
-	import("@/modules/content/components/admin/delete-faq-alert-dialog").then(
+	import("@/modules/faq/components/admin/delete-faq-alert-dialog").then(
 		(mod) => mod.DeleteFaqAlertDialog,
 	),
 );

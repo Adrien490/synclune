@@ -4,19 +4,19 @@ import { type Metadata } from "next";
 import { connection } from "next/server";
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { AnnouncementDataTable } from "@/modules/content/components/admin/announcement-data-table";
-import { getAnnouncements } from "@/modules/content/data/get-announcements";
+import { AnnouncementDataTable } from "@/modules/announcements/components/admin/announcement-data-table";
+import { getAnnouncements } from "@/modules/announcements/data/get-announcements";
 
 import { CreateAnnouncementButton } from "./create-announcement-button";
 
 const AnnouncementFormDialog = dynamic(() =>
-	import("@/modules/content/components/admin/announcement-form-dialog").then(
+	import("@/modules/announcements/components/admin/announcement-form-dialog").then(
 		(mod) => mod.AnnouncementFormDialog,
 	),
 );
 
 const DeleteAnnouncementAlertDialog = dynamic(() =>
-	import("@/modules/content/components/admin/delete-announcement-alert-dialog").then(
+	import("@/modules/announcements/components/admin/delete-announcement-alert-dialog").then(
 		(mod) => mod.DeleteAnnouncementAlertDialog,
 	),
 );

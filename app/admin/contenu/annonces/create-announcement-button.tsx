@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { ANNOUNCEMENT_FORM_DIALOG_ID } from "@/modules/content/constants/dialog";
+import { ANNOUNCEMENT_FORM_DIALOG_ID } from "@/modules/announcements/constants/dialog";
 
 export function CreateAnnouncementButton() {
 	const { open } = useDialog(ANNOUNCEMENT_FORM_DIALOG_ID);

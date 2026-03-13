@@ -234,7 +234,7 @@ describe("Footer", () => {
 
 		const paymentList = screen.getByRole("list", { name: /moyens de paiement/i });
 		expect(paymentList).toBeInTheDocument();
-		expect(within(paymentList).getAllByRole("listitem")).toHaveLength(4);
+		expect(within(paymentList).getAllByRole("listitem")).toHaveLength(3);
 	});
 
 	// --- StripeWordmark ---

@@ -3,7 +3,7 @@
 import type { Session } from "@/modules/auth/lib/auth";
 import { CheckoutSection } from "./checkout-section";
 import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
-import { Info, Mail, Newspaper } from "lucide-react";
+import { Info, Mail } from "lucide-react";
 import Link from "next/link";
 
 interface CheckoutContactSectionProps {

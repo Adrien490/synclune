@@ -60,7 +60,7 @@ export async function StructuredData({ includeHomepageSchemas }: StructuredDataP
 			url: `${SITE_URL}/#atelier-section`,
 			image: `${SITE_URL}/opengraph-image`,
 			datePublished: "2025-01-15",
-			dateModified: process.env.DEPLOY_DATE ?? "2025-06-01",
+			dateModified: process.env.DEPLOY_DATE ?? new Date().toISOString().split("T")[0],
 			author: {
 				"@id": `${SITE_URL}/#founder`,
 			},

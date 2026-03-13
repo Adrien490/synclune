@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { FAQ_FORM_DIALOG_ID } from "@/modules/content/constants/dialog";
+import { FAQ_FORM_DIALOG_ID } from "@/modules/faq/constants/dialog";
 
 export function CreateFaqButton() {
 	const { open } = useDialog(FAQ_FORM_DIALOG_ID);
