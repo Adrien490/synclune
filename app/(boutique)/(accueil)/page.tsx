@@ -13,6 +13,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection } from "./_components/atelier-section";
 import { FaqSection } from "@/modules/content/components/faq-section";
+import { FaqSectionSkeleton } from "@/modules/content/components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
@@ -119,9 +120,9 @@ export default async function Page() {
 			</div>
 
 			{/* 6. FAQ - Frequently asked questions with JSON-LD */}
-			<div className="content-defer">
+			<Suspense fallback={<FaqSectionSkeleton />}>
 				<FaqSection />
-			</div>
+			</Suspense>
 		</>
 	);
 }
