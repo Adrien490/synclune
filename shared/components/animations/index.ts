@@ -26,16 +26,22 @@ export { StaggerGrid } from "./stagger-grid";
 // Text animations
 export { SplitText } from "./split-text";
 
+// Number animations
+export { AnimatedNumber, NumberTicker } from "./animated-number";
+
 // Scroll indicator
 export { ScrollIndicator } from "./scroll-indicator";
 
 // Background Animations (effets décoratifs)
 export { AuroraBackground } from "./aurora-background/index";
 export { BubbleDream } from "./bubble-dream";
+export { DecorativeHaloGroup } from "./decorative-halo";
 export { HandDrawnAccent, HandDrawnCircle, HandDrawnUnderline } from "./hand-drawn-accent";
 export { ParticleBackground } from "./particle-background/index";
 
 // Types
+export type { AnimatedNumberProps } from "./animated-number";
+export type { DecorativeHaloProps } from "./decorative-halo";
 export type { ErrorShakeProps } from "./error-shake";
 export type { FadeProps } from "./fade";
 export type { HoverProps } from "./hover";
@@ -57,6 +63,7 @@ export type {
 	AuroraPalette,
 } from "./aurora-background/index";
 export type { BubbleDreamProps } from "./bubble-dream";
+export type { GlitterSparklesProps } from "./glitter-sparkles";
 export type { HandDrawnAccentProps } from "./hand-drawn-accent";
 export type {
 	AnimationStyle,

@@ -35,5 +35,5 @@ export { usePinchZoom } from "./use-pinch-zoom";
 export { useWebShare } from "./use-web-share";
 export { useAppBadge } from "./use-app-badge";
 
-// Accessibility hooks (re-exported from framer-motion)
-export { useReducedMotion } from "motion/react";
+// Accessibility hooks
+export { useReducedMotionSafe as useReducedMotion } from "./use-reduced-motion-safe";

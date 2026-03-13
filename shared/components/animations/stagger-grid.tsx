@@ -1,7 +1,7 @@
 "use client";
 
 import { m, useReducedMotion } from "motion/react";
-import React, { type ReactNode } from "react";
+import React, { isValidElement, type ReactNode, type Key } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
 export interface StaggerGridProps extends React.AriaAttributes {
@@ -25,6 +25,14 @@ export interface StaggerGridProps extends React.AriaAttributes {
 	role?: string;
 	/** Data attributes */
 	[key: `data-${string}`]: string | undefined;
+}
+
+/** Extraire une key stable de l'enfant ou utiliser l'index comme fallback */
+function getStableKey(child: ReactNode, index: number): Key {
+	if (isValidElement(child) && child.key != null) {
+		return child.key;
+	}
+	return index;
 }
 
 /**
@@ -89,7 +97,7 @@ export function StaggerGrid({
 				{...rest}
 			>
 				{childrenArray.map((child, index) => (
-					<m.div key={`stagger-${index}`} variants={itemVariants}>
+					<m.div key={getStableKey(child, index)} variants={itemVariants}>
 						{child}
 					</m.div>
 				))}
@@ -107,7 +115,7 @@ export function StaggerGrid({
 			{...rest}
 		>
 			{childrenArray.map((child, index) => (
-				<m.div key={`stagger-${index}`} variants={itemVariants}>
+				<m.div key={getStableKey(child, index)} variants={itemVariants}>
 					{child}
 				</m.div>
 			))}

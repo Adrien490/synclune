@@ -1,7 +1,8 @@
 "use client";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { m, useReducedMotion } from "motion/react";
+import { m } from "motion/react";
+import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
 
 export interface SplitTextProps {
 	children: string;

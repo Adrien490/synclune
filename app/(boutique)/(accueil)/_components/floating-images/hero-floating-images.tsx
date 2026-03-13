@@ -1,6 +1,7 @@
 "use client";
 
-import { useInView, useReducedMotion, useScroll, useTransform } from "motion/react";
+import { useInView, useScroll, useTransform } from "motion/react";
+import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
 import { useRef } from "react";
 import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";

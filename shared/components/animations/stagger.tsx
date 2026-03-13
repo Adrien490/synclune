@@ -1,6 +1,7 @@
 "use client";
 
-import { m, useReducedMotion } from "motion/react";
+import { m } from "motion/react";
+import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
 import { Children, isValidElement, type ReactNode, type Key } from "react";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";

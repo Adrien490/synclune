@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
+import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
+import { isSafeLink } from "./announcement-bar.constants";
+import { useAnnouncementBar } from "./use-announcement-bar";
 
-interface AnnouncementBarProps {
+export interface AnnouncementBarProps {
 	message: string;
 	link?: string;
 	linkText?: string;
@@ -15,23 +17,6 @@ interface AnnouncementBarProps {
 	storageKey?: string;
 	/** Hours before the banner can reappear after dismissal */
 	dismissDurationHours?: number;
-}
-
-const STORAGE_PREFIX = "synclune-announcement-";
-const EXIT_ANIMATION_DURATION = 350;
-
-/** Simple string hash for versioning storageKey with message content */
-function simpleHash(str: string): string {
-	let hash = 0;
-	for (let i = 0; i < str.length; i++) {
-		hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
-	}
-	return Math.abs(hash).toString(36);
-}
-
-/** Validate that a link is a safe relative or https URL */
-function isSafeLink(href: string): boolean {
-	return href.startsWith("/") || href.startsWith("https://");
 }
 
 /**
@@ -49,71 +34,12 @@ export function AnnouncementBar({
 	storageKey = "default",
 	dismissDurationHours = 24,
 }: AnnouncementBarProps) {
-	const [isVisible, setIsVisible] = useState(false);
 	const prefersReducedMotion = useReducedMotion();
-	const isDismissingRef = useRef(false);
-	const barRef = useRef<HTMLDivElement>(null);
-
-	const fullKey = `${STORAGE_PREFIX}${storageKey}-${simpleHash(message)}`;
-
-	// Check localStorage for dismiss state
-	useEffect(() => {
-		try {
-			const stored = localStorage.getItem(fullKey);
-			if (stored) {
-				const expiry = Number(stored);
-				if (Date.now() < expiry) {
-					return;
-				}
-				localStorage.removeItem(fullKey);
-			}
-		} catch {
-			// localStorage unavailable
-		}
-		queueMicrotask(() => setIsVisible(true));
-	}, [fullKey]);
-
-	// Set CSS variable for navbar offset (with safe-area)
-	useEffect(() => {
-		if (isVisible) {
-			document.documentElement.style.setProperty(
-				"--announcement-bar-height",
-				"calc(var(--ab-height) + env(safe-area-inset-top, 0px))",
-			);
-		}
-	}, [isVisible]);
-
-	// Reset CSS variable on unmount only (not on dismiss - dismiss handles its own timing)
-	useEffect(() => {
-		return () => {
-			if (!isDismissingRef.current) {
-				document.documentElement.style.setProperty("--announcement-bar-height", "0px");
-			}
-		};
-	}, []);
-
-	const dismiss = () => {
-		isDismissingRef.current = true;
-		setIsVisible(false);
-
-		// Delay CSS variable reset to sync with exit animation
-		setTimeout(() => {
-			document.documentElement.style.setProperty("--announcement-bar-height", "0px");
-		}, EXIT_ANIMATION_DURATION);
-
-		// Move focus to main content after dismiss (C2 - WCAG 2.4.3)
-		requestAnimationFrame(() => {
-			const nextFocus = document.querySelector<HTMLElement>("#main-content, nav a");
-			nextFocus?.focus({ preventScroll: true });
-		});
-
-		try {
-			const expiry = Date.now() + dismissDurationHours * 60 * 60 * 1000;
-			localStorage.setItem(fullKey, String(expiry));
-		} catch {
-			// localStorage unavailable
-		}
-	};
+	const { isVisible, barRef, dismiss } = useAnnouncementBar({
+		message,
+		storageKey,
+		dismissDurationHours,
+	});
 
 	const springTransition = maybeReduceMotion(MOTION_CONFIG.spring.bar, !!prefersReducedMotion);
 

@@ -30,7 +30,7 @@ function formatNumber(value: number, decimalPlaces: number, locale: string): str
 	}).format(Number(value.toFixed(decimalPlaces)));
 }
 
-interface AnimatedNumberProps {
+export interface AnimatedNumberProps {
 	/** Valeur cible a atteindre */
 	value: number;
 	/** Valeur de depart (default: 0) */
@@ -43,6 +43,8 @@ interface AnimatedNumberProps {
 	decimalPlaces?: number;
 	/** Locale pour le formatage des nombres */
 	locale?: string;
+	/** Custom formatter (overrides decimalPlaces/locale) */
+	formatter?: (n: number) => string;
 	/** Classes CSS additionnelles */
 	className?: string;
 	/** Callbacks d'animation */
@@ -58,6 +60,7 @@ export function AnimatedNumber({
 	className,
 	decimalPlaces = 0,
 	locale = "fr-FR",
+	formatter,
 	onAnimationStart,
 	onAnimationComplete,
 }: AnimatedNumberProps) {
@@ -68,11 +71,11 @@ export function AnimatedNumber({
 	const initialValue = direction === "down" ? value : startValue;
 	const spring = useSpring(initialValue, NUMBER_SPRING_CONFIG);
 
-	const display: MotionValue<string> = useTransform(spring, (current) =>
-		formatNumber(current, decimalPlaces, locale),
-	);
+	const format = formatter ?? ((n: number) => formatNumber(n, decimalPlaces, locale));
 
-	const formattedValue = formatNumber(value, decimalPlaces, locale);
+	const display: MotionValue<string> = useTransform(spring, format);
+
+	const formattedValue = format(value);
 
 	// Effect Events: read callbacks without re-triggering effects on identity changes
 	const onStart = useEffectEvent(() => {

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { ChevronUp } from "lucide-react";
-import { AnimatePresence, m, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
+import { AnimatePresence, m, useMotionValueEvent, useScroll } from "motion/react";
+import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 
 const SCROLL_THRESHOLD = 1200;

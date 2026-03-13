@@ -4,7 +4,7 @@ import "./decorative-halo.css";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 
-interface DecorativeHaloProps {
+export interface DecorativeHaloProps {
 	/**
 	 * Taille du halo principal
 	 */

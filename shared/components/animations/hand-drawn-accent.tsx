@@ -1,6 +1,7 @@
 "use client";
 
-import { m, useInView, useReducedMotion } from "motion/react";
+import { m, useInView } from "motion/react";
+import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
 import { useRef } from "react";
 
 import { cn } from "@/shared/utils/cn";

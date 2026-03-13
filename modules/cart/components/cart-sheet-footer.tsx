@@ -3,7 +3,7 @@
 import { SheetFooter } from "@/shared/components/ui/sheet";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { AnimatedNumber } from "@/shared/components/animated-number";
+import { AnimatedNumber } from "@/shared/components/animations/animated-number";
 import Link from "next/link";
 
 interface CartSheetFooterProps {

@@ -28,7 +28,7 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock AnimatedNumber to avoid motion/react dependencies
-vi.mock("@/shared/components/animated-number", () => ({
+vi.mock("@/shared/components/animations/animated-number", () => ({
 	AnimatedNumber: mockAnimatedNumber,
 }));
 
