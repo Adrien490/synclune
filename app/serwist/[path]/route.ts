@@ -7,10 +7,7 @@ const revision = process.env.VERCEL_GIT_COMMIT_SHA ?? nanoid();
 let routeExports;
 try {
 	routeExports = createSerwistRoute({
-		additionalPrecacheEntries: [
-			{ url: "/~offline", revision },
-			{ url: "/icons/offline-placeholder.svg", revision },
-		],
+		additionalPrecacheEntries: [{ url: "/~offline", revision }],
 		swSrc: "app/sw.ts",
 		useNativeEsbuild: true,
 	});
