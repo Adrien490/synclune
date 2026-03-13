@@ -14,6 +14,7 @@ import { DiscountsDataTableSkeleton } from "@/modules/discounts/components/admin
 import { DiscountsFilterBadges } from "@/modules/discounts/components/admin/discounts-filter-badges";
 import { DiscountsFilterSheet } from "@/modules/discounts/components/admin/discounts-filter-sheet";
 import { CreateDiscountButton } from "@/modules/discounts/components/admin/create-discount-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import dynamic from "next/dynamic";
 import type { DiscountType } from "@/app/generated/prisma/client";
 import { type Metadata } from "next";
@@ -105,7 +106,7 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des codes promo"
 						search={

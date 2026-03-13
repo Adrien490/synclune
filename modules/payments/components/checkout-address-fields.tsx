@@ -67,7 +67,7 @@ function AddressAutocompleteField({
 						form.setFieldValue("shipping.city", item.city);
 					}}
 					placeholder=""
-					minQueryLength={3}
+					minQueryLength={2}
 					showSearchIcon={false}
 					showEmptyState={false}
 				/>

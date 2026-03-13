@@ -27,6 +27,7 @@ import { SORT_LABELS } from "@/modules/skus/constants/sku.constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 
@@ -218,7 +219,7 @@ export default async function ProductVariantsPage({
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des variantes"
 						search={

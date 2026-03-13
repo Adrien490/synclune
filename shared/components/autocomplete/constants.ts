@@ -13,7 +13,7 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	/** Message quand aucun resultat */
 	noResultsMessage: "Aucun résultat trouvé",
 	/** Nombre minimum de caracteres pour lancer la recherche */
-	minQueryLength: 3,
+	minQueryLength: 2,
 	/** Delai avant fermeture sur blur desktop (ms) */
 	blurDelay: 150,
 	/** Delai avant fermeture sur blur mobile (ms) - plus long pour les interactions tactiles */

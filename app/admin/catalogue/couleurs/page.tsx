@@ -23,6 +23,7 @@ const DeleteColorAlertDialog = dynamic(() =>
 	),
 );
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -73,7 +74,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des couleurs"
 						search={

@@ -25,7 +25,7 @@ export function useAddressAutocomplete(
 	const [isSearching, startTransition] = useTransition();
 
 	useEffect(() => {
-		if (query.length < 3) return;
+		if (query.length < 2) return;
 
 		startTransition(async () => {
 			const result = await searchAddressForCheckout({ text: query, country });
@@ -38,7 +38,7 @@ export function useAddressAutocomplete(
 		});
 	}, [query, country]);
 
-	const suggestions = query.length < 3 ? [] : results;
+	const suggestions = query.length < 2 ? [] : results;
 
 	return { suggestions, isSearching, error };
 }

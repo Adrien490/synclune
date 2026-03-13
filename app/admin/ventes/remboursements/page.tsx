@@ -10,6 +10,7 @@ import { RefundsDataTable } from "@/modules/refunds/components/admin/refunds-dat
 import { RefundsDataTableSkeleton } from "@/modules/refunds/components/admin/refunds-data-table-skeleton";
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import type { Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
@@ -80,7 +81,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des remboursements"
 						search={

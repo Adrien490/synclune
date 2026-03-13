@@ -16,6 +16,7 @@ import {
 } from "@/modules/customizations/constants/sort.constants";
 import { getFirstParam } from "@/shared/utils/params";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { Sparkles, Clock, CheckCircle2, FileText } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -96,7 +97,7 @@ export default async function CustomizationsPage({ searchParams }: Customization
 			</div>
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={2} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des personnalisations"
 						search={

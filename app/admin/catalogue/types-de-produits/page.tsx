@@ -30,6 +30,7 @@ import { ProductTypesDataTableSkeleton } from "@/modules/product-types/component
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters } from "./_utils/params";
 
 export type ProductTypeFiltersSearchParams = {
@@ -96,7 +97,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des types de bijoux"
 						search={

@@ -287,7 +287,7 @@ function AddressFormContent({
 												: undefined
 										}
 										noResultsMessage="Aucune adresse trouvée"
-										minQueryLength={3}
+										minQueryLength={2}
 										debounceMs={0}
 										aria-required="true"
 										aria-invalid={field.state.meta.errors.length > 0}

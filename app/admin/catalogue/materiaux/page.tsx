@@ -25,6 +25,7 @@ const DeleteMaterialAlertDialog = dynamic(() =>
 	),
 );
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -74,7 +75,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des matériaux"
 						search={

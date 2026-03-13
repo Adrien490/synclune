@@ -15,6 +15,7 @@ import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-fil
 import { OrdersFilterSheet } from "@/modules/orders/components/admin/orders-filter-sheet";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { parseFilters } from "./_utils/params";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
@@ -120,7 +121,7 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 			<PageHeader variant="compact" title="Commandes" className="hidden md:block" />
 
 			<div className="space-y-6">
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={3} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des commandes"
 						search={

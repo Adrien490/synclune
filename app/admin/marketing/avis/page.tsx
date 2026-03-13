@@ -14,6 +14,7 @@ import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/rev
 import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constants";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { formatRating } from "@/shared/utils/rating-utils";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { getFirstParam } from "@/shared/utils/params";
 import type { ReviewSortField } from "@/modules/reviews/types/review.types";
 
@@ -134,7 +135,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			</div>
 
 			{/* Toolbar */}
-			<Suspense fallback={null}>
+			<Suspense fallback={<ToolbarSkeleton selectCount={3} />}>
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des avis"
 					search={

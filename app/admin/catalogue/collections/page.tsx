@@ -15,6 +15,7 @@ import { CollectionsFilterSheet } from "@/modules/collections/components/admin/c
 import { CollectionStatusNavigation } from "@/modules/collections/components/admin/collection-status-navigation";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters, parseStatus } from "./_utils/params";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
@@ -121,7 +122,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 				{/* Onglets de statut */}
 				<CollectionStatusNavigation currentStatus={status} searchParams={params} />
 
-				<Suspense fallback={null}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
 					<Toolbar
 						ariaLabel="Barre d'outils de gestion des collections"
 						search={

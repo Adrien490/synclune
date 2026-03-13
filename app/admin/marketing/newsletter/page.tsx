@@ -10,6 +10,7 @@ import {
 } from "@/modules/newsletter/data/get-subscribers";
 import { getNewsletterStats } from "@/modules/newsletter/data/get-newsletter-stats";
 import { RefreshNewsletterButton } from "@/modules/newsletter/components/admin/refresh-newsletter-button";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { getFirstParam } from "@/shared/utils/params";
 import { Mail, Users } from "lucide-react";
 import { Suspense } from "react";
@@ -108,7 +109,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 				</div>
 			</div>
 
-			<Suspense fallback={null}>
+			<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} />}>
 				<Toolbar
 					ariaLabel="Barre d'outils de gestion des abonnés"
 					search={

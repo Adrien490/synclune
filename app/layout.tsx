@@ -45,6 +45,20 @@ export default function RootLayout({
 				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
 				suppressHydrationWarning
 			>
+				<noscript>
+					<div
+						style={{
+							padding: "12px 16px",
+							backgroundColor: "#fef3c7",
+							color: "#92400e",
+							textAlign: "center",
+							fontSize: "14px",
+						}}
+					>
+						JavaScript est nécessaire pour utiliser toutes les fonctionnalités de Synclune (panier,
+						paiement, recherche). Veuillez activer JavaScript dans votre navigateur.
+					</div>
+				</noscript>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />
