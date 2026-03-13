@@ -2,7 +2,7 @@
 
 import { ZoomIn } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
 
 let lightboxPrefetched = false;
 function prefetchLightbox() {

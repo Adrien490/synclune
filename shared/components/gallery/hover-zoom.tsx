@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
 import { GALLERY_MAIN_SIZES } from "@/modules/media/constants/image-config.constants";
 
 interface GalleryHoverZoomProps {

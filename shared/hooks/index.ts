@@ -34,6 +34,3 @@ export { usePinchZoom } from "./use-pinch-zoom";
 // PWA hooks
 export { useWebShare } from "./use-web-share";
 export { useAppBadge } from "./use-app-badge";
-
-// Accessibility hooks
-export { useReducedMotionSafe as useReducedMotion } from "./use-reduced-motion-safe";

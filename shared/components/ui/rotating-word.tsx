@@ -2,8 +2,7 @@
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
-import { AnimatePresence, m } from "motion/react";
-import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useEffectEvent, useState } from "react";
 
 export interface RotatingWordProps {

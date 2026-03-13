@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
 
 interface GalleryDotsProps {
 	current: number;

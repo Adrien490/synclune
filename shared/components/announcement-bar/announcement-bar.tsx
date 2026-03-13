@@ -1,8 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
-import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";

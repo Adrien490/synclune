@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
-import { useReducedMotion } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 
 import {

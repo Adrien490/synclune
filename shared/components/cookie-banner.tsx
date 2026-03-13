@@ -7,8 +7,7 @@ import {
 import { Button } from "./ui/button";
 import Link from "next/link";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { AnimatePresence, m } from "motion/react";
-import { useReducedMotionSafe as useReducedMotion } from "@/shared/hooks/use-reduced-motion-safe";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef } from "react";
 

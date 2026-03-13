@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { useMediaQuery, useReducedMotion } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
+import { useMediaQuery } from "@/shared/hooks";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import {
 	GALLERY_ZOOM_LEVEL,

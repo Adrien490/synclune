@@ -8,7 +8,7 @@ import {
 	EAGER_LOAD_THUMBNAILS,
 } from "@/modules/media/constants/image-config.constants";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
 import Image from "next/image";
 
 interface GalleryThumbnailProps {

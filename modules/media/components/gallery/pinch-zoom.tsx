@@ -3,7 +3,8 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion, usePinchZoom } from "@/shared/hooks";
+import { useReducedMotion } from "motion/react";
+import { usePinchZoom } from "@/shared/hooks";
 import {
 	MAIN_IMAGE_QUALITY,
 	GALLERY_MAIN_SIZES,
