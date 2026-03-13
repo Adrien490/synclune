@@ -174,7 +174,7 @@ describe("subscribeToNewsletterInternal", () => {
 		expect(mockSendConfirmationEmail).toHaveBeenCalledWith(
 			expect.objectContaining({
 				to: "user@example.com",
-				confirmationUrl: expect.stringMatching(/\/newsletter\/confirm\?token=/),
+				confirmationUrl: expect.stringMatching(/\/newsletter\/confirmer\?token=/),
 			}),
 		);
 		expect(result.success).toBe(true);
@@ -218,7 +218,7 @@ describe("subscribeToNewsletterInternal", () => {
 			expect.objectContaining({
 				to: "user@example.com",
 				confirmationUrl: expect.stringMatching(
-					/http:\/\/localhost:3000\/newsletter\/confirm\?token=/,
+					/http:\/\/localhost:3000\/newsletter\/confirmer\?token=/,
 				),
 			}),
 		);
