@@ -20,8 +20,9 @@ const SpeedInsights = dynamic(
  */
 export function ConditionalAnalytics() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
+	const hasHydrated = useCookieConsentStore((state) => state._hasHydrated);
 
-	if (accepted !== true) {
+	if (!hasHydrated || accepted !== true) {
 		return null;
 	}
 

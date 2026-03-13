@@ -100,10 +100,13 @@ export async function handlePaymentFailure(
 	const orderId = resolveOrderId(paymentIntent.metadata);
 
 	if (!orderId) {
-		logger.error("❌ [WEBHOOK] No orderId in payment intent metadata", undefined, {
-			service: "webhook",
-		});
-		throw new Error("No orderId in payment intent metadata");
+		// PI failed before confirmCheckout added orderId to metadata (e.g. user abandoned).
+		// No order was created, so nothing to restore or refund — skip gracefully.
+		logger.warn(
+			`⚠️ [WEBHOOK] payment_intent.payment_failed without orderId in metadata (PI: ${paymentIntent.id})`,
+			{ service: "webhook" },
+		);
+		return { success: true, skipped: true, reason: "no_order_id" };
 	}
 
 	try {
@@ -182,10 +185,13 @@ export async function handlePaymentCanceled(
 	const orderId = resolveOrderId(paymentIntent.metadata);
 
 	if (!orderId) {
-		logger.error("❌ [WEBHOOK] No orderId in payment intent metadata", undefined, {
-			service: "webhook",
-		});
-		throw new Error("No orderId in payment intent metadata");
+		// PI canceled before confirmCheckout added orderId to metadata (e.g. user abandoned).
+		// No order was created, so nothing to restore or refund — skip gracefully.
+		logger.warn(
+			`⚠️ [WEBHOOK] payment_intent.canceled without orderId in metadata (PI: ${paymentIntent.id})`,
+			{ service: "webhook" },
+		);
+		return { success: true, skipped: true, reason: "no_order_id" };
 	}
 
 	try {

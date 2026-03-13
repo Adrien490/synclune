@@ -20,17 +20,28 @@ const nextConfig: NextConfig = {
 	},
 
 	async rewrites() {
-		return [
-			// PostHog reverse proxy to avoid ad blockers
-			{
-				source: "/ingest/static/:path*",
-				destination: "https://eu-assets.i.posthog.com/static/:path*",
-			},
-			{
-				source: "/ingest/:path*",
-				destination: "https://eu.i.posthog.com/:path*",
-			},
-		];
+		return {
+			beforeFiles: [
+				// Sentry deletes .map after upload but Turbopack leaves
+				// sourceMappingURL comments → rewrite to 204 noop
+				{
+					source: "/_next/static/:path*.map",
+					destination: "/api/noop",
+				},
+			],
+			afterFiles: [],
+			fallback: [
+				// PostHog reverse proxy to avoid ad blockers
+				{
+					source: "/ingest/static/:path*",
+					destination: "https://eu-assets.i.posthog.com/static/:path*",
+				},
+				{
+					source: "/ingest/:path*",
+					destination: "https://eu.i.posthog.com/:path*",
+				},
+			],
+		};
 	},
 
 	async headers() {

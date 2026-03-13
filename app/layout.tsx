@@ -30,7 +30,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="fr" data-scroll-behavior="smooth">
+		<html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning>
 			<head>
 				{/* Preconnect to UploadThing CDN for faster image loading */}
 				<link rel="dns-prefetch" href="https://utfs.io" />

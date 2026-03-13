@@ -182,10 +182,16 @@ describe("handlePaymentFailure", () => {
 		mockMarkOrderAsFailed.mockResolvedValue(undefined);
 	});
 
-	it("should throw when no order_id in metadata", async () => {
-		await expect(handlePaymentFailure(makePaymentIntent({ metadata: {} }))).rejects.toThrow(
-			"No orderId in payment intent metadata",
+	it("should skip gracefully when no order_id in metadata", async () => {
+		const result = await handlePaymentFailure(makePaymentIntent({ metadata: {} }));
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("payment_intent.payment_failed without orderId"),
+			expect.objectContaining({ service: "webhook" }),
 		);
+		expect(mockRestoreStockForOrder).not.toHaveBeenCalled();
+		expect(mockMarkOrderAsFailed).not.toHaveBeenCalled();
 	});
 
 	it("should call restoreStockForOrder and markOrderAsFailed in order", async () => {
@@ -258,10 +264,16 @@ describe("handlePaymentCanceled", () => {
 		mockMarkOrderAsCancelled.mockResolvedValue(undefined);
 	});
 
-	it("should throw when no order_id in metadata", async () => {
-		await expect(handlePaymentCanceled(makePaymentIntent({ metadata: {} }))).rejects.toThrow(
-			"No orderId in payment intent metadata",
+	it("should skip gracefully when no order_id in metadata", async () => {
+		const result = await handlePaymentCanceled(makePaymentIntent({ metadata: {} }));
+
+		expect(result).toEqual({ success: true, skipped: true, reason: "no_order_id" });
+		expect(mockLogger.warn).toHaveBeenCalledWith(
+			expect.stringContaining("payment_intent.canceled without orderId"),
+			expect.objectContaining({ service: "webhook" }),
 		);
+		expect(mockRestoreStockForOrder).not.toHaveBeenCalled();
+		expect(mockMarkOrderAsCancelled).not.toHaveBeenCalled();
 	});
 
 	it("should call restoreStockForOrder and markOrderAsCancelled", async () => {
