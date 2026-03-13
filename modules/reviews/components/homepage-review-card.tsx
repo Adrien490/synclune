@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { cn } from "@/shared/utils/cn";
-import { RelativeDate } from "@/shared/components/relative-date";
+import { RelativeDate } from "@/modules/reviews/components/relative-date";
 import { ReviewCardGallery } from "./review-card-gallery";
 import { ExpandableReviewContent } from "./expandable-review-content";
 

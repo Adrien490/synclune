@@ -6,9 +6,9 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import {
 	ResponsiveSelect,
 	type ResponsiveSelectOption,
-} from "@/shared/components/responsive-select";
+} from "@/modules/customizations/components/responsive-select";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
-import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
+import { UploadProgress } from "@/shared/components/media-upload/upload-progress";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { cn } from "@/shared/utils/cn";
 import { Upload, X } from "lucide-react";

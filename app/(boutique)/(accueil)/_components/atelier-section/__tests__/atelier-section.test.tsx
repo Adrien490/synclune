@@ -54,7 +54,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
-vi.mock("@/shared/components/section-divider", () => ({
+vi.mock("@/app/(boutique)/(accueil)/_components/atelier-section/section-divider", () => ({
 	SparklesDivider: () => <div data-testid="sparkles-divider" />,
 }));
 

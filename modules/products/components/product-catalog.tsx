@@ -20,7 +20,7 @@ import { ProductSortBar } from "@/modules/products/components/product-sort-bar";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { ClearSearchButton } from "@/shared/components/clear-search-button";
+import { ClearSearchButton } from "@/modules/products/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";

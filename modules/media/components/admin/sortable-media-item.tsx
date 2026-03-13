@@ -23,7 +23,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import Image from "next/image";
-import type { MediaItem } from "./media-upload-grid";
+import type { MediaItem } from "@/shared/components/media-upload/media-upload-grid";
 
 export interface SortableMediaItemProps {
 	media: MediaItem;

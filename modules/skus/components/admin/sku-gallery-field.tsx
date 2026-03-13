@@ -1,9 +1,9 @@
 "use client";
 
-import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
-import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
+import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
+import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { Label } from "@/shared/components/ui/label";
-import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
+import { UploadProgress } from "@/shared/components/media-upload/upload-progress";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, m } from "motion/react";

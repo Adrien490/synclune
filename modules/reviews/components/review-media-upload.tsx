@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Camera, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
+import { UploadProgress } from "@/shared/components/media-upload/upload-progress";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { cn } from "@/shared/utils/cn";
 

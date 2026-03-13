@@ -1,5 +1,5 @@
 import { Badge } from "@/shared/components/ui/badge";
-import { ShareButton } from "@/shared/components/share-button";
+import { ShareButton } from "@/modules/products/components/share-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";

@@ -7,7 +7,7 @@ import {
 	ColorPickerHue,
 	ColorPickerOutput,
 	ColorPickerSelection,
-} from "@/shared/components/color-picker";
+} from "@/modules/colors/components/color-picker";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,

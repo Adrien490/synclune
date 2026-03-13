@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { ColorSwatch as AriaColorSwatch } from "@/shared/components/aria-color-swatch";
+import { ColorSwatch as AriaColorSwatch } from "@/modules/products/components/aria-color-swatch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useIsTouchDevice } from "@/shared/hooks";

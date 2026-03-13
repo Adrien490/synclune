@@ -10,7 +10,7 @@
 export const STORAGE_KEYS = {
 	/**
 	 * Tracks if user has seen the long-press hint for media reordering
-	 * Used in: modules/media/components/admin/media-upload-grid.tsx
+	 * Used in: shared/components/media-upload/media-upload-grid.tsx
 	 */
 	MEDIA_UPLOAD_HINT_SEEN: "media-upload-hint-seen",
 

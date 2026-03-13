@@ -1,8 +1,8 @@
 "use client";
 
 import { FieldLabel } from "@/shared/components/forms";
-import { MediaCounterBadge } from "@/modules/media/components/media-counter-badge";
-import { MediaUploadGrid } from "@/modules/media/components/admin/media-upload-grid";
+import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
+import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";

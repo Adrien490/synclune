@@ -42,7 +42,7 @@ vi.mock("@/shared/components/rating-stars", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/relative-date", () => ({
+vi.mock("@/modules/reviews/components/relative-date", () => ({
 	RelativeDate: ({ date }: { date: Date; className?: string }) => (
 		<time data-testid="relative-date">{new Date(date).toISOString().slice(0, 10)}</time>
 	),

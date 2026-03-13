@@ -36,8 +36,8 @@ import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
 	ssr: false,
 });
-import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "./delete-gallery-media-alert-dialog";
-import { SortableMediaItem } from "./sortable-media-item";
+import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
+import { SortableMediaItem } from "@/modules/media/components/admin/sortable-media-item";
 import type { Slide } from "yet-another-react-lightbox";
 
 export interface MediaItem {

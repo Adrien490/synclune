@@ -1,6 +1,6 @@
 import { Fade, HandDrawnUnderline, SplitText, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { SparklesDivider } from "@/shared/components/section-divider";
+import { SparklesDivider } from "./section-divider";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";

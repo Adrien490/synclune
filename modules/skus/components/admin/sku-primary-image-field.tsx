@@ -2,7 +2,7 @@
 
 import { Label } from "@/shared/components/ui/label";
 import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
-import { UploadProgress } from "@/modules/media/components/admin/upload-progress";
+import { UploadProgress } from "@/shared/components/media-upload/upload-progress";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { Upload } from "lucide-react";
