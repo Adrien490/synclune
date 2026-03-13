@@ -1,5 +1,7 @@
 export const STORAGE_PREFIX = "synclune-announcement-";
 export const EXIT_ANIMATION_DURATION = 350;
+/** Minimum upward swipe distance (px) to trigger dismiss on mobile */
+export const SWIPE_DISMISS_THRESHOLD = 30;
 
 /** Simple string hash for versioning storageKey with message content */
 export function simpleHash(str: string): string {

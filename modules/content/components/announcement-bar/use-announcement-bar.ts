@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { STORAGE_PREFIX, EXIT_ANIMATION_DURATION, simpleHash } from "./announcement-bar.constants";
+import { useSwipeToDismiss } from "./use-swipe-to-dismiss";
 
 interface UseAnnouncementBarOptions {
 	message: string;
@@ -13,6 +14,8 @@ interface UseAnnouncementBarReturn {
 	isVisible: boolean;
 	barRef: React.RefObject<HTMLDivElement | null>;
 	dismiss: () => void;
+	/** Current swipe offset in px (negative = swiping up). 0 when not swiping. */
+	swipeOffset: number;
 }
 
 export function useAnnouncementBar({
@@ -85,5 +88,11 @@ export function useAnnouncementBar({
 		}
 	};
 
-	return { isVisible, barRef, dismiss };
+	const { swipeOffset } = useSwipeToDismiss({
+		elementRef: barRef,
+		enabled: isVisible,
+		onDismiss: dismiss,
+	});
+
+	return { isVisible, barRef, dismiss, swipeOffset };
 }

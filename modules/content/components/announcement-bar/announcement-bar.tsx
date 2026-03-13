@@ -24,6 +24,7 @@ export interface AnnouncementBarProps {
  * - Persists dismiss state in localStorage with expiry (key versioned by message hash)
  * - Sets --announcement-bar-height CSS variable on <html> for navbar offset
  * - Shimmer background on bg-primary
+ * - Swipe up to dismiss on mobile (touch gesture)
  * - Accessible: role="region", Escape dismiss (scoped), 44px touch targets
  */
 export function AnnouncementBar({
@@ -34,7 +35,7 @@ export function AnnouncementBar({
 	dismissDurationHours = 24,
 }: AnnouncementBarProps) {
 	const prefersReducedMotion = useReducedMotion();
-	const { isVisible, barRef, dismiss } = useAnnouncementBar({
+	const { isVisible, barRef, dismiss, swipeOffset } = useAnnouncementBar({
 		message,
 		storageKey,
 		dismissDurationHours,
@@ -56,6 +57,12 @@ export function AnnouncementBar({
 					animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
 					exit={prefersReducedMotion ? { opacity: 0 } : { y: "-100%", opacity: 0 }}
 					transition={springTransition}
+					{...(swipeOffset < 0 && {
+						style: {
+							transform: `translateY(${swipeOffset}px)`,
+							opacity: Math.max(0, 1 + swipeOffset / 60),
+						},
+					})}
 					// P4: Scope Escape key to the bar
 					onKeyDown={(e) => {
 						if (e.key === "Escape") dismiss();
