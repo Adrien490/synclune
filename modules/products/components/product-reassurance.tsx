@@ -1,12 +1,7 @@
 import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 import { RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import {
-	VisaIcon,
-	MastercardIcon,
-	CBIcon,
-	PayPalIcon,
-} from "@/shared/components/icons/payment-icons";
+import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
 
 /**
@@ -41,7 +36,6 @@ export function ProductReassurance() {
 						<VisaIcon className="h-5 w-auto" aria-label="Visa" />
 						<MastercardIcon className="h-5 w-auto" aria-label="Mastercard" />
 						<CBIcon className="h-5 w-auto" aria-label="CB" />
-						<PayPalIcon className="h-5 w-auto" aria-label="PayPal" />
 					</div>
 					<div className="flex items-center gap-1.5 text-xs">
 						<span>Propulsé par</span>

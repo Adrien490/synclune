@@ -2,12 +2,7 @@ import { Fade } from "@/shared/components/animations/fade";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
-import {
-	CBIcon,
-	MastercardIcon,
-	PayPalIcon,
-	VisaIcon,
-} from "@/shared/components/icons/payment-icons";
+import { CBIcon, MastercardIcon, VisaIcon } from "@/shared/components/icons/payment-icons";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
@@ -20,7 +15,7 @@ import Link from "next/link";
 const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 	{ title: "Livraison France : 4,99€", description: "Livraison UE : 9,50€" },
 	{ title: "Retours sous 14 jours", description: "Échange ou remboursement" },
-	{ title: "Paiement sécurisé", description: "CB, PayPal" },
+	{ title: "Paiement sécurisé", description: "CB, Visa, Mastercard" },
 ];
 
 /**
@@ -219,9 +214,6 @@ export async function Footer() {
 							</li>
 							<li>
 								<CBIcon aria-label="Carte Bancaire acceptée" className="text-muted-foreground" />
-							</li>
-							<li>
-								<PayPalIcon aria-label="PayPal accepté" className="text-muted-foreground" />
 							</li>
 						</ul>
 					</section>

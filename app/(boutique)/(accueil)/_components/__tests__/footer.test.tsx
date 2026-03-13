@@ -62,9 +62,6 @@ vi.mock("@/shared/components/icons/payment-icons", () => ({
 	CBIcon: (props: Record<string, unknown>) => (
 		<svg data-testid="cb-icon" aria-label={props["aria-label"] as string} />
 	),
-	PayPalIcon: (props: Record<string, unknown>) => (
-		<svg data-testid="paypal-icon" aria-label={props["aria-label"] as string} />
-	),
 }));
 
 // Mock social icons
@@ -214,12 +211,12 @@ describe("Footer", () => {
 
 		// "Paiement sécurisé" appears in both reassurance and sr-only h3, scope to reassurance
 		expect(within(reassurance).getByText("Paiement sécurisé")).toBeInTheDocument();
-		expect(within(reassurance).getByText("CB, PayPal")).toBeInTheDocument();
+		expect(within(reassurance).getByText("CB, Visa, Mastercard")).toBeInTheDocument();
 	});
 
 	// --- Payment icons ---
 
-	it("renders 4 payment icons with individual aria-labels", async () => {
+	it("renders 3 payment icons with individual aria-labels", async () => {
 		await renderFooter();
 
 		const visa = screen.getByTestId("visa-icon");
@@ -230,9 +227,6 @@ describe("Footer", () => {
 
 		const cb = screen.getByTestId("cb-icon");
 		expect(cb).toHaveAttribute("aria-label", "Carte Bancaire acceptée");
-
-		const paypal = screen.getByTestId("paypal-icon");
-		expect(paypal).toHaveAttribute("aria-label", "PayPal accepté");
 	});
 
 	it("renders payment icons list with aria-label", async () => {

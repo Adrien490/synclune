@@ -268,7 +268,7 @@ export function getOrganizationSchema() {
 			email: BUSINESS_INFO.email,
 			availableLanguage: "French",
 		},
-		paymentAccepted: "Visa, Mastercard, CB, PayPal, Apple Pay",
+		paymentAccepted: "Visa, Mastercard, CB, Apple Pay",
 	};
 }
 
