@@ -88,7 +88,12 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			<ProductTypeFormDialog />
 			<DeleteProductTypeAlertDialog />
 			<BulkDeleteProductTypesAlertDialog />
-			<PageHeader variant="compact" title="Types de bijoux" actions={<CreateProductTypeButton />} />
+			<PageHeader
+				variant="compact"
+				title="Types de bijoux"
+				actions={<CreateProductTypeButton />}
+				className="hidden md:block"
+			/>
 
 			<div className="space-y-6">
 				<Suspense fallback={null}>

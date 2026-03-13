@@ -10,7 +10,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function ReviewsAdminLoading() {
 	return (
 		<>
-			<PageHeader variant="compact" title="Avis clients" />
+			<PageHeader variant="compact" title="Avis clients" className="hidden md:block" />
 
 			{/* Statistiques */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">

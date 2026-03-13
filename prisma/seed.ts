@@ -3606,6 +3606,105 @@ async function main(): Promise<void> {
 		`✅ Records soft-deleted: ${productsToSoftDelete.length} produits, ${reviewsToSoftDelete.length} avis, ${ordersToSoftDelete.length} commandes`,
 	);
 
+	// ============================================
+	// ANNOUNCEMENT BAR
+	// ============================================
+	console.log("\n📢 Seeding announcement bar...");
+
+	await prisma.announcementBar.deleteMany();
+
+	const announcements = [
+		{
+			message: "Livraison offerte dès 50€ d'achat !",
+			link: "/collections",
+			linkText: "Découvrir",
+			isActive: true,
+			dismissDurationHours: 24,
+			startsAt: new Date(),
+			endsAt: null,
+		},
+		{
+			message: "Nouvelles créations disponibles — Collection Printemps 2026",
+			link: "/collections/printemps-2026",
+			linkText: "Voir la collection",
+			isActive: false,
+			dismissDurationHours: 48,
+			startsAt: new Date("2026-03-20"),
+			endsAt: new Date("2026-04-30"),
+		},
+	];
+
+	for (const announcement of announcements) {
+		await prisma.announcementBar.create({ data: announcement });
+	}
+
+	console.log(`✅ ${announcements.length} announcements created`);
+
+	// FAQ ITEMS
+	// ============================================
+	console.log("\n📝 Seeding FAQ items...");
+
+	await prisma.faqItem.deleteMany();
+
+	const faqItems = [
+		{
+			question: "Combien de temps pour recevoir ma commande ?",
+			answer:
+				"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo vous livre en 2-4 jours en France métropolitaine. Je vous envoie le numéro de suivi par email dès que votre colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
+			links: [{ text: "conditions de vente", href: "/cgv" }],
+			position: 0,
+		},
+		{
+			question: "Je peux retourner un bijou si je change d'avis ?",
+			answer:
+				"Bien sûr ! Vous avez 14 jours après réception pour changer d'avis. Renvoyez-moi le bijou dans son état d'origine, non porté, et je vous rembourse. Écrivez-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
+			links: [{ text: "conditions de vente", href: "/cgv" }],
+			position: 1,
+		},
+		{
+			question: "En quoi sont faits vos bijoux ?",
+			answer:
+				"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvrez toutes mes {{link0}}.",
+			links: [{ text: "collections", href: "/collections" }],
+			position: 2,
+		},
+		{
+			question: "Comment je prends soin de mes bijoux ?",
+			answer:
+				"Évitez le contact avec l'eau, les parfums et les crèmes. Rangez-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
+			links: undefined,
+			position: 3,
+		},
+		{
+			question: "Vous faites des bijoux sur-mesure ?",
+			answer:
+				"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écrivez-moi via la {{link0}} et on discute de votre projet ensemble.",
+			links: [{ text: "page Personnalisation", href: "/personnalisation" }],
+			position: 4,
+		},
+		{
+			question: "C'est quoi le délai pour une création personnalisée ?",
+			answer:
+				"Comptez environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que vous souhaitez, de créer des esquisses qu'on validera ensemble, et de réaliser votre bijou avec tout le soin qu'il mérite.",
+			links: undefined,
+			position: 5,
+		},
+	];
+
+	for (const item of faqItems) {
+		await prisma.faqItem.create({
+			data: {
+				question: item.question,
+				answer: item.answer,
+				links: item.links ?? undefined,
+				position: item.position,
+				isActive: true,
+			},
+		});
+	}
+
+	console.log(`✅ ${faqItems.length} FAQ items created`);
+
 	console.log("\n🎉 Seed terminé avec succès!");
 }
 

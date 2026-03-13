@@ -10,6 +10,7 @@ export default function EditProductLoadingPage() {
 					{ label: "Catalogue", href: "/admin/catalogue" },
 					{ label: "Bijoux", href: "/admin/catalogue/produits" },
 				]}
+				className="hidden md:block"
 			/>
 
 			<section className="bg-background py-8">

@@ -77,7 +77,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Remboursements" />
+			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
 			<div className="space-y-6">
 				<Suspense fallback={null}>

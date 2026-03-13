@@ -15,7 +15,12 @@ export default function ColorsLoading() {
 			<span className="sr-only">Chargement des couleurs...</span>
 
 			{/* Page Header */}
-			<PageHeader variant="compact" title="Couleurs" actions={<Skeleton className="h-10 w-36" />} />
+			<PageHeader
+				variant="compact"
+				title="Couleurs"
+				actions={<Skeleton className="h-10 w-36" />}
+				className="hidden md:block"
+			/>
 
 			<div className="space-y-6">
 				{/* Toolbar skeleton */}

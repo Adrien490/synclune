@@ -69,7 +69,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Newsletter" />
+			<PageHeader variant="compact" title="Newsletter" className="hidden md:block" />
 
 			{/* Statistiques */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">

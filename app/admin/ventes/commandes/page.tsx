@@ -117,7 +117,7 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Commandes" />
+			<PageHeader variant="compact" title="Commandes" className="hidden md:block" />
 
 			<div className="space-y-6">
 				<Suspense fallback={null}>

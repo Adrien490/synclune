@@ -12,7 +12,7 @@ import {
 export default function DashboardLoading() {
 	return (
 		<>
-			<PageHeader variant="compact" title="Tableau de bord" />
+			<PageHeader variant="compact" title="Tableau de bord" className="hidden md:block" />
 
 			<div className="space-y-6">
 				{/* 3 KPIs */}

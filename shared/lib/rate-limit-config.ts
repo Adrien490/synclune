@@ -1402,3 +1402,65 @@ export const ADMIN_CUSTOMIZATION_LIMITS = {
 	UPDATE: ADMIN_CUSTOMIZATION_UPDATE_LIMIT,
 	BULK_UPDATE: ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT,
 } as const;
+
+// ========================================
+// 📢 ADMIN ANNOUNCEMENT OPERATIONS
+// ========================================
+
+export const ADMIN_ANNOUNCEMENT_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_ANNOUNCEMENT_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_ANNOUNCEMENT_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_ANNOUNCEMENT_LIMITS = {
+	CREATE: ADMIN_ANNOUNCEMENT_CREATE_LIMIT,
+	UPDATE: ADMIN_ANNOUNCEMENT_UPDATE_LIMIT,
+	DELETE: ADMIN_ANNOUNCEMENT_DELETE_LIMIT,
+	TOGGLE_STATUS: ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT,
+} as const;
+
+// ========================================
+// 📝 ADMIN FAQ OPERATIONS
+// ========================================
+
+export const ADMIN_FAQ_CREATE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_FAQ_UPDATE_LIMIT: RateLimitConfig = {
+	limit: 30,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_FAQ_DELETE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_FAQ_REORDER_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_FAQ_LIMITS = {
+	CREATE: ADMIN_FAQ_CREATE_LIMIT,
+	UPDATE: ADMIN_FAQ_UPDATE_LIMIT,
+	DELETE: ADMIN_FAQ_DELETE_LIMIT,
+	REORDER: ADMIN_FAQ_REORDER_LIMIT,
+} as const;

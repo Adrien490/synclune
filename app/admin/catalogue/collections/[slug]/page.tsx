@@ -88,6 +88,7 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
 				variant="compact"
 				title={collection.name}
 				description={collection.description ?? undefined}
+				className="hidden md:block"
 				actions={
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>

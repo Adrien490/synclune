@@ -19,6 +19,7 @@ export default function DiscountsLoading() {
 				variant="compact"
 				title="Codes promo"
 				actions={<Skeleton className="h-10 w-36" />}
+				className="hidden md:block"
 			/>
 
 			<div className="space-y-6">

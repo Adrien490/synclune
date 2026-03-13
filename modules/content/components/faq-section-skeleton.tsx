@@ -1,5 +1,6 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { cn } from "@/shared/utils/cn";
 
 /**
  * Skeleton de chargement pour la section FAQ
@@ -8,7 +9,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 export function FaqSectionSkeleton() {
 	return (
 		<section
-			className={`bg-muted/20 ${SECTION_SPACING.section}`}
+			className={cn("bg-muted/20", SECTION_SPACING.section)}
 			aria-label="Chargement des questions frequentes"
 		>
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

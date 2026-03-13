@@ -199,6 +199,7 @@ export default async function ProductVariantsPage({
 				variant="compact"
 				title={`Variantes de ${product.title}`}
 				description="Gerez les differentes variantes de ce produit (couleur, taille, materiau, etc.)"
+				className="hidden md:block"
 				actions={
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>

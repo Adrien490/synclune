@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export default async function AdminDashboardPage() {
 	return (
 		<>
-			<PageHeader variant="compact" title="Tableau de bord" />
+			<PageHeader variant="compact" title="Tableau de bord" className="hidden md:block" />
 
 			<div className="space-y-6">
 				{/* 3 KPIs en grille */}

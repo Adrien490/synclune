@@ -30,7 +30,7 @@ export default async function NewProductPage() {
 
 	return (
 		<>
-			<PageHeader title="Nouveau produit" variant="compact" />
+			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
 
 			<CreateProductForm
 				productTypes={productTypes}

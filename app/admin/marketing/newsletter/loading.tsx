@@ -12,7 +12,7 @@ export default function NewsletterLoading() {
 	return (
 		<div className="space-y-6">
 			{/* Page Header */}
-			<PageHeader title="Newsletter" variant="compact" />
+			<PageHeader title="Newsletter" variant="compact" className="hidden md:block" />
 
 			{/* Statistics Section - 3 cards */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">

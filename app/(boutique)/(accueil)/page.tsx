@@ -12,7 +12,7 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection } from "./_components/atelier-section";
-import { FaqSection } from "./_components/faq-section";
+import { FaqSection } from "@/modules/content/components/faq-section";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";

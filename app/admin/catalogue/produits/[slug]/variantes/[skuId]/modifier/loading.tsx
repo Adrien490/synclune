@@ -9,7 +9,7 @@ export default function EditVariantLoading() {
 	return (
 		<>
 			{/* Page Header Skeleton */}
-			<PageHeaderSkeleton variant="compact" />
+			<PageHeaderSkeleton variant="compact" className="hidden md:block" />
 
 			<div className="space-y-6">
 				{/* La variante */}

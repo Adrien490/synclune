@@ -110,7 +110,12 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 			<BulkArchiveCollectionsAlertDialog />
 			<ChangeCollectionStatusAlertDialog />
 
-			<PageHeader variant="compact" title="Collections" actions={<CreateCollectionButton />} />
+			<PageHeader
+				variant="compact"
+				title="Collections"
+				actions={<CreateCollectionButton />}
+				className="hidden md:block"
+			/>
 
 			<div className="space-y-6">
 				{/* Onglets de statut */}

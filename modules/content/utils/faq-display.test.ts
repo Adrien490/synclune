@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import type { FaqItemData, FaqLink } from "./faq-utils";
+import type { FaqItemData, FaqLink } from "./faq-display";
 import {
 	generateFaqSchema,
 	getPlainTextAnswer,
 	parseAnswerSegments,
 	validateFaqPlaceholders,
-} from "./faq-utils";
+} from "./faq-display";
 
 // ─── parseAnswerSegments ────────────────────────────────────────────
 

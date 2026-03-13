@@ -97,7 +97,12 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Codes promo" actions={<CreateDiscountButton />} />
+			<PageHeader
+				variant="compact"
+				title="Codes promo"
+				actions={<CreateDiscountButton />}
+				className="hidden md:block"
+			/>
 
 			<div className="space-y-6">
 				<Suspense fallback={null}>

@@ -191,7 +191,7 @@ function DesktopFormSkeleton() {
 export default function CreateProductLoading() {
 	return (
 		<>
-			<PageHeader title="Nouveau produit" variant="compact" />
+			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
 
 			{/* Mobile: Wizard skeleton */}
 			<div className="md:hidden">

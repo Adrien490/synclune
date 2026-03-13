@@ -18,6 +18,7 @@ export default function CatalogLoading() {
 				variant="compact"
 				title="Catalogue"
 				description="Gérez vos bijoux, collections et tout ce qui compose votre catalogue"
+				className="hidden md:block"
 			/>
 
 			{/* Navigation Cards Grid - matches SectionNavigation structure */}

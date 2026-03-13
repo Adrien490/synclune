@@ -83,7 +83,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Avis clients" />
+			<PageHeader variant="compact" title="Avis clients" className="hidden md:block" />
 
 			{/* Statistiques */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">

@@ -13,6 +13,9 @@ import {
 	Mail,
 	MessageSquare,
 	Ticket,
+	FileText,
+	Megaphone,
+	HelpCircle,
 } from "lucide-react";
 
 // ============================================================================
@@ -135,6 +138,27 @@ export const navigationData: NavigationData = {
 					title: "Newsletter",
 					url: "/admin/marketing/newsletter",
 					icon: Mail,
+				},
+			],
+		},
+		// ─────────────────────────────────────────────────────────────────────────
+		// CONTENU - Contenu éditable du site
+		// ─────────────────────────────────────────────────────────────────────────
+		{
+			label: "Contenu",
+			icon: FileText,
+			items: [
+				{
+					id: "announcements",
+					title: "Annonces",
+					url: "/admin/contenu/annonces",
+					icon: Megaphone,
+				},
+				{
+					id: "faq",
+					title: "FAQ",
+					url: "/admin/contenu/faq",
+					icon: HelpCircle,
 				},
 			],
 		},

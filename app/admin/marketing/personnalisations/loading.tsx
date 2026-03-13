@@ -6,7 +6,7 @@ export default function CustomizationsLoading() {
 		<div role="status" aria-busy="true" aria-label="Chargement des personnalisations">
 			<span className="sr-only">Chargement des personnalisations...</span>
 
-			<PageHeader variant="compact" title="Personnalisations" />
+			<PageHeader variant="compact" title="Personnalisations" className="hidden md:block" />
 
 			{/* Stats grid */}
 			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">

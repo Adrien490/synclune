@@ -33,7 +33,12 @@ export function SectionNavigation({
 
 	return (
 		<>
-			<PageHeader variant="compact" title={title} description={description} />
+			<PageHeader
+				variant="compact"
+				title={title}
+				description={description}
+				className="hidden md:block"
+			/>
 			<div className={cn("grid gap-4", gridCols[columns])}>
 				{links.map((link) => {
 					const Icon = link.icon;

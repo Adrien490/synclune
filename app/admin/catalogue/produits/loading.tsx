@@ -15,6 +15,7 @@ export default function ProductsListLoading() {
 				description="Gérez votre catalogue de bijoux"
 				variant="compact"
 				actions={<Button disabled>Nouveau produit</Button>}
+				className="hidden md:block"
 			/>
 
 			{/* Status Navigation - Skeleton tabs */}

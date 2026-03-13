@@ -68,7 +68,7 @@ export default async function CustomizationsPage({ searchParams }: Customization
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Personnalisations" />
+			<PageHeader variant="compact" title="Personnalisations" className="hidden md:block" />
 
 			{/* Statistiques */}
 			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">

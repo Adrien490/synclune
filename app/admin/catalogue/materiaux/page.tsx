@@ -66,7 +66,12 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Matériaux" actions={<CreateMaterialButton />} />
+			<PageHeader
+				variant="compact"
+				title="Matériaux"
+				actions={<CreateMaterialButton />}
+				className="hidden md:block"
+			/>
 
 			<div className="space-y-6">
 				<Suspense fallback={null}>

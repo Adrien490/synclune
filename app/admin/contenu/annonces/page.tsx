@@ -1,0 +1,67 @@
+import dynamic from "next/dynamic";
+import { Suspense } from "react";
+import { type Metadata } from "next";
+import { connection } from "next/server";
+import { Plus } from "lucide-react";
+
+import { PageHeader } from "@/shared/components/page-header";
+import { Button } from "@/shared/components/ui/button";
+import { Skeleton } from "@/shared/components/ui/skeleton";
+import { AnnouncementDataTable } from "@/modules/content/components/admin/announcement-data-table";
+import { getAnnouncements } from "@/modules/content/data/get-announcements";
+
+import { CreateAnnouncementButton } from "./create-announcement-button";
+
+const AnnouncementFormDialog = dynamic(
+	() =>
+		import("@/modules/content/components/admin/announcement-form-dialog").then(
+			(mod) => mod.AnnouncementFormDialog,
+		),
+	{ ssr: false },
+);
+
+const DeleteAnnouncementAlertDialog = dynamic(
+	() =>
+		import("@/modules/content/components/admin/delete-announcement-alert-dialog").then(
+			(mod) => mod.DeleteAnnouncementAlertDialog,
+		),
+	{ ssr: false },
+);
+
+export const metadata: Metadata = {
+	title: "Annonces - Administration",
+	description: "Gérer les annonces promotionnelles",
+};
+
+export default async function AnnouncementsAdminPage() {
+	await connection();
+
+	const announcementsPromise = getAnnouncements();
+
+	return (
+		<>
+			<PageHeader
+				variant="compact"
+				title="Annonces"
+				description="Gérez les annonces promotionnelles affichées sur la boutique"
+				actions={<CreateAnnouncementButton />}
+				className="hidden md:block"
+			/>
+
+			<Suspense
+				fallback={
+					<div className="space-y-3">
+						<Skeleton className="h-12 w-full" />
+						<Skeleton className="h-12 w-full" />
+						<Skeleton className="h-12 w-full" />
+					</div>
+				}
+			>
+				<AnnouncementDataTable announcementsPromise={announcementsPromise} />
+			</Suspense>
+
+			<AnnouncementFormDialog />
+			<DeleteAnnouncementAlertDialog />
+		</>
+	);
+}

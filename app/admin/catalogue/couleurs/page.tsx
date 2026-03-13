@@ -65,7 +65,12 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 
 	return (
 		<>
-			<PageHeader variant="compact" title="Couleurs" actions={<CreateColorButton />} />
+			<PageHeader
+				variant="compact"
+				title="Couleurs"
+				actions={<CreateColorButton />}
+				className="hidden md:block"
+			/>
 
 			<div className="space-y-6">
 				<Suspense fallback={null}>

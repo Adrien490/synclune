@@ -99,6 +99,7 @@ export default async function EditSkuPage({ params }: { params: EditSkuPageParam
 				variant="compact"
 				title={`Modifier ${sku.sku}`}
 				description={`Modification de la variante du produit "${product.title}"`}
+				className="hidden md:block"
 			/>
 
 			<EditProductVariantForm

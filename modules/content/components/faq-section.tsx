@@ -7,16 +7,16 @@ import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { petitFormalScript } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { MessageCircle } from "lucide-react";
-import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
 import { FaqDoodles } from "./faq-doodles";
-import type { AnswerSegment, FaqItemData } from "./faq-utils";
-import { generateFaqSchema, parseAnswerSegments, validateFaqPlaceholders } from "./faq-utils";
+import type { FaqItemData } from "../utils/faq-display";
+import { generateFaqSchema, parseAnswerSegments } from "../utils/faq-display";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
+import { getFaqItems } from "../data/get-faq-items";
 
-function renderSegments(segments: AnswerSegment[]): ReactNode {
+function renderSegments(segments: ReturnType<typeof parseAnswerSegments>): ReactNode {
 	const first = segments[0];
 	if (segments.length === 1 && first?.type === "text") {
 		return first.value;
@@ -45,61 +45,26 @@ function renderAnswerWithLinks(answer: string, links?: FaqItemData["links"]): Re
 	return renderSegments(parseAnswerSegments(answer, links));
 }
 
-const faqItems: FaqItemData[] = [
-	{
-		question: "Combien de temps pour recevoir ma commande ?",
-		answer:
-			"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo vous livre en 2-4 jours en France métropolitaine. Je vous envoie le numéro de suivi par email dès que votre colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
-		links: [{ text: "conditions de vente", href: "/cgv" }],
-	},
-	{
-		question: "Je peux retourner un bijou si je change d'avis ?",
-		answer:
-			"Bien sûr ! Vous avez 14 jours après réception pour changer d'avis. Renvoyez-moi le bijou dans son état d'origine, non porté, et je vous rembourse. Écrivez-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
-		links: [{ text: "conditions de vente", href: "/cgv" }],
-	},
-	{
-		question: "En quoi sont faits vos bijoux ?",
-		answer:
-			"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvrez toutes mes {{link0}}.",
-		links: [{ text: "collections", href: "/collections" }],
-	},
-	{
-		question: "Comment je prends soin de mes bijoux ?",
-		answer:
-			"Évitez le contact avec l'eau, les parfums et les crèmes. Rangez-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
-	},
-	{
-		question: "Vous faites des bijoux sur-mesure ?",
-		answer:
-			"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écrivez-moi via la {{link0}} et on discute de votre projet ensemble.",
-		links: [{ text: "page Personnalisation", href: "/personnalisation" }],
-	},
-	{
-		question: "C'est quoi le délai pour une création personnalisée ?",
-		answer:
-			"Comptez environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que vous souhaitez, de créer des esquisses qu'on validera ensemble, et de réaliser votre bijou avec tout le soin qu'il mérite.",
-	},
-];
-
-// Dev-time validation: warn if any FAQ item has unmatched link placeholders
-if (process.env.NODE_ENV === "development") {
-	validateFaqPlaceholders(faqItems);
-}
-
-const faqSchema = generateFaqSchema(faqItems);
-
 /**
  * FAQ section with FAQPage JSON-LD schema for rich snippets.
  *
  * Server Component with client island for the Accordion.
+ * FAQ items are fetched from the database (managed via admin).
  */
 export async function FaqSection() {
-	"use cache";
-	cacheLife("reference");
-	cacheTag("faq-section");
+	const faqItems = await getFaqItems();
 
-	const accordionItems = faqItems.map((item) => ({
+	if (faqItems.length === 0) return null;
+
+	const faqItemsData: FaqItemData[] = faqItems.map((item) => ({
+		question: item.question,
+		answer: item.answer,
+		links: item.links ?? undefined,
+	}));
+
+	const faqSchema = generateFaqSchema(faqItemsData);
+
+	const accordionItems = faqItemsData.map((item) => ({
 		question: item.question,
 		answer: renderAnswerWithLinks(item.answer, item.links),
 	}));

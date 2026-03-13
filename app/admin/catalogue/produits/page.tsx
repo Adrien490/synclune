@@ -105,6 +105,7 @@ export default function ProductsAdminPage({ searchParams }: ProductsAdminPagePro
 			<PageHeader
 				variant="compact"
 				title="Produits"
+				className="hidden md:block"
 				actions={
 					<Button asChild>
 						<Link href="/admin/catalogue/produits/nouveau">Nouveau produit</Link>

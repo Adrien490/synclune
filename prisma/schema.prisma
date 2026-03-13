@@ -1277,3 +1277,42 @@ model FailedEmail {
   @@index([resolvedAt, nextRetryAt]) // retry cron: resolvedAt IS NULL AND nextRetryAt <= now()
 }
 
+// ============================================================================
+// CONTENU EDITABLE (CMS)
+// ============================================================================
+
+/// Barre d'annonce promotionnelle affichee au-dessus du navbar
+/// Contenu ephemere sans obligation legale de retention (hard delete)
+/// Contrainte "1 seule active" enforced en app layer (transaction)
+model AnnouncementBar {
+  id                   String    @id @default(cuid())
+  message              String    @db.VarChar(200)
+  link                 String?   @db.VarChar(2048)
+  linkText             String?   @db.VarChar(50)
+  startsAt             DateTime  @default(now())
+  endsAt               DateTime?
+  isActive             Boolean   @default(false)
+  dismissDurationHours Int       @default(24)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([isActive, startsAt, endsAt])
+  @@index([createdAt(sort: Desc)])
+}
+
+/// Question/reponse FAQ affichee sur la homepage
+/// Contenu ephemere sans obligation legale de retention (hard delete)
+/// Position pour tri drag-and-drop dans l'admin
+model FaqItem {
+  id        String   @id @default(cuid())
+  question  String   @db.VarChar(300)
+  answer    String   @db.Text
+  links     Json?                        // [{text: string, href: string}]
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, position])
+}
+

@@ -37,7 +37,7 @@ export default async function CustomizationDetailPage({ params }: CustomizationD
 
 	return (
 		<>
-			<PageHeader variant="compact" title={request.firstName} />
+			<PageHeader variant="compact" title={request.firstName} className="hidden md:block" />
 
 			<div className="mb-6">
 				<Button variant="ghost" size="sm" asChild>
