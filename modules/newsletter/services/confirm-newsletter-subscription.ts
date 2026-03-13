@@ -11,6 +11,7 @@ import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { confirmationTokenSchema } from "../schemas/newsletter.schemas";
 import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
+import { ROUTES } from "@/shared/constants/urls";
 import { createNewsletterPromoCode } from "./create-newsletter-promo-code";
 
 interface ConfirmResult {
@@ -29,7 +30,7 @@ export async function confirmNewsletterSubscription(
 	try {
 		// Arcjet protection: Shield + Rate Limiting against brute-force
 		const headersList = await headers();
-		const request = new Request(`${getBaseUrl()}/newsletter/confirm`, {
+		const request = new Request(`${getBaseUrl()}${ROUTES.NEWSLETTER.CONFIRM}`, {
 			method: "POST",
 			headers: headersList,
 		});
@@ -147,7 +148,7 @@ export async function confirmNewsletterSubscription(
 
 		// Send welcome email (non-blocking: don't fail confirmation if email fails)
 		try {
-			const unsubscribeUrl = `${NEWSLETTER_BASE_URL}/newsletter/unsubscribe?token=${subscriber.unsubscribeToken}`;
+			const unsubscribeUrl = `${NEWSLETTER_BASE_URL}${ROUTES.NEWSLETTER.UNSUBSCRIBE}?token=${subscriber.unsubscribeToken}`;
 			await sendNewsletterWelcomeEmail({
 				to: subscriber.email,
 				unsubscribeUrl,

@@ -35,7 +35,7 @@ export const NewsletterConfirmationEmail = ({
 };
 
 NewsletterConfirmationEmail.PreviewProps = {
-	confirmationUrl: "https://synclune.fr/newsletter/confirm?token=example123",
+	confirmationUrl: "https://synclune.fr/newsletter/confirmer?token=example123",
 } as NewsletterConfirmationEmailProps;
 
 export default NewsletterConfirmationEmail;

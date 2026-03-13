@@ -88,7 +88,7 @@ test.describe("Newsletter", { tag: ["@regression"] }, () => {
 	});
 
 	test("la page de confirmation newsletter existe", async ({ page }) => {
-		const response = await page.goto("/newsletter/confirm");
+		const response = await page.goto("/newsletter/confirmer");
 		await page.waitForLoadState("domcontentloaded");
 
 		// Page should load (200 or redirect)
@@ -96,7 +96,7 @@ test.describe("Newsletter", { tag: ["@regression"] }, () => {
 	});
 
 	test("la page de desinscription newsletter existe", async ({ page }) => {
-		const response = await page.goto("/newsletter/unsubscribe");
+		const response = await page.goto("/newsletter/desinscription");
 		await page.waitForLoadState("domcontentloaded");
 
 		// Page should load (200 or redirect)

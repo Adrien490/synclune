@@ -678,7 +678,7 @@ describe("CustomizationStatusEmail", () => {
 
 describe("NewsletterConfirmationEmail", () => {
 	const baseProps = {
-		confirmationUrl: "https://synclune.fr/newsletter/confirm?token=example123",
+		confirmationUrl: "https://synclune.fr/newsletter/confirmer?token=example123",
 	};
 
 	it("renders without error", async () => {
@@ -694,7 +694,7 @@ describe("NewsletterConfirmationEmail", () => {
 
 	it("contains dynamic data", async () => {
 		const html = await render(<NewsletterConfirmationEmail {...baseProps} />);
-		expect(html).toContain("https://synclune.fr/newsletter/confirm?token=example123");
+		expect(html).toContain("https://synclune.fr/newsletter/confirmer?token=example123");
 		expect(html).toContain("7 jours");
 	});
 });
@@ -706,7 +706,7 @@ describe("NewsletterConfirmationEmail", () => {
 describe("NewsletterWelcomeEmail", () => {
 	const baseProps = {
 		email: "example@email.com",
-		unsubscribeUrl: "https://synclune.fr/newsletter/unsubscribe?token=abc123",
+		unsubscribeUrl: "https://synclune.fr/newsletter/desinscription?token=abc123",
 		shopUrl: "https://synclune.fr/produits",
 	};
 
@@ -724,7 +724,7 @@ describe("NewsletterWelcomeEmail", () => {
 	it("contains dynamic data", async () => {
 		const html = await render(<NewsletterWelcomeEmail {...baseProps} />);
 		expect(html).toContain("example@email.com");
-		expect(html).toContain("https://synclune.fr/newsletter/unsubscribe?token=abc123");
+		expect(html).toContain("https://synclune.fr/newsletter/desinscription?token=abc123");
 	});
 });
 

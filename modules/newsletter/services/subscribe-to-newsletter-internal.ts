@@ -6,6 +6,7 @@ import { randomUUID } from "crypto";
 import { updateTag } from "next/cache";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
+import { ROUTES } from "@/shared/constants/urls";
 
 interface SubscribeToNewsletterInternalParams {
 	email: string;
@@ -67,7 +68,7 @@ export async function subscribeToNewsletterInternal({
 				);
 
 				// Envoyer l'email de confirmation
-				const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
+				const confirmationUrl = `${NEWSLETTER_BASE_URL}${ROUTES.NEWSLETTER.CONFIRM}?token=${confirmationToken}`;
 				await sendNewsletterConfirmationEmail({
 					to: email,
 					confirmationUrl,
@@ -100,7 +101,7 @@ export async function subscribeToNewsletterInternal({
 			);
 
 			// Envoyer l'email de confirmation
-			const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
+			const confirmationUrl = `${NEWSLETTER_BASE_URL}${ROUTES.NEWSLETTER.CONFIRM}?token=${confirmationToken}`;
 			await sendNewsletterConfirmationEmail({
 				to: email,
 				confirmationUrl,
@@ -134,7 +135,7 @@ export async function subscribeToNewsletterInternal({
 		getNewsletterInvalidationTags().forEach((tag) => updateTag(tag));
 
 		// Envoyer l'email de confirmation
-		const confirmationUrl = `${NEWSLETTER_BASE_URL}/newsletter/confirm?token=${confirmationToken}`;
+		const confirmationUrl = `${NEWSLETTER_BASE_URL}${ROUTES.NEWSLETTER.CONFIRM}?token=${confirmationToken}`;
 		await sendNewsletterConfirmationEmail({
 			to: email,
 			confirmationUrl,

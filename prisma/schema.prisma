@@ -336,9 +336,9 @@ model ProductSku {
   updatedAt  DateTime    @updatedAt
   deletedAt  DateTime? // Soft delete pour preserver historique commandes
 
-  // Garantir unicite des combinaisons produit/couleur/taille/materiau
-  // Evite les doublons de variantes (ex: 2 SKUs "Bague Rouge Taille 52 Argent")
-  @@unique([productId, colorId, size, materialId])
+  // Garantir unicite des combinaisons produit/couleur/taille/materiau (actifs uniquement)
+  // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL)
+  // Permet de recreer un SKU soft-deleted avec la meme combinaison
   @@index([colorId])
   @@index([materialId])
 }
@@ -513,6 +513,10 @@ enum InvoiceStatus {
   VOIDED // Facture annulée (commande annulée après facturation)
 }
 
+enum PaymentMethod {
+  CARD
+}
+
 // ============================================================================
 // COMMANDES - MODELS
 // ============================================================================
@@ -584,7 +588,7 @@ model Order {
   fulfillmentStatus FulfillmentStatus @default(UNFULFILLED)
 
   // === PAIEMENT ===
-  paymentMethod String    @default("CARD") @db.VarChar(20)
+  paymentMethod PaymentMethod @default(CARD)
   paidAt        DateTime?
 
   // === RELATIONS ===

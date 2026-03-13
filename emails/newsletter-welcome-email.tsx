@@ -83,7 +83,7 @@ export const NewsletterWelcomeEmail = ({
 
 NewsletterWelcomeEmail.PreviewProps = {
 	email: "example@email.com",
-	unsubscribeUrl: "https://synclune.fr/newsletter/unsubscribe?token=abc123",
+	unsubscribeUrl: "https://synclune.fr/newsletter/desinscription?token=abc123",
 	shopUrl: "https://synclune.fr/produits",
 	promoCode: "BIENVENUE-A1B2C3",
 } as NewsletterWelcomeEmailProps;

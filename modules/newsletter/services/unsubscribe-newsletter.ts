@@ -1,6 +1,6 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
-import { getBaseUrl } from "@/shared/constants/urls";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { validateInput } from "@/shared/lib/actions";
@@ -23,7 +23,7 @@ export async function unsubscribeNewsletter(token: string | undefined): Promise<
 	try {
 		// Arcjet protection: Shield + Rate Limiting against brute-force
 		const headersList = await headers();
-		const request = new Request(`${getBaseUrl()}/newsletter/unsubscribe`, {
+		const request = new Request(`${getBaseUrl()}${ROUTES.NEWSLETTER.UNSUBSCRIBE}`, {
 			method: "POST",
 			headers: headersList,
 		});

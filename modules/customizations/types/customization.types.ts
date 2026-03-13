@@ -1,12 +1,9 @@
 // ============================================================================
-// STATUS TYPE - Mirrors Prisma enum CustomizationRequestStatus
+// STATUS TYPE - Re-exported from Prisma (single source of truth)
 // ============================================================================
 
-/**
- * Client-safe type for customization request status.
- * Source of truth: Prisma enum CustomizationRequestStatus in schema.prisma
- */
-export type CustomizationRequestStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+import type { CustomizationRequestStatus } from "@/app/generated/prisma/client";
+export type { CustomizationRequestStatus };
 
 // ============================================================================
 // PRODUCT TYPE - For customization form
