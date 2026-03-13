@@ -139,7 +139,7 @@ function TwoImagesLayout({
 			className="grid grid-cols-2 gap-0.5 overflow-hidden rounded-t-lg"
 		>
 			{images.map((image, i) => (
-				<div key={image.url} className="bg-muted relative aspect-square overflow-hidden">
+				<div key={`${image.url}-${i}`} className="bg-muted relative aspect-square overflow-hidden">
 					<CollectionImageItem
 						image={image}
 						collectionName={collectionName}
@@ -190,7 +190,7 @@ function ThreeImagesLayout({
 			</div>
 			{/* 2 petites images */}
 			{images.slice(1, 3).map((image, i) => (
-				<div key={image.url} className="bg-muted relative aspect-square overflow-hidden">
+				<div key={`${image.url}-${i}`} className="bg-muted relative aspect-square overflow-hidden">
 					<CollectionImageItem
 						image={image}
 						collectionName={collectionName}
@@ -257,7 +257,7 @@ function BentoGridLayout({
 
 				return (
 					<div
-						key={image.url}
+						key={`${image.url}-${i}`}
 						className={cn(
 							"bg-muted relative aspect-square overflow-hidden",
 							// Image 4 visible uniquement sur desktop (sm+)
