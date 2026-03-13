@@ -41,7 +41,7 @@ vi.mock("../schemas/search-address.schema", () => ({
 	geoapifySearchSchema: {
 		parse: (params: Record<string, unknown>) => ({
 			text: params.text ?? "",
-			countryCode: ((params.countryCode as string) ?? "").toUpperCase(),
+			countryCode: ((params.countryCode as string) || "").toUpperCase(),
 			...params,
 		}),
 	},

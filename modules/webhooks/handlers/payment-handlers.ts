@@ -70,7 +70,7 @@ export async function handlePaymentSuccess(
 				if (order) {
 					await sendAdminOrderProcessingFailedAlert({
 						orderNumber: order.orderNumber,
-						customerEmail: order.customerEmail ?? "N/A",
+						customerEmail: order.customerEmail,
 						total: order.total,
 						errorMessage: error instanceof Error ? error.message : String(error),
 						paymentIntentId: paymentIntent.id,

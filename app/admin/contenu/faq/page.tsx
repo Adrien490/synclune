@@ -10,18 +10,14 @@ import { getAdminFaqItems } from "@/modules/content/data/get-admin-faq-items";
 
 import { CreateFaqButton } from "./create-faq-button";
 
-const FaqFormDialog = dynamic(
-	() =>
-		import("@/modules/content/components/admin/faq-form-dialog").then((mod) => mod.FaqFormDialog),
-	{ ssr: false },
+const FaqFormDialog = dynamic(() =>
+	import("@/modules/content/components/admin/faq-form-dialog").then((mod) => mod.FaqFormDialog),
 );
 
-const DeleteFaqAlertDialog = dynamic(
-	() =>
-		import("@/modules/content/components/admin/delete-faq-alert-dialog").then(
-			(mod) => mod.DeleteFaqAlertDialog,
-		),
-	{ ssr: false },
+const DeleteFaqAlertDialog = dynamic(() =>
+	import("@/modules/content/components/admin/delete-faq-alert-dialog").then(
+		(mod) => mod.DeleteFaqAlertDialog,
+	),
 );
 
 export const metadata: Metadata = {

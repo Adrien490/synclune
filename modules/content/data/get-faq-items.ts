@@ -2,7 +2,9 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 
 import { cacheFaqPublic } from "../constants/cache";
+import { faqLinkSchema } from "../schemas/content.schemas";
 import type { FaqItemPublic } from "../types/content.types";
+import { z } from "zod";
 
 /**
  * Get active FAQ items for storefront display, ordered by position.
@@ -26,11 +28,16 @@ async function fetchFaqItems(): Promise<FaqItemPublic[]> {
 			orderBy: { position: "asc" },
 		});
 
-		return items.map((item) => ({
-			question: item.question,
-			answer: item.answer,
-			links: item.links as FaqItemPublic["links"],
-		}));
+		const linksSchema = z.array(faqLinkSchema);
+
+		return items.map((item) => {
+			const parsed = linksSchema.safeParse(item.links);
+			return {
+				question: item.question,
+				answer: item.answer,
+				links: parsed.success ? parsed.data : null,
+			};
+		});
 	} catch (err) {
 		logger.error("Failed to fetch FAQ items", err, {
 			service: "fetchFaqItems",

@@ -32,6 +32,7 @@ export function transformGeoapifyResult(result: GeoapifyResult): SearchAddressRe
 	const postcode = result.postcode ?? "";
 	const city = result.city ?? "";
 	const street = result.street ?? "";
+	// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional: treat empty string as falsy
 	const label = result.address_line1 || result.formatted;
 
 	return {

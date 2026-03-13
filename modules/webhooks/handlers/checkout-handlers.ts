@@ -109,7 +109,7 @@ export async function handleCheckoutSessionCompleted(
 			if (order && piId) {
 				await sendAdminOrderProcessingFailedAlert({
 					orderNumber: order.orderNumber,
-					customerEmail: order.customerEmail ?? "N/A",
+					customerEmail: order.customerEmail,
 					total: order.total,
 					errorMessage: error instanceof Error ? error.message : String(error),
 					paymentIntentId: piId,

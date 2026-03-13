@@ -2,30 +2,23 @@ import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { type Metadata } from "next";
 import { connection } from "next/server";
-import { Plus } from "lucide-react";
-
 import { PageHeader } from "@/shared/components/page-header";
-import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { AnnouncementDataTable } from "@/modules/content/components/admin/announcement-data-table";
 import { getAnnouncements } from "@/modules/content/data/get-announcements";
 
 import { CreateAnnouncementButton } from "./create-announcement-button";
 
-const AnnouncementFormDialog = dynamic(
-	() =>
-		import("@/modules/content/components/admin/announcement-form-dialog").then(
-			(mod) => mod.AnnouncementFormDialog,
-		),
-	{ ssr: false },
+const AnnouncementFormDialog = dynamic(() =>
+	import("@/modules/content/components/admin/announcement-form-dialog").then(
+		(mod) => mod.AnnouncementFormDialog,
+	),
 );
 
-const DeleteAnnouncementAlertDialog = dynamic(
-	() =>
-		import("@/modules/content/components/admin/delete-announcement-alert-dialog").then(
-			(mod) => mod.DeleteAnnouncementAlertDialog,
-		),
-	{ ssr: false },
+const DeleteAnnouncementAlertDialog = dynamic(() =>
+	import("@/modules/content/components/admin/delete-announcement-alert-dialog").then(
+		(mod) => mod.DeleteAnnouncementAlertDialog,
+	),
 );
 
 export const metadata: Metadata = {

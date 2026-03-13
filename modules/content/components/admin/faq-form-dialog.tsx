@@ -154,9 +154,9 @@ export function FaqFormDialog() {
 
 						<div className="space-y-3">
 							<div className="flex items-center justify-between">
-								<label className="text-sm font-medium">
+								<p className="text-sm font-medium">
 									Liens <span className="text-muted-foreground font-normal">(optionnel)</span>
-								</label>
+								</p>
 								<Button
 									type="button"
 									variant="outline"
