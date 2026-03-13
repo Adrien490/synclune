@@ -1,7 +1,9 @@
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
+import { z } from "zod";
 
 import { cacheFaqList } from "../constants/cache";
+import { faqLinkSchema } from "../schemas/faq.schemas";
 import type { FaqListItem } from "../types/faq.types";
 
 /**
@@ -30,10 +32,15 @@ async function fetchAdminFaqItems(): Promise<FaqListItem[]> {
 			orderBy: { position: "asc" },
 		});
 
-		return items.map((item) => ({
-			...item,
-			links: item.links as FaqListItem["links"],
-		}));
+		const linksSchema = z.array(faqLinkSchema);
+
+		return items.map((item) => {
+			const parsed = linksSchema.safeParse(item.links);
+			return {
+				...item,
+				links: parsed.success ? parsed.data : null,
+			};
+		});
 	} catch (err) {
 		logger.error("Failed to fetch admin FAQ items", err, {
 			service: "fetchAdminFaqItems",

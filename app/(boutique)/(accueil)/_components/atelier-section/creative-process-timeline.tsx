@@ -1,16 +1,13 @@
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { cn } from "@/shared/utils/cn";
-import { CheckCircle, Hammer, Lightbulb, Pencil, Sparkles, type LucideIcon } from "lucide-react";
+import { Sparkles, type LucideIcon } from "lucide-react";
 import { processSteps } from "./process-steps";
-
-const STEP_ICONS: LucideIcon[] = [Lightbulb, Pencil, Hammer, CheckCircle];
 
 const ICON_CLASS =
 	"h-6 w-6 motion-safe:transition-[color,filter,rotate,translate,scale] motion-safe:duration-300";
 
-function StepIcon({ index }: { index: number }) {
-	const Icon = STEP_ICONS[index];
-	return Icon ? <Icon className={ICON_CLASS} aria-hidden="true" /> : null;
+function StepIcon({ icon: Icon }: { icon: LucideIcon }) {
+	return <Icon className={ICON_CLASS} aria-hidden="true" />;
 }
 
 export function CreativeProcessTimeline() {
@@ -56,7 +53,7 @@ export function CreativeProcessTimeline() {
 									step.intensity.shadow,
 								)}
 							>
-								<StepIcon index={index} />
+								<StepIcon icon={step.icon} />
 								{isLast(index) && <GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />}
 							</div>
 
@@ -120,7 +117,7 @@ export function CreativeProcessTimeline() {
 									step.intensity.shadow,
 								)}
 							>
-								<StepIcon index={index} />
+								<StepIcon icon={step.icon} />
 								{isLast(index) && (
 									<div className="hidden sm:block">
 										<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />

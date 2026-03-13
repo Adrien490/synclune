@@ -1,9 +1,11 @@
 import { STEP_COLORS } from "@/shared/constants/process-steps";
+import { CheckCircle, Hammer, Lightbulb, Pencil, type LucideIcon } from "lucide-react";
 
 export interface ProcessStep {
 	id: string;
 	title: string;
 	description: string;
+	icon: LucideIcon;
 	color: string;
 	iconHoverClass: string;
 	glowClass: string;
@@ -14,6 +16,7 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "idea",
 		title: "D'abord, une idée",
+		icon: Lightbulb,
 		description:
 			"L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de laisser l'inspiration venir d'elle-même.",
 		color: STEP_COLORS.secondary,
@@ -25,6 +28,7 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "drawing",
 		title: "Le dessin et la peinture",
+		icon: Pencil,
 		description:
 			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique. C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie avec soin.",
 		color: STEP_COLORS.primary,
@@ -35,6 +39,7 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "assembly",
 		title: "La cuisson et l'assemblage",
+		icon: Hammer,
 		description:
 			"Cuisson au four (le plastique rétrécit de 7 fois !), vernissage pour protéger les couleurs, puis montage sur les supports. Parfois le résultat surprend, mais ça fait partie du charme artisanal !",
 		color: STEP_COLORS.secondary,
@@ -45,6 +50,7 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "finishing",
 		title: "La touche finale",
+		icon: CheckCircle,
 		description:
 			"Je polis, je vérifie chaque détail, j'assemble les perles... Bon, je suis un peu perfectionniste ! Puis emballage avec amour dans sa jolie pochette.",
 		color: STEP_COLORS.primary,
