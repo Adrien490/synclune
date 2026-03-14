@@ -13,17 +13,17 @@ import type { ReactNode } from "react";
 function PostHogPageview() {
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
+	const searchParamsString = searchParams.toString();
 
 	useEffect(() => {
 		if (pathname) {
 			let url = window.origin + pathname;
-			const search = searchParams.toString();
-			if (search) {
-				url += `?${search}`;
+			if (searchParamsString) {
+				url += `?${searchParamsString}`;
 			}
 			posthog.capture("$pageview", { $current_url: url });
 		}
-	}, [pathname, searchParams]);
+	}, [pathname, searchParamsString]);
 
 	return null;
 }

@@ -5,7 +5,6 @@ import { FlyToCartOverlay } from "@/modules/cart/components/fly-to-cart-overlay"
 import { NavigationGuardProvider } from "@/shared/contexts/navigation-guard-context";
 import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-provider";
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
-import { InstallPromptStoreProvider } from "@/shared/providers/install-prompt-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { PostHogProvider } from "@/shared/providers/posthog-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
@@ -32,18 +31,16 @@ export function RootProviders({ children }: RootProvidersProps) {
 			>
 				<CookieConsentStoreProvider>
 					<PostHogProvider>
-						<InstallPromptStoreProvider>
-							<NavigationGuardProvider>
-								<DialogStoreProvider>
-									<SheetStoreProvider>
-										<AlertDialogStoreProvider>
-											{children}
-											<FlyToCartOverlay />
-										</AlertDialogStoreProvider>
-									</SheetStoreProvider>
-								</DialogStoreProvider>
-							</NavigationGuardProvider>
-						</InstallPromptStoreProvider>
+						<NavigationGuardProvider>
+							<DialogStoreProvider>
+								<SheetStoreProvider>
+									<AlertDialogStoreProvider>
+										{children}
+										<FlyToCartOverlay />
+									</AlertDialogStoreProvider>
+								</SheetStoreProvider>
+							</DialogStoreProvider>
+						</NavigationGuardProvider>
 					</PostHogProvider>
 				</CookieConsentStoreProvider>
 			</MotionConfig>

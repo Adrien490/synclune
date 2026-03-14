@@ -30,7 +30,7 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ user }: AdminSidebarProps) {
 	return (
-		<Sidebar variant="floating">
+		<Sidebar variant="floating" disableMobileSheet>
 			<SidebarHeader>
 				<SidebarMenu>
 					<SidebarMenuItem>

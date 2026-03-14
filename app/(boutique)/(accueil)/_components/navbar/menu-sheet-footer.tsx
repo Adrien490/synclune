@@ -5,7 +5,7 @@ import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
-import { Settings } from "lucide-react";
+import { LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 
 interface MenuSheetFooterProps {
@@ -45,7 +45,7 @@ export function MenuSheetFooter({ isAdmin }: MenuSheetFooterProps) {
 								className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
 								aria-label="Tableau de bord administrateur"
 							>
-								<Settings size={18} aria-hidden="true" />
+								<LayoutDashboard size={18} aria-hidden="true" />
 							</Link>
 						</SheetClose>
 					)}

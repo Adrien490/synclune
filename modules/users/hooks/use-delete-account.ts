@@ -11,7 +11,7 @@ interface UseDeleteAccountOptions {
 }
 
 /**
- * Hook pour supprimer le compte utilisateur (RGPD - Droit à l'oubli)
+ * Hook pour supprimer le compte utilisateur (RGPD - Suppression de compte)
  *
  * @example
  * ```tsx

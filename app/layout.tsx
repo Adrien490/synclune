@@ -1,9 +1,5 @@
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { CookieBanner } from "@/shared/components/cookie-banner";
-// Lazy-loaded: rarely shown (2nd visit + Chrome/Edge or iOS only)
-const InstallPromptBanner = dynamic(() =>
-	import("@/shared/components/install-prompt-banner").then((mod) => mod.InstallPromptBanner),
-);
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
@@ -17,7 +13,6 @@ import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { RootProviders } from "@/shared/providers/root-providers";
 import { cormorantGaramond, inter, petitFormalScript } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
-import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -76,7 +71,6 @@ export default function RootLayout({
 						{children}
 						<UnsavedChangesDialog />
 						<CookieBanner />
-						<InstallPromptBanner />
 					</RootProviders>
 					<AppToaster />
 				</SerwistProvider>

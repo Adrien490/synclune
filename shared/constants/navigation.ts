@@ -165,6 +165,7 @@ export type MegaMenuData = {
 	productTypes?: Array<{ slug: string; label: string }>;
 	collections?: MegaMenuCollection[];
 	featuredProducts?: MegaMenuProduct[];
+	isAdmin?: boolean;
 };
 
 /**
@@ -174,7 +175,7 @@ export type MegaMenuData = {
  * @returns Items de navigation desktop avec children pour mega menus
  */
 export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
-	const { productTypes, collections } = data;
+	const { productTypes, collections, isAdmin } = data;
 	// Mega menu "Les créations" avec types de produits
 	const creationsItem: NavItemWithChildren = {
 		href: ROUTES.SHOP.PRODUCTS,
@@ -216,11 +217,17 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 				: undefined,
 	};
 
-	return [
+	const items: NavItemWithChildren[] = [
 		creationsItem,
 		collectionsItem,
 		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
 	];
+
+	if (isAdmin) {
+		items.push({ href: ROUTES.ADMIN.ROOT, label: "Tableau de bord", icon: "layout-dashboard" });
+	}
+
+	return items;
 }
 
 // Footer - Navigation simple (labels harmonisés avec le header)

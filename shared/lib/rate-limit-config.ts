@@ -616,7 +616,7 @@ export const ADMIN_COLLECTION_LIMITS = {
 // ========================================
 
 /**
- * Limite pour la suppression de compte (droit à l'oubli RGPD)
+ * Limite pour la suppression de compte (RGPD - Suppression de compte)
  *
  * TRÈS STRICT : Action irréversible et sensible
  * Protège contre les suppressions accidentelles multiples

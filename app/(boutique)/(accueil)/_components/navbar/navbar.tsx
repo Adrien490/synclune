@@ -121,7 +121,11 @@ export async function Navbar() {
 		: null;
 
 	// Générer les items de navigation desktop avec mega menus
-	const desktopNavItems = getDesktopNavItems({ productTypes, collections: menuCollections });
+	const desktopNavItems = getDesktopNavItems({
+		productTypes,
+		collections: menuCollections,
+		isAdmin: userIsAdmin,
+	});
 
 	return (
 		<BadgeCountsStoreProvider

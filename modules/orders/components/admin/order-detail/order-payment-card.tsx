@@ -16,12 +16,10 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-3">
-				{order.paymentMethod && (
-					<div>
-						<p className="text-muted-foreground text-sm">Méthode</p>
-						<p className="capitalize">{order.paymentMethod}</p>
-					</div>
-				)}
+				<div>
+					<p className="text-muted-foreground text-sm">Méthode</p>
+					<p className="capitalize">{order.paymentMethod}</p>
+				</div>
 				{order.paidAt && (
 					<div>
 						<p className="text-muted-foreground text-sm">Date de paiement</p>

@@ -1,6 +1,5 @@
 "use client";
 
-import { useInstallPromptStore } from "@/shared/providers/install-prompt-store-provider";
 import {
 	useCookieConsentStore,
 	useHasConsented,
@@ -12,6 +11,8 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { FocusScope } from "@radix-ui/react-focus-scope";
 import { useEffect, useRef, useState } from "react";
 import type { BeforeInstallPromptEvent } from "@/shared/types/pwa.types";
+import { useInstallPrompt } from "@/shared/hooks/use-install-prompt";
+import type { InstallPromptState } from "@/shared/data/get-install-prompt-state";
 
 /**
  * PWA install prompt banner — bottom-left, cookie-banner style.
@@ -26,11 +27,8 @@ import type { BeforeInstallPromptEvent } from "@/shared/types/pwa.types";
  * - Respects prefers-reduced-motion
  * - Safe area for iOS bottom bar
  */
-export function InstallPromptBanner() {
-	const bannerVisible = useInstallPromptStore((s) => s.bannerVisible);
-	const _hasHydrated = useInstallPromptStore((s) => s._hasHydrated);
-	const dismissForSession = useInstallPromptStore((s) => s.dismissForSession);
-	const markInstalled = useInstallPromptStore((s) => s.markInstalled);
+export function InstallPromptBanner({ initialState }: { initialState: InstallPromptState }) {
+	const { shouldShowBanner, dismiss, markInstalled, recordVisit } = useInstallPrompt(initialState);
 
 	const cookieBannerVisible = useCookieConsentStore((s) => s.bannerVisible);
 	const hasConsented = useHasConsented();
@@ -41,6 +39,12 @@ export function InstallPromptBanner() {
 	const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 	const [isStandalone, setIsStandalone] = useState(false);
 	const [isIOS, setIsIOS] = useState(false);
+
+	// Record visit on mount
+	useEffect(() => {
+		recordVisit();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	// Detect standalone mode and iOS
 	useEffect(() => {
@@ -79,11 +83,7 @@ export function InstallPromptBanner() {
 	const cookieBannerResolved = hasConsented || !cookieBannerVisible;
 
 	const shouldShow =
-		_hasHydrated &&
-		bannerVisible &&
-		!isStandalone &&
-		cookieBannerResolved &&
-		(deferredPrompt !== null || isIOS);
+		shouldShowBanner && !isStandalone && cookieBannerResolved && (deferredPrompt !== null || isIOS);
 
 	// Focus on install button after animation
 	useEffect(() => {
@@ -102,13 +102,13 @@ export function InstallPromptBanner() {
 
 		const handleKeyDown = (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
-				dismissForSession();
+				dismiss();
 			}
 		};
 
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, [shouldShow, dismissForSession]);
+	}, [shouldShow, dismiss]);
 
 	async function handleInstall() {
 		if (!deferredPrompt) return;
@@ -118,10 +118,6 @@ export function InstallPromptBanner() {
 			markInstalled();
 		}
 		setDeferredPrompt(null);
-	}
-
-	if (!_hasHydrated) {
-		return null;
 	}
 
 	return (
@@ -188,7 +184,7 @@ export function InstallPromptBanner() {
 								{isIOS ? (
 									<Button
 										ref={installButtonRef}
-										onClick={dismissForSession}
+										onClick={dismiss}
 										variant="default"
 										size="sm"
 										className="min-h-11 flex-1"
@@ -207,7 +203,7 @@ export function InstallPromptBanner() {
 											Installer
 										</Button>
 										<Button
-											onClick={dismissForSession}
+											onClick={dismiss}
 											variant="secondary"
 											size="sm"
 											className="min-h-11 flex-1"

@@ -45,7 +45,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 		withCallbacks(toggleStoreClosure, {
 			...createToastCallbacks({}),
 			onSuccess: (result) => {
-				createToastCallbacks({}).onSuccess?.(result);
+				createToastCallbacks({}).onSuccess(result);
 				confirmDialog.close();
 			},
 		}),

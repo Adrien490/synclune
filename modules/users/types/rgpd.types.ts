@@ -5,7 +5,7 @@ import {
 } from "../schemas/user.schemas";
 
 // ============================================================================
-// DELETE ACCOUNT TYPES (RGPD - Droit à l'oubli)
+// DELETE ACCOUNT TYPES (RGPD - Suppression de compte)
 // ============================================================================
 
 export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;

@@ -1,4 +1,3 @@
-import { BottomNav } from "@/app/admin/_components/bottom-nav";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
@@ -7,6 +6,10 @@ import { EMAIL_CONTACT } from "@/shared/lib/email-config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
+import { AdminBottomBar } from "./_components/admin-bottom-bar";
+import { AdminBottomBarProvider } from "./_components/admin-bottom-bar-context";
+import { AdminMenuSheet } from "./_components/admin-menu-sheet";
+import { AdminMobileHeader } from "./_components/admin-mobile-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { CommandPalette } from "./_components/command-palette";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
@@ -47,19 +50,19 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			</Suspense>
 			<SidebarInset>
 				<DashboardHeaderWrapper />
-				<main id="main-content" tabIndex={-1} className="space-y-6 p-6 pb-20 md:pb-6">
-					<Suspense>
-						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
-					</Suspense>
-				</main>
+				<AdminMobileHeader />
+				<AdminBottomBarProvider>
+					<div className="space-y-6 p-6 pt-20 pb-[calc(var(--bottom-bar-height,0px)+1.5rem)] md:pt-6 md:pb-6">
+						<Suspense>
+							<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
+						</Suspense>
+					</div>
+				</AdminBottomBarProvider>
 			</SidebarInset>
 			<CommandPalette />
 			<AdminSpeedDial email={EMAIL_CONTACT} />
-			<footer className="md:hidden" aria-label="Navigation mobile">
-				<Suspense>
-					<BottomNav />
-				</Suspense>
-			</footer>
+			<AdminMenuSheet user={user} />
+			<AdminBottomBar />
 		</SidebarProvider>
 	);
 }

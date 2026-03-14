@@ -29,6 +29,7 @@ export { useLightbox } from "./use-lightbox";
 export { usePulseOnChange } from "./use-pulse-on-change";
 
 // Gesture hooks
+export { useEdgeSwipe } from "./use-edge-swipe";
 export { usePinchZoom } from "./use-pinch-zoom";
 
 // PWA hooks
