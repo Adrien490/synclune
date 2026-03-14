@@ -95,6 +95,12 @@ vi.mock("../../utils/cache.utils", () => ({
 vi.mock("@/modules/collections/utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
 }));
+vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
+	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+}));
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
 
 import { createProduct } from "../create-product";
 

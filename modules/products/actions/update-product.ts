@@ -17,7 +17,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
-import { UTApi } from "uploadthing/server";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { updateProductSchema } from "../schemas/product.schemas";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { getProductInvalidationTags } from "../utils/cache.utils";
@@ -307,15 +307,9 @@ export async function updateProduct(
 
 		// 11. Delete removed images from UploadThing storage
 		if (deletedImageUrls.length > 0) {
-			try {
-				const utapi = new UTApi();
-				await utapi.deleteFiles(deletedImageUrls);
-			} catch (e) {
-				// DB update already succeeded, orphaned files will be cleaned by monthly cron
-				if (process.env.NODE_ENV === "development") {
-					logger.error("Failed to delete UploadThing files", e, { action: "update-product" });
-				}
-			}
+			deleteUploadThingFilesFromUrls(deletedImageUrls).catch((e) => {
+				logger.error("Failed to delete UploadThing files", e, { action: "updateProduct" });
+			});
 		}
 
 		// 12. Audit log

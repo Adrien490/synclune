@@ -72,6 +72,12 @@ vi.mock("../../utils/parse-media-from-form", () => ({
 	parsePrimaryImageFromForm: mockParsePrimaryImage,
 	parseGalleryMediaFromForm: mockParseGalleryMedia,
 }));
+vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
+	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+}));
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
 
 import { updateProductSku } from "../update-sku";
 
@@ -121,6 +127,7 @@ describe("updateProductSku", () => {
 			sku: "BRC-01",
 			productId: "prod-1",
 			product: { id: "prod-1", title: "Bracelet", slug: "test" },
+			images: [],
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
 		mockPrisma.productSku.update.mockResolvedValue({

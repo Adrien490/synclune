@@ -23,6 +23,8 @@ import {
 import { validatePublicProductCreation } from "../services/product-validation.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_CREATE_LIMIT } from "@/shared/lib/rate-limit-config";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
+import { logger } from "@/shared/lib/logger";
 
 /**
  * Server Action pour creer un produit
@@ -242,7 +244,18 @@ export async function createProduct(
 			return { product: createdProduct, collectionSlugs: fetchedCollectionSlugs };
 		});
 
-		// 8. Invalidate cache tags
+		// 8. Delete orphaned UploadThing files (removed from form before submit)
+		const rawDeletedImageUrls = safeFormGetJSON<unknown[]>(formData, "deletedImageUrls") ?? [];
+		const deletedImageUrls = rawDeletedImageUrls.filter(
+			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
+		);
+		if (deletedImageUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(deletedImageUrls).catch((e) => {
+				logger.error("Failed to delete UploadThing files", e, { action: "createProduct" });
+			});
+		}
+
+		// 9. Invalidate cache tags
 		// Invalider le cache produit
 		const productTags = getProductInvalidationTags(product.slug, product.id);
 		productTags.forEach((tag) => updateTag(tag));
@@ -253,7 +266,7 @@ export async function createProduct(
 			collectionTags.forEach((tag) => updateTag(tag));
 		}
 
-		// 9. Audit log
+		// 10. Audit log
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -263,7 +276,7 @@ export async function createProduct(
 			metadata: { title: product.title, slug: product.slug, status: product.status },
 		});
 
-		// 10. Success
+		// 11. Success
 		return success(
 			`Produit "${product.title}" créé avec succès${
 				product.status === "PUBLIC" ? " et publié" : ""

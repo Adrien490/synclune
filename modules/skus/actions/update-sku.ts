@@ -16,6 +16,8 @@ import {
 	parseGalleryMediaFromForm,
 } from "../utils/parse-media-from-form";
 import { BusinessError, handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
+import { logger } from "@/shared/lib/logger";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -107,7 +109,7 @@ export async function updateProductSku(
 		);
 
 		// 8. Update product SKU in transaction
-		const { productSku } = await prisma.$transaction(async (tx) => {
+		const { productSku, oldMediaUrls } = await prisma.$transaction(async (tx) => {
 			// Validate SKU exists and get product info
 			const existingSku = await tx.productSku.findUnique({
 				where: { id: validatedData.skuId },
@@ -121,6 +123,9 @@ export async function updateProductSku(
 							title: true,
 							slug: true,
 						},
+					},
+					images: {
+						select: { url: true },
 					},
 				},
 			});
@@ -249,10 +254,22 @@ export async function updateProductSku(
 				});
 			}
 
-			return { productSku: updatedSku };
+			return {
+				productSku: updatedSku,
+				oldMediaUrls: existingSku.images.map((m) => m.url),
+			};
 		});
 
-		// 9. Build success message
+		// 9. Delete removed media from UploadThing storage
+		const newMediaUrls = new Set(allMedia.map((m) => m.url));
+		const removedUrls = oldMediaUrls.filter((url) => !newMediaUrls.has(url));
+		if (removedUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(removedUrls).catch((e) => {
+				logger.error("Failed to delete UploadThing files", e, { action: "updateProductSku" });
+			});
+		}
+
+		// 10. Build success message
 		const variantDetails = [productSku.color?.name, productSku.material?.name, productSku.size]
 			.filter(Boolean)
 			.join(" - ");
@@ -261,7 +278,7 @@ export async function updateProductSku(
 			? `Variante "${variantDetails}" mise à jour avec succès.`
 			: `Variante mise à jour avec succès.`;
 
-		// 10. Invalidate cache (immediate visibility for admin)
+		// 11. Invalidate cache (immediate visibility for admin)
 		const tags = getSkuInvalidationTags(
 			productSku.sku,
 			productSku.productId,
@@ -270,7 +287,7 @@ export async function updateProductSku(
 		);
 		tags.forEach((tag) => updateTag(tag));
 
-		// 11. Audit log
+		// 12. Audit log
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -280,7 +297,7 @@ export async function updateProductSku(
 			metadata: { sku: productSku.sku, productTitle: productSku.product.title, priceInclTaxCents },
 		});
 
-		// 12. Success - Return ActionState format
+		// 13. Success - Return ActionState format
 		return {
 			status: ActionStatus.SUCCESS,
 			message: successMessage,

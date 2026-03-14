@@ -1,6 +1,7 @@
 "use client";
 
 import { Send } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
@@ -31,6 +32,8 @@ export function CreateReviewForm({
 	onSuccess,
 	className,
 }: CreateReviewFormProps) {
+	const [deletedMediaUrls, setDeletedMediaUrls] = useState<string[]>([]);
+
 	const { form, action, isPending } = useCreateReviewForm({
 		productId,
 		orderItemId,
@@ -54,6 +57,9 @@ export function CreateReviewForm({
 				{/* Champs cachés pour les IDs */}
 				<input type="hidden" name="productId" value={productId} />
 				<input type="hidden" name="orderItemId" value={orderItemId} />
+				{deletedMediaUrls.length > 0 && (
+					<input type="hidden" name="deletedMediaUrls" value={JSON.stringify(deletedMediaUrls)} />
+				)}
 
 				{/* Titre du formulaire */}
 				{productTitle && (
@@ -96,7 +102,13 @@ export function CreateReviewForm({
 
 				{/* Photos */}
 				<form.Field name="media">
-					{() => <ReviewMediaField label="Photos" disabled={isPending} />}
+					{() => (
+						<ReviewMediaField
+							label="Photos"
+							onMediaRemoved={(url) => setDeletedMediaUrls((prev) => [...prev, url])}
+							disabled={isPending}
+						/>
+					)}
 				</form.Field>
 
 				{/* Bouton de soumission */}

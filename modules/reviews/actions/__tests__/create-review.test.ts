@@ -102,6 +102,12 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		},
 	},
 }));
+vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
+	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
+}));
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
 
 import { createReview } from "../create-review";
 

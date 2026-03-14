@@ -22,6 +22,8 @@ import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
 import { createReviewSchema } from "../schemas/review.schemas";
 import { updateProductReviewStats } from "../services/review-stats.service";
 import { canUserReviewProduct } from "../data/can-user-review-product";
+import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
+import { logger } from "@/shared/lib/logger";
 
 /**
  * Crée un nouvel avis sur un produit
@@ -137,7 +139,18 @@ export async function createReview(
 			return newReview;
 		});
 
-		// 8. Invalider le cache
+		// 8. Delete orphaned UploadThing files (removed from form before submit)
+		const rawDeletedMediaUrls = safeFormGetJSON<unknown[]>(formData, "deletedMediaUrls") ?? [];
+		const deletedMediaUrls = rawDeletedMediaUrls.filter(
+			(url): url is string => typeof url === "string" && url.length > 0 && url.length <= 2048,
+		);
+		if (deletedMediaUrls.length > 0) {
+			deleteUploadThingFilesFromUrls(deletedMediaUrls).catch((e) => {
+				logger.error("Failed to delete UploadThing files", e, { action: "createReview" });
+			});
+		}
+
+		// 9. Invalider le cache
 		const tags = getReviewInvalidationTags(productId, userId, review.id);
 		tags.forEach((tag) => updateTag(tag));
 

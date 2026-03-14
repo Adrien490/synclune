@@ -12,6 +12,7 @@ import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -34,6 +35,8 @@ export function CreateProductForm({
 		isUploading: isMediaUploading,
 		progress: uploadProgress,
 	} = useMediaUpload();
+
+	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 
 	const { form, action, isPending } = useCreateProductForm({
 		onSuccess: (message) => {
@@ -130,6 +133,9 @@ export function CreateProductForm({
 					<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
 				)}
 			</form.Subscribe>
+			{deletedImageUrls.length > 0 && (
+				<input type="hidden" name="deletedImageUrls" value={JSON.stringify(deletedImageUrls)} />
+			)}
 
 			<div className="space-y-6">
 				{/* Visuels */}
@@ -273,6 +279,13 @@ export function CreateProductForm({
 											blurDataUrl: m.blurDataUrl ?? undefined,
 										}))}
 										onChange={(newMedia) => {
+											const currentUrls = new Set(newMedia.map((m) => m.url));
+											const removed = field.state.value
+												.filter((m) => !currentUrls.has(m.url))
+												.map((m) => m.url);
+											if (removed.length > 0) {
+												setDeletedImageUrls((prev) => [...prev, ...removed]);
+											}
 											const currentLength = field.state.value.length;
 											for (let i = currentLength - 1; i >= 0; i--) {
 												field.removeValue(i);

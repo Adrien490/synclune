@@ -13,6 +13,8 @@ const ReviewMediaUpload = dynamic(() =>
 interface ReviewMediaFieldProps {
 	/** Label affiché au-dessus du champ */
 	label?: string;
+	/** Callback when a media is removed (for UploadThing cleanup) */
+	onMediaRemoved?: (url: string) => void;
 	/** Désactiver l'upload pendant le submit */
 	disabled?: boolean;
 	/** Classes CSS additionnelles */
@@ -37,7 +39,12 @@ interface ReviewMediaFieldProps {
  * </form.Field>
  * ```
  */
-export const ReviewMediaField = ({ label, disabled, className }: ReviewMediaFieldProps) => {
+export const ReviewMediaField = ({
+	label,
+	onMediaRemoved,
+	disabled,
+	className,
+}: ReviewMediaFieldProps) => {
 	const field = useFieldContext<ReviewMediaItem[]>();
 
 	return (
@@ -50,6 +57,7 @@ export const ReviewMediaField = ({ label, disabled, className }: ReviewMediaFiel
 			<ReviewMediaUpload
 				media={field.state.value}
 				onChange={field.handleChange}
+				onMediaRemoved={onMediaRemoved}
 				disabled={disabled}
 			/>
 			<input type="hidden" name={field.name} value={JSON.stringify(field.state.value)} />

@@ -95,8 +95,8 @@ vi.mock("../../utils/cache.utils", () => ({
 vi.mock("@/modules/collections/utils/cache.utils", () => ({
 	getCollectionInvalidationTags: mockGetCollectionInvalidationTags,
 }));
-vi.mock("uploadthing/server", () => ({
-	UTApi: vi.fn().mockImplementation(() => ({ deleteFiles: vi.fn() })),
+vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
+	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
 }));
 
 import { updateProduct } from "../update-product";

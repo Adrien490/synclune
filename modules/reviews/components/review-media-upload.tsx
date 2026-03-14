@@ -22,6 +22,8 @@ interface ReviewMediaUploadProps {
 	media: ReviewMediaItem[];
 	/** Callback quand les médias changent */
 	onChange: (media: ReviewMediaItem[]) => void;
+	/** Callback when a media is removed (for UploadThing cleanup) */
+	onMediaRemoved?: (url: string) => void;
 	/** Désactiver l'upload pendant le submit */
 	disabled?: boolean;
 	/** Classes CSS additionnelles */
@@ -35,6 +37,7 @@ interface ReviewMediaUploadProps {
 export function ReviewMediaUpload({
 	media,
 	onChange,
+	onMediaRemoved,
 	disabled = false,
 	className,
 }: ReviewMediaUploadProps) {
@@ -42,6 +45,10 @@ export function ReviewMediaUpload({
 	const canAddMore = media.length < REVIEW_CONFIG.MAX_MEDIA_COUNT && !disabled;
 
 	const removeMedia = (index: number) => {
+		const removed = media[index];
+		if (removed) {
+			onMediaRemoved?.(removed.url);
+		}
 		const newMedia = media.filter((_, i) => i !== index);
 		onChange(newMedia);
 	};
