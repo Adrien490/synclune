@@ -25,16 +25,12 @@ import { ActiveIndicator } from "./active-indicator";
 const primaryItems = getBottomNavPrimaryItems();
 const allMenuItems = getAllNavItems();
 
-interface BottomNavigationProps {
-	className?: string;
-}
-
 /**
  * Bottom Navigation pour mobile
  * Visible uniquement sur ecrans < 768px (md breakpoint)
  * Position fixed en bas de l'ecran avec backdrop-blur
  */
-export function BottomNav({ className: _className }: BottomNavigationProps) {
+export function BottomNav() {
 	const pathname = usePathname();
 	const [isOpen, setIsOpen] = useState(false);
 

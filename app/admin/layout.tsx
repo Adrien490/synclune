@@ -2,12 +2,13 @@ import { BottomNav } from "@/app/admin/_components/bottom-nav";
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { EMAIL_CONTACT } from "@/shared/lib/email-config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminSidebar } from "./_components/admin-sidebar";
+import { CommandPalette } from "./_components/command-palette";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 
 /**
@@ -30,13 +31,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 }
 
 async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-	const admin = await requireAdmin();
-	if ("error" in admin) redirect("/connexion");
+	const result = await requireAdminWithUser();
+	if ("error" in result) redirect("/connexion");
+
+	const user = {
+		name: result.user.name ?? result.user.email,
+		email: result.user.email,
+		avatar: result.user.image ?? undefined,
+	};
 
 	return (
 		<SidebarProvider>
 			<Suspense>
-				<AdminSidebar />
+				<AdminSidebar user={user} />
 			</Suspense>
 			<SidebarInset>
 				<DashboardHeaderWrapper />
@@ -46,6 +53,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 					</Suspense>
 				</main>
 			</SidebarInset>
+			<CommandPalette />
 			<AdminSpeedDial email={EMAIL_CONTACT} />
 			<footer className="md:hidden" aria-label="Navigation mobile">
 				<Suspense>

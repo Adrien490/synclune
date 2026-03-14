@@ -29,13 +29,13 @@ export interface NavItem {
 	shortTitle?: string; // Pour mobile (optionnel, sinon title)
 	url: string;
 	icon: LucideIcon;
-	isActive?: boolean;
 }
 
 export interface NavGroup {
 	label: string;
 	icon?: LucideIcon;
 	items: NavItem[];
+	collapsible?: boolean;
 }
 
 export interface NavigationData {
@@ -112,6 +112,7 @@ export const navigationData: NavigationData = {
 		{
 			label: "Marketing",
 			icon: Mail,
+			collapsible: true,
 			items: [
 				{
 					id: "discounts",
@@ -169,6 +170,7 @@ export const navigationData: NavigationData = {
 		{
 			label: "Configuration",
 			icon: Settings,
+			collapsible: true,
 			items: [
 				{
 					id: "store-settings",

@@ -20,7 +20,7 @@ import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { navigationData } from "./navigation-config";
 
-interface BreadcrumbSegment {
+export interface BreadcrumbSegment {
 	label: string;
 	href: string;
 	isCurrentPage: boolean;
@@ -33,7 +33,7 @@ const MAX_VISIBLE_SEGMENTS = 4;
  * Génère les segments de breadcrumb basés sur le pathname actuel
  * Utilise la configuration de navigation pour obtenir les labels appropriés
  */
-function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
+export function generateBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 	const segments: BreadcrumbSegment[] = [];
 
 	// Toujours inclure "Tableau de bord" comme premier élément
