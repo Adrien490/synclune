@@ -83,13 +83,7 @@ const nextConfig: NextConfig = {
 		];
 	},
 
-	serverExternalPackages: [
-		"@prisma/client",
-		"@prisma/adapter-neon",
-		"esbuild",
-		"pino",
-		"pino-pretty",
-	],
+	serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "pino", "pino-pretty"],
 
 	images: {
 		qualities: [65, 70, 75, 80, 85, 90],

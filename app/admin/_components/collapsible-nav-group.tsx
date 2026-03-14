@@ -15,15 +15,19 @@ import {
 } from "@/shared/components/ui/sidebar";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { NavMainClient } from "./nav-main-client";
-import type { NavGroup } from "./navigation-config";
+import { navigationData } from "./navigation-config";
 
 interface CollapsibleNavGroupProps {
-	group: NavGroup;
+	groupLabel: string;
 	groupId: string;
 }
 
-export function CollapsibleNavGroup({ group, groupId }: CollapsibleNavGroupProps) {
+export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroupProps) {
 	const pathname = usePathname();
+	const group = navigationData.navGroups.find((g) => g.label === groupLabel);
+
+	if (!group) return null;
+
 	const hasActiveChild = group.items.some((item) => isRouteActive(pathname, item.url));
 
 	return (

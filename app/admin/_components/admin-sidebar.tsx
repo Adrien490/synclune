@@ -55,7 +55,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 					return (
 						<Fragment key={group.label}>
 							{group.collapsible ? (
-								<CollapsibleNavGroup group={group} groupId={groupId} />
+								<CollapsibleNavGroup groupLabel={group.label} groupId={groupId} />
 							) : (
 								<SidebarGroup role="group" aria-labelledby={groupId}>
 									<SidebarGroupLabel

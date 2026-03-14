@@ -9,7 +9,7 @@ try {
 	routeExports = createSerwistRoute({
 		additionalPrecacheEntries: [{ url: "/~offline", revision }],
 		swSrc: "app/sw.ts",
-		useNativeEsbuild: true,
+		useNativeEsbuild: false,
 	});
 } catch (error) {
 	Sentry.captureException(error, { tags: { component: "serwist-route" } });

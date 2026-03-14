@@ -123,7 +123,7 @@ importers:
         version: 10.42.0(@opentelemetry/context-async-hooks@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.105.3(esbuild@0.27.3))
       '@serwist/turbopack':
         specifier: ^9.5.6
-        version: 9.5.6(patch_hash=b3c1a50adcc2a7a6b4a561e5e4f2f8cd292f268ff249829d285575af2f976d49)(@swc/helpers@0.5.19)(esbuild-wasm@0.27.3)(esbuild@0.27.3)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
+        version: 9.5.6(patch_hash=b3c1a50adcc2a7a6b4a561e5e4f2f8cd292f268ff249829d285575af2f976d49)(@swc/helpers@0.5.19)(esbuild-wasm@0.27.4)(esbuild@0.27.3)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
       '@stripe/react-stripe-js':
         specifier: ^5.6.1
         version: 5.6.1(@stripe/stripe-js@8.9.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -175,9 +175,9 @@ importers:
       embla-carousel-react:
         specifier: ^8.6.0
         version: 8.6.0(react@19.2.4)
-      esbuild:
-        specifier: ^0.27.3
-        version: 0.27.3
+      esbuild-wasm:
+        specifier: ^0.27.4
+        version: 0.27.4
       jspdf:
         specifier: ^4.2.0
         version: 4.2.0
@@ -5759,8 +5759,8 @@ packages:
   es-toolkit@1.45.1:
     resolution: {integrity: sha512-/jhoOj/Fx+A+IIyDNOvO3TItGmlMKhtX8ISAHKE90c4b/k1tqaqEZ+uUqfpU8DMnW5cgNJv606zS55jGvza0Xw==}
 
-  esbuild-wasm@0.27.3:
-    resolution: {integrity: sha512-AUXuOxZ145/5Az+lIqk6TdJbxKTyDGkXMJpTExmBdbnHR6n6qAFx+F4oG9ORpVYJ9dQYeQAqzv51TO4DFKsbXw==}
+  esbuild-wasm@0.27.4:
+    resolution: {integrity: sha512-3xhVMcJ8Odvb1QjlWnjBGSYVYESsi3/oJYwLyVvbHOb2CiV4mFtD6x8Lk6JFnRxwEE3fUeVuJLbIxyVQWa867g==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -12629,7 +12629,7 @@ snapshots:
     transitivePeerDependencies:
       - browserslist
 
-  '@serwist/turbopack@9.5.6(patch_hash=b3c1a50adcc2a7a6b4a561e5e4f2f8cd292f268ff249829d285575af2f976d49)(@swc/helpers@0.5.19)(esbuild-wasm@0.27.3)(esbuild@0.27.3)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)':
+  '@serwist/turbopack@9.5.6(patch_hash=b3c1a50adcc2a7a6b4a561e5e4f2f8cd292f268ff249829d285575af2f976d49)(@swc/helpers@0.5.19)(esbuild-wasm@0.27.4)(esbuild@0.27.3)(next@16.1.6(@babel/core@7.29.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(typescript@5.9.3)':
     dependencies:
       '@serwist/build': 9.5.6(browserslist@4.28.1)(typescript@5.9.3)
       '@serwist/utils': 9.5.6(browserslist@4.28.1)
@@ -12644,7 +12644,7 @@ snapshots:
       zod: 4.3.6
     optionalDependencies:
       esbuild: 0.27.3
-      esbuild-wasm: 0.27.3
+      esbuild-wasm: 0.27.4
       typescript: 5.9.3
     transitivePeerDependencies:
       - '@swc/helpers'
@@ -14490,8 +14490,7 @@ snapshots:
 
   es-toolkit@1.45.1: {}
 
-  esbuild-wasm@0.27.3:
-    optional: true
+  esbuild-wasm@0.27.4: {}
 
   esbuild@0.25.10:
     optionalDependencies:
