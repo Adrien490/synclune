@@ -139,7 +139,7 @@ export async function proxy(request: NextRequest) {
 
 		// Vérifier le rôle ADMIN depuis le cookie cache signé
 		const sessionData = await getCookieCache(request);
-		if (sessionData?.user.role !== "ADMIN") {
+		if (sessionData && sessionData.user.role !== "ADMIN") {
 			return NextResponse.redirect(new URL("/?error=access-denied", nextUrl.origin));
 		}
 
