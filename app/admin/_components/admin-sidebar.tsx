@@ -12,7 +12,7 @@ import {
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
 import { cormorantGaramond } from "@/shared/styles/fonts";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, LayoutDashboard } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
 import { CollapsibleNavGroup } from "./collapsible-nav-group";
@@ -38,19 +38,23 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 							<Link href="/admin">
 								<Logo size={40} rounded="lg" />
 								<span
-									className={`${cormorantGaramond.className} flex-1 truncate text-lg font-semibold tracking-wide group-data-[collapsible=icon]:hidden`}
+									className={`${cormorantGaramond.className} flex-1 truncate text-xl font-semibold tracking-wide group-data-[collapsible=icon]:hidden`}
 								>
 									{BRAND.name}
 								</span>
+								<LayoutDashboard
+									className="size-4 shrink-0 opacity-60 group-data-[collapsible=icon]:hidden"
+									aria-hidden="true"
+								/>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				{navigationData.navGroups.map((group, index) => {
+				{navigationData.navGroups.slice(1).map((group, index) => {
 					const groupId = `nav-group-${index}`;
-					const isLastGroup = index === navigationData.navGroups.length - 1;
+					const isLastGroup = index === navigationData.navGroups.length - 2;
 
 					return (
 						<Fragment key={group.label}>
@@ -65,18 +69,13 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 										{group.label}
 									</SidebarGroupLabel>
 									<SidebarMenu className="gap-1" aria-label={group.label}>
-										{group.items.map((item) => {
-											const Icon = item.icon;
-
-											return (
-												<SidebarMenuItem key={item.id}>
-													<NavMainClient url={item.url} tooltip={item.title}>
-														<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-														<span className="flex-1">{item.title}</span>
-													</NavMainClient>
-												</SidebarMenuItem>
-											);
-										})}
+										{group.items.map((item) => (
+											<SidebarMenuItem key={item.id}>
+												<NavMainClient url={item.url} tooltip={item.title}>
+													<span className="flex-1">{item.title}</span>
+												</NavMainClient>
+											</SidebarMenuItem>
+										))}
 									</SidebarMenu>
 								</SidebarGroup>
 							)}

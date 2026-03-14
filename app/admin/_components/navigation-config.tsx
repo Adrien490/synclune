@@ -203,19 +203,6 @@ export const navigationData: NavigationData = {
 };
 
 // ============================================================================
-// BOTTOM NAV CONFIG
-// ============================================================================
-
-/**
- * Configuration pour la bottom navigation mobile
- * - primaryIds : items affichés directement dans la barre
- * - Les autres items sont accessibles via le menu "Plus"
- */
-const bottomNavConfig = {
-	primaryIds: ["dashboard", "orders", "products"] as const,
-};
-
-// ============================================================================
 // HELPERS
 // ============================================================================
 
@@ -224,20 +211,4 @@ const bottomNavConfig = {
  */
 export function getAllNavItems(): NavItem[] {
 	return navigationData.navGroups.flatMap((group) => group.items);
-}
-
-/**
- * Récupère un item de navigation par son ID
- */
-function getNavItemById(id: string): NavItem | undefined {
-	return getAllNavItems().find((item) => item.id === id);
-}
-
-/**
- * Récupère les items principaux du bottom nav
- */
-export function getBottomNavPrimaryItems(): NavItem[] {
-	return bottomNavConfig.primaryIds
-		.map((id) => getNavItemById(id))
-		.filter((item): item is NavItem => item !== undefined);
 }

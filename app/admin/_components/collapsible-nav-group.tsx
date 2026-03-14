@@ -47,18 +47,13 @@ export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroup
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenu className="gap-1" aria-label={group.label}>
-						{group.items.map((item) => {
-							const Icon = item.icon;
-
-							return (
-								<SidebarMenuItem key={item.id}>
-									<NavMainClient url={item.url} tooltip={item.title}>
-										<Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-										<span className="flex-1">{item.title}</span>
-									</NavMainClient>
-								</SidebarMenuItem>
-							);
-						})}
+						{group.items.map((item) => (
+							<SidebarMenuItem key={item.id}>
+								<NavMainClient url={item.url} tooltip={item.title}>
+									<span className="flex-1">{item.title}</span>
+								</NavMainClient>
+							</SidebarMenuItem>
+						))}
 					</SidebarMenu>
 				</CollapsibleContent>
 			</SidebarGroup>

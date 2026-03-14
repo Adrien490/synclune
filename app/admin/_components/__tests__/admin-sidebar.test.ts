@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getAllNavItems, getBottomNavPrimaryItems, navigationData } from "../navigation-config";
+import { getAllNavItems, navigationData } from "../navigation-config";
 import { getInitials } from "../sidebar-footer-user";
 import { generateBreadcrumbs } from "../dashboard-breadcrumb";
 
@@ -67,33 +67,6 @@ describe("getAllNavItems", () => {
 		const items = getAllNavItems();
 		for (const item of items) {
 			expect(item.url).toMatch(/^\/admin/);
-		}
-	});
-});
-
-// ============================================================================
-// getBottomNavPrimaryItems
-// ============================================================================
-
-describe("getBottomNavPrimaryItems", () => {
-	it("returns exactly 3 primary items", () => {
-		const items = getBottomNavPrimaryItems();
-		expect(items).toHaveLength(3);
-	});
-
-	it("returns dashboard, orders, and products", () => {
-		const items = getBottomNavPrimaryItems();
-		const ids = items.map((item) => item.id);
-		expect(ids).toEqual(["dashboard", "orders", "products"]);
-	});
-
-	it("primary items are a subset of all items", () => {
-		const allItems = getAllNavItems();
-		const primaryItems = getBottomNavPrimaryItems();
-		const allIds = new Set(allItems.map((item) => item.id));
-
-		for (const item of primaryItems) {
-			expect(allIds.has(item.id)).toBe(true);
 		}
 	});
 });

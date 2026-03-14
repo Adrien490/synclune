@@ -6,8 +6,6 @@ import { EMAIL_CONTACT } from "@/shared/lib/email-config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { AdminBottomBar } from "./_components/admin-bottom-bar";
-import { AdminBottomBarProvider } from "./_components/admin-bottom-bar-context";
 import { AdminMenuSheet } from "./_components/admin-menu-sheet";
 import { AdminMobileHeader } from "./_components/admin-mobile-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
@@ -51,18 +49,15 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			<SidebarInset>
 				<DashboardHeaderWrapper />
 				<AdminMobileHeader />
-				<AdminBottomBarProvider>
-					<div className="space-y-6 p-6 pt-20 pb-[calc(var(--bottom-bar-height,0px)+1.5rem)] md:pt-6 md:pb-6">
-						<Suspense>
-							<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
-						</Suspense>
-					</div>
-				</AdminBottomBarProvider>
+				<div className="space-y-6 p-6 pt-20 pb-6 md:pt-6">
+					<Suspense>
+						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
+					</Suspense>
+				</div>
 			</SidebarInset>
 			<CommandPalette />
 			<AdminSpeedDial email={EMAIL_CONTACT} />
 			<AdminMenuSheet user={user} />
-			<AdminBottomBar />
 		</SidebarProvider>
 	);
 }

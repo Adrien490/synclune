@@ -91,7 +91,6 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 										</p>
 										<ul className="space-y-0.5">
 											{group.items.map((item, itemIndex) => {
-												const Icon = item.icon;
 												const isActive = isRouteActive(pathname, item.url);
 
 												return (
@@ -112,14 +111,13 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 														<Link
 															href={item.url}
 															className={cn(
-																"relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+																"relative flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
 																isActive
 																	? "bg-accent/50 text-foreground before:bg-primary font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full"
 																	: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
 															)}
 															aria-current={isActive ? "page" : undefined}
 														>
-															<Icon className="size-5 shrink-0" aria-hidden="true" />
 															<span>{item.title}</span>
 														</Link>
 													</m.li>
@@ -186,7 +184,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 	);
 }
 
-/** Hamburger button for use in header and bottom bar */
+/** Hamburger button for use in header */
 export function AdminMenuSheetTrigger({ className }: { className?: string }) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 
