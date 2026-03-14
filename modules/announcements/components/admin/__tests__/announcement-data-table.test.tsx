@@ -7,7 +7,7 @@ import type { AnnouncementListItem } from "../../../types/announcement.types";
 // ============================================================================
 
 const { mockComputeStatus, mockFormatDateTime } = vi.hoisted(() => ({
-	mockComputeStatus: vi.fn(() => "active" as const),
+	mockComputeStatus: vi.fn((): string => "active"),
 	mockFormatDateTime: vi.fn((date: Date) => date.toISOString()),
 }));
 

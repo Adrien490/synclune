@@ -184,6 +184,7 @@ async function cleanup(): Promise<void> {
 	await prisma.productType.deleteMany();
 	await prisma.material.deleteMany();
 	await prisma.color.deleteMany();
+	await prisma.storeSettings.deleteMany();
 
 	console.log("✅ Base de données nettoyée\n");
 }
@@ -3704,6 +3705,16 @@ async function main(): Promise<void> {
 	}
 
 	console.log(`✅ ${faqItems.length} FAQ items created`);
+
+	// ============================================
+	// STORE SETTINGS (SINGLETON)
+	// ============================================
+	await prisma.storeSettings.upsert({
+		where: { id: "store-settings-singleton" },
+		update: {},
+		create: { id: "store-settings-singleton", isClosed: false },
+	});
+	console.log("✅ Store settings singleton created");
 
 	console.log("\n🎉 Seed terminé avec succès!");
 }

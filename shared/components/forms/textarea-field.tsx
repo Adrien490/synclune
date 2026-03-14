@@ -72,7 +72,7 @@ export const TextareaField = ({
 				autoCapitalize={autoCapitalize}
 				autoCorrect={autoCorrect}
 				maxLength={maxLength}
-				className={cn("border-input", className)}
+				className={cn("border-input max-h-60 overflow-y-auto", className)}
 				{...rest}
 			/>
 			{showFooter ? (

@@ -1,7 +1,9 @@
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
+import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { Logo } from "@/shared/components/logo";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 /**
  * Layout minimaliste pour le checkout
@@ -12,7 +14,13 @@ import Link from "next/link";
  * - Pas de navbar complète (évite les distractions)
  * - Pas de footer (focus sur la conversion)
  */
-export default function CheckoutLayout({ children }: { children: React.ReactNode }) {
+export default async function CheckoutLayout({ children }: { children: React.ReactNode }) {
+	const storeStatus = await getStoreStatus();
+
+	if (storeStatus.isClosed) {
+		redirect("/");
+	}
+
 	return (
 		<div className="bg-background flex min-h-screen flex-col">
 			{/* Header minimal */}
@@ -25,7 +33,7 @@ export default function CheckoutLayout({ children }: { children: React.ReactNode
 						{/* Back link - left */}
 						<Link
 							href="/produits"
-							aria-label="Continuer mes achats"
+							aria-label="Boutique"
 							className="group text-muted-foreground hover:text-foreground hover:bg-muted/60 inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm transition-colors sm:px-3"
 						>
 							<ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />

@@ -16,6 +16,7 @@ export async function sendCustomizationRequestEmail({
 	productTypeLabel,
 	details,
 	inspirationProducts,
+	inspirationMedias,
 }: {
 	firstName: string;
 	email: string;
@@ -23,6 +24,7 @@ export async function sendCustomizationRequestEmail({
 	productTypeLabel: string;
 	details: string;
 	inspirationProducts?: Array<{ title: string }>;
+	inspirationMedias?: Array<{ url: string; altText?: string }>;
 }): Promise<EmailResult> {
 	return renderAndSend(
 		CustomizationRequestEmail({
@@ -32,6 +34,7 @@ export async function sendCustomizationRequestEmail({
 			productTypeLabel,
 			details,
 			inspirationProducts,
+			inspirationMedias,
 		}),
 		{
 			to: EMAIL_ADMIN,

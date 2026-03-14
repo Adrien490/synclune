@@ -1,6 +1,8 @@
 import { Footer } from "@/app/(boutique)/(accueil)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(boutique)/(accueil)/_components/navbar";
 import { AnnouncementBarWrapper } from "@/modules/announcements/components/announcement-bar-wrapper";
+import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
+import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
@@ -11,6 +13,12 @@ interface ShopLayoutProps {
 }
 
 export default async function ShopLayout({ children }: ShopLayoutProps) {
+	const storeStatus = await getStoreStatus();
+
+	if (storeStatus.isClosed) {
+		return <StoreClosurePage status={storeStatus} />;
+	}
+
 	return (
 		<>
 			<Suspense fallback={null}>

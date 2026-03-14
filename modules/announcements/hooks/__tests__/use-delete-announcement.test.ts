@@ -8,7 +8,7 @@ import { renderHook, act } from "@testing-library/react";
 const { mockFormAction, mockWithCallbacks, mockCreateToastCallbacks } = vi.hoisted(() => ({
 	mockFormAction: vi.fn(),
 	mockWithCallbacks: vi.fn((action: unknown) => action),
-	mockCreateToastCallbacks: vi.fn(() => ({})),
+	mockCreateToastCallbacks: vi.fn((..._args: unknown[]) => ({})),
 }));
 
 let mockActionStateValue: [unknown, typeof mockFormAction, boolean] = [
@@ -115,7 +115,8 @@ describe("useDeleteAnnouncement", () => {
 
 		// Capture the toast callbacks to test the onSuccess handler
 		let capturedOnSuccess: ((result: unknown) => void) | undefined;
-		mockCreateToastCallbacks.mockImplementation((opts: Record<string, unknown>) => {
+		mockCreateToastCallbacks.mockImplementation((...args: unknown[]) => {
+			const opts = args[0] as Record<string, unknown>;
 			capturedOnSuccess = opts.onSuccess as (result: unknown) => void;
 			return opts;
 		});
@@ -132,7 +133,8 @@ describe("useDeleteAnnouncement", () => {
 		const onSuccess = vi.fn();
 
 		let capturedOnSuccess: ((result: unknown) => void) | undefined;
-		mockCreateToastCallbacks.mockImplementation((opts: Record<string, unknown>) => {
+		mockCreateToastCallbacks.mockImplementation((...args: unknown[]) => {
+			const opts = args[0] as Record<string, unknown>;
 			capturedOnSuccess = opts.onSuccess as (result: unknown) => void;
 			return opts;
 		});

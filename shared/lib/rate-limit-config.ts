@@ -1464,3 +1464,16 @@ export const ADMIN_FAQ_LIMITS = {
 	DELETE: ADMIN_FAQ_DELETE_LIMIT,
 	REORDER: ADMIN_FAQ_REORDER_LIMIT,
 } as const;
+
+// ========================================
+// 🏪 ADMIN STORE SETTINGS
+// ========================================
+
+export const ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_STORE_SETTINGS_LIMITS = {
+	TOGGLE_CLOSURE: ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT,
+} as const;

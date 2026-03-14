@@ -11,6 +11,7 @@ import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
+import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { ajPayment } from "@/shared/lib/arcjet";
 import { getBaseUrl } from "@/shared/constants/urls";
 import { headers } from "next/headers";
@@ -74,6 +75,12 @@ export async function initializePayment(
 					success: false,
 					error: rateLimit.error ?? "Trop de tentatives. Veuillez réessayer plus tard.",
 				};
+			}
+
+			// Block payment if store is closed
+			const storeCheck = await assertStoreOpen();
+			if (storeCheck) {
+				return { success: false, error: storeCheck.message };
 			}
 
 			// Validate cart items

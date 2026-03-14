@@ -11,6 +11,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
+import { useRef } from "react";
 import { FieldLabel } from "./field-label";
 
 interface DateTimeFieldProps {
@@ -79,20 +80,28 @@ export function DateTimeField({
 	};
 
 	const selectedDate = parseValue(field.state.value);
+	const lastTimeRef = useRef("00:00");
 
-	// Extrait l'heure de la valeur actuelle
-	const currentTime = selectedDate
+	// Extrait l'heure pour l'affichage (time input n'est rendu que quand selectedDate existe)
+	const displayTime = selectedDate
 		? `${String(selectedDate.getHours()).padStart(2, "0")}:${String(selectedDate.getMinutes()).padStart(2, "0")}`
 		: "00:00";
 
 	const handleDateSelect = (date: Date | undefined) => {
 		if (!date) {
+			// Mémorise l'heure avant de supprimer la date
+			if (selectedDate) {
+				lastTimeRef.current = `${String(selectedDate.getHours()).padStart(2, "0")}:${String(selectedDate.getMinutes()).padStart(2, "0")}`;
+			}
 			field.handleChange("");
 			return;
 		}
 
-		// Préserve l'heure existante ou utilise 00:00
-		const [hours, minutes] = currentTime.split(":").map(Number);
+		// Préserve l'heure existante ou la dernière connue
+		const timeToUse = selectedDate
+			? `${String(selectedDate.getHours()).padStart(2, "0")}:${String(selectedDate.getMinutes()).padStart(2, "0")}`
+			: lastTimeRef.current;
+		const [hours, minutes] = timeToUse.split(":").map(Number);
 		date.setHours(hours ?? 0, minutes ?? 0, 0, 0);
 		field.handleChange(formatValue(date));
 	};
@@ -161,7 +170,7 @@ export function DateTimeField({
 								<Input
 									id={`${field.name}-time`}
 									type="time"
-									value={currentTime}
+									value={displayTime}
 									onChange={handleTimeChange}
 									disabled={disabled}
 									className="mt-1.5"

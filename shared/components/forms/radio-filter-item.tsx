@@ -11,6 +11,7 @@ interface RadioFilterItemProps {
 	onCheckedChange: (checked: boolean) => void;
 	children: ReactNode;
 	description?: string;
+	disabled?: boolean;
 }
 
 /**
@@ -26,6 +27,7 @@ export function RadioFilterItem({
 	onCheckedChange,
 	children,
 	description,
+	disabled,
 }: RadioFilterItemProps) {
 	return (
 		<label
@@ -36,6 +38,7 @@ export function RadioFilterItem({
 				"hover:bg-accent/50",
 				"focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
 				checked && "bg-primary/5",
+				disabled && "cursor-not-allowed opacity-50",
 			)}
 		>
 			<input
@@ -44,6 +47,7 @@ export function RadioFilterItem({
 				name={name}
 				value={value}
 				checked={checked}
+				disabled={disabled}
 				onChange={(e) => onCheckedChange(e.target.checked)}
 				className={cn(
 					"border-primary text-primary mt-0.5 size-4 shrink-0 rounded-full border",

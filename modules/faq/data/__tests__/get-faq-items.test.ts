@@ -71,7 +71,7 @@ describe("getFaqItems", () => {
 		const result = await getFaqItems();
 
 		expect(result).toHaveLength(2);
-		expect(result[0].question).toBe("Q1");
+		expect(result[0]!.question).toBe("Q1");
 	});
 
 	it("queries only active items", async () => {
@@ -124,8 +124,8 @@ describe("getFaqItems", () => {
 
 		const result = await getFaqItems();
 
-		expect(result[0].links).toEqual([{ text: "ok", href: "/page" }]);
-		expect(result[1].links).toBeNull();
+		expect(result[0]!.links).toEqual([{ text: "ok", href: "/page" }]);
+		expect(result[1]!.links).toBeNull();
 	});
 
 	it("returns empty array on database error", async () => {

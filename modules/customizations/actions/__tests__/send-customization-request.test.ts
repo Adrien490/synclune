@@ -401,6 +401,7 @@ describe("sendCustomizationRequest", () => {
 			phone: "sanitized:+33612345678",
 			productTypeLabel: "sanitized:Bague",
 			details: "sanitized:Je souhaite une bague gravée avec le prénom de ma fille",
+			inspirationMedias: [],
 		});
 	});
 

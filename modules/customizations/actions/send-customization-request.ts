@@ -171,6 +171,10 @@ export async function sendCustomizationRequest(
 				phone: sanitizedPhone,
 				productTypeLabel: sanitizedProductTypeLabel,
 				details: sanitizedDetails,
+				inspirationMedias: validatedData.inspirationMedias.map((media) => ({
+					url: media.url,
+					altText: media.altText ? sanitizeForEmail(media.altText) : undefined,
+				})),
 			});
 
 			if (!emailResult.success) {

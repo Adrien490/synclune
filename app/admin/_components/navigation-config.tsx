@@ -16,6 +16,7 @@ import {
 	FileText,
 	Megaphone,
 	HelpCircle,
+	Store,
 } from "lucide-react";
 
 // ============================================================================
@@ -169,6 +170,12 @@ export const navigationData: NavigationData = {
 			label: "Configuration",
 			icon: Settings,
 			items: [
+				{
+					id: "store-settings",
+					title: "Boutique",
+					url: "/admin/configuration/boutique",
+					icon: Store,
+				},
 				{
 					id: "product-types",
 					title: "Types de produits",

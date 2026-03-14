@@ -104,8 +104,7 @@ export const PhoneField = ({
 				placeholder={placeholder}
 				value={field.state.value ?? ""}
 				onChange={(value) => {
-					const normalized = value && /^\+\d{1,4}$/.test(value) ? "" : (value ?? "");
-					field.handleChange(normalized);
+					field.handleChange(value ?? "");
 				}}
 				onBlur={field.handleBlur}
 				disabled={disabled}

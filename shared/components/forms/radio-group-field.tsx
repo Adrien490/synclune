@@ -14,6 +14,8 @@ interface RadioOption {
 interface RadioGroupFieldProps {
 	options: RadioOption[];
 	label?: string;
+	/** Accessible label fallback when no visible label is provided */
+	"aria-label"?: string;
 	required?: boolean;
 	disabled?: boolean;
 	onValueChangeCallback?: (value: string) => void;
@@ -22,6 +24,7 @@ interface RadioGroupFieldProps {
 export const RadioGroupField = ({
 	options,
 	label,
+	"aria-label": ariaLabel,
 	required,
 	disabled,
 	onValueChangeCallback,
@@ -47,6 +50,7 @@ export const RadioGroupField = ({
 				}}
 				className="flex flex-wrap gap-4"
 				aria-invalid={hasErrors}
+				aria-label={label ? undefined : ariaLabel}
 				aria-labelledby={label ? labelId : undefined}
 				aria-describedby={hasErrors ? errorId : undefined}
 			>

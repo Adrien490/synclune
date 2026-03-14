@@ -8,7 +8,7 @@ import { renderHook, act } from "@testing-library/react";
 const { mockAction, mockWithCallbacks, mockCreateToastCallbacks } = vi.hoisted(() => ({
 	mockAction: vi.fn(),
 	mockWithCallbacks: vi.fn((action: unknown) => action),
-	mockCreateToastCallbacks: vi.fn(() => ({})),
+	mockCreateToastCallbacks: vi.fn((..._args: unknown[]) => ({})),
 }));
 
 let mockActionStateValue: [unknown, typeof mockAction, boolean] = [undefined, mockAction, false];
@@ -92,7 +92,8 @@ describe("useToggleAnnouncementStatus", () => {
 		const onSuccess = vi.fn();
 
 		let capturedOnSuccess: ((result: unknown) => void) | undefined;
-		mockCreateToastCallbacks.mockImplementation((opts: Record<string, unknown>) => {
+		mockCreateToastCallbacks.mockImplementation((...args: unknown[]) => {
+			const opts = args[0] as Record<string, unknown>;
 			capturedOnSuccess = opts.onSuccess as (result: unknown) => void;
 			return opts;
 		});
@@ -108,7 +109,8 @@ describe("useToggleAnnouncementStatus", () => {
 		const onError = vi.fn();
 
 		let capturedOnError: (() => void) | undefined;
-		mockCreateToastCallbacks.mockImplementation((opts: Record<string, unknown>) => {
+		mockCreateToastCallbacks.mockImplementation((...args: unknown[]) => {
+			const opts = args[0] as Record<string, unknown>;
 			capturedOnError = opts.onError as () => void;
 			return opts;
 		});

@@ -17,6 +17,7 @@ export const CheckboxField = ({
 	checked,
 	onCheckedChange,
 	className,
+	"aria-label": ariaLabel,
 	...props
 }: CheckboxFieldProps) => {
 	const field = useFieldContext<boolean>();
@@ -29,6 +30,7 @@ export const CheckboxField = ({
 					disabled={disabled}
 					id={field.name}
 					checked={checked ?? field.state.value}
+					aria-label={ariaLabel}
 					onCheckedChange={(checked) => {
 						const isChecked = Boolean(checked);
 						field.handleChange(isChecked);
