@@ -58,9 +58,9 @@ export const customizationSchema = z.object({
 				blurDataUrl: z
 					.string()
 					.regex(/^data:image\/(png|jpeg|webp|gif);/, {
-						message: "Format d'image non autorise (PNG, JPEG, WebP, GIF uniquement)",
+						message: "Format d'image non autorisé (PNG, JPEG, WebP, GIF uniquement)",
 					})
-					.max(5000)
+					.max(15000)
 					.optional(),
 				altText: z.string().max(255).optional(),
 			}),

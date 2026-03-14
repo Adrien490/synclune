@@ -6,8 +6,8 @@ import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
  * Contient les champs communs a tous les types de medias
  */
 export const baseMediaSchema = z.object({
-	url: z.string().url({ message: "L'URL du media doit etre valide" }).refine(isAllowedMediaDomain, {
-		message: "L'URL du media doit provenir d'un domaine autorise",
+	url: z.string().url({ message: "L'URL du media doit être valide" }).refine(isAllowedMediaDomain, {
+		message: "L'URL du media doit provenir d'un domaine autorisé",
 	}),
 	blurDataUrl: z.string().optional().nullable(),
 	altText: z.string().max(255).optional().nullable(),
@@ -22,7 +22,7 @@ export const imageMediaSchema = baseMediaSchema.extend({
 		.string()
 		.url()
 		.refine((url) => !url || isAllowedMediaDomain(url), {
-			message: "L'URL de la miniature doit provenir d'un domaine autorise",
+			message: "L'URL de la miniature doit provenir d'un domaine autorisé",
 		})
 		.optional()
 		.nullable(),

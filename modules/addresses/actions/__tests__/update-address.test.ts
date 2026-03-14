@@ -168,7 +168,7 @@ describe("updateAddress", () => {
 
 		await updateAddress(ADDRESS_ID, undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Adresse non trouvee");
+		expect(mockError).toHaveBeenCalledWith("Adresse non trouvée");
 		expect(mockPrisma.address.updateMany).not.toHaveBeenCalled();
 	});
 
@@ -178,7 +178,7 @@ describe("updateAddress", () => {
 
 		await updateAddress(ADDRESS_ID, undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Adresse non trouvee");
+		expect(mockError).toHaveBeenCalledWith("Adresse non trouvée");
 	});
 
 	it("should return validation error for invalid form data", async () => {

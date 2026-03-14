@@ -80,12 +80,12 @@ export const collectionNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")
-	.max(100, "Le nom ne peut pas depasser 100 caracteres");
+	.max(100, "Le nom ne peut pas dépasser 100 caractères");
 
 export const collectionDescriptionSchema = z
 	.string()
 	.trim()
-	.max(1000, "La description ne peut pas depasser 1000 caracteres")
+	.max(1000, "La description ne peut pas dépasser 1000 caractères")
 	.optional()
 	.nullable();
 

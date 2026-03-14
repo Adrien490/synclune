@@ -8,7 +8,7 @@ import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-st
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { PostHogProvider } from "@/shared/providers/posthog-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
-import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
+import { LazyMotion, MotionConfig, domMax } from "motion/react";
 import type { ReactNode } from "react";
 
 interface RootProvidersProps {
@@ -21,7 +21,7 @@ interface RootProvidersProps {
  */
 export function RootProviders({ children }: RootProvidersProps) {
 	return (
-		<LazyMotion features={domAnimation}>
+		<LazyMotion features={domMax}>
 			<MotionConfig
 				reducedMotion="user"
 				transition={{

@@ -115,7 +115,7 @@ export async function updateTracking(
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "TRACKING_UPDATED",
-				note: `Suivi mis a jour : ${validated.data.trackingNumber}`,
+				note: `Suivi mis à jour : ${validated.data.trackingNumber}`,
 				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				metadata: {
@@ -134,7 +134,7 @@ export async function updateTracking(
 		}
 
 		if ("_error" in order) {
-			return error("Impossible de modifier le suivi : la commande n'est pas expediee.");
+			return error("Impossible de modifier le suivi : la commande n'est pas expédiée.");
 		}
 
 		// Invalider les caches (orders list admin + commandes user)
@@ -171,7 +171,7 @@ export async function updateTracking(
 		if (validated.data.sendEmail && !emailSent) {
 			return {
 				status: ActionStatus.WARNING,
-				message: `Suivi mis a jour. Nouveau numero : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu etre envoye au client.`,
+				message: `Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
 			};
 		}
 
@@ -189,11 +189,11 @@ export async function updateTracking(
 			},
 		});
 
-		const emailMessage = emailSent ? " Email envoye au client." : "";
+		const emailMessage = emailSent ? " Email envoyé au client." : "";
 		return success(
-			`Suivi mis a jour. Nouveau numero : ${validated.data.trackingNumber}.${emailMessage}`,
+			`Suivi mis à jour. Nouveau numéro : ${validated.data.trackingNumber}.${emailMessage}`,
 		);
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la mise a jour du suivi.");
+		return handleActionError(e, "Erreur lors de la mise à jour du suivi.");
 	}
 }

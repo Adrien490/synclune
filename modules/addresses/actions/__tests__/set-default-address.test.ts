@@ -179,10 +179,10 @@ describe("setDefaultAddress", () => {
 
 		// BusinessError bubbles out of the transaction and is caught by the outer try/catch
 		expect(mockHandleActionError).toHaveBeenCalledWith(
-			expect.objectContaining({ message: "Adresse non trouvee" }),
+			expect.objectContaining({ message: "Adresse non trouvée" }),
 			expect.any(String),
 		);
-		expect(result.message).toBe("Adresse non trouvee");
+		expect(result.message).toBe("Adresse non trouvée");
 	});
 
 	it("should return not found when address belongs to another user", async () => {
@@ -192,10 +192,10 @@ describe("setDefaultAddress", () => {
 		const result = await setDefaultAddress(undefined, validFormData);
 
 		expect(mockHandleActionError).toHaveBeenCalledWith(
-			expect.objectContaining({ message: "Adresse non trouvee" }),
+			expect.objectContaining({ message: "Adresse non trouvée" }),
 			expect.any(String),
 		);
-		expect(result.message).toBe("Adresse non trouvee");
+		expect(result.message).toBe("Adresse non trouvée");
 	});
 
 	it("should verify address ownership with userId in the WHERE clause", async () => {
@@ -237,7 +237,7 @@ describe("setDefaultAddress", () => {
 	it("should return success message after setting default", async () => {
 		const result = await setDefaultAddress(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith("Adresse par defaut modifiee");
+		expect(mockSuccess).toHaveBeenCalledWith("Adresse par défaut modifiée");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 

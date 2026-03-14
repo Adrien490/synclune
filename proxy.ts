@@ -35,6 +35,7 @@ const publicRoutes = [
 	// Autres pages publiques
 	"/a-propos",
 	"/favoris",
+	"/opengraph-image",
 	"/~offline",
 	"/monitoring",
 	"/ingest",

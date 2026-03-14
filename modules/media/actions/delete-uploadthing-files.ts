@@ -78,11 +78,11 @@ export async function deleteUploadThingFiles(
 
 		if (totalFailed > 0) {
 			return success(
-				`${actualDeleted} fichier(s) supprime(s). ${totalFailed} fichier(s) n'ont pas pu etre traite(s).`,
+				`${actualDeleted} fichier(s) supprimé(s). ${totalFailed} fichier(s) n'ont pas pu être traité(s).`,
 				{ deletedCount: actualDeleted, failedCount: totalFailed },
 			);
 		}
-		return success(`${actualDeleted} fichier(s) supprime(s)`, { deletedCount: actualDeleted });
+		return success(`${actualDeleted} fichier(s) supprimé(s)`, { deletedCount: actualDeleted });
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la suppression des fichiers");
 	}

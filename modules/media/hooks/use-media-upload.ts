@@ -137,7 +137,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		if (mediaFiles.length < files.length) {
 			const rejected = files.length - mediaFiles.length;
 			toast.warning(`${rejected} fichier(s) ignore(s)`, {
-				description: "Seuls les images et videos sont acceptes",
+				description: "Seuls les images et videos sont acceptés",
 			});
 		}
 

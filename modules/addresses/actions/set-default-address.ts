@@ -56,7 +56,7 @@ export async function setDefaultAddress(
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
-		return success("Adresse par defaut modifiee");
+		return success("Adresse par défaut modifiée");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors du changement d'adresse par défaut");
 	}

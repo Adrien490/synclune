@@ -30,23 +30,23 @@ export function ProfileForm({ user }: ProfileFormProps) {
 	});
 
 	return (
-		<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-4">
-			<form.AppField
-				name="name"
-				validators={{
-					onChange: ({ value }) => {
-						if (!value || value.length < 2) {
-							return "Le prénom doit contenir au moins 2 caractères";
-						}
-						if (value.length > 100) {
-							return "Le prénom ne peut pas dépasser 100 caractères";
-						}
-						return undefined;
-					},
-				}}
-			>
-				{(field) => (
-					<div className="space-y-2">
+		<div className="space-y-4">
+			<form action={action} onSubmit={() => form.handleSubmit()} className="space-y-4">
+				<form.AppField
+					name="name"
+					validators={{
+						onChange: ({ value }) => {
+							if (!value || value.length < 2) {
+								return "Le prénom doit contenir au moins 2 caractères";
+							}
+							if (value.length > 100) {
+								return "Le prénom ne peut pas dépasser 100 caractères";
+							}
+							return undefined;
+						},
+					}}
+				>
+					{(field) => (
 						<field.InputField
 							label="Prénom"
 							disabled={isPending}
@@ -55,32 +55,30 @@ export function ProfileForm({ user }: ProfileFormProps) {
 							autoCapitalize="words"
 							autoCorrect="off"
 						/>
-						<p className="text-muted-foreground text-sm">
-							Ce prénom sera utilisé pour vos commandes et communications
-						</p>
-					</div>
-				)}
-			</form.AppField>
+					)}
+				</form.AppField>
 
-			<div className="space-y-2">
-				<Label htmlFor="email">Email actuel</Label>
-				<Input
-					id="email"
-					type="email"
-					value={user?.email ?? ""}
-					disabled
-					className="bg-muted cursor-not-allowed"
-				/>
-				<EmailChangeForm />
-			</div>
+				<div className="space-y-2">
+					<Label htmlFor="email">Email actuel</Label>
+					<Input
+						id="email"
+						type="email"
+						value={user?.email ?? ""}
+						disabled
+						className="bg-muted cursor-not-allowed"
+					/>
+				</div>
 
-			<form.Subscribe selector={(s) => [s.canSubmit]}>
-				{([canSubmit]) => (
-					<Button type="submit" disabled={!canSubmit || isPending}>
-						{isPending ? "Enregistrement..." : "Enregistrer les modifications"}
-					</Button>
-				)}
-			</form.Subscribe>
-		</form>
+				<form.Subscribe selector={(s) => [s.canSubmit]}>
+					{([canSubmit]) => (
+						<Button type="submit" disabled={!canSubmit || isPending}>
+							{isPending ? "Enregistrement..." : "Enregistrer les modifications"}
+						</Button>
+					)}
+				</form.Subscribe>
+			</form>
+
+			<EmailChangeForm />
+		</div>
 	);
 }

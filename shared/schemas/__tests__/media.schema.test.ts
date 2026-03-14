@@ -38,7 +38,7 @@ describe("baseMediaSchema", () => {
 		const result = baseMediaSchema.safeParse({ url: INVALID_DOMAIN_URL });
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain("domaine autorise");
+			expect(result.error.issues[0]?.message).toContain("domaine autorisé");
 		}
 	});
 
@@ -94,7 +94,7 @@ describe("imageMediaSchema", () => {
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
-			expect(result.error.issues[0]?.message).toContain("domaine autorise");
+			expect(result.error.issues[0]?.message).toContain("domaine autorisé");
 		}
 	});
 

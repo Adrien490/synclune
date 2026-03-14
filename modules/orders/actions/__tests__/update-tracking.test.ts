@@ -241,7 +241,7 @@ describe("updateTracking", () => {
 		const result = await updateTracking(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("expediee");
+		expect(result.message).toContain("expédiée");
 	});
 
 	// Success: updates tracking and creates audit

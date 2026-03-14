@@ -177,7 +177,7 @@ describe("deleteAddress", () => {
 
 		await deleteAddress(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Adresse non trouvee");
+		expect(mockError).toHaveBeenCalledWith("Adresse non trouvée");
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -187,7 +187,7 @@ describe("deleteAddress", () => {
 
 		await deleteAddress(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Adresse non trouvee");
+		expect(mockError).toHaveBeenCalledWith("Adresse non trouvée");
 	});
 
 	it("should delete a non-default address without reassigning defaults", async () => {

@@ -28,23 +28,13 @@ export function SecuritySection({ emailVerified, providers, email }: SecuritySec
 	return (
 		<>
 			<section className="space-y-4" aria-labelledby="security-heading">
-				<div>
-					<h2 id="security-heading" className="text-base font-semibold">
-						Sécurité
-					</h2>
-					<p className="text-muted-foreground mt-0.5 text-sm">
-						Gérez votre mot de passe et vos méthodes de connexion
-					</p>
-				</div>
+				<h2 id="security-heading" className="text-base font-semibold">
+					Sécurité
+				</h2>
 				<div className="border-border/60 space-y-6 border-t pt-4">
 					{hasCredential && (
 						<div className="flex items-center justify-between">
-							<div className="space-y-1">
-								<p className="text-sm font-medium">Mot de passe</p>
-								<p className="text-muted-foreground text-sm">
-									Modifier votre mot de passe de connexion
-								</p>
-							</div>
+							<p className="text-sm font-medium">Mot de passe</p>
 							<Button variant="outline" size="sm" onClick={() => setPasswordDialogOpen(true)}>
 								<Lock className="mr-2 h-4 w-4" aria-hidden="true" />
 								Modifier

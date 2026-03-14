@@ -284,6 +284,6 @@ export async function createProductSku(
 				message: "Un SKU avec ce code existe déjà.",
 			};
 		}
-		return handleActionError(e, "Une erreur est survenue lors de la creation de la variante.");
+		return handleActionError(e, "Une erreur est survenue lors de la création de la variante.");
 	}
 }

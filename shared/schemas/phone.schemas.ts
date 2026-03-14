@@ -9,8 +9,8 @@ import { z } from "zod";
  * Messages d'erreur pour les validations telephone
  */
 export const PHONE_ERROR_MESSAGES = {
-	REQUIRED: "Le numero de telephone est requis",
-	INVALID: "Numero de telephone invalide",
+	REQUIRED: "Le numéro de téléphone est requis",
+	INVALID: "Numéro de téléphone invalide",
 } as const;
 
 /**

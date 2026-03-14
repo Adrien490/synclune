@@ -105,8 +105,8 @@ export async function bulkDeleteProducts(
 
 		if (orderItemsCount > 0) {
 			return error(
-				`Les produits selectionnes ne peuvent pas etre supprimes car ils sont associes a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-					"Pour conserver l'historique des commandes, veuillez archiver les produits a la place.",
+				`Les produits sélectionnés ne peuvent pas être supprimés car ils sont associés à ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
+					"Pour conserver l'historique des commandes, veuillez archiver les produits à la place.",
 			);
 		}
 

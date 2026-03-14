@@ -65,14 +65,14 @@ export const colorSlugSchema = z
 	.string()
 	.trim()
 	.min(1, "Le slug est requis")
-	.max(50, "Le slug ne peut pas depasser 50 caracteres")
+	.max(50, "Le slug ne peut pas dépasser 50 caractères")
 	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
 
 export const colorNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")
-	.max(100, "Le nom ne peut pas depasser 100 caracteres");
+	.max(100, "Le nom ne peut pas dépasser 100 caractères");
 
 export const createColorSchema = z.object({
 	name: colorNameSchema,
@@ -104,7 +104,7 @@ export const toggleColorStatusSchema = z.object({
 export const bulkToggleColorStatusSchema = z.object({
 	ids: z
 		.array(z.cuid2("ID invalide"))
-		.min(1, "Aucune couleur selectionnee")
+		.min(1, "Aucune couleur sélectionnée")
 		.max(200, "Maximum 200 couleurs par opération"),
 	isActive: z.boolean(),
 });

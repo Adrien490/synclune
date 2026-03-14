@@ -263,9 +263,7 @@ function AddressFormContent({
 									items={addressSuggestions}
 									getItemLabel={(item) => item.label}
 									getItemDescription={(item) =>
-										item.postcode && item.city
-											? `${item.postcode} ${item.city}`
-											: (item.city ?? null)
+										item.postcode && item.city ? `${item.postcode} ${item.city}` : item.city || null
 									}
 									placeholder="Rechercher une adresse..."
 									isLoading={isPendingAddress}

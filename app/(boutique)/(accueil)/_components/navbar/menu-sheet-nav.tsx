@@ -93,7 +93,7 @@ export function MenuSheetNav({
 	const sectionProps = { isMenuItemActive, itemVariants, delay };
 
 	return (
-		<AnimatePresence>
+		<AnimatePresence mode="wait">
 			{isOpen && (
 				<m.nav
 					ref={navRef}

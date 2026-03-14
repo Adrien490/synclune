@@ -27,7 +27,7 @@ import { extractCustomerFirstName } from "../utils/customer-name";
 export type { ResendEmailType } from "../types/email.types";
 
 /**
- * Server Action ADMIN pour renvoyer un email de commande
+ * Server Action ADMIN pour renvoyér un email de commande
  */
 export async function resendOrderEmail(
 	orderId: string,
@@ -94,7 +94,7 @@ export async function resendOrderEmail(
 		});
 
 		if (!order) {
-			return error("Commande non trouvee");
+			return error("Commande non trouvée");
 		}
 
 		// 5. Vérifier que l'email peut être envoyé selon le type et l'envoyer
@@ -125,7 +125,7 @@ export async function resendOrderEmail(
 				});
 
 				actionResult = result.success
-					? success("Email de confirmation renvoye")
+					? success("Email de confirmation renvoyé")
 					: error("Erreur lors de l'envoi de l'email de confirmation");
 				break;
 			}
@@ -133,11 +133,11 @@ export async function resendOrderEmail(
 			case "shipping": {
 				// Vérifier que la commande a été expédiée
 				if (order.status !== OrderStatus.SHIPPED && order.status !== OrderStatus.DELIVERED) {
-					return error("La commande n'a pas encore ete expediee");
+					return error("La commande n'a pas encore été expédiée");
 				}
 
 				if (!order.trackingNumber) {
-					return error("Aucun numero de suivi disponible");
+					return error("Aucun numéro de suivi disponible");
 				}
 
 				const carrierLabel = getCarrierLabel((order.shippingCarrier ?? "autre") as Carrier);
@@ -161,7 +161,7 @@ export async function resendOrderEmail(
 				});
 
 				actionResult = result.success
-					? success("Email d'expedition renvoye")
+					? success("Email d'expedition renvoyé")
 					: error("Erreur lors de l'envoi de l'email d'expedition");
 				break;
 			}
@@ -172,7 +172,7 @@ export async function resendOrderEmail(
 					order.status !== OrderStatus.DELIVERED &&
 					order.fulfillmentStatus !== FulfillmentStatus.DELIVERED
 				) {
-					return error("La commande n'a pas encore ete livree");
+					return error("La commande n'a pas encore été livrée");
 				}
 
 				const deliveryDate = order.actualDelivery
@@ -196,25 +196,25 @@ export async function resendOrderEmail(
 				});
 
 				actionResult = result.success
-					? success("Email de livraison renvoye")
+					? success("Email de livraison renvoyé")
 					: error("Erreur lors de l'envoi de l'email de livraison");
 				break;
 			}
 
 			case "review-request": {
-				// Verifier que la commande a ete livree
+				// Verifier que la commande a été livrée
 				if (
 					order.status !== OrderStatus.DELIVERED &&
 					order.fulfillmentStatus !== FulfillmentStatus.DELIVERED
 				) {
-					return error("La commande n'a pas encore ete livree");
+					return error("La commande n'a pas encore été livrée");
 				}
 
 				const reviewResult = await sendReviewRequestEmailInternal(orderId);
 
 				actionResult =
 					reviewResult.status === ActionStatus.SUCCESS
-						? success("Email de demande d'avis renvoye")
+						? success("Email de demande d'avis renvoyé")
 						: error(reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis");
 				break;
 			}

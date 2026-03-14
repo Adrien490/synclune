@@ -205,7 +205,7 @@ describe("useMediaUpload", () => {
 			expect(toast.warning).toHaveBeenCalledWith(
 				"2 fichier(s) ignore(s)",
 				expect.objectContaining({
-					description: "Seuls les images et videos sont acceptes",
+					description: "Seuls les images et videos sont acceptés",
 				}),
 			);
 		});

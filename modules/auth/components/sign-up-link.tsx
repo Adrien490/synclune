@@ -1,11 +1,6 @@
-"use client";
-
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 
-export function SignUpLink() {
-	const searchParams = useSearchParams();
-	const callbackURL = searchParams.get("callbackURL");
+export function SignUpLink({ callbackURL }: { callbackURL?: string }) {
 	const href = callbackURL
 		? `/inscription?callbackURL=${encodeURIComponent(callbackURL)}`
 		: "/inscription";

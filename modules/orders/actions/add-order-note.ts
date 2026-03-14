@@ -36,7 +36,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 		});
 
 		if (!order) {
-			return error("Commande non trouvee");
+			return error("Commande non trouvée");
 		}
 
 		// 5. Sanitize and create the note
@@ -62,7 +62,7 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 			metadata: {},
 		});
 
-		return success("Note ajoutee");
+		return success("Note ajoutée");
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue");
 	}

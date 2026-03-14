@@ -9,9 +9,9 @@ import { z } from "zod";
  */
 export const EMAIL_ERROR_MESSAGES = {
 	REQUIRED: "L'email est requis",
-	INVALID_FORMAT: "Verifiez le format de votre email (ex: nom@domaine.com)",
+	INVALID_FORMAT: "Vérifiez le format de votre email (ex: nom@domaine.com)",
 	DISPOSABLE:
-		"Les adresses email temporaires ne sont pas acceptees. Merci d'utiliser votre email principal",
+		"Les adresses email temporaires ne sont pas acceptées. Merci d'utiliser votre email principal",
 } as const;
 
 /**

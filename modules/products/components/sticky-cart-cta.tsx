@@ -80,7 +80,7 @@ export function StickyCartCTA({
 	};
 
 	return (
-		<AnimatePresence>
+		<AnimatePresence mode="wait">
 			{isVisible && (
 				<m.div
 					variants={slideVariants}

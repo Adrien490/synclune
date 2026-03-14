@@ -121,7 +121,7 @@ export function InstallPromptBanner({ initialState }: { initialState: InstallPro
 	}
 
 	return (
-		<AnimatePresence>
+		<AnimatePresence mode="wait">
 			{shouldShow && (
 				<m.div
 					initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 20 }}

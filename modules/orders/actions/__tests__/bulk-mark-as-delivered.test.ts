@@ -445,7 +445,7 @@ describe("bulkMarkAsDelivered", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("2");
-		expect(result.message).toContain("livree");
+		expect(result.message).toContain("livrée");
 	});
 
 	it("should use singular form for a single delivered order", async () => {

@@ -3,7 +3,6 @@ import { SignInSocialForm } from "@/modules/auth/components/sign-in-social-form"
 import { SignUpEmailForm } from "@/modules/auth/components/sign-up-email-form";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 
 export const metadata: Metadata = {
 	title: "Inscription | Synclune",
@@ -17,7 +16,14 @@ export const metadata: Metadata = {
 	},
 };
 
-export default function SignupPage() {
+export default async function SignupPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ callbackURL?: string }>;
+}) {
+	const { callbackURL } = await searchParams;
+	const resolvedCallbackURL = callbackURL ?? "/";
+
 	return (
 		<AuthPageLayout
 			backHref="/"
@@ -27,9 +33,7 @@ export default function SignupPage() {
 		>
 			<div className="space-y-6">
 				{/* Social login */}
-				<Suspense>
-					<SignInSocialForm />
-				</Suspense>
+				<SignInSocialForm callbackURL={resolvedCallbackURL} />
 
 				<div className="relative">
 					<div className="absolute inset-0 flex items-center">
@@ -41,9 +45,7 @@ export default function SignupPage() {
 				</div>
 
 				{/* Email sign up */}
-				<Suspense>
-					<SignUpEmailForm />
-				</Suspense>
+				<SignUpEmailForm />
 
 				{/* Login link */}
 				<div className="border-t pt-4 text-center">

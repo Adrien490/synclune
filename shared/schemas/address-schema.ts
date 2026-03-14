@@ -50,7 +50,7 @@ export const addressSchema = z.object({
 		.default(ADDRESS_CONSTANTS.DEFAULT_COUNTRY),
 	phone: z
 		.string()
-		.min(1, ADDRESS_ERROR_MESSAGES.INVALID_PHONE)
+		.min(1, ADDRESS_ERROR_MESSAGES.PHONE_REQUIRED)
 		.refine(isValidPhoneNumber, { message: ADDRESS_ERROR_MESSAGES.INVALID_PHONE }),
 });
 

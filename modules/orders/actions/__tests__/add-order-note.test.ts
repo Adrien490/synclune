@@ -133,7 +133,7 @@ describe("addOrderNote", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(null);
 		const result = await addOrderNote(VALID_ORDER_ID, "Note");
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith("Commande non trouvee");
+		expect(mockError).toHaveBeenCalledWith("Commande non trouvée");
 	});
 
 	it("creates note with sanitized content and admin info", async () => {

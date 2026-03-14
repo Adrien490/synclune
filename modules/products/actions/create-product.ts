@@ -288,6 +288,6 @@ export async function createProduct(
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return error("Une erreur technique est survenue. Veuillez reessayer.");
 		}
-		return handleActionError(e, "Une erreur est survenue lors de la creation du produit.");
+		return handleActionError(e, "Une erreur est survenue lors de la création du produit.");
 	}
 }

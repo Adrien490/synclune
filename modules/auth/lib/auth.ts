@@ -253,8 +253,8 @@ export const auth = betterAuth({
 	],
 	pages: {
 		error: "/error",
-		signIn: "/login",
-		signUp: "/signup",
+		signIn: "/connexion",
+		signUp: "/inscription",
 	},
 	session: {
 		expiresIn: AUTH_SESSION_CONFIG.expiresIn,

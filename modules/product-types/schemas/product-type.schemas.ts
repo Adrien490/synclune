@@ -58,19 +58,19 @@ export const productTypeLabelSchema = z
 	.string()
 	.trim()
 	.min(1, "Le label est requis")
-	.max(50, "Le label ne peut pas depasser 50 caracteres");
+	.max(50, "Le label ne peut pas dépasser 50 caractères");
 
 export const productTypeDescriptionSchema = z
 	.string()
 	.trim()
-	.max(500, "La description ne peut pas depasser 500 caracteres")
+	.max(500, "La description ne peut pas dépasser 500 caractères")
 	.optional();
 
 export const productTypeSlugSchema = z
 	.string()
 	.trim()
 	.min(1, "Le slug est requis")
-	.max(50, "Le slug ne peut pas depasser 50 caracteres")
+	.max(50, "Le slug ne peut pas dépasser 50 caractères")
 	.regex(/^[a-z0-9-]+$/, "Le slug ne peut contenir que des lettres minuscules, chiffres et tirets");
 
 export const createProductTypeSchema = z.object({
@@ -110,8 +110,8 @@ const bulkIdsSchema = z
 	.pipe(
 		z
 			.array(z.cuid2("ID invalide"))
-			.min(1, "Au moins un element requis")
-			.max(100, "Maximum 100 elements par operation"),
+			.min(1, "Au moins un élément requis")
+			.max(100, "Maximum 100 éléments par opération"),
 	);
 
 export const bulkActivateProductTypesSchema = z.object({

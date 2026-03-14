@@ -11,14 +11,10 @@ import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useSignInEmail } from "@/modules/auth/hooks/use-sign-in-email";
 
-export function SignInEmailForm() {
-	const searchParams = useSearchParams();
-	const callbackURL = searchParams.get("callbackURL") ?? "/";
-
+export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 	const { action, isPending, state } = useSignInEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
 

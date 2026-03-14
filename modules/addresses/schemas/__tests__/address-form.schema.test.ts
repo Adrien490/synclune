@@ -33,6 +33,7 @@ vi.mock("../constants/address.constants", () => ({
 		CITY_TOO_SHORT: "La ville doit contenir au moins 2 caracteres",
 		CITY_TOO_LONG: "La ville ne peut pas depasser 50 caracteres",
 		INVALID_POSTAL_CODE: "Le code postal doit contenir 5 chiffres",
+		PHONE_REQUIRED: "Le numero de telephone est requis",
 		INVALID_PHONE: "Le numero de telephone doit etre au format francais valide",
 	},
 	MAX_ADDRESSES_PER_USER: 10,

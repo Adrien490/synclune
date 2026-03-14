@@ -191,14 +191,18 @@ function FieldError({
 		}
 
 		// Handle both formats: string[] and { message?: string }[]
-		const errorMessages = errors
-			.map((error) => {
-				if (typeof error === "string") {
-					return error;
-				}
-				return error?.message;
-			})
-			.filter(Boolean);
+		const errorMessages = [
+			...new Set(
+				errors
+					.map((error) => {
+						if (typeof error === "string") {
+							return error;
+						}
+						return error?.message;
+					})
+					.filter(Boolean),
+			),
+		];
 
 		if (errorMessages.length === 0) {
 			return null;

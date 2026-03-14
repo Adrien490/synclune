@@ -6,7 +6,7 @@ import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
 import { discountCodeSchema } from "@/modules/discounts/schemas/discount.schemas";
 
 const addressSchema = z.object({
-	fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caracteres"),
+	fullName: z.string().min(2, "Le nom complet doit contenir au moins 2 caractères"),
 	addressLine1: z.string().min(1),
 	addressLine2: z.string().optional(),
 	city: z.string().min(1),

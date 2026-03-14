@@ -12,31 +12,22 @@ export function GdprSection({ accountStatus, daysRemaining }: GdprSectionProps) 
 
 	return (
 		<section className="space-y-4" aria-labelledby="gdpr-heading">
-			<div>
-				<h2 id="gdpr-heading" className="text-base font-semibold">
-					Données personnelles
-				</h2>
-				<p className="text-muted-foreground mt-0.5 text-sm">
-					Gérez vos données conformément au RGPD (Règlement Général sur la Protection des Données)
-				</p>
-			</div>
+			<h2 id="gdpr-heading" className="text-base font-semibold">
+				Données personnelles
+			</h2>
 			<div className="border-border/60 space-y-6 border-t pt-4">
 				{isPendingDeletion && daysRemaining > 0 && (
 					<CancelDeletionBanner daysRemaining={daysRemaining} />
 				)}
 
 				{!isPendingDeletion && (
-					<>
-						{/* Suppression */}
-						<div>
-							<h4 className="mb-2 font-medium">Supprimer mon compte</h4>
-							<p className="text-muted-foreground mb-4 text-sm">
-								Demandez la suppression de votre compte. Un délai de 30 jours vous permet
-								d&apos;annuler votre demande avant la suppression définitive.
-							</p>
-							<DeleteAccountDialog />
-						</div>
-					</>
+					<div>
+						<h4 className="mb-2 font-medium">Supprimer mon compte</h4>
+						<p className="text-muted-foreground mb-4 text-sm">
+							Délai de 30 jours avant suppression définitive.
+						</p>
+						<DeleteAccountDialog />
+					</div>
 				)}
 			</div>
 		</section>

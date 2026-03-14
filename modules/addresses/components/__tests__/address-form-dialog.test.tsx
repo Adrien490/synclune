@@ -60,6 +60,7 @@ vi.mock("@/shared/components/forms", () => ({
 				state: { value: string; meta: { errors: string[] } };
 				InputField: (props: { label: string }) => React.ReactNode;
 				PhoneField: (props: { label: string }) => React.ReactNode;
+				AutocompleteField: (props: { label: string; error?: string }) => React.ReactNode;
 			}) => React.ReactNode;
 		}) =>
 			children({
@@ -68,6 +69,12 @@ vi.mock("@/shared/components/forms", () => ({
 				state: { value: "", meta: { errors: [] } },
 				InputField: ({ label }: { label: string }) => <input aria-label={label} />,
 				PhoneField: ({ label }: { label: string }) => <input aria-label={label} />,
+				AutocompleteField: ({ label, error }: { label: string; error?: string }) => (
+					<div>
+						<input aria-label={label} />
+						{error && <p>{error}</p>}
+					</div>
+				),
 			}),
 		Subscribe: ({ children }: { children: (values: [boolean]) => React.ReactNode }) =>
 			children([true]),

@@ -92,8 +92,8 @@ export async function createAddress(
 
 		return success(
 			isDefault
-				? "Adresse ajoutee et definie comme adresse par defaut"
-				: "Adresse ajoutee avec succes",
+				? "Adresse ajoutée et définie comme adresse par défaut"
+				: "Adresse ajoutée avec succès",
 		);
 	} catch (e) {
 		if (e instanceof LimitExceededError) {

@@ -47,7 +47,7 @@ export function AnnouncementBar({
 	const safeLink = link && isSafeLink(link) ? link : undefined;
 
 	return (
-		<AnimatePresence onExitComplete={onExitComplete}>
+		<AnimatePresence mode="wait" onExitComplete={onExitComplete}>
 			{!isDismissed && (
 				<m.div
 					ref={barRef}

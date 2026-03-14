@@ -258,7 +258,7 @@ describe("deleteUploadThingFiles", () => {
 	it("should return success with deletedCount when all files are deleted", async () => {
 		const result = await deleteUploadThingFiles(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith("2 fichier(s) supprime(s)", {
+		expect(mockSuccess).toHaveBeenCalledWith("2 fichier(s) supprimé(s)", {
 			deletedCount: 2,
 		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -280,7 +280,7 @@ describe("deleteUploadThingFiles", () => {
 
 		// totalFailed = failedUrls(1) + utFailures(0) = 1
 		expect(mockSuccess).toHaveBeenCalledWith(
-			"1 fichier(s) supprime(s). 1 fichier(s) n'ont pas pu etre traite(s).",
+			"1 fichier(s) supprimé(s). 1 fichier(s) n'ont pas pu être traité(s).",
 			{ deletedCount: 1, failedCount: 1 },
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -298,7 +298,7 @@ describe("deleteUploadThingFiles", () => {
 
 		// totalFailed = failedUrls(0) + utFailures(2-1=1) = 1
 		expect(mockSuccess).toHaveBeenCalledWith(
-			"1 fichier(s) supprime(s). 1 fichier(s) n'ont pas pu etre traite(s).",
+			"1 fichier(s) supprimé(s). 1 fichier(s) n'ont pas pu être traité(s).",
 			{ deletedCount: 1, failedCount: 1 },
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);

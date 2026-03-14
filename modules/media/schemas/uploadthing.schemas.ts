@@ -13,7 +13,7 @@ const uploadThingUrlSchema = z
 	.string()
 	.url({ message: "URL du fichier invalide" })
 	.refine(isValidUploadThingUrl, {
-		message: "L'URL doit provenir d'un domaine UploadThing autorise (HTTPS)",
+		message: "L'URL doit provenir d'un domaine UploadThing autorisé (HTTPS)",
 	});
 
 /**
@@ -30,7 +30,7 @@ export const deleteUploadThingFilesSchema = z.object({
 	fileUrls: z
 		.array(uploadThingUrlSchema)
 		.min(1, "Au moins une URL est requise")
-		.max(100, "Maximum 100 URLs par requete"),
+		.max(100, "Maximum 100 URLs par requête"),
 });
 
 export type DeleteUploadThingFileInput = z.infer<typeof deleteUploadThingFileSchema>;

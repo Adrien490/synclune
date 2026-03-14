@@ -28,14 +28,9 @@ export default async function SettingsPage() {
 			<div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				<div className="space-y-6 lg:col-span-2">
 					<section className="space-y-4" aria-labelledby="profile-heading">
-						<div>
-							<h2 id="profile-heading" className="text-base font-semibold">
-								Profil
-							</h2>
-							<p className="text-muted-foreground mt-0.5 text-sm">
-								Modifiez vos informations personnelles
-							</p>
-						</div>
+						<h2 id="profile-heading" className="text-base font-semibold">
+							Profil
+						</h2>
 						<div className="border-border/60 border-t pt-4">
 							<ProfileForm user={user} />
 						</div>
@@ -89,16 +84,10 @@ function SecuritySkeleton() {
 	return (
 		<SkeletonGroup label="Chargement des paramètres de sécurité">
 			<section className="space-y-4">
-				<div>
-					<Skeleton className="h-5 w-24" />
-					<Skeleton className="mt-0.5 h-4 w-64" />
-				</div>
+				<Skeleton className="h-5 w-24" />
 				<div className="border-border/60 space-y-6 border-t pt-4">
 					<div className="flex items-center justify-between">
-						<div className="space-y-1">
-							<Skeleton className="h-4 w-28" />
-							<Skeleton className="h-4 w-52" />
-						</div>
+						<Skeleton className="h-4 w-28" />
 						<Skeleton className="h-9 w-24" />
 					</div>
 					<Skeleton className="h-4 w-32" />
@@ -112,10 +101,7 @@ function NewsletterSkeleton() {
 	return (
 		<SkeletonGroup label="Chargement des paramètres newsletter">
 			<section className="space-y-4">
-				<div>
-					<Skeleton className="h-5 w-32" />
-					<Skeleton className="mt-0.5 h-4 w-48" />
-				</div>
+				<Skeleton className="h-5 w-32" />
 				<div className="border-border/60 space-y-3 border-t pt-4">
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-9 w-full" />
@@ -129,10 +115,7 @@ function SessionsSkeleton() {
 	return (
 		<SkeletonGroup label="Chargement des sessions actives">
 			<section className="space-y-4">
-				<div>
-					<Skeleton className="h-5 w-40" />
-					<Skeleton className="mt-0.5 h-4 w-28" />
-				</div>
+				<Skeleton className="h-5 w-40" />
 				<div className="border-border/60 border-t pt-4">
 					<div className="divide-border/50 divide-y">
 						{Array.from({ length: 2 }).map((_, i) => (

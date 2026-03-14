@@ -119,7 +119,7 @@ export async function bulkMarkAsDelivered(
 		});
 
 		if (eligibleOrders.length === 0) {
-			return error("Aucune commande eligible (doivent etre au statut SHIPPED).");
+			return error("Aucune commande éligible (doivent être au statut SHIPPED).");
 		}
 
 		const eligibleIds = eligibleOrders.map((o) => o.id);
@@ -180,9 +180,9 @@ export async function bulkMarkAsDelivered(
 
 		const count = eligibleOrders.length;
 		return success(
-			`${count} commande${count > 1 ? "s" : ""} marquee${count > 1 ? "s" : ""} comme livree${count > 1 ? "s" : ""}.`,
+			`${count} commande${count > 1 ? "s" : ""} marquée${count > 1 ? "s" : ""} comme livrée${count > 1 ? "s" : ""}.`,
 		);
 	} catch (e) {
-		return handleActionError(e, "Une erreur est survenue lors de la mise a jour des commandes.");
+		return handleActionError(e, "Une erreur est survenue lors de la mise à jour des commandes.");
 	}
 }

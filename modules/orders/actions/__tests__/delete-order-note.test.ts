@@ -133,7 +133,7 @@ describe("deleteOrderNote", () => {
 		mockPrisma.orderNote.findUnique.mockResolvedValue(null);
 		const result = await deleteOrderNote(NOTE_ID);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith("Note non trouvee");
+		expect(mockError).toHaveBeenCalledWith("Note non trouvée");
 	});
 
 	it("soft-deletes the note (legal compliance)", async () => {

@@ -198,7 +198,7 @@ describe("resendOrderEmail", () => {
 		const result = await resendOrderEmail(VALID_CUID, "confirmation");
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("Commande non trouvee");
+		expect(result.message).toContain("Commande non trouvée");
 	});
 
 	// -----------------------------------------------------------------------
@@ -255,7 +255,7 @@ describe("resendOrderEmail", () => {
 		const result = await resendOrderEmail(VALID_CUID, "shipping");
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("expediee");
+		expect(result.message).toContain("expédiée");
 	});
 
 	it("should return error for shipping email when tracking number is missing", async () => {
@@ -302,7 +302,7 @@ describe("resendOrderEmail", () => {
 		const result = await resendOrderEmail(VALID_CUID, "delivery");
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("livree");
+		expect(result.message).toContain("livrée");
 	});
 
 	it("should return error when delivery email send fails", async () => {
@@ -334,7 +334,7 @@ describe("resendOrderEmail", () => {
 		const result = await resendOrderEmail(VALID_CUID, "review-request");
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("livree");
+		expect(result.message).toContain("livrée");
 	});
 
 	it("should return error when review request email service fails", async () => {

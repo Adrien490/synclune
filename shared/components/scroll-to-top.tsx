@@ -102,7 +102,7 @@ export function ScrollToTop() {
 			{/* Screen reader announcements */}
 			<div ref={statusRef} role="status" aria-live="polite" className="sr-only" />
 
-			<AnimatePresence>
+			<AnimatePresence mode="wait">
 				{visible && (
 					<m.button
 						type="button"

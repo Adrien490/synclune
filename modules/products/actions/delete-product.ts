@@ -84,8 +84,8 @@ export async function deleteProduct(
 
 		if (orderItemsCount > 0) {
 			return error(
-				`Ce produit ne peut pas etre supprime car il est associe a ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
-					"Pour conserver l'historique des commandes, veuillez archiver le produit a la place.",
+				`Ce produit ne peut pas être supprimé car il est associé à ${orderItemsCount} article${orderItemsCount > 1 ? "s" : ""} de commande. ` +
+					"Pour conserver l'historique des commandes, veuillez archiver le produit à la place.",
 			);
 		}
 

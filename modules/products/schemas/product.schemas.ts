@@ -218,17 +218,17 @@ export const createProductSchema = z
 		title: z
 			.string({ error: "Le titre du produit est requis" })
 			.min(TEXT_LIMITS.PRODUCT_TITLE.min, {
-				error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres`,
+				error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caractères`,
 			})
 			.max(TEXT_LIMITS.PRODUCT_TITLE.max, {
-				error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres`,
+				error: `Le titre ne peut pas dépasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caractères`,
 			})
 			.trim(),
 
 		description: z
 			.string()
 			.max(TEXT_LIMITS.PRODUCT_DESCRIPTION.max, {
-				error: `La description ne peut pas depasser ${TEXT_LIMITS.PRODUCT_DESCRIPTION.max} caracteres`,
+				error: `La description ne peut pas dépasser ${TEXT_LIMITS.PRODUCT_DESCRIPTION.max} caractères`,
 			})
 			.trim()
 			.optional()
@@ -245,7 +245,7 @@ export const createProductSchema = z
 		collectionIds: z
 			.array(z.cuid2({ message: "ID collection invalide" }))
 			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, {
-				error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
+				error: `Un produit ne peut appartenir qu'à ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
 			})
 			.optional()
 			.default([]),
@@ -288,17 +288,17 @@ export const updateProductSchema = z
 		title: z
 			.string({ error: "Le titre du produit est requis" })
 			.min(TEXT_LIMITS.PRODUCT_TITLE.min, {
-				error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caracteres`,
+				error: `Le titre doit contenir au moins ${TEXT_LIMITS.PRODUCT_TITLE.min} caractères`,
 			})
 			.max(TEXT_LIMITS.PRODUCT_TITLE.max, {
-				error: `Le titre ne peut pas depasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caracteres`,
+				error: `Le titre ne peut pas dépasser ${TEXT_LIMITS.PRODUCT_TITLE.max} caractères`,
 			})
 			.trim(),
 
 		description: z
 			.string()
 			.max(TEXT_LIMITS.PRODUCT_DESCRIPTION.max, {
-				error: `La description ne peut pas depasser ${TEXT_LIMITS.PRODUCT_DESCRIPTION.max} caracteres`,
+				error: `La description ne peut pas dépasser ${TEXT_LIMITS.PRODUCT_DESCRIPTION.max} caractères`,
 			})
 			.trim()
 			.optional()
@@ -315,7 +315,7 @@ export const updateProductSchema = z
 		collectionIds: z
 			.array(z.cuid2({ message: "ID collection invalide" }))
 			.max(ARRAY_LIMITS.PRODUCT_COLLECTIONS, {
-				error: `Un produit ne peut appartenir qu'a ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
+				error: `Un produit ne peut appartenir qu'à ${ARRAY_LIMITS.PRODUCT_COLLECTIONS} collections maximum`,
 			})
 			.optional()
 			.default([]),

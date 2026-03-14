@@ -35,7 +35,7 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 		});
 
 		if (!note) {
-			return error("Note non trouvee");
+			return error("Note non trouvée");
 		}
 
 		// 4. Soft delete au lieu de hard delete (conformité légale)
@@ -58,7 +58,7 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 			},
 		});
 
-		return success("Note supprimee");
+		return success("Note supprimée");
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue");
 	}

@@ -216,7 +216,7 @@ describe("createAddress", () => {
 
 		const result = await createAddress(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith("Adresse ajoutee et definie comme adresse par defaut");
+		expect(mockSuccess).toHaveBeenCalledWith("Adresse ajoutée et définie comme adresse par défaut");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -238,7 +238,7 @@ describe("createAddress", () => {
 
 		const result = await createAddress(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith("Adresse ajoutee avec succes");
+		expect(mockSuccess).toHaveBeenCalledWith("Adresse ajoutée avec succès");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 

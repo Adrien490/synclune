@@ -5,7 +5,6 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { Loader2, XCircle } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import { useSignInSocial } from "@/modules/auth/hooks/use-sign-in-social";
 
 const providers = [
@@ -16,9 +15,7 @@ const providers = [
 	},
 ];
 
-export function SignInSocialForm() {
-	const searchParams = useSearchParams();
-	const callbackURL = searchParams.get("callbackURL") ?? "/";
+export function SignInSocialForm({ callbackURL }: { callbackURL: string }) {
 	const { action, isPending, state } = useSignInSocial();
 
 	return (

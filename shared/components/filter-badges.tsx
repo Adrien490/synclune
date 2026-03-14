@@ -157,7 +157,7 @@ export function FilterBadges({
 				{label}
 			</span>
 
-			<AnimatePresence>
+			<AnimatePresence mode="popLayout">
 				{displayedFilters.map((filter) => (
 					<FilterBadge
 						key={filter.id}
