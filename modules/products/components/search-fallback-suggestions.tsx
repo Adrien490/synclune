@@ -76,7 +76,7 @@ export async function SearchFallbackSuggestions({
 						{suggestion ? (
 							<SuggestionLink suggestion={suggestion} />
 						) : (
-							"Essayez de modifier vos filtres ou explorez nos dernières créations ci-dessous."
+							"Essayez de modifier vos filtres."
 						)}
 					</EmptyDescription>
 				</EmptyHeader>

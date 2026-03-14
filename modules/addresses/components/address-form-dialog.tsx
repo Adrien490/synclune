@@ -1,6 +1,5 @@
 "use client";
 
-import { Autocomplete } from "@/shared/components/autocomplete";
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
@@ -11,7 +10,6 @@ import {
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { Label } from "@/shared/components/ui/label";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
@@ -243,69 +241,44 @@ function AddressFormContent({
 							}}
 						>
 							{(field) => (
-								<div className="space-y-2">
-									<Label htmlFor={field.name}>
-										Adresse
-										<span className="text-destructive ml-1" aria-hidden="true">
-											*
-										</span>
-										<span className="sr-only">(requis)</span>
-									</Label>
-									<Autocomplete<SearchAddressResult>
-										name={field.name}
-										value={field.state.value}
-										onChange={(value) => field.handleChange(value)}
-										onSelect={(selectedAddress) => {
-											// Remplir automatiquement les champs avec l'adresse sélectionnée
-											field.handleChange(
-												selectedAddress.street && selectedAddress.housenumber
-													? `${selectedAddress.housenumber} ${selectedAddress.street}`
-													: selectedAddress.label,
-											);
+								<field.AutocompleteField<SearchAddressResult>
+									label="Adresse"
+									required
+									onSelect={(selectedAddress) => {
+										// Remplir automatiquement les champs avec l'adresse sélectionnée
+										field.handleChange(
+											selectedAddress.street && selectedAddress.housenumber
+												? `${selectedAddress.housenumber} ${selectedAddress.street}`
+												: selectedAddress.label,
+										);
 
-											// Mise à jour des autres champs
-											if (selectedAddress.postcode) {
-												form.setFieldValue("postalCode", selectedAddress.postcode);
-											}
-											if (selectedAddress.city) {
-												form.setFieldValue("city", selectedAddress.city);
-											}
-										}}
-										items={addressSuggestions}
-										getItemLabel={(item) => item.label}
-										getItemDescription={(item) =>
-											item.postcode && item.city
-												? `${item.postcode} ${item.city}`
-												: item.city || null
+										// Mise à jour des autres champs
+										if (selectedAddress.postcode) {
+											form.setFieldValue("postalCode", selectedAddress.postcode);
 										}
-										placeholder="Rechercher une adresse..."
-										isLoading={isPendingAddress}
-										disabled={isPending}
-										error={
-											addressSearchError
-												? "La recherche d'adresse est temporairement indisponible"
-												: undefined
+										if (selectedAddress.city) {
+											form.setFieldValue("city", selectedAddress.city);
 										}
-										noResultsMessage="Aucune adresse trouvée"
-										minQueryLength={2}
-										debounceMs={0}
-										aria-required="true"
-										aria-invalid={field.state.meta.errors.length > 0}
-										aria-describedby={
-											field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
-										}
-									/>
-									{field.state.meta.errors.length > 0 && (
-										<p
-											id={`${field.name}-error`}
-											className="text-destructive text-sm font-medium"
-											role="alert"
-											aria-live="assertive"
-										>
-											{field.state.meta.errors.join(", ")}
-										</p>
-									)}
-								</div>
+									}}
+									items={addressSuggestions}
+									getItemLabel={(item) => item.label}
+									getItemDescription={(item) =>
+										item.postcode && item.city
+											? `${item.postcode} ${item.city}`
+											: (item.city ?? null)
+									}
+									placeholder="Rechercher une adresse..."
+									isLoading={isPendingAddress}
+									disabled={isPending}
+									error={
+										addressSearchError
+											? "La recherche d'adresse est temporairement indisponible"
+											: undefined
+									}
+									noResultsMessage="Aucune adresse trouvée"
+									minQueryLength={2}
+									debounceMs={0}
+								/>
 							)}
 						</form.AppField>
 
