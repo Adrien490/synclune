@@ -195,6 +195,13 @@ export async function sendCustomizationRequest(
 				email: sanitizedEmail,
 				productTypeLabel: sanitizedProductTypeLabel,
 				details: sanitizedDetails,
+				inspirationMedias:
+					validatedData.inspirationMedias.length > 0
+						? validatedData.inspirationMedias.map((media) => ({
+								url: media.url,
+								altText: media.altText ? sanitizeForEmail(media.altText) : undefined,
+							}))
+						: undefined,
 			});
 		} catch {
 			// Silence - email confirmation non critique

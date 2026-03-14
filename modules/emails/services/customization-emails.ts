@@ -54,12 +54,14 @@ export async function sendCustomizationConfirmationEmail({
 	productTypeLabel,
 	details,
 	inspirationProducts,
+	inspirationMedias,
 }: {
 	firstName: string;
 	email: string;
 	productTypeLabel: string;
 	details: string;
 	inspirationProducts?: Array<{ title: string }>;
+	inspirationMedias?: Array<{ url: string; altText?: string }>;
 }): Promise<EmailResult> {
 	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS);
 	return renderAndSend(
@@ -68,6 +70,7 @@ export async function sendCustomizationConfirmationEmail({
 			productTypeLabel,
 			details,
 			inspirationProducts,
+			inspirationMedias,
 			shopUrl,
 		}),
 		{

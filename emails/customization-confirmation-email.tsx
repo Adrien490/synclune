@@ -1,4 +1,4 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Button, Column, Img, Row, Section, Text } from "@react-email/components";
 import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
@@ -7,6 +7,7 @@ interface CustomizationConfirmationEmailProps {
 	productTypeLabel: string;
 	details: string;
 	inspirationProducts?: Array<{ title: string }>;
+	inspirationMedias?: Array<{ url: string; altText?: string }>;
 	shopUrl: string;
 }
 
@@ -15,9 +16,11 @@ export const CustomizationConfirmationEmail = ({
 	productTypeLabel,
 	details,
 	inspirationProducts,
+	inspirationMedias,
 	shopUrl,
 }: CustomizationConfirmationEmailProps) => {
 	const hasInspirations = inspirationProducts && inspirationProducts.length > 0;
+	const hasMedias = inspirationMedias && inspirationMedias.length > 0;
 
 	return (
 		<EmailLayout preview={`Votre demande de ${productTypeLabel} personnalisé est bien enregistrée`}>
@@ -65,6 +68,44 @@ export const CustomizationConfirmationEmail = ({
 				</Section>
 			)}
 
+			{/* Images d'inspiration */}
+			{hasMedias && (
+				<Section style={{ marginBottom: "24px" }}>
+					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+						Vos images d&apos;inspiration
+					</Text>
+					<Section style={EMAIL_STYLES.section.card}>
+						{Array.from({ length: Math.ceil(inspirationMedias.length / 2) }, (_, rowIndex) => (
+							<Row key={rowIndex} style={{ marginBottom: "8px" }}>
+								{inspirationMedias.slice(rowIndex * 2, rowIndex * 2 + 2).map((media) => (
+									<Column
+										key={media.url}
+										style={{
+											width: "50%",
+											paddingRight: "4px",
+											paddingLeft: "4px",
+											verticalAlign: "top",
+										}}
+									>
+										<Img
+											src={media.url}
+											alt={media.altText ?? "Image d'inspiration"}
+											width={200}
+											style={{
+												borderRadius: "8px",
+												width: "100%",
+												maxWidth: "200px",
+												height: "auto",
+											}}
+										/>
+									</Column>
+								))}
+							</Row>
+						))}
+					</Section>
+				</Section>
+			)}
+
 			{/* Description */}
 			<Section style={{ marginBottom: "32px" }}>
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Description</Text>
@@ -100,6 +141,16 @@ CustomizationConfirmationEmail.PreviewProps = {
 	details:
 		"Je souhaiterais un collier personnalisé avec les initiales 'ML' gravées sur un pendentif rond en argent.",
 	inspirationProducts: [{ title: "Collier Lune Céleste" }],
+	inspirationMedias: [
+		{
+			url: "https://placehold.co/400x400/e8d5c4/333333?text=Inspiration+1",
+			altText: "Collier en or",
+		},
+		{
+			url: "https://placehold.co/400x400/d5c4e8/333333?text=Inspiration+2",
+			altText: "Pendentif argent",
+		},
+	],
 	shopUrl: "https://synclune.fr/creations",
 } as CustomizationConfirmationEmailProps;
 
