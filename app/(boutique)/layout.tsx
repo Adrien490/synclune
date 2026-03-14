@@ -8,6 +8,22 @@ import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { ScrollToTop } from "@/shared/components/scroll-to-top";
 
+import type { Metadata } from "next";
+
+export async function generateMetadata(): Promise<Metadata> {
+	const storeStatus = await getStoreStatus();
+
+	if (storeStatus.isClosed) {
+		return {
+			title: "Boutique temporairement fermée — Synclune",
+			description: storeStatus.closureMessage ?? "Notre boutique est temporairement fermée.",
+			robots: { index: false, follow: false },
+		};
+	}
+
+	return {};
+}
+
 interface ShopLayoutProps {
 	children: React.ReactNode;
 }

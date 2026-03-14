@@ -121,7 +121,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 									)}
 								</form.AppField>
 								<p className="text-muted-foreground text-xs">
-									Informative uniquement — la boutique ne réouvrira pas automatiquement.
+									La boutique sera automatiquement réouverte à cette date.
 								</p>
 							</div>
 						) : null
