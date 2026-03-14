@@ -1,5 +1,6 @@
 "use client";
 
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { cn } from "@/shared/utils/cn";
 import {
 	m,
@@ -10,18 +11,6 @@ import {
 	useTransform,
 } from "motion/react";
 import { useEffect, useEffectEvent, useRef } from "react";
-
-/**
- * Configuration spring optimisee pour l'animation de nombres
- * - mass faible (0.8) pour une reponse rapide
- * - stiffness moderee (75) pour une animation fluide
- * - damping (15) pour eviter le rebond excessif
- */
-const NUMBER_SPRING_CONFIG = {
-	mass: 0.8,
-	stiffness: 75,
-	damping: 15,
-};
 
 function formatNumber(value: number, decimalPlaces: number, locale: string): string {
 	return Intl.NumberFormat(locale, {
@@ -69,7 +58,7 @@ export function AnimatedNumber({
 	const isInView = useInView(ref, { once: true, margin: "0px" });
 
 	const initialValue = direction === "down" ? value : startValue;
-	const spring = useSpring(initialValue, NUMBER_SPRING_CONFIG);
+	const spring = useSpring(initialValue, MOTION_CONFIG.spring.number);
 
 	const format = formatter ?? ((n: number) => formatNumber(n, decimalPlaces, locale));
 

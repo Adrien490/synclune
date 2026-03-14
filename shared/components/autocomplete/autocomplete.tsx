@@ -236,7 +236,7 @@ export function Autocomplete<T>({
 				</div>
 
 				{/* Hint pour minQueryLength */}
-				<AnimatePresence>
+				<AnimatePresence mode="wait">
 					{showMinQueryHint && (
 						<m.p
 							id={hintId}
@@ -259,7 +259,7 @@ export function Autocomplete<T>({
 					itemCount={items.length}
 				/>
 
-				<AnimatePresence>
+				<AnimatePresence mode="wait">
 					{showResults && (
 						<m.ul
 							id={listboxId}

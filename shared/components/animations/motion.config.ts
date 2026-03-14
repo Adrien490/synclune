@@ -84,6 +84,20 @@ export const MOTION_CONFIG = {
 			damping: 25,
 			stiffness: 300,
 		},
+
+		// Success celebration (order confirmation icon)
+		success: {
+			type: "spring" as const,
+			damping: 12,
+			stiffness: 200,
+		},
+
+		// Animated number counting
+		number: {
+			mass: 0.8,
+			stiffness: 75,
+			damping: 15,
+		},
 	},
 
 	// Default distances and transforms
@@ -98,6 +112,7 @@ export const MOTION_CONFIG = {
 	viewport: {
 		once: true,
 		amount: 0.2,
+		margin: "-50px",
 	},
 
 	// Homepage section animation presets (shared across 4+ sections)

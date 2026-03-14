@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { GetCartReturn } from "@/modules/cart/types/cart.types";
+import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { ArrowRight, Check, Minus, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
@@ -1044,7 +1045,10 @@ function SkuSelectorFormContent({
 							scale: 1,
 							opacity: 1,
 						}}
-						transition={{ duration: 0.2 }}
+						transition={maybeReduceMotion(
+							{ duration: MOTION_CONFIG.duration.normal },
+							!!shouldReduceMotion,
+						)}
 						className="bg-muted relative h-24 w-24 shrink-0 overflow-hidden rounded-lg sm:h-40 sm:w-40"
 					>
 						<Image
@@ -1083,9 +1087,12 @@ function SkuSelectorFormContent({
 												y: 10,
 											}
 								}
-								transition={{
-									duration: shouldReduceMotion ? 0.1 : 0.2,
-								}}
+								transition={maybeReduceMotion(
+									{
+										duration: MOTION_CONFIG.duration.normal,
+									},
+									!!shouldReduceMotion,
+								)}
 								role="status"
 								aria-live="polite"
 							>

@@ -1,5 +1,6 @@
 "use client";
 
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion } from "motion/react";
 import { CheckCircle2 } from "lucide-react";
 
@@ -24,9 +25,7 @@ export function SuccessIcon() {
 			initial={{ opacity: 0, scale: 0.5 }}
 			animate={{ opacity: 1, scale: 1 }}
 			transition={{
-				type: "spring",
-				damping: 12,
-				stiffness: 200,
+				...MOTION_CONFIG.spring.success,
 				delay: 0.2,
 			}}
 			className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full"
@@ -35,7 +34,7 @@ export function SuccessIcon() {
 				initial={{ scale: 0.5, opacity: 0, rotate: -45 }}
 				animate={{ scale: 1, opacity: 1, rotate: 0 }}
 				transition={{
-					type: "spring",
+					...MOTION_CONFIG.spring.success,
 					damping: 15,
 					stiffness: 300,
 					delay: 0.5,
