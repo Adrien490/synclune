@@ -56,12 +56,12 @@ function createAddress(id: string, firstName: string, lastName: string) {
 }
 
 describe("AddressList", () => {
-	it("renders the section header", () => {
+	it("renders the empty state title when no addresses", () => {
 		mockUse.mockReturnValue([]);
 
 		render(<AddressList addressesPromise={Promise.resolve([])} />);
 
-		expect(screen.getByText("Adresses enregistrées")).toBeInTheDocument();
+		expect(screen.getByText("Aucune adresse enregistrée")).toBeInTheDocument();
 	});
 
 	it("shows empty state when no addresses", () => {

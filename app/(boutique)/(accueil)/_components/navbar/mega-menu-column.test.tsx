@@ -72,7 +72,7 @@ describe("MegaMenuColumn", () => {
 		expect(ctaLink).toBeInTheDocument();
 		expect(ctaLink.getAttribute("href")).toBe("/produits");
 		// CTA has distinct styling (bg-accent/40)
-		expect(ctaLink.className).toContain("font-semibold");
+		expect(ctaLink.className).toContain("font-medium");
 	});
 
 	it("renders remaining items in a list", () => {

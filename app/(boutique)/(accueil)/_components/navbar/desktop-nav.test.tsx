@@ -11,7 +11,7 @@ vi.mock("next/font/google", () => {
 	return {
 		Figtree: fontMock,
 		Fraunces: fontMock,
-		Petit_Formal_Script: fontMock,
+		Caveat: fontMock,
 	};
 });
 
