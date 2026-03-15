@@ -8,6 +8,10 @@ export default defineConfig({
 			"server-only": resolve(__dirname, "shared/lib/__mocks__/server-only.ts"),
 		},
 	},
+	css: {
+		// Disable PostCSS processing in tests (avoids @tailwindcss/postcss resolution issues)
+		postcss: {},
+	},
 	test: {
 		pool: "threads",
 		include: ["**/*.test.{ts,tsx}"],

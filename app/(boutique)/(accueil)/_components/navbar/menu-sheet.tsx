@@ -101,6 +101,7 @@ export function MenuSheet({
 								productTypes={productTypes}
 								collections={collections}
 								session={session}
+								isAdmin={isAdmin}
 								isOpen={isOpen}
 								onLogoutClick={handleLogoutClick}
 							/>

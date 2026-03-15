@@ -55,7 +55,7 @@ describe("useFabVisibility", () => {
 
 	describe("return value shape", () => {
 		it("returns all expected properties", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current).toHaveProperty("state");
 			expect(result.current).toHaveProperty("isHidden");
@@ -66,7 +66,7 @@ describe("useFabVisibility", () => {
 		});
 
 		it("exposes toggle as a function", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(typeof result.current.toggle).toBe("function");
 		});
@@ -78,14 +78,14 @@ describe("useFabVisibility", () => {
 
 	describe("initial state", () => {
 		it("isHidden defaults to false when initialHidden is not provided", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current.isHidden).toBe(false);
 		});
 
 		it("isHidden reflects initialHidden=false explicitly", () => {
 			const { result } = renderHook(() =>
-				useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL, initialHidden: false }),
+				useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD, initialHidden: false }),
 			);
 
 			expect(result.current.isHidden).toBe(false);
@@ -93,38 +93,38 @@ describe("useFabVisibility", () => {
 
 		it("isHidden reflects initialHidden=true", () => {
 			const { result } = renderHook(() =>
-				useFabVisibility({ key: FAB_KEYS.STOREFRONT, initialHidden: true }),
+				useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD, initialHidden: true }),
 			);
 
 			expect(result.current.isHidden).toBe(true);
 		});
 
 		it("isPending is false initially", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current.isPending).toBe(false);
 		});
 
 		it("isSuccess is false initially", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current.isSuccess).toBe(false);
 		});
 
 		it("isError is false initially", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current.isError).toBe(false);
 		});
 
 		it("state is undefined initially", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current.state).toBeUndefined();
 		});
 
 		it("isSuccess is false when state is undefined", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			// state is undefined, so state?.status === ActionStatus.SUCCESS is false
 			expect(result.current.state?.status).not.toBe(ActionStatus.SUCCESS);
@@ -132,7 +132,7 @@ describe("useFabVisibility", () => {
 		});
 
 		it("isError is false when state is undefined", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(result.current.state?.status).not.toBe(ActionStatus.ERROR);
 			expect(result.current.isError).toBe(false);
@@ -149,7 +149,7 @@ describe("useFabVisibility", () => {
 
 			const { result } = renderHook(() =>
 				useFabVisibility({
-					key: FAB_KEYS.ADMIN_SPEED_DIAL,
+					key: FAB_KEYS.ADMIN_DASHBOARD,
 					initialHidden: false,
 					onToggle,
 				}),
@@ -168,7 +168,7 @@ describe("useFabVisibility", () => {
 
 			const { result } = renderHook(() =>
 				useFabVisibility({
-					key: FAB_KEYS.STOREFRONT,
+					key: FAB_KEYS.ADMIN_DASHBOARD,
 					initialHidden: true,
 					onToggle,
 				}),
@@ -183,7 +183,7 @@ describe("useFabVisibility", () => {
 		});
 
 		it("does not throw when onToggle is not provided", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
+			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 
 			expect(() => {
 				act(() => {
@@ -205,7 +205,7 @@ describe("useFabVisibility", () => {
 
 			const { result } = renderHook(() =>
 				useFabVisibility({
-					key: FAB_KEYS.ADMIN_SPEED_DIAL,
+					key: FAB_KEYS.ADMIN_DASHBOARD,
 					initialHidden: false,
 					onToggle,
 				}),
@@ -224,7 +224,7 @@ describe("useFabVisibility", () => {
 
 			renderHook(() =>
 				useFabVisibility({
-					key: FAB_KEYS.ADMIN_SPEED_DIAL,
+					key: FAB_KEYS.ADMIN_DASHBOARD,
 					initialHidden: false,
 					onToggle,
 				}),
@@ -239,18 +239,6 @@ describe("useFabVisibility", () => {
 	// -------------------------------------------------------------------------
 
 	describe("key variants", () => {
-		it("works with ADMIN_SPEED_DIAL key", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_SPEED_DIAL }));
-
-			expect(result.current.isHidden).toBe(false);
-		});
-
-		it("works with STOREFRONT key", () => {
-			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.STOREFRONT }));
-
-			expect(result.current.isHidden).toBe(false);
-		});
-
 		it("works with ADMIN_DASHBOARD key", () => {
 			const { result } = renderHook(() => useFabVisibility({ key: FAB_KEYS.ADMIN_DASHBOARD }));
 

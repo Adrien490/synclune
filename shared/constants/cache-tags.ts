@@ -66,6 +66,34 @@ export const SHARED_CACHE_TAGS = {
 	NAVBAR_MENU: "navbar-menu",
 
 	/**
+	 * Liste des litiges dans l'admin
+	 *
+	 * Utilisé par : webhooks (disputes)
+	 */
+	ADMIN_DISPUTES_LIST: "admin-disputes-list",
+
+	/**
+	 * Journal d'audit dans l'admin
+	 *
+	 * Utilisé par : dashboard (audit logs)
+	 */
+	ADMIN_AUDIT_LOGS: "admin-audit-logs",
+
+	/**
+	 * Liste des événements webhook dans l'admin
+	 *
+	 * Utilisé par : webhooks
+	 */
+	ADMIN_WEBHOOK_EVENTS: "admin-webhook-events",
+
+	/**
+	 * Liste des emails échoués dans l'admin
+	 *
+	 * Utilisé par : emails
+	 */
+	ADMIN_FAILED_EMAILS: "admin-failed-emails",
+
+	/**
 	 * Images du sitemap
 	 *
 	 * Utilisé par : products, sitemap-images

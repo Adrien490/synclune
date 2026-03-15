@@ -3,11 +3,7 @@
  * Type-safe pour éviter les erreurs de typo
  */
 export const FAB_KEYS = {
-	/** Speed dial admin (actions rapides) - TODO: à implémenter */
-	ADMIN_SPEED_DIAL: "admin-speed-dial",
-	/** FAB pour la boutique (site public) - TODO: à implémenter */
-	STOREFRONT: "storefront",
-	/** FAB pour acceder au tableau de bord admin depuis le site public - TODO: à implémenter */
+	/** FAB pour acceder au tableau de bord admin depuis le site public */
 	ADMIN_DASHBOARD: "admin-dashboard",
 } as const;
 

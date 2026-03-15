@@ -10,6 +10,18 @@ import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import type { FabProps } from "@/shared/types/fab.types";
 
+// Shared classes for the main FAB button (used by both href and onClick variants)
+const mainButtonClassName = cn(
+	"relative cursor-pointer rounded-full shadow-lg",
+	"bg-primary hover:bg-primary/90",
+	"flex items-center justify-center",
+	"size-14 p-0",
+	"hover:shadow-primary/25 hover:shadow-xl",
+	"active:scale-95",
+	"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
+	"focus-visible:outline-none",
+);
+
 /**
  * Floating Action Button générique avec système de visibilité
  *
@@ -18,7 +30,7 @@ import type { FabProps } from "@/shared/types/fab.types";
  * const [open, setOpen] = useState(false);
  *
  * <Fab
- *   fabKey={FAB_KEYS.ADMIN_SPEED_DIAL}
+ *   fabKey={FAB_KEYS.ADMIN_DASHBOARD}
  *   initialHidden={isHidden}
  *   icon={<Plus className="h-6 w-6" />}
  *   tooltip={{ title: "Actions rapides" }}
@@ -55,6 +67,10 @@ export function Fab({
 	const statusRef = useRef<HTMLDivElement>(null);
 	const statusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [hasMounted, setHasMounted] = useState(false);
+
+	// Stable IDs for aria-controls relationship
+	const visibleId = `fab-visible-${fabKey}`;
+	const hiddenId = `fab-hidden-${fabKey}`;
 
 	// Marquer que le premier rendu est passé
 	useEffect(() => {
@@ -140,6 +156,7 @@ export function Fab({
 				{isHidden ? (
 					<m.div
 						key="fab-hidden"
+						id={hiddenId}
 						initial={shouldAnimate ? { opacity: 0, x: -20 } : false}
 						animate={{ opacity: 1, x: 0 }}
 						exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: 20 }}
@@ -168,6 +185,7 @@ export function Fab({
 									)}
 									aria-label={showTooltip}
 									aria-expanded={false}
+									aria-controls={visibleId}
 								>
 									<ChevronLeft
 										className={cn("size-5", isPending && "animate-pulse")}
@@ -183,6 +201,7 @@ export function Fab({
 				) : (
 					<m.div
 						key="fab-visible"
+						id={visibleId}
 						ref={containerRef}
 						data-fab-container
 						initial={shouldAnimate ? { opacity: 0, x: 20 } : false}
@@ -201,7 +220,8 @@ export function Fab({
 									size="icon"
 									className={cn(
 										"absolute -top-2 -right-2 z-10",
-										"size-7 rounded-full",
+										"size-6 rounded-full",
+										"after:absolute after:inset-[-8px] after:content-['']",
 										"bg-muted",
 										"border-border border",
 										"shadow-sm",
@@ -217,6 +237,7 @@ export function Fab({
 									)}
 									aria-label={hideTooltip}
 									aria-expanded={true}
+									aria-controls={hiddenId}
 								>
 									<X className={cn("size-4", isPending && "animate-pulse")} aria-hidden="true" />
 								</Button>
@@ -235,17 +256,7 @@ export function Fab({
 										ref={mainButtonRef}
 										asChild
 										size="lg"
-										className={cn(
-											"relative cursor-pointer rounded-full shadow-lg",
-											"bg-primary hover:bg-primary/90",
-											"flex items-center justify-center",
-											"size-14 p-0",
-											"hover:shadow-primary/25 hover:shadow-xl",
-											"active:scale-95",
-											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
-											"focus-visible:outline-none",
-											className,
-										)}
+										className={cn(mainButtonClassName, className)}
 									>
 										<a
 											href={href}
@@ -266,17 +277,7 @@ export function Fab({
 										ref={mainButtonRef}
 										onClick={onClick}
 										size="lg"
-										className={cn(
-											"relative cursor-pointer rounded-full shadow-lg",
-											"bg-primary hover:bg-primary/90",
-											"flex items-center justify-center",
-											"size-14 p-0",
-											"hover:shadow-primary/25 hover:shadow-xl",
-											"active:scale-95",
-											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
-											"focus-visible:outline-none",
-											className,
-										)}
+										className={cn(mainButtonClassName, className)}
 										aria-label={ariaLabel}
 										aria-haspopup={ariaHasPopup}
 										aria-describedby={ariaDescription ? `fab-description-${fabKey}` : undefined}

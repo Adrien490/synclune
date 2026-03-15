@@ -17,6 +17,12 @@ import {
 	Megaphone,
 	HelpCircle,
 	Store,
+	Users,
+	Monitor,
+	Gavel,
+	ScrollText,
+	Webhook,
+	MailWarning,
 } from "lucide-react";
 
 // ============================================================================
@@ -86,11 +92,27 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// CATALOGUE - Produits + Collections
+		// CLIENTS - Gestion des utilisateurs
+		// ─────────────────────────────────────────────────────────────────────────
+		{
+			label: "Clients",
+			icon: Users,
+			items: [
+				{
+					id: "customers",
+					title: "Clients",
+					url: "/admin/clients",
+					icon: Users,
+				},
+			],
+		},
+		// ─────────────────────────────────────────────────────────────────────────
+		// CATALOGUE - Produits, Collections, Types, Couleurs, Matériaux
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Catalogue",
 			icon: Package,
+			collapsible: true,
 			items: [
 				{
 					id: "products",
@@ -103,6 +125,25 @@ export const navigationData: NavigationData = {
 					title: "Collections",
 					url: "/admin/catalogue/collections",
 					icon: Layers,
+				},
+				{
+					id: "product-types",
+					title: "Types de produits",
+					shortTitle: "Types",
+					url: "/admin/catalogue/types-de-produits",
+					icon: Tag,
+				},
+				{
+					id: "colors",
+					title: "Couleurs",
+					url: "/admin/catalogue/couleurs",
+					icon: Palette,
+				},
+				{
+					id: "materials",
+					title: "Matériaux",
+					url: "/admin/catalogue/materiaux",
+					icon: Gem,
 				},
 			],
 		},
@@ -165,12 +206,11 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// CONFIGURATION - Attributs produits (rarement modifiés)
+		// CONFIGURATION - Paramètres boutique
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Configuration",
 			icon: Settings,
-			collapsible: true,
 			items: [
 				{
 					id: "store-settings",
@@ -178,24 +218,41 @@ export const navigationData: NavigationData = {
 					url: "/admin/configuration/boutique",
 					icon: Store,
 				},
+			],
+		},
+		// ─────────────────────────────────────────────────────────────────────────
+		// SYSTEME - Monitoring production
+		// ─────────────────────────────────────────────────────────────────────────
+		{
+			label: "Système",
+			icon: Monitor,
+			collapsible: true,
+			items: [
 				{
-					id: "product-types",
-					title: "Types de produits",
-					shortTitle: "Types",
-					url: "/admin/catalogue/types-de-produits",
-					icon: Tag,
+					id: "disputes",
+					title: "Litiges",
+					url: "/admin/systeme/litiges",
+					icon: Gavel,
 				},
 				{
-					id: "colors",
-					title: "Couleurs",
-					url: "/admin/catalogue/couleurs",
-					icon: Palette,
+					id: "audit",
+					title: "Journal d'audit",
+					shortTitle: "Audit",
+					url: "/admin/systeme/audit",
+					icon: ScrollText,
 				},
 				{
-					id: "materials",
-					title: "Matériaux",
-					url: "/admin/catalogue/materiaux",
-					icon: Gem,
+					id: "webhooks",
+					title: "Webhooks",
+					url: "/admin/systeme/webhooks",
+					icon: Webhook,
+				},
+				{
+					id: "failed-emails",
+					title: "Emails échoués",
+					shortTitle: "Emails",
+					url: "/admin/systeme/emails",
+					icon: MailWarning,
 				},
 			],
 		},

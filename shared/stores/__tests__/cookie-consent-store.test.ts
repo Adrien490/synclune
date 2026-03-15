@@ -194,6 +194,29 @@ describe("createCookieConsentStore", () => {
 		});
 	});
 
+	describe("policy version upgrade", () => {
+		it("should show banner when persisted policyVersion < CURRENT_POLICY_VERSION", async () => {
+			// Accept cookies at current policy version
+			store.getState().acceptCookies();
+			expect(store.getState().accepted).toBe(true);
+			expect(store.getState().bannerVisible).toBe(false);
+
+			// Tamper with localStorage to simulate an older policy version
+			const persisted = JSON.parse(localStorageMock.getItem("cookie-consent")!);
+			persisted.state.policyVersion = 0;
+			localStorageMock.setItem("cookie-consent", JSON.stringify(persisted));
+
+			// Re-import and create a fresh store to trigger onRehydrateStorage
+			const mod = await import("../cookie-consent-store");
+			const freshStore = mod.createCookieConsentStore();
+
+			// Banner should be shown because policy version is outdated
+			expect(freshStore.getState().bannerVisible).toBe(true);
+			// Consent data is preserved (not reset like expiration)
+			expect(freshStore.getState().accepted).toBe(true);
+		});
+	});
+
 	describe("CURRENT_POLICY_VERSION", () => {
 		it("should be a positive integer", () => {
 			expect(CURRENT_POLICY_VERSION).toBeGreaterThanOrEqual(1);

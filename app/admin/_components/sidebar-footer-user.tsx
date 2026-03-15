@@ -1,13 +1,11 @@
 "use client";
 
-import { BadgeCheck, ChevronsUpDown, LogOut } from "lucide-react";
-import Link from "next/link";
+import { ChevronsUpDown, LogOut } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
-	DropdownMenuGroup,
 	DropdownMenuItem,
 	DropdownMenuLabel,
 	DropdownMenuSeparator,
@@ -88,15 +86,6 @@ export function SidebarFooterUser({ user }: SidebarFooterUserProps) {
 									</div>
 								</div>
 							</DropdownMenuLabel>
-							<DropdownMenuSeparator />
-							<DropdownMenuGroup>
-								<DropdownMenuItem asChild>
-									<Link href="/admin/compte">
-										<BadgeCheck aria-hidden="true" />
-										Mon compte
-									</Link>
-								</DropdownMenuItem>
-							</DropdownMenuGroup>
 							<DropdownMenuSeparator />
 							<LogoutAlertDialog>
 								<DropdownMenuItem preventDefault className="cursor-pointer">

@@ -124,7 +124,6 @@ export async function Navbar() {
 	const desktopNavItems = getDesktopNavItems({
 		productTypes,
 		collections: menuCollections,
-		isAdmin: userIsAdmin,
 	});
 
 	return (

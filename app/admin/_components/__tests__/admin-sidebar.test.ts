@@ -99,7 +99,7 @@ describe("navigation config integrity", () => {
 		const collapsibleGroups = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
-		expect(collapsibleGroups).toEqual(["Marketing", "Configuration"]);
+		expect(collapsibleGroups).toEqual(["Catalogue", "Marketing", "Système"]);
 	});
 });
 

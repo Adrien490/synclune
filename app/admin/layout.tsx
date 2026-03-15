@@ -1,8 +1,6 @@
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SelectionProvider } from "@/shared/contexts/selection-context";
-import { AdminSpeedDial } from "@/modules/dashboard/components/admin-speed-dial";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { EMAIL_CONTACT } from "@/shared/lib/email-config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -56,7 +54,6 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 				</div>
 			</SidebarInset>
 			<CommandPalette />
-			<AdminSpeedDial email={EMAIL_CONTACT} />
 			<AdminMenuSheet user={user} />
 		</SidebarProvider>
 	);

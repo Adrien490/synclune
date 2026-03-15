@@ -96,7 +96,12 @@ export const ROUTES = {
 		ORDER_DETAIL: (orderId: string) => `/admin/ventes/commandes/${orderId}`,
 		REFUNDS: "/admin/ventes/remboursements",
 		PRODUCTS: "/admin/catalogue/produits",
-		INVENTORY: "/admin/catalogue/inventaire",
+		CUSTOMERS: "/admin/clients",
+		CUSTOMER_DETAIL: (userId: string) => `/admin/clients/${userId}`,
+		DISPUTES: "/admin/systeme/litiges",
+		AUDIT: "/admin/systeme/audit",
+		WEBHOOKS: "/admin/systeme/webhooks",
+		FAILED_EMAILS: "/admin/systeme/emails",
 	},
 } as const;
 

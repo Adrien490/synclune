@@ -1,8 +1,7 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
- * Loading state for espace client pages
- * Structure alignee avec le dashboard : PageHeader compact + Card
+ * Generic loading fallback for espace client route transitions
  */
 export default function EspaceClientLoading() {
 	return (
@@ -13,12 +12,6 @@ export default function EspaceClientLoading() {
 			aria-label="Chargement de la page"
 		>
 			<span className="sr-only">Chargement en cours...</span>
-
-			{/* PageHeader compact skeleton */}
-			<div className="space-y-3">
-				<Skeleton className="h-8 w-48" />
-				<Skeleton className="h-5 w-64" />
-			</div>
 
 			{/* Card skeleton */}
 			<div className="border-border bg-card space-y-4 rounded-xl border p-6">

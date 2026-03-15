@@ -4,11 +4,14 @@ import type { NavbarSessionData } from "@/shared/types/session.types";
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
+import { SheetClose } from "@/shared/components/ui/sheet";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion, type Variants } from "motion/react";
-import { Heart } from "lucide-react";
+import { Heart, LayoutDashboard } from "lucide-react";
+import { cn } from "@/shared/utils/cn";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import {
 	AccountSection,
@@ -39,6 +42,7 @@ interface MenuSheetNavProps {
 		createdAt?: Date;
 	}>;
 	session?: NavbarSessionData | null;
+	isAdmin?: boolean;
 	isOpen: boolean;
 	onLogoutClick?: () => void;
 }
@@ -48,6 +52,7 @@ export function MenuSheetNav({
 	productTypes,
 	collections,
 	session,
+	isAdmin = false,
 	isOpen,
 	onLogoutClick,
 }: MenuSheetNavProps) {
@@ -144,6 +149,31 @@ export function MenuSheetNav({
 						onLogoutClick={onLogoutClick}
 						{...sectionProps}
 					/>
+
+					{/* Admin dashboard link (admin users only) */}
+					{isAdmin && (
+						<m.div
+							className="border-border/60 mt-4 border-t pt-4"
+							variants={itemVariants}
+							custom={delay(170, 0)}
+						>
+							<SheetClose asChild>
+								<Link
+									href={ROUTES.ADMIN.ROOT}
+									className={cn(
+										"flex items-center gap-3 rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
+										"transition-[transform,color,background-color] duration-300 ease-out",
+										"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+										"text-primary hover:bg-primary/5 hover:text-primary",
+										"motion-safe:active:scale-[0.97]",
+									)}
+								>
+									<LayoutDashboard className="h-5 w-5" aria-hidden="true" />
+									Tableau de bord
+								</Link>
+							</SheetClose>
+						</m.div>
+					)}
 				</m.nav>
 			)}
 		</AnimatePresence>
