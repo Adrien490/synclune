@@ -1,11 +1,9 @@
 import { STEP_COLORS } from "@/shared/constants/process-steps";
-import { CheckCircle, Hammer, Lightbulb, Pencil, type LucideIcon } from "lucide-react";
 
 export interface ProcessStep {
 	id: string;
 	title: string;
 	description: string;
-	icon: LucideIcon;
 	color: string;
 	iconHoverClass: string;
 	glowClass: string;
@@ -16,9 +14,8 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "idea",
 		title: "D'abord, une idée",
-		icon: Lightbulb,
 		description:
-			"L'idée naît souvent de mon quotidien : une couleur aperçue dans la rue, un motif sur un tissu, ou même un rêve ! J'essaye de ne pas me forcer, mais plutôt de laisser l'inspiration venir d'elle-même.",
+			"Une couleur dans la rue, un motif sur un tissu, un rêve… Je laisse l'inspiration venir, sans forcer.",
 		color: STEP_COLORS.secondary,
 		iconHoverClass:
 			"group-hover:[&_svg]:text-yellow-500 group-hover:[&_svg]:drop-shadow-[0_0_6px_rgba(234,179,8,0.5)]",
@@ -28,9 +25,8 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "drawing",
 		title: "Le dessin et la peinture",
-		icon: Pencil,
 		description:
-			"Je dessine mes motifs sur du plastique fou, puis je passe à la peinture acrylique. C'est l'étape la plus minutieuse : chaque trait compte, chaque couleur est choisie avec soin.",
+			"Je dessine sur du plastique fou, puis je peins à l'acrylique. Chaque trait compte, chaque couleur est choisie avec soin.",
 		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:rotate-[-15deg]",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-pink)]",
@@ -39,9 +35,8 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "assembly",
 		title: "La cuisson et l'assemblage",
-		icon: Hammer,
 		description:
-			"Cuisson au four (le plastique rétrécit de 7 fois !), vernissage pour protéger les couleurs, puis montage sur les supports. Parfois le résultat surprend, mais ça fait partie du charme artisanal !",
+			"Le plastique rétrécit 7 fois au four ! Vernissage, montage… parfois le résultat surprend, c'est le charme artisanal.",
 		color: STEP_COLORS.secondary,
 		iconHoverClass: "group-hover:[&_svg]:translate-y-[-2px] group-hover:[&_svg]:rotate-[-8deg]",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-lavender)]",
@@ -50,9 +45,8 @@ export const processSteps: ProcessStep[] = [
 	{
 		id: "finishing",
 		title: "La touche finale",
-		icon: CheckCircle,
 		description:
-			"Je polis, je vérifie chaque détail, j'assemble les perles... Bon, je suis un peu perfectionniste ! Puis emballage avec amour dans sa jolie pochette.",
+			"Je polis, vérifie chaque détail, assemble les perles. Emballage avec amour dans sa pochette.",
 		color: STEP_COLORS.primary,
 		iconHoverClass: "group-hover:[&_svg]:scale-110",
 		glowClass: "group-hover:shadow-[0_0_25px_var(--color-glow-mint)]",

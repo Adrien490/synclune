@@ -19,6 +19,9 @@ export function AtelierSectionSkeleton() {
 					<Skeleton className="bg-muted/30 mx-auto mt-5 h-5 w-56" />
 				</div>
 
+				{/* Photo hero skeleton */}
+				<Skeleton className="bg-muted/40 mx-auto mb-10 aspect-[4/3] max-w-4xl rounded-2xl sm:mb-14 sm:aspect-[16/7]" />
+
 				{/* Confession text skeleton */}
 				<div className="mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
 					<Skeleton className="bg-muted/50 mx-auto h-10 w-full max-w-md sm:h-12" />
@@ -41,18 +44,8 @@ export function AtelierSectionSkeleton() {
 					<Skeleton className="bg-muted/30 mx-auto mt-4 h-8 w-24" />
 				</div>
 
-				{/* Sparkles divider skeleton */}
-				<div
-					className="my-8 hidden items-center justify-center gap-3 sm:my-12 sm:flex"
-					aria-hidden="true"
-				>
-					<Skeleton className="bg-muted/30 h-4 w-4 rounded-full" />
-					<Skeleton className="bg-muted/40 h-5 w-5 rounded-full" />
-					<Skeleton className="bg-muted/30 h-4 w-4 rounded-full" />
-				</div>
-
 				{/* Timeline skeleton */}
-				<div className="mt-8 sm:mt-12">
+				<div className="mt-10 sm:mt-16">
 					{/* Desktop: horizontal 4 columns */}
 					<div className="hidden lg:grid lg:grid-cols-4 lg:gap-6">
 						{Array.from({ length: processSteps.length }).map((_, i) => (
@@ -92,7 +85,8 @@ export function AtelierSectionSkeleton() {
 
 				{/* CTA skeleton */}
 				<div className="mt-12 text-center sm:mt-16">
-					<Skeleton className="bg-muted/30 mx-auto h-5 w-56" />
+					<Skeleton className="bg-muted/30 mx-auto h-4 w-48" />
+					<Skeleton className="bg-muted/30 mx-auto mt-2 h-5 w-56" />
 					<Skeleton className="bg-muted/40 mx-auto mt-4 h-11 w-64 rounded-md" />
 				</div>
 			</div>

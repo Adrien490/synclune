@@ -1,13 +1,15 @@
 import { GlitterSparkles } from "@/shared/components/animations/glitter-sparkles";
 import { cn } from "@/shared/utils/cn";
-import { Sparkles, type LucideIcon } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { processSteps } from "./process-steps";
+import { STEP_ILLUSTRATIONS } from "./step-illustrations";
 
-const ICON_CLASS =
-	"h-6 w-6 motion-safe:transition-[color,filter,rotate,translate,scale] motion-safe:duration-300";
-
-function StepIcon({ icon: Icon }: { icon: LucideIcon }) {
-	return <Icon className={ICON_CLASS} aria-hidden="true" />;
+function StepIllustration({ stepId }: { stepId: string }) {
+	const Illustration = STEP_ILLUSTRATIONS[stepId];
+	if (!Illustration) return null;
+	return (
+		<Illustration className="h-7 w-7 motion-safe:transition-[color,filter,rotate,translate,scale,opacity] motion-safe:duration-300" />
+	);
 }
 
 export function CreativeProcessTimeline() {
@@ -17,9 +19,9 @@ export function CreativeProcessTimeline() {
 		<div className="mt-8 sm:mt-12">
 			{/* Desktop: horizontal grid (lg+) */}
 			<div className="relative hidden lg:block">
-				{/* Decorative horizontal line connecting the circles */}
+				{/* Decorative horizontal gradient line connecting the circles */}
 				<div
-					className="timeline-line-desktop bg-secondary/30 absolute top-6 right-[12.5%] left-[12.5%] z-0 h-px"
+					className="timeline-line-desktop absolute top-6 right-[12.5%] left-[12.5%] z-0 h-px bg-gradient-to-r from-[var(--color-glow-yellow)] via-[var(--color-glow-pink)] via-60% to-[var(--color-glow-mint)]"
 					aria-hidden="true"
 				/>
 				<ol
@@ -41,7 +43,7 @@ export function CreativeProcessTimeline() {
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
-							{/* Icon circle */}
+							{/* Icon circle with illustration overlay */}
 							<div
 								className={cn(
 									"relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-300",
@@ -53,12 +55,12 @@ export function CreativeProcessTimeline() {
 									step.intensity.shadow,
 								)}
 							>
-								<StepIcon icon={step.icon} />
+								<StepIllustration stepId={step.id} />
 								{isLast(index) && <GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />}
 							</div>
 
 							{/* Title + description */}
-							<h3 className="text-foreground mt-4 text-lg/6 font-semibold tracking-tight antialiased">
+							<h3 className="text-foreground mt-2 text-lg/6 font-semibold tracking-tight antialiased">
 								{step.title}
 								{isLast(index) && (
 									<Sparkles
@@ -80,9 +82,9 @@ export function CreativeProcessTimeline() {
 
 			{/* Mobile: vertical timeline */}
 			<div className="relative lg:hidden">
-				{/* Vertical line - scroll-driven on supported browsers */}
+				{/* Vertical gradient line - scroll-driven on supported browsers */}
 				<div
-					className="timeline-line-mobile bg-secondary/50 absolute top-8 bottom-8 left-6 w-px lg:hidden"
+					className="timeline-line-mobile absolute top-8 bottom-8 left-6 w-px bg-gradient-to-b from-[var(--color-glow-yellow)] via-[var(--color-glow-pink)] via-60% to-[var(--color-glow-mint)] lg:hidden"
 					aria-hidden="true"
 				/>
 
@@ -117,7 +119,7 @@ export function CreativeProcessTimeline() {
 									step.intensity.shadow,
 								)}
 							>
-								<StepIcon icon={step.icon} />
+								<StepIllustration stepId={step.id} />
 								{isLast(index) && (
 									<div className="hidden sm:block">
 										<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />

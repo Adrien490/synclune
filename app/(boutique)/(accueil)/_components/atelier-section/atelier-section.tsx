@@ -1,11 +1,12 @@
-import { Fade, HandDrawnUnderline, SplitText, Stagger } from "@/shared/components/animations";
+import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { SparklesDivider } from "./section-divider";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { Heart } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
@@ -101,7 +102,17 @@ export async function AtelierSection() {
 					</Fade>
 				</header>
 
-				{/* Confession text with staggered paragraphs */}
+				{/* TODO: replace PlaceholderImage with ParallaxImage + ImageScrollOverlay once IMAGES.ATELIER is fixed */}
+				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
+					<div className="relative mx-auto mb-10 aspect-[4/3] max-w-4xl overflow-hidden rounded-2xl sm:mb-14 sm:aspect-[16/7]">
+						<PlaceholderImage
+							className="h-full w-full rounded-2xl"
+							label="L'atelier de création Synclune, où chaque bijou prend vie"
+						/>
+					</div>
+				</Fade>
+
+				{/* Confession text with progressive reveal */}
 				<Fade
 					y={MOTION_CONFIG.section.subtitle.y}
 					delay={MOTION_CONFIG.section.subtitle.delay}
@@ -114,50 +125,48 @@ export async function AtelierSection() {
 							<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
 						</p>
 
-						<Stagger
-							stagger={MOTION_CONFIG.section.grid.stagger}
-							y={MOTION_CONFIG.section.grid.y}
-							inView
-							once
-							disableOnTouch
-							className="text-muted-foreground space-y-4 text-base leading-relaxed sm:space-y-6 sm:text-lg"
-						>
-							<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
-							<p>
-								<span className="sm:hidden">
-									Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon
-									atelier !
-								</span>
-								<span className="hidden sm:inline">
-									Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans
-									mon petit atelier ! C'était pas prévu à la base <span aria-hidden="true">😂</span>
-								</span>
-							</p>
-							<p>
-								<span className="sm:hidden">
-									Chaque bijou est peint et assemblé à la main, en quelques exemplaires seulement.
-								</span>
-								<span className="hidden sm:inline">
-									Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
-									assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de
-									dix).
-								</span>
-							</p>
-						</Stagger>
+						<div className="text-muted-foreground space-y-4 text-base leading-relaxed sm:space-y-6 sm:text-lg">
+							<Fade inView once y={15} delay={0}>
+								<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
+							</Fade>
+							<Fade inView once y={15} delay={0.2}>
+								<p>
+									<span className="sm:hidden">
+										Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon
+										atelier !
+									</span>
+									<span className="hidden sm:inline">
+										Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà,
+										dans mon petit atelier ! C'était pas prévu à la base{" "}
+										<span aria-hidden="true">😂</span>
+									</span>
+								</p>
+							</Fade>
+							<Fade inView once y={15} delay={0.4}>
+								<p>
+									<span className="sm:hidden">
+										Chaque bijou est peint et assemblé à la main, en quelques exemplaires seulement.
+									</span>
+									<span className="hidden sm:inline">
+										Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
+										assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de
+										dix).
+									</span>
+								</p>
+							</Fade>
+						</div>
 
 						{/* Signature with ink-flow reveal */}
 						<SignatureReveal />
-						<HandDrawnUnderline color="var(--secondary)" delay={0.2} className="mx-auto mt-2" />
 					</div>
 				</Fade>
 
-				{/* Decorative separator */}
-				<SparklesDivider className="my-8 hidden py-0 sm:my-12 sm:flex" />
-
 				{/* Creative process timeline */}
-				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
-					<CreativeProcessTimeline />
-				</Fade>
+				<div className="mt-10 sm:mt-16">
+					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
+						<CreativeProcessTimeline />
+					</Fade>
+				</div>
 
 				{/* Polaroid gallery */}
 				<PolaroidGallery />
@@ -172,6 +181,11 @@ export async function AtelierSection() {
 						once
 						className="text-center"
 					>
+						{/* Social proof */}
+						<p className="text-muted-foreground mb-2 flex items-center justify-center gap-1.5 text-sm">
+							<Heart className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
+							Déjà plus de 500 bijoux personnalisés
+						</p>
 						<p className="text-muted-foreground mb-4 text-base sm:text-lg">
 							Envie d'un bijou qui vous ressemble vraiment ?
 						</p>

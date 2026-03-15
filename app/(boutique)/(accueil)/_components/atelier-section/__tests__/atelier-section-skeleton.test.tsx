@@ -147,13 +147,10 @@ describe("AtelierSectionSkeleton", () => {
 		expect(headerSkeletons).toHaveLength(2);
 	});
 
-	it("renders sparkles divider skeleton with 3 circle items", () => {
+	it("renders photo hero skeleton", () => {
 		const { container } = render(<AtelierSectionSkeleton />);
 
-		const divider = container.querySelector("[aria-hidden='true']");
-		expect(divider).not.toBeNull();
-
-		const dividerSkeletons = divider!.querySelectorAll("[data-testid='skeleton']");
-		expect(dividerSkeletons).toHaveLength(3);
+		const heroSkeleton = container.querySelector(".aspect-\\[4\\/3\\]");
+		expect(heroSkeleton).not.toBeNull();
 	});
 });

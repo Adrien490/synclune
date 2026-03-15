@@ -29,6 +29,14 @@ vi.mock("@/shared/components/animations/glitter-sparkles", () => ({
 	GlitterSparkles: () => <div data-testid="glitter-sparkles" />,
 }));
 
+vi.mock("../before-after-reveal", () => ({
+	BeforeAfterReveal: () => <div data-testid="before-after-reveal" />,
+}));
+
+vi.mock("../step-illustrations", () => ({
+	STEP_ILLUSTRATIONS: {},
+}));
+
 // ---------------------------------------------------------------------------
 
 afterEach(() => {
