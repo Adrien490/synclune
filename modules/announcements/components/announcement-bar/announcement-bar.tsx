@@ -1,10 +1,10 @@
 "use client";
 
 import { X } from "lucide-react";
-import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { AnimatePresence, m } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
-import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { isSafeLink } from "./announcement-bar.constants";
 import { useAnnouncementBar } from "./use-announcement-bar";
 
@@ -35,13 +35,10 @@ export function AnnouncementBar({
 	announcementId,
 	dismissDurationHours,
 }: AnnouncementBarProps) {
-	const prefersReducedMotion = useReducedMotion();
 	const { isDismissed, barRef, dismiss, onExitComplete, swipeOffset } = useAnnouncementBar({
 		announcementId,
 		dismissDurationHours,
 	});
-
-	const springTransition = maybeReduceMotion(MOTION_CONFIG.spring.bar, !!prefersReducedMotion);
 
 	// Validate link prop
 	const safeLink = link && isSafeLink(link) ? link : undefined;
@@ -53,10 +50,10 @@ export function AnnouncementBar({
 					ref={barRef}
 					role="region"
 					aria-label="Barre d'annonce promotionnelle"
-					initial={prefersReducedMotion ? { opacity: 0 } : { y: "-100%", opacity: 0 }}
-					animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
-					exit={prefersReducedMotion ? { opacity: 0 } : { y: "-100%", opacity: 0 }}
-					transition={springTransition}
+					initial={{ y: "-100%", opacity: 0 }}
+					animate={{ y: 0, opacity: 1 }}
+					exit={{ y: "-100%", opacity: 0 }}
+					transition={MOTION_CONFIG.spring.bar}
 					{...(swipeOffset < 0 && {
 						style: {
 							transform: `translateY(${swipeOffset}px)`,

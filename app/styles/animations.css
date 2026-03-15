@@ -380,11 +380,11 @@
 	@keyframes split-text-reveal {
 		from {
 			translate: 0 20px;
-			filter: blur(4px);
+			opacity: 0.2;
 		}
 		to {
 			translate: 0 0;
-			filter: blur(0px);
+			opacity: 1;
 		}
 	}
 

@@ -29,14 +29,16 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 	return (
 		<>
 			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
-			<Suspense fallback={null}>
-				<AnnouncementBarWrapper />
-			</Suspense>
-			<ErrorBoundary fallback={<NavbarSkeleton />}>
-				<Suspense fallback={<NavbarSkeleton />}>
-					<Navbar />
+			<ErrorBoundary fallback={null}>
+				<Suspense fallback={null}>
+					<AnnouncementBarWrapper />
 				</Suspense>
 			</ErrorBoundary>
+			<Suspense fallback={<NavbarSkeleton />}>
+				<ErrorBoundary fallback={<NavbarSkeleton />}>
+					<Navbar />
+				</ErrorBoundary>
+			</Suspense>
 			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-screen">
 				{children}
 			</main>

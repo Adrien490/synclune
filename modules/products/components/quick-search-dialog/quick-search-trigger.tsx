@@ -1,7 +1,6 @@
 "use client";
 
 import { Search } from "lucide-react";
-import { useEffect, useEffectEvent } from "react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { Button } from "@/shared/components/ui/button";
@@ -15,24 +14,9 @@ interface QuickSearchTriggerProps {
 
 /**
  * Trigger button for the quick search dialog.
- * Also registers a global Cmd+K / Ctrl+K keyboard shortcut.
  */
 export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 	const { open, isOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
-
-	const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
-		if (event.key === "k" && (event.metaKey || event.ctrlKey)) {
-			event.preventDefault();
-			open();
-		}
-	});
-
-	useEffect(() => {
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
-	}, []);
-
-	const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 
 	return (
 		<Tooltip>
@@ -49,14 +33,7 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 					<Search className="size-5" />
 				</Button>
 			</TooltipTrigger>
-			<TooltipContent>
-				<span className="flex items-center gap-1.5">
-					Rechercher
-					<kbd className="text-background/60 border-background/30 hidden rounded border px-1 py-0.5 text-xs md:inline-block">
-						{isMac ? "⌘" : "Ctrl+"}K
-					</kbd>
-				</span>
-			</TooltipContent>
+			<TooltipContent>Rechercher</TooltipContent>
 		</Tooltip>
 	);
 }

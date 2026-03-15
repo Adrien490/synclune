@@ -66,48 +66,6 @@ Synclune est un e-commerce bijoux artisanaux tres complet (9+/10 sur la plupart 
 - Cron infra pour l'expiration automatique
 - PostHog pour le tracking engagement
 
-**Modeles Prisma** :
-
-```prisma
-model LoyaltyAccount {
-  id             String               @id @default(cuid())
-  userId         String               @unique
-  user           User                 @relation(fields: [userId], references: [id])
-  balance        Int                  @default(0)
-  lifetimePoints Int                  @default(0)
-  tier           LoyaltyTier          @default(BRONZE)
-  transactions   LoyaltyTransaction[]
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-}
-
-model LoyaltyTransaction {
-  id        String                 @id @default(cuid())
-  accountId String
-  account   LoyaltyAccount         @relation(fields: [accountId], references: [id])
-  type      LoyaltyTransactionType
-  points    Int
-  orderId   String?
-  reason    String?
-  expiresAt DateTime?
-  createdAt DateTime               @default(now())
-}
-
-enum LoyaltyTier {
-  BRONZE
-  SILVER
-  GOLD
-}
-
-enum LoyaltyTransactionType {
-  EARN
-  REDEEM
-  EXPIRE
-  BONUS
-  REFERRAL
-}
-```
-
 **Fichiers cles a creer** :
 
 - `modules/loyalty/` — module complet (~20 fichiers)
@@ -149,44 +107,6 @@ enum LoyaltyTransactionType {
 - Email infra : template avec QR code ou code lisible
 - Stripe : possibilite d'utiliser Stripe pour l'achat de la gift card elle-meme
 
-**Modeles Prisma** :
-
-```prisma
-model GiftCard {
-  id             String               @id @default(cuid())
-  code           String               @unique
-  initialAmount  Int                  // en centimes
-  balance        Int                  // en centimes
-  purchaserId    String?
-  purchaser      User?                @relation("GiftCardPurchaser", fields: [purchaserId], references: [id])
-  recipientEmail String?
-  recipientName  String?
-  message        String?
-  expiresAt      DateTime
-  status         GiftCardStatus       @default(ACTIVE)
-  transactions   GiftCardTransaction[]
-  orderId        String?              // commande d'achat de la gift card
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
-}
-
-model GiftCardTransaction {
-  id         String   @id @default(cuid())
-  giftCardId String
-  giftCard   GiftCard @relation(fields: [giftCardId], references: [id])
-  amount     Int      // en centimes (negatif = utilisation, positif = credit)
-  orderId    String?  // commande ou la gift card a ete utilisee
-  createdAt  DateTime @default(now())
-}
-
-enum GiftCardStatus {
-  ACTIVE
-  EXHAUSTED
-  EXPIRED
-  DISABLED
-}
-```
-
 **Fichiers cles a creer** :
 
 - `modules/gift-cards/` — module complet (~25 fichiers)
@@ -227,24 +147,6 @@ enum GiftCardStatus {
 - Order confirmation email : conditionnel si `giftWrap === true`
 - Admin order detail : afficher le message et le type d'emballage
 - `StoreSettings` module : ajouter config prix emballage
-
-**Modeles Prisma** :
-
-```prisma
-// Ajout sur Order existant
-model Order {
-  // ... champs existants
-  giftWrap     Boolean       @default(false)
-  giftWrapType GiftWrapType?
-  giftMessage  String?
-}
-
-enum GiftWrapType {
-  ECRIN
-  POCHETTE
-  BOITE
-}
-```
 
 **Fichiers cles a creer/modifier** :
 
@@ -288,29 +190,6 @@ enum GiftWrapType {
 - Webhook `checkout.session.completed` : valider le parrainage apres premiere commande du filleul
 - Email infra : notification au parrain quand le filleul commande
 
-**Modeles Prisma** :
-
-```prisma
-model Referral {
-  id          String         @id @default(cuid())
-  referrerId  String
-  referrer    User           @relation("Referrer", fields: [referrerId], references: [id])
-  referredId  String?
-  referred    User?          @relation("Referred", fields: [referredId], references: [id])
-  code        String         @unique
-  status      ReferralStatus @default(PENDING)
-  rewardId    String?        // Discount cree pour le parrain
-  createdAt   DateTime       @default(now())
-  completedAt DateTime?
-}
-
-enum ReferralStatus {
-  PENDING
-  COMPLETED
-  EXPIRED
-}
-```
-
 **Fichiers cles a creer** :
 
 - `modules/referral/` — module complet (~15 fichiers)
@@ -352,34 +231,6 @@ enum ReferralStatus {
 - Produit linking : relation many-to-many avec `Product`
 - Admin CRUD pattern existant (copier le pattern catalogue)
 - SEO : sitemap-images.xml existant, etendre pour les lookbooks
-
-**Modeles Prisma** :
-
-```prisma
-model Lookbook {
-  id          String         @id @default(cuid())
-  title       String
-  slug        String         @unique
-  description String?
-  occasion    String?        // mariage, quotidien, soiree
-  coverImage  String
-  items       LookbookItem[]
-  published   Boolean        @default(false)
-  publishedAt DateTime?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-}
-
-model LookbookItem {
-  id         String   @id @default(cuid())
-  lookbookId String
-  lookbook   Lookbook @relation(fields: [lookbookId], references: [id])
-  imageUrl   String
-  products   Product[] // many-to-many
-  position   Int       @default(0)
-  createdAt  DateTime  @default(now())
-}
-```
 
 **Fichiers cles a creer** :
 
@@ -442,23 +293,6 @@ model LookbookItem {
 - Composants existants : reutiliser les cartes produit de la wishlist
 - SEO : meta tags OG pour le lien partage
 
-**Modeles Prisma** :
-
-```prisma
-// Ajout sur le modele existant
-model Wishlist {
-  // ... champs existants
-  shareToken String? @unique @default(cuid())
-  isPublic   Boolean @default(false)
-}
-
-model WishlistItem {
-  // ... champs existants
-  giftedBy   String? // prenom de la personne qui offre
-  giftedAt   DateTime?
-}
-```
-
 **Fichiers cles a creer/modifier** :
 
 - `app/(boutique)/liste-de-souhaits/[token]/page.tsx` — page publique
@@ -498,41 +332,6 @@ model WishlistItem {
 - UploadThing : images dans les articles
 - SEO : schema JSON-LD (pattern existant dans `structured-data.tsx`)
 - Product linking : relation many-to-many avec `Product`
-
-**Modeles Prisma** :
-
-```prisma
-model BlogPost {
-  id          String        @id @default(cuid())
-  title       String
-  slug        String        @unique
-  excerpt     String?
-  content     String        // HTML from WYSIWYG
-  coverImage  String?
-  categoryId  String?
-  category    BlogCategory? @relation(fields: [categoryId], references: [id])
-  products    Product[]     // many-to-many
-  status      PostStatus    @default(DRAFT)
-  publishedAt DateTime?
-  authorId    String
-  author      User          @relation(fields: [authorId], references: [id])
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-}
-
-model BlogCategory {
-  id    String     @id @default(cuid())
-  name  String     @unique
-  slug  String     @unique
-  posts BlogPost[]
-}
-
-enum PostStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-}
-```
 
 **Fichiers cles a creer** :
 
@@ -579,22 +378,6 @@ enum PostStatus {
 - Checkout webhook : notification "commande expediee"
 - Preferences utilisateur : etendre le profil existant
 
-**Modeles Prisma** :
-
-```prisma
-model PushSubscription {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  endpoint  String   @unique
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now())
-
-  @@index([userId])
-}
-```
-
 **Fichiers cles a creer** :
 
 - `modules/notifications/` — module (~15 fichiers)
@@ -636,30 +419,6 @@ model PushSubscription {
 - `ProductStatus` enum : ajouter `COMING_SOON`
 - Storefront : conditionnel "Ajouter au panier" vs "Me prevenir" selon le statut
 - Cron infra : job de notification (ou hook sur changement de statut)
-
-**Modeles Prisma** :
-
-```prisma
-// Ajout a l'enum existant
-enum ProductStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
-  COMING_SOON // nouveau
-}
-
-model PreorderNotification {
-  id         String    @id @default(cuid())
-  email      String
-  productId  String
-  product    Product   @relation(fields: [productId], references: [id])
-  notifiedAt DateTime?
-  createdAt  DateTime  @default(now())
-
-  @@unique([email, productId])
-  @@index([productId])
-}
-```
 
 **Fichiers cles a creer/modifier** :
 
@@ -805,25 +564,6 @@ model PreorderNotification {
 - Order detail admin : afficher la gravure commandee
 - Email confirmation : inclure le detail de gravure
 
-**Modeles Prisma** :
-
-```prisma
-// Ajout sur Product existant
-model Product {
-  // ... champs existants
-  engravable       Boolean @default(false)
-  engravingPrice   Int?    // supplement en centimes
-  engravingMaxChars Int?
-}
-
-// Ajout sur CartItem / OrderItem
-model OrderItem {
-  // ... champs existants
-  engravingText String?
-  engravingFont String?
-}
-```
-
 **Fichiers cles a creer/modifier** :
 
 - `modules/engraving/components/engraving-preview.tsx` — preview SVG
@@ -907,24 +647,6 @@ model OrderItem {
 - Storefront : badge "Vente flash" sur les cartes produit
 - Announcement bar : afficher les ventes flash en cours
 
-**Modeles Prisma** :
-
-```prisma
-model FlashSale {
-  id          String      @id @default(cuid())
-  title       String
-  description String?
-  startsAt    DateTime
-  endsAt      DateTime
-  discountId  String
-  discount    Discount    @relation(fields: [discountId], references: [id])
-  products    Product[]   // many-to-many
-  notified    Boolean     @default(false)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-}
-```
-
 **Fichiers cles a creer** :
 
 - `modules/flash-sales/` — module complet (~20 fichiers)
@@ -940,34 +662,408 @@ model FlashSale {
 
 ---
 
+### 16. Bouton "Commander a nouveau" (Reorder)
+
+- Depuis le detail d'une commande passee, un clic re-ajoute tous les articles au panier
+- Verifie la disponibilite de chaque SKU avant ajout
+- Feedback clair sur les articles en rupture de stock
+- **Pourquoi** : Simplifie le reachat pour les clients fideles (bijoux consommables : chaines, boucles depareillees).
+
+**Etat actuel** : ❌ Absent — aucune action de reorder dans le codebase. L'action `add-to-cart` existe et fonctionne SKU par SKU.
+
+**Ce qui manque** :
+
+- Server action `reorder-from-order.ts` qui boucle sur `order.items`, verifie le stock de chaque SKU, et appelle `add-to-cart` pour chacun
+- Composant `ReorderButton` avec feedback (toast succes/partiel/echec)
+- Integration dans `order-detail-content.tsx` (detail commande cote client)
+
+**Points d'integration** :
+
+- `modules/cart/actions/add-to-cart.ts` — action existante, reutilisable directement
+- `modules/orders/components/order-detail-content.tsx` — point d'insertion du bouton
+- `modules/skus/` — verification stock via les services existants
+- Toast/feedback pattern existant dans le projet
+
+**Fichiers cles a creer/modifier** :
+
+- `modules/orders/actions/reorder-from-order.ts` — nouvelle action
+- `modules/orders/components/reorder-button.tsx` — composant bouton
+- Modifier `modules/orders/components/order-detail-content.tsx` — integrer le bouton
+
+**Dependances externes** : aucune
+
+**Effort** : XS (quelques heures) — reutilise integralement l'infra existante
+
+---
+
+### 17. Campagnes newsletter broadcast
+
+- Interface admin pour composer et envoyer des newsletters a la liste d'abonnes
+- Editeur de contenu (sujet, corps HTML via React Email)
+- Envoi via `Resend batch.send()` a tous les abonnes opt-in
+- Historique des campagnes envoyees avec stats (envoyes, ouverts)
+- **Pourquoi** : La liste d'abonnes existe (double opt-in, stats) mais il n'y a AUCUN moyen d'envoyer des campagnes. L'infra est la, il manque le "dernier kilometre".
+
+**Etat actuel** : ❌ Absent — le module `newsletter/` gere les abonnements (subscribe, confirm, unsubscribe, promo code) mais aucune fonctionnalite d'envoi de campagne.
+
+**Ce qui manque** :
+
+- Modele Prisma `NewsletterCampaign` (subject, content, status, sentAt, stats)
+- Page admin `/admin/marketing/newsletter/campagnes` — CRUD + compose + preview + send
+- Template React Email generique pour les campagnes
+- Service d'envoi batch via Resend (`batch.send()`)
+- Tracking ouvertures via Resend webhooks (optionnel)
+
+**Points d'integration** :
+
+- `modules/newsletter/` — reutiliser la liste d'abonnes confirmes
+- Email infra (Resend + React Email) — deja en place
+- Admin CRUD pattern — copier le pattern existant
+- Rate limiting — Resend free tier = 100 emails/jour, evaluer les limites
+
+**Fichiers cles a creer** :
+
+- `modules/newsletter/actions/send-campaign.ts` — action envoi
+- `modules/newsletter/data/get-campaigns.ts` — listing campagnes
+- `modules/newsletter/services/broadcast.service.ts` — logique batch send
+- `modules/newsletter/components/campaign-*.tsx` — composants admin (form, list, preview)
+- `app/admin/marketing/newsletter/campagnes/page.tsx` — page admin
+- `emails/newsletter-campaign.tsx` — template generique
+- Migration Prisma
+
+**Dependances externes** : aucune (Resend deja en place)
+
+**Effort** : M (3-7 jours) — l'editeur de contenu et le batch send sont les points principaux
+
+---
+
+### 18. Portefeuille codes promo client
+
+- Page `/compte/mes-reductions` listant les codes promo actifs et non utilises du client
+- Affiche : code, reduction, date d'expiration, conditions
+- Lien direct vers la boutique avec le code pre-applique
+- **Pourquoi** : Les clients recoivent des codes par email (newsletter, parrainage) mais n'ont aucun endroit pour les retrouver. Reduit les demandes support et augmente l'utilisation des codes.
+
+**Etat actuel** : ❌ Absent — `DiscountUsage` track les usages, les `Discount` ont des champs `perUserLimit` et `userId`, mais aucune vue client n'existe.
+
+**Ce qui manque** :
+
+- Page client `/compte/mes-reductions`
+- Query Prisma : codes actifs (non expires, non epuises, assignes a l'utilisateur ou universels avec usage restant)
+- Composant card affichant chaque code avec ses details
+- Lien "Appliquer" qui redirige vers la boutique avec le code en query param
+
+**Points d'integration** :
+
+- `modules/discounts/` — modeles et data existants
+- `DiscountUsage` — pour calculer les usages restants par user
+- Layout compte client — ajouter un lien dans la navigation
+- Checkout form — supporter l'application automatique via query param (optionnel)
+
+**Fichiers cles a creer/modifier** :
+
+- `modules/discounts/data/get-user-discounts.ts` — query codes actifs du client
+- `modules/discounts/components/discount-wallet-card.tsx` — composant card
+- `app/(boutique)/compte/mes-reductions/page.tsx` — page client
+- Modifier navigation compte client — ajouter le lien
+
+**Dependances externes** : aucune
+
+**Effort** : S (1-3 jours) — zero nouveau modele, juste une query + une page
+
+---
+
+## Tier 2 — Differenciation & engagement (suite)
+
+### 19. Q&A produit
+
+- Section questions/reponses sur chaque page produit
+- Les clients posent des questions, l'admin repond
+- Notification email a l'admin quand une question est posee
+- Notification email au client quand sa question recoit une reponse
+- FAQ JSON-LD par produit (SEO)
+- **Pourquoi** : Reduit les emails de support pre-achat, ameliore le SEO, et augmente la confiance.
+
+**Etat actuel** : ❌ Absent — aucun modele `ProductQuestion`, rien cote Q&A. Le module FAQ existe pour les questions generales mais pas au niveau produit.
+
+**Ce qui manque** :
+
+- Modeles Prisma `ProductQuestion` + `ProductAnswer`
+- Section Q&A sur la page produit (sous les reviews)
+- Formulaire de question (auth requise ou email)
+- Interface admin pour repondre aux questions
+- Emails : notification admin (nouvelle question) + notification client (reponse)
+- JSON-LD `FAQPage` par produit (questions les plus utiles)
+
+**Points d'integration** :
+
+- Page produit : ajouter une section sous les reviews
+- Module FAQ existant : pattern similaire (question/reponse), reutiliser les composants UI
+- Admin : ajouter dans le detail produit ou route dediee
+- Email infra : 2 nouveaux templates
+- SEO : `FAQPage` JSON-LD (pattern existant dans `structured-data.tsx`)
+
+**Fichiers cles a creer** :
+
+- `modules/product-qa/` — module complet (~15 fichiers)
+- `modules/product-qa/components/qa-section.tsx` — section page produit
+- `modules/product-qa/components/question-form.tsx` — formulaire
+- `modules/product-qa/actions/ask-question.ts` — action client
+- `modules/product-qa/actions/answer-question.ts` — action admin
+- `emails/product-question-*.tsx` — 2 templates (notification admin + reponse client)
+- Migration Prisma
+
+**Dependances externes** : aucune
+
+**Effort** : M (3-7 jours)
+
+---
+
+### 20. Tags produit
+
+- Tags libres sur les produits pour des filtres transversaux
+- Exemples : "Cadeau Noel", "Hypoallergenique", "Mariage", "Ete 2026"
+- Filtrage par tag dans la boutique (en complement des collections et types)
+- Admin : gerer les tags, assigner aux produits
+- Pages SEO par tag (`/boutique/tag/[slug]`)
+- **Pourquoi** : Les produits sont categorises uniquement par Collection et ProductType. Les tags permettent des axes transversaux (occasion, propriete, saison) sans creer de nouvelles collections.
+
+**Etat actuel** : ❌ Absent — aucun modele `ProductTag`, aucun systeme de tagging.
+
+**Ce qui manque** :
+
+- Modele Prisma `ProductTag` + relation many-to-many avec `Product`
+- Admin : CRUD tags + assignation aux produits (dans le formulaire produit)
+- Storefront : filtre par tag dans la boutique
+- Pages tag : `/boutique/tag/[slug]` avec listing produits
+- Sitemap dynamique pour les pages tag
+
+**Points d'integration** :
+
+- Admin catalogue : ajouter un champ tags dans le formulaire produit (multi-select)
+- Boutique : integrer dans les filtres existants (sidebar/mobile filters)
+- Fuzzy search : inclure les tags dans la recherche
+- SEO : pages tag indexables
+
+**Fichiers cles a creer/modifier** :
+
+- `modules/tags/` — module (~10 fichiers)
+- `app/(boutique)/boutique/tag/[slug]/page.tsx` — page tag
+- Modifier admin formulaire produit — champ multi-select tags
+- Modifier filtres boutique — ajouter filtre par tag
+- Migration Prisma
+
+**Dependances externes** : aucune
+
+**Effort** : S-M (3-5 jours)
+
+---
+
+## Tier 3 — Ameliorations operationnelles (suite)
+
+### 21. Pages admin manquantes
+
+- 5 routes existent dans `navigation-config.tsx` mais n'ont pas de `page.tsx`
+- `/admin/clients` — listing clients, historique commandes, stats
+- `/admin/systeme/litiges` — suivi des litiges Stripe (disputes)
+- `/admin/systeme/audit` — journal d'audit des actions admin
+- `/admin/systeme/webhooks` — monitoring des webhook events
+- `/admin/systeme/emails` — historique des emails envoyes (dead-letter queue)
+- **Pourquoi** : Les liens de navigation existent et menent a des 404. Tous les modeles et composants sous-jacents existent deja.
+
+**Etat actuel** : ⚠️ Partiel — les routes sont configurees dans la navigation admin, les modeles Prisma existent (`User`, `WebhookEvent`, `EmailLog`, etc.), mais les fichiers `page.tsx` manquent.
+
+**Ce qui manque** :
+
+- 5 fichiers `page.tsx` avec les composants de listing/detail
+- Queries data/ avec cache pour chaque page
+- Composants table/list pour afficher les donnees
+
+**Points d'integration** :
+
+- Admin CRUD pattern existant — copier le pattern des pages existantes (commandes, catalogue)
+- Modeles Prisma existants — juste des queries a ecrire
+- Navigation admin — les liens existent deja
+
+**Fichiers cles a creer** :
+
+- `app/admin/clients/page.tsx` — listing clients
+- `app/admin/systeme/litiges/page.tsx` — litiges Stripe
+- `app/admin/systeme/audit/page.tsx` — journal d'audit
+- `app/admin/systeme/webhooks/page.tsx` — webhook events
+- `app/admin/systeme/emails/page.tsx` — historique emails
+- Queries `data/` correspondantes pour chaque page
+
+**Dependances externes** : aucune
+
+**Effort** : M (3-7 jours) — 5 pages independantes, pattern repetitif
+
+---
+
+### 22. Alertes stock bas
+
+- Notification admin quand un SKU passe sous un seuil configurable
+- Seuil configurable par SKU (champ `lowStockThreshold` sur `ProductSku`)
+- Email admin recapitulatif des SKUs en stock bas
+- Indicateur visuel dans l'admin catalogue
+- **Pourquoi** : `LOW_STOCK_THRESHOLD` existe pour le badge storefront mais aucune notification admin. Risque de rupture silencieuse.
+
+**Etat actuel** : ⚠️ Partiel — le badge "Stock bas" est affiche sur le storefront via une constante globale, mais aucune alerte proactive vers l'admin.
+
+**Ce qui manque** :
+
+- Champ `lowStockThreshold` sur `ProductSku` (seuil par SKU, fallback sur constante globale)
+- Cron job qui verifie les niveaux de stock et envoie un email recapitulatif
+- Email template admin "Alerte stock bas" avec liste des SKUs concernes
+- Badge/indicateur dans la liste produits admin
+
+**Points d'integration** :
+
+- `modules/skus/` — ajouter le champ et la logique
+- Cron infra — nouveau job (ex: daily 8:00)
+- Email infra — nouveau template admin
+- Admin catalogue — badge visuel sur les lignes produit
+
+**Fichiers cles a creer/modifier** :
+
+- `modules/cron/services/low-stock-alerts.service.ts` — service cron
+- `app/api/cron/low-stock-alerts/route.ts` — route cron
+- `emails/admin-low-stock-alert.tsx` — template email
+- Modifier `prisma/schema.prisma` — champ `lowStockThreshold`
+- Modifier admin catalogue — badge stock bas
+- Ajouter le job dans `vercel.json`
+- Migration Prisma
+
+**Dependances externes** : aucune
+
+**Effort** : S (1-3 jours)
+
+---
+
+### 23. Page contact
+
+- Page publique `/contact` avec formulaire de contact
+- Champs : nom, email, sujet (select), message
+- Envoi d'email a l'admin + email de confirmation au client
+- Rate limiting pour eviter le spam
+- **Pourquoi** : Aucune route `/contact` n'existe. L'email est visible uniquement dans les CGV. Barriere inutile pour les prospects.
+
+**Etat actuel** : ❌ Absent — pas de page contact, pas de formulaire, pas de route.
+
+**Ce qui manque** :
+
+- Page `/contact` avec formulaire TanStack Form
+- Server action `send-contact-message.ts`
+- 2 emails : notification admin + confirmation client
+- Schema Zod pour la validation
+- Rate limiting (Arcjet ou in-memory)
+
+**Points d'integration** :
+
+- TanStack Form + `useAppForm` — pattern existant
+- Email infra — 2 nouveaux templates
+- Rate limiting — pattern existant dans les server actions
+- Layout boutique — ajouter dans la navigation/footer
+
+**Fichiers cles a creer** :
+
+- `app/(boutique)/contact/page.tsx` — page publique
+- `modules/contact/actions/send-contact-message.ts` — server action
+- `modules/contact/schemas/contact.schema.ts` — validation Zod
+- `modules/contact/components/contact-form.tsx` — formulaire
+- `emails/contact-notification.tsx` — notification admin
+- `emails/contact-confirmation.tsx` — confirmation client
+
+**Dependances externes** : aucune
+
+**Effort** : S (1-3 jours)
+
+---
+
+## Tier 4 — Securite & infra
+
+### 24. Authentification deux facteurs (2FA/TOTP)
+
+- Activation optionnelle du 2FA via application TOTP (Google Authenticator, Authy)
+- Page de setup avec QR code + code secret
+- Recovery codes en cas de perte de l'appareil
+- Enforcement possible pour les admins
+- **Pourquoi** : Better Auth supporte TOTP nativement via le plugin `twoFactor()`. Zero 2FA dans le codebase actuel malgre la gestion de donnees sensibles (commandes, paiements, donnees clients).
+
+**Etat actuel** : ❌ Absent — Better Auth est configure sans le plugin `twoFactor()`. Aucune reference a TOTP, 2FA, ou recovery codes dans le codebase.
+
+**Ce qui manque** :
+
+- Plugin `twoFactor()` dans la config Better Auth (server + client)
+- Page de setup 2FA dans le compte utilisateur (`/compte/securite`)
+- Generation et affichage du QR code TOTP
+- Saisie du code TOTP au login (flow conditionnel)
+- Recovery codes : generation, affichage unique, stockage hash
+- Option admin : forcer le 2FA pour les comptes admin
+
+**Points d'integration** :
+
+- Better Auth config (`modules/auth/lib/`) — ajouter le plugin `twoFactor()`
+- Flow de login — ecran intermediaire si 2FA active
+- Compte client — page securite pour activer/desactiver
+- Admin — enforcement possible via config
+
+**Fichiers cles a creer/modifier** :
+
+- Modifier `modules/auth/lib/auth.ts` — ajouter plugin `twoFactor()`
+- Modifier `modules/auth/lib/auth-client.ts` — client-side plugin
+- `app/(boutique)/compte/securite/page.tsx` — page setup 2FA
+- `modules/auth/components/totp-verify-form.tsx` — formulaire verification code
+- `modules/auth/components/recovery-codes-display.tsx` — affichage recovery codes
+- Modifier flow de login — ecran TOTP conditionnel
+
+**Dependances externes** : aucune (Better Auth gere TOTP nativement)
+
+**Effort** : M (3-7 jours) — Better Auth fait le gros du travail, reste l'UI et les flows
+
+---
+
+## Quick wins / Micro-corrections
+
+Ces items sont trop petits pour etre des features a part entiere mais meritent d'etre notes :
+
+| Item                           | Description                                                                                                                  | Effort  | Fichier(s)                                           |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------- | ---------------------------------------------------- |
+| Import bouton facture          | Le composant `InvoiceDownloadButton` et l'API route existent mais le bouton n'est pas importe dans le detail commande client | ~10 min | `modules/orders/components/order-detail-content.tsx` |
+| Affichage estimation livraison | `estimatedDelivery` est calcule et stocke sur `Order` mais pas affiche cote client                                           | ~30 min | Detail commande client + email confirmation          |
+| Events PostHog manquants       | Certains events declares dans les types ne sont pas tous emis (ex: `wishlist_shared`, `gift_card_purchased`)                 | ~1h     | Fichiers actions concernes                           |
+
+---
+
 ## Recapitulatif par effort d'implementation
 
-| #   | Fonctionnalite             | Etat | Effort | Impact | Priorite suggeree |
-| --- | -------------------------- | ---- | ------ | ------ | ----------------- |
-| 3   | Emballage cadeau & message | ❌   | S      | Fort   | 1                 |
-| 7   | Wishlist partageable       | ⚠️   | S      | Moyen  | 2                 |
-| 6   | Guide des tailles          | ✅   | —      | —      | — (deja fait)     |
-| 10  | Precommande / Coming Soon  | ❌   | M      | Fort   | 3                 |
-| 12  | Portail retours client     | ⚠️   | M      | Moyen  | 4                 |
-| 4   | Parrainage                 | ❌   | M      | Fort   | 5                 |
-| 15  | Ventes flash               | ❌   | M      | Moyen  | 6                 |
-| 9   | Notifications push         | ❌   | M      | Moyen  | 7                 |
-| 13  | Gravure structuree         | ⚠️   | M-L    | Fort   | 8                 |
-| 5   | Lookbook                   | ❌   | M-L    | Moyen  | 9                 |
-| 2   | Gift Cards                 | ❌   | L      | Fort   | 10                |
-| 1   | Programme fidelite         | ❌   | L      | Fort   | 11                |
-| 8   | Blog / Journal             | ❌   | L      | Moyen  | 12                |
-| 11  | Dashboard analytics avance | ⚠️   | L      | Moyen  | 13                |
-| 14  | Configurateur bijou        | ❌   | XL     | Fort   | 14                |
+| #   | Fonctionnalite                | Etat | Effort | Impact | Priorite suggeree |
+| --- | ----------------------------- | ---- | ------ | ------ | ----------------- |
+| 16  | Reorder (commander a nouveau) | ❌   | XS     | Fort   | 1                 |
+| 3   | Emballage cadeau & message    | ❌   | S      | Fort   | 2                 |
+| 18  | Portefeuille codes promo      | ❌   | S      | Moyen  | 3                 |
+| 22  | Alertes stock bas             | ⚠️   | S      | Moyen  | 4                 |
+| 23  | Page contact                  | ❌   | S      | Moyen  | 5                 |
+| 7   | Wishlist partageable          | ⚠️   | S      | Moyen  | 6                 |
+| 6   | Guide des tailles             | ✅   | —      | —      | — (deja fait)     |
+| 10  | Precommande / Coming Soon     | ❌   | M      | Fort   | 7                 |
+| 17  | Campagnes newsletter          | ❌   | M      | Fort   | 8                 |
+| 12  | Portail retours client        | ⚠️   | M      | Moyen  | 9                 |
+| 4   | Parrainage                    | ❌   | M      | Fort   | 10                |
+| 19  | Q&A produit                   | ❌   | M      | Moyen  | 11                |
+| 21  | Pages admin manquantes        | ⚠️   | M      | Moyen  | 12                |
+| 24  | 2FA / TOTP                    | ❌   | M      | Moyen  | 13                |
+| 15  | Ventes flash                  | ❌   | M      | Moyen  | 14                |
+| 9   | Notifications push            | ❌   | M      | Moyen  | 15                |
+| 20  | Tags produit                  | ❌   | S-M    | Moyen  | 16                |
+| 13  | Gravure structuree            | ⚠️   | M-L    | Fort   | 17                |
+| 5   | Lookbook                      | ❌   | M-L    | Moyen  | 18                |
+| 2   | Gift Cards                    | ❌   | L      | Fort   | 19                |
+| 1   | Programme fidelite            | ❌   | L      | Fort   | 20                |
+| 8   | Blog / Journal                | ❌   | L      | Moyen  | 21                |
+| 11  | Dashboard analytics avance    | ⚠️   | L      | Moyen  | 22                |
+| 14  | Configurateur bijou           | ❌   | XL     | Fort   | 23                |
 
-**S** = 1-3 jours · **M** = 3-7 jours · **L** = 1-2 semaines · **XL** = 2-4 semaines
+**XS** = quelques heures · **S** = 1-3 jours · **M** = 3-7 jours · **L** = 1-2 semaines · **XL** = 2-4 semaines
 
-### Corrections par rapport a la version precedente
-
-| Feature           | Ancien effort | Nouveau effort | Raison                                                 |
-| ----------------- | ------------- | -------------- | ------------------------------------------------------ |
-| Guide des tailles | S             | ✅ Deja fait   | `size-guide-dialog.tsx` en production                  |
-| Gift Cards        | M             | L              | Modele Prisma + checkout + emails + admin + page achat |
-| Lookbook          | M             | M-L            | Hotspot editor complexe                                |
-| Gravure           | M             | M-L            | Preview SVG temps reel                                 |
-| Configurateur     | XL            | XL (2-4 sem.)  | Complexite confirmee                                   |
+                                |
