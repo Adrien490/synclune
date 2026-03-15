@@ -41,7 +41,7 @@ function AddressAutocompleteField({
 	query: string;
 	country: ShippingCountry;
 }) {
-	const { suggestions, isSearching, error } = useAddressAutocomplete(query, country);
+	const { suggestions, isSearching, error, retry } = useAddressAutocomplete(query, country);
 
 	return (
 		<form.AppField name="shipping.addressLine1">
@@ -52,6 +52,7 @@ function AddressAutocompleteField({
 					items={suggestions}
 					isLoading={isSearching}
 					error={error}
+					onRetry={retry}
 					getItemLabel={(item) => item.label}
 					getItemDescription={(item) => [item.postcode, item.city].filter(Boolean).join(" ")}
 					onSelect={(item) => {
@@ -84,6 +85,33 @@ interface CheckoutAddressFieldsProps {
 
 export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddressFieldsProps) {
 	const isGuest = !session;
+
+	// Countries with purely numeric postal codes (most EU countries)
+	const NUMERIC_POSTAL_CODE_COUNTRIES = new Set([
+		"FR",
+		"MC",
+		"DE",
+		"ES",
+		"IT",
+		"PT",
+		"AT",
+		"FI",
+		"SE",
+		"DK",
+		"GR",
+		"BG",
+		"HR",
+		"CY",
+		"CZ",
+		"EE",
+		"HU",
+		"LV",
+		"LT",
+		"PL",
+		"RO",
+		"SK",
+		"SI",
+	]);
 
 	return (
 		<fieldset className="space-y-5">
@@ -185,30 +213,39 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 			</form.AppField>
 
 			<div className="grid grid-cols-2 gap-3 sm:gap-6">
-				<form.AppField
-					name="shipping.postalCode"
-					validators={{
-						onChange: ({ value }: { value: string }) => {
-							if (!value) return "Le code postal est requis";
-							if (value.length < 3 || value.length > 10) {
-								return "Code postal invalide";
-							}
-							return undefined;
-						},
+				<form.Subscribe selector={(s) => s.values.shipping.country}>
+					{(selectedCountry) => {
+						const isNumericPostalCode = NUMERIC_POSTAL_CODE_COUNTRIES.has(
+							(selectedCountry as string) || "FR",
+						);
+						return (
+							<form.AppField
+								name="shipping.postalCode"
+								validators={{
+									onChange: ({ value }: { value: string }) => {
+										if (!value) return "Le code postal est requis";
+										if (value.length < 3 || value.length > 10) {
+											return "Code postal invalide";
+										}
+										return undefined;
+									},
+								}}
+							>
+								{(field) => (
+									<field.InputField
+										label="Code postal"
+										required
+										inputMode={isNumericPostalCode ? "numeric" : "text"}
+										pattern={isNumericPostalCode ? "[0-9]*" : undefined}
+										autoComplete="postal-code"
+										autoCorrect="off"
+										enterKeyHint="next"
+									/>
+								)}
+							</form.AppField>
+						);
 					}}
-				>
-					{(field) => (
-						<field.InputField
-							label="Code postal"
-							required
-							inputMode="numeric"
-							pattern="[0-9]*"
-							autoComplete="postal-code"
-							autoCorrect="off"
-							enterKeyHint="next"
-						/>
-					)}
-				</form.AppField>
+				</form.Subscribe>
 
 				<form.AppField
 					name="shipping.city"

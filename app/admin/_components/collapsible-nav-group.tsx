@@ -28,7 +28,7 @@ export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroup
 
 	if (!group) return null;
 
-	const hasActiveChild = group.items.some((item) => isRouteActive(pathname, item.url));
+	const _hasActiveChild = group.items.some((item) => isRouteActive(pathname, item.url));
 
 	return (
 		<Collapsible defaultOpen className="group/collapsible">

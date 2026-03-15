@@ -61,7 +61,10 @@ export const envSchema = z
 		// ========================================
 		// Address Autocomplete (Geoapify - EU countries)
 		// ========================================
-		GEOAPIFY_API_KEY: z.string().optional(),
+		GEOAPIFY_API_KEY: z
+			.string()
+			.min(1, "GEOAPIFY_API_KEY is required for EU address autocomplete")
+			.optional(),
 
 		// ========================================
 		// Rate Limiting — Listes IP (optionnel, comma-separated)

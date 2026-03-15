@@ -1,5 +1,5 @@
 import { cleanup, render } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Particle } from "./types";
 
 // ─── Capture useTransform callbacks for isolated math testing ────────
@@ -16,7 +16,7 @@ vi.mock("motion/react", () => ({
 			const inputCount = Array.isArray(mvOrArray) ? (mvOrArray as unknown[]).length : 1;
 			transformFns.push({ inputCount, fn: fnOrInput as (values: number[]) => number });
 			const defaults = Array.isArray(mvOrArray)
-				? (mvOrArray as { get?: () => number }[]).map((mv) => mv?.get?.() ?? 0)
+				? (mvOrArray as { get?: () => number }[]).map((mv) => mv.get?.() ?? 0)
 				: 0;
 			return { get: () => (fnOrInput as Function)(defaults), set: vi.fn() };
 		}
@@ -214,7 +214,7 @@ describe("scrollParallax Y-offset", () => {
 
 	it("adds zero offset at scroll midpoint (scrollYProgress=0.5)", () => {
 		const p = makeParticle({ depthFactor: 0.5 });
-		const strength = 1 - p.depthFactor; // 0.5
+		const _strength = 1 - p.depthFactor; // 0.5
 		const { combinedY } = renderAnimatedParticle(p, { scrollParallax: true });
 
 		// [mouseY=0, scrollYProgress=0.5, cursorX=0.5, cursorY=0.5]
@@ -283,7 +283,7 @@ describe("scrollParallax Y-offset", () => {
 
 describe("repulsion", () => {
 	const REPULSION_STRENGTH = 30;
-	const REPULSION_RADIUS = 0.15;
+	const _REPULSION_RADIUS = 0.15;
 
 	it("applies repulsion when cursor is within radius", () => {
 		// Particle at (50%, 50%) = (0.5, 0.5) normalized

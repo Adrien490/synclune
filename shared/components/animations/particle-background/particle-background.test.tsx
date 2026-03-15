@@ -380,9 +380,9 @@ describe("scrollFade opacity mapping", () => {
 		render(<ParticleBackground count={1} scrollFade />);
 
 		// Find the array mapping call (second arg is an array, not a function)
-		const mappingCall = vi
-			.mocked(useTransform)
-			.mock.calls.find(([_mv, input]) => Array.isArray(input));
+		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
+			Array.isArray(args[1]),
+		);
 
 		expect(mappingCall).toBeDefined();
 		// Input breakpoints: 0%, 15%, 85%, 100% scroll progress
@@ -398,9 +398,9 @@ describe("scrollFade opacity mapping", () => {
 		render(<ParticleBackground count={1} />);
 
 		// The mapping is always created (scrollFade only controls whether it's passed to ParticleSet)
-		const mappingCall = vi
-			.mocked(useTransform)
-			.mock.calls.find(([_mv, input]) => Array.isArray(input));
+		const mappingCall = (vi.mocked(useTransform).mock.calls as unknown[][]).find((args) =>
+			Array.isArray(args[1]),
+		);
 		expect(mappingCall).toBeDefined();
 	});
 });

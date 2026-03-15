@@ -116,6 +116,7 @@ describe("searchAddressForCheckout", () => {
 		const result = await searchAddressForCheckout({ text: "test", country: "FR" });
 
 		expect(result.addresses).toEqual([]);
+		expect(result.error).toBe(true);
 		expect(mockFetchAddresses).not.toHaveBeenCalled();
 		expect(mockFetchGeoapifyAddresses).not.toHaveBeenCalled();
 	});

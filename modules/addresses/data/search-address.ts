@@ -38,6 +38,7 @@ export async function searchAddress(params: SearchAddressParams): Promise<Search
 			addresses: [],
 			query: params.text,
 			limit: params.maximumResponses ?? SEARCH_ADDRESS_DEFAULT_LIMIT,
+			error: true,
 		};
 	}
 
@@ -76,6 +77,7 @@ export async function searchAddressForCheckout(
 			addresses: [],
 			query: params.text,
 			limit: GEOAPIFY_DEFAULT_LIMIT,
+			error: true,
 		};
 	}
 

@@ -16,7 +16,7 @@ export async function fetchAddresses(
 	params: ValidatedSearchAddressParams,
 ): Promise<SearchAddressReturn> {
 	"use cache";
-	cacheAddressSearch(params.text);
+	cacheAddressSearch(`ban-FR-${params.text}`);
 
 	const apiUrl = buildApiUrl(params);
 

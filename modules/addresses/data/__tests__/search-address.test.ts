@@ -111,7 +111,7 @@ describe("searchAddress", () => {
 
 		const result = await searchAddress(params);
 
-		expect(result).toEqual({ addresses: [], query: "Lyon", limit: 5 });
+		expect(result).toEqual({ addresses: [], query: "Lyon", limit: 5, error: true });
 		expect(mockFetchAddresses).not.toHaveBeenCalled();
 	});
 

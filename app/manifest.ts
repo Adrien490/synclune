@@ -11,6 +11,7 @@ export default function manifest(): MetadataRoute.Manifest {
 		theme_color: "#e493b3",
 		orientation: "portrait-primary",
 		scope: "/",
+		id: "/?source=pwa",
 		lang: "fr",
 		dir: "ltr",
 		categories: ["shopping", "lifestyle"],
