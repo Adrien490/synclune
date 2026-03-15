@@ -36,7 +36,7 @@ export function SignatureReveal() {
 			</svg>
 			{/* Name appears after dash draws */}
 			<span
-				className={`${caveat.className} signature-name text-foreground text-shadow-glow text-base italic md:text-lg`}
+				className={`${caveat.className} signature-name text-foreground text-shadow-glow text-lg italic md:text-xl`}
 			>
 				Léane
 			</span>
