@@ -18,7 +18,12 @@ const STROKE_PROPS = {
 /** Lightbulb sketch - idea/inspiration step */
 export function IdeaIllustration({ className }: StepIllustrationProps) {
 	return (
-		<svg viewBox="0 0 48 48" className={cn("pointer-events-none", className)} aria-hidden="true">
+		<svg
+			viewBox="0 0 48 48"
+			className={cn("pointer-events-none", className)}
+			aria-hidden="true"
+			focusable="false"
+		>
 			{/* Bulb outline */}
 			<path
 				d="M24 6 C16 6, 10 12, 10 20 C10 26, 14 30, 17 33 L17 38 L31 38 L31 33 C34 30, 38 26, 38 20 C38 12, 32 6, 24 6Z"
@@ -53,7 +58,12 @@ export function IdeaIllustration({ className }: StepIllustrationProps) {
 /** Pencil + palette sketch - drawing/painting step */
 export function DrawingIllustration({ className }: StepIllustrationProps) {
 	return (
-		<svg viewBox="0 0 48 48" className={cn("pointer-events-none", className)} aria-hidden="true">
+		<svg
+			viewBox="0 0 48 48"
+			className={cn("pointer-events-none", className)}
+			aria-hidden="true"
+			focusable="false"
+		>
 			{/* Pencil */}
 			<path
 				d="M8 40 L12 28 L34 6 L40 12 L18 34 Z"
@@ -88,7 +98,12 @@ export function DrawingIllustration({ className }: StepIllustrationProps) {
 /** Flame/oven sketch - assembly/firing step */
 export function AssemblyIllustration({ className }: StepIllustrationProps) {
 	return (
-		<svg viewBox="0 0 48 48" className={cn("pointer-events-none", className)} aria-hidden="true">
+		<svg
+			viewBox="0 0 48 48"
+			className={cn("pointer-events-none", className)}
+			aria-hidden="true"
+			focusable="false"
+		>
 			{/* Flame */}
 			<path
 				d="M24 4 C24 4, 14 16, 14 26 C14 32, 18 38, 24 38 C30 38, 34 32, 34 26 C34 16, 24 4, 24 4Z"
@@ -123,7 +138,12 @@ export function AssemblyIllustration({ className }: StepIllustrationProps) {
 /** Gem/jewel sketch - finishing step */
 export function FinishingIllustration({ className }: StepIllustrationProps) {
 	return (
-		<svg viewBox="0 0 48 48" className={cn("pointer-events-none", className)} aria-hidden="true">
+		<svg
+			viewBox="0 0 48 48"
+			className={cn("pointer-events-none", className)}
+			aria-hidden="true"
+			focusable="false"
+		>
 			{/* Diamond top */}
 			<path
 				d="M8 18 L16 8 L32 8 L40 18 L24 40 Z"

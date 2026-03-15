@@ -18,10 +18,6 @@ vi.mock("@/shared/constants/process-steps", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Lightbulb: () => <svg data-testid="icon-lightbulb" aria-hidden="true" />,
-	Pencil: () => <svg data-testid="icon-pencil" aria-hidden="true" />,
-	Hammer: () => <svg data-testid="icon-hammer" aria-hidden="true" />,
-	CheckCircle: () => <svg data-testid="icon-checkcircle" aria-hidden="true" />,
 	Sparkles: () => <svg data-testid="icon-sparkles" aria-hidden="true" />,
 }));
 
@@ -29,12 +25,13 @@ vi.mock("@/shared/components/animations/glitter-sparkles", () => ({
 	GlitterSparkles: () => <div data-testid="glitter-sparkles" />,
 }));
 
-vi.mock("../before-after-reveal", () => ({
-	BeforeAfterReveal: () => <div data-testid="before-after-reveal" />,
-}));
-
 vi.mock("../step-illustrations", () => ({
-	STEP_ILLUSTRATIONS: {},
+	STEP_ILLUSTRATIONS: {
+		idea: () => <svg data-testid="illustration-idea" aria-hidden="true" />,
+		drawing: () => <svg data-testid="illustration-drawing" aria-hidden="true" />,
+		assembly: () => <svg data-testid="illustration-assembly" aria-hidden="true" />,
+		finishing: () => <svg data-testid="illustration-finishing" aria-hidden="true" />,
+	},
 }));
 
 // ---------------------------------------------------------------------------
