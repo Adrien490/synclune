@@ -173,12 +173,13 @@ export function Fab({
 									size="sm"
 									className={cn(
 										"rounded-l-full rounded-r-none",
-										"size-12 p-0",
+										"size-9 p-0",
 										"bg-background",
 										"border-r-0",
-										"shadow-md",
+										"shadow-sm",
+										"opacity-40 hover:opacity-100",
 										"hover:bg-accent",
-										"transition-transform active:scale-95",
+										"transition-all active:scale-95",
 										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 										"focus-visible:outline-none",
 										isPending && "cursor-wait opacity-70",
@@ -188,7 +189,7 @@ export function Fab({
 									aria-controls={visibleId}
 								>
 									<ChevronLeft
-										className={cn("size-5", isPending && "animate-pulse")}
+										className={cn("size-4", isPending && "animate-pulse")}
 										aria-hidden="true"
 									/>
 								</Button>

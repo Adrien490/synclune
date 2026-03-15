@@ -164,7 +164,7 @@ export function MenuSheetNav({
 										"flex items-center gap-3 rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
 										"transition-[transform,color,background-color] duration-300 ease-out",
 										"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-										"text-primary hover:bg-primary/5 hover:text-primary",
+										"text-foreground/80 hover:bg-accent hover:text-foreground",
 										"motion-safe:active:scale-[0.97]",
 									)}
 								>
