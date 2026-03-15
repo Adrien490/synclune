@@ -12,7 +12,7 @@ import {
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
 import { cormorantGaramond } from "@/shared/styles/fonts";
-import { ExternalLink, LayoutDashboard } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
 import { CollapsibleNavGroup } from "./collapsible-nav-group";
@@ -42,10 +42,6 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 								>
 									{BRAND.name}
 								</span>
-								<LayoutDashboard
-									className="size-4 shrink-0 opacity-60 group-data-[collapsible=icon]:hidden"
-									aria-hidden="true"
-								/>
 							</Link>
 						</SidebarMenuButton>
 					</SidebarMenuItem>
