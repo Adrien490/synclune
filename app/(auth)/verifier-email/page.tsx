@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { auth } from "@/modules/auth/lib/auth";
 import { ajAuth } from "@/shared/lib/arcjet";
 import { getBaseUrl } from "@/shared/constants/urls";
-import { cormorantGaramond } from "@/shared/styles/fonts";
+import { fraunces } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
 import { headers } from "next/headers";
@@ -114,9 +114,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 					>
 						<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
 						<div className="space-y-2 text-center">
-							<p
-								className={cn("text-lg font-semibold text-green-700", cormorantGaramond.className)}
-							>
+							<p className={cn("text-lg font-medium text-green-700", fraunces.className)}>
 								Email vérifié avec succès
 							</p>
 							<p className="text-sm text-green-600/90">

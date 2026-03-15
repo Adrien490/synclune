@@ -2,7 +2,7 @@
 
 import { LogoAnimated } from "@/shared/components/logo-animated";
 import { Button } from "@/shared/components/ui/button";
-import { cormorantGaramond } from "@/shared/styles/fonts";
+import { fraunces } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { AlertCircle, ArrowLeft, RefreshCw } from "lucide-react";
 import Link from "next/link";
@@ -60,8 +60,8 @@ export function AuthErrorBoundary({
 						<div className="space-y-3">
 							<h1
 								className={cn(
-									"text-foreground text-2xl font-semibold sm:text-3xl lg:text-4xl",
-									cormorantGaramond.className,
+									"text-foreground text-2xl font-medium sm:text-3xl lg:text-4xl",
+									fraunces.className,
 								)}
 							>
 								{title}

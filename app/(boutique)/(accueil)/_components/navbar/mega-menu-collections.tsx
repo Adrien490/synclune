@@ -31,7 +31,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 		<div className="py-6" role="region" aria-labelledby={headingId}>
 			<h3
 				id={headingId}
-				className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase"
+				className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase"
 			>
 				Collections
 			</h3>
@@ -42,13 +42,13 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 					href={ROUTES.SHOP.COLLECTIONS}
 					aria-current={isViewAllActive ? "page" : undefined}
 					className={cn(
-						"flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold",
+						"flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
 						"bg-accent/40 hover:bg-accent",
 						"text-foreground",
 						"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 						"mb-4 transition-colors duration-200",
 						"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
-						isViewAllActive && "bg-accent font-semibold",
+						isViewAllActive && "bg-accent font-medium",
 					)}
 				>
 					Toutes les collections
@@ -113,7 +113,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 										<span
 											className={cn(
 												"line-clamp-1 text-sm",
-												isActive ? "text-foreground font-semibold" : "text-foreground font-medium",
+												isActive ? "text-foreground font-medium" : "text-foreground",
 											)}
 										>
 											{collection.label}

@@ -9,8 +9,8 @@ vi.mock("next/font/google", () => {
 		style: { fontFamily: "mock" },
 	});
 	return {
-		Inter: fontMock,
-		Cormorant_Garamond: fontMock,
+		Figtree: fontMock,
+		Fraunces: fontMock,
 		Petit_Formal_Script: fontMock,
 	};
 });

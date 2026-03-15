@@ -15,7 +15,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cormorantGaramond } from "@/shared/styles/fonts";
+import { fraunces } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { ExternalLink, LogOut } from "lucide-react";
@@ -73,9 +73,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 					{/* Header */}
 					<div className="flex items-center gap-3 border-b px-5 py-4">
 						<Logo size={36} rounded="lg" />
-						<span
-							className={cn(cormorantGaramond.className, "text-lg font-semibold tracking-wide")}
-						>
+						<span className={cn(fraunces.className, "text-lg font-medium tracking-wide")}>
 							{BRAND.name}
 						</span>
 					</div>

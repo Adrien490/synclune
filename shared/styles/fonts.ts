@@ -1,30 +1,29 @@
-import { Inter, Petit_Formal_Script, Cormorant_Garamond } from "next/font/google";
+import { Fraunces, Figtree, Caveat } from "next/font/google";
 
-// Cormorant Garamond - Serif display élégant pour titres
-// Inspiré de Garamond du XVIe siècle, réimaginé pour l'écran
-// Contraste élevé, serifs fins, courbes élégantes — parfait pour les bijoux artisanaux
-export const cormorantGaramond = Cormorant_Garamond({
+// Fraunces — Serif display "Old Style" aux terminaisons organiques
+// Axe SOFT pour courbes lunaires, WONK pour irrégularité artisanale
+// Dramatic et expressive à grande taille, chaleureuse et humaine
+export const fraunces = Fraunces({
 	subsets: ["latin"],
 	display: "swap",
-	variable: "--font-display", // Variable CSS pour les titres
+	axes: ["opsz", "SOFT", "WONK"],
+	variable: "--font-display",
 	preload: true, // LCP element uses this font (hero h1 via SectionTitle)
 });
 
-// Inter - Sans-serif moderne et polyvalente pour corps de texte et UI
-// Excellente lisibilité, design optimisé pour écrans
-// Professionnelle et contemporaine
-export const inter = Inter({
+// Figtree — Sans-serif géométrique optimisée pour le web
+// Clarté et lisibilité excellentes à 16px, courbes amicales
+export const figtree = Figtree({
 	subsets: ["latin"],
 	display: "swap",
-	variable: "--font-sans", // Variable CSS pour le texte principal
+	variable: "--font-sans",
 });
 
-// Petit Formal Script - Police cursive sophistiquée pour signatures
-// Élégante et raffinée, positionnement luxe artisanal
-export const petitFormalScript = Petit_Formal_Script({
+// Caveat — Police manuscrite authentique et décontractée
+// Écriture naturelle "petit mot dans le colis", univers artisanal intimiste
+export const caveat = Caveat({
 	subsets: ["latin"],
 	display: "optional",
-	weight: ["400"],
 	variable: "--font-cursive",
 	preload: false, // Only used below-the-fold (signatures)
 });

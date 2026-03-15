@@ -27,7 +27,7 @@ export default function CollectionNotFound() {
 						</p>
 					}
 					title={
-						<h1 className="font-display text-foreground text-3xl font-semibold md:text-4xl">
+						<h1 className="font-display text-foreground text-3xl font-medium md:text-4xl">
 							Cette collection n'existe pas
 						</h1>
 					}

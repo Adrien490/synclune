@@ -1,4 +1,4 @@
-import { petitFormalScript } from "@/shared/styles/fonts";
+import { caveat } from "@/shared/styles/fonts";
 
 /**
  * Signature "— Léane" with scroll-driven ink-flow reveal.
@@ -36,7 +36,7 @@ export function SignatureReveal() {
 			</svg>
 			{/* Name appears after dash draws */}
 			<span
-				className={`${petitFormalScript.className} signature-name text-foreground text-shadow-glow text-base italic md:text-lg`}
+				className={`${caveat.className} signature-name text-foreground text-shadow-glow text-base italic md:text-lg`}
 			>
 				Léane
 			</span>

@@ -1,4 +1,4 @@
-import { cormorantGaramond } from "@/shared/styles/fonts";
+import { fraunces } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { SectionTitleProps } from "@/shared/types/component.types";
 
@@ -26,7 +26,7 @@ const weightVariants = {
  * Composant de titre de section unifié pour l'application Synclune
  *
  * Style cohérent avec:
- * - Font display (Cormorant Garamond - serif élégante)
+ * - Font display (Fraunces - serif artisanale)
  * - Italique + uppercase + tracking-wider
  * - Font-weight semibold
  * - Progression responsive harmonisée
@@ -63,8 +63,8 @@ export function SectionTitle({
 			id={id}
 			itemProp={itemProp}
 			className={cn(
-				// Police Cormorant Garamond - Serif élégante
-				cormorantGaramond.className,
+				// Police Fraunces - Serif display artisanale
+				fraunces.className,
 				// Style de base unifié
 				"text-foreground",
 				// Graisse

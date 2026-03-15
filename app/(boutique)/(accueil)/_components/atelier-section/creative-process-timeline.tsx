@@ -60,7 +60,7 @@ export function CreativeProcessTimeline() {
 							</div>
 
 							{/* Title + description */}
-							<h3 className="text-foreground mt-2 text-lg/6 font-semibold tracking-tight antialiased">
+							<h3 className="text-foreground mt-2 text-lg/6 font-medium tracking-tight antialiased">
 								{step.title}
 								{isLast(index) && (
 									<Sparkles
@@ -131,7 +131,7 @@ export function CreativeProcessTimeline() {
 							<div
 								aria-hidden="true"
 								className={cn(
-									"mobile-step-scroll flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-bold sm:hidden",
+									"mobile-step-scroll flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold sm:hidden",
 									step.color,
 									step.intensity.ring,
 									step.intensity.shadow,
@@ -141,7 +141,7 @@ export function CreativeProcessTimeline() {
 							</div>
 
 							<div className="flex-1 pb-8">
-								<h3 className="text-foreground mb-2 text-xl/7 font-semibold tracking-tight antialiased">
+								<h3 className="text-foreground mb-2 text-xl/7 font-medium tracking-tight antialiased">
 									<span className="hidden sm:inline lg:hidden" aria-hidden="true">
 										{index + 1}.{" "}
 									</span>

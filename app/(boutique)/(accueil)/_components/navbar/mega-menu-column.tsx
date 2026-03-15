@@ -50,7 +50,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 		<div role="region" aria-labelledby={headingId}>
 			<h3
 				id={headingId}
-				className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase"
+				className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase"
 			>
 				{title}
 			</h3>
@@ -62,13 +62,13 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 						href={primaryItem.href}
 						aria-current={pathname === primaryItem.href ? "page" : undefined}
 						className={cn(
-							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-semibold",
+							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
 							"bg-accent/40 hover:bg-accent",
 							"text-foreground",
 							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 							"mb-2 transition-colors duration-200",
 							"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
-							pathname === primaryItem.href && "bg-accent font-semibold",
+							pathname === primaryItem.href && "bg-accent font-medium",
 						)}
 					>
 						{primaryItem.label}

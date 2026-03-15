@@ -1,6 +1,6 @@
 import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
-import { cormorantGaramond } from "@/shared/styles/fonts";
+import { fraunces } from "@/shared/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -91,9 +91,9 @@ export function Logo({
 			{showText && (
 				<span
 					className={cn(
-						cormorantGaramond.className,
+						fraunces.className,
 						textSizeClass,
-						"text-foreground font-semibold tracking-wide",
+						"text-foreground font-medium tracking-wide",
 						textClassName,
 					)}
 				>

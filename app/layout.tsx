@@ -11,7 +11,7 @@ import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
 import { SerwistProvider } from "@/shared/lib/serwist-client";
 import { RootProviders } from "@/shared/providers/root-providers";
-import { cormorantGaramond, inter, petitFormalScript } from "@/shared/styles/fonts";
+import { fraunces, figtree, caveat } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import "./globals.css";
@@ -27,7 +27,7 @@ export default function RootLayout({
 	return (
 		<html
 			lang="fr"
-			className={`${inter.variable} ${cormorantGaramond.variable} ${petitFormalScript.variable}`}
+			className={`${figtree.variable} ${fraunces.variable} ${caveat.variable}`}
 			data-scroll-behavior="smooth"
 			suppressHydrationWarning
 		>
@@ -41,7 +41,7 @@ export default function RootLayout({
 				<link rel="dns-prefetch" href="https://js.stripe.com" />
 				<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
 			</head>
-			<body className={`${inter.className} antialiased`} suppressHydrationWarning>
+			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
 				<noscript>
 					<div
 						style={{

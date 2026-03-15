@@ -41,7 +41,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 					>
 						<h3
 							id={featuredHeadingId}
-							className="text-muted-foreground mb-3 text-xs font-semibold tracking-wider uppercase"
+							className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase"
 						>
 							Nouveautés
 						</h3>

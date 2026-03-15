@@ -123,7 +123,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 							<Button
 								asChild
 								size="lg"
-								className="w-full font-semibold tracking-wide transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:w-auto"
+								className="w-full font-medium tracking-wide transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:w-auto"
 							>
 								<Link href="/produits" className="flex items-center justify-center">
 									Découvrir la boutique
@@ -133,7 +133,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 								asChild
 								size="lg"
 								variant="secondary"
-								className="w-full font-semibold transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:w-auto"
+								className="w-full font-medium transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:w-auto"
 							>
 								<Link href="/personnalisation" className="flex items-center justify-center">
 									Créer mon bijou

@@ -1,4 +1,4 @@
-import { petitFormalScript } from "@/shared/styles/fonts";
+import { caveat } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
@@ -166,7 +166,7 @@ export function PolaroidFrame({
 					className={cn(
 						"absolute right-0 bottom-2 left-0 text-center text-xs italic @sm:bottom-3 @sm:text-sm",
 						captionColor ? undefined : "text-gray-600",
-						petitFormalScript.className,
+						caveat.className,
 					)}
 					style={{
 						...(captionColor ? { color: captionColor } : {}),
