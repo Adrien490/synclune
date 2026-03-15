@@ -22,7 +22,7 @@ interface StructuredDataProps {
  */
 export async function StructuredData({ includeHomepageSchemas }: StructuredDataProps = {}) {
 	"use cache";
-	cacheLife("products");
+	cacheLife("reference");
 	cacheTag(SHARED_CACHE_TAGS.HOMEPAGE_STRUCTURED_DATA);
 
 	const reviewStats = await getGlobalReviewStats();

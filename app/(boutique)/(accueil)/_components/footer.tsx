@@ -19,6 +19,22 @@ const REASSURANCE_ITEMS: { title: string; description: string }[] = [
 ];
 
 /**
+ * Lightweight skeleton matching Footer's outer shell to prevent CLS during streaming.
+ */
+export function FooterSkeleton() {
+	return (
+		<footer
+			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-linear-to-b"
+			aria-hidden="true"
+		>
+			<div className={`${CONTAINER_CLASS} ${FOOTER_PADDING}`}>
+				<div className="min-h-[400px] sm:min-h-[350px]" />
+			</div>
+		</footer>
+	);
+}
+
+/**
  * Footer statique de l'application
  *
  * Contenu entierement statique (navigation, liens, contact).

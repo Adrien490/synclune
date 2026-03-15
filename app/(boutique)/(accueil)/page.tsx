@@ -80,7 +80,9 @@ export default async function Page() {
 	return (
 		<>
 			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
-			<StructuredData includeHomepageSchemas />
+			<Suspense fallback={null}>
+				<StructuredData includeHomepageSchemas />
+			</Suspense>
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
 			<Suspense fallback={<HeroSectionSkeleton />}>
