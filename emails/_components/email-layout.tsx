@@ -97,7 +97,7 @@ export function EmailLayout({
 								marginTop: "4px",
 							}}
 						>
-							33600 Pessac, France
+							77 Boulevard du Tertre, 44100 Nantes, France
 						</Text>
 						<Text
 							className="email-text-secondary"

@@ -2,6 +2,7 @@
 
 import { auth } from "@/modules/auth/lib/auth";
 import { error, success, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { signUpEmailSchema } from "../schemas/auth.schemas";
@@ -48,6 +49,12 @@ export const signUpEmail = async (
 		try {
 			await auth.api.signUpEmail({
 				body: { email, password, name },
+			});
+
+			// Record GDPR consent timestamp for CGV + privacy policy acceptance
+			await prisma.user.update({
+				where: { email },
+				data: { termsAcceptedAt: new Date() },
 			});
 
 			return success(

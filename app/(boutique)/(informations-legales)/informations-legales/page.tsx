@@ -220,7 +220,7 @@ export default async function LegalPage() {
 					{/* Dernière mise à jour */}
 					<div className="mt-8 text-center">
 						<p className="text-muted-foreground text-sm/6 tracking-normal italic antialiased">
-							Dernière mise à jour : 13 février 2026
+							Dernière mise à jour : 15 mars 2026
 						</p>
 					</div>
 				</div>

@@ -69,6 +69,7 @@ export const ROUTES = {
 
 	// Legal pages
 	LEGAL: {
+		HUB: "/informations-legales",
 		CGV: "/cgv",
 		PRIVACY: "/confidentialite",
 		WITHDRAWAL: "/retractation",

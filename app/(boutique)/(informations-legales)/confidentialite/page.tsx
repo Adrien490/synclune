@@ -198,6 +198,7 @@ export default async function PrivacyPolicyPage() {
 										<li>Arcjet (protection contre les abus et limitation de requêtes)</li>
 										<li>Google (authentification OAuth)</li>
 										<li>Sentry (monitoring d'erreurs et performance)</li>
+										<li>PostHog (analyse comportementale anonymisée, avec consentement)</li>
 									</ul>
 								</li>
 								<li>
@@ -255,6 +256,12 @@ export default async function PrivacyPolicyPage() {
 									Functional Software Inc., San Francisco. Sentry applique des{" "}
 									<strong>Clauses Contractuelles Types (CCT)</strong> et s'engage à protéger les
 									données conformément au RGPD.
+								</li>
+								<li>
+									<strong>PostHog (Union Européenne) :</strong> analyse comportementale anonymisée
+									(avec consentement) - PostHog Inc., hébergé à Francfort (Allemagne). Les données
+									restent dans l'UE. PostHog est conforme au RGPD et ne transfère pas de données
+									hors de l'Union Européenne.
 								</li>
 							</ul>
 							<p className="mt-2">
@@ -469,6 +476,10 @@ export default async function PrivacyPolicyPage() {
 									<strong>Vercel Speed Insights :</strong> mesures de performance (temps de
 									chargement, Web Vitals) pour optimiser la rapidité du site
 								</li>
+								<li>
+									<strong>PostHog :</strong> analyse comportementale anonymisée pour améliorer
+									l'expérience utilisateur (hébergé en UE)
+								</li>
 							</ul>
 
 							<h3 className="mt-4 text-lg font-medium sm:text-xl">9.4 Gestion des cookies</h3>
@@ -521,7 +532,7 @@ export default async function PrivacyPolicyPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 10 mars 2026
+							Dernière mise à jour : 15 mars 2026
 						</p>
 					</div>
 				</div>

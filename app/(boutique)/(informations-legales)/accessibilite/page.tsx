@@ -70,8 +70,14 @@ export default async function AccessibilityPage() {
 							<h2 className="text-xl font-semibold sm:text-2xl">État de conformité</h2>
 							<p>
 								Ce site web est en <strong>conformité partielle</strong> avec les directives{" "}
-								<strong>WCAG 2.1 niveau AA</strong> (Web Content Accessibility Guidelines). Nous
-								travaillons continuellement pour améliorer l'accessibilité de notre site.
+								<strong>WCAG 2.1 niveau AA</strong> (Web Content Accessibility Guidelines) et le{" "}
+								<strong>RGAA 4.1.2</strong> (Référentiel Général d'Amélioration de l'Accessibilité).
+								Nous travaillons continuellement pour améliorer l'accessibilité de notre site.
+							</p>
+							<p className="text-muted-foreground text-sm">
+								Cette déclaration d'accessibilité a été établie le <strong>10 mars 2026</strong>.
+								Elle n'a pas été établie à partir d'un audit formel RGAA. Un audit de conformité
+								complet est prévu afin de déterminer le taux de conformité exact du site.
 							</p>
 						</section>
 
@@ -368,7 +374,7 @@ export default async function AccessibilityPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 10 mars 2026
+							Dernière mise à jour : 15 mars 2026
 						</p>
 					</div>
 				</div>

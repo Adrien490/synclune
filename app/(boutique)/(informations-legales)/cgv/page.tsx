@@ -438,7 +438,28 @@ export default async function CGVPage() {
 							</p>
 
 							<h3 className="text-lg font-medium sm:text-xl">
-								11.3 Droit applicable et juridiction
+								11.3 Plateforme de règlement en ligne des litiges
+							</h3>
+							<p>
+								Conformément au règlement UE n°524/2013, la Commission européenne met à disposition
+								une plateforme de règlement en ligne des litiges (RLL) à l'adresse suivante :{" "}
+								<a
+									href="https://ec.europa.eu/consumers/odr"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="underline"
+								>
+									https://ec.europa.eu/consumers/odr
+								</a>
+								. Notre adresse email de contact pour la plateforme est :{" "}
+								<a href={`mailto:${contactEmail}`} className="underline">
+									{contactEmail}
+								</a>
+								.
+							</p>
+
+							<h3 className="text-lg font-medium sm:text-xl">
+								11.4 Droit applicable et juridiction
 							</h3>
 							<p>
 								Les présentes CGV sont régies par le droit français. À défaut de résolution amiable
@@ -468,7 +489,7 @@ export default async function CGVPage() {
 						</section>
 
 						<p className="text-muted-foreground pt-8 text-center text-xs italic">
-							Dernière mise à jour : 10 mars 2026
+							Dernière mise à jour : 15 mars 2026
 						</p>
 					</div>
 				</div>
