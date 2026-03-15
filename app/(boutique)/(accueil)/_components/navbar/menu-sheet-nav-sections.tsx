@@ -7,11 +7,9 @@ import { SheetClose } from "@/shared/components/ui/sheet";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
-import { Gem } from "lucide-react";
 import type { Variants } from "motion/react";
 import { m } from "motion/react";
 import Link from "next/link";
-import { CollectionMiniGrid } from "./collection-mini-grid";
 
 // Shared link styles (must match menu-sheet-nav.tsx)
 const linkClassName = cn(
@@ -270,19 +268,8 @@ export function CollectionsSection({
 						isMenuItemActive={isMenuItemActive}
 						itemVariants={itemVariants}
 						customDelay={delay(110, i + 1)}
-						className="gap-3"
 					>
-						{collection.images.length > 0 ? (
-							<CollectionMiniGrid images={collection.images} />
-						) : (
-							<div
-								className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-lg"
-								aria-hidden="true"
-							>
-								<Gem className="text-primary/40 h-5 w-5" />
-							</div>
-						)}
-						<span className="flex-1">{collection.label}</span>
+						{collection.label}
 					</NavLink>
 				))}
 			</ul>

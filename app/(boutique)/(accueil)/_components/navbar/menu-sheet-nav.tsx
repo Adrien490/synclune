@@ -9,7 +9,7 @@ import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { AnimatePresence, m, useReducedMotion, type Variants } from "motion/react";
-import { Heart, LayoutDashboard } from "lucide-react";
+import { Heart } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
@@ -161,14 +161,13 @@ export function MenuSheetNav({
 								<Link
 									href={ROUTES.ADMIN.ROOT}
 									className={cn(
-										"flex items-center gap-3 rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
+										"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
 										"transition-[transform,color,background-color] duration-300 ease-out",
 										"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										"text-foreground/80 hover:bg-accent hover:text-foreground",
 										"motion-safe:active:scale-[0.97]",
 									)}
 								>
-									<LayoutDashboard className="h-5 w-5" aria-hidden="true" />
 									Tableau de bord
 								</Link>
 							</SheetClose>
