@@ -164,7 +164,7 @@ export function PolaroidFrame({
 			{caption && (
 				<figcaption
 					className={cn(
-						"absolute right-0 bottom-2 left-0 text-center text-xs italic @sm:bottom-3 @sm:text-sm",
+						"absolute right-0 bottom-2 left-0 text-center text-sm italic @sm:bottom-3 @sm:text-base",
 						captionColor ? undefined : "text-gray-600",
 						caveat.className,
 					)}
