@@ -31,7 +31,7 @@ export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroup
 	const hasActiveChild = group.items.some((item) => isRouteActive(pathname, item.url));
 
 	return (
-		<Collapsible defaultOpen={hasActiveChild} className="group/collapsible">
+		<Collapsible defaultOpen className="group/collapsible">
 			<SidebarGroup role="group" aria-labelledby={groupId}>
 				<CollapsibleTrigger asChild>
 					<SidebarGroupLabel
