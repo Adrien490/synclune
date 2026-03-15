@@ -23,6 +23,10 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 
 	return (
 		<div className="bg-background flex min-h-screen flex-col">
+			{/* Preconnect to Stripe — only needed on checkout pages */}
+			<link rel="dns-prefetch" href="https://js.stripe.com" />
+			<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
+
 			{/* Header minimal */}
 			<header className="bg-background/90 border-primary/10 border-b-0 backdrop-blur-md md:border-b">
 				{/* Decorative top line */}

@@ -25,6 +25,7 @@ export { StaggerGrid } from "./stagger-grid";
 
 // Text animations
 export { SplitText } from "./split-text";
+export { SplitTextCSS } from "./split-text-css";
 
 // Number animations
 export { AnimatedNumber, NumberTicker } from "./animated-number";
@@ -53,6 +54,7 @@ export type { SlideProps } from "./slide";
 export type { StaggerGridProps } from "./stagger-grid";
 export type { StaggerProps } from "./stagger";
 export type { SplitTextProps } from "./split-text";
+export type { SplitTextCSSProps } from "./split-text-css";
 export type { TapProps } from "./tap";
 
 // Background Animation Types

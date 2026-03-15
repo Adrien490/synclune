@@ -1,11 +1,11 @@
 import { HeroFloatingImages } from "./floating-images";
+import { HeroRotatingWord } from "./hero-rotating-word";
 import { SectionTitle } from "@/shared/components/section-title";
 import { ErrorBoundary } from "@/shared/components/error-boundary";
 import { Button } from "@/shared/components/ui/button";
-import { RotatingWord } from "@/shared/components/ui/rotating-word";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
-import { SplitText } from "@/shared/components/animations";
+import { SplitTextCSS } from "@/shared/components/animations";
 import { Heart } from "lucide-react";
 import Link from "next/link";
 import { Suspense, use } from "react";
@@ -95,8 +95,8 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 								className="text-foreground"
 							>
 								<span className="inline-flex flex-wrap items-center justify-center gap-[0.35em]">
-									<SplitText>Des bijoux</SplitText>{" "}
-									<RotatingWord words={["colorés", "uniques"]} duration={3500} />
+									<SplitTextCSS>Des bijoux</SplitTextCSS>{" "}
+									<HeroRotatingWord words={["colorés", "uniques"]} duration={3500} />
 								</span>
 							</SectionTitle>
 							<p

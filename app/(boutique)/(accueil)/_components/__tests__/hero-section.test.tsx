@@ -31,14 +31,14 @@ vi.mock("@/shared/components/section-title", () => ({
 	},
 }));
 
-// Mock SplitText as passthrough
+// Mock SplitTextCSS as passthrough
 vi.mock("@/shared/components/animations", () => ({
-	SplitText: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+	SplitTextCSS: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
 }));
 
-// Mock RotatingWord
-vi.mock("@/shared/components/ui/rotating-word", () => ({
-	RotatingWord: ({ words }: { words: string[] }) => (
+// Mock HeroRotatingWord
+vi.mock("../hero-rotating-word", () => ({
+	HeroRotatingWord: ({ words }: { words: string[] }) => (
 		<span data-testid="rotating-word">{words[0]}</span>
 	),
 }));
