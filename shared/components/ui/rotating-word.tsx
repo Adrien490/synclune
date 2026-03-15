@@ -53,7 +53,7 @@ export function RotatingWord({ words, duration = 3000, className }: RotatingWord
 		className,
 	);
 
-	const textStyles = "text-foreground font-medium whitespace-nowrap";
+	const textStyles = "text-foreground font-light whitespace-nowrap";
 
 	// Always render same DOM structure to avoid hydration mismatch
 	// (useReducedMotion returns null on server, true/false on client)

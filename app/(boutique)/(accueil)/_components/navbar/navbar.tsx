@@ -1,4 +1,5 @@
 import { Logo } from "@/shared/components/logo";
+import { caveat } from "@/shared/styles/fonts";
 import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/navigation";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
@@ -156,7 +157,7 @@ export async function Navbar() {
 									shadow
 									sizes="64px"
 									showText
-									textClassName="text-xl lg:text-2xl text-foreground truncate"
+									textClassName={`${caveat.className} text-xl lg:text-2xl text-foreground truncate`}
 								/>
 							</div>
 

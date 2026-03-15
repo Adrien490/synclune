@@ -17,6 +17,7 @@ const alignVariants = {
 } as const;
 
 const weightVariants = {
+	light: "font-light",
 	normal: "font-normal",
 	medium: "font-medium",
 	semibold: "font-semibold",
@@ -54,7 +55,7 @@ export function SectionTitle({
 	as: Component = "h2",
 	size = "default",
 	align = "center",
-	weight = "normal",
+	weight = "light",
 	italic = false,
 	itemProp,
 }: SectionTitleProps) {

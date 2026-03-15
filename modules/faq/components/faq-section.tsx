@@ -4,7 +4,6 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
-import { caveat } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { MessageCircle } from "lucide-react";
 import Link from "next/link";
@@ -128,11 +127,8 @@ export async function FaqSection() {
 						id="faq-cta-contact"
 						className="bg-primary/5 border-primary/15 mx-auto mt-12 max-w-3xl rounded-2xl border p-6 text-center sm:p-8"
 					>
-						<p className="text-muted-foreground mb-1 text-base">
+						<p className="text-muted-foreground mb-5 text-base">
 							Vous n'avez pas trouvé votre réponse ?
-						</p>
-						<p className={cn(caveat.className, "text-foreground/70 mb-5 text-sm italic")}>
-							Écrivez-moi, je réponds toujours !
 						</p>
 						<Button
 							asChild

@@ -90,7 +90,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 								as="h1"
 								size="hero"
 								align="center"
-								weight="normal"
+								weight="light"
 								id="hero-title"
 								className="text-foreground"
 							>
