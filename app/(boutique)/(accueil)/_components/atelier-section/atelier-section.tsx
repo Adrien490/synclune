@@ -6,7 +6,6 @@ import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
-import { Heart } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
@@ -181,11 +180,6 @@ export async function AtelierSection() {
 						once
 						className="text-center"
 					>
-						{/* Social proof */}
-						<p className="text-muted-foreground mb-2 flex items-center justify-center gap-1.5 text-sm">
-							<Heart className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
-							Déjà plus de 500 bijoux personnalisés
-						</p>
 						<p className="text-muted-foreground mb-4 text-base sm:text-lg">
 							Envie d'un bijou qui vous ressemble vraiment ?
 						</p>
