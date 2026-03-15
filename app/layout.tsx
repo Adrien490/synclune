@@ -25,7 +25,12 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning>
+		<html
+			lang="fr"
+			className={`${inter.variable} ${cormorantGaramond.variable} ${petitFormalScript.variable}`}
+			data-scroll-behavior="smooth"
+			suppressHydrationWarning
+		>
 			<head>
 				{/* Preconnect to UploadThing CDN for faster image loading */}
 				<link rel="dns-prefetch" href="https://utfs.io" />
@@ -36,10 +41,7 @@ export default function RootLayout({
 				<link rel="dns-prefetch" href="https://js.stripe.com" />
 				<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
 			</head>
-			<body
-				className={`${inter.variable} ${inter.className} ${cormorantGaramond.variable} ${petitFormalScript.variable} antialiased`}
-				suppressHydrationWarning
-			>
+			<body className={`${inter.className} antialiased`} suppressHydrationWarning>
 				<noscript>
 					<div
 						style={{

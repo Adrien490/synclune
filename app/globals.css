@@ -35,6 +35,9 @@ html {
 	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, etc.) */
 	--breakpoint-xs: 375px;
 
+	--font-sans: var(--font-sans);
+	--font-display: var(--font-display);
+	--font-cursive: var(--font-cursive);
 	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
 
 	--blur-1: 1px;

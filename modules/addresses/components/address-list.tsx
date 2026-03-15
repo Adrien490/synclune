@@ -20,20 +20,7 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 	const addresses = use(addressesPromise);
 
 	return (
-		<section aria-labelledby="addresses-heading" className="space-y-6">
-			{/* Section header */}
-			<div className="flex items-center justify-between gap-4">
-				<div>
-					<h2 id="addresses-heading" className="text-foreground text-lg font-semibold">
-						Adresses enregistrées
-					</h2>
-					<p className="text-muted-foreground mt-1 text-sm">Gérez vos adresses de livraison</p>
-				</div>
-				{addresses && addresses.length > 0 && (
-					<CreateAddressButton size="sm">Ajouter</CreateAddressButton>
-				)}
-			</div>
-
+		<section className="space-y-6">
 			{/* Address list or empty state */}
 			{!addresses || addresses.length === 0 ? (
 				<Empty>
@@ -51,11 +38,16 @@ export function AddressList({ addressesPromise }: AddressListProps) {
 					</EmptyContent>
 				</Empty>
 			) : (
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-					{addresses.map((address) => (
-						<AddressCard key={address.id} address={address} />
-					))}
-				</div>
+				<>
+					<div className="flex justify-end">
+						<CreateAddressButton size="sm">Ajouter</CreateAddressButton>
+					</div>
+					<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+						{addresses.map((address) => (
+							<AddressCard key={address.id} address={address} />
+						))}
+					</div>
+				</>
 			)}
 		</section>
 	);

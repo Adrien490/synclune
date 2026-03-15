@@ -6,7 +6,6 @@ import { Inter, Petit_Formal_Script, Cormorant_Garamond } from "next/font/google
 export const cormorantGaramond = Cormorant_Garamond({
 	subsets: ["latin"],
 	display: "swap",
-	weight: ["400", "500", "600"],
 	variable: "--font-display", // Variable CSS pour les titres
 	preload: true, // LCP element uses this font (hero h1 via SectionTitle)
 });
@@ -14,11 +13,9 @@ export const cormorantGaramond = Cormorant_Garamond({
 // Inter - Sans-serif moderne et polyvalente pour corps de texte et UI
 // Excellente lisibilité, design optimisé pour écrans
 // Professionnelle et contemporaine
-// Optimisé : Seulement 300 (light), 400 (regular), 600 (semibold) pour réduire bundle
 export const inter = Inter({
 	subsets: ["latin"],
 	display: "swap",
-	weight: ["300", "400", "600"], // Light, Regular, Semibold (UI + Hero)
 	variable: "--font-sans", // Variable CSS pour le texte principal
 });
 

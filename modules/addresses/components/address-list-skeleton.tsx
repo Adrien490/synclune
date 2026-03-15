@@ -7,15 +7,6 @@ import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 export function AddressListSkeleton() {
 	return (
 		<SkeletonGroup label="Chargement des adresses" className="space-y-6">
-			{/* Section header skeleton */}
-			<div className="flex items-center justify-between gap-4">
-				<div className="space-y-2">
-					<Skeleton className="bg-muted/50 h-7 w-48" />
-					<Skeleton className="bg-muted/30 h-4 w-64" />
-				</div>
-				<Skeleton className="bg-muted/40 h-9 w-24" />
-			</div>
-
 			{/* Address cards grid skeleton */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
 				{Array.from({ length: 3 }).map((_, i) => (
