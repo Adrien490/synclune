@@ -67,7 +67,7 @@ const REPULSION_RADIUS = 0.15;
  * Uses an outer m.span for the mouse offset (transforms driven by MotionValues)
  * and an inner m.span for the looping keyframe animation, avoiding conflicts.
  *
- * P4/P5/P7: All transform offsets (mouse parallax, scroll parallax, repulsion) are
+ * All transform offsets (mouse parallax, scroll parallax, repulsion) are
  * computed in 2 combined useTransform hooks instead of 8 chained ones.
  * Features are gated by boolean props — unused features add zero overhead.
  */

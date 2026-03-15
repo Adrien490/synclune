@@ -370,6 +370,41 @@ describe("ParticleBackground", () => {
 	});
 });
 
+// ─── scrollFade progressive opacity mapping ──────────────────────────
+
+describe("scrollFade opacity mapping", () => {
+	it("configures progressive opacity [0→0, 0.15→1, 0.85→1, 1→0]", async () => {
+		const { useTransform } = await import("motion/react");
+		vi.mocked(useTransform).mockClear();
+
+		render(<ParticleBackground count={1} scrollFade />);
+
+		// Find the array mapping call (second arg is an array, not a function)
+		const mappingCall = vi
+			.mocked(useTransform)
+			.mock.calls.find(([_mv, input]) => Array.isArray(input));
+
+		expect(mappingCall).toBeDefined();
+		// Input breakpoints: 0%, 15%, 85%, 100% scroll progress
+		expect(mappingCall![1]).toEqual([0, 0.15, 0.85, 1]);
+		// Output opacity: fade in, hold, fade out
+		expect(mappingCall![2]).toEqual([0, 1, 1, 0]);
+	});
+
+	it("always computes scrollOpacity even without scrollFade prop", async () => {
+		const { useTransform } = await import("motion/react");
+		vi.mocked(useTransform).mockClear();
+
+		render(<ParticleBackground count={1} />);
+
+		// The mapping is always created (scrollFade only controls whether it's passed to ParticleSet)
+		const mappingCall = vi
+			.mocked(useTransform)
+			.mock.calls.find(([_mv, input]) => Array.isArray(input));
+		expect(mappingCall).toBeDefined();
+	});
+});
+
 // ─── Parallax & mouse interaction tests ─────────────────────────────
 
 describe("ParticleBackground parallax", () => {

@@ -71,7 +71,7 @@ function ParticleBackgroundInner({
 	const cursorX = useMotionValue(0.5);
 	const cursorY = useMotionValue(0.5);
 
-	// P3: Skip mouse listeners entirely on touch devices (no mouse events fire)
+	// Skip mouse listeners entirely on touch devices (no mouse events fire)
 	useEffect(() => {
 		if (isTouchDevice) return;
 		const el = containerRef.current;
@@ -167,7 +167,7 @@ function ParticleBackgroundInner({
 		? [blur[0] * 0.7, blur[1] * 0.7]
 		: [blur * 0.7, blur * 0.7];
 
-	// P1: Generate particles only for the active breakpoint (not both)
+	// Generate particles only for the active breakpoint (not both)
 	const particles = isDesktop
 		? generateParticles(
 				safeCount,
@@ -211,7 +211,7 @@ function ParticleBackgroundInner({
 			className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}
 			style={{ contain: "layout paint style" }}
 		>
-			{/* P1: Single ParticleSet — JS media query replaces CSS dual rendering */}
+			{/* Single ParticleSet — JS media query replaces CSS dual rendering */}
 			<ParticleSet
 				particles={particles}
 				{...(isDesktop ? { mouseX, mouseY } : {})}
