@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/sidebar";
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
-import { fraunces } from "@/shared/styles/fonts";
+import { caveat } from "@/shared/styles/fonts";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
@@ -38,7 +38,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 							<Link href="/admin">
 								<Logo size={40} rounded="lg" />
 								<span
-									className={`${fraunces.className} flex-1 truncate text-xl font-normal tracking-wide group-data-[collapsible=icon]:hidden`}
+									className={`${caveat.className} flex-1 truncate text-xl font-normal tracking-wide group-data-[collapsible=icon]:hidden`}
 								>
 									{BRAND.name}
 								</span>

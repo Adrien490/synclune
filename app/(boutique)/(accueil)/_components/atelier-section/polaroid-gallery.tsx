@@ -100,7 +100,7 @@ const POLAROIDS: PolaroidConfig[] = [
 		captionColor: "var(--polaroid-caption-brown)",
 		captionRotate: 0.8,
 		vintage: true,
-		glowColor: "yellow",
+		glowColor: "yellow", // Deliberate: warm yellow glow pairs with peach washi for visual variety
 		scatterClass: "lg:-translate-y-3 lg:-translate-x-1",
 		scatterVars: {
 			"--scatter-x": "-40px",
