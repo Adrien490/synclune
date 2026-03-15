@@ -35,6 +35,13 @@ const GLOW_CLASSES: Record<GlowColor, string> = {
 	yellow: "hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)]",
 };
 
+const GLOW_CSS_VARS: Record<GlowColor, string> = {
+	pink: "var(--color-glow-pink)",
+	lavender: "var(--color-glow-lavender)",
+	mint: "var(--color-glow-mint)",
+	yellow: "var(--color-glow-yellow)",
+};
+
 const POLAROIDS: PolaroidConfig[] = [
 	{
 		id: "hands",
@@ -130,7 +137,7 @@ export function PolaroidGallery() {
 						y={MOTION_CONFIG.section.grid.y}
 						inView
 						once
-						className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-2"
+						className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[340px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-4"
 					>
 						{POLAROIDS.map((p) => (
 							<PolaroidFrame
@@ -149,7 +156,12 @@ export function PolaroidGallery() {
 									"motion-safe:transition-shadow motion-safe:duration-300",
 									GLOW_CLASSES[p.glowColor],
 								)}
-								style={p.scatterVars}
+								style={
+									{
+										...p.scatterVars,
+										"--glow-color": GLOW_CSS_VARS[p.glowColor],
+									} as React.CSSProperties
+								}
 							>
 								<PlaceholderImage className="h-full w-full" label={p.label} />
 							</PolaroidFrame>

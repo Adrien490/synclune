@@ -10,7 +10,7 @@ import { caveat } from "@/shared/styles/fonts";
  */
 export function SignatureReveal() {
 	return (
-		<div className="signature-reveal pt-4 text-center" aria-label="Léane">
+		<p className="signature-reveal pt-4 text-center" aria-label="Léane">
 			{/* Em dash drawn as SVG line */}
 			<svg
 				viewBox="0 0 30 4"
@@ -40,6 +40,6 @@ export function SignatureReveal() {
 			>
 				Léane
 			</span>
-		</div>
+		</p>
 	);
 }

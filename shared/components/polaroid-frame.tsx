@@ -22,6 +22,8 @@ interface PolaroidFrameProps {
 	washiTape?: boolean;
 	/** Couleur du washi tape */
 	washiColor?: WashiTapeColor;
+	/** Secondary color for top-right washi tape (defaults to pink↔lavender swap) */
+	washiColorSecondary?: WashiTapeColor;
 	/** Position du washi tape */
 	washiPosition?: WashiTapePosition;
 	/** Subtle vintage photo filter */
@@ -82,6 +84,7 @@ export function PolaroidFrame({
 	captionRotate,
 	washiTape = false,
 	washiColor = "pink",
+	washiColorSecondary,
 	washiPosition = "top-left",
 	vintage = false,
 	className,
@@ -97,8 +100,12 @@ export function PolaroidFrame({
 				: "none"
 		: tilt;
 
+	const secondaryWashi = washiColorSecondary ?? (washiColor === "pink" ? "lavender" : "pink");
+
 	return (
 		<figure
+			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- intentional: keyboard-navigable gallery item
+			tabIndex={0}
 			className={cn(
 				"polaroid-paper polaroid-hover group/polaroid @container",
 				"relative rounded-sm bg-white p-2.5 pb-8 @sm:p-3.5 @sm:pb-11",
@@ -132,7 +139,7 @@ export function PolaroidFrame({
 				<div
 					className={cn(
 						"absolute -top-2 -right-3 z-10 h-4 w-12 rotate-12 @sm:h-5 @sm:w-16",
-						washiColors[washiColor === "pink" ? "lavender" : "pink"],
+						washiColors[secondaryWashi],
 						"opacity-90 shadow-[inset_0_0_4px_rgba(255,255,255,0.3)]",
 					)}
 					aria-hidden="true"

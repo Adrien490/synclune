@@ -24,7 +24,7 @@
 		}
 	}
 
-	/* Polaroid scatter-to-land animation */
+	/* Polaroid scatter-to-land animation (desktop: full scatter, mobile: simple fade+slide) */
 	@keyframes polaroid-land {
 		from {
 			opacity: 0;
@@ -36,6 +36,19 @@
 			opacity: 1;
 			translate: 0 0;
 			rotate: 0deg;
+			scale: 1;
+		}
+	}
+
+	@keyframes polaroid-land-simple {
+		from {
+			opacity: 0;
+			translate: 0 20px;
+			scale: 0.95;
+		}
+		to {
+			opacity: 1;
+			translate: 0 0;
 			scale: 1;
 		}
 	}
@@ -99,11 +112,16 @@
 			animation-range: entry 20% entry 70%;
 		}
 
-		/* Polaroid scatter animation on desktop */
+		/* Polaroid scroll-driven: simple fade on mobile, full scatter on desktop */
+		.polaroid-scatter {
+			animation: polaroid-land-simple linear both;
+			animation-timeline: view();
+			animation-range: entry 5% entry 50%;
+		}
+
 		@media (min-width: 1024px) {
 			.polaroid-scatter {
-				animation: polaroid-land linear both;
-				animation-timeline: view();
+				animation-name: polaroid-land;
 				animation-range: entry 10% entry 70%;
 			}
 		}

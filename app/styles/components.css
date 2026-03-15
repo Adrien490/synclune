@@ -135,6 +135,20 @@
 		}
 	}
 
+	/* Mobile tap feedback — glow on :active for touch devices */
+	@media (hover: none) {
+		.polaroid-hover:active {
+			box-shadow: 0 0 20px var(--glow-color, oklch(0.86 0.1 341 / 0.4));
+			transition: box-shadow 150ms;
+		}
+	}
+
+	/* Focus-visible ring for keyboard navigation */
+	.polaroid-hover:focus-visible {
+		outline: 2px solid var(--secondary);
+		outline-offset: 2px;
+	}
+
 	@media (prefers-reduced-motion: reduce) {
 		.polaroid-hover,
 		.polaroid-hover:hover {
