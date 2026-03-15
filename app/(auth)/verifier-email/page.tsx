@@ -114,7 +114,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 					>
 						<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
 						<div className="space-y-2 text-center">
-							<p className={cn("text-lg font-medium text-green-700", fraunces.className)}>
+							<p className={cn("text-lg font-normal text-green-700", fraunces.className)}>
 								Email vérifié avec succès
 							</p>
 							<p className="text-sm text-green-600/90">

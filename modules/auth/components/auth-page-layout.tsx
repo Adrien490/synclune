@@ -55,7 +55,7 @@ export function AuthPageLayout({
 							<div className="space-y-3">
 								<h1
 									className={cn(
-										"text-foreground text-2xl font-medium sm:text-3xl lg:text-4xl",
+										"text-foreground text-2xl font-normal sm:text-3xl lg:text-4xl",
 										fraunces.className,
 									)}
 								>

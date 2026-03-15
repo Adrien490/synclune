@@ -27,7 +27,7 @@ export default function OfflinePage() {
 					<p className="mb-4 text-8xl" aria-hidden="true">
 						📡
 					</p>
-					<h1 className="font-display text-foreground text-3xl font-medium md:text-4xl">
+					<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">
 						Oups, vous êtes hors ligne
 					</h1>
 					<p className="text-muted-foreground text-lg md:text-xl">

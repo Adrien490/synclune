@@ -27,7 +27,7 @@ export default function ProductNotFound() {
 						</p>
 					}
 					title={
-						<h1 className="font-display text-foreground text-3xl font-medium md:text-4xl">
+						<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">
 							Ce bijou n'existe plus
 						</h1>
 					}

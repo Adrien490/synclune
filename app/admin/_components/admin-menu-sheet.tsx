@@ -73,7 +73,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 					{/* Header */}
 					<div className="flex items-center gap-3 border-b px-5 py-4">
 						<Logo size={36} rounded="lg" />
-						<span className={cn(fraunces.className, "text-lg font-medium tracking-wide")}>
+						<span className={cn(fraunces.className, "text-lg font-normal tracking-wide")}>
 							{BRAND.name}
 						</span>
 					</div>

@@ -79,7 +79,7 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="font-display text-foreground wrap-break-words text-2xl font-medium tracking-normal sm:text-3xl lg:text-4xl"
+							className="font-display text-foreground wrap-break-words text-2xl font-normal tracking-normal sm:text-3xl lg:text-4xl"
 							title={title}
 						>
 							{title}
@@ -139,7 +139,7 @@ export function PageHeader({
 								</Link>
 								<span
 									aria-hidden="true"
-									className="font-display text-foreground wrap-break-words min-w-0 flex-1 text-2xl font-medium tracking-normal"
+									className="font-display text-foreground wrap-break-words min-w-0 flex-1 text-2xl font-normal tracking-normal"
 								>
 									{title}
 								</span>
@@ -189,7 +189,7 @@ export function PageHeader({
 						<h1
 							id="page-title"
 							className={cn(
-								"font-display text-foreground wrap-break-words text-2xl font-medium tracking-normal sm:text-3xl lg:text-4xl",
+								"font-display text-foreground wrap-break-words text-2xl font-normal tracking-normal sm:text-3xl lg:text-4xl",
 								breadcrumbs.length > 0 && "sr-only sm:not-sr-only",
 							)}
 						>

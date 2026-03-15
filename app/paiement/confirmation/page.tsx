@@ -270,7 +270,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Prochaines étapes */}
 							<div className="space-y-4">
-								<h3 className="font-display flex items-center gap-2 font-medium">
+								<h3 className="font-display flex items-center gap-2 font-normal">
 									<Sparkles className="text-primary h-5 w-5" />
 									Que va-t-il se passer maintenant ?
 								</h3>

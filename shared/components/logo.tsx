@@ -93,7 +93,7 @@ export function Logo({
 					className={cn(
 						fraunces.className,
 						textSizeClass,
-						"text-foreground font-medium tracking-wide",
+						"text-foreground font-normal tracking-wide",
 						textClassName,
 					)}
 				>

@@ -51,7 +51,7 @@ export function StorefrontErrorLayout({
 				<Fade delay={0.05} duration={MOTION_CONFIG.duration.emphasis}>
 					<div className="space-y-4">
 						<div className="flex flex-col items-center">
-							<h1 className="font-display text-foreground text-3xl font-medium md:text-4xl">
+							<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">
 								{title}
 							</h1>
 							<HandDrawnUnderline delay={0.2} />

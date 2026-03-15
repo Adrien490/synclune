@@ -29,7 +29,7 @@ export default function NotFound() {
 						</p>
 					}
 					title={
-						<h1 className="font-display text-foreground text-3xl font-medium md:text-4xl">
+						<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">
 							<span className="sr-only">Erreur 404 — </span>Oups, vous vous êtes surement perdu 💔
 						</h1>
 					}

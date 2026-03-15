@@ -38,7 +38,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 							<Link href="/admin">
 								<Logo size={40} rounded="lg" />
 								<span
-									className={`${fraunces.className} flex-1 truncate text-xl font-medium tracking-wide group-data-[collapsible=icon]:hidden`}
+									className={`${fraunces.className} flex-1 truncate text-xl font-normal tracking-wide group-data-[collapsible=icon]:hidden`}
 								>
 									{BRAND.name}
 								</span>
