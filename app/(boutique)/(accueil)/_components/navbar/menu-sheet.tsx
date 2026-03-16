@@ -18,8 +18,6 @@ import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { caveat } from "@/shared/styles/fonts";
-import { BRAND } from "@/shared/constants/brand";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
 import { iconButtonClassName } from "./navbar-styles";
@@ -87,15 +85,10 @@ export function MenuSheet({
 				</SheetTrigger>
 
 				<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
-					<SheetHeader className="border-b px-6 py-4 sm:sr-only sm:border-0 sm:p-0!">
-						<span
-							className={`${caveat.className} text-muted-foreground text-lg tracking-wide sm:hidden`}
-						>
-							{BRAND.name}
-						</span>
-						<SheetTitle className="sr-only">Menu de navigation</SheetTitle>
-						<SheetDescription className="sr-only">
-							Menu de navigation de Synclune - Découvrez nos bijoux et collections
+					<SheetHeader className="sr-only">
+						<SheetTitle>Menu de navigation</SheetTitle>
+						<SheetDescription>
+							Menu de navigation - Découvrez nos bijoux et collections
 						</SheetDescription>
 					</SheetHeader>
 
