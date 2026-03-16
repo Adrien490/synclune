@@ -9,6 +9,11 @@ const { mockPrisma, mockSendAdminRefundFailedAlert, mockGetBaseUrl } = vi.hoiste
 		refund: {
 			update: vi.fn(),
 			upsert: vi.fn(),
+			findUnique: vi.fn(),
+		},
+		order: {
+			findUniqueOrThrow: vi.fn(),
+			update: vi.fn(),
 		},
 	};
 
@@ -223,59 +228,68 @@ describe("syncStripeRefunds", () => {
 // ============================================================================
 
 describe("updateOrderPaymentStatus", () => {
+	const mockTx = mockPrisma._mockTx;
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockTx.order.update.mockResolvedValue({});
 	});
 
 	it("should update to REFUNDED when fully refunded", async () => {
-		mockPrisma.order.update.mockResolvedValue({});
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		const result = await updateOrderPaymentStatus("order-1", 10000, 10000, "PAID" as never);
+		const result = await updateOrderPaymentStatus("order-1", 10000, 10000);
 
 		expect(result).toEqual({ isFullyRefunded: true, isPartiallyRefunded: false });
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: { paymentStatus: "REFUNDED" },
 		});
 	});
 
 	it("should update to PARTIALLY_REFUNDED when partially refunded", async () => {
-		mockPrisma.order.update.mockResolvedValue({});
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		const result = await updateOrderPaymentStatus("order-1", 10000, 5000, "PAID" as never);
+		const result = await updateOrderPaymentStatus("order-1", 10000, 5000);
 
 		expect(result).toEqual({ isFullyRefunded: false, isPartiallyRefunded: true });
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: { paymentStatus: "PARTIALLY_REFUNDED" },
 		});
 	});
 
 	it("should not update when totalRefunded is 0", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 0, "PAID" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
+
+		const result = await updateOrderPaymentStatus("order-1", 10000, 0);
 
 		expect(result).toEqual({ isFullyRefunded: false, isPartiallyRefunded: false });
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should not update when already REFUNDED", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 10000, "REFUNDED" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "REFUNDED" });
+
+		const result = await updateOrderPaymentStatus("order-1", 10000, 10000);
 
 		expect(result).toEqual({ isFullyRefunded: true, isPartiallyRefunded: false });
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should not update to PARTIALLY_REFUNDED when already REFUNDED", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 5000, "REFUNDED" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "REFUNDED" });
+
+		const result = await updateOrderPaymentStatus("order-1", 10000, 5000);
 
 		expect(result).toEqual({ isFullyRefunded: false, isPartiallyRefunded: true });
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should mark as fully refunded when totalRefunded exceeds orderTotal", async () => {
-		mockPrisma.order.update.mockResolvedValue({});
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		const result = await updateOrderPaymentStatus("order-1", 10000, 15000, "PAID" as never);
+		const result = await updateOrderPaymentStatus("order-1", 10000, 15000);
 
 		expect(result.isFullyRefunded).toBe(true);
 	});
@@ -415,8 +429,12 @@ describe("markRefundAsFailed", () => {
 // ============================================================================
 
 describe("resolveRefundByStripeId", () => {
+	const mockTx = mockPrisma._mockTx;
+
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockTx.refund.findUnique.mockReset();
+		mockTx.refund.update.mockReset();
 	});
 
 	it("should find refund by stripeRefundId", async () => {
@@ -439,10 +457,10 @@ describe("resolveRefundByStripeId", () => {
 		expect(result).toEqual(refundRecord);
 	});
 
-	it("should fallback to metadataRefundId and link stripeRefundId", async () => {
-		// First lookup by stripeRefundId fails
+	it("should fallback to metadataRefundId and link stripeRefundId atomically", async () => {
+		// Direct lookup by stripeRefundId fails
 		mockPrisma.refund.findUnique.mockResolvedValueOnce(null);
-		// Second lookup by metadataRefundId succeeds
+		// Transaction lookup by metadataRefundId succeeds
 		const refundRecord = {
 			id: "ref-from-metadata",
 			status: "APPROVED",
@@ -455,21 +473,22 @@ describe("resolveRefundByStripeId", () => {
 				stripePaymentIntentId: "pi_456",
 			},
 		};
-		mockPrisma.refund.findUnique.mockResolvedValueOnce(refundRecord);
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockTx.refund.findUnique.mockResolvedValueOnce(refundRecord);
+		mockTx.refund.update.mockResolvedValue({});
 
 		const result = await resolveRefundByStripeId("re_new", "ref-from-metadata");
 
 		expect(result).toEqual(refundRecord);
-		// Should link the stripeRefundId
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+		// Should link the stripeRefundId atomically inside transaction
+		expect(mockTx.refund.update).toHaveBeenCalledWith({
 			where: { id: "ref-from-metadata" },
 			data: { stripeRefundId: "re_new" },
 		});
 	});
 
 	it("should return null when not found by either method", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(null);
+		mockPrisma.refund.findUnique.mockResolvedValueOnce(null);
+		mockTx.refund.findUnique.mockResolvedValueOnce(null);
 
 		const result = await resolveRefundByStripeId("re_nonexistent", "ref_nonexistent");
 
@@ -477,13 +496,14 @@ describe("resolveRefundByStripeId", () => {
 	});
 
 	it("should return null when not found and no metadata provided", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(null);
+		mockPrisma.refund.findUnique.mockResolvedValueOnce(null);
 
 		const result = await resolveRefundByStripeId("re_nonexistent");
 
 		expect(result).toBeNull();
-		// Should only call findUnique once (no fallback)
+		// Should only call direct findUnique once (no transaction fallback)
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 });
 

@@ -17,6 +17,11 @@ const {
 		refund: {
 			update: vi.fn(),
 			upsert: vi.fn(),
+			findUnique: vi.fn(),
+		},
+		order: {
+			findUniqueOrThrow: vi.fn(),
+			update: vi.fn(),
 		},
 	};
 
@@ -312,13 +317,18 @@ describe("syncStripeRefunds", () => {
 describe("updateOrderPaymentStatus", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPrisma.order.update.mockResolvedValue({});
+		mockTx.order.update.mockResolvedValue({});
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<void>) =>
+			cb(mockTx),
+		);
 	});
 
 	it("should mark order as REFUNDED when fully refunded", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 10000, "PAID" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		const result = await updateOrderPaymentStatus("order-1", 10000, 10000);
+
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: { paymentStatus: "REFUNDED" },
 		});
@@ -326,9 +336,11 @@ describe("updateOrderPaymentStatus", () => {
 	});
 
 	it("should mark order as REFUNDED when totalRefunded exceeds orderTotal", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 12000, "PAID" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		const result = await updateOrderPaymentStatus("order-1", 10000, 12000);
+
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: { paymentStatus: "REFUNDED" },
 		});
@@ -336,9 +348,11 @@ describe("updateOrderPaymentStatus", () => {
 	});
 
 	it("should mark order as PARTIALLY_REFUNDED when partially refunded", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 4000, "PAID" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+		const result = await updateOrderPaymentStatus("order-1", 10000, 4000);
+
+		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
 			data: { paymentStatus: "PARTIALLY_REFUNDED" },
 		});
@@ -346,33 +360,44 @@ describe("updateOrderPaymentStatus", () => {
 	});
 
 	it("should not update order when already REFUNDED and fully refunded", async () => {
-		await updateOrderPaymentStatus("order-1", 10000, 10000, "REFUNDED" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "REFUNDED" });
 
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		await updateOrderPaymentStatus("order-1", 10000, 10000);
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should not update order when already PARTIALLY_REFUNDED and partially refunded", async () => {
-		await updateOrderPaymentStatus("order-1", 10000, 4000, "PARTIALLY_REFUNDED" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({
+			paymentStatus: "PARTIALLY_REFUNDED",
+		});
 
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		await updateOrderPaymentStatus("order-1", 10000, 4000);
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should not update order when already REFUNDED even if partially refunded amount is provided", async () => {
-		// Already REFUNDED status is terminal for partially refunded too
-		await updateOrderPaymentStatus("order-1", 10000, 4000, "REFUNDED" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "REFUNDED" });
 
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		await updateOrderPaymentStatus("order-1", 10000, 4000);
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 	});
 
 	it("should not update order when no refund has been made", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 0, "PAID" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "PAID" });
 
-		expect(mockPrisma.order.update).not.toHaveBeenCalled();
+		const result = await updateOrderPaymentStatus("order-1", 10000, 0);
+
+		expect(mockTx.order.update).not.toHaveBeenCalled();
 		expect(result).toEqual({ isFullyRefunded: false, isPartiallyRefunded: false });
 	});
 
 	it("should return correct booleans without DB update when status already matches", async () => {
-		const result = await updateOrderPaymentStatus("order-1", 10000, 10000, "REFUNDED" as never);
+		mockTx.order.findUniqueOrThrow.mockResolvedValue({ paymentStatus: "REFUNDED" });
+
+		const result = await updateOrderPaymentStatus("order-1", 10000, 10000);
 
 		expect(result).toEqual({ isFullyRefunded: true, isPartiallyRefunded: false });
 	});
@@ -400,6 +425,11 @@ describe("resolveRefundByStripeId", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockTx.refund.findUnique.mockReset();
+		mockTx.refund.update.mockReset();
+		mockPrisma.$transaction.mockImplementation((cb: (tx: typeof mockTx) => Promise<unknown>) =>
+			cb(mockTx),
+		);
 	});
 
 	it("should find refund by stripeRefundId when it exists", async () => {
@@ -413,28 +443,26 @@ describe("resolveRefundByStripeId", () => {
 			select: refundSelect,
 		});
 		expect(result).toEqual(expectedRefund);
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
-	it("should find refund by metadata and link stripeRefundId when not found by stripeRefundId", async () => {
+	it("should find refund by metadata and link stripeRefundId atomically when not found by stripeRefundId", async () => {
 		const expectedRefund = makeRefundRecord();
-		mockPrisma.refund.findUnique
-			.mockResolvedValueOnce(null) // first call by stripeRefundId returns null
-			.mockResolvedValueOnce(expectedRefund); // second call by metadata id
-		mockPrisma.refund.update.mockResolvedValue({});
+		mockPrisma.refund.findUnique.mockResolvedValueOnce(null); // direct lookup fails
+		mockTx.refund.findUnique.mockResolvedValueOnce(expectedRefund); // tx lookup succeeds
+		mockTx.refund.update.mockResolvedValue({});
 
 		const result = await resolveRefundByStripeId("re_new_stripe_1", "refund-1");
 
-		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(2);
-		expect(mockPrisma.refund.findUnique).toHaveBeenNthCalledWith(1, {
+		expect(mockPrisma.refund.findUnique).toHaveBeenCalledWith({
 			where: { stripeRefundId: "re_new_stripe_1" },
 			select: refundSelect,
 		});
-		expect(mockPrisma.refund.findUnique).toHaveBeenNthCalledWith(2, {
+		expect(mockTx.refund.findUnique).toHaveBeenCalledWith({
 			where: { id: "refund-1" },
 			select: refundSelect,
 		});
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith({
+		expect(mockTx.refund.update).toHaveBeenCalledWith({
 			where: { id: "refund-1" },
 			data: { stripeRefundId: "re_new_stripe_1" },
 		});
@@ -447,17 +475,17 @@ describe("resolveRefundByStripeId", () => {
 		const result = await resolveRefundByStripeId("re_not_found_1");
 
 		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(1);
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 		expect(result).toBeNull();
 	});
 
 	it("should return null when not found by stripeRefundId and not found by metadataRefundId either", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValueOnce(null).mockResolvedValueOnce(null);
+		mockPrisma.refund.findUnique.mockResolvedValueOnce(null);
+		mockTx.refund.findUnique.mockResolvedValueOnce(null);
 
 		const result = await resolveRefundByStripeId("re_not_found_1", "also-not-found");
 
-		expect(mockPrisma.refund.findUnique).toHaveBeenCalledTimes(2);
-		expect(mockPrisma.refund.update).not.toHaveBeenCalled();
+		expect(mockTx.refund.update).not.toHaveBeenCalled();
 		expect(result).toBeNull();
 	});
 });

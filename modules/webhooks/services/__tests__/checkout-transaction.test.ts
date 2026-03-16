@@ -91,6 +91,7 @@ function makeMultiItemOrder(stockOverrides?: { sku1Stock?: number; sku2Stock?: n
 		id: "order-multi",
 		orderNumber: "SYN-MULTI-001",
 		userId: "user-1",
+		customerEmail: "marie@example.com",
 		paymentStatus: "PENDING",
 		shippingFirstName: "Marie",
 		shippingLastName: "Dupont",

@@ -175,6 +175,7 @@ function makeOrderWithItems(overrides: Partial<OrderWithItems> = {}): OrderWithI
 		id: "order-1",
 		orderNumber: "SYN-001",
 		userId: "user-1",
+		customerEmail: "client@example.com",
 		shippingFirstName: "Jean",
 		shippingLastName: "Dupont",
 		shippingAddress1: "1 rue de la Paix",
