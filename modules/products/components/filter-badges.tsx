@@ -97,6 +97,7 @@ export function ProductFilterBadges({
 			activeFilters={allActiveFilters}
 			onRemove={handleRemove}
 			onClearAll={handleClearAll}
+			compactMobile
 		/>
 	);
 }

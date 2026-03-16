@@ -27,9 +27,10 @@ interface FilterBadgeProps {
 		displayValue?: string;
 	} | null;
 	onRemove: (key: string, value?: string) => void;
+	compactMobile?: boolean;
 }
 
-export function FilterBadge({ filter, formatFilter, onRemove }: FilterBadgeProps) {
+export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: FilterBadgeProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const isMobile = useIsMobile();
 
@@ -118,7 +119,14 @@ export function FilterBadge({ filter, formatFilter, onRemove }: FilterBadgeProps
 			<span className="truncate">
 				{displayValue && displayValue.length > 0 ? (
 					<>
-						<span className="text-muted-foreground font-normal">{displayLabel} :</span>{" "}
+						<span
+							className={cn(
+								"text-muted-foreground font-normal",
+								compactMobile && "hidden sm:inline",
+							)}
+						>
+							{displayLabel} :
+						</span>{" "}
 						<span className="font-medium">{displayValue}</span>
 					</>
 				) : (

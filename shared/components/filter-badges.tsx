@@ -55,6 +55,10 @@ interface FilterBadgesProps {
 	 * Si fourni, remplace le comportement par défaut
 	 */
 	onClearAll?: () => void;
+	/**
+	 * Sur mobile, masque le label et n'affiche que la valeur
+	 */
+	compactMobile?: boolean;
 }
 
 /**
@@ -70,6 +74,7 @@ export function FilterBadges({
 	activeFilters: activeFiltersProp,
 	onRemove,
 	onClearAll,
+	compactMobile,
 }: FilterBadgesProps) {
 	const { optimisticActiveFilters, removeFilterOptimistic, clearAllFiltersOptimistic, isPending } =
 		useFilter(filterOptions);
@@ -164,6 +169,7 @@ export function FilterBadges({
 						filter={filter}
 						formatFilter={formatFilter}
 						onRemove={handleRemoveWithFocus}
+						compactMobile={compactMobile}
 					/>
 				))}
 
