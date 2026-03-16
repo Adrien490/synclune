@@ -18,6 +18,20 @@ beforeAll(() => {
 	});
 });
 
+// Mock next/font/google (imported transitively via fonts.ts)
+vi.mock("next/font/google", () => {
+	const fontMock = () => ({
+		className: "mock-font",
+		variable: "--mock-font",
+		style: { fontFamily: "mock" },
+	});
+	return {
+		Figtree: fontMock,
+		Fraunces: fontMock,
+		Caveat: fontMock,
+	};
+});
+
 // Mock next/link
 vi.mock("next/link", () => ({
 	default: ({

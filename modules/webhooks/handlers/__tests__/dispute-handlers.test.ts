@@ -50,6 +50,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
 	ROUTES: mockROUTES,
+	EXTERNAL_URLS: {
+		STRIPE: {
+			DISPUTE: (disputeId: string) => `https://dashboard.stripe.com/test/disputes/${disputeId}`,
+		},
+	},
 }));
 
 vi.mock("@/modules/orders/constants/cache", () => ({
@@ -181,7 +186,7 @@ describe("handleDisputeCreated", () => {
 						amount: 5000,
 						disputeId: "dp_test_1",
 						dashboardUrl: "https://synclune.fr/admin/ventes/commandes/order-1",
-						stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test_1",
+						stripeDashboardUrl: "https://dashboard.stripe.com/test/disputes/dp_test_1",
 					}),
 				},
 				{
@@ -451,7 +456,7 @@ describe("handleDisputeClosed", () => {
 		const alertTask = result?.tasks?.find((t) => t.type === "ADMIN_DISPUTE_ALERT");
 		expect(alertTask?.data).toMatchObject({
 			dashboardUrl: "https://synclune.fr/admin/ventes/commandes/order-1",
-			stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test_1",
+			stripeDashboardUrl: "https://dashboard.stripe.com/test/disputes/dp_test_1",
 		});
 	});
 

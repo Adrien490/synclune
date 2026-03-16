@@ -46,6 +46,11 @@ vi.mock("@/modules/webhooks/handlers/checkout-handlers", () => ({
 
 vi.mock("@/shared/constants/urls", () => ({
 	getBaseUrl: mockGetBaseUrl,
+	ROUTES: {
+		SHOP: {
+			CART: "/panier",
+		},
+	},
 }));
 
 vi.mock("@/modules/orders/constants/cache", () => ({
@@ -245,7 +250,7 @@ describe("handleAsyncPaymentFailed", () => {
 			expect(emailTask.data.to).toBe("client@example.com");
 			expect(emailTask.data.customerName).toBe("Marie Dupont");
 			expect(emailTask.data.orderNumber).toBe("SYN-001");
-			expect(emailTask.data.retryUrl).toBe("https://synclune.fr/creations");
+			expect(emailTask.data.retryUrl).toBe("https://synclune.fr/panier");
 		}
 	});
 
