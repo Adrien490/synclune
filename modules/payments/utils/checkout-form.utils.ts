@@ -52,9 +52,6 @@ export function getCheckoutFormOptions(
 				phoneNumber: defaultAddress?.phone ?? "",
 			},
 
-			// Newsletter consent
-			newsletterOptIn: false,
-
 			// Save info checkbox (logged-in users only)
 			saveInfo: false,
 

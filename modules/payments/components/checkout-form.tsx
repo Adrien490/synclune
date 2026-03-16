@@ -144,7 +144,6 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 			email: isGuest ? (values.email as string) || undefined : undefined,
 			discountCode,
 			paymentIntentId: pi.paymentIntentId!,
-			newsletterOptIn: values.newsletterOptIn,
 			saveInfo: values.saveInfo,
 		};
 	}

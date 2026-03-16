@@ -17,7 +17,6 @@ import { parseFullName } from "@/modules/payments/utils/parse-full-name";
 import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
 import { createOrderInTransaction } from "@/modules/payments/services/order-creation.service";
 import { buildStripeLineItems } from "@/modules/payments/services/checkout-line-items.service";
-import { subscribeToNewsletterInternal } from "@/modules/newsletter/services/subscribe-to-newsletter-internal";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { logger } from "@/shared/lib/logger";
@@ -173,7 +172,6 @@ export async function confirmCheckout(
 				userId,
 				finalEmail,
 				discountCode: v.discountCode,
-				newsletterOptIn: v.newsletterOptIn,
 				paymentIntentId: v.paymentIntentId,
 			});
 
@@ -225,23 +223,7 @@ export async function confirmCheckout(
 				throw stripeError;
 			}
 
-			// 10. Newsletter opt-in
-			if (v.newsletterOptIn && finalEmail) {
-				const userAgent = headersList.get("user-agent") ?? "";
-				subscribeToNewsletterInternal({
-					email: finalEmail,
-					ipAddress: ipAddress ?? "",
-					userAgent,
-					consentSource: "checkout_form",
-				}).catch((e) => {
-					logger.warn("Newsletter subscription failed during checkout", {
-						service: "checkout",
-						error: e instanceof Error ? e.message : String(e),
-					});
-				});
-			}
-
-			// 11. Save address if requested
+			// 10. Save address if requested
 			if (v.saveInfo && userId) {
 				saveAddressForUser(userId, firstName, lastName, v.shippingAddress).catch((e) => {
 					logger.warn("Failed to save address during checkout", {

@@ -18,7 +18,6 @@ const {
 	mockGetOrCreateStripeCustomer,
 	mockCreateOrderInTransaction,
 	mockBuildStripeLineItems,
-	mockSubscribeToNewsletterInternal,
 	mockStripe,
 	mockCircuitBreakerErrorClass,
 	mockSentryStartSpan,
@@ -64,7 +63,6 @@ const {
 		mockGetOrCreateStripeCustomer: vi.fn(),
 		mockCreateOrderInTransaction: vi.fn(),
 		mockBuildStripeLineItems: vi.fn(),
-		mockSubscribeToNewsletterInternal: vi.fn(),
 		mockStripe: {
 			paymentIntents: {
 				retrieve: vi.fn(),
@@ -129,10 +127,6 @@ vi.mock("@/modules/payments/services/order-creation.service", () => ({
 
 vi.mock("@/modules/payments/services/checkout-line-items.service", () => ({
 	buildStripeLineItems: mockBuildStripeLineItems,
-}));
-
-vi.mock("@/modules/newsletter/services/subscribe-to-newsletter-internal", () => ({
-	subscribeToNewsletterInternal: mockSubscribeToNewsletterInternal,
 }));
 
 vi.mock("@/shared/lib/stripe", () => ({
@@ -232,7 +226,6 @@ function createValidData(overrides: Partial<ConfirmCheckoutData> = {}): ConfirmC
 		email: undefined,
 		discountCode: undefined,
 		paymentIntentId: "pi_test_123",
-		newsletterOptIn: false,
 		saveInfo: false,
 		...overrides,
 	};
@@ -328,8 +321,6 @@ function setupDefaults() {
 	mockStripe.paymentIntents.update.mockResolvedValue({ ...MOCK_PAYMENT_INTENT, amount: 5090 });
 
 	// Newsletter (fire-and-forget)
-	mockSubscribeToNewsletterInternal.mockResolvedValue({ success: true });
-
 	// Cart cache
 	mockGetCartInvalidationTags.mockReturnValue(["cart-user-user-123"]);
 
@@ -457,7 +448,6 @@ describe("confirmCheckout", () => {
 					userId: "user-123",
 					finalEmail: "marie@example.com",
 					paymentIntentId: "pi_test_123",
-					newsletterOptIn: false,
 				}),
 			);
 		});
@@ -991,51 +981,6 @@ describe("confirmCheckout", () => {
 			expect(mockPrisma.order.delete).toHaveBeenCalledWith({
 				where: { id: "order-001" },
 			});
-		});
-	});
-
-	// ──────────────────────────────────────────────────────────────
-	// Newsletter opt-in
-	// ──────────────────────────────────────────────────────────────
-
-	describe("newsletter opt-in", () => {
-		it("should call subscribeToNewsletterInternal when newsletterOptIn is true", async () => {
-			await confirmCheckout(createValidData({ newsletterOptIn: true }));
-
-			expect(mockSubscribeToNewsletterInternal).toHaveBeenCalledWith(
-				expect.objectContaining({
-					email: "marie@example.com",
-					ipAddress: "192.168.1.1",
-					consentSource: "checkout_form",
-				}),
-			);
-		});
-
-		it("should not call subscribeToNewsletterInternal when newsletterOptIn is false", async () => {
-			await confirmCheckout(createValidData({ newsletterOptIn: false }));
-
-			expect(mockSubscribeToNewsletterInternal).not.toHaveBeenCalled();
-		});
-
-		it("should pass user-agent header to newsletter subscription", async () => {
-			mockHeaders.mockResolvedValue(new Headers({ "user-agent": "Mozilla/5.0 TestBrowser" }));
-
-			await confirmCheckout(createValidData({ newsletterOptIn: true }));
-
-			expect(mockSubscribeToNewsletterInternal).toHaveBeenCalledWith(
-				expect.objectContaining({
-					userAgent: "Mozilla/5.0 TestBrowser",
-				}),
-			);
-		});
-
-		it("should not block checkout when newsletter subscription fails", async () => {
-			mockSubscribeToNewsletterInternal.mockRejectedValue(new Error("Email service down"));
-
-			const result = await confirmCheckout(createValidData({ newsletterOptIn: true }));
-
-			// Newsletter failure should not affect checkout result — it is fire-and-forget
-			expect(result.success).toBe(true);
 		});
 	});
 

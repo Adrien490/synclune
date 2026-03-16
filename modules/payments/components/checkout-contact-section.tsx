@@ -69,20 +69,6 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 						<span className="font-medium">{session.user.email}</span>
 					</div>
 				)}
-				{/* Newsletter opt-in */}
-				<form.AppField name="newsletterOptIn">
-					{(field) => (
-						<div className="border-primary/10 bg-primary/3 flex items-start gap-3 rounded-xl border p-3.5">
-							<field.CheckboxField
-								label={
-									<span className="text-sm">
-										Je souhaite recevoir les nouveautés et offres exclusives Synclune
-									</span>
-								}
-							/>
-						</div>
-					)}
-				</form.AppField>
 			</div>
 		</CheckoutSection>
 	);
