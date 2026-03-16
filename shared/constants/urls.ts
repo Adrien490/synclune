@@ -110,10 +110,14 @@ export const ROUTES = {
  * External service URLs
  */
 export const EXTERNAL_URLS = {
-	// Stripe Dashboard
+	// Stripe Dashboard (test mode uses /test/ prefix)
 	STRIPE: {
 		PAYMENT: (paymentIntentId: string) =>
 			`https://dashboard.stripe.com/payments/${paymentIntentId}`,
+		DISPUTE: (disputeId: string) => {
+			const isTest = process.env.STRIPE_SECRET_KEY?.startsWith("sk_test_");
+			return `https://dashboard.stripe.com/${isTest ? "test/" : ""}disputes/${disputeId}`;
+		},
 		WEBHOOKS: "https://dashboard.stripe.com/webhooks",
 	},
 

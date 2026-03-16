@@ -23,6 +23,7 @@ function mapToOrderWithItems(order: {
 	id: string;
 	orderNumber: string;
 	userId: string | null;
+	customerEmail: string | null;
 	shippingFirstName: string | null;
 	shippingLastName: string | null;
 	shippingAddress1: string | null;
@@ -51,6 +52,7 @@ function mapToOrderWithItems(order: {
 		id: order.id,
 		orderNumber: order.orderNumber,
 		userId: order.userId,
+		customerEmail: order.customerEmail,
 		shippingFirstName: order.shippingFirstName,
 		shippingLastName: order.shippingLastName,
 		shippingAddress1: order.shippingAddress1,
