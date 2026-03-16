@@ -17,6 +17,7 @@ export const figtree = Figtree({
 	subsets: ["latin"],
 	display: "swap",
 	variable: "--font-sans",
+	preload: false, // Safari warns about unused preload — body font renders after layout
 });
 
 // Caveat — Police manuscrite authentique et décontractée
