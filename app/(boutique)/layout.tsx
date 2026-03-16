@@ -29,11 +29,9 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 	return (
 		<>
 			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
-			<ErrorBoundary fallback={null}>
-				<Suspense fallback={null}>
-					<AnnouncementBarWrapper />
-				</Suspense>
-			</ErrorBoundary>
+			<Suspense fallback={null}>
+				<AnnouncementBarWrapper />
+			</Suspense>
 			<Suspense fallback={<NavbarSkeleton />}>
 				<Navbar />
 			</Suspense>
