@@ -1,4 +1,5 @@
 import { cn } from "@/shared/utils/cn";
+import { slugify } from "@/shared/utils/generate-slug";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -15,7 +16,16 @@ import { StarIcon } from "@/shared/components/icons/star-icon";
 import type { Product } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import type { ComponentProps, ReactNode } from "react";
-import type { ColorSwatch } from "@/modules/products/types/product-list.types";
+import type { ColorSwatch, SkuFromList } from "@/modules/products/types/product-list.types";
+
+function buildSkuUrl(baseUrl: string, sku: SkuFromList): string {
+	const params = new URLSearchParams();
+	if (sku.color?.slug) params.set("color", sku.color.slug);
+	if (sku.material?.name) params.set("material", slugify(sku.material.name));
+	if (sku.size) params.set("size", sku.size);
+	const qs = params.toString();
+	return qs ? `${baseUrl}?${qs}` : baseUrl;
+}
 
 interface ProductCardProps {
 	product: Product;
@@ -211,7 +221,11 @@ export function ProductCard({
 	// Stock badges take priority over promo badge (same position)
 	const showPromoBadge = hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge;
 
-	const productUrl = `/creations/${slug}`;
+	const baseUrl = `/creations/${slug}`;
+	const productUrl =
+		preferOnSale && defaultSku && !defaultSku.isDefault
+			? buildSkuUrl(baseUrl, defaultSku)
+			: baseUrl;
 
 	const isAboveFold = (index ?? 0) < ABOVE_FOLD_THRESHOLD;
 

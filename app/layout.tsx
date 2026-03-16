@@ -1,6 +1,6 @@
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { CookieBanner } from "@/shared/components/cookie-banner";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
 import { PostHogIdentifyAsync } from "@/shared/components/posthog-identify-async";
@@ -56,11 +56,9 @@ export default function RootLayout({
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />
-					<ErrorBoundary fallback={null}>
-						<Suspense fallback={null}>
-							<UploadThingSSR />
-						</Suspense>
-					</ErrorBoundary>
+					<Suspense fallback={null}>
+						<UploadThingSSR />
+					</Suspense>
 					<RootProviders>
 						<Suspense fallback={null}>
 							<PostHogIdentifyAsync />

@@ -22,7 +22,7 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { ClearSearchButton } from "@/modules/products/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 // Lazy loading - filter sheet charge uniquement a l'ouverture
@@ -176,20 +176,15 @@ export function ProductCatalog({
 						)}
 					</Suspense>
 
-					<ErrorBoundary
-						errorMessage="Impossible de charger les produits"
-						className="flex min-h-[200px] items-center justify-center rounded-xl"
-					>
-						<Suspense fallback={<ProductListSkeleton />}>
-							<ProductList
-								productsPromise={productsPromise}
-								perPage={perPage}
-								searchTerm={searchTerm}
-								wishlistProductIdsPromise={wishlistProductIdsPromise}
-								preferOnSale={preferOnSale}
-							/>
-						</Suspense>
-					</ErrorBoundary>
+					<Suspense fallback={<ProductListSkeleton />}>
+						<ProductList
+							productsPromise={productsPromise}
+							perPage={perPage}
+							searchTerm={searchTerm}
+							wishlistProductIdsPromise={wishlistProductIdsPromise}
+							preferOnSale={preferOnSale}
+						/>
+					</Suspense>
 				</div>
 			</section>
 

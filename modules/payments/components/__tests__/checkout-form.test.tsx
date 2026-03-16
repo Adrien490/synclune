@@ -39,10 +39,6 @@ vi.mock("@/modules/payments/hooks/use-payment-intent", () => ({
 	}),
 }));
 
-vi.mock("@/shared/components/error-boundary", () => ({
-	ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 vi.mock("@stripe/react-stripe-js", () => ({
 	Elements: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	PaymentElement: () => <div data-testid="payment-element" />,

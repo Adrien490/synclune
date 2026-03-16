@@ -17,7 +17,7 @@ import { usePrefetchVideos } from "@/modules/media/hooks/use-video-prefetch";
 import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schema";
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import { GalleryCounter } from "@/shared/components/gallery/counter";
 import { GalleryNavigation } from "@/shared/components/gallery/navigation";
 import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
@@ -115,11 +115,9 @@ function GalleryThumbnailList({
 
 export function Gallery(props: GalleryProps) {
 	return (
-		<ErrorBoundary errorMessage="Impossible de charger la galerie">
-			<Suspense fallback={<GalleryLoadingSkeleton />}>
-				<GalleryContent {...props} />
-			</Suspense>
-		</ErrorBoundary>
+		<Suspense fallback={<GalleryLoadingSkeleton />}>
+			<GalleryContent {...props} />
+		</Suspense>
 	);
 }
 

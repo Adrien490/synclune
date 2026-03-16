@@ -8,7 +8,7 @@ import { toast } from "sonner";
 
 import { Fade } from "@/shared/components/animations/fade";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import { SearchInput, type SearchInputHandle } from "@/shared/components/search-input";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -340,21 +340,16 @@ export function QuickSearchDialog({
 										</Button>
 									</div>
 								) : searchResults ? (
-									<ErrorBoundary
-										errorMessage="La recherche est temporairement indisponible."
-										className="flex flex-1 items-center justify-center"
-									>
-										<QuickSearchContent
-											results={searchResults}
-											query={searchQuery}
-											collections={collections}
-											productTypes={productTypes}
-											onSearch={handleSearchFromSuggestion}
-											onClose={handleClose}
-											onSelectResult={handleSelectResult}
-											onViewAllResults={handleViewAllResults}
-										/>
-									</ErrorBoundary>
+									<QuickSearchContent
+										results={searchResults}
+										query={searchQuery}
+										collections={collections}
+										productTypes={productTypes}
+										onSearch={handleSearchFromSuggestion}
+										onClose={handleClose}
+										onSelectResult={handleSelectResult}
+										onViewAllResults={handleViewAllResults}
+									/>
 								) : (
 									<SearchResultsSkeleton />
 								)}

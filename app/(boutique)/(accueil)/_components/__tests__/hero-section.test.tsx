@@ -9,11 +9,6 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-// Mock ErrorBoundary as a passthrough
-vi.mock("@/shared/components/error-boundary", () => ({
-	ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 // Mock SectionTitle as a simple heading
 vi.mock("@/shared/components/section-title", () => ({
 	SectionTitle: ({

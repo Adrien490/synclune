@@ -132,10 +132,6 @@ vi.mock("@/modules/media/constants/ui-interactions.constants", () => ({
 	},
 }));
 
-vi.mock("@/shared/components/error-boundary", () => ({
-	ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

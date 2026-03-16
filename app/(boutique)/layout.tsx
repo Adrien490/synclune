@@ -4,7 +4,7 @@ import { AnnouncementBarWrapper } from "@/modules/announcements/components/annou
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";

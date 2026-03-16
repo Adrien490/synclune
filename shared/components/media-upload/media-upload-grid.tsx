@@ -27,7 +27,7 @@ import { useState, useEffect } from "react";
 import { useLightbox } from "@/shared/hooks";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import dynamic from "next/dynamic";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
@@ -358,14 +358,5 @@ export function MediaUploadGrid({
 				onIndexChange={setLightboxIndex}
 			/>
 		</>
-	);
-}
-
-// Wrapper with ErrorBoundary
-export function MediaUploadGridWithErrorBoundary(props: MediaUploadGridProps) {
-	return (
-		<ErrorBoundary errorMessage="Impossible de charger la grille de medias">
-			<MediaUploadGrid {...props} />
-		</ErrorBoundary>
 	);
 }

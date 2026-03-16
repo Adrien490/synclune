@@ -5,8 +5,7 @@ import { type Metadata } from "next";
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
-import { ChartError } from "@/modules/dashboard/components/chart-error";
+
 import {
 	KpisSkeleton,
 	ChartSkeleton,
@@ -31,57 +30,25 @@ export default async function AdminDashboardPage() {
 
 			<div className="space-y-6">
 				{/* 3 KPIs en grille */}
-				<ErrorBoundary
-					fallback={
-						<ChartError
-							title="Erreur de chargement"
-							description="Impossible de charger les indicateurs"
-							minHeight={120}
-						/>
-					}
-				>
-					<Suspense fallback={<KpisSkeleton count={3} ariaLabel="Chargement des indicateurs" />}>
-						<DashboardKpis />
-					</Suspense>
-				</ErrorBoundary>
+				<Suspense fallback={<KpisSkeleton count={3} ariaLabel="Chargement des indicateurs" />}>
+					<DashboardKpis />
+				</Suspense>
 
 				{/* Graphique revenus 30j + Commandes récentes */}
 				<div className="grid gap-6 lg:grid-cols-2">
-					<ErrorBoundary
+					<Suspense
 						fallback={
-							<ChartError
-								title="Erreur de chargement"
-								description="Impossible de charger le graphique"
-								minHeight={300}
-							/>
+							<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />
 						}
 					>
-						<Suspense
-							fallback={
-								<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />
-							}
-						>
-							<RevenueChartWrapper />
-						</Suspense>
-					</ErrorBoundary>
+						<RevenueChartWrapper />
+					</Suspense>
 
-					<ErrorBoundary
-						fallback={
-							<ChartError
-								title="Erreur de chargement"
-								description="Impossible de charger les commandes"
-								minHeight={300}
-							/>
-						}
+					<Suspense
+						fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />}
 					>
-						<Suspense
-							fallback={
-								<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />
-							}
-						>
-							<RecentOrdersWrapper />
-						</Suspense>
-					</ErrorBoundary>
+						<RecentOrdersWrapper />
+					</Suspense>
 				</div>
 			</div>
 		</>

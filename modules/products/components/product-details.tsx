@@ -10,7 +10,7 @@ import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 import { Separator } from "@/shared/components/ui/separator";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { ErrorBoundary } from "@/shared/components/error-boundary";
+
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 interface ProductDetailsProps {
@@ -92,18 +92,14 @@ export function ProductDetails({
 					exit="exit"
 					transition={{ duration: prefersReducedMotion ? 0 : 0.15, delay: 0.05 }}
 				>
-					<ErrorBoundary className="py-2" errorMessage="Impossible de charger les caractéristiques">
-						<ProductCharacteristics selectedSku={currentSku} />
-					</ErrorBoundary>
+					<ProductCharacteristics selectedSku={currentSku} />
 				</m.div>
 			</AnimatePresence>
 
 			<Separator className="bg-border" />
 
 			{/* 6. Highlights produit (après CTA - pattern Etsy) */}
-			<ErrorBoundary className="py-2" errorMessage="Impossible de charger les points forts">
-				<ProductHighlights product={product} />
-			</ErrorBoundary>
+			<ProductHighlights product={product} />
 
 			{/* 7. Description produit (après CTA - pattern Etsy) */}
 			{product.description && (
