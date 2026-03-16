@@ -2,7 +2,7 @@ import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { DisputeReason, DisputeStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { getBaseUrl, ROUTES, EXTERNAL_URLS } from "@/shared/constants/urls";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { WebhookHandlerResult } from "../types/webhook.types";
@@ -154,7 +154,7 @@ export async function handleDisputeCreated(
 
 	const baseUrl = getBaseUrl();
 	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-	const stripeDashboardUrl = `https://dashboard.stripe.com/disputes/${dispute.id}`;
+	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
 
 	return {
 		success: true,
@@ -292,7 +292,7 @@ export async function handleDisputeClosed(
 
 	const baseUrl = getBaseUrl();
 	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-	const stripeDashboardUrl = `https://dashboard.stripe.com/disputes/${dispute.id}`;
+	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
 
 	return {
 		success: true,

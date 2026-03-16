@@ -159,93 +159,93 @@ export async function syncStripeRefunds(
 }
 
 /**
- * Met à jour le statut de paiement d'une commande selon les remboursements
+ * Met à jour le statut de paiement d'une commande selon les remboursements.
+ * Uses a transaction to re-read current status and prevent race conditions
+ * when multiple charge.refunded events arrive concurrently.
  */
 export async function updateOrderPaymentStatus(
 	orderId: string,
 	orderTotal: number,
 	totalRefunded: number,
-	currentPaymentStatus: PaymentStatus,
 ): Promise<{ isFullyRefunded: boolean; isPartiallyRefunded: boolean }> {
 	const isFullyRefunded = totalRefunded >= orderTotal;
 	const isPartiallyRefunded = totalRefunded > 0 && totalRefunded < orderTotal;
 
-	if (isFullyRefunded && currentPaymentStatus !== PaymentStatus.REFUNDED) {
-		await prisma.order.update({
+	await prisma.$transaction(async (tx) => {
+		const order = await tx.order.findUniqueOrThrow({
 			where: { id: orderId },
-			data: { paymentStatus: PaymentStatus.REFUNDED },
+			select: { paymentStatus: true },
 		});
-	} else if (
-		isPartiallyRefunded &&
-		currentPaymentStatus !== PaymentStatus.PARTIALLY_REFUNDED &&
-		currentPaymentStatus !== PaymentStatus.REFUNDED
-	) {
-		await prisma.order.update({
-			where: { id: orderId },
-			data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
-		});
-	}
+
+		if (isFullyRefunded && order.paymentStatus !== PaymentStatus.REFUNDED) {
+			await tx.order.update({
+				where: { id: orderId },
+				data: { paymentStatus: PaymentStatus.REFUNDED },
+			});
+		} else if (
+			isPartiallyRefunded &&
+			order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED &&
+			order.paymentStatus !== PaymentStatus.REFUNDED
+		) {
+			await tx.order.update({
+				where: { id: orderId },
+				data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+			});
+		}
+	});
 
 	return { isFullyRefunded, isPartiallyRefunded };
 }
 
+const REFUND_RECORD_SELECT = {
+	id: true,
+	status: true,
+	amount: true,
+	orderId: true,
+	order: {
+		select: {
+			id: true,
+			orderNumber: true,
+			customerEmail: true,
+			stripePaymentIntentId: true,
+		},
+	},
+} as const;
+
 /**
  * Resolves a refund by its Stripe ID or by metadata refund_id.
- * If found via metadataRefundId fallback, links the stripeRefundId to the record.
+ * If found via metadataRefundId fallback, links the stripeRefundId atomically.
  */
 export async function resolveRefundByStripeId(
 	stripeRefundId: string,
 	metadataRefundId?: string,
 ): Promise<RefundRecord | null> {
-	// D'abord chercher via stripeRefundId
-	let refund = await prisma.refund.findUnique({
+	// Direct lookup by stripeRefundId
+	const refund = await prisma.refund.findUnique({
 		where: { stripeRefundId },
-		select: {
-			id: true,
-			status: true,
-			amount: true,
-			orderId: true,
-			order: {
-				select: {
-					id: true,
-					orderNumber: true,
-					customerEmail: true,
-					stripePaymentIntentId: true,
-				},
-			},
-		},
+		select: REFUND_RECORD_SELECT,
 	});
 
-	// Si pas trouvé et metadata présente, chercher via refund_id
-	if (!refund && metadataRefundId) {
-		refund = await prisma.refund.findUnique({
+	if (refund) return refund;
+
+	// Fallback: find by metadata refund_id and link stripeRefundId atomically
+	if (!metadataRefundId) return null;
+
+	return prisma.$transaction(async (tx) => {
+		const found = await tx.refund.findUnique({
 			where: { id: metadataRefundId },
-			select: {
-				id: true,
-				status: true,
-				amount: true,
-				orderId: true,
-				order: {
-					select: {
-						id: true,
-						orderNumber: true,
-						customerEmail: true,
-						stripePaymentIntentId: true,
-					},
-				},
-			},
+			select: REFUND_RECORD_SELECT,
 		});
 
-		// Lier le stripeRefundId si trouvé
-		if (refund) {
-			await prisma.refund.update({
-				where: { id: refund.id },
+		if (found) {
+			await tx.refund.update({
+				where: { id: found.id },
 				data: { stripeRefundId },
 			});
 		}
-	}
 
-	return refund;
+		return found;
+	});
 }
 
 /**

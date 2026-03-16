@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
-import { prisma } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import {
 	syncStripeRefunds,
 	updateOrderPaymentStatus,
@@ -34,9 +34,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			throw new Error("No payment intent found for refunded charge");
 		}
 
-		// 2. Trouver la commande via payment intent
-		const order = await prisma.order.findUnique({
-			where: { stripePaymentIntentId: paymentIntentId },
+		// 2. Trouver la commande via payment intent (exclude soft-deleted)
+		const order = await prisma.order.findFirst({
+			where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
 			select: {
 				id: true,
 				orderNumber: true,
@@ -72,7 +72,6 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 			order.id,
 			order.total,
 			totalRefundedOnStripe,
-			order.paymentStatus,
 		);
 
 		logger.info(

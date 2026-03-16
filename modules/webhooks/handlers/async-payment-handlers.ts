@@ -7,7 +7,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
-import { getBaseUrl } from "@/shared/constants/urls";
+import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
 
 /**
@@ -189,7 +189,7 @@ export async function handleAsyncPaymentFailed(
 		});
 
 		if (order.customerEmail) {
-			const retryUrl = `${getBaseUrl()}/creations`;
+			const retryUrl = `${getBaseUrl()}${ROUTES.SHOP.CART}`;
 			tasks.push({
 				type: "PAYMENT_FAILED_EMAIL",
 				data: {

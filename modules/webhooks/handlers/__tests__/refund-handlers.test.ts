@@ -15,7 +15,7 @@ const {
 	mockGetBaseUrl,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn() },
+		order: { findFirst: vi.fn() },
 	},
 	mockSyncStripeRefunds: vi.fn(),
 	mockUpdateOrderPaymentStatus: vi.fn(),
@@ -28,6 +28,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("../../services/refund.service", () => ({
@@ -155,7 +156,7 @@ describe("handleChargeRefunded", () => {
 	});
 
 	it("should skip (success) when order not found", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(null);
+		mockPrisma.order.findFirst.mockResolvedValue(null);
 
 		const result = await handleChargeRefunded(makeCharge());
 
@@ -164,30 +165,30 @@ describe("handleChargeRefunded", () => {
 
 	it("should handle payment_intent as string", async () => {
 		const order = makeOrder();
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
 		await handleChargeRefunded(makeCharge({ payment_intent: "pi_456" }));
 
-		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
+		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { stripePaymentIntentId: "pi_456" },
+				where: { stripePaymentIntentId: "pi_456", deletedAt: null },
 			}),
 		);
 	});
 
 	it("should handle payment_intent as object", async () => {
 		const order = makeOrder();
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
 		await handleChargeRefunded(makeCharge({ payment_intent: { id: "pi_789" } }));
 
-		expect(mockPrisma.order.findUnique).toHaveBeenCalledWith(
+		expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { stripePaymentIntentId: "pi_789" },
+				where: { stripePaymentIntentId: "pi_789", deletedAt: null },
 			}),
 		);
 	});
@@ -195,7 +196,7 @@ describe("handleChargeRefunded", () => {
 	it("should call syncStripeRefunds with correct args", async () => {
 		const charge = makeCharge();
 		const order = makeOrder({ refunds: [{ id: "r1" }] });
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
@@ -206,18 +207,18 @@ describe("handleChargeRefunded", () => {
 
 	it("should call updateOrderPaymentStatus with correct amount", async () => {
 		const order = makeOrder();
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
 
 		await handleChargeRefunded(makeCharge({ amount_refunded: 10000 }));
 
-		expect(mockUpdateOrderPaymentStatus).toHaveBeenCalledWith("order-1", 10000, 10000, "PAID");
+		expect(mockUpdateOrderPaymentStatus).toHaveBeenCalledWith("order-1", 10000, 10000);
 	});
 
 	it("should include userId cache tag when userId exists", async () => {
 		const order = makeOrder({ userId: "user-1" });
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
@@ -232,7 +233,7 @@ describe("handleChargeRefunded", () => {
 
 	it("should not include userId cache tag when userId is null", async () => {
 		const order = makeOrder({ userId: null });
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
@@ -246,7 +247,7 @@ describe("handleChargeRefunded", () => {
 
 	it("should build email task with correct data", async () => {
 		const order = makeOrder();
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
@@ -263,7 +264,7 @@ describe("handleChargeRefunded", () => {
 
 	it("should not build email task when customerEmail is absent", async () => {
 		const order = makeOrder({ customerEmail: null });
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: false });
 
@@ -275,7 +276,7 @@ describe("handleChargeRefunded", () => {
 
 	it("should determine isPartialRefund correctly (full refund)", async () => {
 		const order = makeOrder();
-		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.order.findFirst.mockResolvedValue(order);
 		mockSyncStripeRefunds.mockResolvedValue(undefined);
 		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
 

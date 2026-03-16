@@ -114,12 +114,163 @@ export async function extractShippingInfo(
 }
 
 /**
- * Processes order from a Checkout Session in an atomic transaction:
- * - Validates stock for all SKUs
- * - Decrements inventory
- * - Updates order status
- * - Deactivates out-of-stock SKUs
- * - Clears user cart
+ * Common order processing logic shared between CS and PI flows.
+ * Validates stock, decrements inventory, deactivates out-of-stock SKUs, clears cart.
+ * The caller provides flow-specific order update data and guest session ID.
+ */
+async function processOrderAtomically(
+	tx: Prisma.TransactionClient,
+	orderId: string,
+	orderUpdateData: Prisma.OrderUpdateInput,
+	guestSessionId: string | undefined,
+	flowLabel: string,
+): Promise<OrderWithItems> {
+	// 1. Fetch order with items and SKUs
+	const order = await tx.order.findUnique({
+		where: { id: orderId },
+		include: {
+			items: {
+				include: {
+					sku: {
+						select: {
+							id: true,
+							inventory: true,
+							sku: true,
+						},
+					},
+				},
+			},
+			user: {
+				select: { id: true },
+			},
+		},
+	});
+
+	if (!order) {
+		throw new Error(`Order not found: ${orderId}`);
+	}
+
+	// 2. Idempotence check
+	if (order.paymentStatus === "PAID") {
+		logger.info(`⚠️  [WEBHOOK] Order ${orderId} already processed (${flowLabel}), skipping`, {
+			service: "webhook",
+		});
+		return mapToOrderWithItems(order);
+	}
+
+	// 3. Re-validate all items INSIDE the transaction to prevent race conditions
+	logger.info(
+		`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId} (${flowLabel})`,
+		{ service: "webhook" },
+	);
+
+	const skuIds = order.items.map((item) => item.skuId);
+	const skus = await tx.$queryRaw<
+		Array<{
+			id: string;
+			inventory: number;
+			isActive: boolean;
+			deletedAt: Date | null;
+			productStatus: string;
+			productDeletedAt: Date | null;
+		}>
+	>`
+		SELECT ps.id, ps.inventory, ps."isActive", ps."deletedAt",
+		       p.status as "productStatus", p."deletedAt" as "productDeletedAt"
+		FROM "ProductSku" ps
+		INNER JOIN "Product" p ON ps."productId" = p.id
+		WHERE ps.id = ANY(${skuIds}::text[])
+		FOR UPDATE
+	`;
+	const skuMap = new Map(skus.map((s) => [s.id, s]));
+
+	for (const item of order.items) {
+		const sku = skuMap.get(item.skuId);
+		const isValid =
+			sku &&
+			!sku.deletedAt &&
+			!sku.productDeletedAt &&
+			sku.isActive &&
+			sku.productStatus === "PUBLIC" &&
+			sku.inventory >= item.quantity;
+
+		if (!isValid) {
+			const reason = !sku
+				? "SKU not found"
+				: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
+			logger.error(
+				`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`,
+				undefined,
+				{ service: "webhook" },
+			);
+			throw new Error(
+				`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`,
+			);
+		}
+	}
+
+	logger.info(`[WEBHOOK] All items validated successfully for order ${orderId} (${flowLabel})`, {
+		service: "webhook",
+	});
+
+	// 4. Decrement stock for each item
+	for (const item of order.items) {
+		await tx.productSku.update({
+			where: { id: item.skuId },
+			data: { inventory: { decrement: item.quantity } },
+		});
+	}
+
+	logger.info(`✅ [WEBHOOK] Stock decremented for order ${orderId} (${flowLabel})`, {
+		service: "webhook",
+	});
+
+	// 5. Update order with flow-specific data
+	await tx.order.update({
+		where: { id: orderId },
+		data: orderUpdateData,
+	});
+
+	// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
+	const { count: deactivatedCount } = await tx.productSku.updateMany({
+		where: { id: { in: skuIds }, inventory: 0 },
+		data: { isActive: false },
+	});
+	if (deactivatedCount > 0) {
+		logger.info(
+			`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId} (${flowLabel})`,
+			{ service: "webhook" },
+		);
+	}
+
+	// 6. Clear cart after successful payment (logged-in OR guest)
+	if (order.userId) {
+		await tx.cartItem.deleteMany({
+			where: { cart: { userId: order.userId } },
+		});
+		logger.info(
+			`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment (${flowLabel})`,
+			{ service: "webhook" },
+		);
+	} else if (guestSessionId) {
+		await tx.cartItem.deleteMany({
+			where: { cart: { sessionId: guestSessionId } },
+		});
+		logger.info(
+			`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment (${flowLabel})`,
+			{ service: "webhook" },
+		);
+	}
+
+	logger.info(`✅ [WEBHOOK] Order processed successfully (${flowLabel}): ${order.orderNumber}`, {
+		service: "webhook",
+	});
+
+	return mapToOrderWithItems(order);
+}
+
+/**
+ * Processes order from a Checkout Session in an atomic transaction.
  */
 export async function processOrderTransaction(
 	orderId: string,
@@ -129,107 +280,10 @@ export async function processOrderTransaction(
 ): Promise<OrderWithItems> {
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
-			// 1. Fetch order with items and SKUs
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
-				include: {
-					items: {
-						include: {
-							sku: {
-								select: {
-									id: true,
-									inventory: true,
-									sku: true,
-								},
-							},
-						},
-					},
-					user: {
-						select: { id: true },
-					},
-				},
-			});
-
-			if (!order) {
-				throw new Error(`Order not found: ${orderId}`);
-			}
-
-			// 2. Idempotence check
-			if (order.paymentStatus === "PAID") {
-				logger.info(`⚠️  [WEBHOOK] Order ${orderId} already processed, skipping`, {
-					service: "webhook",
-				});
-				return mapToOrderWithItems(order);
-			}
-
-			// 3. Re-validate all items INSIDE the transaction to prevent race conditions
-			logger.info(`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId}`, {
-				service: "webhook",
-			});
-
-			const skuIds = order.items.map((item) => item.skuId);
-			const skus = await tx.$queryRaw<
-				Array<{
-					id: string;
-					inventory: number;
-					isActive: boolean;
-					deletedAt: Date | null;
-					productStatus: string;
-					productDeletedAt: Date | null;
-				}>
-			>`
-				SELECT ps.id, ps.inventory, ps."isActive", ps."deletedAt",
-				       p.status as "productStatus", p."deletedAt" as "productDeletedAt"
-				FROM "ProductSku" ps
-				INNER JOIN "Product" p ON ps."productId" = p.id
-				WHERE ps.id = ANY(${skuIds}::text[])
-				FOR UPDATE
-			`;
-			const skuMap = new Map(skus.map((s) => [s.id, s]));
-
-			for (const item of order.items) {
-				const sku = skuMap.get(item.skuId);
-				const isValid =
-					sku &&
-					!sku.deletedAt &&
-					!sku.productDeletedAt &&
-					sku.isActive &&
-					sku.productStatus === "PUBLIC" &&
-					sku.inventory >= item.quantity;
-
-				if (!isValid) {
-					const reason = !sku
-						? "SKU not found"
-						: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
-					logger.error(
-						`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`,
-						undefined,
-						{ service: "webhook" },
-					);
-					throw new Error(
-						`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`,
-					);
-				}
-			}
-
-			logger.info(`[WEBHOOK] All items validated successfully for order ${orderId}`, {
-				service: "webhook",
-			});
-
-			// 4. Decrement stock for each item
-			for (const item of order.items) {
-				await tx.productSku.update({
-					where: { id: item.skuId },
-					data: { inventory: { decrement: item.quantity } },
-				});
-			}
-
-			logger.info(`✅ [WEBHOOK] Stock decremented for order ${orderId}`, { service: "webhook" });
-
-			// 5. Update order with shipping info
-			await tx.order.update({
-				where: { id: orderId },
-				data: {
+			return processOrderAtomically(
+				tx,
+				orderId,
+				{
 					status: "PROCESSING",
 					paymentStatus: "PAID",
 					paidAt: new Date(),
@@ -240,47 +294,9 @@ export async function processOrderTransaction(
 					shippingMethod: getShippingMethodFromRate(shippingRateId ?? ""),
 					shippingCarrier: getShippingCarrierFromRate(shippingRateId ?? ""),
 				},
-			});
-
-			// 5b. Deactivate out-of-stock SKUs (single query instead of N+1)
-			const { count: deactivatedCount } = await tx.productSku.updateMany({
-				where: { id: { in: skuIds }, inventory: 0 },
-				data: { isActive: false },
-			});
-			if (deactivatedCount > 0) {
-				logger.info(
-					`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId}`,
-					{ service: "webhook" },
-				);
-			}
-
-			// 6. Clear cart after successful payment (logged-in OR guest)
-			if (order.userId) {
-				await tx.cartItem.deleteMany({
-					where: { cart: { userId: order.userId } },
-				});
-				logger.info(`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment`, {
-					service: "webhook",
-				});
-			} else {
-				// Guest: get sessionId from Stripe metadata
-				const guestSessionId = session.metadata?.guestSessionId;
-				if (guestSessionId) {
-					await tx.cartItem.deleteMany({
-						where: { cart: { sessionId: guestSessionId } },
-					});
-					logger.info(
-						`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment`,
-						{ service: "webhook" },
-					);
-				}
-			}
-
-			logger.info("✅ [WEBHOOK] Order processed successfully:" + " " + order.orderNumber, {
-				service: "webhook",
-			});
-
-			return mapToOrderWithItems(order);
+				session.metadata?.guestSessionId,
+				"CS flow",
+			);
 		},
 		{ timeout: 10000 },
 	);
@@ -288,7 +304,6 @@ export async function processOrderTransaction(
 
 /**
  * Processes order from a Payment Intent (new PI flow).
- * Similar to processOrderTransaction but uses PI metadata instead of Checkout Session.
  * Shipping info is already stored in the Order (set during confirmCheckout).
  */
 export async function processOrderFromPaymentIntent(
@@ -297,110 +312,10 @@ export async function processOrderFromPaymentIntent(
 ): Promise<OrderWithItems> {
 	return prisma.$transaction(
 		async (tx: Prisma.TransactionClient) => {
-			// 1. Fetch order with items and SKUs
-			const order = await tx.order.findUnique({
-				where: { id: orderId },
-				include: {
-					items: {
-						include: {
-							sku: {
-								select: {
-									id: true,
-									inventory: true,
-									sku: true,
-								},
-							},
-						},
-					},
-					user: {
-						select: { id: true },
-					},
-				},
-			});
-
-			if (!order) {
-				throw new Error(`Order not found: ${orderId}`);
-			}
-
-			// 2. Idempotence check
-			if (order.paymentStatus === "PAID") {
-				logger.info(`⚠️  [WEBHOOK] Order ${orderId} already processed (PI flow), skipping`, {
-					service: "webhook",
-				});
-				return mapToOrderWithItems(order);
-			}
-
-			// 3. Re-validate all items INSIDE the transaction
-			logger.info(
-				`[WEBHOOK] Re-validating ${order.items.length} items for order ${orderId} (PI flow)`,
-				{ service: "webhook" },
-			);
-
-			const skuIds = order.items.map((item) => item.skuId);
-			const skus = await tx.$queryRaw<
-				Array<{
-					id: string;
-					inventory: number;
-					isActive: boolean;
-					deletedAt: Date | null;
-					productStatus: string;
-					productDeletedAt: Date | null;
-				}>
-			>`
-				SELECT ps.id, ps.inventory, ps."isActive", ps."deletedAt",
-				       p.status as "productStatus", p."deletedAt" as "productDeletedAt"
-				FROM "ProductSku" ps
-				INNER JOIN "Product" p ON ps."productId" = p.id
-				WHERE ps.id = ANY(${skuIds}::text[])
-				FOR UPDATE
-			`;
-			const skuMap = new Map(skus.map((s) => [s.id, s]));
-
-			for (const item of order.items) {
-				const sku = skuMap.get(item.skuId);
-				const isValid =
-					sku &&
-					!sku.deletedAt &&
-					!sku.productDeletedAt &&
-					sku.isActive &&
-					sku.productStatus === "PUBLIC" &&
-					sku.inventory >= item.quantity;
-
-				if (!isValid) {
-					const reason = !sku
-						? "SKU not found"
-						: `invalid (active=${sku.isActive}, stock=${sku.inventory}, deleted=${!!sku.deletedAt})`;
-					logger.error(
-						`[WEBHOOK] Validation failed for order ${orderId}, SKU ${item.skuId}: ${reason}`,
-						undefined,
-						{ service: "webhook" },
-					);
-					throw new Error(
-						`Invalid item in order: ${reason} (SKU: ${item.skuId}, Quantity: ${item.quantity})`,
-					);
-				}
-			}
-
-			logger.info(`[WEBHOOK] All items validated successfully for order ${orderId} (PI flow)`, {
-				service: "webhook",
-			});
-
-			// 4. Decrement stock for each item
-			for (const item of order.items) {
-				await tx.productSku.update({
-					where: { id: item.skuId },
-					data: { inventory: { decrement: item.quantity } },
-				});
-			}
-
-			logger.info(`✅ [WEBHOOK] Stock decremented for order ${orderId} (PI flow)`, {
-				service: "webhook",
-			});
-
-			// 5. Update order status — shipping info already in Order from confirmCheckout
-			await tx.order.update({
-				where: { id: orderId },
-				data: {
+			return processOrderAtomically(
+				tx,
+				orderId,
+				{
 					status: "PROCESSING",
 					paymentStatus: "PAID",
 					paidAt: new Date(),
@@ -408,47 +323,9 @@ export async function processOrderFromPaymentIntent(
 					stripeCustomerId:
 						typeof paymentIntent.customer === "string" ? paymentIntent.customer : null,
 				},
-			});
-
-			// 5b. Deactivate out-of-stock SKUs
-			const { count: deactivatedCount } = await tx.productSku.updateMany({
-				where: { id: { in: skuIds }, inventory: 0 },
-				data: { isActive: false },
-			});
-			if (deactivatedCount > 0) {
-				logger.info(
-					`📦 [WEBHOOK] ${deactivatedCount} SKU(s) deactivated (out of stock) for order ${orderId} (PI flow)`,
-					{ service: "webhook" },
-				);
-			}
-
-			// 6. Clear cart — use guestSessionId from PI metadata for guests
-			if (order.userId) {
-				await tx.cartItem.deleteMany({
-					where: { cart: { userId: order.userId } },
-				});
-				logger.info(
-					`🧹 [WEBHOOK] Cart cleared for user ${order.userId} after successful payment (PI flow)`,
-					{ service: "webhook" },
-				);
-			} else {
-				const guestSessionId = paymentIntent.metadata.guestSessionId;
-				if (guestSessionId) {
-					await tx.cartItem.deleteMany({
-						where: { cart: { sessionId: guestSessionId } },
-					});
-					logger.info(
-						`🧹 [WEBHOOK] Cart cleared for guest session ${guestSessionId} after successful payment (PI flow)`,
-						{ service: "webhook" },
-					);
-				}
-			}
-
-			logger.info(`✅ [WEBHOOK] Order processed successfully (PI flow): ${order.orderNumber}`, {
-				service: "webhook",
-			});
-
-			return mapToOrderWithItems(order);
+				paymentIntent.metadata.guestSessionId,
+				"PI flow",
+			);
 		},
 		{ timeout: 10000 },
 	);
@@ -597,9 +474,8 @@ export function buildPostCheckoutTasksFromPI(
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 	}
 
-	// 2. Customer confirmation email — get email from Order (already stored during confirmCheckout)
-	const customerEmail = paymentIntent.receipt_email;
-	// Fallback: query order email from DB (already in the order via createOrderInTransaction)
+	// 2. Customer confirmation email — fallback to Order.customerEmail if receipt_email is null
+	const customerEmail = paymentIntent.receipt_email ?? order.customerEmail;
 	const orderCustomerName =
 		`${order.shippingFirstName ?? ""} ${order.shippingLastName ?? ""}`.trim() || "Client";
 
