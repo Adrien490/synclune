@@ -124,6 +124,10 @@ export function parseFilterValuesFromURL(params: ParseFilterParams): FilterFormD
 		}
 	});
 
+	// Clamp prices to valid range
+	priceMin = Math.max(0, Math.min(priceMin, defaultPriceRange[1]));
+	priceMax = Math.max(priceMin, Math.min(priceMax, defaultPriceRange[1]));
+
 	return {
 		colors: [...new Set(colors)],
 		materials: [...new Set(materials)],

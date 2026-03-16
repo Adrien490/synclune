@@ -13,7 +13,15 @@ import { Input } from "@/shared/components/ui/input";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useEffectEvent, useLayoutEffect, useRef, useState, useTransition } from "react";
+import {
+	useDeferredValue,
+	useEffect,
+	useEffectEvent,
+	useLayoutEffect,
+	useRef,
+	useState,
+	useTransition,
+} from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
 import { RatingStars } from "@/shared/components/rating-stars";
@@ -87,23 +95,39 @@ function SectionHeader({
 				</Badge>
 			)}
 			{onReset && count !== undefined && count > 0 && (
-				<button
-					type="button"
+				<div
+					role="button"
+					tabIndex={0}
 					onClick={(e) => {
 						e.stopPropagation();
 						onReset();
 					}}
-					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto rounded-sm p-1 transition-colors"
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							e.stopPropagation();
+							onReset();
+						}
+					}}
+					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors"
 					aria-label={`Effacer le filtre ${label}`}
 				>
 					<X className="h-3 w-3" />
-				</button>
+				</div>
 			)}
 		</div>
 	);
 }
 
-function SectionSearch({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function SectionSearch({
+	value,
+	onChange,
+	placeholder = "Rechercher...",
+}: {
+	value: string;
+	onChange: (value: string) => void;
+	placeholder?: string;
+}) {
 	return (
 		<div className="relative mb-2">
 			<Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
@@ -111,8 +135,8 @@ function SectionSearch({ value, onChange }: { value: string; onChange: (value: s
 				type="text"
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
-				placeholder="Rechercher..."
-				className="h-8 pr-3 pl-8 text-xs"
+				placeholder={placeholder}
+				className="h-10 pr-3 pl-8 text-xs"
 			/>
 		</div>
 	);
@@ -146,6 +170,10 @@ export function ProductFilterSheet({
 	// Search state for long lists
 	const [colorSearch, setColorSearch] = useState("");
 	const [materialSearch, setMaterialSearch] = useState("");
+
+	// Defer search values to avoid jank on slow devices
+	const deferredColorSearch = useDeferredValue(colorSearch);
+	const deferredMaterialSearch = useDeferredValue(materialSearch);
 
 	const getValuesFromURL = (): FilterFormData => {
 		return parseFilterValuesFromURL({
@@ -219,12 +247,14 @@ export function ProductFilterSheet({
 		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0),
 	);
 
-	// Filter lists by search term
-	const filteredColors = colorSearch
-		? sortedColors.filter((c) => c.name.toLowerCase().includes(colorSearch.toLowerCase()))
+	// Filter lists by deferred search term
+	const filteredColors = deferredColorSearch
+		? sortedColors.filter((c) => c.name.toLowerCase().includes(deferredColorSearch.toLowerCase()))
 		: sortedColors;
-	const filteredMaterials = materialSearch
-		? sortedMaterials.filter((m) => m.name.toLowerCase().includes(materialSearch.toLowerCase()))
+	const filteredMaterials = deferredMaterialSearch
+		? sortedMaterials.filter((m) =>
+				m.name.toLowerCase().includes(deferredMaterialSearch.toLowerCase()),
+			)
 		: sortedMaterials;
 
 	// Default open sections: types + price + any section with active filters
@@ -289,7 +319,7 @@ export function ProductFilterSheet({
 						<form.Field name="productTypes" mode="array">
 							{(field) => (
 								<AccordionItem value="types">
-									<AccordionTrigger className="hover:no-underline">
+									<AccordionTrigger headingLevel={3} className="hover:no-underline">
 										<SectionHeader
 											label="Types de bijoux"
 											count={field.state.value.length}
@@ -333,7 +363,7 @@ export function ProductFilterSheet({
 								field.state.value[0] !== 0 || field.state.value[1] !== maxPriceInEuros;
 							return (
 								<AccordionItem value="price">
-									<AccordionTrigger className="hover:no-underline">
+									<AccordionTrigger headingLevel={3} className="hover:no-underline">
 										<SectionHeader
 											label="Prix"
 											count={hasCustomPrice ? 1 : 0}
@@ -362,7 +392,7 @@ export function ProductFilterSheet({
 						<form.Field name="colors" mode="array">
 							{(field) => (
 								<AccordionItem value="colors">
-									<AccordionTrigger className="hover:no-underline">
+									<AccordionTrigger headingLevel={3} className="hover:no-underline">
 										<SectionHeader
 											label="Couleurs"
 											count={field.state.value.length}
@@ -371,7 +401,11 @@ export function ProductFilterSheet({
 									</AccordionTrigger>
 									<AccordionContent>
 										{sortedColors.length > SEARCH_THRESHOLD && (
-											<SectionSearch value={colorSearch} onChange={setColorSearch} />
+											<SectionSearch
+												value={colorSearch}
+												onChange={setColorSearch}
+												placeholder="Rechercher une couleur..."
+											/>
 										)}
 										<div className="space-y-1">
 											{filteredColors.length === 0 ? (
@@ -438,7 +472,7 @@ export function ProductFilterSheet({
 						<form.Field name="materials" mode="array">
 							{(field) => (
 								<AccordionItem value="materials">
-									<AccordionTrigger className="hover:no-underline">
+									<AccordionTrigger headingLevel={3} className="hover:no-underline">
 										<SectionHeader
 											label="Matériaux"
 											count={field.state.value.length}
@@ -447,7 +481,11 @@ export function ProductFilterSheet({
 									</AccordionTrigger>
 									<AccordionContent>
 										{sortedMaterials.length > SEARCH_THRESHOLD && (
-											<SectionSearch value={materialSearch} onChange={setMaterialSearch} />
+											<SectionSearch
+												value={materialSearch}
+												onChange={setMaterialSearch}
+												placeholder="Rechercher un matériau..."
+											/>
 										)}
 										<div className="space-y-1">
 											{filteredMaterials.length === 0 ? (
@@ -488,7 +526,7 @@ export function ProductFilterSheet({
 					<form.Field name="ratingMin">
 						{(field) => (
 							<AccordionItem value="rating">
-								<AccordionTrigger className="hover:no-underline">
+								<AccordionTrigger headingLevel={3} className="hover:no-underline">
 									<SectionHeader
 										label="Notes clients"
 										count={field.state.value !== null ? 1 : 0}
@@ -524,7 +562,7 @@ export function ProductFilterSheet({
 
 					{/* 6. Disponibilité */}
 					<AccordionItem value="availability" className="border-b-0">
-						<AccordionTrigger className="hover:no-underline">
+						<AccordionTrigger headingLevel={3} className="hover:no-underline">
 							<SectionHeader
 								label="Disponibilité"
 								count={(form.state.values.inStockOnly ? 1 : 0) + (form.state.values.onSale ? 1 : 0)}

@@ -38,7 +38,7 @@ export function CartSheetTrigger({ className }: CartSheetTriggerProps) {
 					<CartBadge />
 				</button>
 			</TooltipTrigger>
-			<TooltipContent>Panier</TooltipContent>
+			<TooltipContent className="hidden sm:block">Panier</TooltipContent>
 		</Tooltip>
 	);
 }

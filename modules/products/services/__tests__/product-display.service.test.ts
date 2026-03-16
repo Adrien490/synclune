@@ -529,7 +529,7 @@ describe("getProductCardData", () => {
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
 
-			const result = getProductCardData(product, "silver");
+			const result = getProductCardData(product, { activeColorSlug: "silver" });
 
 			expect(result.defaultSku?.id).toBe("sku-silver");
 			expect(result.price).toBe(1800);
@@ -543,7 +543,7 @@ describe("getProductCardData", () => {
 			});
 			const product = createMockProduct({}, [sku1]);
 
-			const result = getProductCardData(product, "nonexistent-color");
+			const result = getProductCardData(product, { activeColorSlug: "nonexistent-color" });
 
 			expect(result.defaultSku?.id).toBe("sku-gold");
 		});

@@ -72,7 +72,7 @@ export async function Footer() {
 					{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
 					<div className="mb-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
 						{/* Colonne 1: Logo + phrase perso */}
-						<div className="order-1 space-y-4">
+						<div className="order-1 hidden space-y-4 sm:block">
 							<div className="mb-4">
 								<Logo href="/" size={40} quality={75} className="lg:[&_>_div]:size-12" />
 							</div>

@@ -23,6 +23,8 @@ interface ProductListProps {
 	searchTerm?: string;
 	/** Wishlist product IDs (pre-fetched at page level to avoid inline promise) */
 	wishlistProductIdsPromise?: Promise<Set<string>>;
+	/** Si true, priorise l'affichage du SKU en promotion */
+	preferOnSale?: boolean;
 }
 
 export function ProductList({
@@ -30,6 +32,7 @@ export function ProductList({
 	perPage,
 	searchTerm,
 	wishlistProductIdsPromise,
+	preferOnSale,
 }: ProductListProps) {
 	const result = use(productsPromise);
 	const { products, pagination, totalCount, suggestion } = result;
@@ -111,6 +114,7 @@ export function ProductList({
 							index={index}
 							isInWishlist={wishlistProductIds.has(product.id)}
 							sectionId="catalog"
+							preferOnSale={preferOnSale}
 						/>
 					</div>
 				))}

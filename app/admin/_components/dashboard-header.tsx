@@ -2,6 +2,7 @@
 
 import { DashboardBreadcrumb } from "@/app/admin/_components/dashboard-breadcrumb";
 import { Separator } from "@/shared/components/ui/separator";
+import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 
@@ -23,9 +24,10 @@ export function DashboardHeader() {
 					</TooltipTrigger>
 					<TooltipContent side="right" sideOffset={8}>
 						<span>Basculer le menu</span>
-						<kbd className="bg-muted text-muted-foreground ml-2 inline-flex items-center gap-0.5 rounded border px-1.5 py-0.5 text-xs font-medium">
-							<span className="text-xs">⌘</span>B
-						</kbd>
+						<KbdGroup className="ml-2">
+							<Kbd>⌘</Kbd>
+							<Kbd>B</Kbd>
+						</KbdGroup>
 					</TooltipContent>
 				</Tooltip>
 				<Separator

@@ -80,7 +80,8 @@ function Slider({
 					aria-label={getThumbLabel(index)}
 					aria-valuetext={getThumbAriaValueText(index)}
 					className={cn(
-						"block size-5 shrink-0 rounded-full",
+						"relative block size-5 shrink-0 rounded-full",
+						"before:absolute before:-inset-3 before:content-['']",
 						"border-primary bg-background border-2",
 						"shadow-md hover:shadow-lg",
 						"ring-ring/50 transition-all duration-150",

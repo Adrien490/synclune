@@ -167,8 +167,9 @@ describe("MenuSheet", () => {
 		it("renders sr-only sheet header with title and description", () => {
 			render(<MenuSheet {...baseProps} />);
 
-			expect(screen.getByText("Menu de navigation")).toBeInTheDocument();
-			expect(screen.getByText(/Découvrez nos bijoux et collections/)).toBeInTheDocument();
+			expect(
+				screen.getByText(/Menu de navigation - Découvrez nos bijoux et collections/),
+			).toBeInTheDocument();
 		});
 
 		it("passes isAdmin to footer", () => {

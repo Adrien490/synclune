@@ -104,7 +104,7 @@ export function MenuSheetNav({
 					ref={navRef}
 					key="menu-nav"
 					aria-label="Menu principal mobile"
-					className="relative z-10 px-6 pt-[max(3.5rem,calc(env(safe-area-inset-top)+2.5rem))] pb-4"
+					className="relative z-10 px-6 pt-2 pb-4"
 					initial="hidden"
 					animate="visible"
 					exit="exit"

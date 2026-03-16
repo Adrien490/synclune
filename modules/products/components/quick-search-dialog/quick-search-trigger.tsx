@@ -33,7 +33,7 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 					<Search className="size-5" />
 				</Button>
 			</TooltipTrigger>
-			<TooltipContent>Rechercher</TooltipContent>
+			<TooltipContent className="hidden sm:block">Rechercher</TooltipContent>
 		</Tooltip>
 	);
 }

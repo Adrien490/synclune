@@ -19,9 +19,12 @@ export async function CartSheetRecommendations() {
 	}
 
 	return (
-		<section className="shrink-0 border-t py-3" aria-labelledby="cart-recommendations-heading">
+		<section
+			className="shrink-0 border-t py-3"
+			aria-labelledby="cart-sheet-recommendations-heading"
+		>
 			<h3
-				id="cart-recommendations-heading"
+				id="cart-sheet-recommendations-heading"
 				className="mb-2 px-4 text-xs font-semibold tracking-wide uppercase"
 			>
 				Vous pourriez aimer

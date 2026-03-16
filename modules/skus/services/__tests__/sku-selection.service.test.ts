@@ -130,6 +130,74 @@ describe("getPrimarySkuForList", () => {
 
 		expect(result).toBe(skus[0]);
 	});
+
+	it("should prioritize on-sale in-stock SKU when preferOnSale is true", () => {
+		const skus = [
+			makeSku({ isDefault: true, inventory: 5, compareAtPrice: null }),
+			makeSku({ isDefault: false, inventory: 3, compareAtPrice: 3000 }),
+		];
+
+		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
+
+		expect(result).toBe(skus[1]);
+	});
+
+	it("should prioritize on-sale out-of-stock SKU over default when preferOnSale is true", () => {
+		const skus = [
+			makeSku({ isDefault: true, inventory: 5, compareAtPrice: null }),
+			makeSku({ isDefault: false, inventory: 0, compareAtPrice: 3000 }),
+		];
+
+		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
+
+		expect(result).toBe(skus[1]);
+	});
+
+	it("should prefer on-sale in-stock over on-sale out-of-stock", () => {
+		const skus = [
+			makeSku({ isDefault: false, inventory: 0, compareAtPrice: 3000 }),
+			makeSku({ isDefault: false, inventory: 2, compareAtPrice: 2500 }),
+		];
+
+		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
+
+		expect(result).toBe(skus[1]);
+	});
+
+	it("should fall back to default SKU when no on-sale SKU exists and preferOnSale is true", () => {
+		const skus = [
+			makeSku({ isDefault: true, inventory: 5, compareAtPrice: null }),
+			makeSku({ isDefault: false, inventory: 3, compareAtPrice: null }),
+		];
+
+		const result = getPrimarySkuForList({ skus }, { preferOnSale: true });
+
+		expect(result).toBe(skus[0]);
+	});
+
+	it("should prioritize preferred color over preferOnSale", () => {
+		const skus = [
+			makeSku({
+				isDefault: false,
+				inventory: 5,
+				compareAtPrice: 3000,
+				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+			}),
+			makeSku({
+				isDefault: false,
+				inventory: 5,
+				compareAtPrice: null,
+				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+			}),
+		];
+
+		const result = getPrimarySkuForList(
+			{ skus },
+			{ preferredColorSlug: "argent", preferOnSale: true },
+		);
+
+		expect(result).toBe(skus[1]);
+	});
 });
 
 // ============================================================================

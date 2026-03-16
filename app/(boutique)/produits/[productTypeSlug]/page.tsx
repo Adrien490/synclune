@@ -174,6 +174,7 @@ export default async function ProductTypeCategoryPage({
 			materials={materials}
 			maxPriceInEuros={maxPriceInEuros}
 			activeFiltersCount={activeFiltersCount}
+			preferOnSale={filters.onSale}
 			jsonLd={jsonLd}
 			breadcrumbs={breadcrumbs}
 		/>

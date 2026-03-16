@@ -52,7 +52,7 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 		const numValue = Number(inputValue);
 		if (!isNaN(numValue) && inputValue !== "") {
 			// Appliquer les contraintes et mettre a jour le form
-			const constrainedValue = Math.min(Math.max(0, numValue), value[1]);
+			const constrainedValue = Math.min(Math.max(0, Math.round(numValue)), value[1]);
 			onChange([constrainedValue, value[1]]);
 		}
 	};
@@ -64,7 +64,7 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 		const numValue = Number(inputValue);
 		if (!isNaN(numValue) && inputValue !== "") {
 			// Appliquer les contraintes et mettre a jour le form
-			const constrainedValue = Math.max(Math.min(maxPrice, numValue), value[0]);
+			const constrainedValue = Math.max(Math.min(maxPrice, Math.round(numValue)), value[0]);
 			onChange([value[0], constrainedValue]);
 		}
 	};
@@ -127,29 +127,31 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 				<div className="flex items-center gap-3">
 					<div className="flex-1">
 						<Input
-							type="number"
+							type="text"
 							inputMode="numeric"
-							min={0}
-							max={value[1]}
+							pattern="[0-9]*"
+							placeholder="0"
 							value={minInput}
 							onChange={handleMinChange}
 							onBlur={handleMinBlur}
 							className="h-10 text-sm"
 							aria-label="Prix minimum"
+							aria-description="en euros"
 						/>
 					</div>
 					<span className="text-muted-foreground shrink-0">—</span>
 					<div className="flex-1">
 						<Input
-							type="number"
+							type="text"
 							inputMode="numeric"
-							min={value[0]}
-							max={maxPrice}
+							pattern="[0-9]*"
+							placeholder="0"
 							value={maxInput}
 							onChange={handleMaxChange}
 							onBlur={handleMaxBlur}
 							className="h-10 text-sm"
 							aria-label="Prix maximum"
+							aria-description="en euros"
 						/>
 					</div>
 					<span className="text-muted-foreground shrink-0 text-sm">€</span>

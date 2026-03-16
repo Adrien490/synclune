@@ -17,6 +17,7 @@ import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useState } from "react";
+import { caveat } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
@@ -85,9 +86,13 @@ export function MenuSheet({
 				</SheetTrigger>
 
 				<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
-					<SheetHeader className="sr-only">
-						<SheetTitle>Menu de navigation</SheetTitle>
-						<SheetDescription>
+					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pl-5">
+						<SheetTitle
+							className={cn(caveat.className, "flex h-11 items-center text-2xl font-bold")}
+						>
+							Synclune
+						</SheetTitle>
+						<SheetDescription className="sr-only">
 							Menu de navigation - Découvrez nos bijoux et collections
 						</SheetDescription>
 					</SheetHeader>

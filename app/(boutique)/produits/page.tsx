@@ -140,6 +140,7 @@ export default async function BijouxPage({ searchParams }: BijouxPageProps) {
 			materials={materials}
 			maxPriceInEuros={maxPriceInEuros}
 			activeFiltersCount={activeFiltersCount}
+			preferOnSale={filters.onSale}
 			jsonLd={jsonLd}
 			breadcrumbs={breadcrumbs}
 		/>

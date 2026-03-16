@@ -25,6 +25,8 @@ interface ProductCardProps {
 	isInWishlist?: boolean;
 	/** Identifiant de section pour des IDs uniques (ex: "bestsellers", "latest") */
 	sectionId?: string;
+	/** Si true, priorise l'affichage du SKU en promotion */
+	preferOnSale?: boolean;
 }
 
 /**
@@ -178,13 +180,19 @@ function ProductCardRating({
  * <ProductCard product={product} index={0} />
  * ```
  */
-export function ProductCard({ product, index, isInWishlist = false, sectionId }: ProductCardProps) {
+export function ProductCard({
+	product,
+	index,
+	isInWishlist = false,
+	sectionId,
+	preferOnSale,
+}: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
 
 	// Single-pass O(n) extraction of all display data from SKUs
 	const { defaultSku, price, compareAtPrice, stockInfo, primaryImage, secondaryImage, colors } =
-		getProductCardData(product);
+		getProductCardData(product, preferOnSale ? { preferOnSale } : undefined);
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
 

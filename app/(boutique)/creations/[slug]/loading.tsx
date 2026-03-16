@@ -254,7 +254,7 @@ export default function ProductDetailLoading() {
 							<div className="bg-border h-px" />
 
 							{/* RelatedProducts Skeleton */}
-							<RelatedProductsSkeleton limit={8} />
+							<RelatedProductsSkeleton limit={4} />
 						</article>
 					</div>
 				</div>

@@ -61,6 +61,8 @@ export type ProductCatalogProps = {
 	maxPriceInEuros: number;
 	/** Nombre de filtres actifs */
 	activeFiltersCount: number;
+	/** Si true, le filtre "En promotion" est actif */
+	preferOnSale?: boolean;
 	/** JSON-LD structured data */
 	jsonLd: object;
 	/** Breadcrumbs */
@@ -82,6 +84,7 @@ export function ProductCatalog({
 	materials,
 	maxPriceInEuros,
 	activeFiltersCount,
+	preferOnSale,
 	jsonLd,
 	breadcrumbs,
 }: ProductCatalogProps) {
@@ -183,6 +186,7 @@ export function ProductCatalog({
 								perPage={perPage}
 								searchTerm={searchTerm}
 								wishlistProductIdsPromise={wishlistProductIdsPromise}
+								preferOnSale={preferOnSale}
 							/>
 						</Suspense>
 					</ErrorBoundary>

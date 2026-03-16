@@ -13,6 +13,7 @@ import {
 	SheetDescription,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
+import { Kbd } from "@/shared/components/ui/kbd";
 import { cn } from "@/shared/utils/cn";
 import { Filter, Loader2, X } from "lucide-react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
@@ -150,7 +151,7 @@ export function FilterSheetWrapper({
 							role="progressbar"
 							aria-label="Chargement des filtres"
 						>
-							<div className="bg-primary h-full w-1/3 animate-[progress-indeterminate_1.5s_ease-in-out_infinite]" />
+							<div className="bg-primary h-full w-1/3 motion-safe:animate-[progress-indeterminate_1.5s_ease-in-out_infinite]" />
 						</div>
 					)}
 				</SheetHeader>
@@ -199,6 +200,9 @@ export function FilterSheetWrapper({
 								<Button type="button" onClick={handleApply} disabled={isPending} className="flex-1">
 									{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
 									{applyButtonText}
+									<Kbd className="text-muted-foreground/60 ml-1.5 hidden text-[10px] font-normal lg:inline">
+										⌘↵
+									</Kbd>
 								</Button>
 							</ButtonGroup>
 						</>

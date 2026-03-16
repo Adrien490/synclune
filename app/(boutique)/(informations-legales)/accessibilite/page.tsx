@@ -1,6 +1,7 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { DecorativeHalo } from "@/shared/components/animations/decorative-halo";
+import { Kbd } from "@/shared/components/ui/kbd";
 import { Check } from "lucide-react";
 import { cacheLife, cacheTag } from "next/cache";
 import type { Metadata } from "next";
@@ -181,53 +182,47 @@ export default async function AccessibilityPage() {
 										<tr>
 											<td className="border-b px-4 py-2">Navigation suivante</td>
 											<td className="border-b px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">Tab</kbd>
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">Tab</Kbd>
 											</td>
 										</tr>
 										<tr>
 											<td className="border-b px-4 py-2">Navigation précédente</td>
 											<td className="border-b px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">
-													Shift + Tab
-												</kbd>
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">Shift + Tab</Kbd>
 											</td>
 										</tr>
 										<tr>
 											<td className="border-b px-4 py-2">Activer un lien ou bouton</td>
 											<td className="border-b px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">
-													Entrée ou Espace
-												</kbd>
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">Entrée ou Espace</Kbd>
 											</td>
 										</tr>
 										<tr>
 											<td className="border-b px-4 py-2">Fermer une modale</td>
 											<td className="border-b px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">Échap</kbd>
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">Échap</Kbd>
 											</td>
 										</tr>
 										<tr>
 											<td className="border-b px-4 py-2">Accéder au contenu principal</td>
 											<td className="border-b px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">
 													Tab (depuis le haut de page)
-												</kbd>
+												</Kbd>
 											</td>
 										</tr>
 										<tr>
 											<td className="border-b px-4 py-2">Navigation dans la galerie photos</td>
 											<td className="border-b px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">← →</kbd> ou{" "}
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">
-													Début / Fin
-												</kbd>
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">← →</Kbd> ou{" "}
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">Début / Fin</Kbd>
 											</td>
 										</tr>
 										<tr>
 											<td className="px-4 py-2">Modifier une quantité</td>
 											<td className="px-4 py-2">
-												<kbd className="bg-muted rounded px-2 py-1 font-mono text-sm">+ / -</kbd> ou
-												saisie directe
+												<Kbd className="rounded px-2 py-1 font-mono text-sm">+ / -</Kbd> ou saisie
+												directe
 											</td>
 										</tr>
 									</tbody>

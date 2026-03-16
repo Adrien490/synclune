@@ -24,6 +24,11 @@ export interface GetPrimarySkuOptions {
 	 * Si spécifié, priorise les SKUs de cette couleur.
 	 */
 	preferredColorSlug?: string;
+	/**
+	 * Si true, priorise les SKUs en promotion (compareAtPrice set).
+	 * Utilisé quand le filtre "En promotion" est actif pour afficher le prix barré.
+	 */
+	preferOnSale?: boolean;
 }
 
 /**
@@ -32,10 +37,11 @@ export interface GetPrimarySkuOptions {
  * Ordre de priorité :
  * 1. (Si preferredColorSlug) SKU de la couleur préférée en stock
  * 2. (Si preferredColorSlug) SKU de la couleur préférée (même hors stock)
- * 3. SKU avec isDefault = true et actif
- * 4. Premier SKU en stock, trié par prix croissant
- * 5. Premier SKU actif
- * 6. Premier SKU (fallback)
+ * 3. (Si preferOnSale) SKU en promo en stock, puis en promo hors stock
+ * 4. SKU avec isDefault = true et actif
+ * 5. Premier SKU en stock, trié par prix croissant
+ * 6. Premier SKU actif
+ * 7. Premier SKU (fallback)
  *
  * @param product - Produit avec ses SKUs
  * @param options - Options de sélection (couleur préférée, etc.)
@@ -48,7 +54,7 @@ export function getPrimarySkuForList<
 		return null;
 	}
 
-	const { preferredColorSlug } = options ?? {};
+	const { preferredColorSlug, preferOnSale } = options ?? {};
 
 	// 1. Si couleur préférée spécifiée, prioriser cette couleur (Baymard pattern)
 	if (preferredColorSlug) {
@@ -63,6 +69,17 @@ export function getPrimarySkuForList<
 			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug,
 		);
 		if (colorSku) return colorSku;
+	}
+
+	// 1.5. Si preferOnSale: prioriser les SKUs en promo
+	if (preferOnSale) {
+		const onSaleInStock = product.skus.find(
+			(sku) => sku.isActive && sku.compareAtPrice != null && sku.inventory > 0,
+		);
+		if (onSaleInStock) return onSaleInStock;
+
+		const onSale = product.skus.find((sku) => sku.isActive && sku.compareAtPrice != null);
+		if (onSale) return onSale;
 	}
 
 	// 2. SKU avec isDefault = true

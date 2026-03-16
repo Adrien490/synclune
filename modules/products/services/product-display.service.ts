@@ -176,30 +176,34 @@ export type { ProductCardData } from "../types/product.types";
  * Réduit la complexité de O(5n) à O(n) pour les produits avec beaucoup de SKUs.
  *
  * @param product - Produit avec ses SKUs
- * @param activeColorSlug - Slug de la couleur filtrée (Baymard: thumbnail dynamique)
+ * @param options - Options d'affichage (couleur préférée, promotion)
  * @returns Toutes les données formatées pour ProductCard
  *
  * @example
  * ```tsx
- * // Sans filtre couleur
+ * // Sans filtre
  * const data = getProductCardData(product);
  *
  * // Avec filtre couleur actif (thumbnail s'adapte)
- * const data = getProductCardData(product, "or");
+ * const data = getProductCardData(product, { activeColorSlug: "or" });
+ *
+ * // Avec filtre promotion actif (affiche le SKU en promo)
+ * const data = getProductCardData(product, { preferOnSale: true });
  * ```
  */
 export function getProductCardData(
 	product: ProductFromList,
-	activeColorSlug?: string,
+	options?: { activeColorSlug?: string; preferOnSale?: boolean },
 ): ProductCardData {
 	const skus = product.skus;
 
 	// === 1. Trouver le SKU principal via la fonction unifiée ===
 	// Utilise getPrimarySkuForList avec le paramètre couleur préférée (Baymard pattern)
-	const options: GetPrimarySkuOptions | undefined = activeColorSlug
-		? { preferredColorSlug: activeColorSlug }
-		: undefined;
-	const defaultSku = getPrimarySkuForList<SkuFromList, ProductFromList>(product, options);
+	const skuOptions: GetPrimarySkuOptions | undefined =
+		options?.activeColorSlug || options?.preferOnSale
+			? { preferredColorSlug: options.activeColorSlug, preferOnSale: options.preferOnSale }
+			: undefined;
+	const defaultSku = getPrimarySkuForList<SkuFromList, ProductFromList>(product, skuOptions);
 
 	// === 2. Passe unique sur les SKUs actifs pour extraire toutes les données ===
 	let totalInventory = 0;
