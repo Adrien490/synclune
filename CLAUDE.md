@@ -296,22 +296,25 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-15 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+18 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
 
 | Job                           | Schedule           |
 | ----------------------------- | ------------------ |
+| `cleanup-pending-orders`      | Every 15min        |
+| `retry-webhooks`              | Every 30min        |
+| `retry-failed-emails`         | Hourly             |
+| `auto-reopen-store`           | Hourly             |
 | `cleanup-carts`               | Daily 2:00         |
 | `cleanup-wishlists`           | Daily 2:30         |
+| `abandoned-cart-emails`       | Every 2h           |
 | `cleanup-sessions`            | Daily 3:00         |
 | `process-account-deletions`   | Daily 5:00         |
+| `sync-async-payments`         | Every 4h           |
+| `process-scheduled-discounts` | Every 4h           |
+| `reconcile-refunds`           | Every 6h           |
 | `cleanup-newsletter`          | Weekly Sunday 6:00 |
 | `review-request-emails`       | Daily 10:00        |
-| `abandoned-cart-emails`       | Every 2h           |
 | `cross-sell-emails`           | Daily 11:00        |
-| `sync-async-payments`         | Every 4h           |
-| `reconcile-refunds`           | Every 6h           |
-| `process-scheduled-discounts` | Every 4h           |
-| `retry-webhooks`              | Every 30min        |
 | `cleanup-webhook-events`      | Monthly 1st 7:00   |
 | `hard-delete-retention`       | Monthly 1st 8:00   |
 | `cleanup-orphan-media`        | Monthly 1st 9:00   |
