@@ -35,9 +35,7 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 				</Suspense>
 			</ErrorBoundary>
 			<Suspense fallback={<NavbarSkeleton />}>
-				<ErrorBoundary fallback={<NavbarSkeleton />}>
-					<Navbar />
-				</ErrorBoundary>
+				<Navbar />
 			</Suspense>
 			<main id="main-content" tabIndex={-1} aria-label="Contenu principal" className="min-h-screen">
 				{children}
