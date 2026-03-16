@@ -1,0 +1,136 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// ============================================================================
+// HOISTED MOCKS
+// ============================================================================
+
+const { mockOpenAlertDialog } = vi.hoisted(() => ({
+	mockOpenAlertDialog: vi.fn(),
+}));
+
+// ============================================================================
+// MODULE MOCKS
+// ============================================================================
+
+vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+	useAlertDialogStore: vi.fn(
+		(selector: (state: { openAlertDialog: typeof mockOpenAlertDialog }) => unknown) =>
+			selector({ openAlertDialog: mockOpenAlertDialog }),
+	),
+}));
+
+vi.mock("../remove-cart-item-alert-dialog", () => ({
+	REMOVE_CART_ITEM_DIALOG_ID: "remove-cart-item",
+}));
+
+vi.mock("@/shared/components/ui/button", () => ({
+	Button: ({
+		children,
+		disabled,
+		onClick,
+		"aria-label": ariaLabel,
+		"data-pending": dataPending,
+		...props
+	}: {
+		children: React.ReactNode;
+		disabled?: boolean;
+		onClick?: () => void;
+		"aria-label"?: string;
+		"data-pending"?: string;
+		[key: string]: unknown;
+	}) => (
+		<button
+			disabled={disabled}
+			onClick={onClick}
+			aria-label={ariaLabel}
+			data-pending={dataPending}
+			{...props}
+		>
+			{children}
+		</button>
+	),
+}));
+
+vi.mock("lucide-react", () => ({
+	Trash2: ({ className }: { className?: string }) => (
+		<svg data-testid="trash-icon" className={className} />
+	),
+}));
+
+// ============================================================================
+// IMPORT AFTER MOCKS
+// ============================================================================
+
+import { CartItemRemoveButton } from "../cart-item-remove-button";
+
+// ============================================================================
+// TEST HELPERS
+// ============================================================================
+
+afterEach(() => {
+	cleanup();
+	vi.clearAllMocks();
+});
+
+function renderButton(overrides: Partial<React.ComponentProps<typeof CartItemRemoveButton>> = {}) {
+	const props = {
+		cartItemId: "item-1",
+		itemName: "Bague Lune",
+		quantity: 2,
+		isPending: false,
+		...overrides,
+	};
+	return render(<CartItemRemoveButton {...props} />);
+}
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
+describe("CartItemRemoveButton", () => {
+	it("renders a button with correct aria-label", () => {
+		renderButton();
+		expect(
+			screen.getByRole("button", { name: "Supprimer Bague Lune du panier" }),
+		).toBeInTheDocument();
+	});
+
+	it("renders the trash icon", () => {
+		renderButton();
+		expect(screen.getByTestId("trash-icon")).toBeInTheDocument();
+	});
+
+	it("calls openAlertDialog with correct arguments on click", () => {
+		renderButton({ cartItemId: "item-42", itemName: "Collier Étoile", quantity: 1 });
+		fireEvent.click(screen.getByRole("button"));
+		expect(mockOpenAlertDialog).toHaveBeenCalledOnce();
+		expect(mockOpenAlertDialog).toHaveBeenCalledWith("remove-cart-item", {
+			cartItemId: "item-42",
+			itemName: "Collier Étoile",
+			quantity: 1,
+		});
+	});
+
+	it("is disabled when isPending is true", () => {
+		renderButton({ isPending: true });
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("sets data-pending attribute when isPending is true", () => {
+		renderButton({ isPending: true });
+		const button = screen.getByRole("button");
+		expect(button.dataset.pending).toBe("");
+	});
+
+	it("does not set data-pending attribute when isPending is false", () => {
+		renderButton({ isPending: false });
+		const button = screen.getByRole("button");
+		expect(button.dataset.pending).toBeUndefined();
+	});
+
+	it("is enabled by default (isPending defaults to false)", () => {
+		renderButton();
+		expect(screen.getByRole("button")).not.toBeDisabled();
+	});
+});
