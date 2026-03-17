@@ -52,34 +52,32 @@ export function Fade({
 }: FadeProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
+	const skipAnimation = (disableOnTouch && isTouchDevice) || shouldReduceMotion;
 
-	// Désactiver l'animation sur appareils tactiles pour améliorer TBT/INP
-	if (disableOnTouch && isTouchDevice) {
-		return <div className={className}>{children}</div>;
-	}
-
-	const animationProps = inView
-		? {
-				initial: shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: y },
-				whileInView: { opacity: 1, y: 0 },
-				viewport: { once, margin: "-100px" },
-				exit: shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -y },
-				transition: {
-					duration: shouldReduceMotion ? 0 : duration,
-					delay: shouldReduceMotion ? 0 : delay,
-					ease: MOTION_CONFIG.easing.easeInOut,
-				},
-			}
-		: {
-				initial: shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: y },
-				animate: { opacity: 1, y: 0 },
-				exit: shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -y },
-				transition: {
-					duration: shouldReduceMotion ? 0 : duration,
-					delay: shouldReduceMotion ? 0 : delay,
-					ease: MOTION_CONFIG.easing.easeInOut,
-				},
-			};
+	const animationProps = skipAnimation
+		? {}
+		: inView
+			? {
+					initial: { opacity: 0, y: y },
+					whileInView: { opacity: 1, y: 0 },
+					viewport: { once, margin: "-100px" },
+					exit: { opacity: 0, y: -y },
+					transition: {
+						duration,
+						delay,
+						ease: MOTION_CONFIG.easing.easeInOut,
+					},
+				}
+			: {
+					initial: { opacity: 0, y: y },
+					animate: { opacity: 1, y: 0 },
+					exit: { opacity: 0, y: -y },
+					transition: {
+						duration,
+						delay,
+						ease: MOTION_CONFIG.easing.easeInOut,
+					},
+				};
 
 	return (
 		<m.div className={className} {...animationProps}>

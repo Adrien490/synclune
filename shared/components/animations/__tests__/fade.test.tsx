@@ -88,11 +88,13 @@ describe("Fade", () => {
 		expect(container.firstChild).toHaveClass("my-class");
 	});
 
-	it("renders plain <div> when disableOnTouch + touch device", () => {
+	it("renders m.div without animation props when disableOnTouch + touch device", () => {
 		mockIsTouchDevice.value = true;
 		const { container } = render(<Fade disableOnTouch>Content</Fade>);
-		// Plain div has no data-initial attribute (not m.div)
+		// Always renders m.div but without animation attributes
 		expect(container.firstChild).not.toHaveAttribute("data-initial");
+		expect(container.firstChild).not.toHaveAttribute("data-animate");
+		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
 		expect(screen.getByText("Content")).toBeInTheDocument();
 	});
 
@@ -114,11 +116,12 @@ describe("Fade", () => {
 		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
 	});
 
-	it("sets opacity:1 in initial when reduced motion is on", () => {
+	it("renders m.div without animation props when reduced motion is on", () => {
 		mockReducedMotion.value = true;
 		const { container } = render(<Fade>Content</Fade>);
-		const initial = JSON.parse((container.firstChild as Element).getAttribute("data-initial")!);
-		expect(initial.opacity).toBe(1);
+		expect(container.firstChild).not.toHaveAttribute("data-initial");
+		expect(container.firstChild).not.toHaveAttribute("data-animate");
+		expect(screen.getByText("Content")).toBeInTheDocument();
 	});
 
 	it("sets opacity:0 in initial when reduced motion is off", () => {

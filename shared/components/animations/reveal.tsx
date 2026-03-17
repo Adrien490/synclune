@@ -35,30 +35,23 @@ export function Reveal({
 	// Côté serveur et première hydratation: toujours avec animation
 	// Côté client après mount: respecte les préférences utilisateur
 	const shouldReduceMotion = isClient && prefersReducedMotion;
+	const skipAnimation = (disableOnTouch && isTouchDevice) || shouldReduceMotion;
 
-	// Désactiver l'animation sur appareils tactiles pour améliorer TBT/INP
-	if (disableOnTouch && isTouchDevice) {
-		return (
-			<div className={className} role={role} {...rest}>
-				{children}
-			</div>
-		);
-	}
+	const animationProps = skipAnimation
+		? {}
+		: {
+				initial: { opacity: 0, y },
+				whileInView: { opacity: 1, y: 0 },
+				viewport: { once, amount },
+				transition: {
+					duration,
+					delay,
+					ease: MOTION_CONFIG.easing.easeOut,
+				},
+			};
 
 	return (
-		<m.div
-			className={className}
-			role={role}
-			initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y }}
-			whileInView={{ opacity: 1, y: 0 }}
-			viewport={{ once, amount }}
-			transition={{
-				duration: shouldReduceMotion ? 0 : duration,
-				delay: shouldReduceMotion ? 0 : delay,
-				ease: MOTION_CONFIG.easing.easeOut,
-			}}
-			{...rest}
-		>
+		<m.div className={className} role={role} {...animationProps} {...rest}>
 			{children}
 		</m.div>
 	);

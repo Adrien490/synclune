@@ -236,7 +236,10 @@ export async function Footer() {
 
 					{/* Copyright + Liens légaux */}
 					<div className="flex flex-col items-center gap-4 pt-6">
-						<p className="text-muted-foreground text-center text-sm/6 antialiased">
+						<p
+							className="text-muted-foreground text-center text-sm/6 antialiased"
+							suppressHydrationWarning
+						>
 							© {new Date().getFullYear()} {BRAND.name}. Tous droits réservés.
 						</p>
 						<nav

@@ -103,7 +103,7 @@ describe("Stagger", () => {
 		expect(wrappers).toHaveLength(2);
 	});
 
-	it("renders plain divs when disableOnTouch + touch device", () => {
+	it("renders m.div without animation props when disableOnTouch + touch device", () => {
 		mockIsTouchDevice.value = true;
 		const { container } = render(
 			<Stagger disableOnTouch>
@@ -111,8 +111,12 @@ describe("Stagger", () => {
 				<span>B</span>
 			</Stagger>,
 		);
-		// Container should not have data-initial (plain div, not m.div)
+		// Always renders m.div but without animation attributes
 		expect(container.firstChild).not.toHaveAttribute("data-initial");
+		expect(container.firstChild).not.toHaveAttribute("data-animate");
+		expect(container.firstChild).not.toHaveAttribute("data-while-in-view");
+		expect(screen.getByText("A")).toBeInTheDocument();
+		expect(screen.getByText("B")).toBeInTheDocument();
 	});
 
 	it("uses whileInView when inView=true", () => {
@@ -168,14 +172,17 @@ describe("Stagger", () => {
 		expect(container.firstChild!.childNodes).toHaveLength(2);
 	});
 
-	it("sets staggerChildren to 0 when reduced motion is on", () => {
+	it("renders m.div without animation props when reduced motion is on", () => {
 		mockReducedMotion.value = true;
-		// Verify it renders without crashing (reduced motion applied internally via variants)
 		const { container } = render(
 			<Stagger>
 				<span>A</span>
 			</Stagger>,
 		);
-		expect(container.firstChild).toHaveAttribute("data-has-variants", "true");
+		// No animation attributes when reduced motion is on
+		expect(container.firstChild).not.toHaveAttribute("data-initial");
+		expect(container.firstChild).not.toHaveAttribute("data-animate");
+		expect(container.firstChild).not.toHaveAttribute("data-has-variants");
+		expect(screen.getByText("A")).toBeInTheDocument();
 	});
 });

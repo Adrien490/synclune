@@ -43,72 +43,52 @@ export function Stagger({
 	const isTouchDevice = useIsTouchDevice();
 	const childrenArray = Children.toArray(children);
 
-	// Désactiver l'animation sur appareils tactiles pour améliorer TBT/INP
-	if (disableOnTouch && isTouchDevice) {
-		return (
-			<div className={className} role={role} {...rest}>
-				{childrenArray.map((child, index) => (
-					<div key={getStableKey(child, index)}>{child}</div>
-				))}
-			</div>
-		);
-	}
+	const skipAnimation = (disableOnTouch && isTouchDevice) || shouldReduceMotion;
 
 	// Variants pour gérer les animations avec ou sans inView
-	const containerVariants = {
-		hidden: {},
-		visible: {
-			transition: {
-				staggerChildren: shouldReduceMotion ? 0 : stagger,
-				delayChildren: shouldReduceMotion ? 0 : delay,
-			},
-		},
-	};
+	const containerVariants = skipAnimation
+		? undefined
+		: {
+				hidden: {},
+				visible: {
+					transition: {
+						staggerChildren: stagger,
+						delayChildren: delay,
+					},
+				},
+			};
 
-	const itemVariants = {
-		hidden: {
-			opacity: shouldReduceMotion ? 1 : 0,
-			y: shouldReduceMotion ? 0 : y,
-		},
-		visible: {
-			opacity: 1,
-			y: 0,
-			transition: {
-				duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.normal,
-				ease: MOTION_CONFIG.easing.easeOut,
-			},
-		},
-	};
+	const itemVariants = skipAnimation
+		? undefined
+		: {
+				hidden: { opacity: 0, y },
+				visible: {
+					opacity: 1,
+					y: 0,
+					transition: {
+						duration: MOTION_CONFIG.duration.normal,
+						ease: MOTION_CONFIG.easing.easeOut,
+					},
+				},
+			};
 
-	if (inView) {
-		return (
-			<m.div
-				className={className}
-				role={role}
-				initial="hidden"
-				whileInView="visible"
-				viewport={{ once, amount }}
-				variants={containerVariants}
-				{...rest}
-			>
-				{childrenArray.map((child, index) => (
-					<m.div key={getStableKey(child, index)} variants={itemVariants}>
-						{child}
-					</m.div>
-				))}
-			</m.div>
-		);
-	}
+	const containerProps = skipAnimation
+		? {}
+		: inView
+			? {
+					initial: "hidden" as const,
+					whileInView: "visible" as const,
+					viewport: { once, amount },
+					variants: containerVariants,
+				}
+			: {
+					initial: "hidden" as const,
+					animate: "visible" as const,
+					variants: containerVariants,
+				};
 
 	return (
-		<m.div
-			className={className}
-			role={role}
-			initial="hidden"
-			animate="visible"
-			variants={containerVariants}
-			{...rest}
-		>
+		<m.div className={className} role={role} {...containerProps} {...rest}>
 			{childrenArray.map((child, index) => (
 				<m.div key={getStableKey(child, index)} variants={itemVariants}>
 					{child}
