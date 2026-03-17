@@ -7,9 +7,7 @@ import { cn } from "@/shared/utils/cn";
 import { useLightbox } from "@/shared/hooks";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
-	ssr: false,
-});
+const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"));
 
 interface ReviewMedia {
 	id: string;
