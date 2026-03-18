@@ -29,30 +29,8 @@ export default function RootLayout({
 			lang="fr"
 			className={`${figtree.variable} ${fraunces.variable} ${caveat.variable}`}
 			data-scroll-behavior="smooth"
-			suppressHydrationWarning
 		>
-			<head>
-				{/* Preconnect to UploadThing CDN for faster image loading */}
-				<link rel="dns-prefetch" href="https://utfs.io" />
-				<link rel="preconnect" href="https://utfs.io" crossOrigin="anonymous" />
-				<link rel="dns-prefetch" href="https://x1ain1wpub.ufs.sh" />
-				<link rel="preconnect" href="https://x1ain1wpub.ufs.sh" crossOrigin="anonymous" />
-			</head>
-			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
-				<noscript>
-					<div
-						style={{
-							padding: "12px 16px",
-							backgroundColor: "#fef3c7",
-							color: "#92400e",
-							textAlign: "center",
-							fontSize: "14px",
-						}}
-					>
-						JavaScript est nécessaire pour utiliser toutes les fonctionnalités de Synclune (panier,
-						paiement, recherche). Veuillez activer JavaScript dans votre navigateur.
-					</div>
-				</noscript>
+			<body className={`${figtree.className} antialiased`}>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />
