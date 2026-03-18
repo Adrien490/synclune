@@ -29,8 +29,9 @@ export default function RootLayout({
 			lang="fr"
 			className={`${figtree.variable} ${fraunces.variable} ${caveat.variable}`}
 			data-scroll-behavior="smooth"
+			suppressHydrationWarning
 		>
-			<body className={`${figtree.className} antialiased`}>
+			<body className={`${figtree.className} antialiased`} suppressHydrationWarning>
 				<SerwistProvider swUrl="/serwist/sw.js">
 					<SkipLink />
 					<IconSprite />

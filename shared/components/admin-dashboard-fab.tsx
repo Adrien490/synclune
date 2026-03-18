@@ -12,23 +12,27 @@ import { LayoutDashboard } from "lucide-react";
  * Hidden on mobile (admin link remains in mobile nav menu).
  */
 export async function AdminDashboardFab() {
-	const session = await getSession();
+	try {
+		const session = await getSession();
 
-	if (!session?.user || session.user.role !== "ADMIN") {
+		if (!session?.user || session.user.role !== "ADMIN") {
+			return null;
+		}
+
+		const isHidden = await getFabVisibility(FAB_KEYS.ADMIN_DASHBOARD);
+
+		return (
+			<Fab
+				fabKey={FAB_KEYS.ADMIN_DASHBOARD}
+				initialHidden={isHidden}
+				icon={<LayoutDashboard className="size-6" aria-hidden="true" />}
+				tooltip={{ title: "Tableau de bord" }}
+				ariaLabel="Accéder au tableau de bord administrateur"
+				href={ROUTES.ADMIN.ROOT}
+				hideOnMobile
+			/>
+		);
+	} catch {
 		return null;
 	}
-
-	const isHidden = await getFabVisibility(FAB_KEYS.ADMIN_DASHBOARD);
-
-	return (
-		<Fab
-			fabKey={FAB_KEYS.ADMIN_DASHBOARD}
-			initialHidden={isHidden}
-			icon={<LayoutDashboard className="size-6" aria-hidden="true" />}
-			tooltip={{ title: "Tableau de bord" }}
-			ariaLabel="Accéder au tableau de bord administrateur"
-			href={ROUTES.ADMIN.ROOT}
-			hideOnMobile
-		/>
-	);
 }

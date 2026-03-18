@@ -7,7 +7,7 @@ import { PostHogIdentify } from "./posthog-identify";
  * Wrapped in <Suspense> in the root layout to avoid blocking render.
  */
 export async function PostHogIdentifyAsync() {
-	const session = await getSession();
+	const session = await getSession().catch(() => null);
 	const user = session
 		? { id: session.user.id, email: session.user.email, name: session.user.name }
 		: null;

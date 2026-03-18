@@ -7,16 +7,26 @@ import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { TriangleAlert } from "lucide-react";
 
 export async function EspaceClientContent({ children }: { children: React.ReactNode }) {
-	const reqHeaders = await headers();
-	const session = await auth.api.getSession({
-		headers: reqHeaders,
-	});
+	let session;
+	try {
+		const reqHeaders = await headers();
+		session = await auth.api.getSession({
+			headers: reqHeaders,
+		});
+	} catch {
+		redirect("/connexion?callbackURL=/commandes");
+	}
 
 	if (!session?.user) {
 		redirect("/connexion?callbackURL=/commandes");
 	}
 
-	const user = await getCurrentUser();
+	let user;
+	try {
+		user = await getCurrentUser();
+	} catch {
+		user = null;
+	}
 	const isPendingDeletion = user?.accountStatus === "PENDING_DELETION";
 
 	return (
