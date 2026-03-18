@@ -82,6 +82,11 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	AccountStatus: { ACTIVE: "ACTIVE", INACTIVE: "INACTIVE" },
 }));
 
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
+}));
+
 import { bulkRestoreUsers } from "../bulk-restore-users";
 
 // ============================================================================

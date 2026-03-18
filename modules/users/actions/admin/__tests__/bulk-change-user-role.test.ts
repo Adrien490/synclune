@@ -46,6 +46,11 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_USER_LIMITS: { BULK_OPERATIONS: "user-bulk" },
 }));
 
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
+}));
+
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);

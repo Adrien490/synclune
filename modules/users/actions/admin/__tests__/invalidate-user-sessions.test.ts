@@ -61,6 +61,10 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+}));
+
 vi.mock("../../../schemas/user-admin.schemas", () => ({
 	adminUserIdSchema: {},
 }));

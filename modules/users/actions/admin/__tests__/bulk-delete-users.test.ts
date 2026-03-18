@@ -91,6 +91,11 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	},
 }));
 
+vi.mock("@/shared/lib/audit-log", () => ({
+	logAudit: vi.fn(),
+	logAuditTx: vi.fn(),
+}));
+
 import { bulkDeleteUsers } from "../bulk-delete-users";
 
 // ============================================================================
