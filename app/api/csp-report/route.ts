@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 			documentUri,
 		});
 
-		return NextResponse.json({ status: "ok" }, { status: 204 });
+		return new Response(null, { status: 204 });
 	} catch {
 		return NextResponse.json({ status: "error" }, { status: 400 });
 	}

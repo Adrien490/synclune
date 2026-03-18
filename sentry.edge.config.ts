@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { BusinessError } from "@/shared/lib/actions/errors";
 
 Sentry.init({
 	dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -9,6 +10,17 @@ Sentry.init({
 
 	// RGPD: no PII sent by default
 	sendDefaultPii: false,
+
+	beforeSend(event, hint) {
+		const error = hint.originalException;
+
+		// BusinessError = expected user-facing error, not a bug
+		if (error instanceof BusinessError) {
+			return null;
+		}
+
+		return event;
+	},
 
 	ignoreErrors: ["NEXT_REDIRECT", "NEXT_NOT_FOUND", "CircuitBreakerError", "DYNAMIC_SERVER_USAGE"],
 });

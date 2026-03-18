@@ -25,9 +25,9 @@ export type GetCartItemCountReturn = number;
  */
 export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
 	try {
-		const session = await getSession();
+		const session = await getSession().catch(() => null);
 		const userId = session?.user.id;
-		const sessionId = !userId ? await getCartSessionId() : null;
+		const sessionId = !userId ? await getCartSessionId().catch(() => null) : null;
 
 		return await fetchCartItemCount(userId, sessionId ?? undefined);
 	} catch (e) {

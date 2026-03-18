@@ -15,7 +15,12 @@ import {
  * @returns Liste des slugs de produits recemment vus
  */
 export async function getRecentProductSlugs(): Promise<string[]> {
-	const cookieStore = await cookies();
+	let cookieStore;
+	try {
+		cookieStore = await cookies();
+	} catch {
+		return [];
+	}
 	const cookie = cookieStore.get(RECENT_PRODUCTS_COOKIE_NAME);
 
 	if (!cookie?.value) {

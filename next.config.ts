@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
 	cacheComponents: true,
 	reactCompiler: true,
 	experimental: {
+		turbopackFileSystemCacheForBuild: true,
 		optimizePackageImports: [
 			"motion/react",
 			"lucide-react",
@@ -66,11 +67,12 @@ const nextConfig: NextConfig = {
 							"default-src 'self'",
 							"script-src 'self' 'unsafe-inline' https://js.stripe.com https://va.vercel-scripts.com",
 							"style-src 'self' 'unsafe-inline'",
-							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://images.unsplash.com data: blob:",
+							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:",
 							"font-src 'self'",
 							"connect-src 'self' https://*.stripe.com https://api.uploadthing.com https://*.ingest.uploadthing.com https://*.ufs.sh https://utfs.io https://va.vercel-scripts.com https://vitals.vercel-insights.com",
 							"frame-src https://*.stripe.com",
-							"worker-src 'self'",
+							"media-src 'self' https://*.ufs.sh https://utfs.io",
+							"worker-src 'self' blob:",
 							"object-src 'none'",
 							"frame-ancestors 'none'",
 							"base-uri 'self'",
@@ -83,7 +85,13 @@ const nextConfig: NextConfig = {
 		];
 	},
 
-	serverExternalPackages: ["@prisma/client", "@prisma/adapter-neon", "pino", "pino-pretty"],
+	serverExternalPackages: [
+		"@prisma/client",
+		"@prisma/adapter-neon",
+		"pino",
+		"pino-pretty",
+		"sharp",
+	],
 
 	images: {
 		qualities: [65, 70, 75, 80, 85, 90],
@@ -98,12 +106,6 @@ const nextConfig: NextConfig = {
 				hostname: "uploadthing-prod.s3.us-west-2.amazonaws.com",
 				pathname: "/**",
 			},
-			{
-				protocol: "https",
-				hostname: "avatars.githubusercontent.com",
-				pathname: "/**",
-			},
-			{ protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
 		],
 	},
 

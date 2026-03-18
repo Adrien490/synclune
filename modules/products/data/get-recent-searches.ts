@@ -14,7 +14,12 @@ import {
  * @returns Liste des recherches recentes (max 5)
  */
 export async function getRecentSearches(): Promise<string[]> {
-	const cookieStore = await cookies();
+	let cookieStore;
+	try {
+		cookieStore = await cookies();
+	} catch {
+		return [];
+	}
 	const cookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME);
 
 	if (!cookie?.value) {
