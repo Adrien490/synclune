@@ -172,6 +172,9 @@ export async function updateOrderPaymentStatus(
 	const isPartiallyRefunded = totalRefunded > 0 && totalRefunded < orderTotal;
 
 	await prisma.$transaction(async (tx) => {
+		// Lock the order row to serialize concurrent refund webhook processing
+		await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
+
 		const order = await tx.order.findUniqueOrThrow({
 			where: { id: orderId },
 			select: { paymentStatus: true },

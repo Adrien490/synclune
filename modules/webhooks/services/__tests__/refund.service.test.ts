@@ -14,6 +14,7 @@ const {
 	mockROUTES,
 } = vi.hoisted(() => {
 	const mockTx = {
+		$queryRaw: vi.fn().mockResolvedValue([]),
 		refund: {
 			update: vi.fn(),
 			upsert: vi.fn(),

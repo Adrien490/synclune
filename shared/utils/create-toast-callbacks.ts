@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
 
 export type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
@@ -95,9 +95,17 @@ export const createToastCallbacks = <T extends ActionState | unknown = ActionSta
 			// Call custom error callback if provided
 			customOnError?.(result);
 
-			// Default toast behavior
+			// Skip toast for validation errors (already shown inline by form fields)
 			if (showErrorToast && hasMessage(result)) {
-				toast.error(result.message);
+				const isValidationError =
+					result &&
+					typeof result === "object" &&
+					"status" in result &&
+					(result as unknown as { status: string }).status === ActionStatus.VALIDATION_ERROR;
+
+				if (!isValidationError) {
+					toast.error(result.message);
+				}
 			}
 		},
 	};

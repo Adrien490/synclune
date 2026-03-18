@@ -1055,4 +1055,363 @@ describe("usePinchZoom", () => {
 			expect(result.current.position.x).toBe(posAfterZoom.x + 100);
 		});
 	});
+
+	// -------------------------------------------------------------------------
+	// 9. Touch events – single tap
+	// -------------------------------------------------------------------------
+
+	describe("touch events – single tap", () => {
+		// jsdom does not implement the Touch constructor, so we create a minimal
+		// polyfill locally and build fake TouchEvent-like objects from plain
+		// objects passed to dispatchEvent.
+
+		function makeFakeTouch(el: Element, clientX: number, clientY: number): Touch {
+			return {
+				identifier: 0,
+				target: el,
+				clientX,
+				clientY,
+				pageX: clientX,
+				pageY: clientY,
+				screenX: clientX,
+				screenY: clientY,
+				radiusX: 1,
+				radiusY: 1,
+				rotationAngle: 0,
+				force: 1,
+			} as unknown as Touch;
+		}
+
+		function fireTouchStart(el: HTMLElement, points: Array<{ clientX: number; clientY: number }>) {
+			const touches = points.map((p) => makeFakeTouch(el, p.clientX, p.clientY));
+			const event = Object.assign(new Event("touchstart", { bubbles: true, cancelable: true }), {
+				touches,
+				changedTouches: touches,
+				targetTouches: touches,
+			});
+			act(() => {
+				el.dispatchEvent(event);
+			});
+		}
+
+		function fireTouchEnd(el: HTMLElement, points: Array<{ clientX: number; clientY: number }>) {
+			const changedTouches = points.map((p) => makeFakeTouch(el, p.clientX, p.clientY));
+			const event = Object.assign(new Event("touchend", { bubbles: true, cancelable: true }), {
+				touches: [],
+				changedTouches,
+				targetTouches: [],
+			});
+			act(() => {
+				el.dispatchEvent(event);
+			});
+		}
+
+		it("sets isInteracting to true on touchstart", () => {
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			fireTouchStart(containerRef.current!, [{ clientX: 100, clientY: 100 }]);
+
+			expect(result.current.isInteracting).toBe(true);
+		});
+
+		it("sets isInteracting to false on touchend", () => {
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			fireTouchStart(containerRef.current!, [{ clientX: 100, clientY: 100 }]);
+			fireTouchEnd(containerRef.current!, [{ clientX: 100, clientY: 100 }]);
+
+			expect(result.current.isInteracting).toBe(false);
+		});
+
+		it("calls onTap via timeout after a single tap when not zoomed", () => {
+			vi.useFakeTimers();
+			const onTap = vi.fn();
+			renderHook(() => usePinchZoom({ containerRef, onTap, config: { doubleTapDelay: 300 } }));
+
+			fireTouchStart(containerRef.current!, [{ clientX: 100, clientY: 100 }]);
+			fireTouchEnd(containerRef.current!, [{ clientX: 100, clientY: 100 }]);
+
+			// onTap is scheduled after doubleTapDelay
+			expect(onTap).not.toHaveBeenCalled();
+			act(() => {
+				vi.advanceTimersByTime(350);
+			});
+			expect(onTap).toHaveBeenCalledTimes(1);
+
+			vi.useRealTimers();
+		});
+
+		it("does not throw on touchend when containerRef.current is null", () => {
+			const nullRef: React.RefObject<HTMLDivElement | null> = { current: null };
+			expect(() => {
+				renderHook(() => usePinchZoom({ containerRef: nullRef }));
+			}).not.toThrow();
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// 10. Touch events – double-tap to zoom
+	// -------------------------------------------------------------------------
+
+	describe("touch events – double-tap", () => {
+		function makeFakeTouch(el: Element, clientX: number, clientY: number): Touch {
+			return {
+				identifier: 0,
+				target: el,
+				clientX,
+				clientY,
+				pageX: clientX,
+				pageY: clientY,
+				screenX: clientX,
+				screenY: clientY,
+				radiusX: 1,
+				radiusY: 1,
+				rotationAngle: 0,
+				force: 1,
+			} as unknown as Touch;
+		}
+
+		function fireQuickTap(el: HTMLElement, point: { clientX: number; clientY: number }) {
+			const touch = makeFakeTouch(el, point.clientX, point.clientY);
+
+			const startEvent = Object.assign(
+				new Event("touchstart", { bubbles: true, cancelable: true }),
+				{ touches: [touch], changedTouches: [touch], targetTouches: [touch] },
+			);
+			const endEvent = Object.assign(new Event("touchend", { bubbles: true, cancelable: true }), {
+				touches: [],
+				changedTouches: [touch],
+				targetTouches: [],
+			});
+
+			act(() => {
+				el.dispatchEvent(startEvent);
+			});
+			act(() => {
+				el.dispatchEvent(endEvent);
+			});
+		}
+
+		it("double-tap zooms to doubleTapScale when not zoomed", () => {
+			vi.useFakeTimers();
+			mockGetZoomToPointPosition.mockReturnValue({ x: -50, y: -25 });
+
+			const { result } = renderHook(() =>
+				usePinchZoom({ containerRef, config: { doubleTapScale: 2, doubleTapDelay: 300 } }),
+			);
+
+			const point = { clientX: 200, clientY: 150 };
+
+			// First tap — sets lastTapTime to now
+			fireQuickTap(containerRef.current!, point);
+
+			// Advance time slightly so timeSinceLastTap > 0 but < doubleTapDelay
+			act(() => {
+				vi.advanceTimersByTime(100);
+			});
+
+			// Second tap within delay window → triggers double-tap logic
+			fireQuickTap(containerRef.current!, point);
+
+			// After a double-tap, scale should be doubleTapScale
+			expect(result.current.scale).toBe(2);
+
+			vi.useRealTimers();
+		});
+
+		it("double-tap resets zoom when already zoomed", () => {
+			vi.useFakeTimers();
+			mockGetZoomToPointPosition.mockReturnValue({ x: -50, y: -25 });
+
+			const { result } = renderHook(() =>
+				usePinchZoom({ containerRef, config: { doubleTapScale: 2, doubleTapDelay: 300 } }),
+			);
+
+			// Zoom in programmatically first
+			act(() => {
+				result.current.zoomIn();
+			});
+			expect(result.current.isZoomed).toBe(true);
+
+			const point = { clientX: 200, clientY: 150 };
+
+			// First tap while zoomed
+			fireQuickTap(containerRef.current!, point);
+
+			// Advance slightly so timeSinceLastTap > 0
+			act(() => {
+				vi.advanceTimersByTime(100);
+			});
+
+			// Second tap → double-tap while zoomed → should reset
+			fireQuickTap(containerRef.current!, point);
+
+			expect(result.current.scale).toBe(1);
+
+			vi.useRealTimers();
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// 11. Resize event listener
+	// -------------------------------------------------------------------------
+
+	describe("resize event listener", () => {
+		it("attaches a resize listener when zoomed in", () => {
+			const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			act(() => {
+				result.current.zoomIn();
+			});
+
+			const resizeCall = addEventListenerSpy.mock.calls.find(
+				([event]) => (event as string) === "resize",
+			);
+			expect(resizeCall).toBeDefined();
+
+			addEventListenerSpy.mockRestore();
+		});
+
+		it("removes the resize listener when no longer zoomed", () => {
+			const removeEventListenerSpy = vi.spyOn(window, "removeEventListener");
+
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			act(() => {
+				result.current.zoomIn();
+			});
+			act(() => {
+				result.current.reset();
+			});
+
+			const resizeRemoveCall = removeEventListenerSpy.mock.calls.find(
+				([event]) => (event as string) === "resize",
+			);
+			expect(resizeRemoveCall).toBeDefined();
+
+			removeEventListenerSpy.mockRestore();
+		});
+
+		it("does not attach a resize listener when not zoomed", () => {
+			const addEventListenerSpy = vi.spyOn(window, "addEventListener");
+			addEventListenerSpy.mockClear();
+
+			renderHook(() => usePinchZoom({ containerRef }));
+
+			const resizeCall = addEventListenerSpy.mock.calls.find(
+				([event]) => (event as string) === "resize",
+			);
+			expect(resizeCall).toBeUndefined();
+
+			addEventListenerSpy.mockRestore();
+		});
+
+		it("clamps position when resize fires while zoomed", () => {
+			mockClampPosition.mockImplementation((pos: { x: number; y: number }) => pos);
+
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			act(() => {
+				result.current.zoomIn();
+			});
+
+			// Fire the resize event
+			act(() => {
+				window.dispatchEvent(new Event("resize"));
+			});
+
+			// clampPosition should be called during the resize handler
+			expect(mockClampPosition).toHaveBeenCalled();
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// 12. Boundary clamping
+	// -------------------------------------------------------------------------
+
+	describe("boundary clamping", () => {
+		it("clampPosition is called with the container rect on zoomIn", () => {
+			mockClampPosition.mockImplementation((pos: { x: number; y: number }) => pos);
+
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			act(() => {
+				result.current.zoomIn();
+			});
+
+			expect(mockClampPosition).toHaveBeenCalledWith(
+				expect.any(Object),
+				expect.any(Number),
+				CONTAINER_RECT,
+			);
+		});
+
+		it("clampPosition is called with the container rect on zoomOut when above minScale", () => {
+			mockClampPosition.mockImplementation((pos: { x: number; y: number }) => pos);
+
+			const { result } = renderHook(() =>
+				usePinchZoom({ containerRef, config: { keyboardZoomStep: 0.5, maxScale: 3 } }),
+			);
+
+			act(() => {
+				result.current.zoomIn();
+			}); // 1 → 1.5
+			act(() => {
+				result.current.zoomIn();
+			}); // 1.5 → 2.0
+
+			mockClampPosition.mockClear();
+
+			act(() => {
+				result.current.zoomOut();
+			}); // 2.0 → 1.5 (still above minScale, clampPosition should be called)
+
+			expect(mockClampPosition).toHaveBeenCalled();
+		});
+
+		it("position is clamped to the result of clampPosition on zoomIn", () => {
+			const clampedPos = { x: 42, y: -17 };
+			mockClampPosition.mockReturnValue(clampedPos);
+
+			const { result } = renderHook(() => usePinchZoom({ containerRef }));
+
+			act(() => {
+				result.current.zoomIn();
+			});
+
+			expect(result.current.position).toEqual(clampedPos);
+		});
+
+		it("position resets to origin when zoomOut reaches minScale regardless of clampPosition", () => {
+			mockClampPosition.mockReturnValue({ x: 999, y: 999 });
+
+			const { result } = renderHook(() =>
+				usePinchZoom({ containerRef, config: { minScale: 1, keyboardZoomStep: 0.5 } }),
+			);
+
+			act(() => {
+				result.current.zoomIn();
+			}); // 1 → 1.5
+			act(() => {
+				result.current.zoomOut();
+			}); // 1.5 → 1 (minScale) → forced to {0,0}
+
+			expect(result.current.position).toEqual({ x: 0, y: 0 });
+		});
+
+		it("clampPosition is called with null rect when containerRef.current is null on zoomIn", () => {
+			const nullRef: React.RefObject<HTMLDivElement | null> = { current: null };
+			mockClampPosition.mockImplementation(() => ({ x: 0, y: 0 }));
+
+			const { result } = renderHook(() => usePinchZoom({ containerRef: nullRef }));
+
+			act(() => {
+				result.current.zoomIn();
+			});
+
+			expect(mockClampPosition).toHaveBeenCalledWith(expect.any(Object), expect.any(Number), null);
+		});
+	});
 });

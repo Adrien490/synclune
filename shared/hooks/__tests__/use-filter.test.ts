@@ -679,4 +679,356 @@ describe("useFilter", () => {
 			expect(url).toContain("/admin/commandes");
 		});
 	});
+
+	// -------------------------------------------------------------------------
+	// isPending state
+	// -------------------------------------------------------------------------
+
+	describe("isPending", () => {
+		it("exposes isPending as a boolean", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+			expect(typeof result.current.isPending).toBe("boolean");
+		});
+
+		it("isPending is false before any action", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+			expect(result.current.isPending).toBe(false);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// optimisticActiveFilters state
+	// -------------------------------------------------------------------------
+
+	describe("optimisticActiveFilters", () => {
+		it("matches activeFilters when no optimistic update is pending", () => {
+			setupParams([["filter_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter());
+
+			expect(result.current.optimisticActiveFilters).toEqual(result.current.activeFilters);
+		});
+
+		it("optimisticActiveFiltersCount equals activeFiltersCount without updates", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["filter_type", "ring"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			expect(result.current.optimisticActiveFiltersCount).toBe(result.current.activeFiltersCount);
+		});
+
+		it("hasOptimisticActiveFilters is false when no filters are present", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+			expect(result.current.hasOptimisticActiveFilters).toBe(false);
+		});
+
+		it("hasOptimisticActiveFilters is true when filter params are present", () => {
+			setupParams([["filter_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter());
+			expect(result.current.hasOptimisticActiveFilters).toBe(true);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// removeFilterOptimistic
+	// -------------------------------------------------------------------------
+
+	describe("removeFilterOptimistic", () => {
+		it("calls router.replace to remove the filter from the URL", () => {
+			setupParams([["filter_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFilterOptimistic("filter_status");
+			});
+
+			expect(mockReplace).toHaveBeenCalledTimes(1);
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("filter_status");
+		});
+
+		it("passes scroll:false to router.replace", () => {
+			setupParams([["filter_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFilterOptimistic("filter_status");
+			});
+
+			const options = mockReplace.mock.calls[0]![1];
+			expect(options).toEqual({ scroll: false });
+		});
+
+		it("removes only the specific value from a multi-value filter", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["filter_status", "PENDING"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFilterOptimistic("filter_status", "ACTIVE");
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("filter_status=ACTIVE");
+			expect(url).toContain("filter_status=PENDING");
+		});
+
+		it("resets page to 1", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["page", "3"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFilterOptimistic("filter_status");
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("page=1");
+		});
+
+		it("preserves unrelated params", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["cursor", "xyz"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFilterOptimistic("filter_status");
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("cursor=xyz");
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// removeFiltersOptimistic
+	// -------------------------------------------------------------------------
+
+	describe("removeFiltersOptimistic", () => {
+		it("removes multiple filters in one router.replace call", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["filter_type", "ring"],
+				["cursor", "abc"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFiltersOptimistic(["filter_status", "filter_type"]);
+			});
+
+			expect(mockReplace).toHaveBeenCalledTimes(1);
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("filter_status");
+			expect(url).not.toContain("filter_type");
+			expect(url).toContain("cursor=abc");
+		});
+
+		it("passes scroll:false to router.replace", () => {
+			setupParams([["filter_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFiltersOptimistic(["filter_status"]);
+			});
+
+			const options = mockReplace.mock.calls[0]![1];
+			expect(options).toEqual({ scroll: false });
+		});
+
+		it("resets page to 1", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["page", "4"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.removeFiltersOptimistic(["filter_status"]);
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("page=1");
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// clearAllFiltersOptimistic
+	// -------------------------------------------------------------------------
+
+	describe("clearAllFiltersOptimistic", () => {
+		it("removes all filter params from the URL", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["filter_type", "ring"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.clearAllFiltersOptimistic();
+			});
+
+			expect(mockReplace).toHaveBeenCalledTimes(1);
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("filter_status");
+			expect(url).not.toContain("filter_type");
+		});
+
+		it("passes scroll:false to router.replace", () => {
+			setupParams([["filter_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.clearAllFiltersOptimistic();
+			});
+
+			const options = mockReplace.mock.calls[0]![1];
+			expect(options).toEqual({ scroll: false });
+		});
+
+		it("preserves non-filter params", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["search", "bague"],
+				["cursor", "abc"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.clearAllFiltersOptimistic();
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("search=bague");
+			expect(url).toContain("cursor=abc");
+		});
+
+		it("resets page to 1", () => {
+			setupParams([
+				["filter_status", "ACTIVE"],
+				["page", "5"],
+			]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.clearAllFiltersOptimistic();
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("page=1");
+		});
+
+		it("respects the custom filterPrefix when clearing", () => {
+			setupParams([["f_status", "ACTIVE"]]);
+			const { result } = renderHook(() => useFilter({ filterPrefix: "f_" }));
+
+			act(() => {
+				result.current.clearAllFiltersOptimistic();
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("f_status");
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// setFilter edge cases
+	// -------------------------------------------------------------------------
+
+	describe("setFilter edge cases", () => {
+		it("does not add the filter for null values (treated as value undefined)", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				// null is not a FilterValue but undefined is — testing an empty string instead
+				result.current.setFilter("status", "");
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("filter_status");
+		});
+
+		it("handles an empty array value by not appending anything", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.setFilter("status", []);
+			});
+
+			// Empty array produces no filter entries
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).not.toContain("filter_status");
+		});
+
+		it("handles numeric values by converting to string", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.setFilter("minPrice", 100);
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("filter_minPrice=100");
+		});
+
+		it("does not duplicate the prefix when the key already starts with filterPrefix", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.setFilter("filter_status", "ACTIVE");
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			// Should be filter_status=ACTIVE, not filter_filter_status=ACTIVE
+			expect(url).toContain("filter_status=ACTIVE");
+			expect(url).not.toContain("filter_filter_status");
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// setFilters edge cases
+	// -------------------------------------------------------------------------
+
+	describe("setFilters edge cases", () => {
+		it("handles mixed valid and empty values in the same call", () => {
+			setupParams([]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.setFilters({ status: "ACTIVE", type: "", color: undefined });
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("filter_status=ACTIVE");
+			expect(url).not.toContain("filter_type");
+			expect(url).not.toContain("filter_color");
+		});
+
+		it("replaces an existing filter value with a new one", () => {
+			setupParams([["filter_status", "OLD"]]);
+			const { result } = renderHook(() => useFilter());
+
+			act(() => {
+				result.current.setFilters({ status: "NEW" });
+			});
+
+			const url: string = mockReplace.mock.calls[0]![0]!;
+			expect(url).toContain("filter_status=NEW");
+			expect(url).not.toContain("filter_status=OLD");
+		});
+	});
 });

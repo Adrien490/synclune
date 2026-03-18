@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const { mockPrisma, mockSendAdminRefundFailedAlert, mockGetBaseUrl } = vi.hoisted(() => {
 	const mockTx = {
+		$queryRaw: vi.fn().mockResolvedValue([]),
 		refund: {
 			update: vi.fn(),
 			upsert: vi.fn(),
