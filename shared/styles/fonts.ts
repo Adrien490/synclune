@@ -8,7 +8,7 @@ export const fraunces = Fraunces({
 	display: "swap",
 	axes: ["opsz", "SOFT", "WONK"],
 	variable: "--font-display",
-	preload: true, // LCP element uses this font (hero h1 via SectionTitle)
+	preload: false, // Avoid 26 browser warnings — font loads via CSS when needed
 });
 
 // Figtree — Sans-serif géométrique optimisée pour le web
