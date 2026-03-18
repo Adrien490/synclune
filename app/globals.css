@@ -14,7 +14,7 @@
 html {
 	scroll-behavior: smooth;
 	--navbar-height: 4rem;
-	--ab-height: 44px;
+	--ab-height: 56px;
 	--announcement-bar-height: 0px;
 	position: relative;
 }
@@ -28,6 +28,7 @@ html {
 @media (min-width: 640px) {
 	html {
 		--navbar-height: 5rem;
+		--ab-height: 44px;
 	}
 }
 

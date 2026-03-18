@@ -117,13 +117,19 @@ describe("AnnouncementBar - rendering", () => {
 		expect(screen.getByRole("button", { name: "Fermer la barre d'annonce" })).toBeInTheDocument();
 	});
 
-	it("renders sparkle decorations as aria-hidden", () => {
+	it("renders shimmer with motion-reduce:hidden class", () => {
 		renderBar();
-		const sparkles = screen.getAllByText("✦");
-		expect(sparkles).toHaveLength(2);
-		for (const sparkle of sparkles) {
-			expect(sparkle).toHaveAttribute("aria-hidden", "true");
-		}
+		const shimmerContainer = screen.getByRole("region").querySelector("[aria-hidden='true']");
+		const shimmerElement = shimmerContainer?.querySelector(".motion-reduce\\:hidden");
+		expect(shimmerElement).toBeInTheDocument();
+	});
+
+	it("renders long messages (200 chars) with line-clamp", () => {
+		const longMessage = "A".repeat(200);
+		renderBar({ message: longMessage });
+		const messageSpan = screen.getByText(longMessage);
+		expect(messageSpan).toBeInTheDocument();
+		expect(messageSpan.className).toContain("line-clamp");
 	});
 });
 

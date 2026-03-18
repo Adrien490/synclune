@@ -24,7 +24,6 @@ export function AnnouncementPreview({ message, linkText }: AnnouncementPreviewPr
 					"text-center text-sm font-medium tracking-wide",
 				)}
 			>
-				<span aria-hidden="true">&#10022;</span>
 				<span className="line-clamp-1">{message}</span>
 				{linkText && (
 					<>
@@ -34,7 +33,6 @@ export function AnnouncementPreview({ message, linkText }: AnnouncementPreviewPr
 						<span className="font-semibold underline underline-offset-2">{linkText}</span>
 					</>
 				)}
-				<span aria-hidden="true">&#10022;</span>
 			</div>
 		</div>
 	);

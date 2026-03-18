@@ -8,16 +8,33 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { usePulseOnChange } from "../use-pulse-on-change";
 
 // ---------------------------------------------------------------------------
+// Default matchMedia mock (no reduced motion)
+// ---------------------------------------------------------------------------
+
+function createMatchMediaMock(matches: boolean) {
+	return (query: string) => ({
+		matches: query === "(prefers-reduced-motion: reduce)" ? matches : false,
+		media: query,
+		onchange: null,
+		addEventListener: vi.fn(),
+		removeEventListener: vi.fn(),
+		dispatchEvent: vi.fn(),
+	});
+}
+
+// ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe("usePulseOnChange", () => {
 	beforeEach(() => {
 		vi.useFakeTimers();
+		vi.stubGlobal("matchMedia", createMatchMediaMock(false));
 	});
 
 	afterEach(() => {
 		vi.useRealTimers();
+		vi.unstubAllGlobals();
 	});
 
 	// -------------------------------------------------------------------------
@@ -108,19 +125,18 @@ describe("usePulseOnChange", () => {
 				vi.advanceTimersByTime(400);
 			});
 
-			// Change value again mid-pulse
+			// Change value again mid-pulse — timer restarts
 			value = 3;
 			rerender();
 			expect(result.current).toBe(true);
 
-			// Original timer would have fired at 600ms total, but it was cleared.
-			// New timer fires at 400 + 600 = 1000ms total.
+			// Original 600ms from first change would have expired, but timer was restarted
 			act(() => {
 				vi.advanceTimersByTime(200);
 			});
-			// Only 600ms elapsed since first change, but second timer is at 400ms only
 			expect(result.current).toBe(true);
 
+			// Full 600ms from the second change
 			act(() => {
 				vi.advanceTimersByTime(400);
 			});
@@ -134,14 +150,7 @@ describe("usePulseOnChange", () => {
 
 	describe("prefers-reduced-motion", () => {
 		it("does not pulse when prefers-reduced-motion is reduce", () => {
-			vi.stubGlobal("matchMedia", (query: string) => ({
-				matches: query === "(prefers-reduced-motion: reduce)",
-				media: query,
-				onchange: null,
-				addEventListener: vi.fn(),
-				removeEventListener: vi.fn(),
-				dispatchEvent: vi.fn(),
-			}));
+			vi.stubGlobal("matchMedia", createMatchMediaMock(true));
 
 			let value = "a";
 			const { result, rerender } = renderHook(() => usePulseOnChange(value));
@@ -150,19 +159,10 @@ describe("usePulseOnChange", () => {
 			rerender();
 
 			expect(result.current).toBe(false);
-
-			vi.unstubAllGlobals();
 		});
 
 		it("pulses normally when prefers-reduced-motion is not set", () => {
-			vi.stubGlobal("matchMedia", (query: string) => ({
-				matches: false,
-				media: query,
-				onchange: null,
-				addEventListener: vi.fn(),
-				removeEventListener: vi.fn(),
-				dispatchEvent: vi.fn(),
-			}));
+			vi.stubGlobal("matchMedia", createMatchMediaMock(false));
 
 			let value = "a";
 			const { result, rerender } = renderHook(() => usePulseOnChange(value));
@@ -171,8 +171,6 @@ describe("usePulseOnChange", () => {
 			rerender();
 
 			expect(result.current).toBe(true);
-
-			vi.unstubAllGlobals();
 		});
 	});
 

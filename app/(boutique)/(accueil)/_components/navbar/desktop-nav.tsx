@@ -101,7 +101,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 							<NavigationMenuContent
 								className={cn(
 									"fixed! right-0! left-0! w-screen!",
-									"top-[var(--navbar-height)]!",
+									"top-(--navbar-height)!",
 									"mt-0! rounded-none! border-0! p-0!",
 									"bg-background border-border border-b shadow-md",
 								)}

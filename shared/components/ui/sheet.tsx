@@ -44,6 +44,7 @@ function Sheet({
 				open={open}
 				onOpenChange={onOpenChange}
 				scrollLockTimeout={scrollLockTimeout}
+				noBodyStyles
 				{...props}
 			/>
 		</SheetContext.Provider>

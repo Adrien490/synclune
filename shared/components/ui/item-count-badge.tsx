@@ -61,11 +61,11 @@ export function ItemCountBadge({
 	return (
 		<>
 			{/* aria-live announcement for screen readers */}
-			<div aria-live="polite" aria-atomic="true" className="sr-only">
+			<span aria-live="polite" aria-atomic="true" className="sr-only">
 				{count === 1 ? `1 ${singularLabel}` : `${count} ${pluralLabel}`}
-			</div>
+			</span>
 
-			<div className={positionClassName}>
+			<span className={positionClassName}>
 				<Badge
 					className={cn(
 						itemCountBadgeVariants({ size }),
@@ -76,7 +76,7 @@ export function ItemCountBadge({
 				>
 					{displayCount}
 				</Badge>
-			</div>
+			</span>
 		</>
 	);
 }

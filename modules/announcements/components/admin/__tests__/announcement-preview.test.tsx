@@ -26,16 +26,6 @@ describe("AnnouncementPreview", () => {
 		expect(screen.getByText("Aperçu")).toBeInTheDocument();
 	});
 
-	it("should render sparkle decorations as aria-hidden", () => {
-		render(<AnnouncementPreview message="Test" />);
-
-		const sparkles = screen.getAllByText("✦");
-		expect(sparkles).toHaveLength(2);
-		for (const sparkle of sparkles) {
-			expect(sparkle).toHaveAttribute("aria-hidden", "true");
-		}
-	});
-
 	// ─── Link text ────────────────────────────────────────────────────────────
 
 	it("should render linkText when provided", () => {

@@ -5,7 +5,7 @@ import { AnimatePresence, m } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { isSafeLink } from "./announcement-bar.constants";
+import { isSafeLink, SWIPE_DISMISS_THRESHOLD } from "./announcement-bar.constants";
 import { useAnnouncementBar } from "./use-announcement-bar";
 
 export interface AnnouncementBarProps {
@@ -35,10 +35,11 @@ export function AnnouncementBar({
 	announcementId,
 	dismissDurationHours,
 }: AnnouncementBarProps) {
-	const { isDismissed, barRef, dismiss, onExitComplete, swipeOffset } = useAnnouncementBar({
-		announcementId,
-		dismissDurationHours,
-	});
+	const { isDismissed, barRef, dismiss, onExitComplete, swipeOffset, isSwiping } =
+		useAnnouncementBar({
+			announcementId,
+			dismissDurationHours,
+		});
 
 	// Validate link prop
 	const safeLink = link && isSafeLink(link) ? link : undefined;
@@ -57,7 +58,11 @@ export function AnnouncementBar({
 					{...(swipeOffset < 0 && {
 						style: {
 							transform: `translateY(${swipeOffset}px)`,
-							opacity: Math.max(0, 1 + swipeOffset / 60),
+							opacity: Math.max(0, 1 + swipeOffset / SWIPE_DISMISS_THRESHOLD),
+							// Smooth spring-back when finger released but threshold not reached
+							...(!isSwiping && {
+								transition: "transform 150ms ease-out, opacity 150ms ease-out",
+							}),
 						},
 					})}
 					// Scope Escape key to the bar
@@ -66,7 +71,7 @@ export function AnnouncementBar({
 					}}
 					className={cn(
 						"fixed inset-x-0 top-0 z-50",
-						"h-[var(--ab-height)]",
+						"h-(--ab-height)",
 						"flex items-center justify-center",
 						"bg-primary text-primary-foreground",
 						"text-sm font-medium tracking-wide",
@@ -81,15 +86,12 @@ export function AnnouncementBar({
 
 					<div
 						className={cn(
-							"relative line-clamp-1 flex items-center gap-2 text-center",
+							"relative flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0 text-center",
 							"pl-[max(2.5rem,env(safe-area-inset-left))]",
 							"pr-[max(2.5rem,env(safe-area-inset-right))]",
 						)}
 					>
-						<span aria-hidden="true" className="animate-sparkle-pulse">
-							&#10022;
-						</span>
-						<span>{message}</span>
+						<span className="line-clamp-2 sm:line-clamp-1">{message}</span>
 						{safeLink && linkText && (
 							<>
 								<span aria-hidden="true" className="text-primary-foreground/50">
@@ -104,9 +106,6 @@ export function AnnouncementBar({
 								</Link>
 							</>
 						)}
-						<span aria-hidden="true" className="animate-sparkle-pulse">
-							&#10022;
-						</span>
 					</div>
 
 					<button
