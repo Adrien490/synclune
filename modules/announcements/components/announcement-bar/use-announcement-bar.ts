@@ -18,6 +18,8 @@ interface UseAnnouncementBarReturn {
 	onExitComplete: () => void;
 	/** Current swipe offset in px (negative = swiping up). 0 when not swiping. */
 	swipeOffset: number;
+	/** Whether the user is actively touching/swiping */
+	isSwiping: boolean;
 }
 
 export function useAnnouncementBar({
@@ -65,16 +67,6 @@ export function useAnnouncementBar({
 	const dismiss = () => {
 		isDismissingRef.current = true;
 
-		// Move focus to main content after dismiss (WCAG 2.4.3)
-		requestAnimationFrame(() => {
-			const mainContent = document.querySelector<HTMLElement>("#main-content");
-			if (mainContent) {
-				mainContent.focus({ preventScroll: true });
-			} else {
-				document.querySelector<HTMLElement>("nav a")?.focus({ preventScroll: true });
-			}
-		});
-
 		startTransition(() => {
 			setOptimisticDismissed(true);
 
@@ -85,16 +77,32 @@ export function useAnnouncementBar({
 		});
 	};
 
-	// Reset CSS variable after exit animation completes (synced with AnimatePresence)
+	// Reset CSS variable and move focus after exit animation completes (WCAG 2.4.3)
 	const onExitComplete = () => {
 		document.documentElement.style.setProperty("--announcement-bar-height", "0px");
+
+		const mainContent = document.querySelector<HTMLElement>("#main-content");
+		if (mainContent) {
+			mainContent.focus({ preventScroll: true });
+		} else {
+			document
+				.querySelector<HTMLElement>("[data-announcement-focus-fallback]")
+				?.focus({ preventScroll: true });
+		}
 	};
 
-	const { swipeOffset } = useSwipeToDismiss({
+	const { swipeOffset, isSwiping } = useSwipeToDismiss({
 		elementRef: barRef,
 		enabled: isVisible,
 		onDismiss: dismiss,
 	});
 
-	return { isDismissed: optimisticDismissed, barRef, dismiss, onExitComplete, swipeOffset };
+	return {
+		isDismissed: optimisticDismissed,
+		barRef,
+		dismiss,
+		onExitComplete,
+		swipeOffset,
+		isSwiping,
+	};
 }

@@ -23,11 +23,16 @@ export type { GetWishlistItemCountReturn } from "../types/wishlist.types";
  * @returns Nombre d'items dans la wishlist
  */
 export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn> {
-	const session = await getSession();
-	const userId = session?.user.id;
-	const sessionId = !userId ? await getWishlistSessionId() : null;
+	try {
+		const session = await getSession();
+		const userId = session?.user.id;
+		const sessionId = !userId ? await getWishlistSessionId() : null;
 
-	return await fetchWishlistItemCount(userId, sessionId ?? undefined);
+		return await fetchWishlistItemCount(userId, sessionId ?? undefined);
+	} catch (e) {
+		logger.error("Failed to get wishlist item count", e, { service: "wishlist" });
+		return 0;
+	}
 }
 
 /**

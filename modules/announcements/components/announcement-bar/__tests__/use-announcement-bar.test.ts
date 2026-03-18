@@ -10,7 +10,7 @@ vi.mock("motion/react", () => ({
 
 // Mock the swipe hook since we test it separately
 vi.mock("../use-swipe-to-dismiss", () => ({
-	useSwipeToDismiss: () => ({ swipeOffset: 0 }),
+	useSwipeToDismiss: () => ({ swipeOffset: 0, isSwiping: false }),
 }));
 
 // Mock server action
@@ -125,44 +125,57 @@ describe("useAnnouncementBar - CSS variable", () => {
 
 // ─── Focus management ───────────────────────────────────────────────
 
-describe("useAnnouncementBar - focus management", () => {
-	it("focuses #main-content on dismiss when it exists", async () => {
+describe("useAnnouncementBar - focus management (via onExitComplete)", () => {
+	it("focuses #main-content on onExitComplete when it exists", () => {
 		const mainContent = document.createElement("main");
 		mainContent.id = "main-content";
 		mainContent.tabIndex = -1;
 		mainContent.focus = vi.fn();
 		document.body.appendChild(mainContent);
 
-		const navLink = document.createElement("a");
 		const nav = document.createElement("nav");
-		navLink.focus = vi.fn();
-		nav.appendChild(navLink);
+		nav.setAttribute("data-announcement-focus-fallback", "");
+		nav.tabIndex = -1;
+		nav.focus = vi.fn();
 		document.body.appendChild(nav);
 
 		const { result } = renderHook(() => useAnnouncementBar(DEFAULT_OPTIONS));
 
 		act(() => {
-			result.current.dismiss();
-		});
-
-		// Wait for requestAnimationFrame
-		await act(async () => {
-			await new Promise((r) => requestAnimationFrame(r));
+			result.current.onExitComplete();
 		});
 
 		expect(mainContent.focus).toHaveBeenCalledWith({ preventScroll: true });
-		expect(navLink.focus).not.toHaveBeenCalled();
+		expect(nav.focus).not.toHaveBeenCalled();
 
 		document.body.removeChild(mainContent);
 		document.body.removeChild(nav);
 	});
 
-	it("falls back to nav link when #main-content is missing", async () => {
-		const navLink = document.createElement("a");
+	it("falls back to [data-announcement-focus-fallback] when #main-content is missing", () => {
 		const nav = document.createElement("nav");
-		navLink.focus = vi.fn();
-		nav.appendChild(navLink);
+		nav.setAttribute("data-announcement-focus-fallback", "");
+		nav.tabIndex = -1;
+		nav.focus = vi.fn();
 		document.body.appendChild(nav);
+
+		const { result } = renderHook(() => useAnnouncementBar(DEFAULT_OPTIONS));
+
+		act(() => {
+			result.current.onExitComplete();
+		});
+
+		expect(nav.focus).toHaveBeenCalledWith({ preventScroll: true });
+
+		document.body.removeChild(nav);
+	});
+
+	it("does not move focus during dismiss (focus happens in onExitComplete)", () => {
+		const mainContent = document.createElement("main");
+		mainContent.id = "main-content";
+		mainContent.tabIndex = -1;
+		mainContent.focus = vi.fn();
+		document.body.appendChild(mainContent);
 
 		const { result } = renderHook(() => useAnnouncementBar(DEFAULT_OPTIONS));
 
@@ -170,13 +183,10 @@ describe("useAnnouncementBar - focus management", () => {
 			result.current.dismiss();
 		});
 
-		await act(async () => {
-			await new Promise((r) => requestAnimationFrame(r));
-		});
+		// Focus should NOT be moved during dismiss — only in onExitComplete
+		expect(mainContent.focus).not.toHaveBeenCalled();
 
-		expect(navLink.focus).toHaveBeenCalledWith({ preventScroll: true });
-
-		document.body.removeChild(nav);
+		document.body.removeChild(mainContent);
 	});
 });
 

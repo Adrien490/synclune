@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { prisma } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { CART_CACHE_TAGS } from "../constants/cache";
 
 // ============================================================================
@@ -23,11 +24,16 @@ export type GetCartItemCountReturn = number;
  * @returns Le nombre total d'articles (0 si pas de panier)
  */
 export async function getCartItemCount(): Promise<GetCartItemCountReturn> {
-	const session = await getSession();
-	const userId = session?.user.id;
-	const sessionId = !userId ? await getCartSessionId() : null;
+	try {
+		const session = await getSession();
+		const userId = session?.user.id;
+		const sessionId = !userId ? await getCartSessionId() : null;
 
-	return await fetchCartItemCount(userId, sessionId ?? undefined);
+		return await fetchCartItemCount(userId, sessionId ?? undefined);
+	} catch (e) {
+		logger.error("Failed to get cart item count", e, { service: "cart" });
+		return 0;
+	}
 }
 
 /**

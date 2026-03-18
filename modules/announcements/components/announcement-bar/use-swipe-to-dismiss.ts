@@ -15,6 +15,8 @@ interface UseSwipeToDismissOptions {
 interface UseSwipeToDismissReturn {
 	/** Current swipe offset in px (negative = swiping up). 0 when not swiping. */
 	swipeOffset: number;
+	/** Whether the user is actively touching/swiping */
+	isSwiping: boolean;
 }
 
 /**
@@ -30,6 +32,7 @@ export function useSwipeToDismiss({
 	onDismiss,
 }: UseSwipeToDismissOptions): UseSwipeToDismissReturn {
 	const [swipeOffset, setSwipeOffset] = useState(0);
+	const [isSwiping, setIsSwiping] = useState(false);
 	const touchStartYRef = useRef<number | null>(null);
 	const swipeOffsetRef = useRef(0);
 	const onDismissRef = useRef(onDismiss);
@@ -51,6 +54,7 @@ export function useSwipeToDismiss({
 			const touch = e.touches[0];
 			if (!touch) return;
 			touchStartYRef.current = touch.clientY;
+			setIsSwiping(true);
 		}
 
 		function onTouchMove(e: TouchEvent) {
@@ -64,6 +68,7 @@ export function useSwipeToDismiss({
 		function onTouchEnd() {
 			if (touchStartYRef.current === null) return;
 			touchStartYRef.current = null;
+			setIsSwiping(false);
 
 			if (swipeOffsetRef.current < -SWIPE_DISMISS_THRESHOLD) {
 				onDismissRef.current();
@@ -82,5 +87,5 @@ export function useSwipeToDismiss({
 		};
 	}, [elementRef, enabled]);
 
-	return { swipeOffset };
+	return { swipeOffset, isSwiping };
 }

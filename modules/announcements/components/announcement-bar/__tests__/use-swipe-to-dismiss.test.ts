@@ -27,12 +27,13 @@ describe("useSwipeToDismiss", () => {
 		elementRef = { current: element };
 	});
 
-	it("returns swipeOffset 0 by default", () => {
+	it("returns swipeOffset 0 and isSwiping false by default", () => {
 		const onDismiss = vi.fn();
 		const { result } = renderHook(() =>
 			useSwipeToDismiss({ elementRef, enabled: true, onDismiss }),
 		);
 		expect(result.current.swipeOffset).toBe(0);
+		expect(result.current.isSwiping).toBe(false);
 	});
 
 	it("tracks upward swipe offset (negative)", () => {
@@ -148,5 +149,29 @@ describe("useSwipeToDismiss", () => {
 			dispatchTouch(element, "touchend", 0);
 		});
 		expect(result.current.swipeOffset).toBe(0);
+	});
+
+	it("sets isSwiping true during touch and false on touchend", () => {
+		const onDismiss = vi.fn();
+		const { result } = renderHook(() =>
+			useSwipeToDismiss({ elementRef, enabled: true, onDismiss }),
+		);
+
+		expect(result.current.isSwiping).toBe(false);
+
+		act(() => {
+			dispatchTouch(element, "touchstart", 100);
+		});
+		expect(result.current.isSwiping).toBe(true);
+
+		act(() => {
+			dispatchTouch(element, "touchmove", 80);
+		});
+		expect(result.current.isSwiping).toBe(true);
+
+		act(() => {
+			dispatchTouch(element, "touchend", 0);
+		});
+		expect(result.current.isSwiping).toBe(false);
 	});
 });

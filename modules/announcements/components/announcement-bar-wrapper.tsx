@@ -14,10 +14,15 @@ export async function AnnouncementBarWrapper() {
 
 	if (!announcement) return null;
 
-	const cookieStore = await cookies();
-	const isDismissed = cookieStore.get(getAnnouncementCookieName(announcement.id))?.value === "true";
+	try {
+		const cookieStore = await cookies();
+		const isDismissed =
+			cookieStore.get(getAnnouncementCookieName(announcement.id))?.value === "true";
 
-	if (isDismissed) return null;
+		if (isDismissed) return null;
+	} catch {
+		// cookies() failed during SSR - show announcement (safe default)
+	}
 
 	return (
 		<AnnouncementBar

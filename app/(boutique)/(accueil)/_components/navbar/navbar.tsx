@@ -32,7 +32,7 @@ export async function Navbar() {
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
 	const [session, cartCount, wishlistCount, recentSearches, menuData, recentProducts] =
 		await Promise.all([
-			getSession(),
+			getSession().catch(() => null),
 			getCartItemCount(),
 			getWishlistItemCount(),
 			getRecentSearches(),
@@ -133,7 +133,12 @@ export async function Navbar() {
 			initialCartCount={safeCartCount}
 		>
 			<NavbarWrapper>
-				<nav aria-label="Navigation principale" className="transition-all duration-300 ease-in-out">
+				<nav
+					aria-label="Navigation principale"
+					data-announcement-focus-fallback
+					tabIndex={-1}
+					className="transition-all duration-300 ease-in-out outline-none"
+				>
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 						<div className="flex h-16 items-center gap-4 sm:h-20">
 							{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
