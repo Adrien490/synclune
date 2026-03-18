@@ -5,11 +5,14 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
+import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
+import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
+import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
+import { ScrollToTop } from "@/shared/components/scroll-to-top";
+import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
-import { ScrollToTop } from "@/shared/components/scroll-to-top";
-import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 
 interface ShopLayoutProps {
 	children: React.ReactNode;
@@ -22,7 +25,12 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 		const admin = await isAdmin();
 
 		if (!admin) {
-			return <StoreClosurePage status={storeStatus} />;
+			return (
+				<>
+					<StoreClosurePage status={storeStatus} />
+					<CookieBanner />
+				</>
+			);
 		}
 	}
 
@@ -46,6 +54,9 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 			<Suspense fallback={null}>
 				<AdminDashboardFab />
 			</Suspense>
+			<CookieBanner />
+			<ConditionalAnalytics />
+			<WebVitalsReporter />
 		</>
 	);
 }

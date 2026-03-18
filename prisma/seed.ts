@@ -3607,40 +3607,6 @@ async function main(): Promise<void> {
 		`✅ Records soft-deleted: ${productsToSoftDelete.length} produits, ${reviewsToSoftDelete.length} avis, ${ordersToSoftDelete.length} commandes`,
 	);
 
-	// ============================================
-	// ANNOUNCEMENT BAR
-	// ============================================
-	console.log("\n📢 Seeding announcement bar...");
-
-	await prisma.announcementBar.deleteMany();
-
-	const announcements = [
-		{
-			message: "Livraison offerte dès 50€ d'achat !",
-			link: "/collections",
-			linkText: "Découvrir",
-			isActive: true,
-			dismissDurationHours: 24,
-			startsAt: new Date(),
-			endsAt: null,
-		},
-		{
-			message: "Nouvelles créations disponibles — Collection Printemps 2026",
-			link: "/collections/printemps-2026",
-			linkText: "Voir la collection",
-			isActive: false,
-			dismissDurationHours: 48,
-			startsAt: new Date("2026-03-20"),
-			endsAt: new Date("2026-04-30"),
-		},
-	];
-
-	for (const announcement of announcements) {
-		await prisma.announcementBar.create({ data: announcement });
-	}
-
-	console.log(`✅ ${announcements.length} announcements created`);
-
 	// FAQ ITEMS
 	// ============================================
 	console.log("\n📝 Seeding FAQ items...");

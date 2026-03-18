@@ -127,7 +127,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 
 					<div className="flex flex-col gap-3">
 						<Button asChild className="w-full">
-							<Link href="/boutique">Découvrir nos collections</Link>
+							<Link href="/collections">Découvrir nos collections</Link>
 						</Button>
 						<Button asChild variant="outline" className="w-full">
 							<Link href={isConnected ? "/" : "/connexion"}>
