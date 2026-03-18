@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/no-noninteractive-element-to-interactive-role, jsx-a11y/click-events-have-key-events */
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
@@ -25,19 +26,16 @@ vi.mock("../field-label", () => ({
 }));
 
 // Controllable MultiSelect mock
-let capturedOnValueChange: ((values: string[]) => void) | undefined;
-
 vi.mock("@/shared/components/multi-select", () => ({
 	MultiSelect: ({
 		options,
 		defaultValue,
 		onValueChange,
 		placeholder,
-		disabled,
+		disabled: _disabled,
 		"aria-invalid": ariaInvalid,
 		"aria-required": ariaRequired,
 	}: any) => {
-		capturedOnValueChange = onValueChange;
 		const selected: string[] = defaultValue ?? [];
 
 		const toggle = (value: string) => {

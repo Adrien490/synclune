@@ -1,14 +1,11 @@
 "use client";
 
-import Link, { type LinkProps } from "next/link";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { forwardRef, type AnchorHTMLAttributes, type MouseEvent } from "react";
+import { forwardRef, type ComponentProps, type MouseEvent } from "react";
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
 
-type GuardedLinkProps = Omit<AnchorHTMLAttributes<HTMLAnchorElement>, keyof LinkProps> &
-	LinkProps & {
-		children?: React.ReactNode;
-	};
+type GuardedLinkProps = ComponentProps<typeof Link>;
 
 /**
  * Composant Link protégé qui vérifie les guards de navigation

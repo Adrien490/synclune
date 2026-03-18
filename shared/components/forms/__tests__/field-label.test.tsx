@@ -28,7 +28,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 vi.mock("@/shared/components/ui/tooltip", () => ({
 	TooltipProvider: ({ children }: any) => <>{children}</>,
 	Tooltip: ({ children }: any) => <>{children}</>,
-	TooltipTrigger: ({ children, asChild }: any) => <>{children}</>,
+	TooltipTrigger: ({ children, asChild: _asChild }: any) => <>{children}</>,
 	TooltipContent: ({ children }: any) => <div role="tooltip">{children}</div>,
 }));
 

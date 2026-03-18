@@ -39,6 +39,7 @@ describe("PolaroidFrame", () => {
 		it("renders a figure element with children", () => {
 			const { container } = render(
 				<PolaroidFrame>
+					{/* eslint-disable-next-line @next/next/no-img-element */}
 					<img src="/photo.jpg" alt="test" />
 				</PolaroidFrame>,
 			);
@@ -181,7 +182,7 @@ describe("PolaroidFrame", () => {
 			const washiDivs = container.querySelectorAll("[aria-hidden='true']");
 			// Only the vignette overlay and aging overlay should be present (no washi)
 			const hasWashi = Array.from(washiDivs).some((el) =>
-				(el as HTMLElement).style.clipPath?.includes("polygon"),
+				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
 			expect(hasWashi).toBe(false);
 		});
@@ -194,7 +195,7 @@ describe("PolaroidFrame", () => {
 			);
 
 			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
-				(el as HTMLElement).style.clipPath?.includes("polygon"),
+				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
 			expect(strips).toHaveLength(1);
 			expect((strips[0] as HTMLElement).className).toContain("-rotate-12");
@@ -208,7 +209,7 @@ describe("PolaroidFrame", () => {
 			);
 
 			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
-				(el as HTMLElement).style.clipPath?.includes("polygon"),
+				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
 			expect(strips).toHaveLength(1);
 			expect((strips[0] as HTMLElement).className).toContain("rotate-12");
@@ -222,7 +223,7 @@ describe("PolaroidFrame", () => {
 			);
 
 			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
-				(el as HTMLElement).style.clipPath?.includes("polygon"),
+				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
 			expect(strips).toHaveLength(2);
 		});
@@ -235,7 +236,7 @@ describe("PolaroidFrame", () => {
 			);
 
 			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
-				(el as HTMLElement).style.clipPath?.includes("polygon"),
+				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
 			// Top-left strip has -left-3 class, top-right has -right-3 class
 			const leftStrip = strips.find((el) =>
@@ -257,7 +258,7 @@ describe("PolaroidFrame", () => {
 			);
 
 			const strips = Array.from(container.querySelectorAll("[aria-hidden='true']")).filter((el) =>
-				(el as HTMLElement).style.clipPath?.includes("polygon"),
+				(el as HTMLElement).style.clipPath.includes("polygon"),
 			);
 			const rightStrip = strips.find((el) =>
 				(el as HTMLElement).className.includes("-right-3"),

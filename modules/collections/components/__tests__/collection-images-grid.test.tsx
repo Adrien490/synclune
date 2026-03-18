@@ -33,6 +33,7 @@ vi.mock("../collection-image-item", () => ({
 		sizes: string;
 		staggerIndex?: number;
 	}) => (
+		// eslint-disable-next-line @next/next/no-img-element
 		<img
 			src={image.url}
 			alt={image.alt ?? `Bijou ${index + 1} de ${collectionName}`}

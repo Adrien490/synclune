@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -78,7 +78,10 @@ vi.mock("next/image", () => ({
 		alt: string;
 		fill?: boolean;
 		[key: string]: unknown;
-	}) => <img src={src} alt={alt} {...props} />,
+	}) => (
+		// eslint-disable-next-line @next/next/no-img-element
+		<img src={src} alt={alt} {...props} />
+	),
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({

@@ -92,7 +92,7 @@ describe("Toolbar", () => {
 	});
 
 	it("renders children in a separate container when search is provided", () => {
-		const { container } = render(
+		render(
 			<Toolbar search={<input placeholder="Rechercher..." />}>
 				<button>Filtrer</button>
 			</Toolbar>,
@@ -105,7 +105,7 @@ describe("Toolbar", () => {
 	});
 
 	it("renders a single container without search wrapper when no search is provided", () => {
-		const { container } = render(
+		render(
 			<Toolbar>
 				<button>Filtrer</button>
 			</Toolbar>,

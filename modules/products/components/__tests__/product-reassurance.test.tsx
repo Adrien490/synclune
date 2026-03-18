@@ -25,13 +25,16 @@ vi.mock("lucide-react", () => ({
 // Stub payment icons — render accessible images
 vi.mock("@/shared/components/icons/payment-icons", () => ({
 	VisaIcon: (props: React.SVGProps<SVGSVGElement>) => (
-		<img role="img" alt="Visa" {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
+		// eslint-disable-next-line @next/next/no-img-element
+		<img alt="Visa" {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
 	),
 	MastercardIcon: (props: React.SVGProps<SVGSVGElement>) => (
-		<img role="img" alt="Mastercard" {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
+		// eslint-disable-next-line @next/next/no-img-element
+		<img alt="Mastercard" {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
 	),
 	CBIcon: (props: React.SVGProps<SVGSVGElement>) => (
-		<img role="img" alt="CB" {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
+		// eslint-disable-next-line @next/next/no-img-element
+		<img alt="CB" {...(props as React.ImgHTMLAttributes<HTMLImageElement>)} />
 	),
 }));
 

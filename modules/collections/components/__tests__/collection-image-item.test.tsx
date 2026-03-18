@@ -27,6 +27,7 @@ vi.mock("next/image", () => ({
 		blurDataURL?: string;
 		quality?: number;
 	}) => (
+		// eslint-disable-next-line @next/next/no-img-element
 		<img
 			src={src}
 			alt={alt}

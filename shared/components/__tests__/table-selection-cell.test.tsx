@@ -7,10 +7,10 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 
 const { mockSelectionContext } = vi.hoisted(() => ({
 	mockSelectionContext: {
-		isSelected: vi.fn((id: string) => false),
+		isSelected: vi.fn((_id: string) => false),
 		handleItemSelectionChange: vi.fn(),
-		areAllSelected: vi.fn((ids: string[]) => false),
-		areSomeSelected: vi.fn((ids: string[]) => false),
+		areAllSelected: vi.fn((_ids: string[]) => false),
+		areSomeSelected: vi.fn((_ids: string[]) => false),
 		handleSelectionChange: vi.fn(),
 		getSelectedCount: vi.fn(() => 0),
 		selectedItems: [] as string[],

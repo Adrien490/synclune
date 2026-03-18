@@ -124,7 +124,6 @@ vi.mock("lucide-react", () => {
 });
 
 vi.mock("@/shared/components/forms", () => {
-	const { createElement } = require("react");
 	const { useState } = require("react");
 
 	// A minimal AppForm mock that tracks field state and exposes AppField + Subscribe
@@ -157,7 +156,7 @@ vi.mock("@/shared/components/forms", () => {
 						void v2?.onChangeAsync?.({ value: v });
 					},
 				};
-				return children(field) as ReturnType<typeof createElement>;
+				return children(field) as unknown;
 			},
 			Subscribe: ({
 				selector,
@@ -167,7 +166,7 @@ vi.mock("@/shared/components/forms", () => {
 				children: (v: string) => unknown;
 			}) => {
 				const selected = selector({ values: { search: value } });
-				return children(selected) as ReturnType<typeof createElement>;
+				return children(selected) as unknown;
 			},
 			setFieldValue: (_name: string, v: string) => setValue(v),
 			getFieldValue: (_name: string) => value,

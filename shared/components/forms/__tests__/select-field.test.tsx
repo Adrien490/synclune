@@ -65,7 +65,7 @@ vi.mock("@/shared/components/ui/native-select", () => ({
 // Mock Radix Select — it is hidden on mobile (md:block), but we render a simplified
 // version for tests. jsdom has no concept of CSS, so both branches render visually.
 vi.mock("@/shared/components/ui/select", () => ({
-	Select: ({ children, onValueChange, value, disabled }: any) => (
+	Select: ({ children, onValueChange: _onValueChange, value, disabled }: any) => (
 		<div data-testid="radix-select" data-value={value} data-disabled={disabled}>
 			{children}
 		</div>
@@ -115,7 +115,7 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		state: {
 			value: undefined,
 			meta: { errors: [] },
-			...((overrides.state as object) ?? {}),
+			...(overrides.state as object),
 		},
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,

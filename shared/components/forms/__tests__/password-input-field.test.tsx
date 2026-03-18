@@ -101,7 +101,7 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		state: {
 			value: "",
 			meta: { errors: [] },
-			...((overrides.state as object) ?? {}),
+			...(overrides.state as object),
 		},
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,

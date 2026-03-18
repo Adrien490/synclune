@@ -954,7 +954,7 @@ describe("ProductFilterSheet", () => {
 
 			const checkboxes = screen
 				.getAllByRole("checkbox")
-				.filter((el) => (el as HTMLInputElement).id?.startsWith("type-"));
+				.filter((el) => (el as HTMLInputElement).id.startsWith("type-"));
 
 			// High count first
 			expect((checkboxes[0] as HTMLInputElement).id).toBe("type-high");
@@ -999,7 +999,7 @@ describe("ProductFilterSheet", () => {
 
 			const checkboxes = screen
 				.getAllByRole("checkbox")
-				.filter((el) => (el as HTMLInputElement).id?.startsWith("color-"));
+				.filter((el) => (el as HTMLInputElement).id.startsWith("color-"));
 
 			expect((checkboxes[0] as HTMLInputElement).id).toBe("color-high-c");
 			expect((checkboxes[1] as HTMLInputElement).id).toBe("color-mid-c");

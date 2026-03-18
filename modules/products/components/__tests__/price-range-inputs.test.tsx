@@ -25,6 +25,7 @@ vi.mock("@/shared/components/ui/slider", () => ({
 		onValueChange: (v: number[]) => void;
 		[key: string]: unknown;
 	}) => (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div
 			data-testid="slider"
 			data-value={JSON.stringify(value)}

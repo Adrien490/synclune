@@ -38,6 +38,7 @@ vi.mock("@/shared/components/ui/radio-group", () => ({
 		"aria-invalid": ariaInvalid,
 		"aria-describedby": ariaDescribedBy,
 	}: any) => (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
 		<div
 			role="radiogroup"
 			aria-label={ariaLabel}
@@ -46,7 +47,6 @@ vi.mock("@/shared/components/ui/radio-group", () => ({
 			aria-describedby={ariaDescribedBy}
 			data-value={value}
 			data-disabled={disabled}
-			// Let click events bubble from children call onValueChange
 			onClick={(e) => {
 				const target = e.target as HTMLInputElement;
 				if (target.type === "radio") {
@@ -115,7 +115,7 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		state: {
 			value: "",
 			meta: { errors: [] },
-			...((overrides.state as object) ?? {}),
+			...(overrides.state as object),
 		},
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,

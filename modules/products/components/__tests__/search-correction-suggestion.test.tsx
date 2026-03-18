@@ -76,10 +76,10 @@ describe("SearchCorrectionSuggestion", () => {
 			// Re-render with updated params via direct URLSearchParams manipulation
 			const paramsWithColor = new URLSearchParams("color=or&rating=4");
 			paramsWithColor.set("search", "bague");
-			const expectedHref = `/produits?${paramsWithColor.toString()}`;
+			const _expectedHref = `/produits?${paramsWithColor.toString()}`;
 
 			// Use mockSearchParams that already has the param
-			const localParams = new URLSearchParams("color=or&rating=4");
+			const _localParams = new URLSearchParams("color=or&rating=4");
 			vi.mocked(
 				(vi.importActual("next/navigation") as Promise<{ useSearchParams: () => URLSearchParams }>)
 					.then,

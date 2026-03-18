@@ -25,10 +25,8 @@ vi.mock("../field-label", () => ({
 	),
 }));
 
+/* eslint-disable jsx-a11y/role-has-required-aria-props, jsx-a11y/no-noninteractive-element-to-interactive-role, jsx-a11y/click-events-have-key-events */
 // Controllable Autocomplete mock
-let capturedOnChange: ((value: string) => void) | undefined;
-let capturedOnSelect: ((item: any) => void) | undefined;
-
 vi.mock("@/shared/components/autocomplete", () => ({
 	Autocomplete: ({
 		name,
@@ -42,8 +40,6 @@ vi.mock("@/shared/components/autocomplete", () => ({
 		"aria-invalid": ariaInvalid,
 		"aria-required": ariaRequired,
 	}: any) => {
-		capturedOnChange = onChange;
-		capturedOnSelect = onSelect;
 		return (
 			<div data-testid="autocomplete" aria-invalid={ariaInvalid} aria-required={ariaRequired}>
 				<input

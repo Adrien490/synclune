@@ -10,6 +10,7 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		open !== false ? <div data-testid="sheet">{children}</div> : null,
 	SheetTrigger: ({ children }: any) => <div data-testid="sheet-trigger">{children}</div>,
 	SheetContent: ({ children, onKeyDown, ...props }: any) => (
+		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div data-testid="sheet-content" onKeyDown={onKeyDown} {...props}>
 			{children}
 		</div>

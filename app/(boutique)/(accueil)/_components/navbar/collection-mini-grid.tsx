@@ -46,7 +46,7 @@ export function CollectionMiniGrid({ images }: { images: CollectionImage[] }) {
 				role="img"
 				aria-label="Aperçu"
 			>
-				{images.slice(0, 2).map((image, i) => (
+				{images.slice(0, 2).map((image, _i) => (
 					<Image
 						key={image.url}
 						src={image.url}
@@ -72,7 +72,7 @@ export function CollectionMiniGrid({ images }: { images: CollectionImage[] }) {
 			role="img"
 			aria-label="Aperçu"
 		>
-			{images.slice(0, 4).map((image, i) => (
+			{images.slice(0, 4).map((image, _i) => (
 				<Image
 					key={image.url}
 					src={image.url}

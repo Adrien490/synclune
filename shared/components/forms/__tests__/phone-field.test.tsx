@@ -54,7 +54,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 // next/dynamic: return a synchronous component for tests
 vi.mock("next/dynamic", () => ({
-	default: (loader: () => Promise<any>) => {
+	default: (_loader: () => Promise<any>) => {
 		// Return a fake PhoneInput that renders a tel input
 		const FakePhoneInput = ({
 			id,
@@ -112,7 +112,7 @@ function makeFieldContext(overrides: Record<string, unknown> = {}) {
 		state: {
 			value: "",
 			meta: { errors: [] },
-			...((overrides.state as object) ?? {}),
+			...(overrides.state as object),
 		},
 		handleChange: mockHandleChange,
 		handleBlur: mockHandleBlur,

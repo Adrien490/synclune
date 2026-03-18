@@ -56,11 +56,6 @@ import { isValidUploadThingUrl } from "@/modules/media/utils/validate-media-file
 
 const VALID_URL = "https://utfs.io/f/abc123.jpg";
 
-/** Returns the sharp instance mock (created via vi.hoisted) */
-function getSharpInstance() {
-	return mockSharp.mock.results[0]?.value as ReturnType<typeof mockSharp>;
-}
-
 function makeBuffer(sizeBytes = 1024): Buffer {
 	return Buffer.alloc(sizeBytes, 0xff);
 }
