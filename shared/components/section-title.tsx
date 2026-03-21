@@ -1,4 +1,3 @@
-import { fraunces } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import type { SectionTitleProps } from "@/shared/types/component.types";
 
@@ -65,7 +64,7 @@ export function SectionTitle({
 			itemProp={itemProp}
 			className={cn(
 				// Police Fraunces - Serif display artisanale
-				fraunces.className,
+				"font-display",
 				// Style de base unifié
 				"text-foreground",
 				// Graisse

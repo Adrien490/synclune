@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/sidebar";
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
-import { caveat } from "@/shared/styles/fonts";
 import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
@@ -37,9 +36,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 						<SidebarMenuButton size="lg" asChild tooltip={`${BRAND.name} - Administration`}>
 							<Link href="/admin">
 								<Logo size={40} rounded="lg" />
-								<span
-									className={`${caveat.className} flex-1 truncate text-xl font-normal tracking-wide group-data-[collapsible=icon]:hidden`}
-								>
+								<span className="font-cursive flex-1 truncate text-xl font-normal tracking-wide group-data-[collapsible=icon]:hidden">
 									{BRAND.name}
 								</span>
 							</Link>

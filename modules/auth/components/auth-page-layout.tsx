@@ -1,5 +1,4 @@
 import { LogoAnimated } from "@/shared/components/logo-animated";
-import { fraunces } from "@/shared/styles/fonts";
 import { cn } from "@/shared/utils/cn";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -56,7 +55,7 @@ export function AuthPageLayout({
 								<h1
 									className={cn(
 										"text-foreground text-2xl font-normal sm:text-3xl lg:text-4xl",
-										fraunces.className,
+										"font-display",
 									)}
 								>
 									{title}

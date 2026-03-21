@@ -1,5 +1,3 @@
-import { caveat } from "@/shared/styles/fonts";
-
 /**
  * Signature "— Léane" with scroll-driven ink-flow reveal.
  *
@@ -35,9 +33,7 @@ export function SignatureReveal() {
 				/>
 			</svg>
 			{/* Name appears after dash draws */}
-			<span
-				className={`${caveat.className} signature-name text-foreground text-shadow-glow text-lg italic md:text-xl`}
-			>
+			<span className="font-cursive signature-name text-foreground text-shadow-glow text-lg italic md:text-xl">
 				Léane
 			</span>
 		</p>

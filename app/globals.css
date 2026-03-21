@@ -39,7 +39,6 @@ html {
 	--font-sans: var(--font-sans);
 	--font-display: var(--font-display);
 	--font-cursive: var(--font-cursive);
-	--font-serif: ui-serif, Georgia, Cambria, Times New Roman, Times, serif;
 
 	--blur-1: 1px;
 	--blur-2: 2px;

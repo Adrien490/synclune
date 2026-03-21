@@ -1,6 +1,5 @@
 import { BRAND } from "@/shared/constants/brand";
 import { cn } from "@/shared/utils/cn";
-import { fraunces } from "@/shared/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -91,7 +90,7 @@ export function Logo({
 			{showText && (
 				<span
 					className={cn(
-						fraunces.className,
+						"font-display",
 						textSizeClass,
 						"text-foreground font-normal tracking-wide",
 						textClassName,

@@ -1,4 +1,4 @@
-import { figtree, fraunces } from "@/shared/styles/fonts";
+import { caveat, figtree, fraunces } from "@/shared/styles/fonts";
 import type { Metadata } from "next";
 import "@/app/globals.css";
 
@@ -16,10 +16,8 @@ export default function OfflineLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="fr">
-			<body className={`${figtree.variable} ${figtree.className} ${fraunces.variable} antialiased`}>
-				{children}
-			</body>
+		<html lang="fr" className={`${figtree.variable} ${fraunces.variable} ${caveat.variable}`}>
+			<body className={`${figtree.className} antialiased`}>{children}</body>
 		</html>
 	);
 }

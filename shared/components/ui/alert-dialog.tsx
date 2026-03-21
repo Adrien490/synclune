@@ -5,7 +5,6 @@ import * as React from "react";
 
 import { buttonVariants } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
-import { fraunces } from "@/shared/styles/fonts";
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
 	return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -99,7 +98,7 @@ function AlertDialogTitle({
 	return (
 		<AlertDialogPrimitive.Title
 			data-slot="alert-dialog-title"
-			className={cn("text-foreground text-xl font-normal", fraunces.className, className)}
+			className={cn("text-foreground font-display text-xl font-normal", className)}
 			{...props}
 		/>
 	);
