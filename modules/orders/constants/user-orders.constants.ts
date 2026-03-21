@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITION - USER ORDERS
 // ============================================================================
@@ -24,7 +26,7 @@ export const GET_USER_ORDERS_SELECT = {
 			items: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

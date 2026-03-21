@@ -1,3 +1,4 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
 import { DiscountType } from "@/app/generated/prisma/browser";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
 
@@ -20,7 +21,7 @@ export const GET_DISCOUNT_SELECT = {
 	createdAt: true,
 	updatedAt: true,
 	_count: { select: { usages: true } },
-} as const;
+} as const satisfies Prisma.DiscountSelect;
 
 // ============================================================================
 // SELECT DEFINITIONS - DISCOUNT LIST
@@ -40,7 +41,7 @@ export const GET_DISCOUNTS_SELECT = {
 	endsAt: true,
 	createdAt: true,
 	_count: { select: { usages: true } },
-} as const;
+} as const satisfies Prisma.DiscountSelect;
 
 // ============================================================================
 // SELECT DEFINITIONS - DISCOUNT VALIDATION (minimal)
@@ -58,7 +59,7 @@ export const GET_DISCOUNT_VALIDATION_SELECT = {
 	isActive: true,
 	startsAt: true,
 	endsAt: true,
-} as const;
+} as const satisfies Prisma.DiscountSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

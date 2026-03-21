@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITION - CURRENT USER
 // ============================================================================
@@ -12,4 +14,4 @@ export const GET_CURRENT_USER_DEFAULT_SELECT = {
 	deletionRequestedAt: true,
 	createdAt: true,
 	updatedAt: true,
-} as const;
+} as const satisfies Prisma.UserSelect;

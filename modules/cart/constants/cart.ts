@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // CART LIMITS
 // ============================================================================
@@ -87,7 +89,7 @@ export const GET_CART_SELECT = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-} as const;
+} as const satisfies Prisma.CartSelect;
 
 export const GET_CART_SUMMARY_SELECT = {
 	items: {
@@ -102,4 +104,4 @@ export const GET_CART_SUMMARY_SELECT = {
 			priceAtAdd: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.CartSelect;

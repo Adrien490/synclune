@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITIONS - USER DETAIL
 // ============================================================================
@@ -11,7 +13,7 @@ export const GET_USER_SELECT = {
 	emailVerified: true,
 	createdAt: true,
 	updatedAt: true,
-} as const;
+} as const satisfies Prisma.UserSelect;
 
 // ============================================================================
 // SELECT DEFINITIONS - USER LIST
@@ -35,7 +37,7 @@ export const GET_USERS_SELECT = {
 			accounts: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.UserSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

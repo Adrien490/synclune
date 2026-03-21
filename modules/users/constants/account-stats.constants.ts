@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITIONS - ACCOUNT STATS
 // ============================================================================
@@ -8,8 +10,8 @@ export const CART_SELECT_FOR_COUNT = {
 			items: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.CartSelect;
 
 export const LAST_ORDER_SELECT_FOR_DATE = {
 	createdAt: true,
-} as const;
+} as const satisfies Prisma.OrderSelect;

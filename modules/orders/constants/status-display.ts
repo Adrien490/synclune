@@ -1,9 +1,9 @@
-import {
-	type OrderStatus,
-	type PaymentStatus,
-	type FulfillmentStatus,
-	type InvoiceStatus,
-} from "@/app/generated/prisma/client";
+import type {
+	OrderStatus,
+	PaymentStatus,
+	FulfillmentStatus,
+	InvoiceStatus,
+} from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // Re-export pour compatibilité

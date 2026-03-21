@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -117,7 +119,7 @@ export const GET_WISHLIST_SELECT = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-} as const;
+} as const satisfies Prisma.WishlistSelect;
 
 export const GET_WISHLIST_ITEM_SELECT = GET_WISHLIST_SELECT.items.select;
 

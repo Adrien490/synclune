@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITIONS - RECENT ORDERS
 // ============================================================================
@@ -15,7 +17,7 @@ export const GET_DASHBOARD_RECENT_ORDERS_SELECT = {
 			email: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
 // DEFAULTS

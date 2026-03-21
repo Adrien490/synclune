@@ -1,3 +1,4 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================
@@ -41,7 +42,7 @@ export const GET_ORDERS_SELECT = {
 			items: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
 // SELECT DEFINITIONS - ORDER DETAIL
@@ -157,7 +158,7 @@ export const GET_ORDER_SELECT = {
 		orderBy: { createdAt: "desc" as const },
 		take: 50,
 	},
-} as const;
+} as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

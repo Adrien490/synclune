@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -19,7 +21,7 @@ export const GET_SESSION_SELECT = {
 			name: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.SessionSelect;
 
 export const GET_SESSIONS_SELECT = {
 	id: true,
@@ -37,7 +39,7 @@ export const GET_SESSIONS_SELECT = {
 			role: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.SessionSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

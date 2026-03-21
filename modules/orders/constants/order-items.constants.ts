@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITION - ORDER ITEMS LIST
 // ============================================================================
@@ -55,7 +57,7 @@ export const GET_ORDER_ITEMS_DEFAULT_SELECT = {
 			size: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.OrderItemSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

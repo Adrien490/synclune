@@ -1,3 +1,4 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
@@ -33,7 +34,7 @@ export const GET_REFUNDS_SELECT = {
 			items: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.RefundSelect;
 
 // ============================================================================
 // SELECT DEFINITIONS - REFUND DETAIL
@@ -86,7 +87,7 @@ export const GET_REFUND_SELECT = {
 			},
 		},
 	},
-} as const;
+} as const satisfies Prisma.RefundSelect;
 
 // ============================================================================
 // SELECT DEFINITIONS - ORDER FOR REFUND
@@ -136,7 +137,7 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 			amount: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.OrderSelect;
 
 // ============================================================================
 // LABELS (FRANÇAIS)

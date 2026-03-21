@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITION - USER ADDRESSES
 // ============================================================================
@@ -16,4 +18,4 @@ export const GET_USER_ADDRESSES_DEFAULT_SELECT = {
 	isDefault: true,
 	createdAt: true,
 	updatedAt: true,
-} as const;
+} as const satisfies Prisma.AddressSelect;

@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITION - ACCOUNT
 // ============================================================================
@@ -19,4 +21,4 @@ export const GET_ACCOUNT_DEFAULT_SELECT = {
 			role: true,
 		},
 	},
-} as const;
+} as const satisfies Prisma.AccountSelect;

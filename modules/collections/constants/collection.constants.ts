@@ -1,3 +1,4 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
 // ============================================================================
@@ -66,7 +67,7 @@ export const GET_COLLECTION_SELECT = {
 		},
 		orderBy: { addedAt: "desc" },
 	},
-} as const;
+} as const satisfies Prisma.CollectionSelect;
 
 /**
  * Lightweight select for storefront collection pages (SEO metadata + OG image).
@@ -117,7 +118,7 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 		},
 		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
 	},
-} as const;
+} as const satisfies Prisma.CollectionSelect;
 
 export const GET_COLLECTIONS_SELECT = {
 	id: true,
@@ -171,7 +172,7 @@ export const GET_COLLECTIONS_SELECT = {
 			},
 		},
 	},
-} as const;
+} as const satisfies Prisma.CollectionSelect;
 
 // ============================================================================
 // PAGINATION & SORTING

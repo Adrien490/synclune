@@ -1,3 +1,5 @@
+import type { Prisma } from "@/app/generated/prisma/browser";
+
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -70,7 +72,7 @@ export const PRODUCT_LIST_SELECT = {
 		},
 		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 	},
-} as const;
+} as const satisfies Prisma.ProductSelect;
 
 /**
  * Select complet pour la page détail d'un produit
@@ -154,7 +156,7 @@ export const GET_PRODUCT_SELECT = {
 			addedAt: "desc" as const,
 		},
 	},
-} as const;
+} as const satisfies Prisma.ProductSelect;
 
 /**
  * Select for product listings (public storefront + admin).
@@ -256,7 +258,7 @@ export const GET_PRODUCTS_SELECT = {
 			addedAt: "desc" as const,
 		},
 	},
-} as const;
+} as const satisfies Prisma.ProductSelect;
 
 /**
  * Ultra-lightweight select for quick search dialog results.
@@ -282,7 +284,7 @@ export const QUICK_SEARCH_SELECT = {
 		},
 		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],
 	},
-} as const;
+} as const satisfies Prisma.ProductSelect;
 
 // ============================================================================
 // PAGINATION & SORTING
