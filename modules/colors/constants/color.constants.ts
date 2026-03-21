@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -17,7 +15,7 @@ export const GET_COLORS_SELECT = {
 			skus: true,
 		},
 	},
-} as const satisfies Prisma.ColorSelect;
+} as const;
 
 export const GET_COLOR_SELECT = {
 	id: true,
@@ -26,7 +24,7 @@ export const GET_COLOR_SELECT = {
 	hex: true,
 	createdAt: true,
 	updatedAt: true,
-} as const satisfies Prisma.ColorSelect;
+} as const;
 
 // ============================================================================
 // SEARCH CONSTANTS

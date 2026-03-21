@@ -1,4 +1,3 @@
-import type { Prisma } from "@/app/generated/prisma/client";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================
@@ -67,7 +66,7 @@ export const REVIEW_PUBLIC_SELECT = {
 			deletedAt: true,
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect;
+} as const;
 
 /**
  * SELECT pour la section homepage (social proof)
@@ -95,7 +94,7 @@ export const REVIEW_HOMEPAGE_SELECT = {
 			},
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect;
+} as const;
 
 /**
  * SELECT pour la liste admin des avis
@@ -143,7 +142,7 @@ export const REVIEW_ADMIN_SELECT = {
 			deletedAt: true,
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect;
+} as const;
 
 /**
  * SELECT pour la page "Mes avis" (espace client)
@@ -195,7 +194,7 @@ export const REVIEW_USER_SELECT = {
 			deletedAt: true,
 		},
 	},
-} as const satisfies Prisma.ProductReviewSelect;
+} as const;
 
 /**
  * SELECT pour les statistiques d'un produit
@@ -208,7 +207,7 @@ export const REVIEW_STATS_SELECT = {
 	rating3Count: true,
 	rating4Count: true,
 	rating5Count: true,
-} as const satisfies Prisma.ProductReviewStatsSelect;
+} as const;
 
 // ============================================
 // Statuts et labels

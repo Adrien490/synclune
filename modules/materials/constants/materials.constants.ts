@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -19,7 +17,7 @@ export const GET_MATERIALS_SELECT = {
 			},
 		},
 	},
-} as const satisfies Prisma.MaterialSelect;
+} as const;
 
 export const GET_MATERIAL_SELECT = {
 	id: true,
@@ -29,7 +27,7 @@ export const GET_MATERIAL_SELECT = {
 	isActive: true,
 	createdAt: true,
 	updatedAt: true,
-} as const satisfies Prisma.MaterialSelect;
+} as const;
 
 // ============================================================================
 // PAGINATION CONSTANTS

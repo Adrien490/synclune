@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITION - ORDER ITEM
 // ============================================================================
@@ -34,4 +32,4 @@ export const GET_ORDER_ITEM_DEFAULT_SELECT = {
 			productId: true,
 		},
 	},
-} as const satisfies Prisma.OrderItemSelect;
+} as const;

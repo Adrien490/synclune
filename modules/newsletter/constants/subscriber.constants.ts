@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -13,11 +11,11 @@ export const GET_SUBSCRIBER_SELECT = {
 	confirmedAt: true,
 	createdAt: true,
 	updatedAt: true,
-} as const satisfies Prisma.NewsletterSubscriberSelect;
+} as const;
 
 export const GET_SUBSCRIBERS_SELECT = {
 	...GET_SUBSCRIBER_SELECT,
-} as const satisfies Prisma.NewsletterSubscriberSelect;
+} as const;
 
 // ============================================================================
 // PAGINATION & SORTING
@@ -52,7 +50,7 @@ export const SORT_LABELS = {
 
 export const GET_NEWSLETTER_STATUS_DEFAULT_SELECT = {
 	status: true,
-} as const satisfies Prisma.NewsletterSubscriberSelect;
+} as const;
 
 // ============================================================================
 // BULK OPERATIONS LIMITS

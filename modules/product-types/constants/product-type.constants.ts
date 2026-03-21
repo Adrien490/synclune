@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -27,7 +25,7 @@ export const GET_PRODUCT_TYPES_SELECT = {
 			},
 		},
 	},
-} as const satisfies Prisma.ProductTypeSelect;
+} as const;
 
 export const GET_PRODUCT_TYPE_SELECT = {
 	id: true,
@@ -38,7 +36,7 @@ export const GET_PRODUCT_TYPE_SELECT = {
 	isSystem: true,
 	createdAt: true,
 	updatedAt: true,
-} as const satisfies Prisma.ProductTypeSelect;
+} as const;
 
 // ============================================================================
 // PAGINATION CONSTANTS

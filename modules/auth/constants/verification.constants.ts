@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -11,7 +9,7 @@ export const GET_VERIFICATION_SELECT = {
 	expiresAt: true,
 	createdAt: true,
 	updatedAt: true,
-} as const satisfies Prisma.VerificationSelect;
+} as const;
 
 export const GET_VERIFICATIONS_DEFAULT_SELECT = {
 	id: true,
@@ -19,7 +17,7 @@ export const GET_VERIFICATIONS_DEFAULT_SELECT = {
 	expiresAt: true,
 	createdAt: true,
 	updatedAt: true,
-} as const satisfies Prisma.VerificationSelect;
+} as const;
 
 // ============================================================================
 // PAGINATION & SORTING

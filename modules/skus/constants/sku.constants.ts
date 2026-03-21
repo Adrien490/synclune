@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITIONS
 // ============================================================================
@@ -39,7 +37,7 @@ export const GET_PRODUCT_SKU_SELECT = {
 			status: true,
 		},
 	},
-} as const satisfies Prisma.ProductSkuSelect;
+} as const;
 
 // ============================================================================
 // SELECT DEFINITIONS - LISTS
@@ -108,7 +106,7 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			orderItems: true,
 		},
 	},
-} as const satisfies Prisma.ProductSkuSelect;
+} as const;
 
 // ============================================================================
 // PAGINATION & SORTING

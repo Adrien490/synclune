@@ -65,7 +65,7 @@ const nextConfig: NextConfig = {
 						key: "Content-Security-Policy",
 						value: [
 							"default-src 'self'",
-							"script-src 'self' 'unsafe-inline' https://js.stripe.com https://va.vercel-scripts.com",
+							`script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://js.stripe.com https://va.vercel-scripts.com`,
 							"style-src 'self' 'unsafe-inline'",
 							"img-src 'self' https://*.ufs.sh https://utfs.io https://uploadthing.com https://uploadthing-prod.s3.us-west-2.amazonaws.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com data: blob:",
 							"font-src 'self'",

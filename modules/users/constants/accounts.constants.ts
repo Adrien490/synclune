@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITION - ACCOUNTS LIST
 // ============================================================================
@@ -22,7 +20,7 @@ export const GET_ACCOUNTS_DEFAULT_SELECT = {
 			role: true,
 		},
 	},
-} as const satisfies Prisma.AccountSelect;
+} as const;
 
 // ============================================================================
 // PAGINATION & SORTING

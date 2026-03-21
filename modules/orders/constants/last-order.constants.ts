@@ -1,5 +1,3 @@
-import { type Prisma } from "@/app/generated/prisma/client";
-
 // ============================================================================
 // SELECT DEFINITION - LAST ORDER
 // ============================================================================
@@ -34,4 +32,4 @@ export const GET_LAST_ORDER_DEFAULT_SELECT = {
 			items: true,
 		},
 	},
-} as const satisfies Prisma.OrderSelect;
+} as const;
