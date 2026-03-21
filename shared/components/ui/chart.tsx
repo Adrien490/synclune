@@ -2,15 +2,24 @@
 
 import { cn } from "@/shared/utils/cn";
 import * as React from "react";
-import { Legend, ResponsiveContainer, Tooltip } from "recharts";
-import type { LegendPayload } from "recharts/types/component/DefaultLegendContent";
 import {
-	type NameType,
-	type Payload,
-	type ValueType,
-} from "recharts/types/component/DefaultTooltipContent";
-import type { Props as LegendProps } from "recharts/types/component/Legend";
-import { type TooltipContentProps } from "recharts/types/component/Tooltip";
+	Legend,
+	ResponsiveContainer,
+	Tooltip,
+	type DefaultLegendContentProps,
+	type LegendPayload,
+	type TooltipContentProps,
+	type TooltipPayloadEntry,
+	type TooltipValueType,
+} from "recharts";
+
+type ValueType = TooltipValueType;
+type NameType = number | string;
+type Payload<
+	TValue extends ValueType = ValueType,
+	TName extends NameType = NameType,
+> = TooltipPayloadEntry<TValue, TName>;
+type LegendProps = DefaultLegendContentProps;
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "" } as const;
