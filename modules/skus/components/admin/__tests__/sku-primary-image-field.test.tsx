@@ -25,7 +25,7 @@ vi.mock("@/modules/media/components/admin/primary-image-upload", () => ({
 	}) => (
 		<div data-testid="primary-image-upload">
 			{imageUrl ? (
-				// eslint-disable-next-line @next/next/no-img-element
+				/* eslint-disable-next-line @next/next/no-img-element */
 				<img src={imageUrl} alt="primary" data-testid="primary-image" />
 			) : (
 				renderUploadZone?.()
