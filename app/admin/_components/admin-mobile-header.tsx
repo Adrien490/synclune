@@ -36,7 +36,7 @@ export function AdminMobileHeader() {
 				{/* Search */}
 				<button
 					type="button"
-					onClick={openSearch}
+					onClick={() => openSearch()}
 					className={cn(
 						"-mr-1 ml-2 inline-flex size-10 cursor-pointer items-center justify-center rounded-lg",
 						"text-muted-foreground hover:text-foreground transition-colors",

@@ -172,7 +172,6 @@ const BubbleSet = ({ bubbles, speed, isInView, reducedMotion }: BubbleSetProps) 
 							background: `radial-gradient(circle at 30% 30%, ${bubble.color.inner}, ${bubble.color.outer})`,
 							border: "1px solid oklch(0.9 0.05 340 / 0.2)",
 							boxShadow: "inset -10px -10px 20px oklch(1 0 0 / 0.3)",
-							backdropFilter: "blur(2px)",
 						}}
 						initial={{ y: 0, opacity: 0 }}
 						animate={animation}

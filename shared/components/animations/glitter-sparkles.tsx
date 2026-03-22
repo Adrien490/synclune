@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { useInView } from "motion/react";
+import { useInView, useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { seededRandom } from "@/shared/utils/seeded-random";
@@ -155,10 +155,16 @@ const GlitterSparklesBase = ({
 }: GlitterSparklesProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isTouchDevice = useIsTouchDevice();
+	const prefersReducedMotion = useReducedMotion();
 	const isInView = useInView(containerRef, {
 		once: false,
 		margin: "-100px",
 	});
+
+	// Skip rendering entirely when reduced motion is preferred
+	if (prefersReducedMotion) {
+		return null;
+	}
 
 	// Désactiver sur mobile/tactile pour améliorer les performances (INP/TBT)
 	if (disableOnMobile && isTouchDevice) {
@@ -206,7 +212,7 @@ const GlitterSparklesBase = ({
  *
  * - Adaptatif via CSS media queries (évite le flash d'hydratation)
  * - 25 particules desktop, 12 sur mobile
- * - Respecte prefers-reduced-motion (via CSS)
+ * - Respecte prefers-reduced-motion (via JS useReducedMotion + CSS fallback)
  * - Couleurs liées au thème via CSS variables
  * - Option disableOnMobile pour performances sur appareils tactiles
  * - Animations CSS compositor-only (zéro repaint, auto-pause hors onglet)

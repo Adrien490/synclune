@@ -166,7 +166,7 @@ describe("getVerifications — param validation", () => {
 		vi.mocked(getVerificationsSchema.safeParse).mockReturnValueOnce({
 			success: false,
 			error: { errors: [{ message: "Invalid" }] },
-		} as ReturnType<typeof getVerificationsSchema.safeParse>);
+		} as unknown as ReturnType<typeof getVerificationsSchema.safeParse>);
 
 		await expect(getVerifications(makeValidParams())).rejects.toThrow("Invalid parameters");
 	});

@@ -5,9 +5,10 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsInView, mockIsTouchDevice } = vi.hoisted(() => ({
+const { mockIsInView, mockIsTouchDevice, mockReducedMotion } = vi.hoisted(() => ({
 	mockIsInView: { value: true },
 	mockIsTouchDevice: { value: false },
+	mockReducedMotion: { value: false },
 }));
 
 // ============================================================================
@@ -16,6 +17,7 @@ const { mockIsInView, mockIsTouchDevice } = vi.hoisted(() => ({
 
 vi.mock("motion/react", () => ({
 	useInView: () => mockIsInView.value,
+	useReducedMotion: () => mockReducedMotion.value,
 }));
 
 vi.mock("@/shared/hooks", () => ({
@@ -53,6 +55,7 @@ describe("GlitterSparkles", () => {
 		vi.clearAllMocks();
 		mockIsInView.value = true;
 		mockIsTouchDevice.value = false;
+		mockReducedMotion.value = false;
 	});
 
 	afterEach(cleanup);
@@ -182,5 +185,17 @@ describe("GlitterSparkles", () => {
 		const container = screen.getByTestId("glitter-sparkles");
 		const sparkle = container.querySelector(".animate-glitter-twinkle") as HTMLElement;
 		expect(sparkle.style.getPropertyValue("--sparkle-delay")).toMatch(/^\d+(\.\d+)?s$/);
+	});
+
+	it("returns null when prefers-reduced-motion is enabled", () => {
+		mockReducedMotion.value = true;
+		const { container } = render(<GlitterSparkles />);
+		expect(container.firstChild).toBeNull();
+	});
+
+	it("does not render sparkles when prefers-reduced-motion is enabled", () => {
+		mockReducedMotion.value = true;
+		render(<GlitterSparkles />);
+		expect(screen.queryByTestId("glitter-sparkles")).not.toBeInTheDocument();
 	});
 });

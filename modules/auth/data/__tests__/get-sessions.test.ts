@@ -94,7 +94,7 @@ function makeValidParams(overrides: Record<string, unknown> = {}) {
 		cursor: undefined,
 		direction: "forward" as const,
 		perPage: 30,
-		sortBy: "createdAt",
+		sortBy: "createdAt" as const,
 		sortOrder: "desc" as const,
 		filters: {},
 		...overrides,
@@ -202,7 +202,7 @@ describe("getSessions — param validation", () => {
 		vi.mocked(getSessionsSchema.safeParse).mockReturnValueOnce({
 			success: false,
 			error: { errors: [{ message: "Invalid" }] },
-		} as ReturnType<typeof getSessionsSchema.safeParse>);
+		} as unknown as ReturnType<typeof getSessionsSchema.safeParse>);
 
 		await expect(getSessions(makeValidParams())).rejects.toThrow("Invalid parameters");
 	});

@@ -48,6 +48,7 @@ vi.mock("next/image", () => ({
 	default: (props: Record<string, unknown>) => {
 		const { fill, blurDataURL, ...rest } = props;
 		return (
+			// eslint-disable-next-line @next/next/no-img-element
 			<img
 				alt=""
 				data-fill={fill ? "true" : undefined}
@@ -135,6 +136,7 @@ vi.mock("@/shared/components/ui/table", () => ({
 // ============================================================================
 
 import { ProductsDataTable } from "../products-data-table";
+import type { GetProductsReturn } from "@/modules/products/types/product.types";
 
 // ============================================================================
 // Fixtures
@@ -189,7 +191,7 @@ function createProductsPromise(
 		products,
 		pagination: createPagination(paginationOverrides),
 		totalCount: products.length,
-	});
+	} as unknown as GetProductsReturn);
 }
 
 // ============================================================================

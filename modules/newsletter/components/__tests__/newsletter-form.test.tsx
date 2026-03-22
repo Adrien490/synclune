@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { type ActionStatus } from "@/shared/types/server-action";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -10,7 +10,7 @@ const { mockAction, mockIsPending, mockState, mockReset } = vi.hoisted(() => ({
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
 	mockState: {
-		value: undefined as { status: ActionStatus; message: string } | undefined,
+		value: undefined as ActionState | undefined,
 	},
 	mockReset: vi.fn(),
 }));
@@ -316,7 +316,7 @@ describe("NewsletterForm", () => {
 		vi.mocked(useSubscribeToNewsletter).mockReturnValue({
 			action: mockAction,
 			isPending: false,
-			state: { status: "success", message: "Inscription confirmée" },
+			state: { status: ActionStatus.SUCCESS, message: "Inscription confirmée" },
 		});
 		render(<NewsletterForm />);
 		expect(screen.getByRole("button")).toHaveTextContent("Inscrit(e)");
@@ -326,7 +326,7 @@ describe("NewsletterForm", () => {
 		vi.mocked(useSubscribeToNewsletter).mockReturnValue({
 			action: mockAction,
 			isPending: false,
-			state: { status: "success", message: "Inscription confirmée" },
+			state: { status: ActionStatus.SUCCESS, message: "Inscription confirmée" },
 		});
 		render(<NewsletterForm />);
 		expect(screen.getByTestId("sparkles-icon")).toBeInTheDocument();
@@ -336,7 +336,7 @@ describe("NewsletterForm", () => {
 		vi.mocked(useSubscribeToNewsletter).mockReturnValue({
 			action: mockAction,
 			isPending: false,
-			state: { status: "success", message: "Inscription confirmée !" },
+			state: { status: ActionStatus.SUCCESS, message: "Inscription confirmée !" },
 		});
 		render(<NewsletterForm />);
 		expect(screen.getByTestId("alert")).toBeInTheDocument();
@@ -349,7 +349,7 @@ describe("NewsletterForm", () => {
 		vi.mocked(useSubscribeToNewsletter).mockReturnValue({
 			action: mockAction,
 			isPending: false,
-			state: { status: "error", message: "Email déjà inscrit" },
+			state: { status: ActionStatus.ERROR, message: "Email déjà inscrit" },
 		});
 		render(<NewsletterForm />);
 		expect(screen.getByRole("alert")).toBeInTheDocument();
@@ -360,7 +360,7 @@ describe("NewsletterForm", () => {
 		vi.mocked(useSubscribeToNewsletter).mockReturnValue({
 			action: mockAction,
 			isPending: false,
-			state: { status: "conflict", message: "Adresse déjà utilisée" },
+			state: { status: ActionStatus.CONFLICT, message: "Adresse déjà utilisée" },
 		});
 		render(<NewsletterForm />);
 		expect(screen.getByRole("alert")).toBeInTheDocument();
