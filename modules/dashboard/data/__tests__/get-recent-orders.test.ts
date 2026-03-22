@@ -26,7 +26,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/cache", () => ({
-	cacheDefault: mockCacheDefault,
+	cacheDashboard: mockCacheDefault,
 }));
 
 vi.mock("@/modules/dashboard/constants/cache", () => ({
@@ -244,7 +244,7 @@ describe("fetchDashboardRecentOrders", () => {
 	// Cache
 	// -------------------------------------------------------------------------
 
-	it("should call cacheDefault with the RECENT_ORDERS tag", async () => {
+	it("should call cacheDashboard with the RECENT_ORDERS tag", async () => {
 		await fetchDashboardRecentOrders();
 
 		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-recent-orders");

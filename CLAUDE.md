@@ -170,7 +170,7 @@ async function fetchCart(userId?: string) {
 
 | Profile           | Stale | Revalidate | Usage                                |
 | ----------------- | ----- | ---------- | ------------------------------------ |
-| `skuStock`        | 30s   | 15s        | Real-time stock levels               |
+| `realtime`        | 30s   | 15s        | Real-time data (cart counts, stock)  |
 | `dashboard`       | 1m    | 30s        | Admin data                           |
 | `session`         | 1m    | 30s        | User session                         |
 | `userOrders`      | 2m    | 1m         | Order history                        |

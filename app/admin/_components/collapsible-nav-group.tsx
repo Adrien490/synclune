@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import {
 	Collapsible,
@@ -13,7 +12,6 @@ import {
 	SidebarMenu,
 	SidebarMenuItem,
 } from "@/shared/components/ui/sidebar";
-import { isRouteActive } from "@/shared/lib/navigation";
 import { NavMainClient } from "./nav-main-client";
 import { navigationData } from "./navigation-config";
 
@@ -23,12 +21,9 @@ interface CollapsibleNavGroupProps {
 }
 
 export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroupProps) {
-	const pathname = usePathname();
 	const group = navigationData.navGroups.find((g) => g.label === groupLabel);
 
 	if (!group) return null;
-
-	const _hasActiveChild = group.items.some((item) => isRouteActive(pathname, item.url));
 
 	return (
 		<Collapsible defaultOpen className="group/collapsible">
@@ -47,13 +42,17 @@ export function CollapsibleNavGroup({ groupLabel, groupId }: CollapsibleNavGroup
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenu className="gap-1" aria-label={group.label}>
-						{group.items.map((item) => (
-							<SidebarMenuItem key={item.id}>
-								<NavMainClient url={item.url} tooltip={item.title}>
-									<span className="flex-1">{item.title}</span>
-								</NavMainClient>
-							</SidebarMenuItem>
-						))}
+						{group.items.map((item) => {
+							const Icon = item.icon;
+							return (
+								<SidebarMenuItem key={item.id}>
+									<NavMainClient url={item.url} tooltip={item.title}>
+										<Icon className="size-5 shrink-0" aria-hidden="true" />
+										<span className="flex-1">{item.title}</span>
+									</NavMainClient>
+								</SidebarMenuItem>
+							);
+						})}
 					</SidebarMenu>
 				</CollapsibleContent>
 			</SidebarGroup>

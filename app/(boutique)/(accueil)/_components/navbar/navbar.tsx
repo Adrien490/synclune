@@ -14,11 +14,7 @@ import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
-import dynamic from "next/dynamic";
-
-const QuickSearchDialog = dynamic(() =>
-	import("@/modules/products/components/quick-search-dialog").then((mod) => mod.QuickSearchDialog),
-);
+import { QuickSearchDialogLazy } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-lazy";
 import { cn } from "@/shared/utils/cn";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
@@ -196,7 +192,7 @@ export async function Navbar() {
 
 									{/* Recherche globale (visible sur desktop seulement) */}
 									<QuickSearchTrigger className="hidden sm:inline-flex" />
-									<QuickSearchDialog
+									<QuickSearchDialogLazy
 										recentSearches={recentSearches}
 										collections={collections}
 										productTypes={productTypes}

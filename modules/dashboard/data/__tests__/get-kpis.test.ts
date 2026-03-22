@@ -25,7 +25,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/cache", () => ({
-	cacheDefault: mockCacheDefault,
+	cacheDashboard: mockCacheDefault,
 }));
 
 vi.mock("@/modules/dashboard/constants/cache", () => ({
@@ -307,7 +307,7 @@ describe("fetchDashboardKpis", () => {
 	// Cache
 	// -------------------------------------------------------------------------
 
-	it("should call cacheDefault with the KPIS tag", async () => {
+	it("should call cacheDashboard with the KPIS tag", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();

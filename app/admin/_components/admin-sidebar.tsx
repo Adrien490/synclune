@@ -62,13 +62,17 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 										{group.label}
 									</SidebarGroupLabel>
 									<SidebarMenu className="gap-1" aria-label={group.label}>
-										{group.items.map((item) => (
-											<SidebarMenuItem key={item.id}>
-												<NavMainClient url={item.url} tooltip={item.title}>
-													<span className="flex-1">{item.title}</span>
-												</NavMainClient>
-											</SidebarMenuItem>
-										))}
+										{group.items.map((item) => {
+											const Icon = item.icon;
+											return (
+												<SidebarMenuItem key={item.id}>
+													<NavMainClient url={item.url} tooltip={item.title}>
+														<Icon className="size-5 shrink-0" aria-hidden="true" />
+														<span className="flex-1">{item.title}</span>
+													</NavMainClient>
+												</SidebarMenuItem>
+											);
+										})}
 									</SidebarMenu>
 								</SidebarGroup>
 							)}

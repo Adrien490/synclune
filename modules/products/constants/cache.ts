@@ -14,7 +14,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 // - reference:       stale=7j, revalidate=24h, expire=30j      (prix max, donnees stables)
 // - dashboard:       stale=1min, revalidate=30s, expire=5min   (compteurs admin)
 // - relatedProducts: stale=30min, revalidate=10min, expire=3h  (produits similaires)
-// - skuStock:        stale=30s, revalidate=15s, expire=1min    (stock temps reel)
+// - realtime:        stale=30s, revalidate=15s, expire=1min    (donnees temps reel)
 
 // ============================================
 // CACHE TAGS

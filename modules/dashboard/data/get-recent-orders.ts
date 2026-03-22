@@ -1,6 +1,6 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { cacheDefault } from "@/shared/lib/cache";
+import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { transformRecentOrders } from "../services/recent-orders-transformer.service";
 
@@ -21,9 +21,9 @@ export type { RecentOrderItem, GetRecentOrdersReturn } from "../types/dashboard.
  * Récupère les 5 dernières commandes depuis la DB avec cache
  */
 export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersReturn> {
-	"use cache: remote";
+	"use cache";
 
-	cacheDefault(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 
 	// Exclure les commandes non payees (Stripe checkout abandonnes) et supprimees
 	const orders = await prisma.order.findMany({

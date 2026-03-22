@@ -15,40 +15,40 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
-import { cacheDefault } from "../cache";
+import { cacheDashboard } from "../cache";
 
 // ============================================================================
-// Tests: cacheDefault
+// Tests: cacheDashboard
 // ============================================================================
 
-describe("cacheDefault", () => {
+describe("cacheDashboard", () => {
 	beforeEach(() => {
 		mockCacheLife.mockClear();
 		mockCacheTag.mockClear();
 	});
 
 	it("calls cacheLife with the dashboard profile", () => {
-		cacheDefault();
+		cacheDashboard();
 
 		expect(mockCacheLife).toHaveBeenCalledOnce();
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
 	it("does not call cacheTag when no tag is provided", () => {
-		cacheDefault();
+		cacheDashboard();
 
 		expect(mockCacheTag).not.toHaveBeenCalled();
 	});
 
 	it("calls cacheTag with the given tag when a tag is provided", () => {
-		cacheDefault("my-data-tag");
+		cacheDashboard("my-data-tag");
 
 		expect(mockCacheTag).toHaveBeenCalledOnce();
 		expect(mockCacheTag).toHaveBeenCalledWith("my-data-tag");
 	});
 
 	it("calls both cacheLife and cacheTag when a tag is provided", () => {
-		cacheDefault("some-tag");
+		cacheDashboard("some-tag");
 
 		expect(mockCacheLife).toHaveBeenCalledOnce();
 		expect(mockCacheTag).toHaveBeenCalledOnce();
@@ -59,19 +59,19 @@ describe("cacheDefault", () => {
 		mockCacheLife.mockImplementation(() => callOrder.push("cacheLife"));
 		mockCacheTag.mockImplementation(() => callOrder.push("cacheTag"));
 
-		cacheDefault("ordered-tag");
+		cacheDashboard("ordered-tag");
 
 		expect(callOrder).toEqual(["cacheLife", "cacheTag"]);
 	});
 
 	it("does not call cacheTag when tag is an empty string (falsy)", () => {
-		cacheDefault("");
+		cacheDashboard("");
 
 		expect(mockCacheTag).not.toHaveBeenCalled();
 	});
 
 	it("returns void", () => {
-		const result = cacheDefault("tag");
+		const result = cacheDashboard("tag");
 
 		expect(result).toBeUndefined();
 	});

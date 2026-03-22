@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { auth } from "@/modules/auth/lib/auth";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { SESSION_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { cacheDefault } from "@/shared/lib/cache";
+import { cacheDashboard } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 
 import type { GetUserSessionsReturn } from "../types/session.types";
@@ -45,7 +45,7 @@ export async function fetchUserSessions(
 	currentSessionId?: string,
 ): Promise<GetUserSessionsReturn> {
 	"use cache: private";
-	cacheDefault(SESSION_CACHE_TAGS.SESSIONS(userId));
+	cacheDashboard(SESSION_CACHE_TAGS.SESSIONS(userId));
 
 	try {
 		const sessions = await prisma.session.findMany({

@@ -28,7 +28,7 @@ vi.mock("@/modules/auth/utils/guards", () => ({
 }));
 
 vi.mock("@/shared/lib/cache", () => ({
-	cacheDefault: mockCacheDefault,
+	cacheDashboard: mockCacheDefault,
 }));
 
 vi.mock("../../constants/cache", () => ({
@@ -162,7 +162,7 @@ describe("getAccount", () => {
 		expect(mockCacheUserAccounts).toHaveBeenCalledWith("user-42");
 	});
 
-	it("uses cacheDefault when session has no userId", async () => {
+	it("uses cacheDashboard when session has no userId", async () => {
 		mockGetSession.mockResolvedValue(null);
 
 		await getAccount({ id: "acc-1" });
@@ -188,7 +188,7 @@ describe("fetchAccount", () => {
 		expect(mockCacheUserAccounts).toHaveBeenCalledWith("user-1");
 	});
 
-	it("calls cacheDefault when context has no userId", async () => {
+	it("calls cacheDashboard when context has no userId", async () => {
 		await fetchAccount({ id: "acc-1" }, { admin: true, userId: undefined });
 
 		expect(mockCacheDefault).toHaveBeenCalledOnce();

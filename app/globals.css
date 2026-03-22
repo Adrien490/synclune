@@ -13,6 +13,7 @@
 
 html {
 	scroll-behavior: smooth;
+	scroll-padding-top: calc(var(--navbar-height) + var(--announcement-bar-height, 0px));
 	--navbar-height: 4rem;
 	--ab-height: 56px;
 	--announcement-bar-height: 0px;

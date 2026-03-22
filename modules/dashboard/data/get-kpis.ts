@@ -1,6 +1,6 @@
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { cacheDefault } from "@/shared/lib/cache";
+import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 import type { GetKpisReturn } from "../types/dashboard.types";
@@ -37,9 +37,9 @@ function computeEvolution(current: number, previous: number): number {
  * Consolidated: 2 aggregate queries instead of 6
  */
 export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
-	"use cache: remote";
+	"use cache";
 
-	cacheDefault(DASHBOARD_CACHE_TAGS.KPIS);
+	cacheDashboard(DASHBOARD_CACHE_TAGS.KPIS);
 
 	const { currentMonthStart, lastMonthStart, lastMonthEnd } = getMonthBoundaries();
 

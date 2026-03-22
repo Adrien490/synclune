@@ -113,7 +113,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 															)}
 															aria-current={isActive ? "page" : undefined}
 														>
-															<span>{item.title}</span>
+															<span>{item.shortTitle ?? item.title}</span>
 														</Link>
 													</m.li>
 												);

@@ -55,7 +55,7 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 }));
 
 vi.mock("@/shared/lib/cache", () => ({
-	cacheDefault: (tag?: string) => {
+	cacheDashboard: (tag?: string) => {
 		mockCacheLife("dashboard");
 		if (tag) mockCacheTag(tag);
 	},

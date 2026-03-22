@@ -22,7 +22,7 @@ import {
 const LogoutAlertDialog = dynamic(
 	() =>
 		import("@/modules/auth/components/logout-alert-dialog").then((mod) => mod.LogoutAlertDialog),
-	{ ssr: true },
+	{ ssr: false },
 );
 
 interface SidebarFooterUserProps {

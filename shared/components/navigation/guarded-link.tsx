@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { forwardRef, type ComponentProps, type MouseEvent } from "react";
+import { forwardRef, type ComponentProps } from "react";
 import { useNavigationGuardOptional } from "@/shared/contexts/navigation-guard-context";
 
 type GuardedLinkProps = ComponentProps<typeof Link>;
@@ -13,6 +13,9 @@ type GuardedLinkProps = ComponentProps<typeof Link>;
  *
  * Si des guards sont actifs (ex: formulaire avec modifications non sauvegardées),
  * un modal de confirmation sera affiché avant la navigation.
+ *
+ * Utilise onNavigate au lieu de onClick pour ne bloquer que la navigation
+ * client-side (Ctrl+Click pour nouvel onglet et liens externes ne sont pas affectés).
  *
  * @example
  * ```tsx
@@ -30,26 +33,14 @@ export const GuardedLink = forwardRef<HTMLAnchorElement, GuardedLinkProps>(funct
 	const router = useRouter();
 	const navigationGuard = useNavigationGuardOptional();
 
-	const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-		// Si pas de provider, comportement normal
-		if (!navigationGuard) {
-			onClick?.(e);
-			return;
-		}
+	const handleNavigate = (e: { preventDefault: () => void }) => {
+		// Si pas de provider ou pas de guards actifs, laisser la navigation se faire
+		if (!navigationGuard?.hasActiveGuards()) return;
 
-		// Si pas de guards actifs, comportement normal
-		if (!navigationGuard.hasActiveGuards()) {
-			onClick?.(e);
-			return;
-		}
-
-		// Bloquer la navigation native
+		// Bloquer la navigation
 		e.preventDefault();
 
-		// Appeler le onClick original s'il existe
-		onClick?.(e);
-
-		// Demander la navigation via le contexte
+		// Demander la navigation via le contexte (affiche le modal de confirmation)
 		const destination = typeof href === "string" ? href : (href.pathname ?? "");
 		const canProceed = navigationGuard.requestNavigation(destination, () => {
 			router.push(destination);
@@ -62,7 +53,7 @@ export const GuardedLink = forwardRef<HTMLAnchorElement, GuardedLinkProps>(funct
 	};
 
 	return (
-		<Link ref={ref} href={href} onClick={handleClick} {...props}>
+		<Link ref={ref} href={href} onClick={onClick} onNavigate={handleNavigate} {...props}>
 			{children}
 		</Link>
 	);

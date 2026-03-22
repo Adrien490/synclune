@@ -2,7 +2,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { cacheUserAccounts } from "../constants/cache";
-import { cacheDefault } from "@/shared/lib/cache";
+import { cacheDashboard } from "@/shared/lib/cache";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_ACCOUNT_DEFAULT_SELECT } from "../constants/account.constants";
@@ -52,7 +52,7 @@ export async function fetchAccount(
 	if (context.userId) {
 		cacheUserAccounts(context.userId);
 	} else {
-		cacheDefault();
+		cacheDashboard();
 	}
 
 	const where: Prisma.AccountWhereInput = {

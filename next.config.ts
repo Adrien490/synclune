@@ -100,6 +100,7 @@ const nextConfig: NextConfig = {
 		remotePatterns: [
 			{ protocol: "https", hostname: "*.ufs.sh", pathname: "/f/**" },
 			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },
+			{ protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
 			{ protocol: "https", hostname: "uploadthing.com", pathname: "/**" },
 			{
 				protocol: "https",
@@ -119,7 +120,7 @@ const nextConfig: NextConfig = {
 		session: { stale: 60, revalidate: 30, expire: 300 },
 		userOrders: { stale: 120, revalidate: 60, expire: 600 },
 		relatedProducts: { stale: 1800, revalidate: 600, expire: 10800 },
-		skuStock: { stale: 30, revalidate: 15, expire: 60 },
+		realtime: { stale: 30, revalidate: 15, expire: 60 },
 	},
 };
 

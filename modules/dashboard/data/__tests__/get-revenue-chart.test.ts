@@ -25,7 +25,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/shared/lib/cache", () => ({
-	cacheDefault: mockCacheDefault,
+	cacheDashboard: mockCacheDefault,
 }));
 
 vi.mock("@/modules/dashboard/constants/cache", () => ({
@@ -226,13 +226,13 @@ describe("fetchDashboardRevenueChart", () => {
 	// Cache
 	// -------------------------------------------------------------------------
 
-	it("should call cacheDefault with the REVENUE_CHART tag", async () => {
+	it("should call cacheDashboard with the REVENUE_CHART tag", async () => {
 		await fetchDashboardRevenueChart();
 
 		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-revenue-chart");
 	});
 
-	it("should call cacheDefault exactly once", async () => {
+	it("should call cacheDashboard exactly once", async () => {
 		await fetchDashboardRevenueChart();
 
 		expect(mockCacheDefault).toHaveBeenCalledTimes(1);

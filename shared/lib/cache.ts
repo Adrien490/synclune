@@ -10,7 +10,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 /**
- * Configure le cache par défaut (profil dashboard)
+ * Configure le cache avec le profil dashboard (1min stale, 30s revalidate, 5min expire)
  *
  * Durée : 1min stale, 30s revalidate, 5min expire
  *
@@ -20,12 +20,12 @@ import { cacheLife, cacheTag } from "next/cache";
  * ```ts
  * async function fetchData() {
  *   "use cache"
- *   cacheDefault("my-data-tag")
+ *   cacheDashboard("my-dashboard-tag")
  *   return prisma.data.findMany()
  * }
  * ```
  */
-export function cacheDefault(tag?: string): void {
+export function cacheDashboard(tag?: string): void {
 	cacheLife("dashboard");
 	if (tag) {
 		cacheTag(tag);
