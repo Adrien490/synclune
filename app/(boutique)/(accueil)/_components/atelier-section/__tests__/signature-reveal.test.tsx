@@ -7,7 +7,7 @@ import type React from "react";
 // ---------------------------------------------------------------------------
 
 vi.mock("@/shared/styles/fonts", () => ({
-	caveat: { className: "font-caveat" },
+	caveat: { className: "font-cursive" },
 }));
 
 // ---------------------------------------------------------------------------
@@ -44,7 +44,7 @@ describe("SignatureReveal", () => {
 		render(<SignatureReveal />);
 
 		const nameSpan = screen.getByText("Léane");
-		expect(nameSpan.classList.contains("font-caveat")).toBe(true);
+		expect(nameSpan.classList.contains("font-cursive")).toBe(true);
 	});
 
 	it("name span has signature-name class", () => {

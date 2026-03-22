@@ -4,10 +4,11 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function OrdersDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
+			className="hidden md:block"
 			columns={[
 				{ width: "5%", cell: { type: "checkbox" } },
 				{ width: "10%", cell: { type: "text", width: "w-20" } },
-				{ width: "10%", hiddenBelow: "sm", cell: { type: "text", width: "w-28" } },
+				{ width: "10%", cell: { type: "text", width: "w-28" } },
 				{
 					width: "15%",
 					cell: {
@@ -20,8 +21,8 @@ export function OrdersDataTableSkeleton() {
 						),
 					},
 				},
-				{ width: "10%", hiddenBelow: "sm", cell: { type: "badge", width: "w-20" } },
-				{ width: "10%", hiddenBelow: "lg", cell: { type: "badge", width: "w-20" } },
+				{ width: "10%", cell: { type: "badge", width: "w-20" } },
+				{ width: "10%", cell: { type: "badge", width: "w-20" } },
 				{ width: "8%", cell: { type: "text", width: "w-16" } },
 				{ width: "10%", align: "right", cell: { type: "actions" } },
 			]}

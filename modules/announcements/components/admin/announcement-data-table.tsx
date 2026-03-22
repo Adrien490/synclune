@@ -41,15 +41,15 @@ export function AnnouncementDataTable({ announcementsPromise }: AnnouncementData
 	}
 
 	return (
-		<div className="rounded-md border">
-			<Table>
+		<div className="hidden rounded-md border md:block">
+			<Table className="table-fixed">
 				<TableHeader>
 					<TableRow>
-						<TableHead>Message</TableHead>
-						<TableHead className="hidden md:table-cell">Statut</TableHead>
-						<TableHead className="hidden lg:table-cell">Début</TableHead>
-						<TableHead className="hidden lg:table-cell">Fin</TableHead>
-						<TableHead className="w-12">
+						<TableHead className="w-[35%]">Message</TableHead>
+						<TableHead className="w-[15%]">Statut</TableHead>
+						<TableHead className="w-[15%]">Début</TableHead>
+						<TableHead className="w-[15%]">Fin</TableHead>
+						<TableHead className="w-[8%]">
 							<span className="sr-only">Actions</span>
 						</TableHead>
 					</TableRow>
@@ -67,7 +67,7 @@ export function AnnouncementDataTable({ announcementsPromise }: AnnouncementData
 										</div>
 									)}
 								</TableCell>
-								<TableCell className="hidden md:table-cell">
+								<TableCell>
 									<Badge
 										variant="secondary"
 										className={cn("text-xs", ANNOUNCEMENT_STATUS_COLORS[status])}
@@ -75,10 +75,10 @@ export function AnnouncementDataTable({ announcementsPromise }: AnnouncementData
 										{ANNOUNCEMENT_STATUS_LABELS[status]}
 									</Badge>
 								</TableCell>
-								<TableCell className="text-muted-foreground hidden text-sm lg:table-cell">
+								<TableCell className="text-muted-foreground text-sm">
 									{formatDateTime(announcement.startsAt)}
 								</TableCell>
-								<TableCell className="text-muted-foreground hidden text-sm lg:table-cell">
+								<TableCell className="text-muted-foreground text-sm">
 									{announcement.endsAt ? formatDateTime(announcement.endsAt) : "—"}
 								</TableCell>
 								<TableCell>

@@ -125,7 +125,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<ProductsSelectionToolbar products={products} />
 				<TableScrollContainer>
@@ -137,21 +137,16 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-10 sm:w-[5%] lg:w-[4%]" aria-label="Sélection de produits">
+								<TableHead className="w-[4%]" aria-label="Sélection de produits">
 									<TableSelectionCell type="header" itemIds={productIds} />
 								</TableHead>
-								<TableHead className="hidden w-[12%] sm:table-cell lg:w-[8%]">Image</TableHead>
-								<TableHead className="w-auto sm:w-[30%] lg:w-[20%]">Titre</TableHead>
-								<TableHead className="hidden w-[12%] sm:table-cell lg:w-[10%]">Statut</TableHead>
-								<TableHead className="hidden w-[10%] text-center sm:table-cell lg:w-[8%]">
-									Variantes
-								</TableHead>
-								<TableHead className="hidden w-[12%] text-right lg:table-cell">Prix</TableHead>
-								<TableHead className="hidden w-[8%] text-center lg:table-cell">Stock</TableHead>
-								<TableHead
-									className="w-12 sm:w-[10%] lg:w-[8%]"
-									aria-label="Actions disponibles pour chaque produit"
-								>
+								<TableHead className="w-[8%]">Image</TableHead>
+								<TableHead className="w-[22%]">Titre</TableHead>
+								<TableHead className="w-[10%]">Statut</TableHead>
+								<TableHead className="w-[8%] text-center">Variantes</TableHead>
+								<TableHead className="w-[14%] text-right">Prix</TableHead>
+								<TableHead className="w-[8%] text-center">Stock</TableHead>
+								<TableHead className="w-[8%]" aria-label="Actions disponibles pour chaque produit">
 									Actions
 								</TableHead>
 							</TableRow>
@@ -172,7 +167,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												ariaLabel={`Sélectionner ${product.title}`}
 											/>
 										</TableCell>
-										<TableCell className="hidden py-3 sm:table-cell">
+										<TableCell className="py-3">
 											<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
 												{defaultImage ? (
 													<Image
@@ -207,12 +202,12 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												</Link>
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
+										<TableCell>
 											<Badge variant={STATUS_CONFIG[product.status].variant}>
 												{STATUS_CONFIG[product.status].label}
 											</Badge>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											{skusCount > 0 ? (
 												<Link
 													href={`/admin/catalogue/produits/${product.slug}/variantes`}
@@ -231,7 +226,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												</span>
 											)}
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-right lg:table-cell">
+										<TableCell className="text-right">
 											<span
 												className="text-sm font-medium"
 												title={formatPriceDisplay(priceRange)}
@@ -240,7 +235,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												{formatPriceDisplay(priceRange)}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center lg:table-cell">
+										<TableCell className="text-center">
 											<Badge
 												variant={
 													totalStock === 0
@@ -260,7 +255,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												{totalStock}
 											</Badge>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<ProductRowActions
 												productId={product.id}
 												productSlug={product.slug}

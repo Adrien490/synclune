@@ -44,7 +44,7 @@ export async function SubscribersDataTable({
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<TableScrollContainer>
 					<Table
@@ -57,8 +57,8 @@ export async function SubscribersDataTable({
 							<TableRow>
 								<TableHead className="w-[35%]">Email</TableHead>
 								<TableHead className="w-[20%]">Statut</TableHead>
-								<TableHead className="hidden w-[25%] sm:table-cell">Date d'inscription</TableHead>
-								<TableHead className="hidden w-[20%] md:table-cell">Dernière mise à jour</TableHead>
+								<TableHead className="w-[25%]">Date d'inscription</TableHead>
+								<TableHead className="w-[20%]">Dernière mise à jour</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
@@ -85,10 +85,10 @@ export async function SubscribersDataTable({
 											</span>
 										)}
 									</TableCell>
-									<TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
+									<TableCell className="text-muted-foreground text-sm">
 										{formatDateShort(subscriber.subscribedAt)}
 									</TableCell>
-									<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+									<TableCell className="text-muted-foreground text-sm">
 										{formatDateShort(subscriber.updatedAt)}
 									</TableCell>
 								</TableRow>

@@ -106,13 +106,20 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 														<Link
 															href={item.url}
 															className={cn(
-																"relative flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+																"relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
 																isActive
-																	? "bg-accent/50 text-foreground before:bg-primary font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-0.5 before:-translate-y-1/2 before:rounded-full"
+																	? "bg-primary/10 text-primary before:bg-primary font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full"
 																	: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
 															)}
 															aria-current={isActive ? "page" : undefined}
 														>
+															<item.icon
+																className={cn(
+																	"size-5 shrink-0",
+																	isActive ? "text-primary" : "text-muted-foreground",
+																)}
+																aria-hidden="true"
+															/>
 															<span>{item.shortTitle ?? item.title}</span>
 														</Link>
 													</m.li>
@@ -148,7 +155,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 								target="_blank"
 								rel="noopener noreferrer"
 								className={cn(
-									"flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium",
+									"flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium",
 									"hover:bg-accent/50 transition-colors",
 									"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
 								)}
@@ -161,7 +168,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 								type="button"
 								onClick={handleLogoutClick}
 								className={cn(
-									"flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium",
+									"flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium",
 									"text-destructive hover:bg-destructive/10 transition-colors",
 									"focus-visible:ring-destructive focus-visible:ring-2 focus-visible:outline-none",
 								)}

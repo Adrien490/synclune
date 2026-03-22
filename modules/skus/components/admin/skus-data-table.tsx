@@ -65,7 +65,7 @@ export async function ProductVariantsDataTable({
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<ProductVariantsSelectionToolbar />
 				<TableScrollContainer>
@@ -81,44 +81,24 @@ export async function ProductVariantsDataTable({
 									key="select"
 									scope="col"
 									role="columnheader"
-									className="w-12"
+									className="w-[4%]"
 									aria-label="Sélection de variantes"
 								>
 									<TableSelectionCell type="header" itemIds={variantIds} />
 								</TableHead>
-								<TableHead
-									key="image"
-									scope="col"
-									role="columnheader"
-									className="hidden w-20 md:table-cell"
-								>
+								<TableHead key="image" scope="col" role="columnheader" className="w-[8%]">
 									Image
 								</TableHead>
-								<TableHead key="sku" scope="col" role="columnheader" className="w-[20%]">
+								<TableHead key="sku" scope="col" role="columnheader" className="w-[18%]">
 									Référence
 								</TableHead>
-								<TableHead
-									key="color"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[12%] sm:table-cell"
-								>
+								<TableHead key="color" scope="col" role="columnheader" className="w-[12%]">
 									Couleur
 								</TableHead>
-								<TableHead
-									key="material"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[12%] xl:table-cell"
-								>
+								<TableHead key="material" scope="col" role="columnheader" className="w-[12%]">
 									Matériau
 								</TableHead>
-								<TableHead
-									key="size"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[8%] 2xl:table-cell"
-								>
+								<TableHead key="size" scope="col" role="columnheader" className="w-[8%]">
 									Taille
 								</TableHead>
 								<TableHead key="price" scope="col" role="columnheader" className="w-[12%]">
@@ -128,7 +108,7 @@ export async function ProductVariantsDataTable({
 									key="stock"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[10%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Stock
 								</TableHead>
@@ -150,10 +130,10 @@ export async function ProductVariantsDataTable({
 
 								return (
 									<TableRow key={sku.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<TableSelectionCell type="row" itemId={sku.id} />
 										</TableCell>
-										<TableCell role="gridcell" className="hidden py-3 md:table-cell">
+										<TableCell className="py-3">
 											<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
 												{primaryImage ? (
 													primaryImage.mediaType === "VIDEO" ? (
@@ -191,7 +171,7 @@ export async function ProductVariantsDataTable({
 												)}
 											</div>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="flex flex-col gap-1">
 												<span className="font-medium">{sku.sku}</span>
 												{sku.isDefault && (
@@ -201,7 +181,7 @@ export async function ProductVariantsDataTable({
 												)}
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
+										<TableCell>
 											{sku.color ? (
 												<div className="flex items-center gap-2">
 													<Tooltip>
@@ -223,26 +203,26 @@ export async function ProductVariantsDataTable({
 												<span className="text-muted-foreground text-sm">—</span>
 											)}
 										</TableCell>
-										<TableCell role="gridcell" className="hidden xl:table-cell">
+										<TableCell>
 											{sku.material ? (
 												<span className="text-sm">{sku.material.name}</span>
 											) : (
 												<span className="text-muted-foreground text-sm">—</span>
 											)}
 										</TableCell>
-										<TableCell role="gridcell" className="hidden 2xl:table-cell">
+										<TableCell>
 											{sku.size ? (
 												<span className="text-sm">{sku.size}</span>
 											) : (
 												<span className="text-muted-foreground text-sm">—</span>
 											)}
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<span className="text-sm font-bold">
 												{(sku.priceInclTax / 100).toFixed(2)} €
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<Badge
 												variant={
 													availableStock === 0
@@ -262,7 +242,7 @@ export async function ProductVariantsDataTable({
 												{availableStock}
 											</Badge>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<ProductSkuRowActions
 												skuId={sku.id}
 												skuName={sku.sku}

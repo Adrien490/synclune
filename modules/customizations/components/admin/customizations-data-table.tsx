@@ -57,7 +57,7 @@ export function CustomizationsDataTable({
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<CustomizationSelectionToolbar />
 				<TableScrollContainer>
@@ -69,15 +69,15 @@ export function CustomizationsDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[5%]">
+								<TableHead className="w-[4%]">
 									<SelectAllCheckbox itemIds={requestIds} />
 								</TableHead>
 								<TableHead className="w-[18%]">Client</TableHead>
-								<TableHead className="w-[15%]">Type</TableHead>
-								<TableHead className="w-[15%]">Statut</TableHead>
-								<TableHead className="hidden w-[10%] md:table-cell">Inspirations</TableHead>
-								<TableHead className="hidden w-[5%] lg:table-cell">Notes</TableHead>
-								<TableHead className="hidden w-[12%] sm:table-cell">Date</TableHead>
+								<TableHead className="w-[14%]">Type</TableHead>
+								<TableHead className="w-[14%]">Statut</TableHead>
+								<TableHead className="w-[10%]">Inspirations</TableHead>
+								<TableHead className="w-[5%]">Notes</TableHead>
+								<TableHead className="w-[12%]">Date</TableHead>
 								<TableHead className="w-[8%] text-right">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
@@ -97,21 +97,21 @@ export function CustomizationsDataTable({
 									<TableCell>
 										<StatusBadge status={request.status} />
 									</TableCell>
-									<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+									<TableCell className="text-muted-foreground text-sm">
 										{request._count.inspirationProducts > 0 ? (
 											<span>{request._count.inspirationProducts} produit(s)</span>
 										) : (
 											<span className="text-muted-foreground/50">-</span>
 										)}
 									</TableCell>
-									<TableCell className="hidden lg:table-cell">
+									<TableCell>
 										{request.adminNotes ? (
 											<StickyNote className="text-primary h-4 w-4" />
 										) : (
 											<span className="text-muted-foreground/50">-</span>
 										)}
 									</TableCell>
-									<TableCell className="text-muted-foreground hidden text-sm sm:table-cell">
+									<TableCell className="text-muted-foreground text-sm">
 										{formatDateShort(request.createdAt)}
 									</TableCell>
 									<TableCell className="text-right">

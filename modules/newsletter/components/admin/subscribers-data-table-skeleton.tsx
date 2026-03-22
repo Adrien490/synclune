@@ -4,6 +4,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function SubscribersDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
+			className="hidden md:block"
 			tableFixed={false}
 			columns={[
 				{ width: "35%", cell: { type: "text", width: "w-48" } },
@@ -19,10 +20,10 @@ export function SubscribersDataTableSkeleton() {
 						),
 					},
 				},
-				{ width: "25%", hiddenBelow: "sm", cell: { type: "text", width: "w-24" } },
-				{ width: "20%", hiddenBelow: "md", cell: { type: "text", width: "w-24" } },
+				{ width: "25%", cell: { type: "text", width: "w-24" } },
+				{ width: "20%", cell: { type: "text", width: "w-24" } },
 			]}
-			pagination="offset"
+			pagination="cursor"
 		/>
 	);
 }

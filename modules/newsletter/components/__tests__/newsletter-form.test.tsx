@@ -1,5 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { type ActionStatus } from "@/shared/types/server-action";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -8,7 +9,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { mockAction, mockIsPending, mockState, mockReset } = vi.hoisted(() => ({
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
-	mockState: { value: undefined as { status: string; message: string } | undefined },
+	mockState: {
+		value: undefined as { status: ActionStatus; message: string } | undefined,
+	},
 	mockReset: vi.fn(),
 }));
 
@@ -49,7 +52,7 @@ vi.mock("@/shared/components/forms", () => ({
 						"aria-label"?: string;
 						disabled?: boolean;
 						required?: boolean;
-						inputMode?: string;
+						inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 					}) => (
 						<input
 							data-testid={`input-${name}`}

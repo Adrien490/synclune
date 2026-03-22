@@ -40,7 +40,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<MaterialsSelectionToolbar />
 				<TableScrollContainer>
@@ -52,30 +52,20 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={materialIds} />
 								</TableHead>
-								<TableHead
-									key="name"
-									scope="col"
-									role="columnheader"
-									className="w-[35%] sm:w-[30%]"
-								>
+								<TableHead key="name" scope="col" role="columnheader" className="w-[25%]">
 									Nom
 								</TableHead>
-								<TableHead
-									key="description"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[30%] md:table-cell"
-								>
+								<TableHead key="description" scope="col" role="columnheader" className="w-[30%]">
 									Description
 								</TableHead>
 								<TableHead
 									key="status"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[10%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Statut
 								</TableHead>
@@ -83,7 +73,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 									key="skus"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[10%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Variantes
 								</TableHead>
@@ -91,7 +81,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] text-right sm:w-[10%]"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque matériau"
 								>
 									Actions
@@ -104,10 +94,10 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 
 								return (
 									<TableRow key={material.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<TableSelectionCell type="row" itemId={material.id} />
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="overflow-hidden">
 												<span
 													className="text-foreground block truncate font-semibold"
@@ -117,18 +107,18 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 												</span>
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden md:table-cell">
+										<TableCell>
 											<span className="text-muted-foreground line-clamp-2 text-sm">
 												{material.description ?? "-"}
 											</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<MaterialActiveToggle materialId={material.id} isActive={material.isActive} />
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<span className="text-sm font-medium">{skuCount}</span>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<MaterialsRowActions
 												materialId={material.id}
 												materialName={material.name}

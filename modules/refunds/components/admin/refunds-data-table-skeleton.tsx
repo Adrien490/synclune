@@ -4,9 +4,10 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function RefundsDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
+			className="hidden md:block"
 			columns={[
 				{ width: "15%", cell: { type: "text", width: "w-20" } },
-				{ width: "12%", hiddenBelow: "sm", cell: { type: "text", width: "w-24" } },
+				{ width: "12%", cell: { type: "text", width: "w-24" } },
 				{
 					width: "20%",
 					cell: {
@@ -19,7 +20,7 @@ export function RefundsDataTableSkeleton() {
 						),
 					},
 				},
-				{ width: "15%", hiddenBelow: "md", cell: { type: "text", width: "w-28" } },
+				{ width: "15%", cell: { type: "text", width: "w-28" } },
 				{ width: "12%", cell: { type: "badge", width: "w-20" } },
 				{ width: "10%", cell: { type: "text", width: "w-16" } },
 				{ width: "10%", align: "right", cell: { type: "actions" } },

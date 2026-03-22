@@ -4,14 +4,14 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function ProductTypesDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
+			className="hidden md:block"
 			columns={[
 				{ width: "5%", cell: { type: "checkbox" } },
 				{ width: "25%", cell: { type: "text", width: "w-32" } },
-				{ width: "30%", hiddenBelow: "lg", cell: { type: "text", width: "w-48" } },
-				{ width: "15%", hiddenBelow: "sm", align: "center", cell: { type: "text", width: "w-8" } },
+				{ width: "30%", cell: { type: "text", width: "w-48" } },
+				{ width: "15%", align: "center", cell: { type: "text", width: "w-8" } },
 				{
 					width: "10%",
-					hiddenBelow: "sm",
 					align: "center",
 					cell: {
 						type: "custom",

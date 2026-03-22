@@ -98,7 +98,6 @@ export const createToastCallbacks = <T extends ActionState | unknown = ActionSta
 			// Skip toast for validation errors (already shown inline by form fields)
 			if (showErrorToast && hasMessage(result)) {
 				const isValidationError =
-					result &&
 					typeof result === "object" &&
 					"status" in result &&
 					(result as unknown as { status: string }).status === ActionStatus.VALIDATION_ERROR;

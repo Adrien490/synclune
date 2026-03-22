@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -49,6 +49,7 @@ vi.mock("next/image", () => ({
 		const { fill, blurDataURL, ...rest } = props;
 		return (
 			<img
+				alt=""
 				data-fill={fill ? "true" : undefined}
 				data-blur={blurDataURL ? "true" : undefined}
 				{...rest}
@@ -187,6 +188,7 @@ function createProductsPromise(
 	return Promise.resolve({
 		products,
 		pagination: createPagination(paginationOverrides),
+		totalCount: products.length,
 	});
 }
 

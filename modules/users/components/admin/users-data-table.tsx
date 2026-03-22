@@ -14,6 +14,7 @@ import type { GetUsersReturn } from "@/modules/users/types/user.types";
 import { CheckCircle, Users } from "lucide-react";
 import { use } from "react";
 import Link from "next/link";
+import { formatDateShort } from "@/shared/utils/dates";
 import { UsersRowActions } from "./users-row-actions";
 import { UsersSelectionToolbar } from "./users-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
@@ -23,14 +24,6 @@ interface UsersDataTableProps {
 	perPage: number;
 	/** Base path for the "reset filters" link in empty state */
 	resetHref?: string;
-}
-
-function formatDate(date: Date | string): string {
-	return new Intl.DateTimeFormat("fr-FR", {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	}).format(new Date(date));
 }
 
 export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTableProps) {
@@ -49,7 +42,7 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<UsersSelectionToolbar userIds={userIds} />
 				<TableScrollContainer>
@@ -61,15 +54,15 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[5%]">
+								<TableHead className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={userIds} />
 								</TableHead>
-								<TableHead className="w-[25%]">Nom</TableHead>
-								<TableHead className="w-[30%]">Email</TableHead>
-								<TableHead className="hidden w-[10%] xl:table-cell">Commandes</TableHead>
-								<TableHead className="hidden w-[18%] sm:table-cell">Inscription</TableHead>
+								<TableHead className="w-[22%]">Nom</TableHead>
+								<TableHead className="w-[28%]">Email</TableHead>
+								<TableHead className="w-[10%]">Commandes</TableHead>
+								<TableHead className="w-[16%]">Inscription</TableHead>
 								<TableHead
-									className="w-[12%] text-right"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque utilisateur"
 								>
 									Actions
@@ -104,7 +97,7 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 												)}
 											</div>
 										</TableCell>
-										<TableCell className="hidden xl:table-cell">
+										<TableCell>
 											{orderCount > 0 ? (
 												<Link
 													href={`/admin/ventes/commandes?userId=${user.id}`}
@@ -117,9 +110,9 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 												<span className="text-muted-foreground">0</span>
 											)}
 										</TableCell>
-										<TableCell className="hidden sm:table-cell">
+										<TableCell>
 											<span className="text-muted-foreground text-sm">
-												{formatDate(user.createdAt)}
+												{formatDateShort(user.createdAt)}
 											</span>
 										</TableCell>
 										<TableCell className="text-right">

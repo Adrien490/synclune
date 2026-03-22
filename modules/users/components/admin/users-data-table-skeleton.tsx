@@ -4,6 +4,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function UsersDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
+			className="hidden md:block"
 			columns={[
 				{ width: "8%", cell: { type: "avatar" } },
 				{ width: "20%", cell: { type: "text", width: "w-28" } },
@@ -19,11 +20,11 @@ export function UsersDataTableSkeleton() {
 						),
 					},
 				},
-				{ width: "12%", hiddenBelow: "xl", cell: { type: "text", width: "w-6" } },
-				{ width: "15%", hiddenBelow: "sm", cell: { type: "text", width: "w-20" } },
+				{ width: "12%", cell: { type: "text", width: "w-6" } },
+				{ width: "15%", cell: { type: "text", width: "w-20" } },
 				{ width: "5%", align: "right", cell: { type: "actions" } },
 			]}
-			pagination="offset"
+			pagination="cursor"
 		/>
 	);
 }

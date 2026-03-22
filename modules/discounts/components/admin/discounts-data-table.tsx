@@ -55,9 +55,9 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 
 	const STATUS_BADGE_CONFIG: Record<
 		DiscountStatus,
-		{ label: string; variant: "default" | "secondary" | "outline" }
+		{ label: string; variant: "default" | "secondary" | "outline" | "success" }
 	> = {
-		active: { label: "Actif", variant: "default" },
+		active: { label: "Actif", variant: "success" },
 		inactive: { label: "Inactif", variant: "secondary" },
 		scheduled: { label: "Planifié", variant: "outline" },
 		expired: { label: "Expiré", variant: "secondary" },
@@ -76,7 +76,7 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<DiscountsSelectionToolbar discountIds={discountIds} discounts={discountsData} />
 				<TableScrollContainer>
@@ -88,18 +88,16 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[5%]">
+								<TableHead className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={discountIds} />
 								</TableHead>
-								<TableHead className="w-[20%]">Code</TableHead>
-								<TableHead className="hidden w-[15%] sm:table-cell">Type</TableHead>
+								<TableHead className="w-[18%]">Code</TableHead>
+								<TableHead className="w-[14%]">Type</TableHead>
 								<TableHead className="w-[12%]">Valeur</TableHead>
-								<TableHead className="hidden w-[15%] text-center md:table-cell">
-									Utilisations
-								</TableHead>
+								<TableHead className="w-[14%] text-center">Utilisations</TableHead>
 								<TableHead className="w-[10%] text-center">Statut</TableHead>
 								<TableHead
-									className="w-[10%] text-right"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque code promo"
 								>
 									Actions
@@ -117,7 +115,7 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 											{discount.code}
 										</code>
 									</TableCell>
-									<TableCell role="gridcell" className="hidden sm:table-cell">
+									<TableCell>
 										<span className="text-muted-foreground text-sm">
 											{DISCOUNT_TYPE_LABELS[discount.type]}
 										</span>
@@ -127,26 +125,15 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 											{formatValue(discount.type, discount.value)}
 										</span>
 									</TableCell>
-									<TableCell role="gridcell" className="hidden text-center md:table-cell">
+									<TableCell className="text-center">
 										<span className="text-sm">
 											{formatUsage(discount.usageCount, discount.maxUsageCount)}
 										</span>
 									</TableCell>
-									<TableCell role="gridcell" className="text-center">
+									<TableCell className="text-center">
 										{(() => {
 											const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
-											return (
-												<Badge
-													variant={status.variant}
-													className={
-														status.variant === "default"
-															? "bg-green-100 text-green-800 hover:bg-green-100"
-															: ""
-													}
-												>
-													{status.label}
-												</Badge>
-											);
+											return <Badge variant={status.variant}>{status.label}</Badge>;
 										})()}
 									</TableCell>
 									<TableCell>

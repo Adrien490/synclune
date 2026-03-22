@@ -54,22 +54,22 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<OrdersSelectionToolbar />
 				<TableScrollContainer>
 					<Table caption="Liste des commandes" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[5%]">
+								<TableHead className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={orderIds} />
 								</TableHead>
-								<TableHead className="w-[25%] sm:w-[20%]">Commande</TableHead>
-								<TableHead className="hidden w-[20%] sm:table-cell">Client</TableHead>
-								<TableHead className="w-[20%] sm:w-[15%]">Statut</TableHead>
-								<TableHead className="hidden w-[10%] text-right sm:table-cell">Montant</TableHead>
+								<TableHead className="w-[15%]">Commande</TableHead>
+								<TableHead className="w-[25%]">Client</TableHead>
+								<TableHead className="w-[15%]">Statut</TableHead>
+								<TableHead className="w-[12%] text-right">Montant</TableHead>
 								<TableHead
-									className="w-[15%] text-right sm:w-[10%]"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque commande"
 								>
 									Actions
@@ -94,7 +94,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 												{order.orderNumber}
 											</Link>
 										</TableCell>
-										<TableCell className="hidden sm:table-cell">
+										<TableCell>
 											<span className="block truncate text-sm font-medium">{userName}</span>
 										</TableCell>
 										<TableCell>
@@ -102,7 +102,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
 											</Badge>
 										</TableCell>
-										<TableCell className="hidden text-right sm:table-cell">
+										<TableCell className="text-right">
 											<span className="text-sm font-bold">{formatEuro(order.total)}</span>
 										</TableCell>
 										<TableCell className="text-right">

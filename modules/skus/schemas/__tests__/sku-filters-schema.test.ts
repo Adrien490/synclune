@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { productSkuFiltersSchema } from "@/modules/skus/schemas/sku-filters-schema";
 import {
-	SKU_FILTERS_MIN_DATE,
 	SKU_FILTERS_MAX_INVENTORY,
 	SKU_FILTERS_MAX_PRICE_CENTS,
 } from "@/modules/skus/constants/sku.constants";

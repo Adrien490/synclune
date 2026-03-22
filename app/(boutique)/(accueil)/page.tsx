@@ -7,6 +7,7 @@ import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
+import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { StructuredData } from "@/shared/components/structured-data";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
@@ -125,6 +126,7 @@ export default async function Page() {
 			<Suspense fallback={<FaqSectionSkeleton />}>
 				<FaqSection />
 			</Suspense>
+			<ScrollToTop />
 		</>
 	);
 }

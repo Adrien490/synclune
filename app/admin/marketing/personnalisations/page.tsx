@@ -15,8 +15,8 @@ import {
 	STATUS_FILTER_OPTIONS,
 } from "@/modules/customizations/constants/sort.constants";
 import { getFirstParam } from "@/shared/utils/params";
-import { Skeleton } from "@/shared/components/ui/skeleton";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
+import { CustomizationsDataTableSkeleton } from "@/modules/customizations/components/admin/customizations-data-table-skeleton";
 import { Sparkles, Clock, CheckCircle2, FileText } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -132,7 +132,7 @@ export default async function CustomizationsPage({ searchParams }: Customization
 					</Toolbar>
 				</Suspense>
 
-				<Suspense fallback={<TableSkeleton />}>
+				<Suspense fallback={<CustomizationsDataTableSkeleton />}>
 					<CustomizationsDataTable requestsPromise={requestsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
@@ -167,22 +167,6 @@ function StatCard({
 				<div className={`${highlight && value > 0 ? "text-amber-600" : "text-muted-foreground"}`}>
 					{icon}
 				</div>
-			</div>
-		</div>
-	);
-}
-
-function TableSkeleton() {
-	return (
-		<div className="bg-card rounded-lg border">
-			<div className="space-y-4 p-4">
-				{Array.from({ length: 5 }).map((_, i) => (
-					<div key={i} className="flex items-center gap-4">
-						<Skeleton className="h-10 flex-1" />
-						<Skeleton className="h-10 w-24" />
-						<Skeleton className="h-10 w-20" />
-					</div>
-				))}
 			</div>
 		</div>
 	);

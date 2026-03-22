@@ -14,18 +14,18 @@ import {
  */
 export function ReviewsDataTableSkeleton() {
 	return (
-		<Card aria-busy="true" aria-label="Chargement des avis">
+		<Card className="hidden md:block" aria-busy="true" aria-label="Chargement des avis">
 			<CardContent>
 				<Table aria-hidden="true">
 					<TableHeader>
 						<TableRow>
-							<TableHead className="w-[25%]">Produit</TableHead>
+							<TableHead className="w-[22%]">Produit</TableHead>
 							<TableHead className="w-[20%]">Client</TableHead>
 							<TableHead className="w-[10%]">Note</TableHead>
-							<TableHead className="w-[15%]">Statut</TableHead>
-							<TableHead className="hidden w-[15%] md:table-cell">Date</TableHead>
-							<TableHead className="w-[10%]">Réponse</TableHead>
-							<TableHead className="w-[5%]">Actions</TableHead>
+							<TableHead className="w-[12%]">Statut</TableHead>
+							<TableHead className="w-[12%]">Date</TableHead>
+							<TableHead className="w-[8%]">Réponse</TableHead>
+							<TableHead className="w-[8%]">Actions</TableHead>
 						</TableRow>
 					</TableHeader>
 					<TableBody>
@@ -49,7 +49,7 @@ export function ReviewsDataTableSkeleton() {
 								<TableCell>
 									<Skeleton className="h-5 w-16" />
 								</TableCell>
-								<TableCell className="hidden md:table-cell">
+								<TableCell>
 									<Skeleton className="h-4 w-20" />
 								</TableCell>
 								<TableCell>

@@ -9,7 +9,6 @@ import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
-import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
@@ -49,7 +48,6 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 			<Suspense fallback={<FooterSkeleton />}>
 				<Footer />
 			</Suspense>
-			<ScrollToTop />
 			<CartAndSkuWrapper />
 			<Suspense fallback={null}>
 				<AdminDashboardFab />

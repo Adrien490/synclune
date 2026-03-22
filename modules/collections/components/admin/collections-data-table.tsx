@@ -68,7 +68,7 @@ export async function CollectionsDataTable({
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<CollectionsSelectionToolbar collections={collectionsData} />
 				<TableScrollContainer>
@@ -80,38 +80,23 @@ export async function CollectionsDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={collectionIds} />
 								</TableHead>
-								<TableHead
-									key="name"
-									scope="col"
-									role="columnheader"
-									className="w-[40%] sm:w-[30%]"
-								>
+								<TableHead key="name" scope="col" role="columnheader" className="w-[25%]">
 									Nom
 								</TableHead>
-								<TableHead
-									key="status"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[15%] sm:table-cell"
-								>
+								<TableHead key="status" scope="col" role="columnheader" className="w-[12%]">
 									Statut
 								</TableHead>
-								<TableHead
-									key="description"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[25%] xl:table-cell"
-								>
+								<TableHead key="description" scope="col" role="columnheader" className="w-[25%]">
 									Description
 								</TableHead>
 								<TableHead
 									key="products"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[12%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Produits
 								</TableHead>
@@ -119,7 +104,7 @@ export async function CollectionsDataTable({
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] text-right sm:w-[10%]"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque collection"
 								>
 									Actions
@@ -135,10 +120,10 @@ export async function CollectionsDataTable({
 
 								return (
 									<TableRow key={collection.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<TableSelectionCell type="row" itemId={collection.id} />
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="flex items-center gap-2 overflow-hidden">
 												<Link
 													href={`/admin/catalogue/collections/${collection.slug}`}
@@ -159,7 +144,7 @@ export async function CollectionsDataTable({
 												)}
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden sm:table-cell">
+										<TableCell>
 											<div className="flex items-center gap-2">
 												<Badge variant={STATUS_CONFIG[collection.status].variant}>
 													{STATUS_CONFIG[collection.status].label}
@@ -179,7 +164,7 @@ export async function CollectionsDataTable({
 												)}
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden xl:table-cell">
+										<TableCell>
 											<div className="overflow-hidden">
 												<span
 													className="text-muted-foreground block truncate text-sm"
@@ -189,10 +174,10 @@ export async function CollectionsDataTable({
 												</span>
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<span className="text-sm font-medium">{productsCount}</span>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="flex justify-end">
 												<CollectionRowActions
 													collectionId={collection.id}

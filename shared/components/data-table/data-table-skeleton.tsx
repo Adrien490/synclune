@@ -34,6 +34,7 @@ interface DataTableSkeletonProps {
 	rows?: number;
 	pagination?: "cursor" | "offset" | "none";
 	tableFixed?: boolean;
+	className?: string;
 }
 
 const hiddenClasses: Record<string, string> = {
@@ -78,9 +79,10 @@ export function DataTableSkeleton({
 	rows = 10,
 	pagination = "offset",
 	tableFixed = true,
+	className,
 }: DataTableSkeletonProps) {
 	return (
-		<Card>
+		<Card className={className}>
 			<CardContent>
 				<div className="overflow-x-auto">
 					<Table className={cn("min-w-full", tableFixed && "table-fixed")}>

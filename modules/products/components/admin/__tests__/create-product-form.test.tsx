@@ -60,7 +60,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		...props
 	}: {
 		children: React.ReactNode;
-		type?: string;
+		type?: "button" | "submit" | "reset";
 		disabled?: boolean;
 	}) => <button {...props}>{children}</button>,
 }));

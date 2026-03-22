@@ -86,7 +86,7 @@ function makeValidParams(overrides: Record<string, unknown> = {}) {
 		cursor: undefined,
 		direction: "forward" as const,
 		perPage: 50,
-		sortBy: "createdAt",
+		sortBy: "createdAt" as const,
 		sortOrder: "desc" as const,
 		filters: {},
 		...overrides,

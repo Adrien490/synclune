@@ -52,7 +52,7 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<RefundsSelectionToolbar />
 				<TableScrollContainer>
@@ -64,17 +64,17 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[5%]">
+								<TableHead className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={refundIds} />
 								</TableHead>
-								<TableHead className="w-[15%]">Commande</TableHead>
-								<TableHead className="hidden w-[12%] sm:table-cell">Date</TableHead>
-								<TableHead className="w-[20%]">Client</TableHead>
-								<TableHead className="hidden w-[15%] md:table-cell">Raison</TableHead>
+								<TableHead className="w-[12%]">Commande</TableHead>
+								<TableHead className="w-[12%]">Date</TableHead>
+								<TableHead className="w-[22%]">Client</TableHead>
+								<TableHead className="w-[14%]">Raison</TableHead>
 								<TableHead className="w-[12%]">Statut</TableHead>
 								<TableHead className="w-[10%] text-right">Montant</TableHead>
 								<TableHead
-									className="w-[10%] text-right"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque remboursement"
 								>
 									Actions
@@ -95,7 +95,7 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 											{refund.order.orderNumber}
 										</Link>
 									</TableCell>
-									<TableCell role="gridcell" className="hidden sm:table-cell">
+									<TableCell>
 										<span className="text-sm whitespace-nowrap">
 											{formatDateShort(refund.createdAt)}
 										</span>
@@ -112,7 +112,7 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 											)}
 										</div>
 									</TableCell>
-									<TableCell role="gridcell" className="hidden md:table-cell">
+									<TableCell>
 										<span className="text-sm">
 											{REFUND_REASON_LABELS[refund.reason as RefundReason]}
 										</span>
@@ -122,10 +122,10 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 											{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
 										</Badge>
 									</TableCell>
-									<TableCell role="gridcell" className="text-right">
+									<TableCell className="text-right">
 										<span className="text-sm font-bold">{formatEuro(refund.amount)}</span>
 									</TableCell>
-									<TableCell role="gridcell" className="text-right">
+									<TableCell className="text-right">
 										<RefundRowActions
 											refund={{
 												id: refund.id,

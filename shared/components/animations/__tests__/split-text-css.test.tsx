@@ -58,9 +58,9 @@ describe("SplitTextCSS", () => {
 	it("applies --i CSS custom property as the word index", () => {
 		const { container } = render(<SplitTextCSS>alpha beta gamma</SplitTextCSS>);
 		const spans = Array.from(container.firstChild!.childNodes) as HTMLElement[];
-		expect(spans[0].style.getPropertyValue("--i")).toBe("0");
-		expect(spans[1].style.getPropertyValue("--i")).toBe("1");
-		expect(spans[2].style.getPropertyValue("--i")).toBe("2");
+		expect(spans[0]!.style.getPropertyValue("--i")).toBe("0");
+		expect(spans[1]!.style.getPropertyValue("--i")).toBe("1");
+		expect(spans[2]!.style.getPropertyValue("--i")).toBe("2");
 	});
 
 	it("applies --stagger CSS custom property using default 80ms", () => {
@@ -83,17 +83,17 @@ describe("SplitTextCSS", () => {
 		const { container } = render(<SplitTextCSS>one two three</SplitTextCSS>);
 		const spans = Array.from(container.firstChild!.childNodes) as HTMLElement[];
 		// First and second word spans should contain a non-breaking space after the word text
-		expect(spans[0].textContent).toBe("one\u00A0");
-		expect(spans[1].textContent).toBe("two\u00A0");
+		expect(spans[0]!.textContent).toBe("one\u00A0");
+		expect(spans[1]!.textContent).toBe("two\u00A0");
 		// Last word has no trailing non-breaking space
-		expect(spans[2].textContent).toBe("three");
+		expect(spans[2]!.textContent).toBe("three");
 	});
 
 	it("renders a single word without non-breaking space", () => {
 		const { container } = render(<SplitTextCSS>Solo</SplitTextCSS>);
 		const spans = Array.from(container.firstChild!.childNodes) as HTMLElement[];
 		expect(spans).toHaveLength(1);
-		expect(spans[0].textContent).toBe("Solo");
+		expect(spans[0]!.textContent).toBe("Solo");
 	});
 
 	it("renders correctly with stagger=0", () => {

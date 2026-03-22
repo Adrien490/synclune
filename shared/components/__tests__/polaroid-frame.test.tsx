@@ -14,7 +14,7 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("@/shared/styles/fonts", () => ({
-	caveat: { className: "font-caveat" },
+	caveat: { className: "font-cursive" },
 }));
 
 // Import AFTER mocks
@@ -138,7 +138,7 @@ describe("PolaroidFrame", () => {
 		it("applies caveat font class to the figcaption", () => {
 			render(<PolaroidFrame caption="Belle photo">content</PolaroidFrame>);
 
-			expect(screen.getByText("Belle photo")).toHaveClass("font-caveat");
+			expect(screen.getByText("Belle photo")).toHaveClass("font-cursive");
 		});
 
 		it("applies custom captionColor as inline style", () => {

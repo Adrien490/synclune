@@ -40,7 +40,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<ColorsSelectionToolbar />
 				<TableScrollContainer>
@@ -52,30 +52,20 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={colorIds} />
 								</TableHead>
-								<TableHead
-									key="preview"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[10%] md:table-cell"
-								>
+								<TableHead key="preview" scope="col" role="columnheader" className="w-[8%]">
 									Aperçu
 								</TableHead>
-								<TableHead
-									key="name"
-									scope="col"
-									role="columnheader"
-									className="w-[50%] sm:w-[30%]"
-								>
+								<TableHead key="name" scope="col" role="columnheader" className="w-[30%]">
 									Nom
 								</TableHead>
 								<TableHead
 									key="skus"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[10%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Variantes
 								</TableHead>
@@ -83,7 +73,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 									key="active"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[10%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Actif
 								</TableHead>
@@ -91,7 +81,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] text-right sm:w-[10%]"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque couleur"
 								>
 									Actions
@@ -104,16 +94,16 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 
 								return (
 									<TableRow key={color.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<TableSelectionCell type="row" itemId={color.id} />
 										</TableCell>
-										<TableCell role="gridcell" className="hidden md:table-cell">
+										<TableCell>
 											<div
 												className="border-border inline-flex h-[30px] w-[30px] rounded-full border"
 												style={{ backgroundColor: color.hex }}
 											/>
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="overflow-hidden">
 												<span
 													className="text-foreground block truncate font-semibold"
@@ -123,13 +113,13 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 												</span>
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<span className="text-sm font-medium">{skuCount}</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<ColorActiveToggle colorId={color.id} isActive={color.isActive} />
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<ColorsRowActions
 												colorId={color.id}
 												colorName={color.name}

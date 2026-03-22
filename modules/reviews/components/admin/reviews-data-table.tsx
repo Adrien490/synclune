@@ -43,7 +43,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<TableScrollContainer>
 					<Table
@@ -54,13 +54,13 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[25%]">Produit</TableHead>
+								<TableHead className="w-[22%]">Produit</TableHead>
 								<TableHead className="w-[20%]">Client</TableHead>
 								<TableHead className="w-[10%]">Note</TableHead>
-								<TableHead className="w-[15%]">Statut</TableHead>
-								<TableHead className="hidden w-[15%] md:table-cell">Date</TableHead>
-								<TableHead className="w-[10%]">Réponse</TableHead>
-								<TableHead className="w-[5%] text-right" aria-label="Actions">
+								<TableHead className="w-[12%]">Statut</TableHead>
+								<TableHead className="w-[12%]">Date</TableHead>
+								<TableHead className="w-[8%]">Réponse</TableHead>
+								<TableHead className="w-[8%] text-right" aria-label="Actions">
 									Actions
 								</TableHead>
 							</TableRow>
@@ -120,7 +120,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 									</TableCell>
 
 									{/* Date */}
-									<TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+									<TableCell className="text-muted-foreground text-sm">
 										<time dateTime={new Date(review.createdAt).toISOString()}>
 											{formatDateShort(review.createdAt)}
 										</time>

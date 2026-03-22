@@ -192,12 +192,6 @@ export async function Navbar() {
 
 									{/* Recherche globale (visible sur desktop seulement) */}
 									<QuickSearchTrigger className="hidden sm:inline-flex" />
-									<QuickSearchDialogLazy
-										recentSearches={recentSearches}
-										collections={collections}
-										productTypes={productTypes}
-										recentlyViewed={recentlyViewed}
-									/>
 
 									{/* Lien compte (visible sur desktop seulement) */}
 									<Tooltip>
@@ -225,6 +219,12 @@ export async function Navbar() {
 					</div>
 				</nav>
 			</NavbarWrapper>
+			<QuickSearchDialogLazy
+				recentSearches={recentSearches}
+				collections={collections}
+				productTypes={productTypes}
+				recentlyViewed={recentlyViewed}
+			/>
 			<AppBadgeSync />
 		</BadgeCountsStoreProvider>
 	);

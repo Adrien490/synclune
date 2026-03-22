@@ -4,10 +4,11 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export function SkusDataTableSkeleton() {
 	return (
 		<DataTableSkeleton
+			className="hidden md:block"
 			tableFixed={false}
 			columns={[
 				{ cell: { type: "checkbox" } },
-				{ hiddenBelow: "md", cell: { type: "image" } },
+				{ cell: { type: "image" } },
 				{
 					cell: {
 						type: "custom",
@@ -20,7 +21,6 @@ export function SkusDataTableSkeleton() {
 					},
 				},
 				{
-					hiddenBelow: "sm",
 					cell: {
 						type: "custom",
 						render: () => (
@@ -31,11 +31,11 @@ export function SkusDataTableSkeleton() {
 						),
 					},
 				},
-				{ hiddenBelow: "xl", cell: { type: "text", width: "w-20" } },
-				{ hiddenBelow: "2xl", cell: { type: "text", width: "w-12" } },
+				{ cell: { type: "text", width: "w-20" } },
+				{ cell: { type: "text", width: "w-12" } },
 				{ cell: { type: "text", width: "w-16" } },
-				{ hiddenBelow: "xl", cell: { type: "text", width: "w-14" } },
-				{ hiddenBelow: "sm", align: "center", cell: { type: "text", width: "w-8" } },
+				{ cell: { type: "text", width: "w-14" } },
+				{ align: "center", cell: { type: "text", width: "w-8" } },
 				{ align: "right", cell: { type: "actions" } },
 			]}
 			pagination="cursor"

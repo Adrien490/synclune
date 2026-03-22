@@ -139,7 +139,7 @@ const MOCK_SKU = {
 	compareAtPrice: null,
 	stock: 10,
 	images: [],
-} as Parameters<typeof useUpdateProductSkuForm>[0]["sku"];
+} as unknown as Parameters<typeof useUpdateProductSkuForm>[0]["sku"];
 
 // ============================================================================
 // useRefreshSkus

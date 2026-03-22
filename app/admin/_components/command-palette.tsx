@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
 	CommandDialog,
@@ -10,33 +10,34 @@ import {
 	CommandItem,
 	CommandList,
 } from "@/shared/components/ui/command";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { navigationData } from "./navigation-config";
 
 export function CommandPalette() {
-	const [open, setOpen] = useState(false);
+	const { isOpen, open, close, toggle } = useDialog("command-palette");
 	const router = useRouter();
 
 	useEffect(() => {
 		function handleKeyDown(e: KeyboardEvent) {
 			if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
 				e.preventDefault();
-				setOpen((prev) => !prev);
+				toggle();
 			}
 		}
 
 		document.addEventListener("keydown", handleKeyDown);
 		return () => document.removeEventListener("keydown", handleKeyDown);
-	}, []);
+	}, [toggle]);
 
 	function handleSelect(url: string) {
-		setOpen(false);
+		close();
 		router.push(url);
 	}
 
 	return (
 		<CommandDialog
-			open={open}
-			onOpenChange={setOpen}
+			open={isOpen}
+			onOpenChange={(v) => (v ? open() : close())}
 			title="Recherche rapide"
 			description="Naviguer vers une page d'administration"
 		>

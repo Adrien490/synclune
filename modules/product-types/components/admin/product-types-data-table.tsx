@@ -42,7 +42,7 @@ export async function ProductTypesDataTable({
 	}
 
 	return (
-		<Card>
+		<Card className="hidden md:block">
 			<CardContent>
 				<ProductTypesSelectionToolbar />
 				<TableScrollContainer>
@@ -54,30 +54,20 @@ export async function ProductTypesDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[5%]">
+								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={productTypeIds} />
 								</TableHead>
-								<TableHead
-									key="label"
-									scope="col"
-									role="columnheader"
-									className="w-[30%] sm:w-[25%]"
-								>
+								<TableHead key="label" scope="col" role="columnheader" className="w-[22%]">
 									Label
 								</TableHead>
-								<TableHead
-									key="description"
-									scope="col"
-									role="columnheader"
-									className="hidden w-[30%] lg:table-cell"
-								>
+								<TableHead key="description" scope="col" role="columnheader" className="w-[30%]">
 									Description
 								</TableHead>
 								<TableHead
 									key="products"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[15%] text-center sm:table-cell"
+									className="w-[12%] text-center"
 								>
 									Produits
 								</TableHead>
@@ -85,7 +75,7 @@ export async function ProductTypesDataTable({
 									key="active"
 									scope="col"
 									role="columnheader"
-									className="hidden w-[10%] text-center sm:table-cell"
+									className="w-[10%] text-center"
 								>
 									Actif
 								</TableHead>
@@ -93,7 +83,7 @@ export async function ProductTypesDataTable({
 									key="actions"
 									scope="col"
 									role="columnheader"
-									className="w-[15%] text-right sm:w-[10%]"
+									className="w-[8%] text-right"
 									aria-label="Actions disponibles pour chaque type de produit"
 								>
 									Actions
@@ -106,10 +96,10 @@ export async function ProductTypesDataTable({
 
 								return (
 									<TableRow key={productType.id}>
-										<TableCell role="gridcell">
+										<TableCell>
 											<TableSelectionCell type="row" itemId={productType.id} />
 										</TableCell>
-										<TableCell role="gridcell">
+										<TableCell>
 											<div className="overflow-hidden">
 												<span
 													className="text-foreground block truncate font-semibold"
@@ -119,22 +109,22 @@ export async function ProductTypesDataTable({
 												</span>
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden lg:table-cell">
+										<TableCell>
 											<div className="text-muted-foreground line-clamp-2 text-sm">
 												{productType.description ?? "-"}
 											</div>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<span className="text-sm font-medium">{productsCount}</span>
 										</TableCell>
-										<TableCell role="gridcell" className="hidden text-center sm:table-cell">
+										<TableCell className="text-center">
 											<ProductTypeActiveToggle
 												productTypeId={productType.id}
 												isActive={productType.isActive}
 												isSystem={productType.isSystem}
 											/>
 										</TableCell>
-										<TableCell role="gridcell" className="text-right">
+										<TableCell className="text-right">
 											<ProductTypeRowActions
 												productTypeId={productType.id}
 												isSystem={productType.isSystem}

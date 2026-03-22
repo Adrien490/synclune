@@ -14,7 +14,7 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("@/shared/styles/fonts", () => ({
-	fraunces: { className: "font-fraunces" },
+	fraunces: { className: "font-display" },
 }));
 
 vi.mock("@/shared/types/component.types", () => ({}));
@@ -66,7 +66,7 @@ describe("SectionTitle", () => {
 	it("applies fraunces font className", () => {
 		render(<SectionTitle>Titre</SectionTitle>);
 
-		expect(screen.getByRole("heading")).toHaveClass("font-fraunces");
+		expect(screen.getByRole("heading")).toHaveClass("font-display");
 	});
 
 	it("applies italic class when italic prop is true", () => {
