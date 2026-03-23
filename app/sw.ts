@@ -22,7 +22,9 @@ const runtimeCaching: RuntimeCaching[] = [
 	},
 	// Next.js image optimization — StaleWhileRevalidate
 	{
-		matcher: /^\/_next\/image\?.*/i,
+		matcher({ url }) {
+			return url.pathname.startsWith("/_next/image");
+		},
 		handler: new StaleWhileRevalidate({
 			cacheName: "next-images",
 			plugins: [new ExpirationPlugin({ maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 7 })],
@@ -30,7 +32,9 @@ const runtimeCaching: RuntimeCaching[] = [
 	},
 	// Product detail pages — NetworkFirst (cache visited pages for offline)
 	{
-		matcher: /^\/creations\/[^/]+\/?$/,
+		matcher({ url }) {
+			return /^\/creations\/[^/]+\/?$/.test(url.pathname);
+		},
 		handler: new NetworkFirst({
 			cacheName: "product-pages",
 			networkTimeoutSeconds: 5,
@@ -44,17 +48,19 @@ const runtimeCaching: RuntimeCaching[] = [
 	},
 	// API routes — NetworkFirst (fresh data preferred, offline fallback)
 	{
-		matcher: /^\/api\/.*/i,
+		matcher({ url, sameOrigin }) {
+			return sameOrigin && url.pathname.startsWith("/api/");
+		},
 		handler: new NetworkFirst({
 			cacheName: "api-responses",
 			networkTimeoutSeconds: 5,
 			plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 })],
 		}),
 	},
-	// Navigation requests (HTML pages) — NetworkFirst for offline support
+	// Navigation requests (HTML pages + RSC fetches) — NetworkFirst for offline support
 	{
 		matcher({ request }) {
-			return request.destination === "document";
+			return request.destination === "document" || request.headers.get("RSC") === "1";
 		},
 		handler: new NetworkFirst({
 			cacheName: "navigations",
@@ -81,7 +87,7 @@ const serwist = new Serwist({
 			{
 				url: "/~offline",
 				matcher({ request }) {
-					return request.destination === "document";
+					return request.destination === "document" || request.headers.get("RSC") === "1";
 				},
 			},
 			{
