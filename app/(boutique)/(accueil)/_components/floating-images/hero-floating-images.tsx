@@ -38,7 +38,6 @@ function HeroFloatingImagesInner({ images }: HeroFloatingImagesProps) {
 						parallaxOpacity={parallaxOpacity}
 						shouldReduceMotion={shouldReduceMotion}
 						isInView={isInView}
-						index={index}
 					/>
 				);
 			})}

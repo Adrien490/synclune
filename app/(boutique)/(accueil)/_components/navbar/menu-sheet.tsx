@@ -69,7 +69,14 @@ export function MenuSheet({
 			<Sheet
 				direction="left"
 				open={isOpen}
-				onOpenChange={(open) => (open ? openMenu() : closeMenu())}
+				onOpenChange={(open) => {
+					if (open) {
+						// Blur trigger before sheet opens to prevent aria-hidden conflict:
+						// Vaul/Radix sets aria-hidden on the header before focus moves to sheet content
+						(document.activeElement as HTMLElement)?.blur();
+					}
+					open ? openMenu() : closeMenu();
+				}}
 				preventScrollRestoration
 			>
 				<SheetTrigger asChild>

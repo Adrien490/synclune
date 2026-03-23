@@ -13,5 +13,4 @@ export interface FloatingImageProps {
 	parallaxOpacity: MotionValue<number>;
 	shouldReduceMotion: boolean | null;
 	isInView: boolean;
-	index: number;
 }

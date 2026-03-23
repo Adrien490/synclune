@@ -82,6 +82,9 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 					if (open) {
 						// Capture the trigger element for focus return
 						triggerRef.current = document.querySelector<HTMLElement>(`[${CART_TARGET_ATTR}]`);
+						// Blur trigger before sheet opens to prevent aria-hidden conflict:
+						// Vaul/Radix sets aria-hidden on the header before focus moves to sheet content
+						(document.activeElement as HTMLElement)?.blur();
 					} else {
 						close();
 						// Return focus to trigger after sheet close animation

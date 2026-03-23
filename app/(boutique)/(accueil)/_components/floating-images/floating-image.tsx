@@ -14,7 +14,6 @@ export function FloatingImage({
 	parallaxOpacity,
 	shouldReduceMotion,
 	isInView,
-	index,
 }: FloatingImageProps) {
 	// Scroll-driven parallax: bidirectional for depth
 	const parallaxY = useTransform(
@@ -100,9 +99,9 @@ export function FloatingImage({
 							alt={image.alt}
 							width={position.width}
 							height={position.height}
+							loading="lazy"
 							className="relative aspect-4/5 w-full object-cover"
 							sizes={position.sizes}
-							preload={index === 0}
 							quality={85}
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl}

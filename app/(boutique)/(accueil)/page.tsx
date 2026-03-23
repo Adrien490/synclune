@@ -12,7 +12,7 @@ import { StructuredData } from "@/shared/components/structured-data";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { AtelierSection } from "./_components/atelier-section";
+import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
 import { FaqSection } from "@/modules/faq/components/faq-section";
 import { FaqSectionSkeleton } from "@/modules/faq/components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
@@ -118,9 +118,9 @@ export default async function Page() {
 			</Suspense>
 
 			{/* 5. L'Atelier - Story + creative process merged */}
-			<div className="content-defer">
+			<Suspense fallback={<AtelierSectionSkeleton />}>
 				<AtelierSection />
-			</div>
+			</Suspense>
 
 			{/* 6. FAQ - Frequently asked questions with JSON-LD */}
 			<Suspense fallback={<FaqSectionSkeleton />}>

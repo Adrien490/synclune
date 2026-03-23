@@ -21,7 +21,12 @@ export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
 		<Button
 			variant="ghost"
 			size="icon"
-			onClick={() => open()}
+			onClick={() => {
+				// Blur trigger before dialog opens to prevent aria-hidden conflict:
+				// Radix sets aria-hidden on the header before focus moves to dialog content
+				(document.activeElement as HTMLElement)?.blur();
+				open();
+			}}
 			className={cn("size-11 transition-all duration-300 ease-out", className)}
 			aria-label="Ouvrir la recherche rapide"
 			aria-expanded={isOpen}
