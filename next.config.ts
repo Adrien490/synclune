@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
 			"@dnd-kit/sortable",
 			"cmdk",
 			"sonner",
+			"date-fns",
+			"embla-carousel-react",
 		],
 	},
 

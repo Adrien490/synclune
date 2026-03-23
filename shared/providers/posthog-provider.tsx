@@ -1,9 +1,8 @@
 "use client";
 
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { PostHogProvider as PHProvider } from "posthog-js/react";
-import { posthog } from "@/shared/lib/posthog";
+import { getPostHog } from "@/shared/lib/posthog";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
 import type { ReactNode } from "react";
 
@@ -16,12 +15,13 @@ function PostHogPageview() {
 	const searchParamsString = searchParams.toString();
 
 	useEffect(() => {
-		if (pathname) {
+		const ph = getPostHog();
+		if (pathname && ph) {
 			let url = window.origin + pathname;
 			if (searchParamsString) {
 				url += `?${searchParamsString}`;
 			}
-			posthog.capture("$pageview", { $current_url: url });
+			ph.capture("$pageview", { $current_url: url });
 		}
 	}, [pathname, searchParamsString]);
 
@@ -35,10 +35,13 @@ function PostHogConsentSync() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
 
 	useEffect(() => {
+		const ph = getPostHog();
+		if (!ph) return;
+
 		if (accepted === true) {
-			posthog.opt_in_capturing();
+			ph.opt_in_capturing();
 		} else {
-			posthog.opt_out_capturing();
+			ph.opt_out_capturing();
 		}
 	}, [accepted]);
 
@@ -50,17 +53,34 @@ interface PostHogProviderProps {
 }
 
 export function PostHogProvider({ children }: PostHogProviderProps) {
-	if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-		return <>{children}</>;
-	}
+	const [ready, setReady] = useState(false);
+
+	useEffect(() => {
+		if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return;
+
+		// PostHog is initialized by instrumentation-client.ts via requestIdleCallback.
+		// Poll until the instance is available.
+		const check = () => {
+			if (getPostHog()) {
+				setReady(true);
+			} else {
+				setTimeout(check, 200);
+			}
+		};
+		check();
+	}, []);
 
 	return (
-		<PHProvider client={posthog}>
-			<Suspense fallback={null}>
-				<PostHogPageview />
-			</Suspense>
-			<PostHogConsentSync />
+		<>
+			{ready && (
+				<>
+					<Suspense fallback={null}>
+						<PostHogPageview />
+					</Suspense>
+					<PostHogConsentSync />
+				</>
+			)}
 			{children}
-		</PHProvider>
+		</>
 	);
 }

@@ -8,7 +8,7 @@ export const fraunces = Fraunces({
 	display: "swap",
 	axes: ["opsz", "SOFT", "WONK"],
 	variable: "--font-display",
-	preload: false, // Avoid 26 browser warnings — font loads via CSS when needed
+	preload: true,
 });
 
 // Figtree — Sans-serif géométrique optimisée pour le web
@@ -17,7 +17,7 @@ export const figtree = Figtree({
 	subsets: ["latin"],
 	display: "swap",
 	variable: "--font-sans",
-	preload: false, // Safari warns about unused preload — body font renders after layout
+	preload: true,
 });
 
 // Caveat — Police manuscrite authentique et décontractée

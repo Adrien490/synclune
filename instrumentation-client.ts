@@ -1,20 +1,32 @@
 import * as Sentry from "@sentry/nextjs";
-import posthog from "posthog-js";
+import { setPostHogInstance } from "@/shared/lib/posthog";
 
+// Defer PostHog loading — it starts with opt_out_capturing_by_default: true,
+// so nothing is captured until the user accepts cookies anyway.
 if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-	posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-		api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "/ingest",
-		ui_host: "https://eu.posthog.com",
-		person_profiles: "identified_only",
-		capture_pageview: false,
-		capture_pageleave: true,
-		persistence: "localStorage+cookie",
-		opt_out_capturing_by_default: true,
-		session_recording: {
-			maskAllInputs: true,
-			maskTextSelector: "*",
-		},
-	});
+	const initPostHog = () =>
+		import("posthog-js").then(({ default: posthog }) => {
+			posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+				api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "/ingest",
+				ui_host: "https://eu.posthog.com",
+				person_profiles: "identified_only",
+				capture_pageview: false,
+				capture_pageleave: true,
+				persistence: "localStorage+cookie",
+				opt_out_capturing_by_default: true,
+				session_recording: {
+					maskAllInputs: true,
+					maskTextSelector: "*",
+				},
+			});
+			setPostHogInstance(posthog);
+		});
+
+	if ("requestIdleCallback" in window) {
+		requestIdleCallback(() => void initPostHog());
+	} else {
+		setTimeout(() => void initPostHog(), 1000);
+	}
 }
 
 Sentry.init({
@@ -23,17 +35,6 @@ Sentry.init({
 	environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
 
 	tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-
-	// RGPD: replay only on errors, mask everything
-	integrations: [
-		Sentry.replayIntegration({
-			maskAllText: true,
-			maskAllInputs: true,
-			blockAllMedia: true,
-		}),
-	],
-	replaysSessionSampleRate: 0,
-	replaysOnErrorSampleRate: 1.0,
 
 	sendDefaultPii: false,
 
@@ -45,6 +46,30 @@ Sentry.init({
 		"DYNAMIC_SERVER_USAGE",
 	],
 });
+
+// Lazy-load Sentry Replay after FCP — replaysSessionSampleRate: 0 means
+// replay only activates on errors, no need to block initial paint.
+if ("requestIdleCallback" in window) {
+	requestIdleCallback(() => {
+		Sentry.addIntegration(
+			Sentry.replayIntegration({
+				maskAllText: true,
+				maskAllInputs: true,
+				blockAllMedia: true,
+			}),
+		);
+	});
+} else {
+	setTimeout(() => {
+		Sentry.addIntegration(
+			Sentry.replayIntegration({
+				maskAllText: true,
+				maskAllInputs: true,
+				blockAllMedia: true,
+			}),
+		);
+	}, 2000);
+}
 
 performance.mark("app-init");
 

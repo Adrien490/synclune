@@ -1,10 +1,15 @@
 "use client";
 
-import posthog from "posthog-js";
+import type PostHogJs from "posthog-js";
 
-export { posthog };
+let _posthog: typeof PostHogJs | null = null;
 
-/** Returns the posthog instance only if initialized (key was set) */
+/** Called by instrumentation-client.ts once PostHog is initialized */
+export function setPostHogInstance(instance: typeof PostHogJs) {
+	_posthog = instance;
+}
+
+/** Returns the posthog instance only if initialized (lazy-loaded) */
 export function getPostHog() {
-	return process.env.NEXT_PUBLIC_POSTHOG_KEY ? posthog : null;
+	return _posthog;
 }
