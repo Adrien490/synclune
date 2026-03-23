@@ -34,7 +34,14 @@ try {
 const originalGET = routeExports.GET;
 const safeGET = async (request: Request, context: { params: Promise<{ path: string }> }) => {
 	try {
-		return await originalGET(request, context);
+		const response = await originalGET(request, context);
+		// Allow the SW to control scope "/" even though it's served from /serwist/sw.js
+		if (!response.headers.has("Service-Worker-Allowed")) {
+			const headers = new Headers(response.headers);
+			headers.set("Service-Worker-Allowed", "/");
+			return new Response(response.body, { status: response.status, headers });
+		}
+		return response;
 	} catch (error) {
 		Sentry.captureException(error, { tags: { component: "serwist-get" } });
 		return fallbackResponse();
