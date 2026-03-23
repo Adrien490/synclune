@@ -81,8 +81,11 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
 			<div className="space-y-6">
-				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} />}>
+				<Suspense
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
+				>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des remboursements"
 						search={
 							<SearchInput

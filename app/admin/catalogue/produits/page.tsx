@@ -172,9 +172,12 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 	return (
 		<div className="space-y-6">
 			{/* Onglets de statut */}
-			<ProductStatusNavigation currentStatus={status} searchParams={params} />
+			<div className="hidden md:block">
+				<ProductStatusNavigation currentStatus={status} searchParams={params} />
+			</div>
 
 			<Toolbar
+				className="hidden md:flex"
 				ariaLabel="Barre d'outils de gestion des produits"
 				search={
 					<SearchInput
@@ -204,7 +207,9 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 			</Toolbar>
 
 			{/* Badges de filtres actifs */}
-			<ProductsFilterBadges productTypes={productTypes} collections={collections} />
+			<div className="hidden md:block">
+				<ProductsFilterBadges productTypes={productTypes} collections={collections} />
+			</div>
 
 			<ProductsDataTable productsPromise={Promise.resolve(productsData)} perPage={perPage} />
 		</div>

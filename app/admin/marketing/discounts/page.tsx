@@ -106,8 +106,11 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} />}>
+				<Suspense
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
+				>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des codes promo"
 						search={
 							<SearchInput
@@ -135,7 +138,9 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}
-					<DiscountsFilterBadges />
+					<div className="hidden md:block">
+						<DiscountsFilterBadges />
+					</div>
 				</Suspense>
 
 				<Suspense fallback={<DiscountsDataTableSkeleton />}>

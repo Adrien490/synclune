@@ -75,8 +75,11 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
+				<Suspense
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
+				>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des matériaux"
 						search={
 							<SearchInput
@@ -105,7 +108,9 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}
-					<MaterialsFilterBadges />
+					<div className="hidden md:block">
+						<MaterialsFilterBadges />
+					</div>
 				</Suspense>
 
 				<Suspense fallback={<MaterialsDataTableSkeleton />}>

@@ -74,8 +74,11 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
+				<Suspense
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
+				>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des couleurs"
 						search={
 							<SearchInput
@@ -104,7 +107,9 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}
-					<ColorsFilterBadges />
+					<div className="hidden md:block">
+						<ColorsFilterBadges />
+					</div>
 				</Suspense>
 
 				<Suspense fallback={<ColorsDataTableSkeleton />}>

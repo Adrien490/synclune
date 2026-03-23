@@ -97,8 +97,9 @@ export default async function CustomizationsPage({ searchParams }: Customization
 			</div>
 
 			<div className="space-y-6">
-				<Suspense fallback={<ToolbarSkeleton selectCount={2} />}>
+				<Suspense fallback={<ToolbarSkeleton selectCount={2} className="hidden md:flex" />}>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des personnalisations"
 						search={
 							<SearchInput

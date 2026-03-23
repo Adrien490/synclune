@@ -120,10 +120,15 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 
 			<div className="space-y-6">
 				{/* Onglets de statut */}
-				<CollectionStatusNavigation currentStatus={status} searchParams={params} />
+				<div className="hidden md:block">
+					<CollectionStatusNavigation currentStatus={status} searchParams={params} />
+				</div>
 
-				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
+				<Suspense
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
+				>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des collections"
 						search={
 							<SearchInput
@@ -152,7 +157,9 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}
-					<CollectionsFilterBadges />
+					<div className="hidden md:block">
+						<CollectionsFilterBadges />
+					</div>
 				</Suspense>
 
 				<Suspense fallback={<CollectionsDataTableSkeleton />}>

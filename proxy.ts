@@ -127,7 +127,8 @@ export async function proxy(request: NextRequest) {
 
 	// ===== 4. ROUTES PROTÉGÉES ADMIN =====
 	// Vérification du rôle ADMIN via le cookie cache signé (HMAC, pas de DB call).
-	// Si le cookie cache a expiré (TTL 5 min), getCookieCache retourne null → redirection (sécurité par défaut).
+	// Si le cookie cache a expiré (TTL 5 min) ou si le rôle n'est pas présent dans le cache,
+	// on laisse passer → la validation serveur définitive (requireAdmin) bloquera si nécessaire.
 	// Les pages/actions admin DOIVENT toujours utiliser requireAdmin() pour la validation serveur définitive.
 	if (matchesAnyRoute(pathname, adminRoutes)) {
 		// Pas connecté -> redirection vers login
@@ -139,7 +140,7 @@ export async function proxy(request: NextRequest) {
 
 		// Vérifier le rôle ADMIN depuis le cookie cache signé
 		const sessionData = await getCookieCache(request);
-		if (sessionData && sessionData.user.role !== "ADMIN") {
+		if (sessionData?.user?.role && sessionData.user.role !== "ADMIN") {
 			return NextResponse.redirect(new URL("/?error=access-denied", nextUrl.origin));
 		}
 

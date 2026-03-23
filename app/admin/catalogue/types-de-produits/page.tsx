@@ -97,8 +97,11 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			/>
 
 			<div className="space-y-6">
-				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
+				<Suspense
+					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
+				>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des types de bijoux"
 						search={
 							<SearchInput
@@ -127,7 +130,9 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}
-					<ProductTypesFilterBadges />
+					<div className="hidden md:block">
+						<ProductTypesFilterBadges />
+					</div>
 				</Suspense>
 
 				<Suspense fallback={<ProductTypesDataTableSkeleton />}>

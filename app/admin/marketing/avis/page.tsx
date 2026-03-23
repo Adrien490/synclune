@@ -135,8 +135,9 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			</div>
 
 			{/* Toolbar */}
-			<Suspense fallback={<ToolbarSkeleton selectCount={3} />}>
+			<Suspense fallback={<ToolbarSkeleton selectCount={3} className="hidden md:flex" />}>
 				<Toolbar
+					className="hidden md:flex"
 					ariaLabel="Barre d'outils de gestion des avis"
 					search={
 						<SearchInput

@@ -109,8 +109,11 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 				</div>
 			</div>
 
-			<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} />}>
+			<Suspense
+				fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
+			>
 				<Toolbar
+					className="hidden md:flex"
 					ariaLabel="Barre d'outils de gestion des abonnés"
 					search={
 						<SearchInput
