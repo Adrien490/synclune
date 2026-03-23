@@ -14,7 +14,7 @@ export function ConditionalAnalytics() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
 	const hasHydrated = useCookieConsentStore((state) => state._hasHydrated);
 
-	if (!hasHydrated || accepted !== true) {
+	if (!hasHydrated || accepted !== true || !process.env.NEXT_PUBLIC_VERCEL_ENV) {
 		return null;
 	}
 
