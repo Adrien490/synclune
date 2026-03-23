@@ -3,10 +3,8 @@ import { getDesktopNavItems, getMobileNavItems } from "@/shared/constants/naviga
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
-import { getRecentSearches } from "@/modules/products/data/get-recent-searches";
 import { getRecentProducts } from "@/modules/products/data/get-recent-products";
 import { Heart, User } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import Link from "next/link";
 import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
 import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
@@ -14,7 +12,6 @@ import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
 import { ROUTES } from "@/shared/constants/urls";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
-import { QuickSearchDialogLazy } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-lazy";
 import { cn } from "@/shared/utils/cn";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
@@ -25,15 +22,13 @@ import { NavbarWrapper } from "./navbar-wrapper";
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
-	const [session, cartCount, wishlistCount, recentSearches, menuData, recentProducts] =
-		await Promise.all([
-			getSession().catch(() => null),
-			getCartItemCount(),
-			getWishlistItemCount(),
-			getRecentSearches(),
-			getNavbarMenuData(),
-			getRecentProducts({ limit: 4 }),
-		]);
+	const [session, cartCount, wishlistCount, menuData, recentProducts] = await Promise.all([
+		getSession().catch(() => null),
+		getCartItemCount(),
+		getWishlistItemCount(),
+		getNavbarMenuData(),
+		getRecentProducts({ limit: 4 }),
+	]);
 
 	const { collectionsData, productTypesData } = menuData;
 
@@ -42,17 +37,6 @@ export async function Navbar() {
 
 	const safeCartCount = cartCount;
 	const safeWishlistCount = wishlistCount;
-
-	// Collections et types de produits pour le quick search dialog
-	const collections = collectionsData.collections.map((c) => {
-		const firstImage = c.products[0]?.product.skus[0]?.images[0];
-		return {
-			slug: c.slug,
-			name: c.name,
-			productCount: c._count.products,
-			image: firstImage ? { url: firstImage.url, blurDataUrl: firstImage.blurDataUrl } : null,
-		};
-	});
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
 		slug: t.slug,
@@ -65,17 +49,6 @@ export async function Navbar() {
 		const image = sku?.images.find((img) => img.isPrimary) ?? sku?.images[0];
 		return { sku, image };
 	}
-
-	// Lightweight recently viewed products for the quick search dialog
-	const recentlyViewed = recentProducts.map((p) => {
-		const { sku, image } = extractProductImage(p);
-		return {
-			slug: p.slug,
-			title: p.title,
-			price: sku?.priceInclTax ?? 0,
-			image: image ? { url: image.url, blurDataUrl: image.blurDataUrl } : null,
-		};
-	});
 
 	// Collections avec images[] pour les menus (Bento Grid - jusqu'à 4 images)
 	const menuCollections = collectionsData.collections.map((c) => ({
@@ -172,44 +145,34 @@ export async function Navbar() {
 							<div className="flex min-w-0 flex-1 items-center justify-end">
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
 									{/* Icône favoris (visible sur mobile et desktop) */}
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Link
-												href={ROUTES.ACCOUNT.FAVORITES}
-												className={cn("inline-flex", iconButtonClassName)}
-												aria-label="Accéder à mes favoris"
-											>
-												<Heart
-													size={20}
-													className="transition-transform duration-300 ease-out group-hover:scale-105"
-													aria-hidden="true"
-												/>
-												<WishlistBadge />
-											</Link>
-										</TooltipTrigger>
-										<TooltipContent className="hidden sm:block">Favoris</TooltipContent>
-									</Tooltip>
+									<Link
+										href={ROUTES.ACCOUNT.FAVORITES}
+										className={cn("inline-flex", iconButtonClassName)}
+										aria-label="Accéder à mes favoris"
+									>
+										<Heart
+											size={20}
+											className="transition-transform duration-300 ease-out group-hover:scale-105"
+											aria-hidden="true"
+										/>
+										<WishlistBadge />
+									</Link>
 
 									{/* Recherche globale (visible sur desktop seulement) */}
 									<QuickSearchTrigger className="hidden sm:inline-flex" />
 
 									{/* Lien compte (visible sur desktop seulement) */}
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Link
-												href={session ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN}
-												className={cn("hidden sm:inline-flex", iconButtonClassName)}
-												aria-label={session ? "Mon compte" : "Se connecter"}
-											>
-												<User
-													size={20}
-													className="transition-transform duration-300 ease-out group-hover:scale-105"
-													aria-hidden="true"
-												/>
-											</Link>
-										</TooltipTrigger>
-										<TooltipContent>{session ? "Mon compte" : "Se connecter"}</TooltipContent>
-									</Tooltip>
+									<Link
+										href={session ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN}
+										className={cn("hidden sm:inline-flex", iconButtonClassName)}
+										aria-label={session ? "Mon compte" : "Se connecter"}
+									>
+										<User
+											size={20}
+											className="transition-transform duration-300 ease-out group-hover:scale-105"
+											aria-hidden="true"
+										/>
+									</Link>
 
 									{/* Icône panier - Ouvre le cart sheet */}
 									<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />
@@ -219,12 +182,6 @@ export async function Navbar() {
 					</div>
 				</nav>
 			</NavbarWrapper>
-			<QuickSearchDialogLazy
-				recentSearches={recentSearches}
-				collections={collections}
-				productTypes={productTypes}
-				recentlyViewed={recentlyViewed}
-			/>
 			<AppBadgeSync />
 		</BadgeCountsStoreProvider>
 	);

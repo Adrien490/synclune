@@ -12,6 +12,7 @@ import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
+import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";
 
 interface ShopLayoutProps {
 	children: React.ReactNode;
@@ -49,6 +50,9 @@ export default async function ShopLayout({ children }: ShopLayoutProps) {
 				<Footer />
 			</Suspense>
 			<CartAndSkuWrapper />
+			<Suspense fallback={null}>
+				<QuickSearchDialogAsync />
+			</Suspense>
 			<Suspense fallback={null}>
 				<AdminDashboardFab />
 			</Suspense>
