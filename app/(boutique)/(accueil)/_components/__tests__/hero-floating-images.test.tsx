@@ -36,6 +36,7 @@ vi.mock("@/shared/hooks", () => ({
 }));
 
 import { HeroFloatingImages } from "../floating-images";
+import HeroFloatingImagesInner from "../floating-images/hero-floating-images-inner";
 import type { HeroProductImage } from "../../_utils/extract-hero-images";
 
 afterEach(() => {
@@ -66,9 +67,11 @@ describe("HeroFloatingImages", () => {
 		const { container } = render(<HeroFloatingImages images={[]} />);
 		expect(container.innerHTML).toBe("");
 	});
+});
 
+describe("HeroFloatingImagesInner", () => {
 	it("renders container with aria-hidden when images are provided", () => {
-		const { container } = render(<HeroFloatingImages images={makeImages(4)} />);
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const wrapper = container.querySelector("[aria-hidden]");
 		expect(wrapper).not.toBeNull();
@@ -76,21 +79,21 @@ describe("HeroFloatingImages", () => {
 	});
 
 	it("renders with CSS containment for performance", () => {
-		const { container } = render(<HeroFloatingImages images={makeImages(4)} />);
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const wrapper = container.querySelector("[aria-hidden]");
 		expect(wrapper?.getAttribute("style")).toContain("contain");
 	});
 
 	it("renders up to 4 floating images", () => {
-		const { container } = render(<HeroFloatingImages images={makeImages(4)} />);
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const images = container.querySelectorAll("[data-testid='floating-img']");
 		expect(images.length).toBe(4);
 	});
 
 	it("is hidden on mobile (md:block)", () => {
-		const { container } = render(<HeroFloatingImages images={makeImages(4)} />);
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const wrapper = container.querySelector("[aria-hidden]");
 		expect(wrapper?.className).toContain("hidden");

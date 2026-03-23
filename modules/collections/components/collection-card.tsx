@@ -21,6 +21,8 @@ interface CollectionCardProps {
 	description?: string | null;
 	/** Fourchette de prix de la collection */
 	priceRange?: { min: number; max: number };
+	/** Disable above-fold preload (for cards inside Suspense boundaries) */
+	disablePreload?: boolean;
 }
 
 /**
@@ -44,10 +46,11 @@ export function CollectionCard({
 	productCount,
 	description,
 	priceRange,
+	disablePreload = false,
 }: CollectionCardProps) {
 	const uniqueSuffix = `${slug}-${index ?? 0}`;
 	const titleId = `collection-title-${uniqueSuffix}`;
-	const isAboveFold = index !== undefined && index < ABOVE_FOLD_THRESHOLD;
+	const isAboveFold = !disablePreload && index !== undefined && index < ABOVE_FOLD_THRESHOLD;
 
 	const displayImages = images ?? [];
 

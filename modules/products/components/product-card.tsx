@@ -37,6 +37,8 @@ interface ProductCardProps {
 	sectionId?: string;
 	/** Si true, priorise l'affichage du SKU en promotion */
 	preferOnSale?: boolean;
+	/** Disable above-fold preload (for cards inside Suspense boundaries) */
+	disablePreload?: boolean;
 }
 
 /**
@@ -196,6 +198,7 @@ export function ProductCard({
 	isInWishlist = false,
 	sectionId,
 	preferOnSale,
+	disablePreload = false,
 }: ProductCardProps) {
 	const { slug, title, type } = product;
 	const productType = type?.label;
@@ -227,7 +230,7 @@ export function ProductCard({
 			? buildSkuUrl(baseUrl, defaultSku)
 			: baseUrl;
 
-	const isAboveFold = (index ?? 0) < ABOVE_FOLD_THRESHOLD;
+	const isAboveFold = !disablePreload && (index ?? 0) < ABOVE_FOLD_THRESHOLD;
 
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];

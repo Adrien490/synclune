@@ -110,6 +110,7 @@ export function CollectionsSection({ collectionsPromise }: CollectionsSectionPro
 												productCount={collection._count.products}
 												description={collection.description}
 												priceRange={extractPriceRange(collection.products)}
+												disablePreload
 											/>
 										</CarouselItem>
 									);

@@ -51,7 +51,7 @@ export function LatestCreations({ productsPromise }: LatestCreationsProps) {
 					{products.map((product, index) => (
 						<CursorGlow key={product.id}>
 							<div className="scroll-reveal-card">
-								<ProductCard product={product} index={index} sectionId="latest" />
+								<ProductCard product={product} index={index} sectionId="latest" disablePreload />
 							</div>
 						</CursorGlow>
 					))}
