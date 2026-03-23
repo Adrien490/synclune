@@ -52,48 +52,45 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-// next/dynamic: return a synchronous component for tests
-vi.mock("next/dynamic", () => ({
-	default: (_loader: () => Promise<any>) => {
-		// Return a fake PhoneInput that renders a tel input
-		const FakePhoneInput = ({
-			id,
-			name,
-			value,
-			onChange,
-			onBlur,
-			disabled,
-			placeholder,
-			defaultCountry,
-			"aria-invalid": ariaInvalid,
-			"aria-describedby": ariaDescribedBy,
-			"aria-required": ariaRequired,
-			className,
-		}: any) => (
-			<div
-				className={className}
-				data-testid="phone-input-wrapper"
-				data-default-country={defaultCountry}
-			>
-				<input
-					id={id}
-					name={name}
-					type="tel"
-					value={value}
-					onChange={(e) => onChange(e.target.value)}
-					onBlur={onBlur}
-					disabled={disabled}
-					placeholder={placeholder}
-					aria-invalid={ariaInvalid}
-					aria-describedby={ariaDescribedBy}
-					aria-required={ariaRequired}
-				/>
-			</div>
-		);
-		FakePhoneInput.displayName = "FakePhoneInputWithFlags";
-		return FakePhoneInput;
-	},
-}));
+// Mock phone-input-lazy with a fake PhoneInput for tests
+vi.mock("@/shared/components/forms/phone-input-lazy", () => {
+	const FakePhoneInput = ({
+		id,
+		name,
+		value,
+		onChange,
+		onBlur,
+		disabled,
+		placeholder,
+		defaultCountry,
+		"aria-invalid": ariaInvalid,
+		"aria-describedby": ariaDescribedBy,
+		"aria-required": ariaRequired,
+		className,
+	}: any) => (
+		<div
+			className={className}
+			data-testid="phone-input-wrapper"
+			data-default-country={defaultCountry}
+		>
+			<input
+				id={id}
+				name={name}
+				type="tel"
+				value={value}
+				onChange={(e: any) => onChange(e.target.value)}
+				onBlur={onBlur}
+				disabled={disabled}
+				placeholder={placeholder}
+				aria-invalid={ariaInvalid}
+				aria-describedby={ariaDescribedBy}
+				aria-required={ariaRequired}
+			/>
+		</div>
+	);
+	FakePhoneInput.displayName = "FakePhoneInputWithFlags";
+	return { default: FakePhoneInput };
+});
 
 // ============================================================================
 // IMPORT AFTER MOCKS
