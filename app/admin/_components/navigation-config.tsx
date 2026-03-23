@@ -55,22 +55,6 @@ export interface NavigationData {
 export const navigationData: NavigationData = {
 	navGroups: [
 		// ─────────────────────────────────────────────────────────────────────────
-		// ACCUEIL - Point d'entrée
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Accueil",
-			icon: LayoutDashboard,
-			items: [
-				{
-					id: "dashboard",
-					title: "Tableau de bord",
-					shortTitle: "Accueil",
-					url: "/admin",
-					icon: LayoutDashboard,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
 		// VENTES - Commandes et remboursements
 		// ─────────────────────────────────────────────────────────────────────────
 		{
@@ -260,12 +244,41 @@ export const navigationData: NavigationData = {
 };
 
 // ============================================================================
+// STANDALONE ITEMS (not in navGroups — used only by Quick Access / helpers)
+// ============================================================================
+
+/** Dashboard item — rendered only in Quick Access, not in navGroups. */
+export const DASHBOARD_ITEM: NavItem = {
+	id: "dashboard",
+	title: "Tableau de bord",
+	shortTitle: "Accueil",
+	url: "/admin",
+	icon: LayoutDashboard,
+};
+
+// ============================================================================
 // HELPERS
 // ============================================================================
 
 /**
- * Récupère tous les items de navigation (flat list)
+ * IDs des items affichés dans la section "Accès rapide" du menu mobile.
+ * Filtrés depuis getAllNavItems() pour rester en sync avec navigationData.
+ */
+export const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
+
+/**
+ * Récupère tous les items de navigation (flat list), including standalone items.
  */
 export function getAllNavItems(): NavItem[] {
-	return navigationData.navGroups.flatMap((group) => group.items);
+	return [DASHBOARD_ITEM, ...navigationData.navGroups.flatMap((group) => group.items)];
+}
+
+/**
+ * Récupère les items d'accès rapide pour le menu mobile
+ */
+export function getQuickAccessItems(): NavItem[] {
+	const allItems = getAllNavItems();
+	return QUICK_ACCESS_ITEM_IDS.map((id) => allItems.find((item) => item.id === id)).filter(
+		(item): item is NavItem => item !== undefined,
+	);
 }

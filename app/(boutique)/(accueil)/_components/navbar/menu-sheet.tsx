@@ -92,8 +92,8 @@ export function MenuSheet({
 				</SheetTrigger>
 
 				<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
-					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pl-5">
-						<SheetTitle className="font-cursive flex h-11 items-center text-2xl font-bold">
+					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
+						<SheetTitle className="font-cursive flex h-9 items-center text-xl font-bold">
 							Synclune
 						</SheetTitle>
 						<SheetDescription className="sr-only">

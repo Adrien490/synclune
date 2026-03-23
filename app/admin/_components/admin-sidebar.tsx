@@ -44,9 +44,9 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 				</SidebarMenu>
 			</SidebarHeader>
 			<SidebarContent>
-				{navigationData.navGroups.slice(1).map((group, index) => {
+				{navigationData.navGroups.map((group, index) => {
 					const groupId = `nav-group-${index}`;
-					const isLastGroup = index === navigationData.navGroups.length - 2;
+					const isLastGroup = index === navigationData.navGroups.length - 1;
 
 					return (
 						<Fragment key={group.label}>

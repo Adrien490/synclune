@@ -90,6 +90,17 @@ function sanitizeCssValue(value: string): string {
 	return value.replace(/[^a-zA-Z0-9_\-#().,%\s]/g, "");
 }
 
+/**
+ * Escapes a string for use as a CSS identifier.
+ * Uses CSS.escape when available (browser), falls back to regex replacement on server.
+ */
+function escapeCssIdentifier(value: string): string {
+	if (typeof CSS !== "undefined" && CSS.escape) {
+		return CSS.escape(value);
+	}
+	return value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+}
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 	const colorConfig = Object.entries(config).filter(([, config]) => config.color);
 
@@ -97,7 +108,7 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 		return null;
 	}
 
-	const safeId = CSS.escape(id);
+	const safeId = escapeCssIdentifier(id);
 
 	return (
 		<style
@@ -109,7 +120,7 @@ ${prefix} [data-chart=${safeId}] {
 ${colorConfig
 	.map(([key, itemConfig]) => {
 		const color = itemConfig.color;
-		return color ? `  --color-${CSS.escape(key)}: ${sanitizeCssValue(color)};` : null;
+		return color ? `  --color-${escapeCssIdentifier(key)}: ${sanitizeCssValue(color)};` : null;
 	})
 	.join("\n")}
 }

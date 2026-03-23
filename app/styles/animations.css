@@ -394,6 +394,35 @@
 	}
 
 	/* ==========================================
+	   COLLAPSIBLE — Admin menu collapsible groups
+	   ========================================== */
+	@keyframes collapse-down {
+		from {
+			height: 0;
+		}
+		to {
+			height: var(--radix-collapsible-content-height);
+		}
+	}
+
+	@keyframes collapse-up {
+		from {
+			height: var(--radix-collapsible-content-height);
+		}
+		to {
+			height: 0;
+		}
+	}
+
+	.animate-collapse-down {
+		animation: collapse-down 200ms ease-out;
+	}
+
+	.animate-collapse-up {
+		animation: collapse-up 200ms ease-out;
+	}
+
+	/* ==========================================
 	   REDUCED MOTION — Disable all animations
 	   ========================================== */
 	@media (prefers-reduced-motion: reduce) {
@@ -427,7 +456,9 @@
 		.animate-fadeIn,
 		.animate-flipIn,
 		.animate-badge-pulse,
-		.animate-split-text-reveal {
+		.animate-split-text-reveal,
+		.animate-collapse-down,
+		.animate-collapse-up {
 			animation: none;
 		}
 

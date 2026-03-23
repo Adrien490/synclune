@@ -20,13 +20,14 @@ describe("getAllNavItems", () => {
 		}
 	});
 
-	it("returns items from all groups", () => {
+	it("returns items from all groups plus standalone items", () => {
 		const items = getAllNavItems();
 		const totalFromGroups = navigationData.navGroups.reduce(
 			(sum, group) => sum + group.items.length,
 			0,
 		);
-		expect(items).toHaveLength(totalFromGroups);
+		// +1 for DASHBOARD_ITEM (standalone, not in navGroups)
+		expect(items).toHaveLength(totalFromGroups + 1);
 	});
 
 	it("has no duplicate IDs", () => {
@@ -68,7 +69,7 @@ describe("navigation config integrity", () => {
 		}
 	});
 
-	it("collapsible groups are only Marketing and Configuration", () => {
+	it("collapsible groups are Catalogue, Marketing and Système", () => {
 		const collapsibleGroups = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);

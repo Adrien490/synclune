@@ -1,5 +1,4 @@
 import { use } from "react";
-import type { CustomizationRequestStatus } from "../../types/customization.types";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { ItemCheckbox } from "@/shared/components/item-checkbox";
 import { SelectAllCheckbox } from "@/shared/components/select-all-checkbox";
@@ -16,17 +15,13 @@ import {
 } from "@/shared/components/ui/table";
 import type { GetCustomizationRequestsResult } from "@/modules/customizations/data/get-customization-requests";
 import { formatDateShort } from "@/shared/utils/dates";
-import {
-	CUSTOMIZATION_STATUS_LABELS,
-	CUSTOMIZATION_STATUS_COLORS,
-} from "@/modules/customizations/constants/status.constants";
 import { Button } from "@/shared/components/ui/button";
-import { cn } from "@/shared/utils/cn";
 import { Sparkles, StickyNote } from "lucide-react";
 import Link from "next/link";
 
 import { CustomizationRowActions } from "./customization-row-actions";
 import { CustomizationSelectionToolbar } from "./customization-selection-toolbar";
+import { CustomizationStatusBadge } from "./customization-status-badge";
 import { UpdateNotesDialog } from "./update-notes-dialog";
 
 export interface CustomizationsDataTableProps {
@@ -95,7 +90,7 @@ export function CustomizationsDataTable({
 									</TableCell>
 									<TableCell className="text-sm">{request.productTypeLabel}</TableCell>
 									<TableCell>
-										<StatusBadge status={request.status} />
+										<CustomizationStatusBadge status={request.status} />
 									</TableCell>
 									<TableCell className="text-muted-foreground text-sm">
 										{request._count.inspirationProducts > 0 ? (
@@ -146,23 +141,5 @@ export function CustomizationsDataTable({
 				</div>
 			</CardContent>
 		</Card>
-	);
-}
-
-function StatusBadge({ status }: { status: CustomizationRequestStatus }) {
-	const label = CUSTOMIZATION_STATUS_LABELS[status];
-	const colors = CUSTOMIZATION_STATUS_COLORS[status];
-
-	return (
-		<span
-			className={cn(
-				"inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
-				colors.bg,
-				colors.text,
-			)}
-		>
-			<span aria-hidden="true">{colors.symbol}</span>
-			{label}
-		</span>
 	);
 }

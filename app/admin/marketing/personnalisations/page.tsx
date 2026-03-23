@@ -7,8 +7,8 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getCustomizationRequests } from "@/modules/customizations/data/get-customization-requests";
-import { getCustomizationStats } from "@/modules/customizations/data/get-customization-stats";
 import { CustomizationsDataTable } from "@/modules/customizations/components/admin/customizations-data-table";
+import { CustomizationsBottomBar } from "@/modules/customizations/components/admin/customizations-bottom-bar";
 import {
 	SORT_OPTIONS,
 	SORT_LABELS,
@@ -17,7 +17,8 @@ import {
 import { getFirstParam } from "@/shared/utils/params";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { CustomizationsDataTableSkeleton } from "@/modules/customizations/components/admin/customizations-data-table-skeleton";
-import { Sparkles, Clock, CheckCircle2, FileText } from "lucide-react";
+import { CustomizationsMobileList } from "@/modules/customizations/components/admin/customizations-mobile-list";
+import { CustomizationsMobileListSkeleton } from "@/modules/customizations/components/admin/customizations-mobile-list-skeleton";
 
 export const metadata: Metadata = {
 	title: "Personnalisations | Administration",
@@ -31,7 +32,7 @@ interface CustomizationsPageProps {
 export default async function CustomizationsPage({ searchParams }: CustomizationsPageProps) {
 	await connection();
 
-	const [params, stats] = await Promise.all([searchParams, getCustomizationStats()]);
+	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);
 	const direction = (getFirstParam(params.direction) ?? "forward") as "forward" | "backward";
@@ -71,32 +72,8 @@ export default async function CustomizationsPage({ searchParams }: Customization
 		<>
 			<PageHeader variant="compact" title="Personnalisations" className="hidden md:block" />
 
-			{/* Statistiques */}
-			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-				<StatCard
-					title="En attente"
-					value={stats.pending}
-					icon={<Clock className="h-5 w-5" />}
-					highlight
-				/>
-				<StatCard
-					title="En cours"
-					value={stats.inProgress}
-					icon={<Sparkles className="h-5 w-5" />}
-				/>
-				<StatCard
-					title="Terminées"
-					value={stats.completed}
-					icon={<FileText className="h-5 w-5" />}
-				/>
-				<StatCard
-					title="Finalisées"
-					value={stats.closed}
-					icon={<CheckCircle2 className="h-5 w-5" />}
-				/>
-			</div>
-
 			<div className="space-y-6">
+				{/* Toolbar desktop */}
 				<Suspense fallback={<ToolbarSkeleton selectCount={2} className="hidden md:flex" />}>
 					<Toolbar
 						className="hidden md:flex"
@@ -133,42 +110,19 @@ export default async function CustomizationsPage({ searchParams }: Customization
 					</Toolbar>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<CustomizationsMobileListSkeleton />}>
+					<CustomizationsMobileList requestsPromise={requestsPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<CustomizationsDataTableSkeleton />}>
 					<CustomizationsDataTable requestsPromise={requestsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
-		</>
-	);
-}
 
-function StatCard({
-	title,
-	value,
-	icon,
-	highlight,
-}: {
-	title: string;
-	value: number;
-	icon: React.ReactNode;
-	highlight?: boolean;
-}) {
-	return (
-		<div
-			className={`bg-card rounded-lg border p-4 ${highlight && value > 0 ? "border-amber-200 bg-amber-50/50" : ""}`}
-		>
-			<div className="flex items-center justify-between">
-				<div>
-					<p className="text-muted-foreground text-sm font-medium">{title}</p>
-					<p
-						className={`mt-1 text-2xl font-bold ${highlight && value > 0 ? "text-amber-600" : ""}`}
-					>
-						{value}
-					</p>
-				</div>
-				<div className={`${highlight && value > 0 ? "text-amber-600" : "text-muted-foreground"}`}>
-					{icon}
-				</div>
-			</div>
-		</div>
+			{/* Bottom bar mobile (tri, recherche, filtres) */}
+			<CustomizationsBottomBar />
+		</>
 	);
 }

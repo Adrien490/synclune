@@ -14,7 +14,7 @@ interface MenuSheetFooterProps {
 
 export function MenuSheetFooter({ isAdmin }: MenuSheetFooterProps) {
 	return (
-		<footer className="border-border/40 relative z-10 shrink-0 border-t px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+		<footer className="relative z-10 shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
 			{/* Social links and admin */}
 			<div className="flex items-center justify-between">
 				<div className="flex items-center gap-3">

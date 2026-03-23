@@ -1,18 +1,15 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockUsePathname, mockOpenSearch, mockUseDialog, mockGenerateBreadcrumbs } = vi.hoisted(
-	() => ({
-		mockUsePathname: vi.fn(() => "/admin"),
-		mockOpenSearch: vi.fn(),
-		mockUseDialog: vi.fn(),
-		mockGenerateBreadcrumbs: vi.fn(),
-	}),
-);
+const { mockUsePathname, mockGenerateBreadcrumbs, mockUseIsScrolled } = vi.hoisted(() => ({
+	mockUsePathname: vi.fn(() => "/admin"),
+	mockGenerateBreadcrumbs: vi.fn(),
+	mockUseIsScrolled: vi.fn(() => false),
+}));
 
 // ============================================================================
 // MODULE MOCKS
@@ -22,8 +19,8 @@ vi.mock("next/navigation", () => ({
 	usePathname: mockUsePathname,
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: mockUseDialog,
+vi.mock("@/shared/hooks/use-is-scrolled", () => ({
+	useIsScrolled: mockUseIsScrolled,
 }));
 
 vi.mock("../admin-menu-sheet", () => ({
@@ -38,12 +35,6 @@ vi.mock("../dashboard-breadcrumb", () => ({
 	generateBreadcrumbs: mockGenerateBreadcrumbs,
 }));
 
-vi.mock("lucide-react", () => ({
-	Search: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
-		<svg data-testid="search-icon" className={className} {...props} />
-	),
-}));
-
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
@@ -56,7 +47,6 @@ import { AdminMobileHeader } from "../admin-mobile-header";
 // ============================================================================
 
 beforeEach(() => {
-	mockUseDialog.mockReturnValue({ open: mockOpenSearch });
 	mockGenerateBreadcrumbs.mockReturnValue([
 		{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
 		{ label: "Commandes", href: "/admin/ventes/commandes", isCurrentPage: true },
@@ -90,12 +80,6 @@ describe("AdminMobileHeader", () => {
 			expect(
 				screen.getByRole("banner", { name: "En-tête mobile administration" }),
 			).toBeInTheDocument();
-		});
-
-		it("search button has aria-label Recherche rapide", () => {
-			render(<AdminMobileHeader />);
-
-			expect(screen.getByRole("button", { name: "Recherche rapide" })).toBeInTheDocument();
 		});
 	});
 
@@ -143,28 +127,30 @@ describe("AdminMobileHeader", () => {
 	});
 
 	// ============================================================================
-	// Search button interaction
+	// Scroll-aware styling
 	// ============================================================================
 
-	describe("search button", () => {
-		it('calls open() from useDialog("command-palette") when clicked', () => {
+	describe("scroll-aware styling", () => {
+		it("calls useIsScrolled with threshold 20", () => {
 			render(<AdminMobileHeader />);
 
-			fireEvent.click(screen.getByRole("button", { name: "Recherche rapide" }));
-
-			expect(mockOpenSearch).toHaveBeenCalledTimes(1);
+			expect(mockUseIsScrolled).toHaveBeenCalledWith(20);
 		});
 
-		it('calls useDialog with "command-palette"', () => {
+		it("has transparent background when not scrolled", () => {
+			mockUseIsScrolled.mockReturnValue(false);
+
 			render(<AdminMobileHeader />);
 
-			expect(mockUseDialog).toHaveBeenCalledWith("command-palette");
+			expect(screen.getByRole("banner")).toHaveClass("bg-transparent");
 		});
 
-		it("renders the search icon inside the search button", () => {
+		it("has glass effect background when scrolled", () => {
+			mockUseIsScrolled.mockReturnValue(true);
+
 			render(<AdminMobileHeader />);
 
-			expect(screen.getByTestId("search-icon")).toBeInTheDocument();
+			expect(screen.getByRole("banner")).toHaveClass("backdrop-blur-md");
 		});
 	});
 

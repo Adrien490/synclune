@@ -1,5 +1,6 @@
 "use client";
 
+import { startTransition } from "react";
 import type { CustomizationRequestStatus } from "../../types/customization.types";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -71,7 +72,7 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 		const formData = new FormData();
 		formData.set("requestId", request.id);
 		formData.set("status", newStatus);
-		action(formData);
+		startTransition(() => action(formData));
 	};
 
 	const handleOpenNotes = () => {
