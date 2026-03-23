@@ -14,14 +14,15 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { buttonVariants } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { type AlertDialogData } from "@/shared/stores/alert-dialog-store";
 
 export const TOGGLE_STORE_CLOSURE_DIALOG_ID = "toggle-store-closure";
 
-interface ToggleStoreClosureData {
+type ToggleStoreClosureData = AlertDialogData & {
 	isClosed: boolean;
 	closureMessage: string;
 	reopensAt: string;
-}
+};
 
 interface ToggleStoreClosureAlertDialogProps {
 	action: (payload: FormData) => void;
