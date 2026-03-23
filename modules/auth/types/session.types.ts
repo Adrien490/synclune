@@ -55,19 +55,3 @@ export type GetSessionsReturn = {
 export type Session = Prisma.SessionGetPayload<{
 	select: typeof GET_SESSIONS_SELECT;
 }>;
-
-// ============================================================================
-// TYPES - USER SESSIONS
-// ============================================================================
-
-export type UserSession = {
-	id: string;
-	ipAddress: string | null;
-	userAgent: string | null;
-	createdAt: Date;
-	expiresAt: Date;
-	isCurrentSession: boolean;
-	isExpired: boolean;
-};
-
-export type GetUserSessionsReturn = UserSession[];

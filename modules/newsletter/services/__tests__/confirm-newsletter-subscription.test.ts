@@ -48,6 +48,9 @@ vi.mock("next/cache", () => ({
 	cacheLife: vi.fn(),
 	cacheTag: vi.fn(),
 }));
+vi.mock("next/server", () => ({
+	after: (fn: () => void) => fn(),
+}));
 vi.mock("@/modules/emails/services/newsletter-emails", () => ({
 	sendNewsletterWelcomeEmail: mockSendNewsletterWelcomeEmail,
 }));

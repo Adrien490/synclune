@@ -6,6 +6,7 @@ import { logger } from "@/shared/lib/logger";
 import { validateInput } from "@/shared/lib/actions";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { unsubscribeTokenSchema } from "../schemas/newsletter.schemas";
 
@@ -100,8 +101,12 @@ export async function unsubscribeNewsletter(token: string | undefined): Promise<
 			},
 		});
 
-		// Invalidate cache (pass userId to invalidate user-specific status)
-		getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) => updateTag(tag));
+		// Invalidate cache after response (updateTag cannot be called during render)
+		after(() => {
+			getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) =>
+				updateTag(tag),
+			);
+		});
 
 		return {
 			success: true,

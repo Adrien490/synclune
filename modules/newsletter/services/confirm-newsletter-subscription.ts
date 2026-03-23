@@ -8,6 +8,7 @@ import { getClientIp } from "@/shared/lib/rate-limit";
 import { validateInput } from "@/shared/lib/actions";
 import { headers } from "next/headers";
 import { updateTag } from "next/cache";
+import { after } from "next/server";
 import { getNewsletterInvalidationTags } from "../constants/cache";
 import { confirmationTokenSchema } from "../schemas/newsletter.schemas";
 import { NEWSLETTER_BASE_URL } from "../constants/urls.constants";
@@ -133,8 +134,12 @@ export async function confirmNewsletterSubscription(
 			},
 		});
 
-		// Invalidate cache (pass userId to invalidate user-specific status)
-		getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) => updateTag(tag));
+		// Invalidate cache after response (updateTag cannot be called during render)
+		after(() => {
+			getNewsletterInvalidationTags(subscriber.userId ?? undefined).forEach((tag) =>
+				updateTag(tag),
+			);
+		});
 
 		// Generate unique -10% promo code for the new subscriber
 		let promoCode: string | undefined;
