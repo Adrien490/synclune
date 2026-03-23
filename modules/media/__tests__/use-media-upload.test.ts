@@ -532,7 +532,7 @@ describe("useMediaUpload", () => {
 			expect((results as { fileName: string }[])[0]?.fileName).toBe("ok.jpg");
 		});
 
-		it("should cleanup orphan thumbnail when video upload fails", async () => {
+		it("should log orphan thumbnail warning when video upload fails", async () => {
 			const thumbnailFile = createImageFile("thumb.jpg");
 			mockGenerateVideoThumbnail.mockResolvedValue({
 				thumbnailFile,
@@ -555,12 +555,11 @@ describe("useMediaUpload", () => {
 				await result.current.upload([createVideoFile("fail.mp4")]);
 			});
 
-			// Fire-and-forget cleanup — flush microtasks before asserting
-			await waitFor(() => {
-				expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
-					"https://utfs.io/f/thumb.jpg",
-				]);
-			});
+			// Orphan cleanup is now deferred to the monthly cron job — hook only warns
+			expect(warnSpy).toHaveBeenCalledWith(
+				"[useMediaUpload] Thumbnail orphelin sera nettoyé par le cron:",
+				"https://utfs.io/f/thumb.jpg",
+			);
 
 			warnSpy.mockRestore();
 			vi.unstubAllGlobals();
