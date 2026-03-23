@@ -6,17 +6,8 @@ import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
-import dynamic from "next/dynamic";
 import { AmountRangeInputs } from "./amount-range-inputs";
-
-// Lazy load Calendar pour améliorer les performances mobile (TTI)
-const Calendar = dynamic(
-	() => import("@/shared/components/ui/calendar").then((mod) => mod.Calendar),
-	{
-		loading: () => <div className="bg-muted h-70 w-full animate-pulse rounded-md" />,
-		ssr: false,
-	},
-);
+import { Calendar } from "@/shared/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { Separator } from "@/shared/components/ui/separator";
 import {

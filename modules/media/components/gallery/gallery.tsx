@@ -22,14 +22,12 @@ import { GalleryCounter } from "@/shared/components/gallery/counter";
 import { GalleryNavigation } from "@/shared/components/gallery/navigation";
 import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
 import { useLightbox } from "@/shared/hooks";
-import dynamic from "next/dynamic";
+import { lazy } from "react";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
-// Lazy loading - lightbox only loaded on open
-const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
-	ssr: false,
-});
+// Lazy loading - lightbox charge uniquement a l'ouverture
+const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
@@ -409,13 +407,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 				</div>
 			</div>
 
-			<MediaLightbox
-				open={isOpen}
-				close={close}
-				slides={slides}
-				index={current}
-				onIndexChange={(index) => scrollTo(index)}
-			/>
+			{isOpen && (
+				<Suspense fallback={null}>
+					<MediaLightbox
+						open={isOpen}
+						close={close}
+						slides={slides}
+						index={current}
+						onIndexChange={(index) => scrollTo(index)}
+					/>
+				</Suspense>
+			)}
 		</>
 	);
 }

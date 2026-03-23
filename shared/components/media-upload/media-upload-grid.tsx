@@ -28,14 +28,12 @@ import { useLightbox } from "@/shared/hooks";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "sonner";
 
-import dynamic from "next/dynamic";
+import { lazy, Suspense } from "react";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 
-// Lazy loading - lightbox loaded only on open
-const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
-	ssr: false,
-});
+// Lazy loading - lightbox charge uniquement a l'ouverture
+const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import { SortableMediaItem } from "@/modules/media/components/admin/sortable-media-item";
 import type { Slide } from "yet-another-react-lightbox";
@@ -350,13 +348,17 @@ export function MediaUploadGrid({
 			</DndContext>
 
 			{/* Lightbox */}
-			<MediaLightbox
-				open={lightboxOpen}
-				close={closeLightbox}
-				slides={slides}
-				index={lightboxIndex}
-				onIndexChange={setLightboxIndex}
-			/>
+			{lightboxOpen && (
+				<Suspense fallback={null}>
+					<MediaLightbox
+						open={lightboxOpen}
+						close={closeLightbox}
+						slides={slides}
+						index={lightboxIndex}
+						onIndexChange={setLightboxIndex}
+					/>
+				</Suspense>
+			)}
 		</>
 	);
 }

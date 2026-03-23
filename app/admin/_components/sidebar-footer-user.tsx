@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronsUpDown, LogOut } from "lucide-react";
-import dynamic from "next/dynamic";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -19,11 +18,7 @@ import {
 	useSidebar,
 } from "@/shared/components/ui/sidebar";
 
-const LogoutAlertDialog = dynamic(
-	() =>
-		import("@/modules/auth/components/logout-alert-dialog").then((mod) => mod.LogoutAlertDialog),
-	{ ssr: false },
-);
+import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
 
 interface SidebarFooterUserProps {
 	user: {

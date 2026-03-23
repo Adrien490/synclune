@@ -7,19 +7,7 @@ import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 import type { Country } from "react-phone-number-input";
 import { forwardRef } from "react";
-import dynamic from "next/dynamic";
-
-const PhoneInputWithFlags = dynamic(() => import("./phone-input-lazy"), {
-	ssr: false,
-	loading: () => (
-		<div className="PhoneInput--synclune flex">
-			<div className="bg-input border-input flex min-h-11 items-center rounded-l-md border px-3">
-				<div className="bg-muted-foreground/20 h-4 w-6 rounded-sm" />
-			</div>
-			<div className="bg-background border-input h-11 flex-1 rounded-r-md border border-l-0" />
-		</div>
-	),
-});
+import PhoneInputWithFlags from "./phone-input-lazy";
 
 interface PhoneFieldProps {
 	disabled?: boolean;
