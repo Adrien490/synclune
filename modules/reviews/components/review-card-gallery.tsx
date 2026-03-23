@@ -1,15 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import Image from "next/image";
-import dynamic from "next/dynamic";
 import { cn } from "@/shared/utils/cn";
 import { useLightbox } from "@/shared/hooks";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
-	ssr: false,
-});
+const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 
 interface ReviewMedia {
 	id: string;
@@ -68,12 +65,16 @@ export function ReviewCardGallery({ medias }: ReviewCardGalleryProps) {
 					</button>
 				))}
 			</div>
-			<MediaLightbox
-				open={isOpen}
-				close={close}
-				slides={medias.map((m) => ({ src: m.url, alt: m.altText ?? `Photo de l'avis` }))}
-				index={lightboxIndex}
-			/>
+			{isOpen && (
+				<Suspense fallback={null}>
+					<MediaLightbox
+						open={isOpen}
+						close={close}
+						slides={medias.map((m) => ({ src: m.url, alt: m.altText ?? `Photo de l'avis` }))}
+						index={lightboxIndex}
+					/>
+				</Suspense>
+			)}
 		</>
 	);
 }
