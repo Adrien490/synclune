@@ -1,14 +1,13 @@
 "use client";
 
-import { m, useReducedMotion } from "motion/react";
-
-/** Animated hamburger ↔ X morph icon (3 bars → cross) */
+/**
+ * Animated hamburger ↔ X morph icon (3 bars → cross)
+ *
+ * Uses CSS transitions on SVG attributes instead of motion/react `m.line`
+ * to avoid SSR hydration mismatches (motion serializes SVG attributes
+ * differently during SSR vs client hydration).
+ */
 export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
-	const shouldReduceMotion = useReducedMotion();
-	const transition = shouldReduceMotion
-		? { duration: 0 }
-		: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const };
-
 	return (
 		<svg
 			width={20}
@@ -19,24 +18,18 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 			className="text-current"
 		>
 			{/* Top bar → top-left to bottom-right diagonal */}
-			<m.line
-				x1="3"
-				x2="17"
-				y1="5"
-				y2="5"
+			<line
+				x1={isOpen ? 4 : 3}
+				x2={isOpen ? 16 : 17}
+				y1={isOpen ? 4 : 5}
+				y2={isOpen ? 16 : 5}
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				initial={{ x1: 3, x2: 17, y1: 5, y2: 5, opacity: 1 }}
-				animate={
-					isOpen
-						? { x1: 4, x2: 16, y1: 4, y2: 16, opacity: 1 }
-						: { x1: 3, x2: 17, y1: 5, y2: 5, opacity: 1 }
-				}
-				transition={transition}
+				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.25,0.1,0.25,1)]"
 			/>
 			{/* Middle bar → fades out */}
-			<m.line
+			<line
 				x1="3"
 				x2="17"
 				y1="10"
@@ -44,26 +37,19 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				initial={{ opacity: 1 }}
-				animate={isOpen ? { opacity: 0 } : { opacity: 1 }}
-				transition={transition}
+				className="motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+				opacity={isOpen ? 0 : 1}
 			/>
 			{/* Bottom bar → bottom-left to top-right diagonal */}
-			<m.line
-				x1="3"
-				x2="17"
-				y1="15"
-				y2="15"
+			<line
+				x1={isOpen ? 4 : 3}
+				x2={isOpen ? 16 : 17}
+				y1={isOpen ? 16 : 15}
+				y2={isOpen ? 4 : 15}
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				initial={{ x1: 3, x2: 17, y1: 15, y2: 15, opacity: 1 }}
-				animate={
-					isOpen
-						? { x1: 4, x2: 16, y1: 16, y2: 4, opacity: 1 }
-						: { x1: 3, x2: 17, y1: 15, y2: 15, opacity: 1 }
-				}
-				transition={transition}
+				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.25,0.1,0.25,1)]"
 			/>
 		</svg>
 	);

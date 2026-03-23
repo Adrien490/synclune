@@ -8,10 +8,16 @@ export function formatPrice(value: string | number): string {
 		return `${value}`;
 	}
 
-	return new Intl.NumberFormat("fr-FR", {
-		style: "currency",
-		currency: "EUR",
-		minimumFractionDigits: 0,
-		maximumFractionDigits: 0,
-	}).format(numValue);
+	return (
+		new Intl.NumberFormat("fr-FR", {
+			style: "currency",
+			currency: "EUR",
+			minimumFractionDigits: 0,
+			maximumFractionDigits: 0,
+		})
+			.format(numValue)
+			// Normalize narrow no-break space (U+202F) to regular no-break space (U+00A0)
+			// to prevent hydration mismatches between Node.js and browser Intl implementations
+			.replace(/\u202F/g, "\u00A0")
+	);
 }
