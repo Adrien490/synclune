@@ -8,11 +8,13 @@ import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-gr
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
 import { useCreateProductForm } from "@/modules/products/hooks/use-create-product-form";
+import { useMediaFieldUpload } from "@/modules/products/hooks/use-media-field-upload";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
-import { Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
-import { useState } from "react";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert";
+import { AlertCircle, Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -37,8 +39,9 @@ export function CreateProductForm({
 	} = useMediaUpload();
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
+	const formRef = useRef<HTMLFormElement>(null);
 
-	const { form, action, isPending } = useCreateProductForm({
+	const { form, action, isPending, formErrors } = useCreateProductForm({
 		onSuccess: (message) => {
 			toast.success(message || "Bijou créé avec succès", {
 				action: {
@@ -50,72 +53,42 @@ export function CreateProductForm({
 		},
 	});
 
-	const isUploading = isMediaUploading;
-
-	const maxMediaCount = ARRAY_LIMITS.SKU_MEDIA;
-
-	const handleUpload = async (
-		files: File[],
-		field: {
-			state: {
-				value: Array<{
-					url: string;
-					mediaType: "IMAGE" | "VIDEO";
-					altText?: string;
-					thumbnailUrl?: string | null;
-					blurDataUrl?: string;
-				}>;
-			};
-			pushValue: (value: {
-				url: string;
-				mediaType: "IMAGE" | "VIDEO";
-				altText?: string;
-				thumbnailUrl?: string | null;
-				blurDataUrl?: string;
-			}) => void;
-		},
-	) => {
-		const remaining = maxMediaCount - field.state.value.length;
-		let filesToUpload = files.slice(0, remaining);
-
-		// Trier: images d'abord, vidéos ensuite
-		filesToUpload = filesToUpload.sort((a, b) => {
-			const aIsVideo = a.type.startsWith("video/");
-			const bIsVideo = b.type.startsWith("video/");
-			if (aIsVideo === bIsVideo) return 0;
-			return aIsVideo ? 1 : -1;
-		});
-
-		if (files.length > remaining) {
-			toast.warning(`Seulement ${remaining} média(s) ajouté(s)`);
-		}
-
-		if (field.state.value.length === 0 && filesToUpload[0]?.type.startsWith("video/")) {
-			toast.error("La première image doit être une image, pas une vidéo");
-			return;
-		}
-
-		if (filesToUpload.length === 0) return;
-
-		// useMediaUpload gère la validation de taille et génère les thumbnails vidéo côté client
-		const results = await uploadMedia(filesToUpload);
-		results.forEach((result) => {
-			field.pushValue({
-				url: result.url,
-				altText: form.state.values.title || undefined,
-				mediaType: result.mediaType,
-				thumbnailUrl: result.thumbnailUrl,
-				blurDataUrl: result.blurDataUrl,
-			});
+	// Scroll to first error after failed submission
+	const scrollToFirstError = () => {
+		requestAnimationFrame(() => {
+			const firstError = formRef.current?.querySelector('[data-invalid="true"], [role="alert"]');
+			if (firstError) {
+				firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+			}
 		});
 	};
 
+	// Scroll to global form errors when they appear (server-side)
+	useEffect(() => {
+		if (formErrors.length > 0) {
+			scrollToFirstError();
+		}
+	}, [formErrors]);
+
+	const maxMediaCount = ARRAY_LIMITS.SKU_MEDIA;
+
+	const { handleUpload } = useMediaFieldUpload({
+		uploadMedia,
+		getAltText: () => form.state.values.title || undefined,
+	});
+
 	return (
 		<form
+			ref={formRef}
 			action={action}
 			aria-label="Formulaire de création de bijou"
-			className="space-y-6 pb-16 sm:pb-32"
-			onSubmit={() => void form.handleSubmit()}
+			className="space-y-6 pb-4 sm:pb-8"
+			onSubmit={() => {
+				void form.handleSubmit();
+				if (!form.state.canSubmit) {
+					scrollToFirstError();
+				}
+			}}
 		>
 			{/* Hidden fields */}
 			<form.Subscribe selector={(state) => [state.values.initialSku.media]}>
@@ -137,7 +110,19 @@ export function CreateProductForm({
 				<input type="hidden" name="deletedImageUrls" value={JSON.stringify(deletedImageUrls)} />
 			)}
 
-			<div className="space-y-6">
+			{/* Global form errors (server-side) */}
+			{formErrors.length > 0 && (
+				<Alert variant="destructive" role="alert" aria-live="assertive">
+					<AlertCircle className="size-4" />
+					<AlertDescription>
+						{formErrors.map((error, i) => (
+							<p key={i}>{String(error)}</p>
+						))}
+					</AlertDescription>
+				</Alert>
+			)}
+
+			<fieldset disabled={isPending || isMediaUploading} className="space-y-6">
 				{/* Visuels */}
 				<form.Field
 					name="initialSku.media"
@@ -453,7 +438,7 @@ export function CreateProductForm({
 										type="button"
 										variant="ghost"
 										size="icon"
-										className="-m-2 h-8 min-h-11 w-8 min-w-11 hover:bg-transparent"
+										className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
 										aria-label="Plus d'informations sur les attributs de la variante"
 									>
 										<Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
@@ -468,7 +453,8 @@ export function CreateProductForm({
 							</Tooltip>
 						</div>
 						<p className="text-muted-foreground text-xs">
-							Caractéristiques de la première variante
+							Caractéristiques de la première variante. Vous pourrez ajouter d'autres variantes
+							après la création.
 						</p>
 					</fieldset>
 
@@ -624,22 +610,22 @@ export function CreateProductForm({
 					</form.AppField>
 				</div>
 
-				{/* Footer */}
+				{/* Footer - sticky on mobile, inline on desktop */}
 				<form.AppForm>
-					<div className="mt-6 flex flex-col justify-end gap-3 sm:flex-row">
-						{/* Annonce pour les lecteurs d'ecran */}
+					<div className="bg-background/80 sticky bottom-0 z-10 border-t pt-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:pt-0 sm:backdrop-blur-none">
+						{/* Screen reader announcement */}
 						<span className="sr-only" role="status" aria-live="polite">
 							{isPending ? "Envoi du formulaire en cours..." : ""}
 						</span>
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
-								<>
+								<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
 									<Button
 										type="submit"
 										variant="secondary"
-										disabled={!canSubmit || isPending || isUploading}
+										disabled={!canSubmit || isPending || isMediaUploading}
 										onClick={() => form.setFieldValue("status", "DRAFT")}
-										className="w-full sm:w-auto"
+										className="w-full sm:w-auto sm:min-w-40"
 									>
 										{isPending && form.state.values.status === "DRAFT"
 											? "Chargement..."
@@ -647,9 +633,9 @@ export function CreateProductForm({
 									</Button>
 									<Button
 										type="submit"
-										disabled={!canSubmit || isPending || isUploading}
+										disabled={!canSubmit || isPending || isMediaUploading}
 										onClick={() => form.setFieldValue("status", "PUBLIC")}
-										className="w-full sm:w-auto"
+										className="w-full sm:w-auto sm:min-w-40"
 									>
 										{isPending && form.state.values.status === "PUBLIC"
 											? "Chargement..."
@@ -657,12 +643,12 @@ export function CreateProductForm({
 												? "Chargement..."
 												: "Publier le bijou"}
 									</Button>
-								</>
+								</div>
 							)}
 						</form.Subscribe>
 					</div>
 				</form.AppForm>
-			</div>
+			</fieldset>
 		</form>
 	);
 }

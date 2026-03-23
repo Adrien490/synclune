@@ -8,9 +8,8 @@ export const createProductFormOpts = {
 		description: "",
 		typeId: undefined as string | undefined,
 		collectionIds: [] as string[],
-		status: "PUBLIC" as ProductStatus,
+		status: "DRAFT" as ProductStatus,
 		initialSku: {
-			sku: "",
 			priceInclTaxEuros: null as number | null,
 			compareAtPriceEuros: undefined as number | undefined,
 			inventory: 1,

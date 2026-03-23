@@ -12,7 +12,6 @@ import type {
 	VideoThumbnailResult,
 } from "../types/hooks.types";
 import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
-import { deleteUploadThingFilesFromUrls } from "../services/delete-uploadthing-files.service";
 
 // ============================================================================
 // CONSTANTS
@@ -242,11 +241,11 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 			return null;
 		} catch (error) {
-			// Cleanup orphan thumbnail if video upload fails
+			// Orphan thumbnail cleanup is handled by the monthly cleanup-orphan-media cron job.
+			// We don't call the server-side delete service from the client to avoid
+			// bundling UTApi (server-only) into the client bundle.
 			if (thumbnailUrl) {
-				deleteUploadThingFilesFromUrls([thumbnailUrl]).catch((cleanupError) => {
-					console.warn("[useMediaUpload] Echec nettoyage thumbnail orphelin:", cleanupError);
-				});
+				console.warn("[useMediaUpload] Thumbnail orphelin sera nettoyé par le cron:", thumbnailUrl);
 			}
 			throw error;
 		}

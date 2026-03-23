@@ -94,9 +94,9 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 					</SheetHeader>
 
 					{/* Header — safe area top for iOS notch */}
-					<div className="flex items-center gap-3 border-b px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4">
+					<div className="flex items-center gap-3 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4">
 						<Logo size={36} rounded="lg" />
-						<span className="font-cursive text-lg font-normal tracking-wide">{BRAND.name}</span>
+						<span className="font-cursive text-xl font-normal tracking-wide">{BRAND.name}</span>
 					</div>
 
 					{/* Scrollable nav */}
@@ -172,7 +172,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 					</div>
 
 					{/* Footer — safe area bottom for iOS home indicator */}
-					<div className="space-y-3 border-t px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+					<div className="space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
 						{/* User info */}
 						<div className="flex items-center gap-3">
 							<div className="min-w-0 flex-1">

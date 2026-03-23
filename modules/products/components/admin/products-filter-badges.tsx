@@ -6,6 +6,9 @@ import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSearchParams } from "next/navigation";
 
+import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
+import type { MaterialOption } from "@/modules/materials/data/get-material-options";
+
 const PRODUCT_STATUS_LABELS: Record<ProductStatus, string> = {
 	DRAFT: "Brouillon",
 	PUBLIC: "Public",
@@ -19,8 +22,10 @@ const STOCK_STATUS_LABELS: Record<string, string> = {
 };
 
 interface ProductsFilterBadgesProps {
-	productTypes: Array<{ id: string; label: string }>;
+	productTypes: Array<{ id: string; label: string; slug: string }>;
 	collections: Array<{ id: string; name: string }>;
+	colors: GetColorsReturn["colors"];
+	materials: MaterialOption[];
 }
 
 function formatProductFilter(
@@ -28,10 +33,12 @@ function formatProductFilter(
 	options: {
 		productTypes: Map<string, string>;
 		collections: Map<string, string>;
+		colors: Map<string, string>;
+		materials: Map<string, string>;
 		searchParams: URLSearchParams;
 	},
 ) {
-	const { productTypes, collections, searchParams } = options;
+	const { productTypes, collections, colors, materials, searchParams } = options;
 	const filterKey = filter.key.replace("filter_", "");
 	const value = filter.value as string;
 
@@ -65,7 +72,7 @@ function formatProductFilter(
 		return null;
 	}
 
-	// Gestion du type de bijou
+	// Gestion du type de bijou (slug-based)
 	if (filterKey === "typeId") {
 		const typeName = productTypes.get(value);
 		return {
@@ -83,6 +90,32 @@ function formatProductFilter(
 		};
 	}
 
+	// Gestion des couleurs
+	if (filterKey === "color") {
+		const colorName = colors.get(value);
+		return {
+			label: "Couleur",
+			displayValue: colorName ?? value,
+		};
+	}
+
+	// Gestion des matériaux
+	if (filterKey === "material") {
+		const materialName = materials.get(value);
+		return {
+			label: "Matériau",
+			displayValue: materialName ?? value,
+		};
+	}
+
+	// Gestion de la promotion
+	if (filterKey === "onSale") {
+		return {
+			label: "Promotion",
+			displayValue: "En promotion",
+		};
+	}
+
 	// Gestion de la publication
 	if (filterKey === "isPublished") {
 		return {
@@ -91,20 +124,43 @@ function formatProductFilter(
 		};
 	}
 
-	// Gestion des dates de publication
-	if (filterKey === "publishedAfter") {
-		const date = new Date(value);
+	// Gestion des dates
+	if (filterKey === "createdAfter") {
 		return {
-			label: "Publié après",
-			displayValue: date.toLocaleDateString("fr-FR"),
+			label: "Créé après",
+			displayValue: new Date(value).toLocaleDateString("fr-FR"),
+		};
+	}
+	if (filterKey === "createdBefore") {
+		return {
+			label: "Créé avant",
+			displayValue: new Date(value).toLocaleDateString("fr-FR"),
+		};
+	}
+	if (filterKey === "updatedAfter") {
+		return {
+			label: "Modifié après",
+			displayValue: new Date(value).toLocaleDateString("fr-FR"),
+		};
+	}
+	if (filterKey === "updatedBefore") {
+		return {
+			label: "Modifié avant",
+			displayValue: new Date(value).toLocaleDateString("fr-FR"),
 		};
 	}
 
+	// Gestion des dates de publication
+	if (filterKey === "publishedAfter") {
+		return {
+			label: "Publié après",
+			displayValue: new Date(value).toLocaleDateString("fr-FR"),
+		};
+	}
 	if (filterKey === "publishedBefore") {
-		const date = new Date(value);
 		return {
 			label: "Publié avant",
-			displayValue: date.toLocaleDateString("fr-FR"),
+			displayValue: new Date(value).toLocaleDateString("fr-FR"),
 		};
 	}
 
@@ -115,13 +171,20 @@ function formatProductFilter(
 	};
 }
 
-export function ProductsFilterBadges({ productTypes, collections }: ProductsFilterBadgesProps) {
+export function ProductsFilterBadges({
+	productTypes,
+	collections,
+	colors,
+	materials,
+}: ProductsFilterBadgesProps) {
 	const searchParams = useSearchParams();
 
 	// Create lookup maps for efficient access
 	const filterMaps = {
-		productTypes: new Map(productTypes.map((t) => [t.id, t.label])),
+		productTypes: new Map(productTypes.map((t) => [t.slug, t.label])),
 		collections: new Map(collections.map((c) => [c.id, c.name])),
+		colors: new Map(colors.map((c) => [c.slug, c.name])),
+		materials: new Map(materials.map((m) => [m.slug, m.name])),
 	};
 
 	return (

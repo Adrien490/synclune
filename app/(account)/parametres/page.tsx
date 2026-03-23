@@ -42,9 +42,11 @@ export default async function SettingsPage() {
 				</div>
 
 				<div className="space-y-6">
+					{/* TODO: Réactiver l'inscription newsletter depuis le compte
 					<Suspense fallback={<NewsletterSkeleton />}>
 						<NewsletterWrapper />
 					</Suspense>
+					*/}
 
 					<LogoutCard />
 				</div>

@@ -80,6 +80,15 @@ vi.mock("@/shared/components/multi-select", () => ({
 	MultiSelect: () => <div data-testid="multi-select" />,
 }));
 
+vi.mock("@/shared/components/ui/alert", () => ({
+	Alert: ({ children, ...props }: { children: React.ReactNode }) => (
+		<div data-testid="form-alert" {...props}>
+			{children}
+		</div>
+	),
+	AlertDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
 // ============================================================================
 // Imports (after mocks)
 // ============================================================================
@@ -200,6 +209,7 @@ describe("CreateProductForm", () => {
 			form: mockForm,
 			action: vi.fn(),
 			isPending: false,
+			formErrors: [],
 			...hookOverrides,
 		});
 
@@ -396,6 +406,27 @@ describe("CreateProductForm", () => {
 			expect(
 				screen.getByText("La première image sera l'image principale. Glissez pour réordonner."),
 			).toBeInTheDocument();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Form errors
+	// --------------------------------------------------------------------------
+
+	describe("form errors", () => {
+		it("does not render alert when no form errors", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.queryByTestId("form-alert")).not.toBeInTheDocument();
+		});
+
+		it("renders alert when form errors are present", () => {
+			setup({}, { formErrors: ["Le titre est déjà utilisé"] });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByTestId("form-alert")).toBeInTheDocument();
+			expect(screen.getByText("Le titre est déjà utilisé")).toBeInTheDocument();
 		});
 	});
 });

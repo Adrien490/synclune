@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { Button } from "@/shared/components/ui/button";
 import { BRAND } from "@/shared/constants/brand";
+import { ROUTES } from "@/shared/constants/urls";
 
 import type { StoreStatus } from "../types/store-settings.types";
 
@@ -35,7 +36,7 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 
 				<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center" aria-live="polite">
 					<div className="space-y-4">
-						<p className="mb-4 text-8xl" aria-hidden="true">
+						<p className="mb-4 text-6xl md:text-8xl" aria-hidden="true">
 							🔒
 						</p>
 
@@ -58,7 +59,8 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 					{formattedReopensAt && reopensAtDate && (
 						<p className="text-muted-foreground text-sm">
 							Réouverture prévue le{" "}
-							<time dateTime={reopensAtDate.toISOString()}>{formattedReopensAt}</time>
+							<time dateTime={reopensAtDate.toISOString()}>{formattedReopensAt}</time> (heure de
+							Paris)
 						</p>
 					)}
 
@@ -70,6 +72,36 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 							</Link>
 						</Button>
 					</div>
+
+					<nav
+						aria-label="Pages légales"
+						className="text-muted-foreground flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs"
+					>
+						<Link
+							href={ROUTES.LEGAL.CGV}
+							className="hover:text-foreground underline-offset-2 hover:underline"
+						>
+							CGV
+						</Link>
+						<Link
+							href={ROUTES.LEGAL.PRIVACY}
+							className="hover:text-foreground underline-offset-2 hover:underline"
+						>
+							Confidentialité
+						</Link>
+						<Link
+							href={ROUTES.LEGAL.COOKIES}
+							className="hover:text-foreground underline-offset-2 hover:underline"
+						>
+							Cookies
+						</Link>
+						<Link
+							href={ROUTES.LEGAL.LEGAL_NOTICE}
+							className="hover:text-foreground underline-offset-2 hover:underline"
+						>
+							Mentions légales
+						</Link>
+					</nav>
 				</div>
 			</main>
 		</>

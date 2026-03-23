@@ -27,7 +27,12 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 					filterKey === "updatedAfter" ||
 					filterKey === "updatedBefore"
 				) {
-					filters[filterKey] = new Date(filterValue);
+					if (/^\d{4}-\d{2}-\d{2}$/.test(filterValue)) {
+						const date = new Date(filterValue);
+						if (!isNaN(date.getTime())) {
+							filters[filterKey] = date;
+						}
+					}
 				}
 				// Status field (ProductStatus enum)
 				else if (filterKey === "status") {
@@ -55,11 +60,19 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 						filters.stockStatus = filterValue;
 					}
 				}
+				// Boolean fields
+				else if (filterKey === "onSale") {
+					if (filterValue === "true") {
+						filters.onSale = true;
+					}
+				}
 				// Multi-select fields - Sanitized with limits
 				else if (
 					filterKey === "typeId" ||
 					filterKey === "collectionId" ||
-					filterKey === "collectionSlug"
+					filterKey === "collectionSlug" ||
+					filterKey === "color" ||
+					filterKey === "material"
 				) {
 					const backendKey = filterKey === "typeId" ? "type" : filterKey;
 					const values = Array.isArray(value)

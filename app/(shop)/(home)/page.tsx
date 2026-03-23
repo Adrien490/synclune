@@ -1,5 +1,5 @@
-import { CollectionsSection } from "@/app/(boutique)/(accueil)/_components/collections-section";
-import { LatestCreations } from "@/app/(boutique)/(accueil)/_components/latest-creations";
+import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections-section";
+import { LatestCreations } from "@/app/(shop)/(home)/_components/latest-creations";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { getCollections } from "@/modules/collections/data/get-collections";
@@ -7,9 +7,10 @@ import { getCollections } from "@/modules/collections/data/get-collections";
 import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
+import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
 import { ScrollToTop } from "@/shared/components/scroll-to-top";
 import { StructuredData } from "@/shared/components/structured-data";
-import { SITE_URL } from "@/shared/constants/seo-config";
+import { type GlobalReviewStats, SITE_URL } from "@/shared/constants/seo-config";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
@@ -78,21 +79,15 @@ export default async function Page() {
 		{ isAdmin: false },
 	);
 
-	// Await for JSON-LD: <script> tags in Suspense boundaries cause hydration error #418
-	// Data is cached ("reference" profile, 7d stale) so blocking is negligible
-	const [reviewStats, featuredReviews] = await Promise.all([
-		reviewStatsPromise,
-		featuredReviewsPromise,
-	]);
-
 	return (
 		<>
 			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
-			<StructuredData
-				reviewStats={reviewStats}
-				includeHomepageSchemas
-				featuredReviews={featuredReviews}
-			/>
+			<Suspense fallback={null}>
+				<HomepageStructuredData
+					reviewStatsPromise={reviewStatsPromise}
+					featuredReviewsPromise={featuredReviewsPromise}
+				/>
+			</Suspense>
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
 			<Suspense fallback={<HeroSectionSkeleton />}>
@@ -137,5 +132,26 @@ export default async function Page() {
 			</Suspense>
 			<ScrollToTop />
 		</>
+	);
+}
+
+async function HomepageStructuredData({
+	reviewStatsPromise,
+	featuredReviewsPromise,
+}: {
+	reviewStatsPromise: Promise<GlobalReviewStats>;
+	featuredReviewsPromise: Promise<ReviewHomepage[]>;
+}) {
+	const [reviewStats, featuredReviews] = await Promise.all([
+		reviewStatsPromise,
+		featuredReviewsPromise,
+	]);
+
+	return (
+		<StructuredData
+			reviewStats={reviewStats}
+			includeHomepageSchemas
+			featuredReviews={featuredReviews}
+		/>
 	);
 }

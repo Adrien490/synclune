@@ -91,6 +91,35 @@ describe("StoreClosurePage", () => {
 		expect(mailto).toBeDefined();
 	});
 
+	// ─── Legal links ──────────────────────────────────────────────────────
+
+	it("renders legal page links", () => {
+		const { unmount } = render(<StoreClosurePage status={makeStatus()} />);
+
+		const cgv = screen.getAllByRole("link", { name: "CGV" })[0];
+		expect(cgv).toHaveAttribute("href", "/cgv");
+
+		const privacy = screen.getAllByRole("link", { name: "Confidentialité" })[0];
+		expect(privacy).toHaveAttribute("href", "/confidentialite");
+
+		const cookies = screen.getAllByRole("link", { name: "Cookies" })[0];
+		expect(cookies).toHaveAttribute("href", "/cookies");
+
+		const legalNotice = screen.getAllByRole("link", { name: "Mentions légales" })[0];
+		expect(legalNotice).toHaveAttribute("href", "/mentions-legales");
+
+		unmount();
+	});
+
+	it("renders timezone indicator with reopen date", () => {
+		const reopensAt = new Date("2026-04-01T10:00:00Z");
+		const { unmount } = render(<StoreClosurePage status={makeStatus({ reopensAt })} />);
+
+		expect(screen.getAllByText(/heure de Paris/).length).toBeGreaterThanOrEqual(1);
+
+		unmount();
+	});
+
 	// ─── Accessibility ────────────────────────────────────────────────────
 
 	it("has aria-live polite on the content area", () => {

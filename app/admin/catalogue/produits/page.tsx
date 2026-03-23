@@ -3,9 +3,12 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { Button } from "@/shared/components/ui/button";
+import { getColors } from "@/modules/colors/data/get-colors";
 import { getCollections } from "@/modules/collections/data/get-collections";
+import { getMaterialOptions } from "@/modules/materials/data/get-material-options";
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProducts } from "@/modules/products/data/get-products";
+import { getMaxProductPrice } from "@/modules/products/data/get-max-product-price";
 import {
 	GET_PRODUCTS_SORT_FIELDS,
 	ADMIN_PRODUCTS_SORT_LABELS,
@@ -74,11 +77,13 @@ export type ProductFiltersSearchParams = {
 	filter_updatedAfter?: string;
 	filter_updatedBefore?: string;
 	filter_material?: string | string[];
+	filter_color?: string | string[];
 	filter_collectionSlug?: string | string[];
 	filter_inStock?: string;
 	filter_withDeleted?: string;
 	filter_createdAfter?: string;
 	filter_createdBefore?: string;
+	filter_onSale?: string;
 };
 
 export type ProductsSearchParams = {
@@ -135,7 +140,14 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 	// Parse and validate all search parameters safely
 	const { cursor, direction, perPage, sortBy, search, status } = parseProductParams(params);
 
-	const [productsData, productTypesData, collectionsData] = await Promise.all([
+	const [
+		productsData,
+		productTypesData,
+		collectionsData,
+		colorsData,
+		materialsData,
+		maxPriceInCents,
+	] = await Promise.all([
 		getProducts({
 			cursor,
 			direction,
@@ -156,11 +168,15 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				hasProducts: undefined,
 			},
 		}),
+		getColors({ perPage: 200, sortBy: "name-ascending" }),
+		getMaterialOptions(),
+		getMaxProductPrice(),
 	]);
 
 	const productTypes = productTypesData.productTypes.map((t) => ({
 		id: t.id,
 		label: t.label,
+		slug: t.slug,
 	}));
 
 	const collections = collectionsData.collections.map((c) => ({
@@ -168,6 +184,9 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 		name: c.name,
 		slug: c.slug,
 	}));
+
+	const colors = colorsData.colors;
+	const materials = materialsData;
 
 	return (
 		<div className="space-y-6">
@@ -202,13 +221,24 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					className="w-full sm:min-w-45"
 					noPrefix
 				/>
-				<ProductsFilterSheet productTypes={productTypes} collections={collections} />
+				<ProductsFilterSheet
+					productTypes={productTypes}
+					collections={collections}
+					colors={colors}
+					materials={materials}
+					maxPriceInCents={maxPriceInCents}
+				/>
 				<RefreshProductsButton />
 			</Toolbar>
 
 			{/* Badges de filtres actifs */}
 			<div className="hidden md:block">
-				<ProductsFilterBadges productTypes={productTypes} collections={collections} />
+				<ProductsFilterBadges
+					productTypes={productTypes}
+					collections={collections}
+					colors={colors}
+					materials={materials}
+				/>
 			</div>
 
 			<ProductsDataTable productsPromise={Promise.resolve(productsData)} perPage={perPage} />
