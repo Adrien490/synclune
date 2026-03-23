@@ -93,8 +93,8 @@ export function ActiveSessionsCard({ sessions }: ActiveSessionsCardProps) {
 											</Badge>
 										)}
 									</div>
-									<div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
-										{session.ipAddress && <span>{session.ipAddress}</span>}
+									<div className="text-muted-foreground mt-0.5 flex min-w-0 items-center gap-2 text-xs">
+										{session.ipAddress && <span className="truncate">{session.ipAddress}</span>}
 										<span>
 											{formatDistanceToNow(session.createdAt, {
 												addSuffix: true,
