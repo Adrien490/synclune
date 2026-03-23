@@ -16,20 +16,17 @@ import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avatar";
 import { ExternalLink, LogOut } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { navigationData } from "./navigation-config";
-import { getInitials } from "./sidebar-footer-user";
 
 interface AdminMenuSheetProps {
 	user: {
 		name: string;
 		email: string;
-		avatar?: string;
 	};
 }
 
@@ -108,7 +105,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 															className={cn(
 																"relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
 																isActive
-																	? "bg-primary/10 text-primary before:bg-primary font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full"
+																	? "bg-accent text-foreground before:bg-foreground font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full"
 																	: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
 															)}
 															aria-current={isActive ? "page" : undefined}
@@ -116,7 +113,7 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 															<item.icon
 																className={cn(
 																	"size-5 shrink-0",
-																	isActive ? "text-primary" : "text-muted-foreground",
+																	isActive ? "text-foreground" : "text-muted-foreground",
 																)}
 																aria-hidden="true"
 															/>
@@ -136,12 +133,6 @@ export function AdminMenuSheet({ user }: AdminMenuSheetProps) {
 					<div className="space-y-3 border-t px-4 py-3">
 						{/* User info */}
 						<div className="flex items-center gap-3">
-							<Avatar className="size-9 rounded-lg">
-								{user.avatar && <AvatarImage src={user.avatar} alt={user.name} />}
-								<AvatarFallback className="rounded-lg text-xs">
-									{getInitials(user.name)}
-								</AvatarFallback>
-							</Avatar>
 							<div className="min-w-0 flex-1">
 								<p className="truncate text-sm font-medium">{user.name}</p>
 								<p className="text-muted-foreground truncate text-xs">{user.email}</p>

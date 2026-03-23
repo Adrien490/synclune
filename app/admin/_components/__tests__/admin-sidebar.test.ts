@@ -1,33 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { getAllNavItems, navigationData } from "../navigation-config";
-import { getInitials } from "../sidebar-footer-user";
 import { generateBreadcrumbs } from "../dashboard-breadcrumb";
-
-// ============================================================================
-// getInitials
-// ============================================================================
-
-describe("getInitials", () => {
-	it("returns two initials for a two-word name", () => {
-		expect(getInitials("Jean Dupont")).toBe("JD");
-	});
-
-	it("returns first initial for a single word", () => {
-		expect(getInitials("Admin")).toBe("A");
-	});
-
-	it("returns at most 2 initials for 3+ word names", () => {
-		expect(getInitials("Jean Claude Dupont")).toBe("JC");
-	});
-
-	it("returns uppercase initials", () => {
-		expect(getInitials("jean dupont")).toBe("JD");
-	});
-
-	it("returns empty string for empty input", () => {
-		expect(getInitials("")).toBe("");
-	});
-});
 
 // ============================================================================
 // getAllNavItems

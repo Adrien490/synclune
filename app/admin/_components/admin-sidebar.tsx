@@ -23,7 +23,6 @@ interface AdminSidebarProps {
 	user?: {
 		name: string;
 		email: string;
-		avatar?: string;
 	};
 }
 
@@ -36,7 +35,7 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 						<SidebarMenuButton size="lg" asChild tooltip={`${BRAND.name} - Administration`}>
 							<Link href="/admin">
 								<Logo size={40} rounded="lg" />
-								<span className="font-cursive flex-1 truncate text-xl font-normal tracking-wide group-data-[collapsible=icon]:hidden">
+								<span className="font-cursive flex-1 truncate text-2xl font-normal tracking-wide group-data-[collapsible=icon]:hidden">
 									{BRAND.name}
 								</span>
 							</Link>
