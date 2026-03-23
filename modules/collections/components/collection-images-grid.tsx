@@ -257,7 +257,7 @@ function BentoGridLayout({
 
 				return (
 					<div
-						key={image.url}
+						key={`${image.url}-${i}`}
 						className={cn(
 							"bg-muted relative aspect-square overflow-hidden",
 							// Image 4 visible uniquement sur desktop (sm+)
