@@ -9,7 +9,6 @@ const RotatingWord = dynamic(
 			default: mod.RotatingWord,
 		})),
 	{
-		ssr: false,
 		loading: () => (
 			<span
 				className={cn(
@@ -33,7 +32,7 @@ export interface HeroRotatingWordProps {
 }
 
 /**
- * Thin client wrapper that lazy-loads RotatingWord with `ssr: false`.
+ * Thin client wrapper that lazy-loads RotatingWord.
  *
  * Keeps motion/react out of the hero's critical JS bundle.
  * The static fallback ("colorés") renders immediately for LCP.
