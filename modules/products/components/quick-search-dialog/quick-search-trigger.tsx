@@ -9,16 +9,18 @@ import { QUICK_SEARCH_DIALOG_ID } from "./constants";
 
 interface QuickSearchTriggerProps {
 	className?: string;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
 /**
  * Trigger button for the quick search dialog.
  */
-export function QuickSearchTrigger({ className }: QuickSearchTriggerProps) {
+export function QuickSearchTrigger({ className, ref }: QuickSearchTriggerProps) {
 	const { open, isOpen } = useDialog(QUICK_SEARCH_DIALOG_ID);
 
 	return (
 		<Button
+			ref={ref}
 			variant="ghost"
 			size="icon"
 			onClick={() => {

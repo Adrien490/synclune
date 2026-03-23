@@ -24,7 +24,7 @@ export const figtree = Figtree({
 // Écriture naturelle "petit mot dans le colis", univers artisanal intimiste
 export const caveat = Caveat({
 	subsets: ["latin"],
-	display: "optional",
+	display: "swap",
 	variable: "--font-cursive",
-	preload: false, // Only used below-the-fold (signatures)
+	preload: false, // Avoid browser warnings — font loads via CSS when needed
 });

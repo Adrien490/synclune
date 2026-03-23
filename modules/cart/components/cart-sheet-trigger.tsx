@@ -8,16 +8,18 @@ import { cn } from "@/shared/utils/cn";
 
 interface CartSheetTriggerProps {
 	className?: string;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
 /**
  * Bouton trigger pour ouvrir le cart sheet
  */
-export function CartSheetTrigger({ className }: CartSheetTriggerProps) {
+export function CartSheetTrigger({ className, ref }: CartSheetTriggerProps) {
 	const { isOpen, open } = useSheet("cart");
 
 	return (
 		<button
+			ref={ref}
 			type="button"
 			onClick={open}
 			className={cn("group relative", className)}
