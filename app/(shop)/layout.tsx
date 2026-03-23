@@ -18,7 +18,15 @@ interface ShopLayoutProps {
 	children: React.ReactNode;
 }
 
-export default async function ShopLayout({ children }: ShopLayoutProps) {
+export default function ShopLayout({ children }: ShopLayoutProps) {
+	return (
+		<Suspense>
+			<ShopLayoutContent>{children}</ShopLayoutContent>
+		</Suspense>
+	);
+}
+
+async function ShopLayoutContent({ children }: ShopLayoutProps) {
 	const storeStatus = await getStoreStatus();
 
 	if (storeStatus.isClosed) {

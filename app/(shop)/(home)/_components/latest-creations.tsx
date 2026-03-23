@@ -5,22 +5,18 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { CursorGlow } from "@/modules/products/components/cursor-glow";
 import { ProductCard } from "@/modules/products/components/product-card";
-import { type GetProductsReturn } from "@/modules/products/data/get-products";
+import { getProducts } from "@/modules/products/data/get-products";
 import Link from "next/link";
-import { use } from "react";
 
-interface LatestCreationsProps {
-	productsPromise: Promise<GetProductsReturn>;
-}
-
-/**
- * Latest Creations section - Grid of most recent jewelry.
- *
- * Suspense boundary is in page.tsx — this component calls use() directly
- * to unwrap the products promise. Returns null if the DB is empty.
- */
-export function LatestCreations({ productsPromise }: LatestCreationsProps) {
-	const { products } = use(productsPromise);
+export async function LatestCreations() {
+	const { products } = await getProducts(
+		{
+			perPage: 4,
+			sortBy: "created-descending",
+			filters: { status: "PUBLIC" },
+		},
+		{ isAdmin: false },
+	);
 
 	if (products.length === 0) {
 		return null;

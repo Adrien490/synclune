@@ -1,10 +1,7 @@
 import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections-section";
 import { LatestCreations } from "@/app/(shop)/(home)/_components/latest-creations";
-import { CollectionStatus } from "@/app/generated/prisma/client";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
-import { getCollections } from "@/modules/collections/data/get-collections";
 
-import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
@@ -65,19 +62,9 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-	// Kick off all data fetches in parallel
+	// Kick off cached data fetches in parallel (both have "use cache" at top level)
 	const reviewStatsPromise = getGlobalReviewStats();
 	const featuredReviewsPromise = getFeaturedReviews();
-
-	// Shared between HeroSection (floating images) and LatestCreations (product cards)
-	const latestCreationsPromise = getProducts(
-		{
-			perPage: 4,
-			sortBy: "created-descending",
-			filters: { status: "PUBLIC" },
-		},
-		{ isAdmin: false },
-	);
 
 	return (
 		<>
@@ -91,26 +78,17 @@ export default async function Page() {
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
 			<Suspense fallback={<HeroSectionSkeleton />}>
-				<HeroSection productsPromise={latestCreationsPromise} />
+				<HeroSection />
 			</Suspense>
 
 			{/* 2. Latest Creations - 4 most recent products */}
 			<Suspense fallback={<LatestCreationsSkeleton />}>
-				<LatestCreations productsPromise={latestCreationsPromise} />
+				<LatestCreations />
 			</Suspense>
 
 			{/* 3. Collections - Thematic browsing with descriptions */}
 			<Suspense fallback={<CollectionsSectionSkeleton collectionsCount={6} />}>
-				<CollectionsSection
-					collectionsPromise={getCollections({
-						perPage: 6,
-						sortBy: "created-descending",
-						filters: {
-							hasProducts: true,
-							status: CollectionStatus.PUBLIC,
-						},
-					})}
-				/>
+				<CollectionsSection />
 			</Suspense>
 
 			{/* 4. Reviews - Social proof with featured customer reviews */}

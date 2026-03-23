@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
@@ -111,8 +110,15 @@ vi.mock("@/shared/constants/spacing", () => ({
 	CONTAINER_CLASS: "container",
 }));
 
-// Prevent transitive module loading from inline type import
-vi.mock("@/modules/collections/data/get-collections", () => ({}));
+vi.mock("@/app/generated/prisma/client", () => ({
+	CollectionStatus: { PUBLIC: "PUBLIC" },
+}));
+
+const mockGetCollections = vi.fn();
+
+vi.mock("@/modules/collections/data/get-collections", () => ({
+	getCollections: (...args: unknown[]) => mockGetCollections(...args),
+}));
 
 vi.mock("@/modules/collections/components/collection-card", () => ({
 	CollectionCard: ({ name }: { name: string; [key: string]: unknown }) => (
@@ -124,17 +130,6 @@ vi.mock("@/modules/collections/utils/collection-images.utils", () => ({
 	extractCollectionImages: vi.fn(() => [{ url: "/img.jpg", alt: "Alt" }]),
 	extractPriceRange: vi.fn(() => ({ min: 10, max: 50 })),
 }));
-
-const mockUse = vi.fn();
-
-vi.mock("react", async (importOriginal) => {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-	const actual = await importOriginal<typeof import("react")>();
-	return {
-		...actual,
-		use: (...args: unknown[]) => mockUse(...args),
-	};
-});
 
 import { CollectionsSection } from "../collections-section";
 
@@ -157,18 +152,19 @@ const makeCollections = (count: number) =>
 		products: [{ media: [{ url: "/img.jpg" }], skus: [{ price: 2500 }] }],
 	}));
 
-const mockPromise = Promise.resolve({
-	collections: [],
-}) as unknown as Promise<GetCollectionsReturn>;
+const mockReturn = (collections: ReturnType<typeof makeCollections>) => ({
+	collections,
+	pagination: { nextCursor: null, prevCursor: null, hasNextPage: false, hasPreviousPage: false },
+});
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe("CollectionsSection", () => {
-	it("renders section with correct id and aria attributes", () => {
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("renders section with correct id and aria attributes", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
 
 		const section = document.getElementById("collections");
 		expect(section).not.toBeNull();
@@ -176,9 +172,9 @@ describe("CollectionsSection", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("collections-subtitle");
 	});
 
-	it("renders h2 title 'Les dernières collections'", () => {
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("renders h2 title 'Les dernières collections'", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
 
 		const heading = screen.getByRole("heading", { level: 2 });
 		expect(heading).toBeInTheDocument();
@@ -186,9 +182,9 @@ describe("CollectionsSection", () => {
 		expect(heading.textContent).toContain("Les dernières collections");
 	});
 
-	it("renders subtitle with Heart icon", () => {
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("renders subtitle with Heart icon", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
 
 		const subtitle = document.getElementById("collections-subtitle");
 		expect(subtitle).not.toBeNull();
@@ -196,52 +192,52 @@ describe("CollectionsSection", () => {
 		expect(screen.getByTestId("heart-icon")).toBeInTheDocument();
 	});
 
-	it("returns null when collections array is empty", () => {
-		mockUse.mockReturnValue({ collections: [] });
-		const { container } = render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("returns null when collections array is empty", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn([]));
+		const result = await CollectionsSection();
 
-		expect(container.innerHTML).toBe("");
+		expect(result).toBeNull();
 	});
 
-	it("renders correct number of CollectionCard components", () => {
+	it("renders correct number of CollectionCard components", async () => {
 		const collections = makeCollections(4);
-		mockUse.mockReturnValue({ collections });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+		mockGetCollections.mockResolvedValue(mockReturn(collections));
+		render(await CollectionsSection());
 
 		for (const collection of collections) {
 			expect(screen.getByTestId(`collection-card-${collection.name}`)).toBeInTheDocument();
 		}
 	});
 
-	it("skip link present and targets #collections-cta", () => {
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("skip link present and targets #collections-cta", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
 
 		const skipLink = screen.getByText("Passer au bouton Explorer");
 		expect(skipLink).toBeInTheDocument();
 		expect(skipLink.getAttribute("href")).toBe("#collections-cta");
 	});
 
-	it("CTA links to /collections", () => {
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("CTA links to /collections", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
 
 		const ctaLink = screen.getByText("Explorer les collections");
 		expect(ctaLink.closest("a")).toHaveAttribute("href", "/collections");
 	});
 
-	it("carousel has aria-label 'Carrousel de collections'", () => {
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+	it("carousel has aria-label 'Carrousel de collections'", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
 
 		const carousel = screen.getByTestId("carousel");
 		expect(carousel.getAttribute("aria-label")).toBe("Carrousel de collections");
 	});
 
-	it("shows navigation arrows when >3 collections, hides when <=3", () => {
+	it("shows navigation arrows when >3 collections, hides when <=3", async () => {
 		// With 4 collections — arrows should be visible
-		mockUse.mockReturnValue({ collections: makeCollections(4) });
-		const { unmount } = render(<CollectionsSection collectionsPromise={mockPromise} />);
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		const { unmount } = render(await CollectionsSection());
 
 		expect(screen.getByTestId("carousel-prev")).toBeInTheDocument();
 		expect(screen.getByTestId("carousel-next")).toBeInTheDocument();
@@ -249,8 +245,8 @@ describe("CollectionsSection", () => {
 		unmount();
 
 		// With 3 collections — no arrows
-		mockUse.mockReturnValue({ collections: makeCollections(3) });
-		render(<CollectionsSection collectionsPromise={mockPromise} />);
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(3)));
+		render(await CollectionsSection());
 
 		expect(screen.queryByTestId("carousel-prev")).not.toBeInTheDocument();
 		expect(screen.queryByTestId("carousel-next")).not.toBeInTheDocument();

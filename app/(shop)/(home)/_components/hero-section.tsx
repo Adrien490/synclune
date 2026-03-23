@@ -3,29 +3,23 @@ import { HeroRotatingWord } from "./hero-rotating-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
 import { Button } from "@/shared/components/ui/button";
-import type { GetProductsReturn } from "@/modules/products/data/get-products";
+import { getProducts } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
 import { Heart } from "lucide-react";
 import Link from "next/link";
-import { Suspense, use } from "react";
+import { Suspense } from "react";
 import { ParticleBackground, ScrollIndicator } from "./hero-decorations";
 
-interface HeroSectionProps {
-	productsPromise: Promise<GetProductsReturn>;
-}
-
-/**
- * Resolves productsPromise and renders floating images.
- * Isolated in its own Suspense boundary so the hero text/CTA
- * render immediately without waiting for the DB query.
- */
-function HeroFloatingImagesAsync({
-	productsPromise,
-}: {
-	productsPromise: Promise<GetProductsReturn>;
-}) {
-	const { products } = use(productsPromise);
+async function HeroFloatingImagesAsync() {
+	const { products } = await getProducts(
+		{
+			perPage: 4,
+			sortBy: "created-descending",
+			filters: { status: "PUBLIC" },
+		},
+		{ isAdmin: false },
+	);
 	const heroImages = extractHeroImages(products);
 	return <HeroFloatingImages images={heroImages} />;
 }
@@ -41,7 +35,7 @@ function HeroFloatingImagesAsync({
  * rotating word requires client JS. Decorative animations
  * (particles, scroll indicator) are dynamically imported.
  */
-export function HeroSection({ productsPromise }: HeroSectionProps) {
+export function HeroSection() {
 	return (
 		<section
 			id="hero-section"
@@ -73,7 +67,7 @@ export function HeroSection({ productsPromise }: HeroSectionProps) {
 
 			{/* Floating product images - Desktop only, streams in after products load */}
 			<Suspense fallback={null}>
-				<HeroFloatingImagesAsync productsPromise={productsPromise} />
+				<HeroFloatingImagesAsync />
 			</Suspense>
 
 			<div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 2xl:max-w-7xl">

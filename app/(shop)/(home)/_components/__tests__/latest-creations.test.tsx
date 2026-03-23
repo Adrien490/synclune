@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { GetProductsReturn } from "@/modules/products/data/get-products";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
@@ -69,25 +68,17 @@ vi.mock("@/modules/products/components/cursor-glow", () => ({
 	),
 }));
 
-// Prevent transitive Stripe initialization from get-products → auth
-vi.mock("@/modules/products/data/get-products", () => ({}));
+const mockGetProducts = vi.fn();
+
+vi.mock("@/modules/products/data/get-products", () => ({
+	getProducts: (...args: unknown[]) => mockGetProducts(...args),
+}));
 
 vi.mock("@/modules/products/components/product-card", () => ({
 	ProductCard: ({ product }: { product: { id: string }; [key: string]: unknown }) => (
 		<div data-testid={`product-card-${product.id}`}>ProductCard</div>
 	),
 }));
-
-const mockUse = vi.fn();
-
-vi.mock("react", async (importOriginal) => {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-	const actual = await importOriginal<typeof import("react")>();
-	return {
-		...actual,
-		use: (...args: unknown[]) => mockUse(...args),
-	};
-});
 
 import { LatestCreations } from "../latest-creations";
 
@@ -107,20 +98,20 @@ const mockProducts = [
 	{ id: "p4", slug: "boucles-nuage", title: "Boucles Nuage" },
 ];
 
-const mockPromise = Promise.resolve({
-	products: [],
+const mockReturn = (products: typeof mockProducts) => ({
+	products,
 	pagination: { nextCursor: null, prevCursor: null, hasNextPage: false, hasPreviousPage: false },
-	totalCount: 0,
-}) as Promise<GetProductsReturn>;
+	totalCount: products.length,
+});
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
 
 describe("LatestCreations", () => {
-	it("renders section with correct id and aria attributes", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("renders section with correct id and aria attributes", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		const section = document.getElementById("latest-creations");
 		expect(section).not.toBeNull();
@@ -128,9 +119,9 @@ describe("LatestCreations", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("latest-creations-subtitle");
 	});
 
-	it("renders h2 title 'Nouvelles créations'", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("renders h2 title 'Nouvelles créations'", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		const heading = screen.getByRole("heading", { level: 2 });
 		expect(heading).toBeInTheDocument();
@@ -138,42 +129,42 @@ describe("LatestCreations", () => {
 		expect(heading.textContent).toContain("Nouvelles créations");
 	});
 
-	it("renders subtitle text", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("renders subtitle text", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		const subtitle = document.getElementById("latest-creations-subtitle");
 		expect(subtitle).not.toBeNull();
 		expect(subtitle?.textContent).toContain("Tout juste sorties de l'atelier");
 	});
 
-	it("returns null when products array is empty", () => {
-		mockUse.mockReturnValue({ products: [] });
-		const { container } = render(<LatestCreations productsPromise={mockPromise} />);
+	it("returns null when products array is empty", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn([]));
+		const result = await LatestCreations();
 
-		expect(container.innerHTML).toBe("");
+		expect(result).toBeNull();
 	});
 
-	it("renders correct number of ProductCard components", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("renders correct number of ProductCard components", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		for (const product of mockProducts) {
 			expect(screen.getByTestId(`product-card-${product.id}`)).toBeInTheDocument();
 		}
 	});
 
-	it("CTA links to /produits?sortBy=created-descending", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("CTA links to /produits?sortBy=created-descending", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		const ctaLink = screen.getByText("Voir tous les nouveaux bijoux");
 		expect(ctaLink.closest("a")).toHaveAttribute("href", "/produits?sortBy=created-descending");
 	});
 
-	it("CTA has sr-only description text", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("CTA has sr-only description text", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		const srOnly = screen.getByText(
 			"Découvrir tous les bijoux récemment créés dans la boutique Synclune",
@@ -182,9 +173,9 @@ describe("LatestCreations", () => {
 		expect(srOnly.className).toContain("sr-only");
 	});
 
-	it("each product is wrapped in CursorGlow", () => {
-		mockUse.mockReturnValue({ products: mockProducts });
-		render(<LatestCreations productsPromise={mockPromise} />);
+	it("each product is wrapped in CursorGlow", async () => {
+		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
+		render(await LatestCreations());
 
 		const cursorGlows = screen.getAllByTestId("cursor-glow");
 		expect(cursorGlows).toHaveLength(mockProducts.length);

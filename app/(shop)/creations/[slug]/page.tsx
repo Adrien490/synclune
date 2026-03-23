@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import type { ReviewSortField } from "@/modules/reviews/types/review.types";
 import { notFound } from "next/navigation";
@@ -60,6 +61,7 @@ export default async function ProductPage({
 	params: ProductPageParams;
 	searchParams: ProductSearchParams;
 }) {
+	await connection();
 	const [{ slug }, urlParams] = await Promise.all([params, searchParams]);
 
 	// Paralléliser toutes les requêtes pour optimiser le TTFB

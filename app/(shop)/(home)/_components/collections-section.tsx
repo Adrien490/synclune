@@ -1,9 +1,10 @@
 import { CollectionCard } from "@/modules/collections/components/collection-card";
-import { type GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { getCollections } from "@/modules/collections/data/get-collections";
 import {
 	extractCollectionImages,
 	extractPriceRange,
 } from "@/modules/collections/utils/collection-images.utils";
+import { CollectionStatus } from "@/app/generated/prisma/client";
 import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -20,14 +21,16 @@ import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { Heart } from "lucide-react";
 import Link from "next/link";
-import { use } from "react";
 
-interface CollectionsSectionProps {
-	collectionsPromise: Promise<GetCollectionsReturn>;
-}
-
-export function CollectionsSection({ collectionsPromise }: CollectionsSectionProps) {
-	const { collections } = use(collectionsPromise);
+export async function CollectionsSection() {
+	const { collections } = await getCollections({
+		perPage: 6,
+		sortBy: "created-descending",
+		filters: {
+			hasProducts: true,
+			status: CollectionStatus.PUBLIC,
+		},
+	});
 
 	// Don't render section with no collections
 	if (collections.length === 0) {

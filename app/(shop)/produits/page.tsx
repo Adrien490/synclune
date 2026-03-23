@@ -1,5 +1,6 @@
 import { permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
+import { connection } from "next/server";
 
 import { ProductCatalog } from "@/modules/products/components/product-catalog";
 import { getWishlistProductIds } from "@/modules/wishlist/data/get-wishlist-product-ids";
@@ -82,6 +83,7 @@ export async function generateMetadata({ searchParams }: BijouxPageProps): Promi
 // ============================================================================
 
 export default async function BijouxPage({ searchParams }: BijouxPageProps) {
+	await connection();
 	const searchParamsData = await searchParams;
 
 	// Redirection SEO: /produits?type=X → /produits/X

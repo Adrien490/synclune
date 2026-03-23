@@ -4,6 +4,7 @@ import { ConfirmationResult } from "@/modules/newsletter/components/confirmation
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { connection } from "next/server";
 
 export const metadata: Metadata = {
 	title: "Confirmation newsletter - Synclune",
@@ -18,6 +19,7 @@ interface ConfirmPageProps {
 }
 
 export default async function ConfirmPage({ searchParams }: ConfirmPageProps) {
+	await connection();
 	const params = await searchParams;
 	const token = params.token;
 

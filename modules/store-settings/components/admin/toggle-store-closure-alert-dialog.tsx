@@ -21,7 +21,6 @@ interface ToggleStoreClosureData {
 	isClosed: boolean;
 	closureMessage: string;
 	reopensAt: string;
-	[key: string]: unknown;
 }
 
 interface ToggleStoreClosureAlertDialogProps {

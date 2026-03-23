@@ -10,6 +10,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
+import { connection } from "next/server";
 
 export const metadata: Metadata = {
 	title: "Collections de bijoux artisanaux | Synclune",
@@ -65,6 +66,7 @@ const breadcrumbJsonLd = {
 };
 
 export default async function CollectionsPage({ searchParams }: CollectionsPageProps) {
+	await connection();
 	// Note: Pas de "use cache" ici car la page utilise searchParams (pagination)
 	// Le cache est géré au niveau de fetchCollections() qui utilise déjà "use cache"
 

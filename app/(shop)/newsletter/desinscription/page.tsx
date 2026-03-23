@@ -4,6 +4,7 @@ import { UnsubscribeResult } from "@/modules/newsletter/components/unsubscribe-r
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { connection } from "next/server";
 
 export const metadata: Metadata = {
 	title: "Désinscription newsletter - Synclune",
@@ -18,6 +19,7 @@ interface UnsubscribePageProps {
 }
 
 export default async function UnsubscribePage({ searchParams }: UnsubscribePageProps) {
+	await connection();
 	const params = await searchParams;
 	const token = params.token;
 
