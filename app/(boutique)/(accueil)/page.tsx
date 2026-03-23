@@ -64,7 +64,7 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-	// Stream review stats to avoid blocking page render
+	// Kick off all data fetches in parallel
 	const reviewStatsPromise = getGlobalReviewStats();
 	const featuredReviewsPromise = getFeaturedReviews();
 
@@ -78,12 +78,17 @@ export default async function Page() {
 		{ isAdmin: false },
 	);
 
+	// Await for JSON-LD: <script> tags in Suspense boundaries cause hydration error #418
+	// Data is cached ("reference" profile, 7d stale) so blocking is negligible
+	const [reviewStats, featuredReviews] = await Promise.all([
+		reviewStatsPromise,
+		featuredReviewsPromise,
+	]);
+
 	return (
 		<>
 			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
-			<Suspense fallback={null}>
-				<StructuredData includeHomepageSchemas />
-			</Suspense>
+			<StructuredData reviewStats={reviewStats} featuredReviews={featuredReviews} />
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
 			<Suspense fallback={<HeroSectionSkeleton />}>

@@ -1,32 +1,25 @@
 import {
+	type GlobalReviewStats,
 	getFounderSchema,
 	getLocalBusinessSchema,
 	getOrganizationSchema,
 	getWebSiteSchema,
 	SITE_URL,
 } from "@/shared/constants/seo-config";
-import { cacheLife, cacheTag } from "next/cache";
 
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
-import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
-import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 
 interface StructuredDataProps {
-	includeHomepageSchemas?: boolean;
+	reviewStats: GlobalReviewStats;
+	featuredReviews?: ReviewHomepage[];
 }
 
 /**
  * Consolidates all JSON-LD schemas into a single @graph script.
- * Uses "use cache" to avoid Suspense boundaries around <script> tags.
+ * Sync component — data must be passed as props (no Suspense around <script> tags).
  */
-export async function StructuredData({ includeHomepageSchemas }: StructuredDataProps = {}) {
-	"use cache";
-	cacheLife("reference");
-	cacheTag(SHARED_CACHE_TAGS.HOMEPAGE_STRUCTURED_DATA);
-
-	const reviewStats = await getGlobalReviewStats();
-
+export function StructuredData({ reviewStats, featuredReviews }: StructuredDataProps) {
 	const schemas = [
 		getOrganizationSchema(),
 		getWebSiteSchema(),
@@ -37,9 +30,7 @@ export async function StructuredData({ includeHomepageSchemas }: StructuredDataP
 	// Remove @context from each schema for @graph format
 	const graphSchemas: Record<string, unknown>[] = schemas.map(({ "@context": _, ...rest }) => rest);
 
-	if (includeHomepageSchemas) {
-		const reviews = await getFeaturedReviews();
-
+	if (featuredReviews) {
 		// BreadcrumbList for homepage
 		graphSchemas.push({
 			"@type": "BreadcrumbList",
@@ -72,7 +63,7 @@ export async function StructuredData({ includeHomepageSchemas }: StructuredDataP
 		});
 
 		// Individual Review schemas for rich snippets
-		for (const review of reviews) {
+		for (const review of featuredReviews) {
 			graphSchemas.push({
 				"@type": "Review",
 				author: {

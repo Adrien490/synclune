@@ -4,6 +4,11 @@ import * as Sentry from "@sentry/nextjs";
 
 const revision = process.env.VERCEL_GIT_COMMIT_SHA ?? nanoid();
 
+const fallbackResponse = () =>
+	new Response("// Service worker unavailable", {
+		headers: { "Content-Type": "application/javascript" },
+	});
+
 let routeExports;
 try {
 	routeExports = createSerwistRoute({
@@ -13,17 +18,28 @@ try {
 	});
 } catch (error) {
 	Sentry.captureException(error, { tags: { component: "serwist-route" } });
-	const fallbackGET = () =>
-		new Response("// Service worker unavailable", {
-			headers: { "Content-Type": "application/javascript" },
-		});
 	routeExports = {
 		dynamic: "force-dynamic" as const,
 		dynamicParams: true,
 		revalidate: false,
 		generateStaticParams: () => [{ path: "sw.js" }],
-		GET: fallbackGET,
+		GET: fallbackResponse,
 	};
 }
 
-export const { dynamic, dynamicParams, revalidate, generateStaticParams, GET } = routeExports;
+// Wrap the GET handler with runtime error handling to prevent 500s.
+// The build-time try-catch above only covers createSerwistRoute() compilation.
+// If the generated GET handler throws at request time, Next.js returns a 500,
+// preventing new SW registration and leaving stale SWs active.
+const originalGET = routeExports.GET;
+const safeGET = async (request: Request, context: { params: Promise<{ path: string }> }) => {
+	try {
+		return await originalGET(request, context);
+	} catch (error) {
+		Sentry.captureException(error, { tags: { component: "serwist-get" } });
+		return fallbackResponse();
+	}
+};
+
+export const { dynamic, dynamicParams, revalidate, generateStaticParams } = routeExports;
+export const GET = safeGET;
