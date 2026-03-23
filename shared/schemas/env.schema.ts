@@ -80,6 +80,14 @@ export const envSchema = z
 		SENTRY_PROJECT: z.string().optional(),
 
 		// ========================================
+		// Deployment
+		// ========================================
+		DEPLOY_DATE: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, "DEPLOY_DATE doit être au format YYYY-MM-DD")
+			.optional(),
+
+		// ========================================
 		// Node
 		// ========================================
 		NODE_ENV: z.enum(["development", "production", "test"]).default("development"),

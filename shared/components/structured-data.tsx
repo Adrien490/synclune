@@ -12,6 +12,7 @@ import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 interface StructuredDataProps {
 	reviewStats: GlobalReviewStats;
+	includeHomepageSchemas?: boolean;
 	featuredReviews?: ReviewHomepage[];
 }
 
@@ -19,7 +20,11 @@ interface StructuredDataProps {
  * Consolidates all JSON-LD schemas into a single @graph script.
  * Sync component — data must be passed as props (no Suspense around <script> tags).
  */
-export function StructuredData({ reviewStats, featuredReviews }: StructuredDataProps) {
+export function StructuredData({
+	reviewStats,
+	includeHomepageSchemas,
+	featuredReviews,
+}: StructuredDataProps) {
 	const schemas = [
 		getOrganizationSchema(),
 		getWebSiteSchema(),
@@ -30,10 +35,11 @@ export function StructuredData({ reviewStats, featuredReviews }: StructuredDataP
 	// Remove @context from each schema for @graph format
 	const graphSchemas: Record<string, unknown>[] = schemas.map(({ "@context": _, ...rest }) => rest);
 
-	if (featuredReviews) {
+	if (includeHomepageSchemas) {
 		// BreadcrumbList for homepage
 		graphSchemas.push({
 			"@type": "BreadcrumbList",
+			"@id": `${SITE_URL}/#homepage-breadcrumb`,
 			itemListElement: [
 				{
 					"@type": "ListItem",
@@ -47,11 +53,12 @@ export function StructuredData({ reviewStats, featuredReviews }: StructuredDataP
 		// Article schema for the atelier story section
 		graphSchemas.push({
 			"@type": "Article",
+			"@id": `${SITE_URL}/#atelier-article`,
 			headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
 			url: `${SITE_URL}/#atelier-section`,
 			image: `${SITE_URL}/opengraph-image`,
 			datePublished: "2025-01-15",
-			dateModified: process.env.DEPLOY_DATE ?? "2025-01-15",
+			dateModified: process.env.DEPLOY_DATE ?? new Date().toISOString().split("T")[0],
 			author: {
 				"@id": `${SITE_URL}/#founder`,
 			},
@@ -63,31 +70,34 @@ export function StructuredData({ reviewStats, featuredReviews }: StructuredDataP
 		});
 
 		// Individual Review schemas for rich snippets
-		for (const review of featuredReviews) {
-			graphSchemas.push({
-				"@type": "Review",
-				author: {
-					"@type": "Person",
-					name: review.user.name ?? "Anonyme",
-				},
-				datePublished: new Date(review.createdAt).toISOString(),
-				reviewBody: review.content,
-				...(review.title && { name: review.title }),
-				reviewRating: {
-					"@type": "Rating",
-					ratingValue: review.rating,
-					bestRating: 5,
-					worstRating: 1,
-				},
-				itemReviewed: {
-					"@type": "Product",
-					name: review.product.title,
-					url: `${SITE_URL}/creations/${review.product.slug}`,
-				},
-				publisher: {
-					"@id": `${SITE_URL}/#organization`,
-				},
-			});
+		if (featuredReviews) {
+			for (const [index, review] of featuredReviews.entries()) {
+				graphSchemas.push({
+					"@type": "Review",
+					"@id": `${SITE_URL}/#review-${index}`,
+					author: {
+						"@type": "Person",
+						name: review.user.name ?? "Anonyme",
+					},
+					datePublished: new Date(review.createdAt).toISOString(),
+					reviewBody: review.content,
+					...(review.title && { name: review.title }),
+					reviewRating: {
+						"@type": "Rating",
+						ratingValue: review.rating,
+						bestRating: 5,
+						worstRating: 1,
+					},
+					itemReviewed: {
+						"@type": "Product",
+						name: review.product.title,
+						url: `${SITE_URL}/creations/${review.product.slug}`,
+					},
+					publisher: {
+						"@id": `${SITE_URL}/#organization`,
+					},
+				});
+			}
 		}
 	}
 

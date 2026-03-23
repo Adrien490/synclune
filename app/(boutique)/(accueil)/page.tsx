@@ -88,7 +88,11 @@ export default async function Page() {
 	return (
 		<>
 			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
-			<StructuredData reviewStats={reviewStats} featuredReviews={featuredReviews} />
+			<StructuredData
+				reviewStats={reviewStats}
+				includeHomepageSchemas
+				featuredReviews={featuredReviews}
+			/>
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
 			<Suspense fallback={<HeroSectionSkeleton />}>

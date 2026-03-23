@@ -3,7 +3,6 @@
  */
 
 import { cacheLife, cacheTag } from "next/cache";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================
 // CACHE TAGS
@@ -121,7 +120,6 @@ export function getReviewInvalidationTags(
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
-		SHARED_CACHE_TAGS.HOMEPAGE_STRUCTURED_DATA,
 	];
 
 	// Ajouter les tags produit seulement si le produit existe encore
@@ -150,7 +148,6 @@ export function getReviewModerationTags(productId: string | null, reviewId: stri
 		REVIEWS_CACHE_TAGS.ADMIN_LIST,
 		REVIEWS_CACHE_TAGS.HOMEPAGE,
 		REVIEWS_CACHE_TAGS.GLOBAL_STATS,
-		SHARED_CACHE_TAGS.HOMEPAGE_STRUCTURED_DATA,
 	];
 
 	// Ajouter les tags produit seulement si le produit existe encore

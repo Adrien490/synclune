@@ -4,20 +4,15 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getCartItemCount } from "@/modules/cart/data/get-cart-item-count";
 import { getWishlistItemCount } from "@/modules/wishlist/data/get-wishlist-item-count";
 import { getRecentProducts } from "@/modules/products/data/get-recent-products";
-import { Heart, User } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import Link from "next/link";
-import { CartSheetTrigger } from "@/modules/cart/components/cart-sheet-trigger";
-import { WishlistBadge } from "@/modules/wishlist/components/wishlist-badge";
 import { BadgeCountsStoreProvider } from "@/shared/providers/badge-counts-store-provider";
 import { QuickSearchTrigger } from "@/modules/products/components/quick-search-dialog";
-import { ROUTES } from "@/shared/constants/urls";
 import { AppBadgeSync } from "@/shared/components/app-badge-sync";
 import { cn } from "@/shared/utils/cn";
 import { DesktopNav } from "./desktop-nav";
 import { extractCollectionImages, getNavbarMenuData } from "./get-navbar-menu-data";
 import { MenuSheet } from "./menu-sheet";
 import { iconButtonClassName } from "./navbar-styles";
+import { NavbarIconButtons } from "./navbar-icon-buttons";
 import { NavbarWrapper } from "./navbar-wrapper";
 
 export async function Navbar() {
@@ -145,60 +140,7 @@ export async function Navbar() {
 							{/* Section droite: Favoris + Recherche + Compte + Panier */}
 							<div className="flex min-w-0 flex-1 items-center justify-end">
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
-									{/* Icône favoris (visible sur mobile et desktop) */}
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Link
-												href={ROUTES.ACCOUNT.FAVORITES}
-												className={cn("inline-flex", iconButtonClassName)}
-												aria-label="Accéder à mes favoris"
-											>
-												<Heart
-													size={20}
-													className="transition-transform duration-300 ease-out group-hover:scale-105"
-													aria-hidden="true"
-												/>
-												<WishlistBadge />
-											</Link>
-										</TooltipTrigger>
-										<TooltipContent className="hidden lg:block">Favoris</TooltipContent>
-									</Tooltip>
-
-									{/* Recherche globale (visible sur desktop seulement) */}
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<QuickSearchTrigger className="hidden sm:inline-flex" />
-										</TooltipTrigger>
-										<TooltipContent className="hidden lg:block">Rechercher</TooltipContent>
-									</Tooltip>
-
-									{/* Lien compte (visible sur desktop seulement) */}
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<Link
-												href={session ? ROUTES.ACCOUNT.ROOT : ROUTES.AUTH.SIGN_IN}
-												className={cn("hidden sm:inline-flex", iconButtonClassName)}
-												aria-label={session ? "Mon compte" : "Se connecter"}
-											>
-												<User
-													size={20}
-													className="transition-transform duration-300 ease-out group-hover:scale-105"
-													aria-hidden="true"
-												/>
-											</Link>
-										</TooltipTrigger>
-										<TooltipContent className="hidden lg:block">
-											{session ? "Mon compte" : "Se connecter"}
-										</TooltipContent>
-									</Tooltip>
-
-									{/* Icône panier - Ouvre le cart sheet */}
-									<Tooltip>
-										<TooltipTrigger asChild>
-											<CartSheetTrigger className={cn("inline-flex", iconButtonClassName)} />
-										</TooltipTrigger>
-										<TooltipContent className="hidden lg:block">Panier</TooltipContent>
-									</Tooltip>
+									<NavbarIconButtons isLoggedIn={!!session} />
 								</div>
 							</div>
 						</div>

@@ -99,14 +99,6 @@ export const SHARED_CACHE_TAGS = {
 	 * Utilisé par : products, sitemap-images
 	 */
 	SITEMAP_IMAGES: "sitemap-images",
-
-	/**
-	 * Données structurées JSON-LD de la homepage
-	 *
-	 * Utilisé par : reviews (invalidation lors des mutations),
-	 * structured-data.tsx (cache tag)
-	 */
-	HOMEPAGE_STRUCTURED_DATA: "homepage-structured-data",
 } as const;
 
 // ============================================

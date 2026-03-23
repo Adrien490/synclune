@@ -51,6 +51,22 @@ const runtimeCaching: RuntimeCaching[] = [
 			plugins: [new ExpirationPlugin({ maxEntries: 50, maxAgeSeconds: 60 * 60 })],
 		}),
 	},
+	// Navigation requests (HTML pages) — NetworkFirst for offline support
+	{
+		matcher({ request }) {
+			return request.destination === "document";
+		},
+		handler: new NetworkFirst({
+			cacheName: "navigations",
+			networkTimeoutSeconds: 5,
+			plugins: [
+				new ExpirationPlugin({
+					maxEntries: 50,
+					maxAgeSeconds: 60 * 60 * 24, // 1 day
+				}),
+			],
+		}),
+	},
 	// Default cache for everything else
 	...defaultCache,
 ];
