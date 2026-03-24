@@ -73,7 +73,7 @@ export function MenuSheet({
 					if (open) {
 						// Blur trigger before sheet opens to prevent aria-hidden conflict:
 						// Vaul/Radix sets aria-hidden on the header before focus moves to sheet content
-						(document.activeElement as HTMLElement)?.blur();
+						if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 					}
 					open ? openMenu() : closeMenu();
 				}}

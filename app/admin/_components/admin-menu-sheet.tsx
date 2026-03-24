@@ -72,7 +72,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	function handleOpenChange(open: boolean) {
 		if (open) {
 			// Blur trigger before open to prevent aria-hidden/focus conflicts
-			(document.activeElement as HTMLElement)?.blur();
+			if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 			openMenu();
 		} else {
 			closeMenu();

@@ -30,7 +30,7 @@ vi.mock("motion/react", () => ({
 			className,
 			onClick,
 			"aria-label": ariaLabel,
-			...rest
+			..._rest
 		}: {
 			children: React.ReactNode;
 			className?: string;

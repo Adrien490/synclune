@@ -5,11 +5,11 @@ import type { Metadata } from "next";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserProviders } from "@/modules/auth/data/get-user-providers";
-import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
+// import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
 import { ProfileForm } from "@/modules/users/components/profile-form";
 import { SecuritySection } from "@/modules/users/components/security-section";
 import { GdprSection } from "@/modules/users/components/gdpr-section";
-import { NewsletterSettingsCard } from "@/modules/newsletter/components/newsletter-settings-card";
+// import { NewsletterSettingsCard } from "@/modules/newsletter/components/newsletter-settings-card";
 import { LogoutCard } from "@/modules/auth/components/logout-card";
 export const metadata: Metadata = {
 	title: "Paramètres",
@@ -66,10 +66,10 @@ async function SecuritySectionWrapper({
 	return <SecuritySection emailVerified={emailVerified} providers={providers} email={email} />;
 }
 
-async function NewsletterWrapper() {
-	const status = await getSubscriptionStatus();
-	return <NewsletterSettingsCard isSubscribed={status.isSubscribed} />;
-}
+// async function NewsletterWrapper() {
+// 	const status = await getSubscriptionStatus();
+// 	return <NewsletterSettingsCard isSubscribed={status.isSubscribed} />;
+// }
 
 function SecuritySkeleton() {
 	return (
@@ -88,19 +88,19 @@ function SecuritySkeleton() {
 	);
 }
 
-function NewsletterSkeleton() {
-	return (
-		<SkeletonGroup label="Chargement des paramètres newsletter">
-			<section className="space-y-4">
-				<Skeleton className="h-5 w-32" />
-				<div className="border-border/60 space-y-3 border-t pt-4">
-					<Skeleton className="h-4 w-full" />
-					<Skeleton className="h-9 w-full" />
-				</div>
-			</section>
-		</SkeletonGroup>
-	);
-}
+// function NewsletterSkeleton() {
+// 	return (
+// 		<SkeletonGroup label="Chargement des paramètres newsletter">
+// 			<section className="space-y-4">
+// 				<Skeleton className="h-5 w-32" />
+// 				<div className="border-border/60 space-y-3 border-t pt-4">
+// 					<Skeleton className="h-4 w-full" />
+// 					<Skeleton className="h-9 w-full" />
+// 				</div>
+// 			</section>
+// 		</SkeletonGroup>
+// 	);
+// }
 
 function computeDaysRemaining(deletionRequestedAt: Date | null): number {
 	if (!deletionRequestedAt) return 0;

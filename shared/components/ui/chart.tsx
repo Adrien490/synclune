@@ -95,7 +95,7 @@ function sanitizeCssValue(value: string): string {
  * Uses CSS.escape when available (browser), falls back to regex replacement on server.
  */
 function escapeCssIdentifier(value: string): string {
-	if (typeof CSS !== "undefined" && CSS.escape) {
+	if (typeof CSS !== "undefined") {
 		return CSS.escape(value);
 	}
 	return value.replace(/[^a-zA-Z0-9_-]/g, "\\$&");

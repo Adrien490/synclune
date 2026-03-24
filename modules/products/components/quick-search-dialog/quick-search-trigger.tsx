@@ -26,7 +26,7 @@ export function QuickSearchTrigger({ className, ref }: QuickSearchTriggerProps) 
 			onClick={() => {
 				// Blur trigger before dialog opens to prevent aria-hidden conflict:
 				// Radix sets aria-hidden on the header before focus moves to dialog content
-				(document.activeElement as HTMLElement)?.blur();
+				if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 				open();
 			}}
 			className={cn("size-11 transition-all duration-300 ease-out", className)}
