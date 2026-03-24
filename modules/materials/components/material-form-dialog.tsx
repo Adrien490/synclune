@@ -27,6 +27,7 @@ interface MaterialDialogData extends Record<string, unknown> {
 		description: string | null;
 		isActive: boolean;
 	};
+	onCreated?: (id: string) => void;
 }
 
 export function MaterialFormDialog() {
@@ -47,7 +48,18 @@ export function MaterialFormDialog() {
 		withCallbacks(
 			createMaterial,
 			createToastCallbacks({
-				onSuccess: () => {
+				onSuccess: (result: unknown) => {
+					if (
+						result &&
+						typeof result === "object" &&
+						"data" in result &&
+						result.data &&
+						typeof result.data === "object" &&
+						"id" in result.data &&
+						typeof result.data.id === "string"
+					) {
+						data?.onCreated?.(result.data.id);
+					}
 					close();
 					form.reset();
 				},

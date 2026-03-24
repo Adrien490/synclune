@@ -9,7 +9,6 @@ import {
 	calculateDiscountPercent,
 	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
-import { m, useReducedMotion } from "motion/react";
 import { NotifyBackInStockButton } from "@/modules/wishlist/components/notify-back-in-stock-button";
 
 interface ProductPriceProps {
@@ -36,8 +35,6 @@ export function ProductPriceDisplay({
 	cartsCount,
 	isInWishlist,
 }: ProductPriceProps) {
-	const shouldReduceMotion = useReducedMotion();
-
 	// Calculer le prix minimum et vérifier si plusieurs prix différents
 	const priceInfo = calculatePriceInfo(product.skus);
 
@@ -148,19 +145,15 @@ export function ProductPriceDisplay({
 					</Badge>
 				)}
 				{stockStatus === "low_stock" && (
-					<m.div
-						animate={shouldReduceMotion ? {} : { opacity: [1, 0.7, 1] }}
-						transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+					<Badge
+						variant="outline"
+						className="gap-1.5 border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased shadow-sm dark:border-amber-500 dark:bg-amber-950 dark:text-amber-200"
+						role="status"
+						aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 					>
-						<Badge
-							variant="outline"
-							className="border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased shadow-sm dark:border-amber-500 dark:bg-amber-950 dark:text-amber-200"
-							role="status"
-							aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
-						>
-							<span className="font-bold">Plus que {inventory}</span> en stock !
-						</Badge>
-					</m.div>
+						<span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
+						<span className="font-bold">Plus que {inventory}</span> en stock !
+					</Badge>
 				)}
 				{stockStatus === "out_of_stock" && (
 					<Badge

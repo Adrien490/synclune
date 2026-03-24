@@ -26,6 +26,7 @@ interface ProductTypeDialogData extends Record<string, unknown> {
 		description?: string | null;
 		slug: string;
 	};
+	onCreated?: (id: string) => void;
 }
 
 export function ProductTypeFormDialog() {
@@ -45,7 +46,18 @@ export function ProductTypeFormDialog() {
 		withCallbacks(
 			createProductType,
 			createToastCallbacks({
-				onSuccess: () => {
+				onSuccess: (result: unknown) => {
+					if (
+						result &&
+						typeof result === "object" &&
+						"data" in result &&
+						result.data &&
+						typeof result.data === "object" &&
+						"id" in result.data &&
+						typeof result.data.id === "string"
+					) {
+						data?.onCreated?.(result.data.id);
+					}
 					close();
 					form.reset();
 				},

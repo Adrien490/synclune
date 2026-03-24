@@ -202,7 +202,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 							</Badge>
 						)}
 					</div>
-				) : item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
+				) : item.sku.inventory > 1 && item.sku.inventory <= STOCK_THRESHOLDS.LOW ? (
 					<p className="text-xs text-orange-800">Plus que {item.sku.inventory} en stock</p>
 				) : null}
 			</div>

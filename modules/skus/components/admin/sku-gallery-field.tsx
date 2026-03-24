@@ -3,7 +3,6 @@
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { Label } from "@/shared/components/ui/label";
-import { UploadProgress } from "@/shared/components/media-upload/upload-progress";
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, m } from "motion/react";
@@ -30,6 +29,7 @@ export function SkuGalleryField({
 	pushValue,
 	productName,
 	uploadMedia,
+	isUploading: isMediaUploading,
 }: SkuGalleryFieldProps) {
 	const currentCount = value.length;
 	const isAtLimit = currentCount >= MAX_GALLERY_COUNT;
@@ -81,155 +81,140 @@ export function SkuGalleryField({
 				</div>
 			)}
 
-			{!isAtLimit && (
-				<UploadDropzone
-					endpoint="catalogMedia"
-					onBeforeUploadBegin={(files) => {
-						const remaining = MAX_GALLERY_COUNT - value.length;
-						if (files.length > remaining) {
-							toast.warning(
-								`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
-							);
-							return files.slice(0, remaining);
-						}
-						return files;
-					}}
-					onChange={async (files) => {
-						const remaining = MAX_GALLERY_COUNT - value.length;
-						const filesToUpload = files.slice(0, remaining);
-						if (files.length > remaining) {
-							toast.warning(
-								`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
-							);
-						}
-						if (filesToUpload.length === 0) return;
-
-						const results = await uploadMedia(filesToUpload);
-						results.forEach((result) => {
-							pushValue({
-								url: result.url,
-								blurDataUrl: result.blurDataUrl,
-								thumbnailUrl: result.thumbnailUrl,
-								altText: productName,
-								mediaType: result.mediaType,
-							});
-						});
-					}}
-					onUploadError={(error) => {
-						toast.error(`Erreur: ${error.message}`);
-					}}
-					className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
-					appearance={{
-						container: ({ isDragActive, isUploading: uploading }) => ({
-							border: "2px dashed",
-							borderColor: isDragActive
-								? "var(--primary)"
-								: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-							borderRadius: "0.75rem",
-							backgroundColor: isDragActive
-								? "color-mix(in oklch, var(--primary) 5%, transparent)"
-								: "color-mix(in oklch, var(--muted) 30%, transparent)",
-							padding: "1rem",
-							transition: "all 0.2s ease-in-out",
-							height: "min(140px, 20vh)",
-							minHeight: "120px",
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							gap: "0.5rem",
-							cursor: uploading ? "not-allowed" : "pointer",
-							opacity: uploading ? 0.7 : 1,
-							position: "relative",
-							boxShadow: isDragActive
-								? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
-								: "var(--shadow-sm)",
-						}),
-						uploadIcon: ({ isDragActive, isUploading: uploading }) => ({
-							color: isDragActive
-								? "var(--primary)"
-								: "color-mix(in oklch, var(--primary) 70%, transparent)",
-							width: "2rem",
-							height: "2rem",
-							transition: "all 0.2s ease-in-out",
-							transform: isDragActive ? "scale(1.1)" : "scale(1)",
-							opacity: uploading ? 0.5 : 1,
-						}),
-						label: ({ isDragActive, isUploading: uploading }) => ({
-							color: isDragActive ? "var(--primary)" : "var(--foreground)",
-							fontSize: "0.875rem",
-							fontWeight: "500",
-							textAlign: "center",
-							transition: "color 0.2s ease-in-out",
-							opacity: uploading ? 0.5 : 1,
-							width: "100%",
-							wordBreak: "break-word",
-						}),
-						allowedContent: ({ isUploading: uploading }) => ({
-							color: "var(--muted-foreground)",
-							fontSize: "0.75rem",
-							textAlign: "center",
-							marginTop: "0.25rem",
-							opacity: uploading ? 0.5 : 1,
-						}),
-					}}
-					content={{
-						uploadIcon: ({ isDragActive, isUploading: uploading, uploadProgress }) => {
-							if (uploading) {
-								return (
-									<div
-										className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm"
-										role="status"
-										aria-live="polite"
-									>
-										<UploadProgress
-											progress={uploadProgress}
-											isProcessing={uploadProgress >= 100}
-										/>
-									</div>
+			{!isAtLimit &&
+				(isMediaUploading ? (
+					<div className="flex h-[min(140px,20vh)] min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed">
+						<div className="border-primary/20 border-t-primary h-8 w-8 animate-spin rounded-full border-2" />
+						<p className="text-muted-foreground text-xs">Upload en cours...</p>
+					</div>
+				) : (
+					<UploadDropzone
+						endpoint="catalogMedia"
+						onBeforeUploadBegin={(files) => {
+							const remaining = MAX_GALLERY_COUNT - value.length;
+							if (files.length > remaining) {
+								toast.warning(
+									`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
+								);
+								return files.slice(0, remaining);
+							}
+							return files;
+						}}
+						onChange={async (files) => {
+							const remaining = MAX_GALLERY_COUNT - value.length;
+							const filesToUpload = files.slice(0, remaining);
+							if (files.length > remaining) {
+								toast.warning(
+									`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
 								);
 							}
-							return (
+							if (filesToUpload.length === 0) return;
+
+							const results = await uploadMedia(filesToUpload);
+							results.forEach((result) => {
+								pushValue({
+									url: result.url,
+									blurDataUrl: result.blurDataUrl,
+									thumbnailUrl: result.thumbnailUrl,
+									altText: productName,
+									mediaType: result.mediaType,
+								});
+							});
+						}}
+						onUploadError={(error) => {
+							toast.error(`Erreur: ${error.message}`);
+						}}
+						className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
+						appearance={{
+							container: ({ isDragActive, isUploading: uploading }) => ({
+								border: "2px dashed",
+								borderColor: isDragActive
+									? "var(--primary)"
+									: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
+								borderRadius: "0.75rem",
+								backgroundColor: isDragActive
+									? "color-mix(in oklch, var(--primary) 5%, transparent)"
+									: "color-mix(in oklch, var(--muted) 30%, transparent)",
+								padding: "1rem",
+								transition: "all 0.2s ease-in-out",
+								height: "min(140px, 20vh)",
+								minHeight: "120px",
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								justifyContent: "center",
+								gap: "0.5rem",
+								cursor: uploading ? "not-allowed" : "pointer",
+								opacity: uploading ? 0.7 : 1,
+								position: "relative",
+								boxShadow: isDragActive
+									? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
+									: "var(--shadow-sm)",
+							}),
+							uploadIcon: ({ isDragActive, isUploading: uploading }) => ({
+								color: isDragActive
+									? "var(--primary)"
+									: "color-mix(in oklch, var(--primary) 70%, transparent)",
+								width: "2rem",
+								height: "2rem",
+								transition: "all 0.2s ease-in-out",
+								transform: isDragActive ? "scale(1.1)" : "scale(1)",
+								opacity: uploading ? 0.5 : 1,
+							}),
+							label: ({ isDragActive, isUploading: uploading }) => ({
+								color: isDragActive ? "var(--primary)" : "var(--foreground)",
+								fontSize: "0.875rem",
+								fontWeight: "500",
+								textAlign: "center",
+								transition: "color 0.2s ease-in-out",
+								opacity: uploading ? 0.5 : 1,
+								width: "100%",
+								wordBreak: "break-word",
+							}),
+							allowedContent: ({ isUploading: uploading }) => ({
+								color: "var(--muted-foreground)",
+								fontSize: "0.75rem",
+								textAlign: "center",
+								marginTop: "0.25rem",
+								opacity: uploading ? 0.5 : 1,
+							}),
+						}}
+						content={{
+							uploadIcon: ({ isDragActive }) => (
 								<Upload
 									className={cn(
 										"h-10 w-10 transition-all duration-200",
 										isDragActive ? "text-primary scale-110" : "text-primary/70",
 									)}
 								/>
-							);
-						},
-						label: ({ isDragActive, isUploading: uploading }) => {
-							if (uploading) {
-								return null;
-							}
+							),
+							label: ({ isDragActive }) => {
+								if (isDragActive) {
+									return (
+										<div className="text-center">
+											<p className="text-primary text-sm font-medium">Relâchez pour ajouter</p>
+										</div>
+									);
+								}
 
-							if (isDragActive) {
+								const remaining = MAX_GALLERY_COUNT - value.length;
 								return (
-									<div className="text-center">
-										<p className="text-primary text-sm font-medium">Relâchez pour ajouter</p>
+									<div className="space-y-1 text-center">
+										<p className="text-sm font-medium">Ajouter à la galerie</p>
+										<p className="text-muted-foreground text-xs">
+											{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB
+											(image) / 512MB (vidéo)
+										</p>
 									</div>
 								);
-							}
-
-							const remaining = MAX_GALLERY_COUNT - value.length;
-							return (
-								<div className="space-y-1 text-center">
-									<p className="text-sm font-medium">Ajouter à la galerie</p>
-									<p className="text-muted-foreground text-xs">
-										{remaining} {remaining > 1 ? "médias restants" : "média restant"} • Max 16MB
-										(image) / 512MB (vidéo)
-									</p>
-								</div>
-							);
-						},
-						allowedContent: () => null,
-						button: () => <span className="sr-only">Sélectionner des images pour la galerie</span>,
-					}}
-					config={{
-						mode: "auto",
-					}}
-				/>
-			)}
+							},
+							allowedContent: () => null,
+							button: () => (
+								<span className="sr-only">Sélectionner des images pour la galerie</span>
+							),
+						}}
+					/>
+				))}
 		</div>
 	);
 }

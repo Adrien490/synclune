@@ -35,6 +35,7 @@ interface ColorDialogData extends Record<string, unknown> {
 		slug: string;
 		hex: string;
 	};
+	onCreated?: (id: string) => void;
 }
 
 export function ColorFormDialog() {
@@ -54,7 +55,18 @@ export function ColorFormDialog() {
 		withCallbacks(
 			createColor,
 			createToastCallbacks({
-				onSuccess: () => {
+				onSuccess: (result: unknown) => {
+					if (
+						result &&
+						typeof result === "object" &&
+						"data" in result &&
+						result.data &&
+						typeof result.data === "object" &&
+						"id" in result.data &&
+						typeof result.data.id === "string"
+					) {
+						data?.onCreated?.(result.data.id);
+					}
 					close();
 					form.reset();
 				},

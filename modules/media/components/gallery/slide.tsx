@@ -155,10 +155,18 @@ export function GallerySlide({
 	if (media.mediaType === "VIDEO") {
 		return (
 			<div id={id} role="tabpanel" style={{ viewTransitionName }}>
-				<button
-					type="button"
+				{/* Use div instead of button to avoid nested <button> when VideoErrorFallback renders */}
+				<div
+					role="button"
+					tabIndex={0}
 					className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
 					onClick={onOpen}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							onOpen();
+						}
+					}}
 					aria-label="Ouvrir la vidéo en plein écran"
 				>
 					{videoState === "loading" && <VideoLoadingSpinner />}
@@ -195,7 +203,7 @@ export function GallerySlide({
 					<span id={`video-desc-${index}`} className="sr-only">
 						Vidéo de démonstration du produit sans audio
 					</span>
-				</button>
+				</div>
 			</div>
 		);
 	}

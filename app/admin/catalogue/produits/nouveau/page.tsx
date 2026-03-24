@@ -13,6 +13,19 @@ const DeleteGalleryMediaAlertDialog = dynamic(() =>
 		(mod) => mod.DeleteGalleryMediaAlertDialog,
 	),
 );
+const ProductTypeFormDialog = dynamic(() =>
+	import("@/modules/product-types/components/product-type-form-dialog").then(
+		(mod) => mod.ProductTypeFormDialog,
+	),
+);
+const ColorFormDialog = dynamic(() =>
+	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
+);
+const MaterialFormDialog = dynamic(() =>
+	import("@/modules/materials/components/material-form-dialog").then(
+		(mod) => mod.MaterialFormDialog,
+	),
+);
 
 export const metadata: Metadata = {
 	title: "Nouveau produit - Administration",
@@ -40,6 +53,9 @@ export default async function NewProductPage() {
 			/>
 
 			<DeleteGalleryMediaAlertDialog />
+			<ProductTypeFormDialog />
+			<ColorFormDialog />
+			<MaterialFormDialog />
 		</>
 	);
 }

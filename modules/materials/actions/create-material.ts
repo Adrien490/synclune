@@ -81,7 +81,7 @@ export async function createMaterial(
 		const tags = getMaterialInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return success("Matériau créé avec succès");
+		return success("Matériau créé avec succès", { id: created.id, name: created.name });
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue lors de la création du matériau");
 	}

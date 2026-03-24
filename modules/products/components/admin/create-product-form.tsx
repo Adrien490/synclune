@@ -13,7 +13,11 @@ import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { AlertCircle, Euro, ImagePlus, Info, Package, Upload } from "lucide-react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
+import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
+import { MATERIAL_DIALOG_ID } from "@/modules/materials/components/material-form-dialog";
+import { AlertCircle, Euro, ImagePlus, Info, Package, Plus, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -32,6 +36,9 @@ export function CreateProductForm({
 	materials,
 }: CreateProductFormProps) {
 	const router = useRouter();
+	const typeDialog = useDialog(PRODUCT_TYPE_DIALOG_ID);
+	const colorDialog = useDialog(COLOR_DIALOG_ID);
+	const materialDialog = useDialog(MATERIAL_DIALOG_ID);
 	const {
 		upload: uploadMedia,
 		isUploading: isMediaUploading,
@@ -392,15 +399,36 @@ export function CreateProductForm({
 									<FieldLabel htmlFor={field.name} optional>
 										Type de bijou
 									</FieldLabel>
-									<field.SelectField
-										label=""
-										options={productTypes.map((t) => ({
-											value: t.id,
-											label: t.label,
-										}))}
-										placeholder="Sélectionner un type"
-										clearable
-									/>
+									<div className="flex gap-2">
+										<div className="flex-1">
+											<field.SelectField
+												label=""
+												options={productTypes.map((t) => ({
+													value: t.id,
+													label: t.label,
+												}))}
+												placeholder="Sélectionner un type"
+												clearable
+											/>
+										</div>
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											className="shrink-0"
+											onClick={() =>
+												typeDialog.open({
+													onCreated: (id: string) => {
+														field.handleChange(id);
+														router.refresh();
+													},
+												})
+											}
+											aria-label="Créer un nouveau type de produit"
+										>
+											<Plus className="h-4 w-4" />
+										</Button>
+									</div>
 								</div>
 							)}
 						</form.AppField>
@@ -466,45 +494,66 @@ export function CreateProductForm({
 								<FieldLabel htmlFor={field.name} optional>
 									Couleur
 								</FieldLabel>
-								<field.SelectField
-									label=""
-									options={colors.map((c) => ({
-										value: c.id,
-										label: c.name,
-									}))}
-									renderOption={(opt) => {
-										const c = colors.find((x) => x.id === opt.value);
-										return (
-											<div className="flex items-center gap-2">
-												{c && (
-													<div
-														className="border-border h-4 w-4 rounded-full border"
-														style={{ backgroundColor: c.hex }}
-														aria-hidden="true"
-													/>
-												)}
-												<span>{opt.label}</span>
-											</div>
-										);
-									}}
-									renderValue={(val) => {
-										const c = colors.find((x) => x.id === val);
-										return c ? (
-											<div className="flex items-center gap-2">
-												<div
-													className="border-border h-4 w-4 rounded-full border"
-													style={{ backgroundColor: c.hex }}
-													aria-hidden="true"
-												/>
-												<span>{c.name}</span>
-											</div>
-										) : (
-											<span className="text-muted-foreground">Sélectionner une couleur</span>
-										);
-									}}
-									placeholder="Sélectionner une couleur"
-									clearable
-								/>
+								<div className="flex gap-2">
+									<div className="flex-1">
+										<field.SelectField
+											label=""
+											options={colors.map((c) => ({
+												value: c.id,
+												label: c.name,
+											}))}
+											renderOption={(opt) => {
+												const c = colors.find((x) => x.id === opt.value);
+												return (
+													<div className="flex items-center gap-2">
+														{c && (
+															<div
+																className="border-border h-4 w-4 rounded-full border"
+																style={{ backgroundColor: c.hex }}
+																aria-hidden="true"
+															/>
+														)}
+														<span>{opt.label}</span>
+													</div>
+												);
+											}}
+											renderValue={(val) => {
+												const c = colors.find((x) => x.id === val);
+												return c ? (
+													<div className="flex items-center gap-2">
+														<div
+															className="border-border h-4 w-4 rounded-full border"
+															style={{ backgroundColor: c.hex }}
+															aria-hidden="true"
+														/>
+														<span>{c.name}</span>
+													</div>
+												) : (
+													<span className="text-muted-foreground">Sélectionner une couleur</span>
+												);
+											}}
+											placeholder="Sélectionner une couleur"
+											clearable
+										/>
+									</div>
+									<Button
+										type="button"
+										variant="outline"
+										size="icon"
+										className="shrink-0"
+										onClick={() =>
+											colorDialog.open({
+												onCreated: (id: string) => {
+													field.handleChange(id);
+													router.refresh();
+												},
+											})
+										}
+										aria-label="Créer une nouvelle couleur"
+									>
+										<Plus className="h-4 w-4" />
+									</Button>
+								</div>
 							</div>
 						)}
 					</form.AppField>
@@ -516,15 +565,36 @@ export function CreateProductForm({
 									<FieldLabel htmlFor={field.name} optional>
 										Matériau
 									</FieldLabel>
-									<field.SelectField
-										label=""
-										options={materials.map((m) => ({
-											value: m.id,
-											label: m.name,
-										}))}
-										placeholder="Sélectionner un matériau"
-										clearable
-									/>
+									<div className="flex gap-2">
+										<div className="flex-1">
+											<field.SelectField
+												label=""
+												options={materials.map((m) => ({
+													value: m.id,
+													label: m.name,
+												}))}
+												placeholder="Sélectionner un matériau"
+												clearable
+											/>
+										</div>
+										<Button
+											type="button"
+											variant="outline"
+											size="icon"
+											className="shrink-0"
+											onClick={() =>
+												materialDialog.open({
+													onCreated: (id: string) => {
+														field.handleChange(id);
+														router.refresh();
+													},
+												})
+											}
+											aria-label="Créer un nouveau matériau"
+										>
+											<Plus className="h-4 w-4" />
+										</Button>
+									</div>
 								</div>
 							)}
 						</form.AppField>

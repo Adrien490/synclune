@@ -78,7 +78,11 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 		const tags = getColorInvalidationTags();
 		tags.forEach((tag) => updateTag(tag));
 
-		return success("Couleur créée avec succès");
+		return success("Couleur créée avec succès", {
+			id: created.id,
+			name: created.name,
+			hex: created.hex,
+		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de créer la couleur");
 	}

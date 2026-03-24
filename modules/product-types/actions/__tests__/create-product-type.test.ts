@@ -90,9 +90,10 @@ describe("createProductType", () => {
 		mockGenerateSlug.mockResolvedValue("bague");
 		mockSanitizeText.mockImplementation((text: string) => text);
 
-		mockSuccess.mockImplementation((msg: string) => ({
+		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
+			data,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
@@ -182,7 +183,10 @@ describe("createProductType", () => {
 
 	it("should return success message after creation", async () => {
 		const result = await createProductType(undefined, validFormData);
-		expect(mockSuccess).toHaveBeenCalledWith("Type de produit créé avec succès");
+		expect(mockSuccess).toHaveBeenCalledWith("Type de produit créé avec succès", {
+			id: "pt-1",
+			label: "Bague",
+		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 

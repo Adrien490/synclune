@@ -98,8 +98,8 @@ export function SortableMediaItem({
 			role="group"
 			aria-label={`${isVideo ? "Vidéo" : "Image"} ${index + 1}${isPrimary ? " (principale)" : ""}`}
 		>
-			{/* Skeleton/Loading state */}
-			{!isImageLoaded && !isVideo && (
+			{/* Skeleton/Loading state — hidden when blurDataUrl exists so Next.js blur placeholder is visible */}
+			{!isImageLoaded && !isVideo && !media.blurDataUrl && (
 				<div className="bg-muted absolute inset-0 z-10 motion-safe:animate-pulse" />
 			)}
 
