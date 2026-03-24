@@ -446,7 +446,7 @@ export function CreateProductForm({
 										<Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
 									</Button>
 								</TooltipTrigger>
-								<TooltipContent side="right" className="max-w-[250px]">
+								<TooltipContent side="right" className="max-w-62.5">
 									<p>
 										Ces attributs concernent la première variante du produit. Vous pourrez ajouter
 										d'autres variantes après la création.

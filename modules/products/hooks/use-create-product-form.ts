@@ -7,6 +7,7 @@ import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { createProduct } from "@/modules/products/actions/create-product";
 import { createProductFormOpts } from "@/modules/products/constants/create-product-form-options";
+import { ActionStatus } from "@/shared/types/server-action";
 
 interface UseCreateProductFormOptions {
 	onSuccess?: (message: string) => void;
@@ -22,7 +23,7 @@ export const useCreateProductForm = (options?: UseCreateProductFormOptions) => {
 			createProduct,
 			createToastCallbacks({
 				showSuccessToast: false,
-				showErrorToast: false,
+				showErrorToast: true,
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided
 					if (
@@ -46,7 +47,18 @@ export const useCreateProductForm = (options?: UseCreateProductFormOptions) => {
 	});
 
 	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors);
+	// mergeForm cannot parse custom ActionState format, so we also extract errors from raw state
+	const tanstackErrors = useStore(form.store, (formState) => formState.errors);
+	const serverErrors =
+		state &&
+		typeof state === "object" &&
+		"status" in state &&
+		state.status !== ActionStatus.SUCCESS &&
+		"message" in state &&
+		typeof state.message === "string"
+			? [state.message]
+			: [];
+	const formErrors = tanstackErrors.length > 0 ? tanstackErrors : serverErrors;
 
 	return {
 		form,
