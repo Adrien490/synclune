@@ -78,7 +78,7 @@ export function ReviewMediaUpload({
 								onClick={() => removeMedia(index)}
 								disabled={disabled}
 								className={cn(
-									"absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity",
+									"absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity [@media(hover:none)]:opacity-100",
 									!disabled && "group-hover:opacity-100",
 								)}
 								aria-label={`Supprimer la photo ${index + 1}`}
@@ -94,6 +94,7 @@ export function ReviewMediaUpload({
 			{canAddMore && (
 				<UploadDropzone
 					endpoint="reviewMedia"
+					aria-label="Zone d'upload des photos pour l'avis"
 					onUploadBegin={() => setIsUploading(true)}
 					onClientUploadComplete={(res) => {
 						setIsUploading(false);
@@ -166,7 +167,7 @@ export function ReviewMediaUpload({
 							);
 						},
 						allowedContent: () => null,
-						button: () => null,
+						button: () => <span className="sr-only">Ajouter des photos</span>,
 					}}
 				/>
 			)}

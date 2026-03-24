@@ -5,6 +5,8 @@ import { Separator } from "@/shared/components/ui/separator";
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 /**
  * Header du dashboard
@@ -37,6 +39,20 @@ export function DashboardHeader() {
 				<div className="min-w-0 flex-1">
 					<DashboardBreadcrumb />
 				</div>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Link
+							href="/"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-1 focus-visible:outline-none"
+							aria-label="Voir le site (nouvel onglet)"
+						>
+							<ExternalLink className="size-4" aria-hidden="true" />
+						</Link>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">Voir le site</TooltipContent>
+				</Tooltip>
 			</div>
 		</header>
 	);

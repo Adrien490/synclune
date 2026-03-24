@@ -122,7 +122,7 @@ export function CreateProductForm({
 				</Alert>
 			)}
 
-			<fieldset disabled={isPending || isMediaUploading} className="space-y-6">
+			<fieldset disabled={isPending} className="space-y-6">
 				{/* Visuels */}
 				<form.Field
 					name="initialSku.media"
@@ -204,6 +204,7 @@ export function CreateProductForm({
 													onUploadError={(error) => {
 														toast.error(`Erreur: ${error.message}`);
 													}}
+													aria-label="Zone d'upload des médias du bijou"
 													className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
 													appearance={{
 														container: ({ isDragActive }) => ({
@@ -358,7 +359,8 @@ export function CreateProductForm({
 								<FieldLabel htmlFor={field.name} required>
 									Titre du bijou
 								</FieldLabel>
-								<field.InputField label="" required />
+								{/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+								<field.InputField label="" required autoFocus />
 							</div>
 						)}
 					</form.AppField>
@@ -594,7 +596,7 @@ export function CreateProductForm({
 						{(field) => (
 							<div className="space-y-2">
 								<FieldLabel optional>Quantité en stock</FieldLabel>
-								<field.InputGroupField type="number" min={0}>
+								<field.InputGroupField type="number" min={0} inputMode="numeric">
 									<InputGroupAddon align="inline-end">
 										<Package className="text-muted-foreground h-4 w-4" />
 										<InputGroupText className="text-muted-foreground text-xs">
@@ -610,38 +612,49 @@ export function CreateProductForm({
 					</form.AppField>
 				</div>
 
-				{/* Footer - sticky on mobile, inline on desktop */}
+				{/* Footer */}
 				<form.AppForm>
-					<div className="bg-background/80 sticky bottom-0 z-10 border-t pt-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm sm:static sm:border-0 sm:bg-transparent sm:pt-0 sm:backdrop-blur-none">
-						{/* Screen reader announcement */}
+					<div className="pt-4">
 						<span className="sr-only" role="status" aria-live="polite">
 							{isPending ? "Envoi du formulaire en cours..." : ""}
 						</span>
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
-								<div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+								<div className="flex justify-end gap-3">
 									<Button
 										type="submit"
 										variant="secondary"
+										size="input"
 										disabled={!canSubmit || isPending || isMediaUploading}
 										onClick={() => form.setFieldValue("status", "DRAFT")}
-										className="w-full sm:w-auto sm:min-w-40"
+										className="min-w-0 flex-1 sm:min-w-40 sm:flex-none"
 									>
-										{isPending && form.state.values.status === "DRAFT"
-											? "Chargement..."
-											: "Enregistrer comme brouillon"}
+										{isPending && form.state.values.status === "DRAFT" ? (
+											"Enregistrement..."
+										) : (
+											<>
+												<span className="sm:hidden">Brouillon</span>
+												<span className="hidden sm:inline">Enregistrer comme brouillon</span>
+											</>
+										)}
 									</Button>
 									<Button
 										type="submit"
+										size="input"
 										disabled={!canSubmit || isPending || isMediaUploading}
 										onClick={() => form.setFieldValue("status", "PUBLIC")}
-										className="w-full sm:w-auto sm:min-w-40"
+										className="min-w-0 flex-1 sm:min-w-40 sm:flex-none"
 									>
-										{isPending && form.state.values.status === "PUBLIC"
-											? "Chargement..."
-											: isMediaUploading
-												? "Chargement..."
-												: "Publier le bijou"}
+										{isPending && form.state.values.status === "PUBLIC" ? (
+											"Publication..."
+										) : isMediaUploading ? (
+											"Upload en cours..."
+										) : (
+											<>
+												<span className="sm:hidden">Publier</span>
+												<span className="hidden sm:inline">Publier le bijou</span>
+											</>
+										)}
 									</Button>
 								</div>
 							)}

@@ -322,7 +322,7 @@ describe("CreateProductForm", () => {
 			setup({}, { isPending: true });
 			render(<CreateProductForm {...defaultProps} />);
 
-			const buttons = screen.getAllByRole("button", { name: /chargement/i });
+			const buttons = screen.getAllByRole("button", { name: /enregistrement|publication/i });
 			buttons.forEach((button) => {
 				expect(button).toBeDisabled();
 			});
@@ -344,10 +344,8 @@ describe("CreateProductForm", () => {
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
-			const buttons = screen.getAllByRole("button", { name: /chargement/i });
-			buttons.forEach((button) => {
-				expect(button).toBeDisabled();
-			});
+			expect(screen.getByRole("button", { name: /upload en cours/i })).toBeDisabled();
+			expect(screen.getByRole("button", { name: /brouillon/i })).toBeDisabled();
 		});
 	});
 
@@ -365,7 +363,10 @@ describe("CreateProductForm", () => {
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Upload en cours...")).toBeInTheDocument();
+			const statusElements = screen.getAllByRole("status");
+			expect(statusElements.some((el) => el.textContent!.includes("Upload en cours..."))).toBe(
+				true,
+			);
 			expect(screen.getByText("1 / 3 fichier(s)")).toBeInTheDocument();
 		});
 

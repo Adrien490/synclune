@@ -60,7 +60,7 @@ export function InspirationMediaUpload({
 									onMediasChange(newMedias);
 									onDeleteMedia(media.url);
 								}}
-								className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+								className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100"
 								aria-label={`Supprimer l'image ${index + 1}`}
 							>
 								<X className="size-5 text-white" aria-hidden="true" />

@@ -11,7 +11,6 @@ import {
 } from "@/shared/components/ui/sidebar";
 import { BRAND } from "@/shared/constants/brand";
 import { Logo } from "@/shared/components/logo";
-import { ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
 import { CollapsibleNavGroup } from "./collapsible-nav-group";
@@ -81,20 +80,6 @@ export function AdminSidebar({ user }: AdminSidebarProps) {
 						</Fragment>
 					);
 				})}
-
-				{/* View site link - pushed to bottom */}
-				<SidebarGroup className="mt-auto">
-					<SidebarMenu>
-						<SidebarMenuItem>
-							<SidebarMenuButton asChild tooltip="Voir le site" className="h-9">
-								<Link href="/" target="_blank" rel="noopener noreferrer">
-									<ExternalLink className="h-5 w-5 shrink-0" aria-hidden="true" />
-									<span className="flex-1">Voir le site</span>
-								</Link>
-							</SidebarMenuButton>
-						</SidebarMenuItem>
-					</SidebarMenu>
-				</SidebarGroup>
 			</SidebarContent>
 			{user && <SidebarFooterUser user={user} />}
 		</Sidebar>
