@@ -154,12 +154,17 @@ export function GallerySlide({
 	// Vidéo : même rendu mobile/desktop
 	if (media.mediaType === "VIDEO") {
 		return (
-			<div id={id} role="tabpanel" style={{ viewTransitionName }}>
+			<div
+				id={id}
+				role="tabpanel"
+				className="h-full min-w-0 flex-[0_0_100%]"
+				style={{ viewTransitionName }}
+			>
 				{/* Use div instead of button to avoid nested <button> when VideoErrorFallback renders */}
 				<div
 					role="button"
 					tabIndex={0}
-					className="relative h-full min-w-0 flex-[0_0_100%] cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
+					className="relative h-full cursor-zoom-in appearance-none border-0 bg-transparent p-0 text-left"
 					onClick={onOpen}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" || e.key === " ") {

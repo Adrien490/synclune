@@ -85,11 +85,11 @@ export async function createProduct(
 		}
 
 		// 4. Normalize empty strings to null for optional foreign keys
-		const normalizedTypeId = validatedData.typeId?.trim() || null;
+		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
 		const normalizedCollectionIds = validatedData.collectionIds;
-		const normalizedColorId = validatedData.initialSku.colorId?.trim() || null;
-		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() || null;
-		const normalizedSize = validatedData.initialSku.size?.trim() || null;
+		const normalizedColorId = validatedData.initialSku.colorId?.trim() ?? null;
+		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() ?? null;
+		const normalizedSize = validatedData.initialSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
 		const normalizedDescription = validatedData.description?.trim()
 			? sanitizeText(validatedData.description)

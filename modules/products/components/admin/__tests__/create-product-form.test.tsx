@@ -36,6 +36,29 @@ vi.mock("sonner", () => ({
 	toast: mockToast,
 }));
 
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({
+		open: vi.fn(),
+		close: vi.fn(),
+		isOpen: false,
+	}),
+}));
+
+vi.mock("@/modules/product-types/components/product-type-form-dialog", () => ({
+	PRODUCT_TYPE_DIALOG_ID: "product-type-form",
+	ProductTypeFormDialog: () => null,
+}));
+
+vi.mock("@/modules/colors/components/color-form-dialog", () => ({
+	COLOR_DIALOG_ID: "color-form",
+	ColorFormDialog: () => null,
+}));
+
+vi.mock("@/modules/materials/components/material-form-dialog", () => ({
+	MATERIAL_DIALOG_ID: "material-form",
+	MaterialFormDialog: () => null,
+}));
+
 vi.mock("@/shared/components/forms", () => ({
 	FieldLabel: ({ children, ...props }: { children: React.ReactNode }) => (
 		<label {...props}>{children}</label>
