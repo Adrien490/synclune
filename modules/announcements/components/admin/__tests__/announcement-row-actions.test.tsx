@@ -58,8 +58,8 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Edit: () => <span data-testid="icon-edit" />,
-	MoreVertical: () => <span data-testid="icon-more" />,
+	SquarePen: () => <span data-testid="icon-edit" />,
+	EllipsisVertical: () => <span data-testid="icon-more" />,
 	Power: () => <span data-testid="icon-power" />,
 	PowerOff: () => <span data-testid="icon-power-off" />,
 	Trash2: () => <span data-testid="icon-trash" />,

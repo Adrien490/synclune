@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
 
@@ -70,7 +70,7 @@ export function CancelOrderAlertDialog() {
 							Fermer
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Annulation..." : "Annuler la commande"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

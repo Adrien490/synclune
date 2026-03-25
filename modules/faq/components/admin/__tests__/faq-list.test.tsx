@@ -5,10 +5,15 @@ import { Suspense } from "react";
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
-const { mockOpenDialog, mockOpenAlert, mockReorder } = vi.hoisted(() => ({
+const { mockOpenDialog, mockOpenAlert, mockReorder, mockUseSortable } = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlert: vi.fn(),
 	mockReorder: vi.fn(),
+	mockUseSortable: vi.fn(() => ({
+		ref: vi.fn(),
+		handleRef: vi.fn(),
+		isDragSource: false,
+	})),
 }));
 
 // ---------------------------------------------------------------------------
@@ -70,11 +75,52 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-// ---------------------------------------------------------------------------
-// We need to mock React.use() for the promise-based pattern
-// ---------------------------------------------------------------------------
+vi.mock("@dnd-kit/react/sortable", () => ({
+	useSortable: mockUseSortable,
+}));
 
+vi.mock("@dnd-kit/react", () => ({
+	DragDropProvider: ({
+		children,
+		onDragEnd,
+		onDragStart,
+	}: {
+		children: React.ReactNode;
+		onDragEnd?: (event: Record<string, unknown>) => void;
+		onDragStart?: () => void;
+	}) => (
+		<div
+			data-testid="drag-drop-provider"
+			data-on-drag-end={onDragEnd ? "true" : undefined}
+			data-on-drag-start={onDragStart ? "true" : undefined}
+		>
+			{children}
+		</div>
+	),
+	DragOverlay: ({ children }: { children: (source: { id: string }) => React.ReactNode }) => (
+		<div data-testid="drag-overlay">{typeof children === "function" ? null : children}</div>
+	),
+	KeyboardSensor: class KeyboardSensor {},
+	PointerSensor: {
+		configure: vi.fn(() => ({})),
+	},
+}));
+
+vi.mock("@dnd-kit/dom", () => ({
+	PointerActivationConstraints: {
+		Distance: class Distance {
+			constructor(readonly config: Record<string, unknown>) {}
+		},
+	},
+}));
+
+vi.mock("@dnd-kit/helpers", async (importOriginal) => {
+	return await importOriginal();
+});
+
+// ---------------------------------------------------------------------------
 // Import after mocks
+// ---------------------------------------------------------------------------
 import { FaqList } from "../faq-list";
 import type { FaqListItem } from "../../../types/faq.types";
 
@@ -146,6 +192,11 @@ async function renderFaqList(items: FaqListItem[]) {
 describe("FaqList", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockUseSortable.mockReturnValue({
+			ref: vi.fn(),
+			handleRef: vi.fn(),
+			isDragSource: false,
+		});
 	});
 
 	afterEach(() => {
@@ -191,36 +242,52 @@ describe("FaqList", () => {
 	});
 
 	// -----------------------------------------------------------------------
-	// Drag & drop (native HTML5)
+	// dnd-kit integration
 	// -----------------------------------------------------------------------
-	describe("native drag and drop", () => {
-		it("marks each item as draggable", async () => {
+	describe("dnd-kit integration", () => {
+		it("wraps items in DragDropProvider", async () => {
 			await renderFaqList([faq1, faq2]);
 
-			const items = screen.getByText("What is Synclune?").closest("[draggable]");
-			expect(items).toHaveAttribute("draggable", "true");
+			expect(screen.getByTestId("drag-drop-provider")).toBeInTheDocument();
 		});
 
-		it("applies opacity on drag start", async () => {
+		it("renders DragOverlay", async () => {
 			await renderFaqList([faq1, faq2]);
 
-			const item = screen.getByText("What is Synclune?").closest("[draggable]")!;
-			fireEvent.dragStart(item);
+			expect(screen.getByTestId("drag-overlay")).toBeInTheDocument();
+		});
 
+		it("passes correct id and index to useSortable", async () => {
+			await renderFaqList([faq1, faq2]);
+
+			expect(mockUseSortable).toHaveBeenCalledWith(
+				expect.objectContaining({ id: "faq-1", index: 0 }),
+			);
+			expect(mockUseSortable).toHaveBeenCalledWith(
+				expect.objectContaining({ id: "faq-2", index: 1 }),
+			);
+		});
+
+		it("applies opacity when isDragSource is true", async () => {
+			mockUseSortable.mockReturnValue({
+				ref: vi.fn(),
+				handleRef: vi.fn(),
+				isDragSource: true,
+			});
+
+			await renderFaqList([faq1]);
+
+			// The outer sortable container has bg-card class
+			const item = screen.getByText("What is Synclune?").closest("[class*='bg-card']")!;
 			expect(item.className).toContain("opacity-50");
 		});
 
-		it("calls reorder on drag end", async () => {
+		it("configures event handlers on provider", async () => {
 			await renderFaqList([faq1, faq2]);
 
-			const item1 = screen.getByText("What is Synclune?").closest("[draggable]")!;
-			fireEvent.dragStart(item1);
-			fireEvent.dragEnd(item1);
-
-			expect(mockReorder).toHaveBeenCalledWith([
-				{ id: "faq-1", position: 0 },
-				{ id: "faq-2", position: 1 },
-			]);
+			const provider = screen.getByTestId("drag-drop-provider");
+			expect(provider).toHaveAttribute("data-on-drag-end", "true");
+			expect(provider).toHaveAttribute("data-on-drag-start", "true");
 		});
 	});
 
@@ -236,10 +303,25 @@ describe("FaqList", () => {
 			expect(liveRegion?.getAttribute("aria-atomic")).toBe("true");
 		});
 
-		it("drag handle has aria-label", async () => {
+		it("has drag instructions for screen readers", async () => {
 			await renderFaqList([faq1]);
 
-			expect(screen.getByLabelText("Réordonner")).toBeInTheDocument();
+			const instructions = document.getElementById("faq-drag-instructions");
+			expect(instructions).toBeInTheDocument();
+			expect(instructions?.textContent).toContain("Espace ou Entrée");
+		});
+
+		it("drag handle has contextual aria-label with question text", async () => {
+			await renderFaqList([faq1]);
+
+			expect(screen.getByLabelText('Réordonner "What is Synclune?"')).toBeInTheDocument();
+		});
+
+		it("drag handle has aria-describedby pointing to instructions", async () => {
+			await renderFaqList([faq1]);
+
+			const handle = screen.getByLabelText('Réordonner "What is Synclune?"');
+			expect(handle).toHaveAttribute("aria-describedby", "faq-drag-instructions");
 		});
 
 		it("move up button has aria-label with question text", async () => {

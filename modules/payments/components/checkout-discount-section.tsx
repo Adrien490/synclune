@@ -11,7 +11,7 @@ import {
 	CollapsibleTrigger,
 } from "@/shared/components/ui/collapsible";
 import { cn } from "@/shared/utils/cn";
-import { Check, ChevronRight, Loader2, X } from "lucide-react";
+import { Check, ChevronRight, LoaderCircle, X } from "lucide-react";
 
 interface CheckoutDiscountSectionProps {
 	form: CheckoutFormInstance;
@@ -104,7 +104,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 														onClick={() => field.handleBlur()}
 													>
 														{field.state.meta.isValidating ? (
-															<Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+															<LoaderCircle className="h-4 w-4 motion-safe:animate-spin" />
 														) : (
 															"Appliquer"
 														)}

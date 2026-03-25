@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Trash2, Loader2 } from "lucide-react";
+import { Send, Trash2, LoaderCircle } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -102,7 +102,7 @@ export function ReviewResponseForm({
 				<Button type="submit" disabled={isPending || !isValid} className="flex-1">
 					{isPending ? (
 						<>
-							<Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+							<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
 							{existingResponse ? "Modification..." : "Envoi..."}
 						</>
 					) : (
@@ -143,7 +143,7 @@ export function ReviewResponseForm({
 								>
 									{isPending ? (
 										<>
-											<Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+											<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
 											Suppression...
 										</>
 									) : (

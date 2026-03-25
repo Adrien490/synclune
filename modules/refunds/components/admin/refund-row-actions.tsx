@@ -10,7 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Check, CreditCard, Eye, MoreVertical, XCircle, Trash2 } from "lucide-react";
+import { Check, CreditCard, Eye, EllipsisVertical, CircleX, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { APPROVE_REFUND_DIALOG_ID } from "./approve-refund-alert-dialog";
 import { PROCESS_REFUND_DIALOG_ID } from "./process-refund-alert-dialog";
@@ -80,7 +80,7 @@ export function RefundRowActions({ refund }: RefundRowActionsProps) {
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions"
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
@@ -112,7 +112,7 @@ export function RefundRowActions({ refund }: RefundRowActionsProps) {
 					<>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={handleReject} className="text-destructive">
-							<XCircle className="h-4 w-4" />
+							<CircleX className="h-4 w-4" />
 							Refuser
 						</DropdownMenuItem>
 					</>

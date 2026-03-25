@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
 
@@ -96,7 +96,7 @@ export function ArchiveCollectionAlertDialog() {
 							aria-busy={isPending}
 							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
 						>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending
 								? isArchiving
 									? "Archivage..."

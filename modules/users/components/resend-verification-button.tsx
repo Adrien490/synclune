@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { Loader2, Mail } from "lucide-react";
+import { LoaderCircle, Mail } from "lucide-react";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
 import { useState, useEffect, useEffectEvent } from "react";
 import { getResendVerificationCooldownKey } from "@/shared/constants/storage-keys";
@@ -81,7 +81,7 @@ export function ResendVerificationButton({ email }: ResendVerificationButtonProp
 		>
 			{isPending ? (
 				<>
-					<Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
+					<LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />
 					Envoi...
 				</>
 			) : cooldown > 0 ? (

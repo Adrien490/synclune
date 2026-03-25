@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDeleteCollection } from "@/modules/collections/hooks/use-delete-collection";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const DELETE_COLLECTION_DIALOG_ID = "delete-collection";
 
@@ -75,7 +75,7 @@ export function DeleteCollectionAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

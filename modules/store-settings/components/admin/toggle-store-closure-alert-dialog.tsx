@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 import {
 	AlertDialog,
@@ -86,7 +86,7 @@ export function ToggleStoreClosureAlertDialog({
 							aria-busy={isPending}
 							className={isClosing ? buttonVariants({ variant: "destructive" }) : undefined}
 						>
-							{isPending && <Loader2 className="mr-2 animate-spin" />}
+							{isPending && <LoaderCircle className="mr-2 animate-spin" />}
 							{isPending
 								? "Enregistrement..."
 								: isClosing

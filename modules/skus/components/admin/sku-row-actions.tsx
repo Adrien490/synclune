@@ -17,7 +17,7 @@ import {
 	Check,
 	Copy,
 	DollarSign,
-	MoreVertical,
+	EllipsisVertical,
 	Package,
 	Pencil,
 	Power,
@@ -99,7 +99,7 @@ export function ProductSkuRowActions({
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions pour cette variante"
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 					<span className="sr-only">Ouvrir le menu d'actions</span>
 				</Button>
 			</DropdownMenuTrigger>

@@ -11,9 +11,37 @@ interface TableProps extends React.ComponentProps<"table"> {
 	striped?: boolean;
 	/** Caption accessible décrivant le contenu du tableau (WCAG 1.3.1) */
 	caption?: string;
+	/** Skip the outer role="region" wrapper (use when already inside a TableScrollContainer) */
+	noRegion?: boolean;
 }
 
-function Table({ className, stickyHeader, striped, caption, children, ...props }: TableProps) {
+function Table({
+	className,
+	stickyHeader,
+	striped,
+	caption,
+	noRegion,
+	children,
+	...props
+}: TableProps) {
+	const tableElement = (
+		<table
+			data-slot="table"
+			data-striped={striped ?? undefined}
+			className={cn(
+				"w-full caption-bottom text-sm",
+				striped && "[&_tbody_tr:nth-child(even)]:bg-muted/30",
+				className,
+			)}
+			{...props}
+		>
+			{caption && <TableCaption>{caption}</TableCaption>}
+			{children}
+		</table>
+	);
+
+	if (noRegion) return tableElement;
+
 	return (
 		<div
 			data-slot="table-container"
@@ -27,19 +55,7 @@ function Table({ className, stickyHeader, striped, caption, children, ...props }
 				stickyHeader && "max-h-[70vh] overflow-y-auto",
 			)}
 		>
-			<table
-				data-slot="table"
-				data-striped={striped ?? undefined}
-				className={cn(
-					"w-full caption-bottom text-sm",
-					striped && "[&_tbody_tr:nth-child(even)]:bg-muted/30",
-					className,
-				)}
-				{...props}
-			>
-				{caption && <TableCaption>{caption}</TableCaption>}
-				{children}
-			</table>
+			{tableElement}
 		</div>
 	);
 }

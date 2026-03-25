@@ -6,7 +6,7 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 import { HandDrawnUnderline } from "@/shared/components/animations/hand-drawn-accent";
 import { PostHogTrack } from "@/shared/components/posthog-track";
-import { AlertTriangle } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckoutForm } from "@/modules/payments/components/checkout-form";
@@ -61,7 +61,7 @@ export default async function CheckoutPage() {
 							</h1>
 						</div>
 						<Alert variant="destructive" className="mb-6">
-							<AlertTriangle className="h-4 w-4" />
+							<TriangleAlert className="h-4 w-4" />
 							<AlertTitle>Un petit ajustement est nécessaire</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">

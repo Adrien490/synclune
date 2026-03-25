@@ -3,7 +3,7 @@
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { useCancelAccountDeletion } from "@/modules/users/hooks/use-cancel-account-deletion";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { TriangleAlert, LoaderCircle } from "lucide-react";
 
 interface CancelDeletionBannerProps {
 	daysRemaining: number;
@@ -14,7 +14,7 @@ export function CancelDeletionBanner({ daysRemaining }: CancelDeletionBannerProp
 
 	return (
 		<Alert variant="destructive">
-			<AlertTriangle className="size-4" />
+			<TriangleAlert className="size-4" />
 			<AlertTitle>Suppression programmée</AlertTitle>
 			<AlertDescription className="space-y-3">
 				<p>
@@ -26,7 +26,7 @@ export function CancelDeletionBanner({ daysRemaining }: CancelDeletionBannerProp
 				</p>
 				<form action={action}>
 					<Button type="submit" variant="outline" size="sm" disabled={isPending}>
-						{isPending && <Loader2 className="animate-spin" />}
+						{isPending && <LoaderCircle className="animate-spin" />}
 						{isPending ? "Annulation..." : "Annuler la suppression"}
 					</Button>
 				</form>

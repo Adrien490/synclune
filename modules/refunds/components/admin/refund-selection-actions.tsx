@@ -20,7 +20,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkApproveRefunds } from "@/modules/refunds/hooks/use-bulk-approve-refunds";
 import { useBulkRejectRefunds } from "@/modules/refunds/hooks/use-bulk-reject-refunds";
-import { CheckCircle2, Loader2, MoreVertical, XCircle } from "lucide-react";
+import { CircleCheck, LoaderCircle, EllipsisVertical, CircleX } from "lucide-react";
 import { useState } from "react";
 
 export function RefundSelectionActions() {
@@ -53,17 +53,17 @@ export function RefundSelectionActions() {
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
 						<span className="sr-only">Ouvrir le menu</span>
-						<MoreVertical className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">
 					<DropdownMenuItem onClick={() => setApproveDialogOpen(true)}>
-						<CheckCircle2 className="h-4 w-4" />
+						<CircleCheck className="h-4 w-4" />
 						Approuver
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem onClick={() => setRejectDialogOpen(true)} variant="destructive">
-						<XCircle className="h-4 w-4" />
+						<CircleX className="h-4 w-4" />
 						Refuser
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -94,12 +94,12 @@ export function RefundSelectionActions() {
 							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isApprovePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 										Approbation...
 									</>
 								) : (
 									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 h-4 w-4" />
 										Approuver
 									</>
 								)}
@@ -134,12 +134,12 @@ export function RefundSelectionActions() {
 							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isRejectPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 										Rejet...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Refuser
 									</>
 								)}

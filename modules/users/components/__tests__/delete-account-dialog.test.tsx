@@ -19,7 +19,7 @@ vi.mock("@/modules/users/constants/user.constants", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Loader2: () => <span data-testid="loader-icon" />,
+	LoaderCircle: () => <span data-testid="loader-icon" />,
 }));
 
 // Render AlertDialog without portal behavior so content is always visible

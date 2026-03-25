@@ -13,7 +13,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkDeleteProductTypes } from "@/modules/product-types/hooks/use-bulk-delete-product-types";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const BULK_DELETE_PRODUCT_TYPES_DIALOG_ID = "bulk-delete-product-types";
 
@@ -67,7 +67,7 @@ export function BulkDeleteProductTypesAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="motion-safe:animate-spin" />}
+							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

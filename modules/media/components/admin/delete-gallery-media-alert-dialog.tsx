@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFile } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-file";
 import { startTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const DELETE_GALLERY_MEDIA_DIALOG_ID = "delete-gallery-media";
 
@@ -83,7 +83,7 @@ export function DeleteGalleryMediaAlertDialog() {
 						aria-busy={isPending}
 						className="w-full sm:w-auto"
 					>
-						{isPending && <Loader2 className="motion-safe:animate-spin" />}
+						{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

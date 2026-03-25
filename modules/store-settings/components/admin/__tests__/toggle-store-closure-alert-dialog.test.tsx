@@ -84,7 +84,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	Loader2: ({ className }: { className?: string }) => (
+	LoaderCircle: ({ className }: { className?: string }) => (
 		<span data-testid="loader" className={className} />
 	),
 }));

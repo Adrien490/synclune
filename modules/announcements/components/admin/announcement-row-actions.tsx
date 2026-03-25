@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit, MoreVertical, Power, PowerOff, Trash2 } from "lucide-react";
+import { SquarePen, EllipsisVertical, Power, PowerOff, Trash2 } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -54,12 +54,12 @@ export function AnnouncementRowActions({ announcement }: AnnouncementRowActionsP
 					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
 					aria-label={`Actions pour l'annonce`}
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuItem onClick={handleEdit}>
-					<Edit className="h-4 w-4" />
+					<SquarePen className="h-4 w-4" />
 					Éditer
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={handleToggle} disabled={isToggling}>

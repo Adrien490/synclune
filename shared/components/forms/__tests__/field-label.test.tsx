@@ -33,7 +33,7 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	HelpCircle: () => <svg data-testid="help-icon" />,
+	CircleHelp: () => <svg data-testid="help-icon" />,
 }));
 
 // ============================================================================

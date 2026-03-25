@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import {
 	AlertDialog,
@@ -64,7 +64,7 @@ export function LogoutAlertDialog({
 							disabled={isPending || isLoggedOut}
 							aria-busy={isPending || isLoggedOut}
 						>
-							{(isPending || isLoggedOut) && <Loader2 className="motion-safe:animate-spin" />}
+							{(isPending || isLoggedOut) && <LoaderCircle className="motion-safe:animate-spin" />}
 							{isLoggedOut ? "Déconnecté !" : isPending ? "Déconnexion..." : "Se déconnecter"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

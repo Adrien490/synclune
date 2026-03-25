@@ -19,8 +19,8 @@ import {
 	Archive,
 	ArchiveRestore,
 	Eye,
-	FileEdit,
-	MoreVertical,
+	FilePenLine,
+	EllipsisVertical,
 	Package,
 	Pencil,
 	Trash2,
@@ -90,7 +90,7 @@ export function CollectionRowActions({
 					aria-label="Actions pour cette collection"
 				>
 					<span className="sr-only">Ouvrir le menu d'actions</span>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-50">
@@ -136,7 +136,7 @@ export function CollectionRowActions({
 						{/* Changer statut - Uniquement DRAFT/PUBLIC */}
 						<DropdownMenuSub>
 							<DropdownMenuSubTrigger>
-								<FileEdit className="h-4 w-4" />
+								<FilePenLine className="h-4 w-4" />
 								<span>Changer statut</span>
 							</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>

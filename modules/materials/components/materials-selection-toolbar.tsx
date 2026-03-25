@@ -21,7 +21,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteMaterials } from "@/modules/materials/hooks/use-bulk-delete-materials";
 import { useBulkToggleMaterialStatus } from "@/modules/materials/hooks/use-bulk-toggle-material-status";
-import { CheckCircle2, Loader2, MoreVertical, Trash2, XCircle } from "lucide-react";
+import { CircleCheck, LoaderCircle, EllipsisVertical, Trash2, CircleX } from "lucide-react";
 import { useState } from "react";
 
 export function MaterialsSelectionToolbar() {
@@ -75,16 +75,16 @@ export function MaterialsSelectionToolbar() {
 					<DropdownMenuTrigger asChild>
 						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
 							<span className="sr-only">Ouvrir le menu</span>
-							<MoreVertical className="h-4 w-4" />
+							<EllipsisVertical className="h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-50">
 						<DropdownMenuItem onClick={handleActivateClick}>
-							<CheckCircle2 className="h-4 w-4" />
+							<CircleCheck className="h-4 w-4" />
 							Activer
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={handleDeactivateClick}>
-							<XCircle className="h-4 w-4" />
+							<CircleX className="h-4 w-4" />
 							Désactiver
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
@@ -121,7 +121,7 @@ export function MaterialsSelectionToolbar() {
 							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Suppression...
 									</>
 								) : (
@@ -162,12 +162,12 @@ export function MaterialsSelectionToolbar() {
 							<Button type="submit" disabled={isPending}>
 								{isTogglePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Activation...
 									</>
 								) : (
 									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 h-4 w-4" />
 										Activer
 									</>
 								)}
@@ -203,12 +203,12 @@ export function MaterialsSelectionToolbar() {
 							<Button type="submit" disabled={isPending}>
 								{isTogglePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Désactivation...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Désactiver
 									</>
 								)}

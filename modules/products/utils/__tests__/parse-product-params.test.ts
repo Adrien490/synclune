@@ -17,9 +17,9 @@ import { parseProductParams } from "../parse-product-params";
 describe("parseProductParams", () => {
 	// ---- Status ----
 
-	it("defaults status to PUBLIC when not provided", () => {
+	it("defaults status to undefined (all) when not provided", () => {
 		const result = parseProductParams({});
-		expect(result.status).toBe("PUBLIC");
+		expect(result.status).toBeUndefined();
 	});
 
 	it("returns undefined status for 'all'", () => {
@@ -42,9 +42,9 @@ describe("parseProductParams", () => {
 		expect(result.status).toBe("ARCHIVED");
 	});
 
-	it("falls back to PUBLIC for invalid status", () => {
+	it("falls back to undefined for invalid status", () => {
 		const result = parseProductParams({ status: "INVALID" });
-		expect(result.status).toBe("PUBLIC");
+		expect(result.status).toBeUndefined();
 	});
 
 	it("uses first element when status is an array", () => {

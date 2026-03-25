@@ -25,14 +25,14 @@ import { useBulkDeleteSkus } from "@/modules/skus/hooks/use-bulk-delete-skus";
 import { BULK_ADJUST_STOCK_DIALOG_ID } from "./bulk-adjust-stock-dialog";
 import { BULK_UPDATE_PRICE_DIALOG_ID } from "./bulk-update-price-dialog";
 import {
-	CheckCircle,
+	CircleCheck,
 	DollarSign,
 	FileDown,
-	Loader2,
-	MoreVertical as MoreVerticalIcon,
+	LoaderCircle,
+	EllipsisVertical as MoreVerticalIcon,
 	Package,
 	Trash2,
-	XCircle,
+	CircleX,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -144,12 +144,12 @@ export function ProductVariantSelectionActions() {
 					<DropdownMenuSeparator />
 
 					<DropdownMenuItem onClick={handleActivate} disabled={isActivating}>
-						<CheckCircle className="h-4 w-4" />
+						<CircleCheck className="h-4 w-4" />
 						Activer
 					</DropdownMenuItem>
 
 					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
-						<XCircle className="h-4 w-4" />
+						<CircleX className="h-4 w-4" />
 						Désactiver
 					</DropdownMenuItem>
 
@@ -186,7 +186,7 @@ export function ProductVariantSelectionActions() {
 						<Button onClick={() => deleteSkus(selectedItems)} disabled={isDeleting}>
 							{isDeleting ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+									<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 									Suppression...
 								</>
 							) : (

@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { ActionStatus } from "@/shared/types/server-action";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { CircleAlert, CircleCheck } from "lucide-react";
 import { useState } from "react";
 import { useChangePassword } from "@/modules/auth/hooks/use-change-password";
 
@@ -33,12 +33,12 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 				<>
 					{state.status === ActionStatus.SUCCESS ? (
 						<Alert>
-							<CheckCircle2 />
+							<CircleCheck />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					) : (
 						<Alert variant="destructive">
-							<AlertCircle />
+							<CircleAlert />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}

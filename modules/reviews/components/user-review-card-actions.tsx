@@ -1,6 +1,6 @@
 "use client";
 
-import { Edit2, Trash2 } from "lucide-react";
+import { PenLine, Trash2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -28,7 +28,7 @@ export function UserReviewCardActions({ review }: UserReviewCardActionsProps) {
 				onClick={() => editDialog.open({ review })}
 				aria-label={`Modifier l'avis sur ${review.product.title}`}
 			>
-				<Edit2 className="mr-1 size-4" aria-hidden="true" />
+				<PenLine className="mr-1 size-4" aria-hidden="true" />
 				Modifier
 			</Button>
 

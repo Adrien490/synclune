@@ -19,7 +19,7 @@ import {
 } from "@/shared/components/ui/select";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { Download, Loader2 } from "lucide-react";
+import { Download, LoaderCircle } from "lucide-react";
 import { useReducer } from "react";
 import { toast } from "sonner";
 
@@ -249,7 +249,7 @@ export function ExportOrdersButton() {
 					</Button>
 					<Button onClick={handleExport} disabled={state.isExporting}>
 						{state.isExporting ? (
-							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+							<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 						) : (
 							<Download className="mr-2 h-4 w-4" />
 						)}

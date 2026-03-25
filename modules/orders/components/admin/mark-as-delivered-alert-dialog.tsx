@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsDelivered } from "@/modules/orders/hooks/use-mark-as-delivered";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const MARK_AS_DELIVERED_DIALOG_ID = "mark-as-delivered";
 
@@ -63,7 +63,7 @@ export function MarkAsDeliveredAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Mise à jour..." : "Marquer comme livrée"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

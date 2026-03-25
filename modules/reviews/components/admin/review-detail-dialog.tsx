@@ -11,7 +11,7 @@ import {
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
 import { formatDateShort } from "@/shared/utils/dates";
-import { CheckCircle2, EyeOff, ExternalLink, MessageSquare } from "lucide-react";
+import { CircleCheck, EyeOff, ExternalLink, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -75,7 +75,7 @@ export function ReviewDetailDialog({
 								aria-label={`Statut : ${REVIEW_STATUS_LABELS[review.status]}`}
 							>
 								{isPublished ? (
-									<CheckCircle2 className="mr-1 size-3" aria-hidden="true" />
+									<CircleCheck className="mr-1 size-3" aria-hidden="true" />
 								) : (
 									<EyeOff className="mr-1 size-3" aria-hidden="true" />
 								)}

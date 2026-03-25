@@ -8,7 +8,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CircleCheck, CircleX } from "lucide-react";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
 import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
@@ -54,7 +54,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
 					<Alert role="status" aria-live="polite">
-						<CheckCircle2 aria-hidden="true" />
+						<CircleCheck aria-hidden="true" />
 						<AlertDescription>
 							<div className="space-y-2">
 								<p>{state.message}</p>
@@ -80,7 +80,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 							role="alert"
 							aria-live="assertive"
 						>
-							<XCircle aria-hidden="true" />
+							<CircleX aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}

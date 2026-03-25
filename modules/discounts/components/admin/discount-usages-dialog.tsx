@@ -24,7 +24,7 @@ import {
 } from "@/modules/discounts/data/admin/get-discount-usages";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ExternalLink, Loader2, Receipt } from "lucide-react";
+import { ExternalLink, LoaderCircle, Receipt } from "lucide-react";
 import Link from "next/link";
 
 export const DISCOUNT_USAGES_DIALOG_ID = "discount-usages";
@@ -111,7 +111,7 @@ export function DiscountUsagesDialog() {
 				<div className="flex-1 overflow-auto">
 					{isLoading ? (
 						<div className="flex items-center justify-center py-12">
-							<Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+							<LoaderCircle className="text-muted-foreground h-6 w-6 animate-spin" />
 						</div>
 					) : error ? (
 						<div className="text-destructive py-12 text-center">{error}</div>

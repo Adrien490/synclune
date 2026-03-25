@@ -7,7 +7,7 @@ import { FieldGroup, FieldSet } from "@/shared/components/ui/field";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
-import { XCircle, CheckCircle2, Mail, Loader2 } from "lucide-react";
+import { CircleX, CircleCheck, Mail, LoaderCircle } from "lucide-react";
 import { useResendVerificationEmail } from "@/modules/auth/hooks/use-resend-verification-email";
 import { useEffect, useRef } from "react";
 
@@ -47,7 +47,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
 					<Alert role="status" aria-live="polite">
-						<CheckCircle2 aria-hidden="true" />
+						<CircleCheck aria-hidden="true" />
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
@@ -64,7 +64,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 							role="alert"
 							aria-live="assertive"
 						>
-							<XCircle aria-hidden="true" />
+							<CircleX aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}
@@ -106,7 +106,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 							type="submit"
 						>
 							{isPending ? (
-								<Loader2 className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+								<LoaderCircle className="h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
 							) : (
 								<Mail className="h-4 w-4" aria-hidden="true" />
 							)}

@@ -5,17 +5,17 @@ import { fr } from "date-fns/locale";
 import Link from "next/link";
 import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import {
-	CheckCircle,
+	CircleCheck,
 	CreditCard,
 	Edit,
 	Mail,
-	MoreHorizontal,
+	Ellipsis,
 	PackageX,
 	RotateCcw,
 	StickyNote,
 	Truck,
 	Undo2,
-	XCircle,
+	CircleX,
 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -159,7 +159,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				)}
 				{permissions.canMarkAsDelivered && (
 					<Button size="sm" onClick={handleMarkAsDelivered}>
-						<CheckCircle className="h-4 w-4" aria-hidden="true" />
+						<CircleCheck className="h-4 w-4" aria-hidden="true" />
 						Marquer livrée
 					</Button>
 				)}
@@ -168,7 +168,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" size="sm">
-							<MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+							<Ellipsis className="h-4 w-4" aria-hidden="true" />
 							<span className="sr-only">Plus d'actions</span>
 						</Button>
 					</DropdownMenuTrigger>
@@ -216,7 +216,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 								onClick={handleCancel}
 								className="text-destructive focus:text-destructive"
 							>
-								<XCircle className="h-4 w-4" aria-hidden="true" />
+								<CircleX className="h-4 w-4" aria-hidden="true" />
 								Annuler la commande
 							</DropdownMenuItem>
 						)}

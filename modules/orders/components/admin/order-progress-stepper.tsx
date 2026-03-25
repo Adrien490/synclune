@@ -3,7 +3,7 @@
 import { OrderStatus, PaymentStatus } from "@/app/generated/prisma/browser";
 import { Badge } from "@/shared/components/ui/badge";
 import { cn } from "@/shared/utils/cn";
-import { Clock, Package, Truck, CheckCircle, XCircle } from "lucide-react";
+import { Clock, Package, Truck, CircleCheck, CircleX } from "lucide-react";
 
 // ============================================================================
 // TYPES
@@ -28,7 +28,7 @@ const STEPS: Step[] = [
 	{ key: OrderStatus.PENDING, label: "En attente", icon: Clock },
 	{ key: OrderStatus.PROCESSING, label: "Préparation", icon: Package },
 	{ key: OrderStatus.SHIPPED, label: "Expédiée", icon: Truck },
-	{ key: OrderStatus.DELIVERED, label: "Livrée", icon: CheckCircle },
+	{ key: OrderStatus.DELIVERED, label: "Livrée", icon: CircleCheck },
 ];
 
 const STATUS_ORDER: Record<OrderStatus, number> = {
@@ -131,7 +131,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 			{isCancelled && (
 				<div className="mt-4 flex justify-center">
 					<Badge variant="destructive" className="gap-1">
-						<XCircle className="h-3.5 w-3.5" aria-hidden="true" />
+						<CircleX className="h-3.5 w-3.5" aria-hidden="true" />
 						Commande annulée
 					</Badge>
 				</div>

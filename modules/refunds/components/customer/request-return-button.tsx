@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
-import { RotateCcw, Loader2 } from "lucide-react";
+import { RotateCcw, LoaderCircle } from "lucide-react";
 import { RefundReason } from "@/app/generated/prisma/enums";
 import { requestReturn } from "@/modules/refunds/actions/request-return";
 import { REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
@@ -134,7 +134,7 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 							<Button type="submit" disabled={!reason || isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 										Envoi...
 									</>
 								) : (

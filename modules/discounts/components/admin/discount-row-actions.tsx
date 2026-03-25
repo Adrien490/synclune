@@ -10,7 +10,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Copy, Eye, MoreVertical, Pencil, Trash2, Power, PowerOff } from "lucide-react";
+import { Copy, Eye, EllipsisVertical, Pencil, Trash2, Power, PowerOff } from "lucide-react";
 import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
 import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
 import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
@@ -47,7 +47,7 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions"
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">

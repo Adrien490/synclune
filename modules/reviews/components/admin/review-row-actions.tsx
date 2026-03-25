@@ -17,7 +17,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Eye, EyeOff, ExternalLink, Loader2, MoreVertical } from "lucide-react";
+import { Eye, EyeOff, ExternalLink, LoaderCircle, EllipsisVertical } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
@@ -55,7 +55,7 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 						className="h-11 w-11 p-0 transition-transform active:scale-95"
 						aria-label="Actions"
 					>
-						<MoreVertical className="h-4 w-4" aria-hidden="true" />
+						<EllipsisVertical className="h-4 w-4" aria-hidden="true" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
@@ -143,7 +143,7 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 						>
 							{isPending ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+									<LoaderCircle className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
 									{isPublished ? "Masquage..." : "Publication..."}
 								</>
 							) : (

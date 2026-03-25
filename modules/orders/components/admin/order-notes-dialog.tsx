@@ -14,7 +14,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useOrderNotes } from "@/modules/orders/hooks/use-order-notes";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Loader2, MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";
+import { LoaderCircle, MessageSquarePlus, StickyNote, Trash2 } from "lucide-react";
 
 export const ORDER_NOTES_DIALOG_ID = "order-notes";
 
@@ -86,7 +86,7 @@ export function OrderNotesDialog() {
 					<div className="flex justify-end">
 						<Button onClick={handleAddNote} disabled={isPendingAdd || !newNote.trim()} size="sm">
 							{isPendingAdd ? (
-								<Loader2 className="h-4 w-4 animate-spin" />
+								<LoaderCircle className="h-4 w-4 animate-spin" />
 							) : (
 								<MessageSquarePlus className="h-4 w-4" />
 							)}
@@ -99,7 +99,7 @@ export function OrderNotesDialog() {
 				<div className="flex-1 space-y-3 overflow-auto py-4">
 					{isPendingFetch ? (
 						<div className="flex items-center justify-center py-8">
-							<Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+							<LoaderCircle className="text-muted-foreground h-6 w-6 animate-spin" />
 						</div>
 					) : fetchError ? (
 						<div className="text-destructive py-8 text-center">{fetchError}</div>
@@ -132,7 +132,7 @@ export function OrderNotesDialog() {
 										disabled={isPendingDelete}
 									>
 										{isPendingDelete ? (
-											<Loader2 className="h-3.5 w-3.5 animate-spin" />
+											<LoaderCircle className="h-3.5 w-3.5 animate-spin" />
 										) : (
 											<Trash2 className="h-3.5 w-3.5" />
 										)}

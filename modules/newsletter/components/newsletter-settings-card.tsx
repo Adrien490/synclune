@@ -2,7 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { toggleNewsletter } from "@/modules/newsletter/actions/toggle-newsletter";
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, LoaderCircle } from "lucide-react";
 import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 
 interface NewsletterSettingsCardProps {
@@ -41,7 +41,7 @@ export function NewsletterSettingsCard({ isSubscribed }: NewsletterSettingsCardP
 							disabled={isPending}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 							) : isSubscribed ? (
 								<BellOff className="mr-2 h-4 w-4" />
 							) : (

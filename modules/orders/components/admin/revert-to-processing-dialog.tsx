@@ -15,7 +15,7 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRevertToProcessing } from "@/modules/orders/hooks/use-revert-to-processing";
 import { useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const REVERT_TO_PROCESSING_DIALOG_ID = "revert-to-processing";
 
@@ -98,7 +98,7 @@ export function RevertToProcessingDialog() {
 						onClick={handleSubmit}
 						disabled={!reason.trim() || isPending}
 					>
-						{isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+						{isPending && <LoaderCircle className="h-4 w-4 animate-spin" />}
 						Annuler l'expédition
 					</Button>
 				</ResponsiveDialogFooter>

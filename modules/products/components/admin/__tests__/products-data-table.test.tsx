@@ -93,13 +93,33 @@ vi.mock("@/shared/components/table-selection-cell", () => ({
 	},
 }));
 
+vi.mock("../product-image-cell", () => ({
+	ProductImageCell: ({ images, productTitle }: { images: unknown[]; productTitle: string }) => {
+		const primaryImage =
+			(images as { url: string; altText: string | null; isPrimary: boolean }[]).find(
+				(img) => img.isPrimary,
+			) ?? (images as { url: string; altText: string | null }[])[0];
+		return primaryImage ? (
+			// eslint-disable-next-line @next/next/no-img-element
+			<img src={primaryImage.url} alt={primaryImage.altText ?? productTitle} />
+		) : (
+			<div aria-label="Aucune image disponible" />
+		);
+	},
+}));
+
 vi.mock("@/shared/components/table-scroll-container", () => ({
 	TableScrollContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@/shared/components/data-table/table-empty-state", () => ({
 	TableEmptyState: (props: Record<string, unknown>) => (
-		<div data-testid="empty-state" data-title={props.title} />
+		<div
+			data-testid="empty-state"
+			data-title={props.title}
+			data-has-active-filters={props.hasActiveFilters?.toString()}
+			data-no-items-description={props.noItemsDescription}
+		/>
 	),
 }));
 
@@ -371,6 +391,31 @@ describe("ProductsDataTable", () => {
 			expect(stockBadge).toHaveAttribute("aria-label", "Stock épuisé");
 		});
 
+		it("renders destructive badge for critical stock (<=1)", async () => {
+			const product = createProduct({
+				skus: [
+					{
+						id: "sku-1",
+						isDefault: true,
+						isActive: true,
+						priceInclTax: 4900,
+						compareAtPrice: null,
+						inventory: 1,
+						images: [],
+					},
+				],
+			});
+			const Component = await ProductsDataTable({
+				productsPromise: createProductsPromise([product]),
+				perPage: 10,
+			});
+			render(Component);
+
+			const stockBadge = screen.getByTestId("badge-destructive");
+			expect(stockBadge).toHaveTextContent("1");
+			expect(stockBadge).toHaveAttribute("aria-label", "Stock critique : 1 en stock");
+		});
+
 		it("renders warning badge for low stock (<=3)", async () => {
 			const product = createProduct({
 				skus: [
@@ -619,6 +664,98 @@ describe("ProductsDataTable", () => {
 
 	// --------------------------------------------------------------------------
 	// Primary image selection
+	// --------------------------------------------------------------------------
+
+	// --------------------------------------------------------------------------
+	// Empty state - hasActiveFilters
+	// --------------------------------------------------------------------------
+
+	describe("empty state with filters", () => {
+		it("passes hasActiveFilters to TableEmptyState", async () => {
+			const Component = await ProductsDataTable({
+				productsPromise: createProductsPromise([]),
+				perPage: 10,
+				hasActiveFilters: true,
+			});
+			render(Component);
+
+			const emptyState = screen.getByTestId("empty-state");
+			expect(emptyState).toHaveAttribute("data-has-active-filters", "true");
+		});
+
+		it("passes hasActiveFilters=false when no filters active", async () => {
+			const Component = await ProductsDataTable({
+				productsPromise: createProductsPromise([]),
+				perPage: 10,
+				hasActiveFilters: false,
+			});
+			render(Component);
+
+			const emptyState = screen.getByTestId("empty-state");
+			expect(emptyState).toHaveAttribute("data-has-active-filters", "false");
+			expect(emptyState).toHaveAttribute(
+				"data-no-items-description",
+				"Vous n'avez pas encore de bijou dans le catalogue.",
+			);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Zero SKUs edge case
+	// --------------------------------------------------------------------------
+
+	describe("zero SKUs edge case", () => {
+		it("renders em-dash for price when product has no SKUs", async () => {
+			const product = createProduct({
+				skus: [],
+				_count: { skus: 0 },
+			});
+			const Component = await ProductsDataTable({
+				productsPromise: createProductsPromise([product]),
+				perPage: 10,
+			});
+			render(Component);
+
+			const priceCell = screen.getByLabelText("Prix non défini");
+			expect(priceCell).toHaveTextContent("—");
+		});
+
+		it("renders zero stock for product with no SKUs", async () => {
+			const product = createProduct({
+				skus: [],
+				_count: { skus: 0 },
+			});
+			const Component = await ProductsDataTable({
+				productsPromise: createProductsPromise([product]),
+				perPage: 10,
+			});
+			render(Component);
+
+			const stockBadge = screen.getByTestId("badge-destructive");
+			expect(stockBadge).toHaveTextContent("0");
+			expect(stockBadge).toHaveAttribute("aria-label", "Stock épuisé");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Caption consistency
+	// --------------------------------------------------------------------------
+
+	describe("caption", () => {
+		it("has consistent caption and aria-label", async () => {
+			const Component = await ProductsDataTable({
+				productsPromise: createProductsPromise(),
+				perPage: 10,
+			});
+			render(Component);
+
+			const table = screen.getByRole("table");
+			expect(table).toHaveAttribute("aria-label", "Liste des bijoux");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Image selection
 	// --------------------------------------------------------------------------
 
 	describe("image selection", () => {

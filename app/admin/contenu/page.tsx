@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { HelpCircle, Megaphone } from "lucide-react";
+import { CircleHelp, Megaphone } from "lucide-react";
 import { type Metadata } from "next";
 import { connection } from "next/server";
 
@@ -26,7 +26,7 @@ export default async function ContentPage() {
 					title: "FAQ",
 					description: "Gérer les questions fréquentes affichées sur la homepage",
 					href: "/admin/contenu/faq",
-					icon: HelpCircle,
+					icon: CircleHelp,
 				},
 			]}
 		/>

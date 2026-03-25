@@ -41,7 +41,7 @@ vi.mock("lucide-react", () => ({
 		"aria-hidden": ariaHidden,
 	}: {
 		className?: string;
-		"aria-hidden"?: string;
+		"aria-hidden"?: boolean | "true" | "false";
 	}) => <svg data-testid="package-icon" className={className} aria-hidden={ariaHidden} />,
 }));
 

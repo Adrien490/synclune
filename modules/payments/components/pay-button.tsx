@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { Loader2, Lock } from "lucide-react";
+import { LoaderCircle, Lock } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { confirmCheckout } from "../actions/confirm-checkout";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
@@ -112,7 +112,7 @@ export function PayButton({
 			>
 				{isProcessing ? (
 					<>
-						<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+						<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
 						<span>Traitement...</span>
 					</>
 				) : (

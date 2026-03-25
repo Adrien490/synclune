@@ -11,7 +11,7 @@ import {
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDuplicateColor } from "@/modules/colors/hooks/use-duplicate-color";
-import { Copy, Edit, ExternalLink, MoreVertical, Trash2 } from "lucide-react";
+import { Copy, SquarePen, ExternalLink, EllipsisVertical, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { COLOR_DIALOG_ID } from "./color-form-dialog";
 import { DELETE_COLOR_DIALOG_ID } from "@/modules/colors/components/admin/delete-color-alert-dialog";
@@ -60,12 +60,12 @@ export function ColorsRowActions({
 					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
 					aria-label={`Actions pour ${colorName}`}
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuItem onClick={handleEdit}>
-					<Edit className="h-4 w-4" />
+					<SquarePen className="h-4 w-4" />
 					Éditer
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={() => duplicate(colorId)} disabled={isDuplicating}>

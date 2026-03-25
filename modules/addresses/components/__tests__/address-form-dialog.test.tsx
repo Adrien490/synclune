@@ -143,8 +143,8 @@ vi.mock("@/shared/components/required-fields-note", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	CheckCircle2: () => null,
-	XCircle: () => null,
+	CircleCheck: () => null,
+	CircleX: () => null,
 }));
 
 // ============================================================================

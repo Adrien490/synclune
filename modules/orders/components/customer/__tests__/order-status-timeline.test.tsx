@@ -3,12 +3,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Mock lucide-react icons to avoid SVG rendering complexity
 vi.mock("lucide-react", () => ({
-	CheckCircle2: () => <svg data-testid="icon-check-circle" />,
+	CircleCheck: () => <svg data-testid="icon-check-circle" />,
 	Clock: () => <svg data-testid="icon-clock" />,
 	CreditCard: () => <svg data-testid="icon-credit-card" />,
 	Package: () => <svg data-testid="icon-package" />,
 	Truck: () => <svg data-testid="icon-truck" />,
-	XCircle: () => <svg data-testid="icon-x-circle" />,
+	CircleX: () => <svg data-testid="icon-x-circle" />,
 }));
 
 // Mock Badge to render children with variant as a data attribute

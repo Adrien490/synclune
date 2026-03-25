@@ -305,7 +305,7 @@ describe("CreateProductForm", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Attributs de la variante")).toBeInTheDocument();
+			expect(screen.getByText("Variante")).toBeInTheDocument();
 			expect(screen.getByText("Couleur")).toBeInTheDocument();
 			expect(screen.getByText("Matériau")).toBeInTheDocument();
 		});

@@ -11,8 +11,8 @@ import {
 	MapPin,
 	Package,
 	Truck,
-	CheckCircle2,
-	XCircle,
+	CircleCheck,
+	CircleX,
 	RotateCcw,
 } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
@@ -58,12 +58,12 @@ const ACTION_CONFIG: Record<
 	},
 	SHIPPED: { icon: Truck, color: "text-purple-500", label: "Expédiée", symbol: "→" },
 	DELIVERED: {
-		icon: CheckCircle2,
+		icon: CircleCheck,
 		color: "text-green-600",
 		label: "Livrée",
 		symbol: "✓✓",
 	},
-	CANCELLED: { icon: XCircle, color: "text-red-500", label: "Annulée", symbol: "✗" },
+	CANCELLED: { icon: CircleX, color: "text-red-500", label: "Annulée", symbol: "✗" },
 	RETURNED: {
 		icon: RotateCcw,
 		color: "text-orange-500",
@@ -101,25 +101,25 @@ const ACTION_CONFIG: Record<
 		symbol: "↩",
 	},
 	REFUND_COMPLETED: {
-		icon: CheckCircle2,
+		icon: CircleCheck,
 		color: "text-green-500",
 		label: "Remboursement confirmé",
 		symbol: "✓",
 	},
 	REFUND_FAILED: {
-		icon: XCircle,
+		icon: CircleX,
 		color: "text-red-500",
 		label: "Remboursement échoué",
 		symbol: "✗",
 	},
 	DISPUTE_OPENED: {
-		icon: XCircle,
+		icon: CircleX,
 		color: "text-red-600",
 		label: "Litige ouvert",
 		symbol: "⚠",
 	},
 	DISPUTE_RESOLVED: {
-		icon: CheckCircle2,
+		icon: CircleCheck,
 		color: "text-green-600",
 		label: "Litige résolu",
 		symbol: "✓",

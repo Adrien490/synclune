@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface BulkDeleteData {
@@ -123,7 +123,7 @@ export function BulkDeleteDialog({
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="motion-safe:animate-spin" />}
+							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 							{isPending ? pendingLabel : submitLabel}
 						</AlertDialogAction>
 					</AlertDialogFooter>

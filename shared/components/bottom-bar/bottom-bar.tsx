@@ -34,6 +34,29 @@ export const bottomBarIconClass = "size-5";
 export const bottomBarLabelClass = "text-xs font-medium truncate max-w-full";
 
 // ---------------------------------------------------------------------------
+// Center action (FAB) class constants
+// ---------------------------------------------------------------------------
+
+/** Wrapper class for a prominent center action slot (overflow-visible for FAB protrusion). */
+export const bottomBarCenterActionClass = cn(
+	"flex-1 flex flex-col items-center justify-center",
+	"relative overflow-visible",
+);
+
+/** Inner floating button/link class for center action (FAB-style). */
+export const bottomBarCenterButtonClass = cn(
+	"bg-primary text-primary-foreground",
+	"size-14 rounded-full",
+	"-mt-6 shadow-lg shadow-primary/25",
+	"flex items-center justify-center",
+	"active:scale-95 transition-transform duration-150",
+	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+);
+
+/** Label class for center action (below the floating button). */
+export const bottomBarCenterLabelClass = "text-[10px] font-semibold text-primary mt-0.5";
+
+// ---------------------------------------------------------------------------
 // ActiveDot
 // ---------------------------------------------------------------------------
 

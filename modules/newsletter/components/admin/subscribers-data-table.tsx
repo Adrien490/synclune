@@ -14,7 +14,7 @@ import {
 import { Button } from "@/shared/components/ui/button";
 import { type GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
 import { formatDateShort } from "@/shared/utils/dates";
-import { CheckCircle2, Clock, Mail, XCircle } from "lucide-react";
+import { CircleCheck, Clock, Mail, CircleX } from "lucide-react";
 import Link from "next/link";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
 export interface SubscribersDataTableProps {
@@ -70,7 +70,7 @@ export async function SubscribersDataTable({
 									<TableCell>
 										{subscriber.status === NewsletterStatus.CONFIRMED ? (
 											<span className="inline-flex items-center gap-1.5 text-sm text-green-600">
-												<CheckCircle2 className="h-4 w-4" aria-hidden="true" />
+												<CircleCheck className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.CONFIRMED]}
 											</span>
 										) : subscriber.status === NewsletterStatus.PENDING ? (
@@ -80,7 +80,7 @@ export async function SubscribersDataTable({
 											</span>
 										) : (
 											<span className="text-muted-foreground inline-flex items-center gap-1.5 text-sm">
-												<XCircle className="h-4 w-4" aria-hidden="true" />
+												<CircleX className="h-4 w-4" aria-hidden="true" />
 												{NEWSLETTER_STATUS_LABELS[NewsletterStatus.UNSUBSCRIBED]}
 											</span>
 										)}

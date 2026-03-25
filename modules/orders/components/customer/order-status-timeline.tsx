@@ -11,7 +11,7 @@ import {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/shared/utils/cn";
-import { CheckCircle2, Clock, CreditCard, Package, Truck, XCircle } from "lucide-react";
+import { CircleCheck, Clock, CreditCard, Package, Truck, CircleX } from "lucide-react";
 
 interface OrderStatusTimelineProps {
 	order: {
@@ -59,7 +59,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 		{
 			label: "Livrée",
 			date: order.actualDelivery,
-			icon: CheckCircle2,
+			icon: CircleCheck,
 			completed: order.fulfillmentStatus === "DELIVERED",
 		},
 	];
@@ -77,7 +77,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			<div className="border-border/60 border-t pt-4">
 				{isCancelled ? (
 					<div className="bg-destructive/10 flex items-center gap-3 rounded-lg p-4">
-						<XCircle className="text-destructive h-6 w-6" />
+						<CircleX className="text-destructive h-6 w-6" />
 						<div>
 							<p className="text-destructive font-medium">Commande annulée</p>
 							<p className="text-muted-foreground text-sm">Cette commande a été annulée.</p>

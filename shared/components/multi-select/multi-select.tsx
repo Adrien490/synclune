@@ -19,7 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
-import { ArrowLeftIcon, CheckIcon, ChevronDown, XCircle, XIcon } from "lucide-react";
+import { ArrowLeftIcon, CheckIcon, ChevronDown, CircleX, XIcon } from "lucide-react";
 import * as React from "react";
 import { ARIA_CLEAR_DELAY, FOCUS_RING_DURATION, multiSelectVariants } from "./constants";
 import type { MultiSelectOption, MultiSelectProps, MultiSelectRef, ScreenSize } from "./types";
@@ -569,7 +569,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												isMobile ? "h-10 w-10" : "h-6 w-6",
 											)}
 										>
-											<XCircle
+											<CircleX
 												className={cn("h-3 w-3", responsiveSettings.compactMode && "h-2.5 w-2.5")}
 											/>
 										</div>
@@ -615,7 +615,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 												isMobile ? "ml-2 h-10 w-10" : "ml-2 h-6 w-6",
 											)}
 										>
-											<XCircle
+											<CircleX
 												className={cn("h-4 w-4", responsiveSettings.compactMode && "h-3 w-3")}
 											/>
 										</div>
@@ -930,7 +930,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 															aria-label={`Retirer ${option.label} de la sélection`}
 															className="hover:bg-foreground/20 focus-visible:ring-foreground/50 -mr-1 ml-1 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden"
 														>
-															<XCircle
+															<CircleX
 																className={cn(
 																	"h-3 w-3",
 																	responsiveSettings.compactMode && "h-2.5 w-2.5",
@@ -984,7 +984,7 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 																	aria-label={`Retirer les ${overflowCount} options supplémentaires`}
 																	className="hover:bg-foreground/20 focus-visible:ring-foreground/50 ml-2 flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden"
 																>
-																	<XCircle
+																	<CircleX
 																		className={cn(
 																			"h-4 w-4",
 																			responsiveSettings.compactMode && "h-3 w-3",

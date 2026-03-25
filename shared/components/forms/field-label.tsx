@@ -9,7 +9,7 @@ import {
 	TooltipTrigger,
 } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
-import { HelpCircle } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 
 interface FieldLabelProps {
 	htmlFor?: string;
@@ -52,7 +52,7 @@ export function FieldLabel({
 								className="text-muted-foreground hover:text-foreground h-auto w-auto p-0 hover:bg-transparent"
 								aria-label="Plus d'informations"
 							>
-								<HelpCircle className="h-3.5 w-3.5" />
+								<CircleHelp className="h-3.5 w-3.5" />
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="right" className="max-w-xs">

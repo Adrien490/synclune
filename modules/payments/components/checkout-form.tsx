@@ -11,7 +11,7 @@ import type {
 	AppliedDiscount,
 	ValidateDiscountCodeReturn,
 } from "@/modules/discounts/types/discount.types";
-import { AlertCircle, Lock, WifiOff } from "lucide-react";
+import { CircleAlert, Lock, WifiOff } from "lucide-react";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import Link from "next/link";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
@@ -185,7 +185,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 							{pi.error && (
 								<Alert variant="destructive" role="alert">
-									<AlertCircle className="size-4" />
+									<CircleAlert className="size-4" />
 									<AlertDescription>{pi.error}</AlertDescription>
 								</Alert>
 							)}

@@ -14,7 +14,7 @@ import {
 } from "@/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { AlertTriangle, FolderOpen, Star } from "lucide-react";
+import { TriangleAlert, FolderOpen, Star } from "lucide-react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
@@ -154,7 +154,7 @@ export async function CollectionsDataTable({
 													<Tooltip>
 														<TooltipTrigger asChild>
 															<span className="text-amber-500">
-																<AlertTriangle className="h-4 w-4" />
+																<TriangleAlert className="h-4 w-4" />
 															</span>
 														</TooltipTrigger>
 														<TooltipContent>

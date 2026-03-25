@@ -12,7 +12,15 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDuplicateMaterial } from "@/modules/materials/hooks/use-duplicate-material";
 import { useToggleMaterialStatus } from "@/modules/materials/hooks/use-toggle-material-status";
-import { Copy, Edit, ExternalLink, MoreVertical, Power, PowerOff, Trash2 } from "lucide-react";
+import {
+	Copy,
+	SquarePen,
+	ExternalLink,
+	EllipsisVertical,
+	Power,
+	PowerOff,
+	Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { MATERIAL_DIALOG_ID } from "./material-form-dialog";
 import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
@@ -69,12 +77,12 @@ export function MaterialsRowActions({
 					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
 					aria-label={`Actions pour ${materialName}`}
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuItem onClick={handleEdit}>
-					<Edit className="h-4 w-4" />
+					<SquarePen className="h-4 w-4" />
 					Éditer
 				</DropdownMenuItem>
 				<DropdownMenuItem onClick={() => duplicate(materialId)} disabled={isDuplicating}>

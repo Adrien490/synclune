@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/shared/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { loadMoreReviews } from "../actions/load-more-reviews";
 import { ReviewCard } from "./review-card";
 import type { ReviewPublic, ReviewSortField } from "../types/review.types";
@@ -97,7 +97,7 @@ export function ReviewsLoadMore({
 					>
 						{isPending ? (
 							<>
-								<Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+								<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
 								Chargement...
 							</>
 						) : (

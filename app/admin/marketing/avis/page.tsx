@@ -3,7 +3,7 @@ import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { MessageSquare, CheckCircle2, EyeOff, Star } from "lucide-react";
+import { MessageSquare, CircleCheck, EyeOff, Star } from "lucide-react";
 import { Suspense } from "react";
 import type { Metadata } from "next";
 
@@ -104,7 +104,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 							<p className="text-muted-foreground text-sm font-medium">Publiés</p>
 							<p className="text-secondary-foreground mt-1 text-2xl font-bold">{stats.published}</p>
 						</div>
-						<CheckCircle2 className="text-secondary-foreground h-8 w-8" />
+						<CircleCheck className="text-secondary-foreground h-8 w-8" />
 					</div>
 				</div>
 

@@ -18,7 +18,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
 import { MATERIAL_DIALOG_ID } from "@/modules/materials/components/material-form-dialog";
-import { AlertCircle, Euro, ImagePlus, Info, Package, Plus, Upload } from "lucide-react";
+import { CircleAlert, Euro, ImagePlus, Info, Package, Plus, Upload } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -122,7 +122,7 @@ export function CreateProductForm({
 			{/* Global form errors (server-side) */}
 			{formErrors.length > 0 && (
 				<Alert variant="destructive" role="alert" aria-live="assertive">
-					<AlertCircle className="size-4" />
+					<CircleAlert className="size-4" />
 					<AlertDescription>
 						{formErrors.map((error, i) => (
 							<p key={i}>{String(error)}</p>
@@ -447,18 +447,7 @@ export function CreateProductForm({
 									/>
 								)}
 							</form.AppField>
-						</CardContent>
-					</Card>
-				</div>
 
-				{/* Sidebar */}
-				<div className="space-y-6">
-					{/* Card Organisation */}
-					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
-						<CardHeader className="hidden lg:grid lg:px-6">
-							<CardTitle>Organisation</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
 							<form.AppField name="typeId">
 								{(field) => (
 									<div className="space-y-2">
@@ -522,7 +511,10 @@ export function CreateProductForm({
 							</form.AppField>
 						</CardContent>
 					</Card>
+				</div>
 
+				{/* Sidebar */}
+				<div className="space-y-6">
 					{/* Card Variante */}
 					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
 						<CardHeader className="hidden lg:grid lg:px-6">

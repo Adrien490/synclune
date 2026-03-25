@@ -1,24 +1,10 @@
 "use client";
 
-import {
-	DndContext,
-	DragOverlay,
-	closestCenter,
-	KeyboardSensor,
-	PointerSensor,
-	TouchSensor,
-	useSensor,
-	useSensors,
-	type DragEndEvent,
-	type DragStartEvent,
-} from "@dnd-kit/core";
-import {
-	arrayMove,
-	SortableContext,
-	sortableKeyboardCoordinates,
-	rectSortingStrategy,
-} from "@dnd-kit/sortable";
-import { snapCenterToCursor, restrictToWindowEdges } from "@dnd-kit/modifiers";
+import { DragDropProvider, DragOverlay, KeyboardSensor, PointerSensor } from "@dnd-kit/react";
+import { PointerActivationConstraints } from "@dnd-kit/dom";
+import { RestrictToWindow } from "@dnd-kit/dom/modifiers";
+import { arrayMove } from "@dnd-kit/helpers";
+import type { DragEndEvent } from "@dnd-kit/react";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useReducedMotion } from "motion/react";
 import { Play } from "lucide-react";
@@ -71,17 +57,14 @@ export function MediaUploadGrid({
 	const { isOpen: lightboxOpen, open: openLightboxHook, close: closeLightbox } = useLightbox();
 	const [lightboxIndex, setLightboxIndex] = useState(0);
 
-	// Active drag state for DragOverlay (index for O(1) lookup)
-	const [activeIndex, setActiveIndex] = useState<number | null>(null);
-	// Bounds check: activeIndex could be out of bounds if media changes during drag
-	const activeMedia =
-		activeIndex !== null && activeIndex < media.length ? media[activeIndex] : null;
-
 	// State for accessibility announcements (aria-live)
 	const [announcement, setAnnouncement] = useState<string>("");
 
 	// State for long-press mobile hint (first visit)
 	const [showLongPressHint, setShowLongPressHint] = useState(false);
+
+	// Track if dragging for child components
+	const [isDraggingAny, setIsDraggingAny] = useState(false);
 
 	// Condition to show the hint (only when there are at least 2 medias)
 	const hasMultipleMedia = media.length > 1;
@@ -112,24 +95,6 @@ export function MediaUploadGrid({
 		}
 	}, [hasMultipleMedia]);
 
-	// Sensors for drag & drop (desktop + mobile)
-	const sensors = useSensors(
-		useSensor(PointerSensor, {
-			activationConstraint: {
-				distance: UI_DELAYS.DRAG_ACTIVATION_DISTANCE_PX,
-			},
-		}),
-		useSensor(TouchSensor, {
-			activationConstraint: {
-				delay: UI_DELAYS.LONG_PRESS_ACTIVATION_MS,
-				tolerance: UI_DELAYS.LONG_PRESS_TOLERANCE_PX,
-			},
-		}),
-		useSensor(KeyboardSensor, {
-			coordinateGetter: sortableKeyboardCoordinates,
-		}),
-	);
-
 	// Prepare slides for the lightbox
 	const slides: Slide[] = media.map((m) => {
 		if (m.mediaType === "VIDEO") {
@@ -157,56 +122,47 @@ export function MediaUploadGrid({
 	};
 
 	// Handle drag start
-	const handleDragStart = (event: DragStartEvent) => {
-		const draggedId = event.active.id as string;
-		const draggedIndex = media.findIndex((m) => m.url === draggedId);
-		setActiveIndex(draggedIndex);
-
-		// Screen reader announcement
-		const draggedMedia = media[draggedIndex];
-		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
-		setAnnouncement(
-			`${mediaType} ${draggedIndex + 1} sélectionnée. Utilisez les flèches pour déplacer.`,
-		);
+	const handleDragStart = () => {
+		setIsDraggingAny(true);
+		setAnnouncement("Élément sélectionné. Utilisez les flèches pour déplacer.");
 	};
 
 	// Handle drag end
-	const handleDragEnd = (event: DragEndEvent) => {
-		const { active, over } = event;
+	const handleDragEnd: DragEndEvent = (event) => {
+		setIsDraggingAny(false);
 
-		setActiveIndex(null);
-
-		if (over && active.id !== over.id) {
-			const oldIndex = media.findIndex((m) => m.url === active.id);
-			const newIndex = media.findIndex((m) => m.url === over.id);
-
-			// Compute the new array before validation
-			const newMedia = arrayMove(media, oldIndex, newIndex);
-
-			// Prevent a video from ending up in first position (covers all cases)
-			if (newMedia[0]?.mediaType === "VIDEO") {
-				toast.error("La première position doit être une image, pas une vidéo.");
-				setAnnouncement("Impossible de placer une vidéo en première position.");
-				return;
-			}
-
-			const draggedMedia = media[oldIndex];
-			const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
-
-			onChange(newMedia);
-
-			// Screen reader feedback
-			setAnnouncement(`${mediaType} déplacée en position ${newIndex + 1}.`);
-		} else {
-			// No change
-			setAnnouncement("");
+		if (event.canceled) {
+			setAnnouncement("Déplacement annulé.");
+			return;
 		}
-	};
 
-	// Handle drag cancel
-	const handleDragCancel = () => {
-		setActiveIndex(null);
-		setAnnouncement("Déplacement annulé.");
+		const { source, target } = event.operation;
+
+		if (!source || !target || source.id === target.id) {
+			setAnnouncement("");
+			return;
+		}
+
+		const oldIndex = media.findIndex((m) => m.url === source.id);
+		const newIndex = media.findIndex((m) => m.url === target.id);
+
+		// Compute the new array before validation
+		const newMedia = arrayMove(media, oldIndex, newIndex);
+
+		// Prevent a video from ending up in first position (covers all cases)
+		if (newMedia[0]?.mediaType === "VIDEO") {
+			toast.error("La première position doit être une image, pas une vidéo.");
+			setAnnouncement("Impossible de placer une vidéo en première position.");
+			return;
+		}
+
+		const draggedMedia = media[oldIndex];
+		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
+
+		onChange(newMedia);
+
+		// Screen reader feedback
+		setAnnouncement(`${mediaType} déplacée en position ${newIndex + 1}.`);
 	};
 
 	// Open the delete dialog
@@ -258,101 +214,109 @@ export function MediaUploadGrid({
 
 	return (
 		<>
-			<DndContext
-				sensors={sensors}
-				collisionDetection={closestCenter}
+			<DragDropProvider
+				sensors={[
+					PointerSensor.configure({
+						activationConstraints: [
+							new PointerActivationConstraints.Distance({
+								value: UI_DELAYS.DRAG_ACTIVATION_DISTANCE_PX,
+							}),
+						],
+					}),
+					KeyboardSensor,
+				]}
+				modifiers={[RestrictToWindow]}
 				onDragStart={handleDragStart}
 				onDragEnd={handleDragEnd}
-				onDragCancel={handleDragCancel}
 			>
-				<SortableContext items={media.map((m) => m.url)} strategy={rectSortingStrategy}>
-					{/* Keyboard drag & drop instructions (screen readers) */}
-					<span id="drag-instructions" className="sr-only">
-						Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer, Espace
-						ou Entrée pour déposer, Échap pour annuler.
-					</span>
+				{/* Keyboard drag & drop instructions (screen readers) */}
+				<span id="drag-instructions" className="sr-only">
+					Utilisez Espace ou Entrée pour saisir un élément, les flèches pour le déplacer, Espace ou
+					Entrée pour déposer, Échap pour annuler.
+				</span>
 
-					{/* aria-live region for drag & drop announcements */}
-					<div aria-live="polite" aria-atomic="true" className="sr-only">
-						{announcement}
-					</div>
+				{/* aria-live region for drag & drop announcements */}
+				<div aria-live="polite" aria-atomic="true" className="sr-only">
+					{announcement}
+				</div>
 
-					<div
-						className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4"
-						role="list"
-						aria-label="Médias du produit"
-					>
-						{media.map((m, index) => {
-							const isImageLoaded = loadedImages.has(m.url);
+				<div
+					className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4"
+					role="list"
+					aria-label="Médias du produit"
+				>
+					{media.map((m, index) => {
+						const isImageLoaded = loadedImages.has(m.url);
 
-							return (
-								<SortableMediaItem
-									key={m.url}
-									media={m}
-									index={index}
-									isPrimary={index === 0}
-									isImageLoaded={isImageLoaded}
-									shouldReduceMotion={shouldReduceMotion}
-									isDraggingAny={activeIndex !== null}
-									showLongPressHint={showLongPressHint && index === 1}
-									onImageLoaded={handleImageLoaded}
-									onOpenLightbox={openLightbox}
-									onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
-									onMoveUp={() => handleMoveUp(index)}
-									onMoveDown={() => handleMoveDown(index)}
-									totalCount={media.length}
-								/>
-							);
-						})}
+						return (
+							<SortableMediaItem
+								key={m.url}
+								media={m}
+								index={index}
+								isPrimary={index === 0}
+								isImageLoaded={isImageLoaded}
+								shouldReduceMotion={shouldReduceMotion}
+								isDraggingAny={isDraggingAny}
+								showLongPressHint={showLongPressHint && index === 1}
+								onImageLoaded={handleImageLoaded}
+								onOpenLightbox={openLightbox}
+								onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
+								onMoveUp={() => handleMoveUp(index)}
+								onMoveDown={() => handleMoveDown(index)}
+								totalCount={media.length}
+							/>
+						);
+					})}
 
-						{/* Upload zone */}
-						{canAddMore && renderUploadZone && (
-							<div className="aspect-square overflow-hidden rounded-lg">{renderUploadZone()}</div>
-						)}
-					</div>
-				</SortableContext>
+					{/* Upload zone */}
+					{canAddMore && renderUploadZone && (
+						<div className="aspect-square overflow-hidden rounded-lg">{renderUploadZone()}</div>
+					)}
+				</div>
 
 				{/* DragOverlay for better visual feedback during drag */}
-				<DragOverlay
-					adjustScale={!shouldReduceMotion}
-					modifiers={[snapCenterToCursor, restrictToWindowEdges]}
-				>
-					{activeMedia ? (
-						<div className="border-primary bg-muted aspect-square overflow-hidden rounded-lg border-2 shadow-2xl">
-							{activeMedia.mediaType === "VIDEO" ? (
-								<div className="relative h-full w-full">
-									{activeMedia.thumbnailUrl ? (
-										<Image
-											src={activeMedia.thumbnailUrl}
-											alt="Vidéo en cours de déplacement"
-											fill
-											className="object-cover"
-											sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
-										/>
-									) : (
-										<div className="bg-muted flex h-full w-full items-center justify-center">
-											<Play className="text-muted-foreground h-8 w-8" />
-										</div>
-									)}
-									<div className="absolute inset-0 flex items-center justify-center">
-										<div className="rounded-full bg-black/70 p-2">
-											<Play className="h-5 w-5 text-white" fill="white" />
+				<DragOverlay>
+					{(source) => {
+						const sourceMedia = media.find((m) => m.url === source.id);
+						if (!sourceMedia) return null;
+
+						return (
+							<div className="border-primary bg-muted aspect-square overflow-hidden rounded-lg border-2 shadow-2xl">
+								{sourceMedia.mediaType === "VIDEO" ? (
+									<div className="relative h-full w-full">
+										{sourceMedia.thumbnailUrl ? (
+											<Image
+												src={sourceMedia.thumbnailUrl}
+												alt="Vidéo en cours de déplacement"
+												fill
+												className="object-cover"
+												sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
+											/>
+										) : (
+											<div className="bg-muted flex h-full w-full items-center justify-center">
+												<Play className="text-muted-foreground h-8 w-8" />
+											</div>
+										)}
+										<div className="absolute inset-0 flex items-center justify-center">
+											<div className="rounded-full bg-black/70 p-2">
+												<Play className="h-5 w-5 text-white" fill="white" />
+											</div>
 										</div>
 									</div>
-								</div>
-							) : (
-								<Image
-									src={activeMedia.url}
-									alt="Image en cours de déplacement"
-									fill
-									className="object-cover"
-									sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
-								/>
-							)}
-						</div>
-					) : null}
+								) : (
+									<Image
+										src={sourceMedia.url}
+										alt="Image en cours de déplacement"
+										fill
+										className="object-cover"
+										sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
+									/>
+								)}
+							</div>
+						);
+					}}
 				</DragOverlay>
-			</DndContext>
+			</DragDropProvider>
 
 			{/* Lightbox */}
 			{lightboxOpen && (

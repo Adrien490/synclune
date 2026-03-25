@@ -1,11 +1,11 @@
 "use client";
 
 import { useAppForm } from "@/shared/components/forms";
-import type { ActionState } from "@/shared/types/server-action";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useTransform } from "@tanstack/react-form-nextjs";
-import { useActionState, useEffect, useRef } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
 	type CUSTOMIZATION_DEFAULT_VALUES,
 	CUSTOMIZATION_FORM_OPTIONS,
@@ -15,9 +15,13 @@ import { customizationDraftSchema } from "../schemas/customization.schema";
 
 const DRAFT_STORAGE_KEY = "synclune-customization-draft";
 
+export interface SubmittedCustomizationData {
+	firstName: string;
+	productTypeLabel: string;
+}
+
 interface UseCustomizationFormOptions {
 	userInfo?: { firstName: string; email: string };
-	onSuccess?: (message: string) => void;
 }
 
 function loadDraft(): Partial<typeof CUSTOMIZATION_DEFAULT_VALUES> | null {
@@ -67,21 +71,22 @@ function clearDraft() {
 export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 	const draftRestored = useRef(false);
 
+	const [submittedData, setSubmittedData] = useState<SubmittedCustomizationData | null>(null);
+
 	const [state, action, isPending] = useActionState<ActionState | undefined, FormData>(
 		withCallbacks(
 			sendCustomizationRequest,
 			createToastCallbacks({
 				showSuccessToast: false,
-				onSuccess: (result) => {
+				onSuccess: () => {
 					clearDraft();
-					if (result.message) {
-						options?.onSuccess?.(result.message);
-					}
 				},
 			}),
 		),
 		undefined,
 	);
+
+	const isSubmitted = state?.status === ActionStatus.SUCCESS;
 
 	const form = useAppForm({
 		...CUSTOMIZATION_FORM_OPTIONS,
@@ -121,10 +126,20 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 		return () => subscription.unsubscribe();
 	}, [form]);
 
+	// Capture form values at submit time for the success state recap
+	const captureFormValues = () => {
+		setSubmittedData({
+			firstName: form.state.values.firstName,
+			productTypeLabel: form.state.values.productTypeLabel,
+		});
+	};
+
 	return {
 		form,
-		state,
 		action,
 		isPending,
+		isSubmitted,
+		submittedData,
+		captureFormValues,
 	};
 };

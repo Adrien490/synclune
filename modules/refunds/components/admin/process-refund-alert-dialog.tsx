@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useProcessRefund } from "@/modules/refunds/hooks/use-process-refund";
 import { ActionStatus } from "@/shared/types/server-action";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const PROCESS_REFUND_DIALOG_ID = "process-refund";
 
@@ -73,7 +73,7 @@ export function ProcessRefundAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="motion-safe:animate-spin" />}
+							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 							{isPending ? "Traitement..." : "Traiter le remboursement"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

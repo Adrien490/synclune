@@ -13,7 +13,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { formatDateShort } from "@/shared/utils/dates";
-import { CheckCircle2, EyeOff, MessageSquare } from "lucide-react";
+import { CircleCheck, EyeOff, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 import { RatingStars } from "@/shared/components/rating-stars";
@@ -103,7 +103,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 												role="status"
 												aria-label={`Statut : ${REVIEW_STATUS_LABELS.PUBLISHED}`}
 											>
-												<CheckCircle2 className="size-3" aria-hidden="true" />
+												<CircleCheck className="size-3" aria-hidden="true" />
 												{REVIEW_STATUS_LABELS.PUBLISHED}
 											</Badge>
 										) : (

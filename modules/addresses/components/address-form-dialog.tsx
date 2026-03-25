@@ -18,7 +18,7 @@ import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { ActionStatus } from "@/shared/types/server-action";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CircleCheck, CircleX } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useTransition } from "react";
@@ -159,7 +159,7 @@ function AddressFormContent({
 					{/* Success message */}
 					{state?.status === ActionStatus.SUCCESS && state.message && (
 						<Alert className="bg-primary/10 border-primary/20">
-							<CheckCircle2 className="text-primary" aria-hidden="true" />
+							<CircleCheck className="text-primary" aria-hidden="true" />
 							<AlertDescription className="text-primary font-medium">
 								{state.message}
 							</AlertDescription>
@@ -171,7 +171,7 @@ function AddressFormContent({
 						state?.status !== ActionStatus.INITIAL &&
 						state?.message && (
 							<Alert variant="destructive">
-								<XCircle aria-hidden="true" />
+								<CircleX aria-hidden="true" />
 								<AlertDescription className="font-medium">{state.message}</AlertDescription>
 							</Alert>
 						)}

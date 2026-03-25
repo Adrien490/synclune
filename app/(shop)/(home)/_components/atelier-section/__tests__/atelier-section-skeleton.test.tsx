@@ -27,7 +27,7 @@ vi.mock("lucide-react", () => ({
 	Lightbulb: () => <svg aria-hidden="true" />,
 	Pencil: () => <svg aria-hidden="true" />,
 	Hammer: () => <svg aria-hidden="true" />,
-	CheckCircle: () => <svg aria-hidden="true" />,
+	CircleCheck: () => <svg aria-hidden="true" />,
 }));
 
 // ---------------------------------------------------------------------------

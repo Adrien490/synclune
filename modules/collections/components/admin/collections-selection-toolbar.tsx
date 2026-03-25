@@ -12,7 +12,14 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Archive, ArchiveRestore, FileEdit, Globe, MoreVertical, Trash2 } from "lucide-react";
+import {
+	Archive,
+	ArchiveRestore,
+	FilePenLine,
+	Globe,
+	EllipsisVertical,
+	Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
 import { BULK_DELETE_COLLECTIONS_DIALOG_ID } from "./bulk-delete-collections-alert-dialog";
@@ -138,7 +145,7 @@ export function CollectionsSelectionToolbar({ collections }: CollectionsSelectio
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
 						<span className="sr-only">Ouvrir le menu</span>
-						<MoreVertical className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">
@@ -153,7 +160,7 @@ export function CollectionsSelectionToolbar({ collections }: CollectionsSelectio
 							)}
 							{selectedCollectionsStatus.allPublic && (
 								<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
-									<FileEdit className="h-4 w-4" />
+									<FilePenLine className="h-4 w-4" />
 									Mettre en brouillon
 								</DropdownMenuItem>
 							)}
@@ -164,7 +171,7 @@ export function CollectionsSelectionToolbar({ collections }: CollectionsSelectio
 										Publier
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
-										<FileEdit className="h-4 w-4" />
+										<FilePenLine className="h-4 w-4" />
 										Mettre en brouillon
 									</DropdownMenuItem>
 								</>

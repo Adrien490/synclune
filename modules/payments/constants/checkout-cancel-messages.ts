@@ -1,4 +1,4 @@
-import { AlertCircle, CreditCard, XCircle, type LucideIcon } from "lucide-react";
+import { CircleAlert, CreditCard, CircleX, type LucideIcon } from "lucide-react";
 
 /**
  * Messages d'erreur spécifiques pour la page d'annulation de paiement
@@ -28,19 +28,19 @@ export const CHECKOUT_CANCEL_MESSAGES: Record<
 	authentication_failed: {
 		title: "Authentification échouée",
 		description: "L'authentification 3D Secure a échoué. Réessayez ou contactez votre banque.",
-		icon: XCircle,
+		icon: CircleX,
 	},
 	processing_error: {
 		title: "Erreur de traitement",
 		description:
 			"Une erreur s'est produite lors du traitement de votre paiement. Réessayez dans quelques instants.",
-		icon: XCircle,
+		icon: CircleX,
 	},
 	canceled: {
 		title: "Paiement annulé",
 		description:
 			"Vous avez annulé le processus de paiement. Aucun montant n'a été débité de votre compte.",
-		icon: AlertCircle,
+		icon: CircleAlert,
 	},
 };
 

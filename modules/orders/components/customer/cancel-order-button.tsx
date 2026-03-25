@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
-import { XCircle, Loader2 } from "lucide-react";
+import { CircleX, LoaderCircle } from "lucide-react";
 import { cancelOrderCustomer } from "@/modules/orders/actions/cancel-order-customer";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -42,7 +42,7 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 			<h2 className="text-base font-semibold">Annulation</h2>
 			<div className="border-border/60 border-t pt-4">
 				<Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
-					<XCircle className="mr-2 h-4 w-4" />
+					<CircleX className="mr-2 h-4 w-4" />
 					Annuler la commande
 				</Button>
 			</div>
@@ -79,7 +79,7 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 							<Button type="submit" variant="destructive" disabled={isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Annulation...
 									</>
 								) : (

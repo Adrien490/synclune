@@ -1,5 +1,5 @@
 import { Suspense, use } from "react";
-import { AlertTriangle } from "lucide-react";
+import { TriangleAlert } from "lucide-react";
 
 import { ProductCard } from "@/modules/products/components/product-card";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
@@ -45,7 +45,7 @@ export function ProductList({
 	if (error) {
 		return (
 			<Alert variant="destructive">
-				<AlertTriangle className="h-4 w-4" />
+				<TriangleAlert className="h-4 w-4" />
 				<AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center">
 					<span>Une erreur est survenue lors du chargement des produits.</span>
 					<RefreshButton />

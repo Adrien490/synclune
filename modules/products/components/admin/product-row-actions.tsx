@@ -18,10 +18,10 @@ import {
 	ArchiveRestore,
 	Copy,
 	Eye,
-	FileEdit,
+	FilePenLine,
 	FolderPlus,
 	LayoutList,
-	MoreVertical,
+	EllipsisVertical,
 	Pencil,
 	Trash2,
 } from "lucide-react";
@@ -98,10 +98,9 @@ export function ProductRowActions({
 					variant="ghost"
 					size="sm"
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions pour ce bijou"
+					aria-label={`Actions pour ${productTitle}`}
 				>
-					<span className="sr-only">Ouvrir le menu d'actions</span>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-50">
@@ -152,7 +151,7 @@ export function ProductRowActions({
 						{/* Changer statut - Uniquement pour produits non-archivés */}
 						<DropdownMenuSub>
 							<DropdownMenuSubTrigger>
-								<FileEdit className="h-4 w-4" />
+								<FilePenLine className="h-4 w-4" />
 								<span>Changer statut</span>
 							</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>

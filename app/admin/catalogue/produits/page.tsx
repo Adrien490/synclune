@@ -57,6 +57,7 @@ const ManageCollectionsDialog = dynamic(() =>
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
+import { ProductsBottomBar } from "@/modules/products/components/admin/products-bottom-bar";
 import { ProductsFilterSheet } from "@/modules/products/components/admin/products-filter-sheet";
 import { ProductsQuickFilters } from "@/modules/products/components/admin/products-quick-filters";
 import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
@@ -234,7 +235,19 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				/>
 			</div>
 
-			<ProductsDataTable productsPromise={Promise.resolve(productsData)} perPage={perPage} />
+			<ProductsDataTable
+				productsPromise={Promise.resolve(productsData)}
+				perPage={perPage}
+				hasActiveFilters={!!search || Object.keys(params).some((key) => key.startsWith("filter_"))}
+			/>
+
+			<ProductsBottomBar
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+				materials={materials}
+				maxPriceInCents={maxPriceInCents}
+			/>
 		</div>
 	);
 }

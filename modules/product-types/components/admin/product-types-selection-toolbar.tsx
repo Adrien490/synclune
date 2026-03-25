@@ -14,7 +14,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/use-bulk-activate-product-types";
 import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/use-bulk-deactivate-product-types";
 import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
-import { CheckCircle2, MoreVertical, Trash2, XCircle } from "lucide-react";
+import { CircleCheck, EllipsisVertical, Trash2, CircleX } from "lucide-react";
 import { toast } from "sonner";
 
 export function ProductTypesSelectionToolbar() {
@@ -74,16 +74,16 @@ export function ProductTypesSelectionToolbar() {
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
 						<span className="sr-only">Ouvrir le menu</span>
-						<MoreVertical className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">
 					<DropdownMenuItem onClick={handleActivate} disabled={isActivating}>
-						<CheckCircle2 className="h-4 w-4" />
+						<CircleCheck className="h-4 w-4" />
 						Activer
 					</DropdownMenuItem>
 					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
-						<XCircle className="h-4 w-4" />
+						<CircleX className="h-4 w-4" />
 						Désactiver
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />

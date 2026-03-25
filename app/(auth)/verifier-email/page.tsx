@@ -5,7 +5,7 @@ import { auth } from "@/modules/auth/lib/auth";
 import { ajAuth } from "@/shared/lib/arcjet";
 import { getBaseUrl } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
-import { AlertCircle, CheckCircle2, Sparkles } from "lucide-react";
+import { CircleAlert, CircleCheck, Sparkles } from "lucide-react";
 import { headers } from "next/headers";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -111,7 +111,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 						role="status"
 						aria-live="polite"
 					>
-						<CheckCircle2 className="h-12 w-12 text-green-500" aria-hidden="true" />
+						<CircleCheck className="h-12 w-12 text-green-500" aria-hidden="true" />
 						<div className="space-y-2 text-center">
 							<p className={cn("font-display text-lg font-normal text-green-700")}>
 								Email vérifié avec succès
@@ -146,7 +146,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 			title="Vérification d'email"
 			icon={
 				<div className="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
-					<AlertCircle className="text-destructive h-8 w-8" aria-hidden="true" />
+					<CircleAlert className="text-destructive h-8 w-8" aria-hidden="true" />
 				</div>
 			}
 		>
@@ -156,7 +156,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 					role="alert"
 					aria-live="assertive"
 				>
-					<AlertCircle className="text-destructive h-12 w-12" aria-hidden="true" />
+					<CircleAlert className="text-destructive h-12 w-12" aria-hidden="true" />
 					<div className="space-y-2 text-center">
 						<p className="text-destructive text-lg font-medium">
 							{!token && !error ? "Lien incomplet" : "Erreur de vérification"}

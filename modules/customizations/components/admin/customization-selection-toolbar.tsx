@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, Clock, Loader2, MoreVertical, XCircle } from "lucide-react";
+import { CircleCheck, Clock, LoaderCircle, EllipsisVertical, CircleX } from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import type { CustomizationRequestStatus } from "../../types/customization.types";
@@ -71,16 +71,16 @@ export function CustomizationSelectionToolbar() {
 					<DropdownMenuTrigger asChild>
 						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
 							<span className="sr-only">Ouvrir le menu</span>
-							<MoreVertical className="h-4 w-4" />
+							<EllipsisVertical className="h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-50">
 						<DropdownMenuItem onClick={() => handleOpenDialog("IN_PROGRESS")}>
-							<Loader2 className="h-4 w-4" />
+							<LoaderCircle className="h-4 w-4" />
 							Marquer en cours
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => handleOpenDialog("COMPLETED")}>
-							<CheckCircle className="h-4 w-4" />
+							<CircleCheck className="h-4 w-4" />
 							Marquer terminées
 						</DropdownMenuItem>
 						<DropdownMenuSeparator />
@@ -92,7 +92,7 @@ export function CustomizationSelectionToolbar() {
 							onClick={() => handleOpenDialog("CANCELLED")}
 							className="text-destructive focus:text-destructive"
 						>
-							<XCircle className="h-4 w-4" />
+							<CircleX className="h-4 w-4" />
 							Annuler
 						</DropdownMenuItem>
 					</DropdownMenuContent>
@@ -128,7 +128,7 @@ export function CustomizationSelectionToolbar() {
 							<Button type="submit" disabled={isPending} aria-busy={isPending}>
 								{isPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
 										Mise à jour...
 									</>
 								) : (

@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import { AlertCircle, RotateCcw } from "lucide-react";
+import { CircleAlert, RotateCcw } from "lucide-react";
 import { CHART_STYLES } from "../constants/chart-styles";
 
 interface ChartErrorProps {
@@ -40,7 +40,7 @@ export function ChartError({
 					aria-live="polite"
 				>
 					<div className="bg-destructive/10 mb-4 flex h-12 w-12 items-center justify-center rounded-full">
-						<AlertCircle className="text-destructive h-6 w-6" aria-hidden="true" />
+						<CircleAlert className="text-destructive h-6 w-6" aria-hidden="true" />
 					</div>
 					<h3 className="text-foreground mb-1 text-base font-semibold">{title}</h3>
 					<p className="text-muted-foreground mb-4 max-w-70 text-sm">{description}</p>

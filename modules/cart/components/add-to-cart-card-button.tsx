@@ -6,7 +6,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import type { Product } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
-import { ShoppingCart, Loader2 } from "lucide-react";
+import { ShoppingCart, LoaderCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 
 interface AddToCartCardButtonProps {
@@ -137,7 +137,7 @@ export function AddToCartCardButton({
 				{isMobileFull ? (
 					// Mobile full-width: icône + texte ou spinner
 					isPending ? (
-						<Loader2 size={18} className="animate-spin" aria-hidden="true" />
+						<LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
 					) : (
 						<span className="inline-flex items-center gap-2">
 							<ShoppingCart size={18} className="text-foreground/70" aria-hidden="true" />

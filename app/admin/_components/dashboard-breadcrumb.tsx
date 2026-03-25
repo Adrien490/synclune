@@ -14,7 +14,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { MoreHorizontal } from "lucide-react";
+import { Ellipsis } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
@@ -166,7 +166,7 @@ export function DashboardBreadcrumb() {
 									className="hover:text-foreground flex items-center gap-1 transition-colors"
 									aria-label="Afficher plus de segments"
 								>
-									<MoreHorizontal className="h-4 w-4" />
+									<Ellipsis className="h-4 w-4" />
 								</DropdownMenuTrigger>
 								<DropdownMenuContent align="start">
 									{collapsedSegments.map((segment) => (

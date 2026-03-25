@@ -94,7 +94,7 @@ vi.mock("../admin/review-row-actions", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	CheckCircle2: () => <svg />,
+	CircleCheck: () => <svg />,
 	EyeOff: () => <svg />,
 	MessageSquare: () => <svg />,
 }));

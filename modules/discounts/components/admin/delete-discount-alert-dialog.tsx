@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const DELETE_DISCOUNT_DIALOG_ID = "delete-discount";
 
@@ -76,7 +76,7 @@ export function DeleteDiscountAlertDialog() {
 							disabled={isPending || usageCount > 0}
 							aria-busy={isPending}
 						>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

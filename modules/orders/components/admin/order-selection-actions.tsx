@@ -22,11 +22,11 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkMarkAsDelivered } from "@/modules/orders/hooks/use-bulk-mark-as-delivered";
 import { useBulkCancelOrders } from "@/modules/orders/hooks/use-bulk-cancel-orders";
 import {
-	CheckCircle2,
-	Loader2,
-	MoreVertical as MoreVerticalIcon,
+	CircleCheck,
+	LoaderCircle,
+	EllipsisVertical as MoreVerticalIcon,
 	Trash2,
-	XCircle,
+	CircleX,
 } from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { BULK_DELETE_ORDERS_DIALOG_ID } from "./bulk-delete-orders-alert-dialog";
@@ -73,12 +73,12 @@ export function OrderSelectionActions() {
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">
 					<DropdownMenuItem onClick={() => deliveredDialog.open()}>
-						<CheckCircle2 className="h-4 w-4" />
+						<CircleCheck className="h-4 w-4" />
 						Marquer livrées
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem onClick={() => cancelDialog.open()}>
-						<XCircle className="h-4 w-4" />
+						<CircleX className="h-4 w-4" />
 						Annuler
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
@@ -117,12 +117,12 @@ export function OrderSelectionActions() {
 							<Button type="submit" disabled={isPending}>
 								{isDeliveredPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Mise à jour...
 									</>
 								) : (
 									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 h-4 w-4" />
 										Confirmer
 									</>
 								)}
@@ -161,12 +161,12 @@ export function OrderSelectionActions() {
 							<Button type="submit" disabled={isPending}>
 								{isCancelPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Annulation...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Annuler les commandes
 									</>
 								)}

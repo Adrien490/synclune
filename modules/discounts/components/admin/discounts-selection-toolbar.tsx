@@ -11,7 +11,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { MoreVertical, Trash2, Power, PowerOff } from "lucide-react";
+import { EllipsisVertical, Trash2, Power, PowerOff } from "lucide-react";
 import { toast } from "sonner";
 import { BULK_DELETE_DISCOUNTS_DIALOG_ID } from "./bulk-delete-discounts-alert-dialog";
 import { useBulkToggleDiscountStatus } from "@/modules/discounts/hooks/use-bulk-toggle-discount-status";
@@ -69,7 +69,7 @@ export function DiscountsSelectionToolbar({ discounts }: DiscountsSelectionToolb
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" size="sm" className="h-8 w-8 p-0" disabled={isPending}>
 						<span className="sr-only">Ouvrir le menu</span>
-						<MoreVertical className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">

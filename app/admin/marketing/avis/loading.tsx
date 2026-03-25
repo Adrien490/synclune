@@ -1,4 +1,4 @@
-import { MessageSquare, CheckCircle2, EyeOff } from "lucide-react";
+import { MessageSquare, CircleCheck, EyeOff } from "lucide-react";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { Toolbar } from "@/shared/components/toolbar";
@@ -30,7 +30,7 @@ export default function ReviewsAdminLoading() {
 							<p className="text-muted-foreground text-sm font-medium">Publies</p>
 							<Skeleton className="mt-1 h-8 w-12" />
 						</div>
-						<CheckCircle2 className="text-secondary-foreground h-8 w-8" />
+						<CircleCheck className="text-secondary-foreground h-8 w-8" />
 					</div>
 				</div>
 

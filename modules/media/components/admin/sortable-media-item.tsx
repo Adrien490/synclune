@@ -1,7 +1,6 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { useSortable } from "@dnd-kit/react/sortable";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -17,7 +16,7 @@ import {
 	ArrowUp,
 	Expand,
 	GripVertical,
-	MoreVertical,
+	EllipsisVertical,
 	Play,
 	Star,
 	Trash2,
@@ -62,15 +61,11 @@ export function SortableMediaItem({
 }: SortableMediaItemProps) {
 	const canMoveUp = index > 0 && onMoveUp;
 	const canMoveDown = index < totalCount - 1 && onMoveDown;
-	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
+		index,
+		transition: shouldReduceMotion ? null : { duration: 200, easing: "ease" },
 	});
-
-	const style = {
-		transform: CSS.Transform.toString(transform),
-		transition: shouldReduceMotion ? undefined : transition,
-		zIndex: isDragging ? 50 : undefined,
-	};
 
 	const isVideo = media.mediaType === "VIDEO";
 	const [thumbnailError, setThumbnailError] = useState(false);
@@ -79,8 +74,7 @@ export function SortableMediaItem({
 	return (
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- sortable item needs keyboard interactions
 		<div
-			ref={setNodeRef}
-			style={style}
+			ref={ref}
 			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- sortable item needs keyboard interactions
 			tabIndex={0}
 			onKeyDown={(e) => {
@@ -93,7 +87,7 @@ export function SortableMediaItem({
 				"group relative aspect-square shrink-0 overflow-hidden rounded-lg border-2",
 				shouldReduceMotion ? "" : "motion-safe:transition-all motion-safe:duration-200",
 				"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-				isDragging && "opacity-30",
+				isDragSource && "opacity-30",
 				isPrimary
 					? "border-amber-500 ring-2 ring-amber-500/50"
 					: "border-border hover:border-primary/50",
@@ -217,8 +211,7 @@ export function SortableMediaItem({
 				<TooltipTrigger asChild>
 					<button
 						type="button"
-						{...attributes}
-						{...listeners}
+						ref={handleRef}
 						aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
 						aria-describedby="drag-instructions"
 						className={cn(
@@ -315,7 +308,7 @@ export function SortableMediaItem({
 							className="h-11 w-11 rounded-full border-0 bg-black/70 hover:bg-black/90"
 							aria-label={`Actions pour le média ${index + 1}`}
 						>
-							<MoreVertical className="h-5 w-5 text-white" />
+							<EllipsisVertical className="h-5 w-5 text-white" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="min-w-40">

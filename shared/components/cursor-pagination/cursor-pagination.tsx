@@ -9,7 +9,7 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, ChevronRight, ChevronsLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsLeft, LoaderCircle } from "lucide-react";
 import { useId } from "react";
 import { Button } from "../ui/button";
 import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
@@ -169,7 +169,7 @@ export function CursorPagination({
 						aria-label="Retour au début"
 					>
 						{isPending && !isFirstPage ? (
-							<Loader2 className="size-5 motion-safe:animate-spin md:size-4" />
+							<LoaderCircle className="size-5 motion-safe:animate-spin md:size-4" />
 						) : (
 							<ChevronsLeft className="size-5 md:size-4" />
 						)}

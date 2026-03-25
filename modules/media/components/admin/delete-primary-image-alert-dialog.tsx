@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-files";
 import { startTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const DELETE_PRIMARY_IMAGE_DIALOG_ID = "delete-primary-image";
 
@@ -79,7 +79,7 @@ export function DeletePrimaryImageAlertDialog() {
 						disabled={isPending}
 						aria-busy={isPending}
 					>
-						{isPending && <Loader2 className="motion-safe:animate-spin" />}
+						{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

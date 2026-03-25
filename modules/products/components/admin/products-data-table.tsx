@@ -54,54 +54,61 @@ const STATUS_CONFIG: Record<
 	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
 };
 
+// =============================================================================
+// Helpers
+// =============================================================================
+
+type ProductWithSkus = { skus: Array<{ priceInclTax: number; inventory: number }> };
+
+const getTotalStock = (product: ProductWithSkus) => {
+	return product.skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
+};
+
+const getPriceRange = (product: ProductWithSkus) => {
+	if (product.skus.length === 0) return null;
+
+	const prices = product.skus.map((sku) => sku.priceInclTax);
+	const minPrice = Math.min(...prices);
+	const maxPrice = Math.max(...prices);
+
+	return { minPrice, maxPrice };
+};
+
+const formatPriceDisplay = (priceData: { minPrice: number; maxPrice: number } | null) => {
+	if (!priceData) return "—";
+	const { minPrice, maxPrice } = priceData;
+	if (minPrice === maxPrice) {
+		return formatPrice(minPrice);
+	}
+	return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
+};
+
+const formatPriceAriaLabel = (priceData: { minPrice: number; maxPrice: number } | null) => {
+	if (!priceData) return "Prix non défini";
+	const { minPrice, maxPrice } = priceData;
+	if (minPrice === maxPrice) {
+		return `Prix : ${formatPrice(minPrice)}`;
+	}
+	return `Prix : de ${formatPrice(minPrice)} à ${formatPrice(maxPrice)}`;
+};
+
+// =============================================================================
+// Component
+// =============================================================================
+
 interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
+	hasActiveFilters?: boolean;
 }
 
-export async function ProductsDataTable({ productsPromise, perPage }: ProductsDataTableProps) {
+export async function ProductsDataTable({
+	productsPromise,
+	perPage,
+	hasActiveFilters,
+}: ProductsDataTableProps) {
 	const { products, pagination } = await productsPromise;
 	const productIds = products.map((product) => product.id);
-
-	// Helper pour obtenir le SKU par défaut selon la logique demandée
-	const getDefaultSku = (product: (typeof products)[0]) => {
-		// Déjà trié par orderBy dans le SELECT: isDefault DESC, priceInclTax ASC
-		return product.skus[0];
-	};
-
-	// Helper pour calculer le stock total
-	const getTotalStock = (product: (typeof products)[0]) => {
-		return product.skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
-	};
-
-	// Helper pour obtenir la plage de prix (min-max)
-	const getPriceRange = (product: (typeof products)[0]) => {
-		const prices = product.skus.map((sku) => sku.priceInclTax);
-		const minPrice = Math.min(...prices);
-		const maxPrice = Math.max(...prices);
-
-		return { minPrice, maxPrice };
-	};
-
-	// Helper pour formater l'affichage du prix
-	const formatPriceDisplay = (priceData: { minPrice: number; maxPrice: number } | null) => {
-		if (!priceData) return "—";
-		const { minPrice, maxPrice } = priceData;
-		if (minPrice === maxPrice) {
-			return formatPrice(minPrice);
-		}
-		return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
-	};
-
-	// Helper pour formater l'aria-label du prix (lecteurs d'écran)
-	const formatPriceAriaLabel = (priceData: { minPrice: number; maxPrice: number } | null) => {
-		if (!priceData) return "Prix non défini";
-		const { minPrice, maxPrice } = priceData;
-		if (minPrice === maxPrice) {
-			return `Prix : ${formatPrice(minPrice)}`;
-		}
-		return `Prix : de ${formatPrice(minPrice)} à ${formatPrice(maxPrice)}`;
-	};
 
 	if (products.length === 0) {
 		return (
@@ -109,6 +116,8 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 				icon={Package}
 				title="Aucun bijou trouvé"
 				description="Aucun bijou ne correspond aux critères de recherche."
+				hasActiveFilters={hasActiveFilters}
+				noItemsDescription="Vous n'avez pas encore de bijou dans le catalogue."
 				action={{
 					label: "Créer un produit",
 					href: "/admin/catalogue/produits/nouveau",
@@ -122,12 +131,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 			<CardContent>
 				<ProductsSelectionToolbar products={products} />
 				<TableScrollContainer>
-					<Table
-						aria-label="Liste des bijoux"
-						caption="Liste des produits"
-						striped
-						className="min-w-full table-fixed"
-					>
+					<Table aria-label="Liste des bijoux" striped noRegion className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
 								<TableHead className="w-[4%]" aria-label="Sélection de produits">
@@ -161,7 +165,7 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 										</TableCell>
 										<TableCell className="py-3">
 											<ProductImageCell
-												images={getDefaultSku(product)?.images ?? []}
+												images={product.skus[0]?.images ?? []}
 												productTitle={product.title}
 											/>
 										</TableCell>
@@ -215,16 +219,20 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 												variant={
 													totalStock === 0
 														? "destructive"
-														: totalStock <= STOCK_THRESHOLDS.LOW
-															? "warning"
-															: "success"
+														: totalStock <= STOCK_THRESHOLDS.CRITICAL
+															? "destructive"
+															: totalStock <= STOCK_THRESHOLDS.LOW
+																? "warning"
+																: "success"
 												}
 												aria-label={
 													totalStock === 0
 														? "Stock épuisé"
-														: totalStock <= STOCK_THRESHOLDS.LOW
-															? `Stock faible : ${totalStock} en stock`
-															: `${totalStock} en stock`
+														: totalStock <= STOCK_THRESHOLDS.CRITICAL
+															? `Stock critique : ${totalStock} en stock`
+															: totalStock <= STOCK_THRESHOLDS.LOW
+																? `Stock faible : ${totalStock} en stock`
+																: `${totalStock} en stock`
 												}
 											>
 												{totalStock}

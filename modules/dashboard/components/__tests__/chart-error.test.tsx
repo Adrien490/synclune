@@ -42,7 +42,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	AlertCircle: () => <svg data-testid="alert-icon" aria-hidden="true" />,
+	CircleAlert: () => <svg data-testid="alert-icon" aria-hidden="true" />,
 	RotateCcw: () => <svg data-testid="retry-icon" aria-hidden="true" />,
 }));
 

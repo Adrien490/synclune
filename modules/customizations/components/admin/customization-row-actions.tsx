@@ -17,14 +17,14 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
-	CheckCircle,
+	CircleCheck,
 	Clock,
 	Copy,
-	Loader2,
+	LoaderCircle,
 	Mail,
-	MoreVertical,
+	EllipsisVertical,
 	StickyNote,
-	XCircle,
+	CircleX,
 } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { toast } from "sonner";
@@ -48,9 +48,9 @@ interface CustomizationRowActionsProps {
 
 const STATUS_ICONS: Record<CustomizationRequestStatus, typeof Clock> = {
 	PENDING: Clock,
-	IN_PROGRESS: Loader2,
-	COMPLETED: CheckCircle,
-	CANCELLED: XCircle,
+	IN_PROGRESS: LoaderCircle,
+	COMPLETED: CircleCheck,
+	CANCELLED: CircleX,
 };
 
 const ALL_STATUSES: CustomizationRequestStatus[] = [
@@ -108,7 +108,7 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions"
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-52">

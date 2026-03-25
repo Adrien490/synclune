@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkArchiveProducts } from "@/modules/products/hooks/use-bulk-archive-products";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const BULK_ARCHIVE_PRODUCTS_DIALOG_ID = "bulk-archive-products";
 
@@ -115,7 +115,7 @@ export function BulkArchiveProductsAlertDialog() {
 							aria-busy={isPending}
 							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
 						>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending
 								? isArchiving
 									? "Archivage..."

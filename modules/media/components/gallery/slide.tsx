@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { CircleAlert, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { useMediaQuery } from "@/shared/hooks";
@@ -70,7 +70,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 			}
 		>
 			<div className="bg-background/90 flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-sm">
-				<AlertCircle className="text-muted-foreground h-8 w-8" aria-hidden="true" />
+				<CircleAlert className="text-muted-foreground h-8 w-8" aria-hidden="true" />
 				<p className="text-muted-foreground text-center text-sm">Impossible de charger la vidéo</p>
 				<button
 					type="button"

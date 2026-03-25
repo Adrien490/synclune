@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteReview } from "../hooks/use-delete-review";
 import { DELETE_REVIEW_DIALOG_ID } from "../constants/review.constants";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 interface DeleteReviewData {
 	reviewId: string;
@@ -60,7 +60,7 @@ export function DeleteReviewAlertDialog() {
 							aria-busy={isPending}
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

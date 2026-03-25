@@ -8,7 +8,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
-import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { CircleCheck, LoaderCircle, CircleX } from "lucide-react";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
 import { useEffect, useRef } from "react";
 
@@ -47,7 +47,7 @@ export function RequestPasswordResetForm() {
 				{/* Message de succès */}
 				{state?.status === ActionStatus.SUCCESS && state.message && (
 					<Alert role="status" aria-live="polite">
-						<CheckCircle2 aria-hidden="true" />
+						<CircleCheck aria-hidden="true" />
 						<AlertDescription>{state.message}</AlertDescription>
 					</Alert>
 				)}
@@ -64,7 +64,7 @@ export function RequestPasswordResetForm() {
 							role="alert"
 							aria-live="assertive"
 						>
-							<XCircle aria-hidden="true" />
+							<CircleX aria-hidden="true" />
 							<AlertDescription>{state.message}</AlertDescription>
 						</Alert>
 					)}
@@ -109,7 +109,10 @@ export function RequestPasswordResetForm() {
 								"Email envoyé"
 							) : isPending ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+									<LoaderCircle
+										className="mr-2 h-4 w-4 motion-safe:animate-spin"
+										aria-hidden="true"
+									/>
 									Envoi en cours...
 								</>
 							) : (

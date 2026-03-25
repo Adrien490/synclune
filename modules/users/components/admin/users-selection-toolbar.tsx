@@ -26,7 +26,14 @@ import { useBulkDeleteUsers } from "@/modules/users/hooks/use-bulk-delete-users"
 import { useBulkSuspendUsers } from "@/modules/users/hooks/use-bulk-suspend-users";
 import { useBulkRestoreUsers } from "@/modules/users/hooks/use-bulk-restore-users";
 import { useBulkChangeUserRole } from "@/modules/users/hooks/use-bulk-change-user-role";
-import { CheckCircle2, Loader2, MoreVertical, RotateCcw, Trash2, XCircle } from "lucide-react";
+import {
+	CircleCheck,
+	LoaderCircle,
+	EllipsisVertical,
+	RotateCcw,
+	Trash2,
+	CircleX,
+} from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 interface UsersSelectionToolbarProps {
@@ -85,7 +92,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 					<DropdownMenuTrigger asChild>
 						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
 							<span className="sr-only">Ouvrir le menu</span>
-							<MoreVertical className="h-4 w-4" />
+							<EllipsisVertical className="h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-50">
@@ -93,18 +100,18 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<DropdownMenuSubTrigger>Changer le role</DropdownMenuSubTrigger>
 							<DropdownMenuSubContent>
 								<DropdownMenuItem onClick={() => promoteDialog.open()}>
-									<CheckCircle2 className="h-4 w-4" />
+									<CircleCheck className="h-4 w-4" />
 									Promouvoir admin
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={() => demoteDialog.open()}>
-									<XCircle className="h-4 w-4" />
+									<CircleX className="h-4 w-4" />
 									Retrograder utilisateur
 								</DropdownMenuItem>
 							</DropdownMenuSubContent>
 						</DropdownMenuSub>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => suspendDialog.open()}>
-							<XCircle className="h-4 w-4" />
+							<CircleX className="h-4 w-4" />
 							Suspendre
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={() => restoreDialog.open()}>
@@ -149,7 +156,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Suppression...
 									</>
 								) : (
@@ -193,12 +200,12 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<Button type="submit" disabled={isPending}>
 								{isSuspendPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Suspension...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Suspendre
 									</>
 								)}
@@ -237,7 +244,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<Button type="submit" disabled={isPending}>
 								{isRestorePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Restauration...
 									</>
 								) : (
@@ -284,12 +291,12 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Promotion...
 									</>
 								) : (
 									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 h-4 w-4" />
 										Promouvoir
 									</>
 								)}
@@ -329,12 +336,12 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Retrogradation...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Retrograder
 									</>
 								)}

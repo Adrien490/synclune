@@ -17,7 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
-import { AlertTriangle, Package, Star } from "lucide-react";
+import { TriangleAlert, Package, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import type { GetCollectionReturn } from "../../types/collection.types";
@@ -171,7 +171,7 @@ export function CollectionProductsList({
 												<Tooltip>
 													<TooltipTrigger asChild>
 														<span className="text-amber-500">
-															<AlertTriangle className="h-4 w-4" />
+															<TriangleAlert className="h-4 w-4" />
 														</span>
 													</TooltipTrigger>
 													<TooltipContent>

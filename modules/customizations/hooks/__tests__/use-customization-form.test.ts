@@ -158,13 +158,15 @@ describe("useCustomizationForm", () => {
 
 	// ──────────── Basic return shape ────────────
 
-	it("returns form, state, action, and isPending", () => {
+	it("returns form, action, isPending, isSubmitted, submittedData, and captureFormValues", () => {
 		const { result } = renderHook(() => useCustomizationForm());
 
 		expect(result.current).toHaveProperty("form");
-		expect(result.current).toHaveProperty("state");
 		expect(result.current).toHaveProperty("action");
 		expect(result.current).toHaveProperty("isPending");
+		expect(result.current).toHaveProperty("isSubmitted");
+		expect(result.current).toHaveProperty("submittedData");
+		expect(result.current).toHaveProperty("captureFormValues");
 	});
 
 	it("returns isPending false by default", () => {
@@ -424,15 +426,9 @@ describe("useCustomizationForm", () => {
 		expect(localStorageMock.getItem(DRAFT_KEY)).toBeNull();
 	});
 
-	it("calls onSuccess option with message on success", () => {
-		const onSuccess = vi.fn();
+	it("sets isSubmitted to true on success", () => {
+		const { result } = renderHook(() => useCustomizationForm());
 
-		renderHook(() => useCustomizationForm({ onSuccess }));
-
-		act(() => {
-			mockOnSuccessRef.current?.({ message: "Demande envoyée" });
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("Demande envoyée");
+		expect(result.current.isSubmitted).toBe(false);
 	});
 });

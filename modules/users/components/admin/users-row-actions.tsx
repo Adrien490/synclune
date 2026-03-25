@@ -21,16 +21,16 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import {
-	CheckCircle2,
+	CircleCheck,
 	Download,
 	Eye,
 	KeyRound,
-	Loader2,
+	LoaderCircle,
 	LogOut,
-	MoreVertical,
+	EllipsisVertical,
 	RotateCcw,
 	Trash2,
-	XCircle,
+	CircleX,
 } from "lucide-react";
 import Link from "next/link";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -106,7 +106,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						className="h-11 w-11 p-0 transition-transform active:scale-95"
 						aria-label="Actions"
 					>
-						<MoreVertical className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
@@ -160,11 +160,11 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 								<DropdownMenuSubTrigger>Changer le role</DropdownMenuSubTrigger>
 								<DropdownMenuSubContent>
 									<DropdownMenuItem onClick={() => promoteDialog.open()} disabled={isAdmin}>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 h-4 w-4" />
 										Promouvoir admin
 									</DropdownMenuItem>
 									<DropdownMenuItem onClick={() => demoteDialog.open()} disabled={!isAdmin}>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Retrograder utilisateur
 									</DropdownMenuItem>
 								</DropdownMenuSubContent>
@@ -175,7 +175,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 									className="flex cursor-pointer items-center"
 									onClick={() => suspendDialog.open()}
 								>
-									<XCircle className="mr-2 h-4 w-4" />
+									<CircleX className="mr-2 h-4 w-4" />
 									Suspendre
 								</DropdownMenuItem>
 							) : (
@@ -236,7 +236,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Suppression...
 									</>
 								) : (
@@ -276,12 +276,12 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isSuspendPending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Suspension...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Suspendre
 									</>
 								)}
@@ -316,7 +316,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isRestorePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Restauration...
 									</>
 								) : (
@@ -359,12 +359,12 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Promotion...
 									</>
 								) : (
 									<>
-										<CheckCircle2 className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 h-4 w-4" />
 										Promouvoir
 									</>
 								)}
@@ -401,12 +401,12 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 										Retrogradation...
 									</>
 								) : (
 									<>
-										<XCircle className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 h-4 w-4" />
 										Retrograder
 									</>
 								)}

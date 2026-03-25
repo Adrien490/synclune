@@ -9,7 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { AUTH_ERROR_CODES } from "@/modules/auth/constants/error-messages";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useSignInEmail } from "@/modules/auth/hooks/use-sign-in-email";
@@ -139,7 +139,7 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 						>
 							{isPending ? (
 								<>
-									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
 									<span>Connexion...</span>
 								</>
 							) : (

@@ -4,7 +4,7 @@ import { GoogleIcon } from "@/shared/components/icons";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
-import { Loader2, XCircle } from "lucide-react";
+import { LoaderCircle, CircleX } from "lucide-react";
 import { useSignInSocial } from "@/modules/auth/hooks/use-sign-in-social";
 
 const providers = [
@@ -22,7 +22,7 @@ export function SignInSocialForm({ callbackURL }: { callbackURL: string }) {
 		<div className="space-y-3">
 			{state?.message && state.status !== ActionStatus.SUCCESS && (
 				<Alert variant="destructive" role="alert" aria-live="assertive">
-					<XCircle aria-hidden="true" />
+					<CircleX aria-hidden="true" />
 					<AlertDescription>{state.message}</AlertDescription>
 				</Alert>
 			)}
@@ -39,7 +39,7 @@ export function SignInSocialForm({ callbackURL }: { callbackURL: string }) {
 							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 transition-all duration-300"
 						>
 							{isPending ? (
-								<Loader2 className="h-5 w-5 motion-safe:animate-spin" aria-hidden="true" />
+								<LoaderCircle className="h-5 w-5 motion-safe:animate-spin" aria-hidden="true" />
 							) : (
 								<div className="flex w-full items-center justify-center gap-3">
 									<span className="transition-transform duration-300 group-hover:scale-110">

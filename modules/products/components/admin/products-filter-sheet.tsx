@@ -46,6 +46,12 @@ interface ProductsFilterSheetProps {
 	colors?: GetColorsReturn["colors"];
 	materials?: MaterialOption[];
 	maxPriceInCents?: number;
+	/** Controlled open state. */
+	open?: boolean;
+	/** Controlled open change handler. */
+	onOpenChange?: (open: boolean) => void;
+	/** Hide the default trigger button. */
+	hideTrigger?: boolean;
 }
 
 interface AdminFilterFormData {
@@ -165,6 +171,9 @@ export function ProductsFilterSheet({
 	colors = EMPTY_COLORS,
 	materials = EMPTY_MATERIALS,
 	maxPriceInCents = 50000,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
 }: ProductsFilterSheetProps) {
 	const maxPriceInEuros = Math.ceil(maxPriceInCents / 100);
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
@@ -173,8 +182,9 @@ export function ProductsFilterSheet({
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
 
-	// P1.1: Controlled open state for sync on open
-	const [isOpen, setIsOpen] = useState(false);
+	// Controlled/uncontrolled open state
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isOpen = controlledOpen ?? internalOpen;
 
 	// P1.2: Focus restoration (WCAG 2.4.3)
 	const triggerRef = useRef<HTMLElement | null>(null);
@@ -390,13 +400,12 @@ export function ProductsFilterSheet({
 		<FilterSheetWrapper
 			open={isOpen}
 			onOpenChange={(newOpen) => {
-				if (newOpen) {
-					setIsOpen(true);
-				} else {
-					setIsOpen(false);
+				(controlledOnOpenChange ?? setInternalOpen)(newOpen);
+				if (!newOpen) {
 					triggerRef.current?.focus();
 				}
 			}}
+			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

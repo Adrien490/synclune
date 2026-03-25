@@ -55,34 +55,44 @@ vi.mock("@/modules/media/components/admin/delete-gallery-media-alert-dialog", ()
 	DELETE_GALLERY_MEDIA_DIALOG_ID: "delete-gallery-media",
 }));
 
-vi.mock("@dnd-kit/core", async (importOriginal) => {
-	const actual = (await importOriginal()) as Record<string, unknown>;
-	return {
-		...actual,
-		// Override DndContext to render children + provide minimal drag simulation
-		DndContext: ({ children, onDragEnd, onDragStart, onDragCancel }: Record<string, unknown>) => (
-			<div
-				data-testid="dnd-context"
-				data-on-drag-end={!!onDragEnd}
-				data-on-drag-start={!!onDragStart}
-				data-on-drag-cancel={!!onDragCancel}
-			>
-				{children as React.ReactNode}
-			</div>
-		),
-		DragOverlay: ({ children }: { children: React.ReactNode }) => (
-			<div data-testid="drag-overlay">{children}</div>
-		),
-	};
-});
+vi.mock("@dnd-kit/react", () => ({
+	DragDropProvider: ({ children, onDragEnd, onDragStart }: Record<string, unknown>) => (
+		<div
+			data-testid="drag-drop-provider"
+			data-on-drag-end={!!onDragEnd}
+			data-on-drag-start={!!onDragStart}
+		>
+			{children as React.ReactNode}
+		</div>
+	),
+	DragOverlay: ({ children }: { children: unknown }) => (
+		<div data-testid="drag-overlay">
+			{typeof children === "function" ? null : (children as React.ReactNode)}
+		</div>
+	),
+	KeyboardSensor: class KeyboardSensor {},
+	PointerSensor: {
+		configure: vi.fn(() => ({})),
+	},
+}));
 
-vi.mock("@dnd-kit/sortable", async (importOriginal) => {
+vi.mock("@dnd-kit/dom", () => ({
+	PointerSensor: { configure: vi.fn(() => ({})) },
+	PointerActivationConstraints: {
+		Distance: class Distance {
+			constructor(readonly config: Record<string, unknown>) {}
+		},
+	},
+}));
+
+vi.mock("@dnd-kit/dom/modifiers", () => ({
+	RestrictToWindow: {},
+}));
+
+vi.mock("@dnd-kit/helpers", async (importOriginal) => {
 	const actual = (await importOriginal()) as Record<string, unknown>;
 	return {
 		...actual,
-		SortableContext: ({ children }: { children: React.ReactNode }) => (
-			<div data-testid="sortable-context">{children}</div>
-		),
 	};
 });
 
@@ -201,20 +211,18 @@ describe("MediaUploadGrid", () => {
 			expect(screen.getByTestId("sortable-item-1").dataset.isPrimary).toBe("false");
 		});
 
-		it("wraps items in DndContext and SortableContext", () => {
+		it("wraps items in DragDropProvider", () => {
 			render(<MediaUploadGrid media={[image1]} onChange={mockOnChange} />);
 
-			expect(screen.getByTestId("dnd-context")).toBeInTheDocument();
-			expect(screen.getByTestId("sortable-context")).toBeInTheDocument();
+			expect(screen.getByTestId("drag-drop-provider")).toBeInTheDocument();
 		});
 
-		it("registers all three event handlers on DndContext", () => {
+		it("registers event handlers on DragDropProvider", () => {
 			render(<MediaUploadGrid media={[image1]} onChange={mockOnChange} />);
 
-			const ctx = screen.getByTestId("dnd-context");
-			expect(ctx.dataset.onDragEnd).toBe("true");
-			expect(ctx.dataset.onDragStart).toBe("true");
-			expect(ctx.dataset.onDragCancel).toBe("true");
+			const provider = screen.getByTestId("drag-drop-provider");
+			expect(provider.dataset.onDragEnd).toBe("true");
+			expect(provider.dataset.onDragStart).toBe("true");
 		});
 
 		it("renders upload zone when canAddMore and renderUploadZone provided", () => {
@@ -242,11 +250,11 @@ describe("MediaUploadGrid", () => {
 			expect(screen.queryByTestId("upload-zone")).not.toBeInTheDocument();
 		});
 
-		it("renders empty DragOverlay when no active drag", () => {
+		it("renders DragOverlay", () => {
 			render(<MediaUploadGrid media={[image1]} onChange={mockOnChange} />);
 
 			const overlay = screen.getByTestId("drag-overlay");
-			expect(overlay.children).toHaveLength(0);
+			expect(overlay).toBeInTheDocument();
 		});
 	});
 

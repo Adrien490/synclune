@@ -7,7 +7,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
 import { PasswordStrengthIndicator } from "@/shared/components/forms/password-strength-indicator";
 import Link from "next/link";
@@ -53,7 +53,7 @@ export function SignUpEmailForm() {
 					<>
 						{state.status === ActionStatus.SUCCESS ? (
 							<Alert role="status" aria-live="polite">
-								<CheckCircle2 aria-hidden="true" />
+								<CircleCheck aria-hidden="true" />
 								<AlertDescription>{state.message}</AlertDescription>
 							</Alert>
 						) : (
@@ -64,7 +64,7 @@ export function SignUpEmailForm() {
 								role="alert"
 								aria-live="assertive"
 							>
-								<AlertCircle aria-hidden="true" />
+								<CircleAlert aria-hidden="true" />
 								<AlertDescription>{state.message}</AlertDescription>
 							</Alert>
 						)}
@@ -181,7 +181,10 @@ export function SignUpEmailForm() {
 						<Button disabled={!canSubmit || isPending} className="w-full" type="submit">
 							{isPending ? (
 								<>
-									<Loader2 className="mr-2 h-4 w-4 motion-safe:animate-spin" aria-hidden="true" />
+									<LoaderCircle
+										className="mr-2 h-4 w-4 motion-safe:animate-spin"
+										aria-hidden="true"
+									/>
 									Inscription en cours...
 								</>
 							) : (

@@ -7,7 +7,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { Star, Pencil, Trash2, Loader2, MoreVertical } from "lucide-react";
+import { Star, Pencil, Trash2, LoaderCircle, EllipsisVertical } from "lucide-react";
 import { useSetDefaultAddress } from "../hooks/use-set-default-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -30,9 +30,9 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" size="icon" disabled={isPending}>
 					{isPending ? (
-						<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+						<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
 					) : (
-						<MoreVertical className="h-4 w-4" aria-hidden="true" />
+						<EllipsisVertical className="h-4 w-4" aria-hidden="true" />
 					)}
 					<span className="sr-only">
 						Actions pour {address.firstName} {address.lastName}

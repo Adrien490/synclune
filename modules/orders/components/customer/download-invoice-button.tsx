@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { Download, Loader2 } from "lucide-react";
+import { Download, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -59,7 +59,7 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 					aria-busy={isDownloading}
 				>
 					{isDownloading ? (
-						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
 					) : (
 						<Download className="mr-2 h-4 w-4" />
 					)}

@@ -8,28 +8,17 @@ import type { MediaItem } from "@/modules/media/types/hooks.types";
 // ---------------------------------------------------------------------------
 const { mockUseSortable } = vi.hoisted(() => ({
 	mockUseSortable: vi.fn(() => ({
-		attributes: { role: "button", tabIndex: 0, "aria-roledescription": "sortable" },
-		listeners: { onPointerDown: vi.fn() },
-		setNodeRef: vi.fn(),
-		transform: null,
-		transition: null,
-		isDragging: false,
+		ref: vi.fn(),
+		handleRef: vi.fn(),
+		isDragSource: false,
 	})),
 }));
 
 // ---------------------------------------------------------------------------
 // Module mocks
 // ---------------------------------------------------------------------------
-vi.mock("@dnd-kit/sortable", () => ({
+vi.mock("@dnd-kit/react/sortable", () => ({
 	useSortable: mockUseSortable,
-}));
-
-vi.mock("@dnd-kit/utilities", () => ({
-	CSS: {
-		Transform: {
-			toString: (t: unknown) => (t ? "translate3d(10px, 20px, 0)" : undefined),
-		},
-	},
 }));
 
 vi.mock("next/image", () => ({
@@ -134,12 +123,9 @@ describe("SortableMediaItem", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockUseSortable.mockReturnValue({
-			attributes: { role: "button", tabIndex: 0, "aria-roledescription": "sortable" },
-			listeners: { onPointerDown: vi.fn() },
-			setNodeRef: vi.fn(),
-			transform: null,
-			transition: null,
-			isDragging: false,
+			ref: vi.fn(),
+			handleRef: vi.fn(),
+			isDragSource: false,
 		});
 	});
 
@@ -205,20 +191,19 @@ describe("SortableMediaItem", () => {
 	// useSortable integration
 	// -----------------------------------------------------------------------
 	describe("useSortable", () => {
-		it("passes media.url as sortable id", () => {
-			renderItem();
+		it("passes media.url and index as sortable id and index", () => {
+			renderItem({ index: 2 });
 
-			expect(mockUseSortable).toHaveBeenCalledWith({ id: imageMedia.url });
+			expect(mockUseSortable).toHaveBeenCalledWith(
+				expect.objectContaining({ id: imageMedia.url, index: 2 }),
+			);
 		});
 
-		it("applies reduced opacity when dragging", () => {
+		it("applies reduced opacity when isDragSource", () => {
 			mockUseSortable.mockReturnValue({
-				attributes: { role: "button", tabIndex: 0, "aria-roledescription": "sortable" },
-				listeners: { onPointerDown: vi.fn() },
-				setNodeRef: vi.fn(),
-				transform: null,
-				transition: null,
-				isDragging: true,
+				ref: vi.fn(),
+				handleRef: vi.fn(),
+				isDragSource: true,
 			});
 
 			const { container } = renderItem();
@@ -226,52 +211,20 @@ describe("SortableMediaItem", () => {
 			expect(container.firstElementChild).toHaveClass("opacity-30");
 		});
 
-		it("applies transform style from useSortable", () => {
-			mockUseSortable.mockReturnValue({
-				attributes: { role: "button", tabIndex: 0, "aria-roledescription": "sortable" },
-				listeners: { onPointerDown: vi.fn() },
-				setNodeRef: vi.fn(),
-				transform: { x: 10, y: 20, scaleX: 1, scaleY: 1 } as unknown as null,
-				transition: "transform 200ms ease" as unknown as null,
-				isDragging: false,
-			});
+		it("passes null transition when shouldReduceMotion is true", () => {
+			renderItem({ shouldReduceMotion: true });
 
-			const { container } = renderItem();
-
-			expect(container.firstElementChild).toHaveStyle({
-				transform: "translate3d(10px, 20px, 0)",
-			});
+			expect(mockUseSortable).toHaveBeenCalledWith(expect.objectContaining({ transition: null }));
 		});
 
-		it("removes transition when shouldReduceMotion is true", () => {
-			mockUseSortable.mockReturnValue({
-				attributes: { role: "button", tabIndex: 0, "aria-roledescription": "sortable" },
-				listeners: { onPointerDown: vi.fn() },
-				setNodeRef: vi.fn(),
-				transform: { x: 0, y: 0, scaleX: 1, scaleY: 1 } as unknown as null,
-				transition: "transform 200ms ease" as unknown as null,
-				isDragging: false,
-			});
+		it("passes transition config when shouldReduceMotion is false", () => {
+			renderItem({ shouldReduceMotion: false });
 
-			const { container } = renderItem({ shouldReduceMotion: true });
-
-			const style = container.firstElementChild?.getAttribute("style") ?? "";
-			expect(style).not.toContain("200ms");
-		});
-
-		it("sets zIndex: 50 when dragging", () => {
-			mockUseSortable.mockReturnValue({
-				attributes: { role: "button", tabIndex: 0, "aria-roledescription": "sortable" },
-				listeners: { onPointerDown: vi.fn() },
-				setNodeRef: vi.fn(),
-				transform: null,
-				transition: null,
-				isDragging: true,
-			});
-
-			const { container } = renderItem();
-
-			expect(container.firstElementChild).toHaveStyle({ zIndex: 50 });
+			expect(mockUseSortable).toHaveBeenCalledWith(
+				expect.objectContaining({
+					transition: { duration: 200, easing: "ease" },
+				}),
+			);
 		});
 	});
 

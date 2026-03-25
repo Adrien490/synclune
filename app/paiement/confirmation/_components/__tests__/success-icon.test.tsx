@@ -59,9 +59,9 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
-// Mock lucide-react CheckCircle2 as a simple identifiable element
+// Mock lucide-react CircleCheck as a simple identifiable element
 vi.mock("lucide-react", () => ({
-	CheckCircle2: ({ className }: { className?: string }) => {
+	CircleCheck: ({ className }: { className?: string }) => {
 		const { createElement } = require("react");
 		return createElement("svg", { "data-testid": "check-circle-icon", className });
 	},

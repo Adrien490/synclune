@@ -13,7 +13,7 @@ import {
 import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 
@@ -94,7 +94,7 @@ export function RemoveCartItemAlertDialog() {
 							Annuler
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Retrait..." : "Retirer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

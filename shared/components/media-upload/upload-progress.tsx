@@ -3,7 +3,7 @@
 import { Progress } from "@/shared/components/ui/progress";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, LoaderCircle } from "lucide-react";
 
 interface UploadProgressProps {
 	/** Progress percentage (0-100) */
@@ -69,7 +69,7 @@ export function UploadProgress({
 						<Check className="h-4 w-4 text-emerald-600 sm:h-3 sm:w-3" aria-hidden="true" />
 					</div>
 				) : (
-					<Loader2
+					<LoaderCircle
 						className={cn(
 							"text-primary h-7 w-7 sm:h-5 sm:w-5",
 							!shouldReduceMotion && "animate-spin",
@@ -112,7 +112,7 @@ export function UploadProgress({
 					<Check className="h-6 w-6 text-emerald-600 sm:h-5 sm:w-5" aria-hidden="true" />
 				</div>
 			) : (
-				<Loader2
+				<LoaderCircle
 					className={cn(
 						"text-primary h-10 w-10 sm:h-8 sm:w-8",
 						!shouldReduceMotion && "animate-spin",

@@ -13,8 +13,8 @@ vi.mock("@/modules/users/hooks/use-cancel-account-deletion", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	AlertTriangle: () => <span data-testid="alert-icon" />,
-	Loader2: () => <span data-testid="loader-icon" />,
+	TriangleAlert: () => <span data-testid="alert-icon" />,
+	LoaderCircle: () => <span data-testid="loader-icon" />,
 }));
 
 import { CancelDeletionBanner } from "../cancel-deletion-banner";

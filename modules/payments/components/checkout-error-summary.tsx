@@ -1,7 +1,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 
 interface FieldError {
 	name: string;
@@ -18,7 +18,7 @@ export function CheckoutErrorSummary({ fieldErrors }: CheckoutErrorSummaryProps)
 
 	return (
 		<Alert variant="destructive" role="alert" aria-live="assertive">
-			<AlertCircle className="size-4" />
+			<CircleAlert className="size-4" />
 			<AlertTitle>
 				{fieldErrors.length === 1 ? "1 erreur trouvée" : `${fieldErrors.length} erreurs trouvées`}
 			</AlertTitle>

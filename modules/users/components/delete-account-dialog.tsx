@@ -16,7 +16,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useDeleteAccount } from "@/modules/users/hooks/use-delete-account";
 import { USER_CONSTANTS } from "@/modules/users/constants/user.constants";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 const CONFIRMATION_TEXT = USER_CONSTANTS.ACCOUNT_DELETION_CONFIRMATION;
@@ -90,7 +90,7 @@ export function DeleteAccountDialog() {
 							disabled={!isConfirmed || isPending}
 							aria-busy={isPending}
 						>
-							{isPending && <Loader2 className="animate-spin" />}
+							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Envoi de la demande..." : "Demander la suppression"}
 						</AlertDialogAction>
 					</AlertDialogFooter>

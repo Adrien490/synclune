@@ -11,7 +11,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetUsersReturn } from "@/modules/users/types/user.types";
-import { CheckCircle, Users } from "lucide-react";
+import { CircleCheck, Users } from "lucide-react";
 import { use } from "react";
 import Link from "next/link";
 import { formatDateShort } from "@/shared/utils/dates";
@@ -90,7 +90,7 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 											<div className="flex items-center gap-2">
 												<span className="truncate text-sm">{user.email}</span>
 												{user.emailVerified && (
-													<CheckCircle
+													<CircleCheck
 														className="h-4 w-4 shrink-0 text-green-600"
 														aria-label="Email vérifié"
 													/>

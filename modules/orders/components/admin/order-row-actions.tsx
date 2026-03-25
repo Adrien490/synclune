@@ -19,12 +19,12 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
-	CheckCircle,
+	CircleCheck,
 	CreditCard,
 	Eye,
 	ExternalLink,
 	Mail,
-	MoreVertical,
+	EllipsisVertical,
 	Package,
 	PackageCheck,
 	PackageX,
@@ -34,7 +34,7 @@ import {
 	Trash2,
 	Truck,
 	Undo2,
-	XCircle,
+	CircleX,
 } from "lucide-react";
 import Link from "next/link";
 import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
@@ -183,7 +183,7 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
 					aria-label={`Actions pour la commande ${order.orderNumber}`}
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-48">
@@ -280,7 +280,7 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 				{/* SHIPPED : Marquer comme livrée */}
 				{canMarkAsDelivered && (
 					<DropdownMenuItem onClick={handleMarkAsDelivered}>
-						<CheckCircle className="h-4 w-4" />
+						<CircleCheck className="h-4 w-4" />
 						Marquer comme livrée
 					</DropdownMenuItem>
 				)}
@@ -322,7 +322,7 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 							onClick={handleCancel}
 							className="text-destructive focus:text-destructive"
 						>
-							<XCircle className="h-4 w-4" />
+							<CircleX className="h-4 w-4" />
 							Annuler la commande
 						</DropdownMenuItem>
 					</>

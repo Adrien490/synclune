@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui/sheet";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { cn } from "@/shared/utils/cn";
-import { Filter, Loader2, X } from "lucide-react";
+import { Filter, LoaderCircle, X } from "lucide-react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
 export type { FilterSheetWrapperProps };
@@ -186,7 +186,9 @@ export function FilterSheetWrapper({
 									disabled={isPending}
 									className="h-11 w-full text-base"
 								>
-									{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+									{isPending && (
+										<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+									)}
 									{applyButtonText}
 								</Button>
 							</div>
@@ -198,7 +200,9 @@ export function FilterSheetWrapper({
 									</Button>
 								</SheetClose>
 								<Button type="button" onClick={handleApply} disabled={isPending} className="flex-1">
-									{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+									{isPending && (
+										<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+									)}
 									{applyButtonText}
 									<Kbd className="text-muted-foreground/60 ml-1.5 hidden text-[10px] font-normal lg:inline">
 										⌘↵
@@ -208,7 +212,7 @@ export function FilterSheetWrapper({
 						</>
 					) : (
 						<Button type="button" onClick={handleApply} disabled={isPending} className="w-full">
-							{isPending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+							{isPending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}
 							{applyButtonText}
 						</Button>
 					)}

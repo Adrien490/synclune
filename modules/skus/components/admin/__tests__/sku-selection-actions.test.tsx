@@ -150,16 +150,16 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	CheckCircle: () => <span data-testid="icon-check-circle" />,
+	CircleCheck: () => <span data-testid="icon-check-circle" />,
 	DollarSign: () => <span data-testid="icon-dollar" />,
 	FileDown: () => <span data-testid="icon-file-down" />,
-	Loader2: ({ className }: { className?: string }) => (
+	LoaderCircle: ({ className }: { className?: string }) => (
 		<span data-testid="icon-loader" className={className} />
 	),
-	MoreVertical: () => <span data-testid="icon-more-vertical" />,
+	EllipsisVertical: () => <span data-testid="icon-more-vertical" />,
 	Package: () => <span data-testid="icon-package" />,
 	Trash2: () => <span data-testid="icon-trash" />,
-	XCircle: () => <span data-testid="icon-x-circle" />,
+	CircleX: () => <span data-testid="icon-x-circle" />,
 }));
 
 vi.mock("sonner", () => ({

@@ -12,7 +12,7 @@ import {
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { ExternalLink, MoreVertical, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { ExternalLink, EllipsisVertical, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialog";
 
@@ -64,7 +64,7 @@ export function ProductTypeRowActions({
 					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
 					aria-label="Actions"
 				>
-					<MoreVertical className="h-4 w-4" />
+					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">

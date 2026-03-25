@@ -12,7 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { Loader2, Star } from "lucide-react";
+import { LoaderCircle, Star } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -104,7 +104,7 @@ export function SetFeaturedProductAlertDialog() {
 						disabled={isPending}
 						aria-busy={isPending}
 					>
-						{isPending && <Loader2 className="animate-spin" />}
+						{isPending && <LoaderCircle className="animate-spin" />}
 						{isPending
 							? isFeatured
 								? "Retrait..."

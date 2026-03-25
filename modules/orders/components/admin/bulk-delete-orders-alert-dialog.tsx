@@ -13,7 +13,7 @@ import {
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteOrders } from "@/modules/orders/hooks/use-bulk-delete-orders";
-import { Loader2 } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 
 export const BULK_DELETE_ORDERS_DIALOG_ID = "bulk-delete-orders";
 
@@ -74,7 +74,7 @@ export function BulkDeleteOrdersAlertDialog() {
 						Annuler
 					</AlertDialogCancel>
 					<AlertDialogAction onClick={handleDelete} disabled={isPending} aria-busy={isPending}>
-						{isPending && <Loader2 className="animate-spin" />}
+						{isPending && <LoaderCircle className="animate-spin" />}
 						{isPending ? "Suppression..." : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>

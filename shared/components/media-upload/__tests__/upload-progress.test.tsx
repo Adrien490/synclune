@@ -35,7 +35,7 @@ describe("UploadProgress", () => {
 		it("affiche le spinner, la barre de progression et le texte pendant le téléversement", () => {
 			const { container } = render(<UploadProgress progress={50} />);
 
-			// Spinner (Loader2 SVG rendered by lucide-react)
+			// Spinner (LoaderCircle SVG rendered by lucide-react)
 			const loader = container.querySelector(".lucide-loader-circle, .lucide-loader2, svg");
 			// The status container should be aria-busy
 			const status = screen.getByRole("status");
@@ -57,7 +57,7 @@ describe("UploadProgress", () => {
 
 			expect(screen.getByText("Traitement...")).toBeTruthy();
 
-			// Loader2 must be present (not Check icon)
+			// LoaderCircle must be present (not Check icon)
 			const loaderIcon = container.querySelector('[aria-hidden="true"] + *');
 			// Check icon wrapper should NOT exist at root level
 			const checkIcon = container.querySelector(".text-emerald-600");
@@ -177,9 +177,9 @@ describe("UploadProgress", () => {
 
 			const { container } = render(<UploadProgress progress={50} />);
 
-			// Find the Loader2 SVG — lucide icons render as <svg> with aria-hidden
+			// Find the LoaderCircle SVG — lucide icons render as <svg> with aria-hidden
 			const spinnerCandidates = container.querySelectorAll('svg[aria-hidden="true"]');
-			// There should be at least one (the Loader2 spinner)
+			// There should be at least one (the LoaderCircle spinner)
 			expect(spinnerCandidates.length).toBeGreaterThan(0);
 
 			// None of the aria-hidden SVGs should have animate-spin

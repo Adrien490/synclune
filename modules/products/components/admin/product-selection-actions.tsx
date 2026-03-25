@@ -13,10 +13,9 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import {
 	Archive,
 	ArchiveRestore,
-	FileDown,
-	FileEdit,
+	FilePenLine,
 	Globe,
-	MoreVertical as MoreVerticalIcon,
+	EllipsisVertical as MoreVerticalIcon,
 	Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -71,14 +70,6 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 			hasMixedStatus,
 		};
 	})();
-
-	const handleExportCSV = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins un bijou.");
-			return;
-		}
-		toast.info("Export CSV non implémenté");
-	};
 
 	const handleBulkArchive = () => {
 		if (selectedItems.length === 0) {
@@ -144,14 +135,6 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-50">
-				{/* Export CSV - Toujours disponible */}
-				<DropdownMenuItem onClick={handleExportCSV}>
-					<FileDown className="h-4 w-4" />
-					Exporter CSV
-				</DropdownMenuItem>
-
-				<DropdownMenuSeparator />
-
 				{/* Actions de changement de statut (DRAFT/PUBLIC) */}
 				{!selectedProductsStatus.allArchived && !selectedProductsStatus.hasArchived && (
 					<>
@@ -163,7 +146,7 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 						)}
 						{selectedProductsStatus.allPublic && (
 							<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
-								<FileEdit className="h-4 w-4" />
+								<FilePenLine className="h-4 w-4" />
 								Mettre en brouillon
 							</DropdownMenuItem>
 						)}
@@ -174,7 +157,7 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 									Publier
 								</DropdownMenuItem>
 								<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
-									<FileEdit className="h-4 w-4" />
+									<FilePenLine className="h-4 w-4" />
 									Mettre en brouillon
 								</DropdownMenuItem>
 							</>

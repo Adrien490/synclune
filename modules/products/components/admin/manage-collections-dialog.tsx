@@ -17,7 +17,7 @@ import {
 	getAllCollections,
 	getProductCollections,
 } from "@/modules/products/data/get-product-collections";
-import { Loader2, FolderOpen } from "lucide-react";
+import { LoaderCircle, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 
 export const MANAGE_COLLECTIONS_DIALOG_ID = "manage-product-collections";
@@ -94,7 +94,7 @@ export function ManageCollectionsDialog() {
 					<div className="py-6">
 						{isLoadingData ? (
 							<div className="flex items-center justify-center py-8">
-								<Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+								<LoaderCircle className="text-muted-foreground h-6 w-6 animate-spin" />
 							</div>
 						) : collections.length === 0 ? (
 							<div className="text-muted-foreground py-8 text-center">
