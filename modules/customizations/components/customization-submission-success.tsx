@@ -17,7 +17,7 @@ export function CustomizationSubmissionSuccess({
 			initial={{ opacity: 0, y: 8 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.3, delay: 0.1 }}
-			className="flex flex-col items-center gap-6 py-12 text-center"
+			className="flex flex-col items-center gap-6 py-8 text-center sm:py-12"
 		>
 			<CircleCheck className="text-success size-12" strokeWidth={1.5} />
 

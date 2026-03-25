@@ -88,6 +88,13 @@ export const useCustomizationForm = (options?: UseCustomizationFormOptions) => {
 
 	const isSubmitted = state?.status === ActionStatus.SUCCESS;
 
+	// Scroll to top on successful submission (mobile: form is long, user is scrolled down)
+	useEffect(() => {
+		if (isSubmitted) {
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+	}, [isSubmitted]);
+
 	const form = useAppForm({
 		...CUSTOMIZATION_FORM_OPTIONS,
 		// Merge server state with form state for validation errors
