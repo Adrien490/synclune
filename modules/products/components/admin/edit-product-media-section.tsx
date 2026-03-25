@@ -66,13 +66,14 @@ export function EditProductMediaSection({
 				}}
 				skipUtapiDelete={true}
 				maxItems={maxCount}
-				renderUploadZone={() =>
-					isMediaUploading ? (
-						<div className="bg-primary/5 flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg">
-							<div className="border-primary/20 border-t-primary h-8 w-8 animate-spin rounded-full border-2" />
-							<p className="text-muted-foreground text-xs">Upload en cours...</p>
-						</div>
-					) : (
+				renderUploadZone={() => (
+					<div className="flex h-full w-full flex-col">
+						{isMediaUploading && (
+							<div className="bg-primary/5 flex items-center justify-center gap-2 rounded-t-lg px-2 py-1.5">
+								<div className="border-primary/20 border-t-primary h-4 w-4 animate-spin rounded-full border-2" />
+								<p className="text-muted-foreground text-xs">Upload en cours...</p>
+							</div>
+						)}
 						<UploadDropzone
 							endpoint="catalogMedia"
 							onChange={async (files) => {
@@ -189,8 +190,8 @@ export function EditProductMediaSection({
 								button: () => <span className="sr-only">Sélectionner des médias</span>,
 							}}
 						/>
-					)
-				}
+					</div>
+				)}
 			/>
 			{field.state.meta.errors.length > 0 && (
 				<ul className="text-destructive mt-2 list-none space-y-1 text-sm" role="alert">

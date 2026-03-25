@@ -58,6 +58,7 @@ function isValidMediaType(file: File): boolean {
  *
  * Features:
  * - Parallel batch image upload
+ * - Queue system: add files during an active upload
  * - Client-side video thumbnail generation (Canvas API)
  * - Retry with exponential backoff
  * - Cancellation via AbortController
@@ -72,9 +73,9 @@ function isValidMediaType(file: File): boolean {
  *   onSuccess: (results) => console.log('Uploaded:', results),
  * });
  *
+ * // Can call upload() multiple times — files are queued automatically
  * const handleDrop = async (files: File[]) => {
  *   const results = await upload(files);
- *   // results contains the uploaded file URLs
  * };
  * ```
  */
@@ -90,7 +91,18 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	} = options;
 
 	const [progress, setProgress] = useState<UploadProgress | null>(null);
+	const [queuedCount, setQueuedCount] = useState(0);
 	const abortControllerRef = useRef<AbortController | null>(null);
+	const isProcessingRef = useRef(false);
+	const queueRef = useRef<
+		Array<{
+			files: File[];
+			resolve: (results: MediaUploadResult[]) => void;
+			reject: (error: Error) => void;
+		}>
+	>([]);
+	const cumulativeResultsRef = useRef<MediaUploadResult[]>([]);
+	const cumulativeCompletedRef = useRef(0);
 
 	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing("catalogMedia");
 
@@ -117,6 +129,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				: {
 						total: 0,
 						completed: 0,
+						queued: 0,
 						phase: "validating" as const,
 						...update,
 					};
@@ -327,72 +340,145 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	};
 
 	// ========================================================================
-	// MAIN UPLOAD FUNCTION
+	// BATCH PROCESSING (single batch of files)
 	// ========================================================================
 
-	const upload = async (files: File[]): Promise<MediaUploadResult[]> => {
-		// Create a new AbortController
+	const processBatch = async (files: File[], signal: AbortSignal): Promise<MediaUploadResult[]> => {
+		// Separate images and videos
+		const images = files.filter((f) => getMediaTypeFromFile(f) === "IMAGE");
+		const videos = files.filter((f) => getMediaTypeFromFile(f) === "VIDEO");
+
+		updateProgress({ phase: "uploading", current: `${images.length} image(s)` });
+
+		const uploadResults: MediaUploadResult[] = [];
+
+		// Upload images in batch
+		if (images.length > 0) {
+			updateProgress({ current: `${images.length} image(s)`, phase: "uploading" });
+			const imageResults = await uploadImages(images, signal);
+			uploadResults.push(...imageResults);
+			cumulativeCompletedRef.current += imageResults.length;
+			updateProgress({ completed: cumulativeCompletedRef.current });
+		}
+
+		// Upload videos
+		if (videos.length > 0) {
+			updateProgress({ phase: "generating-thumbnails" });
+			const videoResults = await uploadVideos(videos, signal);
+			uploadResults.push(...videoResults);
+			cumulativeCompletedRef.current += videoResults.length;
+			updateProgress({ completed: cumulativeCompletedRef.current });
+		}
+
+		return uploadResults;
+	};
+
+	// ========================================================================
+	// QUEUE PROCESSING
+	// ========================================================================
+
+	const processQueue = async () => {
+		if (isProcessingRef.current) return;
+		isProcessingRef.current = true;
+
+		// Create a single AbortController for the entire queue session
 		abortControllerRef.current?.abort();
 		abortControllerRef.current = new AbortController();
 		const signal = abortControllerRef.current.signal;
 
+		// Reset cumulative counters
+		cumulativeResultsRef.current = [];
+		cumulativeCompletedRef.current = 0;
+
+		try {
+			while (queueRef.current.length > 0) {
+				const entry = queueRef.current.shift()!;
+				setQueuedCount(queueRef.current.length);
+
+				// Calculate total including remaining queue
+				const queuedFileCount = queueRef.current.reduce((sum, e) => sum + e.files.length, 0);
+				updateProgress({
+					total: cumulativeCompletedRef.current + entry.files.length + queuedFileCount,
+					queued: queuedFileCount,
+				});
+
+				try {
+					const batchResults = await processBatch(entry.files, signal);
+					cumulativeResultsRef.current.push(...batchResults);
+					entry.resolve(batchResults);
+				} catch (error) {
+					if (error instanceof DOMException && error.name === "AbortError") {
+						entry.resolve([]); // Resolve with empty on cancel
+						// Resolve remaining queue entries
+						for (const remaining of queueRef.current) {
+							remaining.resolve([]);
+						}
+						queueRef.current = [];
+						setQueuedCount(0);
+						setProgress(null);
+						isProcessingRef.current = false;
+						return;
+					}
+
+					const err = error instanceof Error ? error : new Error(String(error));
+					onError?.(err);
+					toast.error("Echec de l'upload", { description: err.message });
+					entry.resolve([]); // Resolve with empty on error, continue queue
+				}
+			}
+
+			// All batches done
+			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
+			onSuccess?.(cumulativeResultsRef.current);
+
+			setTimeout(() => {
+				setProgress(null);
+				cumulativeResultsRef.current = [];
+				cumulativeCompletedRef.current = 0;
+			}, 1000);
+		} finally {
+			isProcessingRef.current = false;
+		}
+	};
+
+	// ========================================================================
+	// MAIN UPLOAD FUNCTION
+	// ========================================================================
+
+	const upload = async (files: File[]): Promise<MediaUploadResult[]> => {
 		// Validate files
-		updateProgress({ phase: "validating", total: files.length, completed: 0 });
+		updateProgress({
+			phase: "validating",
+			total: files.length,
+			completed: cumulativeCompletedRef.current,
+			queued: queueRef.current.length,
+		});
 		const validFiles = validateFiles(files);
 
 		if (validFiles.length === 0) {
-			setProgress(null);
+			if (!isProcessingRef.current) {
+				setProgress(null);
+			}
 			return [];
 		}
 
-		// Separate images and videos
-		const images = validFiles.filter((f) => getMediaTypeFromFile(f) === "IMAGE");
-		const videos = validFiles.filter((f) => getMediaTypeFromFile(f) === "VIDEO");
-		const totalFiles = images.length + videos.length;
+		// Create a promise that resolves when this batch is uploaded
+		return new Promise<MediaUploadResult[]>((resolve, reject) => {
+			queueRef.current.push({ files: validFiles, resolve, reject });
+			setQueuedCount(queueRef.current.length);
 
-		updateProgress({ total: totalFiles, completed: 0, phase: "uploading" });
-
-		const uploadResults: MediaUploadResult[] = [];
-
-		try {
-			// Upload images in batch
-			if (images.length > 0) {
-				updateProgress({ current: `${images.length} image(s)`, phase: "uploading" });
-				const imageResults = await uploadImages(images, signal);
-				uploadResults.push(...imageResults);
-				updateProgress({ completed: imageResults.length });
-			}
-
-			// Upload videos
-			if (videos.length > 0) {
-				updateProgress({ phase: "generating-thumbnails" });
-				const videoResults = await uploadVideos(videos, signal);
-				uploadResults.push(...videoResults);
-				updateProgress({ completed: uploadResults.length });
-			}
-
-			updateProgress({ phase: "done", completed: uploadResults.length });
-			onSuccess?.(uploadResults);
-
-			setTimeout(() => setProgress(null), 1000);
-			return uploadResults;
-		} catch (error) {
-			// Handle cancellation silently
-			if (error instanceof DOMException && error.name === "AbortError") {
-				setProgress(null);
-				return uploadResults; // Return what was uploaded
-			}
-
-			const err = error instanceof Error ? error : new Error(String(error));
-			onError?.(err);
-
-			toast.error("Echec de l'upload", {
-				description: err.message,
+			// Update total to reflect new queued files
+			const totalQueued = queueRef.current.reduce((sum, e) => sum + e.files.length, 0);
+			updateProgress({
+				total: cumulativeCompletedRef.current + totalQueued,
+				queued: totalQueued,
 			});
 
-			setTimeout(() => setProgress(null), 1000);
-			return uploadResults; // Return what was uploaded despite the error
-		}
+			// Start processing if not already running
+			if (!isProcessingRef.current) {
+				void processQueue();
+			}
+		});
 	};
 
 	const uploadSingle = async (file: File): Promise<MediaUploadResult | null> => {
@@ -403,7 +489,15 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	const cancel = () => {
 		abortControllerRef.current?.abort();
 		abortControllerRef.current = null;
+		// Clear the queue
+		for (const entry of queueRef.current) {
+			entry.resolve([]);
+		}
+		queueRef.current = [];
+		setQueuedCount(0);
 		setProgress(null);
+		cumulativeResultsRef.current = [];
+		cumulativeCompletedRef.current = 0;
 	};
 
 	// ========================================================================
@@ -417,6 +511,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		cancel,
 		isUploading: isUploadThingUploading || progress !== null,
 		progress,
+		queuedCount,
 		getMediaType: getMediaTypeFromFile,
 		isOversized,
 	};

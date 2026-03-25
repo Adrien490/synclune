@@ -4,6 +4,7 @@ import { FieldLabel } from "@/shared/components/forms";
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { MultiSelect } from "@/shared/components/multi-select";
@@ -129,609 +130,688 @@ export function CreateProductForm({
 				</Alert>
 			)}
 
-			<fieldset disabled={isPending} className="space-y-6">
-				{/* Visuels */}
-				<form.Field
-					name="initialSku.media"
-					mode="array"
-					validators={{
-						onChange: ({ value }) =>
-							value.length === 0 ? "Au moins une image est requise" : undefined,
-					}}
-				>
-					{(field) => {
-						const currentCount = field.state.value.length;
-						const isAtLimit = currentCount >= maxMediaCount;
+			<fieldset disabled={isPending} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+				{/* Colonne principale */}
+				<div className="space-y-6 lg:col-span-2">
+					{/* Card Médias */}
+					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
+						<CardHeader className="hidden lg:grid lg:px-6">
+							<CardTitle>Médias</CardTitle>
+						</CardHeader>
+						<CardContent className="px-0 sm:px-0 lg:px-6">
+							<form.Field
+								name="initialSku.media"
+								mode="array"
+								validators={{
+									onChange: ({ value }) =>
+										value.length === 0 ? "Au moins une image est requise" : undefined,
+								}}
+							>
+								{(field) => {
+									const currentCount = field.state.value.length;
+									const isAtLimit = currentCount >= maxMediaCount;
 
-						return (
-							<div className="space-y-3">
-								<div className="flex items-center justify-between">
-									<div>
-										<FieldLabel htmlFor="media-upload-zone" required>
-											Médias
-										</FieldLabel>
-										<p className="text-muted-foreground mt-1 text-xs">
-											La première image sera l'image principale. Glissez pour réordonner.
-										</p>
-									</div>
-									<MediaCounterBadge count={currentCount} max={maxMediaCount} />
-								</div>
-
-								{isAtLimit && (
-									<div className="bg-secondary/10 border-secondary flex items-start gap-2 rounded-lg border p-3">
-										<Info className="text-secondary-foreground mt-0.5 h-4 w-4 shrink-0" />
-										<p className="text-secondary-foreground text-xs">
-											Limite de {maxMediaCount} médias atteinte
-										</p>
-									</div>
-								)}
-
-								{field.state.value.length === 0 ? (
-									<div className="space-y-3">
-										{/* Feedback d'upload en cours */}
-										{isMediaUploading && uploadProgress ? (
-											<div
-												role="status"
-												aria-live="polite"
-												className="bg-primary/5 border-primary/20 flex flex-col items-center justify-center gap-4 rounded-xl border-2 px-4 py-8"
-											>
-												<div className="relative">
-													<div className="border-primary/20 border-t-primary h-16 w-16 animate-spin rounded-full border-4" />
-													<Upload className="text-primary absolute inset-0 m-auto h-6 w-6" />
-												</div>
-												<div className="space-y-1 text-center">
-													<p className="text-foreground font-medium">
-														{uploadProgress.phase === "validating" && "Validation des fichiers..."}
-														{uploadProgress.phase === "generating-thumbnails" &&
-															"Génération des miniatures..."}
-														{uploadProgress.phase === "uploading" && "Upload en cours..."}
-														{uploadProgress.phase === "done" && "Terminé !"}
-													</p>
-													<p className="text-muted-foreground text-sm">
-														{uploadProgress.completed} / {uploadProgress.total} fichier(s)
-													</p>
-													{uploadProgress.current && (
-														<p className="text-muted-foreground/70 max-w-50 truncate text-xs">
-															{uploadProgress.current}
-														</p>
-													)}
-												</div>
+									return (
+										<div className="space-y-3">
+											<div className="flex items-center justify-between">
+												<p className="text-muted-foreground text-xs">
+													La première image sera l'image principale. Glissez pour réordonner.
+												</p>
+												<MediaCounterBadge count={currentCount} max={maxMediaCount} />
 											</div>
-										) : (
-											<div id="media-upload-zone" className="space-y-3">
-												<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed px-3 py-3">
-													<ImagePlus className="text-muted-foreground/50 h-5 w-5" />
-													<p className="text-muted-foreground text-sm">
-														Ajoutez jusqu'à {maxMediaCount} images et vidéos
+
+											{isAtLimit && (
+												<div className="bg-secondary/10 border-secondary flex items-start gap-2 rounded-lg border p-3">
+													<Info className="text-secondary-foreground mt-0.5 h-4 w-4 shrink-0" />
+													<p className="text-secondary-foreground text-xs">
+														Limite de {maxMediaCount} médias atteinte
 													</p>
 												</div>
-												<UploadDropzone
-													endpoint="catalogMedia"
-													onChange={(files) => handleUpload(files, field)}
-													onUploadError={(error) => {
-														toast.error(`Erreur: ${error.message}`);
-													}}
-													aria-label="Zone d'upload des médias du bijou"
-													className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
-													appearance={{
-														container: ({ isDragActive }) => ({
-															border: "2px dashed",
-															borderColor: isDragActive
-																? "var(--primary)"
-																: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-															borderRadius: "0.75rem",
-															backgroundColor: isDragActive
-																? "color-mix(in oklch, var(--primary) 5%, transparent)"
-																: "color-mix(in oklch, var(--muted) 30%, transparent)",
-															padding: "1.5rem",
-															height: "min(200px, 25vh)",
-															minHeight: "160px",
-															display: "flex",
-															flexDirection: "column",
-															alignItems: "center",
-															justifyContent: "center",
-															gap: "0.5rem",
-															cursor: "pointer",
-														}),
-														uploadIcon: () => ({ display: "none" }),
-														label: () => ({ display: "none" }),
-														allowedContent: () => ({ display: "none" }),
-														button: () => ({ display: "none" }),
-													}}
-													content={{
-														uploadIcon: () => <Upload className="text-primary/70 h-12 w-12" />,
-														label: ({ isDragActive }) => (
+											)}
+
+											{field.state.value.length === 0 ? (
+												<div className="space-y-3">
+													{/* Progress feedback during upload */}
+													{isMediaUploading && uploadProgress && (
+														<div
+															role="status"
+															aria-live="polite"
+															className="bg-primary/5 border-primary/20 flex flex-col items-center justify-center gap-4 rounded-xl border-2 px-4 py-6"
+														>
+															<div className="relative">
+																<div className="border-primary/20 border-t-primary h-12 w-12 animate-spin rounded-full border-4" />
+																<Upload className="text-primary absolute inset-0 m-auto h-5 w-5" />
+															</div>
 															<div className="space-y-1 text-center">
-																<p className="font-medium">
-																	{isDragActive ? "Relâchez" : "Ajouter des médias"}
+																<p className="text-foreground text-sm font-medium">
+																	{uploadProgress.phase === "validating" &&
+																		"Validation des fichiers..."}
+																	{uploadProgress.phase === "generating-thumbnails" &&
+																		"Génération des miniatures..."}
+																	{uploadProgress.phase === "uploading" && "Upload en cours..."}
+																	{uploadProgress.phase === "done" && "Terminé !"}
 																</p>
-																<p className="text-muted-foreground text-xs">
-																	Images (max 16MB) et vidéos (max 512MB)
+																<p className="text-muted-foreground text-sm">
+																	{uploadProgress.completed} / {uploadProgress.total} fichier(s)
 																</p>
+																{uploadProgress.queued > 0 && (
+																	<p className="text-muted-foreground/70 text-xs">
+																		+{uploadProgress.queued} en attente
+																	</p>
+																)}
+																{uploadProgress.current && (
+																	<p className="text-muted-foreground/70 max-w-50 truncate text-xs">
+																		{uploadProgress.current}
+																	</p>
+																)}
 															</div>
-														),
-													}}
-												/>
-											</div>
-										)}
-										{field.state.meta.errors.length > 0 && (
-											<div role="alert" className="text-destructive space-y-1 text-center text-sm">
-												{field.state.meta.errors.map((error) => (
-													<p key={String(error)}>{String(error)}</p>
-												))}
-											</div>
-										)}
-									</div>
-								) : (
-									<MediaUploadGrid
-										media={field.state.value.map((m) => ({
-											url: m.url,
-											mediaType: m.mediaType,
-											altText: m.altText ?? undefined,
-											thumbnailUrl: m.thumbnailUrl ?? undefined,
-											blurDataUrl: m.blurDataUrl ?? undefined,
-										}))}
-										onChange={(newMedia) => {
-											const currentUrls = new Set(newMedia.map((m) => m.url));
-											const removed = field.state.value
-												.filter((m) => !currentUrls.has(m.url))
-												.map((m) => m.url);
-											if (removed.length > 0) {
-												setDeletedImageUrls((prev) => [...prev, ...removed]);
-											}
-											const currentLength = field.state.value.length;
-											for (let i = currentLength - 1; i >= 0; i--) {
-												field.removeValue(i);
-											}
-											newMedia.forEach((m) =>
-												field.pushValue({
-													url: m.url,
-													mediaType: m.mediaType,
-													altText: m.altText ?? undefined,
-													thumbnailUrl: m.thumbnailUrl ?? undefined,
-													blurDataUrl: m.blurDataUrl ?? undefined,
-												}),
-											);
-										}}
-										maxItems={maxMediaCount}
-										renderUploadZone={
-											isAtLimit
-												? undefined
-												: () =>
-														isMediaUploading ? (
-															<div className="bg-primary/5 flex h-full w-full flex-col items-center justify-center gap-2 rounded-lg">
-																<div className="border-primary/20 border-t-primary h-8 w-8 animate-spin rounded-full border-2" />
-																<p className="text-muted-foreground text-xs">
-																	{uploadProgress?.completed ?? 0}/{uploadProgress?.total ?? 0}
-																</p>
-															</div>
-														) : (
+														</div>
+													)}
+
+													{/* Dropzone — always visible for queueing */}
+													{!isAtLimit && (
+														<div id="media-upload-zone" className="space-y-3">
+															{!isMediaUploading && (
+																<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed px-3 py-3">
+																	<ImagePlus className="text-muted-foreground/50 h-5 w-5" />
+																	<p className="text-muted-foreground text-sm">
+																		Ajoutez jusqu'à {maxMediaCount} images et vidéos
+																	</p>
+																</div>
+															)}
 															<UploadDropzone
 																endpoint="catalogMedia"
 																onChange={(files) => handleUpload(files, field)}
 																onUploadError={(error) => {
 																	toast.error(`Erreur: ${error.message}`);
 																}}
-																className="h-full min-h-0 w-full"
+																aria-label="Zone d'upload des médias du bijou"
+																className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
 																appearance={{
 																	container: ({ isDragActive }) => ({
-																		height: "100%",
+																		border: "2px dashed",
+																		borderColor: isDragActive
+																			? "var(--primary)"
+																			: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
+																		borderRadius: "0.75rem",
+																		backgroundColor: isDragActive
+																			? "color-mix(in oklch, var(--primary) 5%, transparent)"
+																			: "color-mix(in oklch, var(--muted) 30%, transparent)",
+																		padding: isMediaUploading ? "1rem" : "1.5rem",
+																		height: isMediaUploading
+																			? "min(100px, 15vh)"
+																			: "min(200px, 25vh)",
+																		minHeight: isMediaUploading ? "80px" : "160px",
 																		display: "flex",
 																		flexDirection: "column",
 																		alignItems: "center",
 																		justifyContent: "center",
+																		gap: "0.5rem",
 																		cursor: "pointer",
-																		backgroundColor: isDragActive
-																			? "color-mix(in oklch, var(--primary) 5%, transparent)"
-																			: "transparent",
 																	}),
 																	uploadIcon: () => ({ display: "none" }),
 																	label: () => ({ display: "none" }),
-																	allowedContent: () => ({ display: "none" }),
+																	allowedContent: () => ({
+																		display: "none",
+																	}),
 																	button: () => ({ display: "none" }),
 																}}
 																content={{
 																	uploadIcon: () => (
-																		<Upload className="text-muted-foreground/50 h-6 w-6" />
+																		<Upload
+																			className={
+																				isMediaUploading
+																					? "text-primary/50 h-8 w-8"
+																					: "text-primary/70 h-12 w-12"
+																			}
+																		/>
 																	),
-																	label: () => (
-																		<p className="text-muted-foreground mt-1 text-center text-xs">
-																			Ajouter
-																		</p>
+																	label: ({ isDragActive }) => (
+																		<div className="space-y-1 text-center">
+																			<p className={isMediaUploading ? "text-sm" : "font-medium"}>
+																				{isDragActive
+																					? "Relâchez"
+																					: isMediaUploading
+																						? "Ajouter d'autres médias"
+																						: "Ajouter des médias"}
+																			</p>
+																			{!isMediaUploading && (
+																				<p className="text-muted-foreground text-xs">
+																					Images (max 16MB) et vidéos (max 512MB)
+																				</p>
+																			)}
+																		</div>
 																	),
 																}}
 															/>
-														)
-										}
+														</div>
+													)}
+													{field.state.meta.errors.length > 0 && (
+														<div
+															role="alert"
+															className="text-destructive space-y-1 text-center text-sm"
+														>
+															{field.state.meta.errors.map((error) => (
+																<p key={String(error)}>{String(error)}</p>
+															))}
+														</div>
+													)}
+												</div>
+											) : (
+												<MediaUploadGrid
+													media={field.state.value.map((m) => ({
+														url: m.url,
+														mediaType: m.mediaType,
+														altText: m.altText ?? undefined,
+														thumbnailUrl: m.thumbnailUrl ?? undefined,
+														blurDataUrl: m.blurDataUrl ?? undefined,
+													}))}
+													onChange={(newMedia) => {
+														const currentUrls = new Set(newMedia.map((m) => m.url));
+														const removed = field.state.value
+															.filter((m) => !currentUrls.has(m.url))
+															.map((m) => m.url);
+														if (removed.length > 0) {
+															setDeletedImageUrls((prev) => [...prev, ...removed]);
+														}
+														const currentLength = field.state.value.length;
+														for (let i = currentLength - 1; i >= 0; i--) {
+															field.removeValue(i);
+														}
+														newMedia.forEach((m) =>
+															field.pushValue({
+																url: m.url,
+																mediaType: m.mediaType,
+																altText: m.altText ?? undefined,
+																thumbnailUrl: m.thumbnailUrl ?? undefined,
+																blurDataUrl: m.blurDataUrl ?? undefined,
+															}),
+														);
+													}}
+													maxItems={maxMediaCount}
+													renderUploadZone={
+														isAtLimit
+															? undefined
+															: () => (
+																	<div className="flex h-full w-full flex-col">
+																		{isMediaUploading && (
+																			<div className="bg-primary/5 flex items-center justify-center gap-2 rounded-t-lg px-2 py-1.5">
+																				<div className="border-primary/20 border-t-primary h-4 w-4 animate-spin rounded-full border-2" />
+																				<p className="text-muted-foreground text-xs">
+																					{uploadProgress?.completed ?? 0}/
+																					{uploadProgress?.total ?? 0}
+																					{uploadProgress && uploadProgress.queued > 0 && (
+																						<span> (+{uploadProgress.queued})</span>
+																					)}
+																				</p>
+																			</div>
+																		)}
+																		<UploadDropzone
+																			endpoint="catalogMedia"
+																			onChange={(files) => handleUpload(files, field)}
+																			onUploadError={(error) => {
+																				toast.error(`Erreur: ${error.message}`);
+																			}}
+																			className="h-full min-h-0 w-full flex-1"
+																			appearance={{
+																				container: ({ isDragActive }) => ({
+																					height: "100%",
+																					display: "flex",
+																					flexDirection: "column",
+																					alignItems: "center",
+																					justifyContent: "center",
+																					cursor: "pointer",
+																					backgroundColor: isDragActive
+																						? "color-mix(in oklch, var(--primary) 5%, transparent)"
+																						: "transparent",
+																				}),
+																				uploadIcon: () => ({
+																					display: "none",
+																				}),
+																				label: () => ({
+																					display: "none",
+																				}),
+																				allowedContent: () => ({
+																					display: "none",
+																				}),
+																				button: () => ({
+																					display: "none",
+																				}),
+																			}}
+																			content={{
+																				uploadIcon: () => (
+																					<Upload className="text-muted-foreground/50 h-6 w-6" />
+																				),
+																				label: () => (
+																					<p className="text-muted-foreground mt-1 text-center text-xs">
+																						Ajouter
+																					</p>
+																				),
+																			}}
+																		/>
+																	</div>
+																)
+													}
+												/>
+											)}
+										</div>
+									);
+								}}
+							</form.Field>
+						</CardContent>
+					</Card>
+
+					{/* Card Informations */}
+					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
+						<CardHeader className="hidden lg:grid lg:px-6">
+							<CardTitle>Informations</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
+							<form.AppField
+								name="title"
+								validators={{
+									onChange: ({ value }) =>
+										!value || value.trim().length < 2
+											? "Le titre doit contenir au moins 2 caractères"
+											: undefined,
+								}}
+							>
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel htmlFor={field.name} required>
+											Titre du bijou
+										</FieldLabel>
+										{/* eslint-disable-next-line jsx-a11y/no-autofocus */}
+										<field.InputField label="" required autoFocus />
+									</div>
+								)}
+							</form.AppField>
+
+							<form.AppField
+								name="description"
+								validators={{
+									onBlur: ({ value }) =>
+										value && value.length > 500
+											? "La description ne peut pas dépasser 500 caractères"
+											: undefined,
+								}}
+							>
+								{(field) => (
+									<field.TextareaField
+										label="Description"
+										optional
+										rows={3}
+										maxLength={500}
+										showCounter
 									/>
 								)}
-							</div>
-						);
-					}}
-				</form.Field>
+							</form.AppField>
+						</CardContent>
+					</Card>
+				</div>
 
-				{/* Le bijou */}
+				{/* Sidebar */}
 				<div className="space-y-6">
-					<form.AppField
-						name="title"
-						validators={{
-							onChange: ({ value }) =>
-								!value || value.trim().length < 2
-									? "Le titre doit contenir au moins 2 caractères"
-									: undefined,
-						}}
-					>
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel htmlFor={field.name} required>
-									Titre du bijou
-								</FieldLabel>
-								{/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-								<field.InputField label="" required autoFocus />
-							</div>
-						)}
-					</form.AppField>
-
-					<form.AppField
-						name="description"
-						validators={{
-							onBlur: ({ value }) =>
-								value && value.length > 500
-									? "La description ne peut pas dépasser 500 caractères"
-									: undefined,
-						}}
-					>
-						{(field) => (
-							<field.TextareaField
-								label="Description"
-								optional
-								rows={3}
-								maxLength={500}
-								showCounter
-							/>
-						)}
-					</form.AppField>
-
-					<div className="space-y-4">
-						<form.AppField name="typeId">
-							{(field) => (
-								<div className="space-y-2">
-									<FieldLabel htmlFor={field.name} optional>
-										Type de bijou
-									</FieldLabel>
-									<div className="flex gap-2">
-										<div className="flex-1">
-											<field.SelectField
-												label=""
-												options={productTypes.map((t) => ({
-													value: t.id,
-													label: t.label,
-												}))}
-												placeholder="Sélectionner un type"
-												clearable
-											/>
+					{/* Card Organisation */}
+					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
+						<CardHeader className="hidden lg:grid lg:px-6">
+							<CardTitle>Organisation</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
+							<form.AppField name="typeId">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel htmlFor={field.name} optional>
+											Type de bijou
+										</FieldLabel>
+										<div className="flex gap-2">
+											<div className="flex-1">
+												<field.SelectField
+													label=""
+													options={productTypes.map((t) => ({
+														value: t.id,
+														label: t.label,
+													}))}
+													placeholder="Sélectionner un type"
+													clearable
+												/>
+											</div>
+											<Button
+												type="button"
+												variant="outline"
+												size="icon"
+												className="shrink-0"
+												onClick={() =>
+													typeDialog.open({
+														onCreated: (id: string) => {
+															field.handleChange(id);
+															router.refresh();
+														},
+													})
+												}
+												aria-label="Créer un nouveau type de produit"
+											>
+												<Plus className="h-4 w-4" />
+											</Button>
 										</div>
-										<Button
-											type="button"
-											variant="outline"
-											size="icon"
-											className="shrink-0"
-											onClick={() =>
-												typeDialog.open({
-													onCreated: (id: string) => {
-														field.handleChange(id);
-														router.refresh();
-													},
-												})
-											}
-											aria-label="Créer un nouveau type de produit"
-										>
-											<Plus className="h-4 w-4" />
-										</Button>
 									</div>
-								</div>
-							)}
-						</form.AppField>
+								)}
+							</form.AppField>
 
-						<form.AppField name="collectionIds">
-							{(field) => (
-								<div className="space-y-2">
-									<FieldLabel optional>Collections</FieldLabel>
-									<MultiSelect
-										options={collections.map((c) => ({
-											value: c.id,
-											label: c.name,
-										}))}
-										defaultValue={field.state.value}
-										onValueChange={(values) => field.handleChange(values)}
-										placeholder="Sélectionner des collections"
-										maxCount={2}
-										hideSelectAll
-									/>
-									<p className="text-muted-foreground text-xs">
-										Un produit peut appartenir à plusieurs collections
-									</p>
-								</div>
-							)}
-						</form.AppField>
-					</div>
-
-					{/* Section attributs de la variante initiale */}
-					<fieldset className="border-border/50 space-y-1 border-t pt-4">
-						<div className="flex items-center gap-1">
-							<legend className="text-foreground/80 text-sm font-medium">
-								Attributs de la variante
-							</legend>
-							<Tooltip>
-								<TooltipTrigger asChild>
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon"
-										className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
-										aria-label="Plus d'informations sur les attributs de la variante"
-									>
-										<Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
-									</Button>
-								</TooltipTrigger>
-								<TooltipContent side="right" className="max-w-62.5">
-									<p>
-										Ces attributs concernent la première variante du produit. Vous pourrez ajouter
-										d'autres variantes après la création.
-									</p>
-								</TooltipContent>
-							</Tooltip>
-						</div>
-						<p className="text-muted-foreground text-xs">
-							Caractéristiques de la première variante. Vous pourrez ajouter d'autres variantes
-							après la création.
-						</p>
-					</fieldset>
-
-					<form.AppField name="initialSku.colorId">
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel htmlFor={field.name} optional>
-									Couleur
-								</FieldLabel>
-								<div className="flex gap-2">
-									<div className="flex-1">
-										<field.SelectField
-											label=""
-											options={colors.map((c) => ({
+							<form.AppField name="collectionIds">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel optional>Collections</FieldLabel>
+										<MultiSelect
+											options={collections.map((c) => ({
 												value: c.id,
 												label: c.name,
 											}))}
-											renderOption={(opt) => {
-												const c = colors.find((x) => x.id === opt.value);
-												return (
-													<div className="flex items-center gap-2">
-														{c && (
-															<div
-																className="border-border h-4 w-4 rounded-full border"
-																style={{ backgroundColor: c.hex }}
-																aria-hidden="true"
-															/>
-														)}
-														<span>{opt.label}</span>
-													</div>
-												);
-											}}
-											renderValue={(val) => {
-												const c = colors.find((x) => x.id === val);
-												return c ? (
-													<div className="flex items-center gap-2">
-														<div
-															className="border-border h-4 w-4 rounded-full border"
-															style={{ backgroundColor: c.hex }}
-															aria-hidden="true"
-														/>
-														<span>{c.name}</span>
-													</div>
-												) : (
-													<span className="text-muted-foreground">Sélectionner une couleur</span>
-												);
-											}}
-											placeholder="Sélectionner une couleur"
-											clearable
+											defaultValue={field.state.value}
+											onValueChange={(values) => field.handleChange(values)}
+											placeholder="Sélectionner des collections"
+											maxCount={2}
+											hideSelectAll
 										/>
+										<p className="text-muted-foreground text-xs">
+											Un produit peut appartenir à plusieurs collections
+										</p>
 									</div>
-									<Button
-										type="button"
-										variant="outline"
-										size="icon"
-										className="shrink-0"
-										onClick={() =>
-											colorDialog.open({
-												onCreated: (id: string) => {
-													field.handleChange(id);
-													router.refresh();
-												},
-											})
-										}
-										aria-label="Créer une nouvelle couleur"
-									>
-										<Plus className="h-4 w-4" />
-									</Button>
-								</div>
-							</div>
-						)}
-					</form.AppField>
+								)}
+							</form.AppField>
+						</CardContent>
+					</Card>
 
-					<div className="space-y-4">
-						<form.AppField name="initialSku.materialId">
-							{(field) => (
-								<div className="space-y-2">
-									<FieldLabel htmlFor={field.name} optional>
-										Matériau
-									</FieldLabel>
-									<div className="flex gap-2">
-										<div className="flex-1">
-											<field.SelectField
-												label=""
-												options={materials.map((m) => ({
-													value: m.id,
-													label: m.name,
-												}))}
-												placeholder="Sélectionner un matériau"
-												clearable
-											/>
-										</div>
+					{/* Card Variante */}
+					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
+						<CardHeader className="hidden lg:grid lg:px-6">
+							<div className="flex items-center gap-1">
+								<CardTitle>Variante</CardTitle>
+								<Tooltip>
+									<TooltipTrigger asChild>
 										<Button
 											type="button"
-											variant="outline"
+											variant="ghost"
 											size="icon"
-											className="shrink-0"
-											onClick={() =>
-												materialDialog.open({
-													onCreated: (id: string) => {
-														field.handleChange(id);
-														router.refresh();
-													},
-												})
-											}
-											aria-label="Créer un nouveau matériau"
+											className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
+											aria-label="Plus d'informations sur les attributs de la variante"
 										>
-											<Plus className="h-4 w-4" />
+											<Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
 										</Button>
+									</TooltipTrigger>
+									<TooltipContent side="bottom" className="max-w-62.5">
+										<p>
+											Ces attributs concernent la première variante du produit. Vous pourrez ajouter
+											d'autres variantes après la création.
+										</p>
+									</TooltipContent>
+								</Tooltip>
+							</div>
+						</CardHeader>
+						<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
+							<form.AppField name="initialSku.colorId">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel htmlFor={field.name} optional>
+											Couleur
+										</FieldLabel>
+										<div className="flex gap-2">
+											<div className="flex-1">
+												<field.SelectField
+													label=""
+													options={colors.map((c) => ({
+														value: c.id,
+														label: c.name,
+													}))}
+													renderOption={(opt) => {
+														const c = colors.find((x) => x.id === opt.value);
+														return (
+															<div className="flex items-center gap-2">
+																{c && (
+																	<div
+																		className="border-border h-4 w-4 rounded-full border"
+																		style={{
+																			backgroundColor: c.hex,
+																		}}
+																		aria-hidden="true"
+																	/>
+																)}
+																<span>{opt.label}</span>
+															</div>
+														);
+													}}
+													renderValue={(val) => {
+														const c = colors.find((x) => x.id === val);
+														return c ? (
+															<div className="flex items-center gap-2">
+																<div
+																	className="border-border h-4 w-4 rounded-full border"
+																	style={{
+																		backgroundColor: c.hex,
+																	}}
+																	aria-hidden="true"
+																/>
+																<span>{c.name}</span>
+															</div>
+														) : (
+															<span className="text-muted-foreground">
+																Sélectionner une couleur
+															</span>
+														);
+													}}
+													placeholder="Sélectionner une couleur"
+													clearable
+												/>
+											</div>
+											<Button
+												type="button"
+												variant="outline"
+												size="icon"
+												className="shrink-0"
+												onClick={() =>
+													colorDialog.open({
+														onCreated: (id: string) => {
+															field.handleChange(id);
+															router.refresh();
+														},
+													})
+												}
+												aria-label="Créer une nouvelle couleur"
+											>
+												<Plus className="h-4 w-4" />
+											</Button>
+										</div>
 									</div>
-								</div>
-							)}
-						</form.AppField>
+								)}
+							</form.AppField>
 
-						<form.AppField name="initialSku.size">
-							{(field) => (
-								<div className="space-y-2">
-									<FieldLabel optional>Taille</FieldLabel>
-									<field.InputGroupField placeholder="Ex: 52, Ajustable, 18cm..." />
-								</div>
-							)}
-						</form.AppField>
-					</div>
+							<form.AppField name="initialSku.materialId">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel htmlFor={field.name} optional>
+											Matériau
+										</FieldLabel>
+										<div className="flex gap-2">
+											<div className="flex-1">
+												<field.SelectField
+													label=""
+													options={materials.map((m) => ({
+														value: m.id,
+														label: m.name,
+													}))}
+													placeholder="Sélectionner un matériau"
+													clearable
+												/>
+											</div>
+											<Button
+												type="button"
+												variant="outline"
+												size="icon"
+												className="shrink-0"
+												onClick={() =>
+													materialDialog.open({
+														onCreated: (id: string) => {
+															field.handleChange(id);
+															router.refresh();
+														},
+													})
+												}
+												aria-label="Créer un nouveau matériau"
+											>
+												<Plus className="h-4 w-4" />
+											</Button>
+										</div>
+									</div>
+								)}
+							</form.AppField>
+
+							<form.AppField name="initialSku.size">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel optional>Taille</FieldLabel>
+										<field.InputGroupField placeholder="Ex: 52, Ajustable, 18cm..." />
+									</div>
+								)}
+							</form.AppField>
+						</CardContent>
+					</Card>
+
+					{/* Card Tarification */}
+					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
+						<CardHeader className="hidden lg:grid lg:px-6">
+							<CardTitle>Tarification</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
+							<form.AppField name="initialSku.priceInclTaxEuros">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel required>Prix de vente final</FieldLabel>
+										<field.InputGroupField type="number" step="0.01" required>
+											<InputGroupAddon>
+												<Euro className="h-4 w-4" />
+											</InputGroupAddon>
+										</field.InputGroupField>
+										<p className="text-muted-foreground text-xs">Le prix que paiera le client</p>
+									</div>
+								)}
+							</form.AppField>
+
+							<form.AppField
+								name="initialSku.compareAtPriceEuros"
+								validators={{
+									onChangeListenTo: ["initialSku.priceInclTaxEuros"],
+									onChange: ({ value, fieldApi }) => {
+										if (!value) return undefined;
+										const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
+										return price && value < price
+											? "Le prix comparé doit être supérieur ou égal au prix de vente"
+											: undefined;
+									},
+									onBlur: ({ value, fieldApi }) => {
+										if (!value) return undefined;
+										const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
+										return price && value < price
+											? "Le prix comparé doit être supérieur ou égal au prix de vente"
+											: undefined;
+									},
+								}}
+							>
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel optional>Ancien prix (affiché barré)</FieldLabel>
+										<field.InputGroupField type="number" step="0.01">
+											<InputGroupAddon>
+												<Euro className="h-4 w-4" />
+											</InputGroupAddon>
+										</field.InputGroupField>
+										<p className="text-muted-foreground text-xs">
+											Sera affiché barré à côté du prix actuel (ex:{" "}
+											<span className="line-through">45€</span> → 39€)
+										</p>
+									</div>
+								)}
+							</form.AppField>
+						</CardContent>
+					</Card>
+
+					{/* Card Stock */}
+					<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
+						<CardHeader className="hidden lg:grid lg:px-6">
+							<CardTitle>Stock</CardTitle>
+						</CardHeader>
+						<CardContent className="px-0 sm:px-0 lg:px-6">
+							<form.AppField name="initialSku.inventory">
+								{(field) => (
+									<div className="space-y-2">
+										<FieldLabel optional>Quantité en stock</FieldLabel>
+										<field.InputGroupField type="number" min={0} inputMode="numeric">
+											<InputGroupAddon align="inline-end">
+												<Package className="text-muted-foreground h-4 w-4" />
+												<InputGroupText className="text-muted-foreground text-xs">
+													unités
+												</InputGroupText>
+											</InputGroupAddon>
+										</field.InputGroupField>
+										<p className="text-muted-foreground text-xs">
+											Laissez vide ou 0 si le bijou est en rupture
+										</p>
+									</div>
+								)}
+							</form.AppField>
+						</CardContent>
+					</Card>
 				</div>
-
-				{/* Prix et stock */}
-				<div className="space-y-6">
-					<form.AppField name="initialSku.priceInclTaxEuros">
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel required>Prix de vente final</FieldLabel>
-								<field.InputGroupField type="number" step="0.01" required>
-									<InputGroupAddon>
-										<Euro className="h-4 w-4" />
-									</InputGroupAddon>
-								</field.InputGroupField>
-								<p className="text-muted-foreground text-xs">Le prix que paiera le client</p>
-							</div>
-						)}
-					</form.AppField>
-
-					<form.AppField
-						name="initialSku.compareAtPriceEuros"
-						validators={{
-							onChangeListenTo: ["initialSku.priceInclTaxEuros"],
-							onChange: ({ value, fieldApi }) => {
-								if (!value) return undefined;
-								const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
-								return price && value < price
-									? "Le prix comparé doit être supérieur ou égal au prix de vente"
-									: undefined;
-							},
-							onBlur: ({ value, fieldApi }) => {
-								if (!value) return undefined;
-								const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
-								return price && value < price
-									? "Le prix comparé doit être supérieur ou égal au prix de vente"
-									: undefined;
-							},
-						}}
-					>
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel optional>Ancien prix (affiché barré)</FieldLabel>
-								<field.InputGroupField type="number" step="0.01">
-									<InputGroupAddon>
-										<Euro className="h-4 w-4" />
-									</InputGroupAddon>
-								</field.InputGroupField>
-								<p className="text-muted-foreground text-xs">
-									Sera affiché barré à côté du prix actuel (ex:{" "}
-									<span className="line-through">45€</span> → 39€)
-								</p>
-							</div>
-						)}
-					</form.AppField>
-
-					<form.AppField name="initialSku.inventory">
-						{(field) => (
-							<div className="space-y-2">
-								<FieldLabel optional>Quantité en stock</FieldLabel>
-								<field.InputGroupField type="number" min={0} inputMode="numeric">
-									<InputGroupAddon align="inline-end">
-										<Package className="text-muted-foreground h-4 w-4" />
-										<InputGroupText className="text-muted-foreground text-xs">
-											unités
-										</InputGroupText>
-									</InputGroupAddon>
-								</field.InputGroupField>
-								<p className="text-muted-foreground text-xs">
-									Laissez vide ou 0 si le bijou est en rupture
-								</p>
-							</div>
-						)}
-					</form.AppField>
-				</div>
-
-				{/* Footer */}
-				<form.AppForm>
-					<div className="pt-4">
-						<span className="sr-only" role="status" aria-live="polite">
-							{isPending ? "Envoi du formulaire en cours..." : ""}
-						</span>
-						<form.Subscribe selector={(state) => [state.canSubmit]}>
-							{([canSubmit]) => (
-								<div className="flex justify-end gap-3">
-									<Button
-										type="submit"
-										variant="secondary"
-										size="input"
-										disabled={!canSubmit || isPending || isMediaUploading}
-										onClick={() => form.setFieldValue("status", "DRAFT")}
-										className="min-w-0 flex-1 sm:min-w-40 sm:flex-none"
-									>
-										{isPending && form.state.values.status === "DRAFT" ? (
-											"Enregistrement..."
-										) : (
-											<>
-												<span className="sm:hidden">Brouillon</span>
-												<span className="hidden sm:inline">Enregistrer comme brouillon</span>
-											</>
-										)}
-									</Button>
-									<Button
-										type="submit"
-										size="input"
-										disabled={!canSubmit || isPending || isMediaUploading}
-										onClick={() => form.setFieldValue("status", "PUBLIC")}
-										className="min-w-0 flex-1 sm:min-w-40 sm:flex-none"
-									>
-										{isPending && form.state.values.status === "PUBLIC" ? (
-											"Publication..."
-										) : isMediaUploading ? (
-											"Upload en cours..."
-										) : (
-											<>
-												<span className="sm:hidden">Publier</span>
-												<span className="hidden sm:inline">Publier le bijou</span>
-											</>
-										)}
-									</Button>
-								</div>
-							)}
-						</form.Subscribe>
-					</div>
-				</form.AppForm>
 			</fieldset>
+
+			{/* Footer */}
+			<form.AppForm>
+				<div className="pt-4">
+					<span className="sr-only" role="status" aria-live="polite">
+						{isPending ? "Envoi du formulaire en cours..." : ""}
+					</span>
+					<form.Subscribe selector={(state) => [state.canSubmit]}>
+						{([canSubmit]) => (
+							<div className="flex justify-end gap-3">
+								<Button
+									type="submit"
+									variant="secondary"
+									size="input"
+									disabled={!canSubmit || isPending || isMediaUploading}
+									onClick={() => form.setFieldValue("status", "DRAFT")}
+									className="min-w-0 flex-1 sm:min-w-40 sm:flex-none"
+								>
+									{isPending && form.state.values.status === "DRAFT" ? (
+										"Enregistrement..."
+									) : (
+										<>
+											<span className="sm:hidden">Brouillon</span>
+											<span className="hidden sm:inline">Enregistrer comme brouillon</span>
+										</>
+									)}
+								</Button>
+								<Button
+									type="submit"
+									size="input"
+									disabled={!canSubmit || isPending || isMediaUploading}
+									onClick={() => form.setFieldValue("status", "PUBLIC")}
+									className="min-w-0 flex-1 sm:min-w-40 sm:flex-none"
+								>
+									{isPending && form.state.values.status === "PUBLIC" ? (
+										"Publication..."
+									) : isMediaUploading ? (
+										"Upload en cours..."
+									) : (
+										<>
+											<span className="sm:hidden">Publier</span>
+											<span className="hidden sm:inline">Publier le bijou</span>
+										</>
+									)}
+								</Button>
+							</div>
+						)}
+					</form.Subscribe>
+				</div>
+			</form.AppForm>
 		</form>
 	);
 }

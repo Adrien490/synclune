@@ -39,12 +39,14 @@ export interface MediaUploadResult {
 }
 
 export interface UploadProgress {
-	/** Total number of files */
+	/** Total number of files (current batch + queued) */
 	total: number;
 	/** Number of uploaded files */
 	completed: number;
 	/** Currently uploading file */
 	current?: string;
+	/** Number of files waiting in queue */
+	queued: number;
 	/** Current phase */
 	phase: "validating" | "generating-thumbnails" | "uploading" | "done";
 }
@@ -58,10 +60,12 @@ export interface UseMediaUploadReturn {
 	validateFiles: (files: File[]) => File[];
 	/** Cancel the current upload */
 	cancel: () => void;
-	/** Whether an upload is in progress */
+	/** Whether an upload is in progress (including queued files) */
 	isUploading: boolean;
 	/** Current progress */
 	progress: UploadProgress | null;
+	/** Number of files waiting in queue */
+	queuedCount: number;
 	/** Utility to determine the media type */
 	getMediaType: (file: File) => "IMAGE" | "VIDEO";
 	/** Utility to check if a file is too large */

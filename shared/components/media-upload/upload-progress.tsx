@@ -14,6 +14,8 @@ interface UploadProgressProps {
 	className?: string;
 	/** If true, shows "Traitement..." even at 100% (server processing in progress) */
 	isProcessing?: boolean;
+	/** Number of files waiting in queue */
+	queuedCount?: number;
 }
 
 /**
@@ -35,6 +37,7 @@ export function UploadProgress({
 	variant = "default",
 	className,
 	isProcessing = false,
+	queuedCount = 0,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
 	// Three states: uploading (0-99%), processing (100% + isProcessing), complete (100% + !isProcessing)
@@ -42,11 +45,12 @@ export function UploadProgress({
 	const isServerProcessing = progress >= 100 && isProcessing;
 
 	// Accessible text for screen readers
+	const queueText = queuedCount > 0 ? `, ${queuedCount} en attente` : "";
 	const srText = isComplete
 		? "Téléversement terminé"
 		: isServerProcessing
 			? "Traitement du fichier en cours"
-			: `Téléversement en cours, ${progress} pourcent`;
+			: `Téléversement en cours, ${progress} pourcent${queueText}`;
 
 	if (variant === "compact") {
 		return (
@@ -144,6 +148,11 @@ export function UploadProgress({
 							? "Traitement..."
 							: `Téléversement... ${progress}%`}
 				</p>
+				{queuedCount > 0 && !isComplete && (
+					<p className="text-muted-foreground text-center text-xs" aria-hidden="true">
+						+{queuedCount} en attente
+					</p>
+				)}
 			</div>
 		</div>
 	);

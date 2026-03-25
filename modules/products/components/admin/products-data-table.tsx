@@ -1,5 +1,4 @@
 // React & Next.js
-import Image from "next/image";
 import Link from "next/link";
 
 // External packages
@@ -28,6 +27,7 @@ import { type GetProductsReturn } from "@/modules/products/data/get-products";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 // Local components
+import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
 import { ProductsSelectionToolbar } from "./products-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
@@ -72,13 +72,6 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 	// Helper pour calculer le stock total
 	const getTotalStock = (product: (typeof products)[0]) => {
 		return product.skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
-	};
-
-	// Helper pour obtenir l'image du SKU par défaut
-	const getDefaultImage = (product: (typeof products)[0]) => {
-		const defaultSku = getDefaultSku(product);
-		if (!defaultSku?.images || defaultSku.images.length === 0) return null;
-		return defaultSku.images.find((img) => img.isPrimary) ?? defaultSku.images[0];
 	};
 
 	// Helper pour obtenir la plage de prix (min-max)
@@ -153,7 +146,6 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 						</TableHeader>
 						<TableBody>
 							{products.map((product) => {
-								const defaultImage = getDefaultImage(product);
 								const totalStock = getTotalStock(product);
 								const skusCount = product._count.skus || 0;
 								const priceRange = getPriceRange(product);
@@ -168,27 +160,10 @@ export async function ProductsDataTable({ productsPromise, perPage }: ProductsDa
 											/>
 										</TableCell>
 										<TableCell className="py-3">
-											<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
-												{defaultImage ? (
-													<Image
-														src={defaultImage.url}
-														alt={defaultImage.altText ?? product.title}
-														fill
-														sizes="80px"
-														quality={80}
-														className="rounded-md object-cover"
-														placeholder={defaultImage.blurDataUrl ? "blur" : "empty"}
-														blurDataURL={defaultImage.blurDataUrl ?? undefined}
-													/>
-												) : (
-													<div
-														className="bg-muted flex h-full w-full items-center justify-center rounded-md"
-														aria-label="Aucune image disponible"
-													>
-														<Package className="text-muted-foreground h-8 w-8" aria-hidden="true" />
-													</div>
-												)}
-											</div>
+											<ProductImageCell
+												images={getDefaultSku(product)?.images ?? []}
+												productTitle={product.title}
+											/>
 										</TableCell>
 										<TableCell>
 											<div className="overflow-hidden">

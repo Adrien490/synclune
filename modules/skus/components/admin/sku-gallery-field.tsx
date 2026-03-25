@@ -81,13 +81,14 @@ export function SkuGalleryField({
 				</div>
 			)}
 
-			{!isAtLimit &&
-				(isMediaUploading ? (
-					<div className="flex h-[min(140px,20vh)] min-h-[120px] flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed">
-						<div className="border-primary/20 border-t-primary h-8 w-8 animate-spin rounded-full border-2" />
-						<p className="text-muted-foreground text-xs">Upload en cours...</p>
-					</div>
-				) : (
+			{!isAtLimit && (
+				<div className="space-y-2">
+					{isMediaUploading && (
+						<div className="bg-primary/5 flex items-center justify-center gap-2 rounded-lg px-3 py-2">
+							<div className="border-primary/20 border-t-primary h-4 w-4 animate-spin rounded-full border-2" />
+							<p className="text-muted-foreground text-xs">Upload en cours...</p>
+						</div>
+					)}
 					<UploadDropzone
 						endpoint="catalogMedia"
 						onBeforeUploadBegin={(files) => {
@@ -214,7 +215,8 @@ export function SkuGalleryField({
 							),
 						}}
 					/>
-				))}
+				</div>
+			)}
 		</div>
 	);
 }
