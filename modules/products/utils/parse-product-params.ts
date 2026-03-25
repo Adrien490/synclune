@@ -18,13 +18,13 @@ export function parseProductParams(searchParams: { [key: string]: string | strin
 		ProductStatus.ARCHIVED,
 	] as const;
 
-	// "all" = undefined (tous les statuts), sinon valider le statut ou défaut PUBLIC
+	// "all" or absent = undefined (all statuses), otherwise validate the status
 	const status =
-		statusParam === "all"
+		statusParam === "all" || !statusParam
 			? undefined
-			: statusParam && validStatuses.includes(statusParam as ProductStatus)
+			: validStatuses.includes(statusParam as ProductStatus)
 				? (statusParam as ProductStatus)
-				: ProductStatus.PUBLIC; // Par défaut: produits publics
+				: undefined;
 
 	return {
 		cursor: searchParamParsers.cursor(searchParams.cursor),

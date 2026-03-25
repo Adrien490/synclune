@@ -49,6 +49,7 @@ interface ProductsFilterSheetProps {
 }
 
 interface AdminFilterFormData {
+	statuses: string[];
 	priceRange: [number, number];
 	typeSlugs: string[];
 	collectionIds: string[];
@@ -69,6 +70,7 @@ interface AdminFilterFormData {
 const SEARCH_THRESHOLD = 8;
 
 const ALL_FILTER_KEYS = [
+	"filter_status",
 	"filter_priceMin",
 	"filter_priceMax",
 	"filter_typeId",
@@ -82,6 +84,12 @@ const ALL_FILTER_KEYS = [
 	"filter_updatedAfter",
 	"filter_updatedBefore",
 ];
+
+const STATUS_OPTIONS = [
+	{ value: "PUBLIC", label: "Public" },
+	{ value: "DRAFT", label: "Brouillon" },
+	{ value: "ARCHIVED", label: "Archivé" },
+] as const;
 
 // ============================================================================
 // SUB-COMPONENTS
@@ -183,6 +191,7 @@ export function ProductsFilterSheet({
 	const deferredMaterialSearch = useDeferredValue(materialSearch);
 
 	const getValuesFromURL = (): AdminFilterFormData => {
+		const statuses: string[] = [];
 		const typeSlugs: string[] = [];
 		const collectionIds: string[] = [];
 		const colorSlugs: string[] = [];
@@ -197,7 +206,8 @@ export function ProductsFilterSheet({
 		let updatedBefore = "";
 
 		searchParams.forEach((value, key) => {
-			if (key === "filter_typeId") typeSlugs.push(value);
+			if (key === "filter_status") statuses.push(value);
+			else if (key === "filter_typeId") typeSlugs.push(value);
 			else if (key === "filter_collectionId") collectionIds.push(value);
 			else if (key === "filter_color") colorSlugs.push(value);
 			else if (key === "filter_material") materialSlugs.push(value);
@@ -218,6 +228,7 @@ export function ProductsFilterSheet({
 		});
 
 		return {
+			statuses: [...new Set(statuses)],
 			priceRange: [priceMin, priceMax],
 			typeSlugs: [...new Set(typeSlugs)],
 			collectionIds: [...new Set(collectionIds)],
@@ -260,6 +271,9 @@ export function ProductsFilterSheet({
 
 		ALL_FILTER_KEYS.forEach((key) => params.delete(key));
 		params.set("page", "1");
+
+		// Statuses
+		formData.statuses.forEach((s) => params.append("filter_status", s));
 
 		// Types (slug-based)
 		formData.typeSlugs.forEach((slug) => params.append("filter_typeId", slug));
@@ -305,6 +319,7 @@ export function ProductsFilterSheet({
 
 	const clearAllFilters = () => {
 		form.reset({
+			statuses: [],
 			priceRange: DEFAULT_PRICE_RANGE,
 			typeSlugs: [],
 			collectionIds: [],
@@ -357,7 +372,7 @@ export function ProductsFilterSheet({
 
 	// Default open sections: types + price + any section with active filters
 	const defaultOpenSections = (() => {
-		const sections = ["types", "price"];
+		const sections = ["status", "types", "price"];
 		if (initialValues.colorSlugs.length > 0) sections.push("colors");
 		if (initialValues.materialSlugs.length > 0) sections.push("materials");
 		if (initialValues.stockStatus || initialValues.onSale) sections.push("availability");
@@ -404,7 +419,46 @@ export function ProductsFilterSheet({
 					className="w-full"
 					aria-label="Filtres de recherche"
 				>
-					{/* 1. Types de produit */}
+					{/* 1. Statut */}
+					<form.Field name="statuses" mode="array">
+						{(field) => (
+							<AccordionItem value="status">
+								<AccordionTrigger headingLevel={3} className="hover:no-underline">
+									<SectionHeader
+										label="Statut"
+										count={field.state.value.length}
+										onReset={() => field.handleChange([])}
+									/>
+								</AccordionTrigger>
+								<AccordionContent>
+									<div className="space-y-1">
+										{STATUS_OPTIONS.map((option) => {
+											const isSelected = field.state.value.includes(option.value);
+											return (
+												<CheckboxFilterItem
+													key={option.value}
+													id={`admin-status-${option.value}`}
+													checked={isSelected}
+													onCheckedChange={(checked) => {
+														if (checked && !isSelected) {
+															field.pushValue(option.value);
+														} else if (!checked && isSelected) {
+															const index = field.state.value.indexOf(option.value);
+															field.removeValue(index);
+														}
+													}}
+												>
+													{option.label}
+												</CheckboxFilterItem>
+											);
+										})}
+									</div>
+								</AccordionContent>
+							</AccordionItem>
+						)}
+					</form.Field>
+
+					{/* 2. Types de produit */}
 					{productTypes.length > 0 && (
 						<form.Field name="typeSlugs" mode="array">
 							{(field) => (

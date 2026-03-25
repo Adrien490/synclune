@@ -54,7 +54,6 @@ const ManageCollectionsDialog = dynamic(() =>
 		(mod) => mod.ManageCollectionsDialog,
 	),
 );
-import { ProductStatusNavigation } from "@/modules/products/components/admin/product-status-navigation";
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
@@ -138,7 +137,7 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 	const params = await searchParams;
 
 	// Parse and validate all search parameters safely
-	const { cursor, direction, perPage, sortBy, search, status } = parseProductParams(params);
+	const { cursor, direction, perPage, sortBy, search } = parseProductParams(params);
 
 	const [
 		productsData,
@@ -155,7 +154,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 			sortBy,
 			search,
 			filters: parseFilters(params),
-			status,
 		}),
 		getProductTypes({
 			perPage: 100,
@@ -190,11 +188,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 
 	return (
 		<div className="space-y-6">
-			{/* Onglets de statut */}
-			<div className="hidden md:block">
-				<ProductStatusNavigation currentStatus={status} searchParams={params} />
-			</div>
-
 			<Toolbar
 				className="hidden md:flex"
 				ariaLabel="Barre d'outils de gestion des produits"

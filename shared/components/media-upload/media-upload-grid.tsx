@@ -217,6 +217,13 @@ export function MediaUploadGrid({
 			skipUtapiDelete,
 			onRemove: () => {
 				const newMedia = media.filter((_, i) => i !== index);
+				// Prevent a video in first position after deletion
+				if (newMedia[0]?.mediaType === "VIDEO") {
+					toast.error(
+						"Impossible : une vidéo passerait en première position. Réorganisez d'abord.",
+					);
+					return;
+				}
 				onChange(newMedia);
 			},
 		});

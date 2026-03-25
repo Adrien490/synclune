@@ -357,6 +357,21 @@ describe("MediaUploadGrid", () => {
 				}),
 			);
 		});
+
+		it("prevents deletion when video would end up in first position", () => {
+			render(<MediaUploadGrid media={[image1, video1]} onChange={mockOnChange} />);
+
+			fireEvent.click(screen.getByTestId("delete-0"));
+
+			// Extract onRemove from the dialog open call and invoke it
+			const dialogData = mockOpen.mock.calls[0]![0] as { onRemove: () => void };
+			dialogData.onRemove();
+
+			expect(mockOnChange).not.toHaveBeenCalled();
+			expect(mockToast.error).toHaveBeenCalledWith(
+				"Impossible : une vidéo passerait en première position. Réorganisez d'abord.",
+			);
+		});
 	});
 
 	// -----------------------------------------------------------------------
