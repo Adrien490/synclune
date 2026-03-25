@@ -188,7 +188,6 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				aria-label="Tri, recherche et filtres"
 				isHidden={isHidden}
 				breakpointClass="md:hidden"
-				zIndex="z-(--z-bar)"
 				className={className}
 			>
 				<div

@@ -80,7 +80,7 @@ interface BottomBarProps {
 	as?: "div" | "nav";
 	/** Tailwind responsive-hide class. @default "md:hidden" */
 	breakpointClass?: string;
-	/** z-index class. @default "z-50" */
+	/** z-index class. @default "z-(--z-bar)" */
 	zIndex?: string;
 	/** Bar height in px (reported to useBottomBarHeight). @default 56 */
 	height?: number;
@@ -96,7 +96,7 @@ export function BottomBar({
 	children,
 	as = "div",
 	breakpointClass = "md:hidden",
-	zIndex = "z-50",
+	zIndex = "z-(--z-bar)",
 	height = 56,
 	enabled = true,
 	isHidden = false,

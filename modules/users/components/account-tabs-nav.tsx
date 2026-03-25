@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { cn } from "@/shared/utils/cn";
 import {
 	BottomBar,
@@ -13,7 +14,7 @@ import {
 import { ROUTES } from "@/shared/constants/urls";
 import { MapPin, Package, Settings } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const navItems = [
 	{
@@ -35,8 +36,18 @@ const navItems = [
 
 export function AccountTabsNav() {
 	const pathname = usePathname();
+	const router = useRouter();
+	const [isPending, startTransition] = useTransition();
 
 	const isActive = (href: string) => pathname.startsWith(href);
+
+	const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+		if (isActive(href)) return;
+		e.preventDefault();
+		startTransition(() => {
+			router.push(href);
+		});
+	};
 
 	return (
 		<>
@@ -53,12 +64,14 @@ export function AccountTabsNav() {
 							<Link
 								key={item.href}
 								href={item.href}
+								onClick={(e) => handleNavigation(e, item.href)}
 								aria-current={active ? "page" : undefined}
 								className={cn(
 									"pb-3 text-sm font-medium transition-colors",
 									active
 										? "text-foreground border-primary border-b-2"
 										: "text-muted-foreground hover:text-foreground border-b-2 border-transparent",
+									isPending && "pointer-events-none opacity-70",
 								)}
 							>
 								{item.label}
@@ -79,8 +92,13 @@ export function AccountTabsNav() {
 							<Link
 								key={item.href}
 								href={item.href}
+								onClick={(e) => handleNavigation(e, item.href)}
 								aria-current={active ? "page" : undefined}
-								className={cn(bottomBarItemClass, active && bottomBarActiveItemClass)}
+								className={cn(
+									bottomBarItemClass,
+									active && bottomBarActiveItemClass,
+									isPending && "pointer-events-none opacity-70",
+								)}
 							>
 								{active && <ActiveDot />}
 								<Icon className={bottomBarIconClass} aria-hidden="true" />

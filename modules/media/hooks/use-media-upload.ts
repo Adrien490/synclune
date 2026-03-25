@@ -158,8 +158,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		if (mediaFiles.length < files.length) {
 			const rejected = files.length - mediaFiles.length;
-			toast.warning(`${rejected} fichier(s) ignore(s)`, {
-				description: "Seuls les images et videos sont acceptés",
+			toast.warning(`${rejected} fichier(s) ignoré(s)`, {
+				description: "Seules les images et vidéos sont acceptées",
 			});
 		}
 
@@ -188,7 +188,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		if (validSizeFiles.length > maxFiles) {
 			toast.warning(`Maximum ${maxFiles} fichiers`, {
-				description: `${validSizeFiles.length - maxFiles} fichier(s) ignore(s)`,
+				description: `${validSizeFiles.length - maxFiles} fichier(s) ignoré(s)`,
 			});
 			return validSizeFiles.slice(0, maxFiles);
 		}
@@ -391,6 +391,12 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		if (isProcessingRef.current) return;
 		isProcessingRef.current = true;
 
+		// Clear any pending "done" timeout from a previous session
+		if (doneTimeoutRef.current) {
+			clearTimeout(doneTimeoutRef.current);
+			doneTimeoutRef.current = null;
+		}
+
 		// Create a single AbortController for the entire queue session
 		abortControllerRef.current?.abort();
 		abortControllerRef.current = new AbortController();
@@ -432,14 +438,16 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 					const err = error instanceof Error ? error : new Error(String(error));
 					onErrorRef.current?.(err);
-					toast.error("Echec de l'upload", { description: err.message });
+					toast.error("Échec de l'upload", { description: err.message });
 					entry.resolve([]); // Resolve with empty on error, continue queue
 				}
 			}
 
 			// All batches done
 			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
-			onSuccessRef.current?.(cumulativeResultsRef.current);
+			if (cumulativeResultsRef.current.length > 0) {
+				onSuccessRef.current?.(cumulativeResultsRef.current);
+			}
 
 			doneTimeoutRef.current = setTimeout(() => {
 				doneTimeoutRef.current = null;
@@ -458,12 +466,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 	const upload = async (files: File[]): Promise<MediaUploadResult[]> => {
 		// Validate files
-		updateProgress({
-			phase: "validating",
-			total: files.length,
-			completed: cumulativeCompletedRef.current,
-			queued: queueRef.current.length,
-		});
 		const validFiles = validateFiles(files);
 
 		if (validFiles.length === 0) {

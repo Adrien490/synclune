@@ -203,9 +203,9 @@ describe("useMediaUpload", () => {
 			expect(valid).toHaveLength(1);
 			expect(valid[0]!.name).toBe("ok.jpg");
 			expect(toast.warning).toHaveBeenCalledWith(
-				"2 fichier(s) ignore(s)",
+				"2 fichier(s) ignoré(s)",
 				expect.objectContaining({
-					description: "Seuls les images et videos sont acceptés",
+					description: "Seules les images et vidéos sont acceptées",
 				}),
 			);
 		});
@@ -496,7 +496,7 @@ describe("useMediaUpload", () => {
 			});
 
 			expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: "Network failure" }));
-			expect(toast.error).toHaveBeenCalledWith("Echec de l'upload", expect.any(Object));
+			expect(toast.error).toHaveBeenCalledWith("Échec de l'upload", expect.any(Object));
 		});
 
 		it("should return partial results when error occurs after some uploads", async () => {
@@ -745,6 +745,121 @@ describe("useMediaUpload", () => {
 			expect(results2).toEqual([]);
 			expect(result.current.progress).toBeNull();
 			expect(result.current.queuedCount).toBe(0);
+		});
+		it("should not wipe progress if upload() is called within the done timeout window", async () => {
+			let callCount = 0;
+			mockStartUpload.mockImplementation((files: File[]) => {
+				callCount++;
+				return Promise.resolve(
+					files.map((f) => ({
+						serverData: { url: `https://utfs.io/f/${f.name}`, blurDataUrl: `blur-${callCount}` },
+					})),
+				);
+			});
+
+			const { result } = renderHook(() => useMediaUpload());
+
+			// First upload completes — starts the 1s done timeout
+			await act(async () => {
+				await result.current.upload([createImageFile("first.jpg")]);
+			});
+
+			expect(result.current.progress?.phase).toBe("done");
+
+			// Immediately start a second upload (within the 1s done window)
+			let secondResults: unknown;
+			await act(async () => {
+				secondResults = await result.current.upload([createImageFile("second.jpg")]);
+			});
+
+			// The second upload should complete successfully with progress intact
+			expect(secondResults).toHaveLength(1);
+			expect((secondResults as { fileName: string }[])[0]?.fileName).toBe("second.jpg");
+			// Progress should be "done" from the second batch, not wiped by the old timeout
+			expect(result.current.progress?.phase).toBe("done");
+		});
+
+		it("should cancel all entries when cancel is called with 3+ queued batches", async () => {
+			mockWithRetry.mockImplementation(
+				(_fn: () => unknown, opts: { signal?: AbortSignal }) =>
+					new Promise((_resolve, reject) => {
+						opts.signal?.addEventListener("abort", () => {
+							reject(new DOMException("Operation annulee", "AbortError"));
+						});
+					}),
+			);
+
+			const { result } = renderHook(() => useMediaUpload());
+
+			let promise1: Promise<unknown>;
+			let promise2: Promise<unknown>;
+			let promise3: Promise<unknown>;
+
+			act(() => {
+				promise1 = result.current.upload([createImageFile("a.jpg")]);
+				promise2 = result.current.upload([createImageFile("b.jpg")]);
+				promise3 = result.current.upload([createImageFile("c.jpg")]);
+			});
+
+			act(() => {
+				result.current.cancel();
+			});
+
+			let results1: unknown;
+			let results2: unknown;
+			let results3: unknown;
+			await act(async () => {
+				results1 = await promise1!;
+				results2 = await promise2!;
+				results3 = await promise3!;
+			});
+
+			expect(results1).toEqual([]);
+			expect(results2).toEqual([]);
+			expect(results3).toEqual([]);
+			expect(result.current.progress).toBeNull();
+			expect(result.current.queuedCount).toBe(0);
+		});
+
+		it("should not call onSuccess when all batches fail", async () => {
+			mockWithRetry.mockRejectedValue(new Error("Network failure"));
+
+			const onSuccess = vi.fn();
+			const onError = vi.fn();
+			const { result } = renderHook(() => useMediaUpload({ onSuccess, onError }));
+
+			await act(async () => {
+				await result.current.upload([createImageFile("fail.jpg")]);
+			});
+
+			expect(onError).toHaveBeenCalled();
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("should use validated file count for progress total, not raw input count", async () => {
+			mockStartUpload.mockResolvedValue([
+				{ serverData: { url: "https://utfs.io/f/img.jpg", blurDataUrl: "blur" } },
+			]);
+
+			const totals: number[] = [];
+			const onProgress = vi.fn((p: { total: number }) => {
+				totals.push(p.total);
+			});
+			const { result } = renderHook(() => useMediaUpload({ onProgress, maxFiles: 2 }));
+
+			await act(async () => {
+				// Pass 5 files but maxFiles is 2 — total should reflect validated count
+				await result.current.upload([
+					createImageFile("a.jpg"),
+					createImageFile("b.jpg"),
+					createImageFile("c.jpg"),
+					createImageFile("d.jpg"),
+					createImageFile("e.jpg"),
+				]);
+			});
+
+			// No progress total should equal 5 (the raw input count)
+			expect(totals.every((t) => t <= 2)).toBe(true);
 		});
 	});
 });

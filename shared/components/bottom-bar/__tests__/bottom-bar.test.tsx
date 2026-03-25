@@ -142,15 +142,27 @@ describe("BottomBar", () => {
 		expect(el.className).not.toContain("md:hidden");
 	});
 
-	it("uses custom zIndex", () => {
+	it("uses default z-(--z-bar) zIndex", () => {
 		render(
-			<BottomBar zIndex="z-(--z-bar)" aria-label="bar">
+			<BottomBar aria-label="bar">
 				<span>content</span>
 			</BottomBar>,
 		);
 
 		const el = screen.getByLabelText("bar");
 		expect(el.className).toContain("z-(--z-bar)");
+	});
+
+	it("uses custom zIndex", () => {
+		render(
+			<BottomBar zIndex="z-50" aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		const el = screen.getByLabelText("bar");
+		expect(el.className).toContain("z-50");
+		expect(el.className).not.toContain("z-(--z-bar)");
 	});
 
 	it("passes custom className", () => {

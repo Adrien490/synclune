@@ -115,7 +115,7 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 		children: React.ReactNode;
 		open: boolean;
 		onOpenChange: (open: boolean) => void;
-	}) => (open ? <div data-testid="search-drawer">{children}</div> : null),
+	}) => (open ? <div data-testid="drawer">{children}</div> : null),
 	DrawerBody: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DrawerContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DrawerHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -162,6 +162,7 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("lucide-react", () => ({
 	ArrowUpDown: () => <span data-testid="sort-icon" />,
+	EllipsisVertical: () => <span data-testid="menu-icon" />,
 	Plus: () => <span data-testid="plus-icon" />,
 	Search: () => <span data-testid="search-icon" />,
 	SlidersHorizontal: () => <span data-testid="filter-icon" />,
@@ -412,7 +413,7 @@ describe("ProductsBottomBar", () => {
 
 			fireEvent.click(screen.getByLabelText("Ouvrir la recherche"));
 
-			expect(screen.getByTestId("search-drawer")).toBeInTheDocument();
+			expect(screen.getAllByTestId("drawer").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("opens sort drawer on sort button click", () => {

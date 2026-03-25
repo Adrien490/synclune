@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpDown, Plus, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUpDown, EllipsisVertical, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import {
 	BottomBar,
 	ActiveDot,
@@ -66,12 +66,13 @@ interface ProductsBottomBarProps {
 /**
  * Mobile bottom bar for admin products page (md:hidden).
  *
- * 4 items: Filtrer | Recherche | + Ajouter (FAB) | Trier
+ * 5 items: Filtrer | Recherche | + Ajouter (FAB) | Trier | Menu
  *
  * - Filtrer → opens ProductsFilterSheet
  * - Recherche → opens search Drawer
  * - Ajouter → Link to create product page (FAB-style center button)
  * - Trier → opens SortDrawer
+ * - Menu → opens contextual menu Drawer
  *
  * Portal to document.body to escape SidebarInset's containing block.
  */
@@ -85,6 +86,7 @@ export function ProductsBottomBar({
 	const [sortOpen, setSortOpen] = useState(false);
 	const [searchOpen, setSearchOpen] = useState(false);
 	const [filterOpen, setFilterOpen] = useState(false);
+	const [menuOpen, setMenuOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
 
 	const searchParams = useSearchParams();
@@ -99,18 +101,19 @@ export function ProductsBottomBar({
 	const hasActiveSort = searchParams.has("sortBy");
 	const hasActiveFilter = Array.from(searchParams.keys()).some((key) => key.startsWith("filter_"));
 
-	const isHidden = sortOpen || searchOpen || filterOpen || isMenuOpen || isAnySheetOpen;
+	const isHidden = sortOpen || searchOpen || filterOpen || menuOpen || isMenuOpen || isAnySheetOpen;
 
-	// Refs for toolbar items (4 items)
+	// Refs for toolbar items (5 items)
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
 	const searchButtonRef = useRef<HTMLButtonElement>(null);
 	const addLinkRef = useRef<HTMLAnchorElement>(null);
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
-	const itemRefs = [filterButtonRef, searchButtonRef, addLinkRef, sortButtonRef];
+	const menuButtonRef = useRef<HTMLButtonElement>(null);
+	const itemRefs = [filterButtonRef, searchButtonRef, addLinkRef, sortButtonRef, menuButtonRef];
 
 	// Keyboard navigation for toolbar
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-		const itemCount = 4;
+		const itemCount = 5;
 		let nextIndex: number | null = null;
 
 		switch (e.key) {
@@ -178,16 +181,15 @@ export function ProductsBottomBar({
 		<>
 			<BottomBar
 				as="nav"
-				aria-label="Filtres, recherche, ajout et tri"
+				aria-label="Filtres, recherche, ajout, tri et menu"
 				isHidden={isHidden}
 				breakpointClass="md:hidden"
-				zIndex="z-(--z-bar)"
 				className="overflow-visible"
 			>
 				<div
 					role="toolbar"
 					aria-orientation="horizontal"
-					aria-label="Filtres, recherche, ajout et tri"
+					aria-label="Filtres, recherche, ajout, tri et menu"
 					className={cn(bottomBarContainerClass, "overflow-visible")}
 				>
 					{/* Filtrer */}
@@ -276,6 +278,27 @@ export function ProductsBottomBar({
 						<ArrowUpDown className={bottomBarIconClass} aria-hidden="true" />
 						<span className={bottomBarLabelClass}>Trier</span>
 					</button>
+
+					{/* Menu */}
+					<button
+						ref={menuButtonRef}
+						type="button"
+						onClick={() => {
+							setSortOpen(false);
+							setSearchOpen(false);
+							setFilterOpen(false);
+							setMenuOpen(true);
+						}}
+						onKeyDown={(e) => handleToolbarKeyDown(e, 4)}
+						onFocus={() => setFocusedIndex(4)}
+						tabIndex={focusedIndex === 4 ? 0 : -1}
+						className={buttonClassName}
+						aria-label="Ouvrir le menu"
+						aria-haspopup="dialog"
+					>
+						<EllipsisVertical className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Menu</span>
+					</button>
 				</div>
 			</BottomBar>
 
@@ -298,6 +321,30 @@ export function ProductsBottomBar({
 				options={SORT_OPTIONS}
 				showResetOption
 			/>
+
+			{/* Menu Drawer */}
+			<Drawer open={menuOpen} onOpenChange={setMenuOpen}>
+				<DrawerContent>
+					<DrawerHeader>
+						<DrawerTitle>Menu</DrawerTitle>
+					</DrawerHeader>
+					<DrawerBody className="flex flex-col gap-2">
+						<Button
+							variant="outline"
+							className="w-full justify-start"
+							onClick={() => {
+								router.refresh();
+								setMenuOpen(false);
+							}}
+						>
+							Actualiser
+						</Button>
+						<Button variant="outline" className="w-full justify-start" disabled>
+							Paramètres catalogue
+						</Button>
+					</DrawerBody>
+				</DrawerContent>
+			</Drawer>
 
 			{/* Search Drawer */}
 			<Drawer open={searchOpen} onOpenChange={setSearchOpen}>

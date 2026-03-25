@@ -145,7 +145,6 @@ export function CustomizationsBottomBar() {
 				aria-label="Tri, recherche et filtres"
 				isHidden={isHidden}
 				breakpointClass="md:hidden"
-				zIndex="z-(--z-bar)"
 			>
 				<div
 					role="toolbar"

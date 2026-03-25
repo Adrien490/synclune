@@ -92,7 +92,7 @@ export function StickyCartCTA({
 						// Mobile only
 						"sm:hidden",
 						// Position fixe en bas
-						"fixed right-0 bottom-0 left-0 z-50",
+						"fixed right-0 bottom-0 left-0 z-(--z-bar)",
 						// Safe area pour iPhone X+
 						"pb-[env(safe-area-inset-bottom)]",
 						// Style
