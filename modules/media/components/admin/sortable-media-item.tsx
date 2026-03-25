@@ -23,7 +23,8 @@ import {
 	Trash2,
 } from "lucide-react";
 import Image from "next/image";
-import type { MediaItem } from "@/shared/components/media-upload/media-upload-grid";
+import { useState } from "react";
+import type { MediaItem } from "@/modules/media/types/hooks.types";
 
 export interface SortableMediaItemProps {
 	media: MediaItem;
@@ -72,6 +73,8 @@ export function SortableMediaItem({
 	};
 
 	const isVideo = media.mediaType === "VIDEO";
+	const [thumbnailError, setThumbnailError] = useState(false);
+	const showThumbnail = isVideo && media.thumbnailUrl && !thumbnailError;
 
 	return (
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- sortable item needs keyboard interactions
@@ -98,17 +101,17 @@ export function SortableMediaItem({
 			role="group"
 			aria-label={`${isVideo ? "Vidéo" : "Image"} ${index + 1}${isPrimary ? " (principale)" : ""}`}
 		>
-			{/* Skeleton/Loading state — hidden when blurDataUrl exists so Next.js blur placeholder is visible */}
-			{!isImageLoaded && !isVideo && !media.blurDataUrl && (
+			{/* Skeleton/Loading state — shown for images and video thumbnails while loading */}
+			{!isImageLoaded && (showThumbnail || !isVideo) && !media.blurDataUrl && (
 				<div className="bg-muted absolute inset-0 z-10 motion-safe:animate-pulse" />
 			)}
 
 			<div className="bg-muted relative h-full w-full">
 				{isVideo ? (
 					<div className="relative h-full w-full">
-						{media.thumbnailUrl ? (
+						{showThumbnail ? (
 							<Image
-								src={media.thumbnailUrl}
+								src={media.thumbnailUrl!}
 								alt={media.altText ?? `Miniature vidéo ${index + 1}`}
 								fill
 								className={cn(
@@ -120,11 +123,11 @@ export function SortableMediaItem({
 								)}
 								sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
 								quality={80}
-								loading="lazy"
 								decoding="async"
 								placeholder={media.blurDataUrl ? "blur" : "empty"}
 								blurDataURL={media.blurDataUrl}
 								onLoad={() => onImageLoaded(media.url)}
+								onError={() => setThumbnailError(true)}
 							/>
 						) : (
 							<video
@@ -133,7 +136,7 @@ export function SortableMediaItem({
 								loop
 								muted
 								playsInline
-								preload="metadata"
+								preload="auto"
 								onTouchEnd={(e) => {
 									if (isDraggingAny) return;
 									e.stopPropagation();

@@ -646,4 +646,105 @@ describe("useMediaUpload", () => {
 			expect(mockStartUpload).toHaveBeenCalledTimes(3);
 		});
 	});
+
+	// ========================================================================
+	// QUEUE SYSTEM
+	// ========================================================================
+
+	describe("queue system", () => {
+		it("should process multiple upload() calls sequentially and call onSuccess with cumulative results", async () => {
+			let callIndex = 0;
+			mockStartUpload.mockImplementation((files: File[]) => {
+				callIndex++;
+				return Promise.resolve(
+					files.map((f) => ({
+						serverData: { url: `https://utfs.io/f/${f.name}`, blurDataUrl: `blur-${callIndex}` },
+					})),
+				);
+			});
+
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useMediaUpload({ onSuccess }));
+
+			let results1: unknown;
+			let results2: unknown;
+
+			await act(async () => {
+				// Fire two upload() calls concurrently — second should queue
+				const promise1 = result.current.upload([createImageFile("batch1-a.jpg")]);
+				const promise2 = result.current.upload([
+					createImageFile("batch2-a.jpg"),
+					createImageFile("batch2-b.jpg"),
+				]);
+
+				[results1, results2] = await Promise.all([promise1, promise2]);
+			});
+
+			// Each batch resolves with its own results
+			expect(results1).toHaveLength(1);
+			expect((results1 as { fileName: string }[])[0]?.fileName).toBe("batch1-a.jpg");
+			expect(results2).toHaveLength(2);
+			expect((results2 as { fileName: string }[])[0]?.fileName).toBe("batch2-a.jpg");
+
+			// onSuccess is called once with ALL cumulative results
+			expect(onSuccess).toHaveBeenCalledTimes(1);
+			expect(onSuccess).toHaveBeenCalledWith(
+				expect.arrayContaining([
+					expect.objectContaining({ fileName: "batch1-a.jpg" }),
+					expect.objectContaining({ fileName: "batch2-a.jpg" }),
+					expect.objectContaining({ fileName: "batch2-b.jpg" }),
+				]),
+			);
+		});
+
+		it("should cancel all queued entries when cancel is called mid-queue", async () => {
+			let resolveFirstUpload: ((value: unknown) => void) | undefined;
+
+			mockWithRetry.mockImplementation(
+				(fn: () => unknown, opts: { signal?: AbortSignal }) =>
+					new Promise((resolve, reject) => {
+						// First call: hang until we resolve manually or abort
+						if (!resolveFirstUpload) {
+							resolveFirstUpload = resolve;
+							opts.signal?.addEventListener("abort", () => {
+								reject(new DOMException("Operation annulee", "AbortError"));
+							});
+						} else {
+							// Subsequent calls also hang
+							opts.signal?.addEventListener("abort", () => {
+								reject(new DOMException("Operation annulee", "AbortError"));
+							});
+						}
+					}),
+			);
+
+			const { result } = renderHook(() => useMediaUpload());
+
+			let promise1: Promise<unknown>;
+			let promise2: Promise<unknown>;
+
+			act(() => {
+				promise1 = result.current.upload([createImageFile("a.jpg")]);
+				promise2 = result.current.upload([createImageFile("b.jpg")]);
+			});
+
+			// Cancel while first batch is in progress and second is queued
+			act(() => {
+				result.current.cancel();
+			});
+
+			let results1: unknown;
+			let results2: unknown;
+			await act(async () => {
+				results1 = await promise1!;
+				results2 = await promise2!;
+			});
+
+			// Both resolve with empty arrays (not rejected)
+			expect(results1).toEqual([]);
+			expect(results2).toEqual([]);
+			expect(result.current.progress).toBeNull();
+			expect(result.current.queuedCount).toBe(0);
+		});
+	});
 });

@@ -327,15 +327,17 @@ describe("MediaUploadGrid", () => {
 			);
 		});
 
-		it("allows move down even when video ends up first (only move up checks video-first)", () => {
-			// Note: handleMoveDown does NOT check for video-first position.
-			// Only handleMoveUp and handleDragEnd do. This is the current behavior.
+		it("prevents video from ending up first position via move down", () => {
 			render(<MediaUploadGrid media={[image1, video1, image2]} onChange={mockOnChange} />);
 
 			fireEvent.click(screen.getByTestId("move-down-0"));
 
 			// arrayMove([image1, video1, image2], 0, 1) = [video1, image1, image2]
-			expect(mockOnChange).toHaveBeenCalledWith([video1, image1, image2]);
+			// Should be blocked because video ends up at index 0
+			expect(mockOnChange).not.toHaveBeenCalled();
+			expect(mockToast.error).toHaveBeenCalledWith(
+				"La première position doit être une image, pas une vidéo.",
+			);
 		});
 	});
 

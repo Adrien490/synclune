@@ -25,6 +25,8 @@ interface UseMediaFieldUploadOptions {
 	uploadMedia: (files: File[]) => Promise<MediaUploadResult[]>;
 	getAltText: () => string | undefined;
 	maxCount?: number;
+	/** When true, skip video-first check (images are already being uploaded) */
+	isUploading?: boolean;
 }
 
 /**
@@ -35,6 +37,7 @@ export function useMediaFieldUpload({
 	uploadMedia,
 	getAltText,
 	maxCount = ARRAY_LIMITS.SKU_MEDIA,
+	isUploading = false,
 }: UseMediaFieldUploadOptions) {
 	const handleUpload = async (files: File[], field: MediaField) => {
 		const remaining = maxCount - field.state.value.length;
@@ -52,7 +55,11 @@ export function useMediaFieldUpload({
 			toast.warning(`Seulement ${remaining} média(s) ajouté(s)`);
 		}
 
-		if (field.state.value.length === 0 && filesToUpload[0]?.type.startsWith("video/")) {
+		if (
+			field.state.value.length === 0 &&
+			!isUploading &&
+			filesToUpload[0]?.type.startsWith("video/")
+		) {
 			toast.error("La première image doit être une image, pas une vidéo");
 			return;
 		}

@@ -5,6 +5,18 @@
  */
 
 // ============================================================================
+// MEDIA GRID TYPES
+// ============================================================================
+
+export interface MediaItem {
+	url: string;
+	altText: string | undefined;
+	mediaType: "IMAGE" | "VIDEO";
+	thumbnailUrl: string | undefined;
+	blurDataUrl: string | undefined;
+}
+
+// ============================================================================
 // MEDIA UPLOAD TYPES
 // ============================================================================
 

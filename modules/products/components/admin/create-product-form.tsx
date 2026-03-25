@@ -83,6 +83,7 @@ export function CreateProductForm({
 	const { handleUpload } = useMediaFieldUpload({
 		uploadMedia,
 		getAltText: () => form.state.values.title || undefined,
+		isUploading: isMediaUploading,
 	});
 
 	return (

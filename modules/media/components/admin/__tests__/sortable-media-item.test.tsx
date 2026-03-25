@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { SortableMediaItem, type SortableMediaItemProps } from "../sortable-media-item";
-import type { MediaItem } from "@/shared/components/media-upload/media-upload-grid";
+import type { MediaItem } from "@/modules/media/types/hooks.types";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks

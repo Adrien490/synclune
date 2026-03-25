@@ -4,6 +4,7 @@ import { MediaCounterBadge } from "@/shared/components/media-upload/media-counte
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { Label } from "@/shared/components/ui/label";
 import { cn } from "@/shared/utils/cn";
+import { getCatalogDropzoneAppearance } from "@/modules/media/utils/upload-dropzone-appearance";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, m } from "motion/react";
 import { ImagePlus, Info, Upload } from "lucide-react";
@@ -102,16 +103,10 @@ export function SkuGalleryField({
 							return files;
 						}}
 						onChange={async (files) => {
-							const remaining = MAX_GALLERY_COUNT - value.length;
-							const filesToUpload = files.slice(0, remaining);
-							if (files.length > remaining) {
-								toast.warning(
-									`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
-								);
-							}
-							if (filesToUpload.length === 0) return;
+							// onBeforeUploadBegin already enforces the limit, so no need to re-check here
+							if (files.length === 0) return;
 
-							const results = await uploadMedia(filesToUpload);
+							const results = await uploadMedia(files);
 							results.forEach((result) => {
 								pushValue({
 									url: result.url,
@@ -126,60 +121,13 @@ export function SkuGalleryField({
 							toast.error(`Erreur: ${error.message}`);
 						}}
 						className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
-						appearance={{
-							container: ({ isDragActive, isUploading: uploading }) => ({
-								border: "2px dashed",
-								borderColor: isDragActive
-									? "var(--primary)"
-									: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-								borderRadius: "0.75rem",
-								backgroundColor: isDragActive
-									? "color-mix(in oklch, var(--primary) 5%, transparent)"
-									: "color-mix(in oklch, var(--muted) 30%, transparent)",
-								padding: "1rem",
-								transition: "all 0.2s ease-in-out",
-								height: "min(140px, 20vh)",
-								minHeight: "120px",
-								display: "flex",
-								flexDirection: "column",
-								alignItems: "center",
-								justifyContent: "center",
-								gap: "0.5rem",
-								cursor: uploading ? "not-allowed" : "pointer",
-								opacity: uploading ? 0.7 : 1,
-								position: "relative",
-								boxShadow: isDragActive
-									? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
-									: "var(--shadow-sm)",
-							}),
-							uploadIcon: ({ isDragActive, isUploading: uploading }) => ({
-								color: isDragActive
-									? "var(--primary)"
-									: "color-mix(in oklch, var(--primary) 70%, transparent)",
-								width: "2rem",
-								height: "2rem",
-								transition: "all 0.2s ease-in-out",
-								transform: isDragActive ? "scale(1.1)" : "scale(1)",
-								opacity: uploading ? 0.5 : 1,
-							}),
-							label: ({ isDragActive, isUploading: uploading }) => ({
-								color: isDragActive ? "var(--primary)" : "var(--foreground)",
-								fontSize: "0.875rem",
-								fontWeight: "500",
-								textAlign: "center",
-								transition: "color 0.2s ease-in-out",
-								opacity: uploading ? 0.5 : 1,
-								width: "100%",
-								wordBreak: "break-word",
-							}),
-							allowedContent: ({ isUploading: uploading }) => ({
-								color: "var(--muted-foreground)",
-								fontSize: "0.75rem",
-								textAlign: "center",
-								marginTop: "0.25rem",
-								opacity: uploading ? 0.5 : 1,
-							}),
-						}}
+						appearance={getCatalogDropzoneAppearance({
+							height: "min(140px, 20vh)",
+							minHeight: "120px",
+							padding: "1rem",
+							iconSize: "2rem",
+							labelFontSize: "0.875rem",
+						})}
 						content={{
 							uploadIcon: ({ isDragActive }) => (
 								<Upload

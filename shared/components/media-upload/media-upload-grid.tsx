@@ -36,15 +36,10 @@ import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 import { DELETE_GALLERY_MEDIA_DIALOG_ID } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
 import { SortableMediaItem } from "@/modules/media/components/admin/sortable-media-item";
+import type { MediaItem } from "@/modules/media/types/hooks.types";
 import type { Slide } from "yet-another-react-lightbox";
 
-export interface MediaItem {
-	url: string;
-	altText: string | undefined;
-	mediaType: "IMAGE" | "VIDEO";
-	thumbnailUrl: string | undefined;
-	blurDataUrl: string | undefined;
-}
+export type { MediaItem };
 
 interface MediaUploadGridProps {
 	/** List of medias */
@@ -243,6 +238,11 @@ export function MediaUploadGrid({
 	const handleMoveDown = (index: number) => {
 		if (index >= media.length - 1) return;
 		const newMedia = arrayMove(media, index, index + 1);
+		// Prevent a video in first position
+		if (newMedia[0]?.mediaType === "VIDEO") {
+			toast.error("La première position doit être une image, pas une vidéo.");
+			return;
+		}
 		onChange(newMedia);
 		setAnnouncement(`Média déplacé en position ${index + 2}.`);
 	};
@@ -320,7 +320,7 @@ export function MediaUploadGrid({
 											alt="Vidéo en cours de déplacement"
 											fill
 											className="object-cover"
-											sizes="150px"
+											sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
 										/>
 									) : (
 										<div className="bg-muted flex h-full w-full items-center justify-center">
@@ -339,7 +339,7 @@ export function MediaUploadGrid({
 									alt="Image en cours de déplacement"
 									fill
 									className="object-cover"
-									sizes="150px"
+									sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
 								/>
 							)}
 						</div>

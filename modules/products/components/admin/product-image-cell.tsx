@@ -65,6 +65,7 @@ export function ProductImageCell({ images, productTitle }: ProductImageCellProps
 				) : (
 					<div
 						className="bg-muted flex h-full w-full items-center justify-center rounded-md"
+						role="img"
 						aria-label="Aucune image disponible"
 					>
 						<Package className="text-muted-foreground h-8 w-8" aria-hidden="true" />

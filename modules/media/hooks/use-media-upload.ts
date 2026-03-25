@@ -103,13 +103,23 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	>([]);
 	const cumulativeResultsRef = useRef<MediaUploadResult[]>([]);
 	const cumulativeCompletedRef = useRef(0);
+	const doneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const onProgressRef = useRef(onProgress);
+	onProgressRef.current = onProgress;
+	const onSuccessRef = useRef(onSuccess);
+	onSuccessRef.current = onSuccess;
+	const onErrorRef = useRef(onError);
+	onErrorRef.current = onError;
 
 	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing("catalogMedia");
 
-	// Abort in-progress uploads on unmount
+	// Abort in-progress uploads and clear timers on unmount
 	useEffect(() => {
 		return () => {
 			abortControllerRef.current?.abort();
+			if (doneTimeoutRef.current) {
+				clearTimeout(doneTimeoutRef.current);
+			}
 		};
 	}, []);
 
@@ -133,7 +143,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 						phase: "validating" as const,
 						...update,
 					};
-			onProgress?.(newProgress);
+			onProgressRef.current?.(newProgress);
 			return newProgress;
 		});
 	};
@@ -421,7 +431,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					}
 
 					const err = error instanceof Error ? error : new Error(String(error));
-					onError?.(err);
+					onErrorRef.current?.(err);
 					toast.error("Echec de l'upload", { description: err.message });
 					entry.resolve([]); // Resolve with empty on error, continue queue
 				}
@@ -429,9 +439,10 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 			// All batches done
 			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
-			onSuccess?.(cumulativeResultsRef.current);
+			onSuccessRef.current?.(cumulativeResultsRef.current);
 
-			setTimeout(() => {
+			doneTimeoutRef.current = setTimeout(() => {
+				doneTimeoutRef.current = null;
 				setProgress(null);
 				cumulativeResultsRef.current = [];
 				cumulativeCompletedRef.current = 0;

@@ -2,6 +2,7 @@
 
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
+import { getCatalogDropzoneAppearance } from "@/modules/media/utils/upload-dropzone-appearance";
 import { cn } from "@/shared/utils/cn";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Upload } from "lucide-react";
@@ -50,9 +51,10 @@ export function EditProductMediaSection({
 					blurDataUrl: m.blurDataUrl ?? undefined,
 				}))}
 				onChange={(newMedia) => {
-					// Clear and repopulate the field
-					while ((field.state.value as MediaItem[]).length > 0) {
-						field.removeValue(0);
+					// Clear and repopulate the field (reverse iteration for safe index removal)
+					const currentLength = (field.state.value as MediaItem[]).length;
+					for (let i = currentLength - 1; i >= 0; i--) {
+						field.removeValue(i);
 					}
 					newMedia.forEach((m) =>
 						field.pushValue({
@@ -86,8 +88,21 @@ export function EditProductMediaSection({
 									);
 								}
 
+								// Sort images before videos to ensure images fill first positions
+								const sorted = [...filesToUpload].sort((a, b) => {
+									const aIsVideo = a.type.startsWith("video/") ? 1 : 0;
+									const bIsVideo = b.type.startsWith("video/") ? 1 : 0;
+									return aIsVideo - bIsVideo;
+								});
+
+								// Block video-first upload when field is empty
+								if (media.length === 0 && sorted[0]?.type.startsWith("video/")) {
+									toast.error("La première position doit être une image, pas une vidéo.");
+									return;
+								}
+
 								// useMediaUpload handles validation, retry, and video thumbnails
-								const results = await uploadMedia(filesToUpload);
+								const results = await uploadMedia(sorted);
 								results.forEach((result) => {
 									field.pushValue({
 										url: result.url,
@@ -103,60 +118,7 @@ export function EditProductMediaSection({
 							}}
 							className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
 							aria-label="Zone d'upload des médias"
-							appearance={{
-								container: ({ isDragActive, isUploading }) => ({
-									border: "2px dashed",
-									borderColor: isDragActive
-										? "var(--primary)"
-										: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-									borderRadius: "0.75rem",
-									backgroundColor: isDragActive
-										? "color-mix(in oklch, var(--primary) 5%, transparent)"
-										: "color-mix(in oklch, var(--muted) 30%, transparent)",
-									padding: "1.5rem",
-									transition: "all 0.2s ease-in-out",
-									height: "min(180px, 22vh)",
-									minHeight: "140px",
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									justifyContent: "center",
-									gap: "0.5rem",
-									cursor: isUploading ? "not-allowed" : "pointer",
-									opacity: isUploading ? 0.7 : 1,
-									position: "relative",
-									boxShadow: isDragActive
-										? "0 0 0 1px color-mix(in oklch, var(--primary) 20%, transparent), 0 4px 12px color-mix(in oklch, var(--primary) 10%, transparent)"
-										: "var(--shadow-sm)",
-								}),
-								uploadIcon: ({ isDragActive, isUploading }) => ({
-									color: isDragActive
-										? "var(--primary)"
-										: "color-mix(in oklch, var(--primary) 70%, transparent)",
-									width: "2.5rem",
-									height: "2.5rem",
-									transition: "all 0.2s ease-in-out",
-									transform: isDragActive ? "scale(1.1)" : "scale(1)",
-									opacity: isUploading ? 0.5 : 1,
-								}),
-								label: ({ isDragActive, isUploading }) => ({
-									color: isDragActive ? "var(--primary)" : "var(--foreground)",
-									fontSize: "0.9rem",
-									fontWeight: "500",
-									textAlign: "center",
-									transition: "color 0.2s ease-in-out",
-									opacity: isUploading ? 0.5 : 1,
-									width: "100%",
-									wordBreak: "break-word",
-								}),
-								allowedContent: ({ isUploading }) => ({
-									color: "var(--muted-foreground)",
-									fontSize: "0.75rem",
-									textAlign: "center",
-									marginTop: "0.25rem",
-									opacity: isUploading ? 0.5 : 1,
-								}),
-							}}
+							appearance={getCatalogDropzoneAppearance()}
 							content={{
 								uploadIcon: ({ isDragActive }) => (
 									<Upload
