@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from "react";
 import { initializePayment } from "../actions/initialize-payment";
 import { updatePaymentAmount } from "../actions/update-payment-amount";
 
+/** Re-validate cart if tab was hidden for more than 10 minutes */
+const STALE_THRESHOLD_MS = 10 * 60 * 1000;
+
 interface UsePaymentIntentParams {
 	cartItems: Array<{ skuId: string; quantity: number; priceAtAdd: number }>;
 	email?: string;
@@ -36,6 +39,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const initCalledRef = useRef(false);
+	const hiddenAtRef = useRef<number | null>(null);
 
 	// Create PI on mount
 	useEffect(() => {
@@ -69,6 +73,54 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 		void init();
 	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+	// Re-validate payment intent when tab becomes visible after long inactivity
+	useEffect(() => {
+		function handleVisibilityChange() {
+			if (document.hidden) {
+				hiddenAtRef.current = Date.now();
+				return;
+			}
+
+			// Tab became visible - check if it was hidden long enough to be stale
+			const hiddenAt = hiddenAtRef.current;
+			hiddenAtRef.current = null;
+
+			if (!hiddenAt || !state.paymentIntentId) return;
+
+			const elapsed = Date.now() - hiddenAt;
+			if (elapsed < STALE_THRESHOLD_MS) return;
+
+			// Re-initialize payment to refresh prices and validate PI is still active
+			setState((prev) => ({ ...prev, isLoading: true, error: null }));
+
+			void initializePayment({
+				cartItems: params.cartItems,
+				email: params.email,
+			}).then((result) => {
+				if (result.success) {
+					setState({
+						clientSecret: result.clientSecret,
+						paymentIntentId: result.paymentIntentId,
+						subtotal: result.subtotal,
+						shipping: result.shipping,
+						total: result.total,
+						isLoading: false,
+						error: null,
+					});
+				} else {
+					setState((prev) => ({
+						...prev,
+						isLoading: false,
+						error: result.error,
+					}));
+				}
+			});
+		}
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+	}, [state.paymentIntentId, params.cartItems, params.email]);
 
 	function updateAmount(country: string, postalCode: string, discountAmount: number) {
 		if (!state.paymentIntentId) return;
