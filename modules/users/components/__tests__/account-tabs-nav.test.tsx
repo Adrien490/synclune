@@ -135,9 +135,9 @@ describe("AccountTabsNav", () => {
 			const allLinks = screen.getAllByRole("link");
 			const labels = allLinks.map((l) => l.textContent);
 			// Expect at least 3 links with those labels (desktop tabs)
-			expect(labels.filter((l) => l?.includes("Commandes")).length).toBeGreaterThanOrEqual(1);
-			expect(labels.filter((l) => l?.includes("Adresses")).length).toBeGreaterThanOrEqual(1);
-			expect(labels.filter((l) => l?.includes("Paramètres")).length).toBeGreaterThanOrEqual(1);
+			expect(labels.filter((l) => l.includes("Commandes")).length).toBeGreaterThanOrEqual(1);
+			expect(labels.filter((l) => l.includes("Adresses")).length).toBeGreaterThanOrEqual(1);
+			expect(labels.filter((l) => l.includes("Paramètres")).length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("desktop links point to the correct hrefs", () => {

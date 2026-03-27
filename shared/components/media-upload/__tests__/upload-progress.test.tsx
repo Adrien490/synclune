@@ -36,7 +36,7 @@ describe("UploadProgress", () => {
 			const { container } = render(<UploadProgress progress={50} />);
 
 			// Spinner (LoaderCircle SVG rendered by lucide-react)
-			const loader = container.querySelector(".lucide-loader-circle, .lucide-loader2, svg");
+			container.querySelector(".lucide-loader-circle, .lucide-loader2, svg");
 			// The status container should be aria-busy
 			const status = screen.getByRole("status");
 			expect(status.getAttribute("aria-busy")).toBe("true");
@@ -58,7 +58,7 @@ describe("UploadProgress", () => {
 			expect(screen.getByText("Traitement...")).toBeTruthy();
 
 			// LoaderCircle must be present (not Check icon)
-			const loaderIcon = container.querySelector('[aria-hidden="true"] + *');
+			container.querySelector('[aria-hidden="true"] + *');
 			// Check icon wrapper should NOT exist at root level
 			const checkIcon = container.querySelector(".text-emerald-600");
 			expect(checkIcon).toBeNull();

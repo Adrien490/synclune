@@ -1,4 +1,5 @@
 import { Toolbar } from "@/shared/components/toolbar";
+import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -203,7 +204,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					/>
 				}
 			>
-				<ProductsQuickFilters />
 				<SelectFilter
 					filterKey="sortBy"
 					label="Trier par"
@@ -215,14 +215,17 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					className="w-full sm:min-w-45"
 					noPrefix
 				/>
-				<ProductsFilterSheet
-					productTypes={productTypes}
-					collections={collections}
-					colors={colors}
-					materials={materials}
-					maxPriceInCents={maxPriceInCents}
-				/>
-				<RefreshProductsButton />
+				<ButtonGroup aria-label="Filtres et actions">
+					<ProductsQuickFilters />
+					<ProductsFilterSheet
+						productTypes={productTypes}
+						collections={collections}
+						colors={colors}
+						materials={materials}
+						maxPriceInCents={maxPriceInCents}
+					/>
+					<RefreshProductsButton />
+				</ButtonGroup>
 			</Toolbar>
 
 			{/* Badges de filtres actifs */}

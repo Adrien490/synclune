@@ -4,6 +4,7 @@ import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
 import { ProductReassurance } from "./product-reassurance";
+import { DeliveryEstimator } from "./delivery-estimator";
 import { ProductHighlights } from "./product-highlights";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
@@ -79,7 +80,10 @@ export function ProductDetails({
 			{/* 4. CTA principal (monté pour réduire la distance au fold - Baymard) */}
 			<AddToCartForm product={product} selectedSku={currentSku} />
 
-			{/* 5. Réassurance (après CTA - "decision support") */}
+			{/* 5. Estimation livraison dynamique */}
+			<DeliveryEstimator />
+
+			{/* 6. Réassurance (après CTA - "decision support") */}
 			<ProductReassurance />
 
 			{/* 5. Caractéristiques principales */}

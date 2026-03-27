@@ -22,37 +22,30 @@ export function RefreshButton({
 	variant = "outline",
 	hideOnMobile = true,
 }: RefreshButtonProps) {
-	const button = (
-		<Button
-			variant={variant}
-			size="icon"
-			onClick={onRefresh}
-			disabled={isPending}
-			className={cn(
-				"border-border/60 hover:border-border hover:bg-accent/30 h-11 w-11 transition-all duration-200",
-				className,
-			)}
-			aria-label={label}
-		>
-			<RefreshCw
-				className={cn("h-4 w-4", isPending && "motion-safe:animate-spin")}
-				aria-hidden="true"
-			/>
-		</Button>
-	);
-
-	const content = (
+	return (
 		<Tooltip>
-			<TooltipTrigger asChild>{button}</TooltipTrigger>
+			<TooltipTrigger asChild>
+				<Button
+					variant={variant}
+					size="icon"
+					onClick={onRefresh}
+					disabled={isPending}
+					className={cn(
+						"border-border/60 hover:border-border hover:bg-accent/30 h-11 w-11 transition-all duration-200",
+						hideOnMobile && "hidden md:flex",
+						className,
+					)}
+					aria-label={label}
+				>
+					<RefreshCw
+						className={cn("h-4 w-4", isPending && "motion-safe:animate-spin")}
+						aria-hidden="true"
+					/>
+				</Button>
+			</TooltipTrigger>
 			<TooltipContent>
 				<p>{label}</p>
 			</TooltipContent>
 		</Tooltip>
 	);
-
-	if (hideOnMobile) {
-		return <div className="hidden md:block">{content}</div>;
-	}
-
-	return content;
 }

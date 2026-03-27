@@ -1,5 +1,6 @@
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
+import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -125,8 +126,10 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>
-						<ProductTypesFilterSheet />
-						<RefreshProductTypesButton />
+						<ButtonGroup aria-label="Filtres et actions">
+							<ProductTypesFilterSheet />
+							<RefreshProductTypesButton />
+						</ButtonGroup>
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}

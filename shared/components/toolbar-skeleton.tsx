@@ -1,3 +1,4 @@
+import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { cn } from "@/shared/utils/cn";
 
 interface ToolbarSkeletonProps {
@@ -41,9 +42,17 @@ export function ToolbarSkeleton({
 				{Array.from({ length: selectCount }).map((_, i) => (
 					<div key={`s${i}`} className="animate-shimmer h-9 w-32 rounded-md" />
 				))}
-				{Array.from({ length: buttonCount }).map((_, i) => (
-					<div key={`b${i}`} className="animate-shimmer h-9 w-9 rounded-md" />
-				))}
+				{buttonCount > 1 ? (
+					<ButtonGroup>
+						{Array.from({ length: buttonCount }).map((_, i) => (
+							<div key={`b${i}`} className="animate-shimmer h-9 w-9 rounded-md" />
+						))}
+					</ButtonGroup>
+				) : (
+					Array.from({ length: buttonCount }).map((_, i) => (
+						<div key={`b${i}`} className="animate-shimmer h-9 w-9 rounded-md" />
+					))
+				)}
 			</div>
 			<span className="sr-only">Chargement de la barre d'outils</span>
 		</div>

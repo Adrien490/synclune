@@ -96,6 +96,7 @@ export function SortableMediaItem({
 			aria-label={`${isVideo ? "Vidéo" : "Image"} ${index + 1}${isPrimary ? " (principale)" : ""}`}
 		>
 			{/* Skeleton/Loading state — shown for images and video thumbnails while loading */}
+			{/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- boolean OR is intentional */}
 			{!isImageLoaded && (showThumbnail || !isVideo) && !media.blurDataUrl && (
 				<div className="bg-muted absolute inset-0 z-10 motion-safe:animate-pulse" />
 			)}

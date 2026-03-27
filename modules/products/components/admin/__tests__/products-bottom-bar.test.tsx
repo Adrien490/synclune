@@ -530,10 +530,9 @@ describe("ProductsBottomBar", () => {
 		it("ArrowRight wraps from last to first item", () => {
 			renderBar();
 
-			const sortButton = screen.getByLabelText("Ouvrir les options de tri");
-			// Need to set focusedIndex to 3 first
-			sortButton.focus();
-			fireEvent.keyDown(sortButton, { key: "ArrowRight" });
+			const menuButton = screen.getByLabelText("Ouvrir le menu");
+			menuButton.focus();
+			fireEvent.keyDown(menuButton, { key: "ArrowRight" });
 
 			expect(screen.getByLabelText("Ouvrir les filtres")).toHaveFocus();
 		});
@@ -555,7 +554,7 @@ describe("ProductsBottomBar", () => {
 			filterButton.focus();
 			fireEvent.keyDown(filterButton, { key: "ArrowLeft" });
 
-			expect(screen.getByLabelText("Ouvrir les options de tri")).toHaveFocus();
+			expect(screen.getByLabelText("Ouvrir le menu")).toHaveFocus();
 		});
 
 		it("Home key moves focus to first item", () => {
@@ -575,7 +574,7 @@ describe("ProductsBottomBar", () => {
 			filterButton.focus();
 			fireEvent.keyDown(filterButton, { key: "End" });
 
-			expect(screen.getByLabelText("Ouvrir les options de tri")).toHaveFocus();
+			expect(screen.getByLabelText("Ouvrir le menu")).toHaveFocus();
 		});
 
 		it("ArrowRight from search moves to Ajouter link", () => {

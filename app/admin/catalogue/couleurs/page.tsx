@@ -1,5 +1,6 @@
 import { DEFAULT_PER_PAGE } from "@/shared/lib/pagination";
 import { Toolbar } from "@/shared/components/toolbar";
+import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -102,8 +103,10 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>
-						<ColorsFilterSheet />
-						<RefreshColorsButton />
+						<ButtonGroup aria-label="Filtres et actions">
+							<ColorsFilterSheet />
+							<RefreshColorsButton />
+						</ButtonGroup>
 					</Toolbar>
 
 					{/* Badges de filtres actifs */}

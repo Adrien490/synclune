@@ -15,6 +15,7 @@ import {
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
 import { Toolbar } from "@/shared/components/toolbar";
+import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
@@ -233,7 +234,6 @@ export default async function ProductVariantsPage({
 							/>
 						}
 					>
-						<SkusFilterSheet colorOptions={colorOptions} materialOptions={materialOptions} />
 						<SelectFilter
 							filterKey="sortBy"
 							label="Trier par"
@@ -245,7 +245,10 @@ export default async function ProductVariantsPage({
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>
-						<RefreshSkusButton productId={product.id} />
+						<ButtonGroup aria-label="Filtres et actions">
+							<SkusFilterSheet colorOptions={colorOptions} materialOptions={materialOptions} />
+							<RefreshSkusButton productId={product.id} />
+						</ButtonGroup>
 					</Toolbar>
 
 					<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
