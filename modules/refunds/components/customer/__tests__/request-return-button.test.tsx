@@ -44,7 +44,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		onClick,
 		disabled,
 		type,
-		variant,
+		variant: _variant,
 		...props
 	}: {
 		children: React.ReactNode;
@@ -99,7 +99,7 @@ vi.mock("@/shared/components/ui/select", () => ({
 	Select: ({
 		children,
 		value,
-		onValueChange,
+		onValueChange: _onValueChange,
 		disabled,
 	}: {
 		children: React.ReactNode;

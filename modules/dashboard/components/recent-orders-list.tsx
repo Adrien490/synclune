@@ -1,8 +1,10 @@
 import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
+	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
@@ -13,6 +15,7 @@ import type {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/shared/utils/cn";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -44,6 +47,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 							key={order.id}
 							href={`/admin/ventes/commandes/${order.id}`}
 							className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
+							aria-label={`Commande #${order.orderNumber}, ${order.total.toFixed(2)} €, ${order.customerName}, ${ORDER_STATUS_LABELS[order.status]}`}
 						>
 							<div className="min-w-0 flex-1 space-y-1">
 								<div className="flex items-center gap-2">
@@ -58,7 +62,10 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 										{PAYMENT_STATUS_LABELS[order.paymentStatus]}
 									</Badge>
 								</div>
-								<p className="text-muted-foreground truncate text-sm">
+								<p
+									className="text-muted-foreground truncate text-sm"
+									title={`${order.customerName} • ${order.customerEmail}`}
+								>
 									{order.customerName} • {order.customerEmail}
 								</p>
 								<p className="text-muted-foreground text-xs">
@@ -79,6 +86,16 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 					)}
 				</div>
 			</CardContent>
+			{orders.length > 0 && (
+				<CardFooter className="justify-center border-t pt-4">
+					<Button asChild variant="ghost" size="sm" className="gap-1.5">
+						<Link href="/admin/ventes/commandes">
+							Voir toutes les commandes
+							<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+						</Link>
+					</Button>
+				</CardFooter>
+			)}
 		</Card>
 	);
 }

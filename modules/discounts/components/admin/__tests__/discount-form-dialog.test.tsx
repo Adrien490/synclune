@@ -126,6 +126,7 @@ vi.mock("@/shared/components/forms", () => ({
 		}: {
 			children: (field: {
 				name: string;
+				state: { value: unknown };
 				InputField: (props: Record<string, unknown>) => React.ReactNode;
 				SelectField: (props: Record<string, unknown>) => React.ReactNode;
 				DateTimeField: (props: Record<string, unknown>) => React.ReactNode;
@@ -134,12 +135,13 @@ vi.mock("@/shared/components/forms", () => ({
 		}) =>
 			children({
 				name,
+				state: { value: 0 },
 				InputField: ({
-					label,
+					_label,
 					type,
 					placeholder,
 				}: {
-					label?: string;
+					_label?: string;
 					type?: string;
 					placeholder?: string;
 				}) => (
@@ -164,10 +166,18 @@ vi.mock("@/shared/components/forms", () => ({
 			}),
 		Subscribe: ({
 			children,
+			selector,
 		}: {
-			children: (values: unknown[]) => React.ReactNode;
-			selector: (state: unknown) => unknown[];
-		}) => <>{children([true])}</>,
+			children: (values: unknown) => React.ReactNode;
+			selector: (state: Record<string, unknown>) => unknown;
+		}) => {
+			const mockState = {
+				canSubmit: true,
+				values: { type: "PERCENTAGE" },
+			};
+			const selected = selector(mockState as Record<string, unknown>);
+			return <>{children(selected)}</>;
+		},
 		reset: vi.fn(),
 	}),
 }));

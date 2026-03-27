@@ -77,8 +77,8 @@ describe("OrdersFilterBadges", () => {
 				string
 			>;
 			expect(result).not.toBeNull();
-			expect(result?.label).toBe("Statut");
-			expect(result?.displayValue).toBe("En attente");
+			expect(result.label).toBe("Statut");
+			expect(result.displayValue).toBe("En attente");
 		});
 
 		it("formats payment status filter with correct label and displayValue", () => {
@@ -88,8 +88,8 @@ describe("OrdersFilterBadges", () => {
 				string
 			>;
 			expect(result).not.toBeNull();
-			expect(result?.label).toBe("Paiement");
-			expect(result?.displayValue).toBe("Payée");
+			expect(result.label).toBe("Paiement");
+			expect(result.displayValue).toBe("Payée");
 		});
 
 		it("returns null for totalMax filter (handled by totalMin)", () => {
@@ -117,8 +117,8 @@ describe("OrdersFilterBadges", () => {
 				string
 			>;
 			expect(result).not.toBeNull();
-			expect(result?.label).toBe("Affichage");
-			expect(result?.displayValue).toBe("Supprimées uniquement");
+			expect(result.label).toBe("Affichage");
+			expect(result.displayValue).toBe("Supprimées uniquement");
 		});
 	});
 });

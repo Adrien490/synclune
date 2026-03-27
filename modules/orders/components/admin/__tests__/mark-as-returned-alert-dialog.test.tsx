@@ -97,7 +97,9 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({ children, asChild, ...props }: any) => <button {...props}>{children}</button>,
+	Button: ({ children, asChild: _asChild, ...props }: any) => (
+		<button {...props}>{children}</button>
+	),
 }));
 
 vi.mock("next/link", () => ({

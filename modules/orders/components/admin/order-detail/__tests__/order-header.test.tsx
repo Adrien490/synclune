@@ -112,10 +112,10 @@ vi.mock("@/shared/components/ui/button", () => ({
 vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: any) => <div>{children}</div>,
 	DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
-	DropdownMenuItem: ({ children, onClick, asChild, ...props }: any) => (
-		<div onClick={onClick} {...props}>
+	DropdownMenuItem: ({ children, onClick, asChild: _asChild, ...props }: any) => (
+		<button onClick={onClick} {...props}>
 			{children}
-		</div>
+		</button>
 	),
 	DropdownMenuSeparator: () => <hr />,
 	DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,

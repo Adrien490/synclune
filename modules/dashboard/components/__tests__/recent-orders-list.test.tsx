@@ -16,12 +16,14 @@ vi.mock("next/link", () => ({
 		href,
 		children,
 		className,
+		"aria-label": ariaLabel,
 	}: {
 		href: string;
 		children: React.ReactNode;
 		className?: string;
+		"aria-label"?: string;
 	}) => (
-		<a href={href} className={className}>
+		<a href={href} className={className} aria-label={ariaLabel}>
 			{children}
 		</a>
 	),
@@ -35,10 +37,31 @@ vi.mock("@/shared/components/ui/card", () => ({
 	),
 	CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	CardDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+	CardFooter: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+		<div data-testid="card-footer" className={className}>
+			{children}
+		</div>
+	),
 	CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	CardTitle: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<h3 className={className}>{children}</h3>
 	),
+}));
+
+vi.mock("@/shared/components/ui/button", () => ({
+	Button: ({
+		children,
+		asChild,
+		...props
+	}: {
+		children: React.ReactNode;
+		asChild?: boolean;
+		[key: string]: unknown;
+	}) => (asChild ? <>{children}</> : <button {...props}>{children}</button>),
+}));
+
+vi.mock("lucide-react", () => ({
+	ArrowRight: () => <span data-testid="arrow-right-icon" />,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -183,8 +206,62 @@ describe("RecentOrdersList", () => {
 	it("links each order to its detail page", () => {
 		render(<RecentOrdersList listData={{ orders: [createOrder({ id: "order-42" })] }} />);
 
-		const link = screen.getByRole("link");
-		expect(link).toHaveAttribute("href", "/admin/ventes/commandes/order-42");
+		const links = screen.getAllByRole("link");
+		const orderLink = links.find((l) => l.getAttribute("href")?.includes("order-42"));
+		expect(orderLink).toHaveAttribute("href", "/admin/ventes/commandes/order-42");
+	});
+
+	// -------------------------------------------------------------------------
+	// Accessibility
+	// -------------------------------------------------------------------------
+
+	it("renders aria-label on each order link with order number, total, customer, and status", () => {
+		render(
+			<RecentOrdersList
+				listData={{
+					orders: [
+						createOrder({
+							orderNumber: "SYN-042",
+							total: 4250,
+							customerName: "Jean Martin",
+							status: "DELIVERED" as RecentOrderItem["status"],
+						}),
+					],
+				}}
+			/>,
+		);
+
+		const links = screen.getAllByRole("link");
+		const orderLink = links.find((l) => l.getAttribute("aria-label")?.includes("SYN-042"));
+		expect(orderLink).toHaveAttribute(
+			"aria-label",
+			"Commande #SYN-042, 4250.00 €, Jean Martin, Livrée",
+		);
+	});
+
+	it("renders title attribute on truncated customer info", () => {
+		render(<RecentOrdersList listData={{ orders: [createOrder()] }} />);
+
+		const truncatedElement = screen.getByTitle("Marie Dupont • marie@example.com");
+		expect(truncatedElement).toBeInTheDocument();
+	});
+
+	// -------------------------------------------------------------------------
+	// Footer link
+	// -------------------------------------------------------------------------
+
+	it("renders 'Voir toutes les commandes' link when orders exist", () => {
+		render(<RecentOrdersList listData={{ orders: [createOrder()] }} />);
+
+		const footerLink = screen.getByText("Voir toutes les commandes");
+		expect(footerLink).toBeInTheDocument();
+		expect(footerLink.closest("a")).toHaveAttribute("href", "/admin/ventes/commandes");
+	});
+
+	it("does not render footer link when no orders", () => {
+		render(<RecentOrdersList listData={{ orders: [] }} />);
+
+		expect(screen.queryByText("Voir toutes les commandes")).toBeNull();
 	});
 
 	it("renders multiple orders", () => {

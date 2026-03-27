@@ -74,9 +74,9 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		className?: string;
 		disabled?: boolean;
 	}) => (
-		<div role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
+		<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
 			{children}
-		</div>
+		</button>
 	),
 }));
 
@@ -129,9 +129,14 @@ describe("DiscountRowActions", () => {
 
 	// ─── Rendering ────────────────────────────────────────────────────────────
 
-	it("renders trigger button with 'Actions' aria-label", () => {
-		render(<DiscountRowActions discount={createDiscount()} />);
-		expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
+	it("renders trigger button with contextual aria-label including the discount code", () => {
+		render(<DiscountRowActions discount={createDiscount({ code: "PROMO10" })} />);
+		expect(screen.getByRole("button", { name: "Actions pour PROMO10" })).toBeInTheDocument();
+	});
+
+	it("renders trigger button with aria-label reflecting a different discount code", () => {
+		render(<DiscountRowActions discount={createDiscount({ code: "CODE123" })} />);
+		expect(screen.getByRole("button", { name: "Actions pour CODE123" })).toBeInTheDocument();
 	});
 
 	it("shows 'Modifier' menu item", () => {

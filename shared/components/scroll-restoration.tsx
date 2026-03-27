@@ -24,12 +24,15 @@ export function ScrollRestoration() {
 			"navigation" in window
 				? (window.navigation as { currentEntry?: { navigationType?: string } })
 				: undefined;
-		const perfNav = performance.navigation;
+		const perfNav =
+			"navigation" in performance
+				? (performance.navigation as PerformanceNavigation | undefined)
+				: undefined;
 		const isBackForward =
 			// Modern Navigation API
 			nav?.currentEntry?.navigationType === "traverse" ||
 			// Fallback: performance.navigation (deprecated but widely supported)
-			(perfNav != null && perfNav.type === perfNav.TYPE_BACK_FORWARD);
+			perfNav?.type === perfNav?.TYPE_BACK_FORWARD;
 
 		if (isBackForward) {
 			const saved = sessionStorage.getItem(key);

@@ -136,7 +136,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenuItem: ({
 		children,
 		onClick,
-		asChild,
+		asChild: _asChild,
 		className,
 		disabled,
 	}: {
@@ -146,9 +146,9 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		className?: string;
 		disabled?: boolean;
 	}) => (
-		<div role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
+		<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
 			{children}
-		</div>
+		</button>
 	),
 	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DropdownMenuSubTrigger: ({
@@ -158,9 +158,9 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		children: React.ReactNode;
 		disabled?: boolean;
 	}) => (
-		<div role="menuitem" aria-disabled={disabled}>
+		<button role="menuitem" aria-disabled={disabled}>
 			{children}
-		</div>
+		</button>
 	),
 	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DropdownMenuPortal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

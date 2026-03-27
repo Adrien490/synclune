@@ -57,7 +57,7 @@ vi.mock("@/shared/components/ui/switch", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: ({ src, alt }: any) => <img src={src} alt={alt} />,
+	default: ({ alt }: any) => <div data-testid="mock-image" aria-label={alt} />,
 }));
 
 vi.mock("@/shared/utils/format-euro", () => ({

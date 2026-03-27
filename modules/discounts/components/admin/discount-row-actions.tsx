@@ -45,7 +45,7 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 					variant="ghost"
 					size="sm"
 					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions"
+					aria-label={`Actions pour ${discount.code}`}
 				>
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>

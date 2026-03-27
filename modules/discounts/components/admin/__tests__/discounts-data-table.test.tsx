@@ -123,7 +123,6 @@ vi.mock("lucide-react", () => ({
 
 import { DiscountsDataTable } from "../discounts-data-table";
 import { getDiscountStatus } from "@/modules/discounts/services/discount-validation.service";
-import type { GetDiscountsReturn } from "@/modules/discounts/types/discount.types";
 
 // ============================================================================
 // HELPERS

@@ -19,7 +19,7 @@ vi.mock("@/shared/components/forms", () => ({
 						<label>{props.label}</label>
 						<input
 							name={name}
-							type={props.type || "text"}
+							type={props.type ?? "text"}
 							disabled={props.disabled}
 							required={props.required}
 						/>

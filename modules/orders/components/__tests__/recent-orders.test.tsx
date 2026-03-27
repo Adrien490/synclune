@@ -143,7 +143,7 @@ vi.mock("lucide-react", () => ({
 }));
 
 vi.mock("date-fns", () => ({
-	format: vi.fn((date: Date, fmt: string) => `${date.getDate()} mars ${date.getFullYear()}`),
+	format: vi.fn((date: Date, _fmt: string) => `${date.getDate()} mars ${date.getFullYear()}`),
 }));
 
 vi.mock("date-fns/locale", () => ({

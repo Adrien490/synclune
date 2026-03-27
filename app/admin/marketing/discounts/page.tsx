@@ -13,6 +13,8 @@ import { DiscountsDataTable } from "@/modules/discounts/components/admin/discoun
 import { DiscountsDataTableSkeleton } from "@/modules/discounts/components/admin/discounts-data-table-skeleton";
 import { DiscountsFilterBadges } from "@/modules/discounts/components/admin/discounts-filter-badges";
 import { DiscountsFilterSheet } from "@/modules/discounts/components/admin/discounts-filter-sheet";
+import { DiscountsMobileList } from "@/modules/discounts/components/admin/discounts-mobile-list";
+import { DiscountsMobileListSkeleton } from "@/modules/discounts/components/admin/discounts-mobile-list-skeleton";
 import { CreateDiscountButton } from "@/modules/discounts/components/admin/create-discount-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import dynamic from "next/dynamic";
@@ -43,6 +45,11 @@ const BulkDeleteDiscountsAlertDialog = dynamic(() =>
 const DiscountUsagesDialog = dynamic(() =>
 	import("@/modules/discounts/components/admin/discount-usages-dialog").then(
 		(mod) => mod.DiscountUsagesDialog,
+	),
+);
+const DiscountsBottomBar = dynamic(() =>
+	import("@/modules/discounts/components/admin/discounts-bottom-bar").then(
+		(mod) => mod.DiscountsBottomBar,
 	),
 );
 
@@ -143,6 +150,12 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 					</div>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<DiscountsMobileListSkeleton />}>
+					<DiscountsMobileList discountsPromise={discountsPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<DiscountsDataTableSkeleton />}>
 					<DiscountsDataTable discountsPromise={discountsPromise} perPage={perPage} />
 				</Suspense>
@@ -153,6 +166,9 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			<ToggleDiscountStatusAlertDialog />
 			<BulkDeleteDiscountsAlertDialog />
 			<DiscountUsagesDialog />
+
+			{/* Bottom bar mobile (tri, recherche, filtres) */}
+			<DiscountsBottomBar />
 		</>
 	);
 }

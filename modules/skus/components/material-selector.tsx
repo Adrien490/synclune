@@ -46,22 +46,22 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 	const [optimisticMaterial, setOptimisticMaterial] = useOptimistic(currentMaterial);
 
 	// Calculer la disponibilité d'un matériau
-	const isMaterialAvailable = (materialSlug: string): boolean => {
+	const isMaterialAvailable = (materialName: string): boolean => {
 		const compatibleSkus = filterCompatibleSkus(product, {
 			colorSlug: currentColor ?? undefined,
-			materialSlug: materialSlug,
+			materialSlug: materialName,
 			size: currentSize ?? undefined,
 		});
 		return compatibleSkus.length > 0;
 	};
 
 	// Mettre à jour le matériau dans l'URL (optimiste)
-	const updateMaterial = (materialSlug: string | null) => {
+	const updateMaterial = (materialName: string | null) => {
 		startTransition(() => {
-			setOptimisticMaterial(materialSlug);
+			setOptimisticMaterial(materialName);
 			const params = new URLSearchParams(searchParams.toString());
-			if (materialSlug) {
-				params.set("material", materialSlug);
+			if (materialName) {
+				params.set("material", materialName);
 			} else {
 				params.delete("material");
 			}

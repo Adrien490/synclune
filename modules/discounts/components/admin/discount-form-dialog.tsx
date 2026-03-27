@@ -212,33 +212,47 @@ export function DiscountFormDialog() {
 								</form.AppField>
 
 								{/* Value Field */}
-								<form.AppField
-									name="value"
-									validators={{
-										onChange: ({ value }) => {
-											if (!value || value <= 0) {
-												return "La valeur doit être positive";
-											}
-											return undefined;
-										},
-									}}
-								>
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel htmlFor={field.name} required>
-												Valeur
-											</FieldLabel>
-											<field.InputField
-												label=""
-												type="number"
-												placeholder="ex: 10 pour 10% ou 1000 pour 10€"
-												disabled={isPending}
-												min={1}
-											/>
-											<p className="text-muted-foreground text-xs">% ou centimes selon le type</p>
-										</div>
+								<form.Subscribe selector={(state) => state.values.type}>
+									{(currentType) => (
+										<form.AppField
+											name="value"
+											validators={{
+												onChange: ({ value }) => {
+													if (!value || value <= 0) {
+														return "La valeur doit être positive";
+													}
+													if (currentType === "PERCENTAGE" && value > 100) {
+														return "Le pourcentage ne peut pas dépasser 100%";
+													}
+													return undefined;
+												},
+											}}
+										>
+											{(field) => (
+												<div className="space-y-2">
+													<FieldLabel htmlFor={field.name} required>
+														{currentType === "PERCENTAGE" ? "Pourcentage" : "Montant (centimes)"}
+													</FieldLabel>
+													<field.InputField
+														label=""
+														type="number"
+														placeholder={currentType === "PERCENTAGE" ? "ex: 10" : "ex: 1000"}
+														disabled={isPending}
+														min={1}
+														max={currentType === "PERCENTAGE" ? 100 : undefined}
+													/>
+													<p className="text-muted-foreground text-xs">
+														{currentType === "PERCENTAGE"
+															? "Pourcentage de réduction (1 à 100)"
+															: field.state.value && field.state.value > 0
+																? `= ${(field.state.value / 100).toFixed(2).replace(".", ",")} €`
+																: "Valeur en centimes (ex : 1000 = 10,00 €)"}
+													</p>
+												</div>
+											)}
+										</form.AppField>
 									)}
-								</form.AppField>
+								</form.Subscribe>
 							</div>
 
 							{/* Min Order Amount Field */}
@@ -246,17 +260,19 @@ export function DiscountFormDialog() {
 								{(field) => (
 									<div className="space-y-2">
 										<FieldLabel htmlFor={field.name} optional>
-											Montant minimum de commande
+											Montant minimum de commande (centimes)
 										</FieldLabel>
 										<field.InputField
 											label=""
 											type="number"
-											placeholder="ex: 5000 pour 50€ minimum"
+											placeholder="ex: 5000"
 											disabled={isPending}
 											min={0}
 										/>
 										<p className="text-muted-foreground text-xs">
-											En centimes. Laisser vide pour aucun minimum.
+											{field.state.value && field.state.value > 0
+												? `= ${(field.state.value / 100).toFixed(2).replace(".", ",")} € minimum`
+												: "En centimes (ex : 5000 = 50,00 €). Laisser vide pour aucun minimum."}
 										</p>
 									</div>
 								)}

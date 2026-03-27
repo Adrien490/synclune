@@ -94,7 +94,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenuItem: ({
 		children,
 		onClick,
-		asChild,
+		asChild: _asChild,
 		className,
 	}: {
 		children: React.ReactNode;
@@ -102,9 +102,9 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		asChild?: boolean;
 		className?: string;
 	}) => (
-		<div role="menuitem" onClick={onClick} className={className}>
+		<button role="menuitem" onClick={onClick} className={className}>
 			{children}
-		</div>
+		</button>
 	),
 }));
 

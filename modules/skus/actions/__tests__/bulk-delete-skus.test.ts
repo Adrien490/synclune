@@ -20,6 +20,7 @@ const {
 		productSku: { deleteMany: vi.fn(), findMany: vi.fn() },
 		orderItem: { count: vi.fn() },
 		cartItem: { count: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -169,11 +170,14 @@ describe("bulkDeleteSkus", () => {
 		mockPrisma.productSku.deleteMany.mockResolvedValue({ count: 2 });
 		mockPrisma.orderItem.count.mockResolvedValue(0);
 		mockPrisma.cartItem.count.mockResolvedValue(0);
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockDeleteUploadThingFilesFromUrls.mockResolvedValue(undefined);
 
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : fallback,
 		}));
 	});
 

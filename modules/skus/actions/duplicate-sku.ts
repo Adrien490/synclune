@@ -7,7 +7,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_SKU_DUPLICATE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { BusinessError, validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -45,82 +45,81 @@ export async function duplicateSku(
 
 		const { skuId } = validation.data;
 
-		// 3. Récupérer le SKU original avec ses médias
-		const original = await prisma.productSku.findUnique({
-			where: { id: skuId },
-			select: {
-				sku: true,
-				productId: true,
-				colorId: true,
-				materialId: true,
-				size: true,
-				priceInclTax: true,
-				compareAtPrice: true,
-				images: {
-					select: {
-						url: true,
-						altText: true,
-						isPrimary: true,
-						position: true,
-						mediaType: true,
-						thumbnailUrl: true,
-						blurDataUrl: true,
+		// 3-5. Transaction atomique : lecture + génération nom + création
+		const { original, duplicate } = await prisma.$transaction(async (tx) => {
+			// 3. Récupérer le SKU original avec ses médias
+			const original = await tx.productSku.findUnique({
+				where: { id: skuId },
+				select: {
+					sku: true,
+					productId: true,
+					colorId: true,
+					materialId: true,
+					size: true,
+					priceInclTax: true,
+					compareAtPrice: true,
+					images: {
+						select: {
+							url: true,
+							altText: true,
+							isPrimary: true,
+							position: true,
+							mediaType: true,
+							thumbnailUrl: true,
+							blurDataUrl: true,
+						},
+					},
+					product: {
+						select: { slug: true },
 					},
 				},
-				product: {
-					select: { slug: true },
+			});
+
+			if (!original) {
+				throw new BusinessError("Variante non trouvée");
+			}
+
+			// 4. Générer un nouveau code SKU unique via le service
+			const skuResult = await generateUniqueTechnicalName(original.sku, async (sku) => {
+				const existing = await tx.productSku.findUnique({ where: { sku } });
+				return existing !== null;
+			});
+
+			if (!skuResult.success) {
+				throw new BusinessError(skuResult.error ?? "Impossible de générer un code SKU unique");
+			}
+
+			const newSku = skuResult.name!;
+
+			// 5. Créer la copie du SKU
+			const duplicate = await tx.productSku.create({
+				data: {
+					sku: newSku,
+					productId: original.productId,
+					colorId: original.colorId,
+					materialId: original.materialId,
+					size: original.size,
+					priceInclTax: original.priceInclTax,
+					compareAtPrice: original.compareAtPrice,
+					inventory: 0, // Reset à 0
+					isActive: false, // Désactivé par défaut
+					isDefault: false, // Jamais par défaut
+					// Dupliquer les images
+					images: {
+						create: original.images.map((img, _index) => ({
+							url: img.url,
+							altText: img.altText,
+							isPrimary: img.isPrimary,
+							position: img.position,
+							mediaType: img.mediaType,
+							thumbnailUrl: img.thumbnailUrl,
+							blurDataUrl: img.blurDataUrl,
+						})),
+					},
 				},
-			},
-		});
+			});
 
-		if (!original) {
-			return {
-				status: ActionStatus.NOT_FOUND,
-				message: "Variante non trouvée",
-			};
-		}
-
-		// 4. Générer un nouveau code SKU unique via le service
-		const skuResult = await generateUniqueTechnicalName(original.sku, async (sku) => {
-			const existing = await prisma.productSku.findUnique({ where: { sku } });
-			return existing !== null;
-		});
-
-		if (!skuResult.success) {
-			return {
-				status: ActionStatus.ERROR,
-				message: skuResult.error ?? "Impossible de générer un code SKU unique",
-			};
-		}
-
-		const newSku = skuResult.name!;
-
-		// 5. Créer la copie du SKU
-		const duplicate = await prisma.productSku.create({
-			data: {
-				sku: newSku,
-				productId: original.productId,
-				colorId: original.colorId,
-				materialId: original.materialId,
-				size: original.size,
-				priceInclTax: original.priceInclTax,
-				compareAtPrice: original.compareAtPrice,
-				inventory: 0, // Reset à 0
-				isActive: false, // Désactivé par défaut
-				isDefault: false, // Jamais par défaut
-				// Dupliquer les images
-				images: {
-					create: original.images.map((img, _index) => ({
-						url: img.url,
-						altText: img.altText,
-						isPrimary: img.isPrimary,
-						position: img.position,
-						mediaType: img.mediaType,
-						thumbnailUrl: img.thumbnailUrl,
-						blurDataUrl: img.blurDataUrl,
-					})),
-				},
-			},
+			return { original, duplicate };
 		});
 
 		// 6. Invalider le cache avec les tags appropriés

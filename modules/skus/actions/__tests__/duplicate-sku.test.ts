@@ -20,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: { findUnique: vi.fn(), create: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -45,7 +46,12 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
-	BusinessError: class extends Error {},
+	BusinessError: class extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	},
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
@@ -110,10 +116,13 @@ describe("duplicateSku", () => {
 
 		mockPrisma.productSku.findUnique.mockResolvedValue(createMockOriginalSku());
 		mockPrisma.productSku.create.mockResolvedValue(createMockDuplicatedSku());
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof Error && e.name === "BusinessError" ? e.message : fallback,
 		}));
 	});
 
@@ -141,10 +150,11 @@ describe("duplicateSku", () => {
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
-	it("should return NOT_FOUND when original SKU does not exist", async () => {
+	it("should return error when original SKU does not exist", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(null);
 		const result = await duplicateSku(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.NOT_FOUND);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("non trouvée");
 	});
 
 	it("should return error when unique name generation fails", async () => {

@@ -11,51 +11,56 @@ import {
 // ---------------------------------------------------------------------------
 
 describe("buildRevenueMap", () => {
-	it("should convert SQL rows to a Map of date -> number", () => {
+	it("should convert SQL rows to Maps of date -> number for revenue and orders", () => {
 		const rows = [
-			{ date: "2026-01-15", revenue: BigInt(150000) },
-			{ date: "2026-01-16", revenue: BigInt(230000) },
+			{ date: "2026-01-15", revenue: BigInt(150000), orders: BigInt(3) },
+			{ date: "2026-01-16", revenue: BigInt(230000), orders: BigInt(5) },
 		];
 
-		const result = buildRevenueMap(rows);
+		const { revenueMap, ordersMap } = buildRevenueMap(rows);
 
-		expect(result).toBeInstanceOf(Map);
-		expect(result.get("2026-01-15")).toBe(150000);
-		expect(result.get("2026-01-16")).toBe(230000);
+		expect(revenueMap).toBeInstanceOf(Map);
+		expect(revenueMap.get("2026-01-15")).toBe(150000);
+		expect(revenueMap.get("2026-01-16")).toBe(230000);
+		expect(ordersMap.get("2026-01-15")).toBe(3);
+		expect(ordersMap.get("2026-01-16")).toBe(5);
 	});
 
 	it("should handle bigint zero", () => {
-		const rows = [{ date: "2026-01-01", revenue: BigInt(0) }];
+		const rows = [{ date: "2026-01-01", revenue: BigInt(0), orders: BigInt(0) }];
 
-		const result = buildRevenueMap(rows);
+		const { revenueMap, ordersMap } = buildRevenueMap(rows);
 
-		expect(result.get("2026-01-01")).toBe(0);
+		expect(revenueMap.get("2026-01-01")).toBe(0);
+		expect(ordersMap.get("2026-01-01")).toBe(0);
 	});
 
 	it("should handle large bigint values", () => {
-		const rows = [{ date: "2026-01-01", revenue: BigInt(9_999_999_999) }];
+		const rows = [{ date: "2026-01-01", revenue: BigInt(9_999_999_999), orders: BigInt(100) }];
 
-		const result = buildRevenueMap(rows);
+		const { revenueMap } = buildRevenueMap(rows);
 
-		expect(result.get("2026-01-01")).toBe(9_999_999_999);
+		expect(revenueMap.get("2026-01-01")).toBe(9_999_999_999);
 	});
 
-	it("should return an empty Map for empty input", () => {
-		const result = buildRevenueMap([]);
+	it("should return empty Maps for empty input", () => {
+		const { revenueMap, ordersMap } = buildRevenueMap([]);
 
-		expect(result.size).toBe(0);
+		expect(revenueMap.size).toBe(0);
+		expect(ordersMap.size).toBe(0);
 	});
 
 	it("should overwrite duplicate dates with the last value", () => {
 		const rows = [
-			{ date: "2026-01-01", revenue: BigInt(100) },
-			{ date: "2026-01-01", revenue: BigInt(200) },
+			{ date: "2026-01-01", revenue: BigInt(100), orders: BigInt(1) },
+			{ date: "2026-01-01", revenue: BigInt(200), orders: BigInt(2) },
 		];
 
-		const result = buildRevenueMap(rows);
+		const { revenueMap, ordersMap } = buildRevenueMap(rows);
 
-		expect(result.get("2026-01-01")).toBe(200);
-		expect(result.size).toBe(1);
+		expect(revenueMap.get("2026-01-01")).toBe(200);
+		expect(ordersMap.get("2026-01-01")).toBe(2);
+		expect(revenueMap.size).toBe(1);
 	});
 });
 
@@ -66,9 +71,10 @@ describe("buildRevenueMap", () => {
 describe("fillMissingDates", () => {
 	it("should generate a continuous series of the given length", () => {
 		const revenueMap = new Map<string, number>();
-		const start = new Date(Date.UTC(2026, 0, 1)); // 2026-01-01
+		const ordersMap = new Map<string, number>();
+		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, start, 5);
+		const result = fillMissingDates(revenueMap, ordersMap, start, 5);
 
 		expect(result).toHaveLength(5);
 		expect(result.map((d) => d.date)).toEqual([
@@ -80,33 +86,36 @@ describe("fillMissingDates", () => {
 		]);
 	});
 
-	it("should fill missing dates with 0 revenue", () => {
+	it("should fill missing dates with 0 revenue and 0 orders", () => {
 		const revenueMap = new Map([["2026-01-02", 5000]]);
+		const ordersMap = new Map([["2026-01-02", 2]]);
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, start, 3);
+		const result = fillMissingDates(revenueMap, ordersMap, start, 3);
 
 		expect(result).toEqual([
-			{ date: "2026-01-01", revenue: 0 },
-			{ date: "2026-01-02", revenue: 5000 },
-			{ date: "2026-01-03", revenue: 0 },
+			{ date: "2026-01-01", revenue: 0, orders: 0 },
+			{ date: "2026-01-02", revenue: 5000, orders: 2 },
+			{ date: "2026-01-03", revenue: 0, orders: 0 },
 		]);
 	});
 
 	it("should return an empty array when days is 0", () => {
 		const revenueMap = new Map<string, number>();
+		const ordersMap = new Map<string, number>();
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, start, 0);
+		const result = fillMissingDates(revenueMap, ordersMap, start, 0);
 
 		expect(result).toEqual([]);
 	});
 
 	it("should handle month boundaries correctly", () => {
 		const revenueMap = new Map<string, number>();
-		const start = new Date(Date.UTC(2026, 0, 30)); // Jan 30
+		const ordersMap = new Map<string, number>();
+		const start = new Date(Date.UTC(2026, 0, 30));
 
-		const result = fillMissingDates(revenueMap, start, 4);
+		const result = fillMissingDates(revenueMap, ordersMap, start, 4);
 
 		expect(result.map((d) => d.date)).toEqual([
 			"2026-01-30",
@@ -118,9 +127,10 @@ describe("fillMissingDates", () => {
 
 	it("should handle year boundaries correctly", () => {
 		const revenueMap = new Map<string, number>();
-		const start = new Date(Date.UTC(2025, 11, 30)); // Dec 30 2025
+		const ordersMap = new Map<string, number>();
+		const start = new Date(Date.UTC(2025, 11, 30));
 
-		const result = fillMissingDates(revenueMap, start, 4);
+		const result = fillMissingDates(revenueMap, ordersMap, start, 4);
 
 		expect(result.map((d) => d.date)).toEqual([
 			"2025-12-30",
@@ -130,19 +140,23 @@ describe("fillMissingDates", () => {
 		]);
 	});
 
-	it("should preserve existing revenue values from the map", () => {
+	it("should preserve existing revenue and orders values from the maps", () => {
 		const revenueMap = new Map([
 			["2026-01-01", 10000],
 			["2026-01-03", 25000],
 		]);
+		const ordersMap = new Map([
+			["2026-01-01", 3],
+			["2026-01-03", 7],
+		]);
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, start, 3);
+		const result = fillMissingDates(revenueMap, ordersMap, start, 3);
 
 		expect(result).toEqual([
-			{ date: "2026-01-01", revenue: 10000 },
-			{ date: "2026-01-02", revenue: 0 },
-			{ date: "2026-01-03", revenue: 25000 },
+			{ date: "2026-01-01", revenue: 10000, orders: 3 },
+			{ date: "2026-01-02", revenue: 0, orders: 0 },
+			{ date: "2026-01-03", revenue: 25000, orders: 7 },
 		]);
 	});
 });
@@ -154,8 +168,8 @@ describe("fillMissingDates", () => {
 describe("formatChartData", () => {
 	it("should format ISO dates to French day+month labels", () => {
 		const data = [
-			{ date: "2026-01-15", revenue: 1000 },
-			{ date: "2026-02-03", revenue: 2000 },
+			{ date: "2026-01-15", revenue: 1000, orders: 2 },
+			{ date: "2026-02-03", revenue: 2000, orders: 4 },
 		];
 
 		const result = formatChartData(data);
@@ -164,16 +178,18 @@ describe("formatChartData", () => {
 		expect(result[1]!.date).toBe("03 févr.");
 	});
 
-	it("should preserve revenue values", () => {
+	it("should preserve revenue and orders values", () => {
 		const data = [
-			{ date: "2026-01-01", revenue: 5000 },
-			{ date: "2026-01-02", revenue: 0 },
+			{ date: "2026-01-01", revenue: 5000, orders: 3 },
+			{ date: "2026-01-02", revenue: 0, orders: 0 },
 		];
 
 		const result = formatChartData(data);
 
 		expect(result[0]!.revenue).toBe(5000);
+		expect(result[0]!.orders).toBe(3);
 		expect(result[1]!.revenue).toBe(0);
+		expect(result[1]!.orders).toBe(0);
 	});
 
 	it("should return empty array for empty input", () => {

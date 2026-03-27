@@ -21,7 +21,7 @@ vi.mock("@/shared/utils/format-euro", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: ({ src, alt, ...props }: any) => <img src={src} alt={alt} />,
+	default: ({ alt }: any) => <div data-testid="mock-image" aria-label={alt} />,
 }));
 
 import { OrderItemsCard } from "../order-items-card";

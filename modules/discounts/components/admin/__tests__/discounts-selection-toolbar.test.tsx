@@ -79,9 +79,9 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		variant?: string;
 		disabled?: boolean;
 	}) => (
-		<div role="menuitem" onClick={onClick} data-variant={variant} aria-disabled={disabled}>
+		<button role="menuitem" onClick={onClick} data-variant={variant} aria-disabled={disabled}>
 			{children}
-		</div>
+		</button>
 	),
 }));
 

@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
+import { BusinessError, handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { bulkDeleteSkusSchema } from "../schemas/sku.schemas";
 import { CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
@@ -50,126 +50,119 @@ export async function bulkDeleteSkus(
 			};
 		}
 
-		// Récupérer les infos des SKUs pour validation, suppression fichiers et invalidation du cache
-		const skusData = await prisma.productSku.findMany({
-			where: { id: { in: ids } },
-			select: {
-				id: true,
-				sku: true,
-				productId: true,
-				isDefault: true,
-				isActive: true,
-				product: {
-					select: {
-						slug: true,
-						status: true,
-						_count: { select: { skus: true } },
-						skus: {
-							where: { isActive: true },
-							select: { id: true },
+		// Transaction atomique : validation + suppression pour éviter les races
+		const { skusData, allImageUrls } = await prisma.$transaction(async (tx) => {
+			// Récupérer les infos des SKUs pour validation, suppression fichiers et invalidation du cache
+			const skusData = await tx.productSku.findMany({
+				where: { id: { in: ids } },
+				select: {
+					id: true,
+					sku: true,
+					productId: true,
+					isDefault: true,
+					isActive: true,
+					product: {
+						select: {
+							slug: true,
+							status: true,
+							_count: { select: { skus: true } },
+							skus: {
+								where: { isActive: true },
+								select: { id: true },
+							},
 						},
 					},
+					images: { select: { url: true } },
 				},
-				images: { select: { url: true } },
-			},
-		});
+			});
 
-		if (skusData.length !== ids.length) {
-			const missing = ids.length - skusData.length;
-			return {
-				status: ActionStatus.ERROR,
-				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
-			};
-		}
-
-		// Verifier qu'aucune variante par defaut n'est selectionnee
-		const defaultSkus = skusData.filter((s) => s.isDefault);
-		if (defaultSkus.length > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Impossible de supprimer une variante par défaut",
-			};
-		}
-
-		// CRITIQUE : Verifier qu'aucun produit ne se retrouve avec 0 SKU
-		const deletionsByProduct = new Map<
-			string,
-			{
-				total: number;
-				deleteCount: number;
-				activeDeleteCount: number;
-				activeTotal: number;
-				status: string;
+			if (skusData.length !== ids.length) {
+				const missing = ids.length - skusData.length;
+				throw new BusinessError(
+					`${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
+				);
 			}
-		>();
-		for (const sku of skusData) {
-			const existing = deletionsByProduct.get(sku.productId);
-			if (existing) {
-				existing.deleteCount++;
-				if (sku.isActive) existing.activeDeleteCount++;
-			} else {
-				deletionsByProduct.set(sku.productId, {
-					total: sku.product._count.skus,
-					deleteCount: 1,
-					activeDeleteCount: sku.isActive ? 1 : 0,
-					activeTotal: sku.product.skus.length,
-					status: sku.product.status,
-				});
-			}
-		}
 
-		for (const [, data] of deletionsByProduct) {
-			if (data.total - data.deleteCount < 1) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
+			// Verifier qu'aucune variante par defaut n'est selectionnee
+			const defaultSkus = skusData.filter((s) => s.isDefault);
+			if (defaultSkus.length > 0) {
+				throw new BusinessError("Impossible de supprimer une variante par défaut");
+			}
+
+			// CRITIQUE : Verifier qu'aucun produit ne se retrouve avec 0 SKU
+			const deletionsByProduct = new Map<
+				string,
+				{
+					total: number;
+					deleteCount: number;
+					activeDeleteCount: number;
+					activeTotal: number;
+					status: string;
+				}
+			>();
+			for (const sku of skusData) {
+				const existing = deletionsByProduct.get(sku.productId);
+				if (existing) {
+					existing.deleteCount++;
+					if (sku.isActive) existing.activeDeleteCount++;
+				} else {
+					deletionsByProduct.set(sku.productId, {
+						total: sku.product._count.skus,
+						deleteCount: 1,
+						activeDeleteCount: sku.isActive ? 1 : 0,
+						activeTotal: sku.product.skus.length,
+						status: sku.product.status,
+					});
+				}
+			}
+
+			for (const [, data] of deletionsByProduct) {
+				if (data.total - data.deleteCount < 1) {
+					throw new BusinessError(
 						"Impossible de supprimer toutes les variantes d'un produit. Un produit doit avoir au moins une variante.",
-				};
-			}
+					);
+				}
 
-			// Pour les produits PUBLIC : au moins 1 SKU actif doit rester
-			if (data.status === "PUBLIC" && data.activeTotal - data.activeDeleteCount < 1) {
-				return {
-					status: ActionStatus.ERROR,
-					message:
+				// Pour les produits PUBLIC : au moins 1 SKU actif doit rester
+				if (data.status === "PUBLIC" && data.activeTotal - data.activeDeleteCount < 1) {
+					throw new BusinessError(
 						"Impossible de supprimer toutes les variantes actives d'un produit PUBLIC. " +
-						"Veuillez creer une autre variante active ou mettre le produit en DRAFT.",
-				};
+							"Veuillez creer une autre variante active ou mettre le produit en DRAFT.",
+					);
+				}
 			}
-		}
 
-		// CRITIQUE : Verifier que les SKUs ne sont pas dans des commandes
-		const orderItemsCount = await prisma.orderItem.count({
-			where: { skuId: { in: ids } },
-		});
+			// CRITIQUE : Verifier que les SKUs ne sont pas dans des commandes
+			const orderItemsCount = await tx.orderItem.count({
+				where: { skuId: { in: ids } },
+			});
 
-		if (orderItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
+			if (orderItemsCount > 0) {
+				throw new BusinessError(
 					`Impossible de supprimer ces variantes car ${orderItemsCount} sont liees a des commandes. ` +
-					"Pour conserver l'historique, veuillez désactiver ces variantes à la place.",
-			};
-		}
+						"Pour conserver l'historique, veuillez désactiver ces variantes à la place.",
+				);
+			}
 
-		// CRITIQUE : Verifier que les SKUs ne sont pas dans des paniers
-		const cartItemsCount = await prisma.cartItem.count({
-			where: { skuId: { in: ids } },
-		});
+			// CRITIQUE : Verifier que les SKUs ne sont pas dans des paniers
+			const cartItemsCount = await tx.cartItem.count({
+				where: { skuId: { in: ids } },
+			});
 
-		if (cartItemsCount > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message:
+			if (cartItemsCount > 0) {
+				throw new BusinessError(
 					`Impossible de supprimer ces variantes car ${cartItemsCount} sont presentes dans des paniers. ` +
-					"Veuillez désactiver ces variantes à la place.",
-			};
-		}
+						"Veuillez désactiver ces variantes à la place.",
+				);
+			}
 
-		// Supprimer toutes les variantes AVANT les fichiers UploadThing
-		const allImageUrls = skusData.flatMap((sku) => sku.images.map((img) => img.url));
-		await prisma.productSku.deleteMany({
-			where: { id: { in: ids } },
+			// Supprimer toutes les variantes AVANT les fichiers UploadThing
+			const allImageUrls = skusData.flatMap((sku) => sku.images.map((img) => img.url));
+			await tx.productSku.deleteMany({
+				where: { id: { in: ids } },
+			});
+
+			return { skusData, allImageUrls };
 		});
 
 		// Supprimer les fichiers UploadThing apres la suppression DB reussie

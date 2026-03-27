@@ -16,10 +16,9 @@ import {
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
 import type { GetRevenueChartReturn } from "@/modules/dashboard/data/get-revenue-chart";
-import { formatChartData } from "@/modules/dashboard/services/revenue-chart-builder.service";
 
 import { cn } from "@/shared/utils/cn";
-import { CartesianGrid, Line, LineChart, XAxis } from "recharts";
+import { Area, CartesianGrid, ComposedChart, Line, XAxis, YAxis } from "recharts";
 import { ChartEmpty } from "./chart-empty";
 import { ChartScrollContainer } from "./chart-scroll-container";
 import { CHART_STYLES } from "../constants/chart-styles";
@@ -28,30 +27,32 @@ interface RevenueChartProps {
 	chartData: GetRevenueChartReturn;
 }
 
-/**
- * ℹ️ Micro-entreprise : Configuration simplifiée sans HT/TVA
- * Affiche uniquement le chiffre d'affaires (pas de TVA)
- */
 const chartConfig = {
 	revenue: {
 		label: "Chiffre d'affaires",
 		color: "var(--chart-1)",
+	},
+	orders: {
+		label: "Commandes",
+		color: "var(--chart-2)",
 	},
 } satisfies ChartConfig;
 
 export function RevenueChart({ chartData }: RevenueChartProps) {
 	const { data } = chartData;
 
-	const formattedData = formatChartData(data);
+	const hasRevenue = data.some((item) => item.revenue > 0);
 
-	// Verifier s'il y a des donnees avec du revenu
-	const hasRevenue = formattedData.some((item) => item.revenue > 0);
-
-	// Résumé textuel pour lecteurs d'écran sans support SVG
-	const totalRevenue = formattedData.reduce((sum, item) => sum + item.revenue, 0);
-	const peakEntry = formattedData.reduce(
+	// Screen reader summary
+	const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+	const totalOrders = data.reduce((sum, item) => sum + item.orders, 0);
+	const peakRevenue = data.reduce(
 		(max, item) => (item.revenue > max.revenue ? item : max),
-		formattedData[0] ?? { date: "—", revenue: 0 },
+		data[0] ?? { date: "—", revenue: 0, orders: 0 },
+	);
+	const peakOrders = data.reduce(
+		(max, item) => (item.orders > max.orders ? item : max),
+		data[0] ?? { date: "—", revenue: 0, orders: 0 },
 	);
 
 	return (
@@ -61,22 +62,26 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 			<CardHeader>
 				<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
 				<CardDescription className={CHART_STYLES.description}>
-					Évolution du chiffre d'affaires
+					Chiffre d&apos;affaires et nombre de commandes
 				</CardDescription>
 			</CardHeader>
 			<CardContent>
 				{!hasRevenue ? (
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
-					<div role="figure" aria-label="Graphique des revenus sur 30 jours">
+					<div role="figure" aria-label="Graphique des revenus et commandes sur 30 jours">
 						<div className="sr-only">
 							<p>
-								Graphique en ligne montrant l&apos;evolution du chiffre d&apos;affaires quotidien
-								sur les 30 derniers jours.
+								Graphique montrant l&apos;evolution du chiffre d&apos;affaires quotidien et du
+								nombre de commandes sur les 30 derniers jours.
 							</p>
-							<p>Total sur la période : {totalRevenue.toFixed(2)} €.</p>
+							<p>Total revenus sur la periode : {totalRevenue.toFixed(2)} €.</p>
+							<p>Total commandes sur la periode : {totalOrders}.</p>
 							<p>
-								Pic : {peakEntry.revenue.toFixed(2)} € le {peakEntry.date}.
+								Pic revenus : {peakRevenue.revenue.toFixed(2)} € le {peakRevenue.date}.
+							</p>
+							<p>
+								Pic commandes : {peakOrders.orders} le {peakOrders.date}.
 							</p>
 						</div>
 						<ChartScrollContainer>
@@ -84,11 +89,17 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 								config={chartConfig}
 								className={cn(CHART_STYLES.height.responsive, "w-full")}
 							>
-								<LineChart
+								<ComposedChart
 									accessibilityLayer
-									data={formattedData}
+									data={data}
 									margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
 								>
+									<defs>
+										<linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+											<stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.3} />
+											<stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0} />
+										</linearGradient>
+									</defs>
 									<CartesianGrid vertical={false} />
 									<XAxis
 										dataKey="date"
@@ -99,11 +110,18 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 										tick={{ fontSize: 11 }}
 										minTickGap={30}
 									/>
+									<YAxis yAxisId="revenue" hide />
+									<YAxis yAxisId="orders" orientation="right" hide />
 									<ChartTooltip
 										content={
 											<ChartTooltipContent
 												labelFormatter={(value) => `Date: ${value}`}
-												formatter={(value) => `${Number(value).toFixed(2)} €`}
+												formatter={(value, name) => {
+													if (name === "orders") {
+														return `${Number(value)} commande${Number(value) > 1 ? "s" : ""}`;
+													}
+													return `${Number(value).toFixed(2)} €`;
+												}}
 											/>
 										}
 									/>
@@ -115,14 +133,24 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 											/>
 										)}
 									/>
-									<Line
+									<Area
+										yAxisId="revenue"
 										dataKey="revenue"
 										type="monotone"
 										stroke="var(--color-revenue)"
+										fill="url(#revenueGradient)"
 										strokeWidth={2}
+									/>
+									<Line
+										yAxisId="orders"
+										dataKey="orders"
+										type="monotone"
+										stroke="var(--color-orders)"
+										strokeWidth={1.5}
+										strokeDasharray="4 4"
 										dot={false}
 									/>
-								</LineChart>
+								</ComposedChart>
 							</ChartContainer>
 						</ChartScrollContainer>
 					</div>

@@ -64,9 +64,9 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		onClick?: () => void;
 		variant?: string;
 	}) => (
-		<div role="menuitem" onClick={onClick}>
+		<button role="menuitem" onClick={onClick}>
 			{children}
-		</div>
+		</button>
 	),
 }));
 

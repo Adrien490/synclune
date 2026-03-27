@@ -27,6 +27,9 @@ export interface OrderForTransform {
 export type GetKpisReturn = {
 	monthlyRevenue: {
 		amount: number;
+		netAmount: number;
+		refundAmount: number;
+		refundCount: number;
 		evolution: number;
 	};
 	monthlyOrders: {
@@ -34,6 +37,18 @@ export type GetKpisReturn = {
 		evolution: number;
 	};
 	averageOrderValue: {
+		amount: number;
+		evolution: number;
+	};
+	conversionRate: {
+		rate: number;
+		evolution: number;
+		abandoned: number;
+	};
+	pendingShipment: {
+		count: number;
+	};
+	discountImpact: {
 		amount: number;
 		evolution: number;
 	};
@@ -46,6 +61,7 @@ export type GetKpisReturn = {
 export type RevenueRow = {
 	date: string;
 	revenue: bigint;
+	orders: bigint;
 };
 
 // ============================================================================
@@ -55,6 +71,7 @@ export type RevenueRow = {
 export type RevenueDataPoint = {
 	date: string;
 	revenue: number;
+	orders: number;
 };
 
 export type GetRevenueChartReturn = {
@@ -78,4 +95,14 @@ export type RecentOrderItem = {
 
 export type GetRecentOrdersReturn = {
 	orders: RecentOrderItem[];
+};
+
+// ============================================================================
+// TYPES - ALERTS
+// ============================================================================
+
+export type DashboardAlerts = {
+	pendingRefunds: number;
+	activeDisputes: number;
+	lowStockSkus: number;
 };

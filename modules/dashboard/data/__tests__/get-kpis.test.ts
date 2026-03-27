@@ -4,8 +4,15 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrismaOrderAggregate, mockCacheDefault } = vi.hoisted(() => ({
+const {
+	mockPrismaOrderAggregate,
+	mockPrismaOrderCount,
+	mockPrismaRefundAggregate,
+	mockCacheDefault,
+} = vi.hoisted(() => ({
 	mockPrismaOrderAggregate: vi.fn(),
+	mockPrismaOrderCount: vi.fn(),
+	mockPrismaRefundAggregate: vi.fn(),
 	mockCacheDefault: vi.fn(),
 }));
 
@@ -13,6 +20,10 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		order: {
 			aggregate: mockPrismaOrderAggregate,
+			count: mockPrismaOrderCount,
+		},
+		refund: {
+			aggregate: mockPrismaRefundAggregate,
 		},
 	},
 	notDeleted: { deletedAt: null },
@@ -44,6 +55,21 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		EXPIRED: "EXPIRED",
 		REFUNDED: "REFUNDED",
 	},
+	FulfillmentStatus: {
+		UNFULFILLED: "UNFULFILLED",
+		PROCESSING: "PROCESSING",
+		SHIPPED: "SHIPPED",
+		DELIVERED: "DELIVERED",
+		RETURNED: "RETURNED",
+	},
+	RefundStatus: {
+		PENDING: "PENDING",
+		APPROVED: "APPROVED",
+		COMPLETED: "COMPLETED",
+		REJECTED: "REJECTED",
+		FAILED: "FAILED",
+		CANCELLED: "CANCELLED",
+	},
 }));
 
 import { fetchDashboardKpis } from "../get-kpis";
@@ -52,25 +78,65 @@ import { fetchDashboardKpis } from "../get-kpis";
 // HELPERS
 // ============================================================================
 
-function makeAggregateResult(total: number | null, count = 0) {
-	return { _sum: { total }, _count: count };
+function makeAggregateResult(total: number | null, count = 0, discountAmount: number | null = 0) {
+	return { _sum: { total, discountAmount }, _count: count };
 }
 
+function makeRefundAggregateResult(amount: number | null, count = 0) {
+	return { _sum: { amount }, _count: count };
+}
+
+/**
+ * Sets up all 7 mocks in the order they are called by Promise.all:
+ * 1. order.aggregate (current month - revenue)
+ * 2. order.aggregate (last month - revenue)
+ * 3. order.count (current month - total orders for conversion)
+ * 4. order.count (last month - total orders for conversion)
+ * 5. order.count (pending shipment)
+ * 6. refund.aggregate (current month)
+ * 7. refund.aggregate (last month)
+ */
 function setupDefaultMocks({
 	currentTotal = 10000,
 	currentCount = 4,
+	currentDiscount = 200,
 	lastTotal = 8000,
 	lastCount = 4,
+	lastDiscount = 100,
+	currentTotalOrders = 6,
+	lastTotalOrders = 5,
+	pendingShipment = 2,
+	currentRefundAmount = 500,
+	currentRefundCount = 1,
+	lastRefundAmount = 300,
+	lastRefundCount = 1,
 }: {
 	currentTotal?: number | null;
 	currentCount?: number;
+	currentDiscount?: number | null;
 	lastTotal?: number | null;
 	lastCount?: number;
+	lastDiscount?: number | null;
+	currentTotalOrders?: number;
+	lastTotalOrders?: number;
+	pendingShipment?: number;
+	currentRefundAmount?: number | null;
+	currentRefundCount?: number;
+	lastRefundAmount?: number | null;
+	lastRefundCount?: number;
 } = {}) {
-	// 2 aggregate calls: current month, last month
 	mockPrismaOrderAggregate
-		.mockResolvedValueOnce(makeAggregateResult(currentTotal, currentCount))
-		.mockResolvedValueOnce(makeAggregateResult(lastTotal, lastCount));
+		.mockResolvedValueOnce(makeAggregateResult(currentTotal, currentCount, currentDiscount))
+		.mockResolvedValueOnce(makeAggregateResult(lastTotal, lastCount, lastDiscount));
+
+	mockPrismaOrderCount
+		.mockResolvedValueOnce(currentTotalOrders)
+		.mockResolvedValueOnce(lastTotalOrders)
+		.mockResolvedValueOnce(pendingShipment);
+
+	mockPrismaRefundAggregate
+		.mockResolvedValueOnce(makeRefundAggregateResult(currentRefundAmount, currentRefundCount))
+		.mockResolvedValueOnce(makeRefundAggregateResult(lastRefundAmount, lastRefundCount));
 }
 
 // ============================================================================
@@ -81,7 +147,6 @@ describe("fetchDashboardKpis", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		vi.useFakeTimers();
-		// Fix date to 2026-02-15T12:00:00Z for all tests
 		vi.setSystemTime(new Date("2026-02-15T12:00:00Z"));
 	});
 
@@ -93,7 +158,7 @@ describe("fetchDashboardKpis", () => {
 	// Return shape
 	// -------------------------------------------------------------------------
 
-	it("should return all 3 KPIs with expected shape", async () => {
+	it("should return all KPIs with expected shape", async () => {
 		setupDefaultMocks();
 
 		const result = await fetchDashboardKpis();
@@ -101,66 +166,116 @@ describe("fetchDashboardKpis", () => {
 		expect(result).toHaveProperty("monthlyRevenue");
 		expect(result).toHaveProperty("monthlyOrders");
 		expect(result).toHaveProperty("averageOrderValue");
+		expect(result).toHaveProperty("conversionRate");
+		expect(result).toHaveProperty("pendingShipment");
+		expect(result).toHaveProperty("discountImpact");
 		expect(result.monthlyRevenue).toHaveProperty("amount");
+		expect(result.monthlyRevenue).toHaveProperty("netAmount");
+		expect(result.monthlyRevenue).toHaveProperty("refundAmount");
+		expect(result.monthlyRevenue).toHaveProperty("refundCount");
 		expect(result.monthlyRevenue).toHaveProperty("evolution");
-		expect(result.monthlyOrders).toHaveProperty("count");
-		expect(result.monthlyOrders).toHaveProperty("evolution");
-		expect(result.averageOrderValue).toHaveProperty("amount");
-		expect(result.averageOrderValue).toHaveProperty("evolution");
+		expect(result.conversionRate).toHaveProperty("rate");
+		expect(result.conversionRate).toHaveProperty("abandoned");
+		expect(result.pendingShipment).toHaveProperty("count");
+		expect(result.discountImpact).toHaveProperty("amount");
 	});
 
 	// -------------------------------------------------------------------------
-	// Only 2 aggregate queries
+	// Query count
 	// -------------------------------------------------------------------------
 
-	it("should make exactly 2 aggregate queries (consolidated)", async () => {
+	it("should make 2 aggregate, 3 count, and 2 refund aggregate queries", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		expect(mockPrismaOrderAggregate).toHaveBeenCalledTimes(2);
+		expect(mockPrismaOrderCount).toHaveBeenCalledTimes(3);
+		expect(mockPrismaRefundAggregate).toHaveBeenCalledTimes(2);
 	});
 
 	// -------------------------------------------------------------------------
-	// Monthly revenue
+	// Monthly revenue (net)
 	// -------------------------------------------------------------------------
 
-	it("should compute positive evolution when current revenue exceeds last month", async () => {
-		setupDefaultMocks({ currentTotal: 12000, currentCount: 4, lastTotal: 8000, lastCount: 4 });
+	it("should compute net revenue (gross - refunds)", async () => {
+		setupDefaultMocks({
+			currentTotal: 12000,
+			currentCount: 4,
+			currentRefundAmount: 2000,
+			currentRefundCount: 2,
+		});
 
 		const result = await fetchDashboardKpis();
 
 		expect(result.monthlyRevenue.amount).toBe(12000);
-		// ((12000 - 8000) / 8000) * 100 = 50
-		expect(result.monthlyRevenue.evolution).toBeCloseTo(50);
+		expect(result.monthlyRevenue.netAmount).toBe(10000); // 12000 - 2000
+		expect(result.monthlyRevenue.refundAmount).toBe(2000);
+		expect(result.monthlyRevenue.refundCount).toBe(2);
+	});
+
+	it("should compute evolution based on net revenue", async () => {
+		setupDefaultMocks({
+			currentTotal: 12000,
+			currentCount: 4,
+			currentRefundAmount: 2000,
+			lastTotal: 8000,
+			lastCount: 4,
+			lastRefundAmount: 1000,
+		});
+
+		const result = await fetchDashboardKpis();
+
+		// Current net = 10000, last net = 7000
+		// ((10000 - 7000) / 7000) * 100 ≈ 42.86
+		expect(result.monthlyRevenue.evolution).toBeCloseTo(42.86, 1);
 	});
 
 	it("should compute negative evolution when current revenue is below last month", async () => {
-		setupDefaultMocks({ currentTotal: 4000, currentCount: 2, lastTotal: 8000, lastCount: 4 });
+		setupDefaultMocks({
+			currentTotal: 4000,
+			currentCount: 2,
+			currentRefundAmount: 0,
+			lastTotal: 8000,
+			lastCount: 4,
+			lastRefundAmount: 0,
+		});
 
 		const result = await fetchDashboardKpis();
 
-		expect(result.monthlyRevenue.amount).toBe(4000);
-		// ((4000 - 8000) / 8000) * 100 = -50
 		expect(result.monthlyRevenue.evolution).toBeCloseTo(-50);
 	});
 
-	it("should return evolution of 0 when last month revenue is 0", async () => {
-		setupDefaultMocks({ currentTotal: 5000, currentCount: 2, lastTotal: 0, lastCount: 0 });
+	it("should return evolution of 0 when last month net revenue is 0", async () => {
+		setupDefaultMocks({
+			currentTotal: 5000,
+			currentCount: 2,
+			lastTotal: 0,
+			lastCount: 0,
+			lastRefundAmount: 0,
+			currentRefundAmount: 0,
+		});
 
 		const result = await fetchDashboardKpis();
 
-		expect(result.monthlyRevenue.amount).toBe(5000);
 		expect(result.monthlyRevenue.evolution).toBe(0);
 	});
 
 	it("should default amounts to 0 when aggregate returns null sums", async () => {
-		setupDefaultMocks({ currentTotal: null, currentCount: 0, lastTotal: null, lastCount: 0 });
+		setupDefaultMocks({
+			currentTotal: null,
+			currentCount: 0,
+			lastTotal: null,
+			lastCount: 0,
+			currentRefundAmount: null,
+			lastRefundAmount: null,
+		});
 
 		const result = await fetchDashboardKpis();
 
 		expect(result.monthlyRevenue.amount).toBe(0);
-		expect(result.monthlyRevenue.evolution).toBe(0);
+		expect(result.monthlyRevenue.netAmount).toBe(0);
+		expect(result.monthlyRevenue.refundAmount).toBe(0);
 	});
 
 	// -------------------------------------------------------------------------
@@ -180,7 +295,6 @@ describe("fetchDashboardKpis", () => {
 
 		const result = await fetchDashboardKpis();
 
-		// ((15 - 10) / 10) * 100 = 50
 		expect(result.monthlyOrders.evolution).toBeCloseTo(50);
 	});
 
@@ -189,7 +303,6 @@ describe("fetchDashboardKpis", () => {
 
 		const result = await fetchDashboardKpis();
 
-		// ((5 - 10) / 10) * 100 = -50
 		expect(result.monthlyOrders.evolution).toBeCloseTo(-50);
 	});
 
@@ -206,17 +319,22 @@ describe("fetchDashboardKpis", () => {
 	// -------------------------------------------------------------------------
 
 	it("should compute average order value as sum divided by count", async () => {
-		// Current: 9000 / 3 = 3000, Last: 8000 / 4 = 2000
-		setupDefaultMocks({ currentTotal: 9000, currentCount: 3, lastTotal: 8000, lastCount: 4 });
+		setupDefaultMocks({
+			currentTotal: 9000,
+			currentCount: 3,
+			lastTotal: 8000,
+			lastCount: 4,
+			currentRefundAmount: 0,
+			lastRefundAmount: 0,
+		});
 
 		const result = await fetchDashboardKpis();
 
 		expect(result.averageOrderValue.amount).toBe(3000);
-		// ((3000 - 2000) / 2000) * 100 = 50
 		expect(result.averageOrderValue.evolution).toBeCloseTo(50);
 	});
 
-	it("should return amount of 0 when current month count is 0", async () => {
+	it("should return AOV of 0 when current month count is 0", async () => {
 		setupDefaultMocks({ currentTotal: 0, currentCount: 0, lastTotal: 8000, lastCount: 4 });
 
 		const result = await fetchDashboardKpis();
@@ -232,20 +350,101 @@ describe("fetchDashboardKpis", () => {
 		expect(result.averageOrderValue.evolution).toBe(0);
 	});
 
-	it("should handle null AOV sums by defaulting to 0", async () => {
-		setupDefaultMocks({ currentTotal: null, currentCount: 3, lastTotal: null, lastCount: 2 });
+	// -------------------------------------------------------------------------
+	// Conversion rate
+	// -------------------------------------------------------------------------
+
+	it("should compute conversion rate as paid/total orders percentage", async () => {
+		setupDefaultMocks({
+			currentCount: 6,
+			currentTotalOrders: 10,
+			lastCount: 4,
+			lastTotalOrders: 8,
+		});
 
 		const result = await fetchDashboardKpis();
 
-		expect(result.averageOrderValue.amount).toBe(0);
-		expect(result.averageOrderValue.evolution).toBe(0);
+		expect(result.conversionRate.rate).toBeCloseTo(60); // 6/10 * 100
+		expect(result.conversionRate.abandoned).toBe(4); // 10 - 6
+	});
+
+	it("should compute conversion evolution vs last month", async () => {
+		setupDefaultMocks({
+			currentCount: 8,
+			currentTotalOrders: 10,
+			lastCount: 5,
+			lastTotalOrders: 10,
+		});
+
+		const result = await fetchDashboardKpis();
+
+		// Current: 80%, Last: 50%
+		// ((80 - 50) / 50) * 100 = 60
+		expect(result.conversionRate.evolution).toBeCloseTo(60);
+	});
+
+	it("should return conversion rate of 0 when no orders this month", async () => {
+		setupDefaultMocks({ currentCount: 0, currentTotalOrders: 0 });
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.conversionRate.rate).toBe(0);
+		expect(result.conversionRate.abandoned).toBe(0);
+	});
+
+	// -------------------------------------------------------------------------
+	// Pending shipment
+	// -------------------------------------------------------------------------
+
+	it("should return pending shipment count", async () => {
+		setupDefaultMocks({ pendingShipment: 7 });
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.pendingShipment.count).toBe(7);
+	});
+
+	it("should query pending shipment with UNFULFILLED and PROCESSING statuses", async () => {
+		setupDefaultMocks();
+
+		await fetchDashboardKpis();
+
+		// Third order.count call is for pending shipment
+		const pendingCall = mockPrismaOrderCount.mock.calls[2]![0];
+		expect(pendingCall.where.fulfillmentStatus).toEqual({
+			in: ["UNFULFILLED", "PROCESSING"],
+		});
+		expect(pendingCall.where.paymentStatus).toBe("PAID");
+	});
+
+	// -------------------------------------------------------------------------
+	// Discount impact
+	// -------------------------------------------------------------------------
+
+	it("should return discount impact amount", async () => {
+		setupDefaultMocks({ currentDiscount: 500, lastDiscount: 300 });
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.discountImpact.amount).toBe(500);
+		// ((500 - 300) / 300) * 100 ≈ 66.67
+		expect(result.discountImpact.evolution).toBeCloseTo(66.67, 0);
+	});
+
+	it("should default discount to 0 when null", async () => {
+		setupDefaultMocks({ currentDiscount: null, lastDiscount: null });
+
+		const result = await fetchDashboardKpis();
+
+		expect(result.discountImpact.amount).toBe(0);
+		expect(result.discountImpact.evolution).toBe(0);
 	});
 
 	// -------------------------------------------------------------------------
 	// Prisma query filters
 	// -------------------------------------------------------------------------
 
-	it("should query with PaymentStatus.PAID filter for all aggregates", async () => {
+	it("should query with PaymentStatus.PAID filter for revenue aggregates", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
@@ -256,7 +455,7 @@ describe("fetchDashboardKpis", () => {
 		}
 	});
 
-	it("should query with notDeleted filter (deletedAt: null) for all calls", async () => {
+	it("should query with notDeleted filter for all order calls", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
@@ -267,40 +466,49 @@ describe("fetchDashboardKpis", () => {
 		}
 	});
 
-	it("should request _sum and _count in both aggregate calls", async () => {
+	it("should request _sum with total and discountAmount in aggregate calls", async () => {
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		const aggregateCalls = mockPrismaOrderAggregate.mock.calls;
 		for (const [args] of aggregateCalls) {
-			expect(args._sum).toEqual({ total: true });
+			expect(args._sum).toEqual({ total: true, discountAmount: true });
 			expect(args._count).toBe(true);
 		}
 	});
 
 	it("should scope current month queries from the first day of current UTC month", async () => {
-		// Fixed time: 2026-02-15T12:00:00Z → current month start = 2026-02-01T00:00:00Z
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
-		const firstAggregatCall = mockPrismaOrderAggregate.mock.calls[0]![0];
-		const expectedCurrentMonthStart = new Date(Date.UTC(2026, 1, 1)); // Feb 1 2026
-		expect(firstAggregatCall.where.paidAt.gte).toEqual(expectedCurrentMonthStart);
+		const firstCall = mockPrismaOrderAggregate.mock.calls[0]![0];
+		const expectedCurrentMonthStart = new Date(Date.UTC(2026, 1, 1));
+		expect(firstCall.where.paidAt.gte).toEqual(expectedCurrentMonthStart);
 	});
 
 	it("should scope last month queries with correct gte and lte bounds", async () => {
-		// Fixed time: 2026-02-15 → last month start = 2026-01-01, end = 2026-01-31T23:59:59
 		setupDefaultMocks();
 
 		await fetchDashboardKpis();
 
 		const lastMonthAggregate = mockPrismaOrderAggregate.mock.calls[1]![0];
-		const expectedLastMonthStart = new Date(Date.UTC(2026, 0, 1)); // Jan 1 2026
-		const expectedLastMonthEnd = new Date(Date.UTC(2026, 1, 0, 23, 59, 59, 999)); // Jan 31 2026
+		const expectedLastMonthStart = new Date(Date.UTC(2026, 0, 1));
+		const expectedLastMonthEnd = new Date(Date.UTC(2026, 1, 0, 23, 59, 59, 999));
 		expect(lastMonthAggregate.where.paidAt.gte).toEqual(expectedLastMonthStart);
 		expect(lastMonthAggregate.where.paidAt.lte).toEqual(expectedLastMonthEnd);
+	});
+
+	it("should query refunds with COMPLETED status", async () => {
+		setupDefaultMocks();
+
+		await fetchDashboardKpis();
+
+		const refundCalls = mockPrismaRefundAggregate.mock.calls;
+		for (const [args] of refundCalls) {
+			expect(args.where.status).toBe("COMPLETED");
+		}
 	});
 
 	// -------------------------------------------------------------------------
