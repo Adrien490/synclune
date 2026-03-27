@@ -24,6 +24,7 @@ import { ClearSearchButton } from "@/modules/products/components/clear-search-bu
 import { SearchInput } from "@/shared/components/search-input";
 
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
+import { ScrollRestoration } from "@/shared/components/scroll-restoration";
 
 // Lazy loading - filter sheet charge uniquement a l'ouverture
 const ProductFilterSheet = dynamic(() =>
@@ -113,6 +114,7 @@ export function ProductCatalog({
 
 	return (
 		<div className="min-h-screen">
+			<ScrollRestoration />
 			{/* JSON-LD Structured Data */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
