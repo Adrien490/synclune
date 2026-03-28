@@ -85,6 +85,9 @@ function makeChartData(count = 5, baseRevenue = 100): GetRevenueChartReturn {
 			date: `${i + 1} janv.`,
 			revenue: baseRevenue * (i + 1),
 			orders: i + 1,
+			subtotal: 0,
+			discounts: 0,
+			shipping: 0,
 		})),
 	};
 }
@@ -95,6 +98,9 @@ function makeEmptyChartData(count = 5): GetRevenueChartReturn {
 			date: `${i + 1} janv.`,
 			revenue: 0,
 			orders: 0,
+			subtotal: 0,
+			discounts: 0,
+			shipping: 0,
 		})),
 	};
 }
@@ -195,9 +201,9 @@ describe("RevenueChart", () => {
 	it("renders sr-only summary with peak revenue entry", () => {
 		const chartData: GetRevenueChartReturn = {
 			data: [
-				{ date: "1 janv.", revenue: 50, orders: 1 },
-				{ date: "2 janv.", revenue: 300, orders: 3 },
-				{ date: "3 janv.", revenue: 100, orders: 2 },
+				{ date: "1 janv.", revenue: 50, orders: 1, subtotal: 0, discounts: 0, shipping: 0 },
+				{ date: "2 janv.", revenue: 300, orders: 3, subtotal: 0, discounts: 0, shipping: 0 },
+				{ date: "3 janv.", revenue: 100, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 			],
 		};
 
@@ -209,9 +215,9 @@ describe("RevenueChart", () => {
 	it("renders sr-only summary with peak orders entry", () => {
 		const chartData: GetRevenueChartReturn = {
 			data: [
-				{ date: "1 janv.", revenue: 50, orders: 1 },
-				{ date: "2 janv.", revenue: 100, orders: 5 },
-				{ date: "3 janv.", revenue: 200, orders: 2 },
+				{ date: "1 janv.", revenue: 50, orders: 1, subtotal: 0, discounts: 0, shipping: 0 },
+				{ date: "2 janv.", revenue: 100, orders: 5, subtotal: 0, discounts: 0, shipping: 0 },
+				{ date: "3 janv.", revenue: 200, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 			],
 		};
 
@@ -244,7 +250,15 @@ describe("RevenueChart", () => {
 	});
 
 	it("handles single data point", () => {
-		render(<RevenueChart chartData={{ data: [{ date: "1 janv.", revenue: 500, orders: 2 }] }} />);
+		render(
+			<RevenueChart
+				chartData={{
+					data: [
+						{ date: "1 janv.", revenue: 500, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
+					],
+				}}
+			/>,
+		);
 
 		expect(screen.getByTestId("composed-chart")).toBeInTheDocument();
 		expect(screen.getByText(/Total revenus sur la periode : 500.00 €/)).toBeInTheDocument();

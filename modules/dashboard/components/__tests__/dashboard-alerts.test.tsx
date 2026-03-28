@@ -58,6 +58,7 @@ function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 		pendingRefunds: 0,
 		activeDisputes: 0,
 		lowStockSkus: 0,
+		pendingCustomizations: 0,
 		...overrides,
 	};
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
 	Card,
 	CardContent,
@@ -15,6 +16,7 @@ import {
 	ChartTooltipContent,
 	type ChartConfig,
 } from "@/shared/components/ui/chart";
+import { Button } from "@/shared/components/ui/button";
 import type { GetRevenueChartReturn } from "@/modules/dashboard/data/get-revenue-chart";
 
 import { cn } from "@/shared/utils/cn";
@@ -27,7 +29,7 @@ interface RevenueChartProps {
 	chartData: GetRevenueChartReturn;
 }
 
-const chartConfig = {
+const simpleChartConfig = {
 	revenue: {
 		label: "Chiffre d'affaires",
 		color: "var(--chart-1)",
@@ -38,32 +40,71 @@ const chartConfig = {
 	},
 } satisfies ChartConfig;
 
+const detailedChartConfig = {
+	subtotal: {
+		label: "Produits",
+		color: "var(--chart-1)",
+	},
+	shipping: {
+		label: "Livraison",
+		color: "var(--chart-3)",
+	},
+	discounts: {
+		label: "Remises",
+		color: "var(--chart-4)",
+	},
+	orders: {
+		label: "Commandes",
+		color: "var(--chart-2)",
+	},
+} satisfies ChartConfig;
+
 export function RevenueChart({ chartData }: RevenueChartProps) {
 	const { data } = chartData;
+	const [isDetailed, setIsDetailed] = useState(false);
 
 	const hasRevenue = data.some((item) => item.revenue > 0);
+	const hasBreakdown = data.some((item) => item.subtotal > 0 || item.shipping > 0);
 
 	// Screen reader summary
 	const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
 	const totalOrders = data.reduce((sum, item) => sum + item.orders, 0);
 	const peakRevenue = data.reduce(
 		(max, item) => (item.revenue > max.revenue ? item : max),
-		data[0] ?? { date: "—", revenue: 0, orders: 0 },
+		data[0] ?? { date: "—", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
 	);
 	const peakOrders = data.reduce(
 		(max, item) => (item.orders > max.orders ? item : max),
-		data[0] ?? { date: "—", revenue: 0, orders: 0 },
+		data[0] ?? { date: "—", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
 	);
+
+	const chartConfig = isDetailed ? detailedChartConfig : simpleChartConfig;
 
 	return (
 		<Card
 			className={cn(CHART_STYLES.card, "can-hover:hover:shadow-lg transition-all duration-300")}
 		>
 			<CardHeader>
-				<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
-				<CardDescription className={CHART_STYLES.description}>
-					Chiffre d&apos;affaires et nombre de commandes
-				</CardDescription>
+				<div className="flex items-center justify-between">
+					<div>
+						<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
+						<CardDescription className={CHART_STYLES.description}>
+							{isDetailed
+								? "Decomposition : produits, livraison et remises"
+								: "Chiffre d'affaires et nombre de commandes"}
+						</CardDescription>
+					</div>
+					{hasBreakdown && (
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => setIsDetailed((prev) => !prev)}
+							className="text-xs"
+						>
+							{isDetailed ? "Vue simple" : "Detailler"}
+						</Button>
+					)}
+				</div>
 			</CardHeader>
 			<CardContent>
 				{!hasRevenue ? (
@@ -99,6 +140,14 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 											<stop offset="5%" stopColor="var(--color-revenue)" stopOpacity={0.3} />
 											<stop offset="95%" stopColor="var(--color-revenue)" stopOpacity={0} />
 										</linearGradient>
+										<linearGradient id="subtotalGradient" x1="0" y1="0" x2="0" y2="1">
+											<stop offset="5%" stopColor="var(--color-subtotal)" stopOpacity={0.3} />
+											<stop offset="95%" stopColor="var(--color-subtotal)" stopOpacity={0} />
+										</linearGradient>
+										<linearGradient id="shippingGradient" x1="0" y1="0" x2="0" y2="1">
+											<stop offset="5%" stopColor="var(--color-shipping)" stopOpacity={0.2} />
+											<stop offset="95%" stopColor="var(--color-shipping)" stopOpacity={0} />
+										</linearGradient>
 									</defs>
 									<CartesianGrid vertical={false} />
 									<XAxis
@@ -120,7 +169,7 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 													if (name === "orders") {
 														return `${Number(value)} commande${Number(value) > 1 ? "s" : ""}`;
 													}
-													return `${Number(value).toFixed(2)} €`;
+													return `${(Number(value) / 100).toFixed(2)} €`;
 												}}
 											/>
 										}
@@ -133,14 +182,46 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 											/>
 										)}
 									/>
-									<Area
-										yAxisId="revenue"
-										dataKey="revenue"
-										type="monotone"
-										stroke="var(--color-revenue)"
-										fill="url(#revenueGradient)"
-										strokeWidth={2}
-									/>
+
+									{isDetailed ? (
+										<>
+											<Area
+												yAxisId="revenue"
+												dataKey="subtotal"
+												type="monotone"
+												stroke="var(--color-subtotal)"
+												fill="url(#subtotalGradient)"
+												strokeWidth={2}
+											/>
+											<Area
+												yAxisId="revenue"
+												dataKey="shipping"
+												type="monotone"
+												stroke="var(--color-shipping)"
+												fill="url(#shippingGradient)"
+												strokeWidth={1.5}
+											/>
+											<Line
+												yAxisId="revenue"
+												dataKey="discounts"
+												type="monotone"
+												stroke="var(--color-discounts)"
+												strokeWidth={1.5}
+												strokeDasharray="4 4"
+												dot={false}
+											/>
+										</>
+									) : (
+										<Area
+											yAxisId="revenue"
+											dataKey="revenue"
+											type="monotone"
+											stroke="var(--color-revenue)"
+											fill="url(#revenueGradient)"
+											strokeWidth={2}
+										/>
+									)}
+
 									<Line
 										yAxisId="orders"
 										dataKey="orders"

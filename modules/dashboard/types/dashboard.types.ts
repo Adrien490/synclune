@@ -1,4 +1,8 @@
-import { type OrderStatus, type PaymentStatus } from "@/app/generated/prisma/client";
+import {
+	type FulfillmentStatus,
+	type OrderStatus,
+	type PaymentStatus,
+} from "@/app/generated/prisma/client";
 
 // ============================================================================
 // TYPES - SERVICE INPUTS (from services/)
@@ -13,6 +17,7 @@ export interface OrderForTransform {
 	createdAt: Date;
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
+	fulfillmentStatus: FulfillmentStatus;
 	total: number;
 	user: {
 		name: string | null;
@@ -52,6 +57,19 @@ export type GetKpisReturn = {
 		amount: number;
 		evolution: number;
 	};
+	reviewHealth: {
+		averageRating: number;
+		totalReviews: number;
+	};
+	newsletterGrowth: {
+		totalActive: number;
+		newThisMonth: number;
+		evolution: number;
+	};
+	avgFulfillmentTime: {
+		hours: number;
+		evolution: number;
+	};
 };
 
 // ============================================================================
@@ -62,6 +80,9 @@ export type RevenueRow = {
 	date: string;
 	revenue: bigint;
 	orders: bigint;
+	subtotal: bigint;
+	discounts: bigint;
+	shipping: bigint;
 };
 
 // ============================================================================
@@ -72,6 +93,9 @@ export type RevenueDataPoint = {
 	date: string;
 	revenue: number;
 	orders: number;
+	subtotal: number;
+	discounts: number;
+	shipping: number;
 };
 
 export type GetRevenueChartReturn = {
@@ -88,6 +112,7 @@ export type RecentOrderItem = {
 	createdAt: Date;
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
+	fulfillmentStatus: FulfillmentStatus;
 	total: number;
 	customerName: string;
 	customerEmail: string;
@@ -101,8 +126,60 @@ export type GetRecentOrdersReturn = {
 // TYPES - ALERTS
 // ============================================================================
 
+// ============================================================================
+// TYPES - FULFILLMENT PIPELINE
+// ============================================================================
+
+export type FulfillmentPipeline = {
+	unfulfilled: number;
+	processing: number;
+	shipped: number;
+	delivered: number;
+	returned: number;
+	lateShipments: number;
+};
+
+// ============================================================================
+// TYPES - TOP PRODUCTS
+// ============================================================================
+
+export type TopProductItem = {
+	productId: string | null;
+	title: string;
+	imageUrl: string | null;
+	unitsSold: number;
+	revenue: number;
+};
+
+export type GetTopProductsReturn = {
+	products: TopProductItem[];
+};
+
+// ============================================================================
+// TYPES - ACTIVE DISCOUNTS
+// ============================================================================
+
+export type ActiveDiscountItem = {
+	id: string;
+	code: string;
+	type: string;
+	value: number;
+	usageCount: number;
+	maxUsageCount: number | null;
+	endsAt: Date | null;
+};
+
+export type GetActiveDiscountsReturn = {
+	discounts: ActiveDiscountItem[];
+};
+
+// ============================================================================
+// TYPES - ALERTS
+// ============================================================================
+
 export type DashboardAlerts = {
 	pendingRefunds: number;
 	activeDisputes: number;
 	lowStockSkus: number;
+	pendingCustomizations: number;
 };

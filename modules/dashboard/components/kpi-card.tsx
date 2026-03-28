@@ -59,6 +59,9 @@ export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	href?: string;
 	tooltip?: string;
 	comparisonLabel?: string;
+	invertEvolutionColors?: boolean;
+	/** SVG path data for a background sparkline (7-day trend) */
+	sparklinePath?: string | null;
 }
 
 export function KpiCard({
@@ -78,6 +81,8 @@ export function KpiCard({
 	href,
 	tooltip,
 	comparisonLabel,
+	invertEvolutionColors = false,
+	sparklinePath,
 }: KpiCardProps) {
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
@@ -88,6 +93,24 @@ export function KpiCard({
 
 	const cardContent = (
 		<>
+			{sparklinePath && (
+				<svg
+					viewBox="0 0 100 32"
+					className="pointer-events-none absolute right-0 bottom-0 h-12 w-2/3 opacity-10"
+					preserveAspectRatio="none"
+					aria-hidden="true"
+				>
+					<path
+						d={sparklinePath}
+						fill="none"
+						stroke="currentColor"
+						strokeWidth={1.5}
+						strokeLinecap="round"
+						strokeLinejoin="round"
+					/>
+				</svg>
+			)}
+
 			<div
 				className="bg-secondary absolute top-2 right-2 h-1 w-1 rounded-full opacity-40 transition-opacity group-hover:opacity-60"
 				aria-hidden="true"
@@ -136,7 +159,11 @@ export function KpiCard({
 
 				<div className="mt-2 flex flex-wrap items-center gap-1.5">
 					{evolution !== undefined && (
-						<KpiEvolution evolution={evolution} comparisonLabel={comparisonLabel} />
+						<KpiEvolution
+							evolution={evolution}
+							comparisonLabel={comparisonLabel}
+							invertColors={invertEvolutionColors}
+						/>
 					)}
 					{badge && (
 						<Badge variant={badge.variant ?? "default"} className="text-xs font-normal">

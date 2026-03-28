@@ -13,8 +13,22 @@ import {
 describe("buildRevenueMap", () => {
 	it("should convert SQL rows to Maps of date -> number for revenue and orders", () => {
 		const rows = [
-			{ date: "2026-01-15", revenue: BigInt(150000), orders: BigInt(3) },
-			{ date: "2026-01-16", revenue: BigInt(230000), orders: BigInt(5) },
+			{
+				date: "2026-01-15",
+				revenue: BigInt(150000),
+				orders: BigInt(3),
+				subtotal: BigInt(0),
+				discounts: BigInt(0),
+				shipping: BigInt(0),
+			},
+			{
+				date: "2026-01-16",
+				revenue: BigInt(230000),
+				orders: BigInt(5),
+				subtotal: BigInt(0),
+				discounts: BigInt(0),
+				shipping: BigInt(0),
+			},
 		];
 
 		const { revenueMap, ordersMap } = buildRevenueMap(rows);
@@ -27,7 +41,16 @@ describe("buildRevenueMap", () => {
 	});
 
 	it("should handle bigint zero", () => {
-		const rows = [{ date: "2026-01-01", revenue: BigInt(0), orders: BigInt(0) }];
+		const rows = [
+			{
+				date: "2026-01-01",
+				revenue: BigInt(0),
+				orders: BigInt(0),
+				subtotal: BigInt(0),
+				discounts: BigInt(0),
+				shipping: BigInt(0),
+			},
+		];
 
 		const { revenueMap, ordersMap } = buildRevenueMap(rows);
 
@@ -36,7 +59,16 @@ describe("buildRevenueMap", () => {
 	});
 
 	it("should handle large bigint values", () => {
-		const rows = [{ date: "2026-01-01", revenue: BigInt(9_999_999_999), orders: BigInt(100) }];
+		const rows = [
+			{
+				date: "2026-01-01",
+				revenue: BigInt(9_999_999_999),
+				orders: BigInt(100),
+				subtotal: BigInt(0),
+				discounts: BigInt(0),
+				shipping: BigInt(0),
+			},
+		];
 
 		const { revenueMap } = buildRevenueMap(rows);
 
@@ -52,8 +84,22 @@ describe("buildRevenueMap", () => {
 
 	it("should overwrite duplicate dates with the last value", () => {
 		const rows = [
-			{ date: "2026-01-01", revenue: BigInt(100), orders: BigInt(1) },
-			{ date: "2026-01-01", revenue: BigInt(200), orders: BigInt(2) },
+			{
+				date: "2026-01-01",
+				revenue: BigInt(100),
+				orders: BigInt(1),
+				subtotal: BigInt(0),
+				discounts: BigInt(0),
+				shipping: BigInt(0),
+			},
+			{
+				date: "2026-01-01",
+				revenue: BigInt(200),
+				orders: BigInt(2),
+				subtotal: BigInt(0),
+				discounts: BigInt(0),
+				shipping: BigInt(0),
+			},
 		];
 
 		const { revenueMap, ordersMap } = buildRevenueMap(rows);
@@ -74,7 +120,17 @@ describe("fillMissingDates", () => {
 		const ordersMap = new Map<string, number>();
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, ordersMap, start, 5);
+		const result = fillMissingDates(
+			{
+				revenueMap,
+				ordersMap,
+				subtotalMap: new Map(),
+				discountsMap: new Map(),
+				shippingMap: new Map(),
+			},
+			start,
+			5,
+		);
 
 		expect(result).toHaveLength(5);
 		expect(result.map((d) => d.date)).toEqual([
@@ -91,12 +147,22 @@ describe("fillMissingDates", () => {
 		const ordersMap = new Map([["2026-01-02", 2]]);
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, ordersMap, start, 3);
+		const result = fillMissingDates(
+			{
+				revenueMap,
+				ordersMap,
+				subtotalMap: new Map(),
+				discountsMap: new Map(),
+				shippingMap: new Map(),
+			},
+			start,
+			3,
+		);
 
 		expect(result).toEqual([
-			{ date: "2026-01-01", revenue: 0, orders: 0 },
-			{ date: "2026-01-02", revenue: 5000, orders: 2 },
-			{ date: "2026-01-03", revenue: 0, orders: 0 },
+			{ date: "2026-01-01", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "2026-01-02", revenue: 5000, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "2026-01-03", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
 		]);
 	});
 
@@ -105,7 +171,17 @@ describe("fillMissingDates", () => {
 		const ordersMap = new Map<string, number>();
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, ordersMap, start, 0);
+		const result = fillMissingDates(
+			{
+				revenueMap,
+				ordersMap,
+				subtotalMap: new Map(),
+				discountsMap: new Map(),
+				shippingMap: new Map(),
+			},
+			start,
+			0,
+		);
 
 		expect(result).toEqual([]);
 	});
@@ -115,7 +191,17 @@ describe("fillMissingDates", () => {
 		const ordersMap = new Map<string, number>();
 		const start = new Date(Date.UTC(2026, 0, 30));
 
-		const result = fillMissingDates(revenueMap, ordersMap, start, 4);
+		const result = fillMissingDates(
+			{
+				revenueMap,
+				ordersMap,
+				subtotalMap: new Map(),
+				discountsMap: new Map(),
+				shippingMap: new Map(),
+			},
+			start,
+			4,
+		);
 
 		expect(result.map((d) => d.date)).toEqual([
 			"2026-01-30",
@@ -130,7 +216,17 @@ describe("fillMissingDates", () => {
 		const ordersMap = new Map<string, number>();
 		const start = new Date(Date.UTC(2025, 11, 30));
 
-		const result = fillMissingDates(revenueMap, ordersMap, start, 4);
+		const result = fillMissingDates(
+			{
+				revenueMap,
+				ordersMap,
+				subtotalMap: new Map(),
+				discountsMap: new Map(),
+				shippingMap: new Map(),
+			},
+			start,
+			4,
+		);
 
 		expect(result.map((d) => d.date)).toEqual([
 			"2025-12-30",
@@ -151,12 +247,22 @@ describe("fillMissingDates", () => {
 		]);
 		const start = new Date(Date.UTC(2026, 0, 1));
 
-		const result = fillMissingDates(revenueMap, ordersMap, start, 3);
+		const result = fillMissingDates(
+			{
+				revenueMap,
+				ordersMap,
+				subtotalMap: new Map(),
+				discountsMap: new Map(),
+				shippingMap: new Map(),
+			},
+			start,
+			3,
+		);
 
 		expect(result).toEqual([
-			{ date: "2026-01-01", revenue: 10000, orders: 3 },
-			{ date: "2026-01-02", revenue: 0, orders: 0 },
-			{ date: "2026-01-03", revenue: 25000, orders: 7 },
+			{ date: "2026-01-01", revenue: 10000, orders: 3, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "2026-01-02", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "2026-01-03", revenue: 25000, orders: 7, subtotal: 0, discounts: 0, shipping: 0 },
 		]);
 	});
 });
@@ -168,8 +274,8 @@ describe("fillMissingDates", () => {
 describe("formatChartData", () => {
 	it("should format ISO dates to French day+month labels", () => {
 		const data = [
-			{ date: "2026-01-15", revenue: 1000, orders: 2 },
-			{ date: "2026-02-03", revenue: 2000, orders: 4 },
+			{ date: "2026-01-15", revenue: 1000, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "2026-02-03", revenue: 2000, orders: 4, subtotal: 0, discounts: 0, shipping: 0 },
 		];
 
 		const result = formatChartData(data);
@@ -180,8 +286,8 @@ describe("formatChartData", () => {
 
 	it("should preserve revenue and orders values", () => {
 		const data = [
-			{ date: "2026-01-01", revenue: 5000, orders: 3 },
-			{ date: "2026-01-02", revenue: 0, orders: 0 },
+			{ date: "2026-01-01", revenue: 5000, orders: 3, subtotal: 0, discounts: 0, shipping: 0 },
+			{ date: "2026-01-02", revenue: 0, orders: 0, subtotal: 0, discounts: 0, shipping: 0 },
 		];
 
 		const result = formatChartData(data);

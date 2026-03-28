@@ -21,7 +21,8 @@ import Link from "next/link";
 import {
 	ORDER_STATUS_LABELS,
 	ORDER_STATUS_VARIANTS,
-	PAYMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_VARIANTS,
 } from "../constants/order-status.constants";
 import { CHART_STYLES } from "../constants/chart-styles";
 
@@ -56,10 +57,10 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 										{ORDER_STATUS_LABELS[order.status]}
 									</Badge>
 									<Badge
-										variant={order.paymentStatus === "PAID" ? "default" : "outline"}
+										variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
 										className="text-xs"
 									>
-										{PAYMENT_STATUS_LABELS[order.paymentStatus]}
+										{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 									</Badge>
 								</div>
 								<p

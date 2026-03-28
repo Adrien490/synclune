@@ -10,6 +10,7 @@ export const GET_DASHBOARD_RECENT_ORDERS_SELECT = {
 	createdAt: true,
 	status: true,
 	paymentStatus: true,
+	fulfillmentStatus: true,
 	total: true,
 	user: {
 		select: {

@@ -37,7 +37,10 @@ export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartRetur
 		SELECT
 			TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
 			COALESCE(SUM(total), 0) as revenue,
-			COUNT(*) as orders
+			COUNT(*) as orders,
+			COALESCE(SUM(subtotal), 0) as subtotal,
+			COALESCE(SUM("discountAmount"), 0) as discounts,
+			COALESCE(SUM("shippingCost"), 0) as shipping
 		FROM "Order"
 		WHERE "paidAt" >= ${thirtyDaysAgo}
 			AND "paymentStatus"::text = ${PaymentStatus.PAID}
@@ -47,8 +50,8 @@ export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartRetur
 	`;
 
 	// Transformer les résultats en série temporelle continue avec labels FR
-	const { revenueMap, ordersMap } = buildRevenueMap(revenueRows);
-	const rawData = fillMissingDates(revenueMap, ordersMap, thirtyDaysAgo, 30);
+	const maps = buildRevenueMap(revenueRows);
+	const rawData = fillMissingDates(maps, thirtyDaysAgo, 30);
 	const data = formatChartData(rawData);
 
 	return { data };

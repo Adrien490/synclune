@@ -120,6 +120,20 @@ vi.mock("../../constants/order-status.constants", () => ({
 		REFUNDED: "Remboursée",
 		PARTIALLY_REFUNDED: "Part. remboursée",
 	},
+	FULFILLMENT_STATUS_LABELS: {
+		UNFULFILLED: "A preparer",
+		PROCESSING: "En preparation",
+		SHIPPED: "Expediee",
+		DELIVERED: "Livree",
+		RETURNED: "Retournee",
+	},
+	FULFILLMENT_STATUS_VARIANTS: {
+		UNFULFILLED: "warning",
+		PROCESSING: "default",
+		SHIPPED: "secondary",
+		DELIVERED: "success",
+		RETURNED: "destructive",
+	},
 }));
 
 vi.mock("../../constants/chart-styles", () => ({
@@ -144,6 +158,7 @@ function createOrder(overrides: Partial<RecentOrderItem> = {}): RecentOrderItem 
 		createdAt: new Date("2026-02-15T14:30:00Z"),
 		status: "PROCESSING" as RecentOrderItem["status"],
 		paymentStatus: "PAID" as RecentOrderItem["paymentStatus"],
+		fulfillmentStatus: "UNFULFILLED" as RecentOrderItem["fulfillmentStatus"],
 		total: 8500,
 		customerName: "Marie Dupont",
 		customerEmail: "marie@example.com",
@@ -191,16 +206,20 @@ describe("RecentOrdersList", () => {
 		expect(screen.getByText("Livrée")).toBeInTheDocument();
 	});
 
-	it("renders payment status badge", () => {
+	it("renders fulfillment status badge", () => {
 		render(
 			<RecentOrdersList
 				listData={{
-					orders: [createOrder({ paymentStatus: "PAID" as RecentOrderItem["paymentStatus"] })],
+					orders: [
+						createOrder({
+							fulfillmentStatus: "UNFULFILLED" as RecentOrderItem["fulfillmentStatus"],
+						}),
+					],
 				}}
 			/>,
 		);
 
-		expect(screen.getByText("Payée")).toBeInTheDocument();
+		expect(screen.getByText("A preparer")).toBeInTheDocument();
 	});
 
 	it("links each order to its detail page", () => {
@@ -297,37 +316,44 @@ describe("RecentOrdersList", () => {
 	});
 
 	// -------------------------------------------------------------------------
-	// Payment status badge variant
+	// Fulfillment status badge variant
 	// -------------------------------------------------------------------------
 
-	describe("payment badge variant", () => {
-		it("uses default variant for PAID status", () => {
+	describe("fulfillment badge variant", () => {
+		it("uses warning variant for UNFULFILLED status", () => {
 			render(
 				<RecentOrdersList
 					listData={{
-						orders: [createOrder({ paymentStatus: "PAID" as RecentOrderItem["paymentStatus"] })],
+						orders: [
+							createOrder({
+								fulfillmentStatus: "UNFULFILLED" as RecentOrderItem["fulfillmentStatus"],
+							}),
+						],
 					}}
 				/>,
 			);
 
 			const badges = screen.getAllByTestId("badge");
-			const paymentBadge = badges.find((b) => b.textContent === "Payée");
-			expect(paymentBadge).toHaveAttribute("data-variant", "default");
+			const fulfillmentBadge = badges.find((b) => b.textContent === "A preparer");
+			expect(fulfillmentBadge).toHaveAttribute("data-variant", "warning");
 		});
 
-		it("uses outline variant for non-PAID status", () => {
+		it("uses success variant for DELIVERED status", () => {
 			render(
 				<RecentOrdersList
 					listData={{
-						orders: [createOrder({ paymentStatus: "PENDING" as RecentOrderItem["paymentStatus"] })],
+						orders: [
+							createOrder({
+								fulfillmentStatus: "DELIVERED" as RecentOrderItem["fulfillmentStatus"],
+							}),
+						],
 					}}
 				/>,
 			);
 
 			const badges = screen.getAllByTestId("badge");
-			// The second badge (payment) should be outline for non-PAID
-			const paymentBadges = badges.filter((b) => b.className.includes("text-xs"));
-			expect(paymentBadges[0]).toHaveAttribute("data-variant", "outline");
+			const fulfillmentBadge = badges.find((b) => b.textContent === "Livree");
+			expect(fulfillmentBadge).toHaveAttribute("data-variant", "success");
 		});
 	});
 });

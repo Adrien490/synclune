@@ -1,4 +1,9 @@
-import { DisputeStatus, ProductStatus, RefundStatus } from "@/app/generated/prisma/client";
+import {
+	CustomizationRequestStatus,
+	DisputeStatus,
+	ProductStatus,
+	RefundStatus,
+} from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
@@ -18,7 +23,7 @@ export async function fetchDashboardAlerts(): Promise<DashboardAlerts> {
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.ALERTS);
 
-	const [pendingRefunds, activeDisputes, lowStockSkus] = await Promise.all([
+	const [pendingRefunds, activeDisputes, lowStockSkus, pendingCustomizations] = await Promise.all([
 		prisma.refund.count({
 			where: { status: RefundStatus.PENDING },
 		}),
@@ -39,7 +44,13 @@ export async function fetchDashboardAlerts(): Promise<DashboardAlerts> {
 				},
 			},
 		}),
+		prisma.customizationRequest.count({
+			where: {
+				status: CustomizationRequestStatus.PENDING,
+				deletedAt: null,
+			},
+		}),
 	]);
 
-	return { pendingRefunds, activeDisputes, lowStockSkus };
+	return { pendingRefunds, activeDisputes, lowStockSkus, pendingCustomizations };
 }

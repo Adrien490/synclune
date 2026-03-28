@@ -1,4 +1,4 @@
-import type { OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import type { FulfillmentStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================================================
@@ -32,4 +32,24 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	EXPIRED: "Expirée",
 	REFUNDED: "Remboursée",
 	PARTIALLY_REFUNDED: "Part. remboursée",
+};
+
+// ============================================================================
+// FULFILLMENT STATUS
+// ============================================================================
+
+export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
+	UNFULFILLED: "A preparer",
+	PROCESSING: "En preparation",
+	SHIPPED: "Expediee",
+	DELIVERED: "Livree",
+	RETURNED: "Retournee",
+};
+
+export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant> = {
+	UNFULFILLED: "warning",
+	PROCESSING: "default",
+	SHIPPED: "secondary",
+	DELIVERED: "success",
+	RETURNED: "destructive",
 };

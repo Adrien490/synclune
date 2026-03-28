@@ -1,10 +1,19 @@
-import { Euro, Package, Receipt, ShoppingBag, Target } from "lucide-react";
+import { Clock, Euro, Mail, Package, Receipt, ShoppingBag, Star, Target } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
+import type { KpiSparklines } from "@/modules/dashboard/data/get-kpi-sparklines";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { KpiCard } from "./kpi-card";
 
+function formatFulfillmentTime(hours: number): string {
+	if (hours <= 0) return "—";
+	if (hours < 24) return `${Math.round(hours)} h`;
+	const days = hours / 24;
+	return `${days.toFixed(1)} j`;
+}
+
 interface DashboardKpisProps {
 	kpis: GetKpisReturn;
+	sparklines?: KpiSparklines;
 }
 
 /**
@@ -12,7 +21,7 @@ interface DashboardKpisProps {
  * Row 1: CA net, Commandes, Panier moyen, A expedier
  * Row 2: Taux de conversion
  */
-export function DashboardKpis({ kpis }: DashboardKpisProps) {
+export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
 	const hasDiscounts = kpis.discountImpact.amount > 0;
 
@@ -47,6 +56,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 					href="/admin/ventes/commandes?paymentStatus=PAID"
 					tooltip="Chiffre d'affaires net (apres remboursements) des commandes payees ce mois"
 					subtitle={revenueSubtitle}
+					sparklinePath={sparklines?.revenuePath}
 					badge={
 						hasRefunds
 							? {
@@ -69,6 +79,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 					priority="critical"
 					href="/admin/ventes/commandes"
 					tooltip="Nombre de commandes payees ce mois"
+					sparklinePath={sparklines?.ordersPath}
 				/>
 
 				{/* Panier moyen */}
@@ -83,6 +94,7 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 					size="featured"
 					priority="operational"
 					tooltip="Valeur moyenne des commandes ce mois"
+					sparklinePath={sparklines?.aovPath}
 				/>
 
 				{/* A expedier */}
@@ -99,8 +111,8 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 				/>
 			</div>
 
-			{/* Row 2: Compact operational KPI */}
-			<div className="grid gap-4 sm:grid-cols-3">
+			{/* Row 2: Compact operational KPIs */}
+			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				<KpiCard
 					title="Taux de conversion"
 					value={`${kpis.conversionRate.rate.toFixed(1)} %`}
@@ -118,6 +130,59 @@ export function DashboardKpis({ kpis }: DashboardKpisProps) {
 							? `${kpis.conversionRate.abandoned} checkout${kpis.conversionRate.abandoned > 1 ? "s" : ""} abandonne${kpis.conversionRate.abandoned > 1 ? "s" : ""}`
 							: undefined
 					}
+				/>
+
+				<KpiCard
+					title="Note moyenne"
+					value={
+						kpis.reviewHealth.totalReviews > 0
+							? `${kpis.reviewHealth.averageRating.toFixed(1)} / 5`
+							: "—"
+					}
+					numericValue={kpis.reviewHealth.averageRating}
+					icon={<Star className="h-4 w-4" />}
+					size="compact"
+					priority="info"
+					href="/admin/marketing/avis"
+					tooltip="Note moyenne des avis clients publies"
+					subtitle={
+						kpis.reviewHealth.totalReviews > 0
+							? `${kpis.reviewHealth.totalReviews} avis`
+							: "Aucun avis"
+					}
+				/>
+
+				<KpiCard
+					title="Abonnes newsletter"
+					value={kpis.newsletterGrowth.totalActive.toString()}
+					numericValue={kpis.newsletterGrowth.totalActive}
+					evolution={kpis.newsletterGrowth.evolution}
+					comparisonLabel="vs mois dernier"
+					icon={<Mail className="h-4 w-4" />}
+					size="compact"
+					priority="info"
+					href="/admin/marketing/newsletter"
+					tooltip="Nombre d'abonnes newsletter confirmes"
+					subtitle={
+						kpis.newsletterGrowth.newThisMonth > 0
+							? `+${kpis.newsletterGrowth.newThisMonth} ce mois`
+							: undefined
+					}
+				/>
+
+				<KpiCard
+					title="Delai d'expedition"
+					value={formatFulfillmentTime(kpis.avgFulfillmentTime.hours)}
+					numericValue={kpis.avgFulfillmentTime.hours}
+					evolution={
+						kpis.avgFulfillmentTime.hours > 0 ? kpis.avgFulfillmentTime.evolution : undefined
+					}
+					invertEvolutionColors
+					comparisonLabel="vs mois dernier"
+					icon={<Clock className="h-4 w-4" />}
+					size="compact"
+					priority="operational"
+					tooltip="Delai moyen entre le paiement et l'expedition"
 				/>
 			</div>
 		</div>

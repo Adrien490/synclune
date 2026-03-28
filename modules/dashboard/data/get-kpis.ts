@@ -1,4 +1,9 @@
-import { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
+import {
+	FulfillmentStatus,
+	NewsletterStatus,
+	PaymentStatus,
+	RefundStatus,
+} from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
@@ -51,6 +56,12 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 		pendingShipmentCount,
 		currentRefunds,
 		lastRefunds,
+		reviewStats,
+		newsletterActive,
+		newsletterCurrentMonth,
+		newsletterLastMonth,
+		currentFulfillmentTime,
+		lastFulfillmentTime,
 	] = await Promise.all([
 		// Revenue + paid orders (current month)
 		prisma.order.aggregate({
@@ -111,6 +122,50 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 			_sum: { amount: true },
 			_count: true,
 		}),
+		// Review stats (aggregated across all products)
+		prisma.productReviewStats.aggregate({
+			_avg: { averageRating: true },
+			_sum: { totalCount: true },
+		}),
+		// Newsletter: total active subscribers
+		prisma.newsletterSubscriber.count({
+			where: { status: NewsletterStatus.CONFIRMED, deletedAt: null },
+		}),
+		// Newsletter: new confirmed this month
+		prisma.newsletterSubscriber.count({
+			where: {
+				status: NewsletterStatus.CONFIRMED,
+				confirmedAt: { gte: currentMonthStart },
+				deletedAt: null,
+			},
+		}),
+		// Newsletter: new confirmed last month
+		prisma.newsletterSubscriber.count({
+			where: {
+				status: NewsletterStatus.CONFIRMED,
+				confirmedAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				deletedAt: null,
+			},
+		}),
+		// Average fulfillment time (current month) - hours from paidAt to shippedAt
+		prisma.$queryRaw<[{ avg_hours: number | null }]>`
+			SELECT AVG(EXTRACT(EPOCH FROM ("shippedAt" - "paidAt")) / 3600) as avg_hours
+			FROM "Order"
+			WHERE "shippedAt" IS NOT NULL
+				AND "paidAt" >= ${currentMonthStart}
+				AND "paymentStatus" = 'PAID'
+				AND "deletedAt" IS NULL
+		`,
+		// Average fulfillment time (last month)
+		prisma.$queryRaw<[{ avg_hours: number | null }]>`
+			SELECT AVG(EXTRACT(EPOCH FROM ("shippedAt" - "paidAt")) / 3600) as avg_hours
+			FROM "Order"
+			WHERE "shippedAt" IS NOT NULL
+				AND "paidAt" >= ${lastMonthStart}
+				AND "paidAt" <= ${lastMonthEnd}
+				AND "paymentStatus" = 'PAID'
+				AND "deletedAt" IS NULL
+		`,
 	]);
 
 	// Revenue
@@ -139,6 +194,14 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 	const currentDiscount = currentMonth._sum.discountAmount ?? 0;
 	const lastDiscount = lastMonth._sum.discountAmount ?? 0;
 
+	// Review health
+	const avgRating = Number(reviewStats._avg.averageRating ?? 0);
+	const totalReviews = reviewStats._sum.totalCount ?? 0;
+
+	// Fulfillment time
+	const currentHours = Number(currentFulfillmentTime[0].avg_hours ?? 0);
+	const lastHours = Number(lastFulfillmentTime[0].avg_hours ?? 0);
+
 	return {
 		monthlyRevenue: {
 			amount: currentRevenue,
@@ -166,6 +229,19 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 		discountImpact: {
 			amount: currentDiscount,
 			evolution: computeEvolution(currentDiscount, lastDiscount),
+		},
+		reviewHealth: {
+			averageRating: avgRating,
+			totalReviews: totalReviews,
+		},
+		newsletterGrowth: {
+			totalActive: newsletterActive,
+			newThisMonth: newsletterCurrentMonth,
+			evolution: computeEvolution(newsletterCurrentMonth, newsletterLastMonth),
+		},
+		avgFulfillmentTime: {
+			hours: currentHours,
+			evolution: computeEvolution(currentHours, lastHours),
 		},
 	};
 }

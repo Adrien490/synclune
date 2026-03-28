@@ -1477,3 +1477,15 @@ export const ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT: RateLimitConfig = {
 export const ADMIN_STORE_SETTINGS_LIMITS = {
 	TOGGLE_CLOSURE: ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT,
 } as const;
+
+/**
+ * Limite pour le rafraichissement du cache dashboard (admin)
+ */
+export const ADMIN_DASHBOARD_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
+export const ADMIN_DASHBOARD_LIMITS = {
+	REFRESH: ADMIN_DASHBOARD_REFRESH_LIMIT,
+} as const;

@@ -8,11 +8,17 @@ const {
 	mockPrismaOrderAggregate,
 	mockPrismaOrderCount,
 	mockPrismaRefundAggregate,
+	mockPrismaReviewStatsAggregate,
+	mockPrismaNewsletterCount,
+	mockPrismaQueryRaw,
 	mockCacheDefault,
 } = vi.hoisted(() => ({
 	mockPrismaOrderAggregate: vi.fn(),
 	mockPrismaOrderCount: vi.fn(),
 	mockPrismaRefundAggregate: vi.fn(),
+	mockPrismaReviewStatsAggregate: vi.fn(),
+	mockPrismaNewsletterCount: vi.fn(),
+	mockPrismaQueryRaw: vi.fn(),
 	mockCacheDefault: vi.fn(),
 }));
 
@@ -25,6 +31,13 @@ vi.mock("@/shared/lib/prisma", () => ({
 		refund: {
 			aggregate: mockPrismaRefundAggregate,
 		},
+		productReviewStats: {
+			aggregate: mockPrismaReviewStatsAggregate,
+		},
+		newsletterSubscriber: {
+			count: mockPrismaNewsletterCount,
+		},
+		$queryRaw: mockPrismaQueryRaw,
 	},
 	notDeleted: { deletedAt: null },
 }));
@@ -70,6 +83,11 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
+	NewsletterStatus: {
+		PENDING: "PENDING",
+		CONFIRMED: "CONFIRMED",
+		UNSUBSCRIBED: "UNSUBSCRIBED",
+	},
 }));
 
 import { fetchDashboardKpis } from "../get-kpis";
@@ -87,7 +105,7 @@ function makeRefundAggregateResult(amount: number | null, count = 0) {
 }
 
 /**
- * Sets up all 7 mocks in the order they are called by Promise.all:
+ * Sets up all mocks in the order they are called by Promise.all:
  * 1. order.aggregate (current month - revenue)
  * 2. order.aggregate (last month - revenue)
  * 3. order.count (current month - total orders for conversion)
@@ -95,6 +113,12 @@ function makeRefundAggregateResult(amount: number | null, count = 0) {
  * 5. order.count (pending shipment)
  * 6. refund.aggregate (current month)
  * 7. refund.aggregate (last month)
+ * 8. productReviewStats.aggregate
+ * 9. newsletterSubscriber.count (total active)
+ * 10. newsletterSubscriber.count (current month)
+ * 11. newsletterSubscriber.count (last month)
+ * 12. $queryRaw (current month fulfillment time)
+ * 13. $queryRaw (last month fulfillment time)
  */
 function setupDefaultMocks({
 	currentTotal = 10000,
@@ -148,6 +172,13 @@ describe("fetchDashboardKpis", () => {
 		vi.resetAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-15T12:00:00Z"));
+		// Default mocks for review stats, newsletter, and fulfillment time (always needed)
+		mockPrismaReviewStatsAggregate.mockResolvedValue({
+			_avg: { averageRating: null },
+			_sum: { totalCount: 0 },
+		});
+		mockPrismaNewsletterCount.mockResolvedValue(0);
+		mockPrismaQueryRaw.mockResolvedValue([{ avg_hours: null }]);
 	});
 
 	afterEach(() => {

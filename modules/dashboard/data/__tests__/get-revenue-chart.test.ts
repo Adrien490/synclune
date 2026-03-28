@@ -197,20 +197,25 @@ describe("fetchDashboardRevenueChart", () => {
 	// Service interaction: fillMissingDates
 	// -------------------------------------------------------------------------
 
-	it("should pass the revenue and orders maps returned by buildRevenueMap to fillMissingDates", async () => {
-		const revenueMap = new Map([
-			["2026-01-20", 5000],
-			["2026-01-21", 3000],
-		]);
-		const ordersMap = new Map([
-			["2026-01-20", 2],
-			["2026-01-21", 1],
-		]);
-		mockBuildRevenueMap.mockReturnValue({ revenueMap, ordersMap });
+	it("should pass the maps returned by buildRevenueMap to fillMissingDates", async () => {
+		const maps = {
+			revenueMap: new Map([
+				["2026-01-20", 5000],
+				["2026-01-21", 3000],
+			]),
+			ordersMap: new Map([
+				["2026-01-20", 2],
+				["2026-01-21", 1],
+			]),
+			subtotalMap: new Map<string, number>(),
+			discountsMap: new Map<string, number>(),
+			shippingMap: new Map<string, number>(),
+		};
+		mockBuildRevenueMap.mockReturnValue(maps);
 
 		await fetchDashboardRevenueChart();
 
-		expect(mockFillMissingDates).toHaveBeenCalledWith(revenueMap, ordersMap, expect.any(Date), 30);
+		expect(mockFillMissingDates).toHaveBeenCalledWith(maps, expect.any(Date), 30);
 	});
 
 	it("should call fillMissingDates exactly once", async () => {
@@ -222,7 +227,7 @@ describe("fetchDashboardRevenueChart", () => {
 	it("should pass days=30 to fillMissingDates", async () => {
 		await fetchDashboardRevenueChart();
 
-		const [, , , days] = mockFillMissingDates.mock.calls[0] as [unknown, unknown, unknown, number];
+		const [, , days] = mockFillMissingDates.mock.calls[0] as [unknown, unknown, number];
 		expect(days).toBe(30);
 	});
 
@@ -235,7 +240,7 @@ describe("fetchDashboardRevenueChart", () => {
 		// thirtyDaysAgo = Date.UTC(2026, 1, 15 - 30) = Date.UTC(2026, 1, -15) = 2026-01-16T00:00:00Z
 		await fetchDashboardRevenueChart();
 
-		const [, , thirtyDaysAgo] = mockFillMissingDates.mock.calls[0] as [unknown, unknown, Date];
+		const [, thirtyDaysAgo] = mockFillMissingDates.mock.calls[0] as [unknown, Date];
 		const expected = new Date(Date.UTC(2026, 1, 15 - 30));
 		expect(thirtyDaysAgo.toISOString()).toBe(expected.toISOString());
 	});
@@ -243,14 +248,14 @@ describe("fetchDashboardRevenueChart", () => {
 	it("should pass a Date instance as the start date to fillMissingDates", async () => {
 		await fetchDashboardRevenueChart();
 
-		const [, , startDate] = mockFillMissingDates.mock.calls[0] as [unknown, unknown, Date];
+		const [, startDate] = mockFillMissingDates.mock.calls[0] as [unknown, Date];
 		expect(startDate).toBeInstanceOf(Date);
 	});
 
 	it("should use UTC midnight as the start of the 30-day window", async () => {
 		await fetchDashboardRevenueChart();
 
-		const [, , startDate] = mockFillMissingDates.mock.calls[0] as [unknown, unknown, Date];
+		const [, startDate] = mockFillMissingDates.mock.calls[0] as [unknown, Date];
 		// Should be start of UTC day, not mid-day
 		expect(startDate.getUTCHours()).toBe(0);
 		expect(startDate.getUTCMinutes()).toBe(0);

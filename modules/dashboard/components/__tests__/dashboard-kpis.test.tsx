@@ -17,6 +17,9 @@ vi.mock("lucide-react", () => ({
 	Receipt: () => <span data-testid="icon-receipt" />,
 	Package: () => <span data-testid="icon-package" />,
 	Target: () => <span data-testid="icon-target" />,
+	Star: () => <span data-testid="icon-star" />,
+	Mail: () => <span data-testid="icon-mail" />,
+	Clock: () => <span data-testid="icon-clock" />,
 }));
 
 const mockKpiCard = vi.fn();
@@ -52,6 +55,9 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 		conversionRate: { rate: 65.0, evolution: 2.1, abandoned: 8 },
 		pendingShipment: { count: 3 },
 		discountImpact: { amount: 150, evolution: 10.0 },
+		reviewHealth: { averageRating: 4.5, totalReviews: 10 },
+		newsletterGrowth: { totalActive: 100, newThisMonth: 5, evolution: 5.0 },
+		avgFulfillmentTime: { hours: 24, evolution: 0 },
 		...overrides,
 	};
 }
@@ -61,10 +67,10 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 // ============================================================================
 
 describe("DashboardKpis", () => {
-	it("renders 5 KPI cards (4 featured + 1 compact)", () => {
+	it("renders 8 KPI cards (4 featured + 4 compact)", () => {
 		render(<DashboardKpis kpis={makeKpis()} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(5);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
 	});
 
 	it("renders CA net du mois KPI with correct props", () => {
@@ -310,10 +316,13 @@ describe("DashboardKpis", () => {
 			conversionRate: { rate: 0, evolution: 0, abandoned: 0 },
 			pendingShipment: { count: 0 },
 			discountImpact: { amount: 0, evolution: 0 },
+			reviewHealth: { averageRating: 0, totalReviews: 0 },
+			newsletterGrowth: { totalActive: 0, newThisMonth: 0, evolution: 0 },
+			avgFulfillmentTime: { hours: 0, evolution: 0 },
 		};
 
 		render(<DashboardKpis kpis={kpis} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(5);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
 	});
 });

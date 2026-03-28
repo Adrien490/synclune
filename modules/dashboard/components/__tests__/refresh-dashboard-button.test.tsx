@@ -1,0 +1,136 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// ============================================================================
+// MOCKS
+// ============================================================================
+
+const mockRefresh = vi.fn();
+const mockUseRefreshDashboard = vi.hoisted(() =>
+	vi.fn(() => ({ refresh: mockRefresh, isPending: false })),
+);
+
+vi.mock("@/modules/dashboard/hooks/use-refresh-dashboard", () => ({
+	useRefreshDashboard: mockUseRefreshDashboard,
+}));
+
+vi.mock("@/shared/components/refresh-button", () => ({
+	RefreshButton: ({
+		onRefresh,
+		isPending,
+		label,
+		className,
+		variant,
+	}: {
+		onRefresh: () => void;
+		isPending: boolean;
+		label?: string;
+		className?: string;
+		variant?: string;
+	}) => (
+		<button
+			data-testid="refresh-button"
+			data-pending={isPending}
+			data-variant={variant}
+			className={className}
+			onClick={onRefresh}
+			aria-label={label}
+			disabled={isPending}
+		>
+			{label}
+		</button>
+	),
+}));
+
+import { RefreshDashboardButton } from "../refresh-dashboard-button";
+
+afterEach(() => {
+	cleanup();
+	vi.clearAllMocks();
+});
+
+// ============================================================================
+// TESTS
+// ============================================================================
+
+describe("RefreshDashboardButton", () => {
+	// -------------------------------------------------------------------------
+	// Rendering
+	// -------------------------------------------------------------------------
+
+	it("renders the refresh button", () => {
+		render(<RefreshDashboardButton />);
+
+		expect(screen.getByTestId("refresh-button")).toBeInTheDocument();
+	});
+
+	it("renders with label 'Rafraichir le tableau de bord'", () => {
+		render(<RefreshDashboardButton />);
+
+		expect(screen.getByText("Rafraichir le tableau de bord")).toBeInTheDocument();
+	});
+
+	it("renders with default outline variant", () => {
+		render(<RefreshDashboardButton />);
+
+		expect(screen.getByTestId("refresh-button")).toHaveAttribute("data-variant", "outline");
+	});
+
+	it("renders with custom variant when provided", () => {
+		render(<RefreshDashboardButton variant="ghost" />);
+
+		expect(screen.getByTestId("refresh-button")).toHaveAttribute("data-variant", "ghost");
+	});
+
+	it("passes className to refresh button", () => {
+		render(<RefreshDashboardButton className="my-custom-class" />);
+
+		expect(screen.getByTestId("refresh-button")).toHaveClass("my-custom-class");
+	});
+
+	// -------------------------------------------------------------------------
+	// Hook integration
+	// -------------------------------------------------------------------------
+
+	it("calls useRefreshDashboard hook", () => {
+		render(<RefreshDashboardButton />);
+
+		expect(mockUseRefreshDashboard).toHaveBeenCalled();
+	});
+
+	it("passes refresh function from hook to button", () => {
+		render(<RefreshDashboardButton />);
+
+		screen.getByTestId("refresh-button").click();
+
+		expect(mockRefresh).toHaveBeenCalledOnce();
+	});
+
+	// -------------------------------------------------------------------------
+	// Loading state
+	// -------------------------------------------------------------------------
+
+	it("is not disabled when isPending is false", () => {
+		mockUseRefreshDashboard.mockReturnValue({ refresh: mockRefresh, isPending: false });
+
+		render(<RefreshDashboardButton />);
+
+		expect(screen.getByTestId("refresh-button")).not.toBeDisabled();
+	});
+
+	it("is disabled when isPending is true", () => {
+		mockUseRefreshDashboard.mockReturnValue({ refresh: mockRefresh, isPending: true });
+
+		render(<RefreshDashboardButton />);
+
+		expect(screen.getByTestId("refresh-button")).toBeDisabled();
+	});
+
+	it("passes isPending=true to RefreshButton when hook returns pending state", () => {
+		mockUseRefreshDashboard.mockReturnValue({ refresh: mockRefresh, isPending: true });
+
+		render(<RefreshDashboardButton />);
+
+		expect(screen.getByTestId("refresh-button")).toHaveAttribute("data-pending", "true");
+	});
+});

@@ -5,20 +5,27 @@ import { CHART_STYLES } from "../constants/chart-styles";
 export interface KpiEvolutionProps {
 	evolution: number;
 	comparisonLabel?: string;
+	/** Invert color logic: negative = good (green), positive = bad (red). Useful for metrics like delivery time. */
+	invertColors?: boolean;
 }
 
 /**
  * Displays KPI evolution with arrow and percentage
  */
-export function KpiEvolution({ evolution, comparisonLabel }: KpiEvolutionProps) {
+export function KpiEvolution({
+	evolution,
+	comparisonLabel,
+	invertColors = false,
+}: KpiEvolutionProps) {
 	const isPositive = evolution >= 0;
+	const isGood = invertColors ? !isPositive : isPositive;
 
 	return (
 		<div className="flex items-center gap-1.5">
 			<div
 				className={cn(
 					"flex items-center text-xs font-medium",
-					isPositive ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative,
+					isGood ? CHART_STYLES.evolution.positive : CHART_STYLES.evolution.negative,
 				)}
 				aria-label={`${isPositive ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)} pourcent`}
 			>
