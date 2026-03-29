@@ -6,9 +6,7 @@ import {
 	EmptyMedia,
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
-import { Button } from "@/shared/components/ui/button";
 import { Filter, MessageSquare } from "lucide-react";
-import Link from "next/link";
 
 import type { ReviewPublic, ProductReviewStatistics, ReviewSortField } from "../types/review.types";
 import { ReviewCard } from "./review-card";
@@ -37,8 +35,6 @@ interface ReviewsListProps {
 	ratingFilter?: number;
 	/** Tri actif */
 	sortBy?: ReviewSortField;
-	/** Utilisateur authentifie (pour afficher le CTA d'avis) */
-	isAuthenticated?: boolean;
 }
 
 /**
@@ -54,7 +50,6 @@ export function ReviewsList({
 	hasMore,
 	ratingFilter,
 	sortBy,
-	isAuthenticated,
 }: ReviewsListProps) {
 	const isFiltered = ratingFilter !== undefined;
 
@@ -71,13 +66,6 @@ export function ReviewsList({
 				<EmptyContent>
 					<p className="text-muted-foreground text-sm">Soyez le premier à donner votre avis !</p>
 				</EmptyContent>
-				{isAuthenticated && (
-					<EmptyActions>
-						<Button variant="outline" asChild>
-							<Link href="/commandes">Donner mon avis</Link>
-						</Button>
-					</EmptyActions>
-				)}
 			</Empty>
 		);
 	}

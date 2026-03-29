@@ -134,28 +134,11 @@ describe("ReviewsList", () => {
 		expect(screen.getByText("Aucun avis pour le moment")).toBeInTheDocument();
 	});
 
-	it("shows CTA to login when not authenticated and no reviews", () => {
+	it("does not show 'Donner mon avis' CTA when no reviews", () => {
 		render(
-			<ReviewsList
-				initialReviews={[]}
-				stats={createStats({ totalCount: 0 })}
-				totalCount={0}
-				isAuthenticated={false}
-			/>,
+			<ReviewsList initialReviews={[]} stats={createStats({ totalCount: 0 })} totalCount={0} />,
 		);
 		expect(screen.queryByText("Donner mon avis")).toBeNull();
-	});
-
-	it("shows CTA 'Donner mon avis' when authenticated and no reviews", () => {
-		render(
-			<ReviewsList
-				initialReviews={[]}
-				stats={createStats({ totalCount: 0 })}
-				totalCount={0}
-				isAuthenticated={true}
-			/>,
-		);
-		expect(screen.getByText("Donner mon avis")).toBeInTheDocument();
 	});
 
 	it("renders filtered empty state when filter is active and no reviews match", () => {

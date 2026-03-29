@@ -1,5 +1,4 @@
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { getSession } from "@/modules/auth/lib/get-current-session";
 
 import { getReviews } from "../data/get-reviews";
 import { getProductReviewStats } from "../data/get-product-review-stats";
@@ -31,7 +30,7 @@ export async function ProductReviewsSection({
 }: ProductReviewsSectionProps) {
 	// Charger les avis (et stats seulement si pas déjà fournies en prop)
 	// Le filtre s'applique aux avis mais pas aux stats (pour garder la distribution complète)
-	const [reviewsData, stats, session] = await Promise.all([
+	const [reviewsData, stats] = await Promise.all([
 		getReviews({
 			productId,
 			perPage: 10,
@@ -39,7 +38,6 @@ export async function ProductReviewsSection({
 			sortBy,
 		}),
 		reviewStats ? Promise.resolve(reviewStats) : getProductReviewStats(productId),
-		getSession(),
 	]);
 	const reviews = reviewsData.reviews as ReviewPublic[];
 
@@ -73,7 +71,6 @@ export async function ProductReviewsSection({
 				totalCount={isFiltered ? filteredCount : reviewsData.totalCount}
 				ratingFilter={ratingFilter}
 				sortBy={sortBy}
-				isAuthenticated={!!session?.user}
 			/>
 		</section>
 	);
