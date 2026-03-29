@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -224,5 +225,72 @@ describe("CollectionsSelectionToolbar", () => {
 		mockSelectedItems.current = ["1", "2"];
 		render(<CollectionsSelectionToolbar collections={allPublicCollections} />);
 		expect(screen.queryByText("Publier")).not.toBeInTheDocument();
+	});
+
+	// ─── Mixed archived/non-archived ─────────────────────────────────────────
+
+	it("shows disabled message for mixed archived/non-archived selection", () => {
+		const mixedCollections = [
+			{ id: "1", name: "Col 1", status: "PUBLIC" as const, productsCount: 3 },
+			{ id: "2", name: "Col 2", status: "ARCHIVED" as const, productsCount: 0 },
+		];
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={mixedCollections} />);
+		expect(screen.getByText(/Selection mixte/)).toBeInTheDocument();
+	});
+
+	// ─── Mixed DRAFT/PUBLIC (non-archived) ────────────────────────────────────
+
+	it("shows both 'Publier' and 'Mettre en brouillon' for mixed DRAFT/PUBLIC", () => {
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={nonArchivedCollections} />);
+		expect(screen.getByText("Publier")).toBeInTheDocument();
+		expect(screen.getByText("Mettre en brouillon")).toBeInTheDocument();
+	});
+
+	// ─── Click interactions ───────────────────────────────────────────────────
+
+	it("clicking 'Archiver' opens archive dialog with correct data", async () => {
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={nonArchivedCollections} />);
+		await userEvent.click(screen.getByText("Archiver"));
+		expect(mockOpenAlertDialog).toHaveBeenCalledWith({
+			collectionIds: ["1", "2"],
+			targetStatus: "ARCHIVED",
+		});
+	});
+
+	it("clicking 'Restaurer' opens archive dialog with PUBLIC status", async () => {
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={archivedCollections} />);
+		await userEvent.click(screen.getByText("Restaurer"));
+		expect(mockOpenAlertDialog).toHaveBeenCalledWith({
+			collectionIds: ["1", "2"],
+			targetStatus: "PUBLIC",
+		});
+	});
+
+	it("clicking 'Supprimer' opens delete dialog with totalProductsCount", async () => {
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={archivedCollections} />);
+		await userEvent.click(screen.getByText("Supprimer"));
+		expect(mockOpenAlertDialog).toHaveBeenCalledWith({
+			collectionIds: ["1", "2"],
+			totalProductsCount: 2, // 2 + 0
+		});
+	});
+
+	it("clicking 'Publier' calls bulkChangeStatus with PUBLIC", async () => {
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={allDraftCollections} />);
+		await userEvent.click(screen.getByText("Publier"));
+		expect(mockBulkChangeStatus).toHaveBeenCalledWith(["1", "2"], "PUBLIC");
+	});
+
+	it("clicking 'Mettre en brouillon' calls bulkChangeStatus with DRAFT", async () => {
+		mockSelectedItems.current = ["1", "2"];
+		render(<CollectionsSelectionToolbar collections={allPublicCollections} />);
+		await userEvent.click(screen.getByText("Mettre en brouillon"));
+		expect(mockBulkChangeStatus).toHaveBeenCalledWith(["1", "2"], "DRAFT");
 	});
 });

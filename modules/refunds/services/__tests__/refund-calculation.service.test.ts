@@ -27,6 +27,7 @@ import {
 	calculateAlreadyRefunded,
 	calculateMaxRefundable,
 	calculateRefundAmount,
+	calculateDiscountRatio,
 	initializeRefundItems,
 	updateItemsRestock,
 	validateRefundQuantity,
@@ -134,6 +135,33 @@ describe("calculateMaxRefundable", () => {
 });
 
 // ============================================================================
+// calculateDiscountRatio
+// ============================================================================
+
+describe("calculateDiscountRatio", () => {
+	it("should return 0 when no discount", () => {
+		expect(calculateDiscountRatio(10000, 0)).toBe(0);
+	});
+
+	it("should return correct ratio for percentage discount", () => {
+		// 20% discount: 2000 / 10000 = 0.2
+		expect(calculateDiscountRatio(10000, 2000)).toBe(0.2);
+	});
+
+	it("should return 0 when subtotal is 0", () => {
+		expect(calculateDiscountRatio(0, 1000)).toBe(0);
+	});
+
+	it("should cap at 1 when discount exceeds subtotal", () => {
+		expect(calculateDiscountRatio(5000, 10000)).toBe(1);
+	});
+
+	it("should return 0 when subtotal is negative", () => {
+		expect(calculateDiscountRatio(-100, 50)).toBe(0);
+	});
+});
+
+// ============================================================================
 // calculateRefundAmount
 // ============================================================================
 
@@ -165,6 +193,57 @@ describe("calculateRefundAmount", () => {
 		const orderItems = [makeOrderItem({ id: "item-1", price: 5000 })];
 		const selected = [makeRefundItem({ orderItemId: "nonexistent", quantity: 1 })];
 		expect(calculateRefundAmount(selected, orderItems)).toBe(0);
+	});
+
+	it("should prorate discount when discount info is provided", () => {
+		// Item: 100€, 20% discount → refund should be 80€
+		const orderItems = [makeOrderItem({ id: "item-1", price: 10000 })];
+		const selected = [makeRefundItem({ orderItemId: "item-1", quantity: 1 })];
+		const result = calculateRefundAmount(selected, orderItems, {
+			subtotal: 10000,
+			discountAmount: 2000,
+		});
+		expect(result).toBe(8000);
+	});
+
+	it("should prorate discount across multiple items", () => {
+		// 2 items: 50€ + 30€ = 80€ subtotal, 20% discount (16€)
+		// Refund item-1 (1 × 50€ × 0.8 = 40€) + item-2 (1 × 30€ × 0.8 = 24€)
+		const orderItems = [
+			makeOrderItem({ id: "item-1", price: 5000 }),
+			makeOrderItem({ id: "item-2", price: 3000 }),
+		];
+		const selected = [
+			makeRefundItem({ orderItemId: "item-1", quantity: 1 }),
+			makeRefundItem({ orderItemId: "item-2", quantity: 1 }),
+		];
+		const result = calculateRefundAmount(selected, orderItems, {
+			subtotal: 8000,
+			discountAmount: 1600,
+		});
+		expect(result).toBe(6400); // 4000 + 2400
+	});
+
+	it("should not prorate when discount is 0", () => {
+		const orderItems = [makeOrderItem({ id: "item-1", price: 5000 })];
+		const selected = [makeRefundItem({ orderItemId: "item-1", quantity: 2 })];
+		const result = calculateRefundAmount(selected, orderItems, {
+			subtotal: 10000,
+			discountAmount: 0,
+		});
+		expect(result).toBe(10000);
+	});
+
+	it("should handle rounding correctly with odd discount ratios", () => {
+		// Item: 33.33€ (3333 cents), 10% discount → 2999.7 → rounds to 3000
+		const orderItems = [makeOrderItem({ id: "item-1", price: 3333 })];
+		const selected = [makeRefundItem({ orderItemId: "item-1", quantity: 1 })];
+		const result = calculateRefundAmount(selected, orderItems, {
+			subtotal: 3333,
+			discountAmount: 333,
+		});
+		// 3333 * (1 - 333/3333) = 3333 * 0.9000... = 2999.7 → Math.round = 3000
+		expect(result).toBe(3000);
 	});
 });
 

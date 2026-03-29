@@ -57,6 +57,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		useCreateRefundForm({
 			orderId: order.id,
 			orderItems: order.items,
+			subtotal: order.subtotal,
+			discountAmount: order.discountAmount,
 			onSuccess: () => {
 				router.push("/admin/ventes/remboursements");
 			},

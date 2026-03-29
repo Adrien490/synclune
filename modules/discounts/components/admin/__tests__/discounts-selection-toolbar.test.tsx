@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -169,5 +170,35 @@ describe("DiscountsSelectionToolbar", () => {
 		mockSelectedItems.value = ["d-1"];
 		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
 		expect(screen.getByText("Ouvrir le menu")).toBeInTheDocument();
+	});
+
+	// ─── Click interactions ───────────────────────────────────────────────────
+
+	it("clicking 'Activer' calls toggle with selected items and true", async () => {
+		mockSelectedItems.value = ["d-1", "d-2"];
+		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
+		await userEvent.click(screen.getByText("Activer"));
+		expect(mockToggle).toHaveBeenCalledWith(["d-1", "d-2"], true);
+	});
+
+	it("clicking 'Désactiver' calls toggle with selected items and false", async () => {
+		mockSelectedItems.value = ["d-1", "d-2"];
+		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
+		await userEvent.click(screen.getByText("Désactiver"));
+		expect(mockToggle).toHaveBeenCalledWith(["d-1", "d-2"], false);
+	});
+
+	it("clicking 'Supprimer' opens delete dialog", async () => {
+		mockSelectedItems.value = ["d-1"];
+		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
+		await userEvent.click(screen.getByText("Supprimer"));
+		expect(mockBulkDeleteDialog.open).toHaveBeenCalled();
+	});
+
+	it("'Supprimer' has destructive variant", () => {
+		mockSelectedItems.value = ["d-1"];
+		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
+		const deleteBtn = screen.getByText("Supprimer").closest("button");
+		expect(deleteBtn).toHaveAttribute("data-variant", "destructive");
 	});
 });

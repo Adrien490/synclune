@@ -110,4 +110,47 @@ test.describe("Admin - Remboursements (actions)", { tag: ["@regression"] }, () =
 			await expect(errorMessage.first()).toBeVisible({ timeout: TIMEOUTS.FEEDBACK });
 		}
 	});
+
+	test("le lien vers le détail de commande est accessible depuis une ligne", async ({ page }) => {
+		const table = page.locator("table");
+		const emptyState = page.getByText(/aucun remboursement/i);
+		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+
+		const tableVisible = await table.isVisible();
+		test.skip(!tableVisible, "Pas de remboursements dans la table");
+
+		// Row actions should include a link to the order
+		const actionsButton = table
+			.locator("tbody tr")
+			.first()
+			.getByRole("button", { name: /Actions/i });
+		await actionsButton.click();
+
+		const viewOrderItem = page.getByRole("menuitem", { name: /commande|voir/i });
+		const viewOrderVisible = await viewOrderItem.isVisible();
+		if (viewOrderVisible) {
+			await expect(viewOrderItem).toBeEnabled();
+		}
+	});
+
+	test("les filtres de statut fonctionnent", async ({ page }) => {
+		const table = page.locator("table");
+		const emptyState = page.getByText(/aucun remboursement/i);
+		await expect(table.or(emptyState)).toBeVisible({ timeout: TIMEOUTS.DATA_LOAD });
+
+		const tableVisible = await table.isVisible();
+		test.skip(!tableVisible, "Pas de remboursements dans la table");
+
+		// Look for sort/filter controls
+		const sortButton = page
+			.getByRole("button", { name: /Trier/i })
+			.or(page.getByRole("combobox", { name: /Trier/i }));
+		const hasSortButton = await sortButton.isVisible();
+		if (hasSortButton) {
+			await sortButton.click();
+			const sortOptions = page.getByRole("option").or(page.getByRole("menuitem"));
+			const optionCount = await sortOptions.count();
+			expect(optionCount).toBeGreaterThan(0);
+		}
+	});
 });

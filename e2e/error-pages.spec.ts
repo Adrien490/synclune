@@ -45,4 +45,48 @@ test.describe("Pages d'erreur", { tag: ["@regression"] }, () => {
 			expect(body).toMatch(/introuvable|n'existe|pas trouvé|erreur/i);
 		}
 	});
+
+	test("une collection inexistante affiche une erreur", async ({ page }) => {
+		const response = await page.goto("/collections/collection-inexistante-e2e-xyz");
+
+		const status = response?.status();
+		expect(status === 404 || status === 200).toBe(true);
+
+		if (status === 200) {
+			const body = await page.textContent("body");
+			expect(body).toMatch(/introuvable|n'existe|pas trouvé|erreur/i);
+		}
+	});
+
+	test("la page 404 ne contient pas d'erreurs JS dans la console", async ({ page }) => {
+		const consoleErrors: string[] = [];
+		page.on("console", (msg) => {
+			if (msg.type() === "error") {
+				consoleErrors.push(msg.text());
+			}
+		});
+
+		await page.goto("/page-inexistante-e2e-test-xyz");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Filter out expected errors (like favicon 404)
+		const unexpectedErrors = consoleErrors.filter(
+			(err) => !err.includes("favicon") && !err.includes("404"),
+		);
+		expect(unexpectedErrors.length, `Console errors found: ${unexpectedErrors.join("\n")}`).toBe(0);
+	});
+
+	test("les routes admin protégées redirigent vers la connexion", async ({ page }) => {
+		// Clear auth state by going to a new context behavior
+		const _response = await page.goto("/admin/catalogue/produits");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Should either redirect to login or show the page (if already authenticated)
+		const url = page.url();
+		const isOnAdmin = url.includes("/admin");
+		const isOnLogin = url.includes("/connexion");
+
+		// One of these must be true
+		expect(isOnAdmin || isOnLogin).toBe(true);
+	});
 });

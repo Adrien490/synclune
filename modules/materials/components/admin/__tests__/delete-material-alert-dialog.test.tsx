@@ -108,7 +108,7 @@ describe("DeleteMaterialAlertDialog", () => {
 	it("passes hiddenFields with id mapped to materialId", () => {
 		render(<DeleteMaterialAlertDialog />);
 		const hiddenFields = screen.getByTestId("hidden-fields");
-		const parsed = JSON.parse(hiddenFields.textContent ?? "[]");
+		const parsed = JSON.parse(hiddenFields.textContent!);
 		expect(parsed).toContainEqual({ name: "id", dataKey: "materialId" });
 	});
 

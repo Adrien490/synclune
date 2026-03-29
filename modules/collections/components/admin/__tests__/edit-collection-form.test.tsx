@@ -93,7 +93,7 @@ vi.mock("@/shared/components/forms", () => ({
 							)}
 							<input
 								data-testid={`input-${name}`}
-								defaultValue={(defaultValues[name] as string) ?? ""}
+								defaultValue={defaultValues[name] as string}
 								placeholder={placeholder}
 								disabled={disabled}
 							/>
@@ -112,7 +112,7 @@ vi.mock("@/shared/components/forms", () => ({
 							{label && <label>{label}</label>}
 							<textarea
 								data-testid={`textarea-${name}`}
-								defaultValue={(defaultValues[name] as string) ?? ""}
+								defaultValue={defaultValues[name] as string}
 								placeholder={placeholder}
 								disabled={disabled}
 							/>

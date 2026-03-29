@@ -1,17 +1,6 @@
 import { jsPDF } from "jspdf";
+import { getVendorLegalInfo } from "@/shared/lib/stripe";
 import type { GetOrderReturn } from "../types/order.types";
-
-const COMPANY = {
-	name: "Synclune",
-	legalName: "TADDEI LEANE",
-	address: "77 Boulevard du Tertre",
-	postalCode: "44100",
-	city: "Nantes",
-	country: "France",
-	siret: "839 183 027 00037",
-	tvaIntra: "FR35839183027",
-	email: "contact@synclune.fr",
-} as const;
 
 function formatEuroPdf(cents: number): string {
 	return new Intl.NumberFormat("fr-FR", {
@@ -34,6 +23,7 @@ function formatDatePdf(date: Date): string {
  * Returns the PDF as an ArrayBuffer
  */
 export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
+	const vendor = getVendorLegalInfo();
 	const doc = new jsPDF({ unit: "mm", format: "a4" });
 	const pageWidth = doc.internal.pageSize.getWidth();
 	const margin = 20;
@@ -43,21 +33,21 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	// Header - Company name
 	doc.setFontSize(22);
 	doc.setFont("helvetica", "bold");
-	doc.text(COMPANY.name, margin, y);
+	doc.text(vendor.company_trade_name, margin, y);
 	y += 8;
 
 	doc.setFontSize(9);
 	doc.setFont("helvetica", "normal");
 	doc.setTextColor(100, 100, 100);
-	doc.text(COMPANY.legalName, margin, y);
+	doc.text(vendor.company_legal_name, margin, y);
 	y += 4;
-	doc.text(`${COMPANY.address}, ${COMPANY.postalCode} ${COMPANY.city}`, margin, y);
+	doc.text(vendor.company_address, margin, y);
 	y += 4;
-	doc.text(`SIRET : ${COMPANY.siret}`, margin, y);
+	doc.text(`SIRET : ${vendor.company_siret}`, margin, y);
 	y += 4;
-	doc.text(`TVA intra. : ${COMPANY.tvaIntra}`, margin, y);
+	doc.text(`TVA intra. : ${vendor.company_vat}`, margin, y);
 	y += 4;
-	doc.text(COMPANY.email, margin, y);
+	doc.text(vendor.company_email, margin, y);
 
 	// Invoice title - right aligned
 	doc.setTextColor(0, 0, 0);
@@ -94,15 +84,25 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 
 	doc.setFont("helvetica", "normal");
 	doc.setFontSize(9);
-	doc.text(`${order.shippingFirstName} ${order.shippingLastName}`, margin, y);
+
+	// Use billing address when different from shipping (Art. 289 CGI)
+	const useBilling = order.billingSameAsShipping === false && order.billingFirstName != null;
+	const firstName = useBilling ? order.billingFirstName! : order.shippingFirstName;
+	const lastName = useBilling ? order.billingLastName! : order.shippingLastName;
+	const address1 = useBilling ? order.billingAddress1! : order.shippingAddress1;
+	const address2 = useBilling ? (order.billingAddress2 ?? null) : order.shippingAddress2;
+	const postalCode = useBilling ? order.billingPostalCode! : order.shippingPostalCode;
+	const city = useBilling ? order.billingCity! : order.shippingCity;
+
+	doc.text(`${firstName} ${lastName}`, margin, y);
 	y += 4;
-	doc.text(order.shippingAddress1, margin, y);
+	doc.text(address1, margin, y);
 	y += 4;
-	if (order.shippingAddress2) {
-		doc.text(order.shippingAddress2, margin, y);
+	if (address2) {
+		doc.text(address2, margin, y);
 		y += 4;
 	}
-	doc.text(`${order.shippingPostalCode} ${order.shippingCity}`, margin, y);
+	doc.text(`${postalCode} ${city}`, margin, y);
 	y += 4;
 	if (order.customerEmail) {
 		doc.text(order.customerEmail, margin, y);
@@ -156,7 +156,7 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	const totalsX = margin + contentWidth * 0.6;
 	doc.setFontSize(9);
 
-	doc.text("Sous-total HT", totalsX, y);
+	doc.text("Sous-total", totalsX, y);
 	doc.text(formatEuroPdf(order.subtotal), colX.total, y);
 	y += 5;
 
@@ -170,8 +170,8 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	doc.text(order.shippingCost === 0 ? "Offerts" : formatEuroPdf(order.shippingCost), colX.total, y);
 	y += 5;
 
-	doc.text("TVA", totalsX, y);
-	doc.text("0,00 €", colX.total, y);
+	doc.text("TVA (non applicable)", totalsX, y);
+	doc.text("—", colX.total, y);
 	y += 3;
 
 	doc.setDrawColor(0, 0, 0);
@@ -181,7 +181,7 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 
 	doc.setFont("helvetica", "bold");
 	doc.setFontSize(11);
-	doc.text("Total TTC", totalsX, y);
+	doc.text("Total", totalsX, y);
 	doc.text(formatEuroPdf(order.total), colX.total, y);
 	y += 12;
 
@@ -189,9 +189,9 @@ export function generateInvoicePdf(order: GetOrderReturn): ArrayBuffer {
 	doc.setFont("helvetica", "italic");
 	doc.setFontSize(7);
 	doc.setTextColor(120, 120, 120);
-	doc.text("TVA non applicable, art. 293 B du CGI", margin, y);
+	doc.text(vendor.vat_exemption, margin, y);
 	y += 3.5;
-	doc.text(`Entrepreneur individuel (micro-entreprise) — ${COMPANY.legalName}`, margin, y);
+	doc.text(`Entrepreneur individuel (micro-entreprise) — ${vendor.company_legal_name}`, margin, y);
 	y += 3.5;
 	doc.text(`Paiement reçu le ${formatDatePdf(order.paidAt ?? order.createdAt)}`, margin, y);
 

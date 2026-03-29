@@ -41,9 +41,9 @@ vi.mock("@/shared/components/ui/collapsible", () => ({
 		children: React.ReactNode;
 		onOpenChange?: (v: boolean) => void;
 	}) => (
-		<div data-testid="collapsible" data-open={open} onClick={() => onOpenChange?.(!open)}>
+		<button data-testid="collapsible" data-open={open} onClick={() => onOpenChange?.(!open)}>
 			{children}
-		</div>
+		</button>
 	),
 	CollapsibleTrigger: ({
 		children,

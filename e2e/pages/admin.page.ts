@@ -85,4 +85,34 @@ export class AdminPage {
 		await this.page.goto("/admin/ventes/remboursements");
 		await this.page.waitForLoadState("domcontentloaded");
 	}
+
+	async gotoVariants(productSlug: string) {
+		await this.page.goto(`/admin/catalogue/produits/${productSlug}/variantes`);
+		await this.page.waitForLoadState("domcontentloaded");
+	}
+
+	async gotoShopConfig() {
+		await this.page.goto("/admin/configuration/boutique");
+		await this.page.waitForLoadState("domcontentloaded");
+	}
+
+	async gotoAnnouncements() {
+		await this.page.goto("/admin/contenu/annonces");
+		await this.page.waitForLoadState("domcontentloaded");
+	}
+
+	async gotoFaq() {
+		await this.page.goto("/admin/contenu/faq");
+		await this.page.waitForLoadState("domcontentloaded");
+	}
+
+	async gotoProductTypes() {
+		await this.page.goto("/admin/catalogue/types-de-produits");
+		await this.page.waitForLoadState("domcontentloaded");
+	}
+
+	async gotoOrderDetail(orderId: string) {
+		await this.page.goto(`/admin/ventes/commandes/${orderId}`);
+		await this.page.waitForLoadState("domcontentloaded");
+	}
 }

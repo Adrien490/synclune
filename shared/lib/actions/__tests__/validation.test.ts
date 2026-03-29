@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { validateInput, validateFormData } from "../validation";
+import { validateInput, validateFormData, safeFormGet, safeFormGetJSON } from "../validation";
 import { ActionStatus } from "@/shared/types/server-action";
 
 const testSchema = z.object({
@@ -83,5 +83,62 @@ describe("validateFormData", () => {
 			testSchema,
 		);
 		expect("error" in result).toBe(true);
+	});
+});
+
+describe("safeFormGet", () => {
+	it("returns string value for existing key", () => {
+		const fd = new FormData();
+		fd.set("name", "Alice");
+		expect(safeFormGet(fd, "name")).toBe("Alice");
+	});
+
+	it("returns null for missing key", () => {
+		const fd = new FormData();
+		expect(safeFormGet(fd, "name")).toBeNull();
+	});
+
+	it("returns null for File value", () => {
+		const fd = new FormData();
+		fd.set("file", new File(["content"], "test.txt"));
+		expect(safeFormGet(fd, "file")).toBeNull();
+	});
+
+	it("returns empty string for empty value", () => {
+		const fd = new FormData();
+		fd.set("name", "");
+		expect(safeFormGet(fd, "name")).toBe("");
+	});
+});
+
+describe("safeFormGetJSON", () => {
+	it("parses valid JSON string", () => {
+		const fd = new FormData();
+		fd.set("ids", JSON.stringify(["a", "b"]));
+		expect(safeFormGetJSON<string[]>(fd, "ids")).toEqual(["a", "b"]);
+	});
+
+	it("returns null for missing key", () => {
+		const fd = new FormData();
+		expect(safeFormGetJSON(fd, "ids")).toBeNull();
+	});
+
+	it("returns null for invalid JSON", () => {
+		const fd = new FormData();
+		fd.set("ids", "not-json{");
+		expect(safeFormGetJSON(fd, "ids")).toBeNull();
+	});
+
+	it("returns null for empty string", () => {
+		const fd = new FormData();
+		fd.set("ids", "");
+		expect(safeFormGetJSON(fd, "ids")).toBeNull();
+	});
+
+	it("parses nested object", () => {
+		const fd = new FormData();
+		fd.set("data", JSON.stringify({ name: "test", nested: { a: 1 } }));
+		const result = safeFormGetJSON<{ name: string; nested: { a: number } }>(fd, "data");
+		expect(result?.nested.a).toBe(1);
 	});
 });

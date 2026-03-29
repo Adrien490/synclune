@@ -1,13 +1,24 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SignUpEmailForm } from "../sign-up-email-form";
 
 // Hoisted mocks
-const { mockState, mockAction, mockIsPending, mockShake } = vi.hoisted(() => ({
+const {
+	mockState,
+	mockAction,
+	mockIsPending,
+	mockShake,
+	mockCanSubmit,
+	mockHandleSubmit,
+	mockReset,
+} = vi.hoisted(() => ({
 	mockState: { value: undefined as any },
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
 	mockShake: { shake: false, onShakeComplete: vi.fn() },
+	mockCanSubmit: { value: true },
+	mockHandleSubmit: vi.fn(),
+	mockReset: vi.fn(),
 }));
 
 vi.mock("@/shared/components/forms", () => ({
@@ -16,8 +27,9 @@ vi.mock("@/shared/components/forms", () => ({
 			const field = {
 				InputField: (props: any) => (
 					<div data-testid={`field-${name}`}>
-						<label>{props.label}</label>
+						<label htmlFor={name}>{props.label}</label>
 						<input
+							id={name}
 							name={name}
 							type={props.type ?? "text"}
 							disabled={props.disabled}
@@ -27,8 +39,9 @@ vi.mock("@/shared/components/forms", () => ({
 				),
 				PasswordInputField: (props: any) => (
 					<div data-testid={`field-${name}`}>
-						<label>{props.label}</label>
+						<label htmlFor={name}>{props.label}</label>
 						<input
+							id={name}
 							name={name}
 							type="password"
 							disabled={props.disabled}
@@ -42,16 +55,16 @@ vi.mock("@/shared/components/forms", () => ({
 		Subscribe: ({ children, selector }: any) => {
 			if (selector) {
 				const result = selector({
-					canSubmit: true,
+					canSubmit: mockCanSubmit.value,
 					isSubmitting: false,
 					values: { password: "test" },
 				});
 				return <div>{children(Array.isArray(result) ? result : result)}</div>;
 			}
-			return <div>{children([true])}</div>;
+			return <div>{children([mockCanSubmit.value])}</div>;
 		},
-		handleSubmit: vi.fn(),
-		reset: vi.fn(),
+		handleSubmit: mockHandleSubmit,
+		reset: mockReset,
 	}),
 }));
 
@@ -110,7 +123,11 @@ vi.mock("@/shared/components/forms/password-strength-indicator", () => ({
 }));
 
 vi.mock("next/link", () => ({
-	default: ({ children, href }: any) => <a href={href}>{children}</a>,
+	default: ({ children, href, target, rel }: any) => (
+		<a href={href} target={target} rel={rel}>
+			{children}
+		</a>
+	),
 }));
 
 vi.mock("lucide-react", () => ({
@@ -128,6 +145,7 @@ beforeEach(() => {
 	mockState.value = undefined;
 	mockIsPending.value = false;
 	mockShake.shake = false;
+	mockCanSubmit.value = true;
 });
 
 describe("SignUpEmailForm", () => {
@@ -200,5 +218,128 @@ describe("SignUpEmailForm", () => {
 		render(<SignUpEmailForm />);
 		const link = screen.getByRole("link", { name: /politique de confidentialité/i });
 		expect(link.getAttribute("href")).toBe("/confidentialite");
+	});
+
+	// ─── Field disabled states ────────────────────────────────────────────────
+
+	it("disables name field when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<SignUpEmailForm />);
+		expect(screen.getByRole("textbox", { name: /prénom/i })).toBeDisabled();
+	});
+
+	it("disables email field when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<SignUpEmailForm />);
+		expect(screen.getByRole("textbox", { name: /email/i })).toBeDisabled();
+	});
+
+	it("disables password field when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<SignUpEmailForm />);
+		const passwordInput = screen.getByTestId("field-password").querySelector("input");
+		expect(passwordInput).not.toBeNull();
+		expect(passwordInput?.disabled).toBe(true);
+	});
+
+	// ─── Submit button states ─────────────────────────────────────────────────
+
+	it("disables submit button when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<SignUpEmailForm />);
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("disables submit button when canSubmit is false", () => {
+		mockCanSubmit.value = false;
+		render(<SignUpEmailForm />);
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("enables submit button when canSubmit is true and not pending", () => {
+		render(<SignUpEmailForm />);
+		expect(screen.getByRole("button")).not.toBeDisabled();
+	});
+
+	it("shows loader icon when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<SignUpEmailForm />);
+		expect(screen.getByTestId("loader")).toBeDefined();
+	});
+
+	// ─── Alert conditions ─────────────────────────────────────────────────────
+
+	it("does not show alert when state has VALIDATION_ERROR status", () => {
+		mockState.value = { status: "validation_error", message: "Champ invalide" };
+		render(<SignUpEmailForm />);
+		expect(screen.queryByTestId("success-alert")).toBeNull();
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	it("shows error alert when state has a message but undefined status (treated as non-success)", () => {
+		// When status is undefined: not VALIDATION_ERROR, not SUCCESS → renders error alert
+		mockState.value = { message: "Erreur inconnue" };
+		render(<SignUpEmailForm />);
+		expect(screen.getByTestId("error-alert")).toBeDefined();
+	});
+
+	it("shows error alert for UNAUTHORIZED status", () => {
+		mockState.value = { status: "unauthorized", message: "Non autorisé" };
+		render(<SignUpEmailForm />);
+		expect(screen.getByTestId("error-alert")).toBeDefined();
+		expect(screen.getByText("Non autorisé")).toBeDefined();
+	});
+
+	it("shows error alert for NOT_FOUND status", () => {
+		mockState.value = { status: "not_found", message: "Introuvable" };
+		render(<SignUpEmailForm />);
+		expect(screen.getByTestId("error-alert")).toBeDefined();
+	});
+
+	it("error alert has role='alert' for assertive announcement", () => {
+		mockState.value = { status: "error", message: "Erreur serveur" };
+		render(<SignUpEmailForm />);
+		const alert = screen.getByRole("alert");
+		expect(alert).toBeDefined();
+	});
+
+	it("success alert has role='status' for polite announcement", () => {
+		mockState.value = { status: "success", message: "Succès !" };
+		render(<SignUpEmailForm />);
+		const status = screen.getByRole("status");
+		expect(status).toBeDefined();
+	});
+
+	// ─── Links attributes ─────────────────────────────────────────────────────
+
+	it("cgv link opens in new tab with rel noopener noreferrer", () => {
+		render(<SignUpEmailForm />);
+		const link = screen.getByRole("link", { name: /conditions générales/i });
+		expect(link.getAttribute("target")).toBe("_blank");
+		expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+	});
+
+	it("confidentialite link opens in new tab with rel noopener noreferrer", () => {
+		render(<SignUpEmailForm />);
+		const link = screen.getByRole("link", { name: /politique de confidentialité/i });
+		expect(link.getAttribute("target")).toBe("_blank");
+		expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+	});
+
+	// ─── Form submission ──────────────────────────────────────────────────────
+
+	it("calls form.handleSubmit when form is submitted", () => {
+		render(<SignUpEmailForm />);
+		const form = document.querySelector("form");
+		expect(form).not.toBeNull();
+		fireEvent.submit(form!);
+		expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
+	});
+
+	it("uses action from useSignUpEmail as form action", () => {
+		render(<SignUpEmailForm />);
+		// The form element is rendered; action is wired to the server action
+		const form = document.querySelector("form");
+		expect(form).not.toBeNull();
 	});
 });

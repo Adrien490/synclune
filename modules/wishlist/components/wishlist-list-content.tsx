@@ -22,6 +22,7 @@ import {
 	WishlistListOptimisticContext,
 	type WishlistListOptimisticContextValue,
 } from "../contexts/wishlist-list-optimistic-context";
+import { SwipeableWishlistItem } from "./swipeable-wishlist-item";
 
 interface WishlistListContentProps {
 	items: GetWishlistReturn["items"];
@@ -130,12 +131,14 @@ export function WishlistListContent({
 											}
 								}
 							>
-								<ProductCard
-									product={item.product!}
-									index={index}
-									isInWishlist={wishlistProductIds.has(item.productId)}
-									sectionId="wishlist"
-								/>
+								<SwipeableWishlistItem productId={item.productId!}>
+									<ProductCard
+										product={item.product!}
+										index={index}
+										isInWishlist={wishlistProductIds.has(item.productId)}
+										sectionId="wishlist"
+									/>
+								</SwipeableWishlistItem>
 							</m.div>
 						))}
 					</AnimatePresence>

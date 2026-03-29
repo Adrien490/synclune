@@ -73,12 +73,33 @@ vi.mock("lucide-react", () => ({
 	Heart: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-heart" className={className} />
 	),
+	Trash2: ({ className }: { className?: string }) => (
+		<svg data-testid="icon-trash" className={className} />
+	),
 }));
 
 vi.mock("@/modules/wishlist/contexts/wishlist-list-optimistic-context", () => ({
 	WishlistListOptimisticContext: {
 		Provider: ({ children }: { children: React.ReactNode; value: unknown }) => <>{children}</>,
 	},
+	useWishlistListOptimistic: vi.fn(() => null),
+}));
+
+vi.mock("@/modules/wishlist/hooks/use-swipe-to-remove", () => ({
+	useSwipeToRemove: vi.fn(() => ({ swipeOffset: 0, isSwiping: false })),
+	SWIPE_REMOVE_THRESHOLD: 80,
+}));
+
+vi.mock("@/modules/wishlist/hooks/use-remove-from-wishlist", () => ({
+	useRemoveFromWishlist: vi.fn(() => ({
+		action: vi.fn(),
+		isPending: false,
+		state: undefined,
+	})),
+}));
+
+vi.mock("sonner", () => ({
+	toast: { success: vi.fn() },
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));

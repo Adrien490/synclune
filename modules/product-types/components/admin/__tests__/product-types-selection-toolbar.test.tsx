@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -179,5 +180,35 @@ describe("ProductTypesSelectionToolbar", () => {
 		mockSelectedItems.value = ["pt-1"];
 		render(<ProductTypesSelectionToolbar />);
 		expect(screen.getByText("Ouvrir le menu")).toBeInTheDocument();
+	});
+
+	// ─── Click interactions ───────────────────────────────────────────────────
+
+	it("clicking 'Activer' calls activateProductTypes", async () => {
+		mockSelectedItems.value = ["pt-1", "pt-2"];
+		render(<ProductTypesSelectionToolbar />);
+		await userEvent.click(screen.getByText("Activer"));
+		expect(mockActivate).toHaveBeenCalledWith(["pt-1", "pt-2"]);
+	});
+
+	it("clicking 'Désactiver' calls deactivateProductTypes", async () => {
+		mockSelectedItems.value = ["pt-1", "pt-2"];
+		render(<ProductTypesSelectionToolbar />);
+		await userEvent.click(screen.getByText("Désactiver"));
+		expect(mockDeactivate).toHaveBeenCalledWith(["pt-1", "pt-2"]);
+	});
+
+	it("clicking 'Supprimer' opens delete dialog", async () => {
+		mockSelectedItems.value = ["pt-1"];
+		render(<ProductTypesSelectionToolbar />);
+		await userEvent.click(screen.getByText("Supprimer"));
+		expect(mockBulkDeleteDialog.open).toHaveBeenCalled();
+	});
+
+	it("'Supprimer' has destructive variant", () => {
+		mockSelectedItems.value = ["pt-1"];
+		render(<ProductTypesSelectionToolbar />);
+		const deleteBtn = screen.getByText("Supprimer").closest("button");
+		expect(deleteBtn).toHaveAttribute("data-variant", "destructive");
 	});
 });

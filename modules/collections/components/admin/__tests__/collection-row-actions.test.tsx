@@ -95,7 +95,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		onClick,
 		className,
 		disabled,
-		asChild,
+		asChild: _asChild,
 		variant,
 	}: {
 		children: React.ReactNode;

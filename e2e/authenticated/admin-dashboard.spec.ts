@@ -148,3 +148,26 @@ test.describe("Admin - Navigation cross-sections", { tag: ["@regression"] }, () 
 		}
 	});
 });
+
+test.describe("Admin - Hub pages smoke tests", { tag: ["@regression"] }, () => {
+	const hubPages = [
+		{ url: "/admin/catalogue", name: "Catalogue" },
+		{ url: "/admin/marketing", name: "Marketing" },
+		{ url: "/admin/ventes", name: "Ventes" },
+		{ url: "/admin/contenu", name: "Contenu" },
+	];
+
+	for (const { url, name } of hubPages) {
+		test(`la page hub ${name} (${url}) charge sans erreur`, async ({ page }) => {
+			const response = await page.goto(url);
+			await page.waitForLoadState("domcontentloaded");
+
+			expect(response?.status()).toBeLessThan(500);
+			await expect(page).not.toHaveURL(/\/connexion/);
+
+			// Should have at least one heading
+			const heading = page.getByRole("heading").first();
+			await expect(heading).toBeVisible();
+		});
+	}
+});

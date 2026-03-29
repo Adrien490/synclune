@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -283,5 +284,117 @@ describe("ProductVariantSelectionActions", () => {
 		render(<ProductVariantSelectionActions />);
 
 		expect(screen.getByTestId("alert-dialog")).toBeInTheDocument();
+	});
+
+	it("alert dialog starts closed", () => {
+		mockSelectedItems = ["sku_1"];
+
+		render(<ProductVariantSelectionActions />);
+
+		expect(screen.getByTestId("alert-dialog")).toHaveAttribute("data-open", "false");
+	});
+
+	// ─── Menu item interactions ───────────────────────────────────────────────
+
+	it("clicking 'Exporter CSV' shows toast info", async () => {
+		mockSelectedItems = ["sku_1"];
+		const { toast } = await import("sonner");
+
+		render(<ProductVariantSelectionActions />);
+		await userEvent.click(screen.getByText("Exporter CSV"));
+
+		expect(toast.info).toHaveBeenCalledWith("Export CSV non implémenté");
+	});
+
+	it("clicking 'Activer' calls activateSkus with selected items", async () => {
+		mockSelectedItems = ["sku_1", "sku_2"];
+
+		render(<ProductVariantSelectionActions />);
+		await userEvent.click(screen.getByText("Activer"));
+
+		expect(mockActivateSkus).toHaveBeenCalledWith(["sku_1", "sku_2"]);
+	});
+
+	it("clicking 'Désactiver' calls deactivateSkus with selected items", async () => {
+		mockSelectedItems = ["sku_1", "sku_2"];
+
+		render(<ProductVariantSelectionActions />);
+		await userEvent.click(screen.getByText("Désactiver"));
+
+		expect(mockDeactivateSkus).toHaveBeenCalledWith(["sku_1", "sku_2"]);
+	});
+
+	it("clicking 'Ajuster le stock' opens bulk adjust stock dialog", async () => {
+		mockSelectedItems = ["sku_1"];
+
+		render(<ProductVariantSelectionActions />);
+		await userEvent.click(screen.getByText("Ajuster le stock"));
+
+		expect(mockOpenDialog).toHaveBeenCalledWith({ skuIds: ["sku_1"] });
+	});
+
+	it("clicking 'Modifier le prix' opens bulk update price dialog", async () => {
+		mockSelectedItems = ["sku_1"];
+
+		render(<ProductVariantSelectionActions />);
+		await userEvent.click(screen.getByText("Modifier le prix"));
+
+		expect(mockOpenDialog).toHaveBeenCalledWith({ skuIds: ["sku_1"] });
+	});
+
+	it("clicking 'Supprimer' opens delete confirmation dialog", async () => {
+		mockSelectedItems = ["sku_1", "sku_2"];
+
+		render(<ProductVariantSelectionActions />);
+		const deleteButtons = screen.getAllByText("Supprimer");
+		// First "Supprimer" is the dropdown menu item
+		await userEvent.click(deleteButtons[0]!);
+
+		expect(screen.getByTestId("alert-dialog")).toHaveAttribute("data-open", "true");
+	});
+
+	it("delete dialog shows correct count for single item", async () => {
+		mockSelectedItems = ["sku_1"];
+
+		render(<ProductVariantSelectionActions />);
+		// Trigger the delete dialog
+		const deleteButtons = screen.getAllByText("Supprimer");
+		await userEvent.click(deleteButtons[0]!);
+
+		expect(screen.getByText("1 variante")).toBeInTheDocument();
+	});
+
+	it("delete dialog shows correct count for multiple items", async () => {
+		mockSelectedItems = ["sku_1", "sku_2", "sku_3"];
+
+		render(<ProductVariantSelectionActions />);
+		const deleteButtons = screen.getAllByText("Supprimer");
+		await userEvent.click(deleteButtons[0]!);
+
+		expect(screen.getByText("3 variantes")).toBeInTheDocument();
+	});
+
+	it("confirm delete button calls deleteSkus with selected items", async () => {
+		mockSelectedItems = ["sku_1", "sku_2"];
+
+		render(<ProductVariantSelectionActions />);
+		// Open delete dialog
+		const deleteButtons = screen.getAllByText("Supprimer");
+		await userEvent.click(deleteButtons[0]!);
+
+		// Click the confirm "Supprimer" button in the dialog footer
+		const confirmButtons = screen.getAllByText("Supprimer");
+		// The last one is the confirm button in the footer
+		await userEvent.click(confirmButtons[confirmButtons.length - 1]!);
+
+		expect(mockDeleteSkus).toHaveBeenCalledWith(["sku_1", "sku_2"]);
+	});
+
+	it("shows warning text about irreversible action", () => {
+		mockSelectedItems = ["sku_1"];
+
+		render(<ProductVariantSelectionActions />);
+
+		expect(screen.getByText(/Cette action est irréversible/)).toBeInTheDocument();
 	});
 });

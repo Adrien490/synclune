@@ -1,22 +1,55 @@
 # Mobile List Card UI/UX — Design Guide 2026
 
+> Derniere mise a jour : 2026-03-29 | Statut : Guide de reference | 17 sections
+
 Documentation des patterns UI/UX modernes pour une card dans une liste mobile, avec un rendu natif premium (iOS/Android 2026). Applicable aux listes admin et storefront de Synclune.
+
+### Stack
+
+| Technologie   | Version  |
+| ------------- | -------- |
+| Next.js       | 16.2.1   |
+| React         | 19.2.4   |
+| Motion        | 12.38.0  |
+| TanStack Form | 1.28.5   |
+| Tailwind CSS  | 4.2.2    |
+| shadcn/ui     | new-york |
+
+### Maturite des patterns
+
+| Pattern                                  | Statut      | Section |
+| ---------------------------------------- | ----------- | ------- |
+| Item / ItemGroup primitives              | Implemente  | 1, 3    |
+| BottomBar + Sort/Search/Filter           | Implemente  | 1       |
+| Server/Client Components + `"use cache"` | Implemente  | 2       |
+| Skeleton shimmer                         | Implemente  | 6       |
+| StaggerGrid / Stagger animations         | Implemente  | 8       |
+| Multi-selection + SelectionToolbar       | Implemente  | 6       |
+| Cursor pagination                        | Implemente  | 14      |
+| Drag & Drop reorder (dnd-kit)            | Implemente  | 5       |
+| Container Queries (`@container/card`)    | Implemente  | 10      |
+| Swipe Actions                            | Design only | 5, 11   |
+| Long Press → Context Menu                | Design only | 5, 11   |
+| Pull to Refresh                          | Design only | 5       |
+| Expandable cards                         | Design only | 9       |
 
 ---
 
 ## 1. Stack Mapping — Composants & Hooks existants
 
-Avant d'implementer, utiliser les primitives existantes du projet :
+Avant d'implementer, utiliser les primitives existantes du projet.
+
+> **Note** : Le projet utilise `m` (import nomme via `LazyMotion domMax` dans `shared/providers/motion-provider.tsx`) et non `motion` (import par defaut). Tous les exemples de ce guide utilisent `m`.
 
 ### Composants UI
 
-| Primitive                                                                     | Fichier                             | Usage                                                                                                                                                   |
-| ----------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ItemGroup` / `Item`                                                          | `shared/components/ui/item.tsx`     | **Primitive liste principale** — `ItemGroup` fournit `role="list"`, `Item` fournit layout flex, variantes (default/outline/muted), tailles (default/sm) |
-| `ItemMedia` / `ItemContent` / `ItemTitle` / `ItemDescription` / `ItemActions` | `shared/components/ui/item.tsx`     | Sous-composants de `Item` pour structurer le contenu                                                                                                    |
-| `Card` (interactive)                                                          | `shared/components/ui/card.tsx`     | Card avec `@container/card`, prop `interactive` pour hover/focus states                                                                                 |
-| `Skeleton` / `SkeletonGroup` / `SkeletonText`                                 | `shared/components/ui/skeleton.tsx` | Variants `default` (pulse) / `shimmer`, shapes (`rectangle` / `rounded` / `circle` / `text`), `SkeletonGroup` fournit `role="status" aria-busy="true"`  |
-| `Badge`                                                                       | `shared/components/ui/badge.tsx`    | Badges statut avec variantes semantiques                                                                                                                |
+| Primitive                                                                     | Fichier                             | Usage                                                                                                                                                                                                                           |
+| ----------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ItemGroup` / `Item`                                                          | `shared/components/ui/item.tsx`     | **Primitive liste principale** — `ItemGroup` fournit `role="list"`, `Item` fournit layout flex, variantes (default/outline/muted), tailles (default/sm)                                                                         |
+| `ItemMedia` / `ItemContent` / `ItemTitle` / `ItemDescription` / `ItemActions` | `shared/components/ui/item.tsx`     | Sous-composants de `Item` pour structurer le contenu                                                                                                                                                                            |
+| `Card` (interactive)                                                          | `shared/components/ui/card.tsx`     | Card avec `@container/card`, prop `interactive` pour hover/focus states                                                                                                                                                         |
+| `Skeleton` / `SkeletonGroup` / `SkeletonText`                                 | `shared/components/ui/skeleton.tsx` | Variants `shimmer` (defaut, animation continue) / `default` (pulse), shapes (`rectangle` / `rounded` / `circle` / `text`), `SkeletonGroup` fournit `role="status" aria-busy="true"`. Aussi : `SkeletonAvatar`, `SkeletonButton` |
+| `Badge`                                                                       | `shared/components/ui/badge.tsx`    | Badges statut avec variantes semantiques                                                                                                                                                                                        |
 
 ### Composants Animation
 
@@ -35,6 +68,18 @@ Avant d'implementer, utiliser les primitives existantes du projet :
 | `useEdgeSwipe()`     | `shared/hooks/use-edge-swipe.ts`   | Swipe from left edge (20px), seuil 50px, passive listeners |
 | `usePinchZoom()`     | `shared/hooks/use-pinch-zoom.ts`   | Pinch-to-zoom, double-tap, pan, keyboard support           |
 
+### Composants mobiles partages
+
+| Composant                          | Fichier                                         | Usage                                                                                                                                                                                        |
+| ---------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BottomBar`                        | `shared/components/bottom-bar/bottom-bar.tsx`   | Barre fixe bas mobile (`md:hidden`), animated slide, `safe-area-inset-bottom`, `inert` quand masquee. Exporte les class constants (`bottomBarItemClass`, `bottomBarCenterButtonClass`, etc.) |
+| `SortDrawer` / `SortDrawerTrigger` | `shared/components/sort-drawer/sort-drawer.tsx` | Drawer tri bottom-sheet, `role="radiogroup"`, keyboard nav (Arrow/Home/End), `useOptimistic`, reduced motion                                                                                 |
+| `FilterSheetWrapper`               | `shared/components/filter-sheet-wrapper.tsx`    | Sheet direction right pour filtres multi-champs, badge count actif, `Cmd+Enter` apply, bouton responsive (pleine largeur mobile)                                                             |
+| `ResponsiveDialog`                 | `shared/components/responsive-dialog.tsx`       | Dialog (desktop) / Drawer (mobile) derriere une API unique, `useIsMobile()` interne, `forceMode` override                                                                                    |
+| `SelectionToolbar`                 | par module                                      | Toolbar multi-selection animee (`gridTemplateRows 0fr→1fr`), apparait quand `selectedCount > 0`                                                                                              |
+| `ItemCheckbox`                     | `shared/components/item-checkbox.tsx`           | Checkbox liee a `useSelectionContext()`, `aria-label` par item                                                                                                                               |
+| `AdminMobileHeader`                | `app/admin/_components/admin-mobile-header.tsx` | Header fixe mobile admin, scroll-aware glass effect (`backdrop-blur-md`), `pwa-header md:hidden`                                                                                             |
+
 ### CSS Custom Variants
 
 ```css
@@ -51,9 +96,151 @@ Usage : `can-hover:bg-accent/50`, `can-hover:scale-105`
 - `.scroll-snap-x` / `.snap-start` / `.snap-center` — Scroll snap pour listes horizontales
 - `.content-defer` — `content-visibility: auto` pour listes longues
 
+### Implementations existantes
+
+Ces modules implementent deja le pattern mobile list card documente ici. Les utiliser comme reference :
+
+| Module             | Mobile List                                                                        | Bottom Bar                                                                    | Skeleton                                           | Tests               |
+| ------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------- | ------------------- |
+| **Customizations** | `modules/customizations/components/admin/customizations-mobile-list.tsx` (123 LOC) | `customizations-bottom-bar.tsx` (278 LOC) — Sort + Search + Filter            | `customizations-mobile-list-skeleton.tsx` (37 LOC) | 237 + 53 + 699 LOC  |
+| **Discounts**      | `modules/discounts/components/admin/discounts-mobile-list.tsx` (134 LOC)           | `discounts-bottom-bar.tsx` (277 LOC) — Sort + Search + Filter                 | `discounts-mobile-list-skeleton.tsx` (37 LOC)      | 443 + 111 + 704 LOC |
+| **Products**       | _non implemente_                                                                   | `products-bottom-bar.tsx` (390 LOC) — Filter + Search + FAB Add + Sort + Menu | —                                                  | 615 LOC             |
+
+Pattern d'integration dans les pages admin (CSS-only breakpoint switching) :
+
+```tsx
+{
+	/* Mobile — md:hidden */
+}
+<Suspense fallback={<MobileListSkeleton />}>
+	<MobileList />
+</Suspense>;
+{
+	/* Desktop — hidden md:block */
+}
+<DataTable />;
+{
+	/* Bottom bar — dynamic import */
+}
+<BottomBar />;
+```
+
 ---
 
-## 2. Anatomie d'une card liste mobile native
+## 2. Patterns Next.js 16 / React 19
+
+### Server Components vs Client Components
+
+Les listes mobiles suivent le pattern Server Component container + Client Component items :
+
+```tsx
+// app/admin/produits/page.tsx — Server Component (pas de "use client")
+import { Suspense } from "react";
+import { getProducts } from "@/modules/products/data/get-products";
+
+export default async function ProductsPage({ searchParams }: Props) {
+	const params = await searchParams;
+	const data = await getProducts(params);
+
+	return (
+		<>
+			{/* Mobile — md:hidden, Server Component qui streame */}
+			<Suspense fallback={<MobileListSkeleton />}>
+				<MobileList data={data} />
+			</Suspense>
+			{/* Desktop — hidden md:block */}
+			<DataTable data={data} />
+			{/* Bottom bar — Client Component */}
+			<BottomBar />
+		</>
+	);
+}
+```
+
+- **Container (page)** : Server Component async — fetch les donnees, pas de bundle JS client
+- **MobileList** : Server Component si lecture seule, Client Component si interactions (swipe, selection)
+- **BottomBar** : Toujours Client Component (`"use client"`) — gere le state des drawers
+- **Suspense** : Skeleton affiche immediatement pendant le streaming SSR de la liste
+
+### Data fetching avec `"use cache"`
+
+Les donnees des listes sont cachees via le pattern `"use cache"` + `cacheLife` + `cacheTag` :
+
+```tsx
+// modules/[module]/data/get-items.ts
+import { cacheLife, cacheTag } from "next/cache";
+
+export async function getItems(params: GetItemsParams) {
+	"use cache";
+	cacheLife("products"); // 15min stale, 5min revalidate
+	cacheTag("items-list");
+	return prisma.item.findMany({ where: buildWhereClause(params) });
+}
+```
+
+Apres mutation, invalider avec `updateTag("items-list")` dans l'action.
+
+### React Compiler — Pas de memoization
+
+Le projet a `babel-plugin-react-compiler` configure. **Ne pas utiliser** `useMemo()`, `useCallback()`, ou `React.memo()` dans les composants de liste. Le compilateur optimise automatiquement.
+
+### Mutations depuis les cards
+
+Utiliser `useActionState` (React 19) pour les mutations declenchees depuis une card :
+
+```tsx
+"use client";
+
+import { useActionState } from "react";
+import { deleteItem } from "@/modules/items/actions/delete-item";
+
+function DeleteButton({ itemId, itemName }: { itemId: string; itemName: string }) {
+	const [state, action, isPending] = useActionState(deleteItem, undefined);
+
+	return (
+		<form action={action}>
+			<input type="hidden" name="id" value={itemId} />
+			<button
+				type="submit"
+				disabled={isPending}
+				aria-label={`Supprimer ${itemName}`}
+				className={cn(isPending && "opacity-50")}
+			>
+				<Trash2 className="size-4" />
+			</button>
+		</form>
+	);
+}
+```
+
+### Optimistic UI dans les listes
+
+Pour les mutations frequentes (toggle wishlist, ajout panier), utiliser `useOptimistic` :
+
+```tsx
+"use client";
+
+import { useOptimistic } from "react";
+
+function WishlistToggle({ productId, isWishlisted }: Props) {
+	const [optimisticState, setOptimistic] = useOptimistic(isWishlisted);
+
+	async function handleToggle() {
+		setOptimistic(!optimisticState);
+		await toggleWishlist(productId);
+	}
+
+	return (
+		<button onClick={handleToggle} aria-pressed={optimisticState}>
+			<Heart className={cn("size-5", optimisticState && "text-primary fill-current")} />
+		</button>
+	);
+}
+```
+
+---
+
+## 3. Anatomie d'une card liste mobile native
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -83,9 +270,9 @@ Usage : `can-hover:bg-accent/50`, `can-hover:scale-105`
 
 ---
 
-## 3. Principes natifs 2026
+## 4. Principes natifs 2026
 
-### 3.1 Espacement & Touch targets
+### 4.1Espacement & Touch targets
 
 - **Hauteur minimum** : 64px (ideal 72-88px pour contenu riche)
 - **Touch target** : 44x44px minimum (WCAG 2.5.8 Target Size)
@@ -94,7 +281,7 @@ Usage : `can-hover:bg-accent/50`, `can-hover:scale-105`
 - **Thumb zone** : Actions frequentes dans la zone basse (< 60% ecran)
 - **Container padding** : `px-4 sm:px-6 lg:px-8` (aligne avec `CONTAINER_PADDING`)
 
-### 3.2 Feedback tactile
+### 4.2Feedback tactile
 
 - **Press state** : `bg-muted/50` transition 100ms — utiliser `can-hover:bg-accent/50` pour le hover, `:active` pour le press sur mobile
 - **Active scale** : `active:scale-[0.98]` subtil sur press (150ms ease-out) — `MOTION_CONFIG.duration.fast`
@@ -109,7 +296,7 @@ function triggerHaptic(duration = 10) {
 }
 ```
 
-### 3.3 Separateurs
+### 4.3Separateurs
 
 - **Recommande** : Pas de separateur visible — utiliser l'espacement (`gap`) et le fond (`bg-card` vs `bg-background`)
 - **Si necessaire** : `ItemSeparator` (composant existant) — `Separator` inset aligne apres le leading
@@ -117,9 +304,11 @@ function triggerHaptic(duration = 10) {
 
 ---
 
-## 4. Patterns d'interaction
+## 5. Patterns d'interaction
 
-### 4.1 Swipe Actions (pattern critique)
+### 5.1Swipe Actions (pattern critique)
+
+> **Pattern non implemente** — Code d'exemple a adapter. Non teste en production.
 
 ```
 ← Swipe gauche                    Swipe droite →
@@ -136,14 +325,18 @@ function triggerHaptic(duration = 10) {
 - **Couleurs semantiques** : `bg-destructive` = supprimer, `bg-secondary` = archiver, `bg-success` = valider
 - **Accessibilite obligatoire** : Chaque action swipe **doit** avoir un equivalent via long press menu ou bouton visible
 
-### 4.2 Long Press → Context Menu
+### 5.2Long Press → Context Menu
+
+> **Pattern non implemente** — Code d'exemple a adapter. Non teste en production.
 
 - **Delai** : 500ms
 - **Feedback** : `scale(1.02)` + `backdrop-blur-sm` sur le fond
 - **Menu** : Sheet en bottom (utiliser le sheet existant du projet)
 - **Backdrop** : `backdrop-blur-sm` + overlay `bg-black/40`
 
-### 4.3 Pull to Refresh
+### 5.3Pull to Refresh
+
+> **Pattern non implemente** — Code d'exemple a adapter. Non teste en production.
 
 - Indicateur spinner en haut de la liste
 - Seuil : 80px de pull
@@ -161,7 +354,7 @@ function triggerHaptic(duration = 10) {
 "use client";
 
 import { useRef, useState } from "react";
-import { motion, useMotionValue, useTransform } from "motion/react";
+import { m, useMotionValue, useTransform } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Loader2 } from "lucide-react";
 
@@ -195,13 +388,13 @@ function PullToRefresh({
 
 	return (
 		<div ref={containerRef} className="relative overflow-y-auto [overscroll-behavior-y:contain]">
-			<motion.div
+			<m.div
 				className="flex items-center justify-center py-4"
 				style={{ opacity: spinnerOpacity, scale: spinnerScale }}
 			>
 				<Loader2 className="text-muted-foreground size-5 animate-spin" />
-			</motion.div>
-			<motion.div
+			</m.div>
+			<m.div
 				drag="y"
 				dragConstraints={{ top: 0, bottom: PULL_THRESHOLD }}
 				dragElastic={0.4}
@@ -210,33 +403,33 @@ function PullToRefresh({
 				transition={MOTION_CONFIG.spring.gentle}
 			>
 				{children}
-			</motion.div>
+			</m.div>
 		</div>
 	);
 }
 ```
 
-### 4.4 Tap → Navigation
+### 5.4Tap → Navigation
 
 - Toute la card est tappable (pas juste le texte) — utiliser `Item asChild` avec `<Link>`
 - Chevron `›` en trailing indique la navigation
-- Transition : View Transition API si disponible (voir section 11), sinon slide 300ms ease
+- Transition : slide 300ms ease
 
-### 4.5 Drag & Drop / Reorder
+### 5.5Drag & Drop / Reorder
 
-Le projet utilise dnd-kit (`@dnd-kit/core` + `@dnd-kit/sortable`). Pattern existant :
+Le projet utilise `@dnd-kit/react` 0.3.2 (API 2026), avec `@dnd-kit/dom` et `@dnd-kit/helpers`. Pattern existant :
 
 - **DragOverlay** : `shadow-lg` + `scale(1.02)` sur l'item en cours de drag
-- **Grip handle** : Icone grip visible en leading, `cursor-grab` / `cursor-grabbing`
-- **Triple sensor** : Pointer + Keyboard + Touch sensor
+- **Grip handle** : Icone grip visible en leading, `handleRef` pour focusabilite clavier
+- **Sensors explicites** : `PointerSensor` + `KeyboardSensor` + `TouchSensor` (via `@dnd-kit/dom`)
 - **Reduced motion** : Animation reorder desactivee
 - **Duree reorder** : `MOTION_CONFIG.duration.normal` (200ms)
 
 ---
 
-## 5. Etats visuels
+## 6. Etats visuels
 
-### 5.1 Loading (Skeleton)
+### 6.1 Loading (Skeleton)
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -269,19 +462,19 @@ Utiliser les composants existants :
 - Memes dimensions que le contenu reel (pas de layout shift)
 - 3-5 items skeleton visibles
 
-### 5.2 Empty State
+### 6.2 Empty State
 
 - Illustration centree (icone ou SVG leger)
 - Titre + description + CTA
 - Pas de liste vide sans explication
 - Utiliser `TableEmptyState` existant pour les DataTables admin
 
-### 5.3 Error State
+### 6.3 Error State
 
 - Message inline dans la liste
 - Bouton "Reessayer"
 - Pas de page d'erreur plein ecran pour une erreur de fetch
-- **Error boundary par item** : Un item en erreur ne doit pas crasher toute la liste. Wrapper chaque item avec un error boundary leger. Utiliser le package `react-error-boundary` (a installer si necessaire) :
+- **Error boundary par item** : Un item en erreur ne doit pas crasher toute la liste. Wrapper chaque item avec un error boundary leger. Necessite le package `react-error-boundary` (**non installe** — `pnpm add react-error-boundary` avant usage) :
 
 ```tsx
 import { ErrorBoundary } from "react-error-boundary";
@@ -309,14 +502,14 @@ function ListWithItemRecovery({ items }: { items: Item[] }) {
 }
 ```
 
-### 5.4 Selected (multi-selection)
+### 6.4 Selected (multi-selection)
 
 - Checkbox animee en leading (remplace le thumbnail)
 - Background teinte `bg-primary/5`
 - Toolbar fixe en bas avec actions groupees (utiliser `.fixed-bottom-safe` pour PWA)
 - Compteur "X selectionne(s)" avec `aria-live="polite"`
 
-### 5.5 Offline (PWA) — recommandations
+### 6.5 Offline (PWA) — recommandations
 
 Le projet est une PWA (Serwist) avec page offline. Les patterns ci-dessous sont des recommandations pour les futures listes offline-aware :
 
@@ -327,7 +520,7 @@ Le projet est une PWA (Serwist) avec page offline. Les patterns ci-dessous sont 
 
 ---
 
-## 6. Design tokens — Aligne avec le projet
+## 7. Design tokens — Aligne avec le projet
 
 ### Typographie
 
@@ -384,7 +577,7 @@ Le projet est une PWA (Serwist) avec page offline. Les patterns ci-dessous sont 
 
 ---
 
-## 7. Animations & Transitions
+## 8. Animations & Transitions
 
 Toutes les animations utilisent `MOTION_CONFIG` (`shared/components/animations/motion.config.ts`) :
 
@@ -428,9 +621,9 @@ Le projet a 6 scroll-driven animations CSS. Pour les listes :
 
 ---
 
-## 8. Variantes de layout
+## 9. Variantes de layout
 
-### 8.1 Compact (listes longues, admin)
+### 9.1Compact (listes longues, admin)
 
 - Hauteur : 56-64px
 - Thumbnail : `size-10` (40px) — `ItemMedia variant="image"`
@@ -438,7 +631,7 @@ Le projet a 6 scroll-driven animations CSS. Pour les listes :
 - `Item size="sm"` (py-3 px-4 gap-2.5)
 - Usage : DataTables admin, listes de selection
 
-### 8.2 Standard (storefront, commandes)
+### 9.2Standard (storefront, commandes)
 
 - Hauteur : 72-88px
 - Thumbnail : `size-12` (48px) a `size-14` (56px)
@@ -446,7 +639,7 @@ Le projet a 6 scroll-driven animations CSS. Pour les listes :
 - `Item size="default"` (p-4 gap-4)
 - Usage : liste commandes, liste adresses, panier
 
-### 8.3 Rich (produits, contenu)
+### 9.3Rich (produits, contenu)
 
 - Hauteur : 96-120px
 - Thumbnail : `size-16` (64px) a `size-20` (80px)
@@ -455,7 +648,9 @@ Le projet a 6 scroll-driven animations CSS. Pour les listes :
 - Support thumbnail video (`<video autoPlay muted loop playsInline>`)
 - Usage : produits, personnalisations, recommandations
 
-### 8.4 Expandable (details inline)
+### 9.4Expandable (details inline)
+
+> **Pattern non implemente** — Recommandation de design, pas encore utilise dans Synclune.
 
 - Tap pour expand/collapse
 - Contenu additionnel avec `MOTION_CONFIG.duration.collapse` (280ms) height animation
@@ -464,7 +659,7 @@ Le projet a 6 scroll-driven animations CSS. Pour les listes :
 
 ---
 
-## 9. Responsive & Container Queries
+## 10. Responsive & Container Queries
 
 ### Breakpoints du projet
 
@@ -541,9 +736,9 @@ Implementation :
 
 ---
 
-## 10. Domain Patterns — Cards e-commerce Synclune
+## 11. Domain Patterns — Cards e-commerce Synclune
 
-### 10.1 Product Card (storefront)
+### 11.1Product Card (storefront)
 
 Pattern existant dans `modules/products/components/product-card.tsx` :
 
@@ -565,7 +760,7 @@ Pattern existant dans `modules/products/components/product-card.tsx` :
 - Mobile : Bouton ajout panier pleine largeur en bas
 - Color swatches : `aria-label` avec nom de la couleur
 
-### 10.2 Order Card (compte client)
+### 11.2Order Card (compte client)
 
 ```
 ┌─────────────────────────────────────────┐
@@ -578,7 +773,7 @@ Pattern existant dans `modules/products/components/product-card.tsx` :
 - Badge statut : Couleur semantique + icone (jamais couleur seule)
 - Statuts : `PENDING` (warning), `PROCESSING` (secondary), `SHIPPED` (secondary), `DELIVERED` (success), `CANCELLED` (destructive)
 
-### 10.3 Cart Item (panier sheet)
+### 11.3Cart Item (panier sheet)
 
 Pattern existant dans `modules/cart/components/cart-sheet-item-row.tsx` :
 
@@ -595,7 +790,7 @@ Pattern existant dans `modules/cart/components/cart-sheet-item-row.tsx` :
 - Support video thumbnail (`autoPlay muted loop playsInline`)
 - Etat pending : `opacity-50` pendant la mutation (optimistic UI)
 
-### 10.4 Admin List Item (compact)
+### 11.4Admin List Item (compact)
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -611,7 +806,7 @@ Pattern existant dans `modules/cart/components/cart-sheet-item-row.tsx` :
 - Menu actions `···` en trailing (edit, duplicate, archive, delete)
 - `Item size="sm"` pour densite
 
-### 10.5 Template TSX — Order Card complet
+### 11.5Template TSX — Order Card complet
 
 Exemple copier-coller d'une card commande mobile :
 
@@ -655,7 +850,7 @@ function OrderCard({ order }: { order: Order }) {
 }
 ```
 
-### 10.6 Implementation Swipe Actions
+### 11.6Implementation Swipe Actions
 
 Approche recommandee avec `motion/react` drag :
 
@@ -663,7 +858,7 @@ Approche recommandee avec `motion/react` drag :
 "use client";
 
 import { useRef } from "react";
-import { type PanInfo, motion, useMotionValue, useTransform } from "motion/react";
+import { type PanInfo, m, useMotionValue, useTransform } from "motion/react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 const SWIPE_THRESHOLD = 80;
@@ -700,16 +895,16 @@ function SwipeableCard({
 	return (
 		<div ref={containerRef} className="relative overflow-hidden">
 			{/* Action background visible au swipe */}
-			<motion.div
+			<m.div
 				className="bg-destructive absolute inset-y-0 left-0 flex items-center px-6"
 				style={{ opacity: actionOpacity }}
 				aria-hidden="true"
 			>
 				<span className="text-destructive-foreground text-sm font-medium">{deleteLabel}</span>
-			</motion.div>
+			</m.div>
 
 			{/* Card draggable */}
-			<motion.div
+			<m.div
 				drag="x"
 				dragConstraints={{ left: -200, right: 0 }}
 				dragElastic={0.1}
@@ -719,13 +914,13 @@ function SwipeableCard({
 				className="bg-card relative"
 			>
 				{children}
-			</motion.div>
+			</m.div>
 		</div>
 	);
 }
 ```
 
-### 10.7 Implementation Long Press
+### 11.7Implementation Long Press
 
 Hook robuste — cancel au scroll, prevention du click parasite, feedback visuel :
 
@@ -822,58 +1017,7 @@ function LongPressableCard({
 
 ---
 
-## 11. Patterns modernes 2026
-
-### View Transitions API
-
-Pour les transitions list → detail (ex: tap produit → fiche produit) :
-
-> **Note** : Pattern futur — non encore utilise dans Synclune. A evaluer quand l'API sera stable.
-
-```tsx
-// Next.js 16 supporte unstable_ViewTransition (API experimentale)
-import { unstable_ViewTransition as ViewTransition } from "react";
-
-<ViewTransition name={`product-${product.id}`}>
-	<ProductCard product={product} />
-</ViewTransition>;
-```
-
-- Transition partagee sur le thumbnail (morphing fluide)
-- Fallback CSS pour navigateurs sans support :
-
-```css
-/* Fallback slide pour navigateurs sans View Transitions */
-@supports not (view-transition-name: none) {
-	[data-slot="page-enter"] {
-		animation: slide-in-right 300ms ease forwards;
-	}
-	[data-slot="page-exit"] {
-		animation: slide-out-left 300ms ease forwards;
-	}
-}
-
-@keyframes slide-in-right {
-	from {
-		transform: translateX(100%);
-		opacity: 0;
-	}
-	to {
-		transform: translateX(0);
-		opacity: 1;
-	}
-}
-@keyframes slide-out-left {
-	from {
-		transform: translateX(0);
-		opacity: 1;
-	}
-	to {
-		transform: translateX(-30%);
-		opacity: 0;
-	}
-}
-```
+## 12. Patterns modernes 2026
 
 ### Container Queries
 
@@ -910,7 +1054,7 @@ Deja en place sur `Card` (`@container/card`). Utiliser pour :
 
 ---
 
-## 12. Accessibilite (WCAG 2.2 AA)
+## 13. Accessibilite (WCAG 2.2 AA)
 
 ### Structure semantique
 
@@ -955,7 +1099,6 @@ Deja en place sur `Card` (`@container/card`). Utiliser pour :
 - Texte : Minimum 4.5:1 (`text-muted-foreground` est WCAG AAA — ratio 4.5:1+)
 - Elements UI : Minimum 3:1
 - **Jamais de couleur seule** pour communiquer un statut — toujours coupler avec une icone ou du texte
-- Dark mode : Tokens oklch auto-inverses, ratios preserves
 
 ### Reduced motion
 
@@ -979,14 +1122,16 @@ Deja en place sur `Card` (`@container/card`). Utiliser pour :
 
 ---
 
-## 13. Performance mobile
+## 14. Performance mobile
 
-### Virtualisation (listes longues)
+### Strategie de rendu des listes
 
+La **cursor pagination** est la strategie principale du projet (10/10, pattern eprouve sur 16/17 modules). Elle limite le nombre d'items rendus a chaque page (~20-50), eliminant le besoin de virtualisation dans la grande majorite des cas.
+
+- **Cursor pagination** : Pattern par defaut — pages de 20-50 items, jamais 200+ items d'un coup
 - **< 50 items** : Rendu direct avec `StaggerGrid` / `Stagger`
-- **50-200 items** : `content-visibility: auto` (`.content-defer`) sur chaque item — voir caveat a11y en section 11
-- **200+ items** : `@tanstack/react-virtual` pour virtualisation complete (non installe — a ajouter si le besoin se presente)
-- **Cursor pagination** : Pattern existant — ne jamais charger 200+ items d'un coup
+- **50-200 items** : `content-visibility: auto` (`.content-defer`) sur chaque item — voir caveat a11y en section 12
+- **200+ items** : Dernier recours theorique — `@tanstack/react-virtual` (non installe, non necessaire avec la cursor pagination)
 
 ### Rendering GPU-friendly
 
@@ -1029,55 +1174,11 @@ Deja en place sur `Card` (`@container/card`). Utiliser pour :
 
 ---
 
-## 14. Dark mode mobile
-
-Les tokens oklch du projet s'inversent automatiquement, mais certains ajustements sont specifiques au mobile :
-
-### Ombres
-
-- `shadow-*` est invisible sur fond sombre — preferer `ring-1 ring-border/50` pour delimiter les cards en dark mode
-- `shadow-lg` sur DragOverlay reste visible grace a l'opacite elevee, mais ajouter `dark:ring-1 dark:ring-border/30` en complement
-
-### Images & thumbnails
-
-- Sur ecrans OLED (majorite des mobiles 2026), les blancs purs eblouissent — appliquer `dark:brightness-90` sur les thumbnails produit si fond blanc
-- Les placeholder blur hash s'adaptent automatiquement si generes en oklch
-
-### Hierarchie de fonds
-
-- `bg-background` (teinte) pour le fond de page
-- `bg-card` (pur) pour les cards — cree la hierarchie visuelle en dark mode ou la difference light est subtile
-- Eviter `bg-muted` comme fond de card en dark mode (trop proche de `bg-background`)
-
-### Contraste
-
-- `text-muted-foreground` : oklch 0.55 en light, verifie WCAG AAA (4.5:1+) — le token dark doit maintenir ce ratio
-- Badges : les variantes semantiques (`success`, `warning`, `destructive`) ajustent automatiquement leur contraste via oklch
-- Bordures `ring-border/50` : opacite 50% peut etre insuffisante en dark — tester et ajuster a `ring-border/70` si necessaire
-
-### Forced-colors mode — a implementer
-
-Pour Windows High Contrast et Android accessibility. Non present dans le codebase actuellement — a ajouter dans `app/globals.css` :
-
-```css
-@media (forced-colors: active) {
-	[data-slot="item"] {
-		border: 1px solid ButtonText;
-	}
-	[data-slot="badge"] {
-		border: 1px solid currentColor;
-	}
-}
-```
-
----
-
 ## 15. Tendances mobile 2025-2026
 
 | Tendance                   | Description                                                     | Implementation Synclune                             |
 | -------------------------- | --------------------------------------------------------------- | --------------------------------------------------- |
 | **Container Queries**      | Card qui s'adapte a son conteneur, pas au viewport              | `@container/card` deja en place                     |
-| **View Transitions**       | Morphing fluide entre list et detail                            | `unstable_ViewTransition` (Next.js 16)              |
 | **Scroll-driven**          | Animations liees au scroll sans JS                              | 6 deja implementees, `animation-timeline: scroll()` |
 | **Micro-interactions**     | Feedback a chaque action (checkmark anime, compteur qui bounce) | `MOTION_CONFIG.spring.success`                      |
 | **Adaptive layout**        | Card qui s'adapte au contenu (pas de hauteur fixe)              | `ItemGroup` + `Item` flexbox                        |
@@ -1134,3 +1235,16 @@ Pour Windows High Contrast et Android accessibility. Non present dans le codebas
 - **Playwright** : mesurer le CLS sur les listes avec skeletons → images (doit etre < 0.1)
 - Verifier que `content-visibility` ne casse pas Ctrl+F sur les 10 premiers items
 - `pnpm size` pour verifier que les nouveaux composants ne gonflent pas le bundle
+
+### Tests existants a utiliser comme reference
+
+Les modules implementes ont des suites de tests completes a suivre comme modele :
+
+| Module             | Fichier test                                                                                     | LOC | Couvre                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------ | --- | ------------------------------------------------------- |
+| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-mobile-list.test.tsx`          | 237 | Rendu, variantes, actions, a11y                         |
+| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-bottom-bar.test.tsx`           | 699 | Sort/Search/Filter drawers, keyboard nav, active states |
+| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-mobile-list-skeleton.test.tsx` | 53  | Skeleton count, animation delay, md:hidden              |
+| **Discounts**      | `modules/discounts/components/admin/__tests__/discounts-mobile-list.test.tsx`                    | 443 | Rendu, badges, row actions, pagination                  |
+| **Discounts**      | `modules/discounts/components/admin/__tests__/discounts-bottom-bar.test.tsx`                     | 704 | Sort/Search/Filter drawers, keyboard nav                |
+| **Products**       | `modules/products/components/admin/__tests__/products-bottom-bar.test.tsx`                       | 615 | FAB, menu, filter integration                           |

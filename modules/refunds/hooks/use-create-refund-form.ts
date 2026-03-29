@@ -24,6 +24,8 @@ export type { RefundItemValue, CreateRefundFormValues };
 interface UseCreateRefundFormOptions {
 	orderId: string;
 	orderItems: OrderItemForRefund[];
+	subtotal: number;
+	discountAmount: number;
 	onSuccess?: (message: string) => void;
 }
 
@@ -50,7 +52,7 @@ export const getAvailableQuantity = getAvailableQuantityService;
  * Utilise TanStack Form avec Next.js App Router
  */
 export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
-	const { orderId, orderItems, onSuccess } = options;
+	const { orderId, orderItems, subtotal, discountAmount, onSuccess } = options;
 
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
@@ -89,7 +91,10 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 
 	// Calculs dérivés (utilise les services)
 	const selectedItems = getSelectedItems(items);
-	const totalAmount = calculateRefundAmount(selectedItems, orderItems);
+	const totalAmount = calculateRefundAmount(selectedItems, orderItems, {
+		subtotal,
+		discountAmount,
+	});
 	const itemsForAction = formatItemsForAction(selectedItems);
 
 	return {

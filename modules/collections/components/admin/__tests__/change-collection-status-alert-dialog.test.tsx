@@ -63,7 +63,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 	AlertDialogDescription: ({
 		children,
-		asChild,
+		asChild: _asChild,
 	}: {
 		children: React.ReactNode;
 		asChild?: boolean;

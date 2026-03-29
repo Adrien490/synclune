@@ -109,6 +109,116 @@ test.describe("Admin - CRUD Produits", { tag: ["@regression"] }, () => {
 		await expect(successFeedback.first()).toBeVisible({ timeout: 10000 });
 	});
 
+	test("supprimer un produit de test via les actions de ligne", async ({ page, adminPage }) => {
+		await adminPage.gotoProducts();
+
+		const table = page.getByRole("table");
+		const emptyState = page.getByText(/aucun produit/i);
+		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+
+		const tableVisible = await table.isVisible();
+		test.skip(!tableVisible, "No products available");
+
+		// Find a test product to delete (created by E2E)
+		const testRow = table.locator("tbody tr").filter({ hasText: TEST_RUN_ID });
+		const hasTestRow = (await testRow.count()) > 0;
+		test.skip(!hasTestRow, "Pas de produit de test à supprimer");
+
+		const actionsButton = testRow.first().getByRole("button", { name: /Actions/i });
+		await actionsButton.click();
+
+		const deleteOption = page.getByRole("menuitem", { name: /Supprimer|Archiver/i });
+		await expect(deleteOption).toBeVisible({ timeout: 5000 });
+		await deleteOption.click();
+
+		// Confirmation dialog
+		const confirmDialog = page.getByRole("alertdialog");
+		await expect(confirmDialog).toBeVisible({ timeout: 5000 });
+
+		const confirmButton = confirmDialog.getByRole("button", { name: /Supprimer|Confirmer/i });
+		await confirmButton.click();
+
+		await expect(confirmDialog).not.toBeVisible({ timeout: 5000 });
+
+		const successFeedback = page.getByText(/supprimé|archivé|succès/i);
+		await expect(successFeedback.first()).toBeVisible({ timeout: 5000 });
+	});
+
+	test("les onglets de statut filtrent les produits", async ({ page, adminPage }) => {
+		await adminPage.gotoProducts();
+
+		const table = page.getByRole("table");
+		const emptyState = page.getByText(/aucun produit/i);
+		await expect(table.or(emptyState)).toBeVisible({ timeout: 10000 });
+
+		// Click on "Brouillon" tab
+		const draftTab = page.getByRole("link", { name: /Brouillon/i });
+		const draftCount = await draftTab.count();
+
+		if (draftCount > 0) {
+			await draftTab.click();
+			await page.waitForLoadState("domcontentloaded");
+
+			// URL should reflect the filter
+			await expect(page).toHaveURL(/status=DRAFT|brouillon/i);
+
+			// Table or empty state should update
+			await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({
+				timeout: 10000,
+			});
+		}
+
+		// Click on "Publié" tab
+		const publishedTab = page.getByRole("link", { name: /Publié/i });
+		if ((await publishedTab.count()) > 0) {
+			await publishedTab.click();
+			await page.waitForLoadState("domcontentloaded");
+
+			await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({
+				timeout: 10000,
+			});
+		}
+	});
+
+	test("les actions de ligne d'un produit exposent les options", async ({ page, adminPage }) => {
+		await adminPage.gotoProducts();
+
+		const table = page.getByRole("table");
+		await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({ timeout: 10000 });
+
+		const tableVisible = await table.isVisible();
+		test.skip(!tableVisible, "No products available");
+
+		const actionsButton = table
+			.locator("tbody tr")
+			.first()
+			.getByRole("button", { name: /Actions/i });
+		await actionsButton.click();
+
+		// Should show edit, delete, and potentially publish/unpublish options
+		const menuItems = page.getByRole("menuitem");
+		const itemCount = await menuItems.count();
+		expect(itemCount).toBeGreaterThanOrEqual(2);
+
+		// Edit option should always be present
+		const editItem = page.getByRole("menuitem", { name: /Modifier|Éditer/i });
+		await expect(editItem).toBeVisible();
+	});
+
+	test("sélectionner une ligne affiche la toolbar de sélection", async ({ page, adminPage }) => {
+		await adminPage.gotoProducts();
+
+		const table = page.getByRole("table");
+		await expect(table.or(page.getByText(/aucun produit/i))).toBeVisible({ timeout: 10000 });
+		test.skip(!(await table.isVisible()), "No products available");
+
+		const firstRowCheckbox = table.locator("tbody tr").first().getByRole("checkbox");
+		await firstRowCheckbox.check();
+
+		const selectionToolbar = page.getByText(/sélectionné/i);
+		await expect(selectionToolbar).toBeVisible({ timeout: 5000 });
+	});
+
 	test("naviguer vers les variantes d'un produit", async ({ page, adminPage }) => {
 		await adminPage.gotoProducts();
 

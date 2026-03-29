@@ -115,7 +115,7 @@ describe("UpdateReviewForm", () => {
 	it("renders hidden ID input with review id", () => {
 		render(<UpdateReviewForm review={createReview({ id: "rev-42" })} />);
 		const input = document.querySelector('input[name="id"]') as HTMLInputElement;
-		expect(input?.value).toBe("rev-42");
+		expect(input.value).toBe("rev-42");
 	});
 
 	it("renders the rating field", () => {

@@ -98,6 +98,8 @@ export const GET_ORDER_FOR_REFUND_SELECT = {
 	orderNumber: true,
 	customerEmail: true,
 	customerName: true,
+	subtotal: true,
+	discountAmount: true,
 	total: true,
 	paymentStatus: true,
 	stripePaymentIntentId: true,

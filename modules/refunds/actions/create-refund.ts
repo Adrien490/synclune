@@ -98,6 +98,8 @@ export async function createRefund(
 				select: {
 					id: true,
 					orderNumber: true,
+					subtotal: true,
+					discountAmount: true,
 					total: true,
 					paymentStatus: true,
 					stripePaymentIntentId: true,
@@ -145,6 +147,12 @@ export async function createRefund(
 			const alreadyRefunded = order.refunds.reduce((sum, r) => sum + r.amount, 0);
 			const maxRefundable = order.total - alreadyRefunded;
 
+			// Proratiser la réduction sur chaque article
+			const discountRatio =
+				order.subtotal > 0 && order.discountAmount > 0
+					? Math.min(order.discountAmount / order.subtotal, 1)
+					: 0;
+
 			// Valider les items et calculer le montant total
 			let totalAmount = 0;
 			const validatedItems: Array<{
@@ -173,8 +181,8 @@ export async function createRefund(
 					throw new Error(`QUANTITY_EXCEEDS:${availableQuantity}`);
 				}
 
-				// Cap the amount to the maximum possible for this item
-				const maxItemAmount = orderItem.price * item.quantity;
+				// Cap the amount to the maximum possible for this item (after discount proration)
+				const maxItemAmount = Math.round(orderItem.price * item.quantity * (1 - discountRatio));
 				const itemAmount = Math.min(item.amount, maxItemAmount);
 
 				if (item.amount > maxItemAmount) {

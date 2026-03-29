@@ -65,6 +65,7 @@ vi.mock("@/shared/components/rating-stars", () => ({
 
 vi.mock("next/image", () => ({
 	default: ({ src, alt }: { src: string; alt: string; fill?: boolean }) => (
+		// eslint-disable-next-line @next/next/no-img-element
 		<img src={src} alt={alt} />
 	),
 }));

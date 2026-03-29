@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -174,5 +175,31 @@ describe("CustomizationSelectionToolbar", () => {
 		mockSelectedItems = ["req-1"];
 		render(<CustomizationSelectionToolbar />);
 		expect(screen.getByText(/1 demande sélectionnée/)).toBeInTheDocument();
+	});
+
+	// ─── Click interactions ───────────────────────────────────────────────────
+
+	it("clicking 'Marquer en cours' opens dialog with IN_PROGRESS", async () => {
+		render(<CustomizationSelectionToolbar />);
+		await userEvent.click(screen.getByText("Marquer en cours"));
+		expect(mockOpenDialog).toHaveBeenCalledWith({ targetStatus: "IN_PROGRESS" });
+	});
+
+	it("clicking 'Marquer terminées' opens dialog with COMPLETED", async () => {
+		render(<CustomizationSelectionToolbar />);
+		await userEvent.click(screen.getByText("Marquer terminées"));
+		expect(mockOpenDialog).toHaveBeenCalledWith({ targetStatus: "COMPLETED" });
+	});
+
+	it("clicking 'Remettre en attente' opens dialog with PENDING", async () => {
+		render(<CustomizationSelectionToolbar />);
+		await userEvent.click(screen.getByText("Remettre en attente"));
+		expect(mockOpenDialog).toHaveBeenCalledWith({ targetStatus: "PENDING" });
+	});
+
+	it("clicking 'Annuler' opens dialog with CANCELLED", async () => {
+		render(<CustomizationSelectionToolbar />);
+		await userEvent.click(screen.getByText("Annuler"));
+		expect(mockOpenDialog).toHaveBeenCalledWith({ targetStatus: "CANCELLED" });
 	});
 });

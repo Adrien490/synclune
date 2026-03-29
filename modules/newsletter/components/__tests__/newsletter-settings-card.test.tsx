@@ -111,7 +111,7 @@ describe("NewsletterSettingsCard", () => {
 	it("sets action value to 'unsubscribe' when subscribed", () => {
 		render(<NewsletterSettingsCard isSubscribed={true} />);
 		const input = document.querySelector('input[name="action"]') as HTMLInputElement;
-		expect(input?.value).toBe("unsubscribe");
+		expect(input.value).toBe("unsubscribe");
 	});
 
 	// ─── Unsubscribed state ───────────────────────────────────────────────────
@@ -140,7 +140,7 @@ describe("NewsletterSettingsCard", () => {
 	it("sets action value to 'subscribe' when not subscribed", () => {
 		render(<NewsletterSettingsCard isSubscribed={false} />);
 		const input = document.querySelector('input[name="action"]') as HTMLInputElement;
-		expect(input?.value).toBe("subscribe");
+		expect(input.value).toBe("subscribe");
 	});
 
 	// ─── Pending state ────────────────────────────────────────────────────────

@@ -121,4 +121,57 @@ test.describe("Gestion du panier - Manipulation des articles", { tag: ["@critica
 		// Cart should show empty state (we only added one item)
 		await expect(cartPage.emptyMessage).toBeVisible({ timeout: 10000 });
 	});
+
+	test("le panier affiche un prix total", async ({ cartPage }) => {
+		// Total/subtotal should be visible in the cart dialog
+		const totalText = cartPage.dialog.getByText(/Total|Sous-total/i);
+		await expect(totalText.first()).toBeVisible();
+
+		// Should contain a price with € symbol
+		const priceText = cartPage.dialog.getByText(/€/);
+		await expect(priceText.first()).toBeVisible();
+	});
+
+	test("le panier affiche le nom du produit", async ({ cartPage }) => {
+		// Product name should be visible as a link or text
+		const productLink = cartPage.dialog
+			.getByRole("link")
+			.filter({ hasNot: cartPage.dialog.page().locator("[aria-label*='Fermer']") });
+		const linkCount = await productLink.count();
+
+		// At least one product link (besides close/checkout)
+		expect(linkCount).toBeGreaterThan(0);
+	});
+});
+
+test.describe("Panier - État vide", { tag: ["@regression"] }, () => {
+	test("le panier vide affiche un message et des liens", async ({ page, cartPage }) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		await cartPage.open();
+
+		// Empty cart message
+		await expect(cartPage.emptyMessage).toBeVisible();
+
+		// Should have links to shop
+		await expect(cartPage.shopLink).toBeVisible();
+	});
+
+	test("le lien 'Découvrir la boutique' fonctionne depuis le panier vide", async ({
+		page,
+		cartPage,
+	}) => {
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		await cartPage.open();
+		await expect(cartPage.emptyMessage).toBeVisible();
+
+		await cartPage.shopLink.click();
+		await page.waitForLoadState("domcontentloaded");
+
+		// Should navigate to products page
+		await expect(page).toHaveURL(/\/produits|\/collections/);
+	});
 });

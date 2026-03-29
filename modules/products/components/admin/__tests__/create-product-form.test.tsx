@@ -141,7 +141,28 @@ const defaultProps = {
 	],
 };
 
-function createMockForm(overrides: Record<string, unknown> = {}) {
+interface FormOverrides {
+	canSubmit?: boolean;
+	status?: string;
+	collectionIds?: string[];
+	initialSku?: {
+		media?: Array<{
+			url: string;
+			mediaType: "IMAGE" | "VIDEO";
+			altText?: string;
+			thumbnailUrl?: string;
+			blurDataUrl?: string;
+		}>;
+		colorId?: string;
+		materialId?: string;
+		size?: string;
+		priceInclTaxEuros?: number;
+		compareAtPriceEuros?: number;
+		inventory?: number;
+	};
+}
+
+function createMockForm(overrides: FormOverrides = {}) {
 	const fieldStub = {
 		name: "test",
 		state: { value: "", meta: { errors: [] } },
@@ -159,25 +180,29 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 		RadioGroupField: () => <div />,
 	};
 
+	const defaultInitialSku = {
+		media: [],
+		colorId: "",
+		materialId: "",
+		size: "",
+		priceInclTaxEuros: 0,
+		compareAtPriceEuros: undefined,
+		inventory: 0,
+	};
+
 	const formState = {
 		values: {
 			title: "",
 			description: "",
 			typeId: "",
-			collectionIds: [],
-			status: "DRAFT",
+			collectionIds: overrides.collectionIds ?? [],
+			status: overrides.status ?? "DRAFT",
 			initialSku: {
-				media: [],
-				colorId: "",
-				materialId: "",
-				size: "",
-				priceInclTaxEuros: 0,
-				compareAtPriceEuros: undefined,
-				inventory: 0,
+				...defaultInitialSku,
+				...overrides.initialSku,
 			},
 		},
-		canSubmit: true,
-		...overrides,
+		canSubmit: overrides.canSubmit ?? true,
 	};
 
 	return {
@@ -222,10 +247,7 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe("CreateProductForm", () => {
-	function setup(
-		formOverrides: Record<string, unknown> = {},
-		hookOverrides: Record<string, unknown> = {},
-	) {
+	function setup(formOverrides: FormOverrides = {}, hookOverrides: Record<string, unknown> = {}) {
 		const mockForm = createMockForm(formOverrides);
 
 		mockUseCreateProductForm.mockReturnValue({
@@ -451,6 +473,279 @@ describe("CreateProductForm", () => {
 
 			expect(screen.getByTestId("form-alert")).toBeInTheDocument();
 			expect(screen.getByText("Le titre est déjà utilisé")).toBeInTheDocument();
+		});
+
+		it("renders multiple error messages", () => {
+			setup({}, { formErrors: ["Erreur A", "Erreur B"] });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("Erreur A")).toBeInTheDocument();
+			expect(screen.getByText("Erreur B")).toBeInTheDocument();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Fieldset disabled state
+	// --------------------------------------------------------------------------
+
+	describe("fieldset disabled state", () => {
+		it("fieldset is not disabled when not pending", () => {
+			setup({}, { isPending: false });
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const fieldset = container.querySelector("fieldset");
+			expect(fieldset).not.toBeDisabled();
+		});
+
+		it("fieldset is disabled when isPending", () => {
+			setup({}, { isPending: true });
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const fieldset = container.querySelector("fieldset");
+			expect(fieldset).toBeDisabled();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Hidden inputs
+	// --------------------------------------------------------------------------
+
+	describe("hidden inputs", () => {
+		it("renders hidden input for status with default DRAFT value", () => {
+			setup();
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const statusInput = container.querySelector('input[name="status"]');
+			expect(statusInput).toBeInTheDocument();
+			expect(statusInput).toHaveAttribute("value", "DRAFT");
+		});
+
+		it("renders hidden input for status with PUBLIC value", () => {
+			setup({ status: "PUBLIC" });
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const statusInput = container.querySelector('input[name="status"]');
+			expect(statusInput).toHaveAttribute("value", "PUBLIC");
+		});
+
+		it("renders hidden input for collectionIds as serialized JSON", () => {
+			setup({ collectionIds: ["col-1", "col-2"] });
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const collectionsInput = container.querySelector('input[name="collectionIds"]');
+			expect(collectionsInput).toBeInTheDocument();
+			expect(collectionsInput).toHaveAttribute("value", JSON.stringify(["col-1", "col-2"]));
+		});
+
+		it("renders hidden input for empty collectionIds", () => {
+			setup({ collectionIds: [] });
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const collectionsInput = container.querySelector('input[name="collectionIds"]');
+			expect(collectionsInput).toHaveAttribute("value", "[]");
+		});
+
+		it("does not render media hidden input when no media", () => {
+			setup();
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const mediaInput = container.querySelector('input[name="initialSku.media"]');
+			expect(mediaInput).not.toBeInTheDocument();
+		});
+
+		it("does not render deletedImageUrls hidden input when none deleted", () => {
+			setup();
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			const deletedInput = container.querySelector('input[name="deletedImageUrls"]');
+			expect(deletedInput).not.toBeInTheDocument();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Layout sections
+	// --------------------------------------------------------------------------
+
+	describe("layout sections", () => {
+		it("renders the Informations card title", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("Informations")).toBeInTheDocument();
+		});
+
+		it("renders the Tarification card title", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("Tarification")).toBeInTheDocument();
+		});
+
+		it("renders the Stock card title", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("Stock")).toBeInTheDocument();
+		});
+
+		it("renders the Variante card title", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("Variante")).toBeInTheDocument();
+		});
+
+		it("renders collections multi-select", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByTestId("multi-select")).toBeInTheDocument();
+		});
+
+		it("renders tooltip info button for variant section", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(
+				screen.getByRole("button", {
+					name: "Plus d'informations sur les attributs de la variante",
+				}),
+			).toBeInTheDocument();
+		});
+
+		it("renders create product type button", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(
+				screen.getByRole("button", { name: "Créer un nouveau type de produit" }),
+			).toBeInTheDocument();
+		});
+
+		it("renders create color button", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(
+				screen.getByRole("button", { name: "Créer une nouvelle couleur" }),
+			).toBeInTheDocument();
+		});
+
+		it("renders create material button", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("button", { name: "Créer un nouveau matériau" })).toBeInTheDocument();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Media upload section
+	// --------------------------------------------------------------------------
+
+	describe("media upload section", () => {
+		it("renders upload dropzone with correct endpoint", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			const dropzone = screen.getByTestId("upload-dropzone");
+			expect(dropzone).toHaveAttribute("data-endpoint", "catalogMedia");
+		});
+
+		it("renders media upload zone container", () => {
+			setup();
+			const { container } = render(<CreateProductForm {...defaultProps} />);
+
+			expect(container.querySelector("#media-upload-zone")).toBeInTheDocument();
+		});
+
+		it("shows media grid when media items are present", () => {
+			const mediaItems = [
+				{
+					url: "https://example.com/img1.jpg",
+					mediaType: "IMAGE" as const,
+					altText: undefined,
+					thumbnailUrl: undefined,
+					blurDataUrl: undefined,
+				},
+			];
+			setup({ initialSku: { media: mediaItems } });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByTestId("media-upload-grid")).toBeInTheDocument();
+			expect(screen.queryByTestId("upload-dropzone")).not.toBeInTheDocument();
+		});
+
+		it("shows media counter with zero when no media", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByTestId("media-counter")).toHaveTextContent("0/6");
+		});
+
+		it("shows hint text about image ordering", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(
+				screen.getByText("La première image sera l'image principale. Glissez pour réordonner."),
+			).toBeInTheDocument();
+		});
+
+		it("shows media limit warning when at max capacity", () => {
+			const maxMedia = Array.from({ length: 6 }, (_, i) => ({
+				url: `https://example.com/img${i}.jpg`,
+				mediaType: "IMAGE" as const,
+				altText: undefined,
+				thumbnailUrl: undefined,
+				blurDataUrl: undefined,
+			}));
+			setup({ initialSku: { media: maxMedia } });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByText("Limite de 6 médias atteinte")).toBeInTheDocument();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// canSubmit — submit button enabled/disabled
+	// --------------------------------------------------------------------------
+
+	describe("canSubmit state", () => {
+		it("enables submit buttons when canSubmit is true and not pending", () => {
+			setup({ canSubmit: true }, { isPending: false });
+			render(<CreateProductForm {...defaultProps} />);
+
+			const submitButtons = screen
+				.getAllByRole("button")
+				.filter((btn) => btn.getAttribute("type") === "submit");
+			submitButtons.forEach((button) => {
+				expect(button).not.toBeDisabled();
+			});
+		});
+
+		it("disables submit buttons when canSubmit is false", () => {
+			setup({ canSubmit: false }, { isPending: false });
+			render(<CreateProductForm {...defaultProps} />);
+
+			const submitButtons = screen
+				.getAllByRole("button")
+				.filter((btn) => btn.getAttribute("type") === "submit");
+			submitButtons.forEach((button) => {
+				expect(button).toBeDisabled();
+			});
+		});
+
+		it("disables submit buttons when isPending regardless of canSubmit", () => {
+			setup({ canSubmit: true }, { isPending: true });
+			render(<CreateProductForm {...defaultProps} />);
+
+			const submitButtons = screen
+				.getAllByRole("button")
+				.filter((btn) => btn.getAttribute("type") === "submit");
+			submitButtons.forEach((button) => {
+				expect(button).toBeDisabled();
+			});
 		});
 	});
 });

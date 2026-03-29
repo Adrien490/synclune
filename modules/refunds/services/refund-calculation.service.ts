@@ -68,32 +68,65 @@ export function calculateMaxRefundable(orderTotal: number, alreadyRefunded: numb
 }
 
 // ============================================================================
-// AMOUNT CALCULATIONS
+// DISCOUNT PRORATION
 // ============================================================================
 
 /**
+ * Calcule le ratio de réduction appliqué à la commande
+ *
+ * @param subtotal - Sous-total de la commande en centimes (avant réduction)
+ * @param discountAmount - Montant de la réduction en centimes
+ * @returns Ratio entre 0 et 1 (ex: 0.2 pour 20% de réduction)
+ */
+export function calculateDiscountRatio(subtotal: number, discountAmount: number): number {
+	if (subtotal <= 0 || discountAmount <= 0) return 0;
+	return Math.min(discountAmount / subtotal, 1);
+}
+
+// ============================================================================
+// AMOUNT CALCULATIONS
+// ============================================================================
+
+export interface DiscountInfo {
+	subtotal: number;
+	discountAmount: number;
+}
+
+/**
  * Calcule le montant total des articles sélectionnés pour remboursement
+ * Proratise les réductions si applicable
  *
  * @param selectedItems - Articles sélectionnés avec leurs quantités
  * @param orderItems - Articles de la commande originale (pour les prix)
+ * @param discount - Info réduction (optionnel, pour proratisation)
  * @returns Montant total en centimes
  *
  * @example
  * ```ts
- * const total = calculateRefundAmount(
- *   [{ orderItemId: "1", quantity: 2, ... }],
- *   [{ id: "1", price: 5000 }]
- * );
+ * // Sans réduction
+ * calculateRefundAmount([{ orderItemId: "1", quantity: 2 }], [{ id: "1", price: 5000 }]);
  * // 10000 (2 × 50€)
+ *
+ * // Avec 20% de réduction
+ * calculateRefundAmount(
+ *   [{ orderItemId: "1", quantity: 2 }],
+ *   [{ id: "1", price: 5000 }],
+ *   { subtotal: 10000, discountAmount: 2000 }
+ * );
+ * // 8000 (2 × 50€ × 0.8)
  * ```
  */
 export function calculateRefundAmount(
 	selectedItems: RefundItemValue[],
 	orderItems: OrderItemForRefundCalc[],
+	discount?: DiscountInfo,
 ): number {
+	const ratio = discount ? calculateDiscountRatio(discount.subtotal, discount.discountAmount) : 0;
+
 	return selectedItems.reduce((sum, item) => {
 		const orderItem = orderItems.find((oi) => oi.id === item.orderItemId);
-		return sum + (orderItem?.price ?? 0) * item.quantity;
+		const rawAmount = (orderItem?.price ?? 0) * item.quantity;
+		return sum + Math.round(rawAmount * (1 - ratio));
 	}, 0);
 }
 

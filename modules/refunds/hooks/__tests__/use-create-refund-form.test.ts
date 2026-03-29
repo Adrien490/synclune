@@ -133,6 +133,8 @@ function makeOrderItem(
 const DEFAULT_OPTIONS = {
 	orderId: "order-1",
 	orderItems: [makeOrderItem()],
+	subtotal: 10000,
+	discountAmount: 0,
 };
 
 // ============================================================================
@@ -327,6 +329,8 @@ describe("useCreateRefundForm", () => {
 			useCreateRefundForm({
 				orderId: "order-1",
 				orderItems: [makeOrderItem({ id: "item-1" }), makeOrderItem({ id: "item-2", quantity: 3 })],
+				subtotal: 25000,
+				discountAmount: 0,
 			}),
 		);
 

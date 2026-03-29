@@ -1,4 +1,5 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -62,19 +63,36 @@ vi.mock("@/shared/components/ui/dialog", () => ({
 	},
 }));
 
+const { mockSelectCallbacks } = vi.hoisted(() => ({
+	mockSelectCallbacks: new Map<number, (v: string) => void>(),
+}));
+
+let selectCounter = 0;
 vi.mock("@/shared/components/ui/select", () => ({
 	Select: ({
 		children,
+		value,
+		onValueChange,
 	}: {
 		children: React.ReactNode;
 		value?: string;
 		onValueChange?: (v: string) => void;
-	}) => <div data-testid="select">{children}</div>,
+	}) => {
+		const id = selectCounter++;
+		if (onValueChange) mockSelectCallbacks.set(id, onValueChange);
+		return (
+			<div data-testid="select" data-value={value} data-select-id={id}>
+				{children}
+			</div>
+		);
+	},
 	SelectContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="select-content">{children}</div>
 	),
 	SelectItem: ({ children, value }: { children: React.ReactNode; value: string }) => (
-		<div data-testid={`select-item-${value}`}>{children}</div>
+		<div data-testid={`select-item-${value}`} data-value={value}>
+			{children}
+		</div>
 	),
 	SelectTrigger: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="select-trigger">{children}</div>
@@ -106,6 +124,15 @@ vi.mock("sonner", () => ({
 
 import { ExportOrdersButton } from "../export-orders-button";
 
+/** Helper: trigger the onValueChange of the first Select (period type) */
+function changePeriodType(value: string) {
+	// The period type select is always the first one rendered (lowest id)
+	const selects = screen.getAllByTestId("select");
+	const id = Number(selects[0]!.getAttribute("data-select-id"));
+	const callback = mockSelectCallbacks.get(id);
+	callback?.(value);
+}
+
 afterEach(cleanup);
 
 // ============================================================================
@@ -115,6 +142,8 @@ afterEach(cleanup);
 describe("ExportOrdersButton", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		selectCounter = 0;
+		mockSelectCallbacks.clear();
 	});
 
 	it("renders without crashing", () => {
@@ -182,5 +211,193 @@ describe("ExportOrdersButton", () => {
 	it("dialog starts closed", () => {
 		render(<ExportOrdersButton />);
 		expect(screen.getByTestId("dialog")).toHaveAttribute("data-open", "false");
+	});
+
+	// ─── Period type selection ─────────────────────────────────────────────
+
+	it("shows year select when period is 'year'", async () => {
+		render(<ExportOrdersButton />);
+		await act(() => changePeriodType("year"));
+		// Should now have 2 selects: period + year
+		expect(screen.getAllByTestId("select").length).toBeGreaterThanOrEqual(2);
+	});
+
+	it("shows month select when period is 'month'", async () => {
+		render(<ExportOrdersButton />);
+		await act(() => changePeriodType("month"));
+		// Should now have 3 selects: period + year + month
+		expect(screen.getAllByTestId("select").length).toBeGreaterThanOrEqual(3);
+	});
+
+	it("shows date inputs when period is 'custom'", async () => {
+		render(<ExportOrdersButton />);
+		await act(() => changePeriodType("custom"));
+		const inputs = screen.getAllByTestId("input");
+		expect(inputs.length).toBe(2);
+	});
+
+	// ─── Export behavior ──────────────────────────────────────────────────
+
+	it("calls fetch with periodType=all on export", async () => {
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(new Blob(["csv"])),
+			headers: new Headers({ "Content-Disposition": 'filename="export.csv"' }),
+		});
+		vi.stubGlobal("fetch", mockFetch);
+
+		render(<ExportOrdersButton />);
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(mockFetch).toHaveBeenCalledWith(expect.stringContaining("periodType=all"));
+		vi.unstubAllGlobals();
+	});
+
+	it("shows toast.error when custom dates are missing", async () => {
+		const { toast } = await import("sonner");
+		render(<ExportOrdersButton />);
+		await act(() => changePeriodType("custom"));
+
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(toast.error).toHaveBeenCalledWith("Veuillez renseigner les dates de début et de fin");
+	});
+
+	it("shows toast.error when fetch fails", async () => {
+		const { toast } = await import("sonner");
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: false,
+			json: () => Promise.resolve({ error: "Server error" }),
+		});
+		vi.stubGlobal("fetch", mockFetch);
+
+		render(<ExportOrdersButton />);
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(toast.error).toHaveBeenCalledWith("Server error");
+		vi.unstubAllGlobals();
+	});
+
+	it("shows generic error when fetch throws", async () => {
+		const { toast } = await import("sonner");
+		const mockFetch = vi.fn().mockRejectedValue(new Error("Network error"));
+		vi.stubGlobal("fetch", mockFetch);
+
+		render(<ExportOrdersButton />);
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(toast.error).toHaveBeenCalledWith("Erreur lors de l'export");
+		vi.unstubAllGlobals();
+	});
+
+	it("shows generic error when response.json fails", async () => {
+		const { toast } = await import("sonner");
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: false,
+			json: () => Promise.reject(new Error("parse error")),
+		});
+		vi.stubGlobal("fetch", mockFetch);
+
+		render(<ExportOrdersButton />);
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(toast.error).toHaveBeenCalledWith("Erreur lors de l'export");
+		vi.unstubAllGlobals();
+	});
+
+	it("downloads CSV on successful export", async () => {
+		const { toast } = await import("sonner");
+		const mockBlob = new Blob(["data"]);
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(mockBlob),
+			headers: new Headers({ "Content-Disposition": 'filename="orders-2026.csv"' }),
+		});
+		vi.stubGlobal("fetch", mockFetch);
+
+		const mockLink = { href: "", download: "", click: vi.fn() };
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+			if (tag === "a") return mockLink as unknown as HTMLAnchorElement;
+			return originalCreateElement(tag);
+		});
+		vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:url");
+		vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+		render(<ExportOrdersButton />);
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(mockLink.download).toBe("orders-2026.csv");
+		expect(mockLink.click).toHaveBeenCalled();
+		expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:url");
+		expect(toast.success).toHaveBeenCalledWith("Export téléchargé");
+
+		vi.restoreAllMocks();
+		vi.unstubAllGlobals();
+	});
+
+	it("falls back to 'export.csv' when no Content-Disposition header", async () => {
+		const mockBlob = new Blob(["data"]);
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(mockBlob),
+			headers: new Headers(),
+		});
+		vi.stubGlobal("fetch", mockFetch);
+
+		const mockLink = { href: "", download: "", click: vi.fn() };
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+			if (tag === "a") return mockLink as unknown as HTMLAnchorElement;
+			return originalCreateElement(tag);
+		});
+		vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:url");
+		vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+		render(<ExportOrdersButton />);
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		expect(mockLink.download).toBe("export.csv");
+
+		vi.restoreAllMocks();
+		vi.unstubAllGlobals();
+	});
+
+	it("sends year param when periodType is year", async () => {
+		const mockFetch = vi.fn().mockResolvedValue({
+			ok: true,
+			blob: () => Promise.resolve(new Blob(["csv"])),
+			headers: new Headers(),
+		});
+		vi.stubGlobal("fetch", mockFetch);
+
+		const mockLink = { href: "", download: "", click: vi.fn() };
+		const originalCreateElement = document.createElement.bind(document);
+		vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+			if (tag === "a") return mockLink as unknown as HTMLAnchorElement;
+			return originalCreateElement(tag);
+		});
+		vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:url");
+		vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+
+		render(<ExportOrdersButton />);
+		await act(() => changePeriodType("year"));
+
+		const exportBtn = screen.getByText("Télécharger CSV");
+		await userEvent.click(exportBtn);
+
+		const fetchUrl = mockFetch.mock.calls[0]![0] as string;
+		expect(fetchUrl).toContain("periodType=year");
+		expect(fetchUrl).toContain("year=");
+
+		vi.restoreAllMocks();
+		vi.unstubAllGlobals();
 	});
 });

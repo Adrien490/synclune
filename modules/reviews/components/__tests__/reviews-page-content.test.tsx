@@ -94,7 +94,8 @@ function StubEmpty() {
 		<div data-testid="empty">
 			<p data-testid="empty-title">Aucun avis</p>
 			<p>Vous n&apos;avez pas encore laissé d&apos;avis.</p>
-			<a href="/creations">Parcourir nos créations</a>
+			{/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+			<a href="/creations/">Parcourir nos créations</a>
 		</div>
 	);
 }
@@ -156,7 +157,7 @@ describe("ReviewsPageContent", () => {
 		render(<StubEmpty />);
 		expect(screen.getByRole("link", { name: "Parcourir nos créations" })).toHaveAttribute(
 			"href",
-			"/creations",
+			"/creations/",
 		);
 	});
 

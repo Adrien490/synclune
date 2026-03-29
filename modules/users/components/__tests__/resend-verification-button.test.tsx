@@ -139,11 +139,11 @@ describe("ResendVerificationButton", () => {
 	// ─── Cooldown from localStorage ───────────────────────────────────────────
 
 	it("shows cooldown remaining when localStorage has recent cooldown", () => {
-		const key = `resend-cooldown-user@example.com`;
+		const _key = `resend-cooldown-user@example.com`;
 		// Set a start time 10 seconds ago → 50s remaining
 		localStorageMock.getItem.mockReturnValue(String(Date.now() - 10_000));
 		render(<ResendVerificationButton email="user@example.com" />);
-		const text = screen.getByRole("button").textContent ?? "";
+		const text = screen.getByRole("button").textContent!;
 		expect(text).toContain("Renvoyer dans");
 		expect(text).toContain("s");
 	});

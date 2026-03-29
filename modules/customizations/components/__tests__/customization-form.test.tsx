@@ -19,7 +19,7 @@ vi.mock("@/modules/customizations/hooks/use-customization-form", () => ({
 			state: { isDirty: false, values: { inspirationMedias: [], deletedImageUrls: [] } },
 			AppField: ({
 				children,
-				name,
+				name: _name,
 			}: {
 				children: (field: {
 					state: { value: string; meta: { errors: string[] } };

@@ -6,9 +6,10 @@ import type * as React from "react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockRouterPush, mockIsPending } = vi.hoisted(() => ({
+const { mockRouterPush, mockIsPending, mockCanSubmit } = vi.hoisted(() => ({
 	mockRouterPush: vi.fn(),
 	mockIsPending: { value: false },
+	mockCanSubmit: { value: true },
 }));
 
 // ============================================================================
@@ -145,10 +146,17 @@ vi.mock("@/shared/components/forms", () => ({
 		),
 		Subscribe: ({
 			children,
+			selector,
 		}: {
 			children: (values: unknown[]) => React.ReactNode;
 			selector: (state: Record<string, unknown>) => unknown[];
-		}) => <>{children([true, defaultValues.status ?? "DRAFT"])}</>,
+		}) => {
+			const fakeState = {
+				canSubmit: mockCanSubmit.value,
+				values: { ...defaultValues },
+			};
+			return <>{children(selector(fakeState))}</>;
+		},
 	})),
 }));
 
@@ -188,6 +196,7 @@ describe("CreateCollectionForm", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockIsPending.value = false;
+		mockCanSubmit.value = true;
 	});
 
 	// ─── Rendering ────────────────────────────────────────────────────────────
@@ -262,6 +271,88 @@ describe("CreateCollectionForm", () => {
 	it("renders description textarea with correct placeholder", () => {
 		render(<CreateCollectionForm />);
 		expect(screen.getByPlaceholderText("Décrivez cette collection...")).toBeInTheDocument();
+	});
+
+	// ─── ARCHIVED option excluded ─────────────────────────────────────────────
+
+	it("does not render the 'Archivée' option in the status select", () => {
+		render(<CreateCollectionForm />);
+		expect(screen.queryByText("Archivée")).not.toBeInTheDocument();
+	});
+
+	// ─── Disabled states when isPending ───────────────────────────────────────
+
+	it("disables the name input when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<CreateCollectionForm />);
+		expect(screen.getByTestId("input-name")).toBeDisabled();
+	});
+
+	it("disables the description textarea when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<CreateCollectionForm />);
+		expect(screen.getByTestId("textarea-description")).toBeDisabled();
+	});
+
+	it("disables the status select when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<CreateCollectionForm />);
+		expect(screen.getByTestId("select-status")).toBeDisabled();
+	});
+
+	it("disables the submit button when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<CreateCollectionForm />);
+		expect(screen.getByRole("button", { name: "Création..." })).toBeDisabled();
+	});
+
+	// ─── canSubmit=false ──────────────────────────────────────────────────────
+
+	it("disables the submit button when canSubmit is false", () => {
+		mockCanSubmit.value = false;
+		render(<CreateCollectionForm />);
+		expect(screen.getByRole("button", { name: "Créer" })).toBeDisabled();
+	});
+
+	// ─── Hidden status input ───────────────────────────────────────────────────
+
+	it("renders a hidden input with name='status' and default value 'DRAFT'", () => {
+		render(<CreateCollectionForm />);
+		const hiddenInput = document.querySelector(
+			'input[type="hidden"][name="status"]',
+		) as HTMLInputElement;
+		expect(hiddenInput).not.toBeNull();
+		expect(hiddenInput.value).toBe("DRAFT");
+	});
+
+	// ─── Form element ─────────────────────────────────────────────────────────
+
+	it("renders a <form> element", () => {
+		const { container } = render(<CreateCollectionForm />);
+		expect(container.querySelector("form")).not.toBeNull();
+	});
+
+	it("applies className prop to the form element", () => {
+		const { container } = render(<CreateCollectionForm className="custom-class" />);
+		const form = container.querySelector("form");
+		expect(form?.className).toContain("custom-class");
+	});
+
+	// ─── enabled states when not pending ─────────────────────────────────────
+
+	it("does not disable the name input when not pending", () => {
+		render(<CreateCollectionForm />);
+		expect(screen.getByTestId("input-name")).not.toBeDisabled();
+	});
+
+	it("does not disable the description textarea when not pending", () => {
+		render(<CreateCollectionForm />);
+		expect(screen.getByTestId("textarea-description")).not.toBeDisabled();
+	});
+
+	it("does not disable the status select when not pending", () => {
+		render(<CreateCollectionForm />);
+		expect(screen.getByTestId("select-status")).not.toBeDisabled();
 	});
 
 	// ─── Props ────────────────────────────────────────────────────────────────

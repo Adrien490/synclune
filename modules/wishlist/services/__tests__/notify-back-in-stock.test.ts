@@ -76,6 +76,7 @@ describe("notifyBackInStock", () => {
 		expect(call.where.wishlist.userId).toEqual({ not: null });
 		expect(call.where.wishlist.user.deletedAt).toBeNull();
 		expect(call.take).toBe(50);
+		expect(call.orderBy).toEqual({ id: "asc" });
 	});
 
 	it("sends email to all eligible wishlist users", async () => {
@@ -181,6 +182,52 @@ describe("notifyBackInStock", () => {
 				where: { id: { in: ["wi-2"] } },
 			}),
 		);
+	});
+
+	it("paginates through all users in batches of 50", async () => {
+		// First batch: 50 items (triggers next batch)
+		const batch1 = Array.from({ length: 50 }, (_, i) =>
+			makeWishlistItem({
+				id: `wi-${i + 1}`,
+				wishlist: { user: { email: `user${i + 1}@example.com`, name: `User ${i + 1}` } },
+			}),
+		);
+		// Second batch: 10 items (less than 50, stops pagination)
+		const batch2 = Array.from({ length: 10 }, (_, i) =>
+			makeWishlistItem({
+				id: `wi-${i + 51}`,
+				wishlist: { user: { email: `user${i + 51}@example.com`, name: `User ${i + 51}` } },
+			}),
+		);
+
+		mockPrisma.wishlistItem.findMany.mockResolvedValueOnce(batch1).mockResolvedValueOnce(batch2);
+
+		await notifyBackInStock("prod-1");
+
+		// Should have made 2 findMany calls (pagination)
+		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledTimes(2);
+
+		// Second call should use cursor from last item of first batch
+		const secondCall = mockPrisma.wishlistItem.findMany.mock.calls[1]![0];
+		expect(secondCall.cursor).toEqual({ id: "wi-50" });
+		expect(secondCall.skip).toBe(1);
+
+		// All 60 emails should have been sent
+		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(60);
+
+		// Two updateMany calls (one per batch)
+		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenCalledTimes(2);
+	});
+
+	it("stops pagination when batch returns fewer than 50 items", async () => {
+		const smallBatch = Array.from({ length: 3 }, (_, i) => makeWishlistItem({ id: `wi-${i + 1}` }));
+		mockPrisma.wishlistItem.findMany.mockResolvedValueOnce(smallBatch);
+
+		await notifyBackInStock("prod-1");
+
+		// Only one findMany call (batch < 50 = no more pages)
+		expect(mockPrisma.wishlistItem.findMany).toHaveBeenCalledTimes(1);
+		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(3);
 	});
 
 	it("uses email as fallback when user has no name", async () => {

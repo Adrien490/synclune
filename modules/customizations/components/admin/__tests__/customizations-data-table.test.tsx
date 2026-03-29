@@ -115,7 +115,7 @@ import type { GetCustomizationRequestsResult } from "@/modules/customizations/da
 // HELPERS
 // ============================================================================
 
-function createResult(
+function _createResult(
 	overrides: Partial<GetCustomizationRequestsResult> = {},
 ): Promise<GetCustomizationRequestsResult> {
 	return Promise.resolve({

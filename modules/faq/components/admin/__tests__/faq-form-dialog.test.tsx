@@ -148,7 +148,7 @@ vi.mock("@/shared/components/responsive-dialog", () => ({
 	),
 	ResponsiveDialogHeader: ({
 		children,
-		className,
+		className: _className,
 	}: {
 		children: React.ReactNode;
 		className?: string;
@@ -169,7 +169,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		type,
 		onClick,
 		variant,
-		size,
+		size: _size,
 		"aria-label": ariaLabel,
 	}: {
 		children: React.ReactNode;

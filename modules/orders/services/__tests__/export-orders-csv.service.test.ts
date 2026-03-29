@@ -132,10 +132,10 @@ describe("generateOrdersCsv", () => {
 		expect(columns[2]).toBe("Date paiement");
 		expect(columns[3]).toBe("Client");
 		expect(columns[4]).toBe("Email");
-		expect(columns[5]).toBe("Sous-total HT");
+		expect(columns[5]).toBe("Sous-total");
 		expect(columns[6]).toBe("Réduction");
 		expect(columns[7]).toBe("Livraison");
-		expect(columns[8]).toBe("Total TTC");
+		expect(columns[8]).toBe("Total");
 		expect(columns[9]).toBe("Moyen de paiement");
 		expect(columns[10]).toBe("Statut paiement");
 		expect(columns[11]).toBe("Statut commande");

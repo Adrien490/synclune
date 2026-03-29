@@ -31,7 +31,7 @@ vi.mock("@radix-ui/react-slider", () => ({
 		"aria-label": ariaLabel,
 		value,
 		max,
-		onValueChange,
+		onValueChange: _onValueChange,
 		...props
 	}: {
 		children?: React.ReactNode;

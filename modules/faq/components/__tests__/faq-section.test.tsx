@@ -47,9 +47,9 @@ vi.mock("@/shared/components/animations", () => ({
 		once?: boolean;
 	}) => <>{children}</>,
 	HandDrawnUnderline: ({
-		color,
-		delay,
-		className,
+		color: _color,
+		delay: _delay,
+		className: _className,
 	}: {
 		color?: string;
 		delay?: number;
@@ -79,9 +79,9 @@ vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
 		children,
 		asChild,
-		variant,
-		size,
-		className,
+		variant: _variant,
+		size: _size,
+		className: _className,
 	}: {
 		children: React.ReactNode;
 		asChild?: boolean;

@@ -49,7 +49,7 @@ vi.mock("@/shared/components/ui/select", () => ({
 	Select: ({
 		children,
 		value,
-		onValueChange,
+		onValueChange: _onValueChange,
 		disabled,
 	}: {
 		children: React.ReactNode;

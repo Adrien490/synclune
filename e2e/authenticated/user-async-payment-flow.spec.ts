@@ -11,22 +11,17 @@ test.describe(
 			checkoutPage,
 			productCatalogPage,
 		}) => {
-			// 1. Navigate to products and find one to purchase
-			await productCatalogPage.goto();
+			// 1. Add product to cart using POM helper
+			const result = await productCatalogPage.addFirstProductToCart(cartPage);
+			if (result.skipped) {
+				if (result.seedData) {
+					requireSeedData(test, false, result.reason);
+				}
+				test.skip(true, result.reason);
+				return;
+			}
 
-			const productCount = await productCatalogPage.productLinks.count();
-			requireSeedData(test, productCount > 0, "No products found");
-
-			await productCatalogPage.gotoFirstProduct();
-
-			// 2. Add to cart
-			const addButtonCount = await productCatalogPage.addToCartButton.count();
-			test.skip(addButtonCount === 0, "Product requires SKU selection");
-
-			await productCatalogPage.addToCartButton.first().click();
-			await expect(cartPage.dialog).toBeVisible({ timeout: 5000 });
-
-			// 3. Navigate to checkout
+			// 2. Navigate to checkout
 			await expect(cartPage.checkoutLink).toBeVisible({ timeout: 5000 });
 			await cartPage.checkoutLink.click();
 

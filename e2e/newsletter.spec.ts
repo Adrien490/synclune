@@ -103,3 +103,45 @@ test.describe("Newsletter", { tag: ["@regression"] }, () => {
 		expect(response?.status()).toBeLessThan(500);
 	});
 });
+
+test.describe("Newsletter - Pages confirmation/desinscription", { tag: ["@regression"] }, () => {
+	test("la page de confirmation sans token affiche un message d'erreur", async ({ page }) => {
+		await page.goto("/newsletter/confirmer");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Should show missing token state
+		const heading = page.getByRole("heading", { name: /Confirmation/i }).first();
+		await expect(heading).toBeVisible();
+
+		// Should show missing token message or error
+		const missingMessage = page.getByText(/manquant|confirmation impossible/i);
+		await expect(missingMessage.first()).toBeVisible({ timeout: 5000 });
+	});
+
+	test("la page de confirmation affiche les boutons de navigation", async ({ page }) => {
+		await page.goto("/newsletter/confirmer");
+		await page.waitForLoadState("domcontentloaded");
+
+		// "Retour à l'accueil" link
+		const homeLink = page.getByRole("link", { name: /Retour à l'accueil/i });
+		await expect(homeLink).toBeVisible();
+
+		// "Découvrir mes créations" link
+		const productsLink = page.getByRole("link", { name: /Découvrir mes créations/i });
+		await expect(productsLink).toBeVisible();
+		await expect(productsLink).toHaveAttribute("href", /\/produits/);
+	});
+
+	test("la page de desinscription sans token affiche un message d'erreur", async ({ page }) => {
+		await page.goto("/newsletter/desinscription");
+		await page.waitForLoadState("domcontentloaded");
+
+		// Should show missing token state
+		const heading = page.getByRole("heading", { name: /Désinscription/i }).first();
+		await expect(heading).toBeVisible();
+
+		// Should show missing token message or error
+		const missingMessage = page.getByText(/manquant|désinscription impossible/i);
+		await expect(missingMessage.first()).toBeVisible({ timeout: 5000 });
+	});
+});

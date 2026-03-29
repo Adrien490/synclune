@@ -63,14 +63,14 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 	AlertDialogTitle: ({
 		children,
-		className,
+		className: _className,
 	}: {
 		children: React.ReactNode;
 		className?: string;
 	}) => <h2 data-testid="alert-dialog-title">{children}</h2>,
 	AlertDialogDescription: ({
 		children,
-		asChild,
+		asChild: _asChild,
 	}: {
 		children: React.ReactNode;
 		asChild?: boolean;

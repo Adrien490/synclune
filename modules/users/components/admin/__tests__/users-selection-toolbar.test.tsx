@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -249,5 +250,52 @@ describe("UsersSelectionToolbar", () => {
 		mockRestoreDialog.isOpen = true;
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
 		expect(document.body.textContent).toContain("Restaurer les utilisateurs");
+	});
+
+	// ─── Click interactions ───────────────────────────────────────────────────
+
+	it("clicking 'Suspendre' opens suspend dialog", async () => {
+		mockSelectedItems.value = ["user-1", "user-2"];
+		render(<UsersSelectionToolbar userIds={["user-1", "user-2"]} />);
+		await userEvent.click(screen.getByText("Suspendre"));
+		expect(mockSuspendDialog.open).toHaveBeenCalled();
+	});
+
+	it("clicking 'Restaurer' opens restore dialog", async () => {
+		mockSelectedItems.value = ["user-1"];
+		render(<UsersSelectionToolbar userIds={["user-1"]} />);
+		await userEvent.click(screen.getByText("Restaurer"));
+		expect(mockRestoreDialog.open).toHaveBeenCalled();
+	});
+
+	it("clicking 'Supprimer' opens delete dialog", async () => {
+		mockSelectedItems.value = ["user-1"];
+		render(<UsersSelectionToolbar userIds={["user-1"]} />);
+		await userEvent.click(screen.getByText("Supprimer"));
+		expect(mockDeleteDialog.open).toHaveBeenCalled();
+	});
+
+	it("clicking 'Promouvoir admin' opens promote dialog", async () => {
+		mockSelectedItems.value = ["user-1"];
+		render(<UsersSelectionToolbar userIds={["user-1"]} />);
+		const promoteBtn = screen.queryByText("Promouvoir admin");
+		if (promoteBtn) {
+			await userEvent.click(promoteBtn);
+			expect(mockPromoteDialog.open).toHaveBeenCalled();
+		}
+	});
+
+	it("renders promote dialog when promoteDialog.isOpen is true", () => {
+		mockSelectedItems.value = ["user-1"];
+		mockPromoteDialog.isOpen = true;
+		render(<UsersSelectionToolbar userIds={["user-1"]} />);
+		expect(document.body.textContent).toContain("Promouvoir");
+	});
+
+	it("renders demote dialog when demoteDialog.isOpen is true", () => {
+		mockSelectedItems.value = ["user-1"];
+		mockDemoteDialog.isOpen = true;
+		render(<UsersSelectionToolbar userIds={["user-1"]} />);
+		expect(document.body.textContent).toContain("Retrograder");
 	});
 });

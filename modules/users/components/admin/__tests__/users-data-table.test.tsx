@@ -149,13 +149,13 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("@/shared/utils/dates", () => ({
-	formatDateShort: vi.fn((date: Date) => "01/01/2026"),
+	formatDateShort: vi.fn((_date: Date) => "01/01/2026"),
 }));
 
 vi.mock("lucide-react", () => ({
 	CircleCheck: ({
 		"aria-label": ariaLabel,
-		className,
+		className: _className,
 	}: {
 		"aria-label"?: string;
 		className?: string;
@@ -346,7 +346,7 @@ describe("UsersDataTable", () => {
 			/>,
 		);
 		const rows = document.querySelectorAll("tr");
-		const deletedRow = Array.from(rows).find((r) => r.className?.includes("opacity-50"));
+		const deletedRow = Array.from(rows).find((r) => r.className.includes("opacity-50"));
 		expect(deletedRow).not.toBeUndefined();
 	});
 

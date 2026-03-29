@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -17,7 +17,7 @@ vi.mock("@/modules/cart/data/get-cart", () => ({
 }));
 
 vi.mock("next/dynamic", () => ({
-	default: (fn: () => Promise<{ CartSheet?: unknown; SkuSelectorDialog?: unknown }>) => {
+	default: (_fn: () => Promise<{ CartSheet?: unknown; SkuSelectorDialog?: unknown }>) => {
 		// Return a placeholder based on the module path
 		const WrappedComponent = (props: Record<string, unknown>) => {
 			// We just render a stub for dynamic components

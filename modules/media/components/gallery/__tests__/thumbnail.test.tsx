@@ -25,7 +25,7 @@ vi.mock("next/image", () => ({
 		onError?: () => void;
 		[key: string]: unknown;
 	}) => (
-		// eslint-disable-next-line @next/next/no-img-element
+		// eslint-disable-next-line @next/next/no-img-element, jsx-a11y/no-noninteractive-element-interactions
 		<img src={src} alt={alt} onError={onError} data-testid="thumbnail-image" />
 	),
 }));

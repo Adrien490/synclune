@@ -15,7 +15,7 @@ const {
 	mockInvalidate,
 	mockSendReset,
 } = vi.hoisted(() => {
-	const makeDialog = (id: string) => ({
+	const makeDialog = (_id: string) => ({
 		isOpen: false,
 		open: vi.fn(),
 		close: vi.fn(),
@@ -71,7 +71,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		"aria-label": ariaLabel,
 		disabled,
 		type,
-		variant,
+		variant: _variant,
 		className,
 		...rest
 	}: {
@@ -99,21 +99,25 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	DropdownMenuTrigger: ({
 		children,
-		asChild,
+		asChild: _asChild,
 	}: {
 		children: React.ReactNode;
 		asChild?: boolean;
 	}) => <div data-testid="dropdown-trigger">{children}</div>,
-	DropdownMenuContent: ({ children, align }: { children: React.ReactNode; align?: string }) => (
-		<div data-testid="dropdown-content">{children}</div>
-	),
+	DropdownMenuContent: ({
+		children,
+		align: _align,
+	}: {
+		children: React.ReactNode;
+		align?: string;
+	}) => <div data-testid="dropdown-content">{children}</div>,
 	DropdownMenuSeparator: () => <hr />,
 	DropdownMenuItem: ({
 		children,
 		onClick,
 		className,
 		disabled,
-		asChild,
+		asChild: _asChild,
 	}: {
 		children: React.ReactNode;
 		onClick?: () => void;
@@ -149,7 +153,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialogCancel: ({
 		children,
 		disabled,
-		type,
+		type: _type,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;

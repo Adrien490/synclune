@@ -85,7 +85,7 @@ vi.mock("@/shared/components/ui/radio-group", () => ({
 	RadioGroup: ({
 		children,
 		value,
-		onValueChange,
+		onValueChange: _onValueChange,
 	}: {
 		children: React.ReactNode;
 		value?: string;

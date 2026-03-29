@@ -53,7 +53,7 @@ describe("ProfileInfoCardSkeleton", () => {
 	it("renders skeleton with full width class for main field", () => {
 		render(<ProfileInfoCardSkeleton />);
 		const skeletons = screen.getAllByTestId("skeleton");
-		const hasFullWidth = skeletons.some((s) => s.className?.includes("w-full"));
+		const hasFullWidth = skeletons.some((s) => s.className.includes("w-full"));
 		expect(hasFullWidth).toBe(true);
 	});
 });

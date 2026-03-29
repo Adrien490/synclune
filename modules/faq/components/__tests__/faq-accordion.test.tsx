@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockStagger } = vi.hoisted(() => ({
+const { mockStagger: _mockStagger } = vi.hoisted(() => ({
 	mockStagger: vi.fn(),
 }));
 
@@ -41,7 +41,7 @@ vi.mock("@/shared/components/ui/accordion", () => ({
 	Accordion: ({
 		children,
 		type,
-		collapsible,
+		collapsible: _collapsible,
 		className,
 	}: {
 		children: React.ReactNode;
@@ -69,7 +69,7 @@ vi.mock("@/shared/components/ui/accordion", () => ({
 	AccordionTrigger: ({
 		children,
 		className,
-		headingLevel,
+		headingLevel: _headingLevel,
 	}: {
 		children: React.ReactNode;
 		className?: string;

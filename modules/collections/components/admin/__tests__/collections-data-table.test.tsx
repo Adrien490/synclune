@@ -105,9 +105,13 @@ vi.mock("@/shared/components/ui/tooltip", () => ({
 	TooltipContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="tooltip-content">{children}</div>
 	),
-	TooltipTrigger: ({ children, asChild }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="tooltip-trigger">{children}</div>
-	),
+	TooltipTrigger: ({
+		children,
+		asChild: _asChild,
+	}: {
+		children: React.ReactNode;
+		asChild?: boolean;
+	}) => <div data-testid="tooltip-trigger">{children}</div>,
 }));
 
 vi.mock("@/shared/components/table-selection-cell", () => ({

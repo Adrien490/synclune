@@ -236,4 +236,114 @@ describe("usePaymentIntent", () => {
 
 		vi.useRealTimers();
 	});
+
+	// ─── Visibility change (stale tab re-activation) ──────────────────────────
+
+	it("does not re-initialize when tab was hidden less than 10 minutes", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(result.current.paymentIntentId).toBe("pi_123");
+		mockInitializePayment.mockClear();
+
+		// Simulate hiding tab
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		act(() => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Advance 5 minutes (below threshold)
+		vi.advanceTimersByTime(5 * 60 * 1000);
+
+		// Simulate showing tab
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		act(() => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		expect(mockInitializePayment).not.toHaveBeenCalled();
+
+		vi.useRealTimers();
+	});
+
+	it("re-initializes when tab was hidden more than 10 minutes", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(result.current.paymentIntentId).toBe("pi_123");
+		mockInitializePayment.mockClear();
+
+		const refreshedResult = {
+			success: true as const,
+			clientSecret: "pi_secret_456",
+			paymentIntentId: "pi_456",
+			subtotal: 10000,
+			shipping: 600,
+			total: 10600,
+		};
+		mockInitializePayment.mockResolvedValue(refreshedResult);
+
+		// Simulate hiding tab
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		act(() => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Advance 11 minutes (above threshold)
+		vi.advanceTimersByTime(11 * 60 * 1000);
+
+		// Simulate showing tab
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+			await Promise.resolve();
+		});
+
+		expect(mockInitializePayment).toHaveBeenCalledTimes(1);
+
+		vi.useRealTimers();
+	});
+
+	it("does not re-initialize when paymentIntentId is null (init failed)", async () => {
+		vi.useFakeTimers();
+
+		mockInitializePayment.mockResolvedValue(ERROR_INIT);
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(result.current.paymentIntentId).toBeNull();
+		mockInitializePayment.mockClear();
+
+		// Simulate hiding + showing tab after 11 minutes
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		act(() => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		vi.advanceTimersByTime(11 * 60 * 1000);
+
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		act(() => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		// Should not re-initialize since there's no paymentIntentId
+		expect(mockInitializePayment).not.toHaveBeenCalled();
+
+		vi.useRealTimers();
+	});
 });

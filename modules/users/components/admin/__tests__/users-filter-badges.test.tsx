@@ -125,7 +125,7 @@ describe("UsersFilterBadges", () => {
 	it("formats createdAfter date in fr-FR locale", () => {
 		mockFilters.value = [{ key: "filter_createdAfter", value: "2026-01-15" }];
 		render(<UsersFilterBadges />);
-		const text = screen.getByTestId("filter-badge-0").textContent ?? "";
+		const text = screen.getByTestId("filter-badge-0").textContent!;
 		expect(text).toContain("Inscrit après");
 	});
 

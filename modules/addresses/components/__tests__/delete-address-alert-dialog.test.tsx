@@ -1,5 +1,4 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -27,7 +26,7 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 }));
 
 vi.mock("@/modules/addresses/hooks/use-delete-address", () => ({
-	useDeleteAddress: ({ onSuccess }: { onSuccess?: () => void }) => ({
+	useDeleteAddress: ({ onSuccess: _onSuccess }: { onSuccess?: () => void }) => ({
 		action: mockDeleteAction,
 		isPending: mockIsPending.value,
 		handle: vi.fn(),
@@ -49,7 +48,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
 	AlertDialogDescription: ({
 		children,
-		asChild,
+		asChild: _asChild,
 	}: {
 		children: React.ReactNode;
 		asChild?: boolean;

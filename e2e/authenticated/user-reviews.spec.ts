@@ -89,3 +89,117 @@ test.describe("Avis produits", { tag: ["@regression"] }, () => {
 		await expect(submitButton).toBeVisible();
 	});
 });
+
+test.describe("Avis produits - Section avis", { tag: ["@regression"] }, () => {
+	test("la section avis affiche les étoiles ou l'état vide", async ({
+		page,
+		productCatalogPage,
+	}) => {
+		await productCatalogPage.goto();
+
+		const productCount = await productCatalogPage.productLinks.count();
+		requireSeedData(test, productCount > 0, "No products found");
+
+		await productCatalogPage.gotoFirstProduct();
+
+		// Reviews section with stars OR empty state
+		const starsSection = page.locator(
+			"[class*='star'], [aria-label*='étoile'], [aria-label*='note']",
+		);
+		const emptyReviews = page.getByText(/aucun avis|soyez le premier|pas encore d'avis/i);
+		const reviewsHeading = page.getByRole("heading", { name: /avis|commentaires|évaluations/i });
+
+		await expect(
+			starsSection.first().or(emptyReviews.first()).or(reviewsHeading.first()),
+		).toBeVisible({ timeout: 5000 });
+	});
+
+	test("les avis affichés contiennent une note et un texte", async ({
+		page,
+		productCatalogPage,
+	}) => {
+		await productCatalogPage.goto();
+
+		const productCount = await productCatalogPage.productLinks.count();
+		requireSeedData(test, productCount > 0, "No products found");
+
+		// Try multiple products to find one with reviews
+		for (let i = 0; i < Math.min(productCount, 3); i++) {
+			const href = await productCatalogPage.productLinks.nth(i).getAttribute("href");
+			await page.goto(href!);
+			await page.waitForLoadState("domcontentloaded");
+
+			const reviewItems = page.locator("[class*='review'], [data-testid*='review']");
+			const reviewText = page.getByText(/\/5|étoile/i);
+
+			if ((await reviewItems.count()) > 0 || (await reviewText.count()) > 0) {
+				// Found a product with reviews
+				await expect(reviewText.first().or(reviewItems.first())).toBeVisible();
+				return;
+			}
+		}
+
+		test.skip(true, "Aucun produit avec des avis trouvé");
+	});
+
+	test("le formulaire de note utilise des étoiles interactives", async ({
+		page,
+		productCatalogPage,
+	}) => {
+		await productCatalogPage.goto();
+
+		const productCount = await productCatalogPage.productLinks.count();
+		requireSeedData(test, productCount > 0, "No products found");
+
+		await productCatalogPage.gotoFirstProduct();
+
+		// Look for interactive star rating
+		const ratingLabel = page.getByText(/Votre note/i);
+		const ratingVisible = await ratingLabel.isVisible();
+		test.skip(!ratingVisible, "Formulaire d'avis non disponible");
+
+		// Stars should be interactive (buttons or radio inputs)
+		const starButtons = page
+			.getByRole("radio", { name: /étoile|star/i })
+			.or(page.getByRole("button", { name: /étoile|star/i }))
+			.or(page.locator("[class*='star'][role='radio']"));
+
+		const starCount = await starButtons.count();
+		if (starCount > 0) {
+			expect(starCount).toBeGreaterThanOrEqual(5);
+		}
+	});
+
+	test("le tri des avis est disponible si des avis existent", async ({
+		page,
+		productCatalogPage,
+	}) => {
+		await productCatalogPage.goto();
+
+		const productCount = await productCatalogPage.productLinks.count();
+		requireSeedData(test, productCount > 0, "No products found");
+
+		// Try products to find one with reviews
+		for (let i = 0; i < Math.min(productCount, 3); i++) {
+			const href = await productCatalogPage.productLinks.nth(i).getAttribute("href");
+			await page.goto(href!);
+			await page.waitForLoadState("domcontentloaded");
+
+			const reviewsHeading = page.getByRole("heading", { name: /avis/i });
+			if (await reviewsHeading.isVisible().catch(() => false)) {
+				// Look for sort controls
+				const sortButton = page
+					.getByRole("button", { name: /Trier/i })
+					.or(page.getByRole("combobox", { name: /Trier/i }))
+					.or(page.getByText(/Plus récents|Plus anciens|Meilleures notes/i));
+
+				if ((await sortButton.count()) > 0) {
+					await expect(sortButton.first()).toBeVisible();
+					return;
+				}
+			}
+		}
+
+		test.skip(true, "Pas de section d'avis avec tri trouvée");
+	});
+});

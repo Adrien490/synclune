@@ -40,7 +40,7 @@ vi.mock("@/shared/components/responsive-dialog", () => ({
 	}) => (open ? <div data-testid="responsive-dialog">{children}</div> : null),
 	ResponsiveDialogContent: ({
 		children,
-		className,
+		className: _className,
 	}: {
 		children: React.ReactNode;
 		className?: string;
@@ -58,7 +58,7 @@ vi.mock("@/shared/components/responsive-dialog", () => ({
 
 vi.mock("@/modules/collections/components/admin/create-collection-form", () => ({
 	CreateCollectionForm: ({
-		onSuccess,
+		onSuccess: _onSuccess,
 		redirectOnSuccess,
 	}: {
 		onSuccess?: () => void;
@@ -68,8 +68,8 @@ vi.mock("@/modules/collections/components/admin/create-collection-form", () => (
 
 vi.mock("@/modules/collections/components/admin/edit-collection-form", () => ({
 	EditCollectionForm: ({
-		collection,
-		onSuccess,
+		collection: _collection,
+		onSuccess: _onSuccess,
 		redirectOnSuccess,
 	}: {
 		collection: unknown;

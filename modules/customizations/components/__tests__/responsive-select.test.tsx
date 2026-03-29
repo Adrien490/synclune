@@ -12,7 +12,7 @@ vi.mock("@/shared/components/ui/select", () => ({
 	Select: ({
 		children,
 		value,
-		onValueChange,
+		onValueChange: _onValueChange,
 		disabled,
 	}: {
 		children: React.ReactNode;
@@ -36,7 +36,7 @@ vi.mock("@/shared/components/ui/select", () => ({
 		"aria-invalid"?: boolean;
 		"aria-describedby"?: string;
 	}) => (
-		<button id={id} aria-invalid={ariaInvalid}>
+		<button id={id} data-invalid={ariaInvalid}>
 			{children}
 		</button>
 	),
@@ -55,7 +55,7 @@ vi.mock("@/shared/components/ui/select", () => ({
 		value: string;
 		disabled?: boolean;
 	}) => (
-		<div role="option" data-value={value} aria-disabled={disabled}>
+		<div role="option" data-value={value} aria-selected={false} aria-disabled={disabled}>
 			{children}
 		</div>
 	),
