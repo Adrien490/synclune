@@ -2,7 +2,7 @@
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
@@ -33,7 +33,7 @@ export function CollectionsFilterSheet({ className }: CollectionsFilterSheetProp
 		};
 	})();
 
-	const form = useForm({
+	const form = useAppForm({
 		defaultValues: initialValues,
 		onSubmit: async ({ value }: { value: FilterFormData }) => {
 			applyFilters(value);

@@ -1,5 +1,4 @@
 import { type Metadata } from "next";
-import { connection } from "next/server";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { getStoreSettings } from "@/modules/store-settings/data/get-store-settings";
@@ -11,8 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function StoreSettingsPage() {
-	await connection();
-
 	const settings = await getStoreSettings();
 
 	if (!settings) {

@@ -10,7 +10,7 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { UTApi } from "uploadthing/server";
+import { utapi } from "@/shared/lib/uploadthing";
 import { deleteUploadThingFileSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeyFromUrl } from "@/modules/media/utils/extract-file-key";
 import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
@@ -49,8 +49,7 @@ export async function deleteUploadThingFile(
 			return error("Impossible d'extraire la cle du fichier depuis l'URL");
 		}
 
-		// 6. Delete file via UTApi (per-request instantiation)
-		const utapi = new UTApi();
+		// 6. Delete file via UTApi singleton
 		const result = await utapi.deleteFiles(fileKey);
 
 		// 7. Verify deletion succeeded

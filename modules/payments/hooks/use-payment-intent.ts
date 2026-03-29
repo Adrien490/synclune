@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { initializePayment } from "../actions/initialize-payment";
 import { updatePaymentAmount } from "../actions/update-payment-amount";
+import { cancelOrphanPaymentIntent } from "../actions/cancel-orphan-payment-intent";
 
 /** Re-validate cart if tab was hidden for more than 10 minutes */
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
@@ -40,6 +41,15 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const initCalledRef = useRef(false);
 	const hiddenAtRef = useRef<number | null>(null);
+
+	// Clean up debounce timer on unmount to avoid orphan server action calls
+	useEffect(() => {
+		return () => {
+			if (debounceTimerRef.current) {
+				clearTimeout(debounceTimerRef.current);
+			}
+		};
+	}, []);
 
 	// Create PI on mount
 	useEffect(() => {
@@ -91,7 +101,10 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 			const elapsed = Date.now() - hiddenAt;
 			if (elapsed < STALE_THRESHOLD_MS) return;
 
-			// Re-initialize payment to refresh prices and validate PI is still active
+			// Re-initialize payment to refresh prices and validate PI is still active.
+			// The old PI may become orphaned if the cart changed (different idempotency key).
+			// Stripe auto-cancels uncaptured PIs after 7 days — no manual cleanup needed.
+			const previousPiId = state.paymentIntentId;
 			setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
 			void initializePayment({
@@ -99,6 +112,10 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 				email: params.email,
 			}).then((result) => {
 				if (result.success) {
+					// Cancel the previous PI if a new one was created (cart hash changed)
+					if (previousPiId && result.paymentIntentId !== previousPiId) {
+						void cancelOrphanPaymentIntent(previousPiId);
+					}
 					setState({
 						clientSecret: result.clientSecret,
 						paymentIntentId: result.paymentIntentId,

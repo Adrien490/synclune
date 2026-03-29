@@ -8,7 +8,7 @@ export const fraunces = Fraunces({
 	display: "swap",
 	axes: ["opsz", "SOFT", "WONK"],
 	variable: "--font-display",
-	preload: true,
+	preload: false, // Body font (Figtree) is preloaded; display font defers to reduce render-blocking
 });
 
 // Figtree — Sans-serif géométrique optimisée pour le web

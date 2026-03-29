@@ -19,7 +19,7 @@ function makeFile(name: string, type: string, sizeBytes: number): File {
 	return new File([blob], name, { type });
 }
 
-const IMAGE_LIMIT = MEDIA_SIZE_LIMITS.IMAGE; // 16 MB
+const IMAGE_LIMIT = MEDIA_SIZE_LIMITS.CATALOG_IMAGE; // 16 MB
 const VIDEO_LIMIT = MEDIA_SIZE_LIMITS.VIDEO; // 512 MB
 
 // ---------------------------------------------------------------------------

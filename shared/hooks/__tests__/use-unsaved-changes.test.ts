@@ -148,9 +148,7 @@ describe("useUnsavedChanges", () => {
 	// -------------------------------------------------------------------------
 
 	describe("allowNavigation", () => {
-		it("temporarily makes isBlocking false after being called", () => {
-			vi.useFakeTimers();
-
+		it("makes isBlocking false after being called", () => {
 			const { result } = renderHook(() => useUnsavedChanges(true));
 			expect(result.current.isBlocking).toBe(true);
 
@@ -158,33 +156,20 @@ describe("useUnsavedChanges", () => {
 				result.current.allowNavigation();
 			});
 
-			// isBlocking is computed from allowNavigationRef - the ref is set to true
-			// but isBlocking is a derived value re-computed on render.
-			// After allowNavigation the ref is true so next render gives false.
-			// We re-check that the returned value before timeout expiry respects the ref.
-			// Since isBlocking is computed at render time from the ref, we need a re-render.
-			// The ref change alone does not trigger a re-render, but the value seen during
-			// the NEXT render will be false. We verify the ref state via side effects
-			// (beforeunload listener removal) rather than isBlocking directly.
-			// For direct testing we advance the timer and verify reset.
-			act(() => {
-				vi.advanceTimersByTime(99);
-			});
-			// Ref is still true (not yet reset) - no re-render triggered by ref change
+			expect(result.current.isBlocking).toBe(false);
+		});
+
+		it("immediately unregisters the navigation guard", () => {
+			const { result } = renderHook(() => useUnsavedChanges(true));
 
 			act(() => {
-				vi.advanceTimersByTime(1); // total 100ms - timer fires
+				result.current.allowNavigation();
 			});
-			// After 100ms the ref is reset to false.
-			// The next render of the hook would compute isBlocking = true again.
-			// Re-render to observe the restored state.
-			const { result: result2 } = renderHook(() => useUnsavedChanges(true));
-			expect(result2.current.isBlocking).toBe(true);
+
+			expect(mockUnregisterGuard).toHaveBeenCalled();
 		});
 
 		it("does not throw when called multiple times", () => {
-			vi.useFakeTimers();
-
 			const { result } = renderHook(() => useUnsavedChanges(true));
 
 			expect(() => {
@@ -193,10 +178,6 @@ describe("useUnsavedChanges", () => {
 					result.current.allowNavigation();
 				});
 			}).not.toThrow();
-
-			act(() => {
-				vi.runAllTimers();
-			});
 		});
 	});
 

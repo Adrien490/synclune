@@ -10,7 +10,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqAccordion } from "./faq-accordion";
 import { FaqDoodles } from "./faq-doodles";
-import type { FaqItemData } from "../utils/faq-display";
+import type { FaqItemData } from "../types/faq.types";
 import { generateFaqSchema, parseAnswerSegments } from "../utils/faq-display";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { getFaqItems } from "../data/get-faq-items";

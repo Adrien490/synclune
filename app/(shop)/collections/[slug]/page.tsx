@@ -10,7 +10,6 @@ import { GET_PRODUCTS_DEFAULT_PER_PAGE, getProducts } from "@/modules/products/d
 import { PageHeader } from "@/shared/components/page-header";
 import { getFirstParam } from "@/shared/utils/params";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import { parseFilters } from "../_utils/params";
 import { generateCollectionMetadata } from "./_utils/generate-metadata";
@@ -44,7 +43,6 @@ type CollectionPageProps = {
 };
 
 export default async function CollectionPage({ params, searchParams }: CollectionPageProps) {
-	await connection();
 	// Note: Pas de "use cache" ici car la page utilise searchParams (filtres dynamiques)
 	// Le cache est géré au niveau de getStorefrontCollectionBySlug() et getProducts()
 

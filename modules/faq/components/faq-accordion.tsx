@@ -21,7 +21,7 @@ export function FaqAccordion({ items }: FaqAccordionProps) {
 	return (
 		<Accordion type="single" collapsible className="mx-auto max-w-3xl">
 			<Stagger stagger={MOTION_CONFIG.stagger.normal} y={20} inView once className="space-y-3">
-				{items.map((item, _idx) => (
+				{items.map((item) => (
 					<AccordionItem
 						key={item.question}
 						value={item.question}

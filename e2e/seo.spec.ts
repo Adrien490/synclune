@@ -72,6 +72,42 @@ test.describe("SEO et métadonnées - Homepage", { tag: ["@slow"] }, () => {
 		const twitterTitle = page.locator('meta[name="twitter:title"]');
 		await expect(twitterTitle).toBeAttached();
 	});
+
+	test("la section FAQ affiche les questions et le JSON-LD FAQPage", async ({ page }) => {
+		const faqSection = page.locator('section[aria-labelledby="faq-title"]');
+		const isFaqVisible = await faqSection.isVisible().catch(() => false);
+
+		// FAQ section may not be visible if no FAQ items are in the database
+		test.skip(!isFaqVisible, "No FAQ items in database");
+
+		// Heading
+		const faqHeading = page.getByRole("heading", { name: /Questions fréquentes/i });
+		await expect(faqHeading).toBeVisible();
+
+		// At least one accordion item
+		const accordionButtons = faqSection.getByRole("button");
+		expect(await accordionButtons.count()).toBeGreaterThan(0);
+
+		// First accordion expands on click
+		const firstButton = accordionButtons.first();
+		await firstButton.click();
+		const expandedRegion = faqSection.locator("[data-state='open']");
+		await expect(expandedRegion.first()).toBeVisible();
+
+		// JSON-LD FAQPage schema
+		const faqSchema = page.locator("#faq-schema");
+		await expect(faqSchema).toBeAttached();
+		const content = await faqSchema.textContent();
+		expect(content).toBeTruthy();
+		const parsed = JSON.parse(content!);
+		expect(parsed["@type"]).toBe("FAQPage");
+		expect(parsed.mainEntity.length).toBeGreaterThan(0);
+		expect(parsed.mainEntity[0]["@type"]).toBe("Question");
+
+		// Contact CTA
+		const contactLink = faqSection.getByRole("link", { name: /contacter/i });
+		await expect(contactLink).toBeVisible();
+	});
 });
 
 test.describe("SEO et métadonnées - Page produits", { tag: ["@slow"] }, () => {

@@ -33,7 +33,7 @@ export default defineConfig({
 				"shared/components/ui/alert-dialog.tsx",
 				"shared/components/ui/calendar.tsx",
 				"shared/components/ui/carousel.tsx",
-				"shared/components/ui/chart.tsx",
+				"modules/dashboard/components/chart.tsx",
 				"shared/components/ui/checkbox.tsx",
 				"shared/components/ui/collapsible.tsx",
 				"shared/components/ui/command.tsx",

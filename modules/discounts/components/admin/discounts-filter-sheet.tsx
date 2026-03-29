@@ -5,7 +5,7 @@ import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.con
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { Separator } from "@/shared/components/ui/separator";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
@@ -46,7 +46,7 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 		return values;
 	})();
 
-	const form = useForm({
+	const form = useAppForm({
 		defaultValues: initialValues,
 		onSubmit: async ({ value }: { value: FilterFormData }) => {
 			applyFilters(value);

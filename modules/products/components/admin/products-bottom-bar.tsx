@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useToolbarDrawer } from "@/shared/hooks";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -83,10 +84,9 @@ export function ProductsBottomBar({
 	materials,
 	maxPriceInCents,
 }: ProductsBottomBarProps) {
-	const [sortOpen, setSortOpen] = useState(false);
-	const [searchOpen, setSearchOpen] = useState(false);
-	const [filterOpen, setFilterOpen] = useState(false);
-	const [menuOpen, setMenuOpen] = useState(false);
+	const { openDrawer, open, close, isOpen, onOpenChange } = useToolbarDrawer<
+		"sort" | "search" | "filter" | "menu"
+	>();
 	const [focusedIndex, setFocusedIndex] = useState(0);
 
 	const searchParams = useSearchParams();
@@ -101,7 +101,7 @@ export function ProductsBottomBar({
 	const hasActiveSort = searchParams.has("sortBy");
 	const hasActiveFilter = Array.from(searchParams.keys()).some((key) => key.startsWith("filter_"));
 
-	const isHidden = sortOpen || searchOpen || filterOpen || menuOpen || isMenuOpen || isAnySheetOpen;
+	const isHidden = openDrawer !== null || isMenuOpen || isAnySheetOpen;
 
 	// Refs for toolbar items (5 items)
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
@@ -159,7 +159,7 @@ export function ProductsBottomBar({
 		}
 
 		router.push(`?${params.toString()}`, { scroll: false });
-		setSearchOpen(false);
+		close();
 	};
 
 	const handleClearSearch = () => {
@@ -168,7 +168,7 @@ export function ProductsBottomBar({
 		params.delete("cursor");
 		params.delete("direction");
 		router.push(`?${params.toString()}`, { scroll: false });
-		setSearchOpen(false);
+		close();
 	};
 
 	const buttonClassName = cn(bottomBarItemClass, "min-w-16");
@@ -196,11 +196,7 @@ export function ProductsBottomBar({
 					<button
 						ref={filterButtonRef}
 						type="button"
-						onClick={() => {
-							setSortOpen(false);
-							setSearchOpen(false);
-							setFilterOpen(true);
-						}}
+						onClick={() => open("filter")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
@@ -219,11 +215,7 @@ export function ProductsBottomBar({
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => {
-							setSortOpen(false);
-							setFilterOpen(false);
-							setSearchOpen(true);
-						}}
+						onClick={() => open("search")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
@@ -262,11 +254,7 @@ export function ProductsBottomBar({
 					<button
 						ref={sortButtonRef}
 						type="button"
-						onClick={() => {
-							setSearchOpen(false);
-							setFilterOpen(false);
-							setSortOpen(true);
-						}}
+						onClick={() => open("sort")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 3)}
 						onFocus={() => setFocusedIndex(3)}
 						tabIndex={focusedIndex === 3 ? 0 : -1}
@@ -283,12 +271,7 @@ export function ProductsBottomBar({
 					<button
 						ref={menuButtonRef}
 						type="button"
-						onClick={() => {
-							setSortOpen(false);
-							setSearchOpen(false);
-							setFilterOpen(false);
-							setMenuOpen(true);
-						}}
+						onClick={() => open("menu")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 4)}
 						onFocus={() => setFocusedIndex(4)}
 						tabIndex={focusedIndex === 4 ? 0 : -1}
@@ -304,8 +287,8 @@ export function ProductsBottomBar({
 
 			{/* Filter Sheet */}
 			<ProductsFilterSheet
-				open={filterOpen}
-				onOpenChange={setFilterOpen}
+				open={isOpen("filter")}
+				onOpenChange={onOpenChange("filter")}
 				hideTrigger
 				productTypes={productTypes}
 				collections={collections}
@@ -316,14 +299,14 @@ export function ProductsBottomBar({
 
 			{/* Sort Drawer */}
 			<SortDrawer
-				open={sortOpen}
-				onOpenChange={setSortOpen}
+				open={isOpen("sort")}
+				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
 			/>
 
 			{/* Menu Drawer */}
-			<Drawer open={menuOpen} onOpenChange={setMenuOpen}>
+			<Drawer open={isOpen("menu")} onOpenChange={onOpenChange("menu")}>
 				<DrawerContent>
 					<DrawerHeader>
 						<DrawerTitle>Menu</DrawerTitle>
@@ -334,7 +317,7 @@ export function ProductsBottomBar({
 							className="w-full justify-start"
 							onClick={() => {
 								router.refresh();
-								setMenuOpen(false);
+								close();
 							}}
 						>
 							Actualiser
@@ -347,7 +330,7 @@ export function ProductsBottomBar({
 			</Drawer>
 
 			{/* Search Drawer */}
-			<Drawer open={searchOpen} onOpenChange={setSearchOpen}>
+			<Drawer open={isOpen("search")} onOpenChange={onOpenChange("search")}>
 				<DrawerContent>
 					<DrawerHeader>
 						<DrawerTitle>Rechercher</DrawerTitle>

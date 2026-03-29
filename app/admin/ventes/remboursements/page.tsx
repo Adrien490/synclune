@@ -3,7 +3,6 @@ import { PageHeader } from "@/shared/components/page-header";
 import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import { getRefunds, SORT_LABELS } from "@/modules/refunds/data/get-refunds";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { RefundsDataTable } from "@/modules/refunds/components/admin/refunds-data-table";
@@ -60,8 +59,6 @@ type RefundsAdminPageProps = {
 };
 
 export default async function RefundsAdminPage({ searchParams }: RefundsAdminPageProps) {
-	await connection();
-
 	const params = await searchParams;
 
 	const { cursor, direction, perPage, sortBy, search } = parseRefundParams(params);

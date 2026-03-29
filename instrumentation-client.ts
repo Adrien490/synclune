@@ -29,46 +29,40 @@ if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
 	}
 }
 
-Sentry.init({
-	dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-	release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
-	environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
+// Defer Sentry init to after hydration — errors before init are caught by
+// the window.addEventListener("error") fallback below.
+const initSentry = () => {
+	Sentry.init({
+		dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+		release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
+		environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV,
 
-	tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+		tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
 
-	sendDefaultPii: false,
+		sendDefaultPii: false,
 
-	ignoreErrors: [
-		"NEXT_REDIRECT",
-		"NEXT_NOT_FOUND",
-		"ResizeObserver loop",
-		"ChunkLoadError",
-		"DYNAMIC_SERVER_USAGE",
-	],
-});
-
-// Lazy-load Sentry Replay after FCP — replaysSessionSampleRate: 0 means
-// replay only activates on errors, no need to block initial paint.
-if ("requestIdleCallback" in window) {
-	requestIdleCallback(() => {
-		Sentry.addIntegration(
-			Sentry.replayIntegration({
-				maskAllText: true,
-				maskAllInputs: true,
-				blockAllMedia: true,
-			}),
-		);
+		ignoreErrors: [
+			"NEXT_REDIRECT",
+			"NEXT_NOT_FOUND",
+			"ResizeObserver loop",
+			"ChunkLoadError",
+			"DYNAMIC_SERVER_USAGE",
+		],
 	});
+
+	Sentry.addIntegration(
+		Sentry.replayIntegration({
+			maskAllText: true,
+			maskAllInputs: true,
+			blockAllMedia: true,
+		}),
+	);
+};
+
+if ("requestIdleCallback" in window) {
+	requestIdleCallback(() => void initSentry());
 } else {
-	setTimeout(() => {
-		Sentry.addIntegration(
-			Sentry.replayIntegration({
-				maskAllText: true,
-				maskAllInputs: true,
-				blockAllMedia: true,
-			}),
-		);
-	}, 2000);
+	setTimeout(() => void initSentry(), 2000);
 }
 
 performance.mark("app-init");

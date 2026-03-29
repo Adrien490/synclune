@@ -28,6 +28,7 @@ interface ConfirmCheckoutResult {
 	orderId: string;
 	orderNumber: string;
 	finalAmount: number;
+	addressSaved?: boolean;
 }
 
 interface ConfirmCheckoutError {
@@ -223,14 +224,18 @@ export async function confirmCheckout(
 				throw stripeError;
 			}
 
-			// 10. Save address if requested
+			// 10. Save address if requested (non-blocking, logged on failure)
+			let addressSaved = true;
 			if (v.saveInfo && userId) {
-				saveAddressForUser(userId, firstName, lastName, v.shippingAddress).catch((e) => {
+				try {
+					await saveAddressForUser(userId, firstName, lastName, v.shippingAddress);
+				} catch (e) {
+					addressSaved = false;
 					logger.warn("Failed to save address during checkout", {
 						service: "checkout",
 						error: e instanceof Error ? e.message : String(e),
 					});
-				});
+				}
 			}
 
 			// 12. Invalidate cart cache
@@ -242,6 +247,7 @@ export async function confirmCheckout(
 				orderId: order.id,
 				orderNumber: order.orderNumber,
 				finalAmount: order.total,
+				...(v.saveInfo && userId && { addressSaved }),
 			};
 		} catch (e) {
 			logger.error("Failed to confirm checkout", e, { service: "checkout" });

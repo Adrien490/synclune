@@ -28,6 +28,9 @@ const { mockPrisma, mockUpdateTag, mockDeleteUploadThingFilesFromUrls } = vi.hoi
 		skuMedia: {
 			findMany: vi.fn(),
 		},
+		customizationMedia: {
+			findMany: vi.fn(),
+		},
 		$transaction: vi.fn(),
 	},
 	mockUpdateTag: vi.fn(),
@@ -87,6 +90,9 @@ function setupEmptyBatch() {
 	mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
 	mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 	mockPrisma.product.findMany.mockResolvedValue([]);
+	mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+	mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+	mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 	mockPrisma.$transaction.mockResolvedValue([
 		{ count: 0 },
 		{ count: 0 },
@@ -120,6 +126,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 2 },
@@ -189,6 +196,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 		mockPrisma.product.findMany.mockResolvedValue([]);
 
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 50 },
@@ -213,6 +221,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 			{ url: "https://utfs.io/f/review-img-1.jpg" },
 			{ url: "https://utfs.io/f/review-img-2.jpg" },
 		]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
@@ -241,6 +250,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 			{ url: "https://utfs.io/f/sku-img.jpg", thumbnailUrl: "https://utfs.io/f/sku-thumb.jpg" },
 			{ url: "https://utfs.io/f/sku-img2.jpg", thumbnailUrl: null },
 		]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 0 },
@@ -260,6 +270,36 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 		]);
 	});
 
+	it("should collect and delete UploadThing media for customization requests", async () => {
+		mockPrisma.productReview.findMany.mockResolvedValue([]);
+		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
+		mockPrisma.customizationRequest.findMany.mockResolvedValue([{ id: "cust-1" }]);
+		mockPrisma.product.findMany.mockResolvedValue([]);
+
+		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([
+			{ url: "https://utfs.io/f/cust-img-1.jpg" },
+			{ url: "https://utfs.io/f/cust-img-2.jpg" },
+		]);
+
+		mockPrisma.$transaction.mockResolvedValue([
+			{ count: 0 },
+			{ count: 0 },
+			{ count: 1 },
+			{ count: 0 },
+		]);
+
+		mockDeleteUploadThingFilesFromUrls.mockResolvedValue({ deleted: 2 });
+
+		await hardDeleteExpiredRecords();
+
+		expect(mockDeleteUploadThingFilesFromUrls).toHaveBeenCalledWith([
+			"https://utfs.io/f/cust-img-1.jpg",
+			"https://utfs.io/f/cust-img-2.jpg",
+		]);
+	});
+
 	it("should continue gracefully when UploadThing deletion fails", async () => {
 		mockPrisma.productReview.findMany.mockResolvedValue([{ id: "rev-1" }]);
 		mockPrisma.newsletterSubscriber.findMany.mockResolvedValue([]);
@@ -267,6 +307,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 		mockPrisma.product.findMany.mockResolvedValue([]);
 
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([{ url: "https://utfs.io/f/fail.jpg" }]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
@@ -290,6 +331,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
 
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 0 },
@@ -314,6 +356,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 		mockPrisma.product.findMany.mockResolvedValue([]);
 
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
@@ -353,6 +396,8 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([{ id: "cust-1" }]);
 		mockPrisma.product.findMany.mockResolvedValue([]);
 
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
+
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 0 },
 			{ count: 0 },
@@ -387,6 +432,7 @@ describe("hardDeleteExpiredRecords — RGPD compliance", () => {
 
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },

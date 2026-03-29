@@ -39,16 +39,19 @@ export function useAddressAutocomplete(
 		if (query.length < 2) return;
 
 		const currentRequestId = ++requestIdRef.current;
+		const abortController = new AbortController();
 
 		startTransition(async () => {
 			const result = await searchAddressForCheckout({ text: query, country });
 
-			// Ignore stale responses
-			if (currentRequestId !== requestIdRef.current) return;
+			// Ignore stale/aborted responses
+			if (abortController.signal.aborted || currentRequestId !== requestIdRef.current) return;
 
 			setResults(result.addresses);
 			setError(result.error ? "La recherche d'adresses a echoue. Reessayez." : null);
 		});
+
+		return () => abortController.abort();
 	}, [query, country, retryCount]);
 
 	const suggestions = query.length < 2 ? [] : results;

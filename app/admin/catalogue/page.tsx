@@ -1,7 +1,6 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
 import { Layers, Package, Palette, Tag } from "lucide-react";
 import { type Metadata } from "next";
-import { connection } from "next/server";
 
 export const metadata: Metadata = {
 	title: "Catalogue - Administration",
@@ -9,7 +8,6 @@ export const metadata: Metadata = {
 };
 
 export default async function CatalogPage() {
-	await connection();
 	return (
 		<>
 			<SectionNavigation

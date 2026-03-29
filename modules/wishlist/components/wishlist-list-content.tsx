@@ -117,7 +117,6 @@ export function WishlistListContent({
 						{optimisticItems.map((item, index) => (
 							<m.div
 								key={item.id}
-								layout={!prefersReducedMotion}
 								initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.9 }}
 								animate={{ opacity: 1, scale: 1 }}
 								exit={prefersReducedMotion ? undefined : { opacity: 0, scale: 0.9 }}

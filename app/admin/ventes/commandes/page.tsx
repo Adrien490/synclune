@@ -7,7 +7,6 @@ import { getOrders } from "@/modules/orders/data/get-orders";
 import { SORT_LABELS as ORDERS_SORT_LABELS } from "@/modules/orders/constants/order.constants";
 import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
 import { ExportOrdersButton } from "@/modules/orders/components/admin/export-orders-button";
-import { connection } from "next/server";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-table";
@@ -100,7 +99,6 @@ type OrdersAdminPageProps = {
 
 export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageProps) {
 	// Force dynamic rendering to enable use cache: remote in functions
-	await connection();
 
 	const params = await searchParams;
 

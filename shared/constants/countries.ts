@@ -116,6 +116,37 @@ export const SORTED_SHIPPING_COUNTRIES = [
 ] as const;
 
 /**
+ * Countries with purely numeric postal codes (most EU countries).
+ * Used to set inputMode="numeric" on postal code fields.
+ * IE, NL, MT use alphanumeric formats and are excluded.
+ */
+export const NUMERIC_POSTAL_CODE_COUNTRIES: ReadonlySet<string> = new Set([
+	"FR",
+	"MC",
+	"DE",
+	"ES",
+	"IT",
+	"PT",
+	"AT",
+	"FI",
+	"SE",
+	"DK",
+	"GR",
+	"BG",
+	"HR",
+	"CY",
+	"CZ",
+	"EE",
+	"HU",
+	"LV",
+	"LT",
+	"PL",
+	"RO",
+	"SK",
+	"SI",
+]);
+
+/**
  * Message d'erreur pour pays non autorisé
  */
 export const COUNTRY_ERROR_MESSAGE =

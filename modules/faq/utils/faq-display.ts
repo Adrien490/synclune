@@ -1,15 +1,8 @@
-export interface FaqLink {
-	text: string;
-	href: string;
-}
-
-export interface FaqItemData {
-	question: string;
-	answer: string;
-	links?: FaqLink[];
-}
+import type { FaqItemData, FaqLink } from "../types/faq.types";
 
 const LINK_PLACEHOLDER_REGEX = /\{\{link(\d+)\}\}/g;
+
+export type { FaqItemData, FaqLink };
 
 export type AnswerSegment =
 	| { type: "text"; value: string }

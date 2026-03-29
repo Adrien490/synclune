@@ -15,7 +15,7 @@ import {
 	ChartTooltip,
 	ChartTooltipContent,
 	type ChartConfig,
-} from "@/shared/components/ui/chart";
+} from "./chart";
 import { Button } from "@/shared/components/ui/button";
 import type { GetRevenueChartReturn } from "@/modules/dashboard/data/get-revenue-chart";
 

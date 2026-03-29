@@ -23,7 +23,7 @@ import {
 	useState,
 	useTransition,
 } from "react";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/shared/components/forms";
 import { PriceRangeInputs } from "../price-range-inputs";
 import { isLightColor, getContrastTextColor } from "@/modules/colors/utils/color-contrast.utils";
 
@@ -255,7 +255,7 @@ export function ProductsFilterSheet({
 
 	const initialValues = getValuesFromURL();
 
-	const form = useForm({
+	const form = useAppForm({
 		defaultValues: initialValues,
 		onSubmit: async ({ value }: { value: AdminFilterFormData }) => {
 			applyFilters(value);

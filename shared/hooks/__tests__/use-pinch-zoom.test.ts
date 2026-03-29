@@ -917,7 +917,7 @@ describe("usePinchZoom", () => {
 			expect(removedEvents).toContain("touchend");
 		});
 
-		it("attaches touch listeners with passive:false option", () => {
+		it("attaches touchstart as passive and touchmove/touchend as non-passive", () => {
 			const addEventListenerSpy = vi.spyOn(containerRef.current!, "addEventListener");
 
 			renderHook(() => usePinchZoom({ containerRef }));
@@ -925,7 +925,11 @@ describe("usePinchZoom", () => {
 			const touchStartCall = addEventListenerSpy.mock.calls.find(
 				([event]) => event === "touchstart",
 			);
-			expect(touchStartCall?.[2]).toEqual({ passive: false });
+			const touchMoveCall = addEventListenerSpy.mock.calls.find(([event]) => event === "touchmove");
+			const touchEndCall = addEventListenerSpy.mock.calls.find(([event]) => event === "touchend");
+			expect(touchStartCall?.[2]).toEqual({ passive: true });
+			expect(touchMoveCall?.[2]).toEqual({ passive: false });
+			expect(touchEndCall?.[2]).toEqual({ passive: false });
 		});
 	});
 

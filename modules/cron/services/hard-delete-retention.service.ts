@@ -100,6 +100,14 @@ export async function hardDeleteExpiredRecords(): Promise<{
 				})
 			: [];
 
+	const customizationMediaUrls =
+		customizationIds.length > 0
+			? await prisma.customizationMedia.findMany({
+					where: { customizationRequestId: { in: customizationIds.map((c) => c.id) } },
+					select: { url: true },
+				})
+			: [];
+
 	// 3. Run all DB deletes in a single transaction
 	const [reviewsResult, newsletterResult, customizationRequestsResult, productsResult] =
 		await prisma.$transaction([
@@ -190,6 +198,21 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			});
 		} catch (_error) {
 			logger.warn("Failed to delete product media from UploadThing", {
+				cronJob: "hard-delete-retention",
+			});
+		}
+	}
+
+	if (customizationMediaUrls.length > 0) {
+		try {
+			const urls = customizationMediaUrls.map((m) => m.url);
+			const result = await deleteUploadThingFilesFromUrls(urls);
+			logger.info("Deleted customization media files from UploadThing", {
+				cronJob: "hard-delete-retention",
+				count: result.deleted,
+			});
+		} catch (_error) {
+			logger.warn("Failed to delete customization media from UploadThing", {
 				cronJob: "hard-delete-retention",
 			});
 		}

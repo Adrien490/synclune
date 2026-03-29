@@ -7,7 +7,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import type { ColorOption } from "@/modules/colors/data/get-color-options";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
-import { useForm } from "@tanstack/react-form";
+import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 
@@ -73,7 +73,7 @@ export function SkusFilterSheet({
 		};
 	})();
 
-	const form = useForm({
+	const form = useAppForm({
 		defaultValues: initialValues,
 		onSubmit: async ({ value }: { value: FilterFormData }) => {
 			applyFilters(value);

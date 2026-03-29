@@ -5,7 +5,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
 	poweredByHeader: false,
 	cacheComponents: true,
-	reactCompiler: false,
+	reactCompiler: true,
 	experimental: {
 		turbopackFileSystemCacheForBuild: true,
 		optimizePackageImports: [

@@ -6,6 +6,7 @@ import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-a
 import {
 	SORTED_SHIPPING_COUNTRIES,
 	COUNTRY_NAMES,
+	NUMERIC_POSTAL_CODE_COUNTRIES,
 	type ShippingCountry,
 } from "@/shared/constants/countries";
 import { useAddressAutocomplete } from "../hooks/use-address-autocomplete";
@@ -85,33 +86,6 @@ interface CheckoutAddressFieldsProps {
 
 export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddressFieldsProps) {
 	const isGuest = !session;
-
-	// Countries with purely numeric postal codes (most EU countries)
-	const NUMERIC_POSTAL_CODE_COUNTRIES = new Set([
-		"FR",
-		"MC",
-		"DE",
-		"ES",
-		"IT",
-		"PT",
-		"AT",
-		"FI",
-		"SE",
-		"DK",
-		"GR",
-		"BG",
-		"HR",
-		"CY",
-		"CZ",
-		"EE",
-		"HU",
-		"LV",
-		"LT",
-		"PL",
-		"RO",
-		"SK",
-		"SI",
-	]);
 
 	return (
 		<fieldset className="space-y-5">

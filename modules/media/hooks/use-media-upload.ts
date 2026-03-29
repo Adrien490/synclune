@@ -81,6 +81,7 @@ function isValidMediaType(file: File): boolean {
  */
 export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUploadReturn {
 	const {
+		endpoint = "catalogMedia",
 		maxSizeImage = DEFAULT_MAX_SIZE_IMAGE,
 		maxSizeVideo = DEFAULT_MAX_SIZE_VIDEO,
 		maxFiles = DEFAULT_MAX_FILES,
@@ -111,7 +112,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	const onErrorRef = useRef(onError);
 	onErrorRef.current = onError;
 
-	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing("catalogMedia");
+	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing(endpoint);
 
 	// Abort in-progress uploads and clear timers on unmount
 	useEffect(() => {

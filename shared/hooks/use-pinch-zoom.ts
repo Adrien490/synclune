@@ -434,11 +434,9 @@ export function usePinchZoom({
 		const container = containerRef.current;
 		if (!container) return;
 
-		const options: AddEventListenerOptions = { passive: false };
-
-		container.addEventListener("touchstart", handleTouchStart, options);
-		container.addEventListener("touchmove", handleTouchMove, options);
-		container.addEventListener("touchend", handleTouchEnd, options);
+		container.addEventListener("touchstart", handleTouchStart, { passive: true });
+		container.addEventListener("touchmove", handleTouchMove, { passive: false });
+		container.addEventListener("touchend", handleTouchEnd, { passive: false });
 
 		return () => {
 			container.removeEventListener("touchstart", handleTouchStart);

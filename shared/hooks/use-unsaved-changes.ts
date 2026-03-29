@@ -81,8 +81,11 @@ export function useUnsavedChanges(
 	const id = useId();
 	const navigationGuard = useNavigationGuardOptional();
 
-	// State pour permettre temporairement la navigation
+	// State pour permettre la navigation (set par allowNavigation)
 	const [allowNav, setAllowNav] = useState(false);
+
+	// Ref pour bypass immédiat des handlers avant le re-render
+	const skipGuardRef = useRef(false);
 
 	// Ref pour éviter les appels récursifs dans popstate
 	const isBlockingPopstateRef = useRef(false);
@@ -112,6 +115,7 @@ export function useUnsavedChanges(
 
 	// Effect Event pour beforeunload - accède à message sans déclencher de re-registration
 	const onBeforeUnload = useEffectEvent((e: BeforeUnloadEvent) => {
+		if (skipGuardRef.current) return;
 		e.preventDefault();
 		// Pour les navigateurs plus anciens
 		e.returnValue = message;
@@ -131,7 +135,7 @@ export function useUnsavedChanges(
 
 	// Effect Event pour popstate - accède à message, id, onBlock sans déclencher de re-registration
 	const onPopState = useEffectEvent(() => {
-		if (isBlockingPopstateRef.current) return;
+		if (isBlockingPopstateRef.current || skipGuardRef.current) return;
 
 		// Afficher la confirmation native pour popstate
 		// (le modal du contexte ne fonctionne pas bien avec popstate car
@@ -169,11 +173,14 @@ export function useUnsavedChanges(
 	}, [isBlocking, interceptHistoryNavigation, id]);
 
 	const allowNavigation = () => {
+		// Ref: bypass immédiat des handlers en vol (avant re-render)
+		skipGuardRef.current = true;
+		// State: déclenche un re-render pour nettoyer les effects (listeners, guard context)
 		setAllowNav(true);
-		// Réinitialiser après un tick pour permettre la navigation
-		setTimeout(() => {
-			setAllowNav(false);
-		}, 100);
+		// Désenregistrer le guard immédiatement (sans attendre le re-render)
+		if (navigationGuard) {
+			navigationGuard.unregisterGuard(id);
+		}
 	};
 
 	return {

@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
+import { Input } from "@/shared/components/ui/input";
 import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import {
@@ -31,20 +32,12 @@ export function FaqFormDialog() {
 	const faqItem = data?.faqItem;
 	const isUpdateMode = !!faqItem;
 
-	const [links, setLinks] = useState<LinkEntry[]>([]);
-	const prevFaqItemRef = useRef(faqItem);
-
-	// Sync links when dialog data changes (outside useEffect to avoid lint error)
-	if (faqItem !== prevFaqItemRef.current) {
-		prevFaqItemRef.current = faqItem;
-		setLinks(faqItem?.links ?? []);
-	}
-
 	const form = useAppForm({
 		defaultValues: {
 			question: "",
 			answer: "",
 			isActive: true,
+			links: [] as LinkEntry[],
 		},
 	});
 
@@ -55,7 +48,6 @@ export function FaqFormDialog() {
 				onSuccess: () => {
 					close();
 					form.reset();
-					setLinks([]);
 				},
 			}),
 		),
@@ -83,12 +75,14 @@ export function FaqFormDialog() {
 				question: faqItem.question,
 				answer: faqItem.answer,
 				isActive: faqItem.isActive,
+				links: faqItem.links ?? [],
 			});
 		} else {
 			form.reset({
 				question: "",
 				answer: "",
 				isActive: true,
+				links: [],
 			});
 		}
 	}, [faqItem, form]);
@@ -97,18 +91,6 @@ export function FaqFormDialog() {
 		if (!open && !isPending) {
 			close();
 		}
-	};
-
-	const addLink = () => {
-		setLinks((prev) => [...prev, { text: "", href: "" }]);
-	};
-
-	const removeLink = (index: number) => {
-		setLinks((prev) => prev.filter((_, i) => i !== index));
-	};
-
-	const updateLink = (index: number, field: keyof LinkEntry, value: string) => {
-		setLinks((prev) => prev.map((link, i) => (i === index ? { ...link, [field]: value } : link)));
 	};
 
 	return (
@@ -123,11 +105,15 @@ export function FaqFormDialog() {
 				<form action={action} className="flex min-h-0 flex-1 flex-col">
 					<div className="flex-1 space-y-6 overflow-y-auto pr-2">
 						{isUpdateMode && <input type="hidden" name="id" value={faqItem!.id} />}
-						<input
-							type="hidden"
-							name="links"
-							value={links.length > 0 ? JSON.stringify(links) : ""}
-						/>
+						<form.Subscribe selector={(state) => state.values.links}>
+							{(links) => (
+								<input
+									type="hidden"
+									name="links"
+									value={links.length > 0 ? JSON.stringify(links) : ""}
+								/>
+							)}
+						</form.Subscribe>
 						<RequiredFieldsNote />
 
 						<form.AppField name="question">
@@ -152,59 +138,76 @@ export function FaqFormDialog() {
 							)}
 						</form.AppField>
 
-						<div className="space-y-3">
-							<div className="flex items-center justify-between">
-								<p className="text-sm font-medium">
-									Liens <span className="text-muted-foreground font-normal">(optionnel)</span>
-								</p>
-								<Button
-									type="button"
-									variant="outline"
-									size="sm"
-									onClick={addLink}
-									disabled={links.length >= 5}
-								>
-									<Plus className="h-3.5 w-3.5" />
-									Ajouter un lien
-								</Button>
-							</div>
-							<p className="text-muted-foreground text-xs">
-								Utilisez {"{{link0}}"}, {"{{link1}}"}, etc. dans la réponse pour insérer ces liens.
-							</p>
-							{links.map((link, index) => (
-								<div key={`link-${index}`} className="flex items-start gap-2">
-									<span className="text-muted-foreground mt-2.5 shrink-0 text-xs font-medium">
-										{`{{link${index}}}`}
-									</span>
-									<div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
-										<input
-											type="text"
-											value={link.text}
-											onChange={(e) => updateLink(index, "text", e.target.value)}
-											placeholder="Texte du lien"
-											className="border-input bg-background placeholder:text-muted-foreground rounded-md border px-3 py-2 text-sm"
-										/>
-										<input
-											type="text"
-											value={link.href}
-											onChange={(e) => updateLink(index, "href", e.target.value)}
-											placeholder="URL (ex: /collections)"
-											className="border-input bg-background placeholder:text-muted-foreground rounded-md border px-3 py-2 text-sm"
-										/>
+						<form.Field name="links" mode="array">
+							{(field) => (
+								<div className="space-y-3">
+									<div className="flex items-center justify-between">
+										<p className="text-sm font-medium">
+											Liens <span className="text-muted-foreground font-normal">(optionnel)</span>
+										</p>
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											onClick={() => field.pushValue({ text: "", href: "" })}
+											disabled={field.state.value.length >= 5}
+										>
+											<Plus className="h-3.5 w-3.5" />
+											Ajouter un lien
+										</Button>
 									</div>
-									<Button
-										type="button"
-										variant="ghost"
-										size="sm"
-										className="text-destructive hover:text-destructive mt-1 h-8 w-8 shrink-0 p-0"
-										onClick={() => removeLink(index)}
-										aria-label={`Supprimer le lien ${index}`}
-									>
-										<Trash2 className="h-3.5 w-3.5" />
-									</Button>
+									<p className="text-muted-foreground text-xs">
+										Utilisez {"{{link0}}"}, {"{{link1}}"}, etc. dans la réponse pour insérer ces
+										liens.
+									</p>
+									{field.state.value.map((link, index) => (
+										<div key={`link-${index}`} className="flex items-start gap-2">
+											<span className="text-muted-foreground mt-2.5 shrink-0 text-xs font-medium">
+												{`{{link${index}}}`}
+											</span>
+											<div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+												<Input
+													type="text"
+													value={link.text}
+													onChange={(e) =>
+														field.handleChange(
+															field.state.value.map((l, i) =>
+																i === index ? { ...l, text: e.target.value } : l,
+															),
+														)
+													}
+													placeholder="Texte du lien"
+													aria-label={`Texte du lien ${index}`}
+												/>
+												<Input
+													type="text"
+													value={link.href}
+													onChange={(e) =>
+														field.handleChange(
+															field.state.value.map((l, i) =>
+																i === index ? { ...l, href: e.target.value } : l,
+															),
+														)
+													}
+													placeholder="URL (ex: /collections)"
+													aria-label={`URL du lien ${index}`}
+												/>
+											</div>
+											<Button
+												type="button"
+												variant="ghost"
+												size="sm"
+												className="text-destructive hover:text-destructive mt-1 h-8 w-8 shrink-0 p-0"
+												onClick={() => field.removeValue(index)}
+												aria-label={`Supprimer le lien ${index}`}
+											>
+												<Trash2 className="h-3.5 w-3.5" />
+											</Button>
+										</div>
+									))}
 								</div>
-							))}
-						</div>
+							)}
+						</form.Field>
 
 						<form.AppField name="isActive">
 							{(field) => <field.CheckboxField label="Visible sur le site" />}

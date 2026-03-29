@@ -21,6 +21,7 @@ export { useBottomBarHeight } from "./use-bottom-bar-height";
 export { useFilter } from "./use-filter";
 export { useBackButtonClose } from "./use-back-button-close";
 export { useRadioGroupKeyboard } from "./use-radio-group-keyboard";
+export { useToolbarDrawer } from "./use-toolbar-drawer";
 
 // Modal/Lightbox hooks
 export { useLightbox } from "./use-lightbox";
@@ -35,3 +36,4 @@ export { usePinchZoom } from "./use-pinch-zoom";
 // PWA hooks
 export { useWebShare } from "./use-web-share";
 export { useAppBadge } from "./use-app-badge";
+export { useInstallPrompt } from "./use-install-prompt";

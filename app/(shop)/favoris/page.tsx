@@ -10,7 +10,6 @@ import {
 	GET_WISHLIST_MAX_RESULTS_PER_PAGE,
 } from "@/modules/wishlist/constants/wishlist.constants";
 import { Suspense } from "react";
-import { connection } from "next/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -39,7 +38,6 @@ function parseParams(params: { cursor?: string; direction?: string; perPage?: st
 }
 
 export default async function WishlistPage({ searchParams }: WishlistPageProps) {
-	await connection();
 	const params = await searchParams;
 	const { cursor, direction, perPage } = parseParams(params);
 

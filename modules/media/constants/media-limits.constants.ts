@@ -15,6 +15,9 @@ export const MAX_GALLERY_MEDIA = 5;
 /** Maximum number of images in the product gallery (across all SKUs) */
 export const MAX_GALLERY_IMAGES = 20;
 
+/** Maximum number of inspiration images per customization request */
+export const MAX_INSPIRATION_MEDIAS = 5;
+
 // ============================================================================
 // SUPPORTED EXTENSIONS
 // ============================================================================

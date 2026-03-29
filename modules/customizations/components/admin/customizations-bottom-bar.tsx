@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useToolbarDrawer } from "@/shared/hooks";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, ArrowUpDown, SlidersHorizontal, X } from "lucide-react";
@@ -45,9 +46,9 @@ const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, labe
  * Se cache quand un sheet/dialog est ouvert (meme pattern que ProductSortBar).
  */
 export function CustomizationsBottomBar() {
-	const [sortOpen, setSortOpen] = useState(false);
-	const [searchOpen, setSearchOpen] = useState(false);
-	const [filterOpen, setFilterOpen] = useState(false);
+	const { openDrawer, open, close, isOpen, onOpenChange } = useToolbarDrawer<
+		"sort" | "search" | "filter"
+	>();
 	const [focusedIndex, setFocusedIndex] = useState(0);
 
 	const searchParams = useSearchParams();
@@ -63,7 +64,7 @@ export function CustomizationsBottomBar() {
 	const statusFilter = searchParams.get("filter_status");
 	const hasActiveFilter = !!statusFilter && statusFilter !== "ALL";
 
-	const isHidden = sortOpen || searchOpen || filterOpen || isMenuOpen || isAnySheetOpen;
+	const isHidden = openDrawer !== null || isMenuOpen || isAnySheetOpen;
 
 	// Refs for toolbar buttons
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
@@ -119,7 +120,7 @@ export function CustomizationsBottomBar() {
 		}
 
 		router.push(`?${params.toString()}`, { scroll: false });
-		setSearchOpen(false);
+		close();
 	};
 
 	const handleClearSearch = () => {
@@ -128,7 +129,7 @@ export function CustomizationsBottomBar() {
 		params.delete("cursor");
 		params.delete("direction");
 		router.push(`?${params.toString()}`, { scroll: false });
-		setSearchOpen(false);
+		close();
 	};
 
 	const buttonClassName = cn(bottomBarItemClass, "min-w-18");
@@ -156,11 +157,7 @@ export function CustomizationsBottomBar() {
 					<button
 						ref={sortButtonRef}
 						type="button"
-						onClick={() => {
-							setSearchOpen(false);
-							setFilterOpen(false);
-							setSortOpen(true);
-						}}
+						onClick={() => open("sort")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
@@ -177,11 +174,7 @@ export function CustomizationsBottomBar() {
 					<button
 						ref={searchButtonRef}
 						type="button"
-						onClick={() => {
-							setSortOpen(false);
-							setFilterOpen(false);
-							setSearchOpen(true);
-						}}
+						onClick={() => open("search")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
@@ -202,11 +195,7 @@ export function CustomizationsBottomBar() {
 					<button
 						ref={filterButtonRef}
 						type="button"
-						onClick={() => {
-							setSortOpen(false);
-							setSearchOpen(false);
-							setFilterOpen(true);
-						}}
+						onClick={() => open("filter")}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
@@ -225,14 +214,14 @@ export function CustomizationsBottomBar() {
 
 			{/* Sort Drawer */}
 			<SortDrawer
-				open={sortOpen}
-				onOpenChange={setSortOpen}
+				open={isOpen("sort")}
+				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
 			/>
 
 			{/* Search Drawer */}
-			<Drawer open={searchOpen} onOpenChange={setSearchOpen}>
+			<Drawer open={isOpen("search")} onOpenChange={onOpenChange("search")}>
 				<DrawerContent>
 					<DrawerHeader>
 						<DrawerTitle>Rechercher</DrawerTitle>
@@ -271,7 +260,7 @@ export function CustomizationsBottomBar() {
 			</Drawer>
 
 			{/* Status Filter Drawer */}
-			<CustomizationsStatusDrawer open={filterOpen} onOpenChange={setFilterOpen} />
+			<CustomizationsStatusDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />
 		</>,
 		document.body,
 	);

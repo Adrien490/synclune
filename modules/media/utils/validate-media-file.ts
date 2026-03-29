@@ -9,8 +9,8 @@
  * File size limits by media type
  */
 export const MEDIA_SIZE_LIMITS = {
-	/** Images: 16MB max (aligned with UploadThing catalogMedia) */
-	IMAGE: 16 * 1024 * 1024,
+	/** Catalog images: 16MB max (aligned with UploadThing catalogMedia route) */
+	CATALOG_IMAGE: 16 * 1024 * 1024,
 	/** Videos: 512MB max */
 	VIDEO: 512 * 1024 * 1024,
 } as const;
@@ -59,7 +59,7 @@ export function isVideoFile(file: File): boolean {
 export function validateMediaFile(file: File): MediaFileValidationResult {
 	const isVideo = isVideoFile(file);
 	const mediaType = isVideo ? "VIDEO" : "IMAGE";
-	const sizeLimit = isVideo ? MEDIA_SIZE_LIMITS.VIDEO : MEDIA_SIZE_LIMITS.IMAGE;
+	const sizeLimit = isVideo ? MEDIA_SIZE_LIMITS.VIDEO : MEDIA_SIZE_LIMITS.CATALOG_IMAGE;
 
 	if (file.size > sizeLimit) {
 		const sizeMB = (file.size / 1024 / 1024).toFixed(2);

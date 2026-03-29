@@ -48,6 +48,15 @@ export interface CreateOrderResult {
  * Verifies stock with FOR UPDATE row locking, applies discount code, and
  * creates the order + order items + discount usage record in a single transaction.
  *
+ * **Optimistic stock reservation**: Stock is verified (FOR UPDATE) but NOT decremented here.
+ * The actual inventory decrement happens in the Stripe webhook handler
+ * (`webhooks/services/checkout.service.ts` → `processOrderAtomically`) after payment
+ * confirmation. This means two concurrent orders for the last item can both pass
+ * verification, but only the first will succeed at webhook processing — the second
+ * will fail the webhook's own FOR UPDATE re-validation and be cleaned up by the
+ * `cleanup-pending-orders` cron job. This trade-off avoids complex rollback logic
+ * for failed payments and is acceptable at current order volume.
+ *
  * Called from confirmCheckout before Stripe PI update.
  * On Stripe failure, the caller is responsible for rolling back via cleanupFailedCheckout.
  */

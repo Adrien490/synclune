@@ -78,7 +78,7 @@ export function ReviewMediaUpload({
 								onClick={() => removeMedia(index)}
 								disabled={disabled}
 								className={cn(
-									"absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity [@media(hover:none)]:opacity-100",
+									"absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 motion-safe:transition-opacity [@media(hover:none)]:opacity-100",
 									!disabled && "group-hover:opacity-100",
 								)}
 								aria-label={`Supprimer la photo ${index + 1}`}
@@ -121,7 +121,7 @@ export function ReviewMediaUpload({
 					}}
 					appearance={{
 						container: cn(
-							"border-2 border-dashed rounded-lg p-4 cursor-pointer transition-colors relative",
+							"border-2 border-dashed rounded-lg p-4 cursor-pointer motion-safe:transition-colors relative",
 							"hover:border-primary/50 hover:bg-muted/50",
 							"ut-uploading:border-primary ut-uploading:bg-primary/5",
 						),

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import { connection } from "next/server";
 import { PageHeader } from "@/shared/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
@@ -25,7 +24,7 @@ interface CustomizationDetailPageProps {
 }
 
 export default async function CustomizationDetailPage({ params }: CustomizationDetailPageProps) {
-	const [, { id }] = await Promise.all([connection(), params]);
+	const { id } = await params;
 
 	const request = await getCustomizationRequest(id);
 

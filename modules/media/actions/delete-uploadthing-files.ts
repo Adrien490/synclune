@@ -5,7 +5,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import type { ActionState } from "@/shared/types/server-action";
-import { UTApi } from "uploadthing/server";
+import { utapi } from "@/shared/lib/uploadthing";
 import { deleteUploadThingFilesSchema } from "@/modules/media/schemas/uploadthing.schemas";
 import { extractFileKeysFromUrls } from "@/modules/media/utils/extract-file-key";
 import { MEDIA_LIMITS } from "@/modules/media/constants/upload-limits";
@@ -63,8 +63,7 @@ export async function deleteUploadThingFiles(
 			});
 		}
 
-		// 6. Delete files via UTApi (per-request instantiation)
-		const utapi = new UTApi();
+		// 6. Delete files via UTApi singleton
 		const result = await utapi.deleteFiles(fileKeys);
 
 		// 7. Verify deletion and report accurate counts

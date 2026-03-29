@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 
 /**
  * Detect swipe-from-left-edge to trigger an action (mobile native UX pattern).
@@ -10,10 +10,7 @@ import { useEffect, useRef } from "react";
  * @param maxWidth - Media query breakpoint in px — disabled above this width (default 1024)
  */
 export function useEdgeSwipe(onOpen: () => void, isOpen: boolean, maxWidth = 1024) {
-	const onOpenRef = useRef(onOpen);
-	useEffect(() => {
-		onOpenRef.current = onOpen;
-	});
+	const onOpenStable = useEffectEvent(onOpen);
 
 	useEffect(() => {
 		if (typeof window === "undefined") return;
@@ -51,7 +48,7 @@ export function useEdgeSwipe(onOpen: () => void, isOpen: boolean, maxWidth = 102
 			// Trigger open when horizontal swipe exceeds 50px
 			if (dx > 50) {
 				tracking = false;
-				onOpenRef.current();
+				onOpenStable();
 			}
 		}
 

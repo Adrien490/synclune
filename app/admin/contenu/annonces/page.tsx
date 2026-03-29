@@ -1,7 +1,6 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { type Metadata } from "next";
-import { connection } from "next/server";
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { AnnouncementDataTable } from "@/modules/announcements/components/admin/announcement-data-table";
@@ -27,8 +26,6 @@ export const metadata: Metadata = {
 };
 
 export default async function AnnouncementsAdminPage() {
-	await connection();
-
 	const announcementsPromise = getAnnouncements();
 
 	return (

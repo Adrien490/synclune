@@ -31,6 +31,7 @@ if (!process.env.UPLOADTHING_TOKEN) {
 }
 
 // Types MIME autorisés pour la validation serveur
+// SVG intentionally excluded: can contain embedded scripts (XSS vector)
 const ALLOWED_IMAGE_TYPES = [
 	"image/jpeg",
 	"image/png",
@@ -83,6 +84,8 @@ const f = createUploadthing({
 });
 
 // FileRouter pour l'application
+// CSRF: UploadThing route handler uses POST with signature verification.
+// Delete operations use Next.js Server Actions (built-in same-origin CSRF protection).
 export const ourFileRouter = {
 	// Route pour les médias de catalogue (produits et SKUs) - images et vidéos
 	catalogMedia: f({

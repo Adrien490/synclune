@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { toast } from "sonner";
@@ -8,8 +9,7 @@ import { UploadProgress } from "@/shared/components/media-upload/upload-progress
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { FieldLabel } from "@/shared/components/forms";
 import { cn } from "@/shared/utils/cn";
-
-const MAX_INSPIRATION_MEDIAS = 5;
+import { MAX_INSPIRATION_MEDIAS } from "@/modules/media/constants/media-limits.constants";
 
 export interface InspirationMediaItem {
 	url: string;
@@ -28,8 +28,10 @@ export function InspirationMediaUpload({
 	onMediasChange,
 	onDeleteMedia,
 }: InspirationMediaUploadProps) {
+	const [isUploading, setIsUploading] = useState(false);
+
 	return (
-		<div className="space-y-2">
+		<div className="space-y-2" aria-busy={isUploading} aria-live="polite">
 			<FieldLabel htmlFor="inspirationImages" optional>
 				Images d&apos;inspiration
 			</FieldLabel>
@@ -38,10 +40,15 @@ export function InspirationMediaUpload({
 			</p>
 
 			{medias.length > 0 && (
-				<div className="flex flex-wrap gap-2">
+				<div
+					className="flex flex-wrap gap-2"
+					role="list"
+					aria-label="Images d'inspiration ajoutées"
+				>
 					{medias.map((media, index) => (
 						<div
 							key={media.url}
+							role="listitem"
 							className="group relative size-20 overflow-hidden rounded-lg border"
 						>
 							<Image
@@ -60,7 +67,7 @@ export function InspirationMediaUpload({
 									onMediasChange(newMedias);
 									onDeleteMedia(media.url);
 								}}
-								className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+								className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 motion-safe:transition-opacity [@media(hover:none)]:opacity-100"
 								aria-label={`Supprimer l'image ${index + 1}`}
 							>
 								<X className="size-5 text-white" aria-hidden="true" />
@@ -73,7 +80,9 @@ export function InspirationMediaUpload({
 			{medias.length < MAX_INSPIRATION_MEDIAS && (
 				<UploadDropzone
 					endpoint="customizationMedia"
+					onUploadBegin={() => setIsUploading(true)}
 					onClientUploadComplete={(res) => {
+						setIsUploading(false);
 						const newMedias = [
 							...medias,
 							...res.map((f) => ({
@@ -84,6 +93,7 @@ export function InspirationMediaUpload({
 						onMediasChange(newMedias);
 					}}
 					onUploadError={(error) => {
+						setIsUploading(false);
 						toast.error(error.message || "Erreur lors de l'upload");
 					}}
 					config={{ mode: "auto" }}
@@ -91,7 +101,7 @@ export function InspirationMediaUpload({
 					appearance={{
 						container: ({ isDragActive, isUploading }) =>
 							cn(
-								"border-2 border-dashed rounded-lg p-6 transition-colors relative min-h-[140px]",
+								"border-2 border-dashed rounded-lg p-6 motion-safe:transition-colors relative min-h-[140px]",
 								isDragActive
 									? "border-primary bg-primary/5"
 									: "border-border/50 hover:border-primary/50 hover:bg-muted/50",
@@ -122,7 +132,7 @@ export function InspirationMediaUpload({
 							return (
 								<Upload
 									className={cn(
-										"size-10 transition-all duration-200",
+										"size-10 motion-safe:transition-all motion-safe:duration-200",
 										isDragActive ? "text-primary scale-110" : "text-muted-foreground",
 									)}
 									aria-hidden="true"

@@ -27,7 +27,7 @@ vi.mock("@/shared/components/ui/card", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/chart", () => ({
+vi.mock("@/modules/dashboard/components/chart", () => ({
 	ChartContainer: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="chart-container">{children}</div>
 	),

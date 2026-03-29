@@ -8,6 +8,7 @@ const { mockPrisma, mockDeleteFiles, mockUpdateTag } = vi.hoisted(() => ({
 		product: { findMany: vi.fn(), deleteMany: vi.fn() },
 		reviewMedia: { findMany: vi.fn() },
 		skuMedia: { findMany: vi.fn() },
+		customizationMedia: { findMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockDeleteFiles: vi.fn(),
@@ -53,6 +54,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.product.findMany.mockResolvedValue([]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 0 },
 			{ count: 0 },
@@ -123,6 +125,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 2 },
 			{ count: 1 },
@@ -150,6 +153,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.product.findMany.mockResolvedValue([]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: BATCH_SIZE_LARGE },
 			{ count: 0 },
@@ -173,6 +177,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-media-1", thumbnailUrl: "https://utfs.io/f/sku-thumb-1" },
 		]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
 			{ count: 0 },
@@ -197,6 +202,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.product.findMany.mockResolvedValue([{ id: "prod-1" }]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
 			{ count: 0 },
@@ -219,6 +225,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		expect(mockPrisma.reviewMedia.findMany).not.toHaveBeenCalled();
 		expect(mockPrisma.skuMedia.findMany).not.toHaveBeenCalled();
+		expect(mockPrisma.customizationMedia.findMany).not.toHaveBeenCalled();
 	});
 
 	it("should not fail when UploadThing review media deletion throws", async () => {
@@ -230,6 +237,7 @@ describe("hardDeleteExpiredRecords", () => {
 			{ url: "https://utfs.io/f/review-media-1" },
 		]);
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
 			{ count: 0 },
@@ -253,6 +261,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
 		]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 0 },
 			{ count: 0 },
@@ -276,6 +285,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
 		]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 0 },
 			{ count: 0 },
@@ -300,6 +310,7 @@ describe("hardDeleteExpiredRecords", () => {
 		mockPrisma.skuMedia.findMany.mockResolvedValue([
 			{ url: "https://utfs.io/f/sku-1", thumbnailUrl: null },
 		]);
+		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.$transaction.mockResolvedValue([
 			{ count: 1 },
 			{ count: 0 },

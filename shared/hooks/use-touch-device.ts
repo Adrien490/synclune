@@ -1,3 +1,5 @@
+"use client";
+
 import { useSyncExternalStore } from "react";
 
 // Media query to detect touch devices (smartphones, tablets).

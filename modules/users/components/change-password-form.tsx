@@ -3,10 +3,8 @@
 import { useAppForm } from "@/shared/components/forms";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
-import { Checkbox } from "@/shared/components/ui/checkbox";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CircleAlert, CircleCheck } from "lucide-react";
-import { useState } from "react";
 import { useChangePassword } from "@/modules/auth/hooks/use-change-password";
 
 interface ChangePasswordFormProps {
@@ -15,7 +13,6 @@ interface ChangePasswordFormProps {
 
 export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 	const { action, isPending, state } = useChangePassword({ onOpenChange });
-	const [revokeOtherSessions, setRevokeOtherSessions] = useState(false);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -23,6 +20,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 			currentPassword: "",
 			newPassword: "",
 			confirmPassword: "",
+			revokeOtherSessions: false,
 		},
 	});
 
@@ -44,13 +42,6 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 					)}
 				</>
 			)}
-
-			{/* Champ caché pour revokeOtherSessions */}
-			<input
-				type="hidden"
-				name="revokeOtherSessions"
-				value={revokeOtherSessions ? "true" : "false"}
-			/>
 
 			<div className="space-y-4">
 				{/* Mot de passe actuel */}
@@ -143,25 +134,25 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 				</form.AppField>
 
 				{/* Option pour déconnecter les autres sessions */}
-				<div className="bg-muted/50 flex items-start gap-3 rounded-lg border p-4 pt-2">
-					<Checkbox
-						id="revokeOtherSessions"
-						checked={revokeOtherSessions}
-						onCheckedChange={(checked) => setRevokeOtherSessions(checked === true)}
-						disabled={isPending || state?.status === ActionStatus.SUCCESS}
-					/>
-					<div className="space-y-1">
-						<label
-							htmlFor="revokeOtherSessions"
-							className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-						>
-							Déconnecter tous les autres appareils
-						</label>
-						<p className="text-muted-foreground text-xs">
-							Déconnecte toutes vos sessions actives sauf celle-ci
-						</p>
-					</div>
-				</div>
+				<form.AppField name="revokeOtherSessions">
+					{(field) => (
+						<div className="bg-muted/50 rounded-lg border p-4 pt-2">
+							<field.CheckboxField
+								label={
+									<div className="space-y-1">
+										<span className="text-sm leading-none font-medium">
+											Déconnecter tous les autres appareils
+										</span>
+										<p className="text-muted-foreground text-xs">
+											Déconnecte toutes vos sessions actives sauf celle-ci
+										</p>
+									</div>
+								}
+								disabled={isPending || state?.status === ActionStatus.SUCCESS}
+							/>
+						</div>
+					)}
+				</form.AppField>
 			</div>
 
 			{/* Submit button */}

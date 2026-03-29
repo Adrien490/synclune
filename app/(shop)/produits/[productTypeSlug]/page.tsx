@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { connection } from "next/server";
 
 import { getProductTypes } from "@/modules/product-types/data/get-product-types";
 import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
@@ -112,7 +111,6 @@ export default async function ProductTypeCategoryPage({
 	params,
 	searchParams,
 }: ProductTypeCategoryPageProps) {
-	await connection();
 	const [{ productTypeSlug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Récupérer le type de produit et les données du catalogue en parallèle

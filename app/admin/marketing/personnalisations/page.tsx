@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import { connection } from "next/server";
 import type { Metadata } from "next";
 import { CustomizationRequestStatus } from "@/app/generated/prisma/client";
 import { Toolbar } from "@/shared/components/toolbar";
@@ -30,8 +29,6 @@ interface CustomizationsPageProps {
 }
 
 export default async function CustomizationsPage({ searchParams }: CustomizationsPageProps) {
-	await connection();
-
 	const params = await searchParams;
 
 	const cursor = getFirstParam(params.cursor);

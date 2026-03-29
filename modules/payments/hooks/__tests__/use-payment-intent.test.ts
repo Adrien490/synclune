@@ -6,9 +6,10 @@ import { cleanup } from "@testing-library/react";
 // Hoisted mocks
 // ============================================================================
 
-const { mockInitializePayment, mockUpdatePaymentAmount } = vi.hoisted(() => ({
+const { mockInitializePayment, mockUpdatePaymentAmount, mockCancelOrphanPI } = vi.hoisted(() => ({
 	mockInitializePayment: vi.fn(),
 	mockUpdatePaymentAmount: vi.fn(),
+	mockCancelOrphanPI: vi.fn(),
 }));
 
 vi.mock("@/modules/payments/actions/initialize-payment", () => ({
@@ -17,6 +18,10 @@ vi.mock("@/modules/payments/actions/initialize-payment", () => ({
 
 vi.mock("@/modules/payments/actions/update-payment-amount", () => ({
 	updatePaymentAmount: mockUpdatePaymentAmount,
+}));
+
+vi.mock("@/modules/payments/actions/cancel-orphan-payment-intent", () => ({
+	cancelOrphanPaymentIntent: mockCancelOrphanPI,
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));

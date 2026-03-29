@@ -4,7 +4,7 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { LazyMotion, MotionConfig } from "motion/react";
 import type { ReactNode } from "react";
 
-const loadFeatures = () => import("motion/react").then((mod) => mod.domMax);
+const loadFeatures = () => import("motion/react").then((mod) => mod.domAnimation);
 
 export function MotionProvider({ children }: { children: ReactNode }) {
 	return (

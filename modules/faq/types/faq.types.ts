@@ -2,10 +2,17 @@
 // FAQ TYPES
 // ============================================================================
 
-/** FAQ link shape matching the existing FaqLink interface */
+/** FAQ link shape */
 export interface FaqLink {
 	text: string;
 	href: string;
+}
+
+/** FAQ item data for display (storefront section, JSON-LD) */
+export interface FaqItemData {
+	question: string;
+	answer: string;
+	links?: FaqLink[];
 }
 
 /** FAQ item data for admin list */

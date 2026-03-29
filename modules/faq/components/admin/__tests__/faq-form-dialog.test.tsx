@@ -1,6 +1,6 @@
 import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type * as React from "react";
+import * as React from "react";
 import type { FaqListItem } from "../../../types/faq.types";
 
 // ============================================================================
@@ -131,6 +131,32 @@ vi.mock("@/shared/components/forms", () => ({
 				})}
 			</div>
 		),
+		Field: ({
+			name,
+			children,
+		}: {
+			name: string;
+			mode?: string;
+			children: (field: Record<string, unknown>) => React.ReactNode;
+		}) => {
+			const [items, setItems] = React.useState<{ text: string; href: string }[]>([]);
+			return (
+				<div data-testid={`field-${name}`}>
+					{children({
+						state: { value: items },
+						pushValue: (val: { text: string; href: string }) => setItems((prev) => [...prev, val]),
+						removeValue: (idx: number) => setItems((prev) => prev.filter((_, i) => i !== idx)),
+						handleChange: (newItems: { text: string; href: string }[]) => setItems(newItems),
+					})}
+				</div>
+			);
+		},
+		Subscribe: ({
+			children,
+		}: {
+			selector: (state: Record<string, unknown>) => unknown;
+			children: (value: unknown) => React.ReactNode;
+		}) => <>{children([])}</>,
 	})),
 }));
 
@@ -160,6 +186,10 @@ vi.mock("@/shared/components/responsive-dialog", () => ({
 
 vi.mock("@/shared/components/required-fields-note", () => ({
 	RequiredFieldsNote: () => <p data-testid="required-fields-note">* Champs obligatoires</p>,
+}));
+
+vi.mock("@/shared/components/ui/input", () => ({
+	Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({

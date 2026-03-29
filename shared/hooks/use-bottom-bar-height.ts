@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 
 const CSS_VAR = "--bottom-bar-height";

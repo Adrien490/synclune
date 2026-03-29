@@ -17,7 +17,6 @@ import { Suspense } from "react";
 import { SubscribersDataTable } from "@/modules/newsletter/components/admin/subscribers-data-table";
 import { SubscribersDataTableSkeleton } from "@/modules/newsletter/components/admin/subscribers-data-table-skeleton";
 import { type Metadata } from "next";
-import { connection } from "next/server";
 
 export const metadata: Metadata = {
 	title: "Newsletter | Dashboard",
@@ -29,7 +28,6 @@ interface NewsletterPageProps {
 }
 
 export default async function NewsletterPage({ searchParams }: NewsletterPageProps) {
-	await connection();
 	const params = await searchParams;
 	const statsPromise = getNewsletterStats();
 

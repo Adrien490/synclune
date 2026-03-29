@@ -1,7 +1,6 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { type Metadata } from "next";
-import { connection } from "next/server";
 
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -26,8 +25,6 @@ export const metadata: Metadata = {
 };
 
 export default async function FaqAdminPage() {
-	await connection();
-
 	const faqItemsPromise = getAdminFaqItems();
 
 	return (

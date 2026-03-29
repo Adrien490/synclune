@@ -1,28 +1,38 @@
 "use client";
 
-import { ColorSwatch as AriaColorSwatch, type ColorSwatchProps } from "react-aria-components";
-import { composeTailwindRenderProps } from "@/shared/lib/react-aria-utils";
+import { twMerge } from "tailwind-merge";
+
+type ColorSwatchProps = {
+	color: string;
+	/** Nom accessible de la couleur (utilise comme aria-label) */
+	colorName?: string;
+	className?: string;
+	"aria-label"?: string;
+};
 
 /**
- * ColorSwatch - Composant de prévisualisation de couleur accessible
+ * ColorSwatch - Composant de previsualisation de couleur accessible
  *
- * Basé sur React Aria ColorSwatch avec styling Tailwind.
  * Affiche un motif damier pour les couleurs avec transparence.
- *
- * @see https://react-spectrum.adobe.com/react-aria/ColorSwatch.html
  */
-export function ColorSwatch(props: ColorSwatchProps) {
+export function ColorSwatch({
+	color,
+	colorName,
+	className,
+	"aria-label": ariaLabel,
+}: ColorSwatchProps) {
 	return (
-		<AriaColorSwatch
-			{...props}
-			className={composeTailwindRenderProps(
-				props.className,
-				"border-border/50 box-border size-8 rounded-full border",
+		<span
+			role="img"
+			aria-label={ariaLabel ?? colorName}
+			className={twMerge(
+				"border-border/50 box-border inline-block size-8 rounded-full border",
+				className,
 			)}
-			style={({ color }) => ({
+			style={{
 				background: `linear-gradient(${color}, ${color}),
           repeating-conic-gradient(#CCC 0% 25%, white 0% 50%) 50% / 16px 16px`,
-			})}
+			}}
 		/>
 	);
 }
