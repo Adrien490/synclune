@@ -64,10 +64,10 @@ describe("RefreshDashboardButton", () => {
 		expect(screen.getByTestId("refresh-button")).toBeInTheDocument();
 	});
 
-	it("renders with label 'Rafraichir le tableau de bord'", () => {
+	it("renders with label 'Rafraîchir le tableau de bord'", () => {
 		render(<RefreshDashboardButton />);
 
-		expect(screen.getByText("Rafraichir le tableau de bord")).toBeInTheDocument();
+		expect(screen.getByText("Rafraîchir le tableau de bord")).toBeInTheDocument();
 	});
 
 	it("renders with default outline variant", () => {

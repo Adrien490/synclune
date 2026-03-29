@@ -92,7 +92,7 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 						<CardTitle className={CHART_STYLES.title}>{chartTitle}</CardTitle>
 						<CardDescription className={CHART_STYLES.description}>
 							{isDetailed
-								? "Decomposition : produits, livraison et remises"
+								? "Décomposition : produits, livraison et remises"
 								: "Chiffre d'affaires et nombre de commandes"}
 						</CardDescription>
 					</div>
@@ -103,7 +103,7 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 							onClick={() => setIsDetailed((prev) => !prev)}
 							className="text-xs"
 						>
-							{isDetailed ? "Vue simple" : "Detailler"}
+							{isDetailed ? "Vue simple" : "Détailler"}
 						</Button>
 					)}
 				</div>
@@ -118,8 +118,8 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 								Graphique montrant l&apos;evolution du chiffre d&apos;affaires quotidien et du
 								nombre de commandes sur les 30 derniers jours.
 							</p>
-							<p>Total revenus sur la periode : {totalRevenue.toFixed(2)} €.</p>
-							<p>Total commandes sur la periode : {totalOrders}.</p>
+							<p>Total revenus sur la période : {totalRevenue.toFixed(2)} €.</p>
+							<p>Total commandes sur la période : {totalOrders}.</p>
 							<p>
 								Pic revenus : {peakRevenue.revenue.toFixed(2)} € le {peakRevenue.date}.
 							</p>

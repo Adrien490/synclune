@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
+import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
 import { FulfillmentPipelineCard } from "@/modules/dashboard/components/fulfillment-pipeline";
@@ -13,6 +14,7 @@ import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-d
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
 import { TopProductsList } from "@/modules/dashboard/components/top-products-list";
 import { ActiveDiscounts } from "@/modules/dashboard/components/active-discounts";
+import { DashboardListsTabs } from "@/modules/dashboard/components/dashboard-lists-tabs";
 
 import {
 	KpisSkeleton,
@@ -51,7 +53,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 	const period = parsePeriod(params.period);
 
 	return (
-		<>
+		<section aria-label="Tableau de bord">
+			<DashboardMobileHeader className="mb-6 md:hidden" />
 			<PageHeader
 				variant="compact"
 				title="Tableau de bord"
@@ -92,25 +95,31 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				</Suspense>
 
 				{/* Commandes recentes + Top produits + Codes promo */}
-				<div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-					<Suspense
-						fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />}
-					>
-						<RecentOrdersWrapper />
-					</Suspense>
-
-					<Suspense
-						fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
-					>
-						<TopProductsWrapper period={period} />
-					</Suspense>
-
-					<Suspense>
-						<ActiveDiscountsWrapper />
-					</Suspense>
-				</div>
+				<DashboardListsTabs
+					ordersSlot={
+						<Suspense
+							fallback={
+								<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
+							}
+						>
+							<RecentOrdersWrapper />
+						</Suspense>
+					}
+					productsSlot={
+						<Suspense
+							fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
+						>
+							<TopProductsWrapper period={period} />
+						</Suspense>
+					}
+					discountsSlot={
+						<Suspense>
+							<ActiveDiscountsWrapper />
+						</Suspense>
+					}
+				/>
 			</div>
-		</>
+		</section>
 	);
 }
 

@@ -149,6 +149,6 @@ describe("DashboardAlerts", () => {
 		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 1 })} />);
 
 		const container = screen.getByRole("status");
-		expect(container).toHaveAttribute("aria-label", "Alertes necessitant votre attention");
+		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant votre attention");
 	});
 });

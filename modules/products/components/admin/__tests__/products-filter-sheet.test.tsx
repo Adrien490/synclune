@@ -224,8 +224,8 @@ vi.mock("@/shared/components/ui/label", () => ({
 }));
 
 // TanStack Form mock - avoids ResizeObserver dependency from real implementation
-vi.mock("@tanstack/react-form", () => ({
-	useForm: ({
+vi.mock("@tanstack/react-form", () => {
+	const useForm = ({
 		defaultValues,
 		onSubmit,
 	}: {
@@ -279,8 +279,18 @@ vi.mock("@tanstack/react-form", () => ({
 			},
 		};
 		return form;
-	},
-}));
+	};
+	return {
+		createFormHookContexts: () => ({
+			fieldContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFieldContext: () => ({}),
+			formContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFormContext: () => ({}),
+		}),
+		createFormHook: () => ({ useAppForm: useForm }),
+		useForm,
+	};
+});
 
 // ============================================================================
 // COMPONENT IMPORT (after mocks)

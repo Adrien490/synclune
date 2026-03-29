@@ -50,7 +50,7 @@ vi.mock("@/modules/dashboard/constants/period.constants", () => ({
 		"30d": { label: "30 jours", chartGranularity: "daily" },
 		month: { label: "Ce mois", chartGranularity: "daily" },
 		quarter: { label: "Ce trimestre", chartGranularity: "weekly" },
-		year: { label: "Cette annee", chartGranularity: "monthly" },
+		year: { label: "Cette année", chartGranularity: "monthly" },
 	},
 	DEFAULT_PERIOD: "month",
 }));

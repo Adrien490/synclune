@@ -52,13 +52,13 @@ export function TopProductsList({ data }: TopProductsListProps) {
 							</span>
 
 							{/* Thumbnail */}
-							<div className="bg-muted h-10 w-10 flex-shrink-0 overflow-hidden rounded">
+							<div className="bg-muted h-10 w-10 flex-shrink-0 overflow-hidden rounded-md sm:h-12 sm:w-12">
 								{product.imageUrl ? (
 									<Image
 										src={product.imageUrl}
 										alt=""
-										width={40}
-										height={40}
+										width={48}
+										height={48}
 										className="h-full w-full object-cover"
 									/>
 								) : (

@@ -71,10 +71,10 @@ describe("PeriodSelector", () => {
 	// Rendering
 	// -------------------------------------------------------------------------
 
-	it("renders the select trigger with aria-label 'Periode du tableau de bord'", () => {
+	it("renders the select trigger with aria-label 'Période du tableau de bord'", () => {
 		render(<PeriodSelector />);
 
-		expect(screen.getByRole("button", { name: "Periode du tableau de bord" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: "Période du tableau de bord" })).toBeInTheDocument();
 	});
 
 	it("displays 'Ce mois' as the default value when no search param is set", () => {
@@ -126,10 +126,10 @@ describe("PeriodSelector", () => {
 		expect(screen.getByText("Ce trimestre")).toBeInTheDocument();
 	});
 
-	it("renders the 'Cette annee' option", () => {
+	it("renders the 'Cette année' option", () => {
 		render(<PeriodSelector />);
 
-		expect(screen.getByText("Cette annee")).toBeInTheDocument();
+		expect(screen.getByText("Cette année")).toBeInTheDocument();
 	});
 
 	it("renders select items with correct period values", () => {
@@ -173,7 +173,7 @@ describe("PeriodSelector", () => {
 		render(<PeriodSelector />);
 
 		const trigger = screen.getByTestId("select-trigger");
-		expect(trigger).toHaveAttribute("aria-label", "Periode du tableau de bord");
+		expect(trigger).toHaveAttribute("aria-label", "Période du tableau de bord");
 	});
 
 	it("renders select content containing all items", () => {

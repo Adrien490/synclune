@@ -23,7 +23,7 @@ export function DashboardAlerts({ alerts }: DashboardAlertsProps) {
 		<div
 			className="flex flex-wrap gap-3"
 			role="status"
-			aria-label="Alertes necessitant votre attention"
+			aria-label="Alertes nécessitant votre attention"
 		>
 			{activeDisputes > 0 && (
 				<Link

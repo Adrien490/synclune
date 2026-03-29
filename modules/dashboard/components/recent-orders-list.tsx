@@ -51,14 +51,14 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 							aria-label={`Commande #${order.orderNumber}, ${order.total.toFixed(2)} €, ${order.customerName}, ${ORDER_STATUS_LABELS[order.status]}`}
 						>
 							<div className="min-w-0 flex-1 space-y-1">
-								<div className="flex items-center gap-2">
+								<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
 									<p className="text-sm font-medium">#{order.orderNumber}</p>
 									<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
 										{ORDER_STATUS_LABELS[order.status]}
 									</Badge>
 									<Badge
 										variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
-										className="text-xs"
+										className="xs:inline-flex hidden text-xs"
 									>
 										{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 									</Badge>
@@ -67,7 +67,8 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 									className="text-muted-foreground truncate text-sm"
 									title={`${order.customerName} • ${order.customerEmail}`}
 								>
-									{order.customerName} • {order.customerEmail}
+									{order.customerName}
+									<span className="hidden sm:inline"> • {order.customerEmail}</span>
 								</p>
 								<p className="text-muted-foreground text-xs">
 									{format(new Date(order.createdAt), "dd/MM/yyyy à HH:mm", {

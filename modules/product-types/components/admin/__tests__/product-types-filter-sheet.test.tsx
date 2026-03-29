@@ -64,8 +64,13 @@ const mockFieldHandleChange = vi.fn();
 // Per-field state so each Field renders with the correct state.value
 const fieldStateMap: Record<string, string> = {};
 
-vi.mock("@tanstack/react-form", () => ({
-	useForm: ({ defaultValues }: { defaultValues: Record<string, string>; onSubmit: unknown }) => ({
+vi.mock("@tanstack/react-form", () => {
+	const useForm = ({
+		defaultValues,
+	}: {
+		defaultValues: Record<string, string>;
+		onSubmit: unknown;
+	}) => ({
 		handleSubmit: mockHandleSubmit,
 		reset: mockFormReset,
 		Field: ({
@@ -88,8 +93,18 @@ vi.mock("@tanstack/react-form", () => ({
 				},
 			});
 		},
-	}),
-}));
+	});
+	return {
+		createFormHookContexts: () => ({
+			fieldContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFieldContext: () => ({}),
+			formContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFormContext: () => ({}),
+		}),
+		createFormHook: () => ({ useAppForm: useForm }),
+		useForm,
+	};
+});
 
 vi.mock("@/shared/components/forms/radio-filter-item", () => ({
 	RadioFilterItem: ({

@@ -189,7 +189,7 @@ describe("RevenueChart", () => {
 
 		render(<RevenueChart chartData={chartData} />);
 
-		expect(screen.getByText(/Total revenus sur la periode : 600.00 €/)).toBeInTheDocument();
+		expect(screen.getByText(/Total revenus sur la période : 600.00 €/)).toBeInTheDocument();
 	});
 
 	it("renders sr-only summary with total orders", () => {
@@ -197,7 +197,7 @@ describe("RevenueChart", () => {
 
 		render(<RevenueChart chartData={chartData} />);
 
-		expect(screen.getByText(/Total commandes sur la periode : 6/)).toBeInTheDocument();
+		expect(screen.getByText(/Total commandes sur la période : 6/)).toBeInTheDocument();
 	});
 
 	it("renders sr-only summary with peak revenue entry", () => {
@@ -279,6 +279,6 @@ describe("RevenueChart", () => {
 		);
 
 		expect(screen.getByTestId("composed-chart")).toBeInTheDocument();
-		expect(screen.getByText(/Total revenus sur la periode : 500.00 €/)).toBeInTheDocument();
+		expect(screen.getByText(/Total revenus sur la période : 500.00 €/)).toBeInTheDocument();
 	});
 });

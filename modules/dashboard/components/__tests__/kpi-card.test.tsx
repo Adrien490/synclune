@@ -219,7 +219,7 @@ describe("KpiCard", () => {
 			const label = link.getAttribute("aria-label")!;
 			expect(label).toContain("CA du mois");
 			expect(label).toContain("1500 €");
-			expect(label).toContain("Cliquer pour voir les details");
+			expect(label).toContain("Cliquer pour voir les détails");
 		});
 	});
 

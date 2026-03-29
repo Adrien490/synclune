@@ -122,7 +122,7 @@ describe("FulfillmentPipelineCard", () => {
 	it("renders the card title", () => {
 		render(<FulfillmentPipelineCard pipeline={makePipeline({ unfulfilled: 3 })} />);
 
-		expect(screen.getByText("Pipeline d'expedition")).toBeInTheDocument();
+		expect(screen.getByText("Pipeline d'expédition")).toBeInTheDocument();
 	});
 
 	// -------------------------------------------------------------------------
@@ -132,13 +132,13 @@ describe("FulfillmentPipelineCard", () => {
 	it("renders singular 'commande' for 1 order", () => {
 		render(<FulfillmentPipelineCard pipeline={makePipeline({ unfulfilled: 1 })} />);
 
-		expect(screen.getByText("1 commande payee")).toBeInTheDocument();
+		expect(screen.getByText("1 commande payée")).toBeInTheDocument();
 	});
 
 	it("renders plural 'commandes' for multiple orders", () => {
 		render(<FulfillmentPipelineCard pipeline={makePipeline({ unfulfilled: 3, shipped: 2 })} />);
 
-		expect(screen.getByText("5 commandes payees")).toBeInTheDocument();
+		expect(screen.getByText("5 commandes payées")).toBeInTheDocument();
 	});
 
 	// -------------------------------------------------------------------------
@@ -198,9 +198,9 @@ describe("FulfillmentPipelineCard", () => {
 
 		const bar = screen.getByRole("img");
 		expect(bar.getAttribute("aria-label")).toContain("4");
-		expect(bar.getAttribute("aria-label")).toContain("a preparer");
+		expect(bar.getAttribute("aria-label")).toContain("à préparer");
 		expect(bar.getAttribute("aria-label")).toContain("6");
-		expect(bar.getAttribute("aria-label")).toContain("expediees");
+		expect(bar.getAttribute("aria-label")).toContain("expédiées");
 	});
 
 	// -------------------------------------------------------------------------
@@ -229,7 +229,7 @@ describe("FulfillmentPipelineCard", () => {
 	it("renders stage count and label in legend", () => {
 		render(<FulfillmentPipelineCard pipeline={makePipeline({ processing: 7 })} />);
 
-		expect(screen.getByText("7 en preparation")).toBeInTheDocument();
+		expect(screen.getByText("7 en préparation")).toBeInTheDocument();
 	});
 
 	it("renders correct filter URLs for each stage in legend", () => {
@@ -270,10 +270,10 @@ describe("FulfillmentPipelineCard", () => {
 			/>,
 		);
 
-		expect(screen.getByText("1 a preparer")).toBeInTheDocument();
-		expect(screen.getByText("1 en preparation")).toBeInTheDocument();
-		expect(screen.getByText("1 expediees")).toBeInTheDocument();
-		expect(screen.getByText("1 livrees")).toBeInTheDocument();
-		expect(screen.getByText("1 retournees")).toBeInTheDocument();
+		expect(screen.getByText("1 à préparer")).toBeInTheDocument();
+		expect(screen.getByText("1 en préparation")).toBeInTheDocument();
+		expect(screen.getByText("1 expédiées")).toBeInTheDocument();
+		expect(screen.getByText("1 livrées")).toBeInTheDocument();
+		expect(screen.getByText("1 retournées")).toBeInTheDocument();
 	});
 });

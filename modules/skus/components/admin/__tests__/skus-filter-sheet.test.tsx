@@ -73,8 +73,8 @@ const fieldStateMap: Record<string, unknown> = {};
 let capturedOnSubmit: ((args: { value: unknown }) => Promise<void>) | null = null;
 let _capturedDefaultValues: Record<string, unknown> = {};
 
-vi.mock("@tanstack/react-form", () => ({
-	useForm: ({
+vi.mock("@tanstack/react-form", () => {
+	const useForm = ({
 		defaultValues,
 		onSubmit,
 	}: {
@@ -112,8 +112,18 @@ vi.mock("@tanstack/react-form", () => ({
 			},
 			defaultValues,
 		};
-	},
-}));
+	};
+	return {
+		createFormHookContexts: () => ({
+			fieldContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFieldContext: () => ({}),
+			formContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFormContext: () => ({}),
+		}),
+		createFormHook: () => ({ useAppForm: useForm }),
+		useForm,
+	};
+});
 
 vi.mock("@/shared/components/ui/checkbox", () => ({
 	Checkbox: ({

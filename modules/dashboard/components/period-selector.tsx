@@ -20,7 +20,12 @@ import {
  * URL-based period selector for the admin dashboard
  * Updates ?period= search param, triggering server-side data refetch
  */
-export function PeriodSelector() {
+interface PeriodSelectorProps {
+	/** Render full-width trigger (for mobile) */
+	fullWidth?: boolean;
+}
+
+export function PeriodSelector({ fullWidth }: PeriodSelectorProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -47,8 +52,8 @@ export function PeriodSelector() {
 	return (
 		<Select value={optimisticValue} onValueChange={handleChange}>
 			<SelectTrigger
-				className="w-36"
-				aria-label="Periode du tableau de bord"
+				className={fullWidth ? "w-full" : "w-36"}
+				aria-label="Période du tableau de bord"
 				data-pending={isPending || undefined}
 			>
 				<SelectValue />

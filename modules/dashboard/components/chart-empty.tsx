@@ -13,7 +13,7 @@ import Link from "next/link";
 import { EMPTY_STATES, type EmptyStateType } from "../constants/empty-states";
 
 interface ChartEmptyProps {
-	/** Type d'etat vide (cle de EMPTY_STATES) */
+	/** Type d'état vide (clé de EMPTY_STATES) */
 	type: EmptyStateType;
 	/** Texte additionnel pour le contexte (ex: "sur cette periode") */
 	periodLabel?: string;
@@ -30,8 +30,8 @@ interface ChartEmptyProps {
 }
 
 /**
- * Empty state specifique pour les charts du dashboard
- * Reutilise le composant Empty avec les configurations predefinies
+ * Empty state spécifique pour les charts du dashboard
+ * Réutilise le composant Empty avec les configurations prédéfinies
  */
 export function ChartEmpty({
 	type,

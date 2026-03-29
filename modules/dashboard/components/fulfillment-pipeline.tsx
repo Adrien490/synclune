@@ -19,31 +19,31 @@ interface FulfillmentPipelineProps {
 const STAGES = [
 	{
 		key: "unfulfilled" as const,
-		label: "A preparer",
+		label: "À préparer",
 		color: "bg-warning",
 		filter: "filter_fulfillmentStatus=UNFULFILLED",
 	},
 	{
 		key: "processing" as const,
-		label: "En preparation",
+		label: "En préparation",
 		color: "bg-info",
 		filter: "filter_fulfillmentStatus=PROCESSING",
 	},
 	{
 		key: "shipped" as const,
-		label: "Expediees",
+		label: "Expédiées",
 		color: "bg-secondary",
 		filter: "filter_fulfillmentStatus=SHIPPED",
 	},
 	{
 		key: "delivered" as const,
-		label: "Livrees",
+		label: "Livrées",
 		color: "bg-success",
 		filter: "filter_fulfillmentStatus=DELIVERED",
 	},
 	{
 		key: "returned" as const,
-		label: "Retournees",
+		label: "Retournées",
 		color: "bg-destructive",
 		filter: "filter_fulfillmentStatus=RETURNED",
 	},
@@ -70,9 +70,9 @@ export function FulfillmentPipelineCard({ pipeline }: FulfillmentPipelineProps) 
 			<CardHeader className="pb-3">
 				<div className="flex items-center justify-between">
 					<div>
-						<CardTitle className={CHART_STYLES.title}>Pipeline d'expedition</CardTitle>
+						<CardTitle className={CHART_STYLES.title}>Pipeline d'expédition</CardTitle>
 						<CardDescription className="text-sm">
-							{total} commande{total > 1 ? "s" : ""} payee{total > 1 ? "s" : ""}
+							{total} commande{total > 1 ? "s" : ""} payée{total > 1 ? "s" : ""}
 						</CardDescription>
 					</div>
 					{pipeline.lateShipments > 0 && (
@@ -91,7 +91,7 @@ export function FulfillmentPipelineCard({ pipeline }: FulfillmentPipelineProps) 
 			<CardContent>
 				{/* Segmented bar */}
 				<div
-					className="flex h-3 w-full overflow-hidden rounded-full"
+					className="flex h-5 w-full overflow-hidden rounded-full sm:h-3"
 					role="img"
 					aria-label={`Pipeline: ${STAGES.map((s) => `${pipeline[s.key]} ${s.label.toLowerCase()}`).join(", ")}`}
 				>
@@ -100,10 +100,12 @@ export function FulfillmentPipelineCard({ pipeline }: FulfillmentPipelineProps) 
 						if (count === 0) return null;
 						const percent = (count / total) * 100;
 						return (
-							<div
+							<Link
 								key={stage.key}
+								href={`/admin/ventes/commandes?${stage.filter}`}
 								className={cn(stage.color, "transition-all duration-500")}
 								style={{ width: `${percent}%` }}
+								aria-label={`${count} ${stage.label.toLowerCase()}`}
 							/>
 						);
 					})}
@@ -118,7 +120,7 @@ export function FulfillmentPipelineCard({ pipeline }: FulfillmentPipelineProps) 
 							<Link
 								key={stage.key}
 								href={`/admin/ventes/commandes?${stage.filter}`}
-								className="hover:text-foreground text-muted-foreground flex items-center gap-1.5 text-xs transition-colors"
+								className="hover:text-foreground text-muted-foreground flex items-center gap-1.5 py-1 text-xs transition-colors"
 							>
 								<span className={cn("h-2.5 w-2.5 rounded-full", stage.color)} aria-hidden="true" />
 								<span className="font-medium">

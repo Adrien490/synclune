@@ -13,26 +13,26 @@ interface KpisSkeletonProps {
 }
 
 /**
- * Skeleton individuel pour une KPI Card
- * Reproduit exactement la structure de KpiCard pour eviter le CLS
+ * Skeleton individuel pour une KPI Card featured
+ * Reproduit exactement la structure de KpiCard featured pour eviter le CLS
  */
 export function KpiCardSkeleton() {
 	return (
-		<Card className={cn(CHART_STYLES.card, "min-h-35")}>
-			{/* Header avec titre et icone */}
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-				<Skeleton className="h-4 w-24" /> {/* Titre */}
-				<Skeleton className="h-8 w-8 rounded-full" /> {/* Icone */}
-			</CardHeader>
-			{/* Contenu avec valeur et evolution */}
-			<CardContent>
-				<Skeleton className="mb-2 h-9 w-32" /> {/* Valeur (text-3xl) */}
-				<div className="flex items-center gap-2">
-					<Skeleton className="h-4 w-12" /> {/* Evolution % */}
-					<Skeleton className="h-5 w-16 rounded-full" /> {/* Badge optionnel */}
-				</div>
-			</CardContent>
-		</Card>
+		<div className="min-w-[72vw] shrink-0 snap-start sm:min-w-0 sm:shrink">
+			<Card className={cn(CHART_STYLES.card, "min-h-45")}>
+				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+					<Skeleton className="h-4 w-24" />
+					<Skeleton className="h-10 w-10 rounded-full" />
+				</CardHeader>
+				<CardContent>
+					<Skeleton className="mb-2 h-10 w-36" />
+					<div className="flex items-center gap-2">
+						<Skeleton className="h-4 w-12" />
+						<Skeleton className="h-5 w-16 rounded-full" />
+					</div>
+				</CardContent>
+			</Card>
+		</div>
 	);
 }
 
@@ -56,7 +56,8 @@ function KpiCardCompactSkeleton() {
 
 /**
  * Skeleton pour les grilles de cartes KPI
- * Row 1: featured cards (large), Row 2: compact cards (optional)
+ * Row 1: featured cards (horizontal scroll on mobile, grid on sm+)
+ * Row 2: compact cards (2-col on mobile, 4-col on lg+)
  */
 export function KpisSkeleton({
 	count = 4,
@@ -72,16 +73,22 @@ export function KpisSkeleton({
 
 	return (
 		<div role="status" aria-busy="true" aria-label={ariaLabel} className="space-y-4">
-			{/* Row 1: Featured KPIs */}
-			<div className={cn("grid", CHART_STYLES.spacing.kpiGap, "sm:grid-cols-2", gridCols)}>
+			{/* Row 1: Featured KPIs — horizontal scroll on mobile */}
+			<div
+				className={cn(
+					"scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2",
+					"sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0",
+					gridCols,
+				)}
+			>
 				{Array.from({ length: count }).map((_, i) => (
 					<KpiCardSkeleton key={i} />
 				))}
 			</div>
 
-			{/* Row 2: Compact KPIs */}
+			{/* Row 2: Compact KPIs — 2-col on mobile */}
 			{compactCount > 0 && (
-				<div className={cn("grid", CHART_STYLES.spacing.kpiGap, "sm:grid-cols-3")}>
+				<div className={cn("grid grid-cols-2", CHART_STYLES.spacing.kpiGap, "lg:grid-cols-4")}>
 					{Array.from({ length: compactCount }).map((_, i) => (
 						<KpiCardCompactSkeleton key={i} />
 					))}

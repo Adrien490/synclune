@@ -11,7 +11,7 @@ export const CHART_STYLES = {
 	height: {
 		default: "h-75",
 		compact: "h-[250px]",
-		responsive: "h-55 sm:h-[250px] md:h-75",
+		responsive: "h-60 sm:h-[250px] md:h-75",
 		compactResponsive: "h-45 sm:h-50 md:h-[250px]",
 		fluid: "h-[clamp(200px,40vw,300px)]",
 		pie: "h-[clamp(200px,min(50vw,50vh),300px)]",
@@ -31,8 +31,8 @@ export const CHART_STYLES = {
 	description: "text-sm text-muted-foreground",
 
 	evolution: {
-		positive: "text-emerald-600",
-		negative: "text-rose-600",
+		positive: "text-evolution-positive",
+		negative: "text-evolution-negative",
 	},
 
 	touchTarget: {

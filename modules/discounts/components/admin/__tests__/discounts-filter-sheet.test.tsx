@@ -117,8 +117,8 @@ const mockFieldHandleChange = vi.fn();
 // Per-field state storage so each Field renders with correct state.value
 const fieldStateMap: Record<string, string> = {};
 
-vi.mock("@tanstack/react-form", () => ({
-	useForm: ({
+vi.mock("@tanstack/react-form", () => {
+	const useForm = ({
 		defaultValues,
 	}: {
 		defaultValues: Record<string, string>;
@@ -146,8 +146,18 @@ vi.mock("@tanstack/react-form", () => ({
 				},
 			});
 		},
-	}),
-}));
+	});
+	return {
+		createFormHookContexts: () => ({
+			fieldContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFieldContext: () => ({}),
+			formContext: { Provider: ({ children }: { children: React.ReactNode }) => children },
+			useFormContext: () => ({}),
+		}),
+		createFormHook: () => ({ useAppForm: useForm }),
+		useForm,
+	};
+});
 
 import { DiscountsFilterSheet } from "../discounts-filter-sheet";
 

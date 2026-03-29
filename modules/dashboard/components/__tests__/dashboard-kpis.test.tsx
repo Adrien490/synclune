@@ -136,12 +136,12 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-	it("renders A expedier KPI with warning when count > 0", () => {
+	it("renders À expédier KPI with warning when count > 0", () => {
 		render(<DashboardKpis kpis={makeKpis({ pendingShipment: { count: 5 } })} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
-				title: "A expedier",
+				title: "À expédier",
 				numericValue: 5,
 				priority: "alert",
 				status: "warning",
@@ -150,12 +150,12 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-	it("renders A expedier KPI with info priority when count is 0", () => {
+	it("renders À expédier KPI with info priority when count is 0", () => {
 		render(<DashboardKpis kpis={makeKpis({ pendingShipment: { count: 0 } })} />);
 
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
-				title: "A expedier",
+				title: "À expédier",
 				numericValue: 0,
 				priority: "info",
 				status: "default",
@@ -178,7 +178,7 @@ describe("DashboardKpis", () => {
 				decimalPlaces: 1,
 				size: "compact",
 				priority: "operational",
-				subtitle: "12 checkouts abandonnes",
+				subtitle: "12 checkouts abandonnés",
 			}),
 		);
 	});
@@ -193,7 +193,7 @@ describe("DashboardKpis", () => {
 		expect(mockKpiCard).toHaveBeenCalledWith(
 			expect.objectContaining({
 				title: "Taux de conversion",
-				subtitle: "1 checkout abandonne",
+				subtitle: "1 checkout abandonné",
 			}),
 		);
 	});

@@ -72,7 +72,7 @@ describe("ChartError", () => {
 		render(<ChartError />);
 
 		expect(
-			screen.getByText("Impossible de charger les donnees. Veuillez reessayer."),
+			screen.getByText("Impossible de charger les données. Veuillez réessayer."),
 		).toBeInTheDocument();
 	});
 
@@ -102,13 +102,13 @@ describe("ChartError", () => {
 		it("renders retry button when onRetry is provided", () => {
 			render(<ChartError onRetry={() => {}} />);
 
-			expect(screen.getByText("Reessayer")).toBeInTheDocument();
+			expect(screen.getByText("Réessayer")).toBeInTheDocument();
 		});
 
 		it("does not render retry button when onRetry is not provided", () => {
 			render(<ChartError />);
 
-			expect(screen.queryByText("Reessayer")).toBeNull();
+			expect(screen.queryByText("Réessayer")).toBeNull();
 		});
 
 		it("calls onRetry when retry button is clicked", async () => {
@@ -117,7 +117,7 @@ describe("ChartError", () => {
 
 			render(<ChartError onRetry={onRetry} />);
 
-			await user.click(screen.getByText("Reessayer"));
+			await user.click(screen.getByText("Réessayer"));
 
 			expect(onRetry).toHaveBeenCalledOnce();
 		});

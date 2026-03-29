@@ -18,7 +18,7 @@ const kpiCardVariants = cva(
 	{
 		variants: {
 			size: {
-				featured: "min-h-45",
+				featured: "min-h-45 md:backdrop-blur-sm md:backdrop-saturate-150",
 				default: "min-h-35",
 				compact: "min-h-25",
 			},
@@ -189,7 +189,7 @@ export function KpiCard({
 		evolution !== undefined
 			? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
 			: "";
-	const accessibleLabel = `${title}: ${displayValue}${evolutionText}${href ? ". Cliquer pour voir les details" : ""}`;
+	const accessibleLabel = `${title}: ${displayValue}${evolutionText}${href ? ". Cliquer pour voir les détails" : ""}`;
 
 	if (href) {
 		return (

@@ -74,7 +74,7 @@ export function ActiveDiscounts({ data }: ActiveDiscountsProps) {
 									{hasWarning && (
 										<TriangleAlert
 											className="text-warning h-3.5 w-3.5"
-											aria-label={nearExpiry ? "Expire bientot" : "Presque sature"}
+											aria-label={nearExpiry ? "Expire bientôt" : "Presque saturé"}
 										/>
 									)}
 									<span className="text-muted-foreground text-xs">
@@ -90,7 +90,7 @@ export function ActiveDiscounts({ data }: ActiveDiscountsProps) {
 			<CardFooter className="justify-center border-t pt-4">
 				<Button asChild variant="ghost" size="sm" className="gap-1.5">
 					<Link href="/admin/marketing/discounts">
-						Gerer les codes promo
+						Gérer les codes promo
 						<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
 					</Link>
 				</Button>

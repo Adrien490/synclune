@@ -237,11 +237,11 @@ describe("ActiveDiscounts", () => {
 		expect(screen.getByTestId("icon-triangle-alert")).toBeInTheDocument();
 	});
 
-	it("renders warning icon with 'Expire bientot' label for near-expiry", () => {
+	it("renders warning icon with 'Expire bientôt' label for near-expiry", () => {
 		render(<ActiveDiscounts data={makeData([makeDiscount({ endsAt: makeFutureDate(3) })])} />);
 
 		const warning = screen.getByTestId("icon-triangle-alert");
-		expect(warning).toHaveAttribute("aria-label", "Expire bientot");
+		expect(warning).toHaveAttribute("aria-label", "Expire bientôt");
 	});
 
 	it("does not render warning icon when endsAt is null", () => {
@@ -268,13 +268,13 @@ describe("ActiveDiscounts", () => {
 		expect(screen.getByTestId("icon-triangle-alert")).toBeInTheDocument();
 	});
 
-	it("renders warning icon with 'Presque sature' label for near-saturation", () => {
+	it("renders warning icon with 'Presque saturé' label for near-saturation", () => {
 		render(
 			<ActiveDiscounts data={makeData([makeDiscount({ usageCount: 90, maxUsageCount: 100 })])} />,
 		);
 
 		const warning = screen.getByTestId("icon-triangle-alert");
-		expect(warning).toHaveAttribute("aria-label", "Presque sature");
+		expect(warning).toHaveAttribute("aria-label", "Presque saturé");
 	});
 
 	it("does not render warning icon when usage is below 80%", () => {
@@ -302,7 +302,7 @@ describe("ActiveDiscounts", () => {
 	it("renders footer link to discounts page", () => {
 		render(<ActiveDiscounts data={makeData([makeDiscount()])} />);
 
-		const link = screen.getByText("Gerer les codes promo");
+		const link = screen.getByText("Gérer les codes promo");
 		expect(link).toBeInTheDocument();
 		expect(link.closest("a")).toHaveAttribute("href", "/admin/marketing/discounts");
 	});

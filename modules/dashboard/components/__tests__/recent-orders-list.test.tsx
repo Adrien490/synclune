@@ -121,11 +121,11 @@ vi.mock("../../constants/order-status.constants", () => ({
 		PARTIALLY_REFUNDED: "Part. remboursée",
 	},
 	FULFILLMENT_STATUS_LABELS: {
-		UNFULFILLED: "A preparer",
-		PROCESSING: "En preparation",
-		SHIPPED: "Expediee",
-		DELIVERED: "Livree",
-		RETURNED: "Retournee",
+		UNFULFILLED: "À préparer",
+		PROCESSING: "En préparation",
+		SHIPPED: "Expédiée",
+		DELIVERED: "Livrée",
+		RETURNED: "Retournée",
 	},
 	FULFILLMENT_STATUS_VARIANTS: {
 		UNFULFILLED: "warning",
@@ -219,7 +219,7 @@ describe("RecentOrdersList", () => {
 			/>,
 		);
 
-		expect(screen.getByText("A preparer")).toBeInTheDocument();
+		expect(screen.getByText("À préparer")).toBeInTheDocument();
 	});
 
 	it("links each order to its detail page", () => {
@@ -334,7 +334,7 @@ describe("RecentOrdersList", () => {
 			);
 
 			const badges = screen.getAllByTestId("badge");
-			const fulfillmentBadge = badges.find((b) => b.textContent === "A preparer");
+			const fulfillmentBadge = badges.find((b) => b.textContent === "À préparer");
 			expect(fulfillmentBadge).toHaveAttribute("data-variant", "warning");
 		});
 
@@ -352,7 +352,7 @@ describe("RecentOrdersList", () => {
 			);
 
 			const badges = screen.getAllByTestId("badge");
-			const fulfillmentBadge = badges.find((b) => b.textContent === "Livree");
+			const fulfillmentBadge = badges.find((b) => b.textContent === "Livrée");
 			expect(fulfillmentBadge).toHaveAttribute("data-variant", "success");
 		});
 	});

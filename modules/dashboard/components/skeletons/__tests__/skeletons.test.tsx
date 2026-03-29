@@ -220,7 +220,7 @@ describe("FulfillmentSkeleton", () => {
 		render(<FulfillmentSkeleton />);
 		expect(screen.getByRole("status")).toHaveAttribute(
 			"aria-label",
-			"Chargement du pipeline d'expedition",
+			"Chargement du pipeline d'expédition",
 		);
 	});
 });

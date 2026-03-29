@@ -32,7 +32,7 @@ export function KpiValue({
 }: KpiValueProps) {
 	const valueClassName = cn(
 		"font-semibold tracking-tight text-foreground",
-		size === "featured" && "text-4xl",
+		size === "featured" && "text-3xl sm:text-4xl",
 		size === "default" && "text-3xl",
 		size === "compact" && "text-2xl",
 	);

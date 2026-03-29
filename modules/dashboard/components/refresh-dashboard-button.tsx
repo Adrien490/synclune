@@ -18,7 +18,7 @@ export function RefreshDashboardButton({
 		<RefreshButton
 			onRefresh={refresh}
 			isPending={isPending}
-			label="Rafraichir le tableau de bord"
+			label="Rafraîchir le tableau de bord"
 			className={className}
 			variant={variant}
 		/>

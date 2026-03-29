@@ -16,7 +16,7 @@ export const DASHBOARD_PERIODS: Record<DashboardPeriod, PeriodConfig> = {
 	"30d": { label: "30 jours", chartGranularity: "daily" },
 	month: { label: "Ce mois", chartGranularity: "daily" },
 	quarter: { label: "Ce trimestre", chartGranularity: "weekly" },
-	year: { label: "Cette annee", chartGranularity: "monthly" },
+	year: { label: "Cette année", chartGranularity: "monthly" },
 } as const;
 
 export const DEFAULT_PERIOD: DashboardPeriod = "month";
@@ -24,11 +24,11 @@ export const DEFAULT_PERIOD: DashboardPeriod = "month";
 export const PERIOD_SEARCH_PARAM = "period";
 
 export const COMPARISON_LABELS: Record<DashboardPeriod, string> = {
-	"7d": "vs 7j precedents",
-	"30d": "vs 30j precedents",
+	"7d": "vs 7j précédents",
+	"30d": "vs 30j précédents",
 	month: "vs mois dernier",
 	quarter: "vs trimestre dernier",
-	year: "vs annee derniere",
+	year: "vs année dernière",
 };
 
 /**

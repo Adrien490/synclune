@@ -11,7 +11,7 @@ interface ChartErrorProps {
 	title?: string;
 	/** Description de l'erreur */
 	description?: string;
-	/** Callback pour reessayer */
+	/** Callback pour réessayer */
 	onRetry?: () => void;
 	/** Hauteur minimum du conteneur */
 	minHeight?: number;
@@ -21,11 +21,11 @@ interface ChartErrorProps {
 
 /**
  * Composant d'erreur pour les charts et sections du dashboard
- * Affiche un message d'erreur avec possibilite de retry
+ * Affiche un message d'erreur avec possibilité de retry
  */
 export function ChartError({
 	title = "Erreur de chargement",
-	description = "Impossible de charger les donnees. Veuillez reessayer.",
+	description = "Impossible de charger les données. Veuillez réessayer.",
 	onRetry,
 	minHeight = 250,
 	className,
@@ -47,7 +47,7 @@ export function ChartError({
 					{onRetry && (
 						<Button variant="outline" size="sm" onClick={onRetry} className="h-10 min-w-30 gap-2">
 							<RotateCcw className="h-4 w-4" aria-hidden="true" />
-							Reessayer
+							Réessayer
 						</Button>
 					)}
 				</div>

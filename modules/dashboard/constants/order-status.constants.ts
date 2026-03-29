@@ -39,11 +39,11 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 // ============================================================================
 
 export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
-	UNFULFILLED: "A preparer",
-	PROCESSING: "En preparation",
-	SHIPPED: "Expediee",
-	DELIVERED: "Livree",
-	RETURNED: "Retournee",
+	UNFULFILLED: "À préparer",
+	PROCESSING: "En préparation",
+	SHIPPED: "Expédiée",
+	DELIVERED: "Livrée",
+	RETURNED: "Retournée",
 };
 
 export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant> = {

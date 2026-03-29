@@ -22,7 +22,7 @@ export function ChartScrollContainer({
 			aria-label={ariaLabel}
 			className={cn(
 				"relative",
-				"overflow-x-hidden overflow-y-visible",
+				"scrollbar-none overflow-x-auto overflow-y-visible",
 				"md:overflow-visible",
 				className,
 			)}
