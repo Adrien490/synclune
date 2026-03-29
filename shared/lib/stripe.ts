@@ -4,14 +4,14 @@ import { logger } from "./logger";
 
 /**
  * Instance Stripe centralisée pour toute l'application
- * Utilise automatiquement la version API compatible avec le SDK Stripe (v20.x)
+ * Utilise automatiquement la version API compatible avec le SDK Stripe (v21.x)
  * - maxNetworkRetries: 2 pour retry automatique en cas d'erreur réseau
  *
  * Note: Cette instance suppose que STRIPE_SECRET_KEY est défini.
  * Pour les contextes où la clé pourrait manquer (cron jobs), utiliser getStripeClient().
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-02-25.clover",
+	apiVersion: "2026-03-25.dahlia",
 	maxNetworkRetries: 2,
 });
 
@@ -57,7 +57,7 @@ export function getStripeClient(): Stripe | null {
 		return null;
 	}
 	_stripeClient = new Stripe(secretKey, {
-		apiVersion: "2026-02-25.clover",
+		apiVersion: "2026-03-25.dahlia",
 		maxNetworkRetries: 2,
 	});
 	return _stripeClient;

@@ -35,7 +35,7 @@ async function checkStripe(): Promise<ServiceCheck> {
 			return { status: "error", message: "STRIPE_SECRET_KEY not configured" };
 		}
 		const stripe = new Stripe(secretKey, {
-			apiVersion: "2026-02-25.clover",
+			apiVersion: "2026-03-25.dahlia",
 			maxNetworkRetries: 0,
 			timeout: 5000,
 		});
