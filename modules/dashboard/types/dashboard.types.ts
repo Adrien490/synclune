@@ -100,6 +100,25 @@ export type RevenueDataPoint = {
 
 export type GetRevenueChartReturn = {
 	data: RevenueDataPoint[];
+	periodLabel: string;
+};
+
+// ============================================================================
+// TYPES - PERIOD BOUNDARIES
+// ============================================================================
+
+export type PeriodBoundaries = {
+	currentStart: Date;
+	currentEnd: Date;
+	previousStart: Date;
+	previousEnd: Date;
+};
+
+export type ChartConfig = {
+	startDate: Date;
+	pointCount: number;
+	granularity: "daily" | "weekly" | "monthly";
+	sqlDateFormat: string;
 };
 
 // ============================================================================

@@ -8,5 +8,5 @@ interface LazyRevenueChartProps {
 }
 
 export function LazyRevenueChart({ chartData }: LazyRevenueChartProps) {
-	return <RevenueChart chartData={chartData} />;
+	return <RevenueChart chartData={chartData} periodLabel={chartData.periodLabel} />;
 }

@@ -118,6 +118,8 @@ function createProductType(overrides: Record<string, unknown> = {}) {
 		slug: "colliers",
 		isActive: true,
 		isSystem: false,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
 		_count: { products: 3 },
 		...overrides,
 	};

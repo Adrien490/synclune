@@ -142,18 +142,35 @@ import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 // HELPERS
 // ============================================================================
 
-function createOrder(id: string, orderNumber: string) {
+function createOrder(id: string, orderNumber: string): GetOrdersReturn["orders"][number] {
 	return {
 		id,
 		orderNumber,
-		status: "PROCESSING",
-		paymentStatus: "PAID",
-		fulfillmentStatus: "UNFULFILLED",
+		userId: null,
+		stripePaymentIntentId: null,
+		stripeCustomerId: null,
+		customerEmail: "alice@example.com",
+		customerName: "Alice",
+		status: "PROCESSING" as const,
+		paymentStatus: "PAID" as const,
+		fulfillmentStatus: "UNFULFILLED" as const,
 		total: 4999,
+		currency: "EUR",
+		shippingMethod: null,
+		shippingCarrier: null,
 		trackingNumber: null,
 		trackingUrl: null,
-		user: { name: "Alice", email: "alice@example.com" },
-	};
+		shippedAt: null,
+		paymentMethod: null,
+		paidAt: null,
+		invoiceNumber: null,
+		invoiceStatus: null,
+		invoiceGeneratedAt: null,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
+		user: { id: "user-1", name: "Alice", email: "alice@example.com" },
+		_count: { items: 2 },
+	} as unknown as GetOrdersReturn["orders"][number];
 }
 
 function makePromise(data: GetOrdersReturn): Promise<GetOrdersReturn> {
@@ -251,7 +268,10 @@ describe("OrdersDataTable", () => {
 	});
 
 	it("falls back to email when user name is null", async () => {
-		const order = { ...createOrder("o-1", "CMD-001"), user: { name: null, email: "bob@test.com" } };
+		const order = {
+			...createOrder("o-1", "CMD-001"),
+			user: { id: "user-2", name: null, email: "bob@test.com" },
+		};
 		const promise = makePromise({
 			orders: [order],
 			pagination: {

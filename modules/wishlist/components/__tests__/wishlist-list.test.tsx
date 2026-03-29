@@ -1,3 +1,4 @@
+import type { GetWishlistReturn } from "@/modules/wishlist/types/wishlist.types";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,7 +27,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		children,
 		asChild,
 		variant,
-		size,
+		size: _size,
 	}: {
 		children: React.ReactNode;
 		asChild?: boolean;
@@ -74,8 +75,10 @@ function createItem(id: string, productId: string) {
 	return {
 		id,
 		productId,
+		createdAt: new Date(),
+		updatedAt: new Date(),
 		product: { id: productId, title: `Product ${productId}` },
-	};
+	} as unknown as GetWishlistReturn["items"][number];
 }
 
 function createPagination(overrides = {}) {

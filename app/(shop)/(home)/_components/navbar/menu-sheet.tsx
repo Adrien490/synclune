@@ -110,7 +110,6 @@ export function MenuSheet({
 								collections={collections}
 								session={session}
 								isAdmin={isAdmin}
-								isOpen={isOpen}
 								onLogoutClick={handleLogoutClick}
 							/>
 						</ScrollFade>

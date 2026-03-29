@@ -127,6 +127,8 @@ function createColor(overrides: Record<string, unknown> = {}) {
 		hex: "#FF0000",
 		slug: "rouge",
 		isActive: true,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
 		_count: { skus: 3 },
 		...overrides,
 	};

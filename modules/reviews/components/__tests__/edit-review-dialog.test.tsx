@@ -7,7 +7,37 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
 	isOpen: false,
-	data: null as { review: { id: string; product: { title: string } } } | null,
+	data: null as {
+		review: {
+			id: string;
+			rating: number;
+			title: string | null;
+			content: string;
+			status: string;
+			createdAt: Date;
+			updatedAt: Date;
+			product: {
+				id: string;
+				title: string;
+				slug: string;
+				skus: Array<{
+					images: Array<{
+						url: string;
+						blurDataUrl: string | null;
+						altText: string | null;
+					}>;
+				}>;
+			};
+			medias: Array<{
+				id: string;
+				url: string;
+				blurDataUrl: string | null;
+				altText: string | null;
+			}>;
+			response: { content: string; authorName: string; createdAt: Date } | null;
+		};
+		[key: string]: unknown;
+	} | null,
 	close: vi.fn(),
 }));
 

@@ -135,18 +135,15 @@ function createPagination(overrides = {}) {
 	};
 }
 
-function createSubscriber(overrides: Record<string, unknown> = {}): {
-	id: string;
-	email: string;
-	status: string;
-	subscribedAt: Date;
-	updatedAt: Date;
-} {
+function createSubscriber(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "sub-1",
 		email: "test@example.com",
-		status: "CONFIRMED",
+		status: "CONFIRMED" as const,
 		subscribedAt: new Date("2026-01-01"),
+		unsubscribedAt: null as Date | null,
+		confirmedAt: null as Date | null,
+		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-15"),
 		...overrides,
 	};

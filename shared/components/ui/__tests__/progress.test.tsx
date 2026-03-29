@@ -55,25 +55,25 @@ describe("Progress", () => {
 	it("sets indicator translateX to -50% when value=50", () => {
 		const { container } = render(<Progress value={50} />);
 		const indicator = container.querySelector("[data-slot='progress-indicator']") as HTMLElement;
-		expect(indicator?.style.transform).toBe("translateX(-50%)");
+		expect(indicator.style.transform).toBe("translateX(-50%)");
 	});
 
 	it("sets indicator translateX to -100% when value=0", () => {
 		const { container } = render(<Progress value={0} />);
 		const indicator = container.querySelector("[data-slot='progress-indicator']") as HTMLElement;
-		expect(indicator?.style.transform).toBe("translateX(-100%)");
+		expect(indicator.style.transform).toBe("translateX(-100%)");
 	});
 
 	it("sets indicator translateX to 0% when value=100", () => {
 		const { container } = render(<Progress value={100} />);
 		const indicator = container.querySelector("[data-slot='progress-indicator']") as HTMLElement;
-		expect(indicator?.style.transform).toBe("translateX(-0%)");
+		expect(indicator.style.transform).toBe("translateX(-0%)");
 	});
 
 	it("handles undefined value (defaults to 0)", () => {
 		const { container } = render(<Progress />);
 		const indicator = container.querySelector("[data-slot='progress-indicator']") as HTMLElement;
-		expect(indicator?.style.transform).toBe("translateX(-100%)");
+		expect(indicator.style.transform).toBe("translateX(-100%)");
 	});
 
 	it("applies custom className", () => {

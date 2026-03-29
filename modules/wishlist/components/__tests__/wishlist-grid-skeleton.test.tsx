@@ -66,7 +66,7 @@ describe("WishlistGridSkeleton", () => {
 		render(<WishlistGridSkeleton />);
 		const roundedFullSkeletons = screen
 			.getAllByTestId("skeleton")
-			.filter((s) => s.className?.includes("rounded-full"));
+			.filter((s) => s.className.includes("rounded-full"));
 		// 8 cards × 3 color swatches + 8 wishlist buttons = at least 8 rounded-full skeletons
 		expect(roundedFullSkeletons.length).toBeGreaterThanOrEqual(8);
 	});

@@ -28,8 +28,8 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	AlertTriangle: ({ "aria-hidden": ariaHidden }: { "aria-hidden"?: string }) => (
-		<span data-testid="icon-alert-triangle" aria-hidden={ariaHidden} />
+	AlertTriangle: (props: any) => (
+		<span data-testid="icon-alert-triangle" aria-hidden={props["aria-hidden"]} />
 	),
 }));
 

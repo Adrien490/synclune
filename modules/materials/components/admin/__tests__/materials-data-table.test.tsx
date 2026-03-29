@@ -8,12 +8,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { mockUseResult } = vi.hoisted(() => ({
 	mockUseResult: {
 		current: {
-			materials: [] as Record<string, unknown>[],
+			materials: [] as Array<{
+				id: string;
+				name: string;
+				slug: string;
+				description: string | null;
+				isActive: boolean;
+				createdAt: Date;
+				updatedAt: Date;
+				_count: { skus: number };
+			}>,
 			pagination: {
 				hasNextPage: false,
 				hasPreviousPage: false,
-				nextCursor: null,
-				prevCursor: null,
+				nextCursor: null as string | null,
+				prevCursor: null as string | null,
 			},
 		},
 	},
@@ -139,6 +148,8 @@ function createMaterial(overrides: Record<string, unknown> = {}) {
 		slug: "argent-925",
 		description: "Argent sterling de qualité",
 		isActive: true,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
 		_count: { skus: 3 },
 		...overrides,
 	};

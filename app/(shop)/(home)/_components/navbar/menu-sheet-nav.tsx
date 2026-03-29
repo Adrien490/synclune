@@ -8,7 +8,7 @@ import { SheetClose } from "@/shared/components/ui/sheet";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { AnimatePresence, m, useReducedMotion, type Variants } from "motion/react";
+import { m, useReducedMotion, type Variants } from "motion/react";
 import { Heart } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import Link from "next/link";
@@ -29,7 +29,6 @@ const itemVariants: Variants = {
 		y: 0,
 		transition: { delay, duration: 0.25, ease: MOTION_CONFIG.easing.easeOut },
 	}),
-	exit: { opacity: 0, y: -4, transition: { duration: 0.1 } },
 };
 
 interface MenuSheetNavProps {
@@ -43,7 +42,6 @@ interface MenuSheetNavProps {
 	}>;
 	session?: NavbarSessionData | null;
 	isAdmin?: boolean;
-	isOpen: boolean;
 	onLogoutClick?: () => void;
 }
 
@@ -53,7 +51,6 @@ export function MenuSheetNav({
 	collections,
 	session,
 	isAdmin = false,
-	isOpen,
 	onLogoutClick,
 }: MenuSheetNavProps) {
 	const { isMenuItemActive } = useActiveNavbarItem();
@@ -73,8 +70,8 @@ export function MenuSheetNav({
 	const navRef = useRef<HTMLElement>(null);
 
 	// Scroll-to-active + focus management after open animation
+	// This component only mounts when the sheet is open (via Vaul portal)
 	useEffect(() => {
-		if (!isOpen) return;
 		const focusDelay = shouldReduceMotion ? 0 : 350;
 		const timer = setTimeout(() => {
 			const nav = navRef.current;
@@ -88,7 +85,7 @@ export function MenuSheetNav({
 			nav.querySelector<HTMLAnchorElement>("a")?.focus();
 		}, focusDelay);
 		return () => clearTimeout(timer);
-	}, [isOpen, shouldReduceMotion]);
+	}, [shouldReduceMotion]);
 
 	// Compute stagger delay in seconds (mirrors previous CSS timing)
 	function delay(baseMs: number, index: number) {
@@ -98,83 +95,77 @@ export function MenuSheetNav({
 	const sectionProps = { isMenuItemActive, itemVariants, delay };
 
 	return (
-		<AnimatePresence mode="wait">
-			{isOpen && (
-				<m.nav
-					ref={navRef}
-					key="menu-nav"
-					aria-label="Menu principal mobile"
-					className="relative z-10 px-6 pt-2 pb-4"
-					initial="hidden"
-					animate="visible"
-					exit="exit"
-				>
-					{/* User header (if logged in) */}
-					{session?.user && (
-						<m.div variants={itemVariants} custom={delay(30, 0)}>
-							<UserHeader session={session} wishlistCount={wishlistCount} cartCount={cartCount} />
-						</m.div>
-					)}
-
-					<DiscoverSection homeItem={homeItem} {...sectionProps} />
-
-					<CreationsSection
-						productTypes={productTypes}
-						personalizationItem={personalizationItem}
-						{...sectionProps}
-					/>
-
-					<CollectionsSection collections={collections} {...sectionProps} />
-
-					{/* Decorative separator */}
-					<m.div
-						className="relative my-6 flex items-center justify-center"
-						aria-hidden="true"
-						variants={itemVariants}
-						custom={delay(140, 0)}
-					>
-						<div className="absolute inset-0 flex items-center">
-							<div className="border-border/80 w-full border-t" />
-						</div>
-						<div className="bg-background/95 relative rounded-full px-3">
-							<Heart className="text-muted-foreground fill-muted-foreground/20 h-4 w-4" />
-						</div>
-					</m.div>
-
-					<AccountSection
-						accountItem={accountItem}
-						favoritesItem={favoritesItem}
-						isLoggedIn={isLoggedIn}
-						wishlistCount={wishlistCount}
-						onLogoutClick={onLogoutClick}
-						{...sectionProps}
-					/>
-
-					{/* Admin dashboard link (admin users only) */}
-					{isAdmin && (
-						<m.div
-							className="border-border/60 mt-4 border-t pt-4"
-							variants={itemVariants}
-							custom={delay(170, 0)}
-						>
-							<SheetClose asChild>
-								<Link
-									href={ROUTES.ADMIN.ROOT}
-									className={cn(
-										"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
-										"transition-[transform,color,background-color] duration-300 ease-out",
-										"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-										"text-foreground/80 hover:bg-accent hover:text-foreground",
-										"motion-safe:active:scale-[0.97]",
-									)}
-								>
-									Tableau de bord
-								</Link>
-							</SheetClose>
-						</m.div>
-					)}
-				</m.nav>
+		<m.nav
+			ref={navRef}
+			aria-label="Menu principal mobile"
+			className="relative z-10 px-6 pt-2 pb-4"
+			initial="hidden"
+			animate="visible"
+		>
+			{/* User header (if logged in) */}
+			{session?.user && (
+				<m.div variants={itemVariants} custom={delay(30, 0)}>
+					<UserHeader session={session} wishlistCount={wishlistCount} cartCount={cartCount} />
+				</m.div>
 			)}
-		</AnimatePresence>
+
+			<DiscoverSection homeItem={homeItem} {...sectionProps} />
+
+			<CreationsSection
+				productTypes={productTypes}
+				personalizationItem={personalizationItem}
+				{...sectionProps}
+			/>
+
+			<CollectionsSection collections={collections} {...sectionProps} />
+
+			{/* Decorative separator */}
+			<m.div
+				className="relative my-6 flex items-center justify-center"
+				aria-hidden="true"
+				variants={itemVariants}
+				custom={delay(140, 0)}
+			>
+				<div className="absolute inset-0 flex items-center">
+					<div className="border-border/80 w-full border-t" />
+				</div>
+				<div className="bg-background/95 relative rounded-full px-3">
+					<Heart className="text-muted-foreground fill-muted-foreground/20 h-4 w-4" />
+				</div>
+			</m.div>
+
+			<AccountSection
+				accountItem={accountItem}
+				favoritesItem={favoritesItem}
+				isLoggedIn={isLoggedIn}
+				wishlistCount={wishlistCount}
+				onLogoutClick={onLogoutClick}
+				{...sectionProps}
+			/>
+
+			{/* Admin dashboard link (admin users only) */}
+			{isAdmin && (
+				<m.div
+					className="border-border/60 mt-4 border-t pt-4"
+					variants={itemVariants}
+					custom={delay(170, 0)}
+				>
+					<SheetClose asChild>
+						<Link
+							href={ROUTES.ADMIN.ROOT}
+							className={cn(
+								"flex items-center rounded-lg px-4 py-3.5 text-base/6 font-medium tracking-wide antialiased",
+								"transition-[transform,color,background-color] duration-300 ease-out",
+								"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+								"text-foreground/80 hover:bg-accent hover:text-foreground",
+								"motion-safe:active:scale-[0.97]",
+							)}
+						>
+							Tableau de bord
+						</Link>
+					</SheetClose>
+				</m.div>
+			)}
+		</m.nav>
 	);
 }

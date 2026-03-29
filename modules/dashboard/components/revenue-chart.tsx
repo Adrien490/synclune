@@ -27,6 +27,7 @@ import { CHART_STYLES } from "../constants/chart-styles";
 
 interface RevenueChartProps {
 	chartData: GetRevenueChartReturn;
+	periodLabel?: string;
 }
 
 const simpleChartConfig = {
@@ -59,8 +60,9 @@ const detailedChartConfig = {
 	},
 } satisfies ChartConfig;
 
-export function RevenueChart({ chartData }: RevenueChartProps) {
+export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 	const { data } = chartData;
+	const chartTitle = periodLabel ? `Revenus - ${periodLabel}` : "Revenus des 30 derniers jours";
 	const [isDetailed, setIsDetailed] = useState(false);
 
 	const hasRevenue = data.some((item) => item.revenue > 0);
@@ -87,7 +89,7 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 			<CardHeader>
 				<div className="flex items-center justify-between">
 					<div>
-						<CardTitle className={CHART_STYLES.title}>Revenus des 30 derniers jours</CardTitle>
+						<CardTitle className={CHART_STYLES.title}>{chartTitle}</CardTitle>
 						<CardDescription className={CHART_STYLES.description}>
 							{isDetailed
 								? "Decomposition : produits, livraison et remises"
@@ -110,7 +112,7 @@ export function RevenueChart({ chartData }: RevenueChartProps) {
 				{!hasRevenue ? (
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
-					<div role="figure" aria-label="Graphique des revenus et commandes sur 30 jours">
+					<div role="figure" aria-label={`Graphique des revenus et commandes - ${chartTitle}`}>
 						<div className="sr-only">
 							<p>
 								Graphique montrant l&apos;evolution du chiffre d&apos;affaires quotidien et du

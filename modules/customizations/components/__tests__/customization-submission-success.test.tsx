@@ -20,7 +20,7 @@ vi.mock("motion/react", () => ({
 			"aria-live"?: string;
 			[key: string]: unknown;
 		}) => (
-			<div role={role} aria-live={ariaLive}>
+			<div role={role as React.AriaRole} aria-live={ariaLive as React.AriaAttributes["aria-live"]}>
 				{children}
 			</div>
 		),

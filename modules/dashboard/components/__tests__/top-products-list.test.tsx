@@ -47,11 +47,12 @@ vi.mock("next/image", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	ArrowRight: ({ "aria-hidden": ariaHidden }: { "aria-hidden"?: string }) => (
-		<span data-testid="icon-arrow-right" aria-hidden={ariaHidden} />
+	ArrowRight: (props: any) => (
+		<span data-testid="icon-arrow-right" aria-hidden={props["aria-hidden"]} />
 	),
-	ShoppingBag: ({ "aria-hidden": ariaHidden }: { "aria-hidden"?: string }) => (
-		<span data-testid="icon-shopping-bag" aria-hidden={ariaHidden} />
+
+	ShoppingBag: (props: any) => (
+		<span data-testid="icon-shopping-bag" aria-hidden={props["aria-hidden"]} />
 	),
 }));
 

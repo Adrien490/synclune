@@ -1,3 +1,4 @@
+import type { GetWishlistReturn } from "@/modules/wishlist/types/wishlist.types";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -26,7 +27,7 @@ vi.mock("@/shared/components/cursor-pagination", () => ({
 vi.mock("@/modules/products/components/product-card", () => ({
 	ProductCard: ({
 		product,
-		index,
+		index: _index,
 	}: {
 		product: { id: string; title: string };
 		index: number;
@@ -93,8 +94,10 @@ function createItem(id: string, productId: string, title: string) {
 	return {
 		id,
 		productId,
+		createdAt: new Date(),
+		updatedAt: new Date(),
 		product: { id: productId, title },
-	};
+	} as unknown as GetWishlistReturn["items"][number];
 }
 
 function createPagination(overrides = {}) {
@@ -202,7 +205,7 @@ describe("WishlistListContent", () => {
 				perPage={12}
 			/>,
 		);
-		const text = document.body.textContent ?? "";
+		const text = document.body.textContent!;
 		expect(text).toContain("1 article");
 		expect(text).not.toContain("1 articles");
 	});

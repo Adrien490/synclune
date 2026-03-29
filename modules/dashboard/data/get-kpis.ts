@@ -7,6 +7,9 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
+import { DEFAULT_PERIOD } from "@/modules/dashboard/constants/period.constants";
+import { getPeriodBoundaries } from "@/modules/dashboard/services/period-boundaries.service";
 
 import type { GetKpisReturn } from "../types/dashboard.types";
 
@@ -16,18 +19,6 @@ export type { GetKpisReturn } from "../types/dashboard.types";
 // ============================================================================
 // HELPERS
 // ============================================================================
-
-function getMonthBoundaries() {
-	const now = new Date();
-	const year = now.getUTCFullYear();
-	const month = now.getUTCMonth();
-
-	return {
-		currentMonthStart: new Date(Date.UTC(year, month, 1)),
-		lastMonthStart: new Date(Date.UTC(year, month - 1, 1)),
-		lastMonthEnd: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)),
-	};
-}
 
 function computeEvolution(current: number, previous: number): number {
 	return previous > 0 ? ((current - previous) / previous) * 100 : 0;
@@ -41,12 +32,14 @@ function computeEvolution(current: number, previous: number): number {
  * Fetches dashboard KPIs with cache
  * Consolidated: parallel queries for revenue, orders, conversion, fulfillment, discounts, refunds
  */
-export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
+export async function fetchDashboardKpis(
+	period: DashboardPeriod = DEFAULT_PERIOD,
+): Promise<GetKpisReturn> {
 	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.KPIS);
 
-	const { currentMonthStart, lastMonthStart, lastMonthEnd } = getMonthBoundaries();
+	const { currentStart, previousStart, previousEnd } = getPeriodBoundaries(period);
 
 	const [
 		currentMonth,
@@ -63,38 +56,38 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 		currentFulfillmentTime,
 		lastFulfillmentTime,
 	] = await Promise.all([
-		// Revenue + paid orders (current month)
+		// Revenue + paid orders (current period)
 		prisma.order.aggregate({
 			where: {
-				paidAt: { gte: currentMonthStart },
+				paidAt: { gte: currentStart },
 				paymentStatus: PaymentStatus.PAID,
 				...notDeleted,
 			},
 			_sum: { total: true, discountAmount: true },
 			_count: true,
 		}),
-		// Revenue + paid orders (last month)
+		// Revenue + paid orders (previous period)
 		prisma.order.aggregate({
 			where: {
-				paidAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				paidAt: { gte: previousStart, lte: previousEnd },
 				paymentStatus: PaymentStatus.PAID,
 				...notDeleted,
 			},
 			_sum: { total: true, discountAmount: true },
 			_count: true,
 		}),
-		// Total orders for conversion rate (current month)
+		// Total orders for conversion rate (current period)
 		prisma.order.count({
-			where: { createdAt: { gte: currentMonthStart }, ...notDeleted },
+			where: { createdAt: { gte: currentStart }, ...notDeleted },
 		}),
-		// Total orders for conversion rate (last month)
+		// Total orders for conversion rate (previous period)
 		prisma.order.count({
 			where: {
-				createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				createdAt: { gte: previousStart, lte: previousEnd },
 				...notDeleted,
 			},
 		}),
-		// Pending shipment count (instantaneous, not monthly)
+		// Pending shipment count (instantaneous, not period-based)
 		prisma.order.count({
 			where: {
 				paymentStatus: PaymentStatus.PAID,
@@ -104,20 +97,20 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 				...notDeleted,
 			},
 		}),
-		// Completed refunds (current month)
+		// Completed refunds (current period)
 		prisma.refund.aggregate({
 			where: {
 				status: RefundStatus.COMPLETED,
-				createdAt: { gte: currentMonthStart },
+				createdAt: { gte: currentStart },
 			},
 			_sum: { amount: true },
 			_count: true,
 		}),
-		// Completed refunds (last month)
+		// Completed refunds (previous period)
 		prisma.refund.aggregate({
 			where: {
 				status: RefundStatus.COMPLETED,
-				createdAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				createdAt: { gte: previousStart, lte: previousEnd },
 			},
 			_sum: { amount: true },
 			_count: true,
@@ -131,38 +124,38 @@ export async function fetchDashboardKpis(): Promise<GetKpisReturn> {
 		prisma.newsletterSubscriber.count({
 			where: { status: NewsletterStatus.CONFIRMED, deletedAt: null },
 		}),
-		// Newsletter: new confirmed this month
+		// Newsletter: new confirmed this period
 		prisma.newsletterSubscriber.count({
 			where: {
 				status: NewsletterStatus.CONFIRMED,
-				confirmedAt: { gte: currentMonthStart },
+				confirmedAt: { gte: currentStart },
 				deletedAt: null,
 			},
 		}),
-		// Newsletter: new confirmed last month
+		// Newsletter: new confirmed previous period
 		prisma.newsletterSubscriber.count({
 			where: {
 				status: NewsletterStatus.CONFIRMED,
-				confirmedAt: { gte: lastMonthStart, lte: lastMonthEnd },
+				confirmedAt: { gte: previousStart, lte: previousEnd },
 				deletedAt: null,
 			},
 		}),
-		// Average fulfillment time (current month) - hours from paidAt to shippedAt
+		// Average fulfillment time (current period) - hours from paidAt to shippedAt
 		prisma.$queryRaw<[{ avg_hours: number | null }]>`
 			SELECT AVG(EXTRACT(EPOCH FROM ("shippedAt" - "paidAt")) / 3600) as avg_hours
 			FROM "Order"
 			WHERE "shippedAt" IS NOT NULL
-				AND "paidAt" >= ${currentMonthStart}
+				AND "paidAt" >= ${currentStart}
 				AND "paymentStatus" = 'PAID'
 				AND "deletedAt" IS NULL
 		`,
-		// Average fulfillment time (last month)
+		// Average fulfillment time (previous period)
 		prisma.$queryRaw<[{ avg_hours: number | null }]>`
 			SELECT AVG(EXTRACT(EPOCH FROM ("shippedAt" - "paidAt")) / 3600) as avg_hours
 			FROM "Order"
 			WHERE "shippedAt" IS NOT NULL
-				AND "paidAt" >= ${lastMonthStart}
-				AND "paidAt" <= ${lastMonthEnd}
+				AND "paidAt" >= ${previousStart}
+				AND "paidAt" <= ${previousEnd}
 				AND "paymentStatus" = 'PAID'
 				AND "deletedAt" IS NULL
 		`,

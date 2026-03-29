@@ -39,7 +39,7 @@ vi.mock("@/app/generated/prisma/client", () => ({
 	PaymentStatus: { PAID: "PAID" },
 }));
 
-import { fetchKpiSparklines } from "../get-kpi-sparklines";
+import { fetchKpiSparklines, aggregateIntoBuckets } from "../get-kpi-sparklines";
 
 // ============================================================================
 // HELPERS
@@ -253,5 +253,95 @@ describe("fetchKpiSparklines", () => {
 		await fetchKpiSparklines();
 
 		expect(mockPrismaQueryRaw).toHaveBeenCalledTimes(1);
+	});
+});
+
+// ============================================================================
+// aggregateIntoBuckets
+// ============================================================================
+
+describe("aggregateIntoBuckets", () => {
+	// -------------------------------------------------------------------------
+	// Empty / minimal inputs
+	// -------------------------------------------------------------------------
+
+	it("should return 7 zeros for an empty array", () => {
+		expect(aggregateIntoBuckets([], 7)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+	});
+
+	it("should place a single value in the first bucket and pad the rest with zeros", () => {
+		expect(aggregateIntoBuckets([100], 7)).toEqual([100, 0, 0, 0, 0, 0, 0]);
+	});
+
+	it("should fill leading buckets with values and pad trailing buckets with zeros for 3 values", () => {
+		expect(aggregateIntoBuckets([10, 20, 30], 7)).toEqual([10, 20, 30, 0, 0, 0, 0]);
+	});
+
+	it("should fill 6 buckets with values and pad the last bucket with zero", () => {
+		expect(aggregateIntoBuckets([1, 2, 3, 4, 5, 6], 7)).toEqual([1, 2, 3, 4, 5, 6, 0]);
+	});
+
+	// -------------------------------------------------------------------------
+	// Exact fit
+	// -------------------------------------------------------------------------
+
+	it("should return values unchanged when count equals bucketCount", () => {
+		expect(aggregateIntoBuckets([1, 2, 3, 4, 5, 6, 7], 7)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+	});
+
+	// -------------------------------------------------------------------------
+	// Aggregation (values > buckets)
+	// -------------------------------------------------------------------------
+
+	it("should sum pairs of values when 14 values are distributed into 7 buckets", () => {
+		const values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
+		expect(aggregateIntoBuckets(values, 7)).toEqual([3, 7, 11, 15, 19, 23, 27]);
+	});
+
+	it("should distribute 30 values into 7 buckets using floor-based bucket boundaries", () => {
+		// bucketSize = 30/7 ≈ 4.2857
+		// Bucket 0: indices 0-3  → 1+2+3+4   = 10
+		// Bucket 1: indices 4-7  → 5+6+7+8   = 26
+		// Bucket 2: indices 8-11 → 9+10+11+12 = 42
+		// Bucket 3: indices 12-16 → 13+14+15+16+17 = 75
+		// Bucket 4: indices 17-20 → 18+19+20+21 = 78
+		// Bucket 5: indices 21-24 → 22+23+24+25 = 94
+		// Bucket 6: indices 25-29 → 26+27+28+29+30 = 140
+		const values = Array.from({ length: 30 }, (_, i) => i + 1);
+		expect(aggregateIntoBuckets(values, 7)).toEqual([10, 26, 42, 75, 78, 94, 140]);
+	});
+
+	// -------------------------------------------------------------------------
+	// All-zero inputs
+	// -------------------------------------------------------------------------
+
+	it("should return all zeros when all input values are zero", () => {
+		expect(aggregateIntoBuckets([0, 0, 0, 0, 0, 0, 0], 7)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+	});
+
+	it("should return all zeros when more than bucketCount zero values are aggregated", () => {
+		const values = new Array(14).fill(0) as number[];
+		expect(aggregateIntoBuckets(values, 7)).toEqual([0, 0, 0, 0, 0, 0, 0]);
+	});
+
+	// -------------------------------------------------------------------------
+	// Output length guarantee
+	// -------------------------------------------------------------------------
+
+	it("should always return exactly bucketCount elements for an empty array", () => {
+		expect(aggregateIntoBuckets([], 7)).toHaveLength(7);
+	});
+
+	it("should always return exactly bucketCount elements when values are fewer than buckets", () => {
+		expect(aggregateIntoBuckets([10, 20], 7)).toHaveLength(7);
+	});
+
+	it("should always return exactly bucketCount elements when values equal buckets", () => {
+		expect(aggregateIntoBuckets([1, 2, 3, 4, 5, 6, 7], 7)).toHaveLength(7);
+	});
+
+	it("should always return exactly bucketCount elements when values exceed buckets", () => {
+		const values = Array.from({ length: 30 }, (_, i) => i + 1);
+		expect(aggregateIntoBuckets(values, 7)).toHaveLength(7);
 	});
 });

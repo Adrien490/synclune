@@ -43,7 +43,7 @@ describe("Avatar", () => {
 	});
 
 	it("renders children", () => {
-		const { container } = render(
+		render(
 			<Avatar>
 				<AvatarFallback>AB</AvatarFallback>
 			</Avatar>,

@@ -2,6 +2,9 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
+import { DASHBOARD_PERIODS, DEFAULT_PERIOD } from "@/modules/dashboard/constants/period.constants";
+import { getChartConfig } from "@/modules/dashboard/services/period-boundaries.service";
 import {
 	buildRevenueMap,
 	fillMissingDates,
@@ -18,41 +21,45 @@ export type { RevenueDataPoint, GetRevenueChartReturn } from "../types/dashboard
 // ============================================================================
 
 /**
- * Récupère les données de revenus des 30 derniers jours depuis la DB avec cache
- * Optimisé: agrégation côté DB via GROUP BY au lieu de traitement JS
- * Les dates sont pre-formatees en labels FR pour eviter date-fns cote client
+ * Fetches revenue data for the selected period with DB-side aggregation and cache
+ * Adapts granularity: daily for 7d/30d/month, weekly for quarter, monthly for year
  */
-export async function fetchDashboardRevenueChart(): Promise<GetRevenueChartReturn> {
+export async function fetchDashboardRevenueChart(
+	period: DashboardPeriod = DEFAULT_PERIOD,
+): Promise<GetRevenueChartReturn> {
 	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 
-	const now = new Date();
-	const thirtyDaysAgo = new Date(
-		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 30),
-	);
+	const chartConfig = getChartConfig(period);
+	const periodLabel = DASHBOARD_PERIODS[period].label;
 
-	// Agregation cote DB - plus efficace que de recuperer tous les ordres
+	// Agregation cote DB with dynamic date format based on granularity
 	const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
 		SELECT
-			TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
+			TO_CHAR("paidAt" AT TIME ZONE 'UTC', ${chartConfig.sqlDateFormat}) as date,
 			COALESCE(SUM(total), 0) as revenue,
 			COUNT(*) as orders,
 			COALESCE(SUM(subtotal), 0) as subtotal,
 			COALESCE(SUM("discountAmount"), 0) as discounts,
 			COALESCE(SUM("shippingCost"), 0) as shipping
 		FROM "Order"
-		WHERE "paidAt" >= ${thirtyDaysAgo}
+		WHERE "paidAt" >= ${chartConfig.startDate}
 			AND "paymentStatus"::text = ${PaymentStatus.PAID}
 			AND "deletedAt" IS NULL
-		GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+		GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', ${chartConfig.sqlDateFormat})
 		ORDER BY date ASC
 	`;
 
-	// Transformer les résultats en série temporelle continue avec labels FR
+	// Transform into continuous time series with French labels
 	const maps = buildRevenueMap(revenueRows);
-	const rawData = fillMissingDates(maps, thirtyDaysAgo, 30);
-	const data = formatChartData(rawData);
+	const rawData = fillMissingDates(
+		maps,
+		chartConfig.startDate,
+		chartConfig.pointCount,
+		chartConfig.granularity,
+	);
+	const data = formatChartData(rawData, chartConfig.granularity);
 
-	return { data };
+	return { data, periodLabel };
 }

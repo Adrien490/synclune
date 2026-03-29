@@ -70,8 +70,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 		disabled,
 		type,
 		variant,
-		size,
-		className,
+		size: _size,
+		className: _className,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
@@ -84,7 +84,6 @@ vi.mock("@/shared/components/ui/button", () => ({
 			disabled={disabled}
 			type={type as "button" | "submit" | "reset" | undefined}
 			data-variant={variant}
-			className={className}
 		>
 			{children}
 		</button>
@@ -98,8 +97,8 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 	),
 	DropdownMenuContent: ({
 		children,
-		align,
-		className,
+		align: _align,
+		className: _dropdownClassName,
 	}: {
 		children: React.ReactNode;
 		align?: string;
@@ -202,7 +201,7 @@ describe("UsersSelectionToolbar", () => {
 	it("shows singular 'utilisateur selectionne' for 1 item", () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		const text = document.body.textContent ?? "";
+		const text = document.body.textContent!;
 		expect(text).toContain("1 utilisateur");
 		expect(text).not.toContain("utilisateurs");
 	});
@@ -210,7 +209,7 @@ describe("UsersSelectionToolbar", () => {
 	it("shows plural 'utilisateurs selectionnes' for multiple items", () => {
 		mockSelectedItems.value = ["user-1", "user-2", "user-3"];
 		render(<UsersSelectionToolbar userIds={["user-1", "user-2", "user-3"]} />);
-		const text = document.body.textContent ?? "";
+		const text = document.body.textContent!;
 		expect(text).toContain("3 utilisateurs");
 	});
 

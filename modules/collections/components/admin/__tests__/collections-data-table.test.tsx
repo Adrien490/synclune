@@ -185,6 +185,8 @@ function createCollection(overrides: Record<string, unknown> = {}) {
 		slug: "bagues-printemps",
 		description: "Une belle collection de bagues.",
 		status: "PUBLIC" as const,
+		createdAt: new Date("2026-01-01"),
+		updatedAt: new Date("2026-01-01"),
 		_count: { products: 3 },
 		products: [],
 		...overrides,

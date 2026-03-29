@@ -167,16 +167,25 @@ import type { GetUserOrdersReturn } from "@/modules/orders/types/user-orders.typ
 // HELPERS
 // ============================================================================
 
-function createOrder(id: string, orderNumber: string) {
+function createOrder(id: string, orderNumber: string): GetUserOrdersReturn["orders"][number] {
 	return {
 		id,
 		orderNumber,
-		status: "PROCESSING",
-		fulfillmentStatus: "UNFULFILLED",
+		status: "PROCESSING" as const,
+		paymentStatus: "PAID" as const,
+		fulfillmentStatus: "UNFULFILLED" as const,
 		total: 4999,
+		currency: "EUR",
+		shippingCarrier: null,
+		trackingNumber: null,
+		trackingUrl: null,
+		shippedAt: null,
+		actualDelivery: null,
+		paymentMethod: null,
+		paidAt: null,
 		createdAt: new Date("2026-01-01"),
 		_count: { items: 2 },
-	};
+	} as unknown as GetUserOrdersReturn["orders"][number];
 }
 
 function makePromise(data: GetUserOrdersReturn): Promise<GetUserOrdersReturn> {

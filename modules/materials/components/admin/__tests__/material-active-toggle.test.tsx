@@ -25,7 +25,7 @@ vi.mock("@/shared/components/active-toggle", () => ({
 	}) => (
 		<button
 			role="switch"
-			aria-checked={String(isActive)}
+			aria-checked={isActive}
 			aria-label={isActive ? "Désactiver" : "Activer"}
 			disabled={isPending}
 			onClick={() => onToggle(!isActive)}

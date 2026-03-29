@@ -100,7 +100,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={null}
-					isOpen
 				/>,
 			);
 
@@ -117,7 +116,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={null}
-					isOpen
 				/>,
 			);
 
@@ -135,7 +133,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={null}
-					isOpen
 				/>,
 			);
 
@@ -158,7 +155,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={null}
-					isOpen
 				/>,
 			);
 
@@ -173,7 +169,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={null}
-					isOpen
 				/>,
 			);
 
@@ -198,7 +193,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={session}
-					isOpen
 				/>,
 			);
 
@@ -212,7 +206,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={session}
-					isOpen
 				/>,
 			);
 
@@ -227,7 +220,6 @@ describe("MenuSheetNav", () => {
 					productTypes={productTypes}
 					collections={collections}
 					session={session}
-					isOpen
 				/>,
 			);
 

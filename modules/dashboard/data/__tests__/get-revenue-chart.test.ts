@@ -10,12 +10,14 @@ const {
 	mockBuildRevenueMap,
 	mockFillMissingDates,
 	mockFormatChartData,
+	mockGetChartConfig,
 } = vi.hoisted(() => ({
 	mockPrismaQueryRaw: vi.fn(),
 	mockCacheDefault: vi.fn(),
 	mockBuildRevenueMap: vi.fn(),
 	mockFillMissingDates: vi.fn(),
 	mockFormatChartData: vi.fn(),
+	mockGetChartConfig: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -42,8 +44,21 @@ vi.mock("@/modules/dashboard/constants/cache", () => ({
 	},
 }));
 
-// Must use the absolute alias path so Vitest resolves it to the same module
-// that get-revenue-chart.ts imports via its relative "../services/..." path.
+vi.mock("@/modules/dashboard/constants/period.constants", () => ({
+	DASHBOARD_PERIODS: {
+		"7d": { label: "7 jours", chartGranularity: "daily" },
+		"30d": { label: "30 jours", chartGranularity: "daily" },
+		month: { label: "Ce mois", chartGranularity: "daily" },
+		quarter: { label: "Ce trimestre", chartGranularity: "weekly" },
+		year: { label: "Cette annee", chartGranularity: "monthly" },
+	},
+	DEFAULT_PERIOD: "month",
+}));
+
+vi.mock("@/modules/dashboard/services/period-boundaries.service", () => ({
+	getChartConfig: mockGetChartConfig,
+}));
+
 vi.mock("@/modules/dashboard/services/revenue-chart-builder.service", () => ({
 	buildRevenueMap: mockBuildRevenueMap,
 	fillMissingDates: mockFillMissingDates,
@@ -60,19 +75,30 @@ import { fetchDashboardRevenueChart } from "../get-revenue-chart";
 // HELPERS
 // ============================================================================
 
+const DEFAULT_START_DATE = new Date("2026-02-01T00:00:00.000Z");
+const DEFAULT_CHART_CONFIG = {
+	startDate: DEFAULT_START_DATE,
+	pointCount: 15,
+	granularity: "daily" as const,
+	sqlDateFormat: "YYYY-MM-DD",
+};
+
 function makeRevenueRows(count = 3) {
 	return Array.from({ length: count }, (_, i) => ({
-		date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+		date: `2026-02-${String(i + 1).padStart(2, "0")}`,
 		revenue: BigInt((i + 1) * 1000),
 		orders: BigInt(i + 1),
 	}));
 }
 
-function makeChartPoints(count = 30, startRevenue = 0) {
+function makeChartPoints(count = 15, startRevenue = 0) {
 	return Array.from({ length: count }, (_, i) => ({
-		date: `2026-01-${String(i + 1).padStart(2, "0")}`,
+		date: `2026-02-${String(i + 1).padStart(2, "0")}`,
 		revenue: startRevenue + i * 500,
 		orders: i + 1,
+		subtotal: 0,
+		discounts: 0,
+		shipping: 0,
 	}));
 }
 
@@ -83,21 +109,22 @@ function makeChartPoints(count = 30, startRevenue = 0) {
 describe("fetchDashboardRevenueChart", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
-		vi.useFakeTimers();
-		// Fix date to 2026-02-15T12:00:00Z for all tests
-		vi.setSystemTime(new Date("2026-02-15T12:00:00Z"));
+
+		mockGetChartConfig.mockReturnValue(DEFAULT_CHART_CONFIG);
 
 		const defaultRows = makeRevenueRows();
-		const defaultRevenueMap = new Map([["2026-01-16", 1000]]);
-		const defaultOrdersMap = new Map([["2026-01-16", 2]]);
-		const defaultPoints = makeChartPoints(30);
+		const defaultMaps = {
+			revenueMap: new Map([["2026-02-01", 1000]]),
+			ordersMap: new Map([["2026-02-01", 2]]),
+			subtotalMap: new Map<string, number>(),
+			discountsMap: new Map<string, number>(),
+			shippingMap: new Map<string, number>(),
+		};
+		const defaultPoints = makeChartPoints(15);
 		const defaultFormatted = defaultPoints.map((p) => ({ ...p, date: `formatted-${p.date}` }));
 
 		mockPrismaQueryRaw.mockResolvedValue(defaultRows);
-		mockBuildRevenueMap.mockReturnValue({
-			revenueMap: defaultRevenueMap,
-			ordersMap: defaultOrdersMap,
-		});
+		mockBuildRevenueMap.mockReturnValue(defaultMaps);
 		mockFillMissingDates.mockReturnValue(defaultPoints);
 		mockFormatChartData.mockReturnValue(defaultFormatted);
 	});
@@ -110,32 +137,31 @@ describe("fetchDashboardRevenueChart", () => {
 	// Return shape
 	// -------------------------------------------------------------------------
 
-	it("should return an object with a data property", async () => {
+	it("should return an object with data and periodLabel properties", async () => {
 		const result = await fetchDashboardRevenueChart();
 
 		expect(result).toHaveProperty("data");
+		expect(result).toHaveProperty("periodLabel");
 		expect(Array.isArray(result.data)).toBe(true);
 	});
 
-	it("should return 30 data points for a standard 30-day chart", async () => {
-		const points = makeChartPoints(30);
-		mockFillMissingDates.mockReturnValue(points);
-		mockFormatChartData.mockReturnValue(points.map((p) => ({ ...p, date: `f-${p.date}` })));
+	it("should return the periodLabel from DASHBOARD_PERIODS config", async () => {
+		const result = await fetchDashboardRevenueChart("month");
 
-		const result = await fetchDashboardRevenueChart();
+		expect(result.periodLabel).toBe("Ce mois");
+	});
 
-		expect(result.data).toHaveLength(30);
+	it("should return correct periodLabel for 7d period", async () => {
+		mockGetChartConfig.mockReturnValue({ ...DEFAULT_CHART_CONFIG, pointCount: 7 });
+
+		const result = await fetchDashboardRevenueChart("7d");
+
+		expect(result.periodLabel).toBe("7 jours");
 	});
 
 	it("should return the data produced by formatChartData", async () => {
-		const rawPoints = [
-			{ date: "2026-01-16", revenue: 1000 },
-			{ date: "2026-01-17", revenue: 2000 },
-		];
-		const formattedPoints = [
-			{ date: "16 janv.", revenue: 1000 },
-			{ date: "17 janv.", revenue: 2000 },
-		];
+		const rawPoints = makeChartPoints(2);
+		const formattedPoints = rawPoints.map((p) => ({ ...p, date: `formatted-${p.date}` }));
 		mockFillMissingDates.mockReturnValue(rawPoints);
 		mockFormatChartData.mockReturnValue(formattedPoints);
 
@@ -151,6 +177,22 @@ describe("fetchDashboardRevenueChart", () => {
 		const result = await fetchDashboardRevenueChart();
 
 		expect(result.data).toEqual([]);
+	});
+
+	// -------------------------------------------------------------------------
+	// Period configuration
+	// -------------------------------------------------------------------------
+
+	it("should call getChartConfig with the provided period", async () => {
+		await fetchDashboardRevenueChart("quarter");
+
+		expect(mockGetChartConfig).toHaveBeenCalledWith("quarter");
+	});
+
+	it("should default to month period when no argument provided", async () => {
+		await fetchDashboardRevenueChart();
+
+		expect(mockGetChartConfig).toHaveBeenCalledWith("month");
 	});
 
 	// -------------------------------------------------------------------------
@@ -172,41 +214,14 @@ describe("fetchDashboardRevenueChart", () => {
 		expect(mockBuildRevenueMap).toHaveBeenCalledTimes(1);
 	});
 
-	it("should handle empty raw query result by passing empty array to buildRevenueMap", async () => {
-		mockPrismaQueryRaw.mockResolvedValue([]);
-		mockBuildRevenueMap.mockReturnValue({
-			revenueMap: new Map(),
-			ordersMap: new Map(),
-		});
-		const zeroPoints = Array.from({ length: 30 }, (_, i) => ({
-			date: `2026-01-${String(i + 1).padStart(2, "0")}`,
-			revenue: 0,
-			orders: 0,
-		}));
-		mockFillMissingDates.mockReturnValue(zeroPoints);
-		mockFormatChartData.mockReturnValue(zeroPoints);
-
-		const result = await fetchDashboardRevenueChart();
-
-		expect(mockBuildRevenueMap).toHaveBeenCalledWith([]);
-		expect(result.data).toHaveLength(30);
-		expect(result.data.every((p) => p.revenue === 0)).toBe(true);
-	});
-
 	// -------------------------------------------------------------------------
 	// Service interaction: fillMissingDates
 	// -------------------------------------------------------------------------
 
-	it("should pass the maps returned by buildRevenueMap to fillMissingDates", async () => {
+	it("should pass maps, startDate, pointCount, and granularity to fillMissingDates", async () => {
 		const maps = {
-			revenueMap: new Map([
-				["2026-01-20", 5000],
-				["2026-01-21", 3000],
-			]),
-			ordersMap: new Map([
-				["2026-01-20", 2],
-				["2026-01-21", 1],
-			]),
+			revenueMap: new Map([["2026-02-01", 5000]]),
+			ordersMap: new Map([["2026-02-01", 2]]),
 			subtotalMap: new Map<string, number>(),
 			discountsMap: new Map<string, number>(),
 			shippingMap: new Map<string, number>(),
@@ -215,7 +230,26 @@ describe("fetchDashboardRevenueChart", () => {
 
 		await fetchDashboardRevenueChart();
 
-		expect(mockFillMissingDates).toHaveBeenCalledWith(maps, expect.any(Date), 30);
+		expect(mockFillMissingDates).toHaveBeenCalledWith(maps, DEFAULT_START_DATE, 15, "daily");
+	});
+
+	it("should use the chart config from getChartConfig", async () => {
+		const customConfig = {
+			startDate: new Date("2026-01-01T00:00:00.000Z"),
+			pointCount: 12,
+			granularity: "monthly" as const,
+			sqlDateFormat: "YYYY-MM",
+		};
+		mockGetChartConfig.mockReturnValue(customConfig);
+
+		await fetchDashboardRevenueChart("year");
+
+		expect(mockFillMissingDates).toHaveBeenCalledWith(
+			expect.any(Object),
+			customConfig.startDate,
+			12,
+			"monthly",
+		);
 	});
 
 	it("should call fillMissingDates exactly once", async () => {
@@ -224,42 +258,35 @@ describe("fetchDashboardRevenueChart", () => {
 		expect(mockFillMissingDates).toHaveBeenCalledTimes(1);
 	});
 
-	it("should pass days=30 to fillMissingDates", async () => {
-		await fetchDashboardRevenueChart();
-
-		const [, , days] = mockFillMissingDates.mock.calls[0] as [unknown, unknown, number];
-		expect(days).toBe(30);
-	});
-
 	// -------------------------------------------------------------------------
-	// Date range computation
+	// Service interaction: formatChartData
 	// -------------------------------------------------------------------------
 
-	it("should compute thirtyDaysAgo as 30 days before current UTC date", async () => {
-		// Fixed time: 2026-02-15T12:00:00Z
-		// thirtyDaysAgo = Date.UTC(2026, 1, 15 - 30) = Date.UTC(2026, 1, -15) = 2026-01-16T00:00:00Z
+	it("should pass the result of fillMissingDates and granularity to formatChartData", async () => {
+		const rawPoints = makeChartPoints(10);
+		mockFillMissingDates.mockReturnValue(rawPoints);
+
 		await fetchDashboardRevenueChart();
 
-		const [, thirtyDaysAgo] = mockFillMissingDates.mock.calls[0] as [unknown, Date];
-		const expected = new Date(Date.UTC(2026, 1, 15 - 30));
-		expect(thirtyDaysAgo.toISOString()).toBe(expected.toISOString());
+		expect(mockFormatChartData).toHaveBeenCalledWith(rawPoints, "daily");
 	});
 
-	it("should pass a Date instance as the start date to fillMissingDates", async () => {
-		await fetchDashboardRevenueChart();
+	it("should pass weekly granularity to formatChartData for quarter period", async () => {
+		mockGetChartConfig.mockReturnValue({
+			...DEFAULT_CHART_CONFIG,
+			granularity: "weekly",
+			sqlDateFormat: "IYYY-IW",
+		});
 
-		const [, startDate] = mockFillMissingDates.mock.calls[0] as [unknown, Date];
-		expect(startDate).toBeInstanceOf(Date);
+		await fetchDashboardRevenueChart("quarter");
+
+		expect(mockFormatChartData).toHaveBeenCalledWith(expect.any(Array), "weekly");
 	});
 
-	it("should use UTC midnight as the start of the 30-day window", async () => {
+	it("should call formatChartData exactly once", async () => {
 		await fetchDashboardRevenueChart();
 
-		const [, startDate] = mockFillMissingDates.mock.calls[0] as [unknown, Date];
-		// Should be start of UTC day, not mid-day
-		expect(startDate.getUTCHours()).toBe(0);
-		expect(startDate.getUTCMinutes()).toBe(0);
-		expect(startDate.getUTCSeconds()).toBe(0);
+		expect(mockFormatChartData).toHaveBeenCalledTimes(1);
 	});
 
 	// -------------------------------------------------------------------------
@@ -276,24 +303,5 @@ describe("fetchDashboardRevenueChart", () => {
 		await fetchDashboardRevenueChart();
 
 		expect(mockCacheDefault).toHaveBeenCalledTimes(1);
-	});
-
-	// -------------------------------------------------------------------------
-	// Service interaction: formatChartData
-	// -------------------------------------------------------------------------
-
-	it("should pass the result of fillMissingDates to formatChartData", async () => {
-		const rawPoints = makeChartPoints(10);
-		mockFillMissingDates.mockReturnValue(rawPoints);
-
-		await fetchDashboardRevenueChart();
-
-		expect(mockFormatChartData).toHaveBeenCalledWith(rawPoints);
-	});
-
-	it("should call formatChartData exactly once", async () => {
-		await fetchDashboardRevenueChart();
-
-		expect(mockFormatChartData).toHaveBeenCalledTimes(1);
 	});
 });

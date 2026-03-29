@@ -14,6 +14,7 @@ function formatFulfillmentTime(hours: number): string {
 interface DashboardKpisProps {
 	kpis: GetKpisReturn;
 	sparklines?: KpiSparklines;
+	comparisonLabel?: string;
 }
 
 /**
@@ -21,7 +22,11 @@ interface DashboardKpisProps {
  * Row 1: CA net, Commandes, Panier moyen, A expedier
  * Row 2: Taux de conversion
  */
-export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
+export function DashboardKpis({
+	kpis,
+	sparklines,
+	comparisonLabel = "vs mois dernier",
+}: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
 	const hasDiscounts = kpis.discountImpact.amount > 0;
 
@@ -49,7 +54,7 @@ export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 					numericValue={kpis.monthlyRevenue.netAmount}
 					suffix=" €"
 					evolution={kpis.monthlyRevenue.evolution}
-					comparisonLabel="vs mois dernier"
+					comparisonLabel={comparisonLabel}
 					icon={<Euro className="h-4 w-4" />}
 					size="featured"
 					priority="critical"
@@ -73,7 +78,7 @@ export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 					value={kpis.monthlyOrders.count.toString()}
 					numericValue={kpis.monthlyOrders.count}
 					evolution={kpis.monthlyOrders.evolution}
-					comparisonLabel="vs mois dernier"
+					comparisonLabel={comparisonLabel}
 					icon={<ShoppingBag className="h-4 w-4" />}
 					size="featured"
 					priority="critical"
@@ -89,7 +94,7 @@ export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 					numericValue={kpis.averageOrderValue.amount}
 					suffix=" €"
 					evolution={kpis.averageOrderValue.evolution}
-					comparisonLabel="vs mois dernier"
+					comparisonLabel={comparisonLabel}
 					icon={<Receipt className="h-4 w-4" />}
 					size="featured"
 					priority="operational"
@@ -120,7 +125,7 @@ export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 					suffix=" %"
 					decimalPlaces={1}
 					evolution={kpis.conversionRate.evolution}
-					comparisonLabel="vs mois dernier"
+					comparisonLabel={comparisonLabel}
 					icon={<Target className="h-4 w-4" />}
 					size="compact"
 					priority="operational"
@@ -157,7 +162,7 @@ export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 					value={kpis.newsletterGrowth.totalActive.toString()}
 					numericValue={kpis.newsletterGrowth.totalActive}
 					evolution={kpis.newsletterGrowth.evolution}
-					comparisonLabel="vs mois dernier"
+					comparisonLabel={comparisonLabel}
 					icon={<Mail className="h-4 w-4" />}
 					size="compact"
 					priority="info"
@@ -178,7 +183,7 @@ export function DashboardKpis({ kpis, sparklines }: DashboardKpisProps) {
 						kpis.avgFulfillmentTime.hours > 0 ? kpis.avgFulfillmentTime.evolution : undefined
 					}
 					invertEvolutionColors
-					comparisonLabel="vs mois dernier"
+					comparisonLabel={comparisonLabel}
 					icon={<Clock className="h-4 w-4" />}
 					size="compact"
 					priority="operational"

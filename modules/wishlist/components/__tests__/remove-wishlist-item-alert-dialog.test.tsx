@@ -64,7 +64,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialogCancel: ({
 		children,
 		disabled,
-		type,
+		type: _type,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
@@ -73,7 +73,7 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialogAction: ({
 		children,
 		disabled,
-		type,
+		type: _type,
 		"aria-busy": ariaBusy,
 		className,
 	}: {
@@ -121,7 +121,7 @@ describe("RemoveWishlistItemAlertDialog", () => {
 
 	it("renders nothing when dialog is closed", () => {
 		mockRemoveDialog.isOpen = false;
-		const { container } = render(<RemoveWishlistItemAlertDialog />);
+		render(<RemoveWishlistItemAlertDialog />);
 		expect(screen.queryByTestId("alert-dialog")).toBeNull();
 	});
 
@@ -167,7 +167,7 @@ describe("RemoveWishlistItemAlertDialog", () => {
 		mockRemoveDialog.data = { productId: "prod-42", itemName: "Bague" };
 		render(<RemoveWishlistItemAlertDialog />);
 		const input = document.querySelector('input[name="productId"]') as HTMLInputElement;
-		expect(input?.value).toBe("prod-42");
+		expect(input.value).toBe("prod-42");
 	});
 
 	// ─── Pending state ────────────────────────────────────────────────────────

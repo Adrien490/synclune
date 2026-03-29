@@ -89,6 +89,7 @@ function makeChartData(count = 5, baseRevenue = 100): GetRevenueChartReturn {
 			discounts: 0,
 			shipping: 0,
 		})),
+		periodLabel: "30 jours",
 	};
 }
 
@@ -102,6 +103,7 @@ function makeEmptyChartData(count = 5): GetRevenueChartReturn {
 			discounts: 0,
 			shipping: 0,
 		})),
+		periodLabel: "30 jours",
 	};
 }
 
@@ -205,6 +207,7 @@ describe("RevenueChart", () => {
 				{ date: "2 janv.", revenue: 300, orders: 3, subtotal: 0, discounts: 0, shipping: 0 },
 				{ date: "3 janv.", revenue: 100, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 			],
+			periodLabel: "30 jours",
 		};
 
 		render(<RevenueChart chartData={chartData} />);
@@ -219,6 +222,7 @@ describe("RevenueChart", () => {
 				{ date: "2 janv.", revenue: 100, orders: 5, subtotal: 0, discounts: 0, shipping: 0 },
 				{ date: "3 janv.", revenue: 200, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 			],
+			periodLabel: "30 jours",
 		};
 
 		render(<RevenueChart chartData={chartData} />);
@@ -230,7 +234,20 @@ describe("RevenueChart", () => {
 		render(<RevenueChart chartData={makeChartData()} />);
 
 		const figure = screen.getByRole("figure");
-		expect(figure).toHaveAttribute("aria-label", "Graphique des revenus et commandes sur 30 jours");
+		expect(figure).toHaveAttribute(
+			"aria-label",
+			"Graphique des revenus et commandes - Revenus des 30 derniers jours",
+		);
+	});
+
+	it("renders dynamic aria-label when periodLabel is provided", () => {
+		render(<RevenueChart chartData={makeChartData()} periodLabel="7 jours" />);
+
+		const figure = screen.getByRole("figure");
+		expect(figure).toHaveAttribute(
+			"aria-label",
+			"Graphique des revenus et commandes - Revenus - 7 jours",
+		);
 	});
 
 	it("does not render figure when there is no revenue", () => {
@@ -244,7 +261,7 @@ describe("RevenueChart", () => {
 	// -------------------------------------------------------------------------
 
 	it("handles empty data array without crashing", () => {
-		render(<RevenueChart chartData={{ data: [] }} />);
+		render(<RevenueChart chartData={{ data: [], periodLabel: "" }} />);
 
 		expect(screen.getByTestId("chart-empty")).toBeInTheDocument();
 	});
@@ -256,6 +273,7 @@ describe("RevenueChart", () => {
 					data: [
 						{ date: "1 janv.", revenue: 500, orders: 2, subtotal: 0, discounts: 0, shipping: 0 },
 					],
+					periodLabel: "7 jours",
 				}}
 			/>,
 		);

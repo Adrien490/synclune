@@ -166,7 +166,7 @@ describe("fetchFulfillmentPipeline", () => {
 		await fetchFulfillmentPipeline();
 
 		const [groupByArgs] = mockOrderGroupBy.mock.calls[0] as [
-			{ by: string[]; where: Record<string, unknown> },
+			{ by: string[]; where: Record<string, unknown>; _count: boolean },
 		];
 		expect(groupByArgs.by).toEqual(["fulfillmentStatus"]);
 		expect(groupByArgs.where.paymentStatus).toBe("PAID");

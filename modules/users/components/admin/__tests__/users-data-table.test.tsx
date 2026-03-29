@@ -177,12 +177,14 @@ function createUser(overrides: Record<string, unknown> = {}) {
 		id: "user-1",
 		name: "Alice Dupont",
 		email: "alice@example.com",
-		role: "USER",
+		role: "USER" as const,
 		emailVerified: true,
 		deletedAt: null,
 		suspendedAt: null,
 		createdAt: new Date("2026-01-01"),
-		_count: { orders: 0 },
+		updatedAt: new Date(),
+		accountStatus: "ACTIVE" as const,
+		_count: { orders: 0, sessions: 0, accounts: 0 },
 		...overrides,
 	};
 }
@@ -310,7 +312,7 @@ describe("UsersDataTable", () => {
 	});
 
 	it("shows order count as a link when orderCount > 0", () => {
-		const users = [createUser({ _count: { orders: 5 } })];
+		const users = [createUser({ _count: { orders: 5, sessions: 0, accounts: 0 } })];
 		mockUse.mockReturnValue({ users, pagination: createPagination() });
 		render(
 			<UsersDataTable
@@ -322,7 +324,7 @@ describe("UsersDataTable", () => {
 	});
 
 	it("shows '0' without link when orderCount is 0", () => {
-		const users = [createUser({ _count: { orders: 0 } })];
+		const users = [createUser({ _count: { orders: 0, sessions: 0, accounts: 0 } })];
 		mockUse.mockReturnValue({ users, pagination: createPagination() });
 		render(
 			<UsersDataTable

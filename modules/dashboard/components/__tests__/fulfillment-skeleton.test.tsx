@@ -10,27 +10,15 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("@/shared/components/ui/card", () => ({
-	Card: ({
-		children,
-		className,
-		role,
-		"aria-busy": ariaBusy,
-		"aria-label": ariaLabel,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-		role?: string;
-		"aria-busy"?: string;
-		"aria-label"?: string;
-	}) => (
+	Card: (props: any) => (
 		<div
 			data-testid="card"
-			className={className}
-			role={role}
-			aria-busy={ariaBusy}
-			aria-label={ariaLabel}
+			className={props.className}
+			role={props.role}
+			aria-busy={props["aria-busy"]}
+			aria-label={props["aria-label"]}
 		>
-			{children}
+			{props.children}
 		</div>
 	),
 	CardContent: ({ children }: { children: React.ReactNode }) => (

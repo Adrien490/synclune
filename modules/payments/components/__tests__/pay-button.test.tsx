@@ -78,7 +78,11 @@ vi.mock("@/shared/components/ui/alert", () => ({
 		role?: string;
 		"aria-live"?: string;
 	}) => (
-		<div role={role} aria-live={ariaLive} data-testid="payment-error-alert">
+		<div
+			role={role as React.AriaRole}
+			aria-live={ariaLive as React.AriaAttributes["aria-live"]}
+			data-testid="payment-error-alert"
+		>
 			{children}
 		</div>
 	),

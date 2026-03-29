@@ -8,8 +8,14 @@ import type { GetRevenueChartReturn } from "../../types/dashboard.types";
 // ============================================================================
 
 vi.mock("../revenue-chart", () => ({
-	RevenueChart: ({ chartData }: { chartData: GetRevenueChartReturn }) => (
-		<div data-testid="revenue-chart" data-count={chartData.data.length} />
+	RevenueChart: ({
+		chartData,
+		periodLabel,
+	}: {
+		chartData: GetRevenueChartReturn;
+		periodLabel?: string;
+	}) => (
+		<div data-testid="revenue-chart" data-count={chartData.data.length} data-period={periodLabel} />
 	),
 }));
 
@@ -31,6 +37,7 @@ function makeChartData(count = 3): GetRevenueChartReturn {
 			discounts: 0,
 			shipping: 0,
 		})),
+		periodLabel: "30 jours",
 	};
 }
 
@@ -51,8 +58,14 @@ describe("LazyRevenueChart", () => {
 		expect(screen.getByTestId("revenue-chart")).toHaveAttribute("data-count", "5");
 	});
 
+	it("passes periodLabel to RevenueChart", () => {
+		render(<LazyRevenueChart chartData={makeChartData()} />);
+
+		expect(screen.getByTestId("revenue-chart")).toHaveAttribute("data-period", "30 jours");
+	});
+
 	it("renders with empty data", () => {
-		render(<LazyRevenueChart chartData={{ data: [] }} />);
+		render(<LazyRevenueChart chartData={{ data: [], periodLabel: "" }} />);
 
 		expect(screen.getByTestId("revenue-chart")).toHaveAttribute("data-count", "0");
 	});

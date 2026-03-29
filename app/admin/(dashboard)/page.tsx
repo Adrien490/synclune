@@ -10,6 +10,7 @@ import { FulfillmentPipelineCard } from "@/modules/dashboard/components/fulfillm
 import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
+import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
 import { TopProductsList } from "@/modules/dashboard/components/top-products-list";
 import { ActiveDiscounts } from "@/modules/dashboard/components/active-discounts";
 
@@ -29,33 +30,48 @@ import { fetchFulfillmentPipeline } from "@/modules/dashboard/data/get-fulfillme
 import { fetchTopProducts } from "@/modules/dashboard/data/get-top-products";
 import { fetchActiveDiscounts } from "@/modules/dashboard/data/get-active-discounts";
 
+import { parsePeriod, COMPARISON_LABELS } from "@/modules/dashboard/constants/period.constants";
+import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
+
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
 	description: "Vue d'ensemble de votre boutique",
+};
+
+type AdminDashboardPageProps = {
+	searchParams: Promise<{ period?: string }>;
 };
 
 /**
  * Dashboard admin - KPIs, alertes, graphique revenus + commandes recentes
  * Chaque widget est isole : une erreur dans un widget n'affecte pas les autres
  */
-export default async function AdminDashboardPage() {
+export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
+	const params = await searchParams;
+	const period = parsePeriod(params.period);
+
 	return (
 		<>
 			<PageHeader
 				variant="compact"
 				title="Tableau de bord"
 				className="hidden md:block"
-				actions={<RefreshDashboardButton />}
+				actions={
+					<div className="flex items-center gap-2">
+						<PeriodSelector />
+						<RefreshDashboardButton />
+					</div>
+				}
 			/>
 
 			<div className="space-y-6">
-				{/* KPIs en grille (4 featured + 1 compact) */}
+				{/* KPIs en grille (4 featured + 4 compact) */}
 				<Suspense
 					fallback={
 						<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
 					}
 				>
-					<KpisWrapper />
+					<KpisWrapper period={period} />
 				</Suspense>
 
 				{/* Alertes actionnables (ne rend rien si tout est ok) */}
@@ -68,11 +84,11 @@ export default async function AdminDashboardPage() {
 					<FulfillmentWrapper />
 				</Suspense>
 
-				{/* Graphique revenus 30j */}
+				{/* Graphique revenus */}
 				<Suspense
 					fallback={<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />}
 				>
-					<RevenueChartWrapper />
+					<RevenueChartWrapper period={period} />
 				</Suspense>
 
 				{/* Commandes recentes + Top produits + Codes promo */}
@@ -86,7 +102,7 @@ export default async function AdminDashboardPage() {
 					<Suspense
 						fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
 					>
-						<TopProductsWrapper />
+						<TopProductsWrapper period={period} />
 					</Suspense>
 
 					<Suspense>
@@ -101,10 +117,10 @@ export default async function AdminDashboardPage() {
 /**
  * Wrapper async pour les KPIs avec gestion d'erreur isolee
  */
-async function KpisWrapper() {
+async function KpisWrapper({ period }: { period: DashboardPeriod }) {
 	let kpis;
 	try {
-		kpis = await fetchDashboardKpis();
+		kpis = await fetchDashboardKpis(period);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (
@@ -119,12 +135,18 @@ async function KpisWrapper() {
 	// Sparklines are non-critical — load in parallel but don't block on failure
 	let sparklines;
 	try {
-		sparklines = await fetchKpiSparklines();
+		sparklines = await fetchKpiSparklines(period);
 	} catch {
 		sparklines = undefined;
 	}
 
-	return <DashboardKpis kpis={kpis} sparklines={sparklines} />;
+	return (
+		<DashboardKpis
+			kpis={kpis}
+			sparklines={sparklines}
+			comparisonLabel={COMPARISON_LABELS[period]}
+		/>
+	);
 }
 
 /**
@@ -159,10 +181,10 @@ async function FulfillmentWrapper() {
 /**
  * Wrapper async pour le graphique des revenus avec gestion d'erreur isolee
  */
-async function RevenueChartWrapper() {
+async function RevenueChartWrapper({ period }: { period: DashboardPeriod }) {
 	let chartData;
 	try {
-		chartData = await fetchDashboardRevenueChart();
+		chartData = await fetchDashboardRevenueChart(period);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (
@@ -176,12 +198,12 @@ async function RevenueChartWrapper() {
 }
 
 /**
- * Wrapper async pour les top produits - silencieux en cas d'erreur
+ * Wrapper async pour les top produits
  */
-async function TopProductsWrapper() {
+async function TopProductsWrapper({ period }: { period: DashboardPeriod }) {
 	let data;
 	try {
-		data = await fetchTopProducts();
+		data = await fetchTopProducts(period);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (

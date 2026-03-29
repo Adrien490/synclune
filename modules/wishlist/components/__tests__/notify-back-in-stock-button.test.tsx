@@ -25,7 +25,7 @@ vi.mock("@/shared/components/ui/button", () => ({
 		disabled,
 		type,
 		variant,
-		size,
+		size: _size,
 		"aria-label": ariaLabel,
 		"aria-busy": ariaBusy,
 		className,
@@ -123,7 +123,7 @@ describe("NotifyBackInStockButton", () => {
 			/>,
 		);
 		const input = container.querySelector('input[name="productId"]') as HTMLInputElement;
-		expect(input?.value).toBe("prod-42");
+		expect(input.value).toBe("prod-42");
 	});
 
 	it("button is enabled when not pending", () => {

@@ -28,12 +28,11 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	ArrowRight: ({ "aria-hidden": ariaHidden }: { "aria-hidden"?: string }) => (
-		<span data-testid="icon-arrow-right" aria-hidden={ariaHidden} />
+	ArrowRight: (props: any) => (
+		<span data-testid="icon-arrow-right" aria-hidden={props["aria-hidden"]} />
 	),
-	Tag: ({ "aria-hidden": ariaHidden }: { "aria-hidden"?: string }) => (
-		<span data-testid="icon-tag" aria-hidden={ariaHidden} />
-	),
+
+	Tag: (props: any) => <span data-testid="icon-tag" aria-hidden={props["aria-hidden"]} />,
 	TriangleAlert: ({
 		"aria-label": ariaLabel,
 		className,
