@@ -1,10 +1,11 @@
-import { Button, Link, Section, Text } from "@react-email/components";
+import { Button, Img, Link, Section, Text } from "@react-email/components";
 import { EMAIL_STYLES } from "./email-colors";
 import { EmailLayout } from "./_components/email-layout";
 
 interface BackInStockEmailProps {
 	customerName: string;
 	productTitle: string;
+	productImageUrl?: string | null;
 	productUrl: string;
 	unsubscribeUrl: string;
 }
@@ -12,6 +13,7 @@ interface BackInStockEmailProps {
 export const BackInStockEmail = ({
 	customerName,
 	productTitle,
+	productImageUrl,
 	productUrl,
 	unsubscribeUrl,
 }: BackInStockEmailProps) => {
@@ -38,6 +40,23 @@ export const BackInStockEmail = ({
 				</Text>
 			</Section>
 
+			{/* Product image */}
+			{productImageUrl && (
+				<Section style={{ marginBottom: "24px", textAlign: "center" }}>
+					<Img
+						src={productImageUrl}
+						alt={productTitle}
+						width="200"
+						height="200"
+						style={{
+							borderRadius: "8px",
+							margin: "0 auto",
+							objectFit: "cover",
+						}}
+					/>
+				</Section>
+			)}
+
 			{/* CTA */}
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
 				<Button href={productUrl} style={EMAIL_STYLES.button.primary}>
@@ -56,6 +75,7 @@ export const BackInStockEmail = ({
 BackInStockEmail.PreviewProps = {
 	customerName: "Marie",
 	productTitle: "Bague Éternité",
+	productImageUrl: "https://utfs.io/f/example-bague-eternite.jpg",
 	productUrl: "https://synclune.fr/produits/bague-eternite",
 	unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
 } as BackInStockEmailProps;

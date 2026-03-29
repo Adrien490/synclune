@@ -57,12 +57,12 @@ export async function processAccountDeletions(): Promise<{
 		count: accountsToAnonymize.length,
 	});
 
-	const startTime = Date.now();
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	let processed = 0;
 	let errors = 0;
 
 	for (const user of accountsToAnonymize) {
-		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
+		if (Date.now() > deadline) {
 			logger.info("Deadline reached, stopping early", { cronJob: "process-account-deletions" });
 			break;
 		}

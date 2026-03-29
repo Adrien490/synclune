@@ -61,8 +61,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/icons/heart-icon", () => ({
-	HeartIcon: ({ variant, className }: { variant?: string; className?: string }) => (
+vi.mock("@/shared/components/icons/animated-heart-icon", () => ({
+	AnimatedHeartIcon: ({ variant, className }: { variant?: string; className?: string }) => (
 		<svg data-testid="heart-icon" data-variant={variant ?? "outline"} className={className} />
 	),
 }));

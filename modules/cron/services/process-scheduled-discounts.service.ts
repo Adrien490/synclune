@@ -42,7 +42,7 @@ export async function processScheduledDiscounts(): Promise<{
 	if (toActivate.length > 0) {
 		const activated = await prisma.discount.updateMany({
 			where: { id: { in: toActivate.map((d) => d.id) } },
-			data: { isActive: true, manuallyDeactivated: false },
+			data: { isActive: true },
 		});
 		activatedCount = activated.count;
 		logger.info("Activated discounts", {

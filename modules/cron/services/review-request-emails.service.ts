@@ -169,7 +169,7 @@ export async function sendDelayedReviewRequestEmails(): Promise<{
 
 				const result = await sendReviewReminderEmail({
 					to: order.user.email,
-					customerName: order.user.name ?? "Cliente",
+					customerName: order.user.name ?? order.user.email,
 					orderNumber: order.orderNumber,
 					reviewUrl,
 					unsubscribeUrl,

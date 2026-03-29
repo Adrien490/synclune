@@ -7,7 +7,10 @@ interface TextareaProps extends React.ComponentProps<"textarea"> {
 	autoGrow?: boolean;
 }
 
-const supportsFieldSizing = typeof CSS !== "undefined" && CSS.supports("field-sizing", "content");
+const supportsFieldSizing =
+	typeof CSS !== "undefined" &&
+	typeof CSS.supports === "function" &&
+	CSS.supports("field-sizing", "content");
 
 function Textarea({ className, autoGrow = false, ref, ...props }: TextareaProps) {
 	const internalRef = React.useRef<HTMLTextAreaElement | null>(null);

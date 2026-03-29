@@ -44,6 +44,16 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 						select: {
 							title: true,
 							slug: true,
+							skus: {
+								where: { isActive: true },
+								select: {
+									images: {
+										take: 1,
+										select: { url: true },
+									},
+								},
+								take: 1,
+							},
 						},
 					},
 				},
@@ -64,10 +74,13 @@ export async function notifyBackInStock(productId: string): Promise<void> {
 					const productUrl = buildUrl(`${ROUTES.SHOP.PRODUCTS}/${item.product.slug}`);
 					const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 
+					const productImageUrl = item.product.skus[0]?.images[0]?.url ?? null;
+
 					const result = await sendBackInStockEmail({
 						to: item.wishlist.user.email,
 						customerName: item.wishlist.user.name ?? item.wishlist.user.email,
 						productTitle: item.product.title,
+						productImageUrl,
 						productUrl,
 						unsubscribeUrl,
 					});

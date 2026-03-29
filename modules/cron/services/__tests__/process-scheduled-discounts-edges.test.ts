@@ -57,7 +57,7 @@ describe("processScheduledDiscounts — edge cases", () => {
 		expect(result.deactivated).toBe(0);
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: ["disc-1"] } },
-			data: { isActive: true, manuallyDeactivated: false },
+			data: { isActive: true },
 		});
 	});
 
@@ -107,7 +107,7 @@ describe("processScheduledDiscounts — edge cases", () => {
 		expect(result.activated).toBe(1);
 		expect(mockPrisma.discount.updateMany).toHaveBeenCalledWith({
 			where: { id: { in: ["disc-auto"] } },
-			data: { isActive: true, manuallyDeactivated: false },
+			data: { isActive: true },
 		});
 	});
 

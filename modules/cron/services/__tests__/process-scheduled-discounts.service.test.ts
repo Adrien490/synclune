@@ -75,11 +75,10 @@ describe("processScheduledDiscounts", () => {
 		expect(findCall.select).toEqual({ id: true });
 		expect(findCall.take).toBe(1000);
 
-		// Verify updateMany includes manuallyDeactivated: false reset
+		// Verify updateMany sets isActive: true
 		const updateCall = mockPrisma.discount.updateMany.mock.calls[0]![0];
 		expect(updateCall.where.id.in).toEqual(["disc-1", "disc-2"]);
 		expect(updateCall.data.isActive).toBe(true);
-		expect(updateCall.data.manuallyDeactivated).toBe(false);
 
 		expect(result.activated).toBe(2);
 	});

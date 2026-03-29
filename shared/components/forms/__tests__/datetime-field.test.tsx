@@ -44,6 +44,7 @@ vi.mock("@/shared/components/ui/input", () => ({
 	Input: ({ id, type, value, onChange, disabled, ...props }: any) => (
 		<input id={id} type={type} value={value} onChange={onChange} disabled={disabled} {...props} />
 	),
+	inputVariants: () => "input-styles",
 }));
 
 vi.mock("@/shared/components/ui/popover", () => ({
@@ -182,16 +183,19 @@ describe("DateTimeField", () => {
 	// CLEAR / RESET
 	// ============================================================================
 
-	it("renders clear button when a date is selected and not disabled", () => {
+	it("renders clear buttons when a date is selected and not disabled", () => {
 		mockUseFieldContext.mockReturnValue(createFieldState("2025-06-15T14:30") as any);
 		render(<DateTimeField />);
-		expect(screen.getByRole("button", { name: "Effacer la date" })).toBeInTheDocument();
+		// Both mobile and desktop branches render a clear button
+		const clearButtons = screen.getAllByRole("button", { name: "Effacer la date" });
+		expect(clearButtons.length).toBe(2);
 	});
 
 	it("clears value by calling handleChange with empty string when clear button clicked", () => {
 		mockUseFieldContext.mockReturnValue(createFieldState("2025-06-15T14:30") as any);
 		render(<DateTimeField />);
-		fireEvent.click(screen.getByRole("button", { name: "Effacer la date" }));
+		const clearButtons = screen.getAllByRole("button", { name: "Effacer la date" });
+		fireEvent.click(clearButtons[0]!);
 		expect(mockHandleChange).toHaveBeenCalledWith("");
 	});
 
@@ -223,5 +227,91 @@ describe("DateTimeField", () => {
 		const hidden = container.querySelector('input[type="hidden"]') as HTMLInputElement;
 		expect(hidden).toBeInTheDocument();
 		expect(hidden.value).toBe("2025-06-15T14:30");
+	});
+
+	// ============================================================================
+	// NATIVE MOBILE INPUT
+	// ============================================================================
+
+	it("renders native datetime-local input for mobile", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]');
+		expect(nativeInput).toBeInTheDocument();
+	});
+
+	it("renders native date input for mobile when dateOnly", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField dateOnly />);
+		const nativeInput = container.querySelector('input[type="date"]');
+		expect(nativeInput).toBeInTheDocument();
+	});
+
+	it("native input has correct value for datetime-local", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("2025-06-15T14:30") as any);
+		const { container } = render(<DateTimeField />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		expect(nativeInput.value).toBe("2025-06-15T14:30");
+	});
+
+	it("native input has date-only value when dateOnly", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("2025-06-15T14:30") as any);
+		const { container } = render(<DateTimeField dateOnly />);
+		const nativeInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+		expect(nativeInput.value).toBe("2025-06-15");
+	});
+
+	it("native input calls handleChange with datetime-local value", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		fireEvent.change(nativeInput, { target: { value: "2025-06-15T09:45" } });
+		expect(mockHandleChange).toHaveBeenCalledWith("2025-06-15T09:45");
+	});
+
+	it("native date input preserves time in lastTimeRef", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField dateOnly />);
+		const nativeInput = container.querySelector('input[type="date"]') as HTMLInputElement;
+		fireEvent.change(nativeInput, { target: { value: "2025-06-15" } });
+		expect(mockHandleChange).toHaveBeenCalledWith("2025-06-15T00:00");
+	});
+
+	it("native input clears value on empty change", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("2025-06-15T14:30") as any);
+		const { container } = render(<DateTimeField />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		fireEvent.change(nativeInput, { target: { value: "" } });
+		expect(mockHandleChange).toHaveBeenCalledWith("");
+	});
+
+	it("native input forwards disabled attribute", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField disabled />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		expect(nativeInput).toBeDisabled();
+	});
+
+	it("native input forwards required attribute", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField required />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		expect(nativeInput).toBeRequired();
+	});
+
+	it("native input has aria-invalid when errors exist", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("", ["Required"]) as any);
+		const { container } = render(<DateTimeField />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		expect(nativeInput).toHaveAttribute("aria-invalid", "true");
+		expect(nativeInput).toHaveAttribute("aria-describedby", "scheduledAt-error");
+	});
+
+	it("native input calls handleBlur on blur", () => {
+		mockUseFieldContext.mockReturnValue(createFieldState("") as any);
+		const { container } = render(<DateTimeField />);
+		const nativeInput = container.querySelector('input[type="datetime-local"]') as HTMLInputElement;
+		fireEvent.blur(nativeInput);
+		expect(mockHandleBlur).toHaveBeenCalledOnce();
 	});
 });

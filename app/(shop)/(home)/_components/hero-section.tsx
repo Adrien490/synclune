@@ -3,7 +3,7 @@ import { HeroRotatingWord } from "./hero-rotating-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
 import { Button } from "@/shared/components/ui/button";
-import { getProducts } from "@/modules/products/data/get-products";
+import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
 import { Heart } from "lucide-react";
@@ -11,15 +11,12 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ParticleBackground, ScrollIndicator } from "./hero-decorations";
 
-async function HeroFloatingImagesAsync() {
-	const { products } = await getProducts(
-		{
-			perPage: 4,
-			sortBy: "created-descending",
-			filters: { status: "PUBLIC" },
-		},
-		{ isAdmin: false },
-	);
+async function HeroFloatingImagesAsync({
+	productsPromise,
+}: {
+	productsPromise: Promise<GetProductsReturn>;
+}) {
+	const { products } = await productsPromise;
 	const heroImages = extractHeroImages(products);
 	return <HeroFloatingImages images={heroImages} />;
 }
@@ -35,7 +32,7 @@ async function HeroFloatingImagesAsync() {
  * rotating word requires client JS. Decorative animations
  * (particles, scroll indicator) are dynamically imported.
  */
-export function HeroSection() {
+export function HeroSection({ productsPromise }: { productsPromise: Promise<GetProductsReturn> }) {
 	return (
 		<section
 			id="hero-section"
@@ -67,7 +64,7 @@ export function HeroSection() {
 
 			{/* Floating product images - Desktop only, streams in after products load */}
 			<Suspense fallback={null}>
-				<HeroFloatingImagesAsync />
+				<HeroFloatingImagesAsync productsPromise={productsPromise} />
 			</Suspense>
 
 			<div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 2xl:max-w-7xl">

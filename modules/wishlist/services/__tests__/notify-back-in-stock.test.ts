@@ -44,6 +44,7 @@ function makeWishlistItem(overrides: Record<string, unknown> = {}) {
 		product: {
 			title: "Bracelet Lune",
 			slug: "bracelet-lune",
+			skus: [{ images: [{ url: "https://utfs.io/f/bracelet-lune.jpg" }] }],
 		},
 		...overrides,
 	};

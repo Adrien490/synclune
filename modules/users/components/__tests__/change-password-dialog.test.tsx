@@ -18,6 +18,12 @@ vi.mock("@/shared/components/forms", () => ({
 		AppField: ({ children }: { name: string; children: (f: unknown) => React.ReactNode }) =>
 			children({
 				InputField: ({ label }: { label: string }) => <input aria-label={label} />,
+				CheckboxField: ({ label }: { label: React.ReactNode }) => (
+					<div>
+						<input type="checkbox" />
+						<label>{label}</label>
+					</div>
+				),
 			}),
 		Subscribe: ({ children }: { children: (v: unknown[]) => React.ReactNode }) => children([true]),
 		handleSubmit: vi.fn(),

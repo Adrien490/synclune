@@ -47,7 +47,7 @@ export async function retryFailedEmails(): Promise<RetryFailedEmailsResult> {
 
 	for (const failedEmail of batch) {
 		if (Date.now() - batchStart > BATCH_DEADLINE_MS) {
-			logger.warn("[CRON:retry-failed-emails] Deadline exceeded, stopping early", {
+			logger.warn("Deadline exceeded, stopping early", {
 				cronJob: "retry-failed-emails",
 			});
 			break;
@@ -67,7 +67,7 @@ export async function retryFailedEmails(): Promise<RetryFailedEmailsResult> {
 			});
 
 			resolved++;
-			logger.info(`[CRON:retry-failed-emails] Resolved ${failedEmail.taskType} ${failedEmail.id}`, {
+			logger.info(`Resolved ${failedEmail.taskType} ${failedEmail.id}`, {
 				cronJob: "retry-failed-emails",
 			});
 		} catch (err) {
@@ -88,15 +88,13 @@ export async function retryFailedEmails(): Promise<RetryFailedEmailsResult> {
 					},
 				})
 				.catch((dbErr: unknown) => {
-					logger.error(
-						`[CRON:retry-failed-emails] Failed to update retry state for ${failedEmail.id}:`,
-						dbErr,
-						{ cronJob: "retry-failed-emails" },
-					);
+					logger.error(`Failed to update retry state for ${failedEmail.id}`, dbErr, {
+						cronJob: "retry-failed-emails",
+					});
 				});
 
 			logger.error(
-				`[CRON:retry-failed-emails] Retry failed for ${failedEmail.taskType} ${failedEmail.id} (attempt ${nextAttempts}/${MAX_EMAIL_RETRY_ATTEMPTS}):`,
+				`Retry failed for ${failedEmail.taskType} ${failedEmail.id} (attempt ${nextAttempts}/${MAX_EMAIL_RETRY_ATTEMPTS})`,
 				err,
 				{ cronJob: "retry-failed-emails" },
 			);
@@ -106,7 +104,7 @@ export async function retryFailedEmails(): Promise<RetryFailedEmailsResult> {
 		await new Promise((resolve) => setTimeout(resolve, EMAIL_THROTTLE_MS));
 	}
 
-	logger.info(`✅ [CRON:retry-failed-emails] ${resolved}/${retried} resolved, ${errors} errors`, {
+	logger.info(`${resolved}/${retried} resolved, ${errors} errors`, {
 		cronJob: "retry-failed-emails",
 	});
 

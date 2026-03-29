@@ -6,9 +6,12 @@ import { logger } from "@/shared/lib/logger";
 import { EMAIL_FROM } from "../constants/email.constants";
 import type { EmailResult } from "../types/email.types";
 
+let resendClient: Resend | null = null;
+
 function getResendClient(): Resend | null {
 	if (!process.env.RESEND_API_KEY) return null;
-	return new Resend(process.env.RESEND_API_KEY);
+	resendClient ??= new Resend(process.env.RESEND_API_KEY);
+	return resendClient;
 }
 
 function isRetryableEmailError(error: unknown): boolean {

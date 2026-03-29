@@ -104,11 +104,16 @@ export function ProductList({
 			<StaggerGrid
 				role="list"
 				aria-label="Liste des produits"
-				className="grid grid-cols-2 gap-4 outline-none group-has-[[data-pending]]/container:pointer-events-none group-has-[[data-pending]]/container:scale-[0.99] group-has-[[data-pending]]/container:blur-[1px] sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 2xl:grid-cols-5"
+				className="grid grid-cols-2 gap-4 transition-[opacity,filter,transform] duration-300 ease-out outline-none group-has-[[data-pending]]/container:pointer-events-none group-has-[[data-pending]]/container:scale-[0.98] group-has-[[data-pending]]/container:opacity-40 group-has-[[data-pending]]/container:blur-[2px] sm:gap-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-8 2xl:grid-cols-5"
 				inView={false}
 			>
 				{products.map((product, index) => (
-					<div key={product.id} role="listitem" className="product-item">
+					<div
+						key={product.id}
+						role="listitem"
+						className="product-item"
+						style={{ "--item-index": index } as React.CSSProperties}
+					>
 						<ProductCard
 							product={product}
 							index={index}

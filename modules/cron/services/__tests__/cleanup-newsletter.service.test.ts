@@ -20,6 +20,17 @@ vi.mock("@/shared/lib/logger", () => ({
 	logger: mockLogger,
 }));
 
+vi.mock("next/cache", () => ({
+	updateTag: vi.fn(),
+}));
+
+vi.mock("@/modules/newsletter/constants/cache", () => ({
+	NEWSLETTER_CACHE_TAGS: {
+		LIST: "newsletter-subscribers-list",
+		USER_STATUS: (userId: string) => `newsletter-user-${userId}`,
+	},
+}));
+
 import {
 	cleanupUnconfirmedNewsletterSubscriptions,
 	unsubscribeInactiveNewsletterSubscribers,

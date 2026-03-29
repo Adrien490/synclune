@@ -26,11 +26,11 @@ export const AdminOrderProcessingFailedEmail = ({
 }: AdminOrderProcessingFailedEmailProps) => {
 	return (
 		<EmailLayout
-			preview={`[URGENT] Paiement recu — Echec traitement commande ${orderNumber}`}
-			headerText="Echec traitement commande"
+			preview={`[URGENT] Paiement reçu — Échec traitement commande ${orderNumber}`}
+			headerText="Échec traitement commande"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Le paiement a ete encaisse mais la commande n&apos;a pas pu etre traitee. Une intervention
+					Le paiement a été encaissé mais la commande n&apos;a pas pu être traitée. Une intervention
 					manuelle est requise.
 				</Text>
 			}
@@ -43,8 +43,8 @@ export const AdminOrderProcessingFailedEmail = ({
 						fontWeight: "bold",
 					}}
 				>
-					Le client a paye mais sa commande n&apos;a pas pu etre traitee. Action manuelle requise
-					immediatement.
+					Le client a payé mais sa commande n&apos;a pas pu être traitée. Action manuelle requise
+					immédiatement.
 				</Text>
 			</Section>
 
@@ -84,7 +84,7 @@ export const AdminOrderProcessingFailedEmail = ({
 						}
 					/>
 					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Montant encaisse</Text>}
+						left={<Text style={EMAIL_STYLES.text.small}>Montant encaissé</Text>}
 						right={
 							<Text
 								style={{

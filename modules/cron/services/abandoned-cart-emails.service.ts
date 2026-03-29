@@ -68,14 +68,14 @@ export async function sendAbandonedCartEmails(): Promise<{
 		cronJob: "abandoned-cart-emails",
 	});
 
-	const startTime = Date.now();
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	let sent = 0;
 	let errors = 0;
 	const cartUrl = buildUrl(ROUTES.SHOP.CART);
 	const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
 
 	for (const cart of abandonedCarts) {
-		if (Date.now() - startTime > BATCH_DEADLINE_MS) {
+		if (Date.now() > deadline) {
 			logger.info("Deadline reached, stopping early", { cronJob: "abandoned-cart-emails" });
 			break;
 		}
@@ -95,6 +95,8 @@ export async function sendAbandonedCartEmails(): Promise<{
 			continue;
 		}
 
+		if (!cart.user?.email) continue;
+
 		try {
 			const items = cart.items
 				.filter((item) => item.sku.inventory > 0)
@@ -109,8 +111,8 @@ export async function sendAbandonedCartEmails(): Promise<{
 			const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
 			const result = await sendAbandonedCartEmail({
-				to: cart.user!.email,
-				customerName: cart.user!.name ?? cart.user!.email,
+				to: cart.user.email,
+				customerName: cart.user.name ?? cart.user.email,
 				items,
 				total,
 				cartUrl,

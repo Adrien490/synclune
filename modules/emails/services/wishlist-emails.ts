@@ -10,17 +10,19 @@ export async function sendBackInStockEmail({
 	to,
 	customerName,
 	productTitle,
+	productImageUrl,
 	productUrl,
 	unsubscribeUrl,
 }: {
 	to: string;
 	customerName: string;
 	productTitle: string;
+	productImageUrl?: string | null;
 	productUrl: string;
 	unsubscribeUrl: string;
 }): Promise<EmailResult> {
 	return renderAndSend(
-		BackInStockEmail({ customerName, productTitle, productUrl, unsubscribeUrl }),
+		BackInStockEmail({ customerName, productTitle, productImageUrl, productUrl, unsubscribeUrl }),
 		{
 			to,
 			subject: EMAIL_SUBJECTS.BACK_IN_STOCK,

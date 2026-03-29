@@ -2,6 +2,7 @@ import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections-
 import { LatestCreations } from "@/app/(shop)/(home)/_components/latest-creations";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 
+import { getProducts } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
@@ -15,6 +16,7 @@ import { FaqSection } from "@/modules/faq/components/faq-section";
 import { FaqSectionSkeleton } from "@/modules/faq/components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
+import { LCPImagePreload } from "./_components/lcp-image-preload";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
@@ -62,12 +64,19 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-	// Kick off cached data fetches in parallel (both have "use cache" at top level)
+	// Kick off cached data fetches in parallel (all have "use cache" at top level)
+	const productsPromise = getProducts(
+		{ perPage: 4, sortBy: "created-descending", filters: { status: "PUBLIC" } },
+		{ isAdmin: false },
+	);
 	const reviewStatsPromise = getGlobalReviewStats();
 	const featuredReviewsPromise = getFeaturedReviews();
 
 	return (
 		<>
+			{/* LCP preload — outside Suspense so the <link> lands in the initial HTML shell */}
+			<LCPImagePreload productsPromise={productsPromise} />
+
 			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
 			<Suspense fallback={null}>
 				<HomepageStructuredData
@@ -78,12 +87,12 @@ export default async function Page() {
 
 			{/* 1. Hero - Attention capture + rotating tagline + floating product images */}
 			<Suspense fallback={<HeroSectionSkeleton />}>
-				<HeroSection />
+				<HeroSection productsPromise={productsPromise} />
 			</Suspense>
 
 			{/* 2. Latest Creations - 4 most recent products */}
 			<Suspense fallback={<LatestCreationsSkeleton />}>
-				<LatestCreations />
+				<LatestCreations productsPromise={productsPromise} />
 			</Suspense>
 
 			{/* 3. Collections - Thematic browsing with descriptions */}

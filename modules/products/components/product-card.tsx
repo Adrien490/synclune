@@ -319,6 +319,7 @@ export function ProductCard({
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
 						loading={isAboveFold ? "eager" : "lazy"}
+						fetchPriority={isAboveFold ? "high" : undefined}
 						preload={isAboveFold}
 						sizes={IMAGE_SIZES.PRODUCT_CARD}
 					/>

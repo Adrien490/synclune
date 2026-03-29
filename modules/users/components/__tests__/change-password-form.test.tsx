@@ -1,3 +1,4 @@
+import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -19,31 +20,62 @@ vi.mock("@/modules/auth/hooks/use-change-password", () => ({
 	})),
 }));
 
-vi.mock("@/shared/components/forms", () => ({
-	useAppForm: vi.fn(() => ({
-		AppField: ({
-			children,
-		}: {
-			name: string;
-			children: (field: unknown) => React.ReactNode;
-			validators?: unknown;
-		}) =>
-			children({
-				InputField: ({
-					label,
-					type,
-					disabled,
-				}: {
-					label: string;
-					type?: string;
-					disabled?: boolean;
-				}) => <input type={type ?? "text"} placeholder={label} disabled={disabled} />,
-			}),
-		Subscribe: ({ children }: { children: (values: unknown[]) => React.ReactNode }) =>
-			children([true]),
-		handleSubmit: vi.fn(),
-	})),
-}));
+vi.mock("@/shared/components/forms", () => {
+	// Stateful checkbox mock that syncs hidden input
+	function MockCheckboxField({
+		label,
+		disabled,
+		name,
+	}: {
+		label: React.ReactNode;
+		disabled?: boolean;
+		name?: string;
+	}) {
+		const [checked, setChecked] = React.useState(false);
+		return (
+			<div>
+				<input
+					type="checkbox"
+					disabled={disabled}
+					checked={checked}
+					onChange={(e) => setChecked(e.target.checked)}
+				/>
+				<label>{label}</label>
+				<input type="hidden" name={name ?? "revokeOtherSessions"} value={String(checked)} />
+			</div>
+		);
+	}
+
+	return {
+		useAppForm: vi.fn(() => ({
+			AppField: ({
+				children,
+				name,
+			}: {
+				name: string;
+				children: (field: unknown) => React.ReactNode;
+				validators?: unknown;
+			}) =>
+				children({
+					InputField: ({
+						label,
+						type,
+						disabled,
+					}: {
+						label: string;
+						type?: string;
+						disabled?: boolean;
+					}) => <input type={type ?? "text"} placeholder={label} disabled={disabled} />,
+					CheckboxField: ({ label, disabled }: { label: React.ReactNode; disabled?: boolean }) => (
+						<MockCheckboxField label={label} disabled={disabled} name={name} />
+					),
+				}),
+			Subscribe: ({ children }: { children: (values: unknown[]) => React.ReactNode }) =>
+				children([true]),
+			handleSubmit: vi.fn(),
+		})),
+	};
+});
 
 vi.mock("@/shared/components/ui/alert", () => ({
 	Alert: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
@@ -204,6 +236,7 @@ describe("ChangePasswordForm", () => {
 		vi.mocked(useAppForm).mockReturnValueOnce({
 			AppField: ({
 				children,
+				name,
 			}: {
 				name: string;
 				children: (field: unknown) => React.ReactNode;
@@ -219,6 +252,13 @@ describe("ChangePasswordForm", () => {
 						type?: string;
 						disabled?: boolean;
 					}) => <input type={type ?? "text"} placeholder={label} disabled={disabled} />,
+					CheckboxField: ({ label, disabled }: { label: React.ReactNode; disabled?: boolean }) => (
+						<div>
+							<input type="checkbox" disabled={disabled} />
+							<label>{label}</label>
+							<input type="hidden" name={name} value="false" />
+						</div>
+					),
 				}),
 			Subscribe: ({ children }: { children: (values: unknown[]) => React.ReactNode }) =>
 				children([false]),

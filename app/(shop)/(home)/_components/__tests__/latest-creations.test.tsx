@@ -68,17 +68,15 @@ vi.mock("@/modules/products/components/cursor-glow", () => ({
 	),
 }));
 
-const mockGetProducts = vi.fn();
-
-vi.mock("@/modules/products/data/get-products", () => ({
-	getProducts: (...args: unknown[]) => mockGetProducts(...args),
-}));
+vi.mock("@/modules/products/data/get-products", () => ({}));
 
 vi.mock("@/modules/products/components/product-card", () => ({
 	ProductCard: ({ product }: { product: { id: string }; [key: string]: unknown }) => (
 		<div data-testid={`product-card-${product.id}`}>ProductCard</div>
 	),
 }));
+
+import type { GetProductsReturn } from "@/modules/products/data/get-products";
 
 import { LatestCreations } from "../latest-creations";
 
@@ -109,9 +107,11 @@ const mockReturn = (products: typeof mockProducts) => ({
 // ---------------------------------------------------------------------------
 
 describe("LatestCreations", () => {
+	const makePromise = (products: typeof mockProducts) =>
+		Promise.resolve(mockReturn(products)) as Promise<GetProductsReturn>;
+
 	it("renders section with correct id and aria attributes", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		const section = document.getElementById("latest-creations");
 		expect(section).not.toBeNull();
@@ -120,8 +120,7 @@ describe("LatestCreations", () => {
 	});
 
 	it("renders h2 title 'Nouvelles créations'", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		const heading = screen.getByRole("heading", { level: 2 });
 		expect(heading).toBeInTheDocument();
@@ -130,8 +129,7 @@ describe("LatestCreations", () => {
 	});
 
 	it("renders subtitle text", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		const subtitle = document.getElementById("latest-creations-subtitle");
 		expect(subtitle).not.toBeNull();
@@ -139,15 +137,13 @@ describe("LatestCreations", () => {
 	});
 
 	it("returns null when products array is empty", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn([]));
-		const result = await LatestCreations();
+		const result = await LatestCreations({ productsPromise: makePromise([]) });
 
 		expect(result).toBeNull();
 	});
 
 	it("renders correct number of ProductCard components", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		for (const product of mockProducts) {
 			expect(screen.getByTestId(`product-card-${product.id}`)).toBeInTheDocument();
@@ -155,16 +151,14 @@ describe("LatestCreations", () => {
 	});
 
 	it("CTA links to /produits?sortBy=created-descending", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		const ctaLink = screen.getByText("Voir tous les nouveaux bijoux");
 		expect(ctaLink.closest("a")).toHaveAttribute("href", "/produits?sortBy=created-descending");
 	});
 
 	it("CTA has sr-only description text", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		const srOnly = screen.getByText(
 			"Découvrir tous les bijoux récemment créés dans la boutique Synclune",
@@ -174,8 +168,7 @@ describe("LatestCreations", () => {
 	});
 
 	it("each product is wrapped in CursorGlow", async () => {
-		mockGetProducts.mockResolvedValue(mockReturn(mockProducts));
-		render(await LatestCreations());
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
 		const cursorGlows = screen.getAllByTestId("cursor-glow");
 		expect(cursorGlows).toHaveLength(mockProducts.length);

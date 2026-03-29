@@ -27,6 +27,7 @@
 
 	.animate-sparkle-pulse {
 		animation: sparkle-pulse 2s ease-in-out infinite;
+		will-change: transform, opacity;
 	}
 
 	/* Animation heart-beat pour toast error */
@@ -42,6 +43,7 @@
 
 	.animate-heart-beat {
 		animation: heart-beat 2s ease-in-out infinite;
+		will-change: transform;
 	}
 
 	/* Animation wishlist button - single pop subtil (200ms) */
@@ -87,6 +89,7 @@
 
 	.animate-wave {
 		animation: wave 2.5s ease-in-out infinite;
+		will-change: transform;
 	}
 
 	/* Progress bar indeterminate for filter sheet */
@@ -120,6 +123,7 @@
 		);
 		background-size: 200% 100%;
 		animation: shimmer 1.5s ease-in-out infinite;
+		will-change: background-position;
 	}
 
 	/* Animation draw-line pour SVG dessinés à la main (Tendance 2026: Hand-drawn aesthetic) */
@@ -371,6 +375,7 @@
 	.animate-glitter-twinkle {
 		animation: glitter-twinkle var(--sparkle-duration, 3s) cubic-bezier(0.25, 0.1, 0.25, 1)
 			var(--sparkle-delay, 0s) infinite;
+		will-change: transform, opacity;
 	}
 
 	/* ==========================================
@@ -427,6 +432,28 @@
 	}
 
 	/* ==========================================
+	   PRODUCT GRID CROSSFADE — Smooth entry after filter/sort change
+	   ========================================== */
+	@keyframes grid-crossfade-in {
+		from {
+			opacity: 0;
+			filter: blur(4px);
+			transform: scale(0.98);
+		}
+		to {
+			opacity: 1;
+			filter: blur(0);
+			transform: scale(1);
+		}
+	}
+
+	.product-item {
+		animation: grid-crossfade-in 0.4s cubic-bezier(0, 0, 0.2, 1) both;
+		animation-delay: calc(var(--item-index, 0) * 30ms);
+		will-change: transform, opacity, filter;
+	}
+
+	/* ==========================================
 	   REDUCED MOTION — Disable all animations
 	   ========================================== */
 	@media (prefers-reduced-motion: reduce) {
@@ -462,7 +489,8 @@
 		.animate-badge-pulse,
 		.animate-split-text-reveal,
 		.animate-collapse-down,
-		.animate-collapse-up {
+		.animate-collapse-up,
+		.product-item {
 			animation: none;
 		}
 

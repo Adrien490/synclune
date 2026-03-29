@@ -5,18 +5,15 @@ import { SectionTitle } from "@/shared/components/section-title";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { CursorGlow } from "@/modules/products/components/cursor-glow";
 import { ProductCard } from "@/modules/products/components/product-card";
-import { getProducts } from "@/modules/products/data/get-products";
+import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import Link from "next/link";
 
-export async function LatestCreations() {
-	const { products } = await getProducts(
-		{
-			perPage: 4,
-			sortBy: "created-descending",
-			filters: { status: "PUBLIC" },
-		},
-		{ isAdmin: false },
-	);
+export async function LatestCreations({
+	productsPromise,
+}: {
+	productsPromise: Promise<GetProductsReturn>;
+}) {
+	const { products } = await productsPromise;
 
 	if (products.length === 0) {
 		return null;

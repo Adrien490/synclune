@@ -183,7 +183,7 @@ export async function sendCrossSellEmails(): Promise<{
 
 			const result = await sendCrossSellEmail({
 				to: order.user.email,
-				customerName: order.user.name ?? "Cliente",
+				customerName: order.user.name ?? order.user.email,
 				products,
 				shopUrl,
 				unsubscribeUrl,

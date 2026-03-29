@@ -121,11 +121,11 @@ export async function syncAsyncPayments(): Promise<{
 				} catch (stockError) {
 					const stockErrorMessage =
 						stockError instanceof Error ? stockError.message : String(stockError);
-					logger.error(
-						"[STOCK-RESTORE-FAILED] Stock not restored after payment failure",
-						stockError,
-						{ cronJob: "sync-async-payments", orderNumber: order.orderNumber, orderId: order.id },
-					);
+					logger.error("Stock not restored after payment failure", stockError, {
+						cronJob: "sync-async-payments",
+						orderNumber: order.orderNumber,
+						orderId: order.id,
+					});
 					sendAdminCronFailedAlert({
 						job: "sync-async-payments",
 						errors: 1,

@@ -49,7 +49,11 @@ const initSentry = () => {
 			"DYNAMIC_SERVER_USAGE",
 		],
 	});
+};
 
+// Defer replay integration — heavy (~50-70 KiB) and not needed on first paint.
+// Errors are still captured by base Sentry init above.
+const initReplay = () => {
 	Sentry.addIntegration(
 		Sentry.replayIntegration({
 			maskAllText: true,
@@ -61,8 +65,10 @@ const initSentry = () => {
 
 if ("requestIdleCallback" in window) {
 	requestIdleCallback(() => void initSentry());
+	setTimeout(() => requestIdleCallback(() => void initReplay()), 5000);
 } else {
 	setTimeout(() => void initSentry(), 2000);
+	setTimeout(() => void initReplay(), 7000);
 }
 
 performance.mark("app-init");

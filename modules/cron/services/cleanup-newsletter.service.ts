@@ -1,7 +1,9 @@
+import { updateTag } from "next/cache";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { CLEANUP_DELETE_LIMIT, RETENTION, BATCH_SIZE_LARGE } from "@/modules/cron/constants/limits";
+import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 
 /**
  * Cleans up unconfirmed newsletter subscriptions.
@@ -34,6 +36,10 @@ export async function cleanupUnconfirmedNewsletterSubscriptions(): Promise<{
 		const deleteResult = await prisma.newsletterSubscriber.deleteMany({
 			where: { id: { in: toDelete.map((s) => s.id) } },
 		});
+
+		if (deleteResult.count > 0) {
+			updateTag(NEWSLETTER_CACHE_TAGS.LIST);
+		}
 
 		const hasMore = toDelete.length === CLEANUP_DELETE_LIMIT;
 
@@ -98,6 +104,10 @@ export async function unsubscribeInactiveNewsletterSubscribers(): Promise<{
 				unsubscribedAt: new Date(),
 			},
 		});
+
+		if (updateResult.count > 0) {
+			updateTag(NEWSLETTER_CACHE_TAGS.LIST);
+		}
 
 		const hasMore = toUnsubscribe.length === BATCH_SIZE_LARGE;
 

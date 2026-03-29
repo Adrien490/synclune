@@ -7,7 +7,7 @@ import { fr } from "date-fns/locale";
 import { Button } from "@/shared/components/ui/button";
 import { Calendar } from "@/shared/components/ui/calendar";
 import { Field, FieldError } from "@/shared/components/ui/field";
-import { Input } from "@/shared/components/ui/input";
+import { Input, inputVariants } from "@/shared/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
@@ -81,6 +81,7 @@ export function DateTimeField({
 
 	const selectedDate = parseValue(field.state.value);
 	const lastTimeRef = useRef("00:00");
+	const hasError = field.state.meta.errors.length > 0;
 
 	// Extrait l'heure pour l'affichage (time input n'est rendu que quand selectedDate existe)
 	const displayTime = selectedDate
@@ -116,9 +117,28 @@ export function DateTimeField({
 		field.handleChange(formatValue(newDate));
 	};
 
+	const handleNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const val = e.target.value;
+		if (!val) {
+			field.handleChange("");
+			return;
+		}
+		if (dateOnly) {
+			field.handleChange(`${val}T${lastTimeRef.current}`);
+		} else {
+			field.handleChange(val);
+		}
+	};
+
 	const handleClear = () => {
 		field.handleChange("");
 	};
+
+	const nativeValue = field.state.value
+		? dateOnly
+			? field.state.value.slice(0, 10)
+			: field.state.value
+		: "";
 
 	const displayValue = selectedDate
 		? dateOnly
@@ -127,24 +147,52 @@ export function DateTimeField({
 		: "";
 
 	return (
-		<Field data-invalid={field.state.meta.errors.length > 0}>
+		<Field data-invalid={hasError}>
 			{label && (
 				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
 				</FieldLabel>
 			)}
 
-			<div className={cn("flex gap-2", className)}>
+			{/* Mobile: native date/datetime-local picker */}
+			<div className={cn("flex gap-2 md:hidden", className)}>
+				<input
+					type={dateOnly ? "date" : "datetime-local"}
+					id={field.name}
+					value={nativeValue}
+					onChange={handleNativeChange}
+					onBlur={field.handleBlur}
+					disabled={disabled}
+					required={required}
+					aria-invalid={hasError}
+					aria-describedby={hasError ? `${field.name}-error` : undefined}
+					aria-required={required}
+					className={cn(inputVariants(), "w-full")}
+				/>
+				{selectedDate && !disabled && (
+					<Button
+						type="button"
+						variant="outline"
+						size="icon"
+						onClick={handleClear}
+						className="min-h-11 shrink-0"
+						aria-label="Effacer la date"
+					>
+						<X className="size-4" />
+					</Button>
+				)}
+			</div>
+
+			{/* Desktop: Calendar popover */}
+			<div className={cn("hidden gap-2 md:flex", className)}>
 				<Popover>
 					<PopoverTrigger asChild>
 						<Button
 							type="button"
 							variant="outline"
 							disabled={disabled}
-							aria-invalid={field.state.meta.errors.length > 0}
-							aria-describedby={
-								field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined
-							}
+							aria-invalid={hasError}
+							aria-describedby={hasError ? `${field.name}-error` : undefined}
 							aria-required={required}
 							className={cn(
 								"min-h-11 w-full justify-start text-left font-normal",

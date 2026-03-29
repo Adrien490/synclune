@@ -1,6 +1,6 @@
 "use client";
 
-import { HeartIcon } from "@/shared/components/icons/heart-icon";
+import { AnimatedHeartIcon } from "@/shared/components/icons/animated-heart-icon";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/ui/button";
@@ -80,20 +80,16 @@ export function WishlistButton({
 				aria-busy={isPending}
 				title={tooltipText}
 			>
-				<HeartIcon
+				<AnimatedHeartIcon
 					variant={isInWishlist ? "filled" : "outline"}
 					decorative
 					className={cn(
 						// Taille configurable (classes size-* pour bypass Button override)
 						iconSize,
-						"motion-safe:transition-all motion-safe:duration-200",
 						// Drop shadows
 						"drop-shadow-[0_0_3px_rgba(255,255,255,0.9)] drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]",
-						// Effet pop subtil au filled (200ms)
-						isInWishlist && [
-							"drop-shadow-[0_0_6px_rgba(215,168,178,0.6)]",
-							"motion-safe:animate-[wishlist-pop_0.2s_cubic-bezier(0.34,1.56,0.64,1)]",
-						],
+						// Glow douce au filled
+						isInWishlist && "drop-shadow-[0_0_6px_rgba(215,168,178,0.6)]",
 					)}
 				/>
 			</Button>
