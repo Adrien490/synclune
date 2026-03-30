@@ -66,7 +66,7 @@ describe("KpiCardSkeleton", () => {
 		render(<KpiCardSkeleton />);
 
 		const skeletons = screen.getAllByTestId("skeleton");
-		const hasValueSkeleton = skeletons.some((s) => s.className.includes("h-9"));
+		const hasValueSkeleton = skeletons.some((s) => s.className.includes("h-10"));
 		expect(hasValueSkeleton).toBe(true);
 	});
 });

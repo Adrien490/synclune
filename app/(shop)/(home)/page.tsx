@@ -16,7 +16,6 @@ import { FaqSection } from "@/modules/faq/components/faq-section";
 import { FaqSectionSkeleton } from "@/modules/faq/components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
-import { LCPImagePreload } from "./_components/lcp-image-preload";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
@@ -74,9 +73,6 @@ export default async function Page() {
 
 	return (
 		<>
-			{/* LCP preload — outside Suspense so the <link> lands in the initial HTML shell */}
-			<LCPImagePreload productsPromise={productsPromise} />
-
 			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
 			<Suspense fallback={null}>
 				<HomepageStructuredData

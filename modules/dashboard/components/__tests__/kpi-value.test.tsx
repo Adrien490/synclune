@@ -108,10 +108,10 @@ describe("KpiValue", () => {
 	// Size variants
 	// -------------------------------------------------------------------------
 
-	it("applies featured size class (text-4xl)", () => {
+	it("applies featured size class (text-3xl sm:text-4xl)", () => {
 		const { container } = render(<KpiValue value="100" size="featured" />);
 
-		expect(container.firstChild).toHaveClass("text-4xl");
+		expect(container.firstChild).toHaveClass("text-3xl");
 	});
 
 	it("applies default size class (text-3xl)", () => {
