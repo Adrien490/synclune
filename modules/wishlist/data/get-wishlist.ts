@@ -14,12 +14,7 @@ import {
 import type { GetWishlistParams, GetWishlistReturn } from "../types/wishlist.types";
 
 // Re-export types for components that import from data/
-export type {
-	GetWishlistParams,
-	GetWishlistReturn,
-	Wishlist,
-	WishlistItem,
-} from "../types/wishlist.types";
+export type { GetWishlistReturn } from "../types/wishlist.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

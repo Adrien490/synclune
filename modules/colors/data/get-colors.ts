@@ -16,25 +16,10 @@ import type { GetColorsParams, GetColorsParamsInput, GetColorsReturn } from "../
 import { buildColorWhereClause } from "../services/color-query-builder";
 
 // Re-export pour compatibilité
-export {
-	COLORS_SORT_LABELS,
-	COLORS_SORT_OPTIONS,
-	GET_COLORS_DEFAULT_PER_PAGE,
-	GET_COLORS_SORT_FIELDS,
-} from "../constants/color.constants";
-export { colorFiltersSchema, colorSortBySchema } from "../schemas/color.schemas";
-export type {
-	Color,
-	ColorFilters,
-	GetColorsParams,
-	GetColorsParamsInput,
-	GetColorsReturn,
-} from "../types/color.types";
+export type { GetColorsReturn } from "../types/color.types";
 
 // Aliases pour compatibilité
 export { COLORS_SORT_LABELS as SORT_LABELS } from "../constants/color.constants";
-export { COLORS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/color.constants";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

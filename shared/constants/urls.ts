@@ -144,7 +144,7 @@ export function buildUrl(path: string): string {
 /**
  * Helper to build production URLs (for canonical/SEO)
  */
-export function buildProductionUrl(path: string): string {
+function buildProductionUrl(path: string): string {
 	const cleanPath = path.startsWith("/") ? path : `/${path}`;
 	return `${PRODUCTION_URL}${cleanPath}`;
 }

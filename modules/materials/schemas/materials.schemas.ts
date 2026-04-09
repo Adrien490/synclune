@@ -20,7 +20,7 @@ export const materialFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const materialSortBySchema = z
+const materialSortBySchema = z
 	.enum(GET_MATERIALS_SORT_FIELDS)
 	.default(GET_MATERIALS_DEFAULT_SORT_BY);
 

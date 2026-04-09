@@ -60,7 +60,7 @@ export const GET_PRODUCT_TYPES_SORT_FIELDS = [
 	"products-descending",
 ] as const;
 
-export const PRODUCT_TYPES_SORT_OPTIONS = {
+const PRODUCT_TYPES_SORT_OPTIONS = {
 	LABEL_ASC: "label-ascending",
 	LABEL_DESC: "label-descending",
 	PRODUCTS_ASC: "products-ascending",

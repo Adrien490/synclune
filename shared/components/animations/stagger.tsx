@@ -14,8 +14,6 @@ function getStableKey(child: ReactNode, index: number): Key {
 	return index;
 }
 
-export type { StaggerProps };
-
 /**
  * Animation stagger ultra-simple avec support prefers-reduced-motion
  * Chaque enfant reçoit un delay croissant

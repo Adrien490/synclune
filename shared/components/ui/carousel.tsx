@@ -493,5 +493,4 @@ export {
 	CarouselPrevious,
 	CarouselDots,
 	type CarouselApi,
-	useCarousel,
 };

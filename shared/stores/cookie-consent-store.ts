@@ -4,11 +4,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { CookieConsentState, CookieConsentStore } from "@/shared/types/store.types";
 import { noopStorage } from "./noop-storage";
 
-export type {
-	CookieConsentState,
-	CookieConsentActions,
-	CookieConsentStore,
-} from "@/shared/types/store.types";
+export type { CookieConsentStore } from "@/shared/types/store.types";
 
 /**
  * Calculate months difference between two dates (replaces date-fns for bundle size)

@@ -9,8 +9,6 @@ import { getRefundSchema } from "../schemas/refund.schemas";
 import type { GetRefundParams, GetRefundReturn } from "../types/refund.types";
 
 // Re-export pour compatibilité
-export type { GetRefundParams, GetRefundReturn } from "../types/refund.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

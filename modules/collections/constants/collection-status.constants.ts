@@ -12,16 +12,14 @@ export const COLLECTION_STATUS_LABELS = {
 	ARCHIVED: "Archivée",
 } as const;
 
-export const COLLECTION_STATUS_COLORS = {
+const COLLECTION_STATUS_COLORS = {
 	DRAFT: "#f59e0b", // amber
 	PUBLIC: "#22c55e", // green
 	ARCHIVED: "#6b7280", // gray
 } as const;
 
-export const COLLECTION_STATUS_VARIANTS: Record<CollectionStatus, BadgeVariant> = {
+const COLLECTION_STATUS_VARIANTS: Record<CollectionStatus, BadgeVariant> = {
 	[CollectionStatus.DRAFT]: "warning",
 	[CollectionStatus.PUBLIC]: "success",
 	[CollectionStatus.ARCHIVED]: "secondary",
 } as const;
-
-export type { CollectionStatusKey } from "../types/collection-status.types";

@@ -16,19 +16,6 @@ import type { GetOrderItemsReturn, GetOrderItemsParams } from "../types/order-it
 import { buildOrderItemsWhereClause } from "../services/order-items-query-builder";
 
 // Re-export pour compatibilité
-export {
-	GET_ORDER_ITEMS_DEFAULT_SELECT,
-	GET_ORDER_ITEMS_DEFAULT_PER_PAGE,
-	GET_ORDER_ITEMS_MAX_RESULTS_PER_PAGE,
-	GET_ORDER_ITEMS_SORT_FIELDS,
-} from "../constants/order-items.constants";
-export {
-	getOrderItemsSchema,
-	orderItemFiltersSchema,
-	orderItemSortBySchema,
-} from "../schemas/order-items.schemas";
-export type { GetOrderItemsReturn, GetOrderItemsParams } from "../types/order-items.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

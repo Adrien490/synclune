@@ -17,14 +17,10 @@ import { SwitchField } from "./switch-field";
 import { TextareaField } from "./textarea-field";
 
 // Export field and form contexts
-export { useFieldContext, useFormContext } from "@/shared/lib/form-context";
-
 // Export UI components (helpers)
 export { FieldLabel } from "./field-label";
 
 // Export filter components
-export { CheckboxFilterItem } from "./checkbox-filter-item";
-
 // Create the main form hook with all field and form components
 export const { useAppForm } = createFormHook({
 	fieldContext,

@@ -21,7 +21,7 @@ export const reviewMediaSchema = z.object({
 	altText: z.string().max(255, "Texte alternatif trop long").optional(),
 });
 
-export type ReviewMediaInput = z.infer<typeof reviewMediaSchema>;
+type ReviewMediaInput = z.infer<typeof reviewMediaSchema>;
 
 // ============================================================================
 // CREATE REVIEW SCHEMA
@@ -69,7 +69,7 @@ export const createReviewSchema = z.object({
 		.default([]),
 });
 
-export type CreateReviewInput = z.infer<typeof createReviewSchema>;
+type CreateReviewInput = z.infer<typeof createReviewSchema>;
 
 // ============================================================================
 // UPDATE REVIEW SCHEMA
@@ -115,7 +115,7 @@ export const updateReviewSchema = z.object({
 		.default([]),
 });
 
-export type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
+type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
 
 // ============================================================================
 // DELETE REVIEW SCHEMA
@@ -128,7 +128,7 @@ export const deleteReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
 
-export type DeleteReviewInput = z.infer<typeof deleteReviewSchema>;
+type DeleteReviewInput = z.infer<typeof deleteReviewSchema>;
 
 // ============================================================================
 // MODERATION SCHEMAS (Admin)
@@ -141,7 +141,7 @@ export const moderateReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
 
-export type ModerateReviewInput = z.infer<typeof moderateReviewSchema>;
+type ModerateReviewInput = z.infer<typeof moderateReviewSchema>;
 
 /**
  * Schéma pour masquer plusieurs avis en masse
@@ -153,7 +153,7 @@ export const bulkHideReviewsSchema = z.object({
 		.max(100, "Maximum 100 avis par opération"),
 });
 
-export type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>;
+type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>;
 
 /**
  * Schéma pour publier plusieurs avis en masse
@@ -165,7 +165,7 @@ export const bulkPublishReviewsSchema = z.object({
 		.max(100, "Maximum 100 avis par opération"),
 });
 
-export type BulkPublishReviewsInput = z.infer<typeof bulkPublishReviewsSchema>;
+type BulkPublishReviewsInput = z.infer<typeof bulkPublishReviewsSchema>;
 
 /**
  * Schéma pour supprimer plusieurs avis en masse (soft delete admin)
@@ -177,7 +177,7 @@ export const bulkDeleteReviewsSchema = z.object({
 		.max(100, "Maximum 100 avis par opération"),
 });
 
-export type BulkDeleteReviewsInput = z.infer<typeof bulkDeleteReviewsSchema>;
+type BulkDeleteReviewsInput = z.infer<typeof bulkDeleteReviewsSchema>;
 
 // ============================================================================
 // REVIEW RESPONSE SCHEMAS (Admin)
@@ -202,7 +202,7 @@ export const createReviewResponseSchema = z.object({
 		.trim(),
 });
 
-export type CreateReviewResponseInput = z.infer<typeof createReviewResponseSchema>;
+type CreateReviewResponseInput = z.infer<typeof createReviewResponseSchema>;
 
 /**
  * Schéma de validation pour la modification d'une réponse admin
@@ -223,7 +223,7 @@ export const updateReviewResponseSchema = z.object({
 		.trim(),
 });
 
-export type UpdateReviewResponseInput = z.infer<typeof updateReviewResponseSchema>;
+type UpdateReviewResponseInput = z.infer<typeof updateReviewResponseSchema>;
 
 /**
  * Schéma de validation pour la suppression d'une réponse admin
@@ -232,7 +232,7 @@ export const deleteReviewResponseSchema = z.object({
 	id: z.cuid2("ID de réponse invalide"),
 });
 
-export type DeleteReviewResponseInput = z.infer<typeof deleteReviewResponseSchema>;
+type DeleteReviewResponseInput = z.infer<typeof deleteReviewResponseSchema>;
 
 /**
  * Schema de validation pour l'envoi d'email de demande d'avis
@@ -241,7 +241,7 @@ export const sendReviewRequestEmailSchema = z.object({
 	orderId: z.cuid2("ID de commande invalide"),
 });
 
-export type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailSchema>;
+type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailSchema>;
 
 // ============================================================================
 // STOREFRONT PARAMS SCHEMA
@@ -250,7 +250,7 @@ export type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailS
 /**
  * Schéma de validation pour les paramètres de requête storefront
  */
-export const getProductReviewsSchema = z.object({
+const getProductReviewsSchema = z.object({
 	productId: z.cuid2("ID de produit invalide"),
 	cursor: z.cuid2().optional(),
 	perPage: z.coerce
@@ -262,4 +262,4 @@ export const getProductReviewsSchema = z.object({
 	filterRating: z.coerce.number().int().min(1).max(5).optional(),
 });
 
-export type GetProductReviewsInput = z.infer<typeof getProductReviewsSchema>;
+type GetProductReviewsInput = z.infer<typeof getProductReviewsSchema>;

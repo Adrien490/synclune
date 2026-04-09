@@ -5,8 +5,6 @@ import { getCurrentUser } from "./get-current-user";
 import type { GetUserAccountsReturn } from "../types/user-accounts.types";
 
 // Re-export pour compatibilité
-export type { UserAccount, GetUserAccountsReturn } from "../types/user-accounts.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

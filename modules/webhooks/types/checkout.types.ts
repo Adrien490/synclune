@@ -36,7 +36,7 @@ export interface OrderWithItems {
 	items: OrderItem[];
 }
 
-export interface ProcessCheckoutResult {
+interface ProcessCheckoutResult {
 	order: OrderWithItems;
 	tasks: PostWebhookTask[];
 }

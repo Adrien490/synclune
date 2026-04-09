@@ -20,7 +20,7 @@ import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { navigationData } from "./navigation-config";
 
-export interface BreadcrumbSegment {
+interface BreadcrumbSegment {
 	label: string;
 	href: string;
 	isCurrentPage: boolean;

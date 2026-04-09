@@ -15,7 +15,7 @@ import type { getSkuDetails } from "@/modules/cart/services/sku-validation.servi
 
 type SkuDetailsResult = Awaited<ReturnType<typeof getSkuDetails>>;
 
-export interface CreateOrderParams {
+interface CreateOrderParams {
 	cartItems: Array<{ skuId: string; quantity: number }>;
 	skuDetailsResults: SkuDetailsResult[];
 	subtotal: number;
@@ -35,7 +35,7 @@ export interface CreateOrderParams {
 	paymentIntentId?: string;
 }
 
-export interface CreateOrderResult {
+interface CreateOrderResult {
 	order: { id: string; orderNumber: string; total: number };
 	appliedDiscountId: string | null;
 	discountAmount: number;

@@ -8,12 +8,7 @@ import { getOrderForRefundSchema } from "../schemas/refund.schemas";
 import type { GetOrderForRefundParams, OrderForRefund } from "../types/refund.types";
 
 // Re-export for backward compatibility
-export { getOrderForRefundSchema };
-export type {
-	GetOrderForRefundParams,
-	OrderForRefund,
-	OrderItemForRefund,
-} from "../types/refund.types";
+export type { OrderForRefund, OrderItemForRefund } from "../types/refund.types";
 
 // ============================================================================
 // MAIN FUNCTION

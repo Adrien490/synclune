@@ -20,20 +20,8 @@ import type {
 import { buildMaterialWhereClause } from "../services/materials-query-builder";
 
 // Re-export pour compatibilité
-export {
-	MATERIALS_SORT_LABELS,
-	MATERIALS_SORT_OPTIONS,
-	GET_MATERIALS_DEFAULT_PER_PAGE,
-	GET_MATERIALS_SORT_FIELDS,
-} from "../constants/materials.constants";
-export { materialFiltersSchema, materialSortBySchema } from "../schemas/materials.schemas";
-export type {
-	Material,
-	MaterialFilters,
-	GetMaterialsParams,
-	GetMaterialsParamsInput,
-	GetMaterialsReturn,
-} from "../types/materials.types";
+export { MATERIALS_SORT_LABELS } from "../constants/materials.constants";
+export type { GetMaterialsReturn } from "../types/materials.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

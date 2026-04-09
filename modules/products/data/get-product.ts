@@ -7,13 +7,6 @@ import type { GetProductParams, GetProductReturn } from "../types/product.types"
 import { cacheProductDetail } from "../utils/cache.utils";
 
 // Re-export pour compatibilité
-export type {
-	GetProductParams,
-	GetProductReturn,
-	ProductSku,
-	ProductVariantInfo,
-} from "../types/product.types";
-
 export async function getProductBySlug(
 	params: Partial<GetProductParams>,
 ): Promise<GetProductReturn | null> {

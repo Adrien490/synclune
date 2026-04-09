@@ -3,8 +3,6 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import type { VariantSelection, UseVariantValidationReturn } from "../types/sku.types";
 
-export type { UseVariantValidationReturn } from "../types/sku.types";
-
 interface UseVariantValidationOptions {
 	product: GetProductReturn;
 	selection: VariantSelection;

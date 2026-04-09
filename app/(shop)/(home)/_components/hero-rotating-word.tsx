@@ -26,7 +26,7 @@ const RotatingWord = dynamic(
 	},
 );
 
-export interface HeroRotatingWordProps {
+interface HeroRotatingWordProps {
 	words: string[];
 	duration?: number;
 }

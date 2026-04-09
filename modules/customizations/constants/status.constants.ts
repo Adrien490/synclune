@@ -51,7 +51,7 @@ export const CUSTOMIZATION_STATUS_COLORS: Record<
 /**
  * Options pour le select de filtre par statut (admin)
  */
-export const CUSTOMIZATION_STATUS_OPTIONS = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(
+const CUSTOMIZATION_STATUS_OPTIONS = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(
 	([value, label]) => ({
 		value: value as CustomizationRequestStatus,
 		label,

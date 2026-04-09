@@ -62,7 +62,7 @@ export const GET_NEWSLETTER_STATUS_DEFAULT_SELECT = {
  * Limites pour les opérations bulk sur les abonnés
  * Protège contre les DoS et les abus
  */
-export const BULK_OPERATIONS = {
+const BULK_OPERATIONS = {
 	/** Nombre maximum d'IDs dans une opération bulk */
 	MAX_IDS: 1000,
 	/** Longueur max du JSON des IDs (~1000 CUID2 IDs) */

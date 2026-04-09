@@ -44,7 +44,7 @@ export interface NavGroup {
 	collapsible?: boolean;
 }
 
-export interface NavigationData {
+interface NavigationData {
 	navGroups: NavGroup[];
 }
 
@@ -248,7 +248,7 @@ export const navigationData: NavigationData = {
 // ============================================================================
 
 /** Dashboard item — rendered only in Quick Access, not in navGroups. */
-export const DASHBOARD_ITEM: NavItem = {
+const DASHBOARD_ITEM: NavItem = {
 	id: "dashboard",
 	title: "Tableau de bord",
 	shortTitle: "Accueil",
@@ -264,7 +264,7 @@ export const DASHBOARD_ITEM: NavItem = {
  * IDs des items affichés dans la section "Accès rapide" du menu mobile.
  * Filtrés depuis getAllNavItems() pour rester en sync avec navigationData.
  */
-export const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
+const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
 
 /**
  * Récupère tous les items de navigation (flat list), including standalone items.

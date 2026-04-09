@@ -22,7 +22,7 @@ import {
 // INFERRED TYPES FROM SCHEMAS
 // ============================================================================
 
-export type MaterialFilters = z.infer<typeof materialFiltersSchema>;
+type MaterialFilters = z.infer<typeof materialFiltersSchema>;
 
 // ============================================================================
 // FUNCTION TYPES - LIST
@@ -51,7 +51,7 @@ export type GetMaterialReturn = Prisma.MaterialGetPayload<{
 // ENTITY TYPES
 // ============================================================================
 
-export type Material = Prisma.MaterialGetPayload<{
+type Material = Prisma.MaterialGetPayload<{
 	select: typeof GET_MATERIALS_SELECT;
 }>;
 
@@ -59,13 +59,13 @@ export type Material = Prisma.MaterialGetPayload<{
 // MUTATION TYPES
 // ============================================================================
 
-export type CreateMaterialInput = z.infer<typeof createMaterialSchema>;
-export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
-export type DeleteMaterialInput = z.infer<typeof deleteMaterialSchema>;
-export type BulkDeleteMaterialsInput = z.infer<typeof bulkDeleteMaterialsSchema>;
-export type ToggleMaterialStatusInput = z.infer<typeof toggleMaterialStatusSchema>;
-export type BulkToggleMaterialStatusInput = z.infer<typeof bulkToggleMaterialStatusSchema>;
-export type DuplicateMaterialInput = z.infer<typeof duplicateMaterialSchema>;
+type CreateMaterialInput = z.infer<typeof createMaterialSchema>;
+type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
+type DeleteMaterialInput = z.infer<typeof deleteMaterialSchema>;
+type BulkDeleteMaterialsInput = z.infer<typeof bulkDeleteMaterialsSchema>;
+type ToggleMaterialStatusInput = z.infer<typeof toggleMaterialStatusSchema>;
+type BulkToggleMaterialStatusInput = z.infer<typeof bulkToggleMaterialStatusSchema>;
+type DuplicateMaterialInput = z.infer<typeof duplicateMaterialSchema>;
 
 // ============================================================================
 // OPTIONS TYPES (for selects/filters)

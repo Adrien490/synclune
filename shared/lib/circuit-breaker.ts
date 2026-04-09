@@ -13,7 +13,7 @@ import { logger } from "@/shared/lib/logger";
 
 type CircuitState = "CLOSED" | "OPEN" | "HALF_OPEN";
 
-export interface CircuitBreakerOptions {
+interface CircuitBreakerOptions {
 	/** Number of consecutive failures before opening (default: 5) */
 	failureThreshold?: number;
 	/** Time in ms before attempting recovery (default: 30_000) */

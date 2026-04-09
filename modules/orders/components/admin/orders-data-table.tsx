@@ -29,7 +29,7 @@ import { OrderRowActions } from "./order-row-actions";
 import { OrdersSelectionToolbar } from "./orders-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
-export interface OrdersDataTableProps {
+interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;
 	perPage: number;
 }

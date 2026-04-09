@@ -9,7 +9,7 @@ import {
 } from "@/modules/cron/constants/limits";
 import { dispatchEmailTask, type EmailTask } from "@/modules/webhooks/utils/execute-post-tasks";
 
-export interface RetryFailedEmailsResult {
+interface RetryFailedEmailsResult {
 	found: number;
 	retried: number;
 	resolved: number;

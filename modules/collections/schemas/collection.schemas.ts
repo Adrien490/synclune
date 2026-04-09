@@ -13,7 +13,7 @@ import {
 // STATUS SCHEMA
 // ============================================================================
 
-export const collectionStatusSchema = z
+const collectionStatusSchema = z
 	.enum([CollectionStatus.PUBLIC, CollectionStatus.DRAFT, CollectionStatus.ARCHIVED])
 	.optional()
 	.default(CollectionStatus.DRAFT);
@@ -41,7 +41,7 @@ export const collectionFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const collectionSortBySchema = z.preprocess((value) => {
+const collectionSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
 		GET_COLLECTIONS_SORT_FIELDS.includes(value as (typeof GET_COLLECTIONS_SORT_FIELDS)[number])
 		? value
@@ -76,13 +76,13 @@ export const getCollectionsSchema = z.object({
 // MUTATION SCHEMAS
 // ============================================================================
 
-export const collectionNameSchema = z
+const collectionNameSchema = z
 	.string()
 	.trim()
 	.min(1, "Le nom est requis")
 	.max(100, "Le nom ne peut pas dépasser 100 caractères");
 
-export const collectionDescriptionSchema = z
+const collectionDescriptionSchema = z
 	.string()
 	.trim()
 	.max(1000, "La description ne peut pas dépasser 1000 caractères")

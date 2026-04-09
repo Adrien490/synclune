@@ -67,7 +67,7 @@ export const searchAddressSchema = z.object({
 /**
  * Type inféré du schéma de recherche
  */
-export type SearchAddressInput = z.infer<typeof searchAddressSchema>;
+type SearchAddressInput = z.infer<typeof searchAddressSchema>;
 
 /**
  * Schéma de validation pour les paramètres Geoapify
@@ -82,4 +82,4 @@ export const geoapifySearchSchema = z.object({
 	limit: z.number().int().min(1).max(20).optional(),
 });
 
-export type GeoapifySearchInput = z.infer<typeof geoapifySearchSchema>;
+type GeoapifySearchInput = z.infer<typeof geoapifySearchSchema>;

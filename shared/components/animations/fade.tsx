@@ -5,8 +5,6 @@ import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { FadeProps } from "./types";
 
-export type { FadeProps };
-
 /**
  * Animation Fade simple avec mouvement vertical
  *

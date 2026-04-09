@@ -24,8 +24,6 @@ import { downloadImage, truncateUrl, withRetry } from "./image-downloader.servic
 import { logger } from "@/shared/lib/logger";
 
 // Re-export types for backwards compatibility
-export type { GenerateThumbHashOptions, ThumbHashLogFn, ThumbHashResult };
-
 // ============================================================================
 // HELPERS
 // ============================================================================

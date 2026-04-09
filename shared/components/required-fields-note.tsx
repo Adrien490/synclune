@@ -1,6 +1,6 @@
 import { cn } from "@/shared/utils/cn";
 
-export interface RequiredFieldsNoteProps {
+interface RequiredFieldsNoteProps {
 	/**
 	 * Classes CSS additionnelles
 	 */

@@ -118,4 +118,3 @@ function Input({
 }
 
 export { Input, inputBaseStyles, inputVariants };
-export type { InputProps };

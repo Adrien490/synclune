@@ -33,5 +33,5 @@ export const deleteUploadThingFilesSchema = z.object({
 		.max(100, "Maximum 100 URLs par requête"),
 });
 
-export type DeleteUploadThingFileInput = z.infer<typeof deleteUploadThingFileSchema>;
-export type DeleteUploadThingFilesInput = z.infer<typeof deleteUploadThingFilesSchema>;
+type DeleteUploadThingFileInput = z.infer<typeof deleteUploadThingFileSchema>;
+type DeleteUploadThingFilesInput = z.infer<typeof deleteUploadThingFilesSchema>;

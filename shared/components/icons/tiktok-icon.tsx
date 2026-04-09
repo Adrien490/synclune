@@ -1,7 +1,5 @@
 import type { TikTokIconProps } from "@/shared/types/icons.types";
 
-export type { TikTokIconProps };
-
 export function TikTokIcon({
 	className = "",
 	size = 24,

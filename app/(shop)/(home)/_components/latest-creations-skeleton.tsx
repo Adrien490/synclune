@@ -46,9 +46,7 @@ export function LatestCreationsSkeleton({ productsCount = 4 }: LatestCreationsSk
  * Grid-only skeleton for the inner Suspense boundary in LatestCreations.
  * Used when the header is already rendered and only the grid is loading.
  */
-export function LatestCreationsGridSkeleton({
-	productsCount = 4,
-}: LatestCreationsSkeletonProps = {}) {
+function LatestCreationsGridSkeleton({ productsCount = 4 }: LatestCreationsSkeletonProps = {}) {
 	return (
 		<>
 			<div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">

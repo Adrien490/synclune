@@ -5,8 +5,6 @@ import type {
 	AvailabilityCheckResult,
 } from "../types/cart.types";
 
-export type { CartItemForValidation, AvailabilityCheckResult } from "../types/cart.types";
-
 // ============================================================================
 // CART ITEM AVAILABILITY SERVICE
 // Pure functions for checking cart item availability

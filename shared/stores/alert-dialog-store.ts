@@ -13,12 +13,7 @@ import {
 	getEntryData,
 } from "./overlay-state-helpers";
 
-export type {
-	AlertDialogData,
-	AlertDialogState,
-	AlertDialogActions,
-	AlertDialogStore,
-} from "@/shared/types/store.types";
+export type { AlertDialogData, AlertDialogStore } from "@/shared/types/store.types";
 
 export const defaultInitState: AlertDialogState = {
 	alertDialogs: {},

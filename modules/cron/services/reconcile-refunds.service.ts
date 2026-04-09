@@ -96,7 +96,7 @@ export async function reconcilePendingRefunds(): Promise<{
 			if (updated > 0 || errors > 0) {
 				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 			}
-			const stripeRefund = await stripe.refunds.retrieve(refund.stripeRefundId, {
+			const stripeRefund = await stripe.refunds.retrieve(refund.stripeRefundId, undefined, {
 				timeout: STRIPE_TIMEOUT_MS,
 			});
 

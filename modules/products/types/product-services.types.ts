@@ -6,18 +6,18 @@ import type {
 } from "@/shared/types/product-sku.types";
 
 // Re-export des types depuis product.types.ts (source de vérité)
-export type { ProductSku, ProductType } from "./product.types";
+export type { ProductSku } from "./product.types";
 
 // Re-export depuis shared (évite la dépendance circulaire)
-export type ProductVariantInfo = SharedProductVariantInfo;
+type ProductVariantInfo = SharedProductVariantInfo;
 export type StockStatus = SharedStockStatus;
-export type ProductStockInfo = SharedProductStockInfo;
+type ProductStockInfo = SharedProductStockInfo;
 
 // ============================================================================
 // TYPES SPÉCIFIQUES AUX SERVICES
 // ============================================================================
 
-export type SkuVariant = {
+type SkuVariant = {
 	sku: string;
 	color?: {
 		id: string;
@@ -43,7 +43,7 @@ export type SkuVariant = {
 // PRODUCT MEDIA
 // ============================================================================
 
-export type ProductImage = {
+type ProductImage = {
 	id: string;
 	url: string;
 	alt: string;
@@ -77,7 +77,7 @@ export interface SkuForPricing {
 // PRODUCT JEWELRY
 // ============================================================================
 
-export type JewelryDimensions = {
+type JewelryDimensions = {
 	// Dimensions textuelles
 	dimensions?: string;
 
@@ -116,5 +116,3 @@ export type SearchResult = {
 // ============================================================================
 // PRODUCT CARD DATA (re-export depuis product.types.ts - source de vérité)
 // ============================================================================
-
-export type { ProductCardData } from "./product.types";

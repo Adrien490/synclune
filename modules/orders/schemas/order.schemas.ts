@@ -63,7 +63,7 @@ export const orderFiltersSchema = z
 // SORT SCHEMA
 // ============================================================================
 
-export const orderSortBySchema = z
+const orderSortBySchema = z
 	.enum([
 		SORT_OPTIONS.CREATED_DESC,
 		SORT_OPTIONS.CREATED_ASC,

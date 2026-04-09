@@ -59,13 +59,13 @@ export type ProductType = Prisma.ProductTypeGetPayload<{
 // MUTATION TYPES
 // ============================================================================
 
-export type CreateProductTypeInput = z.infer<typeof createProductTypeSchema>;
-export type UpdateProductTypeInput = z.infer<typeof updateProductTypeSchema>;
-export type DeleteProductTypeInput = z.infer<typeof deleteProductTypeSchema>;
-export type ToggleProductTypeStatusInput = z.infer<typeof toggleProductTypeStatusSchema>;
-export type BulkActivateProductTypesInput = z.infer<typeof bulkActivateProductTypesSchema>;
-export type BulkDeactivateProductTypesInput = z.infer<typeof bulkDeactivateProductTypesSchema>;
-export type BulkDeleteProductTypesInput = z.infer<typeof bulkDeleteProductTypesSchema>;
+type CreateProductTypeInput = z.infer<typeof createProductTypeSchema>;
+type UpdateProductTypeInput = z.infer<typeof updateProductTypeSchema>;
+type DeleteProductTypeInput = z.infer<typeof deleteProductTypeSchema>;
+type ToggleProductTypeStatusInput = z.infer<typeof toggleProductTypeStatusSchema>;
+type BulkActivateProductTypesInput = z.infer<typeof bulkActivateProductTypesSchema>;
+type BulkDeactivateProductTypesInput = z.infer<typeof bulkDeactivateProductTypesSchema>;
+type BulkDeleteProductTypesInput = z.infer<typeof bulkDeleteProductTypesSchema>;
 
 // ============================================================================
 // UI/FORM TYPES

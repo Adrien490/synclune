@@ -30,7 +30,7 @@ export interface FetchOrderContext {
 	userId?: string;
 }
 
-export type OrderItem = GetOrderReturn["items"][0];
+type OrderItem = GetOrderReturn["items"][0];
 
 // ============================================================================
 // TYPES - ORDER LIST
@@ -38,7 +38,7 @@ export type OrderItem = GetOrderReturn["items"][0];
 
 export type OrderFilters = z.infer<typeof orderFiltersSchema>;
 
-export type OrderSortField = (typeof GET_ORDERS_SORT_FIELDS)[number];
+type OrderSortField = (typeof GET_ORDERS_SORT_FIELDS)[number];
 
 export type GetOrdersParams = z.infer<typeof getOrdersSchema>;
 
@@ -47,7 +47,7 @@ export type GetOrdersReturn = {
 	pagination: PaginationInfo;
 };
 
-export type Order = Prisma.OrderGetPayload<{
+type Order = Prisma.OrderGetPayload<{
 	select: typeof GET_ORDERS_SELECT;
 }>;
 
@@ -55,9 +55,9 @@ export type Order = Prisma.OrderGetPayload<{
 // TYPES - MUTATIONS
 // ============================================================================
 
-export type DeleteOrderInput = z.infer<typeof deleteOrderSchema>;
-export type BulkDeleteOrdersInput = z.infer<typeof bulkDeleteOrdersSchema>;
-export type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
+type DeleteOrderInput = z.infer<typeof deleteOrderSchema>;
+type BulkDeleteOrdersInput = z.infer<typeof bulkDeleteOrdersSchema>;
+type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
 
 // ============================================================================
 // TYPES - SHIPPING

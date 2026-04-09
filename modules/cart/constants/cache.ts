@@ -34,4 +34,4 @@ export const CART_CACHE_TAGS = {
 } as const;
 
 // Re-exports pour retrocompatibilite
-export { cacheCart, cacheCartSummary, getCartInvalidationTags } from "../utils/cache";
+export { cacheCartSummary, getCartInvalidationTags } from "../utils/cache";

@@ -29,4 +29,4 @@ export function getResendVerificationCooldownKey(email: string): string {
 	return `${STORAGE_KEYS.RESEND_VERIFICATION_COOLDOWN_PREFIX}${email}`;
 }
 
-export type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
+type StorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];

@@ -8,4 +8,4 @@ export const updateNotesSchema = z.object({
 		.transform((val) => (val.trim() === "" ? null : val.trim())),
 });
 
-export type UpdateNotesInput = z.infer<typeof updateNotesSchema>;
+type UpdateNotesInput = z.infer<typeof updateNotesSchema>;

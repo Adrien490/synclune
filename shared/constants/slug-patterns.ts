@@ -71,7 +71,7 @@ export const SLUG_MAX_LENGTH = 70;
 /**
  * Tous les patterns de slug regroupés
  */
-export const SLUG_PATTERNS = {
+const SLUG_PATTERNS = {
 	DIACRITICS: DIACRITICS_PATTERN,
 	FRENCH_LIGATURES,
 	NON_ALPHANUMERIC: NON_ALPHANUMERIC_PATTERN,

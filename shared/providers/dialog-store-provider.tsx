@@ -6,9 +6,9 @@ import { useStore } from "zustand";
 import { createDialogStore } from "@/shared/stores/dialog-store";
 import type { DialogStore, DialogStoreProviderProps } from "@/shared/types/store.types";
 
-export type DialogStoreApi = ReturnType<typeof createDialogStore>;
+type DialogStoreApi = ReturnType<typeof createDialogStore>;
 
-export const DialogStoreContext = createContext<DialogStoreApi | undefined>(undefined);
+const DialogStoreContext = createContext<DialogStoreApi | undefined>(undefined);
 
 export const DialogStoreProvider = ({ children }: DialogStoreProviderProps) => {
 	const [store] = useState(() => createDialogStore());
@@ -16,7 +16,7 @@ export const DialogStoreProvider = ({ children }: DialogStoreProviderProps) => {
 	return <DialogStoreContext.Provider value={store}>{children}</DialogStoreContext.Provider>;
 };
 
-export const useDialogStore = <T,>(selector: (store: DialogStore) => T): T => {
+const useDialogStore = <T,>(selector: (store: DialogStore) => T): T => {
 	const dialogStoreContext = useContext(DialogStoreContext);
 
 	if (!dialogStoreContext) {

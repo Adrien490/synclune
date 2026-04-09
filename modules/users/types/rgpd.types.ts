@@ -8,7 +8,7 @@ import {
 // DELETE ACCOUNT TYPES (RGPD - Suppression de compte)
 // ============================================================================
 
-export type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
 
 // ============================================================================
 // EXPORT USER DATA TYPES (RGPD - Droit à la portabilité)

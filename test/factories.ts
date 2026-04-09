@@ -31,7 +31,7 @@ export function createMockFormData(entries: Record<string, string | null>): Form
 // AUTH / SESSION
 // ============================================================================
 
-export function createMockSession(overrides: Record<string, unknown> = {}) {
+function createMockSession(overrides: Record<string, unknown> = {}) {
 	return {
 		user: {
 			id: VALID_USER_ID,
@@ -43,7 +43,7 @@ export function createMockSession(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-export function createMockAdminSession(overrides: Record<string, unknown> = {}) {
+function createMockAdminSession(overrides: Record<string, unknown> = {}) {
 	return {
 		user: {
 			id: "admin_cm1234567890abcde",
@@ -103,7 +103,7 @@ export function createMockOrder(overrides: Record<string, unknown> = {}) {
 // PRODUCTS
 // ============================================================================
 
-export function createMockProduct(overrides: Record<string, unknown> = {}) {
+function createMockProduct(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_PRODUCT_ID,
 		title: "Bracelet Lune",
@@ -122,7 +122,7 @@ export function createMockProduct(overrides: Record<string, unknown> = {}) {
 // SKUS
 // ============================================================================
 
-export function createMockSku(overrides: Record<string, unknown> = {}) {
+function createMockSku(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_SKU_ID,
 		sku: "BRC-LUNE-OR-M",
@@ -143,7 +143,7 @@ export function createMockSku(overrides: Record<string, unknown> = {}) {
 // USERS
 // ============================================================================
 
-export function createMockUser(overrides: Record<string, unknown> = {}) {
+function createMockUser(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_USER_ID,
 		name: "Marie Dupont",
@@ -162,7 +162,7 @@ export function createMockUser(overrides: Record<string, unknown> = {}) {
 // ADDRESSES
 // ============================================================================
 
-export function createMockAddress(overrides: Record<string, unknown> = {}) {
+function createMockAddress(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "addr_cm1234567890abcde",
 		userId: VALID_USER_ID,
@@ -183,7 +183,7 @@ export function createMockAddress(overrides: Record<string, unknown> = {}) {
 // CARTS
 // ============================================================================
 
-export function createMockCart(overrides: Record<string, unknown> = {}) {
+function createMockCart(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "cart_cm1234567890abcde",
 		userId: VALID_USER_ID,
@@ -195,7 +195,7 @@ export function createMockCart(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-export function createMockCartItem(overrides: Record<string, unknown> = {}) {
+function createMockCartItem(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "ci_cm1234567890abcdef",
 		cartId: "cart_cm1234567890abcde",
@@ -211,7 +211,7 @@ export function createMockCartItem(overrides: Record<string, unknown> = {}) {
 // DISCOUNTS
 // ============================================================================
 
-export function createMockDiscount(overrides: Record<string, unknown> = {}) {
+function createMockDiscount(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "disc_cm1234567890abcde",
 		code: "PROMO20",
@@ -235,7 +235,7 @@ export function createMockDiscount(overrides: Record<string, unknown> = {}) {
 // REFUNDS
 // ============================================================================
 
-export function createMockRefund(overrides: Record<string, unknown> = {}) {
+function createMockRefund(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "ref_cm1234567890abcde",
 		orderId: VALID_ORDER_ID,
@@ -257,7 +257,7 @@ export function createMockRefund(overrides: Record<string, unknown> = {}) {
 // WEBHOOK EVENTS
 // ============================================================================
 
-export function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
+function createMockWebhookEvent(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "we_cm1234567890abcde",
 		stripeEventId: "evt_test_abc123",
@@ -275,7 +275,7 @@ export function createMockWebhookEvent(overrides: Record<string, unknown> = {}) 
 // REVIEWS
 // ============================================================================
 
-export function createMockReview(overrides: Record<string, unknown> = {}) {
+function createMockReview(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "rev_cm1234567890abcde",
 		productId: VALID_PRODUCT_ID,
@@ -295,7 +295,7 @@ export function createMockReview(overrides: Record<string, unknown> = {}) {
 // COLLECTIONS
 // ============================================================================
 
-export function createMockCollection(overrides: Record<string, unknown> = {}) {
+function createMockCollection(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "col_cm1234567890abcde",
 		title: "Ete 2026",
@@ -314,7 +314,7 @@ export function createMockCollection(overrides: Record<string, unknown> = {}) {
 // NEWSLETTER
 // ============================================================================
 
-export function createMockNewsletterSubscriber(overrides: Record<string, unknown> = {}) {
+function createMockNewsletterSubscriber(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "ns_cm1234567890abcde",
 		email: "subscriber@example.com",
@@ -332,7 +332,7 @@ export function createMockNewsletterSubscriber(overrides: Record<string, unknown
 // CUSTOMIZATION REQUESTS
 // ============================================================================
 
-export function createMockCustomizationRequest(overrides: Record<string, unknown> = {}) {
+function createMockCustomizationRequest(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "cr_cm1234567890abcde",
 		userId: VALID_USER_ID,
@@ -355,7 +355,7 @@ export function createMockCustomizationRequest(overrides: Record<string, unknown
 // DISPUTES
 // ============================================================================
 
-export function createMockDispute(overrides: Record<string, unknown> = {}) {
+function createMockDispute(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "dp_cm1234567890abcde",
 		stripeDisputeId: "dp_test_abc123",
@@ -377,7 +377,7 @@ export function createMockDispute(overrides: Record<string, unknown> = {}) {
 // DISCOUNT USAGE
 // ============================================================================
 
-export function createMockDiscountUsage(overrides: Record<string, unknown> = {}) {
+function createMockDiscountUsage(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "du_cm1234567890abcde",
 		discountId: "disc_cm1234567890abcde",
@@ -395,7 +395,7 @@ export function createMockDiscountUsage(overrides: Record<string, unknown> = {})
 // ORDER ITEMS (standalone)
 // ============================================================================
 
-export function createMockOrderItem(overrides: Record<string, unknown> = {}) {
+function createMockOrderItem(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "oi_cm1234567890abcde",
 		orderId: VALID_ORDER_ID,
@@ -421,7 +421,7 @@ export function createMockOrderItem(overrides: Record<string, unknown> = {}) {
 // REFUND ITEMS (standalone)
 // ============================================================================
 
-export function createMockRefundItem(overrides: Record<string, unknown> = {}) {
+function createMockRefundItem(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "ri_cm1234567890abcde",
 		refundId: "ref_cm1234567890abcde",
@@ -438,7 +438,7 @@ export function createMockRefundItem(overrides: Record<string, unknown> = {}) {
 // WISHLIST
 // ============================================================================
 
-export function createMockWishlist(overrides: Record<string, unknown> = {}) {
+function createMockWishlist(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "wl_cm1234567890abcde",
 		userId: VALID_USER_ID,
@@ -451,7 +451,7 @@ export function createMockWishlist(overrides: Record<string, unknown> = {}) {
 	};
 }
 
-export function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
+function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "wi_cm1234567890abcde",
 		wishlistId: "wl_cm1234567890abcde",
@@ -467,7 +467,7 @@ export function createMockWishlistItem(overrides: Record<string, unknown> = {}) 
 // ORDER NOTES
 // ============================================================================
 
-export function createMockOrderNote(overrides: Record<string, unknown> = {}) {
+function createMockOrderNote(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "on_cm1234567890abcde",
 		orderId: VALID_ORDER_ID,
@@ -485,7 +485,7 @@ export function createMockOrderNote(overrides: Record<string, unknown> = {}) {
 // PRODUCT TYPES
 // ============================================================================
 
-export function createMockProductType(overrides: Record<string, unknown> = {}) {
+function createMockProductType(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "pt_cm1234567890abcde",
 		slug: "bague",
@@ -503,7 +503,7 @@ export function createMockProductType(overrides: Record<string, unknown> = {}) {
 // COLORS
 // ============================================================================
 
-export function createMockColor(overrides: Record<string, unknown> = {}) {
+function createMockColor(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "color_cm1234567890abcd",
 		slug: "or-rose",
@@ -520,7 +520,7 @@ export function createMockColor(overrides: Record<string, unknown> = {}) {
 // MATERIALS
 // ============================================================================
 
-export function createMockMaterial(overrides: Record<string, unknown> = {}) {
+function createMockMaterial(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "mat_cm1234567890abcde",
 		slug: "argent-925",
@@ -537,7 +537,7 @@ export function createMockMaterial(overrides: Record<string, unknown> = {}) {
 // REVIEW RESPONSES
 // ============================================================================
 
-export function createMockReviewResponse(overrides: Record<string, unknown> = {}) {
+function createMockReviewResponse(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "rr_cm1234567890abcde",
 		reviewId: "rev_cm1234567890abcde",
@@ -555,7 +555,7 @@ export function createMockReviewResponse(overrides: Record<string, unknown> = {}
 // PRODUCT REVIEW STATS
 // ============================================================================
 
-export function createMockProductReviewStats(overrides: Record<string, unknown> = {}) {
+function createMockProductReviewStats(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "prs_cm1234567890abcd",
 		productId: VALID_PRODUCT_ID,
@@ -579,6 +579,6 @@ export function createMockProductReviewStats(overrides: Record<string, unknown> 
 /**
  * Creates a mock Prisma transaction that passes the mockPrisma object as tx
  */
-export function createMockTransaction(mockPrisma: Record<string, unknown>) {
+function createMockTransaction(mockPrisma: Record<string, unknown>) {
 	return async (fn: (tx: unknown) => Promise<unknown>) => fn(mockPrisma);
 }

@@ -67,7 +67,7 @@ export interface BaseSkuForList {
 }
 
 /** Forme minimale d'un produit pour les fonctions de sélection */
-export interface BaseProductForList {
+interface BaseProductForList {
 	slug: string;
 	title: string;
 	skus?: BaseSkuForList[] | null;
@@ -85,7 +85,7 @@ export interface BaseProductSku extends BaseSkuForList {
 }
 
 /** Forme minimale d'un produit détaillé */
-export interface BaseProductDetailed {
+interface BaseProductDetailed {
 	skus?: BaseProductSku[] | null;
 }
 

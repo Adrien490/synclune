@@ -1,8 +1,6 @@
 import { cn } from "@/shared/utils/cn";
 import type { SectionTitleProps } from "@/shared/types/component.types";
 
-export type { SectionTitleProps };
-
 const sizeVariants = {
 	hero: "text-5xl sm:text-6xl lg:text-7xl leading-tight tracking-wider",
 	default: "text-3xl sm:text-4xl lg:text-5xl leading-tight tracking-wide",

@@ -15,9 +15,6 @@ import { useRef } from "react";
 import { useSelectFilter } from "@/shared/hooks/use-select-filter";
 import type { SelectFilterProps } from "@/shared/types/component.types";
 
-export type { FilterOption } from "@/shared/types/component.types";
-export type { SelectFilterProps };
-
 export function SelectFilter({
 	filterKey,
 	label,

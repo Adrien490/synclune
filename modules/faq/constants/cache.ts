@@ -5,7 +5,7 @@ import { cacheTag } from "next/cache";
 // FAQ CACHE TAGS
 // ============================================================================
 
-export const FAQ_CACHE_TAGS = {
+const FAQ_CACHE_TAGS = {
 	/** Public FAQ items for storefront */
 	PUBLIC: "faq-items",
 	/** Admin list of all FAQ items */

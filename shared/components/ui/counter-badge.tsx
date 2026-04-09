@@ -50,5 +50,3 @@ export function CounterBadge({ count, max, label, icon: Icon, className }: Count
 		</Badge>
 	);
 }
-
-export { counterBadgeVariants };

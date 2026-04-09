@@ -12,14 +12,6 @@ import type {
 } from "../types/session.types";
 
 // Re-export pour compatibilité
-export { GET_SESSION_SELECT } from "../constants/session.constants";
-export { getSessionSchema } from "../schemas/session.schemas";
-export type {
-	GetSessionParams,
-	GetSessionReturn,
-	FetchSessionContext,
-} from "../types/session.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

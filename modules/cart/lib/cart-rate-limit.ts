@@ -9,7 +9,7 @@ import { getCartSessionId, getOrCreateCartSessionId } from "./cart-session";
 /**
  * Contexte retourné après vérification du rate limiting
  */
-export type CartRateLimitContext = {
+type CartRateLimitContext = {
 	userId: string | undefined;
 	sessionId: string | null;
 	ipAddress: string | null;
@@ -25,9 +25,9 @@ type CartRateLimitError = {
 	errorState: ActionState;
 };
 
-export type CartRateLimitResult = CartRateLimitSuccess | CartRateLimitError;
+type CartRateLimitResult = CartRateLimitSuccess | CartRateLimitError;
 
-export type CheckCartRateLimitOptions = {
+type CheckCartRateLimitOptions = {
 	/**
 	 * Si true, crée un sessionId si l'utilisateur n'est pas connecté et n'a pas de session.
 	 * Utiliser pour les actions comme addToCart qui ont besoin d'un panier.

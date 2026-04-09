@@ -102,7 +102,7 @@ export function AnimatedHeartIcon({
 					fill: { duration: MOTION_CONFIG.duration.normal, ease: MOTION_CONFIG.easing.easeOut },
 					stroke: { duration: MOTION_CONFIG.duration.fast },
 					strokeWidth: { duration: MOTION_CONFIG.duration.fast },
-					scale: MOTION_CONFIG.spring.bouncy,
+					scale: { duration: MOTION_CONFIG.duration.normal, ease: MOTION_CONFIG.easing.easeOut },
 				}}
 				style={{ originX: "50%", originY: "50%" }}
 			/>

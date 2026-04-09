@@ -78,7 +78,7 @@ export const productFiltersSchema = z
 // SORT SCHEMA
 // ============================================================================
 
-export const productSortBySchema = z.preprocess((value) => {
+const productSortBySchema = z.preprocess((value) => {
 	return typeof value === "string" &&
 		GET_PRODUCTS_SORT_FIELDS.includes(value as (typeof GET_PRODUCTS_SORT_FIELDS)[number])
 		? value

@@ -14,7 +14,7 @@ import {
 import type { GetRevenueChartReturn, RevenueRow } from "../types/dashboard.types";
 
 // Re-export pour compatibilité
-export type { RevenueDataPoint, GetRevenueChartReturn } from "../types/dashboard.types";
+export type { GetRevenueChartReturn } from "../types/dashboard.types";
 
 // ============================================================================
 // MAIN FUNCTION

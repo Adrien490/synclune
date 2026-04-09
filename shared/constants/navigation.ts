@@ -3,11 +3,8 @@ import type { MegaMenuProduct, NavItemWithChildren } from "@/shared/types/naviga
 import { ROUTES } from "@/shared/constants/urls";
 
 export type {
-	NavCategory,
-	IconName,
 	NavItemChild,
 	NavItemWithChildren,
-	NavItem,
 	MegaMenuProduct,
 } from "@/shared/types/navigation.types";
 
@@ -22,7 +19,7 @@ export const MAX_COLLECTIONS_IN_MENU = 3;
  * Structure optimisée pour bijouterie artisanale:
  * Niveau 1: Les créations (mega menu), Les collections (mega menu), Personnalisation
  */
-export const desktopNavItems = [
+const desktopNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem", hasDropdown: true },
 	{
 		href: ROUTES.SHOP.COLLECTIONS,
@@ -152,7 +149,7 @@ type CollectionImage = {
 };
 
 /** Type pour les collections dans le mega menu */
-export type MegaMenuCollection = {
+type MegaMenuCollection = {
 	slug: string;
 	label: string;
 	description?: string | null;
@@ -161,7 +158,7 @@ export type MegaMenuCollection = {
 };
 
 /** Données pour les mega menus desktop */
-export type MegaMenuData = {
+type MegaMenuData = {
 	productTypes?: Array<{ slug: string; label: string }>;
 	collections?: MegaMenuCollection[];
 	featuredProducts?: MegaMenuProduct[];

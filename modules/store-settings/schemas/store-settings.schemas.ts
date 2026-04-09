@@ -29,4 +29,4 @@ export const toggleStoreClosureSchema = z
 		},
 	);
 
-export type ToggleStoreClosureInput = z.infer<typeof toggleStoreClosureSchema>;
+type ToggleStoreClosureInput = z.infer<typeof toggleStoreClosureSchema>;

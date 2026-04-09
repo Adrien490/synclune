@@ -8,8 +8,6 @@ import { validateCartItems } from "../services/item-availability.service";
 import type { ValidateCartResult } from "../types/cart.types";
 
 // Re-export pour retrocompatibilite
-export type { CartValidationIssue, ValidateCartResult } from "../types/cart.types";
-
 /**
  * Valide l'intégralité du panier avant la commande
  *

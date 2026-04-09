@@ -22,7 +22,7 @@ export const colorFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const colorSortBySchema = z.enum(GET_COLORS_SORT_FIELDS).default(GET_COLORS_DEFAULT_SORT_BY);
+const colorSortBySchema = z.enum(GET_COLORS_SORT_FIELDS).default(GET_COLORS_DEFAULT_SORT_BY);
 
 // ============================================================================
 // MAIN SCHEMAS

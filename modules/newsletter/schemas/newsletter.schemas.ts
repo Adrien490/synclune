@@ -68,7 +68,7 @@ export const subscribeToNewsletterSchema = z.object({
 	}),
 });
 
-export type SubscribeToNewsletterInput = z.infer<typeof subscribeToNewsletterSchema>;
+type SubscribeToNewsletterInput = z.infer<typeof subscribeToNewsletterSchema>;
 
 // ============================================================================
 // CONFIRMATION TOKEN SCHEMA
@@ -89,7 +89,7 @@ export const confirmationTokenSchema = z.object({
 		}),
 });
 
-export type ConfirmationTokenInput = z.infer<typeof confirmationTokenSchema>;
+type ConfirmationTokenInput = z.infer<typeof confirmationTokenSchema>;
 
 // ============================================================================
 // UNSUBSCRIBE TOKEN SCHEMA
@@ -104,4 +104,4 @@ export const unsubscribeTokenSchema = z.object({
 		}),
 });
 
-export type UnsubscribeTokenInput = z.infer<typeof unsubscribeTokenSchema>;
+type UnsubscribeTokenInput = z.infer<typeof unsubscribeTokenSchema>;

@@ -64,4 +64,4 @@ function AlertDescription({ className, ...props }: React.ComponentProps<"div">) 
 	);
 }
 
-export { Alert, AlertDescription, AlertTitle, alertVariants };
+export { Alert, AlertDescription, AlertTitle };

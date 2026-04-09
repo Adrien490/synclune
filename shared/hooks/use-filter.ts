@@ -5,7 +5,7 @@ import { useOptimistic, useTransition } from "react";
 
 import type { FilterDefinition, FilterValue, UseFilterOptions } from "@/shared/types/hook.types";
 
-export type { FilterValue, FilterDefinition, UseFilterOptions } from "@/shared/types/hook.types";
+export type { FilterDefinition } from "@/shared/types/hook.types";
 
 export function useFilter(options: UseFilterOptions = {}) {
 	const { filterPrefix = "filter_", preservePage = false } = options;

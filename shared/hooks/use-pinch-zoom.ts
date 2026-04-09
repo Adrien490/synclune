@@ -13,7 +13,7 @@ import {
 // TYPES
 // ============================================
 
-export interface PinchZoomConfig {
+interface PinchZoomConfig {
 	/** Échelle minimum (défaut: 1) */
 	minScale: number;
 	/** Échelle maximum (défaut: 3) */
@@ -30,7 +30,7 @@ export interface PinchZoomConfig {
 	moveThreshold: number;
 }
 
-export interface UsePinchZoomOptions {
+interface UsePinchZoomOptions {
 	/** Ref du container DOM */
 	containerRef: RefObject<HTMLDivElement | null>;
 	/** Si true, le zoom est actif (reset automatique si false) */
@@ -41,7 +41,7 @@ export interface UsePinchZoomOptions {
 	config?: Partial<PinchZoomConfig>;
 }
 
-export interface UsePinchZoomReturn {
+interface UsePinchZoomReturn {
 	/** Niveau de zoom actuel */
 	scale: number;
 	/** Position de pan actuelle */

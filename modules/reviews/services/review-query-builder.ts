@@ -5,7 +5,7 @@ import { parseSortField, hasSortByInput } from "@/shared/utils/sort-field-parser
 import type { GetReviewsParams } from "../types/review.types";
 
 // Re-export pour rétrocompatibilité
-export { parseSortField, hasSortByInput };
+export { hasSortByInput };
 
 // ============================================================================
 // HELPERS

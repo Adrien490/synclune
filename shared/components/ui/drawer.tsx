@@ -12,7 +12,7 @@ const DrawerContext = React.createContext<boolean>(false);
  * Hook pour savoir si le composant est rendu dans un Drawer.
  * Utilisé par ResponsiveSelect pour éviter les nested drawers.
  */
-export function useIsInsideDrawer() {
+function useIsInsideDrawer() {
 	return React.useContext(DrawerContext);
 }
 
@@ -192,11 +192,8 @@ function DrawerDescription({
 
 export {
 	Drawer,
-	DrawerPortal,
-	DrawerOverlay,
 	DrawerTrigger,
 	DrawerClose,
-	DrawerNestedRoot,
 	DrawerHandle,
 	DrawerContent,
 	DrawerHeader,

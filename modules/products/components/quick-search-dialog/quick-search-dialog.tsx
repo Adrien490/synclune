@@ -51,7 +51,7 @@ export function QuickSearchDialog({
 	productTypes,
 	recentlyViewed = EMPTY_RECENTLY_VIEWED,
 }: QuickSearchDialogProps) {
-	const { isOpen, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const { isOpen, open, close } = useDialog(QUICK_SEARCH_DIALOG_ID);
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const searchInputRef = useRef<SearchInputHandle>(null);
@@ -62,6 +62,22 @@ export function QuickSearchDialog({
 			triggerRef.current = document.activeElement as HTMLElement | null;
 		}
 	}, [isOpen]);
+
+	// Global Cmd+K / Ctrl+K shortcut to open quick search
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+				e.preventDefault();
+				if (isOpen) {
+					close();
+				} else {
+					open();
+				}
+			}
+		};
+		document.addEventListener("keydown", handleKeyDown);
+		return () => document.removeEventListener("keydown", handleKeyDown);
+	}, [isOpen, open, close]);
 
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),

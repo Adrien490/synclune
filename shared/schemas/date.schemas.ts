@@ -25,4 +25,4 @@ export const stringOrDateSchema = z
 /**
  * Type infere du schema stringOrDate
  */
-export type StringOrDateInput = z.infer<typeof stringOrDateSchema>;
+type StringOrDateInput = z.infer<typeof stringOrDateSchema>;

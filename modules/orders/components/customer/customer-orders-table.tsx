@@ -31,7 +31,7 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { Eye, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
-export interface CustomerOrdersTableProps {
+interface CustomerOrdersTableProps {
 	ordersPromise: Promise<GetUserOrdersReturn>;
 	perPage: number;
 }

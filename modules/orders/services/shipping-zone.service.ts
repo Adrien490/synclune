@@ -6,10 +6,8 @@
 
 import type { ShippingZone, ShippingZoneResult } from "../types/shipping-zone.types";
 
-export type { ShippingZone, ShippingZoneResult };
-
 // Départements métropolitains français
-export const FRENCH_METROPOLITAN_DEPARTMENTS = [
+const FRENCH_METROPOLITAN_DEPARTMENTS = [
 	"01",
 	"02",
 	"03",

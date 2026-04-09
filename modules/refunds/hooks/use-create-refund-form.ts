@@ -19,8 +19,6 @@ import { useActionState } from "react";
 import type { RefundItemValue, CreateRefundFormValues } from "../types/refund.types";
 
 // Re-export types for backwards compatibility
-export type { RefundItemValue, CreateRefundFormValues };
-
 interface UseCreateRefundFormOptions {
 	orderId: string;
 	orderItems: OrderItemForRefund[];

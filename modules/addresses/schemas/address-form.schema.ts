@@ -54,7 +54,7 @@ export const addressFormSchema = z.object({
 /**
  * Type inféré du schema de formulaire d'adresse
  */
-export type AddressFormInput = z.infer<typeof addressFormSchema>;
+type AddressFormInput = z.infer<typeof addressFormSchema>;
 
 /**
  * Valeurs par défaut pour le formulaire d'adresse

@@ -21,7 +21,7 @@ export const announcementLinkSchema = z
 	.nullable()
 	.transform((val) => (val === "" ? null : val));
 
-export const announcementLinkTextSchema = z
+const announcementLinkTextSchema = z
 	.string()
 	.trim()
 	.max(50, "Le texte du lien ne peut pas dépasser 50 caractères")

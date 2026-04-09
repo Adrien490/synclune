@@ -175,9 +175,4 @@ function ResponsiveSelect({
 // ============================================================================
 
 export { ResponsiveSelect };
-export type {
-	ResponsiveSelectProps,
-	ResponsiveSelectOption,
-	ResponsiveSelectGroup,
-	ResponsiveSelectOptions,
-};
+export type { ResponsiveSelectOption, ResponsiveSelectGroup };

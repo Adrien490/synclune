@@ -1,7 +1,5 @@
 import type { RecentOrderItem, OrderForTransform } from "../types/dashboard.types";
 
-export type { OrderForTransform } from "../types/dashboard.types";
-
 // ============================================================================
 // RECENT ORDERS TRANSFORMER SERVICE
 // Pure functions for transforming order data

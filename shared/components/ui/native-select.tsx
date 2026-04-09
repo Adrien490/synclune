@@ -59,4 +59,4 @@ function NativeSelectOptGroup({ className, ...props }: React.ComponentProps<"opt
 	return <optgroup data-slot="native-select-optgroup" className={cn(className)} {...props} />;
 }
 
-export { NativeSelect, nativeSelectVariants, NativeSelectOptGroup, NativeSelectOption };
+export { NativeSelect, NativeSelectOptGroup, NativeSelectOption };

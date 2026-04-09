@@ -50,7 +50,7 @@ export const changePasswordSchema = z
 		path: ["newPassword"],
 	});
 
-export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
 // ============================================================================
 // SIGN IN EMAIL SCHEMA
@@ -62,7 +62,7 @@ export const signInEmailSchema = z.object({
 	callbackURL: callbackURLSchema,
 });
 
-export type SignInEmailInput = z.infer<typeof signInEmailSchema>;
+type SignInEmailInput = z.infer<typeof signInEmailSchema>;
 
 // ============================================================================
 // SIGN IN SOCIAL SCHEMA
@@ -75,7 +75,7 @@ export const signInSocialSchema = z.object({
 	callbackURL: callbackURLSchema,
 });
 
-export type SignInSocialInput = z.infer<typeof signInSocialSchema>;
+type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 
 // ============================================================================
 // SIGN UP EMAIL SCHEMA
@@ -93,7 +93,7 @@ export const signUpEmailSchema = z.object({
 	callbackURL: callbackURLSchema.optional(),
 });
 
-export type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;
+type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;
 
 // ============================================================================
 // REQUEST PASSWORD RESET SCHEMA
@@ -103,7 +103,7 @@ export const requestPasswordResetSchema = z.object({
 	email: emailSchema,
 });
 
-export type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
+type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
 
 // ============================================================================
 // RESET PASSWORD SCHEMA
@@ -120,7 +120,7 @@ export const resetPasswordSchema = z
 		path: ["confirmPassword"],
 	});
 
-export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 
 // ============================================================================
 // RESEND VERIFICATION EMAIL SCHEMA
@@ -130,4 +130,4 @@ export const resendVerificationEmailSchema = z.object({
 	email: emailSchema,
 });
 
-export type ResendVerificationEmailInput = z.infer<typeof resendVerificationEmailSchema>;
+type ResendVerificationEmailInput = z.infer<typeof resendVerificationEmailSchema>;

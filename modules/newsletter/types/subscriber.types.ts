@@ -26,7 +26,7 @@ export interface NewsletterStats {
 // TYPES - SINGLE SUBSCRIBER
 // ============================================================================
 
-export type Subscriber = Prisma.NewsletterSubscriberGetPayload<{
+type Subscriber = Prisma.NewsletterSubscriberGetPayload<{
 	select: typeof GET_SUBSCRIBER_SELECT;
 }>;
 
@@ -36,7 +36,7 @@ export type Subscriber = Prisma.NewsletterSubscriberGetPayload<{
 
 export type SubscriberFilters = z.infer<typeof subscriberFiltersSchema>;
 
-export type SubscriberSortField = (typeof GET_SUBSCRIBERS_SORT_FIELDS)[number];
+type SubscriberSortField = (typeof GET_SUBSCRIBERS_SORT_FIELDS)[number];
 
 export type GetSubscribersParams = z.infer<typeof getSubscribersSchema>;
 

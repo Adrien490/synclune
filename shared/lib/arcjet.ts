@@ -16,7 +16,7 @@ const mode = process.env.ARCJET_MODE === "DRY_RUN" ? ("DRY_RUN" as const) : ("LI
 /**
  * Instance Arcjet principale pour les routes API générales
  */
-export const aj = arcjet({
+const aj = arcjet({
 	key: process.env.ARCJET_KEY!,
 	rules: [
 		// Shield protège contre les attaques courantes (SQL injection, XSS, etc.)

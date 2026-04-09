@@ -5,11 +5,7 @@ import type {
 	CartItemForDiscount,
 } from "../types/discount.types";
 
-export type {
-	CalculateDiscountParams,
-	CartItemForDiscount,
-	CalculateDiscountWithExclusionParams,
-} from "../types/discount.types";
+export type { CartItemForDiscount } from "../types/discount.types";
 
 /**
  * Calcule le montant de la réduction en centimes

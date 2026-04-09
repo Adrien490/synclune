@@ -21,11 +21,7 @@ import { buildProductTypeWhereClause } from "../services/product-type-query-buil
 
 // Re-exports
 export { PRODUCT_TYPES_SORT_LABELS as SORT_LABELS } from "../constants/product-type.constants";
-export type {
-	GetProductTypesParams,
-	GetProductTypesParamsInput,
-	GetProductTypesReturn,
-} from "../types/product-type.types";
+export type { GetProductTypesParams, GetProductTypesReturn } from "../types/product-type.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

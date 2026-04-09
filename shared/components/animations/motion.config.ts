@@ -164,7 +164,7 @@ export function maybeReduceMotion(
 /**
  * Creates a transition with reduced motion support
  */
-export function createTransition(
+function createTransition(
 	duration: number = MOTION_CONFIG.duration.normal,
 	easing: Transition["ease"] = MOTION_CONFIG.easing.easeOut,
 	prefersReducedMotion: boolean = false,

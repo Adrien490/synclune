@@ -13,13 +13,13 @@ const SYNONYM_GROUPS: string[][] = [
 	// Rings
 	["bague", "bagues", "anneau", "alliance", "chevaliere"],
 	// Necklaces
-	["collier", "colliers", "pendentif", "sautoir", "chaine"],
+	["collier", "colliers", "pendentif", "pendentifs", "sautoir", "sautoirs", "chaine"],
 	// Earrings
 	["boucle", "boucles", "clou", "creole", "creoles", "dormeuse", "dormeuses"],
 	// Bracelets
-	["bracelet", "bracelets", "jonc", "manchette", "gourmette"],
+	["bracelet", "bracelets", "jonc", "joncs", "manchette", "manchettes", "gourmette", "gourmettes"],
 	// Materials — "or" excluded: too common as French conjunction, causes false positives
-	["dore", "gold"],
+	["dore", "gold", "plaque", "vermeil"],
 	["argent", "silver", "argente"],
 	["perle", "perles", "nacre"],
 	["cristal", "cristaux", "strass"],

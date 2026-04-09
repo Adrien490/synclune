@@ -36,5 +36,3 @@ export function ColorSwatch({
 		/>
 	);
 }
-
-export type { ColorSwatchProps };

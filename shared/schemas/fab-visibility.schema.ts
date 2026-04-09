@@ -10,4 +10,4 @@ export const setFabVisibilitySchema = z.object({
 	isHidden: z.preprocess((v) => v === "true", z.boolean()),
 });
 
-export type SetFabVisibilityInput = z.infer<typeof setFabVisibilitySchema>;
+type SetFabVisibilityInput = z.infer<typeof setFabVisibilitySchema>;

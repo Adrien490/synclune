@@ -37,7 +37,7 @@ export type RefundDetail = Prisma.RefundGetPayload<{
 	select: typeof GET_REFUND_SELECT;
 }>;
 
-export type RefundItem = RefundDetail["items"][0];
+type RefundItem = RefundDetail["items"][0];
 
 // ============================================================================
 // FUNCTION TYPES - SINGLE
@@ -63,12 +63,12 @@ export type GetRefundsReturn = {
 // MUTATION TYPES
 // ============================================================================
 
-export type CreateRefundInput = z.infer<typeof createRefundSchema>;
-export type CreateRefundItemInput = z.infer<typeof createRefundItemSchema>;
-export type ApproveRefundInput = z.infer<typeof approveRefundSchema>;
-export type ProcessRefundInput = z.infer<typeof processRefundSchema>;
-export type RejectRefundInput = z.infer<typeof rejectRefundSchema>;
-export type CancelRefundInput = z.infer<typeof cancelRefundSchema>;
+type CreateRefundInput = z.infer<typeof createRefundSchema>;
+type CreateRefundItemInput = z.infer<typeof createRefundItemSchema>;
+type ApproveRefundInput = z.infer<typeof approveRefundSchema>;
+type ProcessRefundInput = z.infer<typeof processRefundSchema>;
+type RejectRefundInput = z.infer<typeof rejectRefundSchema>;
+type CancelRefundInput = z.infer<typeof cancelRefundSchema>;
 
 // ============================================================================
 // ORDER FOR REFUND TYPES (from data/)

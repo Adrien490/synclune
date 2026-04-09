@@ -23,7 +23,7 @@ import {
 // INFERRED TYPES FROM SCHEMAS
 // ============================================================================
 
-export type DiscountFilters = z.infer<typeof discountFiltersSchema>;
+type DiscountFilters = z.infer<typeof discountFiltersSchema>;
 
 // ============================================================================
 // SERVICE TYPES (from services/)
@@ -42,7 +42,7 @@ export type Discount = Prisma.DiscountGetPayload<{
 	select: typeof GET_DISCOUNTS_SELECT;
 }>;
 
-export type DiscountDetail = Prisma.DiscountGetPayload<{
+type DiscountDetail = Prisma.DiscountGetPayload<{
 	select: typeof GET_DISCOUNT_SELECT;
 }>;
 
@@ -79,7 +79,7 @@ export type GetDiscountsReturn = {
 // VALIDATION TYPES
 // ============================================================================
 
-export type ValidateDiscountCodeParams = z.infer<typeof validateDiscountCodeSchema>;
+type ValidateDiscountCodeParams = z.infer<typeof validateDiscountCodeSchema>;
 
 export type ValidateDiscountCodeReturn = {
 	valid: boolean;
@@ -98,11 +98,11 @@ export type ValidateDiscountCodeReturn = {
 // MUTATION TYPES
 // ============================================================================
 
-export type CreateDiscountInput = z.infer<typeof createDiscountSchema>;
-export type UpdateDiscountInput = z.infer<typeof updateDiscountSchema>;
-export type DeleteDiscountInput = z.infer<typeof deleteDiscountSchema>;
-export type BulkDeleteDiscountsInput = z.infer<typeof bulkDeleteDiscountsSchema>;
-export type ToggleDiscountStatusInput = z.infer<typeof toggleDiscountStatusSchema>;
+type CreateDiscountInput = z.infer<typeof createDiscountSchema>;
+type UpdateDiscountInput = z.infer<typeof updateDiscountSchema>;
+type DeleteDiscountInput = z.infer<typeof deleteDiscountSchema>;
+type BulkDeleteDiscountsInput = z.infer<typeof bulkDeleteDiscountsSchema>;
+type ToggleDiscountStatusInput = z.infer<typeof toggleDiscountStatusSchema>;
 
 // ============================================================================
 // DISCOUNT APPLICATION CONTEXT

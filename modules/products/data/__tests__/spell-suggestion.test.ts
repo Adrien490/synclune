@@ -96,11 +96,11 @@ describe("getSpellSuggestion", () => {
 
 	// ─── Transaction setup ──────────────────────────────────────
 
-	it("sets suggestion-specific similarity threshold (0.2)", async () => {
+	it("sets suggestion-specific similarity threshold (0.4)", async () => {
 		setupTransaction([]);
 		await getSpellSuggestion("colier");
 
-		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(expect.anything(), 0.2);
+		expect(mockSetTrigramThreshold).toHaveBeenCalledWith(expect.anything(), 0.4);
 	});
 
 	it("sets dedicated timeout for suggestions", async () => {

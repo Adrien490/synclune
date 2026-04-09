@@ -17,17 +17,6 @@ import { buildOrderWhereClause } from "../services/order-query-builder";
 import type { GetOrdersParams, GetOrdersReturn } from "../types/order.types";
 
 // Re-export pour compatibilité
-export {
-	GET_ORDERS_DEFAULT_PER_PAGE,
-	GET_ORDERS_MAX_RESULTS_PER_PAGE,
-	GET_ORDERS_SELECT,
-	GET_ORDERS_SORT_FIELDS,
-	SORT_LABELS,
-	SORT_OPTIONS,
-} from "../constants/order.constants";
-export { getOrdersSchema, orderFiltersSchema, orderSortBySchema } from "../schemas/order.schemas";
-export type { GetOrdersParams, GetOrdersReturn, Order, OrderFilters } from "../types/order.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

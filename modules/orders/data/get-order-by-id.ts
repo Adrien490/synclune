@@ -9,9 +9,7 @@ import type { GetOrderReturn } from "../types/order.types";
 import { getOrderByIdSchema } from "../schemas/order.schemas";
 
 // Re-export for backward compatibility
-export { getOrderByIdSchema };
-
-export type GetOrderByIdParams = z.infer<typeof getOrderByIdSchema>;
+type GetOrderByIdParams = z.infer<typeof getOrderByIdSchema>;
 
 // ============================================================================
 // MAIN FUNCTION

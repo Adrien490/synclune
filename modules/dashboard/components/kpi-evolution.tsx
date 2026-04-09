@@ -2,7 +2,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { CHART_STYLES } from "../constants/chart-styles";
 
-export interface KpiEvolutionProps {
+interface KpiEvolutionProps {
 	evolution: number;
 	comparisonLabel?: string;
 	/** Invert color logic: negative = good (green), positive = bad (red). Useful for metrics like delivery time. */

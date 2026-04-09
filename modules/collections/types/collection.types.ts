@@ -68,11 +68,11 @@ export type CollectionOption = {
 // MUTATION TYPES
 // ============================================================================
 
-export type CreateCollectionInput = z.infer<typeof createCollectionSchema>;
-export type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
-export type DeleteCollectionInput = z.infer<typeof deleteCollectionSchema>;
-export type BulkDeleteCollectionsInput = z.infer<typeof bulkDeleteCollectionsSchema>;
-export type UpdateCollectionStatusInput = z.infer<typeof updateCollectionStatusSchema>;
+type CreateCollectionInput = z.infer<typeof createCollectionSchema>;
+type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
+type DeleteCollectionInput = z.infer<typeof deleteCollectionSchema>;
+type BulkDeleteCollectionsInput = z.infer<typeof bulkDeleteCollectionsSchema>;
+type UpdateCollectionStatusInput = z.infer<typeof updateCollectionStatusSchema>;
 
 // ============================================================================
 // UI COMPONENT TYPES

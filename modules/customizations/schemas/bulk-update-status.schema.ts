@@ -9,4 +9,4 @@ export const bulkUpdateStatusSchema = z.object({
 	status: z.nativeEnum(CustomizationRequestStatus),
 });
 
-export type BulkUpdateStatusInput = z.infer<typeof bulkUpdateStatusSchema>;
+type BulkUpdateStatusInput = z.infer<typeof bulkUpdateStatusSchema>;

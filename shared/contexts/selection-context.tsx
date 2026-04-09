@@ -3,7 +3,7 @@
 import { useSelection } from "@/shared/hooks/use-selection";
 import { type ReactNode, createContext, useContext } from "react";
 
-export interface SelectionContextType {
+interface SelectionContextType {
 	isSelected: (id: string) => boolean;
 	handleItemSelectionChange: (id: string, checked: boolean) => void;
 	areAllSelected: (ids: string[]) => boolean;

@@ -18,12 +18,12 @@ export const MEDIA_SIZE_LIMITS = {
 /**
  * MIME types considered as videos
  */
-export const VIDEO_MIME_PREFIXES = ["video/"] as const;
+const VIDEO_MIME_PREFIXES = ["video/"] as const;
 
 /**
  * Media file validation result
  */
-export interface MediaFileValidationResult {
+interface MediaFileValidationResult {
 	/** true if the file is valid */
 	valid: boolean;
 	/** Error message if invalid */

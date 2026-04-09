@@ -16,19 +16,6 @@ import type { GetAccountsReturn, GetAccountsParams } from "../types/accounts.typ
 import { buildAccountsWhereClause } from "../services/accounts-query-builder";
 
 // Re-export pour compatibilité
-export {
-	GET_ACCOUNTS_DEFAULT_SELECT,
-	GET_ACCOUNTS_DEFAULT_PER_PAGE,
-	GET_ACCOUNTS_MAX_RESULTS_PER_PAGE,
-	GET_ACCOUNTS_SORT_FIELDS,
-} from "../constants/accounts.constants";
-export {
-	getAccountsSchema,
-	accountFiltersSchema,
-	accountSortBySchema,
-} from "../schemas/accounts.schemas";
-export type { GetAccountsReturn, GetAccountsParams } from "../types/accounts.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

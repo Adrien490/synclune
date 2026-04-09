@@ -5,4 +5,4 @@ export const dismissAnnouncementSchema = z.object({
 	dismissDurationHours: z.preprocess(Number, z.number().positive()),
 });
 
-export type DismissAnnouncementInput = z.infer<typeof dismissAnnouncementSchema>;
+type DismissAnnouncementInput = z.infer<typeof dismissAnnouncementSchema>;

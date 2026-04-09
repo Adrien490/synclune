@@ -8,8 +8,6 @@ import type {
 } from "@/app/generated/prisma/client";
 import type { CreateOrderAuditParams } from "../types/order-audit.types";
 
-export type { CreateOrderAuditParams };
-
 // ============================================================================
 // 🔴 ORDER AUDIT TRAIL (Best Practice Stripe 2025 + Conformité FR)
 // ============================================================================

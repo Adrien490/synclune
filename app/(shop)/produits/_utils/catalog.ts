@@ -92,7 +92,7 @@ export function fetchProducts(
  *
  * @returns Le slug de la couleur si une seule est active, undefined sinon
  */
-export function getActiveColorSlug(searchParamsData: ProductSearchParams): string | undefined {
+function getActiveColorSlug(searchParamsData: ProductSearchParams): string | undefined {
 	const colorParam = searchParamsData.color;
 
 	if (!colorParam) return undefined;

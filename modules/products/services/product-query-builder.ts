@@ -113,6 +113,24 @@ function buildPerWordOrConditions(word: string): Prisma.ProductWhereInput {
 function buildPerWordRelatedConditions(word: string): Prisma.ProductWhereInput[] {
 	return [
 		{
+			type: {
+				OR: [
+					{
+						label: {
+							contains: word,
+							mode: Prisma.QueryMode.insensitive,
+						},
+					},
+					{
+						slug: {
+							contains: word,
+							mode: Prisma.QueryMode.insensitive,
+						},
+					},
+				],
+			},
+		},
+		{
 			skus: {
 				some: {
 					OR: [
@@ -196,7 +214,7 @@ function buildFullExactSearchConditions(words: string[]): Prisma.ProductWhereInp
  * AND logic: each word must match at least one related field.
  * Expanded with synonyms for each word.
  */
-function buildRelatedFieldsSearchConditions(words: string[]): Prisma.ProductWhereInput[] {
+export function buildRelatedFieldsSearchConditions(words: string[]): Prisma.ProductWhereInput[] {
 	if (words.length === 0) return [];
 
 	// Each word (+ synonyms) must match at least one related field

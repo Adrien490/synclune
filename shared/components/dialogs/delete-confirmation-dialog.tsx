@@ -14,7 +14,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { LoaderCircle } from "lucide-react";
 import type { ReactNode } from "react";
 
-export interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
+interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
 	/** Unique dialog ID for the alert dialog store */
 	dialogId: string;
 	/** Dialog title (default: "Confirmer la suppression") */

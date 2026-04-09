@@ -9,7 +9,7 @@ import { seededRandom } from "@/shared/utils/seeded-random";
 // TYPES
 // ============================================================================
 
-export interface BubbleDreamProps {
+interface BubbleDreamProps {
 	/** Classes Tailwind additionnelles pour le conteneur */
 	className?: string;
 	/** Nombre de bulles (défaut: 25 desktop, 15 mobile) */

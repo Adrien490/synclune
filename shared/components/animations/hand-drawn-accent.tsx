@@ -5,7 +5,7 @@ import { useRef } from "react";
 
 import { cn } from "@/shared/utils/cn";
 
-export interface HandDrawnAccentProps {
+interface HandDrawnAccentProps {
 	/**
 	 * Type d'accent dessiné
 	 */

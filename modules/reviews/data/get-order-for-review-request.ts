@@ -5,7 +5,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 // TYPES
 // ============================================================================
 
-export type OrderForReviewRequest = Awaited<ReturnType<typeof fetchOrderForReviewRequest>>;
+type OrderForReviewRequest = Awaited<ReturnType<typeof fetchOrderForReviewRequest>>;
 
 // ============================================================================
 // MAIN FUNCTION

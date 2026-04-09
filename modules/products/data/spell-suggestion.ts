@@ -20,7 +20,7 @@ import { setStatementTimeout, setTrigramThreshold } from "../utils/trigram-helpe
  * Minimum similarity threshold for suggesting a correction.
  * Lower = broader suggestions, higher = stricter suggestions.
  */
-const SUGGESTION_MIN_SIMILARITY = 0.2;
+const SUGGESTION_MIN_SIMILARITY = 0.4;
 
 /**
  * Minimum number of results before suggesting a correction.
@@ -102,6 +102,8 @@ export async function getSpellSuggestion(
 
 	// No words eligible for correction
 	if (eligibleWords.length === 0) return null;
+
+	const startTime = performance.now();
 
 	try {
 		const statusCondition = status
@@ -189,6 +191,13 @@ export async function getSpellSuggestion(
 			clearTimeout(timeoutId);
 		});
 
+		const durationMs = Math.round(performance.now() - startTime);
+		if (durationMs > 500) {
+			logger.warn(`Slow spell suggestion | term="${term}" | duration=${durationMs}ms`, {
+				service: "getSpellSuggestion",
+			});
+		}
+
 		// Merge batch results back with the full word list (including short words)
 		const matchByIndex = new Map(
 			batchResults.map((r) => [
@@ -226,8 +235,12 @@ export async function getSpellSuggestion(
 			similarity: Number(bestMatch.match!.similarity),
 			source: bestMatch.match!.source as SpellSuggestion["source"],
 		};
-	} catch (_error) {
-		logger.warn("Spell suggestion failed", { service: "getSpellSuggestion" });
+	} catch (error) {
+		const durationMs = Math.round(performance.now() - startTime);
+		logger.warn(
+			`Spell suggestion failed | term="${term}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
+			{ service: "getSpellSuggestion" },
+		);
 		return null;
 	}
 }

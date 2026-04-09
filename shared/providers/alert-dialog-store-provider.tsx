@@ -10,9 +10,9 @@ import type {
 	AlertDialogStoreProviderProps,
 } from "@/shared/types/store.types";
 
-export type AlertDialogStoreApi = ReturnType<typeof createAlertDialogStore>;
+type AlertDialogStoreApi = ReturnType<typeof createAlertDialogStore>;
 
-export const AlertDialogStoreContext = createContext<AlertDialogStoreApi | undefined>(undefined);
+const AlertDialogStoreContext = createContext<AlertDialogStoreApi | undefined>(undefined);
 
 export const AlertDialogStoreProvider = ({ children }: AlertDialogStoreProviderProps) => {
 	const [store] = useState(() => createAlertDialogStore());

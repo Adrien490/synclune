@@ -134,7 +134,7 @@ ${colorConfig
 
 const ChartTooltip = Tooltip;
 
-export type CustomTooltipProps = Partial<TooltipContentProps<ValueType, NameType>> & {
+type CustomTooltipProps = Partial<TooltipContentProps<ValueType, NameType>> & {
 	className?: string;
 	hideLabel?: boolean;
 	hideIndicator?: boolean;
@@ -295,7 +295,7 @@ function ChartTooltipContent({
 
 const ChartLegend = Legend;
 
-export type ChartLegendContentProps = {
+type ChartLegendContentProps = {
 	className?: string;
 	hideIcon?: boolean;
 	verticalAlign?: LegendProps["verticalAlign"];
@@ -381,11 +381,4 @@ function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key:
 	return configLabelKey in config ? config[configLabelKey] : config[key as keyof typeof config];
 }
 
-export {
-	ChartContainer,
-	ChartLegend,
-	ChartLegendContent,
-	ChartStyle,
-	ChartTooltip,
-	ChartTooltipContent,
-};
+export { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent };

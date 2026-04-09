@@ -4,7 +4,7 @@ import { m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
-export interface HoverScaleProps {
+interface HoverScaleProps {
 	children: ReactNode;
 	className?: string;
 	/** Scale factor on hover (default: 1.02) */

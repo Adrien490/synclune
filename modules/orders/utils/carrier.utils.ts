@@ -6,7 +6,7 @@
 import type { Carrier, CarrierInfo } from "../types/carrier.types";
 
 // Re-export des types pour compatibilité
-export type { Carrier, CarrierInfo, DetectionResult } from "../types/carrier.types";
+export type { Carrier } from "../types/carrier.types";
 
 // Re-export des fonctions de logique métier depuis services/
 export { getTrackingUrl, detectCarrierAndUrl } from "../services/carrier-detection.service";

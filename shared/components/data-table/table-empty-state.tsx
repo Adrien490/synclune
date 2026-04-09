@@ -10,7 +10,7 @@ import { Button } from "@/shared/components/ui/button";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 
-export interface TableEmptyStateProps {
+interface TableEmptyStateProps {
 	/** Icone a afficher (composant Lucide) */
 	icon: LucideIcon;
 	/** Titre de l'etat vide */

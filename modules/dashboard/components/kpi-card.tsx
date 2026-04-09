@@ -42,7 +42,7 @@ const kpiCardVariants = cva(
 	},
 );
 
-export interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
+interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	title: string;
 	value: string | number;
 	evolution?: number;

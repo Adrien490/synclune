@@ -17,7 +17,7 @@ import { type ShippingCountry } from "@/shared/constants/countries";
 // IDS DES TARIFS STRIPE
 // ==============================================================================
 
-export const STRIPE_SHIPPING_RATE_IDS = {
+const STRIPE_SHIPPING_RATE_IDS = {
 	/** Livraison France Métropolitaine (hors Corse) — 4,99€, 2-3 jours ouvrés */
 	FRANCE: "shr_1SYOf8KjFZ5SF8XKdI4fL8wL",
 	/** Livraison Union Européenne — 9,50€, 4-7 jours ouvrés */
@@ -39,7 +39,7 @@ export const STRIPE_SHIPPING_RATE_IDS = {
  * @param postalCode - Code postal (ex: "75001", "20000")
  * @returns Le shipping_option unique correspondant à l'adresse
  */
-export function getShippingOptionsForAddress(
+function getShippingOptionsForAddress(
 	country: ShippingCountry,
 	postalCode: string,
 ): Array<{ shipping_rate: string }> {

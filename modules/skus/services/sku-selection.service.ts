@@ -130,4 +130,3 @@ export function getStockInfoForList<
 }
 
 // Ré-export des types pour faciliter les imports
-export type { StockStatus, ProductStockInfo } from "@/shared/types/product-sku.types";

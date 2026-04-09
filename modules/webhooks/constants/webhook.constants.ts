@@ -13,7 +13,7 @@ export const SYSTEM_AUTHOR_ID = "00000000-0000-0000-0000-000000000000";
 /**
  * Labels pour les types d'événements (UI admin)
  */
-export const WEBHOOK_EVENT_LABELS: Record<string, string> = {
+const WEBHOOK_EVENT_LABELS: Record<string, string> = {
 	"checkout.session.completed": "Paiement checkout complété",
 	"checkout.session.expired": "Session checkout expirée",
 	"payment_intent.succeeded": "Paiement réussi",
@@ -33,7 +33,7 @@ export const WEBHOOK_EVENT_LABELS: Record<string, string> = {
 /**
  * Catégories d'événements pour le regroupement
  */
-export const WEBHOOK_EVENT_CATEGORIES = {
+const WEBHOOK_EVENT_CATEGORIES = {
 	CHECKOUT: ["checkout.session.completed", "checkout.session.expired"],
 	PAYMENT: ["payment_intent.succeeded", "payment_intent.payment_failed", "payment_intent.canceled"],
 	REFUND: ["charge.refunded", "refund.created", "refund.updated", "refund.failed"],

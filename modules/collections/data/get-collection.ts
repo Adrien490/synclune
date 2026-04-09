@@ -16,12 +16,6 @@ import type {
 } from "../types/collection.types";
 
 // Re-export pour compatibilité
-export type {
-	GetCollectionParams,
-	GetCollectionReturn,
-	GetCollectionStorefrontReturn,
-} from "../types/collection.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

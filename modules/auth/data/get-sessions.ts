@@ -15,20 +15,6 @@ import type { GetSessionsParams, GetSessionsReturn } from "../types/session.type
 import { buildSessionWhereClause } from "../services/session-query-builder";
 
 // Re-export pour compatibilité
-export {
-	GET_SESSIONS_SELECT,
-	GET_SESSIONS_DEFAULT_PER_PAGE,
-	GET_SESSIONS_MAX_RESULTS_PER_PAGE,
-	GET_SESSIONS_DEFAULT_SORT_BY,
-} from "../constants/session.constants";
-export { getSessionsSchema } from "../schemas/session.schemas";
-export type {
-	GetSessionsParams,
-	GetSessionsReturn,
-	SessionFilters,
-	Session,
-} from "../types/session.types";
-
 // ============================================================================
 // UTILS
 // ============================================================================

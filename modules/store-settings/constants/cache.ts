@@ -11,7 +11,7 @@ export const STORE_SETTINGS_SINGLETON_ID = "store-settings-singleton";
 // CACHE TAGS
 // ============================================================================
 
-export const STORE_SETTINGS_CACHE_TAGS = {
+const STORE_SETTINGS_CACHE_TAGS = {
 	/** Store open/closed status for storefront */
 	STATUS: "store-status",
 	/** Admin settings view */

@@ -10,7 +10,7 @@ export const AUTH_ERROR_CODES = {
  * Messages d'erreur d'authentification
  * Affichés sur la page /error avec le paramètre ?error=xxx
  */
-export const AUTH_ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
+const AUTH_ERROR_MESSAGES: Record<string, { title: string; description: string }> = {
 	unable_to_create_user: {
 		title: "Impossible de créer votre compte",
 		description:

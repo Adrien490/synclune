@@ -16,26 +16,11 @@ import type { GetCollectionsParams, GetCollectionsReturn } from "../types/collec
 import { buildCollectionWhereClause } from "../services/collection-query-builder";
 
 // Re-export pour compatibilité
-export {
-	COLLECTIONS_SORT_LABELS,
-	COLLECTIONS_SORT_OPTIONS,
-	GET_COLLECTIONS_DEFAULT_PER_PAGE,
-	GET_COLLECTIONS_SORT_FIELDS,
-	COLLECTION_STATUS_LABELS,
-	COLLECTION_STATUS_COLORS,
-} from "../constants/collection.constants";
-export { collectionFiltersSchema, collectionSortBySchema } from "../schemas/collection.schemas";
-export type {
-	Collection,
-	CollectionFilters,
-	GetCollectionsParams,
-	GetCollectionsReturn,
-} from "../types/collection.types";
+export { GET_COLLECTIONS_DEFAULT_PER_PAGE } from "../constants/collection.constants";
+export type { GetCollectionsParams, GetCollectionsReturn } from "../types/collection.types";
 
 // Aliases pour compatibilité
 export { COLLECTIONS_SORT_LABELS as SORT_LABELS } from "../constants/collection.constants";
-export { COLLECTIONS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/collection.constants";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

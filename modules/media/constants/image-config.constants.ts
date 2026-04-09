@@ -7,13 +7,13 @@
 // ============================================
 
 /** Standard sizes for srcSet (small images) */
-export const IMAGE_SIZES = [16, 32, 48, 64, 96, 128, 256, 384] as const;
+const IMAGE_SIZES = [16, 32, 48, 64, 96, 128, 256, 384] as const;
 
 /** Screen sizes (responsive breakpoints) */
 export const DEVICE_SIZES = [640, 750, 828, 1080, 1200, 1920, 2048, 3840] as const;
 
 /** Maximum image size for the lightbox */
-export const MAX_IMAGE_SIZE = 3840;
+const MAX_IMAGE_SIZE = 3840;
 
 // ============================================
 // IMAGE QUALITY

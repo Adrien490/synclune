@@ -25,4 +25,4 @@ export const phoneSchema = z
 /**
  * Type infere du schema telephone
  */
-export type PhoneInput = z.infer<typeof phoneSchema>;
+type PhoneInput = z.infer<typeof phoneSchema>;

@@ -143,9 +143,9 @@ export interface ReviewStats {
 /**
  * Options de tri
  */
-export type ReviewSortBy = "createdAt" | "rating" | "updatedAt";
-export type ReviewSortOrder = "asc" | "desc";
-export type ReviewStorefrontSort = "recent" | "oldest" | "highest-rating" | "lowest-rating";
+type ReviewSortBy = "createdAt" | "rating" | "updatedAt";
+type ReviewSortOrder = "asc" | "desc";
+type ReviewStorefrontSort = "recent" | "oldest" | "highest-rating" | "lowest-rating";
 
 /**
  * Champs de tri unifiés (pattern get-products.ts)
@@ -233,7 +233,7 @@ export interface ReviewableProduct {
 /**
  * Média d'un avis (photo)
  */
-export interface ReviewMedia {
+interface ReviewMedia {
 	id: string;
 	url: string;
 	blurDataUrl: string | null;
@@ -247,7 +247,7 @@ export interface ReviewMedia {
 /**
  * Réponse admin à un avis (affichage)
  */
-export interface ReviewResponseDisplay {
+interface ReviewResponseDisplay {
 	content: string;
 	authorName: string;
 	createdAt: Date;
@@ -256,7 +256,7 @@ export interface ReviewResponseDisplay {
 /**
  * Réponse admin complète (admin)
  */
-export interface ReviewResponseAdmin {
+interface ReviewResponseAdmin {
 	id: string;
 	content: string;
 	authorId: string;

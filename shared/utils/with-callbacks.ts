@@ -4,8 +4,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 import type { ActionState } from "@/shared/types/server-action";
 import type { Callbacks } from "@/shared/types/callback.types";
 
-export type { Callbacks } from "@/shared/types/callback.types";
-
 export const withCallbacks = <T extends ActionState | unknown = ActionState, R = unknown>(
 	fn: (prev: T | undefined, formData: FormData) => Promise<T>,
 	callbacks: Callbacks<T, R>,

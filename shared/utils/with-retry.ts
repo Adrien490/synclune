@@ -7,7 +7,7 @@
 
 import { delay } from "./delay";
 
-export interface WithRetryOptions {
+interface WithRetryOptions {
 	/** Total number of attempts (default: 3) */
 	maxAttempts?: number;
 	/** Base delay for exponential backoff in ms (default: 1000) */

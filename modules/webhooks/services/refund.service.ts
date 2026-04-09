@@ -7,8 +7,6 @@ import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
 
 // Re-export types for backwards compatibility
-export type { RefundSyncResult, RefundRecord };
-
 /** Valid currency codes */
 const VALID_CURRENCY_CODES = new Set(["EUR"]);
 

@@ -14,8 +14,6 @@ import type { MergeCartsResult } from "../types/cart.types";
 import { getGuestCartForMerge, getUserCartForMerge } from "@/modules/cart/data/get-cart-for-merge";
 
 // Re-export pour retrocompatibilite
-export type { MergeCartsResult } from "../types/cart.types";
-
 /**
  * Fusionne le panier visiteur avec le panier utilisateur après connexion
  *

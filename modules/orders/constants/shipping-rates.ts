@@ -13,13 +13,13 @@ import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/cou
 import type { ShippingCarrier, ShippingRate, AllowedShippingCountry } from "../types/order.types";
 
 // Re-export pour compatibilité
-export type { ShippingCarrier, ShippingRate, AllowedShippingCountry };
+export type { ShippingRate };
 
 // ============================================================================
 // CONSTANTS
 // ============================================================================
 
-export const SHIPPING_CARRIERS = {
+const SHIPPING_CARRIERS = {
 	STANDARD: "standard",
 } as const;
 
@@ -55,7 +55,7 @@ export const SHIPPING_RATES = {
  * Liste de tous les pays où la livraison est possible
  * Utilise la source de vérité centralisée depuis @/shared/constants/countries
  */
-export const ALLOWED_SHIPPING_COUNTRIES = SHIPPING_COUNTRIES;
+const ALLOWED_SHIPPING_COUNTRIES = SHIPPING_COUNTRIES;
 
 // ============================================================================
 // MIGRATION NOTICE

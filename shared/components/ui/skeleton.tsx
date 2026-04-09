@@ -112,4 +112,4 @@ function SkeletonButton({ size = "default", className }: SkeletonButtonProps) {
 	return <Skeleton shape="rounded" className={cn(sizeClasses[size], className)} />;
 }
 
-export { Skeleton, SkeletonGroup, SkeletonText, SkeletonAvatar, SkeletonButton, skeletonVariants };
+export { Skeleton, SkeletonGroup, SkeletonText, SkeletonAvatar, SkeletonButton };

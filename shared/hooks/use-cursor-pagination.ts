@@ -8,8 +8,6 @@ import { useEffect, useRef, useTransition, useEffectEvent } from "react";
 
 import type { UseCursorPaginationProps } from "@/shared/types/hook.types";
 
-export type { UseCursorPaginationProps } from "@/shared/types/hook.types";
-
 /**
  * Hook pour gérer la pagination avec cursor (Best Practices 2025)
  *

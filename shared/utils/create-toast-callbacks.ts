@@ -3,8 +3,6 @@ import { toast } from "sonner";
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
 
-export type { CreateToastCallbacksOptions } from "@/shared/types/callback.types";
-
 /**
  * Type guard pour vérifier si une valeur contient un message
  * @param value - La valeur à vérifier

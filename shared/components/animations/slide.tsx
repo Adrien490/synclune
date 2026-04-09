@@ -4,8 +4,6 @@ import { m, useReducedMotion } from "motion/react";
 import { MOTION_CONFIG } from "./motion.config";
 import type { SlideProps } from "./types";
 
-export type { SlideProps };
-
 /**
  * Animation slide simple avec support prefers-reduced-motion
  */

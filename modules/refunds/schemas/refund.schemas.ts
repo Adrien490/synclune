@@ -46,7 +46,7 @@ export const refundFiltersSchema = z
 // SORT SCHEMA
 // ============================================================================
 
-export const refundSortBySchema = z
+const refundSortBySchema = z
 	.enum([
 		SORT_OPTIONS.CREATED_DESC,
 		SORT_OPTIONS.CREATED_ASC,

@@ -6,7 +6,7 @@ import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/genera
 // SHARED TYPES
 // ============================================================================
 
-export interface OrderDetailProps {
+interface OrderDetailProps {
 	order: GetOrderReturn;
 }
 
@@ -23,7 +23,7 @@ export interface OrderHeaderProps {
 // STEPPER & ALERTS (Server Components)
 // ============================================================================
 
-export interface OrderProgressStepperProps {
+interface OrderProgressStepperProps {
 	status: OrderStatus;
 	paymentStatus: PaymentStatus;
 }

@@ -21,22 +21,6 @@ import type {
 	RevertValidationResult,
 } from "../types/order.types";
 
-export type {
-	OrderForShipValidation,
-	ShipValidationResult,
-	ShipBlockReason,
-	OrderStateInput,
-	OrderPermissions,
-	DeliveryValidationResult,
-	DeliveryBlockReason,
-	ReturnValidationResult,
-	ReturnBlockReason,
-	ProcessingValidationResult,
-	ProcessingBlockReason,
-	RevertValidationResult,
-	RevertBlockReason,
-} from "../types/order.types";
-
 // ============================================================================
 // ORDER STATUS VALIDATION SERVICE
 // Pure functions for validating order status transitions

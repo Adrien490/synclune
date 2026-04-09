@@ -53,7 +53,7 @@ export const GET_MATERIALS_SORT_FIELDS = [
 	"createdAt-descending",
 ] as const;
 
-export const MATERIALS_SORT_OPTIONS = {
+const MATERIALS_SORT_OPTIONS = {
 	NAME_ASC: "name-ascending",
 	NAME_DESC: "name-descending",
 	SKU_COUNT_ASC: "skuCount-ascending",

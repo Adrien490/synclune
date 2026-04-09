@@ -14,7 +14,7 @@ export const NEWSLETTER_STATUS_LABELS: Record<NewsletterStatus, string> = {
 /**
  * Variantes de badge pour l'affichage des statuts
  */
-export const NEWSLETTER_STATUS_VARIANTS: Record<NewsletterStatus, BadgeVariant> = {
+const NEWSLETTER_STATUS_VARIANTS: Record<NewsletterStatus, BadgeVariant> = {
 	[NewsletterStatus.PENDING]: "warning",
 	[NewsletterStatus.CONFIRMED]: "success",
 	[NewsletterStatus.UNSUBSCRIBED]: "secondary",
@@ -23,7 +23,7 @@ export const NEWSLETTER_STATUS_VARIANTS: Record<NewsletterStatus, BadgeVariant> 
 /**
  * Description des statuts pour tooltips/aide
  */
-export const NEWSLETTER_STATUS_DESCRIPTIONS: Record<NewsletterStatus, string> = {
+const NEWSLETTER_STATUS_DESCRIPTIONS: Record<NewsletterStatus, string> = {
 	[NewsletterStatus.PENDING]: "En attente de confirmation par email (double opt-in non validé)",
 	[NewsletterStatus.CONFIRMED]: "Abonnement actif, email de confirmation validé",
 	[NewsletterStatus.UNSUBSCRIBED]: "L'utilisateur s'est désabonné de la newsletter",

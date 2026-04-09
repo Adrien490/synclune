@@ -6,7 +6,7 @@
 // TODO: Revert to Zod once Turbopack fully supports ESM + "use client" boundaries
 // without HMR errors (track: https://github.com/vercel/next.js/issues and Zod v4 release notes).
 
-export interface GalleryParams {
+interface GalleryParams {
 	color?: string;
 	material?: string;
 	size?: string;

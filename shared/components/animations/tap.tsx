@@ -4,7 +4,7 @@ import { m, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
-export interface TapProps {
+interface TapProps {
 	children: ReactNode;
 	className?: string;
 	scale?: number;

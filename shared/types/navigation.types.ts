@@ -5,7 +5,7 @@
 /**
  * Catégories d'items de navigation pour le menu mobile
  */
-export type NavCategory = "discovery" | "transaction";
+type NavCategory = "discovery" | "transaction";
 
 /**
  * Types d'icônes disponibles (mapping côté client)
@@ -80,7 +80,7 @@ export type NavItemWithChildren = {
 /**
  * Item de navigation simple
  */
-export type NavItem = {
+type NavItem = {
 	href: string;
 	label: string;
 	icon?: IconName;

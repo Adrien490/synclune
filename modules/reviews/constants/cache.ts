@@ -66,7 +66,7 @@ export function cacheProductReviewStats(productId: string) {
  * - Utilisé pour : Page "Mes avis"
  * - Durée : Cache privé court
  */
-export function cacheUserReviews(userId: string) {
+function cacheUserReviews(userId: string) {
 	cacheLife("userOrders");
 	cacheTag(REVIEWS_CACHE_TAGS.USER(userId));
 }

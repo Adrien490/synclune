@@ -10,11 +10,6 @@ import type {
 } from "../types/product-counts.types";
 
 // Re-export pour compatibilité
-export type {
-	GetProductCountsByStatusReturn,
-	ProductCountsByStatus,
-} from "../types/product-counts.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

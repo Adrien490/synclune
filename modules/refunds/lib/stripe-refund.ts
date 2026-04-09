@@ -9,8 +9,6 @@ import type {
 	StripeRefundResult,
 } from "../types/stripe-refund.types";
 
-export type { CreateStripeRefundParams, StripeRefundStatus, StripeRefundResult };
-
 // Map internal RefundReason to Stripe's reason parameter.
 // Stripe only accepts: "duplicate", "fraudulent", "requested_by_customer".
 // Only FRAUD maps to "fraudulent" (unlocks Stripe's automated dispute handling).

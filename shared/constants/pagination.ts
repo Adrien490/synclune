@@ -3,9 +3,7 @@
 export {
 	PAGINATION_LIMITS,
 	PAGINATION_DEFAULTS,
-	PAGE_SPECIFIC_LIMITS,
 	CUID_LENGTH,
 	cursorSchema,
 	directionSchema,
-	type PaginationDirection,
 } from "@/shared/schemas/pagination-schema";

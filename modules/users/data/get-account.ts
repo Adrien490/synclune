@@ -14,14 +14,6 @@ import type {
 } from "../types/account.types";
 
 // Re-export pour compatibilité
-export { GET_ACCOUNT_DEFAULT_SELECT } from "../constants/account.constants";
-export { getAccountSchema } from "../schemas/accounts.schemas";
-export type {
-	GetAccountParams,
-	GetAccountReturn,
-	FetchAccountContext,
-} from "../types/account.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

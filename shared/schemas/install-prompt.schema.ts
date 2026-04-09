@@ -10,7 +10,7 @@ export const installPromptCookieSchema = z.object({
 	p: z.boolean(),
 });
 
-export type InstallPromptCookieValue = z.infer<typeof installPromptCookieSchema>;
+type InstallPromptCookieValue = z.infer<typeof installPromptCookieSchema>;
 
 /** Schema for the install prompt action input */
 export const installPromptActionSchema = z.object({

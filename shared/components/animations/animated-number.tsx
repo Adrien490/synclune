@@ -19,7 +19,7 @@ function formatNumber(value: number, decimalPlaces: number, locale: string): str
 	}).format(Number(value.toFixed(decimalPlaces)));
 }
 
-export interface AnimatedNumberProps {
+interface AnimatedNumberProps {
 	/** Valeur cible a atteindre */
 	value: number;
 	/** Valeur de depart (default: 0) */

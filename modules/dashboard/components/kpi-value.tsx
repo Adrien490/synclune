@@ -3,7 +3,7 @@
 import { cn } from "@/shared/utils/cn";
 import { NumberTicker } from "@/shared/components/animations/animated-number";
 
-export interface KpiValueProps {
+interface KpiValueProps {
 	/** Valeur à afficher (string ou number) */
 	value: string | number;
 	/** Valeur numérique pour l'animation (si fournie, utilise NumberTicker) */

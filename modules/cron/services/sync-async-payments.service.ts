@@ -89,9 +89,13 @@ export async function syncAsyncPayments(): Promise<{
 			if (updated > 0 || errors > 0) {
 				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 			}
-			const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
-				timeout: STRIPE_TIMEOUT_MS,
-			});
+			const paymentIntent = await stripe.paymentIntents.retrieve(
+				order.stripePaymentIntentId,
+				undefined,
+				{
+					timeout: STRIPE_TIMEOUT_MS,
+				},
+			);
 
 			if (paymentIntent.status === "succeeded") {
 				// Payment succeeded but webhook was missed

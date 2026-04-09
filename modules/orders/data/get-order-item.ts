@@ -13,14 +13,6 @@ import type {
 } from "../types/order-item.types";
 
 // Re-export pour compatibilité
-export { GET_ORDER_ITEM_DEFAULT_SELECT } from "../constants/order-item.constants";
-export { getOrderItemSchema } from "../schemas/order-item.schemas";
-export type {
-	GetOrderItemParams,
-	GetOrderItemReturn,
-	FetchOrderItemContext,
-} from "../types/order-item.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -52,7 +44,7 @@ export async function getOrderItem(
 /**
  * Récupère un item de commande depuis la DB avec cache
  */
-export async function fetchOrderItem(
+async function fetchOrderItem(
 	params: GetOrderItemParams,
 	context: FetchOrderItemContext,
 ): Promise<GetOrderItemReturn | null> {

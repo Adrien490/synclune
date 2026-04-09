@@ -25,7 +25,7 @@ export const ADDRESSES_CACHE_TAGS = {
  * - Utilisé pour : /account/profile, sélection d'adresse
  * - Durée : 5min fraîche, 1min revalidation
  */
-export function cacheUserAddresses(userId: string) {
+function cacheUserAddresses(userId: string) {
 	cacheLife("cart");
 	cacheTag(ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId));
 }

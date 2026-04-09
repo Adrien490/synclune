@@ -27,7 +27,7 @@ export const SEARCH_ADDRESS_DEFAULT_TYPE = "PositionOfInterest,StreetAddress" as
 /**
  * Types de localisants disponibles
  */
-export const LOCALISANT_TYPES = {
+const LOCALISANT_TYPES = {
 	POI: "PositionOfInterest",
 	STREET: "StreetAddress",
 	BOTH: "PositionOfInterest,StreetAddress",
@@ -36,7 +36,7 @@ export const LOCALISANT_TYPES = {
 /**
  * Territoires disponibles
  */
-export const TERRITORIES = {
+const TERRITORIES = {
 	METROPOLE: "METROPOLE",
 	DOMTOM: "DOMTOM",
 } as const;
@@ -44,7 +44,7 @@ export const TERRITORIES = {
 /**
  * Labels pour les types de localisants (pour l'UI)
  */
-export const LOCALISANT_TYPE_LABELS = {
+const LOCALISANT_TYPE_LABELS = {
 	[LOCALISANT_TYPES.POI]: "Point d'intérêt",
 	[LOCALISANT_TYPES.STREET]: "Adresse postale",
 	[LOCALISANT_TYPES.BOTH]: "Tous types",

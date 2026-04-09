@@ -16,23 +16,11 @@ import { buildDiscountWhereClause } from "../services/discount-query-builder";
 import type { GetDiscountsParams, GetDiscountsReturn } from "../types/discount.types";
 
 // Re-export pour compatibilité
-export {
-	DISCOUNTS_SORT_LABELS,
-	DISCOUNTS_SORT_OPTIONS,
-	GET_DISCOUNTS_DEFAULT_PER_PAGE,
-} from "../constants/discount.constants";
-export { discountFiltersSchema, discountSortBySchema } from "../schemas/discount.schemas";
-export type {
-	Discount,
-	DiscountFilters,
-	GetDiscountsParams,
-	GetDiscountsReturn,
-} from "../types/discount.types";
+export { GET_DISCOUNTS_DEFAULT_PER_PAGE } from "../constants/discount.constants";
+export type { GetDiscountsReturn } from "../types/discount.types";
 
 // Aliases pour compatibilité
 export { DISCOUNTS_SORT_LABELS as SORT_LABELS } from "../constants/discount.constants";
-export { DISCOUNTS_SORT_OPTIONS as SORT_OPTIONS } from "../constants/discount.constants";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

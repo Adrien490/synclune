@@ -9,8 +9,7 @@ import { CART_CACHE_TAGS } from "../constants/cache";
 import type { GetCartReturn } from "../types/cart.types";
 
 // Re-export pour compatibilité
-export { GET_CART_SELECT } from "../constants/cart";
-export type { GetCartReturn, Cart, CartItem } from "../types/cart.types";
+export type { GetCartReturn } from "../types/cart.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

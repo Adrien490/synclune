@@ -5,15 +5,7 @@ import type {
 	EligibilityCheckResult,
 } from "../types/discount.types";
 
-export type { EligibilityCheckResult } from "../types/discount.types";
-
 // Re-export des fonctions de validation pure depuis services/
-export {
-	isDiscountCurrentlyValid,
-	getDiscountStatus,
-	type DiscountStatus,
-} from "../services/discount-validation.service";
-
 type UsageCounts = {
 	userCount: number;
 	emailCount: number;

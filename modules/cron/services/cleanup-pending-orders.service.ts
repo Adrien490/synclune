@@ -94,9 +94,13 @@ export async function cleanupPendingOrders(): Promise<{
 				await new Promise((resolve) => setTimeout(resolve, STRIPE_THROTTLE_MS));
 			}
 
-			const paymentIntent = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
-				timeout: STRIPE_TIMEOUT_MS,
-			});
+			const paymentIntent = await stripe.paymentIntents.retrieve(
+				order.stripePaymentIntentId,
+				undefined,
+				{
+					timeout: STRIPE_TIMEOUT_MS,
+				},
+			);
 
 			if (!CANCELLABLE_PI_STATUSES.has(paymentIntent.status)) {
 				// PI is still active (processing, requires_action, succeeded)

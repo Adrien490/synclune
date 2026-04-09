@@ -7,8 +7,7 @@ import { ADDRESSES_CACHE_TAGS } from "../constants/cache";
 import type { GetUserAddressesReturn } from "../types/user-addresses.types";
 
 // Re-export pour compatibilité
-export { GET_USER_ADDRESSES_DEFAULT_SELECT } from "../constants/user-addresses.constants";
-export type { GetUserAddressesReturn, UserAddress } from "../types/user-addresses.types";
+export type { GetUserAddressesReturn } from "../types/user-addresses.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

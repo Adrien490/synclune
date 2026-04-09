@@ -27,7 +27,7 @@ import { RefundRowActions } from "./refund-row-actions";
 import { RefundsSelectionToolbar } from "./refunds-selection-toolbar";
 import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
-export interface RefundsDataTableProps {
+interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
 	perPage: number;
 }

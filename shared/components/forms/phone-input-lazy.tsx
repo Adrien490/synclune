@@ -14,5 +14,3 @@ type PhoneInputProps = React.ComponentProps<typeof PhoneInput>;
 export default function PhoneInputWithFlags(props: PhoneInputProps) {
 	return <PhoneInput {...props} flags={flags} />;
 }
-
-export type { Country, PhoneInputProps };

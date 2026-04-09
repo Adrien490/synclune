@@ -9,8 +9,6 @@
 
 import type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.types";
 
-export type { CartItemForPriceCheck, PriceChangeResult } from "../types/cart.types";
-
 // ============================================================================
 // CART PRICING CALCULATOR SERVICE
 // Pure functions for detecting and calculating price changes

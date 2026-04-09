@@ -4,7 +4,7 @@ import { m, useReducedMotion } from "motion/react";
 import React, { isValidElement, type ReactNode, type Key } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
-export interface StaggerGridProps extends React.AriaAttributes {
+interface StaggerGridProps extends React.AriaAttributes {
 	children: ReactNode;
 	className?: string;
 	/** Stagger delay between items (default: 0.06) */

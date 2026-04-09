@@ -5,4 +5,3 @@ export { Autocomplete } from "./autocomplete";
 export type { AutocompleteProps } from "./types";
 
 // Tier 3 - Constants (customisation avancee)
-export { AUTOCOMPLETE_ANIMATIONS, AUTOCOMPLETE_DEFAULTS } from "./constants";

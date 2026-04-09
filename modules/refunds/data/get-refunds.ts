@@ -17,19 +17,7 @@ import { buildRefundWhereClause } from "../services/refund-query-builder";
 import type { GetRefundsParams, GetRefundsReturn } from "../types/refund.types";
 
 // Re-export pour compatibilité
-export {
-	SORT_LABELS,
-	SORT_OPTIONS,
-	GET_REFUNDS_DEFAULT_PER_PAGE,
-} from "../constants/refund.constants";
-export { refundFiltersSchema, refundSortBySchema } from "../schemas/refund.schemas";
-export type {
-	Refund,
-	RefundFilters,
-	GetRefundsParams,
-	GetRefundsReturn,
-} from "../types/refund.types";
-
+export { SORT_LABELS } from "../constants/refund.constants";
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

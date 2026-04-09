@@ -26,7 +26,7 @@ export type GetWishlistParams = {
  * Type complet de la wishlist avec ses relations
  * Inféré depuis le Prisma select pour garantir la cohérence
  */
-export type Wishlist = Prisma.WishlistGetPayload<{
+type Wishlist = Prisma.WishlistGetPayload<{
 	select: typeof GET_WISHLIST_SELECT;
 }>;
 
@@ -67,21 +67,21 @@ export type GetWishlistItemCountReturn = number;
 /**
  * Données retournées par addToWishlist en cas de succès
  */
-export type AddToWishlistData = {
+type AddToWishlistData = {
 	wishlistItemId: string;
 };
 
 /**
  * Données retournées par removeFromWishlist en cas de succès
  */
-export type RemoveFromWishlistData = {
+type RemoveFromWishlistData = {
 	removed: boolean;
 };
 
 /**
  * Données retournées par toggleWishlistItem en cas de succès
  */
-export type ToggleWishlistItemData = {
+type ToggleWishlistItemData = {
 	action: "added" | "removed";
 	wishlistItemId?: string;
 };

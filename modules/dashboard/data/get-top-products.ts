@@ -8,7 +8,7 @@ import { getPeriodBoundaries } from "@/modules/dashboard/services/period-boundar
 
 import type { GetTopProductsReturn, TopProductItem } from "../types/dashboard.types";
 
-export type { GetTopProductsReturn, TopProductItem } from "../types/dashboard.types";
+export type { GetTopProductsReturn } from "../types/dashboard.types";
 
 type TopProductRow = {
 	productId: string | null;

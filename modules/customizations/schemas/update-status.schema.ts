@@ -6,4 +6,4 @@ export const updateStatusSchema = z.object({
 	status: z.nativeEnum(CustomizationRequestStatus),
 });
 
-export type UpdateStatusInput = z.infer<typeof updateStatusSchema>;
+type UpdateStatusInput = z.infer<typeof updateStatusSchema>;

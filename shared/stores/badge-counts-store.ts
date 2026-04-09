@@ -2,12 +2,6 @@ import { create } from "zustand";
 
 import type { BadgeCountsStore } from "@/shared/types/store.types";
 
-export type {
-	BadgeCountsState,
-	BadgeCountsActions,
-	BadgeCountsStore,
-} from "@/shared/types/store.types";
-
 /**
  * Store Zustand pour les counts des badges navbar (wishlist + cart)
  *

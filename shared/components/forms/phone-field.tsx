@@ -108,5 +108,3 @@ export const PhoneField = ({
 		</Field>
 	);
 };
-
-export type { PhoneFieldProps };

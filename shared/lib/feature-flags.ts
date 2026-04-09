@@ -6,7 +6,7 @@ import { getPostHog } from "@/shared/lib/posthog";
  * Feature flag keys - centralized definition
  * Add flags here as they are created in PostHog dashboard
  */
-export const FEATURE_FLAGS = {
+const FEATURE_FLAGS = {
 	// Example flags - replace with actual flags from PostHog dashboard
 	// NEW_CHECKOUT_FLOW: "new-checkout-flow",
 	// SHOW_REVIEWS: "show-reviews",

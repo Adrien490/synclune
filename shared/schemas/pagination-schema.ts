@@ -35,7 +35,7 @@ export const PAGINATION_DEFAULTS = {
  * Limites spécifiques à certaines pages
  * Ces valeurs sont utilisées pour des listes spéciales (carousels, sitemaps, etc.)
  */
-export const PAGE_SPECIFIC_LIMITS = {
+const PAGE_SPECIFIC_LIMITS = {
 	/** Limite pour la liste des produits admin (affichage dense) */
 	ADMIN_PRODUCTS: 100,
 	/** Limites pour les carousels de la homepage */
@@ -77,4 +77,4 @@ export const directionSchema = z.enum(["forward", "backward"]).default("forward"
 /**
  * Type pour la direction de pagination
  */
-export type PaginationDirection = z.infer<typeof directionSchema>;
+type PaginationDirection = z.infer<typeof directionSchema>;

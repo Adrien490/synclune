@@ -195,7 +195,7 @@ export const GET_COLLECTIONS_SORT_FIELDS = [
 // UI OPTIONS
 // ============================================================================
 
-export const COLLECTIONS_SORT_OPTIONS = {
+const COLLECTIONS_SORT_OPTIONS = {
 	NAME_ASC: "name-ascending",
 	NAME_DESC: "name-descending",
 	CREATED_ASC: "created-ascending",
@@ -219,8 +219,4 @@ export const COLLECTIONS_SORT_LABELS = {
 // Re-export for backward compatibility with server components
 // ============================================================================
 
-export {
-	COLLECTION_STATUS_LABELS,
-	COLLECTION_STATUS_COLORS,
-	COLLECTION_STATUS_VARIANTS,
-} from "./collection-status.constants";
+export { COLLECTION_STATUS_LABELS } from "./collection-status.constants";

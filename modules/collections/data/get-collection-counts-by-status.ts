@@ -10,11 +10,6 @@ import type {
 } from "../types/collection-counts.types";
 
 // Re-export pour compatibilité
-export type {
-	GetCollectionCountsByStatusReturn,
-	CollectionCountsByStatus,
-} from "../types/collection-counts.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

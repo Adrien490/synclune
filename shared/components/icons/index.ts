@@ -1,7 +1,1 @@
-export { AnimatedHeartIcon } from "./animated-heart-icon";
-export { AppleIcon, type AppleIconProps } from "./apple-icon";
-export { GoogleIcon, type GoogleIconProps } from "./google-icon";
-export { HeartIcon, type HeartIconProps } from "./heart-icon";
-export { InstagramIcon } from "./instagram-icon";
-export { TikTokIcon, type TikTokIconProps } from "./tiktok-icon";
-export { IconSprite, SpriteIcon } from "./icon-sprite";
+export { GoogleIcon } from "./google-icon";

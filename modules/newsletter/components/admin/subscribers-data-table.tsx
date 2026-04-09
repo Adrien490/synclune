@@ -17,7 +17,7 @@ import { formatDateShort } from "@/shared/utils/dates";
 import { CircleCheck, Clock, Mail, CircleX } from "lucide-react";
 import Link from "next/link";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
-export interface SubscribersDataTableProps {
+interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
 	perPage: number;
 }

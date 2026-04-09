@@ -5,7 +5,7 @@ import { m, useReducedMotion } from "motion/react";
 import type { ReactNode } from "react";
 import { MOTION_CONFIG } from "./motion.config";
 
-export interface ErrorShakeProps {
+interface ErrorShakeProps {
 	children: ReactNode;
 	className?: string;
 	/** Trigger the shake animation */

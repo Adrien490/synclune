@@ -17,5 +17,5 @@ export const userIdSchema = z.string().trim().min(1, "ID utilisateur requis");
  */
 export const optionalUserIdSchema = userIdSchema.optional();
 
-export type Cuid = z.infer<typeof cuidSchema>;
-export type UserId = z.infer<typeof userIdSchema>;
+type Cuid = z.infer<typeof cuidSchema>;
+type UserId = z.infer<typeof userIdSchema>;

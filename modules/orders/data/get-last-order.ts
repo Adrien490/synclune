@@ -8,9 +8,6 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import type { GetLastOrderReturn } from "../types/last-order.types";
 
 // Re-export pour compatibilité
-export { GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
-export type { GetLastOrderReturn } from "../types/last-order.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

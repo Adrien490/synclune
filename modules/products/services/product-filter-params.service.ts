@@ -33,7 +33,7 @@ export interface BuildFilterURLParams {
 	currentCategorySlug: string | null;
 }
 
-export interface ActiveFiltersResult {
+interface ActiveFiltersResult {
 	hasActiveFilters: boolean;
 	activeFiltersCount: number;
 }

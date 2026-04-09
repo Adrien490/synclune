@@ -10,8 +10,6 @@ import { UI_DELAYS } from "../constants/ui-interactions.constants";
 import type { VideoThumbnailOptions, VideoThumbnailResult } from "../types/hooks.types";
 
 // Re-export types for backwards compatibility
-export type { VideoThumbnailOptions, VideoThumbnailResult };
-
 // ============================================================================
 // FEATURE DETECTION
 // ============================================================================

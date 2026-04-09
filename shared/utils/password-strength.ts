@@ -1,7 +1,5 @@
 import type { PasswordRule } from "@/shared/types/utility.types";
 
-export type { PasswordRule } from "@/shared/types/utility.types";
-
 // ============================================================================
 // CONSTANTS
 // ============================================================================

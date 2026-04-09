@@ -10,12 +10,7 @@ import {
 	getEntryData,
 } from "./overlay-state-helpers";
 
-export type {
-	DialogData,
-	DialogState,
-	DialogActions,
-	DialogStore,
-} from "@/shared/types/store.types";
+export type { DialogStore } from "@/shared/types/store.types";
 
 export const defaultInitState: DialogState = {
 	dialogs: {},

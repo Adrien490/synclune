@@ -131,28 +131,28 @@ export const STOCK_THRESHOLDS = {
  * Retourne le tag des badges admin
  * Utiliser pour invalider les compteurs de la sidebar
  */
-export function getAdminBadgesTag(): string {
+function getAdminBadgesTag(): string {
 	return SHARED_CACHE_TAGS.ADMIN_BADGES;
 }
 
 /**
  * Retourne les tags pour l'invalidation de l'inventaire admin
  */
-export function getAdminInventoryTags(): string[] {
+function getAdminInventoryTags(): string[] {
 	return [SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 }
 
 /**
  * Retourne les tags pour l'invalidation des commandes admin
  */
-export function getAdminOrdersTags(): string[] {
+function getAdminOrdersTags(): string[] {
 	return [SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 }
 
 /**
  * Retourne les tags pour l'invalidation des clients admin
  */
-export function getAdminCustomersTags(): string[] {
+function getAdminCustomersTags(): string[] {
 	return [SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 }
 
@@ -160,8 +160,8 @@ export function getAdminCustomersTags(): string[] {
 // TYPE EXPORTS
 // ============================================
 
-export type SharedCacheTagKey = keyof typeof SHARED_CACHE_TAGS;
-export type SharedCacheTagValue = (typeof SHARED_CACHE_TAGS)[SharedCacheTagKey];
+type SharedCacheTagKey = keyof typeof SHARED_CACHE_TAGS;
+type SharedCacheTagValue = (typeof SHARED_CACHE_TAGS)[SharedCacheTagKey];
 
 // ============================================
 // SESSION CACHE TAGS (évite cycle auth ↔ users)

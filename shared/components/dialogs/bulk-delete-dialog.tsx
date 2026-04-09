@@ -20,7 +20,7 @@ interface BulkDeleteData {
 	[key: string]: unknown;
 }
 
-export interface BulkDeleteDialogProps {
+interface BulkDeleteDialogProps {
 	/** Unique dialog ID for the alert dialog store */
 	dialogId: string;
 	/** Dialog title (default: "Confirmer la suppression") */

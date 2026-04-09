@@ -9,8 +9,6 @@ import { shouldRestockByDefault } from "./refund-restock.service";
 import type { RefundItemValue } from "../types/refund.types";
 
 // Re-export pour retro-compatibilite
-export type { RefundItemValue } from "../types/refund.types";
-
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -87,7 +85,7 @@ export function calculateDiscountRatio(subtotal: number, discountAmount: number)
 // AMOUNT CALCULATIONS
 // ============================================================================
 
-export interface DiscountInfo {
+interface DiscountInfo {
 	subtotal: number;
 	discountAmount: number;
 }

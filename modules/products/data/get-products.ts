@@ -28,19 +28,9 @@ import { cacheProducts } from "../utils/cache.utils";
 import { serializeProduct } from "../utils/serialize-product";
 
 // Re-exports for compatibility
-export {
-	GET_PRODUCTS_DEFAULT_PER_PAGE,
-	GET_PRODUCTS_DEFAULT_SORT_BY,
-	GET_PRODUCTS_MAX_RESULTS_PER_PAGE,
-} from "../constants/product.constants";
-export { productFiltersSchema, productSortBySchema } from "../schemas/product.schemas";
-export type {
-	GetProductsParams,
-	GetProductsReturn,
-	Product,
-	ProductFilters,
-	SortField,
-} from "../types/product.types";
+export { GET_PRODUCTS_DEFAULT_PER_PAGE } from "../constants/product.constants";
+export { productFiltersSchema } from "../schemas/product.schemas";
+export type { GetProductsReturn, Product, ProductFilters, SortField } from "../types/product.types";
 
 // ============================================================================
 // MAIN FUNCTIONS

@@ -5,7 +5,7 @@ import { cn } from "@/shared/utils/cn";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { useEffect, useEffectEvent, useState } from "react";
 
-export interface LayoutTextFlipProps {
+interface LayoutTextFlipProps {
 	/** Texte statique affiché avant les mots rotatifs */
 	text?: string;
 	/** Liste de mots qui alternent avec animation */

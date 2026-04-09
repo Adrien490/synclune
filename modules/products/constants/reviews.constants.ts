@@ -14,4 +14,3 @@ export const REVIEW_CONFIG = {
 } as const;
 
 // Re-export pour retrocompatibilite
-export { getProductAggregateRating } from "../utils/seo";

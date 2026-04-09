@@ -1,7 +1,7 @@
 import { cn } from "@/shared/utils/cn";
 import type { ReactNode } from "react";
 
-export type TiltDirection = "left" | "right" | "none";
+type TiltDirection = "left" | "right" | "none";
 export type WashiTapeColor = "pink" | "lavender" | "mint" | "peach";
 export type WashiTapePosition = "top-left" | "top-right" | "both";
 

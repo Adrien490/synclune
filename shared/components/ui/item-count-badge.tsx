@@ -21,7 +21,7 @@ const itemCountBadgeVariants = cva(
 	},
 );
 
-export interface ItemCountBadgeProps extends VariantProps<typeof itemCountBadgeVariants> {
+interface ItemCountBadgeProps extends VariantProps<typeof itemCountBadgeVariants> {
 	/** The count to display */
 	count: number;
 	/** Singular label for aria announcement (e.g., "article dans votre panier") */

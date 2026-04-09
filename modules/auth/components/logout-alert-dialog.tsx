@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useLogout } from "../hooks/use-logout";
 
-export const LOGOUT_DIALOG_ID = "logout";
+const LOGOUT_DIALOG_ID = "logout";
 
 interface LogoutAlertDialogProps {
 	children?: React.ReactNode;

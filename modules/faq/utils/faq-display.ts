@@ -4,9 +4,7 @@ const LINK_PLACEHOLDER_REGEX = /\{\{link(\d+)\}\}/g;
 
 export type { FaqItemData, FaqLink };
 
-export type AnswerSegment =
-	| { type: "text"; value: string }
-	| { type: "link"; text: string; href: string };
+type AnswerSegment = { type: "text"; value: string } | { type: "link"; text: string; href: string };
 
 export function parseAnswerSegments(answer: string, links?: FaqLink[]): AnswerSegment[] {
 	if (!links || links.length === 0) {

@@ -24,7 +24,7 @@ export type GetVerificationReturn = Omit<RawVerificationResult, "value"> & {
 	valueMasked: string | null;
 };
 
-export type Verification = Prisma.VerificationGetPayload<{
+type Verification = Prisma.VerificationGetPayload<{
 	select: typeof GET_VERIFICATION_SELECT;
 }>;
 

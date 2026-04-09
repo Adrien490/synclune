@@ -15,24 +15,9 @@ import { buildSubscriberWhereClause } from "../services/subscriber-query-builder
 import type { GetSubscribersParams, GetSubscribersReturn } from "../types/subscriber.types";
 
 // Re-export pour compatibilité
-export {
-	GET_SUBSCRIBERS_DEFAULT_PER_PAGE,
-	GET_SUBSCRIBERS_SELECT,
-	SORT_LABELS,
-	SORT_OPTIONS,
-} from "../constants/subscriber.constants";
-export {
-	getSubscribersSchema,
-	subscriberFiltersSchema,
-	subscriberSortBySchema,
-} from "../schemas/subscriber.schemas";
-export type {
-	GetSubscribersParams,
-	GetSubscribersReturn,
-	Subscriber,
-	SubscriberFilters,
-} from "../types/subscriber.types";
-export const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
+export { SORT_LABELS, SORT_OPTIONS } from "../constants/subscriber.constants";
+export type { GetSubscribersReturn } from "../types/subscriber.types";
+const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 
 // ============================================================================
 // MAIN FUNCTIONS

@@ -9,8 +9,6 @@ import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { SkuDataForInvalidation } from "../types/sku.types";
 
-export type { SkuDataForInvalidation } from "../types/sku.types";
-
 // ============================================
 // CACHE CONFIGURATION HELPERS
 // ============================================

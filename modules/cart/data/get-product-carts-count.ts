@@ -8,7 +8,7 @@ import { CART_CACHE_TAGS } from "../constants/cache";
 // TYPES
 // ============================================================================
 
-export type GetProductCartsCountReturn = number;
+type GetProductCartsCountReturn = number;
 
 // ============================================================================
 // MAIN FUNCTION

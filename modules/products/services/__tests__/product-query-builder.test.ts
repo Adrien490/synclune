@@ -462,6 +462,52 @@ describe("buildSearchConditions", () => {
 });
 
 // ============================================================================
+// buildRelatedFieldsSearchConditions — ProductType
+// ============================================================================
+
+describe("buildRelatedFieldsSearchConditions — ProductType", () => {
+	it("includes type.label and type.slug conditions", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({ ids: ["id-1"], totalCount: 1 });
+
+		const result = await buildSearchConditions("bague");
+
+		// exactConditions should include type.label and type.slug matches
+		const json = JSON.stringify(result.exactConditions);
+		expect(json).toContain('"label"');
+		expect(json).toContain('"slug"');
+	});
+
+	it("expands synonyms for product type search", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({ ids: [], totalCount: 0 });
+
+		const result = await buildSearchConditions("anneau");
+
+		// "anneau" synonyms include "bague" and "alliance"
+		const json = JSON.stringify(result.exactConditions);
+		expect(json).toContain("bague");
+		expect(json).toContain("alliance");
+	});
+
+	it("includes type conditions alongside SKU, color, material, and collection", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({ ids: ["id-1"], totalCount: 1 });
+
+		const result = await buildSearchConditions("bague");
+
+		const json = JSON.stringify(result.exactConditions);
+		// ProductType
+		expect(json).toContain('"label"');
+		// SKU
+		expect(json).toContain('"sku"');
+		// Color
+		expect(json).toContain('"hex"');
+		// Material
+		expect(json).toContain('"material"');
+		// Collection
+		expect(json).toContain('"collection"');
+	});
+});
+
+// ============================================================================
 // buildExactSearchConditions
 // ============================================================================
 

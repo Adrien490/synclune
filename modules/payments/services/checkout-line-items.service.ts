@@ -1,5 +1,11 @@
 import type Stripe from "stripe";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
+
+type SessionLineItem = NonNullable<
+	Parameters<Stripe["checkout"]["sessions"]["create"]>[0]
+>["line_items"] extends Array<infer T> | undefined
+	? T
+	: never;
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 
 interface SkuDetail {
@@ -23,7 +29,7 @@ interface CartItem {
 }
 
 interface BuildLineItemsResult {
-	lineItems: Stripe.Checkout.SessionCreateParams.LineItem[];
+	lineItems: SessionLineItem[];
 	subtotal: number;
 }
 
@@ -36,7 +42,7 @@ export function buildStripeLineItems(
 	cartItems: CartItem[],
 	skuDetailsResults: Array<{ success: boolean; data?: SkuDetail }>,
 ): BuildLineItemsResult {
-	const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [];
+	const lineItems: SessionLineItem[] = [];
 	let subtotal = 0;
 
 	for (const cartItem of cartItems) {

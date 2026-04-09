@@ -32,7 +32,7 @@ export const EMAIL_ADMIN = CONTACT_EMAIL;
 /**
  * Nom de l'entreprise pour les emails
  */
-export const EMAIL_COMPANY_NAME = "Synclune";
+const EMAIL_COMPANY_NAME = "Synclune";
 
 /**
  * Messages d'email prédéfinis

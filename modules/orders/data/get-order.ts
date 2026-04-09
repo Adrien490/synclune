@@ -11,15 +11,6 @@ import { getOrderSchema } from "../schemas/order.schemas";
 import type { GetOrderParams, GetOrderReturn, FetchOrderContext } from "../types/order.types";
 
 // Re-export pour compatibilité
-export { GET_ORDER_SELECT } from "../constants/order.constants";
-export { getOrderSchema } from "../schemas/order.schemas";
-export type {
-	GetOrderParams,
-	GetOrderReturn,
-	FetchOrderContext,
-	OrderItem,
-} from "../types/order.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

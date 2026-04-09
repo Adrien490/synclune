@@ -37,7 +37,7 @@ export interface FetchSessionContext {
 
 export type SessionFilters = z.infer<typeof sessionFiltersSchema>;
 
-export type SessionSortField = (typeof GET_SESSIONS_SORT_FIELDS)[number];
+type SessionSortField = (typeof GET_SESSIONS_SORT_FIELDS)[number];
 
 export type GetSessionsParams = z.infer<typeof getSessionsSchema>;
 
@@ -52,6 +52,6 @@ export type GetSessionsReturn = {
 	pagination: PaginationInfo;
 };
 
-export type Session = Prisma.SessionGetPayload<{
+type Session = Prisma.SessionGetPayload<{
 	select: typeof GET_SESSIONS_SELECT;
 }>;

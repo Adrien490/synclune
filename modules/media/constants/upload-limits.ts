@@ -27,7 +27,7 @@ const minutes = (n: number) => n * 60 * 1000;
  * Context: Product/SKU images and videos
  * More permissive due to frequent admin workflow (adding products)
  */
-export const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
+const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
 	limit: 10, // 10 uploads maximum
 	windowMs: minutes(1), // per minute
 };
@@ -46,7 +46,7 @@ export const UPLOAD_CATALOG_LIMIT: RateLimitConfig = {
  * Context: Photos accompanying product reviews
  * Moderate since users are authenticated
  */
-export const UPLOAD_REVIEW_MEDIA_LIMIT: RateLimitConfig = {
+const UPLOAD_REVIEW_MEDIA_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 uploads maximum
 	windowMs: minutes(1), // per minute
 };
@@ -61,7 +61,7 @@ export const UPLOAD_REVIEW_MEDIA_LIMIT: RateLimitConfig = {
  * Context: Deleting UploadThing files from admin panel
  * Moderate limit to prevent mass deletion by compromised admin
  */
-export const DELETE_MEDIA_LIMIT: RateLimitConfig = {
+const DELETE_MEDIA_LIMIT: RateLimitConfig = {
 	limit: 20, // 20 deletions maximum
 	windowMs: minutes(1), // per minute
 };
@@ -71,7 +71,7 @@ export const DELETE_MEDIA_LIMIT: RateLimitConfig = {
  *
  * STRICT: Public endpoint, similar to contact attachments
  */
-export const UPLOAD_CUSTOMIZATION_LIMIT: RateLimitConfig = {
+const UPLOAD_CUSTOMIZATION_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 uploads maximum
 	windowMs: minutes(10), // per 10 minutes
 };

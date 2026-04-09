@@ -2,10 +2,13 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
+import { notDeleted } from "@/shared/lib/prisma";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 import { QUICK_SEARCH_SELECT } from "../constants/product.constants";
+import { buildRelatedFieldsSearchConditions } from "../services/product-query-builder";
+import { splitSearchTerms } from "../utils/search-helpers";
 import { SUGGESTION_THRESHOLD_RESULTS } from "./spell-suggestion";
 import { fuzzySearchProductIds } from "./fuzzy-search";
 import { getSpellSuggestion } from "./spell-suggestion";
@@ -59,19 +62,56 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 	}
 
 	try {
-		// Search for product IDs using fuzzy search
-		const { ids: productIds, totalCount } = await fuzzySearchProductIds(term, {
+		// 1. Fuzzy search on title/description
+		const { ids: fuzzyIds, totalCount: fuzzyTotalCount } = await fuzzySearchProductIds(term, {
 			limit: QUICK_SEARCH_LIMIT,
 			status: ProductStatus.PUBLIC,
 		});
 
-		// Fetch products and optionally spell suggestion in parallel
-		const shouldSuggest = productIds.length < SUGGESTION_THRESHOLD_RESULTS;
+		// 2. Exact search on related fields (type, SKU, color, material, collection)
+		//    Only runs when fuzzy returns fewer than QUICK_SEARCH_LIMIT results
+		let exactOnlyIds: string[] = [];
+		let exactOnlyTotalCount = 0;
+		const remainingSlots = QUICK_SEARCH_LIMIT - fuzzyIds.length;
+
+		if (remainingSlots > 0) {
+			const words = splitSearchTerms(term);
+			if (words.length > 0) {
+				const exactConditions = buildRelatedFieldsSearchConditions(words);
+				if (exactConditions.length > 0) {
+					const exactWhere = {
+						AND: [
+							...exactConditions,
+							{ status: ProductStatus.PUBLIC },
+							{ ...notDeleted },
+							...(fuzzyIds.length > 0 ? [{ NOT: { id: { in: fuzzyIds } } }] : []),
+						],
+					};
+					const [exactProducts, exactCount] = await Promise.all([
+						prisma.product.findMany({
+							where: exactWhere,
+							select: { id: true },
+							take: remainingSlots,
+						}),
+						prisma.product.count({ where: exactWhere }),
+					]);
+					exactOnlyIds = exactProducts.map((p) => p.id);
+					exactOnlyTotalCount = exactCount;
+				}
+			}
+		}
+
+		// 3. Combine: fuzzy first (relevance-ordered), then exact-only
+		const allIds = [...fuzzyIds, ...exactOnlyIds];
+		const totalCount = fuzzyTotalCount + exactOnlyTotalCount;
+
+		// 4. Fetch full products + spell suggestion in parallel
+		const shouldSuggest = allIds.length < SUGGESTION_THRESHOLD_RESULTS;
 
 		const [products, spellResult] = await Promise.all([
-			productIds.length > 0
+			allIds.length > 0
 				? prisma.product.findMany({
-						where: { id: { in: productIds } },
+						where: { id: { in: allIds } },
 						select: QUICK_SEARCH_SELECT,
 					})
 				: Promise.resolve([]),
@@ -80,9 +120,9 @@ export async function quickSearchProducts(searchTerm: string): Promise<QuickSear
 				: Promise.resolve(null),
 		]);
 
-		// Preserve relevance ordering from fuzzy search
+		// 5. Preserve ordering (fuzzy first, then exact)
 		const productMap = new Map(products.map((p) => [p.id, p]));
-		const orderedProducts = productIds
+		const orderedProducts = allIds
 			.map((id) => productMap.get(id))
 			.filter((p): p is QuickSearchProduct => p !== undefined);
 

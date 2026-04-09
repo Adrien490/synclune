@@ -154,7 +154,7 @@ export const REFUND_STATUS_LABELS: Record<RefundStatus, string> = {
 	[RefundStatus.CANCELLED]: "Annulé",
 };
 
-export const REFUND_STATUS_COLORS: Record<RefundStatus, string> = {
+const REFUND_STATUS_COLORS: Record<RefundStatus, string> = {
 	[RefundStatus.PENDING]: "#f59e0b", // Amber
 	[RefundStatus.APPROVED]: "#3b82f6", // Blue
 	[RefundStatus.COMPLETED]: "#22c55e", // Green

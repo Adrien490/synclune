@@ -10,8 +10,6 @@ import { getColorSchema } from "../schemas/color.schemas";
 import type { GetColorParams, GetColorReturn } from "../types/color.types";
 
 // Re-export pour compatibilité
-export type { GetColorParams, GetColorReturn } from "../types/color.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

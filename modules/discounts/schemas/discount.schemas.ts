@@ -34,7 +34,7 @@ export const discountFiltersSchema = z.object({
 // SORT SCHEMA
 // ============================================================================
 
-export const discountSortBySchema = z
+const discountSortBySchema = z
 	.enum([
 		DISCOUNTS_SORT_OPTIONS.CREATED_DESC,
 		DISCOUNTS_SORT_OPTIONS.CREATED_ASC,

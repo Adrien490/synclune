@@ -7,10 +7,6 @@ import { getVerificationSchema } from "../schemas/verification.schemas";
 import type { GetVerificationParams, GetVerificationReturn } from "../types/verification.types";
 
 // Re-export pour compatibilité
-export { GET_VERIFICATION_SELECT } from "../constants/verification.constants";
-export { getVerificationSchema } from "../schemas/verification.schemas";
-export type { GetVerificationParams, GetVerificationReturn } from "../types/verification.types";
-
 // ============================================================================
 // UTILS
 // ============================================================================

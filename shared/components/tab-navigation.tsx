@@ -16,8 +16,6 @@ import {
 import { cn } from "@/shared/utils/cn";
 import type { TabNavigationItem } from "@/shared/types/component.types";
 
-export type { TabNavigationItem };
-
 interface TabNavigationProps {
 	items: TabNavigationItem[];
 	activeValue?: string;

@@ -9,8 +9,6 @@ import { getMaterialSchema } from "../schemas/materials.schemas";
 import type { GetMaterialParams, GetMaterialReturn } from "../types/materials.types";
 
 // Re-export pour compatibilité
-export type { GetMaterialParams, GetMaterialReturn } from "../types/materials.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

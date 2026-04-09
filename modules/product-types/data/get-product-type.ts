@@ -9,8 +9,6 @@ import { getProductTypeSchema } from "../schemas/product-type.schemas";
 import type { GetProductTypeParams, GetProductTypeReturn } from "../types/product-type.types";
 
 // Re-export pour compatibilité
-export type { GetProductTypeParams, GetProductTypeReturn } from "../types/product-type.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

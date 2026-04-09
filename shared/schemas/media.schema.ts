@@ -34,5 +34,5 @@ export const imageMediaSchema = baseMediaSchema.extend({
  */
 export const nullableImageMediaSchema = imageMediaSchema.nullable();
 
-export type BaseMedia = z.infer<typeof baseMediaSchema>;
-export type ImageMedia = z.infer<typeof imageMediaSchema>;
+type BaseMedia = z.infer<typeof baseMediaSchema>;
+type ImageMedia = z.infer<typeof imageMediaSchema>;

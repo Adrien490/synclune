@@ -16,4 +16,4 @@ export const stringOrStringArraySchema = z.union([
  */
 export const optionalStringOrStringArraySchema = stringOrStringArraySchema.optional();
 
-export type StringOrStringArray = z.infer<typeof stringOrStringArraySchema>;
+type StringOrStringArray = z.infer<typeof stringOrStringArraySchema>;

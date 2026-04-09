@@ -65,5 +65,5 @@ export function constrainPerPage(
 // TYPE EXPORTS
 // ============================================================================
 
-export type PerPageSchema = ReturnType<typeof createPerPageSchema>;
-export type PaginationSchema = ReturnType<typeof createPaginationSchema>;
+type PerPageSchema = ReturnType<typeof createPerPageSchema>;
+type PaginationSchema = ReturnType<typeof createPaginationSchema>;

@@ -4,7 +4,7 @@ import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 import type { ActiveDiscountItem, GetActiveDiscountsReturn } from "../types/dashboard.types";
 
-export type { ActiveDiscountItem, GetActiveDiscountsReturn } from "../types/dashboard.types";
+export type { GetActiveDiscountsReturn } from "../types/dashboard.types";
 
 /**
  * Fetches top 5 active discount codes sorted by usage

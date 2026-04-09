@@ -24,7 +24,7 @@ const CRITICAL_EMAIL_TASKS = new Set([
 	"ADMIN_ORDER_PROCESSING_FAILED_ALERT",
 ]);
 
-export interface PostWebhookTasksResult {
+interface PostWebhookTasksResult {
 	successful: number;
 	failed: number;
 	errors: Array<{ type: string; error: string }>;

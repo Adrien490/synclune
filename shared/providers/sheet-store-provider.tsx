@@ -6,9 +6,9 @@ import { useStore } from "zustand";
 import { createSheetStore } from "@/shared/stores/sheet-store";
 import type { SheetId, SheetStore, SheetStoreProviderProps } from "@/shared/types/store.types";
 
-export type SheetStoreApi = ReturnType<typeof createSheetStore>;
+type SheetStoreApi = ReturnType<typeof createSheetStore>;
 
-export const SheetStoreContext = createContext<SheetStoreApi | undefined>(undefined);
+const SheetStoreContext = createContext<SheetStoreApi | undefined>(undefined);
 
 export const SheetStoreProvider = ({ children }: SheetStoreProviderProps) => {
 	const [store] = useState(() => createSheetStore());

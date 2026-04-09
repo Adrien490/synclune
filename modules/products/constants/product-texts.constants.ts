@@ -135,7 +135,7 @@ export const PRODUCT_TEXTS = {
 /**
  * Configuration des types de produits avec leurs caractéristiques
  */
-export const PRODUCT_TYPE_CONFIG = {
+const PRODUCT_TYPE_CONFIG = {
 	EARRINGS: {
 		name: "Boucles d'oreilles",
 		emoji: "💎",
@@ -178,7 +178,7 @@ export const PRODUCT_TYPES_REQUIRING_SIZE = ["ring", "bracelet"] as const;
 /**
  * Type helper pour les types de produits nécessitant une taille
  */
-export type ProductTypeRequiringSize = (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number];
+type ProductTypeRequiringSize = (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number];
 
 /**
  * Configuration des tailles d'images optimisées pour performance
@@ -204,9 +204,9 @@ export const MAX_COLOR_SWATCHES = 5;
 export const ABOVE_FOLD_THRESHOLD = 4;
 
 /** Number of days a product is considered "new" after creation */
-export const NEW_PRODUCT_DAYS = 14;
+const NEW_PRODUCT_DAYS = 14;
 
-export const VALIDATION_MESSAGES = {
+const VALIDATION_MESSAGES = {
 	REQUIRED_FIELD: "Ce champ est obligatoire",
 	EMAIL_INVALID: "Adresse email invalide",
 	TEXT_TOO_LONG: (max: number) => `Maximum ${max} caractères`,

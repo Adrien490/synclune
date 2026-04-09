@@ -24,7 +24,7 @@ import { CustomizationSelectionToolbar } from "./customization-selection-toolbar
 import { CustomizationStatusBadge } from "./customization-status-badge";
 import { UpdateNotesDialog } from "./update-notes-dialog";
 
-export interface CustomizationsDataTableProps {
+interface CustomizationsDataTableProps {
 	requestsPromise: Promise<GetCustomizationRequestsResult>;
 	perPage: number;
 }

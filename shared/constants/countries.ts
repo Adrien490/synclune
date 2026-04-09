@@ -91,14 +91,14 @@ export const COUNTRY_NAMES: Record<ShippingCountry, string> = {
 /**
  * Vérifie si un code pays est autorisé pour la livraison
  */
-export function isValidShippingCountry(country: string): country is ShippingCountry {
+function isValidShippingCountry(country: string): country is ShippingCountry {
 	return SHIPPING_COUNTRIES.includes(country as ShippingCountry);
 }
 
 /**
  * Récupère le nom d'affichage d'un pays
  */
-export function getCountryName(country: ShippingCountry): string {
+function getCountryName(country: ShippingCountry): string {
 	return COUNTRY_NAMES[country];
 }
 

@@ -20,14 +20,14 @@ export const DEFAULT_CURRENCY = "EUR" as const;
  * @example
  * const priceInEuros = priceInCents / CURRENCY_DIVISOR; // 1500 -> 15.00
  */
-export const CURRENCY_DIVISOR = 100;
+const CURRENCY_DIVISOR = 100;
 
 /**
  * Currency symbol for display
  */
-export const CURRENCY_SYMBOL = "\u20AC" as const; // Euro sign
+const CURRENCY_SYMBOL = "\u20AC" as const; // Euro sign
 
 /**
  * Currency locale for formatting
  */
-export const CURRENCY_LOCALE = "fr-FR" as const;
+const CURRENCY_LOCALE = "fr-FR" as const;

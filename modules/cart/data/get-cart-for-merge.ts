@@ -6,8 +6,8 @@ import { cacheCart } from "@/modules/cart/utils/cache";
 // TYPES
 // ============================================================================
 
-export type GuestCartForMerge = Awaited<ReturnType<typeof fetchGuestCartForMerge>>;
-export type UserCartForMerge = Awaited<ReturnType<typeof fetchUserCartForMerge>>;
+type GuestCartForMerge = Awaited<ReturnType<typeof fetchGuestCartForMerge>>;
+type UserCartForMerge = Awaited<ReturnType<typeof fetchUserCartForMerge>>;
 
 // ============================================================================
 // MAIN FUNCTIONS

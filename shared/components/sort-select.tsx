@@ -16,8 +16,6 @@ import { X } from "lucide-react";
 import { useRef } from "react";
 import type { SortSelectProps } from "@/shared/types/component.types";
 
-export type { SortOption, SortSelectProps };
-
 export function SortSelect({
 	label,
 	options,

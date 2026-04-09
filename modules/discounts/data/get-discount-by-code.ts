@@ -6,8 +6,6 @@ import { getDiscountByCodeSchema } from "../schemas/discount.schemas";
 import type { GetDiscountByCodeParams, GetDiscountByCodeReturn } from "../types/discount.types";
 
 // Re-export pour compatibilité
-export type { GetDiscountByCodeParams, GetDiscountByCodeReturn } from "../types/discount.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

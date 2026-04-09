@@ -24,8 +24,5 @@ export {
 	cacheCurrentUser,
 	cacheUserAccounts,
 	getCurrentUserInvalidationTags,
-	getUserSessionsInvalidationTags,
-	getUserAccountsInvalidationTags,
-	getAdminAccountsListInvalidationTags,
 	getUserFullInvalidationTags,
 } from "../utils/cache.utils";

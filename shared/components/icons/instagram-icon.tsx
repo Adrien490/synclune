@@ -1,7 +1,5 @@
 import type { InstagramIconProps } from "@/shared/types/icons.types";
 
-export type { InstagramIconProps };
-
 export function InstagramIcon({
 	className = "",
 	size = 24,

@@ -6,7 +6,7 @@ export type DashboardPeriod = "7d" | "30d" | "month" | "quarter" | "year";
 
 export type ChartGranularity = "daily" | "weekly" | "monthly";
 
-export type PeriodConfig = {
+type PeriodConfig = {
 	label: string;
 	chartGranularity: ChartGranularity;
 };

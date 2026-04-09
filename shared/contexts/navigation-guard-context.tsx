@@ -5,7 +5,7 @@ import { createContext, useContext, useRef, useState, type ReactNode } from "rea
 /**
  * Configuration d'un guard de navigation
  */
-export interface NavigationGuard {
+interface NavigationGuard {
 	/** Message à afficher dans le modal de confirmation */
 	message?: string;
 	/** Callback appelé quand la navigation est bloquée */

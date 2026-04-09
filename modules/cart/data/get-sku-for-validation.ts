@@ -5,12 +5,10 @@ import { prisma } from "@/shared/lib/prisma";
 // TYPES
 // ============================================================================
 
-export type SkuForValidation = Awaited<ReturnType<typeof fetchSkuForValidation>>;
+type SkuForValidation = Awaited<ReturnType<typeof fetchSkuForValidation>>;
 /** @deprecated Use SkuForValidation instead (identical query) */
-export type SkuForDetails = SkuForValidation;
-export type BatchSkuRow = NonNullable<
-	Awaited<ReturnType<typeof fetchSkusForBatchValidation>>
->[number];
+type SkuForDetails = SkuForValidation;
+type BatchSkuRow = NonNullable<Awaited<ReturnType<typeof fetchSkusForBatchValidation>>>[number];
 
 // ============================================================================
 // SINGLE SKU QUERIES

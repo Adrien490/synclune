@@ -1,14 +1,20 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-// ─── Mocks (hoisted to avoid reference errors) ──────────────────
+// ──��� Mocks (hoisted to avoid reference errors) ──────────────────
 
-const { mockFuzzySearchProductIds, mockGetSpellSuggestion, mockPrismaFindMany } = vi.hoisted(
-	() => ({
-		mockFuzzySearchProductIds: vi.fn(),
-		mockGetSpellSuggestion: vi.fn(),
-		mockPrismaFindMany: vi.fn(),
-	}),
-);
+const {
+	mockFuzzySearchProductIds,
+	mockGetSpellSuggestion,
+	mockPrismaFindMany,
+	mockPrismaCount,
+	mockBuildRelatedFieldsSearchConditions,
+} = vi.hoisted(() => ({
+	mockFuzzySearchProductIds: vi.fn(),
+	mockGetSpellSuggestion: vi.fn(),
+	mockPrismaFindMany: vi.fn(),
+	mockPrismaCount: vi.fn(),
+	mockBuildRelatedFieldsSearchConditions: vi.fn(),
+}));
 
 vi.mock("../fuzzy-search", () => ({
 	fuzzySearchProductIds: mockFuzzySearchProductIds,
@@ -21,8 +27,9 @@ vi.mock("../spell-suggestion", () => ({
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
-		product: { findMany: mockPrismaFindMany },
+		product: { findMany: mockPrismaFindMany, count: mockPrismaCount },
 	},
+	notDeleted: { deletedAt: null },
 }));
 
 vi.mock("server-only", () => ({}));
@@ -34,6 +41,18 @@ vi.mock("next/cache", () => ({
 
 vi.mock("../../constants/product.constants", () => ({
 	QUICK_SEARCH_SELECT: { id: true, slug: true, title: true },
+}));
+
+vi.mock("../../services/product-query-builder", () => ({
+	buildRelatedFieldsSearchConditions: mockBuildRelatedFieldsSearchConditions,
+}));
+
+vi.mock("../../utils/search-helpers", () => ({
+	splitSearchTerms: vi.fn((term: string) => {
+		const trimmed = term.trim();
+		if (!trimmed) return [];
+		return trimmed.split(/\s+/).filter(Boolean).slice(0, 5);
+	}),
 }));
 
 import { quickSearchProducts, type QuickSearchSuccess } from "../quick-search-products";
@@ -62,6 +81,10 @@ describe("quickSearchProducts", () => {
 		mockFuzzySearchProductIds.mockResolvedValue({ ids: [], totalCount: 0 });
 		mockGetSpellSuggestion.mockResolvedValue(null);
 		mockPrismaFindMany.mockResolvedValue([]);
+		mockPrismaCount.mockResolvedValue(0);
+		mockBuildRelatedFieldsSearchConditions.mockReturnValue([
+			{ type: { OR: [{ label: { contains: "test" } }] } },
+		]);
 	});
 
 	// ─── Input validation ──────────────────────────────────────
@@ -101,14 +124,16 @@ describe("quickSearchProducts", () => {
 			ids: ["id-1", "id-2"],
 			totalCount: 2,
 		});
-		mockPrismaFindMany.mockResolvedValue(products);
+		// First call: exact-match IDs, second call: full products
+		mockPrismaFindMany.mockResolvedValueOnce([]).mockResolvedValueOnce(products);
 
 		const result = await quickSearchProducts("collier");
 
-		expect(mockPrismaFindMany).toHaveBeenCalledWith({
-			where: { id: { in: ["id-1", "id-2"] } },
-			select: expect.any(Object),
-		});
+		// The full product fetch should include both fuzzy IDs
+		const fullProductCall = mockPrismaFindMany.mock.calls.find((call) =>
+			call[0]?.where?.id?.in?.includes("id-1"),
+		);
+		expect(fullProductCall).toBeDefined();
 		expect(asSuccess(result).products).toHaveLength(2);
 		expect(asSuccess(result).totalCount).toBe(2);
 	});
@@ -118,24 +143,28 @@ describe("quickSearchProducts", () => {
 			ids: ["id-2", "id-1", "id-3"],
 			totalCount: 3,
 		});
-		// Prisma returns in different order
-		mockPrismaFindMany.mockResolvedValue([
-			makeProduct("id-1"),
-			makeProduct("id-3"),
-			makeProduct("id-2"),
-		]);
+		// First call: exact-match IDs, second call: full products (in different order)
+		mockPrismaFindMany
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([makeProduct("id-1"), makeProduct("id-3"), makeProduct("id-2")]);
 
 		const result = await quickSearchProducts("collier");
 
 		expect(asSuccess(result).products.map((p) => p.id)).toEqual(["id-2", "id-1", "id-3"]);
 	});
 
-	it("does not call prisma.findMany when no IDs found", async () => {
+	it("does not call prisma.findMany for full products when no IDs found from either search", async () => {
 		mockFuzzySearchProductIds.mockResolvedValue({ ids: [], totalCount: 0 });
+		// Exact search also returns nothing
+		mockPrismaFindMany.mockResolvedValue([]);
 
 		await quickSearchProducts("xyznonexistent");
 
-		expect(mockPrismaFindMany).not.toHaveBeenCalled();
+		// First call is exact-match ID query, should not have a second call for full products
+		const fullProductCalls = mockPrismaFindMany.mock.calls.filter(
+			(call) => call[0]?.select?.slug !== undefined,
+		);
+		expect(fullProductCalls).toHaveLength(0);
 	});
 
 	// ─── Spell suggestion ──────────────────────────────────────
@@ -145,7 +174,9 @@ describe("quickSearchProducts", () => {
 			ids: ["id-1"],
 			totalCount: 1,
 		});
-		mockPrismaFindMany.mockResolvedValue([makeProduct("id-1")]);
+		mockPrismaFindMany
+			.mockResolvedValueOnce([]) // exact-match IDs
+			.mockResolvedValueOnce([makeProduct("id-1")]); // full products
 		mockGetSpellSuggestion.mockResolvedValue({
 			term: "collier",
 			similarity: 0.7,
@@ -163,11 +194,9 @@ describe("quickSearchProducts", () => {
 			ids: ["id-1", "id-2", "id-3"],
 			totalCount: 10,
 		});
-		mockPrismaFindMany.mockResolvedValue([
-			makeProduct("id-1"),
-			makeProduct("id-2"),
-			makeProduct("id-3"),
-		]);
+		mockPrismaFindMany
+			.mockResolvedValueOnce([]) // exact-match IDs
+			.mockResolvedValueOnce([makeProduct("id-1"), makeProduct("id-2"), makeProduct("id-3")]); // full products
 
 		const result = await quickSearchProducts("collier");
 
@@ -186,14 +215,19 @@ describe("quickSearchProducts", () => {
 
 	// ─── Parallel execution ──────────────────────────────────
 
-	it("fetches products and spell suggestion in parallel", async () => {
+	it("fetches full products and spell suggestion in parallel", async () => {
 		const callOrder: string[] = [];
+		let findManyCallCount = 0;
 
 		mockFuzzySearchProductIds.mockResolvedValue({
 			ids: ["id-1"],
 			totalCount: 1,
 		});
 		mockPrismaFindMany.mockImplementation(async () => {
+			findManyCallCount++;
+			// First call: exact-match IDs (fast)
+			if (findManyCallCount === 1) return [];
+			// Second call: full products (tracked for parallel check)
 			callOrder.push("findMany-start");
 			await new Promise((r) => setTimeout(r, 10));
 			callOrder.push("findMany-end");
@@ -225,7 +259,9 @@ describe("quickSearchProducts", () => {
 			totalCount: 3,
 		});
 		// "id-missing" is not returned by DB
-		mockPrismaFindMany.mockResolvedValue([makeProduct("id-1"), makeProduct("id-2")]);
+		mockPrismaFindMany
+			.mockResolvedValueOnce([]) // exact-match IDs
+			.mockResolvedValueOnce([makeProduct("id-1"), makeProduct("id-2")]); // full products
 
 		const result = await quickSearchProducts("collier");
 
@@ -238,5 +274,118 @@ describe("quickSearchProducts", () => {
 		await quickSearchProducts("  collier  ");
 
 		expect(mockFuzzySearchProductIds).toHaveBeenCalledWith("collier", expect.any(Object));
+	});
+
+	// ─── Related-field (exact) search ──────────────────────────
+
+	it("returns exact-only results when fuzzy returns empty", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({ ids: [], totalCount: 0 });
+		// Exact search finds products by type/color/material/collection
+		mockPrismaFindMany
+			.mockResolvedValueOnce([{ id: "exact-1" }, { id: "exact-2" }]) // exact-match IDs
+			.mockResolvedValueOnce([makeProduct("exact-1"), makeProduct("exact-2")]); // full products
+
+		const result = await quickSearchProducts("bague");
+
+		expect(asSuccess(result).products).toHaveLength(2);
+		expect(asSuccess(result).products.map((p) => p.id)).toEqual(["exact-1", "exact-2"]);
+	});
+
+	it("merges fuzzy and exact results with fuzzy first", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({
+			ids: ["fuzzy-1", "fuzzy-2"],
+			totalCount: 2,
+		});
+		// Exact search finds additional products
+		mockPrismaFindMany
+			.mockResolvedValueOnce([{ id: "exact-1" }]) // exact-match IDs
+			.mockResolvedValueOnce([
+				makeProduct("fuzzy-1"),
+				makeProduct("fuzzy-2"),
+				makeProduct("exact-1"),
+			]); // full products
+
+		const result = await quickSearchProducts("bague");
+
+		expect(asSuccess(result).products.map((p) => p.id)).toEqual(["fuzzy-1", "fuzzy-2", "exact-1"]);
+	});
+
+	it("skips exact query when fuzzy fills all 6 slots", async () => {
+		const fuzzyIds = ["id-1", "id-2", "id-3", "id-4", "id-5", "id-6"];
+		mockFuzzySearchProductIds.mockResolvedValue({
+			ids: fuzzyIds,
+			totalCount: 10,
+		});
+		const products = fuzzyIds.map(makeProduct);
+		mockPrismaFindMany.mockResolvedValueOnce(products); // only full products, no exact query
+
+		const result = await quickSearchProducts("collier");
+
+		// buildRelatedFieldsSearchConditions should not have been called
+		expect(mockBuildRelatedFieldsSearchConditions).not.toHaveBeenCalled();
+		expect(asSuccess(result).products).toHaveLength(6);
+	});
+
+	it("limits exact results to remaining slots", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({
+			ids: ["fuzzy-1", "fuzzy-2", "fuzzy-3", "fuzzy-4"],
+			totalCount: 4,
+		});
+		// Exact search returns 2 extra (but only 2 slots remain)
+		mockPrismaFindMany
+			.mockResolvedValueOnce([{ id: "exact-1" }, { id: "exact-2" }]) // exact-match IDs
+			.mockResolvedValueOnce([
+				makeProduct("fuzzy-1"),
+				makeProduct("fuzzy-2"),
+				makeProduct("fuzzy-3"),
+				makeProduct("fuzzy-4"),
+				makeProduct("exact-1"),
+				makeProduct("exact-2"),
+			]); // full products
+
+		const result = await quickSearchProducts("bague");
+
+		expect(asSuccess(result).products).toHaveLength(6);
+		// Verify exact query was limited to 2 (remaining slots)
+		const exactCall = mockPrismaFindMany.mock.calls[0]!;
+		expect(exactCall[0].take).toBe(2);
+	});
+
+	it("excludes fuzzy IDs from exact query to avoid duplicates", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({
+			ids: ["fuzzy-1"],
+			totalCount: 1,
+		});
+		mockPrismaFindMany
+			.mockResolvedValueOnce([{ id: "exact-1" }]) // exact-match IDs
+			.mockResolvedValueOnce([makeProduct("fuzzy-1"), makeProduct("exact-1")]); // full products
+
+		await quickSearchProducts("bague");
+
+		// Verify exact query excludes fuzzy IDs
+		const exactCall = mockPrismaFindMany.mock.calls[0]!;
+		const whereAnd = exactCall[0].where.AND;
+		const notCondition = whereAnd.find((c: Record<string, unknown>) => "NOT" in c);
+		expect(notCondition).toEqual({ NOT: { id: { in: ["fuzzy-1"] } } });
+	});
+
+	it("reports totalCount as sum of fuzzy and exact-only counts", async () => {
+		mockFuzzySearchProductIds.mockResolvedValue({
+			ids: ["fuzzy-1"],
+			totalCount: 15,
+		});
+		mockPrismaFindMany
+			.mockResolvedValueOnce([{ id: "exact-1" }, { id: "exact-2" }])
+			.mockResolvedValueOnce([
+				makeProduct("fuzzy-1"),
+				makeProduct("exact-1"),
+				makeProduct("exact-2"),
+			]);
+		mockPrismaCount.mockResolvedValueOnce(8);
+
+		const result = await quickSearchProducts("bague");
+
+		// fuzzyTotalCount (15) + exactOnlyTotalCount (8) = 23
+		expect(asSuccess(result).totalCount).toBe(23);
 	});
 });

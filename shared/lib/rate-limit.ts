@@ -9,7 +9,7 @@ import { logger } from "@/shared/lib/logger";
 import type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
 import type { ReadonlyHeaders } from "next/dist/server/web/spec-extension/adapters/headers";
 
-export type { RateLimitConfig, RateLimitResult } from "@/shared/types/rate-limit.types";
+export type { RateLimitConfig } from "@/shared/types/rate-limit.types";
 
 // ============================================================================
 // IN-MEMORY RATE LIMITER

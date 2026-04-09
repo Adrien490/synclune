@@ -23,7 +23,7 @@ export const UPLOADTHING_DOMAINS = [
 /**
  * Domaines Synclune (CDN, domaine principal)
  */
-export const SYNCLUNE_DOMAINS = ["synclune.fr", "cdn.synclune.fr"] as const;
+const SYNCLUNE_DOMAINS = ["synclune.fr", "cdn.synclune.fr"] as const;
 
 /**
  * Tous les domaines autorisés pour les médias

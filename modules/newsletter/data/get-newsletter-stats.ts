@@ -6,8 +6,6 @@ import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
 import type { NewsletterStats } from "../types/subscriber.types";
 
 // Re-export pour compatibilité
-export type { NewsletterStats };
-
 /**
  * Récupère les statistiques de la newsletter pour le dashboard admin
  *

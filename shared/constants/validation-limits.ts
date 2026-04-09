@@ -65,7 +65,7 @@ export const DATE_LIMITS = {
 // CONFIRMATIONS
 // ============================================================================
 
-export const CONFIRMATION_TEXTS = {
+const CONFIRMATION_TEXTS = {
 	/** Texte de confirmation pour suppression de compte */
 	DELETE_ACCOUNT: "SUPPRIMER",
 } as const;

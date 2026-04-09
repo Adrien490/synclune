@@ -1,7 +1,5 @@
 import type { GoogleIconProps } from "@/shared/types/icons.types";
 
-export type { GoogleIconProps };
-
 export function GoogleIcon({
 	className = "",
 	size = 24,

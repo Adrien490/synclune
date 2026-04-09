@@ -11,8 +11,6 @@
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import type { StockStatus, PriceInfo, SkuForPricing } from "../types/product-services.types";
 
-export type { StockStatus, PriceInfo, SkuForPricing } from "../types/product-services.types";
-
 // ============================================================================
 // PRODUCT PRICING SERVICE
 // Pure functions for price calculations and stock status

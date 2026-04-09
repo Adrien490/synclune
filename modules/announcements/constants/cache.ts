@@ -5,7 +5,7 @@ import { cacheTag } from "next/cache";
 // CACHE TAGS
 // ============================================================================
 
-export const ANNOUNCEMENT_CACHE_TAGS = {
+const ANNOUNCEMENT_CACHE_TAGS = {
 	/** Active announcement for storefront */
 	ACTIVE: "active-announcement",
 	/** Admin list of all announcements */

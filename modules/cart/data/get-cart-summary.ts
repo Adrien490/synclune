@@ -8,8 +8,6 @@ import { cacheCartSummary } from "../constants/cache";
 import type { GetCartSummaryReturn } from "../types/cart.types";
 
 // Re-export pour compatibilité
-export type { CartSummary, GetCartSummaryReturn } from "../types/cart.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

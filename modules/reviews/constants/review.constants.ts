@@ -225,7 +225,7 @@ export const REVIEW_STATUS_LABELS = {
 /**
  * Variantes de badge pour l'affichage des statuts
  */
-export const REVIEW_STATUS_VARIANTS: Record<string, BadgeVariant> = {
+const REVIEW_STATUS_VARIANTS: Record<string, BadgeVariant> = {
 	PUBLISHED: "success",
 	HIDDEN: "secondary",
 } as const;
@@ -237,7 +237,7 @@ export const REVIEW_STATUS_VARIANTS: Record<string, BadgeVariant> = {
 /**
  * Options de tri disponibles
  */
-export const REVIEW_SORT_OPTIONS = {
+const REVIEW_SORT_OPTIONS = {
 	RECENT: "recent",
 	OLDEST: "oldest",
 	HIGHEST_RATING: "highest-rating",
@@ -247,7 +247,7 @@ export const REVIEW_SORT_OPTIONS = {
 /**
  * Labels français pour les options de tri
  */
-export const REVIEW_SORT_LABELS: Record<string, string> = {
+const REVIEW_SORT_LABELS: Record<string, string> = {
 	recent: "Plus récents",
 	oldest: "Plus anciens",
 	"highest-rating": "Meilleures notes",
@@ -257,7 +257,7 @@ export const REVIEW_SORT_LABELS: Record<string, string> = {
 /**
  * Tri par défaut
  */
-export const REVIEW_DEFAULT_SORT = REVIEW_SORT_OPTIONS.RECENT;
+const REVIEW_DEFAULT_SORT = REVIEW_SORT_OPTIONS.RECENT;
 
 // ============================================
 // Constantes unifiées (pattern get-products.ts)
@@ -298,7 +298,7 @@ export const GET_REVIEWS_SORT_FIELDS = [
 /**
  * Labels français pour les champs de tri
  */
-export const REVIEW_SORT_FIELD_LABELS: Record<string, string> = {
+const REVIEW_SORT_FIELD_LABELS: Record<string, string> = {
 	"createdAt-desc": "Plus récents",
 	"createdAt-asc": "Plus anciens",
 	"rating-desc": "Meilleures notes",
@@ -314,7 +314,7 @@ export const REVIEW_SORT_FIELD_LABELS: Record<string, string> = {
 /**
  * Configuration pour les rich snippets Google
  */
-export const REVIEW_SCHEMA_ORG = {
+const REVIEW_SCHEMA_ORG = {
 	"@type": "AggregateRating",
 	bestRating: REVIEW_CONFIG.MAX_RATING,
 	worstRating: REVIEW_CONFIG.MIN_RATING,

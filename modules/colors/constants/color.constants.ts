@@ -54,7 +54,7 @@ export const GET_COLORS_SORT_FIELDS = [
 	"skuCount-descending",
 ] as const;
 
-export const COLORS_SORT_OPTIONS = {
+const COLORS_SORT_OPTIONS = {
 	NAME_ASC: "name-ascending",
 	NAME_DESC: "name-descending",
 	SKU_COUNT_ASC: "skuCount-ascending",

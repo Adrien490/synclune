@@ -3,12 +3,12 @@
  * Fonctions pures sans effets de bord
  */
 
-export type ProductPublicationValidation = {
+type ProductPublicationValidation = {
 	isValid: boolean;
 	errorMessage: string | null;
 };
 
-export type ProductForPublicationCheck = {
+type ProductForPublicationCheck = {
 	title: string;
 	skus: {
 		id: string;
@@ -18,7 +18,7 @@ export type ProductForPublicationCheck = {
 	}[];
 };
 
-export type SkuForPublicCheck = {
+type SkuForPublicCheck = {
 	isActive: boolean;
 	inventory: number;
 };

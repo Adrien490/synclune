@@ -10,7 +10,7 @@ export type GetCartReturn = Prisma.CartGetPayload<{
 	select: typeof GET_CART_SELECT;
 }> | null;
 
-export type Cart = Prisma.CartGetPayload<{
+type Cart = Prisma.CartGetPayload<{
 	select: typeof GET_CART_SELECT;
 }>;
 

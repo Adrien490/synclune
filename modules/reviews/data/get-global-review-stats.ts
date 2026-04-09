@@ -4,8 +4,6 @@ import { REVIEWS_CACHE_TAGS } from "../constants/cache";
 import type { GlobalReviewStats } from "../types/review.types";
 
 // Re-export pour compatibilité
-export type { GlobalReviewStats };
-
 /**
  * Récupère les statistiques globales d'avis pour tout le site
  * Utilisé pour l'AggregateRating dans le schema LocalBusiness

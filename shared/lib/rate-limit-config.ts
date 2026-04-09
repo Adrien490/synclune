@@ -1481,7 +1481,7 @@ export const ADMIN_STORE_SETTINGS_LIMITS = {
 /**
  * Limite pour le rafraichissement du cache dashboard (admin)
  */
-export const ADMIN_DASHBOARD_REFRESH_LIMIT: RateLimitConfig = {
+const ADMIN_DASHBOARD_REFRESH_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(1),
 };

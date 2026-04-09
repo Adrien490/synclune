@@ -73,7 +73,7 @@ export const customizationSchema = z.object({
 	website: z.string().optional().or(z.literal("")),
 });
 
-export type CustomizationFormData = z.infer<typeof customizationSchema>;
+type CustomizationFormData = z.infer<typeof customizationSchema>;
 
 /**
  * Partial schema for validating localStorage draft data

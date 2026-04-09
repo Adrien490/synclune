@@ -76,7 +76,7 @@ export function getRecentProductsInvalidationTags(): string[] {
 /**
  * Cache tags pour les recherches recentes
  */
-export const RECENT_SEARCHES_CACHE_TAGS = {
+const RECENT_SEARCHES_CACHE_TAGS = {
 	/** Tag principal pour les recherches recentes */
 	LIST: "recent-searches-list",
 } as const;

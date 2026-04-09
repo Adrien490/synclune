@@ -142,7 +142,7 @@ interface UseIconProps {
 	variant?: "outline" | "filled";
 }
 
-export function SpriteIcon({
+function SpriteIcon({
 	name,
 	size = 24,
 	className = "",

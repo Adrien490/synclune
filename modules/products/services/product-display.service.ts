@@ -154,7 +154,7 @@ export function getPrimaryImageForList(product: ProductFromList): ExtractedImage
  * Vérifie la disponibilité du produit pour les données structurées
  * Système simplifié : InStock ou OutOfStock uniquement
  */
-export function getAvailabilityForList(product: ProductFromList): string {
+function getAvailabilityForList(product: ProductFromList): string {
 	const stockInfo = getStockInfoForList(product);
 	return stockInfo.status === "out_of_stock"
 		? "https://schema.org/OutOfStock"
@@ -166,8 +166,6 @@ export function getAvailabilityForList(product: ProductFromList): string {
 // ============================================================================
 
 import type { ProductCardData } from "../types/product.types";
-
-export type { ProductCardData } from "../types/product.types";
 
 /**
  * Récupère toutes les données nécessaires à ProductCard en une seule passe.

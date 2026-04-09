@@ -26,7 +26,7 @@ import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsSelectionToolbar } from "./discounts-selection-toolbar";
 import { CreateDiscountButton } from "./create-discount-button";
 
-export interface DiscountsMobileListProps {
+interface DiscountsMobileListProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
 	perPage: number;
 }

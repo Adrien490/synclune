@@ -38,4 +38,4 @@ export const emailOptionalSchema = z
 /**
  * Type infere du schema email
  */
-export type EmailInput = z.infer<typeof emailSchema>;
+type EmailInput = z.infer<typeof emailSchema>;

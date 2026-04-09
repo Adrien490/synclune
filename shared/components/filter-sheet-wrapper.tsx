@@ -18,8 +18,6 @@ import { cn } from "@/shared/utils/cn";
 import { Filter, LoaderCircle, X } from "lucide-react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
-export type { FilterSheetWrapperProps };
-
 export function FilterSheetWrapper({
 	activeFiltersCount = 0,
 	hasActiveFilters = false,

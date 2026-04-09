@@ -12,11 +12,9 @@ import type {
 	CookieConsentStoreProviderProps,
 } from "@/shared/types/store.types";
 
-export type CookieConsentStoreApi = ReturnType<typeof createCookieConsentStore>;
+type CookieConsentStoreApi = ReturnType<typeof createCookieConsentStore>;
 
-export const CookieConsentStoreContext = createContext<CookieConsentStoreApi | undefined>(
-	undefined,
-);
+const CookieConsentStoreContext = createContext<CookieConsentStoreApi | undefined>(undefined);
 
 export const CookieConsentStoreProvider = ({ children }: CookieConsentStoreProviderProps) => {
 	const [store] = useState(() => createCookieConsentStore());

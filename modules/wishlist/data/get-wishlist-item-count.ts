@@ -7,8 +7,6 @@ import { cacheWishlistCount } from "../constants/cache";
 import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
 
 // Re-export pour compatibilité
-export type { GetWishlistItemCountReturn } from "../types/wishlist.types";
-
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================

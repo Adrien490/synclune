@@ -13,4 +13,4 @@ export const recentProductSlugSchema = z
 	.max(100, "Slug trop long")
 	.regex(/^[a-z0-9-]+$/, "Format slug invalide");
 
-export type RecentProductSlug = z.infer<typeof recentProductSlugSchema>;
+type RecentProductSlug = z.infer<typeof recentProductSlugSchema>;

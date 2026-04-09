@@ -6,7 +6,7 @@ import { cacheProductDetail } from "@/modules/products/utils/cache.utils";
 // TYPES
 // ============================================================================
 
-export type ProductForDuplication = Awaited<ReturnType<typeof fetchProductForDuplication>>;
+type ProductForDuplication = Awaited<ReturnType<typeof fetchProductForDuplication>>;
 
 // ============================================================================
 // MAIN FUNCTION

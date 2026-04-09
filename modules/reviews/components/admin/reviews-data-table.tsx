@@ -22,7 +22,7 @@ import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types";
 import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
 import { ReviewRowActions } from "./review-row-actions";
 
-export interface ReviewsDataTableProps {
+interface ReviewsDataTableProps {
 	reviewsPromise: Promise<GetReviewsReturn>;
 	perPage?: number;
 }

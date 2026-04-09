@@ -5,8 +5,6 @@
 import { logger } from "@/shared/lib/logger";
 import type { ParsedMedia } from "../types/sku.types";
 
-export type { ParsedMedia } from "../types/sku.types";
-
 /**
  * Parse une image primaire depuis FormData
  * Les images sont envoyees en JSON string dans un champ hidden

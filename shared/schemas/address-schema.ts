@@ -54,4 +54,4 @@ export const addressSchema = z.object({
 		.refine(isValidPhoneNumber, { message: ADDRESS_ERROR_MESSAGES.INVALID_PHONE }),
 });
 
-export type AddressInput = z.infer<typeof addressSchema>;
+type AddressInput = z.infer<typeof addressSchema>;

@@ -24,11 +24,3 @@ export const AUTH_CACHE_TAGS = {
 } as const;
 
 // Re-exports pour retrocompatibilite
-export {
-	cacheAuthSessions,
-	cacheAuthSession,
-	cacheAuthVerifications,
-	getAuthSessionInvalidationTags,
-	getAuthVerificationInvalidationTags,
-	getUserProvidersInvalidationTags,
-} from "../utils/cache.utils";

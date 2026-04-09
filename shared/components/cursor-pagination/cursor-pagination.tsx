@@ -17,8 +17,6 @@ import { PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
 
-export type { CursorPaginationProps };
-
 const PAGINATION_BUTTON_CLASSES = [
 	"backdrop-blur-sm",
 	"border-primary/20",
@@ -227,14 +225,3 @@ export function CursorPagination({
 }
 
 // Re-export pagination utilities for convenience
-export {
-	DEFAULT_PER_PAGE,
-	DEFAULT_DIRECTION,
-	buildCursorPagination,
-	processCursorResults,
-} from "@/shared/lib/pagination";
-export type {
-	CursorPaginationParams,
-	PaginationInfo,
-	CursorPaginationResult,
-} from "@/shared/lib/pagination";

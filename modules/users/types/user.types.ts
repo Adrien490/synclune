@@ -28,7 +28,7 @@ export type GetUserReturn = Prisma.UserGetPayload<{
 
 export type UserFilters = z.infer<typeof userFiltersSchema>;
 
-export type UserSortField = (typeof GET_USERS_SORT_FIELDS)[number];
+type UserSortField = (typeof GET_USERS_SORT_FIELDS)[number];
 
 export type GetUsersParams = z.infer<typeof getUsersSchema>;
 
@@ -37,10 +37,10 @@ export type GetUsersReturn = {
 	pagination: PaginationInfo;
 };
 
-export type User = Prisma.UserGetPayload<{
+type User = Prisma.UserGetPayload<{
 	select: typeof GET_USERS_SELECT;
 }>;
 
-export type UserDetail = Prisma.UserGetPayload<{
+type UserDetail = Prisma.UserGetPayload<{
 	select: typeof GET_USER_SELECT;
 }>;

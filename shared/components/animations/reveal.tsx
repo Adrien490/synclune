@@ -5,8 +5,6 @@ import { useIsTouchDevice, useMounted } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 import type { RevealProps } from "./types";
 
-export type { RevealProps };
-
 /**
  * Animation reveal avec whileInView (scroll-triggered)
  * L'animation se déclenche quand l'élément entre dans le viewport
