@@ -5,11 +5,9 @@ import type { Metadata } from "next";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 import { getCurrentUser } from "@/modules/users/data/get-current-user";
 import { getUserProviders } from "@/modules/auth/data/get-user-providers";
-// import { getSubscriptionStatus } from "@/modules/newsletter/data/get-subscription-status";
 import { ProfileForm } from "@/modules/users/components/profile-form";
 import { SecuritySection } from "@/modules/users/components/security-section";
 import { GdprSection } from "@/modules/users/components/gdpr-section";
-// import { NewsletterSettingsCard } from "@/modules/newsletter/components/newsletter-settings-card";
 import { LogoutCard } from "@/modules/auth/components/logout-card";
 export const metadata: Metadata = {
 	title: "Paramètres",
@@ -42,12 +40,6 @@ export default async function SettingsPage() {
 				</div>
 
 				<div className="space-y-6">
-					{/* TODO: Réactiver l'inscription newsletter depuis le compte
-					<Suspense fallback={<NewsletterSkeleton />}>
-						<NewsletterWrapper />
-					</Suspense>
-					*/}
-
 					<LogoutCard />
 				</div>
 			</div>

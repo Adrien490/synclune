@@ -1,14 +1,17 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ResetPasswordForm } from "../reset-password-form";
 
 // Hoisted mocks
-const { mockState, mockAction, mockIsPending, mockShake } = vi.hoisted(() => ({
-	mockState: { value: undefined as any },
-	mockAction: vi.fn(),
-	mockIsPending: { value: false },
-	mockShake: { shake: false, onShakeComplete: vi.fn() },
-}));
+const { mockState, mockAction, mockIsPending, mockShake, mockCanSubmit, mockHandleSubmit } =
+	vi.hoisted(() => ({
+		mockState: { value: undefined as any },
+		mockAction: vi.fn(),
+		mockIsPending: { value: false },
+		mockShake: { shake: false, onShakeComplete: vi.fn() },
+		mockCanSubmit: { value: true },
+		mockHandleSubmit: vi.fn(),
+	}));
 
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: () => ({
@@ -42,15 +45,15 @@ vi.mock("@/shared/components/forms", () => ({
 		Subscribe: ({ children, selector }: any) => {
 			if (selector) {
 				const result = selector({
-					canSubmit: true,
+					canSubmit: mockCanSubmit.value,
 					isSubmitting: false,
 					values: { password: "test123" },
 				});
 				return <div>{children(Array.isArray(result) ? result : result)}</div>;
 			}
-			return <div>{children([true])}</div>;
+			return <div>{children([mockCanSubmit.value])}</div>;
 		},
-		handleSubmit: vi.fn(),
+		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
 	}),
 }));
@@ -133,6 +136,7 @@ beforeEach(() => {
 	mockState.value = undefined;
 	mockIsPending.value = false;
 	mockShake.shake = false;
+	mockCanSubmit.value = true;
 });
 
 describe("ResetPasswordForm", () => {
@@ -196,5 +200,92 @@ describe("ResetPasswordForm", () => {
 		render(<ResetPasswordForm token="abc123" />);
 		expect(screen.queryByTestId("success-alert")).toBeNull();
 		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	// ─── RequiredFieldsNote ───────────────────────────────────────────────────
+
+	it("renders RequiredFieldsNote", () => {
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByTestId("required-note")).toBeDefined();
+	});
+
+	// ─── Pending state ────────────────────────────────────────────────────────
+
+	it("shows 'Réinitialiser mon mot de passe' button text when pending", () => {
+		mockIsPending.value = true;
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByRole("button", { name: /réinitialiser mon mot de passe/i })).toBeDefined();
+	});
+
+	it("disables submit button when isPending", () => {
+		mockIsPending.value = true;
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("disables password field when isPending", () => {
+		mockIsPending.value = true;
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByTestId("field-password").querySelector("input")).toBeDisabled();
+	});
+
+	it("disables confirmPassword field when isPending", () => {
+		mockIsPending.value = true;
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByTestId("field-confirmPassword").querySelector("input")).toBeDisabled();
+	});
+
+	// ─── VALIDATION_ERROR filter ──────────────────────────────────────────────
+
+	it("does not show error alert for VALIDATION_ERROR status", () => {
+		mockState.value = { status: "validation_error", message: "Champ invalide" };
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+		expect(screen.queryByTestId("success-alert")).toBeNull();
+	});
+
+	// ─── canSubmit / SUCCESS disables button ──────────────────────────────────
+
+	it("disables submit button when canSubmit is false", () => {
+		mockCanSubmit.value = false;
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("disables submit button on SUCCESS state", () => {
+		mockState.value = { status: "success", message: "Mot de passe mis à jour avec succès." };
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByRole("button", { name: /mot de passe réinitialisé/i })).toBeDisabled();
+	});
+
+	// ─── PasswordStrengthIndicator ────────────────────────────────────────────
+
+	it("renders PasswordStrengthIndicator", () => {
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByTestId("password-strength")).toBeDefined();
+	});
+
+	// ─── Form submission ──────────────────────────────────────────────────────
+
+	it("calls form.handleSubmit when form is submitted", () => {
+		render(<ResetPasswordForm token="abc123" />);
+		const form = document.querySelector("form");
+		expect(form).not.toBeNull();
+		fireEvent.submit(form!);
+		expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
+	});
+
+	// ─── error alert accessibility ────────────────────────────────────────────
+
+	it("error alert has role='alert' for assertive announcement", () => {
+		mockState.value = { status: "error", message: "Token invalide" };
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByRole("alert")).toBeDefined();
+	});
+
+	it("success alert has role='status' for polite announcement", () => {
+		mockState.value = { status: "success", message: "Mot de passe mis à jour." };
+		render(<ResetPasswordForm token="abc123" />);
+		expect(screen.getByRole("status")).toBeDefined();
 	});
 });

@@ -159,6 +159,11 @@ describe("useDeleteOrder", () => {
 		expect(typeof result.current.isPending).toBe("boolean");
 	});
 
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useDeleteOrder());
+		expect(result.current.isPending).toBe(false);
+	});
+
 	it("calls onSuccess when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDeleteOrder({ onSuccess }));
@@ -181,6 +186,37 @@ describe("useDeleteOrder", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useDeleteOrder());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockDeleteOrder).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects the action result after invocation", async () => {
+		const { result } = renderHook(() => useDeleteOrder());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects error result on failure", async () => {
+		mockDeleteOrder.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useDeleteOrder());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
 });
 
 // ============================================================================
@@ -199,6 +235,21 @@ describe("useRefreshOrders", () => {
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
 		expect(typeof result.current.refresh).toBe("function");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useRefreshOrders());
+		expect(result.current.isPending).toBe(false);
+	});
+
+	it("calls the underlying action when refresh is invoked", async () => {
+		const { result } = renderHook(() => useRefreshOrders());
+
+		await act(async () => {
+			result.current.refresh();
+		});
+
+		expect(mockRefreshOrders).toHaveBeenCalledTimes(1);
 	});
 
 	it("calls onSuccess when refresh succeeds", async () => {
@@ -223,6 +274,16 @@ describe("useRefreshOrders", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useRefreshOrders());
+
+		await act(async () => {
+			result.current.refresh();
+		});
+
+		expect(mockRefreshOrders).toHaveBeenCalledTimes(1);
+	});
 });
 
 // ============================================================================
@@ -241,6 +302,11 @@ describe("useBulkCancelOrders", () => {
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
 		expect(typeof result.current.cancelOrders).toBe("function");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useBulkCancelOrders());
+		expect(result.current.isPending).toBe(false);
 	});
 
 	it("cancelOrders sends ids as JSON in FormData", async () => {
@@ -298,6 +364,17 @@ describe("useBulkCancelOrders", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("handles an empty ids array without crashing", async () => {
+		const { result } = renderHook(() => useBulkCancelOrders());
+
+		await act(async () => {
+			result.current.cancelOrders([]);
+		});
+
+		const formData = mockBulkCancelOrders.mock.calls[0]?.[1] as FormData;
+		expect(formData.get("ids")).toBe(JSON.stringify([]));
+	});
 });
 
 // ============================================================================
@@ -316,6 +393,11 @@ describe("useBulkDeleteOrders", () => {
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
 		expect(typeof result.current.deleteOrders).toBe("function");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useBulkDeleteOrders());
+		expect(result.current.isPending).toBe(false);
 	});
 
 	it("deleteOrders sends ids as JSON in FormData", async () => {
@@ -351,6 +433,17 @@ describe("useBulkDeleteOrders", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("handles a single id correctly", async () => {
+		const { result } = renderHook(() => useBulkDeleteOrders());
+
+		await act(async () => {
+			result.current.deleteOrders(["only-order"]);
+		});
+
+		const formData = mockBulkDeleteOrders.mock.calls[0]?.[1] as FormData;
+		expect(JSON.parse(formData.get("ids") as string)).toEqual(["only-order"]);
+	});
 });
 
 // ============================================================================
@@ -371,6 +464,11 @@ describe("useBulkMarkAsDelivered", () => {
 		expect(typeof result.current.markAsDelivered).toBe("function");
 	});
 
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useBulkMarkAsDelivered());
+		expect(result.current.isPending).toBe(false);
+	});
+
 	it("markAsDelivered sends ids as JSON and sendEmail=false in FormData", async () => {
 		const { result } = renderHook(() => useBulkMarkAsDelivered());
 
@@ -380,6 +478,17 @@ describe("useBulkMarkAsDelivered", () => {
 
 		const formData = mockBulkMarkAsDelivered.mock.calls[0]?.[1] as FormData;
 		expect(formData.get("ids")).toBe(JSON.stringify(["order-1", "order-2"]));
+		expect(formData.get("sendEmail")).toBe("false");
+	});
+
+	it("always sets sendEmail to false regardless of input", async () => {
+		const { result } = renderHook(() => useBulkMarkAsDelivered());
+
+		await act(async () => {
+			result.current.markAsDelivered(["order-1"]);
+		});
+
+		const formData = mockBulkMarkAsDelivered.mock.calls[0]?.[1] as FormData;
 		expect(formData.get("sendEmail")).toBe("false");
 	});
 
@@ -424,6 +533,11 @@ describe("useCancelOrder", () => {
 		expect(typeof result.current.isPending).toBe("boolean");
 	});
 
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useCancelOrder());
+		expect(result.current.isPending).toBe(false);
+	});
+
 	it("calls onSuccess when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useCancelOrder({ onSuccess }));
@@ -446,6 +560,37 @@ describe("useCancelOrder", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useCancelOrder());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockCancelOrder).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects the success result", async () => {
+		const { result } = renderHook(() => useCancelOrder());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects the error result on failure", async () => {
+		mockCancelOrder.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useCancelOrder());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
 });
 
 // ============================================================================
@@ -463,6 +608,11 @@ describe("useMarkAsDelivered", () => {
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useMarkAsDelivered());
+		expect(result.current.isPending).toBe(false);
 	});
 
 	it("calls onSuccess when action succeeds", async () => {
@@ -487,6 +637,37 @@ describe("useMarkAsDelivered", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useMarkAsDelivered());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockMarkAsDelivered).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects success result", async () => {
+		const { result } = renderHook(() => useMarkAsDelivered());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects error result on failure", async () => {
+		mockMarkAsDelivered.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useMarkAsDelivered());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
 });
 
 // ============================================================================
@@ -504,6 +685,11 @@ describe("useMarkAsPaid", () => {
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useMarkAsPaid());
+		expect(result.current.isPending).toBe(false);
 	});
 
 	it("calls onSuccess when action succeeds", async () => {
@@ -528,6 +714,37 @@ describe("useMarkAsPaid", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useMarkAsPaid());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockMarkAsPaid).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects success result", async () => {
+		const { result } = renderHook(() => useMarkAsPaid());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects error on failure", async () => {
+		mockMarkAsPaid.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useMarkAsPaid());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
 });
 
 // ============================================================================
@@ -545,6 +762,11 @@ describe("useMarkAsProcessing", () => {
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useMarkAsProcessing());
+		expect(result.current.isPending).toBe(false);
 	});
 
 	it("calls onSuccess when action succeeds", async () => {
@@ -569,6 +791,37 @@ describe("useMarkAsProcessing", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useMarkAsProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockMarkAsProcessing).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects success result", async () => {
+		const { result } = renderHook(() => useMarkAsProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects error on failure", async () => {
+		mockMarkAsProcessing.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useMarkAsProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
 });
 
 // ============================================================================
@@ -586,6 +839,11 @@ describe("useMarkAsReturned", () => {
 		expect(result.current.state).toBeUndefined();
 		expect(typeof result.current.action).toBe("function");
 		expect(typeof result.current.isPending).toBe("boolean");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useMarkAsReturned());
+		expect(result.current.isPending).toBe(false);
 	});
 
 	it("calls onSuccess when action succeeds", async () => {
@@ -610,6 +868,37 @@ describe("useMarkAsReturned", () => {
 
 		expect(onSuccess).not.toHaveBeenCalled();
 	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useMarkAsReturned());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockMarkAsReturned).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects success result", async () => {
+		const { result } = renderHook(() => useMarkAsReturned());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects error on failure", async () => {
+		mockMarkAsReturned.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useMarkAsReturned());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
 });
 
 // ============================================================================
@@ -631,10 +920,53 @@ describe("useMarkAsShippedForm", () => {
 		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
-	it("accepts an onSuccess callback option", () => {
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123" }));
+		expect(result.current.isPending).toBe(false);
+	});
+
+	it("formErrors is an empty array initially", () => {
+		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123" }));
+		expect(result.current.formErrors).toHaveLength(0);
+	});
+
+	it("accepts an onSuccess callback option without error", () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123", onSuccess }));
 		expect(result.current.form).toBeDefined();
+	});
+
+	it("calls onSuccess with message when action succeeds", async () => {
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123", onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).toHaveBeenCalledWith("Commande expédiée");
+	});
+
+	it("does not call onSuccess when action fails", async () => {
+		mockMarkAsShipped.mockResolvedValue(ERROR);
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123", onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	it("calls the action when action is invoked", async () => {
+		const { result } = renderHook(() => useMarkAsShippedForm({ orderId: "order-123" }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockMarkAsShipped).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -654,6 +986,11 @@ describe("useResendOrderEmail", () => {
 		expect(typeof result.current.isPending).toBe("boolean");
 	});
 
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useResendOrderEmail());
+		expect(result.current.isPending).toBe(false);
+	});
+
 	it("resend calls the action with orderId and emailType", async () => {
 		const { result } = renderHook(() => useResendOrderEmail());
 
@@ -662,6 +999,37 @@ describe("useResendOrderEmail", () => {
 		});
 
 		expect(mockResendOrderEmail).toHaveBeenCalledWith("order-123", "confirmation");
+	});
+
+	it("resend works with all supported email types", async () => {
+		const emailTypes = ["confirmation", "shipping", "delivery", "review-request"] as const;
+
+		for (const emailType of emailTypes) {
+			vi.clearAllMocks();
+			mockResendOrderEmail.mockResolvedValue(SUCCESS);
+			const { result } = renderHook(() => useResendOrderEmail());
+
+			await act(async () => {
+				result.current.resend("order-abc", emailType);
+			});
+
+			expect(mockResendOrderEmail).toHaveBeenCalledWith("order-abc", emailType);
+		}
+	});
+
+	it("can be called multiple times with different orders", async () => {
+		const { result } = renderHook(() => useResendOrderEmail());
+
+		await act(async () => {
+			result.current.resend("order-1", "confirmation");
+		});
+		await act(async () => {
+			result.current.resend("order-2", "shipping");
+		});
+
+		expect(mockResendOrderEmail).toHaveBeenCalledTimes(2);
+		expect(mockResendOrderEmail).toHaveBeenNthCalledWith(1, "order-1", "confirmation");
+		expect(mockResendOrderEmail).toHaveBeenNthCalledWith(2, "order-2", "shipping");
 	});
 });
 
@@ -682,6 +1050,11 @@ describe("useRevertToProcessing", () => {
 		expect(typeof result.current.isPending).toBe("boolean");
 	});
 
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useRevertToProcessing());
+		expect(result.current.isPending).toBe(false);
+	});
+
 	it("invokes the underlying action when action is called", async () => {
 		const { result } = renderHook(() => useRevertToProcessing());
 
@@ -690,6 +1063,40 @@ describe("useRevertToProcessing", () => {
 		});
 
 		expect(mockRevertToProcessing).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects success result", async () => {
+		const { result } = renderHook(() => useRevertToProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects error on failure", async () => {
+		mockRevertToProcessing.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useRevertToProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
+
+	it("can be called multiple times", async () => {
+		const { result } = renderHook(() => useRevertToProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockRevertToProcessing).toHaveBeenCalledTimes(2);
 	});
 });
 
@@ -712,6 +1119,16 @@ describe("useUpdateTrackingForm", () => {
 		expect(Array.isArray(result.current.formErrors)).toBe(true);
 	});
 
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123" }));
+		expect(result.current.isPending).toBe(false);
+	});
+
+	it("formErrors is an empty array initially", () => {
+		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123" }));
+		expect(result.current.formErrors).toHaveLength(0);
+	});
+
 	it("accepts initial tracking values without error", () => {
 		const { result } = renderHook(() =>
 			useUpdateTrackingForm({
@@ -728,6 +1145,39 @@ describe("useUpdateTrackingForm", () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123", onSuccess }));
 		expect(result.current.form).toBeDefined();
+	});
+
+	it("calls onSuccess with message when action succeeds", async () => {
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123", onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).toHaveBeenCalledWith("Tracking mis à jour");
+	});
+
+	it("does not call onSuccess when action fails", async () => {
+		mockUpdateTracking.mockResolvedValue(ERROR);
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123", onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	it("calls the action when action is invoked", async () => {
+		const { result } = renderHook(() => useUpdateTrackingForm({ orderId: "order-123" }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockUpdateTracking).toHaveBeenCalledTimes(1);
 	});
 });
 
@@ -761,6 +1211,16 @@ describe("useOrderNotes", () => {
 	it("isPending is false initially", () => {
 		const { result } = renderHook(() => useOrderNotes());
 		expect(result.current.isPending).toBe(false);
+	});
+
+	it("fetchError is null initially", () => {
+		const { result } = renderHook(() => useOrderNotes());
+		expect(result.current.fetchError).toBeNull();
+	});
+
+	it("notes is empty array initially", () => {
+		const { result } = renderHook(() => useOrderNotes());
+		expect(result.current.notes).toEqual([]);
 	});
 
 	it("reset clears notes and fetchError", async () => {
@@ -814,6 +1274,28 @@ describe("useOrderNotes", () => {
 		expect(result.current.fetchError).toBeNull();
 	});
 
+	it("loadNotes clears fetchError before fetching", async () => {
+		// First call produces an error
+		mockGetOrderNotes.mockResolvedValueOnce({ error: "Network error" });
+		// Second call succeeds
+		mockGetOrderNotes.mockResolvedValueOnce({ notes: [] });
+
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.loadNotes("order-123");
+		});
+
+		expect(result.current.fetchError).toBe("Network error");
+
+		await act(async () => {
+			result.current.loadNotes("order-123");
+		});
+
+		// Error should be cleared before the second fetch resolves
+		expect(result.current.fetchError).toBeNull();
+	});
+
 	it("reset after a fetch error clears the error", async () => {
 		mockGetOrderNotes.mockResolvedValue({ error: "Server error" });
 
@@ -830,5 +1312,91 @@ describe("useOrderNotes", () => {
 		});
 
 		expect(result.current.fetchError).toBeNull();
+	});
+
+	it("add calls addOrderNote with correct orderId and content", async () => {
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.add("order-123", "A new note");
+		});
+
+		expect(mockAddOrderNote).toHaveBeenCalledWith("order-123", "A new note");
+	});
+
+	it("add calls onSuccess callback when action succeeds", async () => {
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.add("order-123", "Note content", onSuccess);
+		});
+
+		expect(onSuccess).toHaveBeenCalled();
+	});
+
+	it("add does not call onSuccess when action fails", async () => {
+		mockAddOrderNote.mockResolvedValue(ERROR);
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.add("order-123", "Note content", onSuccess);
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	it("remove calls deleteOrderNote with correct noteId", async () => {
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.remove("note-abc");
+		});
+
+		expect(mockDeleteOrderNote).toHaveBeenCalledWith("note-abc");
+	});
+
+	it("remove calls onSuccess callback when action succeeds", async () => {
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.remove("note-abc", onSuccess);
+		});
+
+		expect(onSuccess).toHaveBeenCalled();
+	});
+
+	it("remove does not call onSuccess when action fails", async () => {
+		mockDeleteOrderNote.mockResolvedValue(ERROR);
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.remove("note-abc", onSuccess);
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	it("add works without an onSuccess callback", async () => {
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.add("order-123", "Note without callback");
+		});
+
+		expect(mockAddOrderNote).toHaveBeenCalledTimes(1);
+	});
+
+	it("remove works without an onSuccess callback", async () => {
+		const { result } = renderHook(() => useOrderNotes());
+
+		await act(async () => {
+			result.current.remove("note-xyz");
+		});
+
+		expect(mockDeleteOrderNote).toHaveBeenCalledTimes(1);
 	});
 });

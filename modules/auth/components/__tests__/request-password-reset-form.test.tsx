@@ -1,14 +1,17 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RequestPasswordResetForm } from "../request-password-reset-form";
 
 // Hoisted mocks
-const { mockState, mockAction, mockIsPending, mockShake } = vi.hoisted(() => ({
-	mockState: { value: undefined as any },
-	mockAction: vi.fn(),
-	mockIsPending: { value: false },
-	mockShake: { shake: false, onShakeComplete: vi.fn() },
-}));
+const { mockState, mockAction, mockIsPending, mockShake, mockCanSubmit, mockHandleSubmit } =
+	vi.hoisted(() => ({
+		mockState: { value: undefined as any },
+		mockAction: vi.fn(),
+		mockIsPending: { value: false },
+		mockShake: { shake: false, onShakeComplete: vi.fn() },
+		mockCanSubmit: { value: true },
+		mockHandleSubmit: vi.fn(),
+	}));
 
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: () => ({
@@ -41,12 +44,16 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		Subscribe: ({ children, selector }: any) => {
 			if (selector) {
-				const result = selector({ canSubmit: true, isSubmitting: false, values: { email: "" } });
+				const result = selector({
+					canSubmit: mockCanSubmit.value,
+					isSubmitting: false,
+					values: { email: "" },
+				});
 				return <div>{children(Array.isArray(result) ? result : result)}</div>;
 			}
-			return <div>{children([true])}</div>;
+			return <div>{children([mockCanSubmit.value])}</div>;
 		},
-		handleSubmit: vi.fn(),
+		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
 	}),
 }));
@@ -121,6 +128,7 @@ beforeEach(() => {
 	mockState.value = undefined;
 	mockIsPending.value = false;
 	mockShake.shake = false;
+	mockCanSubmit.value = true;
 });
 
 describe("RequestPasswordResetForm", () => {
@@ -178,5 +186,72 @@ describe("RequestPasswordResetForm", () => {
 	it("renders RequiredFieldsNote", () => {
 		render(<RequestPasswordResetForm />);
 		expect(screen.getByTestId("required-note")).toBeDefined();
+	});
+
+	// ─── Disabled states on SUCCESS ───────────────────────────────────────────
+
+	it("disables email field when state is SUCCESS", () => {
+		mockState.value = { status: "success", message: "Email envoyé avec succès." };
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByTestId("field-email").querySelector("input")).toBeDisabled();
+	});
+
+	it("disables submit button when state is SUCCESS", () => {
+		mockState.value = { status: "success", message: "Email envoyé avec succès." };
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByRole("button", { name: /email envoyé/i })).toBeDisabled();
+	});
+
+	// ─── VALIDATION_ERROR and INITIAL filters ─────────────────────────────────
+
+	it("does not show error alert for VALIDATION_ERROR status", () => {
+		mockState.value = { status: "validation_error", message: "Champ invalide" };
+		render(<RequestPasswordResetForm />);
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+		expect(screen.queryByTestId("success-alert")).toBeNull();
+	});
+
+	it("does not show error alert for INITIAL status", () => {
+		mockState.value = { status: "initial", message: "Chargement..." };
+		render(<RequestPasswordResetForm />);
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	// ─── canSubmit ────────────────────────────────────────────────────────────
+
+	it("disables submit button when canSubmit is false", () => {
+		mockCanSubmit.value = false;
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("disables email field when isPending", () => {
+		mockIsPending.value = true;
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByTestId("field-email").querySelector("input")).toBeDisabled();
+	});
+
+	// ─── Accessibility ────────────────────────────────────────────────────────
+
+	it("success alert has role='status' for polite announcement", () => {
+		mockState.value = { status: "success", message: "Email envoyé avec succès." };
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByRole("status")).toBeDefined();
+	});
+
+	it("error alert has role='alert' for assertive announcement", () => {
+		mockState.value = { status: "error", message: "Adresse email introuvable" };
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByRole("alert")).toBeDefined();
+	});
+
+	// ─── Form submission ──────────────────────────────────────────────────────
+
+	it("calls form.handleSubmit when form is submitted", () => {
+		render(<RequestPasswordResetForm />);
+		const form = document.querySelector("form");
+		expect(form).not.toBeNull();
+		fireEvent.submit(form!);
+		expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
 	});
 });

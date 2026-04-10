@@ -6,8 +6,8 @@ import { render, screen, cleanup } from "@testing-library/react";
 // ============================================================================
 
 vi.mock("@/shared/components/animations", () => ({
-	Fade: ({ children, className }: any) => (
-		<div data-testid="fade" className={className}>
+	Fade: ({ children, className, delay }: any) => (
+		<div data-testid="fade" className={className} data-delay={delay}>
 			{children}
 		</div>
 	),
@@ -60,5 +60,27 @@ describe("AuthFadeIn", () => {
 		);
 
 		expect(screen.getByTestId("fade")).toBeInTheDocument();
+	});
+
+	// ─── Delay prop ───────────────────────────────────────────────────────────
+
+	it("should pass default delay of 0 to Fade when not provided", () => {
+		render(
+			<AuthFadeIn>
+				<span>Default delay</span>
+			</AuthFadeIn>,
+		);
+
+		expect(screen.getByTestId("fade")).toHaveAttribute("data-delay", "0");
+	});
+
+	it("should pass custom delay to Fade when provided", () => {
+		render(
+			<AuthFadeIn delay={0.3}>
+				<span>Custom delay</span>
+			</AuthFadeIn>,
+		);
+
+		expect(screen.getByTestId("fade")).toHaveAttribute("data-delay", "0.3");
 	});
 });

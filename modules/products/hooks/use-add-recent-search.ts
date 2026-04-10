@@ -18,7 +18,7 @@ interface UseAddRecentSearchOptions {
  * @example
  * ```tsx
  * const { add, isPending } = useAddRecentSearch({
- *   onSuccess: (searches) => console.log("Nouveau:", searches),
+ *   onSuccess: (searches) => toast.success(`${searches.length} recherche(s) enregistree(s)`),
  * })
  *
  * <Button onClick={() => add("bague argent")} disabled={isPending}>

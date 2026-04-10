@@ -266,9 +266,8 @@ export async function sendAdminDisputeAlert({
 /**
  * Alerte admin : Echec generation facture (Conformite legale)
  *
- * TODO: Invoice generation feature is not yet implemented.
- * This function is preparatory code for when automated invoice
- * generation is added. It will be wired up at that time.
+ * Preparatory code for automated invoice generation.
+ * Will be wired up when the invoice feature is implemented.
  */
 export async function sendAdminInvoiceFailedAlert({
 	orderNumber,

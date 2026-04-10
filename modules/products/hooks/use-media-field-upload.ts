@@ -9,7 +9,7 @@ interface MediaValue {
 	blurDataUrl?: string;
 }
 
-interface MediaField {
+export interface MediaField {
 	state: { value: MediaValue[] };
 	pushValue: (value: MediaValue) => void;
 }

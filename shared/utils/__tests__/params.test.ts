@@ -25,4 +25,16 @@ describe("getFirstParam", () => {
 	it("returns single-element array's value", () => {
 		expect(getFirstParam(["only"])).toBe("only");
 	});
+
+	it("ignores subsequent array elements", () => {
+		expect(getFirstParam(["first", "second", "third"])).toBe("first");
+	});
+
+	it("returns numeric-looking string as-is", () => {
+		expect(getFirstParam("42")).toBe("42");
+	});
+
+	it("returns empty string from single-element array", () => {
+		expect(getFirstParam([""])).toBe("");
+	});
 });

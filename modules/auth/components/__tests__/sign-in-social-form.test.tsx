@@ -114,4 +114,24 @@ describe("SignInSocialForm", () => {
 		const button = screen.getByRole("button");
 		expect(button).toBeDisabled();
 	});
+
+	// ─── No alert for SUCCESS state ───────────────────────────────────────────
+
+	it("should not show error alert when state status is SUCCESS", () => {
+		mockState.value = { status: "SUCCESS", message: "Connexion réussie" };
+
+		render(<SignInSocialForm callbackURL="/boutique" />);
+
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	// ─── No error alert when state has no message ─────────────────────────────
+
+	it("should not show error alert when state has no message", () => {
+		mockState.value = { status: "ERROR", message: "" };
+
+		render(<SignInSocialForm callbackURL="/boutique" />);
+
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
 });

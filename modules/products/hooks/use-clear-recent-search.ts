@@ -21,7 +21,7 @@ interface UseClearRecentSearchesOptions {
  * ```tsx
  * const { clear, searches, isPending } = useClearRecentSearches({
  *   initialSearches: ["bague", "collier"],
- *   onSuccess: () => console.log("Tout efface"),
+ *   onSuccess: () => toast.success("Tout efface"),
  * })
  *
  * <Button onClick={clear} disabled={isPending}>

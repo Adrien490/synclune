@@ -6,7 +6,7 @@ See [README.md](./README.md#demarrage-rapide) for initial setup.
 
 ## Architecture
 
-The codebase follows **Domain-Driven Design** with 23 modules under `modules/`. Each module has a layered structure:
+The codebase follows **Domain-Driven Design** with 26 modules under `modules/`. Each module has a layered structure:
 
 | Layer         | Purpose                    | Rules                                             |
 | ------------- | -------------------------- | ------------------------------------------------- |
@@ -126,6 +126,16 @@ Husky + lint-staged runs automatically on commit:
 
 - ESLint with `--fix` on `.ts/.tsx/.js/.jsx` files
 - Prettier on all supported files
+
+## Branch Protection
+
+The `main` branch is protected with the following rules:
+
+- **Required status checks**: `quality`, `tests`, `e2e-smoke` must pass before merge
+- **Required reviews**: At least 1 approving review
+- **Force push**: Disabled on `main`
+- **Up-to-date branches**: Required before merging
+- **Squash merge**: Default merge strategy for clean linear history
 
 ## Testing
 

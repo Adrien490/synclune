@@ -44,4 +44,12 @@ describe("SignUpLink", () => {
 			`/inscription?callbackURL=${encodeURIComponent("/boutique/produits")}`,
 		);
 	});
+
+	// ─── Rendering ────────────────────────────────────────────────────────────
+
+	it("should render 'Créez votre compte' link text", () => {
+		render(<SignUpLink />);
+
+		expect(screen.getByRole("link", { name: "Créez votre compte" })).toBeInTheDocument();
+	});
 });

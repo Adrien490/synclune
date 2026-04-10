@@ -1,15 +1,7 @@
 "use client";
 
-import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
-import {
-	Accordion,
-	AccordionContent,
-	AccordionItem,
-	AccordionTrigger,
-} from "@/shared/components/ui/accordion";
-import { Badge } from "@/shared/components/ui/badge";
-import { Input } from "@/shared/components/ui/input";
+import { Accordion } from "@/shared/components/ui/accordion";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -24,7 +16,17 @@ import {
 } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
-import { RatingStars } from "@/shared/components/rating-stars";
+import { SectionHeader } from "./filter-section-header";
+import { TypeFilterSection } from "./filter-section-types";
+import { ColorFilterSection } from "./filter-section-colors";
+import { MaterialFilterSection } from "./filter-section-materials";
+import { RatingFilterSection } from "./filter-section-rating";
+import { AvailabilityFilterSection } from "./filter-section-availability";
+import {
+	AccordionContent,
+	AccordionItem,
+	AccordionTrigger,
+} from "@/shared/components/ui/accordion";
 import {
 	parseFilterValuesFromURL,
 	buildFilterURL,
@@ -35,26 +37,22 @@ import {
 	getCategorySlugFromPath,
 	type FilterFormData,
 } from "@/modules/products/services/product-filter-params.service";
-import { cn } from "@/shared/utils/cn";
-import { Check, Search, X } from "lucide-react";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
-import { isLightColor, getContrastTextColor } from "@/modules/colors/utils/color-contrast.utils";
+import type { ProductTypeOption } from "./filter-section-types";
 
 // ============================================================================
-// TYPES
+// CONSTANTS
 // ============================================================================
-
-interface ProductTypeOption {
-	slug: string;
-	label: string;
-	_count?: { products: number };
-}
 
 const EMPTY_COLORS: GetColorsReturn["colors"] = [];
 const EMPTY_MATERIALS: MaterialOption[] = [];
 const EMPTY_PRODUCT_TYPES: ProductTypeOption[] = [];
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 interface FilterSheetProps {
 	colors: GetColorsReturn["colors"];
@@ -63,83 +61,6 @@ interface FilterSheetProps {
 	maxPriceInEuros: number;
 	/** Type de produit actif (depuis le path segment /produits/[type]) */
 	activeProductTypeSlug?: string;
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-const SEARCH_THRESHOLD = 8;
-
-// ============================================================================
-// SUB-COMPONENTS
-// ============================================================================
-
-function SectionHeader({
-	label,
-	count,
-	badgeContent,
-	onReset,
-}: {
-	label: string;
-	count?: number;
-	badgeContent?: React.ReactNode;
-	onReset?: () => void;
-}) {
-	return (
-		<div className="flex flex-1 items-center gap-2">
-			<span>{label}</span>
-			{count !== undefined && count > 0 && (
-				<Badge variant="secondary" className="h-5 px-1.5 text-xs font-semibold">
-					{badgeContent ?? count}
-				</Badge>
-			)}
-			{onReset && count !== undefined && count > 0 && (
-				<div
-					role="button"
-					tabIndex={0}
-					onClick={(e) => {
-						e.stopPropagation();
-						onReset();
-					}}
-					onKeyDown={(e) => {
-						if (e.key === "Enter" || e.key === " ") {
-							e.preventDefault();
-							e.stopPropagation();
-							onReset();
-						}
-					}}
-					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors"
-					aria-label={`Effacer le filtre ${label}`}
-				>
-					<X className="h-3 w-3" />
-				</div>
-			)}
-		</div>
-	);
-}
-
-function SectionSearch({
-	value,
-	onChange,
-	placeholder = "Rechercher...",
-}: {
-	value: string;
-	onChange: (value: string) => void;
-	placeholder?: string;
-}) {
-	return (
-		<div className="relative mb-2">
-			<Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
-			<Input
-				type="text"
-				value={value}
-				onChange={(e) => onChange(e.target.value)}
-				placeholder={placeholder}
-				className="h-10 pr-3 pl-8 text-xs"
-			/>
-		</div>
-	);
 }
 
 // ============================================================================
@@ -272,12 +193,6 @@ export function ProductFilterSheet({
 		if (initialValues.inStockOnly || initialValues.onSale) {
 			sections.push("availability");
 		}
-		if (
-			initialValues.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
-			initialValues.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
-		) {
-			// Already included by default
-		}
 		return sections;
 	})();
 
@@ -315,46 +230,24 @@ export function ProductFilterSheet({
 					aria-label="Filtres de recherche"
 				>
 					{/* 1. Types de bijoux */}
-					{sortedProductTypes.length > 0 && (
-						<form.Field name="productTypes" mode="array">
-							{(field) => (
-								<AccordionItem value="types">
-									<AccordionTrigger headingLevel={3} className="hover:no-underline">
-										<SectionHeader
-											label="Types de bijoux"
-											count={field.state.value.length}
-											onReset={() => field.handleChange([])}
-										/>
-									</AccordionTrigger>
-									<AccordionContent>
-										<div className="space-y-1">
-											{sortedProductTypes.map((type) => {
-												const isSelected = field.state.value.includes(type.slug);
-												return (
-													<CheckboxFilterItem
-														key={type.slug}
-														id={`type-${type.slug}`}
-														checked={isSelected}
-														onCheckedChange={(checked) => {
-															if (checked && !isSelected) {
-																field.pushValue(type.slug);
-															} else if (!checked && isSelected) {
-																const index = field.state.value.indexOf(type.slug);
-																field.removeValue(index);
-															}
-														}}
-														count={type._count?.products}
-													>
-														{type.label}
-													</CheckboxFilterItem>
-												);
-											})}
-										</div>
-									</AccordionContent>
-								</AccordionItem>
-							)}
-						</form.Field>
-					)}
+					<form.Field name="productTypes" mode="array">
+						{(field) => (
+							<TypeFilterSection
+								productTypes={sortedProductTypes}
+								selectedValues={field.state.value}
+								onToggle={(slug, checked) => {
+									const isSelected = field.state.value.includes(slug);
+									if (checked && !isSelected) {
+										field.pushValue(slug);
+									} else if (!checked && isSelected) {
+										const index = field.state.value.indexOf(slug);
+										field.removeValue(index);
+									}
+								}}
+								onReset={() => field.handleChange([])}
+							/>
+						)}
+					</form.Field>
 
 					{/* 2. Prix */}
 					<form.Field name="priceRange">
@@ -388,221 +281,72 @@ export function ProductFilterSheet({
 					</form.Field>
 
 					{/* 3. Couleurs */}
-					{sortedColors.length > 0 && (
-						<form.Field name="colors" mode="array">
-							{(field) => (
-								<AccordionItem value="colors">
-									<AccordionTrigger headingLevel={3} className="hover:no-underline">
-										<SectionHeader
-											label="Couleurs"
-											count={field.state.value.length}
-											onReset={() => field.handleChange([])}
-										/>
-									</AccordionTrigger>
-									<AccordionContent>
-										{sortedColors.length > SEARCH_THRESHOLD && (
-											<SectionSearch
-												value={colorSearch}
-												onChange={setColorSearch}
-												placeholder="Rechercher une couleur..."
-											/>
-										)}
-										<div className="space-y-1">
-											{filteredColors.length === 0 ? (
-												<p className="text-muted-foreground py-2 text-center text-xs">
-													Aucun résultat
-												</p>
-											) : (
-												filteredColors.map((color) => {
-													const isSelected = field.state.value.includes(color.slug);
-													const light = isLightColor(color.hex, 0.85);
-													return (
-														<CheckboxFilterItem
-															key={color.slug}
-															id={`color-${color.slug}`}
-															checked={isSelected}
-															onCheckedChange={(checked) => {
-																if (checked && !isSelected) {
-																	field.pushValue(color.slug);
-																} else if (!checked && isSelected) {
-																	const index = field.state.value.indexOf(color.slug);
-																	field.removeValue(index);
-																}
-															}}
-															indicator={
-																<span
-																	className={cn(
-																		"relative h-6 w-6 rounded-full shadow-sm",
-																		light ? "border-border border" : "border-border/50 border",
-																		isSelected
-																			? "ring-primary ring-2 ring-offset-1"
-																			: "ring-1 ring-black/5 ring-inset",
-																	)}
-																	style={{
-																		backgroundColor: color.hex,
-																	}}
-																>
-																	{isSelected && (
-																		<Check
-																			className="absolute inset-0 m-auto h-3 w-3"
-																			style={{
-																				color: getContrastTextColor(color.hex),
-																			}}
-																			strokeWidth={3}
-																		/>
-																	)}
-																</span>
-															}
-															count={color._count.skus}
-														>
-															{color.name}
-														</CheckboxFilterItem>
-													);
-												})
-											)}
-										</div>
-									</AccordionContent>
-								</AccordionItem>
-							)}
-						</form.Field>
-					)}
+					<form.Field name="colors" mode="array">
+						{(field) => (
+							<ColorFilterSection
+								colors={sortedColors}
+								filteredColors={filteredColors}
+								selectedValues={field.state.value}
+								colorSearch={colorSearch}
+								onColorSearchChange={setColorSearch}
+								onToggle={(slug, checked) => {
+									const isSelected = field.state.value.includes(slug);
+									if (checked && !isSelected) {
+										field.pushValue(slug);
+									} else if (!checked && isSelected) {
+										const index = field.state.value.indexOf(slug);
+										field.removeValue(index);
+									}
+								}}
+								onReset={() => field.handleChange([])}
+							/>
+						)}
+					</form.Field>
 
-					{/* 4. Matériaux */}
-					{sortedMaterials.length > 0 && (
-						<form.Field name="materials" mode="array">
-							{(field) => (
-								<AccordionItem value="materials">
-									<AccordionTrigger headingLevel={3} className="hover:no-underline">
-										<SectionHeader
-											label="Matériaux"
-											count={field.state.value.length}
-											onReset={() => field.handleChange([])}
-										/>
-									</AccordionTrigger>
-									<AccordionContent>
-										{sortedMaterials.length > SEARCH_THRESHOLD && (
-											<SectionSearch
-												value={materialSearch}
-												onChange={setMaterialSearch}
-												placeholder="Rechercher un matériau..."
-											/>
-										)}
-										<div className="space-y-1">
-											{filteredMaterials.length === 0 ? (
-												<p className="text-muted-foreground py-2 text-center text-xs">
-													Aucun résultat
-												</p>
-											) : (
-												filteredMaterials.map((material) => {
-													const isSelected = field.state.value.includes(material.slug);
-													return (
-														<CheckboxFilterItem
-															key={material.slug}
-															id={`material-${material.slug}`}
-															checked={isSelected}
-															onCheckedChange={(checked) => {
-																if (checked && !isSelected) {
-																	field.pushValue(material.slug);
-																} else if (!checked && isSelected) {
-																	const index = field.state.value.indexOf(material.slug);
-																	field.removeValue(index);
-																}
-															}}
-															count={material._count?.skus}
-														>
-															{material.name}
-														</CheckboxFilterItem>
-													);
-												})
-											)}
-										</div>
-									</AccordionContent>
-								</AccordionItem>
-							)}
-						</form.Field>
-					)}
+					{/* 4. Materiaux */}
+					<form.Field name="materials" mode="array">
+						{(field) => (
+							<MaterialFilterSection
+								materials={sortedMaterials}
+								filteredMaterials={filteredMaterials}
+								selectedValues={field.state.value}
+								materialSearch={materialSearch}
+								onMaterialSearchChange={setMaterialSearch}
+								onToggle={(slug, checked) => {
+									const isSelected = field.state.value.includes(slug);
+									if (checked && !isSelected) {
+										field.pushValue(slug);
+									} else if (!checked && isSelected) {
+										const index = field.state.value.indexOf(slug);
+										field.removeValue(index);
+									}
+								}}
+								onReset={() => field.handleChange([])}
+							/>
+						)}
+					</form.Field>
 
 					{/* 5. Notes clients */}
 					<form.Field name="ratingMin">
 						{(field) => (
-							<AccordionItem value="rating">
-								<AccordionTrigger headingLevel={3} className="hover:no-underline">
-									<SectionHeader
-										label="Notes clients"
-										count={field.state.value !== null ? 1 : 0}
-										badgeContent={
-											field.state.value !== null ? `${field.state.value}+ ★` : undefined
-										}
-										onReset={() => field.handleChange(null)}
-									/>
-								</AccordionTrigger>
-								<AccordionContent>
-									<div className="space-y-1">
-										{[5, 4, 3, 2, 1].map((stars) => {
-											const isSelected = field.state.value === stars;
-											return (
-												<CheckboxFilterItem
-													key={stars}
-													id={`rating-${stars}`}
-													checked={isSelected}
-													onCheckedChange={(checked) => {
-														field.handleChange(checked ? stars : null);
-													}}
-													indicator={<RatingStars rating={stars} size="sm" />}
-												>
-													{stars === 1 ? "1 étoile et plus" : `${stars} étoiles et plus`}
-												</CheckboxFilterItem>
-											);
-										})}
-									</div>
-								</AccordionContent>
-							</AccordionItem>
+							<RatingFilterSection
+								selectedValue={field.state.value}
+								onChange={field.handleChange}
+							/>
 						)}
 					</form.Field>
 
-					{/* 6. Disponibilité */}
-					<AccordionItem value="availability" className="border-b-0">
-						<AccordionTrigger headingLevel={3} className="hover:no-underline">
-							<SectionHeader
-								label="Disponibilité"
-								count={(form.state.values.inStockOnly ? 1 : 0) + (form.state.values.onSale ? 1 : 0)}
-								onReset={() => {
-									form.setFieldValue("inStockOnly", false);
-									form.setFieldValue("onSale", false);
-								}}
-							/>
-						</AccordionTrigger>
-						<AccordionContent>
-							<div className="space-y-1">
-								<form.Field name="inStockOnly">
-									{(field) => (
-										<CheckboxFilterItem
-											id="filter-in-stock"
-											checked={field.state.value}
-											onCheckedChange={(checked) => {
-												field.handleChange(checked === true);
-											}}
-										>
-											En stock uniquement
-										</CheckboxFilterItem>
-									)}
-								</form.Field>
-								<form.Field name="onSale">
-									{(field) => (
-										<CheckboxFilterItem
-											id="filter-on-sale"
-											checked={field.state.value}
-											onCheckedChange={(checked) => {
-												field.handleChange(checked === true);
-											}}
-										>
-											En promotion
-										</CheckboxFilterItem>
-									)}
-								</form.Field>
-							</div>
-						</AccordionContent>
-					</AccordionItem>
+					{/* 6. Disponibilite */}
+					<AvailabilityFilterSection
+						inStockOnly={form.state.values.inStockOnly}
+						onSale={form.state.values.onSale}
+						onInStockChange={(checked) => form.setFieldValue("inStockOnly", checked)}
+						onSaleChange={(checked) => form.setFieldValue("onSale", checked)}
+						onReset={() => {
+							form.setFieldValue("inStockOnly", false);
+							form.setFieldValue("onSale", false);
+						}}
+					/>
 				</Accordion>
 			</form>
 		</FilterSheetWrapper>

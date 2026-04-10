@@ -2,7 +2,7 @@ import { renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ============================================================================
-// Hoisted mocks
+// Hoisted mocks — must be declared before any imports that use them
 // ============================================================================
 
 const {
@@ -22,6 +22,15 @@ const {
 	mockDuplicateDiscount: vi.fn(),
 	mockRefreshDiscounts: vi.fn(),
 }));
+
+const { mockToastSuccess, mockToastError, mockToastLoading, mockToastDismiss, mockToastWarning } =
+	vi.hoisted(() => ({
+		mockToastSuccess: vi.fn(),
+		mockToastError: vi.fn(),
+		mockToastLoading: vi.fn(() => "loading-id"),
+		mockToastDismiss: vi.fn(),
+		mockToastWarning: vi.fn(),
+	}));
 
 vi.mock("@/modules/discounts/actions/apply-discount-code", () => ({
 	applyDiscountCode: mockApplyDiscountCode,
@@ -47,12 +56,17 @@ vi.mock("@/modules/discounts/actions/refresh-discounts", () => ({
 
 vi.mock("sonner", () => ({
 	toast: {
-		loading: vi.fn(),
-		dismiss: vi.fn(),
-		success: vi.fn(),
-		error: vi.fn(),
-		warning: vi.fn(),
+		loading: mockToastLoading,
+		dismiss: mockToastDismiss,
+		success: mockToastSuccess,
+		error: mockToastError,
+		warning: mockToastWarning,
 	},
+}));
+
+// Prevent redirect errors from propagating in test environment
+vi.mock("next/dist/client/components/redirect-error", () => ({
+	isRedirectError: () => false,
 }));
 
 // ============================================================================
@@ -66,13 +80,15 @@ import { useBulkDeleteDiscounts } from "../use-bulk-delete-discounts";
 import { useBulkToggleDiscountStatus } from "../use-bulk-toggle-discount-status";
 import { useDuplicateDiscount } from "../use-duplicate-discount";
 import { useRefreshDiscounts } from "../use-refresh-discounts";
+import { ActionStatus } from "@/shared/types/server-action";
 
 // ============================================================================
-// Helpers
+// Shared fixtures
 // ============================================================================
 
 const SUCCESS = { status: "success" as const, message: "OK" };
 const ERROR = { status: "error" as const, message: "Failed" };
+const WARNING = { status: "warning" as const, message: "Attention" };
 
 // ============================================================================
 // useApplyDiscountCode
@@ -84,114 +100,263 @@ describe("useApplyDiscountCode", () => {
 		mockApplyDiscountCode.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns applyCode, state, action, and isPending", () => {
-		const { result } = renderHook(() => useApplyDiscountCode());
-		expect(typeof result.current.applyCode).toBe("function");
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
+
+	describe("return value shape", () => {
+		it("returns applyCode, state, action, and isPending", () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			expect(typeof result.current.applyCode).toBe("function");
+			expect(typeof result.current.action).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
+			expect(result.current.state).toBeUndefined();
+		});
+
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+			expect(result.current.isPending).toBe(false);
+		});
 	});
 
-	it("applyCode trims and uppercases the code", async () => {
-		const { result } = renderHook(() => useApplyDiscountCode());
+	// --------------------------------------------------------------------------
+	// FormData construction in applyCode
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.applyCode("  promo10  ", 5000);
+	describe("applyCode FormData construction", () => {
+		it("trims and uppercases the code", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("  promo10  ", 5000);
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("code")).toBe("PROMO10");
 		});
 
-		const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("code")).toBe("PROMO10");
+		it("leaves already-uppercase code unchanged", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("SUMMER20", 5000);
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("code")).toBe("SUMMER20");
+		});
+
+		it("rounds the subtotal to the nearest integer", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 4999.7);
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("subtotal")).toBe("5000");
+		});
+
+		it("rounds down when subtotal decimal is below 0.5", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 1000.4);
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("subtotal")).toBe("1000");
+		});
+
+		it("appends userId when provided", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000, "user-123");
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("userId")).toBe("user-123");
+		});
+
+		it("omits userId when not provided", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000);
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("userId")).toBeNull();
+		});
+
+		it("appends customerEmail when provided", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000, undefined, "guest@example.com");
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("customerEmail")).toBe("guest@example.com");
+		});
+
+		it("omits customerEmail when not provided", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000);
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("customerEmail")).toBeNull();
+		});
+
+		it("appends both userId and customerEmail when both are provided", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000, "user-1", "user@example.com");
+			});
+
+			const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("userId")).toBe("user-1");
+			expect(formData.get("customerEmail")).toBe("user@example.com");
+		});
 	});
 
-	it("applyCode rounds the subtotal", async () => {
-		const { result } = renderHook(() => useApplyDiscountCode());
+	// --------------------------------------------------------------------------
+	// Callback behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.applyCode("PROMO10", 4999.7);
+	describe("callbacks", () => {
+		it("calls onSuccess with discount data when action returns data", async () => {
+			const discountData = {
+				id: "d1",
+				code: "PROMO10",
+				type: "PERCENTAGE",
+				value: 10,
+				discountAmount: 500,
+			};
+			mockApplyDiscountCode.mockResolvedValue({
+				status: "success" as const,
+				message: "Code appliqué",
+				data: discountData,
+			});
+
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
+
+			await act(async () => {
+				result.current.applyCode("PROMO10", 5000);
+			});
+
+			expect(onSuccess).toHaveBeenCalledWith(discountData);
 		});
 
-		const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("subtotal")).toBe("5000");
+		it("does not call onSuccess when action succeeds with no data", async () => {
+			// Success without a data payload — onSuccess should not fire
+			mockApplyDiscountCode.mockResolvedValue({ status: "success" as const, message: "OK" });
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
+
+			await act(async () => {
+				result.current.applyCode("PROMO10", 5000);
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("calls onError when action returns an error status", async () => {
+			mockApplyDiscountCode.mockResolvedValue(ERROR);
+			const onError = vi.fn();
+			const { result } = renderHook(() => useApplyDiscountCode({ onError }));
+
+			await act(async () => {
+				result.current.applyCode("INVALID", 5000);
+			});
+
+			expect(onError).toHaveBeenCalled();
+		});
+
+		it("does not call onSuccess when action fails", async () => {
+			mockApplyDiscountCode.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
+
+			await act(async () => {
+				result.current.applyCode("INVALID", 5000);
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			// Should not throw when no callbacks are provided
+			await act(async () => {
+				result.current.applyCode("CODE", 5000);
+			});
+
+			expect(mockApplyDiscountCode).toHaveBeenCalledTimes(1);
+		});
 	});
 
-	it("applyCode appends userId when provided", async () => {
-		const { result } = renderHook(() => useApplyDiscountCode());
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.applyCode("PROMO10", 5000, "user-123");
+	describe("toast behavior", () => {
+		it("shows a success toast with the action message on success", async () => {
+			mockApplyDiscountCode.mockResolvedValue({ ...SUCCESS, message: "Code appliqué" });
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000);
+			});
+
+			expect(mockToastSuccess).toHaveBeenCalledWith("Code appliqué");
 		});
 
-		const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("userId")).toBe("user-123");
+		it("shows an error toast with the action message on failure", async () => {
+			mockApplyDiscountCode.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("INVALID", 5000);
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith("Failed");
+		});
 	});
 
-	it("applyCode omits userId when not provided", async () => {
-		const { result } = renderHook(() => useApplyDiscountCode());
+	// --------------------------------------------------------------------------
+	// State update
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.applyCode("PROMO10", 5000);
+	describe("state update", () => {
+		it("state reflects the action result after a successful call", async () => {
+			const { result } = renderHook(() => useApplyDiscountCode());
+
+			await act(async () => {
+				result.current.applyCode("CODE", 5000);
+			});
+
+			expect(result.current.state).toEqual(SUCCESS);
 		});
 
-		const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("userId")).toBeNull();
-	});
+		it("state reflects the action result after a failed call", async () => {
+			mockApplyDiscountCode.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useApplyDiscountCode());
 
-	it("applyCode appends customerEmail when provided", async () => {
-		const { result } = renderHook(() => useApplyDiscountCode());
+			await act(async () => {
+				result.current.applyCode("BAD", 5000);
+			});
 
-		await act(async () => {
-			result.current.applyCode("PROMO10", 5000, undefined, "guest@example.com");
+			expect(result.current.state).toEqual(ERROR);
 		});
-
-		const formData = mockApplyDiscountCode.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("customerEmail")).toBe("guest@example.com");
-	});
-
-	it("calls onSuccess with discount data when action succeeds", async () => {
-		const discountData = {
-			id: "d1",
-			code: "PROMO10",
-			type: "PERCENTAGE",
-			value: 10,
-			discountAmount: 500,
-		};
-		mockApplyDiscountCode.mockResolvedValue({
-			status: "success" as const,
-			message: "Code appliqué",
-			data: discountData,
-		});
-
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
-
-		await act(async () => {
-			result.current.applyCode("PROMO10", 5000);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith(discountData);
-	});
-
-	it("calls onError when action fails", async () => {
-		mockApplyDiscountCode.mockResolvedValue(ERROR);
-		const onError = vi.fn();
-		const { result } = renderHook(() => useApplyDiscountCode({ onError }));
-
-		await act(async () => {
-			result.current.applyCode("INVALID", 5000);
-		});
-
-		expect(onError).toHaveBeenCalled();
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockApplyDiscountCode.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useApplyDiscountCode({ onSuccess }));
-
-		await act(async () => {
-			result.current.applyCode("INVALID", 5000);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
 	});
 });
 
@@ -205,44 +370,118 @@ describe("useDeleteDiscount", () => {
 		mockDeleteDiscount.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useDeleteDiscount());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
 
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useDeleteDiscount({ onSuccess }));
+	describe("return value shape", () => {
+		it("returns state, action, and isPending", () => {
+			const { result } = renderHook(() => useDeleteDiscount());
 
-		await act(async () => {
-			result.current.action(new FormData());
+			expect(result.current.state).toBeUndefined();
+			expect(typeof result.current.action).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith("OK");
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useDeleteDiscount());
+			expect(result.current.isPending).toBe(false);
+		});
 	});
 
-	it("does not call onSuccess when action fails", async () => {
-		mockDeleteDiscount.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useDeleteDiscount({ onSuccess }));
+	// --------------------------------------------------------------------------
+	// Callback behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.action(new FormData());
+	describe("callbacks", () => {
+		it("calls onSuccess with the action message when action succeeds", async () => {
+			mockDeleteDiscount.mockResolvedValue({ ...SUCCESS, message: "Code supprimé" });
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useDeleteDiscount({ onSuccess }));
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(onSuccess).toHaveBeenCalledWith("Code supprimé");
 		});
 
-		expect(onSuccess).not.toHaveBeenCalled();
+		it("does not call onSuccess when action fails", async () => {
+			mockDeleteDiscount.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useDeleteDiscount({ onSuccess }));
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useDeleteDiscount());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockDeleteDiscount).toHaveBeenCalledTimes(1);
+		});
 	});
 
-	it("state is updated after successful action", async () => {
-		const { result } = renderHook(() => useDeleteDiscount());
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.action(new FormData());
+	describe("toast behavior", () => {
+		it("shows a success toast with the action message", async () => {
+			mockDeleteDiscount.mockResolvedValue({ ...SUCCESS, message: "Supprimé avec succès" });
+			const { result } = renderHook(() => useDeleteDiscount());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockToastSuccess).toHaveBeenCalledWith("Supprimé avec succès");
 		});
 
-		expect(result.current.state).toEqual(SUCCESS);
+		it("shows an error toast when action fails", async () => {
+			mockDeleteDiscount.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useDeleteDiscount());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith("Failed");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// State update
+	// --------------------------------------------------------------------------
+
+	describe("state update", () => {
+		it("state reflects the success result after action completes", async () => {
+			const { result } = renderHook(() => useDeleteDiscount());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(result.current.state).toEqual(SUCCESS);
+		});
+
+		it("state reflects the error result after a failed action", async () => {
+			mockDeleteDiscount.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useDeleteDiscount());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(result.current.state).toEqual(ERROR);
+		});
 	});
 });
 
@@ -253,40 +492,142 @@ describe("useDeleteDiscount", () => {
 describe("useToggleDiscountStatus", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockToggleDiscountStatus.mockResolvedValue({
-			...SUCCESS,
-			message: "Code promo activé",
+		mockToggleDiscountStatus.mockResolvedValue({ ...SUCCESS, message: "Code promo activé" });
+	});
+
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
+
+	describe("return value shape", () => {
+		it("returns state, action, and isPending", () => {
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			expect(result.current.state).toBeUndefined();
+			expect(typeof result.current.action).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
+		});
+
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useToggleDiscountStatus());
+			expect(result.current.isPending).toBe(false);
 		});
 	});
 
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useToggleDiscountStatus());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
+	// --------------------------------------------------------------------------
+	// Callback behavior
+	// --------------------------------------------------------------------------
 
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useToggleDiscountStatus({ onSuccess }));
+	describe("callbacks", () => {
+		it("calls onSuccess with the action message when action succeeds", async () => {
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useToggleDiscountStatus({ onSuccess }));
 
-		await act(async () => {
-			result.current.action(new FormData());
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(onSuccess).toHaveBeenCalledWith("Code promo activé");
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith("Code promo activé");
-	});
+		it("calls onSuccess with deactivation message", async () => {
+			mockToggleDiscountStatus.mockResolvedValue({ ...SUCCESS, message: "Code promo désactivé" });
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useToggleDiscountStatus({ onSuccess }));
 
-	it("does not call onSuccess when action fails", async () => {
-		mockToggleDiscountStatus.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useToggleDiscountStatus({ onSuccess }));
+			await act(async () => {
+				result.current.action(new FormData());
+			});
 
-		await act(async () => {
-			result.current.action(new FormData());
+			expect(onSuccess).toHaveBeenCalledWith("Code promo désactivé");
 		});
 
-		expect(onSuccess).not.toHaveBeenCalled();
+		it("does not call onSuccess when action fails", async () => {
+			mockToggleDiscountStatus.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useToggleDiscountStatus({ onSuccess }));
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockToggleDiscountStatus).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
+
+	describe("toast behavior", () => {
+		it("shows a success toast with the action message", async () => {
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockToastSuccess).toHaveBeenCalledWith("Code promo activé");
+		});
+
+		it("shows an error toast when action fails", async () => {
+			mockToggleDiscountStatus.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith("Failed");
+		});
+
+		it("shows a warning toast for WARNING status", async () => {
+			mockToggleDiscountStatus.mockResolvedValue(WARNING);
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(mockToastWarning).toHaveBeenCalledWith("Attention");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// State update
+	// --------------------------------------------------------------------------
+
+	describe("state update", () => {
+		it("state reflects the success result after action completes", async () => {
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(result.current.state?.status).toBe(ActionStatus.SUCCESS);
+		});
+
+		it("state reflects the error result after a failed action", async () => {
+			mockToggleDiscountStatus.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.action(new FormData());
+			});
+
+			expect(result.current.state?.status).toBe(ActionStatus.ERROR);
+		});
 	});
 });
 
@@ -303,46 +644,156 @@ describe("useBulkDeleteDiscounts", () => {
 		});
 	});
 
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkDeleteDiscounts());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
 
-	it("handle appends all IDs to FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteDiscounts());
+	describe("return value shape", () => {
+		it("returns state, action, isPending, and handle", () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
 
-		await act(async () => {
-			result.current.handle(["id-1", "id-2", "id-3"]);
+			expect(result.current.state).toBeUndefined();
+			expect(typeof result.current.action).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
+			expect(typeof result.current.handle).toBe("function");
 		});
 
-		const formData = mockBulkDeleteDiscounts.mock.calls[0]?.[1] as FormData;
-		expect(formData.getAll("ids")).toEqual(["id-1", "id-2", "id-3"]);
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+			expect(result.current.isPending).toBe(false);
+		});
 	});
 
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteDiscounts({ onSuccess }));
+	// --------------------------------------------------------------------------
+	// FormData construction in handle
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.handle(["id-1"]);
+	describe("handle FormData construction", () => {
+		it("appends all provided IDs to FormData", async () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["id-1", "id-2", "id-3"]);
+			});
+
+			const formData = mockBulkDeleteDiscounts.mock.calls[0]?.[1] as FormData;
+			expect(formData.getAll("ids")).toEqual(["id-1", "id-2", "id-3"]);
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith("3 code(s) promo supprimé(s)");
+		it("appends a single ID correctly", async () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["only-id"]);
+			});
+
+			const formData = mockBulkDeleteDiscounts.mock.calls[0]?.[1] as FormData;
+			expect(formData.getAll("ids")).toEqual(["only-id"]);
+		});
+
+		it("handles an empty array without throwing", async () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle([]);
+			});
+
+			const formData = mockBulkDeleteDiscounts.mock.calls[0]?.[1] as FormData;
+			expect(formData.getAll("ids")).toEqual([]);
+		});
 	});
 
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteDiscounts.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteDiscounts({ onSuccess }));
+	// --------------------------------------------------------------------------
+	// Callback behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.handle(["id-1"]);
+	describe("callbacks", () => {
+		it("calls onSuccess with the action message when action succeeds", async () => {
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useBulkDeleteDiscounts({ onSuccess }));
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(onSuccess).toHaveBeenCalledWith("3 code(s) promo supprimé(s)");
 		});
 
-		expect(onSuccess).not.toHaveBeenCalled();
+		it("does not call onSuccess when action fails", async () => {
+			mockBulkDeleteDiscounts.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useBulkDeleteDiscounts({ onSuccess }));
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(mockBulkDeleteDiscounts).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
+
+	describe("toast behavior", () => {
+		it("shows a success toast with the action message", async () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(mockToastSuccess).toHaveBeenCalledWith("3 code(s) promo supprimé(s)");
+		});
+
+		it("shows an error toast when action fails", async () => {
+			mockBulkDeleteDiscounts.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith("Failed");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// State update
+	// --------------------------------------------------------------------------
+
+	describe("state update", () => {
+		it("state reflects the success result after handle completes", async () => {
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(result.current.state?.status).toBe(ActionStatus.SUCCESS);
+		});
+
+		it("state reflects the error result after a failed handle", async () => {
+			mockBulkDeleteDiscounts.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useBulkDeleteDiscounts());
+
+			await act(async () => {
+				result.current.handle(["id-1"]);
+			});
+
+			expect(result.current.state?.status).toBe(ActionStatus.ERROR);
+		});
 	});
 });
 
@@ -356,58 +807,170 @@ describe("useBulkToggleDiscountStatus", () => {
 		mockBulkToggleDiscountStatus.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns state, action, toggle, and isPending", () => {
-		const { result } = renderHook(() => useBulkToggleDiscountStatus());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.toggle).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
 
-	it("toggle appends all IDs and isActive=true to FormData", async () => {
-		const { result } = renderHook(() => useBulkToggleDiscountStatus());
+	describe("return value shape", () => {
+		it("returns state, action, toggle, and isPending", () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
 
-		await act(async () => {
-			result.current.toggle(["id-1", "id-2"], true);
+			expect(result.current.state).toBeUndefined();
+			expect(typeof result.current.action).toBe("function");
+			expect(typeof result.current.toggle).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
 		});
 
-		const formData = mockBulkToggleDiscountStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.getAll("ids")).toEqual(["id-1", "id-2"]);
-		expect(formData.get("isActive")).toBe("true");
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+			expect(result.current.isPending).toBe(false);
+		});
 	});
 
-	it("toggle appends isActive=false when deactivating", async () => {
-		const { result } = renderHook(() => useBulkToggleDiscountStatus());
+	// --------------------------------------------------------------------------
+	// FormData construction in toggle
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.toggle(["id-1"], false);
+	describe("toggle FormData construction", () => {
+		it("appends all IDs and isActive=true when activating", async () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1", "id-2"], true);
+			});
+
+			const formData = mockBulkToggleDiscountStatus.mock.calls[0]?.[1] as FormData;
+			expect(formData.getAll("ids")).toEqual(["id-1", "id-2"]);
+			expect(formData.get("isActive")).toBe("true");
 		});
 
-		const formData = mockBulkToggleDiscountStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("isActive")).toBe("false");
+		it("appends isActive=false when deactivating", async () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1"], false);
+			});
+
+			const formData = mockBulkToggleDiscountStatus.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("isActive")).toBe("false");
+		});
+
+		it("handles an empty IDs array without throwing", async () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle([], true);
+			});
+
+			const formData = mockBulkToggleDiscountStatus.mock.calls[0]?.[1] as FormData;
+			expect(formData.getAll("ids")).toEqual([]);
+			expect(formData.get("isActive")).toBe("true");
+		});
+
+		it("appends a single ID correctly", async () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["only-id"], true);
+			});
+
+			const formData = mockBulkToggleDiscountStatus.mock.calls[0]?.[1] as FormData;
+			expect(formData.getAll("ids")).toEqual(["only-id"]);
+		});
 	});
 
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkToggleDiscountStatus({ onSuccess }));
+	// --------------------------------------------------------------------------
+	// Callback behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.toggle(["id-1"], true);
+	describe("callbacks", () => {
+		it("calls onSuccess when action succeeds", async () => {
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useBulkToggleDiscountStatus({ onSuccess }));
+
+			await act(async () => {
+				result.current.toggle(["id-1"], true);
+			});
+
+			expect(onSuccess).toHaveBeenCalledTimes(1);
 		});
 
-		expect(onSuccess).toHaveBeenCalled();
+		it("does not call onSuccess when action fails", async () => {
+			mockBulkToggleDiscountStatus.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useBulkToggleDiscountStatus({ onSuccess }));
+
+			await act(async () => {
+				result.current.toggle(["id-1"], true);
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1"], true);
+			});
+
+			expect(mockBulkToggleDiscountStatus).toHaveBeenCalledTimes(1);
+		});
 	});
 
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkToggleDiscountStatus.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkToggleDiscountStatus({ onSuccess }));
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.toggle(["id-1"], true);
+	describe("toast behavior", () => {
+		it("shows a success toast on successful toggle", async () => {
+			mockBulkToggleDiscountStatus.mockResolvedValue({ ...SUCCESS, message: "2 codes activés" });
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1", "id-2"], true);
+			});
+
+			expect(mockToastSuccess).toHaveBeenCalledWith("2 codes activés");
 		});
 
-		expect(onSuccess).not.toHaveBeenCalled();
+		it("shows an error toast when action fails", async () => {
+			mockBulkToggleDiscountStatus.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1"], true);
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith("Failed");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// State update
+	// --------------------------------------------------------------------------
+
+	describe("state update", () => {
+		it("state reflects success after toggle completes", async () => {
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1"], true);
+			});
+
+			expect(result.current.state?.status).toBe(ActionStatus.SUCCESS);
+		});
+
+		it("state reflects error after failed toggle", async () => {
+			mockBulkToggleDiscountStatus.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useBulkToggleDiscountStatus());
+
+			await act(async () => {
+				result.current.toggle(["id-1"], false);
+			});
+
+			expect(result.current.state?.status).toBe(ActionStatus.ERROR);
+		});
 	});
 });
 
@@ -416,65 +979,172 @@ describe("useBulkToggleDiscountStatus", () => {
 // ============================================================================
 
 describe("useDuplicateDiscount", () => {
+	const duplicateSuccessResponse = {
+		status: "success" as const,
+		message: "Code dupliqué",
+		data: { id: "new-id", code: "PROMO10-COPY-1" },
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockDuplicateDiscount.mockResolvedValue({
-			status: "success" as const,
-			message: "Code dupliqué",
-			data: { id: "new-id", code: "PROMO10-COPY-1" },
+		mockDuplicateDiscount.mockResolvedValue(duplicateSuccessResponse);
+	});
+
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
+
+	describe("return value shape", () => {
+		it("returns duplicate and isPending", () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
+
+			expect(typeof result.current.duplicate).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
+		});
+
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
+			expect(result.current.isPending).toBe(false);
 		});
 	});
 
-	it("returns duplicate and isPending", () => {
-		const { result } = renderHook(() => useDuplicateDiscount());
-		expect(typeof result.current.duplicate).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
+	// --------------------------------------------------------------------------
+	// FormData construction in duplicate
+	// --------------------------------------------------------------------------
 
-	it("duplicate appends discountId to FormData", async () => {
-		const { result } = renderHook(() => useDuplicateDiscount());
+	describe("duplicate FormData construction", () => {
+		it("appends discountId to FormData", async () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
 
-		await act(async () => {
-			result.current.duplicate("discount-123");
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			const formData = mockDuplicateDiscount.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("discountId")).toBe("discount-123");
 		});
 
-		const formData = mockDuplicateDiscount.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("discountId")).toBe("discount-123");
+		it("passes the correct discountId for different IDs", async () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
+
+			await act(async () => {
+				result.current.duplicate("another-discount-456");
+			});
+
+			const formData = mockDuplicateDiscount.mock.calls[0]?.[1] as FormData;
+			expect(formData.get("discountId")).toBe("another-discount-456");
+		});
 	});
 
-	it("calls onSuccess with { id, code } when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useDuplicateDiscount({ onSuccess }));
+	// --------------------------------------------------------------------------
+	// Callback behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.duplicate("discount-123");
+	describe("callbacks", () => {
+		it("calls onSuccess with { id, code } when action succeeds with data", async () => {
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useDuplicateDiscount({ onSuccess }));
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(onSuccess).toHaveBeenCalledWith({ id: "new-id", code: "PROMO10-COPY-1" });
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith({ id: "new-id", code: "PROMO10-COPY-1" });
+		it("does not call onSuccess when action succeeds without data", async () => {
+			mockDuplicateDiscount.mockResolvedValue({ status: "success" as const, message: "OK" });
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useDuplicateDiscount({ onSuccess }));
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("calls onError with the error message when action fails", async () => {
+			mockDuplicateDiscount.mockResolvedValue(ERROR);
+			const onError = vi.fn();
+			const { result } = renderHook(() => useDuplicateDiscount({ onError }));
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(onError).toHaveBeenCalledWith("Failed");
+		});
+
+		it("does not call onSuccess when action fails", async () => {
+			mockDuplicateDiscount.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useDuplicateDiscount({ onSuccess }));
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("does not call onError when action succeeds", async () => {
+			const onError = vi.fn();
+			const { result } = renderHook(() => useDuplicateDiscount({ onError }));
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(onError).not.toHaveBeenCalled();
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(mockDuplicateDiscount).toHaveBeenCalledTimes(1);
+		});
 	});
 
-	it("calls onError with message when action fails", async () => {
-		mockDuplicateDiscount.mockResolvedValue(ERROR);
-		const onError = vi.fn();
-		const { result } = renderHook(() => useDuplicateDiscount({ onError }));
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
 
-		await act(async () => {
-			result.current.duplicate("discount-123");
+	describe("toast behavior", () => {
+		it("shows a loading toast during duplication", async () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(mockToastLoading).toHaveBeenCalledWith("Duplication en cours...");
 		});
 
-		expect(onError).toHaveBeenCalledWith("Failed");
-	});
+		it("dismisses the loading toast after action completes", async () => {
+			const { result } = renderHook(() => useDuplicateDiscount());
 
-	it("does not call onSuccess when action fails", async () => {
-		mockDuplicateDiscount.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useDuplicateDiscount({ onSuccess }));
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
 
-		await act(async () => {
-			result.current.duplicate("discount-123");
+			expect(mockToastDismiss).toHaveBeenCalledWith("loading-id");
 		});
 
-		expect(onSuccess).not.toHaveBeenCalled();
+		it("shows an error toast when action fails", async () => {
+			mockDuplicateDiscount.mockResolvedValue(ERROR);
+			const { result } = renderHook(() => useDuplicateDiscount());
+
+			await act(async () => {
+				result.current.duplicate("discount-123");
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith("Failed");
+		});
 	});
 });
 
@@ -488,32 +1158,117 @@ describe("useRefreshDiscounts", () => {
 		mockRefreshDiscounts.mockResolvedValue(SUCCESS);
 	});
 
-	it("returns state, action, isPending, and refresh", () => {
-		const { result } = renderHook(() => useRefreshDiscounts());
-		expect(typeof result.current.state).not.toBe("string");
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.refresh).toBe("function");
-	});
+	// --------------------------------------------------------------------------
+	// Return value shape
+	// --------------------------------------------------------------------------
 
-	it("calls the refreshDiscounts action when refresh is invoked", async () => {
-		const { result } = renderHook(() => useRefreshDiscounts());
+	describe("return value shape", () => {
+		it("returns state, action, isPending, and refresh", () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
 
-		await act(async () => {
-			result.current.refresh();
+			expect(typeof result.current.state).not.toBe("string");
+			expect(typeof result.current.action).toBe("function");
+			expect(typeof result.current.isPending).toBe("boolean");
+			expect(typeof result.current.refresh).toBe("function");
 		});
 
-		expect(mockRefreshDiscounts).toHaveBeenCalledTimes(1);
-	});
-
-	it("calls onSuccess when refresh succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useRefreshDiscounts({ onSuccess }));
-
-		await act(async () => {
-			result.current.refresh();
+		it("isPending starts as false", () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+			expect(result.current.isPending).toBe(false);
 		});
 
-		expect(onSuccess).toHaveBeenCalled();
+		it("state starts as undefined", () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+			expect(result.current.state).toBeUndefined();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// refresh() behavior
+	// --------------------------------------------------------------------------
+
+	describe("refresh()", () => {
+		it("calls the refreshDiscounts action when refresh() is invoked", async () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			expect(mockRefreshDiscounts).toHaveBeenCalledTimes(1);
+		});
+
+		it("calls refresh() with an empty FormData by default", async () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			const calledFormData = mockRefreshDiscounts.mock.calls[0]?.[1] as FormData;
+			expect([...calledFormData.entries()]).toHaveLength(0);
+		});
+
+		it("calls onSuccess callback when action succeeds", async () => {
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useRefreshDiscounts({ onSuccess }));
+
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			expect(onSuccess).toHaveBeenCalledTimes(1);
+		});
+
+		it("does not call onSuccess when action fails", async () => {
+			mockRefreshDiscounts.mockResolvedValue(ERROR);
+			const onSuccess = vi.fn();
+			const { result } = renderHook(() => useRefreshDiscounts({ onSuccess }));
+
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			expect(onSuccess).not.toHaveBeenCalled();
+		});
+
+		it("can be called multiple times", async () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+
+			await act(async () => {
+				result.current.refresh();
+			});
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			expect(mockRefreshDiscounts).toHaveBeenCalledTimes(2);
+		});
+
+		it("works without options (no callbacks)", async () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			expect(mockRefreshDiscounts).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Toast behavior
+	// --------------------------------------------------------------------------
+
+	describe("toast behavior", () => {
+		it("does not show a success toast (refresh is silent)", async () => {
+			const { result } = renderHook(() => useRefreshDiscounts());
+
+			await act(async () => {
+				result.current.refresh();
+			});
+
+			expect(mockToastSuccess).not.toHaveBeenCalled();
+		});
 	});
 });

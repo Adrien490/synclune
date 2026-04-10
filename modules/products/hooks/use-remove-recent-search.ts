@@ -21,7 +21,7 @@ interface UseRemoveRecentSearchOptions {
  * ```tsx
  * const { remove, searches, isPending } = useRemoveRecentSearch({
  *   initialSearches: ["bague", "collier"],
- *   onSuccess: (searches) => console.log("Restant:", searches),
+ *   onSuccess: (searches) => toast.success(`${searches.length} restante(s)`),
  * })
  *
  * <Button onClick={() => remove("bague")} disabled={isPending}>

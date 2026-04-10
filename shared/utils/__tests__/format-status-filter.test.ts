@@ -43,4 +43,31 @@ describe("formatStatusFilter", () => {
 			displayValue: "En ligne",
 		});
 	});
+
+	it("returns inactive label for empty string value", () => {
+		expect(formatStatusFilter("")).toEqual({
+			label: "Statut",
+			displayValue: "Inactifs",
+		});
+	});
+
+	it("returns inactive label for '1' (not 'true')", () => {
+		expect(formatStatusFilter("1")).toEqual({
+			label: "Statut",
+			displayValue: "Inactifs",
+		});
+	});
+
+	it("always returns fixed 'Statut' label regardless of value", () => {
+		expect(formatStatusFilter("true").label).toBe("Statut");
+		expect(formatStatusFilter("false").label).toBe("Statut");
+		expect(formatStatusFilter("anything").label).toBe("Statut");
+	});
+
+	it("custom active label only — inactive label uses default", () => {
+		expect(formatStatusFilter("false", "Publiés")).toEqual({
+			label: "Statut",
+			displayValue: "Inactifs",
+		});
+	});
 });

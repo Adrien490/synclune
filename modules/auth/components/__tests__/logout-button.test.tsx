@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -68,5 +68,63 @@ describe("LogoutButton", () => {
 		render(<LogoutButton />);
 
 		expect(screen.getByRole("button", { name: "Se déconnecter" })).toBeDisabled();
+	});
+
+	// ─── aria-busy ────────────────────────────────────────────────────────────
+
+	it("should have aria-busy=true when isPending", () => {
+		mockLogout.isPending = true;
+
+		render(<LogoutButton />);
+
+		expect(screen.getByRole("button", { name: "Se déconnecter" })).toHaveAttribute(
+			"aria-busy",
+			"true",
+		);
+	});
+
+	it("should not have aria-busy=true when idle", () => {
+		render(<LogoutButton />);
+
+		const button = screen.getByRole("button", { name: "Se déconnecter" });
+		expect(button.getAttribute("aria-busy")).not.toBe("true");
+	});
+
+	// ─── className prop ───────────────────────────────────────────────────────
+
+	it("should apply custom className", () => {
+		render(<LogoutButton className="custom-class" />);
+
+		expect(screen.getByRole("button", { name: "Se déconnecter" })).toHaveClass("custom-class");
+	});
+
+	// ─── Click interaction ────────────────────────────────────────────────────
+
+	it("should call action when clicked while not pending", () => {
+		render(<LogoutButton />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
+
+		expect(mockLogout.action).toHaveBeenCalledTimes(1);
+	});
+
+	it("should not call action when clicked while isPending", () => {
+		mockLogout.isPending = true;
+
+		render(<LogoutButton />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
+
+		expect(mockLogout.action).not.toHaveBeenCalled();
+	});
+
+	it("should not call action when clicked while isLoggedOut", () => {
+		mockLogout.isLoggedOut = true;
+
+		render(<LogoutButton />);
+
+		fireEvent.click(screen.getByRole("button", { name: "Se déconnecter" }));
+
+		expect(mockLogout.action).not.toHaveBeenCalled();
 	});
 });

@@ -3,8 +3,8 @@
 // ============================================================================
 // NOTE: Validation without Zod to avoid HMR Turbopack errors in
 // client components. Zod v4 is not compatible with "use client" + Turbopack.
-// TODO: Revert to Zod once Turbopack fully supports ESM + "use client" boundaries
-// without HMR errors (track: https://github.com/vercel/next.js/issues and Zod v4 release notes).
+// Plain validation (no Zod) to avoid HMR Turbopack errors in "use client" boundaries.
+// Track: https://github.com/vercel/next.js/issues — revert to Zod when resolved.
 
 interface GalleryParams {
 	color?: string;

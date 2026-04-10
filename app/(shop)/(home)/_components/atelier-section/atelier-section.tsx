@@ -101,7 +101,7 @@ export async function AtelierSection() {
 					</Fade>
 				</header>
 
-				{/* TODO: replace PlaceholderImage with ParallaxImage + ImageScrollOverlay once IMAGES.ATELIER is fixed */}
+				{/* Placeholder until atelier photography is available — swap with ParallaxImage + ImageScrollOverlay */}
 				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 					<div className="relative mx-auto mb-10 aspect-[4/3] max-w-4xl overflow-hidden rounded-2xl sm:mb-14 sm:aspect-[16/7]">
 						<PlaceholderImage

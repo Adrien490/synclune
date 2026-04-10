@@ -163,4 +163,79 @@ describe("withCallbacks", () => {
 		expect(onError).not.toHaveBeenCalled();
 		expect(onWarning).not.toHaveBeenCalled();
 	});
+
+	it("calls onError when action returns CONFLICT status", async () => {
+		const onError = vi.fn();
+		const result = { status: ActionStatus.CONFLICT, message: "Conflict" };
+		const fn = vi.fn().mockResolvedValue(result);
+		const wrapped = withCallbacks(fn, { onError });
+
+		await wrapped(undefined, formData);
+
+		expect(onError).toHaveBeenCalledWith(result);
+	});
+
+	it("calls onError when action returns FORBIDDEN status", async () => {
+		const onError = vi.fn();
+		const result = { status: ActionStatus.FORBIDDEN, message: "Forbidden" };
+		const fn = vi.fn().mockResolvedValue(result);
+		const wrapped = withCallbacks(fn, { onError });
+
+		await wrapped(undefined, formData);
+
+		expect(onError).toHaveBeenCalledWith(result);
+	});
+
+	it("works correctly when no callbacks are provided at all", async () => {
+		const fn = vi.fn().mockResolvedValue({ status: ActionStatus.SUCCESS, message: "OK" });
+		const wrapped = withCallbacks(fn, {});
+
+		const result = await wrapped(undefined, formData);
+
+		expect(result).toEqual({ status: ActionStatus.SUCCESS, message: "OK" });
+	});
+
+	it("does not call onEnd when reference is falsy (null returned from onStart)", async () => {
+		// Some onStart implementations might return null instead of undefined
+		const onStart = vi.fn().mockReturnValue(null);
+		const onEnd = vi.fn();
+		const fn = vi.fn().mockResolvedValue({ status: ActionStatus.SUCCESS, message: "OK" });
+		const wrapped = withCallbacks(fn, { onStart, onEnd });
+
+		await wrapped(undefined, formData);
+
+		// null is falsy, so onEnd should not be called
+		expect(onEnd).not.toHaveBeenCalled();
+	});
+
+	it("returns the action result on success", async () => {
+		const expected = { status: ActionStatus.SUCCESS, message: "Created", data: { id: "1" } };
+		const fn = vi.fn().mockResolvedValue(expected);
+		const wrapped = withCallbacks(fn, {});
+
+		const result = await wrapped(undefined, formData);
+
+		expect(result).toEqual(expected);
+	});
+
+	it("error result message defaults to generic message for non-Error throws", async () => {
+		const fn = vi.fn().mockRejectedValue(42);
+		const wrapped = withCallbacks(fn, {});
+
+		const result = await wrapped(undefined, formData);
+
+		expect((result as { message: string }).message).toBe("Une erreur inattendue est survenue");
+	});
+
+	it("onEnd is called on exception even without onStart reference", async () => {
+		const onEnd = vi.fn();
+		const fn = vi.fn().mockRejectedValue(new Error("boom"));
+		// No onStart — reference will be undefined
+		const wrapped = withCallbacks(fn, { onEnd });
+
+		await wrapped(undefined, formData);
+
+		// onEnd should not be called because reference is undefined
+		expect(onEnd).not.toHaveBeenCalled();
+	});
 });

@@ -45,4 +45,21 @@ describe("LogoutCard", () => {
 
 		expect(screen.getByRole("button", { name: /Se déconnecter/i })).toBeInTheDocument();
 	});
+
+	// ─── Accessibility ────────────────────────────────────────────────────────
+
+	it("should render a <section> landmark element", () => {
+		render(<LogoutCard />);
+
+		expect(document.querySelector("section")).not.toBeNull();
+	});
+
+	it("heading id should match section aria-labelledby", () => {
+		render(<LogoutCard />);
+
+		const section = document.querySelector("section");
+		const heading = screen.getByRole("heading", { name: "Déconnexion" });
+
+		expect(section?.getAttribute("aria-labelledby")).toBe(heading.id);
+	});
 });

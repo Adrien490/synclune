@@ -2,6 +2,7 @@ import { useRef, useState, useTransition } from "react";
 
 import { quickSearch } from "@/modules/products/actions/quick-search";
 import type { QuickSearchResult } from "@/modules/products/data/quick-search-products";
+import { logger } from "@/shared/lib/logger";
 import type { SearchInputHandle } from "@/shared/components/search-input";
 
 import { MIN_SEARCH_LENGTH, type QuickSearchError } from "./constants";
@@ -48,7 +49,7 @@ export function useQuickSearch({ searchInputRef, resetActiveIndex }: UseQuickSea
 				setSearchResults(results);
 			} catch (error) {
 				if (latestQueryRef.current !== trimmed) return;
-				console.error("[QuickSearch] Search failed:", error);
+				logger.error("[QuickSearch] Search failed:", error);
 				setSearchResults({ type: "error" });
 			}
 		});

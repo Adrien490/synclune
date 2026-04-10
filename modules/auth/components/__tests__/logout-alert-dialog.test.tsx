@@ -123,4 +123,60 @@ describe("LogoutAlertDialog", () => {
 
 		expect(screen.getByTestId("cancel")).toHaveTextContent("Annuler");
 	});
+
+	// ─── Loader icon ──────────────────────────────────────────────────────────
+
+	it("should show loader icon when isPending", () => {
+		mockLogout.isPending = true;
+
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.getByTestId("loader")).toBeInTheDocument();
+	});
+
+	it("should show loader icon when isLoggedOut", () => {
+		mockLogout.isLoggedOut = true;
+
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.getByTestId("loader")).toBeInTheDocument();
+	});
+
+	it("should not show loader icon when idle", () => {
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.queryByTestId("loader")).not.toBeInTheDocument();
+	});
+
+	// ─── Submit button disabled states ────────────────────────────────────────
+
+	it("should disable submit button when isPending", () => {
+		mockLogout.isPending = true;
+
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.getByTestId("submit")).toBeDisabled();
+	});
+
+	it("should disable submit button when isLoggedOut", () => {
+		mockLogout.isLoggedOut = true;
+
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.getByTestId("submit")).toBeDisabled();
+	});
+
+	it("should not disable submit button when idle", () => {
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.getByTestId("submit")).not.toBeDisabled();
+	});
+
+	// ─── Description text ─────────────────────────────────────────────────────
+
+	it("should show description text about logging out", () => {
+		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
+
+		expect(screen.getByText(/voulez-vous vraiment vous déconnecter/i)).toBeInTheDocument();
+	});
 });

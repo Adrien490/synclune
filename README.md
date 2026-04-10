@@ -2,9 +2,9 @@
 
 > Boutique en ligne de bijoux faits main par une creatrice independante basee en France.
 
-[![Next.js](https://img.shields.io/badge/Next.js-16.1-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma)](https://www.prisma.io/)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-7.6-2D3748?logo=prisma)](https://www.prisma.io/)
 [![Vercel](https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel)](https://vercel.com/)
 
 ---
@@ -18,7 +18,7 @@
 - **Auth** : Better Auth (email/password, Google)
 - **Paiements** : Stripe
 - **Uploads** : UploadThing
-- **Emails** : React Email + Resend (24 templates)
+- **Emails** : React Email + Resend (36 templates)
 - **PWA** : Serwist
 - **Analytics** : Vercel Analytics + Speed Insights
 
@@ -77,7 +77,7 @@ app/
 ├── serwist/                 # Service Worker PWA
 └── ~offline/                # Page offline PWA
 
-modules/                     # DDD - 23 modules metier
+modules/                     # DDD - 26 modules metier
 ├── [module]/
 │   ├── actions/             # Server Actions (mutations)
 │   ├── data/                # Data fetching + cache ("use cache")
@@ -182,7 +182,7 @@ Voir [`.env.example`](./.env.example) pour la liste complete des variables.
 
 Deploye sur [Vercel](https://vercel.com). Push sur `main` declenche le deploiement automatique.
 
-15 cron jobs definis dans `vercel.json`.
+18 cron jobs definis dans `vercel.json`.
 
 ---
 

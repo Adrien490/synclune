@@ -34,7 +34,7 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 import { usePaymentIntent } from "../use-payment-intent";
 
 // ============================================================================
-// Helpers
+// Fixtures
 // ============================================================================
 
 const SUCCESS_INIT = {
@@ -44,6 +44,15 @@ const SUCCESS_INIT = {
 	subtotal: 10000,
 	shipping: 500,
 	total: 10500,
+};
+
+const SUCCESS_INIT_NEW_PI = {
+	success: true as const,
+	clientSecret: "pi_secret_456",
+	paymentIntentId: "pi_456",
+	subtotal: 10000,
+	shipping: 600,
+	total: 10600,
 };
 
 const ERROR_INIT = {
@@ -62,13 +71,20 @@ afterEach(cleanup);
 describe("usePaymentIntent", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		// Reset document.hidden to visible
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
 		mockInitializePayment.mockResolvedValue(SUCCESS_INIT);
 		mockUpdatePaymentAmount.mockResolvedValue({
 			success: true,
 			shipping: 800,
 			newTotal: 10800,
 		});
+		mockCancelOrphanPI.mockResolvedValue(undefined);
 	});
+
+	// --------------------------------------------------------------------------
+	// Initial state
+	// --------------------------------------------------------------------------
 
 	it("starts with isLoading=true and null clientSecret", () => {
 		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
@@ -78,6 +94,18 @@ describe("usePaymentIntent", () => {
 		expect(result.current.paymentIntentId).toBeNull();
 		expect(result.current.error).toBeNull();
 	});
+
+	it("starts with subtotal, shipping and total at 0", () => {
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		expect(result.current.subtotal).toBe(0);
+		expect(result.current.shipping).toBe(0);
+		expect(result.current.total).toBe(0);
+	});
+
+	// --------------------------------------------------------------------------
+	// Successful initialization
+	// --------------------------------------------------------------------------
 
 	it("sets state from successful initializePayment response", async () => {
 		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
@@ -92,19 +120,6 @@ describe("usePaymentIntent", () => {
 		expect(result.current.shipping).toBe(500);
 		expect(result.current.total).toBe(10500);
 		expect(result.current.error).toBeNull();
-	});
-
-	it("sets error state when initializePayment fails", async () => {
-		mockInitializePayment.mockResolvedValue(ERROR_INIT);
-
-		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
-
-		await waitFor(() => {
-			expect(result.current.isLoading).toBe(false);
-		});
-
-		expect(result.current.error).toBe("Erreur initialisation");
-		expect(result.current.clientSecret).toBeNull();
 	});
 
 	it("calls initializePayment with cartItems and email on mount", async () => {
@@ -122,6 +137,19 @@ describe("usePaymentIntent", () => {
 		});
 	});
 
+	it("calls initializePayment without email when email is omitted", async () => {
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		expect(mockInitializePayment).toHaveBeenCalledWith({
+			cartItems: CART_ITEMS,
+			email: undefined,
+		});
+	});
+
 	it("only calls initializePayment once on mount", async () => {
 		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
 
@@ -131,6 +159,40 @@ describe("usePaymentIntent", () => {
 
 		expect(mockInitializePayment).toHaveBeenCalledTimes(1);
 	});
+
+	// --------------------------------------------------------------------------
+	// Initialization error
+	// --------------------------------------------------------------------------
+
+	it("sets error state when initializePayment fails", async () => {
+		mockInitializePayment.mockResolvedValue(ERROR_INIT);
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		expect(result.current.error).toBe("Erreur initialisation");
+		expect(result.current.clientSecret).toBeNull();
+		expect(result.current.paymentIntentId).toBeNull();
+	});
+
+	it("keeps clientSecret null when initializePayment fails", async () => {
+		mockInitializePayment.mockResolvedValue(ERROR_INIT);
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await waitFor(() => {
+			expect(result.current.isLoading).toBe(false);
+		});
+
+		expect(result.current.clientSecret).toBeNull();
+	});
+
+	// --------------------------------------------------------------------------
+	// updateAmount — exposed function
+	// --------------------------------------------------------------------------
 
 	it("exposes updateAmount function", async () => {
 		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
@@ -154,12 +216,15 @@ describe("usePaymentIntent", () => {
 		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
 	});
 
-	it("updateAmount calls updatePaymentAmount with debounce after init", async () => {
+	// --------------------------------------------------------------------------
+	// updateAmount — debounce behavior
+	// --------------------------------------------------------------------------
+
+	it("updateAmount calls updatePaymentAmount after 500ms debounce", async () => {
 		vi.useFakeTimers();
 
 		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
 
-		// Wait for init (flush the mock promise resolution)
 		await act(async () => {
 			await Promise.resolve();
 		});
@@ -168,10 +233,9 @@ describe("usePaymentIntent", () => {
 			result.current.updateAmount("FR", "75001", 500);
 		});
 
-		// Before debounce fires - not called yet
+		// Not called yet — debounce pending
 		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
 
-		// Advance past 500ms debounce
 		await act(async () => {
 			vi.advanceTimersByTime(500);
 			await Promise.resolve();
@@ -188,7 +252,7 @@ describe("usePaymentIntent", () => {
 		vi.useRealTimers();
 	});
 
-	it("updateAmount debounces multiple rapid calls", async () => {
+	it("updateAmount debounces multiple rapid calls — only last fires", async () => {
 		vi.useFakeTimers();
 
 		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
@@ -208,7 +272,6 @@ describe("usePaymentIntent", () => {
 			await Promise.resolve();
 		});
 
-		// Only the last call should fire
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledTimes(1);
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledWith(
 			expect.objectContaining({ discountAmount: 200 }),
@@ -216,6 +279,32 @@ describe("usePaymentIntent", () => {
 
 		vi.useRealTimers();
 	});
+
+	it("updateAmount does not fire before 500ms", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		act(() => {
+			result.current.updateAmount("FR", "75001", 0);
+		});
+
+		act(() => {
+			vi.advanceTimersByTime(499);
+		});
+
+		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
+
+		vi.useRealTimers();
+	});
+
+	// --------------------------------------------------------------------------
+	// updateAmount — success state update
+	// --------------------------------------------------------------------------
 
 	it("updates shipping and total after successful updateAmount", async () => {
 		vi.useFakeTimers();
@@ -242,7 +331,45 @@ describe("usePaymentIntent", () => {
 		vi.useRealTimers();
 	});
 
-	// ─── Visibility change (stale tab re-activation) ──────────────────────────
+	// --------------------------------------------------------------------------
+	// updateAmount — failure branch
+	// --------------------------------------------------------------------------
+
+	it("does not update state when updatePaymentAmount returns success=false", async () => {
+		vi.useFakeTimers();
+
+		mockUpdatePaymentAmount.mockResolvedValue({ success: false });
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		// Capture the initial values after init
+		const initialShipping = result.current.shipping;
+		const initialTotal = result.current.total;
+
+		act(() => {
+			result.current.updateAmount("FR", "75001", 0);
+		});
+
+		await act(async () => {
+			vi.advanceTimersByTime(500);
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		// State should remain unchanged when action fails
+		expect(result.current.shipping).toBe(initialShipping);
+		expect(result.current.total).toBe(initialTotal);
+
+		vi.useRealTimers();
+	});
+
+	// --------------------------------------------------------------------------
+	// Visibility change — stale tab re-activation
+	// --------------------------------------------------------------------------
 
 	it("does not re-initialize when tab was hidden less than 10 minutes", async () => {
 		vi.useFakeTimers();
@@ -288,15 +415,7 @@ describe("usePaymentIntent", () => {
 		expect(result.current.paymentIntentId).toBe("pi_123");
 		mockInitializePayment.mockClear();
 
-		const refreshedResult = {
-			success: true as const,
-			clientSecret: "pi_secret_456",
-			paymentIntentId: "pi_456",
-			subtotal: 10000,
-			shipping: 600,
-			total: 10600,
-		};
-		mockInitializePayment.mockResolvedValue(refreshedResult);
+		mockInitializePayment.mockResolvedValue(SUCCESS_INIT_NEW_PI);
 
 		// Simulate hiding tab
 		Object.defineProperty(document, "hidden", { value: true, writable: true });
@@ -315,6 +434,137 @@ describe("usePaymentIntent", () => {
 		});
 
 		expect(mockInitializePayment).toHaveBeenCalledTimes(1);
+
+		vi.useRealTimers();
+	});
+
+	it("updates state with new PI values after stale re-initialization", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		mockInitializePayment.mockClear();
+		mockInitializePayment.mockResolvedValue(SUCCESS_INIT_NEW_PI);
+
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		vi.advanceTimersByTime(11 * 60 * 1000);
+
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(result.current.clientSecret).toBe("pi_secret_456");
+		expect(result.current.paymentIntentId).toBe("pi_456");
+		expect(result.current.shipping).toBe(600);
+		expect(result.current.total).toBe(10600);
+
+		vi.useRealTimers();
+	});
+
+	it("cancels orphan PI when re-init produces a different paymentIntentId", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		expect(result.current.paymentIntentId).toBe("pi_123");
+		mockInitializePayment.mockClear();
+		mockInitializePayment.mockResolvedValue(SUCCESS_INIT_NEW_PI); // Different PI ID
+
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		vi.advanceTimersByTime(11 * 60 * 1000);
+
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		// Old PI should be cancelled because a new one was created
+		expect(mockCancelOrphanPI).toHaveBeenCalledWith("pi_123");
+
+		vi.useRealTimers();
+	});
+
+	it("does not cancel orphan PI when re-init returns the same paymentIntentId", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		mockInitializePayment.mockClear();
+		// Same PI ID as initial
+		mockInitializePayment.mockResolvedValue(SUCCESS_INIT);
+
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		vi.advanceTimersByTime(11 * 60 * 1000);
+
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(mockCancelOrphanPI).not.toHaveBeenCalled();
+
+		vi.useRealTimers();
+	});
+
+	it("sets error state when re-initialization after stale tab fails", async () => {
+		vi.useFakeTimers();
+
+		const { result } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		mockInitializePayment.mockClear();
+		mockInitializePayment.mockResolvedValue(ERROR_INIT);
+
+		Object.defineProperty(document, "hidden", { value: true, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+		});
+
+		vi.advanceTimersByTime(11 * 60 * 1000);
+
+		Object.defineProperty(document, "hidden", { value: false, writable: true });
+		await act(async () => {
+			document.dispatchEvent(new Event("visibilitychange"));
+			await Promise.resolve();
+			await Promise.resolve();
+		});
+
+		expect(result.current.error).toBe("Erreur initialisation");
+		expect(result.current.isLoading).toBe(false);
 
 		vi.useRealTimers();
 	});
@@ -348,6 +598,37 @@ describe("usePaymentIntent", () => {
 
 		// Should not re-initialize since there's no paymentIntentId
 		expect(mockInitializePayment).not.toHaveBeenCalled();
+
+		vi.useRealTimers();
+	});
+
+	// --------------------------------------------------------------------------
+	// Debounce cleanup on unmount
+	// --------------------------------------------------------------------------
+
+	it("clears debounce timer on unmount to avoid state updates on dead component", async () => {
+		vi.useFakeTimers();
+
+		const { result, unmount } = renderHook(() => usePaymentIntent({ cartItems: CART_ITEMS }));
+
+		await act(async () => {
+			await Promise.resolve();
+		});
+
+		act(() => {
+			result.current.updateAmount("FR", "75001", 0);
+		});
+
+		// Unmount before debounce fires
+		unmount();
+
+		await act(async () => {
+			vi.advanceTimersByTime(500);
+			await Promise.resolve();
+		});
+
+		// updatePaymentAmount should not have been called after unmount
+		expect(mockUpdatePaymentAmount).not.toHaveBeenCalled();
 
 		vi.useRealTimers();
 	});

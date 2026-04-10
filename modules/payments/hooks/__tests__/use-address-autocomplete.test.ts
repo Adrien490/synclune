@@ -63,6 +63,27 @@ describe("useAddressAutocomplete", () => {
 	});
 
 	// --------------------------------------------------------------------------
+	// Return shape
+	// --------------------------------------------------------------------------
+
+	it("exposes suggestions, isSearching, error and retry", () => {
+		const { result } = renderHook(() => useAddressAutocomplete("", "FR"));
+
+		expect(result.current).toHaveProperty("suggestions");
+		expect(result.current).toHaveProperty("isSearching");
+		expect(result.current).toHaveProperty("error");
+		expect(result.current).toHaveProperty("retry");
+	});
+
+	it("initializes with empty suggestions, no error and retry as function", () => {
+		const { result } = renderHook(() => useAddressAutocomplete("", "FR"));
+
+		expect(result.current.suggestions).toEqual([]);
+		expect(result.current.error).toBeNull();
+		expect(typeof result.current.retry).toBe("function");
+	});
+
+	// --------------------------------------------------------------------------
 	// Short query guard
 	// --------------------------------------------------------------------------
 
@@ -83,10 +104,27 @@ describe("useAddressAutocomplete", () => {
 	it("does not call server action when query < 2 chars", async () => {
 		renderHook(() => useAddressAutocomplete("R", "FR"));
 
-		// Flush all pending effects
 		await act(async () => {});
 
 		expect(vi.mocked(searchAddressForCheckout)).not.toHaveBeenCalled();
+	});
+
+	it("returns empty suggestions for short query even when previous results exist", async () => {
+		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult(mockResults));
+
+		const { result, rerender } = renderHook(
+			({ query }: { query: string }) => useAddressAutocomplete(query, "FR"),
+			{ initialProps: { query: "Rue de la Paix" } },
+		);
+
+		await act(async () => {});
+		expect(result.current.suggestions).toEqual(mockResults);
+
+		// Drop back to a short query — results state is still there but
+		// suggestions should be gated to []
+		rerender({ query: "R" });
+
+		expect(result.current.suggestions).toEqual([]);
 	});
 
 	// --------------------------------------------------------------------------
@@ -128,6 +166,18 @@ describe("useAddressAutocomplete", () => {
 			text: "Unter",
 			country: "DE",
 		});
+	});
+
+	it("returns multiple suggestions when server returns multiple addresses", async () => {
+		const multipleResults = [...mockResults, ...mockResultsDE];
+		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult(multipleResults));
+
+		const { result } = renderHook(() => useAddressAutocomplete("Rue", "FR"));
+
+		await act(async () => {});
+
+		expect(result.current.suggestions).toHaveLength(2);
+		expect(result.current.suggestions).toEqual(multipleResults);
 	});
 
 	it("clears error when result.error is false", async () => {
@@ -175,6 +225,16 @@ describe("useAddressAutocomplete", () => {
 		expect(result.current.error).toBeNull();
 	});
 
+	it("returns empty suggestions when server returns error with no addresses", async () => {
+		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult([], true));
+
+		const { result } = renderHook(() => useAddressAutocomplete("Paris", "FR"));
+
+		await act(async () => {});
+
+		expect(result.current.suggestions).toEqual([]);
+	});
+
 	// --------------------------------------------------------------------------
 	// Country change clears state synchronously
 	// --------------------------------------------------------------------------
@@ -218,6 +278,28 @@ describe("useAddressAutocomplete", () => {
 		expect(result.current.error).toBeNull();
 	});
 
+	it("triggers a new search when country changes", async () => {
+		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult(mockResults));
+
+		const { rerender } = renderHook(
+			({ country }: { country: "FR" | "DE" }) => useAddressAutocomplete("Rue", country),
+			{ initialProps: { country: "FR" as "FR" | "DE" } },
+		);
+
+		await act(async () => {});
+		expect(vi.mocked(searchAddressForCheckout)).toHaveBeenCalledTimes(1);
+
+		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult(mockResultsDE));
+		rerender({ country: "DE" });
+		await act(async () => {});
+
+		expect(vi.mocked(searchAddressForCheckout)).toHaveBeenCalledTimes(2);
+		expect(vi.mocked(searchAddressForCheckout)).toHaveBeenLastCalledWith({
+			text: "Rue",
+			country: "DE",
+		});
+	});
+
 	// --------------------------------------------------------------------------
 	// Stale response guard
 	// --------------------------------------------------------------------------
@@ -251,6 +333,38 @@ describe("useAddressAutocomplete", () => {
 
 		// Only DE results should be visible — FR response was stale
 		expect(result.current.suggestions).toEqual(mockResultsDE);
+	});
+
+	it("ignores stale responses when query changes rapidly", async () => {
+		let resolveFirst!: (v: ReturnType<typeof makeSearchResult>) => void;
+		const firstRequest = new Promise<ReturnType<typeof makeSearchResult>>((resolve) => {
+			resolveFirst = resolve;
+		});
+		const secondResults: SearchAddressResult[] = [mockResultsDE[0]!];
+		const secondRequest = Promise.resolve(makeSearchResult(secondResults));
+
+		vi.mocked(searchAddressForCheckout)
+			.mockReturnValueOnce(firstRequest)
+			.mockReturnValueOnce(secondRequest);
+
+		const { result, rerender } = renderHook(
+			({ query }: { query: string }) => useAddressAutocomplete(query, "FR"),
+			{ initialProps: { query: "Rue" } },
+		);
+
+		// Trigger second request immediately
+		rerender({ query: "Rue de" });
+
+		// Let the second request complete
+		await act(async () => {});
+
+		// Now resolve the first stale request
+		await act(async () => {
+			resolveFirst(makeSearchResult(mockResults));
+		});
+
+		// Only second results should be visible — first response was stale
+		expect(result.current.suggestions).toEqual(secondResults);
 	});
 
 	// --------------------------------------------------------------------------
@@ -307,25 +421,38 @@ describe("useAddressAutocomplete", () => {
 		expect(result.current.suggestions).toEqual(mockResults);
 	});
 
-	// --------------------------------------------------------------------------
-	// Short-query guard with existing results
-	// --------------------------------------------------------------------------
-
-	it("returns empty suggestions for short query even when previous results exist", async () => {
-		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult(mockResults));
-
-		const { result, rerender } = renderHook(
-			({ query }: { query: string }) => useAddressAutocomplete(query, "FR"),
-			{ initialProps: { query: "Rue de la Paix" } },
-		);
+	it("retry() does not call server action when query < 2 chars", async () => {
+		const { result } = renderHook(() => useAddressAutocomplete("R", "FR"));
 
 		await act(async () => {});
-		expect(result.current.suggestions).toEqual(mockResults);
+		expect(vi.mocked(searchAddressForCheckout)).not.toHaveBeenCalled();
 
-		// Drop back to a short query — results state is still there but
-		// suggestions should be gated to []
-		rerender({ query: "R" });
+		await act(async () => {
+			result.current.retry();
+		});
 
-		expect(result.current.suggestions).toEqual([]);
+		// Still should not be called — short query guard still applies
+		expect(vi.mocked(searchAddressForCheckout)).not.toHaveBeenCalled();
+	});
+
+	it("retry() multiple times calls server action multiple times", async () => {
+		vi.mocked(searchAddressForCheckout).mockResolvedValue(makeSearchResult(mockResults));
+
+		const { result } = renderHook(() => useAddressAutocomplete("Paris", "FR"));
+
+		await act(async () => {});
+
+		await act(async () => {
+			result.current.retry();
+		});
+		await act(async () => {
+			result.current.retry();
+		});
+		await act(async () => {
+			result.current.retry();
+		});
+
+		// 1 initial + 3 retries
+		expect(vi.mocked(searchAddressForCheckout)).toHaveBeenCalledTimes(4);
 	});
 });

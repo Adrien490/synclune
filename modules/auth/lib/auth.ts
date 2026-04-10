@@ -208,11 +208,7 @@ export const auth = betterAuth({
 					});
 				}
 
-				// TODO: Optionnel - Logger dans un système de monitoring (Sentry, Datadog, etc.)
-				// await analytics.track('stripe_customer_created', {
-				//   userId: user.id,
-				//   stripeCustomerId: stripeCustomer.id
-				// });
+				// Stripe customer events are tracked via Sentry and /api/webhooks/stripe
 			},
 
 			// 🔴 CORRECTION : Personnaliser les paramètres de création du Customer Stripe
@@ -237,16 +233,7 @@ export const auth = betterAuth({
 
 			// 🔴 CORRECTION : Handler global pour tous les événements Stripe (monitoring)
 			onEvent: async (_event) => {
-				// TODO: Optionnel - Envoyer à un système de monitoring
-				// if (process.env.NODE_ENV === "production") {
-				//   await monitoring.logEvent('stripe_webhook_received', {
-				//     type: event.type,
-				//     id: event.id,
-				//     created: event.created
-				//   });
-				// }
-				// Les événements de paiement sont gérés par /api/webhooks/stripe
-				// Ce hook est principalement pour le monitoring et les événements customer
+				// Stripe events are monitored via Sentry; payment events handled by /api/webhooks/stripe
 			},
 		}),
 		nextCookies(), // IMPORTANT: doit être le dernier plugin pour gérer les cookies dans les server actions

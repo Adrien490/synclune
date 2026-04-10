@@ -1,8 +1,29 @@
 # Default owner for everything
 * @Adrien490
 
-# Critical paths
+# Critical paths — payments & security
 modules/payments/ @Adrien490
 modules/webhooks/ @Adrien490
 modules/auth/ @Adrien490
 shared/lib/stripe.ts @Adrien490
+
+# Core business modules
+modules/orders/ @Adrien490
+modules/products/ @Adrien490
+modules/cart/ @Adrien490
+modules/discounts/ @Adrien490
+
+# Shared infrastructure
+shared/lib/ @Adrien490
+shared/schemas/ @Adrien490
+
+# Database & schema
+prisma/ @Adrien490
+
+# App routing & layouts
+app/ @Adrien490
+
+# CI/CD & config
+.github/ @Adrien490
+next.config.ts @Adrien490
+vercel.json @Adrien490

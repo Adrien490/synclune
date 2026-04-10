@@ -2,6 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
+import {
+	DEFAULT_MAX_SIZE_IMAGE,
+	DEFAULT_MAX_SIZE_VIDEO,
+	DEFAULT_MAX_FILES,
+	DEFAULT_VIDEO_CONCURRENCY,
+	formatFileSize,
+	getMediaTypeFromFile,
+	isValidMediaType,
+} from "@/modules/media/utils/upload-helpers";
 import { withRetry } from "@/shared/utils/with-retry";
 import { toast } from "sonner";
 import type {
@@ -12,46 +21,6 @@ import type {
 	VideoThumbnailResult,
 } from "../types/hooks.types";
 import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const DEFAULT_MAX_SIZE_IMAGE = 16 * 1024 * 1024; // 16MB
-const DEFAULT_MAX_SIZE_VIDEO = 512 * 1024 * 1024; // 512MB
-const DEFAULT_MAX_FILES = 6;
-const DEFAULT_VIDEO_CONCURRENCY = 2;
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-/**
- * Formats a byte size into a human-readable string
- */
-function formatFileSize(bytes: number): string {
-	if (bytes < 1024) return `${bytes} B`;
-	if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-	return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-/**
- * Determines the media type from the MIME type
- */
-function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
-	return file.type.startsWith("video/") ? "VIDEO" : "IMAGE";
-}
-
-/**
- * Checks if a file has a valid media MIME type (image/* or video/*)
- */
-function isValidMediaType(file: File): boolean {
-	return file.type.startsWith("image/") || file.type.startsWith("video/");
-}
-
-// ============================================================================
-// HOOK
-// ============================================================================
 
 /**
  * Production-ready hook for media uploads (images and videos)
@@ -124,10 +93,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		};
 	}, []);
 
-	// ========================================================================
-	// UTILITIES
-	// ========================================================================
-
 	const isOversized = (file: File): boolean => {
 		const maxSize = getMediaTypeFromFile(file) === "VIDEO" ? maxSizeVideo : maxSizeImage;
 		return file.size > maxSize;
@@ -148,10 +113,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			return newProgress;
 		});
 	};
-
-	// ========================================================================
-	// VALIDATION
-	// ========================================================================
 
 	const validateFiles = (files: File[]): File[] => {
 		// Filter out non-image/video files
@@ -196,10 +157,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		return validSizeFiles;
 	};
-
-	// ========================================================================
-	// UPLOAD FUNCTIONS
-	// ========================================================================
 
 	/**
 	 * Uploads a video with thumbnail generation
@@ -350,10 +307,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		return results;
 	};
 
-	// ========================================================================
-	// BATCH PROCESSING (single batch of files)
-	// ========================================================================
-
 	const processBatch = async (files: File[], signal: AbortSignal): Promise<MediaUploadResult[]> => {
 		// Separate images and videos
 		const images = files.filter((f) => getMediaTypeFromFile(f) === "IMAGE");
@@ -383,10 +336,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		return uploadResults;
 	};
-
-	// ========================================================================
-	// QUEUE PROCESSING
-	// ========================================================================
 
 	const processQueue = async () => {
 		if (isProcessingRef.current) return;
@@ -461,10 +410,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		}
 	};
 
-	// ========================================================================
-	// MAIN UPLOAD FUNCTION
-	// ========================================================================
-
 	const upload = async (files: File[]): Promise<MediaUploadResult[]> => {
 		// Validate files
 		const validFiles = validateFiles(files);
@@ -513,10 +458,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		cumulativeResultsRef.current = [];
 		cumulativeCompletedRef.current = 0;
 	};
-
-	// ========================================================================
-	// RETURN
-	// ========================================================================
 
 	return {
 		upload,

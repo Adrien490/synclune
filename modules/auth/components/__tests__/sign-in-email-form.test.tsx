@@ -1,14 +1,17 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SignInEmailForm } from "../sign-in-email-form";
 
 // Hoisted mocks
-const { mockState, mockAction, mockIsPending, mockShake } = vi.hoisted(() => ({
-	mockState: { value: undefined as any },
-	mockAction: vi.fn(),
-	mockIsPending: { value: false },
-	mockShake: { shake: false, onShakeComplete: vi.fn() },
-}));
+const { mockState, mockAction, mockIsPending, mockShake, mockCanSubmit, mockHandleSubmit } =
+	vi.hoisted(() => ({
+		mockState: { value: undefined as any },
+		mockAction: vi.fn(),
+		mockIsPending: { value: false },
+		mockShake: { shake: false, onShakeComplete: vi.fn() },
+		mockCanSubmit: { value: true },
+		mockHandleSubmit: vi.fn(),
+	}));
 
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: () => ({
@@ -41,12 +44,16 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		Subscribe: ({ children, selector }: any) => {
 			if (selector) {
-				const result = selector({ canSubmit: true, isSubmitting: false, values: { password: "" } });
+				const result = selector({
+					canSubmit: mockCanSubmit.value,
+					isSubmitting: false,
+					values: { password: "" },
+				});
 				return <div>{children(Array.isArray(result) ? result : result)}</div>;
 			}
-			return <div>{children([true])}</div>;
+			return <div>{children([mockCanSubmit.value])}</div>;
 		},
-		handleSubmit: vi.fn(),
+		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
 	}),
 }));
@@ -129,6 +136,7 @@ beforeEach(() => {
 	mockState.value = undefined;
 	mockIsPending.value = false;
 	mockShake.shake = false;
+	mockCanSubmit.value = true;
 });
 
 describe("SignInEmailForm", () => {
@@ -194,5 +202,69 @@ describe("SignInEmailForm", () => {
 	it("hides error when state is undefined", () => {
 		render(<SignInEmailForm callbackURL="/" />);
 		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	// ─── RequiredFieldsNote ───────────────────────────────────────────────────
+
+	it("renders RequiredFieldsNote", () => {
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByTestId("required-note")).toBeDefined();
+	});
+
+	// ─── Pending state ────────────────────────────────────────────────────────
+
+	it("shows loader icon when isPending", () => {
+		mockIsPending.value = true;
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByTestId("loader")).toBeDefined();
+	});
+
+	it("disables submit button when isPending", () => {
+		mockIsPending.value = true;
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByRole("button", { name: /connexion/i })).toBeDisabled();
+	});
+
+	it("disables email field when isPending", () => {
+		mockIsPending.value = true;
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByTestId("field-email").querySelector("input")).toBeDisabled();
+	});
+
+	it("disables password field when isPending", () => {
+		mockIsPending.value = true;
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByTestId("field-password").querySelector("input")).toBeDisabled();
+	});
+
+	// ─── canSubmit ────────────────────────────────────────────────────────────
+
+	it("disables submit button when canSubmit is false", () => {
+		mockCanSubmit.value = false;
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByRole("button", { name: /se connecter/i })).toBeDisabled();
+	});
+
+	it("enables submit button when canSubmit is true and not pending", () => {
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByRole("button", { name: /se connecter/i })).not.toBeDisabled();
+	});
+
+	// ─── VALIDATION_ERROR filter ──────────────────────────────────────────────
+
+	it("does not show error alert for VALIDATION_ERROR status", () => {
+		mockState.value = { status: "validation_error", message: "Champ invalide" };
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	// ─── Form submission ──────────────────────────────────────────────────────
+
+	it("calls form.handleSubmit when form is submitted", () => {
+		render(<SignInEmailForm callbackURL="/" />);
+		const form = document.querySelector("form");
+		expect(form).not.toBeNull();
+		fireEvent.submit(form!);
+		expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
 	});
 });

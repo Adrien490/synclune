@@ -254,3 +254,55 @@ describe("searchParamParsers.date", () => {
 		expect(result).toBeUndefined();
 	});
 });
+
+describe("searchParamParsers.boolean - edge cases", () => {
+	it("should return false for random string", () => {
+		expect(searchParamParsers.boolean("yes")).toBe(false);
+	});
+
+	it("should return false for 'True' (case sensitive)", () => {
+		expect(searchParamParsers.boolean("True")).toBe(false);
+	});
+
+	it("should use first element of array for boolean", () => {
+		expect(searchParamParsers.boolean(["true", "false"])).toBe(true);
+	});
+
+	it("should return false for array starting with 'false'", () => {
+		expect(searchParamParsers.boolean(["false", "true"])).toBe(false);
+	});
+});
+
+describe("searchParamParsers.cursor - edge cases", () => {
+	it("should return undefined for cursor that is too long", () => {
+		const tooLong = "a".repeat(CUID_LENGTH + 1);
+		expect(searchParamParsers.cursor(tooLong)).toBeUndefined();
+	});
+
+	it("should return undefined for an empty string cursor", () => {
+		expect(searchParamParsers.cursor("")).toBeUndefined();
+	});
+});
+
+describe("searchParamParsers.perPage - edge cases", () => {
+	it("should return default when value is float", () => {
+		// z.coerce.number().int() rejects non-integers
+		expect(searchParamParsers.perPage("1.5")).toBe(10);
+	});
+
+	it("should accept boundary value 1", () => {
+		expect(searchParamParsers.perPage("1")).toBe(1);
+	});
+});
+
+describe("parseSearchParam - edge cases", () => {
+	it("should use first element of array when array has multiple items", () => {
+		const result = parseSearchParam(["hello", "world"], z.string().min(1), "default");
+		expect(result).toBe("hello");
+	});
+
+	it("should return defaultValue when first element fails validation", () => {
+		const result = parseSearchParam(["", "valid"], z.string().min(1), "fallback");
+		expect(result).toBe("fallback");
+	});
+});

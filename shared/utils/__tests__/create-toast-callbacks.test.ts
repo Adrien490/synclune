@@ -177,5 +177,83 @@ describe("createToastCallbacks", () => {
 
 			expect(custom).toHaveBeenCalledWith(result);
 		});
+
+		it("does not show error toast for VALIDATION_ERROR status", () => {
+			const callbacks = createToastCallbacks();
+			callbacks.onError({ message: "Invalid field", status: ActionStatus.VALIDATION_ERROR });
+
+			expect(mockToast.error).not.toHaveBeenCalled();
+		});
+
+		it("still calls custom onError callback for VALIDATION_ERROR", () => {
+			const custom = vi.fn();
+			const callbacks = createToastCallbacks({ onError: custom });
+			const result = { message: "Invalid", status: ActionStatus.VALIDATION_ERROR };
+			callbacks.onError(result);
+
+			expect(custom).toHaveBeenCalledWith(result);
+		});
+
+		it("shows error toast for UNAUTHORIZED status", () => {
+			const callbacks = createToastCallbacks();
+			callbacks.onError({ message: "Unauthorized", status: ActionStatus.UNAUTHORIZED });
+
+			expect(mockToast.error).toHaveBeenCalledWith("Unauthorized");
+		});
+
+		it("shows error toast for NOT_FOUND status", () => {
+			const callbacks = createToastCallbacks();
+			callbacks.onError({ message: "Not found", status: ActionStatus.NOT_FOUND });
+
+			expect(mockToast.error).toHaveBeenCalledWith("Not found");
+		});
+
+		it("does not show toast for result without message", () => {
+			const callbacks = createToastCallbacks();
+			callbacks.onError({ status: ActionStatus.ERROR } as never);
+
+			expect(mockToast.error).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("onEnd with numeric reference", () => {
+		it("dismisses toast when reference is a number", () => {
+			const callbacks = createToastCallbacks();
+			callbacks.onEnd(42);
+
+			expect(mockToast.dismiss).toHaveBeenCalledWith(42);
+		});
+
+		it("dismisses toast when reference is zero", () => {
+			const callbacks = createToastCallbacks();
+			callbacks.onEnd(0);
+
+			// 0 is falsy but defined — the check is `!== undefined`
+			expect(mockToast.dismiss).toHaveBeenCalledWith(0);
+		});
+	});
+
+	describe("default options", () => {
+		it("returns callbacks when called with no options", () => {
+			const callbacks = createToastCallbacks();
+
+			expect(callbacks).toHaveProperty("onStart");
+			expect(callbacks).toHaveProperty("onEnd");
+			expect(callbacks).toHaveProperty("onSuccess");
+			expect(callbacks).toHaveProperty("onWarning");
+			expect(callbacks).toHaveProperty("onError");
+		});
+
+		it("does not crash when all show flags are false and result has no message", () => {
+			const callbacks = createToastCallbacks({
+				showSuccessToast: false,
+				showWarningToast: false,
+				showErrorToast: false,
+			});
+
+			expect(() => callbacks.onSuccess({ status: ActionStatus.SUCCESS } as never)).not.toThrow();
+			expect(() => callbacks.onWarning({ status: ActionStatus.WARNING } as never)).not.toThrow();
+			expect(() => callbacks.onError({ status: ActionStatus.ERROR } as never)).not.toThrow();
+		});
 	});
 });
