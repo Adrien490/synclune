@@ -33,9 +33,8 @@ export const ReviewResponseEmail = ({
 					Bonjour {customerName},
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Merci d&apos;avoir pris le temps de partager votre avis sur{" "}
-					<strong>{productTitle}</strong>. Nous avons lu votre retour avec attention et nous tenions
-					à vous répondre.
+					Merci d'avoir pris le temps de partager votre avis sur <strong>{productTitle}</strong>.
+					Nous avons lu votre retour avec attention et nous tenions à vous répondre.
 				</Text>
 			</Section>
 
@@ -44,7 +43,7 @@ export const ReviewResponseEmail = ({
 			{/* Rappel de l'avis original */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Votre avis</Text>
-				<div
+				<Section
 					style={{
 						...EMAIL_STYLES.section.card,
 						borderLeft: `3px solid ${EMAIL_COLORS.border}`,
@@ -60,13 +59,13 @@ export const ReviewResponseEmail = ({
 					>
 						&ldquo;{reviewContent}&rdquo;
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			{/* Réponse de l'équipe */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Notre réponse</Text>
-				<div
+				<Section
 					style={{
 						...EMAIL_STYLES.section.card,
 						borderLeft: `3px solid ${EMAIL_COLORS.primary}`,
@@ -83,7 +82,7 @@ export const ReviewResponseEmail = ({
 					>
 						— {responseAuthorName}
 					</Text>
-				</div>
+				</Section>
 			</Section>
 
 			<Hr style={{ ...EMAIL_STYLES.hr, margin: "24px 0" }} />

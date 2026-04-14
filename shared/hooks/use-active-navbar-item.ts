@@ -83,28 +83,28 @@ export function useActiveNavbarItem() {
 		}
 
 		// Pages collections
-		if (pathname.startsWith("/collections")) {
-			return { label: "Les collections", href: "/collections" };
+		if (pathname.startsWith(ROUTES.SHOP.COLLECTIONS)) {
+			return { label: "Les collections", href: ROUTES.SHOP.COLLECTIONS };
 		}
 
 		// Page personnalisation
-		if (pathname === "/personnalisation") {
-			return { label: "Personnalisation", href: "/personnalisation" };
+		if (pathname === ROUTES.SHOP.CUSTOMIZATION) {
+			return { label: "Personnalisation", href: ROUTES.SHOP.CUSTOMIZATION };
 		}
 
 		// Pages espace client
 		if (
-			pathname.startsWith("/commandes") ||
-			pathname.startsWith("/favoris") ||
-			pathname.startsWith("/adresses") ||
-			pathname.startsWith("/parametres")
+			pathname.startsWith(ROUTES.ACCOUNT.ORDERS) ||
+			pathname.startsWith(ROUTES.ACCOUNT.FAVORITES) ||
+			pathname.startsWith(ROUTES.ACCOUNT.ADDRESSES) ||
+			pathname.startsWith(ROUTES.ACCOUNT.SETTINGS)
 		) {
-			return { label: "Mon compte", href: "/commandes" };
+			return { label: "Mon compte", href: ROUTES.ACCOUNT.ORDERS };
 		}
 
 		// Pages paiement
-		if (pathname.startsWith("/paiement")) {
-			return { label: "Paiement", href: "/paiement" };
+		if (pathname.startsWith(ROUTES.SHOP.CHECKOUT)) {
+			return { label: "Paiement", href: ROUTES.SHOP.CHECKOUT };
 		}
 
 		return null;

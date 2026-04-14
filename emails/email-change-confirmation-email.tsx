@@ -13,7 +13,7 @@ export const EmailChangeConfirmationEmail = ({
 }: EmailChangeConfirmationEmailProps) => (
 	<EmailLayout preview="Confirmez votre nouvelle adresse email">
 		<Section style={{ marginBottom: "24px" }}>
-			<Text style={EMAIL_STYLES.heading.h2}>Changement d&apos;adresse email</Text>
+			<Text style={EMAIL_STYLES.heading.h2}>Changement d'adresse email</Text>
 			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
 				Vous avez demandé à changer votre adresse email pour <strong>{newEmail}</strong>. Cliquez
 				sur le bouton ci-dessous pour confirmer ce changement.
@@ -28,8 +28,8 @@ export const EmailChangeConfirmationEmail = ({
 
 		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
 			<Text style={EMAIL_STYLES.text.small}>
-				Si vous n&apos;avez pas demandé ce changement, ignorez cet email. Votre adresse actuelle
-				reste inchangée.
+				Ce lien expire dans 1 heure. Si vous n'avez pas demandé ce changement, ignorez cet email.
+				Votre adresse actuelle reste inchangée.
 			</Text>
 		</Section>
 	</EmailLayout>

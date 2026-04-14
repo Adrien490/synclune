@@ -118,7 +118,7 @@ export const CustomizationRequestEmail = ({
 			{inspirationMedias && inspirationMedias.length > 0 && (
 				<Section style={{ marginBottom: "24px" }}>
 					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
-						Images d&apos;inspiration
+						Images d'inspiration
 					</Text>
 					<Section style={EMAIL_STYLES.section.card}>
 						{Array.from({ length: Math.ceil(inspirationMedias.length / 2) }, (_, rowIndex) => (

@@ -47,6 +47,7 @@ export function useFilter(options: UseFilterOptions = {}) {
 
 	// Type pour les actions optimistes
 	type OptimisticAction =
+		| { type: "set"; filters: FilterDefinition[] }
 		| { type: "remove"; key: string; value?: string }
 		| { type: "removeMany"; keys: string[] }
 		| { type: "clear" };
@@ -57,6 +58,12 @@ export function useFilter(options: UseFilterOptions = {}) {
 		(currentFilters, action: OptimisticAction) => {
 			if (action.type === "clear") {
 				return [];
+			}
+			if (action.type === "set") {
+				// Replace filters: remove all that share a key with the new set, then add new ones
+				const newKeys = new Set(action.filters.map((f) => f.key));
+				const kept = currentFilters.filter((f) => !newKeys.has(f.key));
+				return [...kept, ...action.filters];
 			}
 			if (action.type === "removeMany") {
 				return currentFilters.filter((f) => !action.keys.includes(f.key));
@@ -129,6 +136,66 @@ export function useFilter(options: UseFilterOptions = {}) {
 	 */
 	const setFilter = (key: string, value: FilterValue | undefined) => {
 		setFilters({ [key]: value });
+	};
+
+	/**
+	 * Définir plusieurs filtres de manière optimiste (UI instantanée)
+	 */
+	const setFiltersOptimistic = (filters: Record<string, FilterValue | undefined>) => {
+		startTransition(() => {
+			// 1. Build optimistic filter definitions
+			const optimisticFilters: FilterDefinition[] = [];
+			Object.entries(filters).forEach(([key, value]) => {
+				if (value === undefined || value === "") return;
+				const fullKey = key.startsWith(filterPrefix) ? key : `${filterPrefix}${key}`;
+				const filterKey = key.replace(filterPrefix, "");
+				if (Array.isArray(value)) {
+					value.forEach((v) => {
+						optimisticFilters.push({
+							id: `${fullKey}-${v}`,
+							key: fullKey,
+							value: String(v),
+							label: filterKey,
+							displayValue: String(v),
+						});
+					});
+				} else {
+					const strValue = value instanceof Date ? value.toISOString() : String(value);
+					optimisticFilters.push({
+						id: `${fullKey}-${strValue}`,
+						key: fullKey,
+						value: strValue,
+						label: filterKey,
+						displayValue: strValue,
+					});
+				}
+			});
+
+			updateOptimisticFilters({ type: "set", filters: optimisticFilters });
+
+			// 2. Navigation
+			const params = preserveNonFilterParams();
+			Object.entries(filters).forEach(([key, value]) => {
+				if (value === undefined || value === "") return;
+				const fullKey = key.startsWith(filterPrefix) ? key : `${filterPrefix}${key}`;
+				if (Array.isArray(value)) {
+					value.forEach((v) => params.append(fullKey, String(v)));
+				} else if (value instanceof Date) {
+					params.set(fullKey, value.toISOString());
+				} else {
+					params.set(fullKey, String(value));
+				}
+			});
+
+			router.replace(buildUrl(params), { scroll: false });
+		});
+	};
+
+	/**
+	 * Définir un seul filtre de manière optimiste (UI instantanée)
+	 */
+	const setFilterOptimistic = (key: string, value: FilterValue | undefined) => {
+		setFiltersOptimistic({ [key]: value });
 	};
 
 	/**
@@ -326,6 +393,8 @@ export function useFilter(options: UseFilterOptions = {}) {
 		clearAllFilters,
 
 		// Actions optimistes (UI instantanée)
+		setFilterOptimistic,
+		setFiltersOptimistic,
 		removeFilterOptimistic,
 		removeFiltersOptimistic,
 		clearAllFiltersOptimistic,

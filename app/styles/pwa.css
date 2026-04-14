@@ -4,12 +4,14 @@
 
 /* Prévenir le bounce/overscroll iOS en mode standalone */
 html {
+	color-scheme: light;
 	overscroll-behavior-y: none;
 }
 
 body {
 	position: relative;
 	overscroll-behavior-y: none;
+	min-height: 100dvh;
 	/* Safe area pour notch/bords arrondis - avec fallbacks */
 	padding-top: env(safe-area-inset-top, 0);
 	padding-bottom: env(safe-area-inset-bottom, 0);
@@ -33,7 +35,6 @@ button,
 [role="button"],
 nav a,
 .select-none {
-	-webkit-user-select: none;
 	user-select: none;
 }
 
@@ -94,19 +95,12 @@ textarea {
 	}
 }
 
-/* Support pour les claviers virtuels (iOS 16.4+) */
-@supports (height: 100dvh) {
-	body {
-		min-height: 100dvh;
-	}
-}
+/* ========================================================================
+   VIEW TRANSITIONS — Navigation native-feel (PWA)
+   ======================================================================== */
 
-/* Fallback pour navigateurs sans dvh */
-@supports not (height: 100dvh) {
-	body {
-		min-height: 100vh;
-		min-height: -webkit-fill-available;
-	}
+@view-transition {
+	navigation: auto;
 }
 
 /* ========================================================================

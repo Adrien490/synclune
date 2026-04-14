@@ -59,20 +59,15 @@ export const RefundRejectedEmail = ({
 			</Section>
 
 			{/* CTAs */}
+			<Section style={{ marginBottom: "12px", textAlign: "center" }}>
+				<Button href="https://synclune.fr/contact" style={EMAIL_STYLES.button.primary}>
+					Nous contacter
+				</Button>
+			</Section>
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<div style={{ marginBottom: "12px" }}>
-					<Button href="https://synclune.fr/contact" style={EMAIL_STYLES.button.primary}>
-						Nous contacter
-					</Button>
-				</div>
-				<div>
-					<Link
-						href={orderDetailsUrl}
-						style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
-					>
-						Voir ma commande
-					</Link>
-				</div>
+				<Link href={orderDetailsUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+					Voir ma commande
+				</Link>
 			</Section>
 		</EmailLayout>
 	);

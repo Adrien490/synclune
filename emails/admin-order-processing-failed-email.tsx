@@ -30,7 +30,7 @@ export const AdminOrderProcessingFailedEmail = ({
 			headerText="Échec traitement commande"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Le paiement a été encaissé mais la commande n&apos;a pas pu être traitée. Une intervention
+					Le paiement a été encaissé mais la commande n'a pas pu être traitée. Une intervention
 					manuelle est requise.
 				</Text>
 			}
@@ -43,7 +43,7 @@ export const AdminOrderProcessingFailedEmail = ({
 						fontWeight: "bold",
 					}}
 				>
-					Le client a payé mais sa commande n&apos;a pas pu être traitée. Action manuelle requise
+					Le client a payé mais sa commande n'a pas pu être traitée. Action manuelle requise
 					immédiatement.
 				</Text>
 			</Section>
@@ -127,23 +127,21 @@ export const AdminOrderProcessingFailedEmail = ({
 			</Section>
 
 			{/* CTAs */}
+			<Section style={{ marginBottom: "12px", textAlign: "center" }}>
+				<Button
+					href={stripeDashboardUrl}
+					style={{
+						...EMAIL_STYLES.button.primary,
+						backgroundColor: EMAIL_COLORS.stripe,
+					}}
+				>
+					Ouvrir Stripe
+				</Button>
+			</Section>
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<div style={{ marginBottom: "12px" }}>
-					<Button
-						href={stripeDashboardUrl}
-						style={{
-							...EMAIL_STYLES.button.primary,
-							backgroundColor: EMAIL_COLORS.stripe,
-						}}
-					>
-						Ouvrir Stripe
-					</Button>
-				</div>
-				<div>
-					<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
-						Voir la commande
-					</Button>
-				</div>
+				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
+					Voir la commande
+				</Button>
 			</Section>
 		</EmailLayout>
 	);

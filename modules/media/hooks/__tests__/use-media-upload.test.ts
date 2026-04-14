@@ -28,12 +28,12 @@ vi.mock("@/modules/media/utils/uploadthing", () => ({
 	}),
 }));
 
-vi.mock("../hooks/use-video-thumbnail", () => ({
+vi.mock("../use-video-thumbnail", () => ({
 	generateVideoThumbnail: (...args: unknown[]) => mockGenerateVideoThumbnail(...args),
 	isThumbnailGenerationSupported: () => mockIsThumbnailGenerationSupported(),
 }));
 
-vi.mock("../services/delete-uploadthing-files.service", () => ({
+vi.mock("../../services/delete-uploadthing-files.service", () => ({
 	deleteUploadThingFilesFromUrls: (...args: unknown[]) =>
 		mockDeleteUploadThingFilesFromUrls(...args),
 }));
@@ -50,7 +50,7 @@ vi.mock("sonner", () => ({
 }));
 
 import { toast } from "sonner";
-import { useMediaUpload } from "../hooks/use-media-upload";
+import { useMediaUpload } from "../use-media-upload";
 
 // ============================================================================
 // HELPERS

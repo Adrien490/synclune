@@ -57,7 +57,7 @@ export const AdminWebhookFailedEmail = ({
 					/>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Type d&apos;événement</Text>}
+						left={<Text style={EMAIL_STYLES.text.small}>Type d'événement</Text>}
 						right={
 							<Text
 								style={{
@@ -97,23 +97,21 @@ export const AdminWebhookFailedEmail = ({
 			</Section>
 
 			{/* CTAs */}
+			<Section style={{ marginBottom: "12px", textAlign: "center" }}>
+				<Button
+					href={stripeDashboardUrl}
+					style={{
+						...EMAIL_STYLES.button.primary,
+						backgroundColor: EMAIL_COLORS.stripe,
+					}}
+				>
+					Voir dans Stripe
+				</Button>
+			</Section>
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<div style={{ marginBottom: "12px" }}>
-					<Button
-						href={stripeDashboardUrl}
-						style={{
-							...EMAIL_STYLES.button.primary,
-							backgroundColor: EMAIL_COLORS.stripe,
-						}}
-					>
-						Voir dans Stripe
-					</Button>
-				</div>
-				<div>
-					<Button href={adminDashboardUrl} style={EMAIL_STYLES.button.primary}>
-						Dashboard Admin
-					</Button>
-				</div>
+				<Button href={adminDashboardUrl} style={EMAIL_STYLES.button.primary}>
+					Dashboard Admin
+				</Button>
 			</Section>
 		</EmailLayout>
 	);

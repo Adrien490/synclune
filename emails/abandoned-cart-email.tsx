@@ -49,7 +49,7 @@ export const AbandonedCartEmail = ({
 			{/* Items */}
 			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
 				{items.map((item, index) => (
-					<div key={index}>
+					<Section key={index}>
 						{index > 0 && <Hr style={{ borderColor: EMAIL_COLORS.border, margin: "12px 0" }} />}
 						<Text style={{ ...EMAIL_STYLES.text.body, fontWeight: "600", marginBottom: "4px" }}>
 							{item.productTitle}
@@ -63,7 +63,7 @@ export const AbandonedCartEmail = ({
 							{item.quantity > 1 ? `${item.quantity} x ` : ""}
 							{formatEuro(item.price)}
 						</Text>
-					</div>
+					</Section>
 				))}
 				<Hr style={{ borderColor: EMAIL_COLORS.border, margin: "16px 0" }} />
 				<Text style={{ ...EMAIL_STYLES.text.body, fontWeight: "bold", textAlign: "right" }}>

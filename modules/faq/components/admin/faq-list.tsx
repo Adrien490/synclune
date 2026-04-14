@@ -52,7 +52,7 @@ export function FaqList({ faqItemsPromise }: FaqListProps) {
 		setLiveMessage("Élément sélectionné. Utilisez les flèches pour déplacer.");
 	};
 
-	const handleDragEnd: DragEndEvent = (event) => {
+	const handleDragEnd = (event: DragEndEvent) => {
 		setIsDragging(false);
 
 		if (event.canceled) {

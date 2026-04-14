@@ -27,7 +27,7 @@ export const AdminCronFailedEmail = ({
 			headerText="Échec cron job"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Vérifiez les logs Vercel pour plus d&apos;informations.
+					Vérifiez les logs Vercel pour plus d'informations.
 				</Text>
 			}
 		>
@@ -98,6 +98,6 @@ AdminCronFailedEmail.PreviewProps = {
 		lastError: "Connection timeout after 30s",
 	},
 	dashboardUrl: "https://synclune.fr/admin",
-} satisfies AdminCronFailedEmailProps;
+} as AdminCronFailedEmailProps;
 
 export default AdminCronFailedEmail;

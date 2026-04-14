@@ -26,7 +26,7 @@ export const AdminCheckoutFailedEmail = ({
 			headerText="Échec checkout Stripe"
 			footer={
 				<Text style={EMAIL_STYLES.text.tiny}>
-					Vérifiez les logs Vercel et le dashboard Stripe pour plus d&apos;informations.
+					Vérifiez les logs Vercel et le dashboard Stripe pour plus d'informations.
 				</Text>
 			}
 		>

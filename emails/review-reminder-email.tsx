@@ -39,12 +39,12 @@ export const ReviewReminderEmail = ({
 					Bonjour {customerName},
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Nous espérons que vous profitez bien de votre commande. Nous serions ravies d&apos;avoir
-					votre retour d&apos;expérience !
+					Nous espérons que vous profitez bien de votre commande. Nous serions ravies d'avoir votre
+					retour d'expérience !
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Votre avis, même en quelques mots, aide d&apos;autres clientes à choisir et nous permet de
-					nous améliorer.
+					Votre avis, même en quelques mots, aide d'autres clientes à choisir et nous permet de nous
+					améliorer.
 				</Text>
 			</Section>
 

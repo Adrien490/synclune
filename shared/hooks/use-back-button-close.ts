@@ -61,9 +61,13 @@ export function useBackButtonClose({ isOpen, onClose, id = "modal" }: UseBackBut
 		return () => window.removeEventListener("popstate", onPopState);
 	}, [isOpen]);
 
-	// Fonction pour fermer proprement
+	// Fonction pour fermer proprement (pop l'entrée history pour éviter un back orphelin)
 	const handleClose = () => {
-		historyPushedRef.current = false;
+		if (historyPushedRef.current) {
+			// Reset ref AVANT history.back() pour que onPopState ne rappelle pas onClose
+			historyPushedRef.current = false;
+			history.back();
+		}
 		onClose();
 	};
 

@@ -25,4 +25,30 @@ describe("useMounted", () => {
 		rerender();
 		expect(result.current).toBe(true);
 	});
+
+	it("returns the same value (true) on consecutive re-renders without unmount", () => {
+		const { result, rerender } = renderHook(() => useMounted());
+		for (let i = 0; i < 5; i++) {
+			rerender();
+			expect(result.current).toBe(true);
+		}
+	});
+
+	it("returns true again after unmount and remount", () => {
+		const { result, unmount } = renderHook(() => useMounted());
+		expect(result.current).toBe(true);
+
+		unmount();
+
+		const { result: result2 } = renderHook(() => useMounted());
+		expect(result2.current).toBe(true);
+	});
+
+	it("can be used by multiple components simultaneously", () => {
+		const { result: r1 } = renderHook(() => useMounted());
+		const { result: r2 } = renderHook(() => useMounted());
+
+		expect(r1.current).toBe(true);
+		expect(r2.current).toBe(true);
+	});
 });

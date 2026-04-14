@@ -1,19 +1,24 @@
 # Mobile List Card UI/UX — Design Guide 2026
 
-> Derniere mise a jour : 2026-03-29 | Statut : Guide de reference | 17 sections
+> Derniere mise a jour : 2026-04-14 | Statut : Guide de reference | 17 sections
 
 Documentation des patterns UI/UX modernes pour une card dans une liste mobile, avec un rendu natif premium (iOS/Android 2026). Applicable aux listes admin et storefront de Synclune.
 
 ### Stack
 
-| Technologie   | Version  |
-| ------------- | -------- |
-| Next.js       | 16.2.1   |
-| React         | 19.2.4   |
-| Motion        | 12.38.0  |
-| TanStack Form | 1.28.5   |
-| Tailwind CSS  | 4.2.2    |
-| shadcn/ui     | new-york |
+| Technologie    | Version  |
+| -------------- | -------- |
+| Next.js        | 16.2.3   |
+| React          | 19.2.5   |
+| Motion         | 12.38.0  |
+| TanStack Form  | 1.29.0   |
+| Tailwind CSS   | 4.2.2    |
+| @dnd-kit/react | 0.4.0    |
+| Zustand        | 5.0.12   |
+| Serwist        | 9.5.7    |
+| shadcn/ui      | new-york |
+
+> **Note** : Verifier `package.json` pour les versions exactes installees — ce tableau peut devenir obsolete rapidement.
 
 ### Maturite des patterns
 
@@ -28,7 +33,9 @@ Documentation des patterns UI/UX modernes pour une card dans une liste mobile, a
 | Cursor pagination                        | Implemente  | 14      |
 | Drag & Drop reorder (dnd-kit)            | Implemente  | 5       |
 | Container Queries (`@container/card`)    | Implemente  | 10      |
-| Swipe Actions                            | Design only | 5, 11   |
+| View Transitions (morphing)              | Partiel     | 2       |
+| `useTransition` + `isPending`            | Implemente  | 2       |
+| Swipe Actions (swipe-to-remove)          | Implemente  | 5, 11   |
 | Long Press → Context Menu                | Design only | 5, 11   |
 | Pull to Refresh                          | Design only | 5       |
 | Expandable cards                         | Design only | 9       |
@@ -39,7 +46,7 @@ Documentation des patterns UI/UX modernes pour une card dans une liste mobile, a
 
 Avant d'implementer, utiliser les primitives existantes du projet.
 
-> **Note** : Le projet utilise `m` (import nomme via `LazyMotion domMax` dans `shared/providers/motion-provider.tsx`) et non `motion` (import par defaut). Tous les exemples de ce guide utilisent `m`.
+> **Note** : Le projet utilise `m` (import nomme via `LazyMotion domAnimation` dans `shared/providers/motion-provider.tsx`) et non `motion` (import par defaut). `domAnimation` est un bundle allege qui inclut le drag (`drag="x"`, `drag="y"`) mais **n'inclut pas les layout animations** (`layout`, `layoutId`) — pour celles-ci, importer `domMax` ponctuellement. Tous les exemples de ce guide utilisent `m`. Exception : quelques fichiers historiques (ex: `customization-form.tsx`) importent `motion` directement — preferer `m` pour les nouveaux composants.
 
 ### Composants UI
 
@@ -61,12 +68,15 @@ Avant d'implementer, utiliser les primitives existantes du projet.
 
 ### Hooks
 
-| Hook                 | Fichier                            | Usage                                                      |
-| -------------------- | ---------------------------------- | ---------------------------------------------------------- |
-| `useIsMobile()`      | `shared/hooks/use-mobile.ts`       | Breakpoint 768px, SSR-safe (`useSyncExternalStore`)        |
-| `useIsTouchDevice()` | `shared/hooks/use-touch-device.ts` | Detecte `(hover: none) and (pointer: coarse)`              |
-| `useEdgeSwipe()`     | `shared/hooks/use-edge-swipe.ts`   | Swipe from left edge (20px), seuil 50px, passive listeners |
-| `usePinchZoom()`     | `shared/hooks/use-pinch-zoom.ts`   | Pinch-to-zoom, double-tap, pan, keyboard support           |
+| Hook                 | Fichier                                         | Usage                                                                                                               |
+| -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `useIsMobile()`      | `shared/hooks/use-mobile.ts`                    | Breakpoint 768px, SSR-safe (`useSyncExternalStore`)                                                                 |
+| `useIsTouchDevice()` | `shared/hooks/use-touch-device.ts`              | Detecte `(hover: none) and (pointer: coarse)` — SSR-safe (`useSyncExternalStore`)                                   |
+| `useEdgeSwipe()`     | `shared/hooks/use-edge-swipe.ts`                | Swipe from left edge (20px), seuil 50px, passive listeners — utilise `useEffectEvent` pour handlers stables         |
+| `usePinchZoom()`     | `shared/hooks/use-pinch-zoom.ts`                | Pinch-to-zoom, double-tap, pan, keyboard support — utilise `useEffectEvent` pour handlers stables                   |
+| `useTransition()`    | React 19 built-in                               | **125 fichiers** — transitions non-urgentes avec `isPending` pour feedback loading. Pattern principal des mutations |
+| `useSwipeToRemove()` | `modules/wishlist/hooks/use-swipe-to-remove.ts` | Swipe gauche pour supprimer — seuil 80px, cancel si scroll vertical, passive listeners, snap-back                   |
+| `useEffectEvent()`   | React 19 built-in                               | **19 fichiers** — event handlers stables sans re-render. A utiliser dans les hooks de gestes et listeners           |
 
 ### Composants mobiles partages
 
@@ -100,11 +110,12 @@ Usage : `can-hover:bg-accent/50`, `can-hover:scale-105`
 
 Ces modules implementent deja le pattern mobile list card documente ici. Les utiliser comme reference :
 
-| Module             | Mobile List                                                                        | Bottom Bar                                                                    | Skeleton                                           | Tests               |
-| ------------------ | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------- | ------------------- |
-| **Customizations** | `modules/customizations/components/admin/customizations-mobile-list.tsx` (123 LOC) | `customizations-bottom-bar.tsx` (278 LOC) — Sort + Search + Filter            | `customizations-mobile-list-skeleton.tsx` (37 LOC) | 237 + 53 + 699 LOC  |
-| **Discounts**      | `modules/discounts/components/admin/discounts-mobile-list.tsx` (134 LOC)           | `discounts-bottom-bar.tsx` (277 LOC) — Sort + Search + Filter                 | `discounts-mobile-list-skeleton.tsx` (37 LOC)      | 443 + 111 + 704 LOC |
-| **Products**       | _non implemente_                                                                   | `products-bottom-bar.tsx` (390 LOC) — Filter + Search + FAB Add + Sort + Menu | —                                                  | 615 LOC             |
+| Module             | Mobile List                                                                 | Bottom Bar                                                          | Skeleton                                  |
+| ------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
+| **Customizations** | `modules/customizations/components/admin/customizations-mobile-list.tsx`    | `customizations-bottom-bar.tsx` — Sort + Search + Filter            | `customizations-mobile-list-skeleton.tsx` |
+| **Discounts**      | `modules/discounts/components/admin/discounts-mobile-list.tsx`              | `discounts-bottom-bar.tsx` — Sort + Search + Filter                 | `discounts-mobile-list-skeleton.tsx`      |
+| **Wishlist**       | `modules/wishlist/components/swipeable-wishlist-item.tsx` (swipe-to-remove) | —                                                                   | `wishlist-grid-skeleton.tsx`              |
+| **Products**       | _non implemente_                                                            | `products-bottom-bar.tsx` — Filter + Search + FAB Add + Sort + Menu | —                                         |
 
 Pattern d'integration dans les pages admin (CSS-only breakpoint switching) :
 
@@ -178,11 +189,50 @@ export async function getItems(params: GetItemsParams) {
 }
 ```
 
-Apres mutation, invalider avec `updateTag("items-list")` dans l'action.
+Apres mutation, invalider avec `updateTag("items-list")` dans l'action (import : `import { updateTag } from "next/cache"`).
+
+### `use()` hook — Unwrap promises server → client
+
+Le hook `use()` de React 19 est le pattern fondamental pour passer des donnees d'un Server Component a un Client Component dans les listes mobiles. Il est utilise dans toutes les implementations de reference (`customizations-mobile-list.tsx`, `discounts-mobile-list.tsx`, `faq-list.tsx`) :
+
+```tsx
+// Server Component (page) — passe la promise directement
+export default async function ItemsPage() {
+	const itemsPromise = getItems(params); // PAS de await
+
+	return (
+		<Suspense fallback={<MobileListSkeleton />}>
+			<MobileList itemsPromise={itemsPromise} />
+		</Suspense>
+	);
+}
+
+// Client Component — unwrap avec use()
+("use client");
+
+import { use } from "react";
+
+function MobileList({ itemsPromise }: { itemsPromise: Promise<ItemsResponse> }) {
+	const { items, pagination } = use(itemsPromise);
+
+	return (
+		<ItemGroup aria-label="Liste des items">
+			{items.map((item) => (
+				<ListItem key={item.id} item={item} />
+			))}
+		</ItemGroup>
+	);
+}
+```
+
+- Le Server Component ne fait pas `await` — il passe la promise brute en prop
+- Le Client Component appelle `use(promise)` qui suspend le composant
+- Le `<Suspense>` parent affiche le skeleton pendant la suspension
+- Ce pattern permet le streaming SSR : le skeleton s'affiche immediatement cote serveur
 
 ### React Compiler — Pas de memoization
 
-Le projet a `babel-plugin-react-compiler` configure. **Ne pas utiliser** `useMemo()`, `useCallback()`, ou `React.memo()` dans les composants de liste. Le compilateur optimise automatiquement.
+Le React Compiler est active via `reactCompiler: true` dans `next.config.ts` (le package `babel-plugin-react-compiler` est installe comme devDependency du projet). **Ne pas utiliser** `useMemo()`, `useCallback()`, ou `React.memo()` dans les composants de liste. Le compilateur optimise automatiquement.
 
 ### Mutations depuis les cards
 
@@ -238,6 +288,61 @@ function WishlistToggle({ productId, isWishlisted }: Props) {
 }
 ```
 
+### View Transitions (morphing entre pages)
+
+Le projet utilise le CSS View Transitions API pour les transitions fluides entre la liste de produits et la fiche produit. Pattern existant dans `modules/media/components/gallery/` :
+
+```tsx
+// Sur la card produit dans la liste (source)
+<Image
+	style={{ viewTransitionName: `product-${product.id}` }}
+	src={product.image}
+	alt={product.name}
+/>
+
+// Sur la gallery de la fiche produit (destination)
+<Image
+	style={{ viewTransitionName: `product-${product.id}` }}
+	src={product.images[0]}
+	alt={product.name}
+/>
+```
+
+- `viewTransitionName` doit etre **unique** dans le DOM a tout instant (appliquer uniquement sur le premier slide)
+- Utilise dans `gallery.tsx`, `slide.tsx`, `pinch-zoom.tsx`
+- Pas besoin de JS — le navigateur morphe automatiquement les elements avec le meme `viewTransitionName`
+- Support : Chrome 111+, Safari 18+, Firefox non supporte (fallback : transition classique)
+
+### `useTransition` pour les mutations non-urgentes
+
+Pattern le plus utilise du projet (125 fichiers). Fournit `isPending` pour le feedback loading pendant la transition :
+
+```tsx
+"use client";
+
+import { useTransition } from "react";
+
+function FilterButton({ onFilter }: { onFilter: () => void }) {
+	const [isPending, startTransition] = useTransition();
+
+	function handleClick() {
+		startTransition(() => {
+			onFilter(); // Update non-urgente — ne bloque pas l'input utilisateur
+		});
+	}
+
+	return (
+		<button onClick={handleClick} disabled={isPending}>
+			{isPending ? "Chargement..." : "Filtrer"}
+		</button>
+	);
+}
+```
+
+- Utiliser pour : filtrage, tri, pagination, recherche, changements de statut
+- `isPending` : afficher un indicateur (opacity, spinner, skeleton) sans bloquer l'UI
+- Contribue directement a un bon score INP (< 200ms)
+
 ---
 
 ## 3. Anatomie d'une card liste mobile native
@@ -286,7 +391,7 @@ function WishlistToggle({ productId, isWishlisted }: Props) {
 - **Press state** : `bg-muted/50` transition 100ms — utiliser `can-hover:bg-accent/50` pour le hover, `:active` pour le press sur mobile
 - **Active scale** : `active:scale-[0.98]` subtil sur press (150ms ease-out) — `MOTION_CONFIG.duration.fast`
 - **No hover states sur mobile** : Utiliser `@custom-variant can-hover` exclusivement, pas de `:hover` nu
-- **Haptic feedback** : Android Chrome uniquement (`navigator.vibrate()`), non disponible sur iOS Safari — utiliser avec parcimonie :
+- **Haptic feedback** : `navigator.vibrate()` est Chrome Android uniquement — non supporte sur iOS Safari, fiabilite cross-platform faible. **Deconseille pour les interactions critiques**. Utiliser uniquement comme enhancement optionnel :
 
 ```tsx
 function triggerHaptic(duration = 10) {
@@ -308,7 +413,7 @@ function triggerHaptic(duration = 10) {
 
 ### 5.1Swipe Actions (pattern critique)
 
-> **Pattern non implemente** — Code d'exemple a adapter. Non teste en production.
+> **Pattern implemente** dans le module wishlist. Voir `modules/wishlist/hooks/use-swipe-to-remove.ts` (hook) + `modules/wishlist/components/swipeable-wishlist-item.tsx` (composant). L'implementation utilise des raw touch events (pas Motion drag) avec passive listeners pour ne pas bloquer le scroll. Voir section 11.6 pour le detail.
 
 ```
 ← Swipe gauche                    Swipe droite →
@@ -327,7 +432,7 @@ function triggerHaptic(duration = 10) {
 
 ### 5.2Long Press → Context Menu
 
-> **Pattern non implemente** — Code d'exemple a adapter. Non teste en production.
+> **Pattern non implemente** — Code d'exemple a adapter. Ne pas copier-coller en production sans tests approfondis.
 
 - **Delai** : 500ms
 - **Feedback** : `scale(1.02)` + `backdrop-blur-sm` sur le fond
@@ -336,7 +441,7 @@ function triggerHaptic(duration = 10) {
 
 ### 5.3Pull to Refresh
 
-> **Pattern non implemente** — Code d'exemple a adapter. Non teste en production.
+> **Pattern non implemente** — Code d'exemple a adapter. Ne pas copier-coller en production sans tests approfondis.
 
 - Indicateur spinner en haut de la liste
 - Seuil : 80px de pull
@@ -417,7 +522,7 @@ function PullToRefresh({
 
 ### 5.5Drag & Drop / Reorder
 
-Le projet utilise `@dnd-kit/react` 0.3.2 (API 2026), avec `@dnd-kit/dom` et `@dnd-kit/helpers`. Pattern existant :
+Le projet utilise `@dnd-kit/react` 0.4.0 (API 2026), avec `@dnd-kit/dom` et `@dnd-kit/helpers`. Pattern existant :
 
 - **DragOverlay** : `shadow-lg` + `scale(1.02)` sur l'item en cours de drag
 - **Grip handle** : Icone grip visible en leading, `handleRef` pour focusabilite clavier
@@ -474,16 +579,32 @@ Utiliser les composants existants :
 - Message inline dans la liste
 - Bouton "Reessayer"
 - Pas de page d'erreur plein ecran pour une erreur de fetch
-- **Error boundary par item** : Un item en erreur ne doit pas crasher toute la liste. Wrapper chaque item avec un error boundary leger. Necessite le package `react-error-boundary` (**non installe** — `pnpm add react-error-boundary` avant usage) :
+- **Error boundary par item** : Un item en erreur ne doit pas crasher toute la liste. Wrapper chaque item avec un error boundary custom leger (pas de dependance externe necessaire) :
 
 ```tsx
-import { ErrorBoundary } from "react-error-boundary";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+
+class ItemErrorBoundary extends Component<
+	{ children: ReactNode; fallback: ReactNode },
+	{ hasError: boolean }
+> {
+	state = { hasError: false };
+	static getDerivedStateFromError() {
+		return { hasError: true };
+	}
+	componentDidCatch(error: Error, info: ErrorInfo) {
+		console.error("ItemErrorBoundary:", error, info);
+	}
+	render() {
+		return this.state.hasError ? this.props.fallback : this.props.children;
+	}
+}
 
 function ListWithItemRecovery({ items }: { items: Item[] }) {
 	return (
 		<ItemGroup aria-label="Liste des commandes">
 			{items.map((item) => (
-				<ErrorBoundary
+				<ItemErrorBoundary
 					key={item.id}
 					fallback={
 						<Item variant="muted" className="opacity-60">
@@ -495,7 +616,7 @@ function ListWithItemRecovery({ items }: { items: Item[] }) {
 					}
 				>
 					<ListItem item={item} />
-				</ErrorBoundary>
+				</ItemErrorBoundary>
 			))}
 		</ItemGroup>
 	);
@@ -613,7 +734,7 @@ Utiliser `StaggerGrid` ou `Stagger` :
 
 ### Scroll-driven animations
 
-Le projet a 6 scroll-driven animations CSS. Pour les listes :
+Le projet a plusieurs scroll-driven animations CSS (voir `app/styles/scroll-driven.css`). Pour les listes :
 
 - **Reveal on scroll** : Items apparaissent progressivement au scroll (utiliser `Stagger` avec `inView`)
 - **Parallax subtil** : Thumbnail avec leger decalage Y au scroll (CSS `animation-timeline: scroll()`)
@@ -764,7 +885,7 @@ Pattern existant dans `modules/products/components/product-card.tsx` :
 
 ```
 ┌─────────────────────────────────────────┐
-│  #SYN-2024-0042    ● En preparation     │ ← Numero + Badge statut
+│  #SYN-2026-0042    ● En preparation     │ ← Numero + Badge statut
 │  23 mars 2026      2 articles           │ ← Date + compteur items
 │  89,00 €                        ›       │ ← Montant + chevron nav
 └─────────────────────────────────────────┘
@@ -852,7 +973,9 @@ function OrderCard({ order }: { order: Order }) {
 
 ### 11.6Implementation Swipe Actions
 
-Approche recommandee avec `motion/react` drag :
+**Pattern canonique** : `modules/wishlist/hooks/use-swipe-to-remove.ts` + `modules/wishlist/components/swipeable-wishlist-item.tsx`. Le hook utilise des raw touch events (pas Motion drag) avec passive listeners, ce qui evite toute dependance a `domAnimation` vs `domMax`.
+
+Approche alternative avec `motion/react` drag (non utilisee en production, a tester) :
 
 ```tsx
 "use client";
@@ -921,6 +1044,8 @@ function SwipeableCard({
 ```
 
 ### 11.7Implementation Long Press
+
+> **Code non teste en production** — Proposition de design a adapter et tester avant usage.
 
 Hook robuste — cancel au scroll, prevention du click parasite, feedback visuel :
 
@@ -1050,7 +1175,7 @@ Deja en place sur `Card` (`@container/card`). Utiliser pour :
 </div>;
 ```
 
-> **Caveat** : `content-visibility: auto` peut masquer le contenu aux screen readers et casser la recherche navigateur (Ctrl+F) sur les items hors viewport. Utiliser uniquement pour les listes longues (50+ items) et tester avec un lecteur d'ecran. Preferer la cursor pagination pour limiter le nombre d'items rendus.
+> **Caveat important** : `content-visibility: auto` peut masquer le contenu aux screen readers et casser la recherche navigateur (Ctrl+F) sur les items hors viewport. **La cursor pagination est la strategie primaire du projet** (10/10, utilisee sur 16/17 modules) — elle limite les items rendus a 20-50 par page, eliminant le besoin de `content-visibility` dans la grande majorite des cas. N'utiliser `content-visibility` qu'en dernier recours pour les listes non paginables de 50+ items, et tester avec un lecteur d'ecran.
 
 ---
 
@@ -1068,7 +1193,7 @@ Deja en place sur `Card` (`@container/card`). Utiliser pour :
 - Chaque action repetee dans une liste **doit** avoir un label unique incluant le nom de l'item :
   - `aria-label="Supprimer Bague Celeste"` (pas juste "Supprimer")
   - `aria-label="Ajouter Collier Luna au panier"` (pas juste "Ajouter au panier")
-  - `aria-label="Voir la commande #SYN-2024-0042"` (pas juste "Voir")
+  - `aria-label="Voir la commande #SYN-2026-0042"` (pas juste "Voir")
 - Permet a Voice Control de distinguer les actions identiques visuellement
 - Patron : `aria-label={`${action} ${itemName}`}`
 
@@ -1158,12 +1283,13 @@ La **cursor pagination** est la strategie principale du projet (10/10, pattern e
 
 - Budget INP : < 200ms pour toutes les interactions (tap, swipe, expand)
 - Les animations GPU-composited (`transform`, `opacity`) ne bloquent pas le main thread
-- Eviter les `setState` synchrones dans les event handlers de geste — preferer `startTransition` pour les updates non urgentes
+- Eviter les `setState` synchrones dans les event handlers de geste — preferer `useTransition` (voir section 2) pour les updates non urgentes. Le hook fournit `isPending` pour le feedback visuel, contrairement a `startTransition` seul
+- `useEffectEvent` (19 fichiers) pour les event handlers stables dans les hooks de geste — evite les re-renders parasites des closures
 
 ### Debounce & Throttle
 
 - Scroll listeners : Passive (`{ passive: true }`) — deja fait dans `useEdgeSwipe`
-- Resize : `useSyncExternalStore` plutot que `addEventListener` + debounce
+- Resize / Media queries / Online status : `useSyncExternalStore` plutot que `addEventListener` + debounce — pattern utilise dans 6 hooks du projet (`use-mobile`, `use-touch-device`, `use-media-query`, `use-mounted`, `use-pulse-on-change`, `use-web-share`)
 - Swipe gesture : Calculs dans `requestAnimationFrame`
 
 ### Battery & Low-end devices
@@ -1188,6 +1314,11 @@ La **cursor pagination** est la strategie principale du projet (10/10, pattern e
 | **Semantic color**         | Statut visible par couleur ET icone (pas de couleur seule)      | `Badge` avec icone + texte                          |
 | **Glassmorphism subtil**   | `backdrop-blur-sm` sur les overlays uniquement                  | Context menu backdrop                               |
 | **Scroll snap**            | Listes horizontales avec snap magnetique                        | `.scroll-snap-x` + `.snap-start`                    |
+| **View Transitions**       | Morphing fluide entre liste et detail sans JS                   | `viewTransitionName` sur gallery (3 fichiers)       |
+| **Popover API**            | Popovers natifs sans JS (`popover`, `popovertarget`)            | Non adopte — le projet utilise Radix Popover        |
+| **CSS Anchor Positioning** | Positionnement relatif a un element ancre (tooltips, menus)     | Emerging — support Chrome 125+, non encore utilise  |
+| **`useTransition`**        | Transitions non-bloquantes avec feedback `isPending`            | Pattern principal — 125 fichiers                    |
+| **`useEffectEvent`**       | Event handlers stables pour hooks de gestes                     | 19 fichiers — hooks de geste et listeners           |
 
 ---
 
@@ -1240,11 +1371,11 @@ La **cursor pagination** est la strategie principale du projet (10/10, pattern e
 
 Les modules implementes ont des suites de tests completes a suivre comme modele :
 
-| Module             | Fichier test                                                                                     | LOC | Couvre                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------------ | --- | ------------------------------------------------------- |
-| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-mobile-list.test.tsx`          | 237 | Rendu, variantes, actions, a11y                         |
-| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-bottom-bar.test.tsx`           | 699 | Sort/Search/Filter drawers, keyboard nav, active states |
-| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-mobile-list-skeleton.test.tsx` | 53  | Skeleton count, animation delay, md:hidden              |
-| **Discounts**      | `modules/discounts/components/admin/__tests__/discounts-mobile-list.test.tsx`                    | 443 | Rendu, badges, row actions, pagination                  |
-| **Discounts**      | `modules/discounts/components/admin/__tests__/discounts-bottom-bar.test.tsx`                     | 704 | Sort/Search/Filter drawers, keyboard nav                |
-| **Products**       | `modules/products/components/admin/__tests__/products-bottom-bar.test.tsx`                       | 615 | FAB, menu, filter integration                           |
+| Module             | Fichier test                                                                                     | Couvre                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
+| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-mobile-list.test.tsx`          | Rendu, variantes, actions, a11y                         |
+| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-bottom-bar.test.tsx`           | Sort/Search/Filter drawers, keyboard nav, active states |
+| **Customizations** | `modules/customizations/components/admin/__tests__/customizations-mobile-list-skeleton.test.tsx` | Skeleton count, animation delay, md:hidden              |
+| **Discounts**      | `modules/discounts/components/admin/__tests__/discounts-mobile-list.test.tsx`                    | Rendu, badges, row actions, pagination                  |
+| **Discounts**      | `modules/discounts/components/admin/__tests__/discounts-bottom-bar.test.tsx`                     | Sort/Search/Filter drawers, keyboard nav                |
+| **Products**       | `modules/products/components/admin/__tests__/products-bottom-bar.test.tsx`                       | FAB, menu, filter integration                           |

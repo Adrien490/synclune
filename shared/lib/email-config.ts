@@ -53,7 +53,7 @@ export const EMAIL_SUBJECTS = {
 	REFUND_REJECTED: "Votre demande de remboursement a été refusée - Synclune",
 	PAYMENT_FAILED: "Échec de votre paiement - Synclune",
 	NEWSLETTER_CONFIRMATION: "Confirmez votre inscription à la newsletter Synclune",
-	NEWSLETTER_WELCOME: "Bienvenue dans notre communauté Synclune !",
+	NEWSLETTER_WELCOME: "Bienvenue chez Synclune !",
 	CUSTOMIZATION_REQUEST: "Nouvelle demande de personnalisation - Synclune",
 	CUSTOMIZATION_CONFIRMATION: "Votre demande de personnalisation a été reçue - Synclune",
 	CUSTOMIZATION_IN_PROGRESS: "Votre personnalisation est en cours - Synclune",

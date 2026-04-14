@@ -128,7 +128,7 @@ export function MediaUploadGrid({
 	};
 
 	// Handle drag end
-	const handleDragEnd: DragEndEvent = (event) => {
+	const handleDragEnd = (event: DragEndEvent) => {
 		setIsDraggingAny(false);
 
 		if (event.canceled) {

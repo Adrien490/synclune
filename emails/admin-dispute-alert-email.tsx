@@ -143,23 +143,21 @@ export const AdminDisputeAlertEmail = ({
 			</Section>
 
 			{/* CTAs */}
+			<Section style={{ marginBottom: "12px", textAlign: "center" }}>
+				<Button
+					href={stripeDashboardUrl}
+					style={{
+						...EMAIL_STYLES.button.primary,
+						backgroundColor: EMAIL_COLORS.stripe,
+					}}
+				>
+					Répondre au litige
+				</Button>
+			</Section>
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<div style={{ marginBottom: "12px" }}>
-					<Button
-						href={stripeDashboardUrl}
-						style={{
-							...EMAIL_STYLES.button.primary,
-							backgroundColor: EMAIL_COLORS.stripe,
-						}}
-					>
-						Répondre au litige
-					</Button>
-				</div>
-				<div>
-					<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
-						Voir la commande
-					</Button>
-				</div>
+				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
+					Voir la commande
+				</Button>
 			</Section>
 		</EmailLayout>
 	);

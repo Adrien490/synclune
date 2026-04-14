@@ -318,7 +318,7 @@ export function SortableMediaItem({
 							Agrandir
 						</DropdownMenuItem>
 						{/* WCAG 2.5.7: Drag alternatives */}
-						{(canMoveUp ?? canMoveDown) && <DropdownMenuSeparator />}
+						{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
 						{canMoveUp && (
 							<DropdownMenuItem onClick={onMoveUp} className="gap-2 py-2.5">
 								<ArrowUp className="h-4 w-4" />

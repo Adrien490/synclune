@@ -38,7 +38,7 @@ import { PrismaClient } from "../app/generated/prisma/client";
 import { UTApi } from "uploadthing/server";
 import { VIDEO_MIGRATION_CONFIG } from "../modules/media/constants/thumbnail.constants";
 import { isValidCuid, isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
-import type { MediaItem, ProcessResult } from "../modules/media/types/script.types";
+import type { ScriptMediaItem, ProcessResult } from "../modules/media/types/script.types";
 import { requireScriptEnvVars } from "../shared/utils/script-env";
 import { delay, withRetry, createScriptLogger, processInBatches } from "./lib/script-utils";
 
@@ -315,7 +315,7 @@ function extractFileKey(url: string): string | null {
  * Traite une vidéo : télécharge, supprime audio, upload, met à jour DB
  */
 async function processVideo(
-	media: MediaItem,
+	media: ScriptMediaItem,
 	index: number,
 	total: number,
 ): Promise<ProcessResult> {
@@ -424,7 +424,7 @@ async function processVideo(
 }
 
 async function processVideosInBatches(
-	videos: MediaItem[],
+	videos: ScriptMediaItem[],
 	batchSize: number,
 ): Promise<ProcessResult[]> {
 	return processInBatches({

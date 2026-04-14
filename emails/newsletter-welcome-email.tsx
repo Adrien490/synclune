@@ -19,17 +19,11 @@ export const NewsletterWelcomeEmail = ({
 		<EmailLayout
 			preview={promoCode ? `Bienvenue — Votre code -10% : ${promoCode}` : "Bienvenue"}
 			footer={
-				<>
-					<Text style={EMAIL_STYLES.text.tiny}>Synclune - Bijoux artisanaux</Text>
-					<Text style={EMAIL_STYLES.text.tiny}>
-						<Link
-							href={unsubscribeUrl}
-							style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
-						>
-							Se désinscrire
-						</Link>
-					</Text>
-				</>
+				<Text style={EMAIL_STYLES.text.tiny}>
+					<Link href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
+						Se désinscrire
+					</Link>
+				</Text>
 			}
 		>
 			{/* Titre */}

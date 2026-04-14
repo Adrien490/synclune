@@ -60,8 +60,8 @@ export const ReviewRequestEmail = ({
 						: "Votre commande a bien été livrée. Nous espérons que vos créations vous plaisent !"}
 				</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
-					Prenez quelques instants pour partager votre expérience. Votre avis aide d&apos;autres
-					clientes à faire leur choix et nous permet d&apos;améliorer nos créations.
+					Prenez quelques instants pour partager votre expérience. Votre avis aide d'autres clientes
+					à faire leur choix et nous permet d'améliorer nos créations.
 				</Text>
 			</Section>
 
@@ -135,14 +135,6 @@ export const ReviewRequestEmail = ({
 					textAlign: "center",
 				}}
 			>
-				<Text
-					style={{
-						margin: 0,
-						fontSize: "32px",
-					}}
-				>
-					{"\u2B50\uFE0F"}
-				</Text>
 				<Text
 					style={{
 						...EMAIL_STYLES.text.body,

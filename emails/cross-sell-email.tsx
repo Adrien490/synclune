@@ -38,7 +38,7 @@ export const CrossSellEmail = ({
 			<Section style={{ marginBottom: "24px" }}>
 				<Text style={EMAIL_STYLES.heading.h2}>Complétez votre collection</Text>
 				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
-					Bonjour {customerName}, nous avons sélectionné ces créations qui s&apos;accordent avec vos
+					Bonjour {customerName}, nous avons sélectionné ces créations qui s'accordent avec vos
 					derniers achats.
 				</Text>
 			</Section>
@@ -46,7 +46,7 @@ export const CrossSellEmail = ({
 			{/* Produits suggérés */}
 			<Section style={{ marginBottom: "24px" }}>
 				{products.map((product, index) => (
-					<div key={product.title}>
+					<Section key={product.title}>
 						{index > 0 && <Hr style={{ borderColor: EMAIL_COLORS.border, margin: "16px 0" }} />}
 						<Row>
 							{product.imageUrl && (
@@ -95,7 +95,7 @@ export const CrossSellEmail = ({
 								</Text>
 							</Column>
 						</Row>
-					</div>
+					</Section>
 				))}
 			</Section>
 

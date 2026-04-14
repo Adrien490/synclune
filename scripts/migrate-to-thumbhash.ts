@@ -31,7 +31,7 @@ import { THUMBHASH_CONFIG } from "../modules/media/constants/image-downloader.co
 import { isValidUploadThingUrl } from "../modules/media/utils/validate-media-file";
 import { delay } from "../shared/utils/delay";
 import type {
-	MediaItem,
+	ScriptMediaItem,
 	ProcessResult as BaseProcessResult,
 	ProcessMetrics,
 	StructuredLog,
@@ -114,7 +114,7 @@ interface ThumbHashProcessResult extends BaseProcessResult {
 	previousFormat?: string;
 }
 
-interface MediaItemWithBlur extends MediaItem {
+interface ScriptMediaItemWithBlur extends ScriptMediaItem {
 	blurDataUrl: string | null;
 }
 
@@ -159,7 +159,7 @@ function createMetrics(overrides: Partial<ProcessMetrics> = {}): ProcessMetrics 
  * Traite une image et génère son ThumbHash
  */
 async function processImage(
-	image: MediaItemWithBlur,
+	image: ScriptMediaItemWithBlur,
 	table: "SkuMedia" | "ReviewMedia" | "CustomizationMedia",
 ): Promise<ThumbHashProcessResult> {
 	const startTime = performance.now();
@@ -220,7 +220,7 @@ async function processImage(
  * Traite un batch d'images en parallèle
  */
 async function processBatch(
-	images: MediaItemWithBlur[],
+	images: ScriptMediaItemWithBlur[],
 	table: "SkuMedia" | "ReviewMedia" | "CustomizationMedia",
 ): Promise<ThumbHashProcessResult[]> {
 	return Promise.all(images.map((image) => processImage(image, table)));
@@ -235,7 +235,7 @@ async function migrateTable(
 	logInfo(`\n📊 Migration ${table}...`);
 
 	// Récupérer les images à migrer
-	let images: MediaItemWithBlur[];
+	let images: ScriptMediaItemWithBlur[];
 
 	if (table === "SkuMedia") {
 		const allImages = await prisma.skuMedia.findMany({
@@ -266,7 +266,7 @@ async function migrateTable(
 	}
 
 	// Filtrer selon les options
-	let toProcess: MediaItemWithBlur[];
+	let toProcess: ScriptMediaItemWithBlur[];
 	let skipped = 0;
 
 	if (FORCE_ALL) {

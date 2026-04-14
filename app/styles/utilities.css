@@ -59,7 +59,6 @@
 	   ========================================== */
 	.scroll-snap-x {
 		scroll-snap-type: x mandatory;
-		-webkit-overflow-scrolling: touch;
 	}
 
 	.snap-start {
@@ -72,7 +71,6 @@
 
 	/* Masquer scrollbar mais garder fonctionnalité */
 	.scrollbar-none {
-		-ms-overflow-style: none;
 		scrollbar-width: none;
 	}
 
