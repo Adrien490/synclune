@@ -121,6 +121,7 @@ vi.mock("lucide-react", () => ({
 	ExternalLink: () => <svg data-testid="icon-external-link" />,
 	LoaderCircle: () => <svg data-testid="icon-loader" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
+	MessageSquare: () => <svg data-testid="icon-message-square" />,
 }));
 
 import { ReviewRowActions } from "../review-row-actions";

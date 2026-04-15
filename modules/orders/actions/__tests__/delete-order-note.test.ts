@@ -8,7 +8,6 @@ import { VALID_CUID, VALID_ORDER_ID } from "@/test/factories";
 
 const {
 	mockPrisma,
-	mockSoftDelete,
 	mockRequireAdmin,
 	mockEnforceRateLimit,
 	mockValidateInput,
@@ -18,10 +17,8 @@ const {
 	mockUpdateTag,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		orderNote: { findUnique: vi.fn() },
-	},
-	mockSoftDelete: {
-		orderNote: vi.fn(),
+		orderNote: { findUnique: vi.fn(), update: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -34,7 +31,6 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
-	softDelete: mockSoftDelete,
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({
 	requireAdminWithUser: mockRequireAdmin,
@@ -85,11 +81,14 @@ describe("deleteOrderNote", () => {
 		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { noteId: NOTE_ID } });
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.orderNote.findUnique.mockResolvedValue({
 			id: NOTE_ID,
 			orderId: VALID_ORDER_ID,
 		});
-		mockSoftDelete.orderNote.mockResolvedValue({});
+		mockPrisma.orderNote.update.mockResolvedValue({});
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -138,7 +137,10 @@ describe("deleteOrderNote", () => {
 
 	it("soft-deletes the note (legal compliance)", async () => {
 		await deleteOrderNote(NOTE_ID);
-		expect(mockSoftDelete.orderNote).toHaveBeenCalledWith(NOTE_ID);
+		expect(mockPrisma.orderNote.update).toHaveBeenCalledWith({
+			where: { id: NOTE_ID },
+			data: { deletedAt: expect.any(Date) },
+		});
 	});
 
 	it("invalidates order notes cache", async () => {
@@ -161,7 +163,7 @@ describe("deleteOrderNote", () => {
 	});
 
 	it("calls handleActionError on unexpected exception", async () => {
-		mockSoftDelete.orderNote.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.orderNote.update.mockRejectedValue(new Error("DB crash"));
 		const result = await deleteOrderNote(NOTE_ID);
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});

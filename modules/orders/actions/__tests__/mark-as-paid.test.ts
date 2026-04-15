@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createMockFormData, createMockOrder, VALID_CUID } from "@/test/factories";
+import type * as SharedActions from "@/shared/lib/actions";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -44,13 +45,17 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ORDER_LIMITS: { MARK_AS_PAID: "admin-mark-paid" },
 }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
-vi.mock("@/shared/lib/actions", () => ({
-	safeFormGet: (formData: FormData, key: string) => {
-		const v = formData.get(key);
-		return typeof v === "string" ? v : null;
-	},
-	handleActionError: mockHandleActionError,
-}));
+vi.mock("@/shared/lib/actions", async (importOriginal) => {
+	const original = await importOriginal<typeof SharedActions>();
+	return {
+		...original,
+		safeFormGet: (formData: FormData, key: string) => {
+			const v = formData.get(key);
+			return typeof v === "string" ? v : null;
+		},
+		handleActionError: mockHandleActionError,
+	};
+});
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendOrderConfirmationEmail: mockSendOrderConfirmationEmail,
 }));

@@ -143,22 +143,6 @@
 		}
 	}
 
-	@supports (animation-timeline: scroll()) {
-		.carousel-progress {
-			animation: carousel-scroll linear both;
-			animation-timeline: scroll(nearest inline);
-		}
-
-		@keyframes carousel-scroll {
-			from {
-				transform: translateX(0);
-			}
-			to {
-				transform: translateX(300%);
-			}
-		}
-	}
-
 	/* ==========================================
 	   @PROPERTY CONFESSION GLOW GRADIENT
 	   ========================================== */

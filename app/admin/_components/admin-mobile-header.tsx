@@ -3,19 +3,21 @@
 import { useIsScrolled } from "@/shared/hooks/use-is-scrolled";
 import { cn } from "@/shared/utils/cn";
 import { usePathname } from "next/navigation";
-import { AdminMenuSheetTrigger } from "./admin-menu-sheet";
 import { generateBreadcrumbs } from "./dashboard-breadcrumb";
 
 /**
  * Mobile header for admin pages.
- * Shows hamburger + current page title. Hidden on md+.
- * Scroll-aware: transparent at top, glass effect on scroll (like storefront navbar).
+ * Shows current page title. Hidden on md+.
+ * Scroll-aware: transparent at top, glass effect on scroll.
+ *
+ * No hamburger needed — navigation is always accessible from the bottom bar:
+ * - Global nav bar on standard pages
+ * - "Menu" tab in the page-specific bottom bar on contextual pages (products, discounts)
  */
 export function AdminMobileHeader() {
 	const pathname = usePathname();
 	const isScrolled = useIsScrolled(20);
 	const breadcrumbs = generateBreadcrumbs(pathname);
-	// Use the last breadcrumb segment as the page title
 	const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label ?? "Administration";
 
 	return (
@@ -32,10 +34,6 @@ export function AdminMobileHeader() {
 			aria-label="En-tête mobile administration"
 		>
 			<div className="flex w-full items-center px-4">
-				{/* Hamburger */}
-				<AdminMenuSheetTrigger className="mr-3 -ml-1 size-10 cursor-pointer rounded-lg" />
-
-				{/* Page title */}
 				<h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
 					{pageTitle}
 				</h1>

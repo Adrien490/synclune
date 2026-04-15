@@ -227,7 +227,7 @@ export function ColorSwatches({
 				// Scroll horizontal sur mobile si beaucoup de couleurs
 				// pt-1 pour éviter le clipping du scale/ring au survol
 				interactive
-					? "scrollbar-hide -mx-1 snap-x snap-mandatory gap-3 overflow-x-auto px-1 pt-1 sm:gap-4"
+					? "scrollbar-none -mx-1 snap-x snap-mandatory gap-3 overflow-x-auto px-1 pt-1 sm:gap-4"
 					: "flex-wrap gap-1.5 pt-1",
 				className,
 			)}

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createMockOrder, VALID_CUID } from "@/test/factories";
+import type * as SharedActions from "@/shared/lib/actions";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -49,15 +50,23 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ORDER_LIMITS: { RESEND_EMAIL: "admin-resend-email" },
 }));
 
-vi.mock("@/shared/lib/actions", () => ({
-	safeFormGet: (formData: FormData, key: string) => {
-		const v = formData.get(key);
-		return typeof v === "string" ? v : null;
-	},
-	handleActionError: mockHandleActionError,
-	success: (msg: string, data?: unknown) => ({ status: ActionStatus.SUCCESS, message: msg, data }),
-	error: (msg: string) => ({ status: ActionStatus.ERROR, message: msg }),
-}));
+vi.mock("@/shared/lib/actions", async (importOriginal) => {
+	const original = await importOriginal<typeof SharedActions>();
+	return {
+		...original,
+		safeFormGet: (formData: FormData, key: string) => {
+			const v = formData.get(key);
+			return typeof v === "string" ? v : null;
+		},
+		handleActionError: mockHandleActionError,
+		success: (msg: string, data?: unknown) => ({
+			status: ActionStatus.SUCCESS,
+			message: msg,
+			data,
+		}),
+		error: (msg: string) => ({ status: ActionStatus.ERROR, message: msg }),
+	};
+});
 
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendOrderConfirmationEmail: mockSendOrderConfirmationEmail,
@@ -179,16 +188,16 @@ describe("resendOrderEmail", () => {
 	it("should return error for invalid orderId", async () => {
 		const result = await resendOrderEmail("not-a-valid-cuid", "confirmation");
 
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("invalide");
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
+		expect(result.message).toBeTruthy();
 	});
 
 	// Invalid emailType
 	it("should return error for invalid emailType", async () => {
 		const result = await resendOrderEmail(VALID_CUID, "invalid-type" as ResendEmailType);
 
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("invalide");
+		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
+		expect(result.message).toBeTruthy();
 	});
 
 	// Order not found

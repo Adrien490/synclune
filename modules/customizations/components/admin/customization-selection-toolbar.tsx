@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, Clock, LoaderCircle, EllipsisVertical, CircleX } from "lucide-react";
+import { CircleCheck, Clock, LoaderCircle, EllipsisVertical, CircleX, Trash2 } from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import type { CustomizationRequestStatus } from "../../types/customization.types";
@@ -25,6 +25,7 @@ import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 
 import { useBulkUpdateCustomizationStatus } from "../../hooks/use-bulk-update-customization-status";
+import { useBulkDeleteCustomizationRequests } from "../../hooks/use-bulk-delete-customization-requests";
 import { CUSTOMIZATION_STATUS_LABELS } from "../../constants/status.constants";
 
 export function CustomizationSelectionToolbar() {
@@ -32,10 +33,18 @@ export function CustomizationSelectionToolbar() {
 	const statusDialog = useDialog<{ targetStatus: CustomizationRequestStatus }>(
 		"bulk-customization-status",
 	);
+	const deleteDialog = useDialog("bulk-customization-delete");
 
 	const { action, isPending } = useBulkUpdateCustomizationStatus({
 		onSuccess: () => {
 			statusDialog.close();
+			clearSelection();
+		},
+	});
+
+	const { action: deleteAction, isPending: isDeletePending } = useBulkDeleteCustomizationRequests({
+		onSuccess: () => {
+			deleteDialog.close();
 			clearSelection();
 		},
 	});
@@ -47,6 +56,13 @@ export function CustomizationSelectionToolbar() {
 	};
 
 	const targetStatus = statusDialog.data?.targetStatus ?? null;
+
+	const handleBulkDelete = (formData: FormData) => {
+		selectedItems.forEach((id) => {
+			formData.append("requestIds", id);
+		});
+		deleteAction(formData);
+	};
 
 	const handleSubmit = (formData: FormData) => {
 		if (!targetStatus) return;
@@ -95,6 +111,11 @@ export function CustomizationSelectionToolbar() {
 							<CircleX className="h-4 w-4" />
 							Annuler
 						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem onClick={() => deleteDialog.open()} variant="destructive">
+							<Trash2 className="h-4 w-4" />
+							Supprimer
+						</DropdownMenuItem>
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</SelectionToolbar>
@@ -133,6 +154,53 @@ export function CustomizationSelectionToolbar() {
 									</>
 								) : (
 									"Confirmer"
+								)}
+							</Button>
+						</AlertDialogFooter>
+					</form>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			{/* Bulk Delete Dialog */}
+			<AlertDialog
+				open={deleteDialog.isOpen}
+				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
+			>
+				<AlertDialogContent>
+					<form action={handleBulkDelete}>
+						<AlertDialogHeader>
+							<AlertDialogTitle>Supprimer les demandes</AlertDialogTitle>
+							<AlertDialogDescription>
+								Supprimer{" "}
+								<span className="font-semibold">
+									{selectedItems.length} demande{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								définitivement ?
+								<br />
+								<br />
+								Cette action est irréversible.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel type="button" disabled={isDeletePending}>
+								Annuler
+							</AlertDialogCancel>
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={isDeletePending}
+								aria-busy={isDeletePending}
+							>
+								{isDeletePending ? (
+									<>
+										<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
+										Suppression...
+									</>
+								) : (
+									<>
+										<Trash2 className="mr-2 h-4 w-4" />
+										Supprimer
+									</>
 								)}
 							</Button>
 						</AlertDialogFooter>

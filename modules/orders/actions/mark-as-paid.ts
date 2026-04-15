@@ -21,7 +21,7 @@ import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsPaidSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 
@@ -52,15 +52,10 @@ export async function markAsPaid(
 		const rawId = safeFormGet(formData, "id");
 		const note = safeFormGet(formData, "note");
 
-		const result = markAsPaidSchema.safeParse({ id: rawId, note });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message ?? "ID invalide",
-			};
-		}
+		const validated = validateInput(markAsPaidSchema, { id: rawId, note });
+		if ("error" in validated) return validated.error;
 
-		const { id } = result.data;
+		const { id } = validated.data;
 
 		// Transaction: fetch + validate + stock check + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
@@ -253,7 +248,7 @@ export async function markAsPaid(
 			status: ActionStatus.SUCCESS,
 			message: `Commande ${order.orderNumber} marquée comme payée. Prête pour préparation.${stockMessage}${emailMessage}`,
 		};
-	} catch (error) {
-		return handleActionError(error, ORDER_ERROR_MESSAGES.MARK_AS_PAID_FAILED);
+	} catch (e) {
+		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_PAID_FAILED);
 	}
 }

@@ -29,26 +29,33 @@ export async function addOrderNote(orderId: string, content: string): Promise<Ac
 		const validated = validateInput(addOrderNoteSchema, { orderId, content });
 		if ("error" in validated) return validated.error;
 
-		// 4. Vérifier que la commande existe
-		const order = await prisma.order.findUnique({
-			where: { id: validated.data.orderId, ...notDeleted },
-			select: { id: true },
+		// 4. Sanitize input
+		const sanitizedContent = sanitizeText(validated.data.content.trim());
+
+		// 5. Transaction: verify order exists + create note atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id: validated.data.orderId, ...notDeleted },
+				select: { id: true },
+			});
+
+			if (!found) return null;
+
+			await tx.orderNote.create({
+				data: {
+					orderId: validated.data.orderId,
+					content: sanitizedContent,
+					authorId: auth.user.id,
+					authorName: auth.user.name ?? auth.user.email,
+				},
+			});
+
+			return found;
 		});
 
 		if (!order) {
 			return error("Commande non trouvée");
 		}
-
-		// 5. Sanitize and create the note
-		const sanitizedContent = sanitizeText(validated.data.content.trim());
-		await prisma.orderNote.create({
-			data: {
-				orderId: validated.data.orderId,
-				content: sanitizedContent,
-				authorId: auth.user.id,
-				authorName: auth.user.name ?? auth.user.email,
-			},
-		});
 
 		// 6. Invalider le cache
 		updateTag(ORDERS_CACHE_TAGS.NOTES(validated.data.orderId));

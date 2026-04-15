@@ -238,7 +238,7 @@ export function QuickSearchDialog({
 					role="search"
 					data-pending={isPending ? "" : undefined}
 				>
-					<div className="relative">
+					<div className="relative overflow-hidden">
 						<SearchInput
 							ref={searchInputRef}
 							paramName="qs"

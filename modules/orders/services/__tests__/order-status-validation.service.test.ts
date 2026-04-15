@@ -239,6 +239,7 @@ describe("getOrderPermissions", () => {
 		expect(permissions.canRevertToProcessing).toBe(false);
 		expect(permissions.canRefund).toBe(false);
 		expect(permissions.canMarkAsPaid).toBe(false);
+		expect(permissions.canMarkAsReturned).toBe(false);
 	});
 
 	it("should compute correct permissions for a PROCESSING + PAID order", () => {
@@ -280,10 +281,23 @@ describe("getOrderPermissions", () => {
 
 		expect(permissions.canRefund).toBe(true);
 		expect(permissions.canUpdateTracking).toBe(true);
+		expect(permissions.canMarkAsReturned).toBe(true);
 		expect(permissions.canMarkAsDelivered).toBe(false);
 		expect(permissions.canCancel).toBe(false);
 		expect(permissions.canMarkAsShipped).toBe(false);
 		expect(permissions.canRevertToProcessing).toBe(false);
+	});
+
+	it("should not allow canMarkAsReturned for a DELIVERED + RETURNED order", () => {
+		const permissions = getOrderPermissions({
+			status: "DELIVERED",
+			paymentStatus: "PAID",
+			fulfillmentStatus: "RETURNED",
+			trackingNumber: "ABC123",
+		});
+
+		expect(permissions.canMarkAsReturned).toBe(false);
+		expect(permissions.canRefund).toBe(true);
 	});
 
 	it("should compute correct permissions for a CANCELLED order", () => {
@@ -299,6 +313,7 @@ describe("getOrderPermissions", () => {
 		expect(permissions.canMarkAsProcessing).toBe(false);
 		expect(permissions.canRevertToProcessing).toBe(false);
 		expect(permissions.canMarkAsPaid).toBe(false);
+		expect(permissions.canMarkAsReturned).toBe(false);
 	});
 
 	it("should allow canMarkAsPaid for PENDING + payment PENDING", () => {

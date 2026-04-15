@@ -12,6 +12,7 @@ const { mockPermissions, mockAlertDialogOpen, mockDialogOpen } = vi.hoisted(() =
 		canCancel: false,
 		canRevertToProcessing: false,
 		canMarkAsProcessing: false,
+		canMarkAsReturned: false,
 	},
 	mockAlertDialogOpen: vi.fn(),
 	mockDialogOpen: vi.fn(),
@@ -148,6 +149,7 @@ describe("OrderHeader", () => {
 		mockPermissions.canCancel = false;
 		mockPermissions.canRevertToProcessing = false;
 		mockPermissions.canMarkAsProcessing = false;
+		mockPermissions.canMarkAsReturned = false;
 		mockAlertDialogOpen.mockReset();
 		mockDialogOpen.mockReset();
 	});
@@ -216,6 +218,7 @@ describe("OrderHeader", () => {
 	});
 
 	it('shows "Marquer retournée" when DELIVERED and not RETURNED', () => {
+		mockPermissions.canMarkAsReturned = true;
 		render(
 			<OrderHeader
 				order={createOrder({ status: "DELIVERED", fulfillmentStatus: "DELIVERED" })}
@@ -226,6 +229,7 @@ describe("OrderHeader", () => {
 	});
 
 	it('hides "Marquer retournée" when fulfillmentStatus is RETURNED', () => {
+		mockPermissions.canMarkAsReturned = false;
 		render(
 			<OrderHeader
 				order={createOrder({ status: "DELIVERED", fulfillmentStatus: "RETURNED" })}

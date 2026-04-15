@@ -5,11 +5,11 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
+	validateInput,
 	handleActionError,
 	success,
 	error,
 	notFound,
-	validationError,
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -48,13 +48,10 @@ export async function markAsProcessing(
 
 		const rawId = safeFormGet(formData, "id");
 
-		const result = markAsProcessingSchema.safeParse({ id: rawId });
+		const validated = validateInput(markAsProcessingSchema, { id: rawId });
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return validationError(result.error.issues[0]?.message ?? "Données invalides");
-		}
-
-		const { id } = result.data;
+		const { id } = validated.data;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {

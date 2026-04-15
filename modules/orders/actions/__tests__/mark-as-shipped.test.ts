@@ -12,6 +12,7 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
+	mockValidateInput,
 	mockSuccess,
 	mockError,
 	mockNotFound,
@@ -32,6 +33,7 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
+	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockNotFound: vi.fn(),
@@ -65,6 +67,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 	notFound: mockNotFound,
 	validationError: mockValidationError,
+	validateInput: mockValidateInput,
 }));
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendShippingConfirmationEmail: mockSendShippingEmail,
@@ -90,22 +93,10 @@ vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: mockGetOrderInvalidationTags,
 }));
 vi.mock("../../schemas/order.schemas", () => ({
-	markAsShippedSchema: {
-		safeParse: vi.fn().mockReturnValue({
-			success: true,
-			data: {
-				id: "test",
-				trackingNumber: "1Z999",
-				trackingUrl: undefined,
-				carrier: undefined,
-				sendEmail: true,
-			},
-		}),
-	},
+	markAsShippedSchema: {},
 }));
 
 import { markAsShipped } from "../mark-as-shipped";
-import { markAsShippedSchema } from "../../schemas/order.schemas";
 
 // ============================================================================
 // HELPERS
@@ -150,10 +141,9 @@ describe("markAsShipped", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(order);
 		mockPrisma.order.update.mockResolvedValue({});
 
-		vi.mocked(markAsShippedSchema.safeParse).mockReturnValue({
-			success: true,
+		mockValidateInput.mockReturnValue({
 			data: { id: VALID_CUID, trackingNumber: "1Z999", sendEmail: true },
-		} as never);
+		});
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -190,10 +180,9 @@ describe("markAsShipped", () => {
 	});
 
 	it("should return validation error for invalid data", async () => {
-		vi.mocked(markAsShippedSchema.safeParse).mockReturnValue({
-			success: false,
-			error: { issues: [{ message: "Le numero de suivi est requis" }] },
-		} as never);
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "Le numero de suivi est requis" },
+		});
 		const result = await markAsShipped(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});

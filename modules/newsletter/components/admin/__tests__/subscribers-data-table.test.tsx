@@ -119,6 +119,24 @@ vi.mock("lucide-react", () => ({
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
+vi.mock("../newsletter-selection-toolbar", () => ({
+	NewsletterSelectionToolbar: () => <div data-testid="newsletter-selection-toolbar" />,
+}));
+
+vi.mock("../subscriber-row-actions", () => ({
+	SubscriberRowActions: () => <div data-testid="subscriber-row-actions" />,
+}));
+
+vi.mock("@/shared/components/item-checkbox", () => ({
+	ItemCheckbox: () => <input type="checkbox" data-testid="item-checkbox" />,
+}));
+
+vi.mock("@/shared/components/select-all-checkbox", () => ({
+	SelectAllCheckbox: () => <input type="checkbox" data-testid="select-all-checkbox" />,
+}));
+
+import { Suspense } from "react";
+import { act } from "@testing-library/react";
 import { SubscribersDataTable } from "../subscribers-data-table";
 
 // ============================================================================
@@ -162,24 +180,32 @@ beforeEach(() => {
 	vi.clearAllMocks();
 });
 
+async function renderTable(
+	subscribersPromise: Promise<{
+		subscribers: ReturnType<typeof createSubscriber>[];
+		pagination: ReturnType<typeof createPagination>;
+	}>,
+	perPage = 20,
+) {
+	await act(async () => {
+		render(
+			<Suspense fallback={<div>Loading...</div>}>
+				<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
+			</Suspense>,
+		);
+	});
+}
+
 describe("SubscribersDataTable", () => {
 	// ─── Empty state ──────────────────────────────────────────────────────────
 
 	it("renders empty state when no subscribers", async () => {
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers: [], pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers: [], pagination: createPagination() }));
 		expect(screen.getByTestId("table-empty-state")).toBeInTheDocument();
 	});
 
 	it("shows 'Aucun abonné trouvé' in empty state", async () => {
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers: [], pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers: [], pagination: createPagination() }));
 		expect(screen.getByText("Aucun abonné trouvé")).toBeInTheDocument();
 	});
 
@@ -187,74 +213,46 @@ describe("SubscribersDataTable", () => {
 
 	it("renders a card when subscribers exist", async () => {
 		const subscribers = [createSubscriber()];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByTestId("card")).toBeInTheDocument();
 	});
 
 	it("renders subscriber email", async () => {
 		const subscribers = [createSubscriber({ email: "subscriber@example.com" })];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByText("subscriber@example.com")).toBeInTheDocument();
 	});
 
 	it("renders 'Confirmé' status for CONFIRMED subscribers", async () => {
 		const subscribers = [createSubscriber({ status: "CONFIRMED" })];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByText("Confirmé")).toBeInTheDocument();
 		expect(screen.getByTestId("icon-circle-check")).toBeInTheDocument();
 	});
 
 	it("renders 'En attente' status for PENDING subscribers", async () => {
 		const subscribers = [createSubscriber({ status: "PENDING" })];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByText("En attente")).toBeInTheDocument();
 		expect(screen.getByTestId("icon-clock")).toBeInTheDocument();
 	});
 
 	it("renders 'Désabonné' status for UNSUBSCRIBED subscribers", async () => {
 		const subscribers = [createSubscriber({ status: "UNSUBSCRIBED" })];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByText("Désabonné")).toBeInTheDocument();
 		expect(screen.getByTestId("icon-circle-x")).toBeInTheDocument();
 	});
 
 	it("renders cursor pagination", async () => {
 		const subscribers = [createSubscriber()];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByTestId("cursor-pagination")).toBeInTheDocument();
 	});
 
 	it("renders table with correct aria-label", async () => {
 		const subscribers = [createSubscriber()];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(
 			screen.getByRole("table", { name: /Liste des abonnés newsletter/i }),
 		).toBeInTheDocument();
@@ -265,11 +263,7 @@ describe("SubscribersDataTable", () => {
 			createSubscriber({ id: "sub-1", email: "a@example.com" }),
 			createSubscriber({ id: "sub-2", email: "b@example.com" }),
 		];
-		const Component = await SubscribersDataTable({
-			subscribersPromise: Promise.resolve({ subscribers, pagination: createPagination() }),
-			perPage: 20,
-		});
-		render(Component);
+		await renderTable(Promise.resolve({ subscribers, pagination: createPagination() }));
 		expect(screen.getByText("a@example.com")).toBeInTheDocument();
 		expect(screen.getByText("b@example.com")).toBeInTheDocument();
 	});

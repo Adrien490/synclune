@@ -7,7 +7,7 @@ import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
@@ -48,15 +48,10 @@ export async function updateOrderShippingAddress(
 			shippingCountry: safeFormGet(formData, "shippingCountry") ?? "FR",
 		};
 
-		const result = updateOrderShippingAddressSchema.safeParse(rawData);
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message ?? "Données invalides",
-			};
-		}
+		const validated = validateInput(updateOrderShippingAddressSchema, rawData);
+		if ("error" in validated) return validated.error;
 
-		const { id, ...addressData } = result.data;
+		const { id, ...addressData } = validated.data;
 
 		// Transaction: fetch + validate + update + audit atomically
 		const order = await prisma.$transaction(async (tx) => {

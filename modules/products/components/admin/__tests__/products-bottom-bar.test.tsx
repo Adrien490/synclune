@@ -163,6 +163,7 @@ vi.mock("@/shared/utils/cn", () => ({
 vi.mock("lucide-react", () => ({
 	ArrowUpDown: () => <span data-testid="sort-icon" />,
 	EllipsisVertical: () => <span data-testid="menu-icon" />,
+	Menu: () => <span data-testid="nav-menu-icon" />,
 	Plus: () => <span data-testid="plus-icon" />,
 	Search: () => <span data-testid="search-icon" />,
 	SlidersHorizontal: () => <span data-testid="filter-icon" />,
@@ -530,7 +531,7 @@ describe("ProductsBottomBar", () => {
 		it("ArrowRight wraps from last to first item", () => {
 			renderBar();
 
-			const menuButton = screen.getByLabelText("Ouvrir le menu");
+			const menuButton = screen.getByLabelText("Ouvrir le menu de navigation");
 			menuButton.focus();
 			fireEvent.keyDown(menuButton, { key: "ArrowRight" });
 
@@ -554,7 +555,7 @@ describe("ProductsBottomBar", () => {
 			filterButton.focus();
 			fireEvent.keyDown(filterButton, { key: "ArrowLeft" });
 
-			expect(screen.getByLabelText("Ouvrir le menu")).toHaveFocus();
+			expect(screen.getByLabelText("Ouvrir le menu de navigation")).toHaveFocus();
 		});
 
 		it("Home key moves focus to first item", () => {
@@ -574,7 +575,7 @@ describe("ProductsBottomBar", () => {
 			filterButton.focus();
 			fireEvent.keyDown(filterButton, { key: "End" });
 
-			expect(screen.getByLabelText("Ouvrir le menu")).toHaveFocus();
+			expect(screen.getByLabelText("Ouvrir le menu de navigation")).toHaveFocus();
 		});
 
 		it("ArrowRight from search moves to Ajouter link", () => {

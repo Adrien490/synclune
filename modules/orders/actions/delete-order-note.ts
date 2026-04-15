@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma, softDelete } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { updateTag } from "next/cache";
 import type { ActionState } from "@/shared/types/server-action";
@@ -28,19 +28,27 @@ export async function deleteOrderNote(noteId: string): Promise<ActionState> {
 		const validated = validateInput(deleteOrderNoteSchema, { noteId });
 		if ("error" in validated) return validated.error;
 
-		// 3. Vérifier que la note existe et récupérer l'orderId pour le cache
-		const note = await prisma.orderNote.findUnique({
-			where: { id: validated.data.noteId },
-			select: { id: true, orderId: true },
+		// 3. Transaction: fetch + soft delete atomically (prevents TOCTOU race)
+		const note = await prisma.$transaction(async (tx) => {
+			const found = await tx.orderNote.findUnique({
+				where: { id: validated.data.noteId },
+				select: { id: true, orderId: true },
+			});
+
+			if (!found) return null;
+
+			// Soft delete (Art. L123-22 Code de Commerce)
+			await tx.orderNote.update({
+				where: { id: validated.data.noteId },
+				data: { deletedAt: new Date() },
+			});
+
+			return found;
 		});
 
 		if (!note) {
 			return error("Note non trouvée");
 		}
-
-		// 4. Soft delete au lieu de hard delete (conformité légale)
-		// Conservation des notes pour audit trail (Art. L123-22 Code de Commerce)
-		await softDelete.orderNote(validated.data.noteId);
 
 		// 5. Invalider le cache des notes uniquement (pas de changement de statut)
 		if (note.orderId) {

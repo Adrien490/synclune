@@ -4,6 +4,7 @@
 
 /* Prévenir le bounce/overscroll iOS en mode standalone */
 html {
+	/* Synclune is light-only — no dark mode */
 	color-scheme: light;
 	overscroll-behavior-y: none;
 }
@@ -103,6 +104,13 @@ textarea {
 	navigation: auto;
 }
 
+/* Disable view transitions for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
+	}
+}
+
 /* ========================================================================
    VAUL DRAWER - Optimisation des gestes tactiles
    ======================================================================== */
@@ -119,4 +127,9 @@ textarea {
 [data-vaul-drawer-direction="right"] [data-slot="scroll-fade-container"],
 [data-vaul-drawer-direction="left"] [data-slot="scroll-fade-container"] {
 	touch-action: pan-y pan-x;
+}
+
+/* Permettre le scroll vertical dans le bottom sheet sans déclencher le drag-to-close */
+[data-vaul-drawer-direction="bottom"] [data-slot="scroll-fade-container"] {
+	touch-action: pan-y;
 }

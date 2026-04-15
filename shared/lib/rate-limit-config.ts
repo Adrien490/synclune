@@ -1374,8 +1374,35 @@ export const ADMIN_NEWSLETTER_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
+/**
+ * Limite pour le désabonnement admin d'un subscriber
+ */
+export const ADMIN_NEWSLETTER_UNSUBSCRIBE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression admin d'un subscriber (RGPD)
+ */
+export const ADMIN_NEWSLETTER_DELETE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression en masse de subscribers (RGPD)
+ */
+export const ADMIN_NEWSLETTER_BULK_DELETE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
 export const ADMIN_NEWSLETTER_LIMITS = {
 	REFRESH: ADMIN_NEWSLETTER_REFRESH_LIMIT,
+	UNSUBSCRIBE: ADMIN_NEWSLETTER_UNSUBSCRIBE_LIMIT,
+	DELETE: ADMIN_NEWSLETTER_DELETE_LIMIT,
+	BULK_DELETE: ADMIN_NEWSLETTER_BULK_DELETE_LIMIT,
 } as const;
 
 // ========================================
@@ -1398,9 +1425,27 @@ export const ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
+/**
+ * Limite pour la suppression d'une personnalisation (admin)
+ */
+export const ADMIN_CUSTOMIZATION_DELETE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour la suppression en masse de personnalisations (admin)
+ */
+export const ADMIN_CUSTOMIZATION_BULK_DELETE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
 export const ADMIN_CUSTOMIZATION_LIMITS = {
 	UPDATE: ADMIN_CUSTOMIZATION_UPDATE_LIMIT,
 	BULK_UPDATE: ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT,
+	DELETE: ADMIN_CUSTOMIZATION_DELETE_LIMIT,
+	BULK_DELETE: ADMIN_CUSTOMIZATION_BULK_DELETE_LIMIT,
 } as const;
 
 // ========================================

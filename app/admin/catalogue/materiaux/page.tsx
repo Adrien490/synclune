@@ -9,6 +9,8 @@ import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import { MaterialsDataTable } from "@/modules/materials/components/admin/materials-data-table";
 import { MaterialsDataTableSkeleton } from "@/modules/materials/components/admin/materials-data-table-skeleton";
+import { MaterialsMobileList } from "@/modules/materials/components/admin/materials-mobile-list";
+import { MaterialsMobileListSkeleton } from "@/modules/materials/components/admin/materials-mobile-list-skeleton";
 import { MaterialsFilterBadges } from "@/modules/materials/components/admin/materials-filter-badges";
 import { MaterialsFilterSheet } from "@/modules/materials/components/admin/materials-filter-sheet";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
@@ -26,6 +28,7 @@ const DeleteMaterialAlertDialog = dynamic(() =>
 	),
 );
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
+import { MaterialsBottomBar } from "@/modules/materials/components/admin/materials-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
@@ -116,6 +119,12 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 					</div>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<MaterialsMobileListSkeleton />}>
+					<MaterialsMobileList materialsPromise={materialsPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<MaterialsDataTableSkeleton />}>
 					<MaterialsDataTable materialsPromise={materialsPromise} perPage={perPage} />
 				</Suspense>
@@ -123,6 +132,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 
 			<MaterialFormDialog />
 			<DeleteMaterialAlertDialog />
+			<MaterialsBottomBar />
 		</>
 	);
 }

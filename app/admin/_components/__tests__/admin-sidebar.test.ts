@@ -69,11 +69,11 @@ describe("navigation config integrity", () => {
 		}
 	});
 
-	it("collapsible groups are Catalogue, Marketing and Système", () => {
+	it("collapsible groups are Catalogue and Marketing", () => {
 		const collapsibleGroups = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
-		expect(collapsibleGroups).toEqual(["Catalogue", "Marketing", "Système"]);
+		expect(collapsibleGroups).toEqual(["Catalogue", "Marketing"]);
 	});
 });
 

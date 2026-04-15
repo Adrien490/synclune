@@ -36,6 +36,75 @@ const ACTIVE_STATUS_OPTIONS = [
 	{ value: "inactive", label: "Inactives uniquement" },
 ] as const;
 
+// ============================================================================
+// Sub-components
+// ============================================================================
+
+interface CheckboxOption {
+	id: string;
+	name: string;
+	hex?: string;
+}
+
+interface CheckboxArrayField {
+	state: { value: string[] };
+	pushValue: (value: string) => void;
+	removeValue: (index: number) => void;
+}
+
+interface FilterCheckboxGroupProps {
+	legend: string;
+	options: CheckboxOption[];
+	field: CheckboxArrayField;
+	idPrefix: string;
+}
+
+function FilterCheckboxGroup({ legend, options, field, idPrefix }: FilterCheckboxGroupProps) {
+	return (
+		<fieldset className="space-y-3">
+			<legend className="text-foreground text-sm font-medium">{legend}</legend>
+			<div className="max-h-48 space-y-2 overflow-y-auto">
+				{options.map((option) => {
+					const isSelected = field.state.value.includes(option.id);
+					return (
+						<div key={option.id} className="flex items-center space-x-2">
+							<Checkbox
+								id={`${idPrefix}-${option.id}`}
+								checked={isSelected}
+								onCheckedChange={(checked) => {
+									if (checked && !isSelected) {
+										field.pushValue(option.id);
+									} else if (!checked && isSelected) {
+										const index = field.state.value.indexOf(option.id);
+										field.removeValue(index);
+									}
+								}}
+								className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+							/>
+							{option.hex && (
+								<span
+									className="border-border h-4 w-4 shrink-0 rounded-full border"
+									style={{ backgroundColor: option.hex }}
+								/>
+							)}
+							<Label
+								htmlFor={`${idPrefix}-${option.id}`}
+								className="flex-1 cursor-pointer text-sm font-normal"
+							>
+								{option.name}
+							</Label>
+						</div>
+					);
+				})}
+			</div>
+		</fieldset>
+	);
+}
+
+// ============================================================================
+// Main component
+// ============================================================================
+
 export function SkusFilterSheet({
 	className,
 	colorOptions,
@@ -80,43 +149,25 @@ export function SkusFilterSheet({
 		},
 	});
 
+	const FILTER_KEYS = [
+		"filter_stockStatus",
+		"filter_colorId",
+		"filter_materialId",
+		"filter_isActive",
+	] as const;
+
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
-
-		// Supprimer tous les filtres geres par ce sheet
-		const filterKeys = [
-			"filter_stockStatus",
-			"filter_colorId",
-			"filter_materialId",
-			"filter_isActive",
-		];
-		filterKeys.forEach((key) => params.delete(key));
-
-		// Reset cursor pour la pagination
+		FILTER_KEYS.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
 
-		// Ajouter les statuts de stock
-		if (formData.stockStatuses.length > 0) {
-			formData.stockStatuses.forEach((status) => params.append("filter_stockStatus", status));
-		}
+		formData.stockStatuses.forEach((s) => params.append("filter_stockStatus", s));
+		formData.colorIds.forEach((id) => params.append("filter_colorId", id));
+		formData.materialIds.forEach((id) => params.append("filter_materialId", id));
 
-		// Ajouter les couleurs
-		if (formData.colorIds.length > 0) {
-			formData.colorIds.forEach((id) => params.append("filter_colorId", id));
-		}
-
-		// Ajouter les materiaux
-		if (formData.materialIds.length > 0) {
-			formData.materialIds.forEach((id) => params.append("filter_materialId", id));
-		}
-
-		// Ajouter le statut actif/inactif
-		if (formData.isActive === "active") {
-			params.set("filter_isActive", "true");
-		} else if (formData.isActive === "inactive") {
-			params.set("filter_isActive", "false");
-		}
+		if (formData.isActive === "active") params.set("filter_isActive", "true");
+		else if (formData.isActive === "inactive") params.set("filter_isActive", "false");
 
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
@@ -133,13 +184,7 @@ export function SkusFilterSheet({
 		form.reset(defaultValues);
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = [
-			"filter_stockStatus",
-			"filter_colorId",
-			"filter_materialId",
-			"filter_isActive",
-		];
-		filterKeys.forEach((key) => params.delete(key));
+		FILTER_KEYS.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
 
@@ -148,19 +193,10 @@ export function SkusFilterSheet({
 		});
 	};
 
-	// Calculer les filtres actifs depuis l'URL
 	const { hasActiveFilters, activeFiltersCount } = (() => {
 		let count = 0;
-		const sheetFilterKeys = [
-			"filter_stockStatus",
-			"filter_colorId",
-			"filter_materialId",
-			"filter_isActive",
-		];
 		searchParams.forEach((value, key) => {
-			if (sheetFilterKeys.includes(key) && value !== "all") {
-				count += 1;
-			}
+			if ((FILTER_KEYS as readonly string[]).includes(key) && value !== "all") count += 1;
 		});
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
 	})();
@@ -249,91 +285,38 @@ export function SkusFilterSheet({
 					)}
 				</form.Field>
 
-				<Separator />
-
 				{/* Couleurs */}
 				{colorOptions.length > 0 && (
 					<>
+						<Separator />
 						<form.Field name="colorIds" mode="array">
 							{(field) => (
-								<fieldset className="space-y-3">
-									<legend className="text-foreground text-sm font-medium">Couleur</legend>
-									<div className="max-h-48 space-y-2 overflow-y-auto">
-										{colorOptions.map((color) => {
-											const isSelected = field.state.value.includes(color.id);
-											return (
-												<div key={color.id} className="flex items-center space-x-2">
-													<Checkbox
-														id={`color-${color.id}`}
-														checked={isSelected}
-														onCheckedChange={(checked) => {
-															if (checked && !isSelected) {
-																field.pushValue(color.id);
-															} else if (!checked && isSelected) {
-																const index = field.state.value.indexOf(color.id);
-																field.removeValue(index);
-															}
-														}}
-														className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-													/>
-													<span
-														className="border-border h-4 w-4 shrink-0 rounded-full border"
-														style={{ backgroundColor: color.hex }}
-													/>
-													<Label
-														htmlFor={`color-${color.id}`}
-														className="flex-1 cursor-pointer text-sm font-normal"
-													>
-														{color.name}
-													</Label>
-												</div>
-											);
-										})}
-									</div>
-								</fieldset>
+								<FilterCheckboxGroup
+									legend="Couleur"
+									options={colorOptions.map((c) => ({ id: c.id, name: c.name, hex: c.hex }))}
+									field={field as CheckboxArrayField}
+									idPrefix="color"
+								/>
 							)}
 						</form.Field>
-						<Separator />
 					</>
 				)}
 
 				{/* Materiaux */}
 				{materialOptions.length > 0 && (
-					<form.Field name="materialIds" mode="array">
-						{(field) => (
-							<fieldset className="space-y-3">
-								<legend className="text-foreground text-sm font-medium">Matériau</legend>
-								<div className="max-h-48 space-y-2 overflow-y-auto">
-									{materialOptions.map((material) => {
-										const isSelected = field.state.value.includes(material.id);
-										return (
-											<div key={material.id} className="flex items-center space-x-2">
-												<Checkbox
-													id={`material-${material.id}`}
-													checked={isSelected}
-													onCheckedChange={(checked) => {
-														if (checked && !isSelected) {
-															field.pushValue(material.id);
-														} else if (!checked && isSelected) {
-															const index = field.state.value.indexOf(material.id);
-															field.removeValue(index);
-														}
-													}}
-													className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-												/>
-												<Label
-													htmlFor={`material-${material.id}`}
-													className="flex-1 cursor-pointer text-sm font-normal"
-												>
-													{material.name}
-												</Label>
-											</div>
-										);
-									})}
-								</div>
-							</fieldset>
-						)}
-					</form.Field>
+					<>
+						<Separator />
+						<form.Field name="materialIds" mode="array">
+							{(field) => (
+								<FilterCheckboxGroup
+									legend="Matériau"
+									options={materialOptions.map((m) => ({ id: m.id, name: m.name }))}
+									field={field as CheckboxArrayField}
+									idPrefix="material"
+								/>
+							)}
+						</form.Field>
+					</>
 				)}
 			</form>
 		</FilterSheetWrapper>

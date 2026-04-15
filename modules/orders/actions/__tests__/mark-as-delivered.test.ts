@@ -12,6 +12,7 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
+	mockValidateInput,
 	mockSendDeliveryEmail,
 	mockScheduleReviewEmail,
 	mockCreateOrderAuditTx,
@@ -27,6 +28,7 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
+	mockValidateInput: vi.fn(),
 	mockSendDeliveryEmail: vi.fn(),
 	mockScheduleReviewEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
@@ -51,6 +53,7 @@ vi.mock("@/shared/lib/actions", () => ({
 		return typeof v === "string" ? v : null;
 	},
 	handleActionError: mockHandleActionError,
+	validateInput: mockValidateInput,
 }));
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendDeliveryConfirmationEmail: mockSendDeliveryEmail,
@@ -78,13 +81,10 @@ vi.mock("@/modules/reviews/constants/cache", () => ({
 	REVIEWS_CACHE_TAGS: { REVIEWABLE: (userId: string) => `reviewable-${userId}` },
 }));
 vi.mock("../../schemas/order.schemas", () => ({
-	markAsDeliveredSchema: {
-		safeParse: vi.fn().mockReturnValue({ success: true, data: { id: "test", sendEmail: true } }),
-	},
+	markAsDeliveredSchema: {},
 }));
 
 import { markAsDelivered } from "../mark-as-delivered";
-import { markAsDeliveredSchema } from "../../schemas/order.schemas";
 
 // ============================================================================
 // HELPERS
@@ -123,10 +123,7 @@ describe("markAsDelivered", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createShippedOrder());
 		mockPrisma.order.update.mockResolvedValue({});
 
-		vi.mocked(markAsDeliveredSchema.safeParse).mockReturnValue({
-			success: true,
-			data: { id: VALID_CUID, sendEmail: true },
-		} as never);
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, sendEmail: true } });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -151,10 +148,9 @@ describe("markAsDelivered", () => {
 	});
 
 	it("should return validation error for invalid data", async () => {
-		vi.mocked(markAsDeliveredSchema.safeParse).mockReturnValue({
-			success: false,
-			error: { issues: [{ message: "ID invalide" }] },
-		} as never);
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "ID invalide" },
+		});
 		const result = await markAsDelivered(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});

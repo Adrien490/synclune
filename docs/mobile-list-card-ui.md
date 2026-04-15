@@ -68,15 +68,15 @@ Avant d'implementer, utiliser les primitives existantes du projet.
 
 ### Hooks
 
-| Hook                 | Fichier                                         | Usage                                                                                                               |
-| -------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `useIsMobile()`      | `shared/hooks/use-mobile.ts`                    | Breakpoint 768px, SSR-safe (`useSyncExternalStore`)                                                                 |
-| `useIsTouchDevice()` | `shared/hooks/use-touch-device.ts`              | Detecte `(hover: none) and (pointer: coarse)` — SSR-safe (`useSyncExternalStore`)                                   |
-| `useEdgeSwipe()`     | `shared/hooks/use-edge-swipe.ts`                | Swipe from left edge (20px), seuil 50px, passive listeners — utilise `useEffectEvent` pour handlers stables         |
-| `usePinchZoom()`     | `shared/hooks/use-pinch-zoom.ts`                | Pinch-to-zoom, double-tap, pan, keyboard support — utilise `useEffectEvent` pour handlers stables                   |
-| `useTransition()`    | React 19 built-in                               | **125 fichiers** — transitions non-urgentes avec `isPending` pour feedback loading. Pattern principal des mutations |
-| `useSwipeToRemove()` | `modules/wishlist/hooks/use-swipe-to-remove.ts` | Swipe gauche pour supprimer — seuil 80px, cancel si scroll vertical, passive listeners, snap-back                   |
-| `useEffectEvent()`   | React 19 built-in                               | **19 fichiers** — event handlers stables sans re-render. A utiliser dans les hooks de gestes et listeners           |
+| Hook                 | Fichier                                         | Usage                                                                                                                |
+| -------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `useIsMobile()`      | `shared/hooks/use-mobile.ts`                    | Breakpoint 768px, SSR-safe (`useSyncExternalStore`)                                                                  |
+| `useIsTouchDevice()` | `shared/hooks/use-touch-device.ts`              | Detecte `(hover: none) and (pointer: coarse)` — SSR-safe (`useSyncExternalStore`)                                    |
+| `useEdgeSwipe()`     | `shared/hooks/use-edge-swipe.ts`                | Swipe from left edge (20px), seuil 50px, passive listeners — utilise `useEffectEvent` pour handlers stables          |
+| `usePinchZoom()`     | `shared/hooks/use-pinch-zoom.ts`                | Pinch-to-zoom, double-tap, pan, keyboard support — utilise `useEffectEvent` pour handlers stables                    |
+| `useTransition()`    | React 19 built-in                               | **137+ fichiers** — transitions non-urgentes avec `isPending` pour feedback loading. Pattern principal des mutations |
+| `useSwipeToRemove()` | `modules/wishlist/hooks/use-swipe-to-remove.ts` | Swipe gauche pour supprimer — seuil 80px, cancel si scroll vertical, passive listeners, snap-back                    |
+| `useEffectEvent()`   | React 19 built-in                               | **27+ fichiers** — event handlers stables sans re-render. A utiliser dans les hooks de gestes et listeners           |
 
 ### Composants mobiles partages
 
@@ -114,8 +114,19 @@ Ces modules implementent deja le pattern mobile list card documente ici. Les uti
 | ------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------- |
 | **Customizations** | `modules/customizations/components/admin/customizations-mobile-list.tsx`    | `customizations-bottom-bar.tsx` — Sort + Search + Filter            | `customizations-mobile-list-skeleton.tsx` |
 | **Discounts**      | `modules/discounts/components/admin/discounts-mobile-list.tsx`              | `discounts-bottom-bar.tsx` — Sort + Search + Filter                 | `discounts-mobile-list-skeleton.tsx`      |
+| **Products**       | `modules/products/components/admin/products-mobile-list.tsx`                | `products-bottom-bar.tsx` — Filter + Search + FAB Add + Sort + Menu | `products-mobile-list-skeleton.tsx`       |
+| **Orders**         | `modules/orders/components/admin/orders-mobile-list.tsx`                    | `orders-bottom-bar.tsx` — Sort + Search + Filter                    | `orders-mobile-list-skeleton.tsx`         |
+| **Refunds**        | `modules/refunds/components/admin/refunds-mobile-list.tsx`                  | `refunds-bottom-bar.tsx` — Sort + Search + Filter                   | `refunds-mobile-list-skeleton.tsx`        |
+| **Reviews**        | `modules/reviews/components/admin/reviews-mobile-list.tsx`                  | `reviews-bottom-bar.tsx` — Sort + Search                            | `reviews-mobile-list-skeleton.tsx`        |
+| **Newsletter**     | `modules/newsletter/components/admin/newsletter-mobile-list.tsx`            | `newsletter-bottom-bar.tsx` — Sort + Search                         | `newsletter-mobile-list-skeleton.tsx`     |
+| **Collections**    | `modules/collections/components/admin/collections-mobile-list.tsx`          | `collections-bottom-bar.tsx` — Sort + Search                        | `collections-mobile-list-skeleton.tsx`    |
+| **Users**          | `modules/users/components/admin/users-mobile-list.tsx`                      | `users-bottom-bar.tsx` — Filter + Sort + Search + Menu              | `users-mobile-list-skeleton.tsx`          |
+| **Colors**         | `modules/colors/components/admin/colors-mobile-list.tsx`                    | `colors-bottom-bar.tsx` — Sort + Search + Menu                      | `colors-mobile-list-skeleton.tsx`         |
+| **Materials**      | `modules/materials/components/admin/materials-mobile-list.tsx`              | `materials-bottom-bar.tsx` — Sort + Search + Menu                   | `materials-mobile-list-skeleton.tsx`      |
+| **Product Types**  | `modules/product-types/components/admin/product-types-mobile-list.tsx`      | `product-types-bottom-bar.tsx` — Sort + Search + Menu               | `product-types-mobile-list-skeleton.tsx`  |
+| **Announcements**  | `modules/announcements/components/admin/announcements-mobile-list.tsx`      | — (peu d'items, pas de tri/recherche)                               | `announcements-mobile-list-skeleton.tsx`  |
+| **FAQ**            | `modules/faq/components/admin/faq-list.tsx` (responsive, drag-drop)         | — (liste ordonnee, pas de tri/recherche)                            | Skeleton inline dans la page              |
 | **Wishlist**       | `modules/wishlist/components/swipeable-wishlist-item.tsx` (swipe-to-remove) | —                                                                   | `wishlist-grid-skeleton.tsx`              |
-| **Products**       | _non implemente_                                                            | `products-bottom-bar.tsx` — Filter + Search + FAB Add + Sort + Menu | —                                         |
 
 Pattern d'integration dans les pages admin (CSS-only breakpoint switching) :
 
@@ -315,7 +326,7 @@ Le projet utilise le CSS View Transitions API pour les transitions fluides entre
 
 ### `useTransition` pour les mutations non-urgentes
 
-Pattern le plus utilise du projet (125 fichiers). Fournit `isPending` pour le feedback loading pendant la transition :
+Pattern le plus utilise du projet (137+ fichiers). Fournit `isPending` pour le feedback loading pendant la transition :
 
 ```tsx
 "use client";
@@ -413,7 +424,7 @@ function triggerHaptic(duration = 10) {
 
 ### 5.1Swipe Actions (pattern critique)
 
-> **Pattern implemente** dans le module wishlist. Voir `modules/wishlist/hooks/use-swipe-to-remove.ts` (hook) + `modules/wishlist/components/swipeable-wishlist-item.tsx` (composant). L'implementation utilise des raw touch events (pas Motion drag) avec passive listeners pour ne pas bloquer le scroll. Voir section 11.6 pour le detail.
+> **Wrapper generique** : `shared/components/swipeable-card.tsx` — bidirectionnel, seuil dynamique (80px ou 30%), overswipe >75%, `prefers-reduced-motion`. **Pattern specifique wishlist** : `modules/wishlist/hooks/use-swipe-to-remove.ts` + `modules/wishlist/components/swipeable-wishlist-item.tsx` (unidirectionnel). Les deux utilisent des raw touch events avec passive listeners. Voir section 11.6 pour le detail.
 
 ```
 ← Swipe gauche                    Swipe droite →
@@ -758,16 +769,16 @@ Le projet a plusieurs scroll-driven animations CSS (voir `app/styles/scroll-driv
 - Thumbnail : `size-12` (48px) a `size-14` (56px)
 - 3 lignes de texte
 - `Item size="default"` (p-4 gap-4)
-- Usage : liste commandes, liste adresses, panier
+- Usage : liste commandes, liste adresses
 
-### 9.3Rich (produits, contenu)
+### 9.3Rich (produits, contenu, panier)
 
 - Hauteur : 96-120px
-- Thumbnail : `size-16` (64px) a `size-20` (80px)
+- Thumbnail : `size-16` (64px) a `size-20` (80px) — voire `size-24` (96px) sur SM en layout grid
 - 3 lignes + tags/badges
 - Possible action inline (bouton ajout panier) — 1 max visible
 - Support thumbnail video (`<video autoPlay muted loop playsInline>`)
-- Usage : produits, personnalisations, recommandations
+- Usage : produits, personnalisations, recommandations, **panier sheet** (`cart-sheet-item-row.tsx` : `grid-cols-[5rem_1fr]` + `size-20` mobile, `sm:size-24` — images larges pour la lisibilite des variantes couleur/taille)
 
 ### 9.4Expandable (details inline)
 
@@ -973,7 +984,11 @@ function OrderCard({ order }: { order: Order }) {
 
 ### 11.6Implementation Swipe Actions
 
-**Pattern canonique** : `modules/wishlist/hooks/use-swipe-to-remove.ts` + `modules/wishlist/components/swipeable-wishlist-item.tsx`. Le hook utilise des raw touch events (pas Motion drag) avec passive listeners, ce qui evite toute dependance a `domAnimation` vs `domMax`.
+**Wrapper generique** : `shared/components/swipeable-card.tsx` + `shared/hooks/use-swipe-action.ts`. Composant bidirectionnel (left/right actions) avec seuil dynamique (min px, 30% largeur), overswipe auto-trigger a >75%, `prefers-reduced-motion`, passive listeners, `aria-label` + `role="button"` sur les zones d'action.
+
+**Pattern specifique wishlist** : `modules/wishlist/hooks/use-swipe-to-remove.ts` + `modules/wishlist/components/swipeable-wishlist-item.tsx`. Hook unidirectionnel (left-only) specialise pour le swipe-to-delete.
+
+Les deux utilisent des raw touch events (pas Motion drag) avec passive listeners, ce qui evite toute dependance a `domAnimation` vs `domMax`.
 
 Approche alternative avec `motion/react` drag (non utilisee en production, a tester) :
 
@@ -1284,7 +1299,7 @@ La **cursor pagination** est la strategie principale du projet (10/10, pattern e
 - Budget INP : < 200ms pour toutes les interactions (tap, swipe, expand)
 - Les animations GPU-composited (`transform`, `opacity`) ne bloquent pas le main thread
 - Eviter les `setState` synchrones dans les event handlers de geste — preferer `useTransition` (voir section 2) pour les updates non urgentes. Le hook fournit `isPending` pour le feedback visuel, contrairement a `startTransition` seul
-- `useEffectEvent` (19 fichiers) pour les event handlers stables dans les hooks de geste — evite les re-renders parasites des closures
+- `useEffectEvent` (27+ fichiers) pour les event handlers stables dans les hooks de geste — evite les re-renders parasites des closures
 
 ### Debounce & Throttle
 
@@ -1317,8 +1332,8 @@ La **cursor pagination** est la strategie principale du projet (10/10, pattern e
 | **View Transitions**       | Morphing fluide entre liste et detail sans JS                   | `viewTransitionName` sur gallery (3 fichiers)       |
 | **Popover API**            | Popovers natifs sans JS (`popover`, `popovertarget`)            | Non adopte — le projet utilise Radix Popover        |
 | **CSS Anchor Positioning** | Positionnement relatif a un element ancre (tooltips, menus)     | Emerging — support Chrome 125+, non encore utilise  |
-| **`useTransition`**        | Transitions non-bloquantes avec feedback `isPending`            | Pattern principal — 125 fichiers                    |
-| **`useEffectEvent`**       | Event handlers stables pour hooks de gestes                     | 19 fichiers — hooks de geste et listeners           |
+| **`useTransition`**        | Transitions non-bloquantes avec feedback `isPending`            | Pattern principal — 137+ fichiers                   |
+| **`useEffectEvent`**       | Event handlers stables pour hooks de gestes                     | 27+ fichiers — hooks de geste et listeners          |
 
 ---
 

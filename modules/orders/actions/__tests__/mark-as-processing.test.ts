@@ -16,6 +16,7 @@ const {
 	mockError,
 	mockNotFound,
 	mockValidationError,
+	mockValidateInput,
 	mockCreateOrderAuditTx,
 	mockGetOrderInvalidationTags,
 	mockCanMarkAsProcessing,
@@ -33,6 +34,7 @@ const {
 	mockError: vi.fn(),
 	mockNotFound: vi.fn(),
 	mockValidationError: vi.fn(),
+	mockValidateInput: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
 	mockCanMarkAsProcessing: vi.fn(),
@@ -59,6 +61,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 	notFound: mockNotFound,
 	validationError: mockValidationError,
+	validateInput: mockValidateInput,
 }));
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 vi.mock("../../constants/cache", () => ({
@@ -78,13 +81,10 @@ vi.mock("../../constants/order.constants", () => ({
 	},
 }));
 vi.mock("../../schemas/order.schemas", () => ({
-	markAsProcessingSchema: {
-		safeParse: vi.fn().mockReturnValue({ success: true, data: { id: VALID_CUID } }),
-	},
+	markAsProcessingSchema: {},
 }));
 
 import { markAsProcessing } from "../mark-as-processing";
-import { markAsProcessingSchema } from "../../schemas/order.schemas";
 
 // ============================================================================
 // HELPERS
@@ -121,10 +121,7 @@ describe("markAsProcessing", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createPendingPaidOrder());
 		mockPrisma.order.update.mockResolvedValue({});
 
-		vi.mocked(markAsProcessingSchema.safeParse).mockReturnValue({
-			success: true,
-			data: { id: VALID_CUID },
-		} as never);
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -162,10 +159,9 @@ describe("markAsProcessing", () => {
 	});
 
 	it("should return validation error for invalid ID", async () => {
-		vi.mocked(markAsProcessingSchema.safeParse).mockReturnValue({
-			success: false,
-			error: { issues: [{ message: "ID invalide" }] },
-		} as never);
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "ID invalide" },
+		});
 		const result = await markAsProcessing(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 		expect(result.message).toBe("ID invalide");

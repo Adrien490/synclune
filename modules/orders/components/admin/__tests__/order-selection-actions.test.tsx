@@ -11,16 +11,24 @@ const {
 	mockBulkDeleteDialog,
 	mockDeliveredDialog,
 	mockCancelDialog,
+	mockShippedDialog,
+	mockProcessingDialog,
 	mockDeliveredAction,
 	mockCancelAction,
+	mockShippedAction,
+	mockProcessingAction,
 } = vi.hoisted(() => ({
 	mockSelectedItems: { value: [] as string[] },
 	mockClearSelection: vi.fn(),
 	mockBulkDeleteDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
 	mockDeliveredDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
 	mockCancelDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
+	mockShippedDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
+	mockProcessingDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
 	mockDeliveredAction: vi.fn(),
 	mockCancelAction: vi.fn(),
+	mockShippedAction: vi.fn(),
+	mockProcessingAction: vi.fn(),
 }));
 
 vi.mock("@/shared/contexts/selection-context", () => ({
@@ -35,8 +43,12 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: (id: string) =>
-		id === "bulk-mark-delivered" ? mockDeliveredDialog : mockCancelDialog,
+	useDialog: (id: string) => {
+		if (id === "bulk-mark-delivered") return mockDeliveredDialog;
+		if (id === "bulk-mark-shipped") return mockShippedDialog;
+		if (id === "bulk-cancel-orders") return mockCancelDialog;
+		return mockProcessingDialog;
+	},
 }));
 
 vi.mock("@/modules/orders/hooks/use-bulk-mark-as-delivered", () => ({
@@ -45,6 +57,14 @@ vi.mock("@/modules/orders/hooks/use-bulk-mark-as-delivered", () => ({
 
 vi.mock("@/modules/orders/hooks/use-bulk-cancel-orders", () => ({
 	useBulkCancelOrders: () => ({ action: mockCancelAction, isPending: false }),
+}));
+
+vi.mock("@/modules/orders/hooks/use-bulk-mark-as-shipped", () => ({
+	useBulkMarkAsShipped: () => ({ action: mockShippedAction, isPending: false }),
+}));
+
+vi.mock("@/modules/orders/hooks/use-bulk-mark-as-processing", () => ({
+	useBulkMarkAsProcessing: () => ({ action: mockProcessingAction, isPending: false }),
 }));
 
 vi.mock("../bulk-delete-orders-alert-dialog", () => ({
@@ -114,6 +134,8 @@ vi.mock("lucide-react", () => ({
 	LoaderCircle: () => <svg data-testid="loader" />,
 	EllipsisVertical: () => <svg data-testid="icon-more" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
+	Truck: () => <svg data-testid="icon-truck" />,
+	Package: () => <svg data-testid="icon-package" />,
 }));
 
 import { OrderSelectionActions } from "../order-selection-actions";
@@ -140,6 +162,18 @@ describe("OrderSelectionActions", () => {
 	});
 
 	describe("dropdown menu items", () => {
+		it("shows 'Mettre en préparation' menu item", () => {
+			mockSelectedItems.value = ["order-1"];
+			render(<OrderSelectionActions />);
+			expect(screen.getByText("Mettre en préparation")).toBeInTheDocument();
+		});
+
+		it("shows 'Marquer expédiées' menu item", () => {
+			mockSelectedItems.value = ["order-1"];
+			render(<OrderSelectionActions />);
+			expect(screen.getByText("Marquer expédiées")).toBeInTheDocument();
+		});
+
 		it("shows 'Marquer livrées' menu item", () => {
 			mockSelectedItems.value = ["order-1"];
 			render(<OrderSelectionActions />);

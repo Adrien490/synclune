@@ -2,7 +2,7 @@
 
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import {
 	validateInput,
@@ -56,39 +56,52 @@ export async function deleteOrder(
 
 		const { id } = validated.data;
 
-		// Récupérer la commande avec les infos nécessaires
-		const order = await prisma.order.findUnique({
-			where: { id, ...notDeleted },
-			select: {
-				id: true,
-				orderNumber: true,
-				userId: true,
-				invoiceNumber: true,
-				paymentStatus: true,
-			},
+		// Transaction: fetch + validate + soft delete atomically (prevents TOCTOU race)
+		const order = await prisma.$transaction(async (tx) => {
+			const found = await tx.order.findUnique({
+				where: { id, ...notDeleted },
+				select: {
+					id: true,
+					orderNumber: true,
+					userId: true,
+					invoiceNumber: true,
+					paymentStatus: true,
+				},
+			});
+
+			if (!found) return null;
+
+			if (found.invoiceNumber) {
+				return { ...found, _error: "has_invoice" as const };
+			}
+
+			if (
+				found.paymentStatus === PaymentStatus.PAID ||
+				found.paymentStatus === PaymentStatus.REFUNDED
+			) {
+				return { ...found, _error: "already_paid" as const };
+			}
+
+			// Soft delete (Art. L123-22 Code de Commerce - conservation 10 ans)
+			await tx.order.update({
+				where: { id },
+				data: { deletedAt: new Date() },
+			});
+
+			return found;
 		});
 
 		if (!order) {
 			return error(ORDER_ERROR_MESSAGES.NOT_FOUND);
 		}
 
-		// Règle 1 : Vérifier qu'aucune facture n'a été émise
-		if (order.invoiceNumber) {
-			return error(ORDER_ERROR_MESSAGES.HAS_INVOICE);
+		if ("_error" in order) {
+			const message =
+				order._error === "has_invoice"
+					? ORDER_ERROR_MESSAGES.HAS_INVOICE
+					: ORDER_ERROR_MESSAGES.CANNOT_DELETE_PAID;
+			return error(message);
 		}
-
-		// Règle 2 : Vérifier que la commande n'a jamais été payée
-		// PAID ou REFUNDED signifie qu'il y a eu un paiement
-		if (
-			order.paymentStatus === PaymentStatus.PAID ||
-			order.paymentStatus === PaymentStatus.REFUNDED
-		) {
-			return error(ORDER_ERROR_MESSAGES.CANNOT_DELETE_PAID);
-		}
-
-		// Soft delete autorisé (commande de test, abandonnée, ou échouée)
-		// Conformité Art. L123-22 Code de Commerce : conservation 10 ans
-		await softDelete.order(id);
 
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));

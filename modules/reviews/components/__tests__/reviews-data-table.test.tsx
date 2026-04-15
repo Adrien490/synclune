@@ -93,6 +93,14 @@ vi.mock("../admin/review-row-actions", () => ({
 	ReviewRowActions: () => <div data-testid="row-actions" />,
 }));
 
+vi.mock("@/shared/components/table-selection-cell", () => ({
+	TableSelectionCell: () => <div data-testid="table-selection-cell" />,
+}));
+
+vi.mock("../admin/reviews-selection-toolbar", () => ({
+	ReviewsSelectionToolbar: () => <div data-testid="reviews-selection-toolbar" />,
+}));
+
 vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg />,
 	EyeOff: () => <svg />,

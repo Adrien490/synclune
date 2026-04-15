@@ -213,7 +213,9 @@ export async function bulkCancelOrders(
 		];
 
 		if (refundedCount > 0) {
-			messages.push(`${refundedCount} passee${refundedCount > 1 ? "s" : ""} a REFUNDED.`);
+			messages.push(
+				`${refundedCount} passee${refundedCount > 1 ? "s" : ""} a REFUNDED. Remboursements Stripe a traiter separement.`,
+			);
 		}
 
 		if (stockRestored > 0) {

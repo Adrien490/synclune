@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createMockFormData, createMockOrder, VALID_CUID } from "@/test/factories";
+import type * as SharedActions from "@/shared/lib/actions";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -23,6 +24,8 @@ const {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn() },
 		orderHistory: { create: vi.fn() },
+		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
+		discount: { update: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -61,13 +64,17 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/actions", () => ({
-	safeFormGet: (formData: FormData, key: string) => {
-		const v = formData.get(key);
-		return typeof v === "string" ? v : null;
-	},
-	handleActionError: mockHandleActionError,
-}));
+vi.mock("@/shared/lib/actions", async (importOriginal) => {
+	const original = await importOriginal<typeof SharedActions>();
+	return {
+		...original,
+		safeFormGet: (formData: FormData, key: string) => {
+			const v = formData.get(key);
+			return typeof v === "string" ? v : null;
+		},
+		handleActionError: mockHandleActionError,
+	};
+});
 
 vi.mock("@/modules/emails/services/status-emails", () => ({
 	sendCancelOrderConfirmationEmail: mockSendCancelEmail,
@@ -155,6 +162,9 @@ describe("cancelOrder", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(txOrder);
 		mockPrisma.order.update.mockResolvedValue({});
 		mockPrisma.productSku.update.mockResolvedValue({});
+		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
+		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
+		mockPrisma.discount.update.mockResolvedValue({});
 
 		vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
 			success: true,
@@ -328,6 +338,55 @@ describe("cancelOrder", () => {
 		await cancelOrder(undefined, fd);
 
 		expect(mockSanitizeText).toHaveBeenCalledWith("<script>alert(1)</script>");
+	});
+
+	// Discount usage release
+	it("should release discount usages when cancelling an order", async () => {
+		const order = createTxOrder({
+			paymentStatus: "PAID",
+		});
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.discountUsage.findMany.mockResolvedValue([
+			{ id: "usage-1", discountId: "disc-A" },
+			{ id: "usage-2", discountId: "disc-B" },
+		]);
+
+		await cancelOrder(undefined, validFormData);
+
+		expect(mockPrisma.discount.update).toHaveBeenCalledTimes(2);
+		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
+			where: { id: "disc-A" },
+			data: { usageCount: { decrement: 1 } },
+		});
+		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
+			where: { id: "disc-B" },
+			data: { usageCount: { decrement: 1 } },
+		});
+		expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
+			where: { orderId: VALID_CUID },
+		});
+	});
+
+	it("should not call deleteMany on discountUsage when there are no usages", async () => {
+		const order = createTxOrder();
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
+
+		await cancelOrder(undefined, validFormData);
+
+		expect(mockPrisma.discountUsage.deleteMany).not.toHaveBeenCalled();
+		expect(mockPrisma.discount.update).not.toHaveBeenCalled();
+	});
+
+	// PARTIALLY_REFUNDED should become REFUNDED on cancel
+	it("should mark paymentStatus as REFUNDED when cancelling a PARTIALLY_REFUNDED order", async () => {
+		const order = createTxOrder({ paymentStatus: "PARTIALLY_REFUNDED" });
+		mockPrisma.order.findUnique.mockResolvedValue(order);
+
+		const result = await cancelOrder(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.message).toContain("REFUNDED");
 	});
 
 	// handleActionError on unexpected exception

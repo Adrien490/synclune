@@ -5,7 +5,7 @@ import { useToolbarDrawer } from "@/shared/hooks";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowUpDown, EllipsisVertical, Plus, Search, SlidersHorizontal, X } from "lucide-react";
+import { ArrowUpDown, Menu, Plus, Search, SlidersHorizontal, X } from "lucide-react";
 import {
 	BottomBar,
 	ActiveDot,
@@ -73,7 +73,7 @@ interface ProductsBottomBarProps {
  * - Recherche → opens search Drawer
  * - Ajouter → Link to create product page (FAB-style center button)
  * - Trier → opens SortDrawer
- * - Menu → opens contextual menu Drawer
+ * - Menu → opens admin nav sheet (consistent with global nav bar)
  *
  * Portal to document.body to escape SidebarInset's containing block.
  */
@@ -85,15 +85,19 @@ export function ProductsBottomBar({
 	maxPriceInCents,
 }: ProductsBottomBarProps) {
 	const { openDrawer, open, close, isOpen, onOpenChange } = useToolbarDrawer<
-		"sort" | "search" | "filter" | "menu"
+		"sort" | "search" | "filter"
 	>();
 	const [focusedIndex, setFocusedIndex] = useState(0);
 
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	// Hide when any sheet/dialog is open (same pattern as CustomizationsBottomBar)
-	const { isOpen: isMenuOpen } = useDialog("admin-menu-sheet");
+	// Nav menu — same dialog as global nav bar, consistent across all pages
+	const {
+		isOpen: isMenuOpen,
+		open: openNavMenu,
+		close: closeNavMenu,
+	} = useDialog("admin-menu-sheet");
 	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
 
 	// Active states
@@ -267,19 +271,22 @@ export function ProductsBottomBar({
 						<span className={bottomBarLabelClass}>Trier</span>
 					</button>
 
-					{/* Menu */}
+					{/* Menu — navigation globale admin (cohérent avec la nav bar globale) */}
 					<button
 						ref={menuButtonRef}
 						type="button"
-						onClick={() => open("menu")}
+						onClick={() => (isMenuOpen ? closeNavMenu() : openNavMenu())}
 						onKeyDown={(e) => handleToolbarKeyDown(e, 4)}
 						onFocus={() => setFocusedIndex(4)}
 						tabIndex={focusedIndex === 4 ? 0 : -1}
 						className={buttonClassName}
-						aria-label="Ouvrir le menu"
+						aria-label={
+							isMenuOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"
+						}
 						aria-haspopup="dialog"
+						aria-expanded={isMenuOpen}
 					>
-						<EllipsisVertical className={bottomBarIconClass} aria-hidden="true" />
+						<Menu className={bottomBarIconClass} aria-hidden="true" />
 						<span className={bottomBarLabelClass}>Menu</span>
 					</button>
 				</div>
@@ -304,30 +311,6 @@ export function ProductsBottomBar({
 				options={SORT_OPTIONS}
 				showResetOption
 			/>
-
-			{/* Menu Drawer */}
-			<Drawer open={isOpen("menu")} onOpenChange={onOpenChange("menu")}>
-				<DrawerContent>
-					<DrawerHeader>
-						<DrawerTitle>Menu</DrawerTitle>
-					</DrawerHeader>
-					<DrawerBody className="flex flex-col gap-2">
-						<Button
-							variant="outline"
-							className="w-full justify-start"
-							onClick={() => {
-								router.refresh();
-								close();
-							}}
-						>
-							Actualiser
-						</Button>
-						<Button variant="outline" className="w-full justify-start" disabled>
-							Paramètres catalogue
-						</Button>
-					</DrawerBody>
-				</DrawerContent>
-			</Drawer>
 
 			{/* Search Drawer */}
 			<Drawer open={isOpen("search")} onOpenChange={onOpenChange("search")}>

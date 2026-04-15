@@ -176,6 +176,9 @@ vi.mock("lucide-react", () => ({
 		<span data-testid="filter-icon" className={className} />
 	),
 	X: ({ className }: { className?: string }) => <span data-testid="x-icon" className={className} />,
+	Menu: ({ className }: { className?: string }) => (
+		<span data-testid="menu-icon" className={className} />
+	),
 }));
 
 // Mock createPortal to render children inline during tests
@@ -257,7 +260,7 @@ describe("DiscountsBottomBar", () => {
 			renderDefault();
 			expect(screen.getByTestId("bottom-bar")).toHaveAttribute(
 				"aria-label",
-				"Tri, recherche et filtres",
+				"Tri, recherche, filtres et menu",
 			);
 		});
 	});
@@ -277,7 +280,7 @@ describe("DiscountsBottomBar", () => {
 			renderDefault();
 			expect(screen.getByRole("toolbar")).toHaveAttribute(
 				"aria-label",
-				"Tri, recherche et filtres",
+				"Tri, recherche, filtres et menu",
 			);
 		});
 
@@ -286,7 +289,7 @@ describe("DiscountsBottomBar", () => {
 			const buttons = screen
 				.getAllByRole("button")
 				.filter((btn) => btn.getAttribute("aria-haspopup") === "dialog");
-			expect(buttons).toHaveLength(3);
+			expect(buttons).toHaveLength(4);
 		});
 	});
 
@@ -347,21 +350,21 @@ describe("DiscountsBottomBar", () => {
 			expect(filterButton).toHaveAttribute("tabindex", "0");
 		});
 
-		it("ArrowRight from filter button wraps to sort button", () => {
+		it("ArrowRight from filter button moves to menu button", () => {
 			renderDefault();
 			const filterButton = screen.getByRole("button", { name: /Ouvrir les filtres/ });
 			fireEvent.focus(filterButton);
 			fireEvent.keyDown(filterButton, { key: "ArrowRight" });
-			const sortButton = screen.getByRole("button", { name: /Ouvrir les options de tri/ });
-			expect(sortButton).toHaveAttribute("tabindex", "0");
+			const menuButton = screen.getByRole("button", { name: /Ouvrir le menu de navigation/ });
+			expect(menuButton).toHaveAttribute("tabindex", "0");
 		});
 
-		it("ArrowLeft from sort button wraps to filter button", () => {
+		it("ArrowLeft from sort button wraps to menu button", () => {
 			renderDefault();
 			const sortButton = screen.getByRole("button", { name: /Ouvrir les options de tri/ });
 			fireEvent.keyDown(sortButton, { key: "ArrowLeft" });
-			const filterButton = screen.getByRole("button", { name: /Ouvrir les filtres/ });
-			expect(filterButton).toHaveAttribute("tabindex", "0");
+			const menuButton = screen.getByRole("button", { name: /Ouvrir le menu de navigation/ });
+			expect(menuButton).toHaveAttribute("tabindex", "0");
 		});
 
 		it("ArrowLeft from search button moves focus to sort button", () => {
@@ -399,12 +402,12 @@ describe("DiscountsBottomBar", () => {
 			expect(sortButton).toHaveAttribute("tabindex", "0");
 		});
 
-		it("End key moves focus to last button (filter)", () => {
+		it("End key moves focus to last button (menu)", () => {
 			renderDefault();
 			const sortButton = screen.getByRole("button", { name: /Ouvrir les options de tri/ });
 			fireEvent.keyDown(sortButton, { key: "End" });
-			const filterButton = screen.getByRole("button", { name: /Ouvrir les filtres/ });
-			expect(filterButton).toHaveAttribute("tabindex", "0");
+			const menuButton = screen.getByRole("button", { name: /Ouvrir le menu de navigation/ });
+			expect(menuButton).toHaveAttribute("tabindex", "0");
 		});
 	});
 

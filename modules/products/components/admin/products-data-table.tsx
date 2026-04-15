@@ -215,28 +215,34 @@ export async function ProductsDataTable({
 											</span>
 										</TableCell>
 										<TableCell className="text-center">
-											<Badge
-												variant={
-													totalStock === 0
-														? "destructive"
-														: totalStock <= STOCK_THRESHOLDS.CRITICAL
-															? "destructive"
-															: totalStock <= STOCK_THRESHOLDS.LOW
-																? "warning"
-																: "success"
-												}
+											<Link
+												href={`/admin/catalogue/produits/${product.slug}/variantes`}
+												title="Gérer le stock des variantes"
 												aria-label={
 													totalStock === 0
-														? "Stock épuisé"
+														? "Stock épuisé - Gérer les variantes"
 														: totalStock <= STOCK_THRESHOLDS.CRITICAL
-															? `Stock critique : ${totalStock} en stock`
+															? `Stock critique : ${totalStock} - Gérer les variantes`
 															: totalStock <= STOCK_THRESHOLDS.LOW
-																? `Stock faible : ${totalStock} en stock`
-																: `${totalStock} en stock`
+																? `Stock faible : ${totalStock} - Gérer les variantes`
+																: `${totalStock} en stock - Gérer les variantes`
 												}
 											>
-												{totalStock}
-											</Badge>
+												<Badge
+													variant={
+														totalStock === 0
+															? "destructive"
+															: totalStock <= STOCK_THRESHOLDS.CRITICAL
+																? "destructive"
+																: totalStock <= STOCK_THRESHOLDS.LOW
+																	? "warning"
+																	: "success"
+													}
+													className="cursor-pointer hover:opacity-80"
+												>
+													{totalStock}
+												</Badge>
+											</Link>
 										</TableCell>
 										<TableCell className="text-right">
 											<ProductRowActions

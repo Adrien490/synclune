@@ -14,6 +14,8 @@ import { OrdersDataTableSkeleton } from "@/modules/orders/components/admin/order
 import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-filter-badges";
 import { OrdersFilterSheet } from "@/modules/orders/components/admin/orders-filter-sheet";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
+import { OrdersMobileList } from "@/modules/orders/components/admin/orders-mobile-list";
+import { OrdersMobileListSkeleton } from "@/modules/orders/components/admin/orders-mobile-list-skeleton";
 import { parseFilters } from "./_utils/params";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
@@ -68,6 +70,9 @@ const OrderNotesDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/order-notes-dialog").then(
 		(mod) => mod.OrderNotesDialog,
 	),
+);
+const OrdersBottomBar = dynamic(() =>
+	import("@/modules/orders/components/admin/orders-bottom-bar").then((mod) => mod.OrdersBottomBar),
 );
 
 export type OrderFiltersSearchParams = {
@@ -161,10 +166,19 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 					</div>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<OrdersMobileListSkeleton />}>
+					<OrdersMobileList ordersPromise={ordersPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<OrdersDataTableSkeleton />}>
 					<OrdersDataTable ordersPromise={ordersPromise} perPage={perPage} />
 				</Suspense>
 			</div>
+
+			{/* Bottom bar mobile (tri, recherche, filtres) */}
+			<OrdersBottomBar />
 
 			{/* Alert Dialogs globaux */}
 			<CancelOrderAlertDialog />

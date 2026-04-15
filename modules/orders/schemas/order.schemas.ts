@@ -394,6 +394,36 @@ export const bulkMarkAsDeliveredSchema = z.object({
 // ============================================================================
 
 /**
+ * Schema pour passer plusieurs commandes en préparation en masse
+ * Filtrage automatique : seules les commandes PENDING payées seront traitées
+ */
+export const bulkMarkAsProcessingSchema = z.object({
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins une commande doit être sélectionnée")
+		.max(100, "Maximum 100 commandes par opération"),
+});
+
+/**
+ * Schema pour marquer plusieurs commandes comme expédiées en masse
+ * Filtrage automatique : seules les commandes PROCESSING seront traitées
+ */
+export const bulkMarkAsShippedSchema = z.object({
+	ids: z
+		.array(z.cuid2())
+		.min(1, "Au moins une commande doit être sélectionnée")
+		.max(100, "Maximum 100 commandes par opération"),
+	sendEmail: z
+		.union([z.boolean(), z.enum(["true", "false"])])
+		.optional()
+		.default(false)
+		.transform((val) => {
+			if (typeof val === "boolean") return val;
+			return val === "true";
+		}),
+});
+
+/**
  * Schema pour annuler plusieurs commandes en masse
  * Filtrage automatique : seules les commandes non annulées seront traitées
  */

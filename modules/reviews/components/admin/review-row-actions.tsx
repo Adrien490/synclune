@@ -17,7 +17,14 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { Eye, EyeOff, ExternalLink, LoaderCircle, EllipsisVertical } from "lucide-react";
+import {
+	Eye,
+	EyeOff,
+	ExternalLink,
+	LoaderCircle,
+	EllipsisVertical,
+	MessageSquare,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
@@ -79,6 +86,17 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 							Voir le produit
 						</Link>
 					</DropdownMenuItem>
+
+					{/* Répondre */}
+					{!review.response && (
+						<DropdownMenuItem
+							onSelect={() => setDetailDialogOpen(true)}
+							className="flex cursor-pointer items-center"
+						>
+							<MessageSquare className="mr-2 h-4 w-4" aria-hidden="true" />
+							Répondre
+						</DropdownMenuItem>
+					)}
 
 					<DropdownMenuSeparator />
 

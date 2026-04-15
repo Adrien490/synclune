@@ -6,7 +6,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -49,15 +49,10 @@ export async function cancelOrder(
 		const rawReason = safeFormGet(formData, "reason");
 		const sanitizedReason = rawReason ? sanitizeText(rawReason) : null;
 
-		const result = cancelOrderSchema.safeParse({ id: rawId, reason: sanitizedReason });
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message ?? "ID invalide",
-			};
-		}
+		const validated = validateInput(cancelOrderSchema, { id: rawId, reason: sanitizedReason });
+		if ("error" in validated) return validated.error;
 
-		const { id } = result.data;
+		const { id } = validated.data;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -95,7 +90,10 @@ export async function cancelOrder(
 
 			// Déterminer le nouveau paymentStatus
 			const newPaymentStatus =
-				found.paymentStatus === PaymentStatus.PAID ? PaymentStatus.REFUNDED : found.paymentStatus;
+				found.paymentStatus === PaymentStatus.PAID ||
+				found.paymentStatus === PaymentStatus.PARTIALLY_REFUNDED
+					? PaymentStatus.REFUNDED
+					: found.paymentStatus;
 
 			// Ne restaurer le stock QUE si la commande était PENDING
 			const shouldRestoreStock = found.paymentStatus === PaymentStatus.PENDING;
@@ -123,7 +121,26 @@ export async function cancelOrder(
 				}
 			}
 
-			// 3. Audit trail (Best Practice Stripe 2025)
+			// 3. Libérer les codes promo utilisés sur cette commande
+			const discountUsages = await tx.discountUsage.findMany({
+				where: { orderId: id },
+				select: { id: true, discountId: true },
+			});
+
+			const releasedDiscountIds: string[] = [];
+			for (const usage of discountUsages) {
+				await tx.discount.update({
+					where: { id: usage.discountId },
+					data: { usageCount: { decrement: 1 } },
+				});
+				releasedDiscountIds.push(usage.discountId);
+			}
+
+			if (discountUsages.length > 0) {
+				await tx.discountUsage.deleteMany({ where: { orderId: id } });
+			}
+
+			// 4. Audit trail (Best Practice Stripe 2025)
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "CANCELLED",
@@ -138,6 +155,7 @@ export async function cancelOrder(
 				metadata: {
 					stockRestored: shouldRestoreStock,
 					itemsCount: found.items.length,
+					releasedDiscountIds,
 				},
 			});
 
@@ -208,7 +226,7 @@ export async function cancelOrder(
 
 		const refundMessage =
 			order._newPaymentStatus === PaymentStatus.REFUNDED
-				? " Le statut de paiement a été passé à REFUNDED."
+				? " Statut passe a REFUNDED. Un remboursement Stripe doit etre effectue separement si necessaire."
 				: "";
 
 		const stockMessage =

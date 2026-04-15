@@ -39,6 +39,10 @@ vi.mock("@/modules/customizations/hooks/use-bulk-update-customization-status", (
 	useBulkUpdateCustomizationStatus: () => ({ action: mockAction, isPending: false }),
 }));
 
+vi.mock("@/modules/customizations/hooks/use-bulk-delete-customization-requests", () => ({
+	useBulkDeleteCustomizationRequests: () => ({ action: mockAction, isPending: false }),
+}));
+
 vi.mock("@/shared/components/selection-toolbar", () => ({
 	SelectionToolbar: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="selection-toolbar">{children}</div>
@@ -120,6 +124,7 @@ vi.mock("lucide-react", () => ({
 	LoaderCircle: () => <svg data-testid="icon-loader" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	CircleX: () => <svg data-testid="icon-circle-x" />,
+	Trash2: () => <svg data-testid="icon-trash2" />,
 }));
 
 import { CustomizationSelectionToolbar } from "../customization-selection-toolbar";
@@ -162,7 +167,7 @@ describe("CustomizationSelectionToolbar", () => {
 
 	it("renders separator between action groups", () => {
 		render(<CustomizationSelectionToolbar />);
-		expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+		expect(screen.getAllByTestId("dropdown-separator").length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("returns null when no items are selected", () => {

@@ -7,8 +7,17 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { RefundsDataTable } from "@/modules/refunds/components/admin/refunds-data-table";
 import { RefundsDataTableSkeleton } from "@/modules/refunds/components/admin/refunds-data-table-skeleton";
+import { RefundsMobileList } from "@/modules/refunds/components/admin/refunds-mobile-list";
+import { RefundsMobileListSkeleton } from "@/modules/refunds/components/admin/refunds-mobile-list-skeleton";
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
+import { RefundsFilterSheet } from "@/modules/refunds/components/admin/refunds-filter-sheet";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
+
+const RefundsBottomBar = dynamic(() =>
+	import("@/modules/refunds/components/admin/refunds-bottom-bar").then(
+		(mod) => mod.RefundsBottomBar,
+	),
+);
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import type { Metadata } from "next";
 
@@ -106,14 +115,24 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 							className="w-full sm:min-w-45"
 							noPrefix
 						/>
+						<RefundsFilterSheet />
 						<RefreshRefundsButton />
 					</Toolbar>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<RefundsMobileListSkeleton />}>
+					<RefundsMobileList refundsPromise={refundsPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<RefundsDataTableSkeleton />}>
 					<RefundsDataTable refundsPromise={refundsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
+
+			{/* Bottom bar mobile */}
+			<RefundsBottomBar />
 
 			{/* Alert Dialogs globaux */}
 			<ApproveRefundAlertDialog />

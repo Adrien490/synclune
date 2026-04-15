@@ -276,6 +276,13 @@ vi.mock("@/modules/orders/constants/status-display", () => ({
 		PARTIALLY_REFUNDED: "Partiellement remboursée",
 		REFUNDED: "Remboursée",
 	},
+	FULFILLMENT_STATUS_LABELS: {
+		UNFULFILLED: "Non traité",
+		PROCESSING: "En traitement",
+		SHIPPED: "Expédié",
+		DELIVERED: "Livré",
+		RETURNED: "Retourné",
+	},
 }));
 
 vi.mock("lucide-react", () => ({
@@ -685,6 +692,7 @@ describe("OrdersFilterSheet", () => {
 		expect(mockFormReset).toHaveBeenCalledWith({
 			statuses: [],
 			paymentStatuses: [],
+			fulfillmentStatuses: [],
 			priceRange: [0, 10000],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",

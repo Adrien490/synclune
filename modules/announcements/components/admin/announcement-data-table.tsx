@@ -31,7 +31,7 @@ export function AnnouncementDataTable({ announcementsPromise }: AnnouncementData
 
 	if (announcements.length === 0) {
 		return (
-			<div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
+			<div className="hidden flex-col items-center justify-center rounded-lg border border-dashed py-12 md:flex">
 				<p className="text-muted-foreground text-sm">Aucune annonce pour le moment</p>
 				<p className="text-muted-foreground mt-1 text-xs">
 					Créez votre première annonce pour l&apos;afficher sur la boutique.

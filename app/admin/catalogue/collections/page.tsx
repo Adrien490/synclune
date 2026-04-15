@@ -11,6 +11,8 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { CollectionsDataTable } from "@/modules/collections/components/admin/collections-data-table";
 import { CollectionsDataTableSkeleton } from "@/modules/collections/components/admin/collections-data-table-skeleton";
+import { CollectionsMobileList } from "@/modules/collections/components/admin/collections-mobile-list";
+import { CollectionsMobileListSkeleton } from "@/modules/collections/components/admin/collections-mobile-list-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
 import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
 import { CollectionStatusNavigation } from "@/modules/collections/components/admin/collection-status-navigation";
@@ -19,7 +21,12 @@ import { RefreshCollectionsButton } from "@/modules/collections/components/admin
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters, parseStatus } from "./_utils/params";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
+// Lazy loading - dialogs et bottom bar charges uniquement a l'ouverture
+const CollectionsBottomBar = dynamic(() =>
+	import("@/modules/collections/components/admin/collections-bottom-bar").then(
+		(mod) => mod.CollectionsBottomBar,
+	),
+);
 const CollectionFormDialog = dynamic(() =>
 	import("@/modules/collections/components/admin/collection-form-dialog").then(
 		(mod) => mod.CollectionFormDialog,
@@ -165,10 +172,19 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 					</div>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<CollectionsMobileListSkeleton />}>
+					<CollectionsMobileList collectionsPromise={collectionsPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<CollectionsDataTableSkeleton />}>
 					<CollectionsDataTable collectionsPromise={collectionsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
+
+			{/* Bottom bar mobile */}
+			<CollectionsBottomBar />
 		</>
 	);
 }

@@ -15,11 +15,12 @@ const {
 	mockHandleActionError,
 	mockSuccess,
 	mockError,
-	mockSoftDelete,
+	mockSoftDelete: _mockSoftDelete,
 	mockGetOrderInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findUnique: vi.fn() },
+		order: { findUnique: vi.fn(), update: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -34,7 +35,6 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
-	softDelete: mockSoftDelete,
 	notDeleted: { deletedAt: null },
 }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
@@ -90,7 +90,10 @@ describe("deleteOrder", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
-		mockSoftDelete.order.mockResolvedValue(undefined);
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
+		mockPrisma.order.update.mockResolvedValue({});
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
 
 		mockPrisma.order.findUnique.mockResolvedValue(
@@ -165,7 +168,10 @@ describe("deleteOrder", () => {
 
 	it("should soft delete eligible order", async () => {
 		const result = await deleteOrder(undefined, validFormData);
-		expect(mockSoftDelete.order).toHaveBeenCalledWith(VALID_CUID);
+		expect(mockPrisma.order.update).toHaveBeenCalledWith({
+			where: { id: VALID_CUID },
+			data: { deletedAt: expect.any(Date) },
+		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 

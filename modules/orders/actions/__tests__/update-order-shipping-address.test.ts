@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type * as SharedActions from "@/shared/lib/actions";
 import { ActionStatus } from "@/shared/types/server-action";
 import {
 	createMockFormData,
@@ -60,13 +61,17 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/actions", () => ({
-	safeFormGet: (formData: FormData, key: string) => {
-		const v = formData.get(key);
-		return typeof v === "string" ? v : null;
-	},
-	handleActionError: mockHandleActionError,
-}));
+vi.mock("@/shared/lib/actions", async (importOriginal) => {
+	const original = await importOriginal<typeof SharedActions>();
+	return {
+		...original,
+		safeFormGet: (formData: FormData, key: string) => {
+			const v = formData.get(key);
+			return typeof v === "string" ? v : null;
+		},
+		handleActionError: mockHandleActionError,
+	};
+});
 
 vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: mockSanitizeText,

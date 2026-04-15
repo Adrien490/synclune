@@ -55,7 +55,7 @@ export const GET_USERS_SORT_FIELDS = ["createdAt", "updatedAt", "name", "email",
 // UI OPTIONS
 // ============================================================================
 
-const USERS_SORT_OPTIONS = {
+export const USERS_SORT_OPTIONS = {
 	CREATED_ASC: "createdAt-ascending",
 	CREATED_DESC: "createdAt-descending",
 	UPDATED_ASC: "updatedAt-ascending",
@@ -66,7 +66,7 @@ const USERS_SORT_OPTIONS = {
 	EMAIL_DESC: "email-descending",
 } as const;
 
-const USERS_SORT_LABELS = {
+export const USERS_SORT_LABELS = {
 	[USERS_SORT_OPTIONS.CREATED_DESC]: "Plus récents",
 	[USERS_SORT_OPTIONS.CREATED_ASC]: "Plus anciens",
 	[USERS_SORT_OPTIONS.UPDATED_DESC]: "Mis à jour récemment",

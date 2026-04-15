@@ -185,7 +185,7 @@ export function QuickSearchContent({
 									<EmptyMedia variant="icon">
 										<Search className="size-5" aria-hidden="true" />
 									</EmptyMedia>
-									<EmptyTitle className="text-base">
+									<EmptyTitle className="wrap-break-words w-full text-base">
 										Aucun résultat pour &ldquo;{query}&rdquo;
 									</EmptyTitle>
 								</EmptyHeader>

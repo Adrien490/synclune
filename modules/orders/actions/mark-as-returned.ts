@@ -6,7 +6,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -48,19 +48,13 @@ export async function markAsReturned(
 		const rawReason = safeFormGet(formData, "reason");
 		const reason = rawReason ? sanitizeText(rawReason) : null;
 
-		const result = markAsReturnedSchema.safeParse({
+		const validated = validateInput(markAsReturnedSchema, {
 			id: rawId,
 			reason: reason ?? undefined,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message ?? "Données invalides",
-			};
-		}
-
-		const { id } = result.data;
+		const { id } = validated.data;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -98,7 +92,7 @@ export async function markAsReturned(
 				action: "RETURNED",
 				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.RETURNED,
-				note: result.data.reason,
+				note: validated.data.reason,
 				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
@@ -144,7 +138,7 @@ export async function markAsReturned(
 					orderNumber: order.orderNumber,
 					customerName: customerFirstName,
 					orderTotal: order.total,
-					reason: result.data.reason,
+					reason: validated.data.reason,
 					orderDetailsUrl,
 				});
 				emailSent = true;
@@ -162,7 +156,7 @@ export async function markAsReturned(
 			metadata: {
 				orderNumber: order.orderNumber,
 				previousFulfillmentStatus: order.fulfillmentStatus,
-				reason: result.data.reason,
+				reason: validated.data.reason,
 			},
 		});
 

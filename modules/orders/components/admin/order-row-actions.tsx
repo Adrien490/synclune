@@ -1,6 +1,6 @@
 "use client";
 
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/browser";
 import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
 import type { OrderStateInput } from "@/modules/orders/types/order.types";
 import { Button } from "@/shared/components/ui/button";
@@ -57,6 +57,7 @@ interface OrderRowActionsProps {
 		fulfillmentStatus?: FulfillmentStatus | null;
 		trackingNumber?: string | null;
 		trackingUrl?: string | null;
+		invoiceNumber?: string | null;
 	};
 }
 
@@ -82,7 +83,6 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 
 	const isShipped = order.status === OrderStatus.SHIPPED;
 	const isDelivered = order.status === OrderStatus.DELIVERED;
-	const isCancelled = order.status === OrderStatus.CANCELLED;
 
 	const {
 		canMarkAsPaid,
@@ -92,14 +92,16 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 		canRefund,
 		canMarkAsProcessing,
 		canRevertToProcessing,
+		canMarkAsReturned,
 	} = permissions;
 
 	const canTrack = isShipped && order.trackingUrl;
-	const canMarkAsReturned = isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
 
-	// Deletable if never paid (no PAID or REFUNDED status)
+	// Deletable if never paid (no PAID or REFUNDED status) and no invoice
 	const canDelete =
-		order.paymentStatus !== PaymentStatus.PAID && order.paymentStatus !== PaymentStatus.REFUNDED;
+		!order.invoiceNumber &&
+		order.paymentStatus !== PaymentStatus.PAID &&
+		order.paymentStatus !== PaymentStatus.REFUNDED;
 
 	// =========================================================================
 	// HANDLERS
@@ -337,19 +339,6 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 						<Trash2 className="h-4 w-4" />
 						Supprimer
 					</DropdownMenuItem>
-				)}
-
-				{/* CANCELLED : Actions limitées */}
-				{isCancelled && (
-					<>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem asChild>
-							<Link href={`/admin/ventes/commandes/${order.id}`}>
-								<Package className="h-4 w-4" />
-								Voir les détails
-							</Link>
-						</DropdownMenuItem>
-					</>
 				)}
 			</DropdownMenuContent>
 		</DropdownMenu>

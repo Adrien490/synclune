@@ -11,6 +11,15 @@ vi.mock("@/shared/components/ui/card", () => ({
 vi.mock("lucide-react", () => ({
 	Phone: () => <svg aria-hidden="true" />,
 	User: () => <svg aria-hidden="true" />,
+	ExternalLink: () => <svg aria-hidden="true" />,
+}));
+
+vi.mock("next/link", () => ({
+	default: ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
+		<a href={href} {...props}>
+			{children}
+		</a>
+	),
 }));
 
 import { OrderCustomerCard } from "../order-customer-card";

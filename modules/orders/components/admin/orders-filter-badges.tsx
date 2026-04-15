@@ -4,6 +4,7 @@ import { FilterBadges } from "@/shared/components/filter-badges";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -29,6 +30,12 @@ function formatOrderFilter(
 	if (filterKey === "paymentStatus") {
 		const label = PAYMENT_STATUS_LABELS[value as keyof typeof PAYMENT_STATUS_LABELS];
 		return label ? { label: "Paiement", displayValue: label } : null;
+	}
+
+	// Gestion du statut de traitement
+	if (filterKey === "fulfillmentStatus") {
+		const label = FULFILLMENT_STATUS_LABELS[value as keyof typeof FULFILLMENT_STATUS_LABELS];
+		return label ? { label: "Traitement", displayValue: label } : null;
 	}
 
 	// Gestion du montant (grouper totalMin/totalMax)

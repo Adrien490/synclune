@@ -109,6 +109,23 @@ export async function cancelOrderCustomer(
 				});
 			}
 
+			// Release discount usages (free up promo codes)
+			const discountUsages = await tx.discountUsage.findMany({
+				where: { orderId: id },
+				select: { id: true, discountId: true },
+			});
+
+			for (const usage of discountUsages) {
+				await tx.discount.update({
+					where: { id: usage.discountId },
+					data: { usageCount: { decrement: 1 } },
+				});
+			}
+
+			if (discountUsages.length > 0) {
+				await tx.discountUsage.deleteMany({ where: { orderId: id } });
+			}
+
 			// Audit trail
 			await createOrderAuditTx(tx, {
 				orderId: id,
@@ -123,6 +140,7 @@ export async function cancelOrderCustomer(
 				metadata: {
 					stockRestored: true,
 					itemsCount: found.items.length,
+					releasedDiscountIds: discountUsages.map((u) => u.discountId),
 				},
 			});
 

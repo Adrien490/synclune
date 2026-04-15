@@ -1,9 +1,6 @@
 "use client";
 
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
-import { HamburgerIcon } from "@/shared/components/icons/hamburger-icon";
-import { Logo } from "@/shared/components/logo";
-import ScrollFade from "@/shared/components/scroll-fade";
 import {
 	Sheet,
 	SheetContent,
@@ -11,18 +8,14 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
-import { BRAND } from "@/shared/constants/brand";
-import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { ExternalLink, LogOut } from "lucide-react";
+import { ChevronRight, ExternalLink, LayoutDashboard, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AdminMenuCollapsibleGroup } from "./admin-menu-collapsible-group";
-import { AdminMenuQuickAccess } from "./admin-menu-quick-access";
-import { getQuickAccessItems, navigationData } from "./navigation-config";
+import { getAllNavItems, navigationData } from "./navigation-config";
 
 interface AdminMenuSheetProps {
 	user: {
@@ -32,32 +25,36 @@ interface AdminMenuSheetProps {
 	badges?: Record<string, number>;
 }
 
-const quickAccessItems = getQuickAccessItems();
+const allNavItems = getAllNavItems();
 
 export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
+	const [searchQuery, setSearchQuery] = useState("");
 	const pathname = usePathname();
 	const navRef = useRef<HTMLElement>(null);
-	useEdgeSwipe(openMenu, isOpen, 768);
+	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	// Close on navigation
 	useEffect(() => {
 		if (isOpen) closeMenu();
 	}, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Focus management: scroll to active item and focus first link after open
+	// Focus management: focus search input on open, then scroll to active
 	useEffect(() => {
 		if (!isOpen || !navRef.current) return;
 
 		const timer = setTimeout(() => {
+			// Focus search first — most useful for quick navigation
+			if (searchInputRef.current) {
+				searchInputRef.current.focus({ preventScroll: true });
+				return;
+			}
+
 			const activeLink = navRef.current?.querySelector<HTMLAnchorElement>('[aria-current="page"]');
 			if (activeLink) {
 				activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" });
 				activeLink.focus({ preventScroll: true });
-			} else {
-				const firstLink = navRef.current?.querySelector<HTMLAnchorElement>("a");
-				firstLink?.focus({ preventScroll: true });
 			}
 		}, 350);
 
@@ -66,180 +63,290 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 
 	function handleLogoutClick() {
 		closeMenu();
+		setSearchQuery("");
 		setTimeout(() => setShowLogout(true), 150);
 	}
 
 	function handleOpenChange(open: boolean) {
 		if (open) {
-			// Blur trigger before open to prevent aria-hidden/focus conflicts
 			if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+			setSearchQuery("");
 			openMenu();
 		} else {
 			closeMenu();
+			setSearchQuery("");
 		}
 	}
+
+	const isDashboardActive = pathname === "/admin";
+	// When the sheet is closed via navigation (effect), the query resets on next open via handleOpenChange
+	const normalizedQuery = (isOpen ? searchQuery : "").trim().toLowerCase();
+	const isSearching = normalizedQuery.length > 0;
+
+	// Filter nav items when searching
+	const filteredItems = isSearching
+		? allNavItems.filter(
+				(item) =>
+					item.title.toLowerCase().includes(normalizedQuery) ||
+					(item.shortTitle && item.shortTitle.toLowerCase().includes(normalizedQuery)),
+			)
+		: [];
 
 	return (
 		<>
 			<Sheet
-				direction="left"
+				direction="bottom"
 				open={isOpen}
 				onOpenChange={handleOpenChange}
 				preventScrollRestoration
 			>
-				<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
+				<SheetContent
+					className="bg-muted flex h-[92dvh] flex-col rounded-t-2xl border-t p-0!"
+					overlayClassName="bg-black/40"
+					showCloseButton={false}
+				>
 					<SheetHeader className="sr-only p-0!">
 						<SheetTitle>Menu d&apos;administration</SheetTitle>
 						<SheetDescription>Navigation du tableau de bord administrateur</SheetDescription>
 					</SheetHeader>
 
-					{/* Header — safe area top for iOS notch */}
-					<div className="flex items-center gap-3 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-4">
-						<Logo size={36} rounded="lg" />
-						<span className="font-cursive text-xl font-normal tracking-wide">{BRAND.name}</span>
-					</div>
+					{/* Drag handle */}
+					<div
+						className="bg-muted-foreground/25 mx-auto mt-3 mb-2 h-1.5 w-10 shrink-0 rounded-full"
+						aria-hidden="true"
+					/>
 
-					{/* Scrollable nav */}
-					<div className="min-h-0 flex-1">
-						<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
-							{/* Quick access section */}
-							<AdminMenuQuickAccess items={quickAccessItems} pathname={pathname} badges={badges} />
-
-							<div className="border-border/50 mx-4 border-t" aria-hidden="true" />
-
-							{/* Navigation groups */}
-							<nav ref={navRef} aria-label="Navigation administration" className="px-3 py-3">
-								{navigationData.navGroups.map((group, groupIndex) =>
-									group.collapsible ? (
-										<div key={group.label} className={cn(groupIndex > 0 && "mt-2")}>
-											<AdminMenuCollapsibleGroup
-												group={group}
-												pathname={pathname}
-												badges={badges}
-											/>
-										</div>
-									) : (
-										<div key={group.label} className={cn(groupIndex > 0 && "mt-3")}>
-											{group.items.length > 1 && (
-												<p className="text-muted-foreground mb-1.5 px-3 text-xs font-semibold tracking-wider uppercase">
-													{group.label}
-												</p>
-											)}
-											<ul className="space-y-0.5">
-												{group.items.map((item) => {
-													const isActive = isRouteActive(pathname, item.url);
-													const badgeCount = badges?.[item.id];
-
-													return (
-														<li key={item.id}>
-															<Link
-																href={item.url}
-																className={cn(
-																	"relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-																	"motion-safe:active:scale-[0.97]",
-																	isActive
-																		? "bg-accent text-foreground before:bg-foreground font-semibold before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full"
-																		: "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
-																)}
-																aria-current={isActive ? "page" : undefined}
-															>
-																<item.icon
-																	className={cn(
-																		"size-5 shrink-0",
-																		isActive ? "text-foreground" : "text-muted-foreground",
-																	)}
-																	aria-hidden="true"
-																/>
-																<span className="flex-1">{item.shortTitle ?? item.title}</span>
-																{badgeCount != null && badgeCount > 0 && (
-																	<span
-																		className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
-																		aria-label={`${badgeCount} en attente`}
-																	>
-																		{badgeCount > 99 ? "99+" : badgeCount}
-																	</span>
-																)}
-															</Link>
-														</li>
-													);
-												})}
-											</ul>
-										</div>
-									),
+					{/* Search bar — fixed above scroll */}
+					<div className="px-4 pb-2">
+						<div className="relative">
+							<Search
+								className="text-muted-foreground/60 pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+								aria-hidden="true"
+							/>
+							<input
+								ref={searchInputRef}
+								type="search"
+								value={searchQuery}
+								onChange={(e) => setSearchQuery(e.target.value)}
+								placeholder="Rechercher une page..."
+								aria-label="Rechercher dans le menu de navigation"
+								className={cn(
+									"bg-background/80 border-border/60 placeholder:text-muted-foreground/50",
+									"flex h-10 w-full rounded-xl border py-2 pr-3 pl-9 text-sm",
+									"focus-visible:ring-primary/30 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:outline-none",
+									"transition-colors",
 								)}
-							</nav>
-						</ScrollFade>
+							/>
+						</div>
 					</div>
 
-					{/* Footer — safe area bottom for iOS home indicator */}
-					<div className="space-y-3 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-						{/* User info */}
-						<div className="flex items-center gap-3">
-							<div className="min-w-0 flex-1">
-								<p className="truncate text-sm font-medium">{user.name}</p>
-								<p className="text-muted-foreground truncate text-xs">{user.email}</p>
+					{/* Scrollable content */}
+					<nav
+						ref={navRef}
+						aria-label="Navigation administration"
+						className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+					>
+						{isSearching ? (
+							/* Search results — flat list */
+							<div className="bg-background overflow-hidden rounded-xl border">
+								{filteredItems.length === 0 ? (
+									<p className="text-muted-foreground px-4 py-6 text-center text-sm">
+										Aucun resultat pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;
+									</p>
+								) : (
+									filteredItems.map((item, i) => {
+										const isActive = isRouteActive(pathname, item.url);
+										const badgeCount = badges?.[item.id];
+										const isLast = i === filteredItems.length - 1;
+
+										return (
+											<Link
+												key={item.id}
+												href={item.url}
+												className={cn(
+													"flex items-center gap-3 px-4 py-3 transition-colors",
+													"active:bg-accent",
+													isActive && "bg-accent",
+													!isLast && "border-border/60 border-b",
+												)}
+												aria-current={isActive ? "page" : undefined}
+											>
+												<item.icon
+													className={cn(
+														"size-5 shrink-0",
+														isActive ? "text-foreground" : "text-muted-foreground",
+													)}
+													aria-hidden="true"
+												/>
+												<span
+													className={cn("flex-1 text-sm font-medium", isActive && "font-semibold")}
+												>
+													{item.title}
+												</span>
+												{badgeCount != null && badgeCount > 0 && (
+													<span
+														className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+														aria-label={`${badgeCount} en attente`}
+													>
+														{badgeCount > 99 ? "99+" : badgeCount}
+													</span>
+												)}
+												<ChevronRight
+													className="text-muted-foreground/50 size-4 shrink-0"
+													aria-hidden="true"
+												/>
+											</Link>
+										);
+									})
+								)}
 							</div>
-						</div>
+						) : (
+							/* Default view — grouped cards */
+							<>
+								{/* User card */}
+								<div className="bg-background mb-3 overflow-hidden rounded-xl border">
+									<div className="px-4 py-3">
+										<p className="truncate text-sm font-semibold">{user.name}</p>
+										<p className="text-muted-foreground truncate text-xs">{user.email}</p>
+									</div>
+								</div>
 
-						{/* Actions */}
-						<div className="flex gap-2">
-							<Link
-								href="/"
-								target="_blank"
-								rel="noopener noreferrer"
-								className={cn(
-									"flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium",
-									"hover:bg-accent/50 transition-colors",
-									"motion-safe:active:scale-[0.97]",
-									"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
-								)}
-								aria-label="Voir le site (nouvel onglet)"
-							>
-								<ExternalLink className="size-4" aria-hidden="true" />
-								Voir le site
-							</Link>
-							<button
-								type="button"
-								onClick={handleLogoutClick}
-								className={cn(
-									"flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium",
-									"text-destructive hover:bg-destructive/10 transition-colors",
-									"motion-safe:active:scale-95",
-									"focus-visible:ring-destructive focus-visible:ring-2 focus-visible:outline-none",
-								)}
-							>
-								<LogOut className="size-4" aria-hidden="true" />
-								Déconnexion
-							</button>
-						</div>
-					</div>
+								{/* Dashboard — standalone prominent card */}
+								<div
+									className={cn(
+										"bg-background mb-3 overflow-hidden rounded-xl border",
+										isDashboardActive && "ring-border ring-2",
+									)}
+								>
+									<Link
+										href="/admin"
+										className={cn(
+											"flex items-center gap-3 px-4 py-3.5 transition-colors",
+											"active:bg-accent",
+											isDashboardActive && "bg-accent",
+										)}
+										aria-current={isDashboardActive ? "page" : undefined}
+									>
+										<div
+											className={cn(
+												"flex size-9 shrink-0 items-center justify-center rounded-lg",
+												isDashboardActive
+													? "bg-foreground text-background"
+													: "bg-muted text-muted-foreground",
+											)}
+										>
+											<LayoutDashboard className="size-5" aria-hidden="true" />
+										</div>
+										<div className="min-w-0 flex-1">
+											<span
+												className={cn("text-sm font-medium", isDashboardActive && "font-semibold")}
+											>
+												Tableau de bord
+											</span>
+											<p className="text-muted-foreground text-xs">Vue d&apos;ensemble</p>
+										</div>
+										<ChevronRight
+											className="text-muted-foreground/50 size-4 shrink-0"
+											aria-hidden="true"
+										/>
+									</Link>
+								</div>
+
+								{/* Navigation groups — iOS Settings style */}
+								{navigationData.navGroups.map((group) => (
+									<div key={group.label} className="mb-3">
+										<p className="text-muted-foreground mb-1 px-1 text-xs font-medium">
+											{group.label}
+										</p>
+										<div className="bg-background overflow-hidden rounded-xl border">
+											{group.items.map((item, itemIndex) => {
+												const isActive = isRouteActive(pathname, item.url);
+												const badgeCount = badges?.[item.id];
+												const isLast = itemIndex === group.items.length - 1;
+
+												return (
+													<Link
+														key={item.id}
+														href={item.url}
+														className={cn(
+															"flex items-center gap-3 px-4 py-3 transition-colors",
+															"active:bg-accent",
+															isActive && "bg-accent",
+															!isLast && "border-border/60 border-b",
+														)}
+														aria-current={isActive ? "page" : undefined}
+													>
+														<item.icon
+															className={cn(
+																"size-5 shrink-0",
+																isActive ? "text-foreground" : "text-muted-foreground",
+															)}
+															aria-hidden="true"
+														/>
+														<span
+															className={cn(
+																"flex-1 text-sm font-medium",
+																isActive && "font-semibold",
+															)}
+														>
+															{item.shortTitle ?? item.title}
+														</span>
+														{badgeCount != null && badgeCount > 0 && (
+															<span
+																className="bg-primary text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-xs font-bold"
+																aria-label={`${badgeCount} en attente`}
+															>
+																{badgeCount > 99 ? "99+" : badgeCount}
+															</span>
+														)}
+														<ChevronRight
+															className="text-muted-foreground/50 size-4 shrink-0"
+															aria-hidden="true"
+														/>
+													</Link>
+												);
+											})}
+										</div>
+									</div>
+								))}
+
+								{/* Actions card */}
+								<div className="bg-background mt-1 overflow-hidden rounded-xl border">
+									<Link
+										href="/"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="border-border/60 active:bg-accent flex items-center gap-3 border-b px-4 py-3 transition-colors"
+										aria-label="Voir le site (nouvel onglet)"
+									>
+										<ExternalLink
+											className="text-muted-foreground size-5 shrink-0"
+											aria-hidden="true"
+										/>
+										<span className="flex-1 text-sm font-medium">Voir le site</span>
+										<ChevronRight
+											className="text-muted-foreground/50 size-4 shrink-0"
+											aria-hidden="true"
+										/>
+									</Link>
+									<button
+										type="button"
+										onClick={handleLogoutClick}
+										className="active:bg-accent flex w-full items-center gap-3 px-4 py-3 transition-colors"
+									>
+										<LogOut className="text-destructive size-5 shrink-0" aria-hidden="true" />
+										<span className="text-destructive flex-1 text-left text-sm font-medium">
+											Deconnexion
+										</span>
+									</button>
+								</div>
+							</>
+						)}
+					</nav>
 				</SheetContent>
 			</Sheet>
 
 			<LogoutAlertDialog open={showLogout} onOpenChange={setShowLogout} />
 		</>
-	);
-}
-
-/** Hamburger button for use in header */
-export function AdminMenuSheetTrigger({ className }: { className?: string }) {
-	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
-
-	return (
-		<button
-			type="button"
-			className={cn(
-				"inline-flex items-center justify-center",
-				"motion-safe:hover:scale-105 motion-safe:active:scale-95",
-				"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
-				className,
-			)}
-			aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
-			aria-haspopup="dialog"
-			aria-expanded={isOpen}
-			onClick={() => (isOpen ? closeMenu() : openMenu())}
-		>
-			<HamburgerIcon isOpen={isOpen} />
-		</button>
 	);
 }

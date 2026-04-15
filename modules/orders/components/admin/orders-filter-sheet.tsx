@@ -13,6 +13,7 @@ import { Separator } from "@/shared/components/ui/separator";
 import {
 	ORDER_STATUS_LABELS,
 	PAYMENT_STATUS_LABELS,
+	FULFILLMENT_STATUS_LABELS,
 } from "@/modules/orders/constants/status-display";
 import { cn } from "@/shared/utils/cn";
 import { format } from "date-fns";
@@ -28,6 +29,7 @@ interface OrdersFilterSheetProps {
 interface FilterFormData {
 	statuses: string[];
 	paymentStatuses: string[];
+	fulfillmentStatuses: string[];
 	priceRange: [number, number];
 	dateRange: {
 		from: string;
@@ -48,6 +50,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 	const initialValues = ((): FilterFormData => {
 		const statuses: string[] = [];
 		const paymentStatuses: string[] = [];
+		const fulfillmentStatuses: string[] = [];
 		let priceMin = DEFAULT_PRICE_RANGE[0]!;
 		let priceMax = DEFAULT_PRICE_RANGE[1]!;
 		let dateFrom = "";
@@ -59,6 +62,8 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				statuses.push(value);
 			} else if (key === "filter_paymentStatus") {
 				paymentStatuses.push(value);
+			} else if (key === "filter_fulfillmentStatus") {
+				fulfillmentStatuses.push(value);
 			} else if (key === "filter_totalMin") {
 				priceMin = Number(value) || DEFAULT_PRICE_RANGE[0]!;
 			} else if (key === "filter_totalMax") {
@@ -75,6 +80,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		return {
 			statuses: [...new Set(statuses)],
 			paymentStatuses: [...new Set(paymentStatuses)],
+			fulfillmentStatuses: [...new Set(fulfillmentStatuses)],
 			priceRange: [priceMin, priceMax],
 			dateRange: { from: dateFrom, to: dateTo },
 			showDeleted,
@@ -95,6 +101,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		const filterKeys = [
 			"filter_status",
 			"filter_paymentStatus",
+			"filter_fulfillmentStatus",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -116,6 +123,13 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		// Add payment statuses
 		if (formData.paymentStatuses.length > 0) {
 			formData.paymentStatuses.forEach((status) => params.append("filter_paymentStatus", status));
+		}
+
+		// Add fulfillment statuses
+		if (formData.fulfillmentStatuses.length > 0) {
+			formData.fulfillmentStatuses.forEach((status) =>
+				params.append("filter_fulfillmentStatus", status),
+			);
 		}
 
 		// Add price range (convert euros to cents)
@@ -149,6 +163,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		const defaultValues: FilterFormData = {
 			statuses: [],
 			paymentStatuses: [],
+			fulfillmentStatuses: [],
 			priceRange: [DEFAULT_PRICE_RANGE[0]!, DEFAULT_PRICE_RANGE[1]!],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
@@ -160,6 +175,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		const filterKeys = [
 			"filter_status",
 			"filter_paymentStatus",
+			"filter_fulfillmentStatus",
 			"filter_totalMin",
 			"filter_totalMax",
 			"filter_createdAfter",
@@ -182,7 +198,7 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 		let count = 0;
 
 		// Multi-value filters: count each individual value
-		const multiValueKeys = ["filter_status", "filter_paymentStatus"];
+		const multiValueKeys = ["filter_status", "filter_paymentStatus", "filter_fulfillmentStatus"];
 		// Paired filters: count the pair as one filter (use the first key as representative)
 		const pairedFilters: Record<string, string[]> = {
 			filter_totalMin: ["filter_totalMin", "filter_totalMax"],
@@ -292,6 +308,39 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 
 				<Separator />
 
+				{/* Fulfillment Status */}
+				<form.Field name="fulfillmentStatuses" mode="array">
+					{(field) => (
+						<fieldset className="space-y-1">
+							<legend className="text-foreground mb-2 text-sm font-medium">
+								Statut de traitement
+							</legend>
+							{Object.entries(FULFILLMENT_STATUS_LABELS).map(([value, label]) => {
+								const isSelected = field.state.value.includes(value);
+								return (
+									<CheckboxFilterItem
+										key={value}
+										id={`fulfillment-${value}`}
+										checked={isSelected}
+										onCheckedChange={(checked) => {
+											if (checked && !isSelected) {
+												field.pushValue(value);
+											} else if (!checked && isSelected) {
+												const index = field.state.value.indexOf(value);
+												field.removeValue(index);
+											}
+										}}
+									>
+										{label}
+									</CheckboxFilterItem>
+								);
+							})}
+						</fieldset>
+					)}
+				</form.Field>
+
+				<Separator />
+
 				{/* Price Range */}
 				<form.Field name="priceRange">
 					{(field) => (
@@ -308,6 +357,53 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				{/* Date Range avec Calendar */}
 				<fieldset className="space-y-3">
 					<legend className="text-foreground text-sm font-medium">Période de commande</legend>
+
+					{/* Date presets */}
+					<div className="flex flex-wrap gap-2">
+						{[
+							{
+								label: "Aujourd'hui",
+								getRange: () => {
+									const today = new Date();
+									today.setHours(0, 0, 0, 0);
+									return { from: today.toISOString(), to: new Date().toISOString() };
+								},
+							},
+							{
+								label: "7 derniers jours",
+								getRange: () => {
+									const to = new Date();
+									const from = new Date();
+									from.setDate(from.getDate() - 7);
+									from.setHours(0, 0, 0, 0);
+									return { from: from.toISOString(), to: to.toISOString() };
+								},
+							},
+							{
+								label: "Ce mois",
+								getRange: () => {
+									const to = new Date();
+									const from = new Date(to.getFullYear(), to.getMonth(), 1);
+									return { from: from.toISOString(), to: to.toISOString() };
+								},
+							},
+						].map((preset) => (
+							<Button
+								key={preset.label}
+								type="button"
+								variant="outline"
+								size="sm"
+								onClick={() => {
+									const range = preset.getRange();
+									form.setFieldValue("dateRange.from", range.from);
+									form.setFieldValue("dateRange.to", range.to);
+								}}
+							>
+								{preset.label}
+							</Button>
+						))}
+					</div>
+
 					<div className="space-y-3">
 						<form.Field name="dateRange.from">
 							{(field) => (

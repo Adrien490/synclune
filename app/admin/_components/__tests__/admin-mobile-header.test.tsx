@@ -23,14 +23,6 @@ vi.mock("@/shared/hooks/use-is-scrolled", () => ({
 	useIsScrolled: mockUseIsScrolled,
 }));
 
-vi.mock("../admin-menu-sheet", () => ({
-	AdminMenuSheetTrigger: ({ className }: { className?: string }) => (
-		<button type="button" data-testid="menu-sheet-trigger" className={className}>
-			Menu
-		</button>
-	),
-}));
-
 vi.mock("../dashboard-breadcrumb", () => ({
 	generateBreadcrumbs: mockGenerateBreadcrumbs,
 }));
@@ -181,18 +173,6 @@ describe("AdminMobileHeader", () => {
 			render(<AdminMobileHeader />);
 
 			expect(screen.getByRole("banner")).toHaveClass("z-40");
-		});
-	});
-
-	// ============================================================================
-	// Child components
-	// ============================================================================
-
-	describe("child components", () => {
-		it("renders the AdminMenuSheetTrigger", () => {
-			render(<AdminMobileHeader />);
-
-			expect(screen.getByTestId("menu-sheet-trigger")).toBeInTheDocument();
 		});
 	});
 });

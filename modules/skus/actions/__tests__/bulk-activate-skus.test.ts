@@ -17,6 +17,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: { updateMany: vi.fn(), findMany: vi.fn() },
+		$transaction: vi.fn(async (ops: unknown[]) => Promise.all(ops as Promise<unknown>[])),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),

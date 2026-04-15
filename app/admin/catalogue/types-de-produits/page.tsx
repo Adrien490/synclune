@@ -23,11 +23,14 @@ const BulkDeleteProductTypesAlertDialog = dynamic(() =>
 	),
 );
 import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
+import { ProductTypesBottomBar } from "@/modules/product-types/components/admin/product-types-bottom-bar";
 import { getProductTypes, SORT_LABELS } from "@/modules/product-types/data/get-product-types";
 import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import { ProductTypesDataTable } from "@/modules/product-types/components/admin/product-types-data-table";
 import { ProductTypesDataTableSkeleton } from "@/modules/product-types/components/admin/product-types-data-table-skeleton";
+import { ProductTypesMobileList } from "@/modules/product-types/components/admin/product-types-mobile-list";
+import { ProductTypesMobileListSkeleton } from "@/modules/product-types/components/admin/product-types-mobile-list-skeleton";
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
@@ -138,10 +141,18 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					</div>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<ProductTypesMobileListSkeleton />}>
+					<ProductTypesMobileList productTypesPromise={productTypesPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<ProductTypesDataTableSkeleton />}>
 					<ProductTypesDataTable productTypesPromise={productTypesPromise} perPage={perPage} />
 				</Suspense>
 			</div>
+
+			<ProductTypesBottomBar />
 		</>
 	);
 }

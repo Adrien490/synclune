@@ -22,6 +22,7 @@ import {
 } from "@/modules/orders/constants/status-display";
 import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { formatDateShort } from "@/shared/utils/dates";
 import { Button } from "@/shared/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
@@ -64,9 +65,10 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 								<TableHead className="w-[4%]">
 									<TableSelectionCell type="header" itemIds={orderIds} />
 								</TableHead>
-								<TableHead className="w-[15%]">Commande</TableHead>
-								<TableHead className="w-[25%]">Client</TableHead>
-								<TableHead className="w-[15%]">Statut</TableHead>
+								<TableHead className="w-[13%]">Commande</TableHead>
+								<TableHead className="w-[20%]">Client</TableHead>
+								<TableHead className="w-[12%]">Date</TableHead>
+								<TableHead className="w-[13%]">Statut</TableHead>
 								<TableHead className="w-[12%] text-right">Montant</TableHead>
 								<TableHead
 									className="w-[8%] text-right"
@@ -97,6 +99,11 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 										<TableCell>
 											<span className="block truncate text-sm font-medium">{userName}</span>
 										</TableCell>
+										<TableCell className="text-muted-foreground text-sm">
+											<time dateTime={new Date(order.createdAt).toISOString()}>
+												{formatDateShort(order.createdAt)}
+											</time>
+										</TableCell>
 										<TableCell>
 											<Badge variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}>
 												{ORDER_STATUS_LABELS[order.status as OrderStatus]}
@@ -115,6 +122,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 													fulfillmentStatus: order.fulfillmentStatus as FulfillmentStatus,
 													trackingNumber: order.trackingNumber,
 													trackingUrl: order.trackingUrl,
+													invoiceNumber: order.invoiceNumber,
 												}}
 											/>
 										</TableCell>

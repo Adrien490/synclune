@@ -9,9 +9,18 @@ import type { Metadata } from "next";
 
 import { getReviews, getReviewCountsByStatus } from "@/modules/reviews/data/get-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
+import dynamic from "next/dynamic";
 import { ReviewsDataTable } from "@/modules/reviews/components/admin/reviews-data-table";
 import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/reviews-data-table-skeleton";
+import { ReviewsMobileList } from "@/modules/reviews/components/admin/reviews-mobile-list";
+import { ReviewsMobileListSkeleton } from "@/modules/reviews/components/admin/reviews-mobile-list-skeleton";
 import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constants";
+
+const ReviewsBottomBar = dynamic(() =>
+	import("@/modules/reviews/components/admin/reviews-bottom-bar").then(
+		(mod) => mod.ReviewsBottomBar,
+	),
+);
 import { RatingStars } from "@/shared/components/rating-stars";
 import { formatRating } from "@/shared/utils/rating-utils";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -44,6 +53,9 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 		: undefined;
 	const sortByParam = getFirstParam(params.sortBy);
 	const sortBy = (sortByParam ?? "createdAt-desc") as ReviewSortField;
+	const hasResponseParam = getFirstParam(params.hasResponse);
+	const hasResponse =
+		hasResponseParam === "true" ? true : hasResponseParam === "false" ? false : undefined;
 
 	const reviewsPromise = getReviews(
 		{
@@ -53,6 +65,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			search,
 			status: statusFilter,
 			filterRating: ratingFilter,
+			hasResponse,
 		},
 		{ isAdmin: true },
 	);
@@ -80,6 +93,13 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 		{ value: "3", label: "3 étoiles" },
 		{ value: "2", label: "2 étoiles" },
 		{ value: "1", label: "1 étoile" },
+	];
+
+	// Options de réponse
+	const responseOptions = [
+		{ value: "", label: "Toutes les réponses" },
+		{ value: "true", label: "Avec réponse" },
+		{ value: "false", label: "Sans réponse" },
 	];
 
 	return (
@@ -167,6 +187,14 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 						noPrefix
 					/>
 					<SelectFilter
+						filterKey="hasResponse"
+						label="Réponse"
+						options={responseOptions}
+						placeholder="Toutes les réponses"
+						className="w-full sm:min-w-[170px]"
+						noPrefix
+					/>
+					<SelectFilter
 						filterKey="sortBy"
 						label="Trier par"
 						options={sortOptions}
@@ -177,10 +205,18 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 				</Toolbar>
 			</Suspense>
 
-			{/* DataTable */}
+			{/* Liste mobile */}
+			<Suspense fallback={<ReviewsMobileListSkeleton />}>
+				<ReviewsMobileList reviewsPromise={reviewsPromise} perPage={perPage} />
+			</Suspense>
+
+			{/* DataTable desktop */}
 			<Suspense fallback={<ReviewsDataTableSkeleton />}>
 				<ReviewsDataTable reviewsPromise={reviewsPromise} perPage={perPage} />
 			</Suspense>
+
+			{/* Bottom bar mobile */}
+			<ReviewsBottomBar />
 		</>
 	);
 }

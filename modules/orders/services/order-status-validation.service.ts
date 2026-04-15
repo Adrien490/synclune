@@ -197,6 +197,8 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 	const isPaymentPending = order.paymentStatus === PaymentStatus.PENDING;
 	const hasTrackingNumber = !!order.trackingNumber;
 
+	const isReturned = order.fulfillmentStatus === FulfillmentStatus.RETURNED;
+
 	return {
 		// Remboursement possible si payé (ou partiellement remboursé) et pas annulé/retourné
 		canRefund: (isProcessing || isShipped || isDelivered) && isPaidOrPartiallyRefunded,
@@ -221,6 +223,9 @@ export function getOrderPermissions(order: OrderStateInput): OrderPermissions {
 
 		// Retour en traitement possible si expédié
 		canRevertToProcessing: isShipped,
+
+		// Retour possible si livré et pas encore retourné
+		canMarkAsReturned: isDelivered && !isReturned,
 	};
 }
 

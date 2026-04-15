@@ -6,7 +6,7 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -49,19 +49,13 @@ export async function revertToProcessing(
 		const rawReason = safeFormGet(formData, "reason");
 		const reason = sanitizeText(rawReason ?? "");
 
-		const result = revertToProcessingSchema.safeParse({
+		const validated = validateInput(revertToProcessingSchema, {
 			id: rawId,
 			reason,
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message ?? "Données invalides",
-			};
-		}
-
-		const { id } = result.data;
+		const { id } = validated.data;
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -107,7 +101,7 @@ export async function revertToProcessing(
 				newStatus: OrderStatus.PROCESSING,
 				previousFulfillmentStatus: found.fulfillmentStatus,
 				newFulfillmentStatus: FulfillmentStatus.PROCESSING,
-				note: result.data.reason,
+				note: validated.data.reason,
 				authorId: adminUser.id,
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
@@ -152,7 +146,7 @@ export async function revertToProcessing(
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
 					customerName: customerFirstName,
-					reason: result.data.reason,
+					reason: validated.data.reason,
 					orderDetailsUrl,
 				});
 				emailSent = true;
@@ -170,7 +164,7 @@ export async function revertToProcessing(
 			metadata: {
 				orderNumber: order.orderNumber,
 				previousStatus: order.status,
-				reason: result.data.reason,
+				reason: validated.data.reason,
 				previousTrackingNumber: order.trackingNumber,
 			},
 		});

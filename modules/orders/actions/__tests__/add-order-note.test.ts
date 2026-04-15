@@ -20,6 +20,7 @@ const {
 	mockPrisma: {
 		order: { findUnique: vi.fn() },
 		orderNote: { create: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -87,6 +88,9 @@ describe("addOrderNote", () => {
 		mockValidateInput.mockReturnValue({
 			data: { orderId: VALID_ORDER_ID, content: "Note test" },
 		});
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 		mockPrisma.order.findUnique.mockResolvedValue({ id: VALID_ORDER_ID });
 		mockPrisma.orderNote.create.mockResolvedValue({});
 		mockSanitizeText.mockImplementation((text: string) => text);

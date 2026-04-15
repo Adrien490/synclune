@@ -20,7 +20,17 @@ type FilterValues = {
 	includeDeleted: boolean;
 };
 
-export function UsersFilterSheet() {
+interface UsersFilterSheetProps {
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
+}
+
+export function UsersFilterSheet({
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
+}: UsersFilterSheetProps = {}) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -155,6 +165,9 @@ export function UsersFilterSheet() {
 			description="Filtrer les clients par critères"
 			applyButtonText="Appliquer les filtres"
 			showCancelButton={false}
+			open={controlledOpen}
+			onOpenChange={controlledOnOpenChange}
+			hideTrigger={hideTrigger}
 		>
 			<form
 				onSubmit={(e) => {

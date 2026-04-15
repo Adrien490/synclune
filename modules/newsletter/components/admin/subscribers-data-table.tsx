@@ -1,5 +1,8 @@
+import { use } from "react";
 import { NewsletterStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { ItemCheckbox } from "@/shared/components/item-checkbox";
+import { SelectAllCheckbox } from "@/shared/components/select-all-checkbox";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
@@ -17,16 +20,18 @@ import { formatDateShort } from "@/shared/utils/dates";
 import { CircleCheck, Clock, Mail, CircleX } from "lucide-react";
 import Link from "next/link";
 import { NEWSLETTER_STATUS_LABELS } from "@/modules/newsletter/constants/newsletter-status.constants";
+
+import { NewsletterSelectionToolbar } from "./newsletter-selection-toolbar";
+import { SubscriberRowActions } from "./subscriber-row-actions";
+
 interface SubscribersDataTableProps {
 	subscribersPromise: Promise<GetSubscribersReturn>;
 	perPage: number;
 }
 
-export async function SubscribersDataTable({
-	subscribersPromise,
-	perPage,
-}: SubscribersDataTableProps) {
-	const { subscribers, pagination } = await subscribersPromise;
+export function SubscribersDataTable({ subscribersPromise, perPage }: SubscribersDataTableProps) {
+	const { subscribers, pagination } = use(subscribersPromise);
+	const subscriberIds = subscribers.map((s) => s.id);
 
 	if (subscribers.length === 0) {
 		return (
@@ -46,6 +51,7 @@ export async function SubscribersDataTable({
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
+				<NewsletterSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						aria-label="Liste des abonnés newsletter"
@@ -55,15 +61,22 @@ export async function SubscribersDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[35%]">Email</TableHead>
+								<TableHead className="w-[4%]">
+									<SelectAllCheckbox itemIds={subscriberIds} />
+								</TableHead>
+								<TableHead className="w-[33%]">Email</TableHead>
 								<TableHead className="w-[20%]">Statut</TableHead>
-								<TableHead className="w-[25%]">Date d'inscription</TableHead>
-								<TableHead className="w-[20%]">Dernière mise à jour</TableHead>
+								<TableHead className="w-[20%]">Date d'inscription</TableHead>
+								<TableHead className="w-[16%]">Dernière mise à jour</TableHead>
+								<TableHead className="w-[7%] text-right">Actions</TableHead>
 							</TableRow>
 						</TableHeader>
 						<TableBody>
 							{subscribers.map((subscriber) => (
 								<TableRow key={subscriber.id}>
+									<TableCell>
+										<ItemCheckbox itemId={subscriber.id} />
+									</TableCell>
 									<TableCell className="font-medium">
 										<span>{subscriber.email}</span>
 									</TableCell>
@@ -90,6 +103,15 @@ export async function SubscribersDataTable({
 									</TableCell>
 									<TableCell className="text-muted-foreground text-sm">
 										{formatDateShort(subscriber.updatedAt)}
+									</TableCell>
+									<TableCell className="text-right">
+										<SubscriberRowActions
+											subscriber={{
+												id: subscriber.id,
+												email: subscriber.email,
+												status: subscriber.status,
+											}}
+										/>
 									</TableCell>
 								</TableRow>
 							))}

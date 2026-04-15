@@ -388,7 +388,8 @@ describe("ProductsDataTable", () => {
 
 			const stockBadge = screen.getByTestId("badge-destructive");
 			expect(stockBadge).toHaveTextContent("0");
-			expect(stockBadge).toHaveAttribute("aria-label", "Stock épuisé");
+			const stockLink = screen.getByRole("link", { name: /Stock épuisé/i });
+			expect(stockLink).toBeInTheDocument();
 		});
 
 		it("renders destructive badge for critical stock (<=1)", async () => {
@@ -413,7 +414,8 @@ describe("ProductsDataTable", () => {
 
 			const stockBadge = screen.getByTestId("badge-destructive");
 			expect(stockBadge).toHaveTextContent("1");
-			expect(stockBadge).toHaveAttribute("aria-label", "Stock critique : 1 en stock");
+			const stockLink = screen.getByRole("link", { name: /Stock critique/i });
+			expect(stockLink).toBeInTheDocument();
 		});
 
 		it("renders warning badge for low stock (<=3)", async () => {
@@ -438,7 +440,8 @@ describe("ProductsDataTable", () => {
 
 			const stockBadge = screen.getByTestId("badge-warning");
 			expect(stockBadge).toHaveTextContent("2");
-			expect(stockBadge).toHaveAttribute("aria-label", "Stock faible : 2 en stock");
+			const stockLink = screen.getByRole("link", { name: /Stock faible/i });
+			expect(stockLink).toBeInTheDocument();
 		});
 
 		it("renders success badge for normal stock", async () => {
@@ -450,7 +453,8 @@ describe("ProductsDataTable", () => {
 
 			const stockBadge = screen.getByTestId("badge-success");
 			expect(stockBadge).toHaveTextContent("10");
-			expect(stockBadge).toHaveAttribute("aria-label", "10 en stock");
+			const stockLink = screen.getByRole("link", { name: /en stock/i });
+			expect(stockLink).toBeInTheDocument();
 		});
 
 		it("sums inventory across multiple SKUs", async () => {
@@ -733,7 +737,8 @@ describe("ProductsDataTable", () => {
 
 			const stockBadge = screen.getByTestId("badge-destructive");
 			expect(stockBadge).toHaveTextContent("0");
-			expect(stockBadge).toHaveAttribute("aria-label", "Stock épuisé");
+			const stockLink = screen.getByRole("link", { name: /Stock épuisé/i });
+			expect(stockLink).toBeInTheDocument();
 		});
 	});
 

@@ -48,7 +48,7 @@ export async function bulkActivateSkus(
 			};
 		}
 
-		// Récupérer les infos des SKUs pour l'invalidation du cache
+		// Récupérer les infos des SKUs pour validation et invalidation du cache
 		const skusData = await prisma.productSku.findMany({
 			where: { id: { in: ids } },
 			select: {
@@ -67,11 +67,13 @@ export async function bulkActivateSkus(
 			};
 		}
 
-		// Activer toutes les variantes
-		await prisma.productSku.updateMany({
-			where: { id: { in: ids } },
-			data: { isActive: true },
-		});
+		// Activer toutes les variantes dans une transaction atomique
+		await prisma.$transaction([
+			prisma.productSku.updateMany({
+				where: { id: { in: ids } },
+				data: { isActive: true },
+			}),
+		]);
 
 		// Invalider le cache (deduplique automatiquement les tags)
 		const uniqueTags = collectBulkInvalidationTags(skusData);

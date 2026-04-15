@@ -6,26 +6,6 @@
    CAROUSEL MASKING
    ========================================== */
 @layer utilities {
-	/* Masque pour carousel avec fondu sur les bords */
-	/* Mobile: fondu visible à droite pour indiquer qu'il y a plus de contenu */
-	.mask-carousel-edges {
-		-webkit-mask-image: linear-gradient(to right, black 0%, black 70%, transparent 95%);
-		mask-image: linear-gradient(to right, black 0%, black 70%, transparent 95%);
-	}
-
-	@media (min-width: 640px) {
-		.mask-carousel-edges {
-			-webkit-mask-image: linear-gradient(
-				to right,
-				transparent 0%,
-				black 3%,
-				black 97%,
-				transparent 100%
-			);
-			mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
-		}
-	}
-
 	/* ==========================================
 	   SCROLLBAR MULTISELECT
 	   ========================================== */
@@ -69,17 +49,6 @@
 
 	.multiselect-singleline-scroll::-webkit-scrollbar-thumb:hover {
 		background-color: oklch(0.55 0.01 270 / 0.4);
-	}
-
-	/* ==========================================
-	   SCROLLBAR HIDE (Mobile carousel)
-	   ========================================== */
-	.scrollbar-hide {
-		-ms-overflow-style: none;
-		scrollbar-width: none;
-	}
-	.scrollbar-hide::-webkit-scrollbar {
-		display: none;
 	}
 
 	/* ==========================================

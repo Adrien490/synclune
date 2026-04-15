@@ -12,6 +12,7 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
+	mockValidateInput,
 	mockSendReturnConfirmationEmail,
 	mockCreateOrderAuditTx,
 	mockBuildUrl,
@@ -27,6 +28,7 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
+	mockValidateInput: vi.fn(),
 	mockSendReturnConfirmationEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockBuildUrl: vi.fn(),
@@ -51,6 +53,7 @@ vi.mock("@/shared/lib/actions", () => ({
 		return typeof v === "string" ? v : null;
 	},
 	handleActionError: mockHandleActionError,
+	validateInput: mockValidateInput,
 }));
 vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: (text: string) => text }));
 vi.mock("@/modules/emails/services/status-emails", () => ({
@@ -79,15 +82,10 @@ vi.mock("../../constants/order.constants", () => ({
 	},
 }));
 vi.mock("../../schemas/order.schemas", () => ({
-	markAsReturnedSchema: {
-		safeParse: vi
-			.fn()
-			.mockReturnValue({ success: true, data: { id: VALID_CUID, reason: undefined } }),
-	},
+	markAsReturnedSchema: {},
 }));
 
 import { markAsReturned } from "../mark-as-returned";
-import { markAsReturnedSchema } from "../../schemas/order.schemas";
 
 // ============================================================================
 // HELPERS
@@ -134,10 +132,7 @@ describe("markAsReturned", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createDeliveredOrder());
 		mockPrisma.order.update.mockResolvedValue({});
 
-		vi.mocked(markAsReturnedSchema.safeParse).mockReturnValue({
-			success: true,
-			data: { id: VALID_CUID, reason: undefined },
-		} as never);
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, reason: undefined } });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -162,10 +157,9 @@ describe("markAsReturned", () => {
 	});
 
 	it("should return validation error for invalid ID", async () => {
-		vi.mocked(markAsReturnedSchema.safeParse).mockReturnValue({
-			success: false,
-			error: { issues: [{ message: "ID invalide" }] },
-		} as never);
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "ID invalide" },
+		});
 		const result = await markAsReturned(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 		expect(result.message).toBe("ID invalide");
@@ -216,10 +210,7 @@ describe("markAsReturned", () => {
 	});
 
 	it("should create audit trail with reason when provided", async () => {
-		vi.mocked(markAsReturnedSchema.safeParse).mockReturnValue({
-			success: true,
-			data: { id: VALID_CUID, reason: "Produit defectueux" },
-		} as never);
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, reason: "Produit defectueux" } });
 
 		await markAsReturned(undefined, validFormDataWithReason);
 

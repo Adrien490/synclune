@@ -21,12 +21,16 @@ import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkMarkAsDelivered } from "@/modules/orders/hooks/use-bulk-mark-as-delivered";
 import { useBulkCancelOrders } from "@/modules/orders/hooks/use-bulk-cancel-orders";
+import { useBulkMarkAsProcessing } from "@/modules/orders/hooks/use-bulk-mark-as-processing";
+import { useBulkMarkAsShipped } from "@/modules/orders/hooks/use-bulk-mark-as-shipped";
 import {
 	CircleCheck,
 	LoaderCircle,
 	EllipsisVertical as MoreVerticalIcon,
 	Trash2,
 	CircleX,
+	Package,
+	Truck,
 } from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { BULK_DELETE_ORDERS_DIALOG_ID } from "./bulk-delete-orders-alert-dialog";
@@ -36,7 +40,9 @@ export function OrderSelectionActions() {
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_ORDERS_DIALOG_ID);
 
 	const deliveredDialog = useDialog("bulk-mark-delivered");
+	const shippedDialog = useDialog("bulk-mark-shipped");
 	const cancelDialog = useDialog("bulk-cancel-orders");
+	const processingDialog = useDialog("bulk-mark-processing");
 
 	const { action: markAsDeliveredAction, isPending: isDeliveredPending } = useBulkMarkAsDelivered({
 		onSuccess: () => {
@@ -52,7 +58,23 @@ export function OrderSelectionActions() {
 		},
 	});
 
-	const isPending = isDeliveredPending || isCancelPending;
+	const { action: markAsProcessingAction, isPending: isProcessingPending } =
+		useBulkMarkAsProcessing({
+			onSuccess: () => {
+				processingDialog.close();
+				clearSelection();
+			},
+		});
+
+	const { action: markAsShippedAction, isPending: isShippedPending } = useBulkMarkAsShipped({
+		onSuccess: () => {
+			shippedDialog.close();
+			clearSelection();
+		},
+	});
+
+	const isPending =
+		isDeliveredPending || isCancelPending || isProcessingPending || isShippedPending;
 
 	if (selectedItems.length === 0) return null;
 
@@ -72,6 +94,14 @@ export function OrderSelectionActions() {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end" className="w-50">
+					<DropdownMenuItem onClick={() => processingDialog.open()}>
+						<Package className="h-4 w-4" />
+						Mettre en préparation
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => shippedDialog.open()}>
+						<Truck className="h-4 w-4" />
+						Marquer expédiées
+					</DropdownMenuItem>
 					<DropdownMenuItem onClick={() => deliveredDialog.open()}>
 						<CircleCheck className="h-4 w-4" />
 						Marquer livrées
@@ -88,6 +118,92 @@ export function OrderSelectionActions() {
 					</DropdownMenuItem>
 				</DropdownMenuContent>
 			</DropdownMenu>
+
+			{/* Mark as Processing Dialog */}
+			<AlertDialog
+				open={processingDialog.isOpen}
+				onOpenChange={(open) => (open ? processingDialog.open() : processingDialog.close())}
+			>
+				<AlertDialogContent>
+					<form action={markAsProcessingAction}>
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
+						<AlertDialogHeader>
+							<AlertDialogTitle>Mettre en préparation</AlertDialogTitle>
+							<AlertDialogDescription>
+								Passer{" "}
+								<span className="font-semibold">
+									{selectedItems.length} commande{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								en cours de préparation ?
+								<br />
+								<br />
+								Seules les commandes en attente avec paiement confirmé seront traitées.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel type="button" disabled={isPending}>
+								Annuler
+							</AlertDialogCancel>
+							<Button type="submit" disabled={isPending}>
+								{isProcessingPending ? (
+									<>
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+										Mise à jour...
+									</>
+								) : (
+									<>
+										<Package className="mr-2 h-4 w-4" />
+										Confirmer
+									</>
+								)}
+							</Button>
+						</AlertDialogFooter>
+					</form>
+				</AlertDialogContent>
+			</AlertDialog>
+
+			{/* Mark as Shipped Dialog */}
+			<AlertDialog
+				open={shippedDialog.isOpen}
+				onOpenChange={(open) => (open ? shippedDialog.open() : shippedDialog.close())}
+			>
+				<AlertDialogContent>
+					<form action={markAsShippedAction}>
+						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
+						<AlertDialogHeader>
+							<AlertDialogTitle>Marquer comme expédiées</AlertDialogTitle>
+							<AlertDialogDescription>
+								Marquer{" "}
+								<span className="font-semibold">
+									{selectedItems.length} commande{selectedItems.length > 1 ? "s" : ""}
+								</span>{" "}
+								comme expédiée{selectedItems.length > 1 ? "s" : ""} ?
+								<br />
+								<br />
+								Seules les commandes en cours de préparation avec paiement confirmé seront traitées.
+							</AlertDialogDescription>
+						</AlertDialogHeader>
+						<AlertDialogFooter>
+							<AlertDialogCancel type="button" disabled={isPending}>
+								Annuler
+							</AlertDialogCancel>
+							<Button type="submit" disabled={isPending}>
+								{isShippedPending ? (
+									<>
+										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+										Expédition...
+									</>
+								) : (
+									<>
+										<Truck className="mr-2 h-4 w-4" />
+										Confirmer
+									</>
+								)}
+							</Button>
+						</AlertDialogFooter>
+					</form>
+				</AlertDialogContent>
+			</AlertDialog>
 
 			{/* Mark as Delivered Dialog */}
 			<AlertDialog

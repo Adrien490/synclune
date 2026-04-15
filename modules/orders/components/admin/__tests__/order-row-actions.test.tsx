@@ -216,6 +216,7 @@ function createPermissions(overrides: Record<string, boolean> = {}) {
 		canRefund: false,
 		canMarkAsProcessing: false,
 		canRevertToProcessing: false,
+		canMarkAsReturned: false,
 		...overrides,
 	};
 }
@@ -334,7 +335,7 @@ describe("OrderRowActions", () => {
 
 	describe("derived permissions - returned", () => {
 		it("shows 'Marquer comme retourné' when status is DELIVERED and fulfillmentStatus is not RETURNED", () => {
-			setupMocks();
+			setupMocks({ canMarkAsReturned: true });
 			render(
 				<OrderRowActions
 					order={createOrder({
@@ -347,7 +348,7 @@ describe("OrderRowActions", () => {
 		});
 
 		it("hides 'Marquer comme retourné' when fulfillmentStatus is RETURNED", () => {
-			setupMocks();
+			setupMocks({ canMarkAsReturned: false });
 			render(
 				<OrderRowActions
 					order={createOrder({

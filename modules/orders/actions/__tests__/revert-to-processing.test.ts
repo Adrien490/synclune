@@ -12,6 +12,7 @@ const {
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
+	mockValidateInput,
 	mockSendRevertShippingNotificationEmail,
 	mockCreateOrderAuditTx,
 	mockBuildUrl,
@@ -27,6 +28,7 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
+	mockValidateInput: vi.fn(),
 	mockSendRevertShippingNotificationEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockBuildUrl: vi.fn(),
@@ -51,6 +53,7 @@ vi.mock("@/shared/lib/actions", () => ({
 		return typeof v === "string" ? v : null;
 	},
 	handleActionError: mockHandleActionError,
+	validateInput: mockValidateInput,
 }));
 vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: (text: string) => text }));
 vi.mock("@/modules/emails/services/status-emails", () => ({
@@ -78,15 +81,10 @@ vi.mock("../../constants/order.constants", () => ({
 	},
 }));
 vi.mock("../../schemas/order.schemas", () => ({
-	revertToProcessingSchema: {
-		safeParse: vi
-			.fn()
-			.mockReturnValue({ success: true, data: { id: VALID_CUID, reason: "Erreur transporteur" } }),
-	},
+	revertToProcessingSchema: {},
 }));
 
 import { revertToProcessing } from "../revert-to-processing";
-import { revertToProcessingSchema } from "../../schemas/order.schemas";
 
 // ============================================================================
 // HELPERS
@@ -131,10 +129,7 @@ describe("revertToProcessing", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createShippedOrder());
 		mockPrisma.order.update.mockResolvedValue({});
 
-		vi.mocked(revertToProcessingSchema.safeParse).mockReturnValue({
-			success: true,
-			data: { id: VALID_CUID, reason: "Erreur transporteur" },
-		} as never);
+		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID, reason: "Erreur transporteur" } });
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -159,20 +154,18 @@ describe("revertToProcessing", () => {
 	});
 
 	it("should return validation error when reason is missing", async () => {
-		vi.mocked(revertToProcessingSchema.safeParse).mockReturnValue({
-			success: false,
-			error: { issues: [{ message: "La raison est obligatoire" }] },
-		} as never);
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "La raison est obligatoire" },
+		});
 		const result = await revertToProcessing(undefined, invalidFormData);
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 		expect(result.message).toBe("La raison est obligatoire");
 	});
 
 	it("should return validation error for invalid ID", async () => {
-		vi.mocked(revertToProcessingSchema.safeParse).mockReturnValue({
-			success: false,
-			error: { issues: [{ message: "ID invalide" }] },
-		} as never);
+		mockValidateInput.mockReturnValue({
+			error: { status: ActionStatus.VALIDATION_ERROR, message: "ID invalide" },
+		});
 		const result = await revertToProcessing(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 		expect(result.message).toBe("ID invalide");

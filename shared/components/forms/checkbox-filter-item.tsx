@@ -37,19 +37,14 @@ export function CheckboxFilterItem({
 		<label
 			htmlFor={id}
 			className={cn(
-				"-mx-3 flex min-h-11 cursor-pointer items-start gap-3 rounded-lg px-3 py-2.5",
+				"-mx-3 flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5",
 				"transition-colors duration-150",
 				"hover:bg-accent/50",
 				"focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
 				checked && "bg-primary/5",
 			)}
 		>
-			<Checkbox
-				id={id}
-				checked={checked}
-				onCheckedChange={onCheckedChange}
-				className="data-[state=checked]:bg-primary data-[state=checked]:border-primary mt-0.5 shrink-0"
-			/>
+			<Checkbox id={id} checked={checked} onCheckedChange={onCheckedChange} className="shrink-0" />
 			<div className="flex min-w-0 flex-1 items-center gap-2">
 				{indicator && (
 					<span className="shrink-0" aria-hidden="true">

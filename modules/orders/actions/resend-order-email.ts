@@ -12,7 +12,7 @@ import {
 import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-review-request-email.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, success, error } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -44,17 +44,14 @@ export async function resendOrderEmail(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Validate orderId and emailType
-		const idResult = z.cuid2().safeParse(orderId);
-		if (!idResult.success) {
-			return error("ID de commande invalide");
-		}
-
-		const emailTypeResult = z
-			.enum(["confirmation", "shipping", "delivery", "review-request"])
-			.safeParse(emailType);
-		if (!emailTypeResult.success) {
-			return error("Type d'email invalide");
-		}
+		const validated = validateInput(
+			z.object({
+				orderId: z.cuid2(),
+				emailType: z.enum(["confirmation", "shipping", "delivery", "review-request"]),
+			}),
+			{ orderId, emailType },
+		);
+		if ("error" in validated) return validated.error;
 
 		// 4. Récupérer la commande avec uniquement les champs nécessaires
 		const order = await prisma.order.findUnique({

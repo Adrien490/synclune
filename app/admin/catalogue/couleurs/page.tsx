@@ -9,6 +9,8 @@ import { getFirstParam } from "@/shared/utils/params";
 import { Suspense } from "react";
 import { ColorsDataTable } from "@/modules/colors/components/admin/colors-data-table";
 import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/colors-data-table-skeleton";
+import { ColorsMobileList } from "@/modules/colors/components/admin/colors-mobile-list";
+import { ColorsMobileListSkeleton } from "@/modules/colors/components/admin/colors-mobile-list-skeleton";
 import { ColorsFilterBadges } from "@/modules/colors/components/admin/colors-filter-badges";
 import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filter-sheet";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
@@ -24,6 +26,7 @@ const DeleteColorAlertDialog = dynamic(() =>
 	),
 );
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
+import { ColorsBottomBar } from "@/modules/colors/components/admin/colors-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
@@ -115,6 +118,12 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 					</div>
 				</Suspense>
 
+				{/* Liste mobile */}
+				<Suspense fallback={<ColorsMobileListSkeleton />}>
+					<ColorsMobileList colorsPromise={colorsPromise} perPage={perPage} />
+				</Suspense>
+
+				{/* DataTable desktop */}
 				<Suspense fallback={<ColorsDataTableSkeleton />}>
 					<ColorsDataTable colorsPromise={colorsPromise} perPage={perPage} />
 				</Suspense>
@@ -122,6 +131,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 
 			<ColorFormDialog />
 			<DeleteColorAlertDialog />
+			<ColorsBottomBar />
 		</>
 	);
 }

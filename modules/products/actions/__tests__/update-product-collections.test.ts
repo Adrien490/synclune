@@ -115,7 +115,11 @@ describe("updateProductCollections", () => {
 			{ id: COL_ID_2, slug: "colliers" },
 		]);
 		mockPrisma.productCollection.findMany.mockResolvedValue([
-			{ collection: { slug: "ancienne-collection" } },
+			{
+				collectionId: "old-col-id",
+				isFeatured: false,
+				collection: { slug: "ancienne-collection" },
+			},
 		]);
 		mockPrisma.productCollection.deleteMany.mockResolvedValue({ count: 1 });
 		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 2 });
@@ -227,6 +231,42 @@ describe("updateProductCollections", () => {
 		await updateProductCollections(undefined, validFormData);
 		expect(mockGetProductInvalidationTags).toHaveBeenCalledWith("bracelet-lune", PRODUCT_ID);
 		expect(mockUpdateTag).toHaveBeenCalled();
+	});
+
+	it("should preserve isFeatured when a collection is kept", async () => {
+		// COL_ID_1 est déjà associé et featured
+		mockPrisma.productCollection.findMany.mockResolvedValue([
+			{ collectionId: COL_ID_1, isFeatured: true, collection: { slug: "bijoux" } },
+		]);
+		mockValidateInput.mockReturnValue({
+			data: { productId: PRODUCT_ID, collectionIds: [COL_ID_1] },
+		});
+		mockPrisma.collection.findMany.mockResolvedValue([{ id: COL_ID_1, slug: "bijoux" }]);
+
+		await updateProductCollections(undefined, validFormData);
+
+		expect(mockPrisma.productCollection.createMany).toHaveBeenCalledWith({
+			data: [{ productId: PRODUCT_ID, collectionId: COL_ID_1, isFeatured: true }],
+		});
+	});
+
+	it("should set isFeatured to false for newly added collections", async () => {
+		// COL_ID_1 existait (featured), COL_ID_2 est nouveau
+		mockPrisma.productCollection.findMany.mockResolvedValue([
+			{ collectionId: COL_ID_1, isFeatured: true, collection: { slug: "bijoux" } },
+		]);
+		mockValidateInput.mockReturnValue({
+			data: { productId: PRODUCT_ID, collectionIds: [COL_ID_1, COL_ID_2] },
+		});
+
+		await updateProductCollections(undefined, validFormData);
+
+		expect(mockPrisma.productCollection.createMany).toHaveBeenCalledWith({
+			data: [
+				{ productId: PRODUCT_ID, collectionId: COL_ID_1, isFeatured: true },
+				{ productId: PRODUCT_ID, collectionId: COL_ID_2, isFeatured: false },
+			],
+		});
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

@@ -7,6 +7,7 @@ type OrderFilters = NonNullable<GetOrdersParams["filters"]>;
 export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filters"] => {
 	let status: OrderFilters["status"] = undefined;
 	let paymentStatus: OrderFilters["paymentStatus"] = undefined;
+	let fulfillmentStatus: OrderFilters["fulfillmentStatus"] = undefined;
 	let totalMin: number | undefined = undefined;
 	let totalMax: number | undefined = undefined;
 	let createdAfter: Date | undefined = undefined;
@@ -25,6 +26,9 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 						break;
 					case "paymentStatus":
 						paymentStatus = filterValue as OrderFilters["paymentStatus"];
+						break;
+					case "fulfillmentStatus":
+						fulfillmentStatus = filterValue as OrderFilters["fulfillmentStatus"];
 						break;
 					case "totalMin":
 						totalMin = Number(filterValue) * 100; // Convert euros to cents
@@ -51,6 +55,7 @@ export const parseFilters = (params: OrdersSearchParams): GetOrdersParams["filte
 	return {
 		status,
 		paymentStatus,
+		fulfillmentStatus,
 		totalMin,
 		totalMax,
 		createdAfter,

@@ -92,7 +92,12 @@ function SummaryContent() {
 
 export default function CheckoutLoading() {
 	return (
-		<div className="relative min-h-screen">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement du formulaire de commande"
+			className="relative min-h-screen overflow-hidden"
+		>
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 
@@ -106,38 +111,44 @@ export default function CheckoutLoading() {
 
 					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
 						{/* Left column — Form */}
-						<div className="space-y-8">
+						<div className="space-y-6">
 							{/* Contact */}
-							<section className="space-y-5">
-								<SectionHeading width="w-20" />
-								<InputSkeleton labelWidth="w-28" />
-								<Skeleton className="h-4 w-64" />
-							</section>
+							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
+								<section className="space-y-5">
+									<SectionHeading width="w-20" />
+									<InputSkeleton labelWidth="w-28" />
+									<Skeleton className="h-4 w-64" />
+								</section>
+							</div>
 
 							{/* Livraison */}
-							<section className="space-y-5">
-								<SectionHeading width="w-24" />
-								<Skeleton className="h-4 w-56" />
-								<InputSkeleton labelWidth="w-24" />
-								<InputSkeleton labelWidth="w-20" />
-								<Skeleton className="h-4 w-44" />
-								<div className="grid grid-cols-2 gap-3 sm:gap-6">
+							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
+								<section className="space-y-5">
+									<SectionHeading width="w-24" />
+									<Skeleton className="h-4 w-56" />
 									<InputSkeleton labelWidth="w-24" />
+									<InputSkeleton labelWidth="w-20" />
+									<Skeleton className="h-4 w-44" />
+									<div className="grid grid-cols-2 gap-3 sm:gap-6">
+										<InputSkeleton labelWidth="w-24" />
+										<InputSkeleton labelWidth="w-12" />
+									</div>
 									<InputSkeleton labelWidth="w-12" />
-								</div>
-								<InputSkeleton labelWidth="w-12" />
-								<div className="space-y-2">
-									<Skeleton className="h-4 w-20" />
-									<Skeleton className="h-10 w-full rounded-md" />
-									<Skeleton className="h-3 w-52" />
-								</div>
-							</section>
+									<div className="space-y-2">
+										<Skeleton className="h-4 w-20" />
+										<Skeleton className="h-10 w-full rounded-md" />
+										<Skeleton className="h-3 w-52" />
+									</div>
+								</section>
+							</div>
 
 							{/* Mode d'expedition */}
-							<section className="space-y-5">
-								<SectionHeading width="w-44" />
-								<Skeleton className="h-16 w-full rounded-xl" />
-							</section>
+							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
+								<section className="space-y-5">
+									<SectionHeading width="w-44" />
+									<Skeleton className="h-16 w-full rounded-xl" />
+								</section>
+							</div>
 
 							{/* Code promo — collapsed link */}
 							<div className="-mx-3 flex min-h-11 items-center px-3">
@@ -145,38 +156,40 @@ export default function CheckoutLoading() {
 							</div>
 
 							{/* Paiement */}
-							<section className="space-y-5">
-								<SectionHeading width="w-24" />
+							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
+								<section className="space-y-5">
+									<SectionHeading width="w-24" />
 
-								{/* Stripe PaymentElement placeholder */}
-								<div className="animate-pulse space-y-4 rounded-xl border p-6">
-									<Skeleton className="h-4 w-40" />
-									<Skeleton className="h-10 w-full rounded" />
-									<div className="grid grid-cols-2 gap-4">
-										<Skeleton className="h-10 rounded" />
-										<Skeleton className="h-10 rounded" />
+									{/* Stripe PaymentElement placeholder */}
+									<div className="animate-pulse space-y-4 rounded-xl border p-6">
+										<Skeleton className="h-4 w-40" />
+										<Skeleton className="h-10 w-full rounded" />
+										<div className="grid grid-cols-2 gap-4">
+											<Skeleton className="h-10 rounded" />
+											<Skeleton className="h-10 rounded" />
+										</div>
 									</div>
-								</div>
 
-								{/* Terms + button */}
-								<div className="space-y-3">
-									<Skeleton className="mx-auto h-4 w-72" />
-									<Skeleton className="h-12 w-full rounded-md" />
-								</div>
-
-								{/* Trust badges */}
-								<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
-									<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-										<Skeleton className="h-3 w-28" />
-										<Skeleton className="hidden h-3 w-px sm:inline" />
-										<Skeleton className="h-3 w-24" />
+									{/* Terms + button */}
+									<div className="space-y-3">
+										<Skeleton className="mx-auto h-4 w-72" />
+										<Skeleton className="h-12 w-full rounded-md" />
 									</div>
-								</div>
-							</section>
+
+									{/* Trust badges */}
+									<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
+										<div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+											<Skeleton className="h-3 w-28" />
+											<Skeleton className="hidden h-3 w-px sm:inline" />
+											<Skeleton className="h-3 w-24" />
+										</div>
+									</div>
+								</section>
+							</div>
 						</div>
 
 						{/* Right column — Summary */}
-						<div className="order-first lg:order-none">
+						<div className="order-first lg:order-0">
 							{/* Mobile: collapsed card */}
 							<Card className="border-primary/10 rounded-2xl shadow-md md:hidden">
 								<CardHeader className="pb-0">

@@ -3,7 +3,7 @@
 import { format, formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import Link from "next/link";
-import { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { PaymentStatus } from "@/app/generated/prisma/browser";
 import {
 	CircleCheck,
 	CreditCard,
@@ -52,8 +52,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 
 	const permissions = getOrderPermissions(order);
-	const isDelivered = order.status === OrderStatus.DELIVERED;
-	const canMarkAsReturned = isDelivered && order.fulfillmentStatus !== FulfillmentStatus.RETURNED;
+	const { canMarkAsReturned } = permissions;
 
 	// Handlers
 	const handleMarkAsPaid = () => {

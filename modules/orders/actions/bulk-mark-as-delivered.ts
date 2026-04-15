@@ -150,9 +150,12 @@ export async function bulkMarkAsDelivered(
 			}
 		}
 
-		// Planifier l'envoi des emails de demande d'avis
-		// (ne bloque pas le flux principal en cas d'erreur)
-		await scheduleReviewRequestEmailsBulk(eligibleIds);
+		// Planifier l'envoi des emails de demande d'avis (fire-and-forget)
+		void scheduleReviewRequestEmailsBulk(eligibleIds).catch((reviewEmailError) => {
+			logger.error("Échec planification emails avis", reviewEmailError, {
+				action: "bulk-mark-as-delivered",
+			});
+		});
 
 		// Invalider les caches pour chaque userId unique
 		const uniqueUserIds = [

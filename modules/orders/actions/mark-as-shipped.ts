@@ -7,11 +7,11 @@ import { sendShippingConfirmationEmail } from "@/modules/emails/services/order-e
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import {
+	validateInput,
 	handleActionError,
 	success,
 	error,
 	notFound,
-	validationError,
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -63,24 +63,21 @@ export async function markAsShipped(
 		const carrier = safeFormGet(formData, "carrier");
 		const sendEmail = safeFormGet(formData, "sendEmail");
 
-		const result = markAsShippedSchema.safeParse({
+		const validated = validateInput(markAsShippedSchema, {
 			id: rawId,
 			trackingNumber,
 			trackingUrl: trackingUrl ?? undefined,
 			carrier: carrier ?? undefined,
 			sendEmail: sendEmail ?? "true",
 		});
+		if ("error" in validated) return validated.error;
 
-		if (!result.success) {
-			return validationError(result.error.issues[0]?.message ?? "Données invalides");
-		}
-
-		const { id } = result.data;
+		const { id } = validated.data;
 
 		// Générer l'URL de suivi si non fournie
-		const carrierValue = (result.data.carrier ?? "autre") as Carrier;
+		const carrierValue = (validated.data.carrier ?? "autre") as Carrier;
 		const finalTrackingUrl =
-			result.data.trackingUrl ?? getTrackingUrl(carrierValue, result.data.trackingNumber);
+			validated.data.trackingUrl ?? getTrackingUrl(carrierValue, validated.data.trackingNumber);
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
 		const order = await prisma.$transaction(async (tx) => {
@@ -118,9 +115,9 @@ export async function markAsShipped(
 				data: {
 					status: OrderStatus.SHIPPED,
 					fulfillmentStatus: FulfillmentStatus.SHIPPED,
-					trackingNumber: result.data.trackingNumber,
+					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
-					shippingCarrier: result.data.carrier ?? null,
+					shippingCarrier: validated.data.carrier ?? null,
 					shippedAt: new Date(),
 				},
 			});
@@ -136,10 +133,10 @@ export async function markAsShipped(
 				authorName: adminUser.name ?? "Admin",
 				source: HistorySource.ADMIN,
 				metadata: {
-					trackingNumber: result.data.trackingNumber,
+					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
-					shippingCarrier: result.data.carrier,
-					emailSent: result.data.sendEmail,
+					shippingCarrier: validated.data.carrier,
+					emailSent: validated.data.sendEmail,
 				},
 			});
 
@@ -171,14 +168,14 @@ export async function markAsShipped(
 			metadata: {
 				orderNumber: order.orderNumber,
 				previousStatus: order.status,
-				trackingNumber: result.data.trackingNumber,
-				carrier: result.data.carrier,
+				trackingNumber: validated.data.trackingNumber,
+				carrier: validated.data.carrier,
 			},
 		});
 
 		// Envoyer l'email de confirmation d'expédition au client
 		let emailSent = false;
-		if (result.data.sendEmail && order.customerEmail) {
+		if (validated.data.sendEmail && order.customerEmail) {
 			const carrierLabel = getCarrierLabel(carrierValue);
 
 			const customerFirstName = extractCustomerFirstName(
@@ -191,7 +188,7 @@ export async function markAsShipped(
 					to: order.customerEmail,
 					orderNumber: order.orderNumber,
 					customerName: customerFirstName,
-					trackingNumber: result.data.trackingNumber,
+					trackingNumber: validated.data.trackingNumber,
 					trackingUrl: finalTrackingUrl,
 					carrierLabel,
 					shippingAddress: {
@@ -211,16 +208,16 @@ export async function markAsShipped(
 		}
 
 		// Si l'email devait être envoyé mais a échoué, retourner un warning
-		if (result.data.sendEmail && !emailSent) {
+		if (validated.data.sendEmail && !emailSent) {
 			return {
 				status: ActionStatus.WARNING,
-				message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
+				message: `Commande ${order.orderNumber} expédiée. Numéro de suivi : ${validated.data.trackingNumber}. ATTENTION: L'email n'a pas pu être envoyé au client.`,
 			};
 		}
 
 		const emailMessage = emailSent ? " Email envoyé au client." : "";
 		return success(
-			`Commande ${order.orderNumber} expédiée. Numéro de suivi : ${result.data.trackingNumber}.${emailMessage}`,
+			`Commande ${order.orderNumber} expédiée. Numéro de suivi : ${validated.data.trackingNumber}.${emailMessage}`,
 		);
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_SHIPPED_FAILED);

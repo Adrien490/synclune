@@ -7,7 +7,7 @@ import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-e
 import { scheduleReviewRequestEmail } from "@/modules/reviews/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet } from "@/shared/lib/actions";
+import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
@@ -50,18 +50,13 @@ export async function markAsDelivered(
 		const rawId = safeFormGet(formData, "id");
 		const sendEmail = safeFormGet(formData, "sendEmail");
 
-		const result = markAsDeliveredSchema.safeParse({
+		const validated = validateInput(markAsDeliveredSchema, {
 			id: rawId,
 			sendEmail: sendEmail ?? "true",
 		});
-		if (!result.success) {
-			return {
-				status: ActionStatus.VALIDATION_ERROR,
-				message: result.error.issues[0]?.message ?? "ID invalide",
-			};
-		}
+		if ("error" in validated) return validated.error;
 
-		const { id } = result.data;
+		const { id } = validated.data;
 		const deliveryDate = new Date();
 
 		// Transaction: fetch + validate + update + audit atomically (prevents TOCTOU race)
@@ -108,7 +103,7 @@ export async function markAsDelivered(
 				source: HistorySource.ADMIN,
 				metadata: {
 					deliveryDate: deliveryDate.toISOString(),
-					emailSent: result.data.sendEmail,
+					emailSent: validated.data.sendEmail,
 				},
 			});
 
@@ -141,7 +136,7 @@ export async function markAsDelivered(
 
 		// Envoyer l'email de confirmation de livraison au client
 		let emailSent = false;
-		if (result.data.sendEmail && order.customerEmail) {
+		if (validated.data.sendEmail && order.customerEmail) {
 			const customerFirstName = extractCustomerFirstName(
 				order.customerName,
 				order.shippingFirstName,
@@ -172,15 +167,12 @@ export async function markAsDelivered(
 			}
 		}
 
-		// Planifier l'envoi de l'email de demande d'avis
-		// (ne bloque pas le flux principal en cas d'erreur)
-		try {
-			await scheduleReviewRequestEmail(id);
-		} catch (reviewEmailError) {
+		// Planifier l'envoi de l'email de demande d'avis (fire-and-forget)
+		void scheduleReviewRequestEmail(id).catch((reviewEmailError) => {
 			logger.error("Échec planification email avis", reviewEmailError, {
 				action: "mark-as-delivered",
 			});
-		}
+		});
 
 		void logAudit({
 			adminId: adminUser.id,
@@ -196,7 +188,7 @@ export async function markAsDelivered(
 
 		const emailMessage = emailSent
 			? " Email envoyé au client."
-			: result.data.sendEmail
+			: validated.data.sendEmail
 				? " (Échec envoi email)"
 				: "";
 

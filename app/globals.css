@@ -269,7 +269,6 @@ html {
 
 	body {
 		@apply bg-background text-foreground;
-		min-height: 100vh;
 		letter-spacing: var(--tracking-normal);
 	}
 

@@ -15,6 +15,8 @@ export const CUSTOMIZATION_ERROR_MESSAGES = {
 	UPDATE_STATUS_ERROR: "Erreur lors de la mise à jour du statut",
 	UPDATE_NOTES_ERROR: "Erreur lors de la mise à jour des notes",
 	BULK_UPDATE_ERROR: "Erreur lors de la mise à jour en masse",
+	DELETE_ERROR: "Erreur lors de la suppression de la demande",
+	BULK_DELETE_ERROR: "Erreur lors de la suppression en masse",
 } as const;
 
 export const CUSTOMIZATION_SUCCESS_MESSAGES = {
@@ -25,4 +27,7 @@ export const CUSTOMIZATION_SUCCESS_MESSAGES = {
 	NOTES_DELETED: "Notes supprimées",
 	BULK_UPDATED: (count: number) =>
 		`${count} demande${count > 1 ? "s" : ""} mise${count > 1 ? "s" : ""} à jour`,
+	DELETED: "Demande supprimée",
+	BULK_DELETED: (count: number) =>
+		`${count} demande${count > 1 ? "s" : ""} supprimée${count > 1 ? "s" : ""}`,
 } as const;

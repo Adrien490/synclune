@@ -30,6 +30,8 @@ const {
 		order: { findUnique: vi.fn(), update: vi.fn() },
 		productSku: { update: vi.fn() },
 		orderHistory: { create: vi.fn() },
+		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
+		discount: { update: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAuth: vi.fn(),
@@ -157,6 +159,9 @@ describe("cancelOrderCustomer", () => {
 		mockPrisma.order.findUnique.mockResolvedValue(createPendingOrder());
 		mockPrisma.order.update.mockResolvedValue({});
 		mockPrisma.productSku.update.mockResolvedValue({});
+		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
+		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
+		mockPrisma.discount.update.mockResolvedValue({});
 	});
 
 	// Auth

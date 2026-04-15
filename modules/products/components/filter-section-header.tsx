@@ -39,7 +39,7 @@ export function SectionHeader({ label, count, badgeContent, onReset }: SectionHe
 							onReset();
 						}
 					}}
-					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors"
+					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md transition-colors"
 					aria-label={`Effacer le filtre ${label}`}
 				>
 					<X className="h-3 w-3" />

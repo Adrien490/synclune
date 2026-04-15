@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { AdminMenuSheet } from "./_components/admin-menu-sheet";
+import { AdminMobileBottomBar } from "./_components/admin-mobile-bottom-bar";
 import { AdminMobileHeader } from "./_components/admin-mobile-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { CommandPalette } from "./_components/command-palette";
@@ -46,11 +47,12 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			<SidebarInset>
 				<DashboardHeaderWrapper />
 				<AdminMobileHeader />
-				<div className="space-y-6 p-6 pt-20 pb-6 md:pt-6">
+				<div className="space-y-6 p-6 pt-20 pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:pt-6 md:pb-6">
 					<Suspense>
 						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
 					</Suspense>
 				</div>
+				<AdminMobileBottomBar />
 			</SidebarInset>
 			<CommandPalette />
 			<AdminMenuSheet user={user} />

@@ -71,17 +71,22 @@ export async function updateProductCollections(
 			}
 		}
 
-		// 6. Récupérer TOUTES les collections actuelles du produit (pour invalidation cache)
+		// 6. Récupérer TOUTES les collections actuelles du produit (pour invalidation cache + isFeatured)
 		const currentCollections = await prisma.productCollection.findMany({
 			where: {
 				productId: validation.data.productId,
 			},
 			select: {
+				collectionId: true,
+				isFeatured: true,
 				collection: {
 					select: { slug: true },
 				},
 			},
 		});
+
+		// Conserver les flags isFeatured existants pour les collections qui restent associées
+		const featuredMap = new Map(currentCollections.map((pc) => [pc.collectionId, pc.isFeatured]));
 
 		// 7. Mettre à jour les collections (transaction)
 		await prisma.$transaction([
@@ -89,13 +94,14 @@ export async function updateProductCollections(
 			prisma.productCollection.deleteMany({
 				where: { productId: validation.data.productId },
 			}),
-			// Créer les nouvelles associations
+			// Créer les nouvelles associations en préservant isFeatured pour les collections conservées
 			...(validation.data.collectionIds.length > 0
 				? [
 						prisma.productCollection.createMany({
 							data: validation.data.collectionIds.map((collectionId) => ({
 								productId: validation.data.productId,
 								collectionId,
+								isFeatured: featuredMap.get(collectionId) ?? false,
 							})),
 						}),
 					]

@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useToolbarDrawer } from "@/shared/hooks";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, ArrowUpDown, SlidersHorizontal, X } from "lucide-react";
+import { Menu, Search, ArrowUpDown, SlidersHorizontal, X } from "lucide-react";
 import {
 	BottomBar,
 	ActiveDot,
@@ -54,8 +54,12 @@ export function DiscountsBottomBar() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 
-	// Hide when any sheet/dialog is open
-	const { isOpen: isMenuOpen } = useDialog("admin-menu-sheet");
+	// Nav menu — same dialog as global nav bar, consistent across all pages
+	const {
+		isOpen: isMenuOpen,
+		open: openNavMenu,
+		close: closeNavMenu,
+	} = useDialog("admin-menu-sheet");
 	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
 
 	// Active states
@@ -72,11 +76,12 @@ export function DiscountsBottomBar() {
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
 	const searchButtonRef = useRef<HTMLButtonElement>(null);
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
-	const buttonRefs = [sortButtonRef, searchButtonRef, filterButtonRef];
+	const menuButtonRef = useRef<HTMLButtonElement>(null);
+	const buttonRefs = [sortButtonRef, searchButtonRef, filterButtonRef, menuButtonRef];
 
 	// Keyboard navigation for toolbar
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-		const buttonCount = 3;
+		const buttonCount = 4;
 		let nextIndex: number | null = null;
 
 		switch (e.key) {
@@ -134,7 +139,7 @@ export function DiscountsBottomBar() {
 		close();
 	};
 
-	const buttonClassName = cn(bottomBarItemClass, "min-w-18");
+	const buttonClassName = cn(bottomBarItemClass, "min-w-16");
 	const activeButtonClassName = cn(buttonClassName, bottomBarActiveItemClass);
 
 	// Portal to document.body to escape admin sidebar's containing block
@@ -144,14 +149,14 @@ export function DiscountsBottomBar() {
 		<>
 			<BottomBar
 				as="nav"
-				aria-label="Tri, recherche et filtres"
+				aria-label="Tri, recherche, filtres et menu"
 				isHidden={isHidden}
 				breakpointClass="md:hidden"
 			>
 				<div
 					role="toolbar"
 					aria-orientation="horizontal"
-					aria-label="Tri, recherche et filtres"
+					aria-label="Tri, recherche, filtres et menu"
 					className={bottomBarContainerClass}
 				>
 					{/* Trier */}
@@ -207,6 +212,25 @@ export function DiscountsBottomBar() {
 						{hasActiveFilter && <ActiveDot />}
 						<SlidersHorizontal className={bottomBarIconClass} aria-hidden="true" />
 						<span className={bottomBarLabelClass}>Filtrer</span>
+					</button>
+
+					{/* Menu — navigation globale admin (cohérent avec la nav bar globale) */}
+					<button
+						ref={menuButtonRef}
+						type="button"
+						onClick={() => (isMenuOpen ? closeNavMenu() : openNavMenu())}
+						onKeyDown={(e) => handleToolbarKeyDown(e, 3)}
+						onFocus={() => setFocusedIndex(3)}
+						tabIndex={focusedIndex === 3 ? 0 : -1}
+						className={buttonClassName}
+						aria-label={
+							isMenuOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"
+						}
+						aria-haspopup="dialog"
+						aria-expanded={isMenuOpen}
+					>
+						<Menu className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Menu</span>
 					</button>
 				</div>
 			</BottomBar>

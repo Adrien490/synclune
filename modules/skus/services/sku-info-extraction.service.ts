@@ -30,7 +30,7 @@ export function extractVariantInfo<
 
 		if (sku.color || materialName) {
 			// Utiliser le slug comme clé principale (URL-friendly)
-			const materialSlug = materialName ? slugify(materialName) : "no-color";
+			const materialSlug = materialName ? slugify(materialName) : "no-material";
 			const colorKey = sku.color?.slug ?? sku.color?.id ?? materialSlug;
 			const colorName = sku.color?.name ?? materialName ?? "Standard";
 			const existing = colorMap.get(colorKey) ?? { name: colorName, count: 0 };

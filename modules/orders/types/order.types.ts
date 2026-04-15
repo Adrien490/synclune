@@ -120,6 +120,7 @@ export interface OrderPermissions {
 	canMarkAsPaid: boolean;
 	canCancel: boolean;
 	canRevertToProcessing: boolean;
+	canMarkAsReturned: boolean;
 }
 
 // Validation result types for status transition functions

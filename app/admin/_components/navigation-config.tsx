@@ -18,11 +18,6 @@ import {
 	CircleHelp,
 	Store,
 	Users,
-	Monitor,
-	Gavel,
-	ScrollText,
-	Webhook,
-	MailWarning,
 } from "lucide-react";
 
 // ============================================================================
@@ -205,41 +200,9 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// SYSTEME - Monitoring production
+		// SYSTEME - Planned for future implementation
+		// Pages: Litiges, Journal d'audit, Webhooks, Emails échoués
 		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Système",
-			icon: Monitor,
-			collapsible: true,
-			items: [
-				{
-					id: "disputes",
-					title: "Litiges",
-					url: "/admin/systeme/litiges",
-					icon: Gavel,
-				},
-				{
-					id: "audit",
-					title: "Journal d'audit",
-					shortTitle: "Audit",
-					url: "/admin/systeme/audit",
-					icon: ScrollText,
-				},
-				{
-					id: "webhooks",
-					title: "Webhooks",
-					url: "/admin/systeme/webhooks",
-					icon: Webhook,
-				},
-				{
-					id: "failed-emails",
-					title: "Emails échoués",
-					shortTitle: "Emails",
-					url: "/admin/systeme/emails",
-					icon: MailWarning,
-				},
-			],
-		},
 	],
 };
 
