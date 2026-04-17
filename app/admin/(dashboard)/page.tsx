@@ -7,6 +7,7 @@ import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { CustomerKpis } from "@/modules/dashboard/components/customer-kpis";
 import { CartAbandonmentCard } from "@/modules/dashboard/components/cart-abandonment-card";
 import { SalesHeatmap } from "@/modules/dashboard/components/sales-heatmap";
+import { ComparisonModeSelector } from "@/modules/dashboard/components/comparison-mode-selector";
 import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
@@ -39,8 +40,15 @@ import { fetchFulfillmentPipeline } from "@/modules/dashboard/data/get-fulfillme
 import { fetchTopProducts } from "@/modules/dashboard/data/get-top-products";
 import { fetchActiveDiscounts } from "@/modules/dashboard/data/get-active-discounts";
 
-import { parsePeriod, COMPARISON_LABELS } from "@/modules/dashboard/constants/period.constants";
-import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
+import {
+	getComparisonLabel,
+	parseComparisonMode,
+	parsePeriod,
+} from "@/modules/dashboard/constants/period.constants";
+import type {
+	ComparisonMode,
+	DashboardPeriod,
+} from "@/modules/dashboard/constants/period.constants";
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
@@ -48,7 +56,7 @@ export const metadata: Metadata = {
 };
 
 type AdminDashboardPageProps = {
-	searchParams: Promise<{ period?: string }>;
+	searchParams: Promise<{ period?: string; comparison?: string }>;
 };
 
 /**
@@ -58,6 +66,7 @@ type AdminDashboardPageProps = {
 export default async function AdminDashboardPage({ searchParams }: AdminDashboardPageProps) {
 	const params = await searchParams;
 	const period = parsePeriod(params.period);
+	const comparisonMode = parseComparisonMode(params.comparison);
 
 	return (
 		<section aria-label="Tableau de bord">
@@ -69,6 +78,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				actions={
 					<div className="flex items-center gap-2">
 						<PeriodSelector />
+						<ComparisonModeSelector />
 						<ExportDashboardButton />
 						<RefreshDashboardButton />
 					</div>
@@ -82,7 +92,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
 					}
 				>
-					<KpisWrapper period={period} />
+					<KpisWrapper period={period} comparisonMode={comparisonMode} />
 				</Suspense>
 
 				{/* KPIs clients (nouveaux, recurrents, meilleur client) */}
@@ -91,7 +101,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						<KpisSkeleton count={0} compactCount={3} ariaLabel="Chargement des KPIs clients" />
 					}
 				>
-					<CustomerKpisWrapper period={period} />
+					<CustomerKpisWrapper period={period} comparisonMode={comparisonMode} />
 				</Suspense>
 
 				{/* Alertes actionnables (ne rend rien si tout est ok) */}
@@ -108,7 +118,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				<Suspense
 					fallback={<ChartSkeleton height={180} ariaLabel="Chargement des paniers abandonnés" />}
 				>
-					<CartAbandonmentWrapper period={period} />
+					<CartAbandonmentWrapper period={period} comparisonMode={comparisonMode} />
 				</Suspense>
 
 				{/* Graphique revenus */}
@@ -157,10 +167,16 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 /**
  * Wrapper async pour les KPIs avec gestion d'erreur isolee
  */
-async function KpisWrapper({ period }: { period: DashboardPeriod }) {
+async function KpisWrapper({
+	period,
+	comparisonMode,
+}: {
+	period: DashboardPeriod;
+	comparisonMode: ComparisonMode;
+}) {
 	let kpis;
 	try {
-		kpis = await fetchDashboardKpis(period);
+		kpis = await fetchDashboardKpis(period, comparisonMode);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (
@@ -184,7 +200,7 @@ async function KpisWrapper({ period }: { period: DashboardPeriod }) {
 		<DashboardKpis
 			kpis={kpis}
 			sparklines={sparklines}
-			comparisonLabel={COMPARISON_LABELS[period]}
+			comparisonLabel={getComparisonLabel(period, comparisonMode)}
 		/>
 	);
 }
@@ -193,7 +209,13 @@ async function KpisWrapper({ period }: { period: DashboardPeriod }) {
  * Wrapper async pour les KPIs clients - silencieux en cas d'erreur
  * (KPIs secondaires, ne doivent pas bloquer le rendu du dashboard)
  */
-async function CustomerKpisWrapper({ period }: { period: DashboardPeriod }) {
+async function CustomerKpisWrapper({
+	period,
+	comparisonMode,
+}: {
+	period: DashboardPeriod;
+	comparisonMode: ComparisonMode;
+}) {
 	let kpis;
 	try {
 		kpis = await fetchCustomerKpis(period);
@@ -201,13 +223,19 @@ async function CustomerKpisWrapper({ period }: { period: DashboardPeriod }) {
 		Sentry.captureException(error);
 		return null;
 	}
-	return <CustomerKpis kpis={kpis} comparisonLabel={COMPARISON_LABELS[period]} />;
+	return <CustomerKpis kpis={kpis} comparisonLabel={getComparisonLabel(period, comparisonMode)} />;
 }
 
 /**
  * Wrapper async pour les paniers abandonnes - silencieux en cas d'erreur
  */
-async function CartAbandonmentWrapper({ period }: { period: DashboardPeriod }) {
+async function CartAbandonmentWrapper({
+	period,
+	comparisonMode,
+}: {
+	period: DashboardPeriod;
+	comparisonMode: ComparisonMode;
+}) {
 	let data;
 	try {
 		data = await fetchCartAbandonment(period);
@@ -215,7 +243,9 @@ async function CartAbandonmentWrapper({ period }: { period: DashboardPeriod }) {
 		Sentry.captureException(error);
 		return null;
 	}
-	return <CartAbandonmentCard data={data} comparisonLabel={COMPARISON_LABELS[period]} />;
+	return (
+		<CartAbandonmentCard data={data} comparisonLabel={getComparisonLabel(period, comparisonMode)} />
+	);
 }
 
 /**

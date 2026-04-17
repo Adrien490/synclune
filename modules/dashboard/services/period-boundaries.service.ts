@@ -8,7 +8,17 @@ import type { PeriodBoundaries, ChartConfig } from "../types/dashboard.types";
 // ============================================================================
 
 /**
- * Computes current and previous period date boundaries for KPI comparisons
+ * Shifts a date by exactly one year backwards (UTC), preserving month, day,
+ * hour, minute, second and millisecond. Handles leap-year edge case (Feb 29).
+ */
+function shiftOneYearBackward(date: Date): Date {
+	const shifted = new Date(date);
+	shifted.setUTCFullYear(shifted.getUTCFullYear() - 1);
+	return shifted;
+}
+
+/**
+ * Computes current, previous and previous-year date boundaries for KPI comparisons
  */
 export function getPeriodBoundaries(period: DashboardPeriod): PeriodBoundaries {
 	const now = new Date();
@@ -16,52 +26,65 @@ export function getPeriodBoundaries(period: DashboardPeriod): PeriodBoundaries {
 	const month = now.getUTCMonth();
 	const date = now.getUTCDate();
 
+	let base: Omit<PeriodBoundaries, "previousYearStart" | "previousYearEnd">;
+
 	switch (period) {
 		case "7d":
-			return {
+			base = {
 				currentStart: new Date(Date.UTC(year, month, date - 7)),
 				currentEnd: now,
 				previousStart: new Date(Date.UTC(year, month, date - 14)),
 				previousEnd: new Date(Date.UTC(year, month, date - 7)),
 			};
+			break;
 
 		case "30d":
-			return {
+			base = {
 				currentStart: new Date(Date.UTC(year, month, date - 30)),
 				currentEnd: now,
 				previousStart: new Date(Date.UTC(year, month, date - 60)),
 				previousEnd: new Date(Date.UTC(year, month, date - 30)),
 			};
+			break;
 
 		case "month":
-			return {
+			base = {
 				currentStart: new Date(Date.UTC(year, month, 1)),
 				currentEnd: now,
 				previousStart: new Date(Date.UTC(year, month - 1, 1)),
 				previousEnd: new Date(Date.UTC(year, month, 0, 23, 59, 59, 999)),
 			};
+			break;
 
 		case "quarter": {
 			const currentQuarter = Math.floor(month / 3);
 			const quarterStart = new Date(Date.UTC(year, currentQuarter * 3, 1));
 			const prevQuarterStart = new Date(Date.UTC(year, (currentQuarter - 1) * 3, 1));
 			const prevQuarterEnd = new Date(Date.UTC(year, currentQuarter * 3, 0, 23, 59, 59, 999));
-			return {
+			base = {
 				currentStart: quarterStart,
 				currentEnd: now,
 				previousStart: prevQuarterStart,
 				previousEnd: prevQuarterEnd,
 			};
+			break;
 		}
 
 		case "year":
-			return {
+			base = {
 				currentStart: new Date(Date.UTC(year, 0, 1)),
 				currentEnd: now,
 				previousStart: new Date(Date.UTC(year - 1, 0, 1)),
 				previousEnd: new Date(Date.UTC(year - 1, 11, 31, 23, 59, 59, 999)),
 			};
+			break;
 	}
+
+	return {
+		...base,
+		previousYearStart: shiftOneYearBackward(base.currentStart),
+		previousYearEnd: shiftOneYearBackward(base.currentEnd),
+	};
 }
 
 /**

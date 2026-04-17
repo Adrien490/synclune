@@ -112,6 +112,9 @@ export type PeriodBoundaries = {
 	currentEnd: Date;
 	previousStart: Date;
 	previousEnd: Date;
+	/** Same period one year earlier - used for Year-over-Year comparisons */
+	previousYearStart: Date;
+	previousYearEnd: Date;
 };
 
 export type ChartConfig = {

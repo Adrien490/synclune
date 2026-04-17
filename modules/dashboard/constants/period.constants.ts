@@ -31,6 +31,29 @@ export const COMPARISON_LABELS: Record<DashboardPeriod, string> = {
 	year: "vs année dernière",
 };
 
+// ============================================================================
+// COMPARISON MODE (previous period vs same period last year)
+// ============================================================================
+
+export type ComparisonMode = "previous" | "yoy";
+
+export const DEFAULT_COMPARISON_MODE: ComparisonMode = "previous";
+
+export const COMPARISON_MODE_SEARCH_PARAM = "comparison";
+
+export const YOY_COMPARISON_LABELS: Record<DashboardPeriod, string> = {
+	"7d": "vs N-1 (7j)",
+	"30d": "vs N-1 (30j)",
+	month: "vs même mois N-1",
+	quarter: "vs même trimestre N-1",
+	year: "vs année N-1",
+};
+
+export const COMPARISON_MODE_LABELS: Record<ComparisonMode, string> = {
+	previous: "Période précédente",
+	yoy: "Année précédente",
+};
+
 /**
  * Parses and validates a period string from URL search params
  * Returns DEFAULT_PERIOD for invalid or missing values
@@ -38,4 +61,20 @@ export const COMPARISON_LABELS: Record<DashboardPeriod, string> = {
 export function parsePeriod(raw: string | undefined): DashboardPeriod {
 	if (raw && raw in DASHBOARD_PERIODS) return raw as DashboardPeriod;
 	return DEFAULT_PERIOD;
+}
+
+/**
+ * Parses and validates a comparison mode string from URL search params
+ * Returns DEFAULT_COMPARISON_MODE for invalid or missing values
+ */
+export function parseComparisonMode(raw: string | undefined): ComparisonMode {
+	if (raw === "yoy" || raw === "previous") return raw;
+	return DEFAULT_COMPARISON_MODE;
+}
+
+/**
+ * Returns the comparison label for a given period + mode
+ */
+export function getComparisonLabel(period: DashboardPeriod, mode: ComparisonMode): string {
+	return mode === "yoy" ? YOY_COMPARISON_LABELS[period] : COMPARISON_LABELS[period];
 }

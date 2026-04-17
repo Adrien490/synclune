@@ -553,4 +553,67 @@ describe("fetchDashboardKpis", () => {
 
 		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-kpis");
 	});
+
+	// -------------------------------------------------------------------------
+	// Comparison mode (Year-over-Year)
+	// -------------------------------------------------------------------------
+
+	describe("comparisonMode parameter", () => {
+		it("uses previousStart/End when mode is 'previous' (default)", async () => {
+			setupDefaultMocks({ currentTotal: 10000, currentCount: 5, lastTotal: 5000, lastCount: 3 });
+
+			await fetchDashboardKpis("month");
+
+			// Second order.aggregate call uses the "previous" boundaries (last month)
+			const lastMonthCall = mockPrismaOrderAggregate.mock.calls[1]?.[0];
+			expect(lastMonthCall).toBeDefined();
+			const previousStart = lastMonthCall.where.paidAt.gte as Date;
+
+			// Frozen time is 2026-02-15 → previous month start = 2026-01-01
+			expect(previousStart.getUTCFullYear()).toBe(2026);
+			expect(previousStart.getUTCMonth()).toBe(0); // January
+		});
+
+		it("uses previousYearStart/End when mode is 'yoy'", async () => {
+			setupDefaultMocks({ currentTotal: 10000, currentCount: 5, lastTotal: 5000, lastCount: 3 });
+
+			await fetchDashboardKpis("month", "yoy");
+
+			const lastYearCall = mockPrismaOrderAggregate.mock.calls[1]?.[0];
+			expect(lastYearCall).toBeDefined();
+			const previousStart = lastYearCall.where.paidAt.gte as Date;
+
+			// Frozen time is 2026-02-15 → YoY start = 2025-02-01 (Feb 1 last year)
+			expect(previousStart.getUTCFullYear()).toBe(2025);
+			expect(previousStart.getUTCMonth()).toBe(1); // February
+		});
+
+		it("computes evolution against YoY data when mode is 'yoy'", async () => {
+			setupDefaultMocks({
+				currentTotal: 12000,
+				currentCount: 4,
+				currentRefundAmount: 0,
+				lastTotal: 6000,
+				lastCount: 2,
+				lastRefundAmount: 0,
+			});
+
+			const result = await fetchDashboardKpis("month", "yoy");
+
+			// current net = 12000, previous (YoY) net = 6000 → +100%
+			expect(result.monthlyRevenue.evolution).toBeCloseTo(100);
+		});
+
+		it("propagates yoy boundaries to refund and newsletter queries too", async () => {
+			setupDefaultMocks();
+
+			await fetchDashboardKpis("month", "yoy");
+
+			// Second refund.aggregate call should also use 2025-02 boundary
+			const lastYearRefundCall = mockPrismaRefundAggregate.mock.calls[1]?.[0];
+			const refundStart = lastYearRefundCall.where.createdAt.gte as Date;
+
+			expect(refundStart.getUTCFullYear()).toBe(2025);
+		});
+	});
 });

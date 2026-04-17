@@ -7,8 +7,14 @@ import {
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
-import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
-import { DEFAULT_PERIOD } from "@/modules/dashboard/constants/period.constants";
+import type {
+	ComparisonMode,
+	DashboardPeriod,
+} from "@/modules/dashboard/constants/period.constants";
+import {
+	DEFAULT_COMPARISON_MODE,
+	DEFAULT_PERIOD,
+} from "@/modules/dashboard/constants/period.constants";
 import { getPeriodBoundaries } from "@/modules/dashboard/services/period-boundaries.service";
 
 import type { GetKpisReturn } from "../types/dashboard.types";
@@ -31,15 +37,25 @@ function computeEvolution(current: number, previous: number): number {
 /**
  * Fetches dashboard KPIs with cache
  * Consolidated: parallel queries for revenue, orders, conversion, fulfillment, discounts, refunds
+ *
+ * @param period - Period scope (e.g. "month", "year")
+ * @param comparisonMode - "previous" (default) compares vs immediately preceding period.
+ *                        "yoy" compares vs the same period one year earlier.
  */
 export async function fetchDashboardKpis(
 	period: DashboardPeriod = DEFAULT_PERIOD,
+	comparisonMode: ComparisonMode = DEFAULT_COMPARISON_MODE,
 ): Promise<GetKpisReturn> {
 	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.KPIS);
 
-	const { currentStart, previousStart, previousEnd } = getPeriodBoundaries(period);
+	const boundaries = getPeriodBoundaries(period);
+	const currentStart = boundaries.currentStart;
+	const previousStart =
+		comparisonMode === "yoy" ? boundaries.previousYearStart : boundaries.previousStart;
+	const previousEnd =
+		comparisonMode === "yoy" ? boundaries.previousYearEnd : boundaries.previousEnd;
 
 	const [
 		currentMonth,

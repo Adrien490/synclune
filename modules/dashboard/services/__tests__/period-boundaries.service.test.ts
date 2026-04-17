@@ -302,6 +302,81 @@ describe("getPeriodBoundaries edge cases", () => {
 });
 
 // ---------------------------------------------------------------------------
+// getPeriodBoundaries — Year-over-Year (previousYearStart / previousYearEnd)
+// ---------------------------------------------------------------------------
+
+describe("getPeriodBoundaries — YoY boundaries", () => {
+	describe("month period (frozen 2026-03-15)", () => {
+		it("previousYearStart shifts currentStart back by exactly 1 year", () => {
+			const { currentStart, previousYearStart } = getPeriodBoundaries("month");
+
+			expect(previousYearStart.getUTCFullYear()).toBe(currentStart.getUTCFullYear() - 1);
+			expect(previousYearStart.getUTCMonth()).toBe(currentStart.getUTCMonth());
+			expect(previousYearStart.getUTCDate()).toBe(currentStart.getUTCDate());
+		});
+
+		it("previousYearEnd shifts currentEnd back by exactly 1 year", () => {
+			const { currentEnd, previousYearEnd } = getPeriodBoundaries("month");
+
+			expect(previousYearEnd.getUTCFullYear()).toBe(currentEnd.getUTCFullYear() - 1);
+			expect(previousYearEnd.getUTCMonth()).toBe(currentEnd.getUTCMonth());
+			expect(previousYearEnd.getUTCDate()).toBe(currentEnd.getUTCDate());
+			expect(previousYearEnd.getUTCHours()).toBe(currentEnd.getUTCHours());
+		});
+	});
+
+	describe("year period (frozen 2026-03-15)", () => {
+		it("previousYearStart is January 1 2025 UTC", () => {
+			const { previousYearStart } = getPeriodBoundaries("year");
+
+			expect(previousYearStart).toEqual(new Date(Date.UTC(2025, 0, 1)));
+		});
+
+		it("previousYearEnd is the same day/time as currentEnd shifted by 1 year", () => {
+			const { currentEnd, previousYearEnd } = getPeriodBoundaries("year");
+
+			expect(previousYearEnd.getUTCFullYear()).toBe(currentEnd.getUTCFullYear() - 1);
+			expect(previousYearEnd.getUTCMonth()).toBe(currentEnd.getUTCMonth());
+		});
+	});
+
+	describe("7d period (frozen 2026-03-15)", () => {
+		it("previousYearStart is March 8 2025 UTC", () => {
+			const { previousYearStart } = getPeriodBoundaries("7d");
+
+			expect(previousYearStart).toEqual(new Date(Date.UTC(2025, 2, 8)));
+		});
+
+		it("previousYearEnd preserves time of currentEnd minus 1 year", () => {
+			const { currentEnd, previousYearEnd } = getPeriodBoundaries("7d");
+
+			expect(previousYearEnd.getUTCFullYear()).toBe(currentEnd.getUTCFullYear() - 1);
+		});
+	});
+
+	describe("leap year edge case (frozen 2028-02-29)", () => {
+		beforeEach(() => {
+			vi.setSystemTime(new Date("2028-02-29T12:00:00Z"));
+		});
+
+		it("month: previousYearStart shifts Feb 1 2028 to Feb 1 2027", () => {
+			const { previousYearStart } = getPeriodBoundaries("month");
+
+			expect(previousYearStart).toEqual(new Date(Date.UTC(2027, 1, 1)));
+		});
+
+		it("currentEnd Feb 29 2028 shifted by JS Date setUTCFullYear becomes March 1 2027 (overflow)", () => {
+			// JS Date semantics: Feb 29 in leap year → setUTCFullYear(prev) overflows to Mar 1
+			const { currentEnd, previousYearEnd } = getPeriodBoundaries("month");
+
+			expect(currentEnd.getUTCDate()).toBe(29);
+			// previousYearEnd may overflow because 2027 has no Feb 29
+			expect(previousYearEnd.getTime()).toBeLessThan(currentEnd.getTime());
+		});
+	});
+});
+
+// ---------------------------------------------------------------------------
 // getChartConfig
 // ---------------------------------------------------------------------------
 

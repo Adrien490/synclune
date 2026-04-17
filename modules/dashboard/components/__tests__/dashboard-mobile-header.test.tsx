@@ -23,6 +23,12 @@ vi.mock("../period-selector", () => ({
 	),
 }));
 
+vi.mock("../comparison-mode-selector", () => ({
+	ComparisonModeSelector: ({ fullWidth }: { fullWidth?: boolean }) => (
+		<div data-testid="comparison-mode-selector" data-full-width={fullWidth} />
+	),
+}));
+
 vi.mock("../refresh-dashboard-button", () => ({
 	RefreshDashboardButton: ({ variant }: { variant?: string }) => (
 		<button data-testid="refresh-dashboard-button" data-variant={variant}>
@@ -31,16 +37,32 @@ vi.mock("../refresh-dashboard-button", () => ({
 	),
 }));
 
-vi.mock("@/modules/dashboard/constants/period.constants", () => ({
-	DEFAULT_PERIOD: "month",
-	PERIOD_SEARCH_PARAM: "period",
+const { COMPARISON_LABELS, YOY_COMPARISON_LABELS } = vi.hoisted(() => ({
 	COMPARISON_LABELS: {
 		"7d": "vs 7j précédents",
 		"30d": "vs 30j précédents",
 		month: "vs mois dernier",
 		quarter: "vs trimestre dernier",
 		year: "vs année dernière",
-	},
+	} as Record<string, string>,
+	YOY_COMPARISON_LABELS: {
+		"7d": "vs N-1 (7j)",
+		"30d": "vs N-1 (30j)",
+		month: "vs même mois N-1",
+		quarter: "vs même trimestre N-1",
+		year: "vs année N-1",
+	} as Record<string, string>,
+}));
+
+vi.mock("@/modules/dashboard/constants/period.constants", () => ({
+	DEFAULT_PERIOD: "month",
+	PERIOD_SEARCH_PARAM: "period",
+	DEFAULT_COMPARISON_MODE: "previous",
+	COMPARISON_MODE_SEARCH_PARAM: "comparison",
+	COMPARISON_LABELS,
+	YOY_COMPARISON_LABELS,
+	getComparisonLabel: (period: string, mode: "previous" | "yoy"): string =>
+		mode === "yoy" ? YOY_COMPARISON_LABELS[period] : COMPARISON_LABELS[period],
 }));
 
 import { DashboardMobileHeader } from "../dashboard-mobile-header";
@@ -69,6 +91,29 @@ describe("DashboardMobileHeader", () => {
 		render(<DashboardMobileHeader />);
 
 		expect(screen.getByTestId("period-selector")).toBeInTheDocument();
+	});
+
+	it("renders the comparison mode selector", () => {
+		render(<DashboardMobileHeader />);
+
+		expect(screen.getByTestId("comparison-mode-selector")).toBeInTheDocument();
+	});
+
+	it("renders ComparisonModeSelector with fullWidth=true", () => {
+		render(<DashboardMobileHeader />);
+
+		const selector = screen.getByTestId("comparison-mode-selector");
+		expect(selector).toHaveAttribute("data-full-width", "true");
+	});
+
+	it("uses YoY label when comparison search param is 'yoy'", () => {
+		mockGet.mockImplementation((key: string) =>
+			key === "comparison" ? "yoy" : key === "period" ? "month" : null,
+		);
+
+		render(<DashboardMobileHeader />);
+
+		expect(screen.getByText("vs même mois N-1")).toBeInTheDocument();
 	});
 
 	it("renders the refresh button with outline variant", () => {
