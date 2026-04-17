@@ -10,12 +10,14 @@ vi.mock("next/link", () => ({
 		href,
 		children,
 		className,
+		"aria-label": ariaLabel,
 	}: {
 		href: string;
 		children: React.ReactNode;
 		className?: string;
+		"aria-label"?: string;
 	}) => (
-		<a href={href} className={className}>
+		<a href={href} className={className} aria-label={ariaLabel}>
 			{children}
 		</a>
 	),
@@ -27,10 +29,6 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: vi.fn((cents: number, _opts?: unknown) => `${(cents / 100).toFixed(2)} €`),
-}));
-
-vi.mock("@/shared/components/animations/reveal", () => ({
-	Reveal: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock("../collection-images-grid", () => ({
@@ -162,5 +160,60 @@ describe("CollectionCard", () => {
 	it("wraps content in an article element", () => {
 		const { container } = renderCard();
 		expect(container.querySelector("article")).not.toBeNull();
+	});
+
+	describe("stretched-link pattern (P1.4)", () => {
+		it("link aria-label matches the collection name (clean SR announcement)", () => {
+			renderCard();
+			const link = screen.getByRole("link", { name: "Bagues Artisanales" });
+			expect(link).toBeInTheDocument();
+			expect(link.getAttribute("href")).toBe("/collections/bagues-artisanales");
+		});
+
+		it("link has after:inset-0 + after:z-10 classes to cover the whole article", () => {
+			renderCard();
+			const link = screen.getByRole("link", { name: "Bagues Artisanales" });
+			expect(link.className).toMatch(/after:inset-0/);
+			expect(link.className).toMatch(/after:z-10/);
+		});
+
+		it("link has focus-ring utility applied (centralized focus style)", () => {
+			renderCard();
+			const link = screen.getByRole("link", { name: "Bagues Artisanales" });
+			expect(link.className).toMatch(/focus-ring/);
+		});
+	});
+
+	describe("title attribute (P1.6)", () => {
+		it("sets title attribute on heading for tooltip on truncation", () => {
+			renderCard({ name: "Collection Noël 2026 Édition Limitée" });
+			const heading = screen.getByRole("heading");
+			expect(heading.getAttribute("title")).toBe("Collection Noël 2026 Édition Limitée");
+		});
+	});
+
+	describe("heading levels", () => {
+		it("renders h4 heading when headingLevel is 'h4'", () => {
+			renderCard({ headingLevel: "h4" });
+			expect(screen.getByRole("heading", { level: 4 })).toBeInTheDocument();
+		});
+	});
+
+	describe("productCount prominence (P2.2)", () => {
+		it("renders productCount with text-sm font-medium (promoted from text-xs muted)", () => {
+			renderCard({ productCount: 42 });
+			const count = screen.getByText("42 articles");
+			expect(count.className).toMatch(/text-sm/);
+			expect(count.className).toMatch(/font-medium/);
+		});
+	});
+
+	describe("description visibility (P3.3)", () => {
+		it("description uses hidden sm:block (desktop-only)", () => {
+			renderCard({ description: "Bijoux faits à la main" });
+			const desc = screen.getByText("Bijoux faits à la main");
+			expect(desc.className).toMatch(/hidden/);
+			expect(desc.className).toMatch(/sm:block/);
+		});
 	});
 });
