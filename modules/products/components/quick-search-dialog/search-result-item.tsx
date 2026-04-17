@@ -59,6 +59,8 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 				href={`/creations/${product.slug}`}
 				onClick={onSelect}
 				data-active={undefined}
+				role="option"
+				aria-selected={false}
 				className={cn(
 					"group/result flex items-center gap-3 rounded-xl px-3 py-2.5",
 					"hover:bg-muted transition-colors",

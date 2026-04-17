@@ -5,15 +5,29 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsOpen, mockUseSheet, mockUseReducedMotion } = vi.hoisted(() => {
-	const mockClose = vi.fn();
-	const mockIsOpen = { value: true };
-	return {
-		mockIsOpen,
-		mockUseSheet: vi.fn(() => ({ isOpen: mockIsOpen.value, close: mockClose })),
-		mockUseReducedMotion: vi.fn(() => false),
-	};
-});
+const { mockIsOpen, mockUseSheet, mockUseReducedMotion, mockIsMobile, mockHaptic } = vi.hoisted(
+	() => {
+		const mockClose = vi.fn();
+		const mockIsOpen = { value: true };
+		const mockIsMobile = { value: false };
+		return {
+			mockIsOpen,
+			mockIsMobile,
+			mockUseSheet: vi.fn(() => ({ isOpen: mockIsOpen.value, close: mockClose })),
+			mockUseReducedMotion: vi.fn(() => false),
+			mockHaptic: vi.fn(),
+		};
+	},
+);
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.value,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
+}));
 
 // ============================================================================
 // MODULE MOCKS
@@ -86,6 +100,52 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		<div data-testid="sheet-footer" className={className}>
 			{children}
 		</div>
+	),
+}));
+
+// Mock Drawer UI — render children in simplified wrappers (mobile branch)
+vi.mock("@/shared/components/ui/drawer", () => ({
+	Drawer: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="drawer">{children}</div>
+	),
+	DrawerContent: ({
+		children,
+		"aria-busy": ariaBusy,
+		"data-pending": dataPending,
+		className,
+	}: {
+		children: React.ReactNode;
+		"aria-busy"?: boolean;
+		"data-pending"?: string;
+		className?: string;
+	}) => (
+		<div
+			data-testid="drawer-content"
+			aria-busy={ariaBusy}
+			data-pending={dataPending}
+			className={className}
+		>
+			{children}
+		</div>
+	),
+	DrawerHeader: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+		<div data-testid="drawer-header" className={className}>
+			{children}
+		</div>
+	),
+	DrawerTitle: ({ children }: { children: React.ReactNode }) => (
+		<h2 data-testid="drawer-title">{children}</h2>
+	),
+	DrawerDescription: ({
+		children,
+		className,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<p data-testid="drawer-description" className={className}>
+			{children}
+		</p>
 	),
 }));
 
@@ -212,6 +272,7 @@ afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	mockIsOpen.value = true;
+	mockIsMobile.value = false;
 });
 
 function createCartItem(overrides: Partial<Record<string, unknown>> = {}) {
@@ -469,6 +530,39 @@ describe("CartSheet", () => {
 
 			expect(screen.getByRole("alert")).toBeInTheDocument();
 			expect(screen.getByTestId("cart-footer")).toHaveAttribute("data-stock-issues", "true");
+		});
+	});
+
+	// ------------------------------------------------------------------
+	// Responsive shell: Sheet (desktop) vs Drawer (mobile)
+	// ------------------------------------------------------------------
+	describe("responsive shell", () => {
+		it("renders Sheet (right) on desktop viewport", () => {
+			mockIsMobile.value = false;
+			render(<CartSheet cart={createCart([createCartItem()])} />);
+			expect(screen.getByTestId("sheet")).toBeInTheDocument();
+			expect(screen.queryByTestId("drawer")).not.toBeInTheDocument();
+		});
+
+		it("renders Drawer (bottom) on mobile viewport", () => {
+			mockIsMobile.value = true;
+			render(<CartSheet cart={createCart([createCartItem()])} />);
+			expect(screen.getByTestId("drawer")).toBeInTheDocument();
+			expect(screen.queryByTestId("sheet")).not.toBeInTheDocument();
+		});
+
+		it("keeps the same title and subtotal in both shells", () => {
+			mockIsMobile.value = true;
+			render(<CartSheet cart={createCart([createCartItem({ quantity: 2 })])} />);
+			expect(screen.getByTestId("drawer-title").textContent).toContain("Mon panier");
+			expect(screen.getByTestId("drawer-title").textContent).toContain("(2)");
+		});
+
+		it("renders empty state under the Drawer shell on mobile", () => {
+			mockIsMobile.value = true;
+			render(<CartSheet cart={null} />);
+			expect(screen.getByTestId("drawer")).toBeInTheDocument();
+			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
 		});
 	});
 });

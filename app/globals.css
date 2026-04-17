@@ -38,6 +38,18 @@ html {
 	}
 }
 
+/* Admin layout — publie la hauteur du header admin pour les sticky sub-bars
+ * (StickyActionBar). Mobile = AdminMobileHeader (h-14), Desktop = DashboardHeader (h-16). */
+[data-admin-layout] {
+	--admin-header-height: 3.5rem;
+}
+
+@media (min-width: 768px) {
+	[data-admin-layout] {
+		--admin-header-height: 4rem;
+	}
+}
+
 @theme inline {
 	/* Breakpoint personnalisé pour très petits écrans (iPhone SE, etc.) */
 	--breakpoint-xs: 375px;

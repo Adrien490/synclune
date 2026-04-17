@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
+
 import { FOCUSABLE_SELECTOR } from "./constants";
 
 export function useKeyboardNavigation() {
@@ -104,6 +106,7 @@ export function useKeyboardNavigation() {
 
 		if (nextIndex !== null) {
 			setActiveIndex(nextIndex);
+			triggerHaptic("selection");
 			focusables[nextIndex]?.scrollIntoView({ block: "nearest" });
 		}
 	};

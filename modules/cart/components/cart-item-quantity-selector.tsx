@@ -4,6 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { Input } from "@/shared/components/ui/input";
 import { useUpdateCartItem } from "@/modules/cart/hooks/use-update-cart-item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Minus, Plus } from "lucide-react";
 import { useOptimistic, useTransition } from "react";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
@@ -33,13 +34,20 @@ export function CartItemQuantitySelector({
 	const [isPending, startTransition] = useTransition();
 	const [optimisticQuantity, setOptimisticQuantity] = useOptimistic(currentQuantity);
 	const cartOptimistic = useCartOptimisticSafe();
+	const haptic = useHaptic();
 
 	const { action, isPending: isActionPending } = useUpdateCartItem();
 
 	const handleQuantityChange = (newQuantity: number) => {
 		if (isNaN(newQuantity)) return;
 		const clampedQuantity = Math.max(1, Math.min(newQuantity, maxQuantity));
-		if (clampedQuantity === optimisticQuantity) return;
+		if (clampedQuantity === optimisticQuantity) {
+			// Value was clamped to current (e.g. user typed over max/under min)
+			// Signal the limit with a short error pulse instead of silently ignoring.
+			if (newQuantity !== optimisticQuantity) haptic("error");
+			return;
+		}
+		haptic("selection");
 
 		// Calculer le delta pour le badge navbar
 		const delta = clampedQuantity - optimisticQuantity;

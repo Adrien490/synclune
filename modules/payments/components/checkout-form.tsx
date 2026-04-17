@@ -166,7 +166,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				const shippingInfo = getShippingInfo(country, postalCode as string);
 
 				return (
-					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
+					<div className="grid gap-6 pb-32 lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0">
 						<div className="space-y-8">
 							<h1 ref={headingRef} tabIndex={-1} className="sr-only">
 								Paiement sécurisé

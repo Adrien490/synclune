@@ -2,8 +2,8 @@
 
 import { CircleCheck } from "lucide-react";
 
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -25,12 +25,10 @@ interface UserMobileItemProps {
 
 export function UserMobileItem({ user }: UserMobileItemProps) {
 	const { open } = useDialog<UserItemDrawerData>(USER_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const displayName = user.name ?? "Utilisateur";
 	const orderCount = user._count.orders;
 
 	const handleOpen = () => {
-		haptic("selection");
 		open({
 			user: {
 				id: user.id,
@@ -47,12 +45,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 	};
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
-			aria-label={`Ouvrir la fiche de ${displayName}`}
-		>
+		<SelectableMobileCard itemId={user.id} ariaLabel={`Client ${displayName}`} onOpen={handleOpen}>
 			<Item
 				variant="outline"
 				size="sm"
@@ -78,6 +71,6 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</SelectableMobileCard>
 	);
 }

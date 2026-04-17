@@ -81,6 +81,8 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			/>
 
 			<div className="space-y-6">
+				<ColorsBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
 				>
@@ -135,7 +137,6 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			<ColorFormDialog />
 			<DeleteColorAlertDialog />
 			<ColorItemDrawer />
-			<ColorsBottomBar />
 		</>
 	);
 }

@@ -13,6 +13,7 @@ import {
 import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
@@ -35,6 +36,7 @@ interface RemoveCartItemData {
 export function RemoveCartItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveCartItemData>(REMOVE_CART_ITEM_DIALOG_ID);
 	const cartOptimistic = useCartOptimisticSafe();
+	const haptic = useHaptic();
 
 	const { action, isPending } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
@@ -60,6 +62,7 @@ export function RemoveCartItemAlertDialog() {
 	// Handler pour soumettre avec optimistic update
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		haptic("error");
 		const formData = new FormData(e.currentTarget);
 		const cartItemId = removeDialog.data?.cartItemId;
 

@@ -5,8 +5,11 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
+import { SwipeableCard } from "@/shared/components/swipeable-card";
+import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
+import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 
 import type { CartItem } from "../types/cart.types";
 import {
@@ -18,19 +21,25 @@ import {
 	getCartItemDiscountPercent,
 	getCartItemPrimaryImage,
 } from "../services/cart-item.service";
+import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 interface CartSheetItemRowProps {
 	item: CartItem;
 	onClose?: () => void;
+	/**
+	 * Mobile viewport → enables swipe-to-delete gesture via SwipeableCard wrapper.
+	 * Desktop keeps the click-remove button only.
+	 */
+	isMobile?: boolean;
 }
 
 /**
  * Ligne d'article version compacte pour le cart sheet
  * Layout vertical optimise pour la largeur du sheet
  */
-export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
+export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetItemRowProps) {
 	const subtotal = getCartItemSubtotal(item);
 	const isOutOfStock = isCartItemOutOfStock(item);
 	const isInactive = isCartItemInactive(item);
@@ -38,6 +47,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 	const hasDiscount = hasCartItemDiscount(item);
 	const discountPercent = getCartItemDiscountPercent(item);
 	const primaryImage = getCartItemPrimaryImage(item);
+	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 
 	const ariaLabelParts = [
 		item.sku.product.title,
@@ -47,7 +57,15 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 		`${formatEuro(getCartItemSubtotal(item))}`,
 	].filter(Boolean);
 
-	return (
+	const handleSwipeRemove = () => {
+		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
+			cartItemId: item.id,
+			itemName: item.sku.product.title,
+			quantity: item.quantity,
+		});
+	};
+
+	const article = (
 		<article
 			className={cn(
 				"group/item rounded-lg border p-3.5",
@@ -221,7 +239,7 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 					/>
 				)}
 
-				{/* Supprimer - à droite */}
+				{/* Supprimer - à droite (fallback keyboard/desktop — WCAG 2.1 AA) */}
 				<CartItemRemoveButton
 					cartItemId={item.id}
 					itemName={item.sku.product.title}
@@ -229,5 +247,20 @@ export function CartSheetItemRow({ item, onClose }: CartSheetItemRowProps) {
 				/>
 			</div>
 		</article>
+	);
+
+	if (!isMobile) return article;
+
+	return (
+		<SwipeableCard
+			className="rounded-lg"
+			leftAction={{
+				children: <Trash2 className="text-destructive-foreground size-5" aria-hidden="true" />,
+				label: `Supprimer ${item.sku.product.title} du panier`,
+				onAction: handleSwipeRemove,
+			}}
+		>
+			{article}
+		</SwipeableCard>
 	);
 }

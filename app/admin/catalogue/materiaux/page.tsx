@@ -84,6 +84,8 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			/>
 
 			<div className="space-y-6">
+				<MaterialsBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
 				>
@@ -138,7 +140,6 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			<MaterialFormDialog />
 			<DeleteMaterialAlertDialog />
 			<MaterialItemDrawer />
-			<MaterialsBottomBar />
 		</>
 	);
 }

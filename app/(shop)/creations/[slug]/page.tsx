@@ -19,7 +19,6 @@ import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { ProductDetails } from "@/modules/products/components/product-details";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
-import { StickyCartCTA } from "@/modules/products/components/sticky-cart-cta";
 
 import { RelatedProducts } from "@/modules/products/components/related-products";
 import { RelatedProductsSkeleton } from "@/modules/products/components/related-products-skeleton";
@@ -249,11 +248,6 @@ export default async function ProductPage({
 					</div>
 				</div>
 			</div>
-
-			{/* Sticky CTA mobile - apparait quand le bouton principal sort du viewport */}
-			<Suspense fallback={null}>
-				<StickyCartCTA product={product} defaultSku={selectedSku} />
-			</Suspense>
 		</div>
 	);
 }

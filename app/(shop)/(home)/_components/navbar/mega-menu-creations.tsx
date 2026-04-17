@@ -17,6 +17,7 @@ interface MegaMenuCreationsProps {
 
 export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCreationsProps) {
 	const featuredHeadingId = useId();
+	const regionHeadingId = useId();
 
 	if (!productTypes || productTypes.length === 0) {
 		return null;
@@ -25,7 +26,10 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 	const hasProducts = featuredProducts && featuredProducts.length > 0;
 
 	return (
-		<div className="py-6">
+		<div className="py-6" role="region" aria-labelledby={regionHeadingId}>
+			<h2 id={regionHeadingId} className="sr-only">
+				Créations
+			</h2>
 			<div className={cn("flex gap-8", hasProducts && "flex-row")}>
 				{/* Left zone: categories */}
 				<div className={cn(hasProducts ? "flex-1" : "w-full")}>
@@ -78,6 +82,19 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 												blurDataURL={product.blurDataUrl ?? undefined}
 												aria-hidden="true"
 											/>
+											{product.isNew && (
+												<span
+													className={cn(
+														"absolute top-1 left-1 z-10",
+														"rounded-full px-1.5 py-0.5",
+														"bg-primary/90 text-primary-foreground",
+														"text-[0.625rem] leading-none font-medium tracking-wide",
+														"shadow-sm backdrop-blur-sm",
+													)}
+												>
+													Nouveau
+												</span>
+											)}
 										</div>
 										<div className="min-w-0">
 											<p className="text-foreground line-clamp-1 text-xs font-medium">

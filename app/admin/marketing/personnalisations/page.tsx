@@ -70,6 +70,8 @@ export default async function CustomizationsPage({ searchParams }: Customization
 			<PageHeader variant="compact" title="Personnalisations" className="hidden md:block" />
 
 			<div className="space-y-6">
+				<CustomizationsBottomBar />
+
 				{/* Toolbar desktop */}
 				<Suspense fallback={<ToolbarSkeleton selectCount={2} className="hidden md:flex" />}>
 					<Toolbar
@@ -117,9 +119,6 @@ export default async function CustomizationsPage({ searchParams }: Customization
 					<CustomizationsDataTable requestsPromise={requestsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
-
-			{/* Bottom bar mobile (tri, recherche, filtres) */}
-			<CustomizationsBottomBar />
 		</>
 	);
 }

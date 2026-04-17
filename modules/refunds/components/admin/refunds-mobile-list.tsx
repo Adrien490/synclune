@@ -4,6 +4,8 @@ import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
+import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
 import {
 	Item,
 	ItemActions,
@@ -57,46 +59,55 @@ export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileList
 			<ItemGroup aria-label="Remboursements" className="gap-2">
 				{refunds.map((refund) => (
 					<div key={refund.id} role="listitem">
-						<Item
-							variant="outline"
-							size="sm"
-							className="gap-3"
-							aria-roledescription="carte remboursement"
+						<SelectableMobileCard
+							itemId={refund.id}
+							ariaLabel={`Remboursement ${refund.order.orderNumber}`}
 						>
-							<ItemContent className="min-w-0">
-								<ItemTitle>
-									<Link
-										href={`/admin/ventes/commandes/${refund.order.id}`}
-										className="truncate font-semibold hover:underline"
-									>
-										{refund.order.orderNumber}
-									</Link>
-									<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
-										{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
-									</Badge>
-								</ItemTitle>
-								<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-									<span>{refund.order.customerName || refund.order.customerEmail}</span>
-									<span aria-hidden="true">·</span>
-									<span>{REFUND_REASON_LABELS[refund.reason as RefundReason]}</span>
-									<span aria-hidden="true">·</span>
-									<span className="font-medium">{formatEuro(refund.amount)}</span>
-									<span aria-hidden="true">·</span>
-									<span>{formatDateShort(refund.createdAt)}</span>
-								</ItemDescription>
-							</ItemContent>
-							<ItemActions>
-								<RefundRowActions
-									refund={{
-										id: refund.id,
-										status: refund.status as RefundStatus,
-										amount: refund.amount,
-										orderId: refund.order.id,
-										orderNumber: refund.order.orderNumber,
-									}}
-								/>
-							</ItemActions>
-						</Item>
+							<Item
+								variant="outline"
+								size="sm"
+								className="gap-3"
+								aria-roledescription="carte remboursement"
+							>
+								<ItemContent className="min-w-0">
+									<ItemTitle>
+										<Link
+											href={`/admin/ventes/commandes/${refund.order.id}`}
+											onClick={(e) => e.stopPropagation()}
+											onPointerDown={(e) => e.stopPropagation()}
+											className="truncate font-semibold hover:underline"
+										>
+											{refund.order.orderNumber}
+										</Link>
+										<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
+											{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
+										</Badge>
+									</ItemTitle>
+									<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+										<span>{refund.order.customerName || refund.order.customerEmail}</span>
+										<span aria-hidden="true">·</span>
+										<span>{REFUND_REASON_LABELS[refund.reason as RefundReason]}</span>
+										<span aria-hidden="true">·</span>
+										<span className="font-medium">{formatEuro(refund.amount)}</span>
+										<span aria-hidden="true">·</span>
+										<span>{formatDateShort(refund.createdAt)}</span>
+									</ItemDescription>
+								</ItemContent>
+								<ItemActions>
+									<StopEventPropagation>
+										<RefundRowActions
+											refund={{
+												id: refund.id,
+												status: refund.status as RefundStatus,
+												amount: refund.amount,
+												orderId: refund.order.id,
+												orderNumber: refund.order.orderNumber,
+											}}
+										/>
+									</StopEventPropagation>
+								</ItemActions>
+							</Item>
+						</SelectableMobileCard>
 					</div>
 				))}
 			</ItemGroup>

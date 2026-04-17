@@ -4,6 +4,7 @@ import { SheetFooter } from "@/shared/components/ui/sheet";
 import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AnimatedNumber } from "@/shared/components/animations/animated-number";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import Link from "next/link";
 
 interface CartSheetFooterProps {
@@ -21,8 +22,15 @@ export function CartSheetFooter({
 	hasStockIssues,
 	onClose,
 }: CartSheetFooterProps) {
+	const haptic = useHaptic();
+
+	const handleCheckoutClick = () => {
+		haptic("medium");
+		onClose();
+	};
+
 	return (
-		<SheetFooter className="mt-auto shrink-0 border-t px-6 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+		<SheetFooter className="mt-auto shrink-0 border-t px-6 pt-3 pb-4">
 			<div className="w-full space-y-2">
 				{/* Subtotal */}
 				<div className="flex items-center justify-between">
@@ -58,7 +66,7 @@ export function CartSheetFooter({
 						size="lg"
 						className="w-full shadow-md transition-shadow group-has-[[data-pending]]/sheet:pointer-events-none group-has-[[data-pending]]/sheet:opacity-50 hover:shadow-lg"
 					>
-						<Link href="/paiement" onClick={onClose}>
+						<Link href="/paiement" onClick={handleCheckoutClick}>
 							Passer commande
 						</Link>
 					</Button>

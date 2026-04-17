@@ -133,6 +133,8 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 			/>
 
 			<div className="space-y-6">
+				<CollectionsBottomBar />
+
 				{/* Onglets de statut */}
 				<div className="hidden md:block">
 					<CollectionStatusNavigation currentStatus={status} searchParams={params} />
@@ -188,9 +190,6 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 					<CollectionsDataTable collectionsPromise={collectionsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
-
-			{/* Bottom bar mobile */}
-			<CollectionsBottomBar />
 		</>
 	);
 }

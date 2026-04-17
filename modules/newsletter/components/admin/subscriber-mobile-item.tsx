@@ -4,8 +4,8 @@ import { CircleCheck, CircleX, Clock } from "lucide-react";
 
 import type { NewsletterStatus } from "@/app/generated/prisma/client";
 
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -23,19 +23,16 @@ interface SubscriberMobileItemProps {
 
 export function SubscriberMobileItem({ subscriber }: SubscriberMobileItemProps) {
 	const { open } = useDialog<SubscriberItemDrawerData>(SUBSCRIBER_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 
 	const handleOpen = () => {
-		haptic("selection");
 		open({ subscriber });
 	};
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
-			aria-label={`Ouvrir la fiche de ${subscriber.email}`}
+		<SelectableMobileCard
+			itemId={subscriber.id}
+			ariaLabel={`Abonné ${subscriber.email}`}
+			onOpen={handleOpen}
 		>
 			<Item
 				variant="outline"
@@ -68,6 +65,6 @@ export function SubscriberMobileItem({ subscriber }: SubscriberMobileItemProps) 
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</SelectableMobileCard>
 	);
 }

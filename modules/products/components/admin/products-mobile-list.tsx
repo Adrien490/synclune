@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
+import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
 import {
 	Item,
 	ItemActions,
@@ -113,73 +115,81 @@ export function ProductsMobileList({
 
 					return (
 						<div key={product.id} role="listitem">
-							<Item
-								variant="outline"
-								size="sm"
-								className="gap-3"
-								aria-roledescription="carte produit"
-							>
-								{/* Image miniature */}
-								{primaryImage ? (
-									<Link
-										href={`/admin/catalogue/produits/${product.slug}/modifier`}
-										className="shrink-0"
-										tabIndex={-1}
-										aria-hidden="true"
-									>
-										<Image
-											src={primaryImage.thumbnailUrl ?? primaryImage.url}
-											alt=""
-											width={48}
-											height={48}
-											sizes="48px"
-											className="size-12 rounded-md border object-cover"
-											{...(primaryImage.blurDataUrl
-												? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
-												: {})}
-										/>
-									</Link>
-								) : (
-									<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-										<Package className="text-muted-foreground size-5" aria-hidden="true" />
-									</div>
-								)}
-
-								<ItemContent className="min-w-0">
-									<ItemTitle>
+							<SelectableMobileCard itemId={product.id} ariaLabel={`Produit ${product.title}`}>
+								<Item
+									variant="outline"
+									size="sm"
+									className="gap-3"
+									aria-roledescription="carte produit"
+								>
+									{/* Image miniature */}
+									{primaryImage ? (
 										<Link
 											href={`/admin/catalogue/produits/${product.slug}/modifier`}
-											className="truncate font-semibold hover:underline"
+											className="shrink-0"
+											tabIndex={-1}
+											aria-hidden="true"
+											onClick={(e) => e.stopPropagation()}
+											onPointerDown={(e) => e.stopPropagation()}
 										>
-											{product.title}
+											<Image
+												src={primaryImage.thumbnailUrl ?? primaryImage.url}
+												alt=""
+												width={48}
+												height={48}
+												sizes="48px"
+												className="size-12 rounded-md border object-cover"
+												{...(primaryImage.blurDataUrl
+													? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
+													: {})}
+											/>
 										</Link>
-										<Badge variant={status.variant}>{status.label}</Badge>
-									</ItemTitle>
-									<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-										<span className="font-medium">{formatPriceDisplay(priceRange)}</span>
-										<span aria-hidden="true">·</span>
-										<span>{totalStock} en stock</span>
-										<span aria-hidden="true">·</span>
-										<span>
-											{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
-										</span>
-										{product.type && (
-											<>
-												<span aria-hidden="true">·</span>
-												<span>{product.type.label}</span>
-											</>
-										)}
-									</ItemDescription>
-								</ItemContent>
-								<ItemActions>
-									<ProductRowActions
-										productId={product.id}
-										productSlug={product.slug}
-										productTitle={product.title}
-										productStatus={product.status}
-									/>
-								</ItemActions>
-							</Item>
+									) : (
+										<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
+											<Package className="text-muted-foreground size-5" aria-hidden="true" />
+										</div>
+									)}
+
+									<ItemContent className="min-w-0">
+										<ItemTitle>
+											<Link
+												href={`/admin/catalogue/produits/${product.slug}/modifier`}
+												onClick={(e) => e.stopPropagation()}
+												onPointerDown={(e) => e.stopPropagation()}
+												className="truncate font-semibold hover:underline"
+											>
+												{product.title}
+											</Link>
+											<Badge variant={status.variant}>{status.label}</Badge>
+										</ItemTitle>
+										<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+											<span className="font-medium">{formatPriceDisplay(priceRange)}</span>
+											<span aria-hidden="true">·</span>
+											<span>{totalStock} en stock</span>
+											<span aria-hidden="true">·</span>
+											<span>
+												{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
+											</span>
+											{product.type && (
+												<>
+													<span aria-hidden="true">·</span>
+													<span>{product.type.label}</span>
+												</>
+											)}
+										</ItemDescription>
+									</ItemContent>
+									<ItemActions>
+										<StopEventPropagation>
+											<ProductRowActions
+												productId={product.id}
+												productSlug={product.slug}
+												productTitle={product.title}
+												productStatus={product.status}
+											/>
+										</StopEventPropagation>
+									</ItemActions>
+								</Item>
+							</SelectableMobileCard>
 						</div>
 					);
 				})}

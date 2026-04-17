@@ -106,6 +106,8 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 		<>
 			<PageHeader variant="compact" title="Avis clients" className="hidden md:block" />
 
+			<ReviewsBottomBar />
+
 			{/* Statistiques */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<div className="bg-card rounded-lg border p-6">
@@ -214,9 +216,6 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			<Suspense fallback={<ReviewsDataTableSkeleton />}>
 				<ReviewsDataTable reviewsPromise={reviewsPromise} perPage={perPage} />
 			</Suspense>
-
-			{/* Bottom bar mobile */}
-			<ReviewsBottomBar />
 		</>
 	);
 }

@@ -87,6 +87,8 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
 			<div className="space-y-6">
+				<RefundsBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
 				>
@@ -130,9 +132,6 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 					<RefundsDataTable refundsPromise={refundsPromise} perPage={perPage} />
 				</Suspense>
 			</div>
-
-			{/* Bottom bar mobile */}
-			<RefundsBottomBar />
 
 			{/* Alert Dialogs globaux */}
 			<ApproveRefundAlertDialog />

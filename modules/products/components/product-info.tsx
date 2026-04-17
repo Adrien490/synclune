@@ -26,10 +26,7 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 			{/* Titre avec boutons share + wishlist */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="flex-1 space-y-2">
-					<p
-						className="text-foreground line-clamp-2 text-3xl/10 font-medium tracking-normal"
-						itemProp="name"
-					>
+					<p className="text-foreground text-3xl/10 font-medium tracking-normal" itemProp="name">
 						{product.title}
 					</p>
 					{/* Badge note cliquable - scrolle vers les avis (mobile) */}

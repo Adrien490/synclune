@@ -185,5 +185,15 @@ describe("DesktopNav", () => {
 
 			expect(mockPush).not.toHaveBeenCalled();
 		});
+
+		it("does not navigate on mouse click (opens dropdown via Radix instead)", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			fireEvent.click(trigger);
+
+			expect(mockPush).not.toHaveBeenCalled();
+		});
 	});
 });

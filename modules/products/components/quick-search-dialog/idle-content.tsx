@@ -63,6 +63,8 @@ export function IdleContent({
 										<Link
 											href={`/creations/${product.slug}`}
 											onClick={handleNavigateClose}
+											role="option"
+											aria-selected={false}
 											className={cn(
 												"flex w-24 shrink-0 flex-col items-center gap-2",
 												"rounded-xl p-2 transition-colors",
@@ -136,6 +138,8 @@ export function IdleContent({
 												onClick={() => onRecentSearch(term)}
 												disabled={isPending}
 												data-active={undefined}
+												role="option"
+												aria-selected={false}
 												className={cn(
 													"flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-medium transition-all",
 													"hover:bg-muted",

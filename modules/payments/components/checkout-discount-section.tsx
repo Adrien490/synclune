@@ -4,6 +4,7 @@ import type { CheckoutFormInstance } from "../hooks/use-checkout-form";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Collapsible,
@@ -20,6 +21,7 @@ interface CheckoutDiscountSectionProps {
 
 export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionProps) {
 	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
+	const haptic = useHaptic();
 
 	return (
 		<form.Subscribe selector={(s) => s.values._appliedDiscount}>
@@ -76,8 +78,10 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 													if (result.valid && result.discount) {
 														fieldApi.form.setFieldValue("_appliedDiscount", result.discount);
 														fieldApi.form.setFieldValue("discountCode", "");
+														haptic("success");
 														return undefined;
 													}
+													haptic("error");
 													return result.error ?? "Code invalide";
 												},
 											}}

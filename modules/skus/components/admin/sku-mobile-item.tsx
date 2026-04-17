@@ -3,10 +3,10 @@
 import { Package } from "lucide-react";
 import Image from "next/image";
 
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
@@ -42,12 +42,10 @@ const getStockAriaLabel = (inventory: number) => {
 
 export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	const { open } = useDialog<SkuItemDrawerData>(SKU_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
 	const stockVariant = getStockVariant(sku.inventory);
 
 	const handleOpen = () => {
-		haptic("selection");
 		open({
 			sku: {
 				id: sku.id,
@@ -66,12 +64,7 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	};
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
-			aria-label={`Ouvrir la fiche de la variante ${sku.sku}`}
-		>
+		<SelectableMobileCard itemId={sku.id} ariaLabel={`Variante ${sku.sku}`} onOpen={handleOpen}>
 			<Item
 				variant="outline"
 				size="sm"
@@ -147,6 +140,6 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</SelectableMobileCard>
 	);
 }

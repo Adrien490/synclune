@@ -28,6 +28,10 @@ vi.mock("@/shared/contexts/selection-context", () => ({
 	useSelectionContext: () => mockSelectionContext,
 }));
 
+vi.mock("@/shared/components/selection-bottom-sheet", () => ({
+	SelectionBottomSheet: () => null,
+}));
+
 vi.mock("motion/react", () => {
 	const { forwardRef: fRef, createElement } = require("react");
 	return {
@@ -254,8 +258,8 @@ describe("SelectionToolbar", () => {
 			mockSelectionContext.getSelectedCount.mockReturnValue(1);
 			const { container } = render(<SelectionToolbar>actions</SelectionToolbar>);
 
-			// The outer m.div carries the "mb-4 grid" classes for grid-rows animation
-			const gridWrapper = container.querySelector(".grid");
+			// Toolbar is hidden on mobile (`hidden md:grid`)
+			const gridWrapper = container.querySelector('[class*="md:grid"]');
 			expect(gridWrapper).toBeInTheDocument();
 			expect(gridWrapper?.className).toContain("mb-4");
 		});

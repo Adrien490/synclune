@@ -46,6 +46,7 @@ vi.mock("lucide-react", async (importOriginal) => {
 
 vi.mock("next/navigation", () => ({
 	usePathname: mockUsePathname,
+	useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("next/link", () => ({
@@ -123,7 +124,7 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 	bottomBarCenterLabelClass: "center-label",
 }));
 
-import { AdminMobileBottomBar, ROUTES_WITH_PAGE_BOTTOM_BAR } from "../admin-mobile-bottom-bar";
+import { AdminMobileBottomBar } from "../admin-mobile-bottom-bar";
 
 // ============================================================================
 // SETUP
@@ -306,24 +307,16 @@ describe("AdminMobileBottomBar", () => {
 			expect(screen.getByTestId("bottom-bar")).toHaveAttribute("data-hidden", "true");
 		});
 
-		it("hides on routes with page-specific bottom bars", () => {
+		it("stays visible on routes that previously had contextual bottom bars", () => {
 			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			render(<AdminMobileBottomBar />);
-			expect(screen.getByTestId("bottom-bar")).toHaveAttribute("data-hidden", "true");
+			expect(screen.getByTestId("bottom-bar")).toHaveAttribute("data-hidden", "false");
 		});
 
 		it("is visible on routes without page-specific bottom bars", () => {
 			mockUsePathname.mockReturnValue("/admin");
 			render(<AdminMobileBottomBar />);
 			expect(screen.getByTestId("bottom-bar")).toHaveAttribute("data-hidden", "false");
-		});
-	});
-
-	describe("ROUTES_WITH_PAGE_BOTTOM_BAR", () => {
-		it("includes expected routes", () => {
-			expect(ROUTES_WITH_PAGE_BOTTOM_BAR).toContain("/admin/catalogue/produits");
-			expect(ROUTES_WITH_PAGE_BOTTOM_BAR).toContain("/admin/marketing/discounts");
-			expect(ROUTES_WITH_PAGE_BOTTOM_BAR).toContain("/admin/ventes/commandes");
 		});
 	});
 });

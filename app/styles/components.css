@@ -125,6 +125,17 @@
 			transform: rotate(var(--polaroid-rotate));
 		}
 	}
+
+	/* ==========================================
+	   MEGA MENU — Shadow premium rose
+	   Used on collection cards hover/focus to convey premium lift.
+	   Uses primary token with relative color to stay in sync with theme.
+	   ========================================== */
+	.shadow-premium-rose {
+		box-shadow:
+			0 8px 30px -8px oklch(from var(--color-primary) l c h / 0.35),
+			0 4px 15px -5px oklch(from var(--color-primary) calc(l * 0.97) c calc(h - 40) / 0.25);
+	}
 }
 
 /* ============================================

@@ -36,6 +36,8 @@ export type MegaMenuProduct = {
 	priceInclTax: number; // prix en centimes
 	imageUrl: string;
 	blurDataUrl: string | null;
+	/** Vrai si publié depuis moins de 14 jours (badge "Nouveau") */
+	isNew?: boolean;
 };
 
 /**
@@ -53,6 +55,8 @@ export type NavItemChild = {
 	images?: NavItemImage[];
 	/** Date de création (pour badge "Nouvelle" sur les collections) */
 	createdAt?: Date;
+	/** Slug de la catégorie produit (pour résoudre l'icône lucide dans MegaMenuColumn) */
+	iconKey?: string;
 };
 
 /**

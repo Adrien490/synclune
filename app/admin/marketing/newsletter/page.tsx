@@ -87,6 +87,8 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 		<>
 			<PageHeader variant="compact" title="Newsletter" className="hidden md:block" />
 
+			<NewsletterBottomBar />
+
 			{/* Statistiques */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
 				<div className="bg-card rounded-lg border p-6">
@@ -176,8 +178,6 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 				<SubscribersDataTable subscribersPromise={subscribersPromise} perPage={perPage} />
 			</Suspense>
 
-			{/* Bottom bar mobile */}
-			<NewsletterBottomBar />
 			<SubscriberItemDrawer />
 		</>
 	);

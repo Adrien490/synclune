@@ -3,6 +3,7 @@
 import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provider";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Trash2 } from "lucide-react";
 
 interface CartItemRemoveButtonProps {
@@ -25,8 +26,10 @@ export function CartItemRemoveButton({
 	isPending = false,
 }: CartItemRemoveButtonProps) {
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
+	const haptic = useHaptic();
 
 	const handleRemove = () => {
+		haptic("light");
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
 			cartItemId,
 			itemName,

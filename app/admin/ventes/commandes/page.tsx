@@ -125,6 +125,8 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 			<PageHeader variant="compact" title="Commandes" className="hidden md:block" />
 
 			<div className="space-y-6">
+				<OrdersBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={3} className="hidden md:flex" />}
 				>
@@ -176,9 +178,6 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 					<OrdersDataTable ordersPromise={ordersPromise} perPage={perPage} />
 				</Suspense>
 			</div>
-
-			{/* Bottom bar mobile (tri, recherche, filtres) */}
-			<OrdersBottomBar />
 
 			{/* Alert Dialogs globaux */}
 			<CancelOrderAlertDialog />

@@ -52,7 +52,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			<Suspense fallback={<AdminSidebarSkeleton />}>
 				<AdminSidebar user={user} />
 			</Suspense>
-			<SidebarInset>
+			<SidebarInset data-admin-layout>
 				<DashboardHeaderWrapper />
 				<AdminMobileHeader />
 				<main

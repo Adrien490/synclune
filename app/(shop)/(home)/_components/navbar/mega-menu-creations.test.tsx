@@ -133,4 +133,34 @@ describe("MegaMenuCreations", () => {
 
 		expect(screen.queryByText("Nouveautés")).toBeNull();
 	});
+
+	it("renders 'Nouveau' badge when product.isNew is true", () => {
+		const productsWithNew = [
+			{ ...featuredProducts[0]!, isNew: true },
+			{ ...featuredProducts[1]!, isNew: false },
+		];
+		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={productsWithNew} />);
+
+		const badges = screen.getAllByText("Nouveau");
+		expect(badges).toHaveLength(1);
+	});
+
+	it("does not render 'Nouveau' badge when isNew is undefined", () => {
+		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={featuredProducts} />);
+
+		expect(screen.queryByText("Nouveau")).toBeNull();
+	});
+
+	it("wraps content in a region landmark with aria-labelledby", () => {
+		render(<MegaMenuCreations productTypes={productTypes} />);
+
+		const regions = screen.getAllByRole("region");
+		// MegaMenuCreations region (the outer wrapper) — first region
+		const outerRegion = regions[0];
+		expect(outerRegion).toBeDefined();
+		const headingId = outerRegion!.getAttribute("aria-labelledby");
+		expect(headingId).toBeTruthy();
+		const heading = document.getElementById(headingId!);
+		expect(heading?.textContent).toBe("Créations");
+	});
 });

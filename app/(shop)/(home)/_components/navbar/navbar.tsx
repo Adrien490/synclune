@@ -15,6 +15,14 @@ import { iconButtonClassName } from "./navbar-styles";
 import { NavbarIconButtons } from "./navbar-icon-buttons";
 import { NavbarWrapper } from "./navbar-wrapper";
 
+const NEW_BADGE_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
+/** "Nouveau" badge eligibility — published within the last 14 days. */
+function isProductNew(createdAt: Date | string | null | undefined): boolean {
+	if (!createdAt) return false;
+	return Date.now() - new Date(createdAt).getTime() < NEW_BADGE_WINDOW_MS;
+}
+
 export async function Navbar() {
 	// Paralléliser tous les fetches pour optimiser le TTFB
 	// Les données publiques (collections, productTypes) sont cachées via getNavbarMenuData()
@@ -58,7 +66,8 @@ export async function Navbar() {
 	// Générer les items de navigation mobile en fonction de la session et statut admin
 	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
-	// Featured products for the mega menu (up to 3 recent products with images)
+	// Featured products for the mega menu (up to 3 recent products with images).
+	// "Nouveau" badge eligibility computed via isProductNew helper.
 	const featuredProducts = recentProducts
 		.slice(0, 3)
 		.map((p) => {
@@ -69,6 +78,7 @@ export async function Navbar() {
 				priceInclTax: sku?.priceInclTax ?? 0,
 				imageUrl: image?.url ?? "",
 				blurDataUrl: image?.blurDataUrl ?? null,
+				isNew: isProductNew(p.createdAt),
 			};
 		})
 		.filter((p) => p.imageUrl);

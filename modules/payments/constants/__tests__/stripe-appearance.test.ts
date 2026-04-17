@@ -6,8 +6,20 @@ describe("stripeAppearance", () => {
 		expect(stripeAppearance.theme).toBe("stripe");
 	});
 
-	it("sets primary color to purple", () => {
-		expect(stripeAppearance.variables?.colorPrimary).toBe("#7c3aed");
+	it("maps colorPrimary to Synclune rose (--primary-text oklch equivalent)", () => {
+		expect(stripeAppearance.variables?.colorPrimary).toBe("#b74585");
+	});
+
+	it("maps colorDanger to Synclune destructive (--destructive oklch equivalent)", () => {
+		expect(stripeAppearance.variables?.colorDanger).toBe("#d14639");
+	});
+
+	it("maps colorText to Synclune foreground", () => {
+		expect(stripeAppearance.variables?.colorText).toBe("#1a1a2e");
+	});
+
+	it("maps colorTextSecondary to Synclune muted-foreground", () => {
+		expect(stripeAppearance.variables?.colorTextSecondary).toBe("#868592");
 	});
 
 	it("sets a 16px base font size for mobile accessibility", () => {
@@ -26,6 +38,16 @@ describe("stripeAppearance", () => {
 
 	it("Input:focus border matches primary color", () => {
 		const focusRule = stripeAppearance.rules![".Input:focus"];
-		expect(focusRule?.border).toContain("#7c3aed");
+		expect(focusRule?.border).toContain("#b74585");
+	});
+
+	it("Input padding reaches 44px touch target (14px vertical)", () => {
+		const inputRule = stripeAppearance.rules![".Input"];
+		expect(inputRule?.padding).toBe("14px 12px");
+	});
+
+	it("Tab--selected border matches primary color", () => {
+		const tabRule = stripeAppearance.rules![".Tab--selected"];
+		expect(tabRule?.border).toContain("#b74585");
 	});
 });

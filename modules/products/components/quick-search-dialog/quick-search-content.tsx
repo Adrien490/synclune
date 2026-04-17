@@ -90,6 +90,8 @@ export function QuickSearchContent({
 								Vouliez-vous dire{" "}
 								<button
 									type="button"
+									role="option"
+									aria-selected={false}
 									aria-label={`Rechercher ${suggestion}`}
 									onClick={() => onSearch(suggestion)}
 									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
@@ -212,6 +214,8 @@ export function QuickSearchContent({
 					<Button
 						onClick={onViewAllResults}
 						data-active={undefined}
+						role="option"
+						aria-selected={false}
 						className="data-[active=true]:ring-ring/50 w-full data-[active=true]:ring-[3px]"
 					>
 						{totalCount === 1 ? "Voir le résultat" : `Voir les ${totalCount} résultats`}

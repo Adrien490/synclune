@@ -5,8 +5,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenAlertDialog } = vi.hoisted(() => ({
+const { mockOpenAlertDialog, mockHaptic } = vi.hoisted(() => ({
 	mockOpenAlertDialog: vi.fn(),
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 // ============================================================================
@@ -110,6 +116,12 @@ describe("CartItemRemoveButton", () => {
 			itemName: "Collier Étoile",
 			quantity: 1,
 		});
+	});
+
+	it("triggers light haptic feedback when clicked", () => {
+		renderButton();
+		fireEvent.click(screen.getByRole("button"));
+		expect(mockHaptic).toHaveBeenCalledWith("light");
 	});
 
 	it("is disabled when isPending is true", () => {

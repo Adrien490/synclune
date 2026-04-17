@@ -6,6 +6,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { LoaderCircle, Lock } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { confirmCheckout } from "../actions/confirm-checkout";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 
@@ -32,12 +33,19 @@ export function PayButton({
 }: PayButtonProps) {
 	const stripe = useStripe();
 	const elements = useElements();
+	const haptic = useHaptic();
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	function showError(message: string) {
+		setError(message);
+		haptic("error");
+	}
 
 	async function handleClick() {
 		if (!stripe || !elements) return;
 
+		haptic("medium");
 		setIsProcessing(true);
 		setError(null);
 
@@ -52,7 +60,7 @@ export function PayButton({
 			// 2. Submit Elements to Stripe first (validates payment details)
 			const { error: submitError } = await elements.submit();
 			if (submitError) {
-				setError(submitError.message ?? "Erreur de validation du paiement.");
+				showError(submitError.message ?? "Erreur de validation du paiement.");
 				setIsProcessing(false);
 				return;
 			}
@@ -60,7 +68,7 @@ export function PayButton({
 			// 3. Server action: create order + update PI with order metadata
 			const result = await confirmCheckout(formData);
 			if (!result.success) {
-				setError(result.error);
+				showError(result.error);
 				setIsProcessing(false);
 				return;
 			}
@@ -82,20 +90,20 @@ export function PayButton({
 			// If confirmPayment returns, it means there was an error
 			// (successful payments redirect to return_url)
 
-			setError(
+			showError(
 				confirmError.type === "card_error" || confirmError.type === "validation_error"
 					? (confirmError.message ?? "Erreur de paiement.")
 					: "Une erreur est survenue lors du paiement.",
 			);
 		} catch {
-			setError("Une erreur inattendue est survenue. Veuillez réessayer.");
+			showError("Une erreur inattendue est survenue. Veuillez réessayer.");
 		} finally {
 			setIsProcessing(false);
 		}
 	}
 
 	return (
-		<div className="space-y-3">
+		<div className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:static md:space-y-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
 			{error && (
 				<Alert variant="destructive" role="alert" aria-live="assertive">
 					<AlertDescription>{error}</AlertDescription>
@@ -105,7 +113,7 @@ export function PayButton({
 			<Button
 				type="button"
 				size="lg"
-				className="w-full text-base shadow-md transition-shadow hover:shadow-lg"
+				className="min-h-11 w-full text-base shadow-md transition-shadow hover:shadow-lg"
 				disabled={disabled || !stripe || !elements || isProcessing || shippingUnavailable}
 				aria-busy={isProcessing}
 				onClick={handleClick}
@@ -128,7 +136,7 @@ export function PayButton({
 					Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
 				</p>
 			) : disabled && !isProcessing ? (
-				<p className="text-muted-foreground text-center text-sm">
+				<p className="text-muted-foreground text-center text-xs md:text-sm">
 					Veuillez remplir tous les champs obligatoires pour continuer.
 				</p>
 			) : null}

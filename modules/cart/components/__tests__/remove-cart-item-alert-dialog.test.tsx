@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -13,6 +13,7 @@ const {
 	mockIsPending,
 	mockOptimisticUpdate,
 	mockStartTransition,
+	mockHaptic,
 } = vi.hoisted(() => ({
 	mockIsOpen: { value: false },
 	mockClose: vi.fn(),
@@ -23,6 +24,12 @@ const {
 	mockIsPending: { value: false },
 	mockOptimisticUpdate: vi.fn(),
 	mockStartTransition: vi.fn((cb: () => void) => cb()),
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 // ============================================================================
@@ -191,5 +198,15 @@ describe("RemoveCartItemAlertDialog", () => {
 		mockIsPending.value = true;
 		render(<RemoveCartItemAlertDialog />);
 		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
+	});
+
+	it("fires an error haptic when the destructive action is confirmed", () => {
+		mockIsOpen.value = true;
+		mockDialogData.value = { cartItemId: "ci-42", itemName: "Collier", quantity: 1 };
+		const { container } = render(<RemoveCartItemAlertDialog />);
+		const form = container.querySelector("form");
+		if (!form) throw new Error("form not found");
+		fireEvent.submit(form);
+		expect(mockHaptic).toHaveBeenCalledWith("error");
 	});
 });

@@ -145,6 +145,31 @@ vi.mock("../discount-row-actions", () => ({
 	),
 }));
 
+vi.mock("@/shared/components/selectable-mobile-card", () => ({
+	SelectableMobileCard: ({
+		ariaLabel,
+		onOpen,
+		children,
+	}: {
+		ariaLabel: string;
+		onOpen?: () => void;
+		children: React.ReactNode;
+	}) => (
+		<button type="button" aria-label={ariaLabel} onClick={onOpen}>
+			{children}
+		</button>
+	),
+}));
+
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({
+		isOpen: false,
+		data: null,
+		open: vi.fn(),
+		close: vi.fn(),
+	}),
+}));
+
 vi.mock("../create-discount-button", () => ({
 	CreateDiscountButton: () => <button data-testid="create-discount-button">Créer</button>,
 }));

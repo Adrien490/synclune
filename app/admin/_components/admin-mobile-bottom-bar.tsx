@@ -16,23 +16,10 @@ import {
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, ShoppingBag, Package, Menu, Sparkles } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-
-// Routes qui ont leur propre barre d'actions contextuelle (ProductsBottomBar, DiscountsBottomBar…)
-// La nav bar se masque sur ces pages pour éviter la superposition.
-export const ROUTES_WITH_PAGE_BOTTOM_BAR = [
-	"/admin/catalogue/produits",
-	"/admin/catalogue/collections",
-	"/admin/marketing/discounts",
-	"/admin/marketing/personnalisations",
-	"/admin/marketing/avis",
-	"/admin/marketing/newsletter",
-	"/admin/ventes/commandes",
-	"/admin/ventes/remboursements",
-];
 
 interface AdminMobileBottomBarProps {
 	badges?: Record<string, number>;
@@ -40,11 +27,14 @@ interface AdminMobileBottomBarProps {
 
 export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const pathname = usePathname();
+	const searchParams = useSearchParams();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const { open: openCommandPalette } = useDialog("command-palette");
 
-	const hasPageBar = ROUTES_WITH_PAGE_BOTTOM_BAR.some((r) => pathname.startsWith(r));
-	const isHidden = isMenuOpen || hasPageBar;
+	// Masquer la nav globale quand une bulk-selection admin est active : le
+	// SelectionBottomSheet prend le relais en bas d'écran.
+	const hasSelection = searchParams.getAll("selected").length > 0;
+	const isHidden = isMenuOpen || hasSelection;
 
 	const leftTabs = [
 		{

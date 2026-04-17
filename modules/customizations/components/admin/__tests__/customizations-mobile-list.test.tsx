@@ -99,6 +99,22 @@ vi.mock("@/shared/components/swipeable-card", () => ({
 	SwipeableCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock("@/shared/components/selectable-mobile-card", () => ({
+	SelectableMobileCard: ({
+		ariaLabel,
+		onOpen,
+		children,
+	}: {
+		ariaLabel: string;
+		onOpen?: () => void;
+		children: React.ReactNode;
+	}) => (
+		<button type="button" aria-label={ariaLabel} onClick={onOpen}>
+			{children}
+		</button>
+	),
+}));
+
 vi.mock("@/shared/utils/dates", () => ({
 	formatDateShort: () => "01/01/2026",
 }));

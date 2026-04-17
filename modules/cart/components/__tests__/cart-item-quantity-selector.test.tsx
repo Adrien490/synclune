@@ -5,10 +5,16 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAction, mockIsPending, mockCartOptimistic } = vi.hoisted(() => ({
+const { mockAction, mockIsPending, mockCartOptimistic, mockHaptic } = vi.hoisted(() => ({
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
 	mockCartOptimistic: { value: null as null | { updateOptimisticCart: ReturnType<typeof vi.fn> } },
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 // ============================================================================
@@ -191,5 +197,25 @@ describe("CartItemQuantitySelector", () => {
 		renderSelector({ currentQuantity: 2, maxQuantity: 8 });
 		const input = screen.getByTestId("quantity-input");
 		expect(input).toHaveAttribute("aria-label", "Quantité, entre 1 et 8");
+	});
+
+	it("triggers selection haptic when incrementing", () => {
+		renderSelector({ currentQuantity: 2, maxQuantity: 5 });
+		fireEvent.click(screen.getByLabelText("Augmenter la quantité"));
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("triggers selection haptic when decrementing", () => {
+		renderSelector({ currentQuantity: 3, maxQuantity: 5 });
+		fireEvent.click(screen.getByLabelText("Diminuer la quantité"));
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("triggers error haptic when typed value is clamped against a limit", () => {
+		renderSelector({ currentQuantity: 5, maxQuantity: 5 });
+		const input = screen.getByTestId("quantity-input");
+		// User types a value higher than max — clamp brings it back to 5, same as current
+		fireEvent.change(input, { target: { value: "99" } });
+		expect(mockHaptic).toHaveBeenCalledWith("error");
 	});
 });

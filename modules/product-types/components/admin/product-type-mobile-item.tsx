@@ -1,8 +1,8 @@
 "use client";
 
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import {
@@ -24,12 +24,10 @@ interface ProductTypeMobileItemProps {
 
 export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProps) {
 	const { open } = useDialog<ProductTypeItemDrawerData>(PRODUCT_TYPE_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const productsCount = productType._count.products || 0;
 	const statusLabel = productType.isActive ? "Actif" : "Inactif";
 
 	const handleOpen = () => {
-		haptic("selection");
 		open({
 			productType: {
 				id: productType.id,
@@ -44,11 +42,11 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 	};
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
-			aria-label={`Ouvrir la fiche du type ${productType.label}`}
+		<SelectableMobileCard
+			itemId={productType.id}
+			ariaLabel={`Type de bijou ${productType.label}`}
+			onOpen={handleOpen}
+			disableSelection={productType.isSystem}
 		>
 			<Item
 				variant="outline"
@@ -72,6 +70,6 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</SelectableMobileCard>
 	);
 }

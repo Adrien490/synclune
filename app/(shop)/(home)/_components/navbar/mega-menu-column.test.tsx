@@ -139,6 +139,43 @@ describe("MegaMenuColumn", () => {
 		});
 	});
 
+	describe("category icons (iconKey)", () => {
+		it("renders an icon when iconKey matches the mapping", () => {
+			const itemsWithIcons = [
+				{ href: "/produits", label: "Toutes les créations" },
+				{ href: "/produits/bagues", label: "Bagues", iconKey: "bagues" },
+			];
+			render(<MegaMenuColumn title="Créations" items={itemsWithIcons} />);
+
+			const baguesLink = screen.getByRole("link", { name: /Bagues/ });
+			const svg = baguesLink.querySelector("svg");
+			expect(svg).toBeInTheDocument();
+			expect(svg?.getAttribute("aria-hidden")).toBe("true");
+		});
+
+		it("falls back to Gem icon for unknown iconKey", () => {
+			const itemsWithUnknown = [
+				{ href: "/produits", label: "Toutes les créations" },
+				{ href: "/produits/inconnu", label: "Inconnu", iconKey: "inconnu" },
+			];
+			render(<MegaMenuColumn title="Créations" items={itemsWithUnknown} />);
+
+			const link = screen.getByRole("link", { name: /Inconnu/ });
+			expect(link.querySelector("svg")).toBeInTheDocument();
+		});
+
+		it("renders no icon when iconKey is missing", () => {
+			const itemsWithout = [
+				{ href: "/produits", label: "Toutes les créations" },
+				{ href: "/produits/colliers", label: "Colliers" },
+			];
+			render(<MegaMenuColumn title="Créations" items={itemsWithout} />);
+
+			const link = screen.getByRole("link", { name: "Colliers" });
+			expect(link.querySelector("svg")).toBeNull();
+		});
+	});
+
 	describe("accessibility", () => {
 		it("has ArrowRight icon with aria-hidden on CTA", () => {
 			render(<MegaMenuColumn title="Créations" items={items} />);

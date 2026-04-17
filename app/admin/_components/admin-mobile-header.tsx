@@ -81,7 +81,7 @@ export function AdminMobileHeader() {
 					<span className="size-11 shrink-0" aria-hidden="true" />
 				)}
 
-				<h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold tracking-tight">
+				<h1 className="min-w-0 flex-1 truncate text-left text-base leading-none font-semibold tracking-tight">
 					{pageTitle}
 				</h1>
 

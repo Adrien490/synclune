@@ -57,7 +57,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 			</NavigationMenuLink>
 
 			{/* Collection cards - reproduces CollectionCard design */}
-			<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+			<div className="grid grid-cols-4 gap-3">
 				{filteredCollections.map((collection, index) => {
 					const isActive = pathname === collection.href;
 					const displayImages = collection.images ?? [];
@@ -77,7 +77,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 										"transition-[transform,border-color,box-shadow] duration-300 ease-out",
 										"motion-reduce:transition-colors",
 										"motion-safe:can-hover:hover:border-primary/40",
-										"can-hover:hover:shadow-[0_8px_30px_-8px_oklch(0.85_0.12_350/0.35),0_4px_15px_-5px_oklch(0.82_0.10_300/0.25)]",
+										"can-hover:hover:shadow-premium-rose",
 										"motion-safe:can-hover:hover:-translate-y-1 motion-safe:can-hover:hover:scale-[1.02]",
 										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										"focus-within:border-primary/40 focus-within:shadow-primary/15 focus-within:shadow-lg",

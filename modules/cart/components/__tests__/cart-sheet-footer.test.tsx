@@ -2,12 +2,18 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // Hoisted mocks must be declared before vi.mock calls
-const { mockAnimatedNumber } = vi.hoisted(() => ({
+const { mockAnimatedNumber, mockHaptic } = vi.hoisted(() => ({
 	mockAnimatedNumber: vi.fn(
 		({ value, formatter }: { value: number; formatter: (n: number) => string }) => (
 			<span data-testid="animated-number">{formatter(value)}</span>
 		),
 	),
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 // Mock next/link — render a plain anchor
@@ -86,7 +92,10 @@ vi.mock("@/shared/utils/cn", () => ({
 
 import { CartSheetFooter } from "../cart-sheet-footer";
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.clearAllMocks();
+});
 
 function createProps(overrides: Partial<React.ComponentProps<typeof CartSheetFooter>> = {}) {
 	return {
@@ -165,6 +174,13 @@ describe("CartSheetFooter", () => {
 		const link = screen.getByRole("link", { name: /Passer commande/i });
 		link.click();
 		expect(onClose).toHaveBeenCalledOnce();
+	});
+
+	it("triggers medium haptic feedback on checkout click", async () => {
+		render(<CartSheetFooter {...createProps({ hasStockIssues: false })} />);
+		const link = screen.getByRole("link", { name: /Passer commande/i });
+		link.click();
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 
 	it("renders the sheet footer wrapper", () => {

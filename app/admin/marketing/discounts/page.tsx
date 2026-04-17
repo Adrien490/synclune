@@ -113,6 +113,8 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			/>
 
 			<div className="space-y-6">
+				<DiscountsBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
 				>
@@ -166,9 +168,6 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			<ToggleDiscountStatusAlertDialog />
 			<BulkDeleteDiscountsAlertDialog />
 			<DiscountUsagesDialog />
-
-			{/* Bottom bar mobile (tri, recherche, filtres) */}
-			<DiscountsBottomBar />
 		</>
 	);
 }

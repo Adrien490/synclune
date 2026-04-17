@@ -357,8 +357,16 @@ vi.mock("lucide-react", () => ({
 	X: () => <span data-testid="x-icon" />,
 }));
 
-vi.mock("sonner", () => ({
-	toast: { error: vi.fn() },
+vi.mock("@/shared/utils/toast", () => ({
+	toast: {
+		error: vi.fn(),
+		success: vi.fn(),
+	},
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: vi.fn(),
+	useHaptic: vi.fn(() => vi.fn()),
 }));
 
 // ============================================================================
@@ -461,10 +469,10 @@ describe("QuickSearchDialog", () => {
 			expect(screen.getByTestId("dialog-description")).toBeInTheDocument();
 		});
 
-		it("renders results container with role='group' and correct aria-label", () => {
+		it("renders results container with role='listbox' and correct aria-label", () => {
 			render(<QuickSearchDialog {...defaultProps} />);
-			const group = screen.getByRole("group", { name: "Résultats de recherche" });
-			expect(group).toBeInTheDocument();
+			const listbox = screen.getByRole("listbox", { name: "Résultats de recherche" });
+			expect(listbox).toBeInTheDocument();
 		});
 
 		it("renders search role on the search input area", () => {

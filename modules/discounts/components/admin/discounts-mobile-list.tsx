@@ -2,6 +2,8 @@ import { use } from "react";
 import { Ticket } from "lucide-react";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
+import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
 import {
 	Item,
 	ItemActions,
@@ -87,35 +89,39 @@ export function DiscountsMobileList({ discountsPromise, perPage }: DiscountsMobi
 					const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
 					return (
 						<div key={discount.id} role="listitem">
-							<Item
-								variant="outline"
-								size="sm"
-								className="gap-3"
-								aria-roledescription="carte code promo"
-							>
-								<ItemContent className="min-w-0">
-									<ItemTitle>
-										<code className="bg-muted truncate rounded px-1.5 py-0.5 text-sm font-semibold">
-											{discount.code}
-										</code>
-										<Badge variant={status.variant}>{status.label}</Badge>
-									</ItemTitle>
-									<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-										<span>
-											{DISCOUNT_TYPE_ICONS[discount.type]} {DISCOUNT_TYPE_LABELS[discount.type]}
-										</span>
-										<span aria-hidden="true">·</span>
-										<span className="font-medium">
-											{formatValue(discount.type, discount.value)}
-										</span>
-										<span aria-hidden="true">·</span>
-										<span>{formatUsage(discount.usageCount, discount.maxUsageCount)}</span>
-									</ItemDescription>
-								</ItemContent>
-								<ItemActions>
-									<DiscountRowActions discount={discount} />
-								</ItemActions>
-							</Item>
+							<SelectableMobileCard itemId={discount.id} ariaLabel={`Code promo ${discount.code}`}>
+								<Item
+									variant="outline"
+									size="sm"
+									className="gap-3"
+									aria-roledescription="carte code promo"
+								>
+									<ItemContent className="min-w-0">
+										<ItemTitle>
+											<code className="bg-muted truncate rounded px-1.5 py-0.5 text-sm font-semibold">
+												{discount.code}
+											</code>
+											<Badge variant={status.variant}>{status.label}</Badge>
+										</ItemTitle>
+										<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+											<span>
+												{DISCOUNT_TYPE_ICONS[discount.type]} {DISCOUNT_TYPE_LABELS[discount.type]}
+											</span>
+											<span aria-hidden="true">·</span>
+											<span className="font-medium">
+												{formatValue(discount.type, discount.value)}
+											</span>
+											<span aria-hidden="true">·</span>
+											<span>{formatUsage(discount.usageCount, discount.maxUsageCount)}</span>
+										</ItemDescription>
+									</ItemContent>
+									<ItemActions>
+										<StopEventPropagation>
+											<DiscountRowActions discount={discount} />
+										</StopEventPropagation>
+									</ItemActions>
+								</Item>
+							</SelectableMobileCard>
 						</div>
 					);
 				})}

@@ -11,6 +11,8 @@ const {
 	mockBulkCancelOrders,
 	mockBulkDeleteOrders,
 	mockBulkMarkAsDelivered,
+	mockBulkMarkAsProcessing,
+	mockBulkMarkAsShipped,
 	mockCancelOrder,
 	mockMarkAsDelivered,
 	mockMarkAsPaid,
@@ -29,6 +31,8 @@ const {
 	mockBulkCancelOrders: vi.fn(),
 	mockBulkDeleteOrders: vi.fn(),
 	mockBulkMarkAsDelivered: vi.fn(),
+	mockBulkMarkAsProcessing: vi.fn(),
+	mockBulkMarkAsShipped: vi.fn(),
 	mockCancelOrder: vi.fn(),
 	mockMarkAsDelivered: vi.fn(),
 	mockMarkAsPaid: vi.fn(),
@@ -57,6 +61,12 @@ vi.mock("@/modules/orders/actions/bulk-delete-orders", () => ({
 }));
 vi.mock("@/modules/orders/actions/bulk-mark-as-delivered", () => ({
 	bulkMarkAsDelivered: mockBulkMarkAsDelivered,
+}));
+vi.mock("@/modules/orders/actions/bulk-mark-as-processing", () => ({
+	bulkMarkAsProcessing: mockBulkMarkAsProcessing,
+}));
+vi.mock("@/modules/orders/actions/bulk-mark-as-shipped", () => ({
+	bulkMarkAsShipped: mockBulkMarkAsShipped,
 }));
 vi.mock("@/modules/orders/actions/cancel-order", () => ({
 	cancelOrder: mockCancelOrder,
@@ -124,6 +134,8 @@ import { useRefreshOrders } from "../use-refresh-orders";
 import { useBulkCancelOrders } from "../use-bulk-cancel-orders";
 import { useBulkDeleteOrders } from "../use-bulk-delete-orders";
 import { useBulkMarkAsDelivered } from "../use-bulk-mark-as-delivered";
+import { useBulkMarkAsProcessing } from "../use-bulk-mark-as-processing";
+import { useBulkMarkAsShipped } from "../use-bulk-mark-as-shipped";
 import { useCancelOrder } from "../use-cancel-order";
 import { useMarkAsDelivered } from "../use-mark-as-delivered";
 import { useMarkAsPaid } from "../use-mark-as-paid";
@@ -1398,5 +1410,159 @@ describe("useOrderNotes", () => {
 		});
 
 		expect(mockDeleteOrderNote).toHaveBeenCalledTimes(1);
+	});
+});
+
+// ============================================================================
+// useBulkMarkAsProcessing
+// ============================================================================
+
+describe("useBulkMarkAsProcessing", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockBulkMarkAsProcessing.mockResolvedValue(SUCCESS);
+	});
+
+	it("returns state, action, and isPending", () => {
+		const { result } = renderHook(() => useBulkMarkAsProcessing());
+		expect(result.current.state).toBeUndefined();
+		expect(typeof result.current.action).toBe("function");
+		expect(typeof result.current.isPending).toBe("boolean");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useBulkMarkAsProcessing());
+		expect(result.current.isPending).toBe(false);
+	});
+
+	it("calls onSuccess when action succeeds", async () => {
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useBulkMarkAsProcessing({ onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).toHaveBeenCalled();
+	});
+
+	it("does not call onSuccess when action fails", async () => {
+		mockBulkMarkAsProcessing.mockResolvedValue(ERROR);
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useBulkMarkAsProcessing({ onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useBulkMarkAsProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockBulkMarkAsProcessing).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects the success result", async () => {
+		const { result } = renderHook(() => useBulkMarkAsProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects the error result on failure", async () => {
+		mockBulkMarkAsProcessing.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useBulkMarkAsProcessing());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
+	});
+});
+
+// ============================================================================
+// useBulkMarkAsShipped
+// ============================================================================
+
+describe("useBulkMarkAsShipped", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockBulkMarkAsShipped.mockResolvedValue(SUCCESS);
+	});
+
+	it("returns state, action, and isPending", () => {
+		const { result } = renderHook(() => useBulkMarkAsShipped());
+		expect(result.current.state).toBeUndefined();
+		expect(typeof result.current.action).toBe("function");
+		expect(typeof result.current.isPending).toBe("boolean");
+	});
+
+	it("isPending is false initially", () => {
+		const { result } = renderHook(() => useBulkMarkAsShipped());
+		expect(result.current.isPending).toBe(false);
+	});
+
+	it("calls onSuccess when action succeeds", async () => {
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useBulkMarkAsShipped({ onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).toHaveBeenCalled();
+	});
+
+	it("does not call onSuccess when action fails", async () => {
+		mockBulkMarkAsShipped.mockResolvedValue(ERROR);
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useBulkMarkAsShipped({ onSuccess }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
+	});
+
+	it("works without options", async () => {
+		const { result } = renderHook(() => useBulkMarkAsShipped());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(mockBulkMarkAsShipped).toHaveBeenCalledTimes(1);
+	});
+
+	it("state reflects the success result", async () => {
+		const { result } = renderHook(() => useBulkMarkAsShipped());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state?.status).toBe("success");
+	});
+
+	it("state reflects the error result on failure", async () => {
+		mockBulkMarkAsShipped.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useBulkMarkAsShipped());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.state).toEqual(ERROR);
 	});
 });

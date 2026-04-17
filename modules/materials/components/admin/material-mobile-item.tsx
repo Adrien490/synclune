@@ -1,8 +1,8 @@
 "use client";
 
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { MATERIAL_ITEM_DRAWER_ID, type MaterialItemDrawerData } from "./material-item-drawer";
@@ -20,12 +20,10 @@ interface MaterialMobileItemProps {
 
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	const { open } = useDialog<MaterialItemDrawerData>(MATERIAL_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const skuCount = material._count.skus || 0;
 	const statusLabel = material.isActive ? "Actif" : "Inactif";
 
 	const handleOpen = () => {
-		haptic("selection");
 		open({
 			material: {
 				id: material.id,
@@ -39,11 +37,10 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	};
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
-			aria-label={`Ouvrir la fiche du matériau ${material.name}`}
+		<SelectableMobileCard
+			itemId={material.id}
+			ariaLabel={`Matériau ${material.name}`}
+			onOpen={handleOpen}
 		>
 			<Item
 				variant="outline"
@@ -66,6 +63,6 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</SelectableMobileCard>
 	);
 }

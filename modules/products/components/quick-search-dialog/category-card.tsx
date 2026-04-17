@@ -27,6 +27,8 @@ export function CategoryCard({ type, onSelect, variant = "full", query }: Catego
 				href={`/produits/${type.slug}`}
 				onClick={onSelect}
 				data-active={undefined}
+				role="option"
+				aria-selected={false}
 				className={cn(
 					"rounded-xl text-left font-medium transition-all",
 					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",

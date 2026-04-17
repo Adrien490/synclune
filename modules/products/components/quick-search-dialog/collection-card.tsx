@@ -33,6 +33,8 @@ export function CollectionCard({
 				href={`/collections/${collection.slug}`}
 				onClick={onSelect}
 				data-active={undefined}
+				role="option"
+				aria-selected={false}
 				className={cn(
 					"flex items-center rounded-xl text-left transition-all",
 					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",

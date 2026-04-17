@@ -1,39 +1,57 @@
 import type { Appearance } from "@stripe/stripe-js";
 
+/**
+ * Stripe PaymentElement appearance aligned on Synclune OKLCH tokens.
+ *
+ * Synclune brand colors are defined in `app/globals.css` as OKLCH.
+ * Stripe Elements requires hex/rgb — values below are precomputed equivalents.
+ *
+ * | Stripe var               | CSS token               | OKLCH                    | HEX      |
+ * | ------------------------ | ----------------------- | ------------------------ | -------- |
+ * | colorPrimary             | --primary-text          | 0.5 0.15 340.78          | #b74585  |
+ * | colorBackground          | --background            | 0.99 0.005 270           | #fcfcfd  |
+ * | colorText                | --foreground            | 0.13 0.01 270            | #1a1a2e  |
+ * | colorTextSecondary       | --muted-foreground      | 0.55 0.01 270            | #868592  |
+ * | colorDanger              | --destructive           | 0.59 0.17 25             | #d14639  |
+ *
+ * `.Input` vertical padding 14px → 44px touch target (WCAG 2.5.5 AAA).
+ */
 export const stripeAppearance: Appearance = {
 	theme: "stripe",
 	variables: {
-		colorPrimary: "#7c3aed",
+		colorPrimary: "#b74585",
+		colorBackground: "#ffffff",
+		colorText: "#1a1a2e",
+		colorTextSecondary: "#868592",
+		colorDanger: "#d14639",
 		borderRadius: "0.75rem",
 		fontFamily:
 			'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
 		fontSizeBase: "16px",
 		spacingUnit: "4px",
-		colorBackground: "#ffffff",
-		colorText: "#1a1a2e",
-		colorDanger: "#ef4444",
 	},
 	rules: {
 		".Input": {
-			border: "1px solid #e2e8f0",
+			border: "1px solid #e7e7ea",
 			boxShadow: "none",
-			padding: "10px 12px",
+			padding: "14px 12px",
 		},
 		".Input:focus": {
-			border: "1px solid #7c3aed",
-			boxShadow: "0 0 0 1px #7c3aed",
+			border: "1px solid #b74585",
+			boxShadow: "0 0 0 1px #b74585",
 		},
 		".Tab": {
-			border: "1px solid #e2e8f0",
+			border: "1px solid #e7e7ea",
 			boxShadow: "none",
 		},
 		".Tab--selected": {
-			border: "1px solid #7c3aed",
-			boxShadow: "0 0 0 1px #7c3aed",
+			border: "1px solid #b74585",
+			boxShadow: "0 0 0 1px #b74585",
 		},
 		".Label": {
 			fontWeight: "500",
 			fontSize: "14px",
+			color: "#1a1a2e",
 		},
 	},
 };

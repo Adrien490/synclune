@@ -107,6 +107,8 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			/>
 
 			<div className="space-y-6">
+				<ProductTypesBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
 				>
@@ -157,8 +159,6 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					<ProductTypesDataTable productTypesPromise={productTypesPromise} perPage={perPage} />
 				</Suspense>
 			</div>
-
-			<ProductTypesBottomBar />
 		</>
 	);
 }

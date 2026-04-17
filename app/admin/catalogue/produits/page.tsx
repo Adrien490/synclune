@@ -192,6 +192,14 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 
 	return (
 		<div className="space-y-6">
+			<ProductsBottomBar
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+				materials={materials}
+				maxPriceInCents={maxPriceInCents}
+			/>
+
 			<Toolbar
 				className="hidden md:flex"
 				ariaLabel="Barre d'outils de gestion des produits"
@@ -256,14 +264,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				productsPromise={Promise.resolve(productsData)}
 				perPage={perPage}
 				hasActiveFilters={!!search || Object.keys(params).some((key) => key.startsWith("filter_"))}
-			/>
-
-			<ProductsBottomBar
-				productTypes={productTypes}
-				collections={collections}
-				colors={colors}
-				materials={materials}
-				maxPriceInCents={maxPriceInCents}
 			/>
 		</div>
 	);

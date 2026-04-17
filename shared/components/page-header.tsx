@@ -75,11 +75,11 @@ export function PageHeader({
 	if (isCompact) {
 		return (
 			<header className={cn("mb-4 space-y-6 md:mb-6", className)} aria-labelledby="page-title">
-				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="font-display text-foreground wrap-break-words text-2xl font-normal tracking-normal sm:text-3xl lg:text-4xl"
+							className="font-display text-foreground wrap-break-words text-2xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl"
 							title={title}
 						>
 							{title}
@@ -94,7 +94,7 @@ export function PageHeader({
 						<div
 							role="group"
 							aria-label="Actions de la page"
-							className="flex w-full shrink-0 flex-wrap items-center justify-start gap-3 md:w-auto md:justify-end"
+							className="flex w-full shrink-0 flex-wrap items-center justify-start gap-3 md:mt-1 md:w-auto md:justify-end"
 						>
 							{actions}
 						</div>

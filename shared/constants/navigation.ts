@@ -169,6 +169,8 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 						...productTypes.map((type) => ({
 							href: ROUTES.SHOP.PRODUCT_TYPE(type.slug),
 							label: type.label,
+							// iconKey passed to MegaMenuColumn to resolve a lucide icon per category
+							iconKey: type.slug,
 						})),
 					]
 				: undefined,

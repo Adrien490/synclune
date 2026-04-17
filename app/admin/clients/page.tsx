@@ -119,6 +119,8 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 			<PageHeader variant="compact" title="Clients" className="hidden md:block" />
 
 			<div className="space-y-6">
+				<UsersBottomBar />
+
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />}
 				>
@@ -173,7 +175,6 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 				</Suspense>
 			</div>
 
-			<UsersBottomBar />
 			<UserItemDrawer />
 		</>
 	);

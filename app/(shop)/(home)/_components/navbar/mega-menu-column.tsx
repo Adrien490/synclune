@@ -7,7 +7,31 @@ import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { LoadingIndicator } from "@/shared/components/navigation";
 import { cn } from "@/shared/utils/cn";
-import { ArrowRight } from "lucide-react";
+import {
+	ArrowRight,
+	Circle,
+	CircleDot,
+	Gem,
+	Link2,
+	type LucideIcon,
+	Pin,
+	Sparkles,
+	Watch,
+} from "lucide-react";
+
+/**
+ * Mapping iconKey (slug catégorie produit) → icône lucide.
+ * Fallback `Gem` pour tout slug non listé (cohérent avec le branding bijoux).
+ */
+const ITEM_ICON_MAP: Record<string, LucideIcon> = {
+	bagues: Circle,
+	colliers: Link2,
+	bracelets: CircleDot,
+	"boucles-d-oreilles": Sparkles,
+	pendentifs: Gem,
+	broches: Pin,
+	montres: Watch,
+};
 
 interface MegaMenuColumnProps {
 	/** Column title displayed as section header */
@@ -88,6 +112,7 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 			>
 				{restItems.map((item, index) => {
 					const isActive = pathname === item.href;
+					const Icon = item.iconKey ? (ITEM_ICON_MAP[item.iconKey] ?? Gem) : null;
 					return (
 						<li
 							key={item.href}
@@ -99,14 +124,24 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 									href={item.href}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
-										"relative block min-h-11 rounded-sm px-3 py-2.5 text-sm",
+										"relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
 										"hover:bg-accent hover:text-accent-foreground",
 										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 										"transition-colors duration-200",
 										isActive && "bg-accent/50 font-medium",
 									)}
 								>
-									{item.label}
+									{Icon && (
+										<Icon
+											className={cn(
+												"text-foreground/40 size-4 shrink-0 transition-colors duration-200",
+												"group-hover:text-foreground/60",
+												isActive && "text-primary/80",
+											)}
+											aria-hidden="true"
+										/>
+									)}
+									<span className="truncate">{item.label}</span>
 									<LoadingIndicator />
 								</Link>
 							</NavigationMenuLink>

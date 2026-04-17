@@ -28,7 +28,7 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 			<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
 
 			{/* Header minimal */}
-			<header className="bg-background/90 border-primary/10 border-b-0 backdrop-blur-md md:border-b">
+			<header className="bg-background/90 border-primary/10 border-b-0 pt-[env(safe-area-inset-top)] backdrop-blur-md md:border-b">
 				{/* Decorative top line */}
 				<div className="from-primary/0 via-primary/40 to-primary/0 h-px bg-linear-to-r" />
 

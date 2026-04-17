@@ -148,7 +148,7 @@ describe("QuickSearchContent", () => {
 	it('shows "Voir les X résultats" button when totalCount > 1', () => {
 		render(<QuickSearchContent results={makeResults({ totalCount: 5 })} {...defaultProps} />);
 
-		expect(screen.getByRole("button", { name: /voir les 5 résultats/i })).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: /voir les 5 résultats/i })).toBeInTheDocument();
 	});
 
 	it('shows singular "Voir le résultat" when totalCount === 1', () => {
@@ -159,7 +159,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		expect(screen.getByRole("button", { name: /voir le résultat/i })).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: /voir le résultat/i })).toBeInTheDocument();
 	});
 
 	it("shows empty state message when no products, no matched nav, no suggestion", () => {
@@ -222,7 +222,7 @@ describe("QuickSearchContent", () => {
 		);
 
 		expect(screen.getByText(/vouliez-vous dire/i)).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /rechercher bagues/i })).toBeInTheDocument();
+		expect(screen.getByRole("option", { name: /rechercher bagues/i })).toBeInTheDocument();
 	});
 
 	it("calls onSearch when suggestion is clicked", async () => {
@@ -235,7 +235,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		const suggestionBtn = screen.getByRole("button", { name: /rechercher bagues/i });
+		const suggestionBtn = screen.getByRole("option", { name: /rechercher bagues/i });
 		await userEvent.click(suggestionBtn);
 
 		expect(onSearch).toHaveBeenCalledWith("bagues");
@@ -281,7 +281,7 @@ describe("QuickSearchContent", () => {
 			/>,
 		);
 
-		const button = screen.getByRole("button", { name: /voir les 2 résultats/i });
+		const button = screen.getByRole("option", { name: /voir les 2 résultats/i });
 		await userEvent.click(button);
 
 		expect(onViewAllResults).toHaveBeenCalledOnce();

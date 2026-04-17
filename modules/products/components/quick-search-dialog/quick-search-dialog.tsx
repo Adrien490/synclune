@@ -4,7 +4,6 @@ import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, useTransition } from "react";
-import { toast } from "sonner";
 
 import { Fade } from "@/shared/components/animations/fade";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
@@ -19,8 +18,10 @@ import {
 } from "@/shared/components/ui/dialog";
 import { useAddRecentSearch } from "@/modules/products/hooks/use-add-recent-search";
 import { useRecentSearches } from "@/modules/products/hooks/use-recent-searches";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
+import { toast } from "@/shared/utils/toast";
 
 import { QUICK_SEARCH_DIALOG_ID, RESULTS_CONTAINER_ID, SEARCH_DEBOUNCE_MS } from "./constants";
 import type {
@@ -88,6 +89,35 @@ export function QuickSearchDialog({
 		onClearError: () => toast.error("Erreur lors de la suppression"),
 	});
 
+	const handleRemoveRecent = (term: string) => {
+		remove(term);
+		toast.success("Recherche supprimée", {
+			action: {
+				label: "Annuler",
+				onClick: () => add(term),
+			},
+			duration: 5000,
+		});
+	};
+
+	const handleClearRecent = () => {
+		const snapshot = [...searches];
+		clear();
+		if (snapshot.length === 0) return;
+		toast.success(
+			snapshot.length === 1 ? "Recherche effacée" : `${snapshot.length} recherches effacées`,
+			{
+				action: {
+					label: "Annuler",
+					onClick: () => {
+						snapshot.forEach((term) => add(term));
+					},
+				},
+				duration: 6000,
+			},
+		);
+	};
+
 	const { contentRef, handleArrowNavigation, focusFirst, resetActiveIndex, activeDescendantId } =
 		useKeyboardNavigation();
 
@@ -126,6 +156,7 @@ export function QuickSearchDialog({
 	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {
 		if (isPending) return;
 		if (saveToRecent) add(term);
+		triggerHaptic("medium");
 		startTransition(() => {
 			router.push(`/produits?search=${encodeURIComponent(term)}`);
 			close();
@@ -148,6 +179,7 @@ export function QuickSearchDialog({
 	};
 
 	const handleSelectResult = () => {
+		triggerHaptic("light");
 		add(searchQuery);
 		close();
 	};
@@ -159,6 +191,34 @@ export function QuickSearchDialog({
 	const handleClose = () => {
 		close();
 		reset();
+	};
+
+	// Swipe-down-to-dismiss on mobile (triggered from header drag handle area)
+	const touchStartYRef = useRef<number | null>(null);
+	const touchDeltaYRef = useRef(0);
+	const handleHeaderTouchStart = (e: React.TouchEvent<HTMLElement>) => {
+		const y = e.touches[0]?.clientY;
+		if (typeof y === "number") {
+			touchStartYRef.current = y;
+			touchDeltaYRef.current = 0;
+		}
+	};
+	const handleHeaderTouchMove = (e: React.TouchEvent<HTMLElement>) => {
+		if (touchStartYRef.current === null) return;
+		const y = e.touches[0]?.clientY;
+		if (typeof y === "number") {
+			touchDeltaYRef.current = y - touchStartYRef.current;
+		}
+	};
+	const handleHeaderTouchEnd = () => {
+		const delta = touchDeltaYRef.current;
+		touchStartYRef.current = null;
+		touchDeltaYRef.current = 0;
+		// Threshold: 80px downward swipe from header triggers close
+		if (delta > 80) {
+			triggerHaptic("medium");
+			handleClose();
+		}
 	};
 
 	return (
@@ -177,15 +237,15 @@ export function QuickSearchDialog({
 				aria-busy={isPending}
 				className={cn(
 					"group/search",
-					// Mobile: fullscreen
-					"fixed inset-0 h-[100dvh] w-full max-w-none rounded-none",
-					"top-0 left-0 translate-x-0 translate-y-0",
-					"motion-safe:data-[state=open]:slide-in-from-top-2 motion-safe:data-[state=closed]:slide-out-to-top-2",
+					// Mobile: bottom-sheet, hauteur constante 88dvh
+					"fixed top-auto right-0 bottom-0 left-0 h-[88dvh] w-full max-w-none translate-x-0 translate-y-0",
+					"overflow-hidden rounded-none rounded-t-2xl border-t",
+					"motion-safe:data-[state=open]:slide-in-from-bottom motion-safe:data-[state=closed]:slide-out-to-bottom",
 					"motion-safe:data-[state=open]:zoom-in-100 motion-safe:data-[state=closed]:zoom-out-100",
 					"flex flex-col",
-					// Desktop: centered dialog
+					// Desktop: centered dialog, hauteur constante 640px (capée à 85vh pour petits écrans)
 					"md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2",
-					"md:max-h-[70vh] md:w-full md:max-w-160 md:overflow-hidden md:rounded-xl",
+					"md:h-[min(640px,85vh)] md:w-full md:max-w-160 md:overflow-hidden md:rounded-xl md:border",
 					"motion-safe:md:data-[state=open]:slide-in-from-top-4 motion-safe:md:data-[state=open]:zoom-in-95",
 				)}
 			>
@@ -194,9 +254,15 @@ export function QuickSearchDialog({
 					className={cn(
 						"bg-background sticky top-0 z-10 shrink-0",
 						"border-border border-b md:border-b-0",
-						"pt-[env(safe-area-inset-top,0)] md:pt-0",
 					)}
+					onTouchStart={handleHeaderTouchStart}
+					onTouchMove={handleHeaderTouchMove}
+					onTouchEnd={handleHeaderTouchEnd}
 				>
+					{/* Drag handle (mobile only) */}
+					<div className="flex justify-center pt-2 pb-1 md:hidden" aria-hidden="true">
+						<span className="bg-muted-foreground/30 h-1.5 w-10 rounded-full" />
+					</div>
 					<div className="flex h-14 items-center px-4">
 						<Button
 							variant="ghost"
@@ -246,7 +312,7 @@ export function QuickSearchDialog({
 							debounceMs={SEARCH_DEBOUNCE_MS}
 							size="md"
 							placeholder={showAnimatedPlaceholder ? " " : placeholder}
-							aria-label={placeholder}
+							aria-label="Rechercher un bijou"
 							// eslint-disable-next-line jsx-a11y/no-autofocus
 							autoFocus
 							preventMobileBlur
@@ -321,13 +387,16 @@ export function QuickSearchDialog({
 					)}
 				</div>
 
-				{/* Content */}
-				{/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- role="group" container with keyboard arrow navigation for search results */}
+				{/* Content — ARIA 1.2 combobox pattern: listbox is a presentational
+					 container, the input owns focus and announces active option via
+					 aria-activedescendant. tabIndex={-1} makes it programmatically focusable
+					 to satisfy jsx-a11y while keeping it out of the Tab order. */}
 				<div
 					ref={contentRef}
 					id={RESULTS_CONTAINER_ID}
-					role="group"
+					role="listbox"
 					aria-label="Résultats de recherche"
+					tabIndex={-1}
 					className={cn(
 						"min-h-0 flex-1 overflow-hidden",
 						"group-has-[[data-pending]]/search:opacity-50",
@@ -379,8 +448,8 @@ export function QuickSearchDialog({
 									collections={collections}
 									onClose={handleClose}
 									onRecentSearch={handleRecentSearch}
-									onRemoveSearch={remove}
-									onClearSearches={clear}
+									onRemoveSearch={handleRemoveRecent}
+									onClearSearches={handleClearRecent}
 									isPending={isPending}
 								/>
 							</Fade>

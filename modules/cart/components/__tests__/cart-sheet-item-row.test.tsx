@@ -5,8 +5,47 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOnClose } = vi.hoisted(() => ({
+const { mockOnClose, mockOpenAlertDialog } = vi.hoisted(() => ({
 	mockOnClose: vi.fn(),
+	mockOpenAlertDialog: vi.fn(),
+}));
+
+vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+	useAlertDialogStore: vi.fn(
+		(selector: (state: { openAlertDialog: typeof mockOpenAlertDialog }) => unknown) =>
+			selector({ openAlertDialog: mockOpenAlertDialog }),
+	),
+}));
+
+vi.mock("../remove-cart-item-alert-dialog", () => ({
+	REMOVE_CART_ITEM_DIALOG_ID: "remove-cart-item",
+}));
+
+vi.mock("@/shared/components/swipeable-card", () => ({
+	SwipeableCard: ({
+		children,
+		leftAction,
+		className,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+		leftAction?: { label: string; onAction: () => void };
+	}) => (
+		<div
+			data-testid="swipeable-card"
+			className={className}
+			data-left-action-label={leftAction?.label}
+			onClick={leftAction?.onAction}
+		>
+			{children}
+		</div>
+	),
+}));
+
+vi.mock("lucide-react", () => ({
+	Trash2: ({ className }: { className?: string }) => (
+		<svg data-testid="swipe-trash-icon" className={className} />
+	),
 }));
 
 // ============================================================================
@@ -286,5 +325,44 @@ describe("CartSheetItemRow", () => {
 		vi.mocked(cartItemService.getCartItemPrimaryImage).mockReturnValue(null);
 		render(<CartSheetItemRow item={createCartItem()} />);
 		expect(screen.getByText("Pas d'image")).toBeInTheDocument();
+	});
+
+	// ------------------------------------------------------------------
+	// Mobile swipe-to-delete
+	// ------------------------------------------------------------------
+	describe("mobile swipe-to-delete", () => {
+		it("does not wrap in SwipeableCard by default (desktop)", () => {
+			render(<CartSheetItemRow item={createCartItem()} />);
+			expect(screen.queryByTestId("swipeable-card")).not.toBeInTheDocument();
+		});
+
+		it("wraps the row in SwipeableCard when isMobile is true", () => {
+			render(<CartSheetItemRow item={createCartItem()} isMobile />);
+			expect(screen.getByTestId("swipeable-card")).toBeInTheDocument();
+		});
+
+		it("attaches a localized left-action label for screen readers", () => {
+			render(<CartSheetItemRow item={createCartItem()} isMobile />);
+			expect(screen.getByTestId("swipeable-card")).toHaveAttribute(
+				"data-left-action-label",
+				"Supprimer Bague Lune du panier",
+			);
+		});
+
+		it("opens the remove dialog when swipe-to-delete fires", () => {
+			render(<CartSheetItemRow item={createCartItem({ id: "item-7", quantity: 3 })} isMobile />);
+			screen.getByTestId("swipeable-card").click();
+			expect(mockOpenAlertDialog).toHaveBeenCalledWith("remove-cart-item", {
+				cartItemId: "item-7",
+				itemName: "Bague Lune",
+				quantity: 3,
+			});
+		});
+
+		it("keeps the keyboard-accessible remove button inside the swipeable wrapper (WCAG 2.1 AA)", () => {
+			render(<CartSheetItemRow item={createCartItem()} isMobile />);
+			const wrapper = screen.getByTestId("swipeable-card");
+			expect(wrapper.querySelector("[data-testid='remove-button']")).not.toBeNull();
+		});
 	});
 });

@@ -77,15 +77,10 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								className={linkClasses}
 								data-active={itemIsActive}
 								aria-current={itemIsActive ? "page" : undefined}
-								onClick={(e) => {
-									// Navigate on mouse click (detail > 0), not keyboard activation
-									// Keyboard users use the dropdown content links instead
-									if (e.detail > 0 && !e.defaultPrevented) {
-										router.push(item.href);
-									}
-								}}
 								onKeyDown={(e) => {
-									// Enter navigates to the section page, Space toggles dropdown
+									// Enter navigates to the section page (explicit keyboard intent).
+									// Mouse click and Space key toggle the dropdown via Radix default.
+									// Mouse users navigate via the explicit "Toutes les..." CTA inside the panel.
 									if (e.key === "Enter") {
 										e.preventDefault();
 										router.push(item.href);
@@ -104,6 +99,9 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 									"top-(--navbar-height)!",
 									"mt-0! rounded-none! border-0! p-0!",
 									"bg-background border-border border-b shadow-md",
+									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-200",
+									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150",
+									"motion-reduce:animate-none",
 								)}
 							>
 								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">

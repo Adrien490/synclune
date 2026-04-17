@@ -54,6 +54,22 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	}),
 }));
 
+vi.mock("@/shared/components/selectable-mobile-card", () => ({
+	SelectableMobileCard: ({
+		ariaLabel,
+		onOpen,
+		children,
+	}: {
+		ariaLabel: string;
+		onOpen?: () => void;
+		children: React.ReactNode;
+	}) => (
+		<button type="button" aria-label={ariaLabel} onClick={onOpen}>
+			{children}
+		</button>
+	),
+}));
+
 vi.mock("@/shared/utils/dates", () => ({
 	formatDateTime: mockFormatDateTime,
 }));
@@ -360,9 +376,7 @@ describe("AnnouncementsMobileList", () => {
 				createAnnouncement({ id: "ann_1" }),
 				createAnnouncement({ id: "ann_2" }),
 			]);
-			expect(screen.getAllByRole("button", { name: /Ouvrir la fiche de l'annonce/i })).toHaveLength(
-				2,
-			);
+			expect(screen.getAllByRole("button", { name: /Annonce/i })).toHaveLength(2);
 		});
 
 		it("renders one listitem per announcement", async () => {
