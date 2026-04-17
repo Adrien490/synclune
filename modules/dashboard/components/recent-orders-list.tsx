@@ -77,7 +77,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 								</p>
 							</div>
 							<div className="text-right">
-								<p className="font-bold">{order.total.toFixed(2)} €</p>
+								<p className="font-bold tabular-nums">{order.total.toFixed(2)} €</p>
 							</div>
 						</Link>
 					))}

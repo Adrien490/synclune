@@ -38,10 +38,11 @@ export function KpiCardSkeleton() {
 
 /**
  * Skeleton compact pour les KPI cards de Row 2
+ * `min-h-25` matche la hauteur réelle de KpiCard size="compact" (anti-CLS)
  */
 function KpiCardCompactSkeleton() {
 	return (
-		<Card className={CHART_STYLES.card}>
+		<Card className={cn(CHART_STYLES.card, "min-h-25")}>
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<Skeleton className="h-4 w-28" />
 				<Skeleton className="h-6 w-6 rounded-full" />

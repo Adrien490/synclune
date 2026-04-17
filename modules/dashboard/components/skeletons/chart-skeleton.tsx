@@ -1,22 +1,31 @@
 import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { cn } from "@/shared/utils/cn";
 import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface ChartSkeletonProps {
-	/** Hauteur du graphique */
+	/** Hauteur du graphique en pixels (fallback fixe). Ignoré si `heightClassName` est fourni. */
 	height?: number;
+	/** Classe Tailwind responsive pour la hauteur (ex. "h-60 sm:h-[250px] md:h-75") — anti-CLS desktop/mobile */
+	heightClassName?: string;
 	/** Label pour l'accessibilite */
 	ariaLabel?: string;
 }
 
 /**
- * Skeleton pour les graphiques
- * Reproduit la structure CardHeader + CardContent des charts reels
+ * Skeleton pour les graphiques.
+ *
+ * - `heightClassName` (préféré) : classes Tailwind responsives qui matchent la hauteur réelle
+ *   du graphique sur chaque breakpoint, évitant tout CLS lors du remplacement par le contenu.
+ * - `height` (legacy) : valeur fixe en pixels appliquée via style inline.
  */
 export function ChartSkeleton({
 	height = 250,
+	heightClassName,
 	ariaLabel = "Chargement du graphique",
 }: ChartSkeletonProps) {
+	const useResponsive = Boolean(heightClassName);
+
 	return (
 		<div role="status" aria-busy="true" aria-label={ariaLabel}>
 			<Card className={CHART_STYLES.card}>
@@ -26,7 +35,10 @@ export function ChartSkeleton({
 				</CardHeader>
 				<CardContent>
 					{/* Simulation des axes du chart */}
-					<div className="relative" style={{ height: `${height}px` }}>
+					<div
+						className={cn("relative", useResponsive && heightClassName)}
+						style={useResponsive ? undefined : { height: `${height}px` }}
+					>
 						{/* Axe Y (gauche) */}
 						<div className="absolute top-0 bottom-0 left-0 flex w-12 flex-col justify-between py-4">
 							<Skeleton className="h-3 w-8" />

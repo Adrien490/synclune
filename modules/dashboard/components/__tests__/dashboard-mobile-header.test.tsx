@@ -62,7 +62,7 @@ vi.mock("@/modules/dashboard/constants/period.constants", () => ({
 	COMPARISON_LABELS,
 	YOY_COMPARISON_LABELS,
 	getComparisonLabel: (period: string, mode: "previous" | "yoy"): string =>
-		mode === "yoy" ? YOY_COMPARISON_LABELS[period] : COMPARISON_LABELS[period],
+		(mode === "yoy" ? YOY_COMPARISON_LABELS[period] : COMPARISON_LABELS[period]) ?? "",
 }));
 
 import { DashboardMobileHeader } from "../dashboard-mobile-header";
@@ -107,9 +107,8 @@ describe("DashboardMobileHeader", () => {
 	});
 
 	it("uses YoY label when comparison search param is 'yoy'", () => {
-		mockGet.mockImplementation((key: string) =>
-			key === "comparison" ? "yoy" : key === "period" ? "month" : null,
-		);
+		mockGet.mockImplementation(((key: string) =>
+			key === "comparison" ? "yoy" : key === "period" ? "month" : null) as () => string | null);
 
 		render(<DashboardMobileHeader />);
 

@@ -31,17 +31,13 @@ export function DashboardMobileHeader({ className }: DashboardMobileHeaderProps)
 
 	return (
 		<div className={cn("space-y-3", className)}>
-			<h1 className="text-xl font-semibold tracking-wide">Tableau de bord</h1>
-			<div className="flex items-center gap-2">
-				<div className="flex-1">
-					<PeriodSelector fullWidth />
-				</div>
+			<div className="flex items-center justify-between gap-2">
+				<h1 className="text-xl font-semibold tracking-wide">Tableau de bord</h1>
 				<RefreshDashboardButton variant="outline" />
 			</div>
-			<div className="flex items-center gap-2">
-				<div className="flex-1">
-					<ComparisonModeSelector fullWidth />
-				</div>
+			<div className="grid grid-cols-2 gap-2">
+				<PeriodSelector fullWidth />
+				<ComparisonModeSelector fullWidth />
 			</div>
 			<p className="text-muted-foreground text-xs">{getComparisonLabel(period, comparisonMode)}</p>
 		</div>

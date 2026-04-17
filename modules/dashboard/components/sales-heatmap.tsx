@@ -6,6 +6,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
+import ScrollFade from "@/shared/components/scroll-fade";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { GetSalesHeatmapReturn } from "@/modules/dashboard/data/get-sales-heatmap";
@@ -56,13 +57,13 @@ export function SalesHeatmap({ data }: SalesHeatmapProps) {
 						Pas assez de données pour afficher la heatmap
 					</div>
 				) : (
-					<div className="overflow-x-auto">
-						<div className="min-w-[600px]">
+					<ScrollFade axis="horizontal">
+						<div className="min-w-[480px] sm:min-w-[600px]">
 							{/* Hours axis */}
 							<div
 								className="text-muted-foreground mb-1 grid text-[10px]"
 								style={{
-									gridTemplateColumns: "32px repeat(24, minmax(0, 1fr))",
+									gridTemplateColumns: "28px repeat(24, minmax(0, 1fr))",
 								}}
 								aria-hidden="true"
 							>
@@ -81,7 +82,7 @@ export function SalesHeatmap({ data }: SalesHeatmapProps) {
 										key={day}
 										className="grid items-center gap-0.5"
 										style={{
-											gridTemplateColumns: "32px repeat(24, minmax(0, 1fr))",
+											gridTemplateColumns: "28px repeat(24, minmax(0, 1fr))",
 										}}
 									>
 										<div className="text-muted-foreground pr-1 text-right text-[11px] font-medium">
@@ -133,7 +134,7 @@ export function SalesHeatmap({ data }: SalesHeatmapProps) {
 								</span>
 							</div>
 						</div>
-					</div>
+					</ScrollFade>
 				)}
 			</CardContent>
 		</Card>

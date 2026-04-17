@@ -85,82 +85,124 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				}
 			/>
 
-			<div className="space-y-6">
-				{/* KPIs en grille (4 featured + 4 compact) */}
-				<Suspense
-					fallback={
-						<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
-					}
-				>
-					<KpisWrapper period={period} comparisonMode={comparisonMode} />
-				</Suspense>
-
-				{/* KPIs clients (nouveaux, recurrents, meilleur client) */}
-				<Suspense
-					fallback={
-						<KpisSkeleton count={0} compactCount={3} ariaLabel="Chargement des KPIs clients" />
-					}
-				>
-					<CustomerKpisWrapper period={period} comparisonMode={comparisonMode} />
-				</Suspense>
-
-				{/* Alertes actionnables (ne rend rien si tout est ok) */}
+			<div className="space-y-8">
+				{/* Alertes prioritaires en haut (au-dessus des KPIs) */}
 				<Suspense>
 					<AlertsWrapper />
 				</Suspense>
 
-				{/* Pipeline d'expedition */}
-				<Suspense fallback={<FulfillmentSkeleton />}>
-					<FulfillmentWrapper />
-				</Suspense>
+				{/* SECTION 1 — Performance ventes (KPIs principaux + comportement client) */}
+				<section aria-labelledby="dashboard-section-performance" className="space-y-4">
+					<SectionHeading id="dashboard-section-performance" label="Performance ventes" />
 
-				{/* Paniers abandonnes & taux de recuperation */}
-				<Suspense
-					fallback={<ChartSkeleton height={180} ariaLabel="Chargement des paniers abandonnés" />}
-				>
-					<CartAbandonmentWrapper period={period} comparisonMode={comparisonMode} />
-				</Suspense>
+					<Suspense
+						fallback={
+							<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
+						}
+					>
+						<KpisWrapper period={period} comparisonMode={comparisonMode} />
+					</Suspense>
 
-				{/* Graphique revenus */}
-				<Suspense
-					fallback={<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />}
-				>
-					<RevenueChartWrapper period={period} />
-				</Suspense>
+					<Suspense
+						fallback={
+							<KpisSkeleton count={0} compactCount={3} ariaLabel="Chargement des KPIs clients" />
+						}
+					>
+						<CustomerKpisWrapper period={period} comparisonMode={comparisonMode} />
+					</Suspense>
+				</section>
 
-				{/* Heatmap d'activite (jour x heure) */}
-				<Suspense
-					fallback={<ChartSkeleton height={260} ariaLabel="Chargement de la heatmap d'activité" />}
-				>
-					<SalesHeatmapWrapper period={period} />
-				</Suspense>
+				{/* SECTION 2 — Insights opérationnels (Pipeline + Paniers) — 2-col sur xl+ */}
+				<section aria-labelledby="dashboard-section-operations" className="space-y-4">
+					<SectionHeading id="dashboard-section-operations" label="Insights opérationnels" />
 
-				{/* Commandes recentes + Top produits + Codes promo */}
-				<DashboardListsTabs
-					ordersSlot={
+					<div className="grid gap-6 xl:grid-cols-2">
+						<Suspense fallback={<FulfillmentSkeleton />}>
+							<FulfillmentWrapper />
+						</Suspense>
+
 						<Suspense
 							fallback={
-								<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
+								<ChartSkeleton
+									heightClassName="h-32"
+									ariaLabel="Chargement des paniers abandonnés"
+								/>
 							}
 						>
-							<RecentOrdersWrapper />
+							<CartAbandonmentWrapper period={period} comparisonMode={comparisonMode} />
 						</Suspense>
-					}
-					productsSlot={
-						<Suspense
-							fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
-						>
-							<TopProductsWrapper period={period} />
-						</Suspense>
-					}
-					discountsSlot={
-						<Suspense>
-							<ActiveDiscountsWrapper />
-						</Suspense>
-					}
-				/>
+					</div>
+				</section>
+
+				{/* SECTION 3 — Tendances temporelles (Revenu + Heatmap) */}
+				<section aria-labelledby="dashboard-section-trends" className="space-y-4">
+					<SectionHeading id="dashboard-section-trends" label="Tendances & activité" />
+
+					<Suspense
+						fallback={
+							<ChartSkeleton
+								heightClassName="h-60 sm:h-[250px] md:h-75"
+								ariaLabel="Chargement du graphique des revenus"
+							/>
+						}
+					>
+						<RevenueChartWrapper period={period} />
+					</Suspense>
+
+					<Suspense
+						fallback={
+							<ChartSkeleton
+								heightClassName="h-60 sm:h-[250px] md:h-[260px]"
+								ariaLabel="Chargement de la heatmap d'activité"
+							/>
+						}
+					>
+						<SalesHeatmapWrapper period={period} />
+					</Suspense>
+				</section>
+
+				{/* SECTION 4 — Activité récente (Commandes + Produits + Promos) */}
+				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
+					<SectionHeading id="dashboard-section-activity" label="Activité récente" />
+
+					<DashboardListsTabs
+						ordersSlot={
+							<Suspense
+								fallback={
+									<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
+								}
+							>
+								<RecentOrdersWrapper />
+							</Suspense>
+						}
+						productsSlot={
+							<Suspense
+								fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
+							>
+								<TopProductsWrapper period={period} />
+							</Suspense>
+						}
+						discountsSlot={
+							<Suspense>
+								<ActiveDiscountsWrapper />
+							</Suspense>
+						}
+					/>
+				</section>
 			</div>
 		</section>
+	);
+}
+
+/**
+ * Petit titre de section discret (uppercase, muted) qui structure le dashboard
+ * sans alourdir visuellement. Servable en h2 pour la navigation lecteur d'écran.
+ */
+function SectionHeading({ id, label }: { id: string; label: string }) {
+	return (
+		<h2 id={id} className="text-muted-foreground text-xs font-semibold tracking-[0.08em] uppercase">
+			{label}
+		</h2>
 	);
 }
 

@@ -1,4 +1,6 @@
-import { cn } from "@/shared/utils/cn";
+"use client";
+
+import ScrollFade from "@/shared/components/scroll-fade";
 
 interface ChartScrollContainerProps {
 	children: React.ReactNode;
@@ -9,7 +11,12 @@ interface ChartScrollContainerProps {
 }
 
 /**
- * Container for charts - forces responsive on mobile
+ * Container for charts and any horizontally-scrollable dashboard content.
+ *
+ * Wraps content in ScrollFade so that, when the inner content overflows the
+ * viewport (typically on mobile where charts have a min-width), gradient edge
+ * indicators appear on the left/right to signal scrollable content.
+ * On desktop where content fits, no fade is shown — natural rendering.
  */
 export function ChartScrollContainer({
 	children,
@@ -17,17 +24,8 @@ export function ChartScrollContainer({
 	className,
 }: ChartScrollContainerProps) {
 	return (
-		<div
-			role="region"
-			aria-label={ariaLabel}
-			className={cn(
-				"relative",
-				"scrollbar-none overflow-x-auto overflow-y-visible",
-				"md:overflow-visible",
-				className,
-			)}
-		>
-			<div className="w-full min-w-0">{children}</div>
+		<div role="region" aria-label={ariaLabel} className={className}>
+			<ScrollFade axis="horizontal">{children}</ScrollFade>
 		</div>
 	);
 }
