@@ -100,10 +100,13 @@ describe("CartPriceChangeAlert", () => {
 		expect(screen.getByRole("alert")).toBeInTheDocument();
 	});
 
-	it("renders the alert when a price has decreased", () => {
+	it("renders a positive status message when prices have only decreased", () => {
 		const items = [createItem("1", 3000, 2500)];
 		render(<CartPriceChangeAlert items={items as never} />);
-		expect(screen.getByRole("alert")).toBeInTheDocument();
+		// When only decreases: uses role="status" (non-blocking, positive tone)
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+		expect(screen.getByRole("status")).toBeInTheDocument();
+		expect(screen.getByText(/Des prix ont baissé/i)).toBeInTheDocument();
 	});
 
 	it("lists changed items with old and new price", () => {

@@ -58,7 +58,8 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 				<main
 					id="admin-main-content"
 					tabIndex={-1}
-					className="space-y-6 p-6 pt-20 pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
+					style={{ "--admin-main-x": "1.5rem" } as React.CSSProperties}
+					className="space-y-6 px-[var(--admin-main-x)] pt-20 pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
 				>
 					<Suspense fallback={<AdminContentSkeleton />}>
 						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>

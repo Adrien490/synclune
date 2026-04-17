@@ -2,6 +2,7 @@
 
 import { SquarePen, EllipsisVertical, Power, PowerOff, Trash2 } from "lucide-react";
 
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -31,10 +32,12 @@ export function AnnouncementRowActions({ announcement }: AnnouncementRowActionsP
 	const { toggleStatus, isPending: isToggling } = useToggleAnnouncementStatus();
 
 	const handleEdit = () => {
+		triggerHaptic("selection");
 		openDialog({ announcement });
 	};
 
 	const handleDelete = () => {
+		triggerHaptic("medium");
 		openAlert({
 			announcementId: announcement.id,
 			announcementMessage: announcement.message,
@@ -42,6 +45,7 @@ export function AnnouncementRowActions({ announcement }: AnnouncementRowActionsP
 	};
 
 	const handleToggle = () => {
+		triggerHaptic("medium");
 		toggleStatus(announcement.id, !announcement.isActive);
 	};
 

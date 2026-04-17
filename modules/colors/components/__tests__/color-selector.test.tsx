@@ -6,9 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockRouterReplace, mockUseReducedMotion } = vi.hoisted(() => ({
+const { mockRouterReplace, mockUseReducedMotion, mockTriggerHaptic } = vi.hoisted(() => ({
 	mockRouterReplace: vi.fn(),
 	mockUseReducedMotion: vi.fn(() => false),
+	mockTriggerHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -54,6 +55,10 @@ vi.mock("@/shared/hooks/use-radio-group-keyboard", () => ({
 		containerRef: { current: null },
 		handleKeyDown: vi.fn(),
 	})),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -194,6 +199,23 @@ describe("ColorSelector", () => {
 			render(<ColorSelector colors={colors} product={createProduct()} />);
 			await userEvent.click(screen.getByRole("radio"));
 			expect(mockRouterReplace).toHaveBeenCalled();
+		});
+	});
+
+	describe("haptic feedback", () => {
+		it("triggers selection haptic when clicking an available color", async () => {
+			const colors = [createColor({ slug: "rouge" })];
+			render(<ColorSelector colors={colors} product={createProduct()} />);
+			await userEvent.click(screen.getByRole("radio"));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("does not trigger haptic when color is disabled (unavailable)", async () => {
+			vi.mocked(filterCompatibleSkus).mockReturnValue([]);
+			const colors = [createColor({ slug: "rouge" })];
+			render(<ColorSelector colors={colors} product={createProduct()} />);
+			await userEvent.click(screen.getByRole("radio"));
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
 		});
 	});
 

@@ -33,6 +33,7 @@ async function fetchActiveAnnouncement(): Promise<ActiveAnnouncement | null> {
 				link: true,
 				linkText: true,
 				dismissDurationHours: true,
+				endsAt: true,
 			},
 			orderBy: { createdAt: "desc" },
 		});

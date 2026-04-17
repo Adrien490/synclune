@@ -23,6 +23,7 @@ import { GalleryNavigation } from "@/shared/components/gallery/navigation";
 import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
 import { useLightbox } from "@/shared/hooks";
 import { lazy } from "react";
+import ScrollFade from "@/shared/components/scroll-fade";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
@@ -84,29 +85,44 @@ function GalleryThumbnailList({
 		});
 	}, [current, prefersReduced]);
 
-	return (
-		<div className={isDesktop ? "order-1 hidden md:block" : "order-3 mt-3 md:hidden"}>
-			<div
-				ref={tablistRef}
-				className={isDesktop ? "flex flex-col gap-2" : "flex flex-wrap gap-2"}
-				role="tablist"
-				aria-label="Vignettes"
-			>
-				{images.map((media, index) => (
-					<GalleryThumbnail
-						key={media.id}
-						media={media}
-						index={index}
-						isActive={index === current}
-						hasError={thumbnailErrors.has(media.id)}
-						title={title}
-						onClick={() => onScrollTo(index)}
-						onError={() => onError(media.id)}
-						className={isDesktop ? "hover:shadow-sm" : "h-14 w-14"}
-						isLCPCandidate={index === 0}
-					/>
-				))}
+	const thumbnails = images.map((media, index) => (
+		<GalleryThumbnail
+			key={media.id}
+			media={media}
+			index={index}
+			isActive={index === current}
+			hasError={thumbnailErrors.has(media.id)}
+			title={title}
+			onClick={() => onScrollTo(index)}
+			onError={() => onError(media.id)}
+			className={isDesktop ? "hover:shadow-sm" : "h-14 w-14 shrink-0"}
+			isLCPCandidate={index === 0}
+		/>
+	));
+
+	if (isDesktop) {
+		return (
+			<div className="order-1 hidden md:block">
+				<div ref={tablistRef} className="flex flex-col gap-2" role="tablist" aria-label="Vignettes">
+					{thumbnails}
+				</div>
 			</div>
+		);
+	}
+
+	// Mobile: horizontal scroll avec ScrollFade (gradient indique overflow)
+	return (
+		<div className="order-3 mt-3 md:hidden">
+			<ScrollFade axis="horizontal">
+				<div
+					ref={tablistRef}
+					className="flex flex-nowrap gap-2 py-1"
+					role="tablist"
+					aria-label="Vignettes"
+				>
+					{thumbnails}
+				</div>
+			</ScrollFade>
 		</div>
 	);
 }

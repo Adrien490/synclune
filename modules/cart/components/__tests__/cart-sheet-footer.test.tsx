@@ -90,6 +90,10 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
+vi.mock("../cart-promo-code-form", () => ({
+	CartPromoCodeForm: () => <div data-testid="cart-promo-code-form" />,
+}));
+
 import { CartSheetFooter } from "../cart-sheet-footer";
 
 afterEach(() => {

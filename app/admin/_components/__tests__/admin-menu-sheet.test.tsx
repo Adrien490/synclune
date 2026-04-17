@@ -6,12 +6,15 @@ import type * as LucideReact from "lucide-react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsOpen, mockOpenMenu, mockCloseMenu, mockUsePathname } = vi.hoisted(() => ({
-	mockIsOpen: { current: false },
-	mockOpenMenu: vi.fn(),
-	mockCloseMenu: vi.fn(),
-	mockUsePathname: vi.fn(() => "/admin"),
-}));
+const { mockIsOpen, mockOpenMenu, mockCloseMenu, mockUsePathname, mockTriggerHaptic } = vi.hoisted(
+	() => ({
+		mockIsOpen: { current: false },
+		mockOpenMenu: vi.fn(),
+		mockCloseMenu: vi.fn(),
+		mockUsePathname: vi.fn(() => "/admin"),
+		mockTriggerHaptic: vi.fn(),
+	}),
+);
 
 // ============================================================================
 // MODULE MOCKS
@@ -61,6 +64,10 @@ vi.mock("@/shared/lib/navigation", () => ({
 		pathname === url || pathname.startsWith(url + "/"),
 }));
 
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
+}));
+
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) =>
 		args
@@ -73,15 +80,33 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	Sheet: ({
 		children,
 		open,
+		onOpenChange,
 	}: {
 		children: React.ReactNode;
 		open: boolean;
 		direction?: string;
 		onOpenChange?: (v: boolean) => void;
 		preventScrollRestoration?: boolean;
-	}) => (open ? <div data-testid="sheet">{children}</div> : null),
-	SheetContent: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+	}) =>
+		open ? (
+			<div data-testid="sheet">
+				<button type="button" data-testid="sheet-dismiss" onClick={() => onOpenChange?.(false)}>
+					dismiss
+				</button>
+				{children}
+			</div>
+		) : null,
+	SheetContent: ({
+		children,
+		className,
+		onOverlayClick,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+		onOverlayClick?: (e: React.MouseEvent) => void;
+	}) => (
 		<div data-testid="sheet-content" className={className}>
+			<div data-testid="sheet-overlay" onClick={(e) => onOverlayClick?.(e)} aria-hidden="true" />
 			{children}
 		</div>
 	),
@@ -163,7 +188,7 @@ describe("AdminMenuSheet", () => {
 
 		it("renders search input", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByLabelText("Rechercher dans le menu de navigation")).toBeInTheDocument();
+			expect(screen.getByLabelText("Filtrer les pages de navigation")).toBeInTheDocument();
 		});
 
 		it("renders dashboard link", () => {
@@ -246,6 +271,84 @@ describe("AdminMenuSheet", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
 			expect(screen.getByText("Menu d'administration")).toBeInTheDocument();
+		});
+	});
+
+	describe("search differentiation (P1.4)", () => {
+		it('uses "Filtrer les pages" placeholder (not generic search)', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			expect(input).toHaveAttribute("placeholder", "Filtrer les pages...");
+		});
+	});
+
+	describe("aria-live search results (P1.5)", () => {
+		it("announces empty state via aria-live polite", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "xyznope" } });
+
+			const statusNodes = screen.getAllByRole("status");
+			const liveMessage = statusNodes.find((n) => n.textContent.includes("Aucun résultat"));
+			expect(liveMessage).toBeDefined();
+			expect(liveMessage).toHaveAttribute("aria-live", "polite");
+		});
+
+		it("labels results region with count", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "command" } });
+
+			const region = screen.getByRole("region");
+			expect(region.getAttribute("aria-label")).toMatch(/résultats? de navigation/);
+		});
+	});
+
+	describe("scroll fade (P2.4)", () => {
+		it("wraps nav in ScrollFade with vertical axis and fadeFromClass=from-muted", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+
+			const scrollFadeRoot = screen.getByTestId("scroll-fade-root");
+			expect(scrollFadeRoot).toBeInTheDocument();
+
+			const scrollContainer = screen.getByTestId("scroll-fade-container");
+			// ScrollFade vertical axis gives h-full + overflow-y-auto
+			expect(scrollContainer.className).toContain("overflow-y-auto");
+			// overscroll-contain passed through via className
+			expect(scrollContainer.className).toContain("overscroll-contain");
+		});
+
+		it("nav is inside scroll-fade container (landmark preserved)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+
+			const nav = screen.getByLabelText("Navigation administration");
+			const scrollContainer = screen.getByTestId("scroll-fade-container");
+			expect(scrollContainer.contains(nav)).toBe(true);
+		});
+	});
+
+	describe("haptic feedback (P1.3)", () => {
+		it('fires "selection" haptic on dismiss', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByTestId("sheet-dismiss"));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it('fires "selection" haptic on scrim tap', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByTestId("sheet-overlay"));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
 		});
 	});
 });

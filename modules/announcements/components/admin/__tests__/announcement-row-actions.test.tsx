@@ -6,10 +6,16 @@ import type { AnnouncementListItem } from "../../../types/announcement.types";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenDialog, mockOpenAlert, mockToggleStatus } = vi.hoisted(() => ({
+const { mockOpenDialog, mockOpenAlert, mockToggleStatus, mockHaptic } = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlert: vi.fn(),
 	mockToggleStatus: vi.fn(),
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
@@ -174,5 +180,25 @@ describe("AnnouncementRowActions", () => {
 			announcementId: "ann_1",
 			announcementMessage: "Test annonce",
 		});
+	});
+
+	// ─── Haptic feedback ──────────────────────────────────────────────────────
+
+	it("should fire selection haptic on edit", () => {
+		render(<AnnouncementRowActions announcement={createAnnouncement()} />);
+		fireEvent.click(screen.getByText("Éditer"));
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("should fire medium haptic on toggle", () => {
+		render(<AnnouncementRowActions announcement={createAnnouncement({ isActive: false })} />);
+		fireEvent.click(screen.getByText("Activer"));
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	it("should fire medium haptic on delete", () => {
+		render(<AnnouncementRowActions announcement={createAnnouncement()} />);
+		fireEvent.click(screen.getByText("Supprimer"));
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 });

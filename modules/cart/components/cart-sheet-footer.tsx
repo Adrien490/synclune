@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { AnimatedNumber } from "@/shared/components/animations/animated-number";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { CartPromoCodeForm } from "./cart-promo-code-form";
 import Link from "next/link";
 
 interface CartSheetFooterProps {
@@ -32,6 +33,9 @@ export function CartSheetFooter({
 	return (
 		<SheetFooter className="mt-auto shrink-0 border-t px-6 pt-3 pb-4">
 			<div className="w-full space-y-2">
+				{/* Promo code disclosure — collapsed by default */}
+				<CartPromoCodeForm />
+
 				{/* Subtotal */}
 				<div className="flex items-center justify-between">
 					<span className="font-semibold">

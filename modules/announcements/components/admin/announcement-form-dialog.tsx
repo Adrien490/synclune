@@ -169,9 +169,21 @@ export function AnnouncementFormDialog() {
 							)}
 						</form.AppField>
 
-						<form.Subscribe selector={(state) => [state.values.message, state.values.linkText]}>
-							{([message, linkText]) => (
-								<AnnouncementPreview message={message ?? ""} linkText={linkText ?? null} />
+						<form.Subscribe
+							selector={(state) => [
+								state.values.message,
+								state.values.link,
+								state.values.linkText,
+								state.values.endsAt,
+							]}
+						>
+							{([message, link, linkText, endsAt]) => (
+								<AnnouncementPreview
+									message={message ?? ""}
+									link={link ?? null}
+									linkText={linkText ?? null}
+									endsAt={endsAt ? new Date(endsAt) : null}
+								/>
 							)}
 						</form.Subscribe>
 					</div>

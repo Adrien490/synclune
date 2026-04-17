@@ -6,6 +6,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SectionHeader } from "./filter-section-header";
 
 // ============================================================================
@@ -35,6 +36,7 @@ export function TypeFilterSection({
 	onToggle,
 	onReset,
 }: TypeFilterSectionProps) {
+	const haptic = useHaptic();
 	if (productTypes.length === 0) return null;
 
 	return (
@@ -52,6 +54,7 @@ export function TypeFilterSection({
 								id={`type-${type.slug}`}
 								checked={isSelected}
 								onCheckedChange={(checked) => {
+									haptic("selection");
 									onToggle(type.slug, checked === true);
 								}}
 								count={type._count?.products}

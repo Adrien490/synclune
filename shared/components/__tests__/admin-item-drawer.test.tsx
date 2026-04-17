@@ -14,7 +14,12 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 		<div
 			data-testid="drawer"
 			data-open={open ? "true" : "false"}
+			role="button"
+			tabIndex={0}
 			onClick={() => onOpenChange(false)}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") onOpenChange(false);
+			}}
 		>
 			{open ? children : null}
 		</div>

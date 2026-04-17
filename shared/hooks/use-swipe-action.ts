@@ -45,6 +45,12 @@ interface UseSwipeActionReturn {
 	leftProgress: number;
 	/** 0–1 progress toward the right action threshold */
 	rightProgress: number;
+	/** Current container width in px (tracked via ResizeObserver). 0 before first measurement. */
+	containerWidth: number;
+	/** Effective left threshold in px: min(configured, width * 30%). Drives the rubber-band helper. */
+	effectiveLeftThreshold: number;
+	/** Effective right threshold in px. */
+	effectiveRightThreshold: number;
 }
 
 /**
@@ -65,14 +71,22 @@ function getEffectiveThreshold(pxThreshold: number, containerWidth: number): num
  * - Dynamic threshold: min(configured px, 30% of card width)
  * - Overswipe auto-trigger at >75% of card width
  * - Fires actions when the swipe exceeds the threshold on release
+ * - Haptic tiers are managed by the hook itself (source of truth):
+ *   `medium` on confirm (touchend above threshold), `heavy` on overswipe
  * - Passive touch listeners (non-blocking scroll performance)
+ * - Container width tracked via ResizeObserver (no layout thrashing in touchmove)
+ *
+ * TODO(2026-Q3): evaluate a Pointer Events migration once desktop drag is a
+ * requirement. Today all consumers are mobile-only, so Touch Events suffice
+ * and avoid a 46-test rewrite.
  *
  * @example
  * ```tsx
- * const { swipeOffset, isSwiping, leftProgress } = useSwipeAction({
- *   elementRef,
- *   leftAction: { onAction: handleDelete, threshold: 80 },
- * });
+ * const { swipeOffset, isSwiping, leftProgress, containerWidth, effectiveLeftThreshold } =
+ *   useSwipeAction({
+ *     elementRef,
+ *     leftAction: { onAction: handleDelete, threshold: 80 },
+ *   });
  * ```
  */
 export function useSwipeAction({
@@ -91,14 +105,16 @@ export function useSwipeAction({
 	const swipeOffsetRef = useRef(0);
 	const overswipeFiredRef = useRef(false);
 	const rafIdRef = useRef(0);
+	const containerWidthRef = useRef(0);
 
-	// Stable event callbacks — avoids stale closure + no dependency needed in effect
-	const onLeftAction = useEffectEvent(() => {
-		triggerHaptic("medium");
+	// Stable event callbacks — tier controls which haptic pattern fires.
+	// Hook is the single source of truth for action haptics (no duplication from callers).
+	const onLeftAction = useEffectEvent((tier: "confirm" | "overswipe" = "confirm") => {
+		triggerHaptic(tier === "overswipe" ? "heavy" : "medium");
 		leftAction?.onAction();
 	});
-	const onRightAction = useEffectEvent(() => {
-		triggerHaptic("medium");
+	const onRightAction = useEffectEvent((tier: "confirm" | "overswipe" = "confirm") => {
+		triggerHaptic(tier === "overswipe" ? "heavy" : "medium");
 		rightAction?.onAction();
 	});
 
@@ -106,7 +122,36 @@ export function useSwipeAction({
 	const hasRight = !!rightAction;
 	const leftThresholdPx = leftAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
 	const rightThresholdPx = rightAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
-	const containerWidthRef = useRef(0);
+
+	// Track container width via ResizeObserver — no per-move getBoundingClientRect.
+	// `elementRef` intentionally omitted from deps: it's a ref, stable by convention.
+	useEffect(() => {
+		const el = elementRef.current;
+		if (!el || !enabled || (!hasLeft && !hasRight)) return;
+
+		// Prime synchronously: we need a width before the first touchmove.
+		const initialWidth = el.getBoundingClientRect().width;
+		containerWidthRef.current = initialWidth;
+		setContainerWidth(initialWidth);
+
+		if (typeof ResizeObserver === "undefined") return;
+
+		const ro = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) return;
+			const width = entry.contentRect.width;
+			if (width !== containerWidthRef.current) {
+				containerWidthRef.current = width;
+				setContainerWidth(width);
+			}
+		});
+		ro.observe(el);
+
+		return () => {
+			ro.disconnect();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [enabled, hasLeft, hasRight]);
 
 	useEffect(() => {
 		const el = elementRef.current;
@@ -150,7 +195,7 @@ export function useSwipeAction({
 				}
 			}
 
-			// Compute new offset
+			// Compute new offset (linear — rubber-band is applied at render time in the consumer)
 			let newOffset = 0;
 			if (lockedDirectionRef.current === "left") {
 				newOffset = Math.min(0, deltaX);
@@ -158,12 +203,8 @@ export function useSwipeAction({
 				newOffset = Math.max(0, deltaX);
 			}
 
-			// Read container width once per move for progress + overswipe
-			const measuredWidth = el?.getBoundingClientRect().width ?? 0;
-			if (measuredWidth !== containerWidthRef.current) {
-				containerWidthRef.current = measuredWidth;
-				setContainerWidth(measuredWidth);
-			}
+			// Width is tracked by ResizeObserver — no layout read here.
+			const measuredWidth = containerWidthRef.current;
 
 			// Update via rAF for 60fps
 			cancelAnimationFrame(rafIdRef.current);
@@ -172,14 +213,14 @@ export function useSwipeAction({
 				setSwipeOffset(newOffset);
 			});
 
-			// Overswipe auto-trigger at >75% of card width
+			// Overswipe auto-trigger at >75% of card width → "heavy" haptic tier
 			if (!overswipeFiredRef.current) {
 				if (measuredWidth > 0 && Math.abs(newOffset) > measuredWidth * OVERSWIPE_RATIO) {
 					overswipeFiredRef.current = true;
 					if (lockedDirectionRef.current === "left") {
-						onLeftAction();
+						onLeftAction("overswipe");
 					} else if (lockedDirectionRef.current === "right") {
-						onRightAction();
+						onRightAction("overswipe");
 					}
 				}
 			}
@@ -194,17 +235,17 @@ export function useSwipeAction({
 			if (isTrackingRef.current && !overswipeFiredRef.current) {
 				const offset = swipeOffsetRef.current;
 				const dir = lockedDirectionRef.current;
-				const containerWidth = el?.getBoundingClientRect().width ?? 0;
+				const width = containerWidthRef.current;
 
 				if (dir === "left") {
-					const threshold = getEffectiveThreshold(leftThresholdPx, containerWidth);
+					const threshold = getEffectiveThreshold(leftThresholdPx, width);
 					if (Math.abs(offset) >= threshold) {
-						onLeftAction();
+						onLeftAction("confirm");
 					}
 				} else if (dir === "right") {
-					const threshold = getEffectiveThreshold(rightThresholdPx, containerWidth);
+					const threshold = getEffectiveThreshold(rightThresholdPx, width);
 					if (offset >= threshold) {
-						onRightAction();
+						onRightAction("confirm");
 					}
 				}
 			}
@@ -235,7 +276,15 @@ export function useSwipeAction({
 		swipeOffset < 0 ? Math.min(1, Math.abs(swipeOffset) / effectiveLeftThreshold) : 0;
 	const rightProgress = swipeOffset > 0 ? Math.min(1, swipeOffset / effectiveRightThreshold) : 0;
 
-	return { swipeOffset, isSwiping, leftProgress, rightProgress };
+	return {
+		swipeOffset,
+		isSwiping,
+		leftProgress,
+		rightProgress,
+		containerWidth,
+		effectiveLeftThreshold,
+		effectiveRightThreshold,
+	};
 }
 
 export { SWIPE_ACTION_THRESHOLD, SWIPE_WIDTH_RATIO, OVERSWIPE_RATIO };

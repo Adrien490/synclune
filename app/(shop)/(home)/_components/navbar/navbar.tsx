@@ -114,7 +114,14 @@ export async function Navbar() {
 					className="transition-all duration-300 ease-in-out outline-none"
 				>
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-						<div className="flex h-16 items-center gap-4 sm:h-20">
+						<div
+							className={cn(
+								"flex h-16 items-center gap-4 sm:h-20",
+								// Scroll compact: shrink sm:h-20 → sm:h-16 when wrapper is scrolled
+								"motion-safe:transition-[height] motion-safe:duration-300 motion-safe:ease-out",
+								"group-data-[scrolled=true]:sm:h-16",
+							)}
+						>
 							{/* Section gauche: Menu burger (mobile) / Logo (desktop) */}
 							<div className="flex min-w-0 flex-1 items-center lg:flex-none">
 								{/* Menu burger (mobile uniquement) */}
@@ -132,7 +139,12 @@ export async function Navbar() {
 								<Logo
 									href="/"
 									size={48}
-									className="hidden max-w-full min-w-0 lg:flex"
+									className={cn(
+										"hidden max-w-full min-w-0 origin-left lg:flex",
+										// Scroll compact: subtle scale-down of desktop logo when scrolled
+										"motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out",
+										"group-data-[scrolled=true]:motion-safe:scale-90",
+									)}
 									shadow
 									sizes="64px"
 									showText
@@ -142,7 +154,7 @@ export async function Navbar() {
 
 							{/* Section centrale: Logo (mobile) / Navigation desktop */}
 							<div className="flex items-center justify-center lg:flex-1">
-								{/* Logo mobile centré (icône seule, shrink au scroll) */}
+								{/* Logo mobile centré (icône seule) */}
 								<Logo href="/" size={44} className="lg:hidden" shadow sizes="44px" />
 								<DesktopNav navItems={desktopNavItems} featuredProducts={featuredProducts} />
 							</div>
@@ -150,7 +162,12 @@ export async function Navbar() {
 							{/* Section droite: Favoris + Recherche + Compte + Panier */}
 							<div className="flex min-w-0 flex-1 items-center justify-end">
 								<div className="flex shrink-0 items-center gap-2 sm:gap-3">
-									<NavbarIconButtons isLoggedIn={!!session} />
+									<NavbarIconButtons
+										isLoggedIn={!!session}
+										isAdmin={userIsAdmin}
+										userName={session?.user.name ?? null}
+										userEmail={session?.user.email ?? null}
+									/>
 								</div>
 							</div>
 						</div>

@@ -1,7 +1,5 @@
 "use server";
 
-import { updateTag } from "next/cache";
-
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -11,7 +9,7 @@ import { ADMIN_ANNOUNCEMENT_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { getAnnouncementInvalidationTags } from "../constants/cache";
+import { invalidateAnnouncementCache } from "../constants/cache";
 import { updateAnnouncementSchema } from "../schemas/announcement.schemas";
 
 export async function updateAnnouncement(
@@ -63,7 +61,7 @@ export async function updateAnnouncement(
 			},
 		});
 
-		getAnnouncementInvalidationTags().forEach((tag) => updateTag(tag));
+		invalidateAnnouncementCache();
 
 		void logAudit({
 			adminId: adminUser.id,

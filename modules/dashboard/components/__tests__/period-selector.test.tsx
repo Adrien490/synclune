@@ -16,6 +16,69 @@ vi.mock("next/navigation", () => ({
 	}),
 }));
 
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
+}));
+
+vi.mock("@/shared/components/ui/tabs", () => ({
+	Tabs: ({
+		children,
+		value,
+		onValueChange,
+		className,
+	}: {
+		children: React.ReactNode;
+		value?: string;
+		onValueChange?: (value: string) => void;
+		className?: string;
+	}) => (
+		<div
+			data-testid="tabs"
+			data-value={value}
+			className={className}
+			data-on-change={!!onValueChange}
+		>
+			{children}
+		</div>
+	),
+	TabsList: ({
+		children,
+		className,
+		"aria-label": ariaLabel,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+		"aria-label"?: string;
+	}) => (
+		<div role="tablist" className={className} aria-label={ariaLabel}>
+			{children}
+		</div>
+	),
+	TabsTrigger: ({
+		children,
+		value,
+		className,
+		"aria-label": ariaLabel,
+	}: {
+		children: React.ReactNode;
+		value: string;
+		className?: string;
+		"aria-label"?: string;
+	}) => (
+		<button role="tab" data-value={value} className={className} aria-label={ariaLabel}>
+			{children}
+		</button>
+	),
+}));
+
+vi.mock("lucide-react", () => ({
+	Loader2: (props: { className?: string }) => (
+		<span data-testid="icon-loader" className={props.className} />
+	),
+}));
+
 vi.mock("@/shared/components/ui/select", () => ({
 	Select: ({
 		children,
@@ -180,5 +243,75 @@ describe("PeriodSelector", () => {
 		render(<PeriodSelector />);
 
 		expect(screen.getByTestId("select-content")).toBeInTheDocument();
+	});
+
+	// -------------------------------------------------------------------------
+	// Segmented variant (mobile)
+	// -------------------------------------------------------------------------
+
+	describe("variant=segmented", () => {
+		it("renders a Tabs with 5 triggers (one per period)", () => {
+			render(<PeriodSelector variant="segmented" />);
+
+			const triggers = screen.getAllByRole("tab");
+			expect(triggers).toHaveLength(5);
+		});
+
+		it("renders short labels (7j, 30j, Mois, Trim., Année) in the triggers", () => {
+			render(<PeriodSelector variant="segmented" />);
+
+			expect(screen.getByText("7j")).toBeInTheDocument();
+			expect(screen.getByText("30j")).toBeInTheDocument();
+			expect(screen.getByText("Mois")).toBeInTheDocument();
+			expect(screen.getByText("Trim.")).toBeInTheDocument();
+			expect(screen.getByText("Année")).toBeInTheDocument();
+		});
+
+		it("renders triggers with correct values", () => {
+			render(<PeriodSelector variant="segmented" />);
+
+			const triggers = screen.getAllByRole("tab");
+			const values = triggers.map((trigger) => trigger.getAttribute("data-value"));
+			expect(values).toEqual(["7d", "30d", "month", "quarter", "year"]);
+		});
+
+		it("sets Tabs value from URL search param", () => {
+			mockGet.mockReturnValue("quarter");
+
+			render(<PeriodSelector variant="segmented" />);
+
+			const tabs = screen.getByTestId("tabs");
+			expect(tabs).toHaveAttribute("data-value", "quarter");
+		});
+
+		it("defaults to 'month' when no search param is set", () => {
+			mockGet.mockReturnValue(null);
+
+			render(<PeriodSelector variant="segmented" />);
+
+			const tabs = screen.getByTestId("tabs");
+			expect(tabs).toHaveAttribute("data-value", "month");
+		});
+
+		it("provides a long aria-label on each trigger for AT", () => {
+			render(<PeriodSelector variant="segmented" />);
+
+			expect(screen.getByRole("tab", { name: "7 jours" })).toBeInTheDocument();
+			expect(screen.getByRole("tab", { name: "Ce trimestre" })).toBeInTheDocument();
+			expect(screen.getByRole("tab", { name: "Cette année" })).toBeInTheDocument();
+		});
+
+		it("applies an aria-label to the tablist", () => {
+			render(<PeriodSelector variant="segmented" />);
+
+			const tablist = screen.getByRole("tablist");
+			expect(tablist).toHaveAttribute("aria-label", "Période du tableau de bord");
+		});
+
+		it("does not render the Select dropdown when using segmented variant", () => {
+			render(<PeriodSelector variant="segmented" />);
+
+			expect(screen.queryByTestId("select")).toBeNull();
+		});
 	});
 });

@@ -1,3 +1,4 @@
+import { cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
@@ -23,6 +24,11 @@ export type { GetRevenueChartReturn } from "../types/dashboard.types";
 /**
  * Fetches revenue data for the selected period with DB-side aggregation and cache
  * Adapts granularity: daily for 7d/30d/month, weekly for quarter, monthly for year
+ *
+ * Cache strategy:
+ *  - Shared tag `DASHBOARD_CACHE_TAGS.REVENUE_CHART` for global dashboard refresh
+ *  - Per-granularity secondary tag (`revenue-chart-{granularity}`) allows targeted
+ *    invalidation if ever a single granularity bucket needs pruning.
  */
 export async function fetchDashboardRevenueChart(
 	period: DashboardPeriod = DEFAULT_PERIOD,
@@ -32,6 +38,8 @@ export async function fetchDashboardRevenueChart(
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 
 	const chartConfig = getChartConfig(period);
+	cacheTag(`${DASHBOARD_CACHE_TAGS.REVENUE_CHART}-${chartConfig.granularity}`);
+
 	const periodLabel = DASHBOARD_PERIODS[period].label;
 
 	// Agregation cote DB with dynamic date format based on granularity

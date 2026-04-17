@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 // Stub window.matchMedia (needed by useEdgeSwipe)
@@ -77,12 +77,39 @@ vi.mock("motion/react", () => {
 	};
 });
 
-// Mock Sheet components
+// Mock Sheet components — forward key props (scrollLockTimeout, onOpenChange, onOverlayClick)
+// so tests can assert on them.
 vi.mock("@/shared/components/ui/sheet", () => ({
-	Sheet: ({ children }: { children: React.ReactNode }) => <div data-testid="sheet">{children}</div>,
+	Sheet: ({
+		children,
+		onOpenChange,
+		scrollLockTimeout,
+	}: {
+		children: React.ReactNode;
+		onOpenChange?: (open: boolean) => void;
+		scrollLockTimeout?: number;
+	}) => (
+		<div data-testid="sheet" data-scroll-lock-timeout={scrollLockTimeout}>
+			<button type="button" data-testid="sheet-toggle" onClick={() => onOpenChange?.(true)}>
+				toggle
+			</button>
+			{children}
+		</div>
+	),
 	SheetTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	SheetContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="sheet-content">{children}</div>
+	SheetContent: ({
+		children,
+		onOverlayClick,
+	}: {
+		children: React.ReactNode;
+		onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+	}) => (
+		<div data-testid="sheet-content">
+			<button type="button" data-testid="sheet-overlay" onClick={onOverlayClick as never}>
+				overlay
+			</button>
+			{children}
+		</div>
 	),
 	SheetHeader: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
 		<div {...props}>{children}</div>
@@ -122,6 +149,13 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 		open: mockOpen,
 		close: mockClose,
 	}),
+}));
+
+// Mock useHaptic — capture all triggerHaptic calls for assertions
+const mockHaptic = vi.fn();
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: (...args: unknown[]) => mockHaptic(...args),
 }));
 
 import { MenuSheet } from "./menu-sheet";
@@ -194,6 +228,48 @@ describe("MenuSheet", () => {
 			const svg = trigger.querySelector("svg");
 			expect(svg).not.toBeNull();
 			expect(svg?.getAttribute("aria-hidden")).toBe("true");
+		});
+	});
+
+	describe("native 2026 mobile polish", () => {
+		it("passes a tuned scrollLockTimeout (500ms) to the Sheet", () => {
+			render(<MenuSheet {...baseProps} />);
+
+			const sheet = screen.getByTestId("sheet");
+			expect(sheet.getAttribute("data-scroll-lock-timeout")).toBe("500");
+		});
+
+		it("fires haptic 'light' when the sheet is toggled open", () => {
+			render(<MenuSheet {...baseProps} />);
+
+			fireEvent.click(screen.getByTestId("sheet-toggle"));
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+		});
+
+		it("fires haptic 'light' on overlay tap (scrim dismiss)", () => {
+			render(<MenuSheet {...baseProps} />);
+
+			fireEvent.click(screen.getByTestId("sheet-overlay"));
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+		});
+
+		it("renders a decorative drag-handle pill (iOS grab affordance)", () => {
+			const { container } = render(<MenuSheet {...baseProps} />);
+
+			const handle = container.querySelector('[aria-hidden="true"].rounded-full');
+			expect(handle).not.toBeNull();
+			expect(handle?.className).toMatch(/h-12/);
+			expect(handle?.className).toMatch(/w-1/);
+			expect(handle?.className).toMatch(/right-1/);
+		});
+
+		it("renders an aria-live region announcing the menu and link count", () => {
+			render(<MenuSheet {...baseProps} />);
+
+			const liveRegion = screen.getByRole("status");
+			expect(liveRegion).toHaveTextContent(/Menu ouvert, 1 liens de navigation/);
+			expect(liveRegion.getAttribute("aria-live")).toBe("polite");
+			expect(liveRegion.className).toContain("sr-only");
 		});
 	});
 });

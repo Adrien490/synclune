@@ -237,9 +237,9 @@ export function QuickSearchDialog({
 				aria-busy={isPending}
 				className={cn(
 					"group/search",
-					// Mobile: bottom-sheet, hauteur constante 88dvh
-					"fixed top-auto right-0 bottom-0 left-0 h-[88dvh] w-full max-w-none translate-x-0 translate-y-0",
-					"overflow-hidden rounded-none rounded-t-2xl border-t",
+					// Mobile: bottom-sheet pleine hauteur (100dvh)
+					"fixed inset-0 top-0 right-0 bottom-0 left-0 h-dvh w-full max-w-none translate-x-0 translate-y-0",
+					"overflow-hidden rounded-none border-0",
 					"motion-safe:data-[state=open]:slide-in-from-bottom motion-safe:data-[state=closed]:slide-out-to-bottom",
 					"motion-safe:data-[state=open]:zoom-in-100 motion-safe:data-[state=closed]:zoom-out-100",
 					"flex flex-col",

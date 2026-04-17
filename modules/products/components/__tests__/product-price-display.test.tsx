@@ -176,5 +176,43 @@ describe("ProductPriceDisplay", () => {
 
 			expect(screen.queryByText(/panier/i)).not.toBeInTheDocument();
 		});
+
+		it("does not render the FOMO badge when cartsCount is below threshold (1)", () => {
+			const sku = makeSku({ inventory: 10, isActive: true });
+			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} cartsCount={1} />);
+
+			// Threshold = 2 → "Dans 1 panier" is suppressed as weak social proof
+			expect(screen.queryByText(/panier/i)).not.toBeInTheDocument();
+		});
+
+		it("renders the FOMO badge at the threshold (2)", () => {
+			const sku = makeSku({ inventory: 10, isActive: true });
+			render(<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} cartsCount={2} />);
+
+			expect(screen.getByText(/2/)).toBeInTheDocument();
+			expect(screen.getByText(/paniers/i)).toBeInTheDocument();
+		});
+
+		it("exposes aria-live=polite on the price region for variant transitions", () => {
+			const sku = makeSku({ priceInclTax: 4999 });
+			const { container } = render(
+				<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />,
+			);
+			const region = container.querySelector(
+				'[role="region"][aria-labelledby="product-price-selected"]',
+			);
+			expect(region).toHaveAttribute("aria-live", "polite");
+			expect(region).toHaveAttribute("aria-atomic", "true");
+		});
+
+		it("includes an sr-only announce with the updated price on variant change", () => {
+			const sku = makeSku({ priceInclTax: 4999 });
+			const { container } = render(
+				<ProductPriceDisplay selectedSku={sku} product={makeProduct([sku])} />,
+			);
+			const srOnly = container.querySelector(".sr-only");
+			expect(srOnly?.textContent).toMatch(/prix mis à jour/i);
+			expect(srOnly?.textContent).toMatch(/49\.99 €/);
+		});
 	});
 });

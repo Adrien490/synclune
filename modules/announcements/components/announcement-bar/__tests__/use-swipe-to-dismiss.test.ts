@@ -1,5 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
+}));
+
 import { useSwipeToDismiss } from "../use-swipe-to-dismiss";
 import { SWIPE_DISMISS_THRESHOLD } from "../announcement-bar.constants";
 
@@ -22,6 +29,7 @@ describe("useSwipeToDismiss", () => {
 	let elementRef: React.RefObject<HTMLDivElement | null>;
 
 	beforeEach(() => {
+		mockHaptic.mockClear();
 		element = document.createElement("div");
 		document.body.appendChild(element);
 		elementRef = { current: element };
@@ -149,6 +157,41 @@ describe("useSwipeToDismiss", () => {
 			dispatchTouch(element, "touchend", 0);
 		});
 		expect(result.current.swipeOffset).toBe(0);
+	});
+
+	it("triggers medium haptic feedback when swipe exceeds threshold", () => {
+		const onDismiss = vi.fn();
+		renderHook(() => useSwipeToDismiss({ elementRef, enabled: true, onDismiss }));
+
+		act(() => {
+			dispatchTouch(element, "touchstart", 100);
+		});
+		act(() => {
+			dispatchTouch(element, "touchmove", 100 - SWIPE_DISMISS_THRESHOLD - 5);
+		});
+		act(() => {
+			dispatchTouch(element, "touchend", 0);
+		});
+
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
+		expect(onDismiss).toHaveBeenCalledOnce();
+	});
+
+	it("does not trigger haptic when swipe stays below threshold", () => {
+		const onDismiss = vi.fn();
+		renderHook(() => useSwipeToDismiss({ elementRef, enabled: true, onDismiss }));
+
+		act(() => {
+			dispatchTouch(element, "touchstart", 100);
+		});
+		act(() => {
+			dispatchTouch(element, "touchmove", 100 - SWIPE_DISMISS_THRESHOLD + 5);
+		});
+		act(() => {
+			dispatchTouch(element, "touchend", 0);
+		});
+
+		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("sets isSwiping true during touch and false on touchend", () => {

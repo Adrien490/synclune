@@ -24,7 +24,7 @@ export function ChartScrollContainer({
 	className,
 }: ChartScrollContainerProps) {
 	return (
-		<div role="region" aria-label={ariaLabel} className={className}>
+		<div role="region" aria-label={ariaLabel} className={className} data-no-swipe-nav>
 			<ScrollFade axis="horizontal">{children}</ScrollFade>
 		</div>
 	);

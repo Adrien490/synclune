@@ -13,10 +13,9 @@ const {
 	mockSuccess,
 	mockError,
 	mockHandleActionError,
-	mockUpdateTag,
+	mockInvalidateCache,
 	mockLogAudit,
 	mockPrisma,
-	mockGetInvalidationTags,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -24,7 +23,7 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
+	mockInvalidateCache: vi.fn(),
 	mockLogAudit: vi.fn(),
 	mockPrisma: {
 		announcementBar: {
@@ -34,7 +33,6 @@ const {
 		},
 		$transaction: vi.fn(),
 	},
-	mockGetInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -57,9 +55,8 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ANNOUNCEMENT_LIMITS: { TOGGLE_STATUS: "announcement:toggle" },
 }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("../../constants/cache", () => ({
-	getAnnouncementInvalidationTags: mockGetInvalidationTags,
+	invalidateAnnouncementCache: mockInvalidateCache,
 }));
 
 import { toggleAnnouncementStatus } from "../toggle-announcement-status";
@@ -98,7 +95,6 @@ describe("toggleAnnouncementStatus", () => {
 		mockPrisma.$transaction.mockResolvedValue([{ count: 1 }, { id: VALID_CUID }]);
 		mockPrisma.announcementBar.updateMany.mockReturnValue({ prismaPromise: "updateMany" });
 		mockPrisma.announcementBar.update.mockReturnValue({ prismaPromise: "update" });
-		mockGetInvalidationTags.mockReturnValue(["active-announcement", "announcements-list"]);
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -238,8 +234,7 @@ describe("toggleAnnouncementStatus", () => {
 	it("should invalidate cache tags after activation", async () => {
 		await toggleAnnouncementStatus(undefined, formDataForToggle(true));
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("active-announcement");
-		expect(mockUpdateTag).toHaveBeenCalledWith("announcements-list");
+		expect(mockInvalidateCache).toHaveBeenCalledTimes(1);
 	});
 
 	it("should invalidate cache tags after deactivation", async () => {
@@ -247,8 +242,7 @@ describe("toggleAnnouncementStatus", () => {
 
 		await toggleAnnouncementStatus(undefined, formDataForToggle(false));
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("active-announcement");
-		expect(mockUpdateTag).toHaveBeenCalledWith("announcements-list");
+		expect(mockInvalidateCache).toHaveBeenCalledTimes(1);
 	});
 
 	// ─── Audit log ────────────────────────────────────────────────────────────

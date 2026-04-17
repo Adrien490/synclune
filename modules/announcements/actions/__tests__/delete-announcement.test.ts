@@ -13,10 +13,9 @@ const {
 	mockSuccess,
 	mockError,
 	mockHandleActionError,
-	mockUpdateTag,
+	mockInvalidateCache,
 	mockLogAudit,
 	mockPrisma,
-	mockGetInvalidationTags,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -24,7 +23,7 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
+	mockInvalidateCache: vi.fn(),
 	mockLogAudit: vi.fn(),
 	mockPrisma: {
 		announcementBar: {
@@ -32,7 +31,6 @@ const {
 			delete: vi.fn(),
 		},
 	},
-	mockGetInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -55,9 +53,8 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ANNOUNCEMENT_LIMITS: { DELETE: "announcement:delete" },
 }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("../../constants/cache", () => ({
-	getAnnouncementInvalidationTags: mockGetInvalidationTags,
+	invalidateAnnouncementCache: mockInvalidateCache,
 }));
 
 import { deleteAnnouncement } from "../delete-announcement";
@@ -90,7 +87,6 @@ describe("deleteAnnouncement", () => {
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
 		mockPrisma.announcementBar.findUnique.mockResolvedValue(EXISTING_ANNOUNCEMENT);
 		mockPrisma.announcementBar.delete.mockResolvedValue({ id: VALID_CUID });
-		mockGetInvalidationTags.mockReturnValue(["active-announcement", "announcements-list"]);
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -173,8 +169,7 @@ describe("deleteAnnouncement", () => {
 	it("should invalidate all announcement cache tags", async () => {
 		await deleteAnnouncement(undefined, validFormData());
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("active-announcement");
-		expect(mockUpdateTag).toHaveBeenCalledWith("announcements-list");
+		expect(mockInvalidateCache).toHaveBeenCalledTimes(1);
 	});
 
 	// ─── Audit log ────────────────────────────────────────────────────────────

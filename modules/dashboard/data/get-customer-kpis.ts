@@ -16,6 +16,8 @@ function computeEvolution(current: number, previous: number): number {
 
 type SpendRow = {
 	userId: string;
+	name: string | null;
+	email: string | null;
 	totalSpent: bigint | number;
 	orderCount: bigint | number;
 };
@@ -95,16 +97,20 @@ export async function fetchCustomerKpis(
 				AND o."deletedAt" IS NULL
 		`,
 		// Top spender on the period (paid orders only) - returns top 1
+		// LEFT JOIN User avoids a N+1 follow-up query when resolving name/email
 		prisma.$queryRaw<SpendRow[]>`
 			SELECT o."userId" as "userId",
+				u."name" as "name",
+				u."email" as "email",
 				SUM(o."total")::bigint as "totalSpent",
 				COUNT(*)::bigint as "orderCount"
 			FROM "Order" o
+			LEFT JOIN "User" u ON u."id" = o."userId" AND u."deletedAt" IS NULL
 			WHERE o."userId" IS NOT NULL
 				AND o."paymentStatus" = 'PAID'
 				AND o."paidAt" >= ${currentStart}
 				AND o."deletedAt" IS NULL
-			GROUP BY o."userId"
+			GROUP BY o."userId", u."name", u."email"
 			ORDER BY "totalSpent" DESC
 			LIMIT 1
 		`,
@@ -122,15 +128,10 @@ export async function fetchCustomerKpis(
 	let topSpender: TopSpenderItem | null = null;
 	const topRow = topSpenderRows[0];
 	if (topRow) {
-		const userId = topRow.userId;
-		const user = await prisma.user.findUnique({
-			where: { id: userId },
-			select: { name: true, email: true },
-		});
 		topSpender = {
-			userId,
-			customerName: user?.name ?? "Client",
-			customerEmail: user?.email ?? "",
+			userId: topRow.userId,
+			customerName: topRow.name ?? "Client",
+			customerEmail: topRow.email ?? "",
 			totalSpent: Number(topRow.totalSpent),
 			orderCount: Number(topRow.orderCount),
 		};

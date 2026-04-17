@@ -45,8 +45,9 @@ export function useEdgeSwipe(onOpen: () => void, isOpen: boolean, maxWidth = 102
 				return;
 			}
 
-			// Trigger open when horizontal swipe exceeds 50px
-			if (dx > 50) {
+			// Trigger open when horizontal swipe exceeds 30px.
+			// Lowered from 50 → 30 for snappier native feel (iOS/Android drawer parity).
+			if (dx > 30) {
 				tracking = false;
 				onOpenStable();
 			}

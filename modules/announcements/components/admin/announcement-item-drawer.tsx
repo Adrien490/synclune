@@ -3,6 +3,7 @@
 import { ExternalLink, Power, PowerOff, SquarePen, Trash2 } from "lucide-react";
 import Link from "next/link";
 
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { AdminItemDrawer } from "@/shared/components/admin-item-drawer";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
@@ -53,16 +54,19 @@ export function AnnouncementItemDrawer() {
 	const statusLabel = ANNOUNCEMENT_STATUS_LABELS[status];
 
 	const handleEdit = () => {
+		triggerHaptic("selection");
 		drawer.close();
 		formDialog.open({ announcement });
 	};
 
 	const handleToggle = () => {
+		triggerHaptic("medium");
 		toggleStatus(announcement.id, !announcement.isActive);
 		drawer.close();
 	};
 
 	const handleDelete = () => {
+		triggerHaptic("medium");
 		drawer.close();
 		deleteAlert.open({
 			announcementId: announcement.id,

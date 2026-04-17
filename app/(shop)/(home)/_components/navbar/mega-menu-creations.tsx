@@ -76,7 +76,8 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 												src={product.imageUrl}
 												alt=""
 												fill
-												sizes="90px"
+												sizes="(max-width: 1024px) 80px, 96px"
+												priority={index === 0}
 												className="object-cover"
 												placeholder={product.blurDataUrl ? "blur" : "empty"}
 												blurDataURL={product.blurDataUrl ?? undefined}

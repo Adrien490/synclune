@@ -44,11 +44,13 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 import {
 	BottomBar,
 	ActiveDot,
+	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
+	bottomBarBadgeClass,
 	bottomBarCenterActionClass,
 	bottomBarCenterButtonClass,
 	bottomBarCenterLabelClass,
@@ -229,6 +231,46 @@ describe("ActiveDot", () => {
 });
 
 // ---------------------------------------------------------------------------
+// BottomBarActivePill
+// ---------------------------------------------------------------------------
+
+describe("BottomBarActivePill", () => {
+	it("renders as a span with aria-hidden", () => {
+		const { container } = render(<BottomBarActivePill groupId="nav" />);
+		const span = container.querySelector("span");
+		expect(span).not.toBeNull();
+		expect(span).toHaveAttribute("aria-hidden", "true");
+	});
+
+	it("applies pill base classes", () => {
+		const { container } = render(<BottomBarActivePill groupId="nav" />);
+		const span = container.querySelector("span")!;
+		expect(span.className).toContain("bg-primary");
+		expect(span.className).toContain("rounded-full");
+	});
+
+	it("includes forced-colors fallback color", () => {
+		const { container } = render(<BottomBarActivePill groupId="nav" />);
+		const span = container.querySelector("span")!;
+		expect(span.className).toContain("forced-colors:bg-[Highlight]");
+	});
+
+	it("merges custom className", () => {
+		const { container } = render(<BottomBarActivePill groupId="nav" className="h-2 w-10" />);
+		const span = container.querySelector("span")!;
+		expect(span.className).toContain("w-10");
+		expect(span.className).toContain("h-2");
+	});
+
+	it("renders static span (no layoutId) when reduced motion", () => {
+		useReducedMotionMock.mockReturnValueOnce(true);
+		const { container } = render(<BottomBarActivePill groupId="nav" />);
+		const span = container.querySelector("span")!;
+		expect(span).not.toHaveAttribute("layoutid");
+	});
+});
+
+// ---------------------------------------------------------------------------
 // Exported class constants
 // ---------------------------------------------------------------------------
 
@@ -254,6 +296,25 @@ describe("Exported class constants", () => {
 		expect(bottomBarActiveItemClass).toContain("bg-primary/5");
 	});
 
+	it("bottomBarActiveItemClass includes forced-colors outline", () => {
+		expect(bottomBarActiveItemClass).toContain("forced-colors:outline");
+		expect(bottomBarActiveItemClass).toContain("forced-colors:outline-[Highlight]");
+	});
+
+	it("bottomBarActiveItemClass includes contrast-more outline", () => {
+		expect(bottomBarActiveItemClass).toContain("contrast-more:outline");
+	});
+
+	it("bottomBarBadgeClass contains badge styles", () => {
+		expect(bottomBarBadgeClass).toContain("rounded-full");
+		expect(bottomBarBadgeClass).toContain("bg-destructive");
+		expect(bottomBarBadgeClass).toContain("ring-2");
+	});
+
+	it("bottomBarBadgeClass includes forced-colors outline", () => {
+		expect(bottomBarBadgeClass).toContain("forced-colors:outline");
+	});
+
 	it("bottomBarIconClass defines size", () => {
 		expect(bottomBarIconClass).toContain("size-5");
 	});
@@ -277,6 +338,11 @@ describe("Exported class constants", () => {
 
 	it("bottomBarCenterButtonClass contains focus-visible styles", () => {
 		expect(bottomBarCenterButtonClass).toContain("focus-visible");
+	});
+
+	it("bottomBarCenterButtonClass includes forced-colors outline", () => {
+		expect(bottomBarCenterButtonClass).toContain("forced-colors:outline");
+		expect(bottomBarCenterButtonClass).toContain("forced-colors:outline-[ButtonText]");
 	});
 
 	it("bottomBarCenterLabelClass defines text size and color", () => {

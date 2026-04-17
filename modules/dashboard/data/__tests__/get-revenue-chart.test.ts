@@ -7,6 +7,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 const {
 	mockPrismaQueryRaw,
 	mockCacheDefault,
+	mockCacheTag,
 	mockBuildRevenueMap,
 	mockFillMissingDates,
 	mockFormatChartData,
@@ -14,6 +15,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrismaQueryRaw: vi.fn(),
 	mockCacheDefault: vi.fn(),
+	mockCacheTag: vi.fn(),
 	mockBuildRevenueMap: vi.fn(),
 	mockFillMissingDates: vi.fn(),
 	mockFormatChartData: vi.fn(),
@@ -28,7 +30,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("next/cache", () => ({
 	cacheLife: vi.fn(),
-	cacheTag: vi.fn(),
+	cacheTag: mockCacheTag,
 	updateTag: vi.fn(),
 }));
 
@@ -303,5 +305,32 @@ describe("fetchDashboardRevenueChart", () => {
 		await fetchDashboardRevenueChart();
 
 		expect(mockCacheDefault).toHaveBeenCalledTimes(1);
+	});
+
+	it("should add a per-granularity secondary cache tag", async () => {
+		mockGetChartConfig.mockReturnValue({
+			...DEFAULT_CHART_CONFIG,
+			granularity: "daily",
+		});
+		await fetchDashboardRevenueChart("30d");
+		expect(mockCacheTag).toHaveBeenCalledWith("dashboard-revenue-chart-daily");
+	});
+
+	it("should differentiate cache tag for weekly granularity", async () => {
+		mockGetChartConfig.mockReturnValue({
+			...DEFAULT_CHART_CONFIG,
+			granularity: "weekly",
+		});
+		await fetchDashboardRevenueChart("quarter");
+		expect(mockCacheTag).toHaveBeenCalledWith("dashboard-revenue-chart-weekly");
+	});
+
+	it("should differentiate cache tag for monthly granularity", async () => {
+		mockGetChartConfig.mockReturnValue({
+			...DEFAULT_CHART_CONFIG,
+			granularity: "monthly",
+		});
+		await fetchDashboardRevenueChart("year");
+		expect(mockCacheTag).toHaveBeenCalledWith("dashboard-revenue-chart-monthly");
 	});
 });

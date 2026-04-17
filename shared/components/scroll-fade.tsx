@@ -11,6 +11,13 @@ interface ScrollFadeProps {
 	rootClassName?: string;
 	hideScrollbar?: boolean;
 	axis?: ScrollAxis;
+	/**
+	 * Tailwind class used as the gradient start color for edge fades.
+	 * Default `from-background` matches shadcn's page surface; override with
+	 * `from-muted`, `from-card`, etc. when the container sits on a different
+	 * surface (e.g. admin menu sheet on `bg-muted`).
+	 */
+	fadeFromClass?: string;
 }
 
 interface ScrollInfo {
@@ -28,6 +35,7 @@ export default function ScrollFade({
 	rootClassName,
 	hideScrollbar = true,
 	axis = "horizontal",
+	fadeFromClass = "from-background",
 }: ScrollFadeProps) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const contentRef = useRef<HTMLDivElement | null>(null);
@@ -136,28 +144,40 @@ export default function ScrollFade({
 			{(axis === "horizontal" || axis === "both") && showLeft && (
 				<div
 					aria-hidden="true"
-					className="from-background pointer-events-none absolute top-0 left-0 z-10 h-full w-10 bg-linear-to-r to-transparent"
+					className={cn(
+						"pointer-events-none absolute top-0 left-0 z-10 h-full w-10 bg-linear-to-r to-transparent",
+						fadeFromClass,
+					)}
 				/>
 			)}
 
 			{(axis === "horizontal" || axis === "both") && showRight && (
 				<div
 					aria-hidden="true"
-					className="from-background pointer-events-none absolute top-0 right-0 z-10 h-full w-10 bg-linear-to-l to-transparent"
+					className={cn(
+						"pointer-events-none absolute top-0 right-0 z-10 h-full w-10 bg-linear-to-l to-transparent",
+						fadeFromClass,
+					)}
 				/>
 			)}
 
 			{(axis === "vertical" || axis === "both") && showTop && (
 				<div
 					aria-hidden="true"
-					className="from-background pointer-events-none absolute top-0 left-0 z-10 h-10 w-full bg-linear-to-b to-transparent"
+					className={cn(
+						"pointer-events-none absolute top-0 left-0 z-10 h-10 w-full bg-linear-to-b to-transparent",
+						fadeFromClass,
+					)}
 				/>
 			)}
 
 			{(axis === "vertical" || axis === "both") && showBottom && (
 				<div
 					aria-hidden="true"
-					className="from-background pointer-events-none absolute bottom-0 left-0 z-10 h-10 w-full bg-linear-to-t to-transparent"
+					className={cn(
+						"pointer-events-none absolute bottom-0 left-0 z-10 h-10 w-full bg-linear-to-t to-transparent",
+						fadeFromClass,
+					)}
 				/>
 			)}
 		</div>

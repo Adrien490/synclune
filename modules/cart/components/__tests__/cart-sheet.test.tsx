@@ -217,6 +217,21 @@ vi.mock("../cart-sheet-item-row", () => ({
 	),
 }));
 
+vi.mock("../cart-clear-button", () => ({
+	CartClearButton: ({ disabled }: { disabled?: boolean }) => (
+		<button
+			type="button"
+			disabled={disabled}
+			aria-label="Vider le panier"
+			data-testid="cart-clear-button"
+		/>
+	),
+}));
+
+vi.mock("../clear-cart-alert-dialog", () => ({
+	ClearCartAlertDialog: () => null,
+}));
+
 vi.mock("../remove-cart-item-alert-dialog", () => ({
 	RemoveCartItemAlertDialog: () => <div data-testid="remove-alert-dialog" />,
 }));

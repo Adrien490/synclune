@@ -47,8 +47,10 @@ export function DashboardKpis({
 
 	return (
 		<div className="space-y-4">
-			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+ */}
-			<div role="region" aria-label="Indicateurs clés ventes">
+			{/* Row 1: 4 featured KPIs — horizontal scroll on mobile (with edge fades), grid on sm+.
+			    `data-no-swipe-nav` opts this row out of the dashboard-level period-swipe
+			    wrapper so the native snap-x horizontal scroll isn't hijacked. */}
+			<div role="region" aria-label="Indicateurs clés ventes" data-no-swipe-nav>
 				<ScrollFade axis="horizontal">
 					<div className="flex snap-x snap-mandatory gap-4 pb-2 sm:grid sm:grid-cols-2 sm:pb-0 lg:grid-cols-4">
 						<KpiCardAnimated index={0}>
@@ -134,8 +136,8 @@ export function DashboardKpis({
 				</ScrollFade>
 			</div>
 
-			{/* Row 2: Compact operational KPIs — 2-col on mobile, animated */}
-			<div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), 4-col at lg+ (full card) */}
+			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-4">
 				<KpiCardAnimated index={4}>
 					<KpiCard
 						title="Taux de conversion"
@@ -148,6 +150,7 @@ export function DashboardKpis({
 						icon={<Target className="h-4 w-4" />}
 						size="compact"
 						priority="operational"
+						flatOnMobile
 						tooltip="Pourcentage de checkouts qui aboutissent à un paiement"
 						subtitle={
 							kpis.conversionRate.abandoned > 0
@@ -169,8 +172,10 @@ export function DashboardKpis({
 						icon={<Star className="h-4 w-4" />}
 						size="compact"
 						priority="info"
+						flatOnMobile
 						href="/admin/marketing/avis"
 						tooltip="Note moyenne des avis clients publiés"
+						sparklinePath={sparklines?.reviewsPath}
 						subtitle={
 							kpis.reviewHealth.totalReviews > 0
 								? `${kpis.reviewHealth.totalReviews} avis`
@@ -189,8 +194,10 @@ export function DashboardKpis({
 						icon={<Mail className="h-4 w-4" />}
 						size="compact"
 						priority="info"
+						flatOnMobile
 						href="/admin/marketing/newsletter"
 						tooltip="Nombre d'abonnés newsletter confirmés"
+						sparklinePath={sparklines?.newsletterPath}
 						subtitle={
 							kpis.newsletterGrowth.newThisMonth > 0
 								? `+${kpis.newsletterGrowth.newThisMonth} ce mois`
@@ -212,6 +219,7 @@ export function DashboardKpis({
 						icon={<Clock className="h-4 w-4" />}
 						size="compact"
 						priority="operational"
+						flatOnMobile
 						tooltip="Délai moyen entre le paiement et l'expédition"
 					/>
 				</KpiCardAnimated>

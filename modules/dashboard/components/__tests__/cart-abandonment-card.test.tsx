@@ -18,6 +18,29 @@ vi.mock("lucide-react", () => ({
 	ArrowRight: () => <span data-testid="icon-arrow-right" />,
 	ArrowUp: () => <span data-testid="icon-arrow-up" />,
 	ArrowDown: () => <span data-testid="icon-arrow-down" />,
+	ChevronRight: () => <span data-testid="icon-chevron-right" />,
+}));
+
+// Mobile-only primitives stubbed out so only the desktop Card renders.
+vi.mock("@/shared/components/ui/item", () => ({
+	Item: () => null,
+	ItemGroup: () => null,
+	ItemContent: () => null,
+	ItemTitle: () => null,
+	ItemMedia: () => null,
+	ItemActions: () => null,
+	ItemSeparator: () => null,
+	ItemDescription: () => null,
+	ItemFooter: () => null,
+}));
+
+vi.mock("../stat-row", () => ({
+	StatRow: () => null,
+}));
+
+// Force desktop rendering path in jsdom (no matchMedia)
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 vi.mock("next/link", () => ({
@@ -55,7 +78,8 @@ describe("CartAbandonmentCard", () => {
 	it("renders the title and description", () => {
 		render(<CartAbandonmentCard data={makeData()} />);
 
-		expect(screen.getByText("Paniers & récupération")).toBeInTheDocument();
+		// Title appears in both mobile (<h3>) and desktop (<CardTitle>)
+		expect(screen.getAllByText("Paniers & récupération").length).toBeGreaterThanOrEqual(1);
 		expect(
 			screen.getByText("Suivi des paniers abandonnés et taux de conversion des relances"),
 		).toBeInTheDocument();
@@ -64,8 +88,10 @@ describe("CartAbandonmentCard", () => {
 	it("renders the link to orders list", () => {
 		render(<CartAbandonmentCard data={makeData()} />);
 
-		const link = screen.getByLabelText("Voir les commandes");
-		expect(link).toHaveAttribute("href", "/admin/ventes/commandes");
+		// Link appears in both mobile header + desktop Card header
+		const links = screen.getAllByLabelText("Voir les commandes");
+		expect(links.length).toBeGreaterThanOrEqual(1);
+		expect(links[0]).toHaveAttribute("href", "/admin/ventes/commandes");
 	});
 
 	// -------------------------------------------------------------------------

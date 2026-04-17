@@ -91,23 +91,23 @@ describe("useEdgeSwipe", () => {
 			expect(onOpen).not.toHaveBeenCalled();
 		});
 
-		it("does not call onOpen if horizontal distance is insufficient (<= 50px)", () => {
+		it("does not call onOpen if horizontal distance is insufficient (<= 30px)", () => {
 			const onOpen = vi.fn();
 			renderHook(() => useEdgeSwipe(onOpen, false));
 
 			fireTouchStart(10, 0);
-			fireTouchMove(55, 0); // dx = 45, not enough
+			fireTouchMove(35, 0); // dx = 25, not enough (threshold is 30)
 			fireTouchEnd();
 
 			expect(onOpen).not.toHaveBeenCalled();
 		});
 
-		it("calls onOpen when swipe exactly exceeds 50px threshold", () => {
+		it("calls onOpen when swipe exactly exceeds 30px threshold", () => {
 			const onOpen = vi.fn();
 			renderHook(() => useEdgeSwipe(onOpen, false));
 
 			fireTouchStart(5, 0);
-			fireTouchMove(56, 0); // dx = 51, exceeds 50
+			fireTouchMove(36, 0); // dx = 31, exceeds 30
 			fireTouchEnd();
 
 			expect(onOpen).toHaveBeenCalledOnce();
@@ -302,9 +302,9 @@ describe("useEdgeSwipe", () => {
 			const onOpen = vi.fn();
 			renderHook(() => useEdgeSwipe(onOpen, false));
 
-			// First gesture — incomplete
+			// First gesture — incomplete (dx = 20, below 30 threshold)
 			fireTouchStart(10, 0);
-			fireTouchMove(30, 0); // not enough
+			fireTouchMove(30, 0);
 			fireTouchEnd();
 
 			// Second gesture — should work independently

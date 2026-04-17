@@ -1,4 +1,4 @@
-import type { ReactNode, RefObject } from "react";
+import type { MouseEvent, ReactNode, RefObject } from "react";
 import type { SortOption } from "@/shared/types/sort.types";
 
 export type FilterOption = {
@@ -61,6 +61,17 @@ export interface FilterSheetWrapperProps {
 	trigger?: ReactNode;
 	/** Hide the default trigger button entirely (for external triggers) */
 	hideTrigger?: boolean;
+	/**
+	 * Fires when the user taps the scrim overlay. If omitted, defaults to
+	 * emitting a selection haptic.
+	 */
+	onOverlayClick?: (event: MouseEvent<HTMLDivElement>) => void;
+	/**
+	 * Vaul snap points for the mobile bottom-sheet variant. Values are
+	 * fractions of the viewport (e.g. [0.5, 0.92]) or CSS length strings.
+	 * Ignored on desktop (right-side sheet).
+	 */
+	snapPoints?: (number | string)[];
 }
 
 /**

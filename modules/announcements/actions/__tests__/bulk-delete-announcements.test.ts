@@ -13,10 +13,9 @@ const {
 	mockSuccess,
 	mockError,
 	mockHandleActionError,
-	mockUpdateTag,
+	mockInvalidateCache,
 	mockLogAudit,
 	mockPrisma,
-	mockGetInvalidationTags,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -24,7 +23,7 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
+	mockInvalidateCache: vi.fn(),
 	mockLogAudit: vi.fn(),
 	mockPrisma: {
 		announcementBar: {
@@ -32,7 +31,6 @@ const {
 			deleteMany: vi.fn(),
 		},
 	},
-	mockGetInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -55,9 +53,8 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ANNOUNCEMENT_LIMITS: { BULK_DELETE: "announcement:bulk-delete" },
 }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("../../constants/cache", () => ({
-	getAnnouncementInvalidationTags: mockGetInvalidationTags,
+	invalidateAnnouncementCache: mockInvalidateCache,
 }));
 
 import { bulkDeleteAnnouncements } from "../bulk-delete-announcements";
@@ -92,7 +89,6 @@ describe("bulkDeleteAnnouncements", () => {
 			{ id: VALID_CUID_2, message: "Promo hiver" },
 		]);
 		mockPrisma.announcementBar.deleteMany.mockResolvedValue({ count: 2 });
-		mockGetInvalidationTags.mockReturnValue(["active-announcement", "announcements-list"]);
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -183,8 +179,7 @@ describe("bulkDeleteAnnouncements", () => {
 	it("should invalidate all announcement cache tags", async () => {
 		await bulkDeleteAnnouncements(undefined, formDataWithIds([VALID_CUID]));
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("active-announcement");
-		expect(mockUpdateTag).toHaveBeenCalledWith("announcements-list");
+		expect(mockInvalidateCache).toHaveBeenCalledTimes(1);
 	});
 
 	// ─── Audit log ────────────────────────────────────────────────────────────

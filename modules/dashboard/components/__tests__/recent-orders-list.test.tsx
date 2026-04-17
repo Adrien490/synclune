@@ -17,16 +17,24 @@ vi.mock("next/link", () => ({
 		children,
 		className,
 		"aria-label": ariaLabel,
+		onClick,
 	}: {
 		href: string;
 		children: React.ReactNode;
 		className?: string;
 		"aria-label"?: string;
+		onClick?: (e: React.MouseEvent) => void;
 	}) => (
-		<a href={href} className={className} aria-label={ariaLabel}>
+		<a href={href} className={className} aria-label={ariaLabel} onClick={onClick}>
 			{children}
 		</a>
 	),
+}));
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("@/shared/components/ui/card", () => ({
@@ -62,6 +70,24 @@ vi.mock("@/shared/components/ui/button", () => ({
 
 vi.mock("lucide-react", () => ({
 	ArrowRight: () => <span data-testid="arrow-right-icon" />,
+	ChevronRight: () => <span data-testid="icon-chevron-right" />,
+}));
+
+vi.mock("@/shared/components/ui/item", () => ({
+	Item: () => null,
+	ItemGroup: () => null,
+	ItemContent: () => null,
+	ItemTitle: () => null,
+	ItemMedia: () => null,
+	ItemActions: () => null,
+	ItemSeparator: () => null,
+	ItemDescription: () => null,
+	ItemFooter: () => null,
+}));
+
+// Force desktop rendering path in jsdom (no matchMedia)
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -174,7 +200,8 @@ describe("RecentOrdersList", () => {
 	it("renders the title", () => {
 		render(<RecentOrdersList listData={{ orders: [createOrder()] }} />);
 
-		expect(screen.getByText("Dernières commandes")).toBeInTheDocument();
+		// Title appears in both mobile (<h3>) and desktop (<CardTitle>)
+		expect(screen.getAllByText("Dernières commandes").length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("renders order number with hash prefix", () => {
@@ -228,6 +255,17 @@ describe("RecentOrdersList", () => {
 		const links = screen.getAllByRole("link");
 		const orderLink = links.find((l) => l.getAttribute("href")?.includes("order-42"));
 		expect(orderLink).toHaveAttribute("href", "/admin/ventes/commandes/order-42");
+	});
+
+	it("fires a 'light' haptic when an order link is tapped", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(<RecentOrdersList listData={{ orders: [createOrder({ id: "order-42" })] }} />);
+
+		const links = screen.getAllByRole("link");
+		const orderLink = links.find((l) => l.getAttribute("href")?.includes("order-42"))!;
+		fireEvent.click(orderLink);
+
+		expect(mockHaptic).toHaveBeenCalledWith("light");
 	});
 
 	// -------------------------------------------------------------------------
@@ -305,7 +343,8 @@ describe("RecentOrdersList", () => {
 		it("renders empty message when no orders", () => {
 			render(<RecentOrdersList listData={{ orders: [] }} />);
 
-			expect(screen.getByText("Aucune commande récente")).toBeInTheDocument();
+			// Empty state appears in both mobile section and desktop Card
+			expect(screen.getAllByText("Aucune commande récente").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("does not render empty message when orders exist", () => {

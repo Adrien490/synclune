@@ -68,7 +68,14 @@ vi.mock("../../constants/chart-styles", () => ({
 		title: "mock-title",
 		description: "mock-description",
 		height: { responsive: "mock-height" },
+		touchTarget: { button: "mock-touch" },
 	},
+}));
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
 }));
 
 import { RevenueChart } from "../revenue-chart";
@@ -280,5 +287,37 @@ describe("RevenueChart", () => {
 
 		expect(screen.getByTestId("composed-chart")).toBeInTheDocument();
 		expect(screen.getByText(/Total revenus sur la période : 500.00 €/)).toBeInTheDocument();
+	});
+
+	// -------------------------------------------------------------------------
+	// Haptic feedback
+	// -------------------------------------------------------------------------
+
+	it("fires a 'selection' haptic when the Détailler toggle is tapped", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		const chartData: GetRevenueChartReturn = {
+			data: [
+				{
+					date: "1 janv.",
+					revenue: 500,
+					orders: 2,
+					subtotal: 400,
+					discounts: 50,
+					shipping: 10,
+				},
+			],
+			periodLabel: "30 jours",
+		};
+
+		render(<RevenueChart chartData={chartData} />);
+		fireEvent.click(screen.getByRole("button", { name: /détailler/i }));
+
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("renders the mobile tap hint caption", () => {
+		render(<RevenueChart chartData={makeChartData()} />);
+
+		expect(screen.getByText("Touchez le graphique pour voir le détail.")).toBeInTheDocument();
 	});
 });

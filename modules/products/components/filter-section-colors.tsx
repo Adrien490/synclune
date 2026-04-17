@@ -9,6 +9,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { Check } from "lucide-react";
 import { isLightColor, getContrastTextColor } from "@/modules/colors/utils/color-contrast.utils";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SectionHeader, SectionSearch, SEARCH_THRESHOLD } from "./filter-section-header";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
@@ -40,6 +41,7 @@ export function ColorFilterSection({
 	onToggle,
 	onReset,
 }: ColorFilterSectionProps) {
+	const haptic = useHaptic();
 	if (colors.length === 0) return null;
 
 	return (
@@ -68,6 +70,7 @@ export function ColorFilterSection({
 									id={`color-${color.slug}`}
 									checked={isSelected}
 									onCheckedChange={(checked) => {
+										haptic("selection");
 										onToggle(color.slug, checked === true);
 									}}
 									indicator={

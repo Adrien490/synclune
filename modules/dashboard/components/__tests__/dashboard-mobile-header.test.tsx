@@ -18,21 +18,45 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("../period-selector", () => ({
-	PeriodSelector: ({ fullWidth }: { fullWidth?: boolean }) => (
-		<div data-testid="period-selector" data-full-width={fullWidth} />
+	PeriodSelector: ({ fullWidth, variant }: { fullWidth?: boolean; variant?: string }) => (
+		<div
+			data-testid="period-selector"
+			data-full-width={fullWidth ? "true" : undefined}
+			data-variant={variant}
+		/>
 	),
 }));
 
 vi.mock("../comparison-mode-selector", () => ({
-	ComparisonModeSelector: ({ fullWidth }: { fullWidth?: boolean }) => (
-		<div data-testid="comparison-mode-selector" data-full-width={fullWidth} />
+	ComparisonModeSelector: ({ fullWidth, variant }: { fullWidth?: boolean; variant?: string }) => (
+		<div
+			data-testid="comparison-mode-selector"
+			data-full-width={fullWidth ? "true" : undefined}
+			data-variant={variant}
+		/>
 	),
 }));
 
 vi.mock("../refresh-dashboard-button", () => ({
-	RefreshDashboardButton: ({ variant }: { variant?: string }) => (
-		<button data-testid="refresh-dashboard-button" data-variant={variant}>
+	RefreshDashboardButton: ({ variant, iconOnly }: { variant?: string; iconOnly?: boolean }) => (
+		<button
+			data-testid="refresh-dashboard-button"
+			data-variant={variant}
+			data-icon-only={iconOnly ? "true" : undefined}
+		>
 			Rafraîchir
+		</button>
+	),
+}));
+
+vi.mock("../export-dashboard-button", () => ({
+	ExportDashboardButton: ({ variant, iconOnly }: { variant?: string; iconOnly?: boolean }) => (
+		<button
+			data-testid="export-dashboard-button"
+			data-variant={variant}
+			data-icon-only={iconOnly ? "true" : undefined}
+		>
+			Exporter
 		</button>
 	),
 }));
@@ -99,11 +123,11 @@ describe("DashboardMobileHeader", () => {
 		expect(screen.getByTestId("comparison-mode-selector")).toBeInTheDocument();
 	});
 
-	it("renders ComparisonModeSelector with fullWidth=true", () => {
+	it("renders ComparisonModeSelector in the 'segmented' variant on mobile", () => {
 		render(<DashboardMobileHeader />);
 
 		const selector = screen.getByTestId("comparison-mode-selector");
-		expect(selector).toHaveAttribute("data-full-width", "true");
+		expect(selector).toHaveAttribute("data-variant", "segmented");
 	});
 
 	it("uses YoY label when comparison search param is 'yoy'", () => {
@@ -115,12 +139,22 @@ describe("DashboardMobileHeader", () => {
 		expect(screen.getByText("vs même mois N-1")).toBeInTheDocument();
 	});
 
-	it("renders the refresh button with outline variant", () => {
+	it("renders the refresh button as compact ghost icon", () => {
 		render(<DashboardMobileHeader />);
 
 		const button = screen.getByTestId("refresh-dashboard-button");
 		expect(button).toBeInTheDocument();
-		expect(button).toHaveAttribute("data-variant", "outline");
+		expect(button).toHaveAttribute("data-variant", "ghost");
+		expect(button).toHaveAttribute("data-icon-only", "true");
+	});
+
+	it("renders the export button as compact ghost icon", () => {
+		render(<DashboardMobileHeader />);
+
+		const button = screen.getByTestId("export-dashboard-button");
+		expect(button).toBeInTheDocument();
+		expect(button).toHaveAttribute("data-variant", "ghost");
+		expect(button).toHaveAttribute("data-icon-only", "true");
 	});
 
 	it("renders the comparison label for the default period", () => {
@@ -203,11 +237,11 @@ describe("DashboardMobileHeader", () => {
 	// PeriodSelector props
 	// -------------------------------------------------------------------------
 
-	it("renders PeriodSelector with fullWidth=true", () => {
+	it("renders PeriodSelector as segmented variant (mobile UX 2026)", () => {
 		render(<DashboardMobileHeader />);
 
 		const selector = screen.getByTestId("period-selector");
-		expect(selector).toHaveAttribute("data-full-width", "true");
+		expect(selector).toHaveAttribute("data-variant", "segmented");
 	});
 
 	// -------------------------------------------------------------------------

@@ -22,7 +22,7 @@ export type AnnouncementListItem = Pick<
 /** Announcement data for storefront display */
 export type ActiveAnnouncement = Pick<
 	AnnouncementBar,
-	"id" | "message" | "link" | "linkText" | "dismissDurationHours"
+	"id" | "message" | "link" | "linkText" | "dismissDurationHours" | "endsAt"
 >;
 
 /** Computed announcement display status */

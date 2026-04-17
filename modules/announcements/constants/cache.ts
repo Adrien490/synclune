@@ -1,5 +1,4 @@
-import { cacheLife } from "next/cache";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag, updateTag } from "next/cache";
 
 // ============================================================================
 // CACHE TAGS
@@ -35,4 +34,14 @@ export function cacheAnnouncementsList() {
 /** Get all tags to invalidate when an announcement changes */
 export function getAnnouncementInvalidationTags(): string[] {
 	return [ANNOUNCEMENT_CACHE_TAGS.ACTIVE, ANNOUNCEMENT_CACHE_TAGS.LIST];
+}
+
+/**
+ * Invalidate every cache tag related to announcements (storefront active +
+ * admin list). Call from any mutation server action after the DB write.
+ */
+export function invalidateAnnouncementCache(): void {
+	for (const tag of getAnnouncementInvalidationTags()) {
+		updateTag(tag);
+	}
 }

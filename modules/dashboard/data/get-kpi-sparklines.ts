@@ -1,4 +1,4 @@
-import { PaymentStatus } from "@/app/generated/prisma/client";
+import { NewsletterStatus, PaymentStatus, ReviewStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
@@ -13,10 +13,17 @@ type DailyRow = {
 	orders: bigint;
 };
 
+type DailyCountRow = {
+	date: string;
+	count: bigint;
+};
+
 export type KpiSparklines = {
 	revenuePath: string | null;
 	ordersPath: string | null;
 	aovPath: string | null;
+	newsletterPath: string | null;
+	reviewsPath: string | null;
 };
 
 const SPARKLINE_BUCKETS = 7;
@@ -34,19 +41,42 @@ export async function fetchKpiSparklines(
 
 	const { currentStart } = getPeriodBoundaries(period);
 
-	// Fetch daily aggregates for the full period
-	const rows = await prisma.$queryRaw<DailyRow[]>`
-		SELECT
-			TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
-			COALESCE(SUM(total), 0) as revenue,
-			COUNT(*) as orders
-		FROM "Order"
-		WHERE "paidAt" >= ${currentStart}
-			AND "paymentStatus"::text = ${PaymentStatus.PAID}
-			AND "deletedAt" IS NULL
-		GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
-		ORDER BY date ASC
-	`;
+	// Fetch daily aggregates for the full period (parallelised — 3 independent queries)
+	const [orderRows, newsletterRows, reviewRows] = await Promise.all([
+		prisma.$queryRaw<DailyRow[]>`
+			SELECT
+				TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
+				COALESCE(SUM(total), 0) as revenue,
+				COUNT(*) as orders
+			FROM "Order"
+			WHERE "paidAt" >= ${currentStart}
+				AND "paymentStatus"::text = ${PaymentStatus.PAID}
+				AND "deletedAt" IS NULL
+			GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+			ORDER BY date ASC
+		`,
+		prisma.$queryRaw<DailyCountRow[]>`
+			SELECT
+				TO_CHAR("confirmedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
+				COUNT(*) as count
+			FROM "NewsletterSubscriber"
+			WHERE "confirmedAt" >= ${currentStart}
+				AND "status"::text = ${NewsletterStatus.CONFIRMED}
+			GROUP BY TO_CHAR("confirmedAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+			ORDER BY date ASC
+		`,
+		prisma.$queryRaw<DailyCountRow[]>`
+			SELECT
+				TO_CHAR("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
+				COUNT(*) as count
+			FROM "ProductReview"
+			WHERE "createdAt" >= ${currentStart}
+				AND "status"::text = ${ReviewStatus.PUBLISHED}
+				AND "deletedAt" IS NULL
+			GROUP BY TO_CHAR("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+			ORDER BY date ASC
+		`,
+	]);
 
 	// Compute period length in days
 	const now = new Date();
@@ -55,31 +85,41 @@ export async function fetchKpiSparklines(
 		Math.ceil((now.getTime() - currentStart.getTime()) / (1000 * 60 * 60 * 24)),
 	);
 
-	// Build date -> row map for lookup
-	const dateMap = new Map(rows.map((r) => [r.date, r]));
+	// Build date -> row maps for lookup
+	const orderMap = new Map(orderRows.map((r) => [r.date, r]));
+	const newsletterMap = new Map(newsletterRows.map((r) => [r.date, Number(r.count)]));
+	const reviewMap = new Map(reviewRows.map((r) => [r.date, Number(r.count)]));
 
 	// Collect daily data for the full period
 	const dailyRevenues: number[] = [];
 	const dailyOrders: number[] = [];
+	const dailyNewsletter: number[] = [];
+	const dailyReviews: number[] = [];
 
 	for (let i = 0; i < totalDays; i++) {
 		const d = new Date(currentStart);
 		d.setDate(d.getDate() + i);
 		const key = d.toISOString().split("T")[0]!;
-		const row = dateMap.get(key);
-		dailyRevenues.push(row ? Number(row.revenue) : 0);
-		dailyOrders.push(row ? Number(row.orders) : 0);
+		const orderRow = orderMap.get(key);
+		dailyRevenues.push(orderRow ? Number(orderRow.revenue) : 0);
+		dailyOrders.push(orderRow ? Number(orderRow.orders) : 0);
+		dailyNewsletter.push(newsletterMap.get(key) ?? 0);
+		dailyReviews.push(reviewMap.get(key) ?? 0);
 	}
 
 	// Aggregate into 7 equal buckets
 	const revenues = aggregateIntoBuckets(dailyRevenues, SPARKLINE_BUCKETS);
 	const orders = aggregateIntoBuckets(dailyOrders, SPARKLINE_BUCKETS);
 	const aov = revenues.map((r, i) => (orders[i]! > 0 ? r / orders[i]! : 0));
+	const newsletter = aggregateIntoBuckets(dailyNewsletter, SPARKLINE_BUCKETS);
+	const reviews = aggregateIntoBuckets(dailyReviews, SPARKLINE_BUCKETS);
 
 	return {
 		revenuePath: buildSparklinePath(revenues),
 		ordersPath: buildSparklinePath(orders),
 		aovPath: buildSparklinePath(aov),
+		newsletterPath: buildSparklinePath(newsletter),
+		reviewsPath: buildSparklinePath(reviews),
 	};
 }
 

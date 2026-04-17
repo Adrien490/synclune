@@ -65,6 +65,7 @@ describe("getActiveAnnouncement", () => {
 				link: true,
 				linkText: true,
 				dismissDurationHours: true,
+				endsAt: true,
 			},
 			orderBy: { createdAt: "desc" },
 		});
@@ -75,7 +76,14 @@ describe("getActiveAnnouncement", () => {
 
 		const call = mockPrisma.announcementBar.findFirst.mock.calls[0]![0];
 		const selectKeys = Object.keys(call.select);
-		expect(selectKeys).toEqual(["id", "message", "link", "linkText", "dismissDurationHours"]);
+		expect(selectKeys).toEqual([
+			"id",
+			"message",
+			"link",
+			"linkText",
+			"dismissDurationHours",
+			"endsAt",
+		]);
 	});
 
 	it("should order by createdAt desc (newest first)", async () => {

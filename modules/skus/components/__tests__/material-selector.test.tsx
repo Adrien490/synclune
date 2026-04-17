@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -12,6 +13,7 @@ const {
 	mockPathname,
 	mockSearchParamsGet,
 	mockSearchParamsToString,
+	mockTriggerHaptic,
 } = vi.hoisted(() => ({
 	mockFilterCompatibleSkus: vi.fn(),
 	mockUseRadioGroupKeyboard: vi.fn(),
@@ -19,6 +21,7 @@ const {
 	mockPathname: vi.fn(),
 	mockSearchParamsGet: vi.fn(),
 	mockSearchParamsToString: vi.fn(),
+	mockTriggerHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -40,6 +43,10 @@ vi.mock("@/modules/skus/services/sku-filter.service", () => ({
 
 vi.mock("@/shared/hooks/use-radio-group-keyboard", () => ({
 	useRadioGroupKeyboard: mockUseRadioGroupKeyboard,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
 }));
 
 vi.mock("motion/react", () => ({
@@ -185,6 +192,23 @@ describe("MaterialSelector", () => {
 			);
 
 			expect(container.firstChild).toBeNull();
+		});
+	});
+
+	describe("haptic feedback", () => {
+		it("triggers selection haptic when clicking an available material", async () => {
+			const product = makeProduct() as unknown as Parameters<typeof MaterialSelector>[0]["product"];
+			render(<MaterialSelector materials={MATERIALS} product={product} />);
+			await userEvent.click(screen.getByRole("radio", { name: /argent 925/i }));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("does not trigger haptic when material is disabled", async () => {
+			mockFilterCompatibleSkus.mockReturnValue([]);
+			const product = makeProduct() as unknown as Parameters<typeof MaterialSelector>[0]["product"];
+			render(<MaterialSelector materials={MATERIALS} product={product} />);
+			await userEvent.click(screen.getByRole("radio", { name: /argent 925/i }));
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
 		});
 	});
 });

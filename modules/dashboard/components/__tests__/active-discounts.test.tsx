@@ -31,6 +31,9 @@ vi.mock("lucide-react", () => ({
 	ArrowRight: (props: any) => (
 		<span data-testid="icon-arrow-right" aria-hidden={props["aria-hidden"]} />
 	),
+	ChevronRight: (props: any) => (
+		<span data-testid="icon-chevron-right" aria-hidden={props["aria-hidden"]} />
+	),
 
 	Tag: (props: any) => <span data-testid="icon-tag" aria-hidden={props["aria-hidden"]} />,
 	TriangleAlert: ({
@@ -40,6 +43,25 @@ vi.mock("lucide-react", () => ({
 		"aria-label"?: string;
 		className?: string;
 	}) => <span data-testid="icon-triangle-alert" aria-label={ariaLabel} className={className} />,
+}));
+
+// Mock the mobile-only Item components as null so only the desktop Card variant
+// renders — keeps existing getByText assertions working without duplicate matches.
+vi.mock("@/shared/components/ui/item", () => ({
+	Item: () => null,
+	ItemGroup: () => null,
+	ItemContent: () => null,
+	ItemTitle: () => null,
+	ItemMedia: () => null,
+	ItemActions: () => null,
+	ItemSeparator: () => null,
+	ItemDescription: () => null,
+	ItemFooter: () => null,
+}));
+
+// Force desktop rendering path in jsdom (no matchMedia)
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -149,7 +171,8 @@ describe("ActiveDiscounts", () => {
 	it("renders the card title", () => {
 		render(<ActiveDiscounts data={makeData([makeDiscount()])} />);
 
-		expect(screen.getByText("Codes promo actifs")).toBeInTheDocument();
+		// Title renders on both the mobile section (<h3>) and desktop card (<CardTitle>)
+		expect(screen.getAllByText("Codes promo actifs").length).toBeGreaterThanOrEqual(1);
 	});
 
 	// -------------------------------------------------------------------------
@@ -159,7 +182,7 @@ describe("ActiveDiscounts", () => {
 	it("renders singular 'code actif' for 1 discount", () => {
 		render(<ActiveDiscounts data={makeData([makeDiscount()])} />);
 
-		expect(screen.getByText("1 code actif")).toBeInTheDocument();
+		expect(screen.getAllByText("1 code actif").length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("renders plural 'codes actifs' for multiple discounts", () => {
@@ -173,7 +196,7 @@ describe("ActiveDiscounts", () => {
 			/>,
 		);
 
-		expect(screen.getByText("3 codes actifs")).toBeInTheDocument();
+		expect(screen.getAllByText("3 codes actifs").length).toBeGreaterThanOrEqual(1);
 	});
 
 	// -------------------------------------------------------------------------

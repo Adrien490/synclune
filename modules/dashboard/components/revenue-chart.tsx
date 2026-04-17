@@ -2,13 +2,6 @@
 
 import { useState } from "react";
 import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
-import {
 	ChartContainer,
 	ChartLegend,
 	ChartLegendContent,
@@ -17,6 +10,7 @@ import {
 	type ChartConfig,
 } from "./chart";
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import type { GetRevenueChartReturn } from "@/modules/dashboard/data/get-revenue-chart";
 
 import { cn } from "@/shared/utils/cn";
@@ -83,32 +77,38 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 	const chartConfig = isDetailed ? detailedChartConfig : simpleChartConfig;
 
 	return (
-		<Card
-			className={cn(CHART_STYLES.card, "can-hover:hover:shadow-lg transition-all duration-300")}
+		<section
+			className={cn(
+				"space-y-3",
+				"md:border-primary/30 md:from-primary/5 md:can-hover:hover:shadow-lg md:rounded-xl md:border-l-4 md:bg-linear-to-br md:to-transparent md:p-6 md:shadow-md md:transition-all md:duration-300",
+			)}
+			aria-labelledby="revenue-chart-title"
 		>
-			<CardHeader>
-				<div className="flex items-center justify-between">
-					<div>
-						<CardTitle className={CHART_STYLES.title}>{chartTitle}</CardTitle>
-						<CardDescription className={CHART_STYLES.description}>
-							{isDetailed
-								? "Décomposition : produits, livraison et remises"
-								: "Chiffre d'affaires et nombre de commandes"}
-						</CardDescription>
-					</div>
-					{hasBreakdown && (
-						<Button
-							variant="ghost"
-							size="sm"
-							onClick={() => setIsDetailed((prev) => !prev)}
-							className="text-xs"
-						>
-							{isDetailed ? "Vue simple" : "Détailler"}
-						</Button>
-					)}
+			<header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+				<div>
+					<h3 id="revenue-chart-title" className={cn(CHART_STYLES.title, "text-base md:text-xl")}>
+						{chartTitle}
+					</h3>
+					<p className={cn(CHART_STYLES.description, "text-xs md:text-sm")}>
+						{isDetailed
+							? "Décomposition : produits, livraison et remises"
+							: "Chiffre d'affaires et nombre de commandes"}
+					</p>
 				</div>
-			</CardHeader>
-			<CardContent>
+				{hasBreakdown && (
+					<Button
+						variant="ghost"
+						onClick={() => {
+							triggerHaptic("selection");
+							setIsDetailed((prev) => !prev);
+						}}
+						className={cn(CHART_STYLES.touchTarget.button, "self-start text-xs sm:self-auto")}
+					>
+						{isDetailed ? "Vue simple" : "Détailler"}
+					</Button>
+				)}
+			</header>
+			<div>
 				{!hasRevenue ? (
 					<ChartEmpty type="noRevenue" minHeight={300} />
 				) : (
@@ -136,6 +136,14 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 									accessibilityLayer
 									data={data}
 									margin={{ top: 5, right: 10, bottom: 5, left: -10 }}
+									onClick={(state) => {
+										if (
+											"activeTooltipIndex" in state &&
+											typeof state.activeTooltipIndex === "number"
+										) {
+											triggerHaptic("selection");
+										}
+									}}
 								>
 									<defs>
 										<linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
@@ -164,6 +172,12 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 									<YAxis yAxisId="revenue" hide />
 									<YAxis yAxisId="orders" orientation="right" hide />
 									<ChartTooltip
+										cursor={{
+											stroke: "var(--color-primary)",
+											strokeWidth: 1.5,
+											strokeDasharray: "3 3",
+											strokeOpacity: 0.6,
+										}}
 										content={
 											<ChartTooltipContent
 												labelFormatter={(value) => `Date: ${value}`}
@@ -185,6 +199,12 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 										)}
 									/>
 
+									{/*
+									 * Colorblind safety: each overlaid series uses a distinct stroke pattern
+									 * so they remain distinguishable without relying on color alone (WCAG 1.4.1).
+									 *   subtotal  → solid         shipping  → 6 2 dashed
+									 *   discounts → 4 4 dashed    orders    → 2 2 dotted
+									 */}
 									{isDetailed ? (
 										<>
 											<Area
@@ -202,6 +222,7 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 												stroke="var(--color-shipping)"
 												fill="url(#shippingGradient)"
 												strokeWidth={1.5}
+												strokeDasharray="6 2"
 											/>
 											<Line
 												yAxisId="revenue"
@@ -230,15 +251,18 @@ export function RevenueChart({ chartData, periodLabel }: RevenueChartProps) {
 										type="monotone"
 										stroke="var(--color-orders)"
 										strokeWidth={1.5}
-										strokeDasharray="4 4"
+										strokeDasharray="2 2"
 										dot={false}
 									/>
 								</ComposedChart>
 							</ChartContainer>
 						</ChartScrollContainer>
+						<p className="text-muted-foreground mt-2 text-[11px] md:hidden" aria-hidden="true">
+							Touchez le graphique pour voir le détail.
+						</p>
 					</div>
 				)}
-			</CardContent>
-		</Card>
+			</div>
+		</section>
 	);
 }

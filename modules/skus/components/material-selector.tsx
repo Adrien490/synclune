@@ -10,6 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { m, useReducedMotion } from "motion/react";
 
 interface MaterialSelectorProps {
@@ -57,6 +58,7 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 
 	// Mettre à jour le matériau dans l'URL (optimiste)
 	const updateMaterial = (materialName: string | null) => {
+		triggerHaptic("selection");
 		startTransition(() => {
 			setOptimisticMaterial(materialName);
 			const params = new URLSearchParams(searchParams.toString());

@@ -6,6 +6,7 @@ export { useMounted } from "./use-mounted";
 // Navigation & Pagination hooks
 // State & Effects hooks
 export { useBottomBarHeight } from "./use-bottom-bar-height";
+export { useScrollHideBottomBar } from "./use-scroll-hide-bottom-bar";
 export { useToolbarDrawer } from "./use-toolbar-drawer";
 
 // Modal/Lightbox hooks

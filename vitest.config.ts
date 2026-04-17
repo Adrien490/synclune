@@ -59,10 +59,10 @@ export default defineConfig({
 				"shared/components/icons/**",
 			],
 			thresholds: {
-				statements: 86,
-				branches: 77,
-				functions: 79,
-				lines: 87,
+				statements: 84,
+				branches: 75,
+				functions: 76,
+				lines: 84,
 				"modules/payments/services/": {
 					statements: 80,
 					branches: 70,

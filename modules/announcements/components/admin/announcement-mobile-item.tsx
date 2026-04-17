@@ -1,5 +1,6 @@
 "use client";
 
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
@@ -26,6 +27,7 @@ export function AnnouncementMobileItem({ announcement }: AnnouncementMobileItemP
 	const status = computeAnnouncementStatus(announcement);
 
 	const handleOpen = () => {
+		triggerHaptic("light");
 		open({ announcement });
 	};
 

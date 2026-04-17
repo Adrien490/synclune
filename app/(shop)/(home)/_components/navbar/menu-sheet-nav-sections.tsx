@@ -6,10 +6,15 @@ import { Badge } from "@/shared/components/ui/badge";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import type { Variants } from "motion/react";
 import { m } from "motion/react";
 import Link from "next/link";
+
+function hapticSelection() {
+	triggerHaptic("selection");
+}
 
 // Shared link styles (must match menu-sheet-nav.tsx)
 const linkClassName = cn(
@@ -89,6 +94,7 @@ function NavLink({
 					href={href}
 					className={getLinkClass(href, isMenuItemActive, className, { exact })}
 					aria-current={isMenuItemActive(href, { exact }) ? "page" : undefined}
+					onClick={hapticSelection}
 				>
 					{children}
 				</Link>
@@ -116,6 +122,7 @@ export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProp
 					href={ROUTES.ACCOUNT.ROOT}
 					className="group block"
 					aria-label={`Mon compte - ${firstName}${wishlistCount > 0 ? `, ${wishlistCount} favori${wishlistCount > 1 ? "s" : ""}` : ""}${cartCount > 0 ? `, ${cartCount} article${cartCount > 1 ? "s" : ""}` : ""}`}
+					onClick={hapticSelection}
 				>
 					<div>
 						<p className="text-foreground text-base font-semibold">Bonjour {firstName}</p>

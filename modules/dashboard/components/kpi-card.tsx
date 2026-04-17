@@ -4,6 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
@@ -42,6 +43,15 @@ const kpiCardVariants = cva(
 	},
 );
 
+/**
+ * Mobile flat-mode overrides: strip Card chrome (border, shadow, gradient, min-h, rounded)
+ * under md: breakpoint to produce a dense iOS-native presentation.
+ * Chrome is re-applied at md: via md:-prefixed classes.
+ */
+const KPI_FLAT_MOBILE_OVERRIDES =
+	"border-0 bg-none from-transparent shadow-none rounded-none min-h-0 py-3 px-0 gap-1 " +
+	"md:bg-linear-to-br md:rounded-xl md:shadow-sm md:px-6 md:py-6 md:gap-2";
+
 interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	title: string;
 	value: string | number;
@@ -62,6 +72,11 @@ interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	invertEvolutionColors?: boolean;
 	/** SVG path data for a background sparkline (7-day trend) */
 	sparklinePath?: string | null;
+	/**
+	 * When true, the Card chrome (border, gradient, shadow, min-height) is stripped
+	 * on mobile viewports (< md) for a flat iOS-native density. Desktop is unaffected.
+	 */
+	flatOnMobile?: boolean;
 }
 
 export function KpiCard({
@@ -83,6 +98,7 @@ export function KpiCard({
 	comparisonLabel,
 	invertEvolutionColors = false,
 	sparklinePath,
+	flatOnMobile = false,
 }: KpiCardProps) {
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
@@ -91,24 +107,31 @@ export function KpiCard({
 		size === "compact" && "w-6 h-6",
 	);
 
+	// Unique id used to expose tooltip text to AT when the card is a link
+	// (the tooltip itself is bound to the Link via aria-describedby below)
+	const tooltipDescriptionId = tooltip ? `kpi-tooltip-${slugify(title)}` : undefined;
+
 	const cardContent = (
 		<>
 			{sparklinePath && (
-				<svg
-					viewBox="0 0 100 32"
-					className="pointer-events-none absolute right-0 bottom-0 h-12 w-2/3 opacity-10"
-					preserveAspectRatio="none"
-					aria-hidden="true"
-				>
-					<path
-						d={sparklinePath}
-						fill="none"
-						stroke="currentColor"
-						strokeWidth={1.5}
-						strokeLinecap="round"
-						strokeLinejoin="round"
-					/>
-				</svg>
+				<>
+					<svg
+						viewBox="0 0 100 32"
+						className="pointer-events-none absolute right-0 bottom-0 h-12 w-2/3 opacity-10"
+						preserveAspectRatio="none"
+						aria-hidden="true"
+					>
+						<path
+							d={sparklinePath}
+							fill="none"
+							stroke="currentColor"
+							strokeWidth={1.5}
+							strokeLinecap="round"
+							strokeLinejoin="round"
+						/>
+					</svg>
+					<span className="sr-only">Tendance sur les 7 derniers jours</span>
+				</>
 			)}
 
 			<div
@@ -126,22 +149,29 @@ export function KpiCard({
 			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 				<div className="flex items-center gap-1.5">
 					<CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
-					{tooltip && (
+					{tooltip && !href && (
 						<Tooltip>
 							<TooltipTrigger asChild>
-								<span
-									role="img"
-									tabIndex={href ? -1 : 0}
-									className="text-muted-foreground/60 hover:text-muted-foreground inline-flex h-4 w-4 cursor-help items-center justify-center"
+								<button
+									type="button"
+									className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex h-11 w-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
 									aria-label={`Info: ${title}`}
 								>
 									<Info className="h-3.5 w-3.5" aria-hidden="true" />
-								</span>
+								</button>
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
 								<p className="text-sm">{tooltip}</p>
 							</TooltipContent>
 						</Tooltip>
+					)}
+					{tooltip && href && (
+						<>
+							<Info className="text-muted-foreground/60 h-3.5 w-3.5" aria-hidden="true" />
+							<span id={tooltipDescriptionId} className="sr-only">
+								{tooltip}
+							</span>
+						</>
 					)}
 				</div>
 				{icon && <div className={iconClassName}>{icon}</div>}
@@ -180,6 +210,7 @@ export function KpiCard({
 
 	const cardClassName = cn(
 		kpiCardVariants({ size, priority, status }),
+		flatOnMobile && KPI_FLAT_MOBILE_OVERRIDES,
 		href &&
 			"cursor-pointer focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
 	);
@@ -193,11 +224,26 @@ export function KpiCard({
 
 	if (href) {
 		return (
-			<Link href={href} className="block" aria-label={accessibleLabel}>
+			<Link
+				href={href}
+				className="block"
+				onClick={() => triggerHaptic("light")}
+				aria-label={accessibleLabel}
+				aria-describedby={tooltipDescriptionId}
+			>
 				<Card className={cardClassName}>{cardContent}</Card>
 			</Link>
 		);
 	}
 
 	return <Card className={cardClassName}>{cardContent}</Card>;
+}
+
+function slugify(text: string): string {
+	return text
+		.toLowerCase()
+		.normalize("NFD")
+		.replace(/[\u0300-\u036f]/g, "")
+		.replace(/[^a-z0-9]+/g, "-")
+		.replace(/^-+|-+$/g, "");
 }

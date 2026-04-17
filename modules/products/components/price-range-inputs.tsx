@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Slider } from "@/shared/components/ui/slider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { priceToSlider, sliderToPrice, SLIDER_MAX } from "../constants/price-filter";
 
 interface PriceRangeInputsProps {
@@ -20,6 +21,10 @@ interface PriceRangeInputsProps {
  * - Les prix eleves restent accessibles sans monopoliser le slider
  */
 export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputsProps) {
+	const haptic = useHaptic();
+	// Tracks if we've tickled haptic during current drag (avoid spam per tick)
+	const draggingRef = useRef(false);
+
 	// Etat local pour permettre l'edition libre des inputs texte
 	const [minInput, setMinInput] = useState(String(value[0]));
 	const [maxInput, setMaxInput] = useState(String(value[1]));
@@ -112,11 +117,19 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 					<Slider
 						value={sliderPosition}
 						onValueChange={(newPos) => {
+							if (!draggingRef.current) {
+								draggingRef.current = true;
+								haptic("light");
+							}
 							setSliderPosition([newPos[0]!, newPos[1]!]);
 							// Convertir les positions en prix reels
 							const newMinPrice = sliderToPrice(newPos[0]!, maxPrice);
 							const newMaxPrice = sliderToPrice(newPos[1]!, maxPrice);
 							onChange([newMinPrice, newMaxPrice]);
+						}}
+						onValueCommit={() => {
+							draggingRef.current = false;
+							haptic("selection");
 						}}
 						max={SLIDER_MAX}
 						min={0}

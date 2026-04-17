@@ -7,6 +7,7 @@ import {
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
 import { RatingStars } from "@/shared/components/rating-stars";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SectionHeader } from "./filter-section-header";
 
 // ============================================================================
@@ -23,6 +24,7 @@ interface RatingFilterSectionProps {
 // ============================================================================
 
 export function RatingFilterSection({ selectedValue, onChange }: RatingFilterSectionProps) {
+	const haptic = useHaptic();
 	return (
 		<AccordionItem value="rating">
 			<AccordionTrigger headingLevel={3} className="hover:no-underline">
@@ -30,7 +32,10 @@ export function RatingFilterSection({ selectedValue, onChange }: RatingFilterSec
 					label="Notes clients"
 					count={selectedValue !== null ? 1 : 0}
 					badgeContent={selectedValue !== null ? `${selectedValue}+ ★` : undefined}
-					onReset={() => onChange(null)}
+					onReset={() => {
+						haptic("light");
+						onChange(null);
+					}}
 				/>
 			</AccordionTrigger>
 			<AccordionContent>
@@ -43,6 +48,7 @@ export function RatingFilterSection({ selectedValue, onChange }: RatingFilterSec
 								id={`rating-${stars}`}
 								checked={isSelected}
 								onCheckedChange={(checked) => {
+									haptic("selection");
 									onChange(checked ? stars : null);
 								}}
 								indicator={<RatingStars rating={stars} size="sm" />}

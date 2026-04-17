@@ -12,22 +12,20 @@ const {
 	mockValidateInput,
 	mockSuccess,
 	mockHandleActionError,
-	mockUpdateTag,
+	mockInvalidateCache,
 	mockLogAudit,
 	mockSanitizeText,
 	mockPrisma,
-	mockGetInvalidationTags,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
+	mockInvalidateCache: vi.fn(),
 	mockLogAudit: vi.fn(),
 	mockSanitizeText: vi.fn((text: string) => text),
 	mockPrisma: { announcementBar: { create: vi.fn() } },
-	mockGetInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -50,9 +48,8 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ANNOUNCEMENT_LIMITS: { CREATE: "announcement:create" },
 }));
 vi.mock("@/shared/lib/sanitize", () => ({ sanitizeText: mockSanitizeText }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("../../constants/cache", () => ({
-	getAnnouncementInvalidationTags: mockGetInvalidationTags,
+	invalidateAnnouncementCache: mockInvalidateCache,
 }));
 
 import { createAnnouncement } from "../create-announcement";
@@ -91,7 +88,6 @@ describe("createAnnouncement", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: VALID_DATA });
 		mockPrisma.announcementBar.create.mockResolvedValue({ id: "new-id" });
-		mockGetInvalidationTags.mockReturnValue(["active-announcement", "announcements-list"]);
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -242,8 +238,7 @@ describe("createAnnouncement", () => {
 	it("should invalidate all announcement cache tags", async () => {
 		await createAnnouncement(undefined, validFormData());
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("active-announcement");
-		expect(mockUpdateTag).toHaveBeenCalledWith("announcements-list");
+		expect(mockInvalidateCache).toHaveBeenCalledTimes(1);
 	});
 
 	// ─── Audit log ────────────────────────────────────────────────────────────

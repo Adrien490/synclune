@@ -36,6 +36,8 @@ function Sheet({
 		id: "sheet",
 	});
 
+	// snapPoints, activeSnapPoint, fadeFromIndex sont forwardés via ...props
+	// (types natifs de Vaul.Root — discriminated union on snapPoints presence).
 	return (
 		<SheetContext.Provider value={{ direction }}>
 			<SheetPrimitive.Root
@@ -59,12 +61,34 @@ function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Clo
 	return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
+/**
+ * Handle draggable Vaul pour les bottom-sheets mobile.
+ * Permet à Vaul de drag/fermer la sheet sans que le contenu interne
+ * soit capturé. Rend une pill visible avec hit area étendue à 44px.
+ */
+function SheetHandle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Handle>) {
+	return (
+		<SheetPrimitive.Handle
+			data-slot="sheet-handle"
+			className={cn(
+				"bg-muted-foreground/30 relative mx-auto mt-2 h-1 w-10 shrink-0 rounded-full",
+				"cursor-grab active:cursor-grabbing",
+				// Zone tactile étendue 44px min (Apple HIG / WCAG 2.5.5)
+				"before:absolute before:-inset-x-6 before:-inset-y-4 before:content-['']",
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
 function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
 	return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
 function SheetOverlay({
 	className,
+	onClick,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Overlay>) {
 	return (
@@ -76,6 +100,7 @@ function SheetOverlay({
 				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
 				className,
 			)}
+			onClick={onClick}
 			{...props}
 		/>
 	);
@@ -87,6 +112,7 @@ function SheetContent({
 	overlayClassName,
 	showCloseButton = true,
 	title,
+	onOverlayClick,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
 	overlayClassName?: string;
@@ -94,12 +120,15 @@ function SheetContent({
 	/** Accessible title for screen readers. Renders a sr-only Drawer.Title
 	 * to satisfy Radix's accessibility check. */
 	title?: string;
+	/** Fired when the user taps the scrim overlay to dismiss.
+	 * Useful for attaching haptic feedback. */
+	onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) {
 	const { direction } = React.useContext(SheetContext);
 
 	return (
 		<SheetPortal>
-			<SheetOverlay className={overlayClassName} />
+			<SheetOverlay className={overlayClassName} onClick={onOverlayClick} />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"
 				className={cn(
@@ -182,6 +211,7 @@ export {
 	SheetContent,
 	SheetDescription,
 	SheetFooter,
+	SheetHandle,
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,

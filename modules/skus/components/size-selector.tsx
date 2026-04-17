@@ -15,6 +15,7 @@ const SizeGuideDialog = dynamic(() =>
 	import("./size-guide-dialog").then((mod) => mod.SizeGuideDialog),
 );
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { Check } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 
@@ -72,6 +73,7 @@ export function SizeSelector({
 
 	// Mettre à jour la taille dans l'URL (optimiste)
 	const updateSize = (size: string | null) => {
+		triggerHaptic("selection");
 		startTransition(() => {
 			setOptimisticSize(size);
 			const params = new URLSearchParams(searchParams.toString());

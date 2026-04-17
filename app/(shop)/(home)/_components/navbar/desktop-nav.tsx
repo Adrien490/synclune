@@ -25,16 +25,18 @@ interface DesktopNavProps {
 }
 
 const linkClasses = cn(
-	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium",
+	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium tracking-[0.02em]",
 	"text-foreground/85 hover:text-foreground",
 	"data-[active=true]:text-foreground",
-	"transition-colors duration-200",
+	"transition-[color,background-color] duration-200",
+	// Subtle rose accent halo on hover (premium brand touch, stays under underline)
+	"motion-safe:hover:bg-primary/5 data-[state=open]:bg-primary/5",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-	// Underline animé au hover
+	// Underline animé au hover — spring easing premium
 	"after:absolute after:bottom-0 after:left-1 after:right-1",
 	"after:h-0.5 after:bg-primary after:rounded-full",
 	"after:origin-center after:scale-x-0",
-	"motion-safe:after:transition-transform motion-safe:after:duration-200",
+	"motion-safe:after:transition-transform motion-safe:after:duration-[220ms] motion-safe:after:[transition-timing-function:var(--ease-spring)]",
 	"hover:after:scale-x-100 data-[state=open]:after:scale-x-100",
 	"data-[active=true]:after:scale-x-100",
 	"motion-reduce:hover:after:scale-x-100 motion-reduce:data-[state=open]:after:scale-x-100",
@@ -45,7 +47,12 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 	const router = useRouter();
 
 	return (
-		<NavigationMenu className="hidden lg:flex" viewport={false}>
+		<NavigationMenu
+			className="hidden lg:flex"
+			viewport={false}
+			delayDuration={120}
+			skipDelayDuration={300}
+		>
 			<NavigationMenuList className="gap-1">
 				{navItems.map((item) => {
 					const itemIsActive = isMenuItemActive(item.href);

@@ -5,8 +5,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockShare } = vi.hoisted(() => ({
+const { mockShare, mockTriggerHaptic, canShareRef } = vi.hoisted(() => ({
 	mockShare: vi.fn().mockResolvedValue("shared" as const),
+	mockTriggerHaptic: vi.fn(),
+	canShareRef: { current: true as boolean },
 }));
 
 // ============================================================================
@@ -15,9 +17,15 @@ const { mockShare } = vi.hoisted(() => ({
 
 vi.mock("@/shared/hooks/use-web-share", () => ({
 	useWebShare: () => ({
-		canShare: true,
+		get canShare() {
+			return canShareRef.current;
+		},
 		share: mockShare,
 	}),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -42,6 +50,34 @@ vi.mock("lucide-react", () => ({
 	Share2: ({ size }: { size?: number }) => <span data-testid="share2-icon" data-size={size} />,
 	Check: ({ size }: { size?: number }) => <span data-testid="check-icon" data-size={size} />,
 	Copy: ({ size }: { size?: number }) => <span data-testid="copy-icon" data-size={size} />,
+	Mail: ({ size }: { size?: number }) => <span data-testid="mail-icon" data-size={size} />,
+}));
+
+vi.mock("@/shared/components/ui/dropdown-menu", () => ({
+	DropdownMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	DropdownMenuTrigger: ({
+		children,
+		asChild: _asChild,
+	}: {
+		children: React.ReactNode;
+		asChild?: boolean;
+	}) => <>{children}</>,
+	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="dropdown-content">{children}</div>
+	),
+	DropdownMenuItem: ({
+		children,
+		asChild: _asChild,
+		onSelect,
+	}: {
+		children: React.ReactNode;
+		asChild?: boolean;
+		onSelect?: () => void;
+	}) => (
+		<button type="button" role="menuitem" onClick={onSelect}>
+			{children}
+		</button>
+	),
 }));
 
 // ============================================================================
@@ -73,6 +109,7 @@ afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	mockShare.mockResolvedValue("shared" as const);
+	canShareRef.current = true;
 });
 
 describe("ShareButton", () => {
@@ -184,6 +221,93 @@ describe("ShareButton", () => {
 			await waitFor(() => {
 				expect(screen.getByTestId("tooltip-content").textContent).toBe("Lien copié !");
 			});
+		});
+	});
+
+	describe("haptic feedback", () => {
+		it("triggers success haptic when share succeeds", async () => {
+			mockShare.mockResolvedValue("shared" as const);
+			renderDefault();
+			fireEvent.click(screen.getByRole("button"));
+			await waitFor(() => {
+				expect(mockTriggerHaptic).toHaveBeenCalledWith("success");
+			});
+		});
+
+		it("triggers success haptic when clipboard copy succeeds", async () => {
+			mockShare.mockResolvedValue("copied" as const);
+			renderDefault();
+			fireEvent.click(screen.getByRole("button"));
+			await waitFor(() => {
+				expect(mockTriggerHaptic).toHaveBeenCalledWith("success");
+			});
+		});
+
+		it("does not trigger haptic when share is dismissed", async () => {
+			mockShare.mockResolvedValue("dismissed" as const);
+			renderDefault();
+			fireEvent.click(screen.getByRole("button"));
+			await waitFor(() => {
+				expect(mockShare).toHaveBeenCalled();
+			});
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("desktop fallback (no Web Share API)", () => {
+		it("renders a dropdown menu trigger when Web Share is unavailable", () => {
+			canShareRef.current = false;
+			renderDefault();
+			expect(screen.getByTestId("share-button-trigger")).toBeInTheDocument();
+			// Dropdown content is mounted in tests (mocked Radix portal)
+			expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
+		});
+
+		it("includes a Pinterest share link with encoded URL and title", () => {
+			canShareRef.current = false;
+			renderDefault({ url: "/creations/bague-lune" });
+			const pinterestLink = screen.getByRole("link", { name: /pinterest/i });
+			const href = pinterestLink.getAttribute("href") ?? "";
+			expect(href).toContain("pinterest.com/pin/create/button/");
+			expect(href).toContain("url=");
+			expect(href).toContain("description=Bague");
+		});
+
+		it("includes media param when media prop is provided", () => {
+			canShareRef.current = false;
+			renderDefault({ media: "https://cdn.example.com/bague.jpg" });
+			const pinterestLink = screen.getByRole("link", { name: /pinterest/i });
+			expect(pinterestLink.getAttribute("href")).toContain("media=");
+		});
+
+		it("omits media param when no media prop", () => {
+			canShareRef.current = false;
+			renderDefault();
+			const pinterestLink = screen.getByRole("link", { name: /pinterest/i });
+			expect(pinterestLink.getAttribute("href")).not.toContain("media=");
+		});
+
+		it("includes a mailto: link with subject and body", () => {
+			canShareRef.current = false;
+			renderDefault();
+			const mailLink = screen.getByRole("link", { name: /envoyer par e-mail/i });
+			const href = mailLink.getAttribute("href") ?? "";
+			expect(href).toMatch(/^mailto:/);
+			expect(href).toContain("subject=");
+			expect(href).toContain("body=");
+		});
+
+		it("renders a copy-link menu item", () => {
+			canShareRef.current = false;
+			renderDefault();
+			expect(screen.getByText(/copier le lien/i)).toBeInTheDocument();
+		});
+
+		it("does not call the native share hook when canShare=false", () => {
+			canShareRef.current = false;
+			renderDefault();
+			fireEvent.click(screen.getByTestId("share-button-trigger"));
+			expect(mockShare).not.toHaveBeenCalled();
 		});
 	});
 });

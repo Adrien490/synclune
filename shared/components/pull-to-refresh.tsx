@@ -15,6 +15,20 @@ const TRIGGER_DISTANCE = 70;
 const MAX_DISTANCE = 120;
 /** Vertical scroll position (px) below which the gesture arms */
 const ARM_SCROLL_THRESHOLD = 4;
+/** Max time (ms) PTR waits for a page-level refresh handler before falling back to router.refresh() alone */
+const PAGE_HANDLER_TIMEOUT = 1500;
+
+/**
+ * Event name dispatched by PullToRefresh when the gesture fires.
+ * Pages can listen via `window.addEventListener("admin:pull-to-refresh", e => e.detail.waitFor(promise))`
+ * to register custom refresh logic (e.g. server-action cache invalidation) that PTR will await
+ * before running `router.refresh()`. A fallback timeout prevents a stuck handler from blocking UX.
+ */
+export const PULL_TO_REFRESH_EVENT = "admin:pull-to-refresh" as const;
+
+export interface PullToRefreshEventDetail {
+	waitFor: (promise: Promise<void>) => void;
+}
 
 /**
  * Native-feel pull-to-refresh indicator for touch devices.
@@ -89,9 +103,31 @@ export function PullToRefresh() {
 				triggerHaptic("medium");
 				// Give the spinner a minimum 400ms visual presence — feels intentional
 				const minDelay = new Promise<void>((resolve) => setTimeout(resolve, 400));
-				void Promise.all([minDelay])
+
+				// Let pages register a custom async refresh (e.g. cache invalidation).
+				// Falls back to router.refresh() alone if no listener or timeout exceeded.
+				const pageHandler = new Promise<void>((resolve) => {
+					let settled = false;
+					const markSettled = () => {
+						if (settled) return;
+						settled = true;
+						resolve();
+					};
+					const event = new CustomEvent<PullToRefreshEventDetail>(PULL_TO_REFRESH_EVENT, {
+						detail: {
+							waitFor: (promise) => {
+								void promise.finally(markSettled);
+							},
+						},
+					});
+					window.dispatchEvent(event);
+					setTimeout(markSettled, PAGE_HANDLER_TIMEOUT);
+				});
+
+				void Promise.all([minDelay, pageHandler])
 					.then(() => {
 						router.refresh();
+						triggerHaptic("success");
 					})
 					.finally(() => {
 						setTimeout(() => setIsRefreshing(false), 200);

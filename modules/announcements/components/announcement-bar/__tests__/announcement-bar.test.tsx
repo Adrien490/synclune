@@ -1,6 +1,13 @@
 import type React from "react";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
+}));
+
 import { AnnouncementBar } from "../announcement-bar";
 import type { AnnouncementBarProps } from "../announcement-bar";
 
@@ -92,6 +99,7 @@ beforeEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	mockFormAction.mockClear();
+	mockHaptic.mockClear();
 	document.documentElement.style.removeProperty("--announcement-bar-height");
 });
 
@@ -199,5 +207,38 @@ describe("AnnouncementBar - dismiss", () => {
 		const formData = mockFormAction.mock.calls[0]![0] as FormData;
 		expect(formData.get("announcementId")).toBe("clx1234567890");
 		expect(formData.get("dismissDurationHours")).toBe("24");
+	});
+
+	it("triggers light haptic feedback on close button click", () => {
+		renderBar();
+		fireEvent.click(screen.getByRole("button", { name: "Fermer la barre d'annonce" }));
+
+		expect(mockHaptic).toHaveBeenCalledWith("light");
+	});
+});
+
+// ─── Countdown ──────────────────────────────────────────────────────
+
+describe("AnnouncementBar - countdown", () => {
+	it("renders a timer pill when endsAt is within 24h", () => {
+		const inOneHour = new Date(Date.now() + 60 * 60 * 1000);
+		renderBar({ endsAt: inOneHour });
+
+		const timer = screen.getByRole("timer");
+		expect(timer).toBeInTheDocument();
+		expect(timer).toHaveAttribute("aria-live", "off");
+	});
+
+	it("does not render the timer pill when endsAt is more than 24h away", () => {
+		const inThreeDays = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+		renderBar({ endsAt: inThreeDays });
+
+		expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+	});
+
+	it("does not render the timer pill when endsAt is null", () => {
+		renderBar({ endsAt: null });
+
+		expect(screen.queryByRole("timer")).not.toBeInTheDocument();
 	});
 });

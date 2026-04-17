@@ -31,6 +31,7 @@ export async function AnnouncementBarWrapper() {
 			linkText={announcement.linkText ?? undefined}
 			announcementId={announcement.id}
 			dismissDurationHours={announcement.dismissDurationHours}
+			endsAt={announcement.endsAt}
 		/>
 	);
 }

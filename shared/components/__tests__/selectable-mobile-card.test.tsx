@@ -6,8 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const { selectionState, mockHandleItemSelectionChange } = vi.hoisted(() => ({
 	selectionState: {
 		selectedItems: [] as string[],
-		isSelected: (id: string) => false,
-		getSelectedCount: () => 0,
+		isSelected: ((_id: string) => false) as (id: string) => boolean,
+		getSelectedCount: (() => 0) as () => number,
 	},
 	mockHandleItemSelectionChange: vi.fn(),
 }));

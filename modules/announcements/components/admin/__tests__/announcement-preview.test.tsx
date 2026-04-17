@@ -23,7 +23,22 @@ describe("AnnouncementPreview", () => {
 	it("should render the preview label", () => {
 		render(<AnnouncementPreview message="Test" />);
 
-		expect(screen.getByText("Aperçu")).toBeInTheDocument();
+		expect(screen.getByText("Aperçu storefront")).toBeInTheDocument();
+	});
+
+	it("should render link as fallback text when linkText is missing", () => {
+		render(<AnnouncementPreview message="Promo" link="/soldes" />);
+
+		expect(screen.getByText("/soldes")).toBeInTheDocument();
+		expect(screen.getByText("Texte du lien requis quand un lien est spécifié")).toBeInTheDocument();
+	});
+
+	it("should render a fake disabled close button", () => {
+		render(<AnnouncementPreview message="Promo" />);
+
+		const closeButton = screen.getByRole("button", { hidden: true });
+		expect(closeButton).toBeDisabled();
+		expect(closeButton).toHaveAttribute("aria-hidden", "true");
 	});
 
 	// ─── Link text ────────────────────────────────────────────────────────────

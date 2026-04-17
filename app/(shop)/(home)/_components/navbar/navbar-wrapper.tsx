@@ -22,11 +22,13 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 	return (
 		<header
 			data-scrolled={isScrolled}
+			data-home-navbar
+			style={{ viewTransitionName: "shop-navbar" }}
 			className={cn(
 				"pwa-header",
 				"group fixed inset-x-0 z-40",
 				"top-[var(--announcement-bar-height)]",
-				"transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
+				"transition-[top,background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
 				"border-b",
 				isScrolled
 					? "bg-background/95 border-border shadow-lg shadow-black/8 backdrop-blur-md"

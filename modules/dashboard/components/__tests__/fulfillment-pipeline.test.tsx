@@ -16,15 +16,30 @@ vi.mock("next/link", () => ({
 		href,
 		children,
 		className,
+		onClick,
+		"aria-label": ariaLabel,
 	}: {
 		href: string;
 		children: React.ReactNode;
 		className?: string;
+		onClick?: (e: React.MouseEvent) => void;
+		"aria-label"?: string;
 	}) => (
-		<a href={href} className={className}>
+		<a href={href} className={className} onClick={onClick} aria-label={ariaLabel}>
 			{children}
 		</a>
 	),
+}));
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
+}));
+
+// Force desktop rendering path — tests use the full-behavior branch (segments clickable)
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 vi.mock("lucide-react", () => ({
@@ -112,7 +127,10 @@ describe("FulfillmentPipelineCard", () => {
 	it("renders when at least one stage has orders", () => {
 		render(<FulfillmentPipelineCard pipeline={makePipeline({ unfulfilled: 5 })} />);
 
-		expect(screen.getByTestId("card")).toBeInTheDocument();
+		// Component renders a <section> (not a Card) after UX 2026 refactor
+		expect(
+			document.querySelector("section[aria-labelledby='fulfillment-pipeline-title']"),
+		).not.toBeNull();
 	});
 
 	// -------------------------------------------------------------------------
@@ -275,5 +293,37 @@ describe("FulfillmentPipelineCard", () => {
 		expect(screen.getByText("1 expédiées")).toBeInTheDocument();
 		expect(screen.getByText("1 livrées")).toBeInTheDocument();
 		expect(screen.getByText("1 retournées")).toBeInTheDocument();
+	});
+
+	// -------------------------------------------------------------------------
+	// Haptic feedback
+	// -------------------------------------------------------------------------
+
+	it("fires a 'light' haptic when a pipeline segment is tapped", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(<FulfillmentPipelineCard pipeline={makePipeline({ unfulfilled: 5 })} />);
+
+		const firstLink = screen.getAllByRole("link")[0]!;
+		fireEvent.click(firstLink);
+
+		expect(mockHaptic).toHaveBeenCalledWith("light");
+	});
+
+	it("fires a 'medium' haptic when the late shipments badge is tapped", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(
+			<FulfillmentPipelineCard pipeline={makePipeline({ unfulfilled: 1, lateShipments: 2 })} />,
+		);
+
+		const lateLink = screen
+			.getAllByRole("link")
+			.find(
+				(l) =>
+					l.getAttribute("href") === "/admin/ventes/commandes?filter_fulfillmentStatus=UNFULFILLED",
+			);
+		expect(lateLink).toBeTruthy();
+		fireEvent.click(lateLink!);
+
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 });

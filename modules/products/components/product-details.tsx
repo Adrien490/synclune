@@ -5,6 +5,7 @@ import { ProductPriceDisplay } from "./product-price-display";
 import { ProductCharacteristics } from "./product-characteristics";
 import { ProductReassurance } from "./product-reassurance";
 import { DeliveryEstimator } from "./delivery-estimator";
+import { ProductCustomizationLink } from "./product-customization-link";
 import { ProductHighlights } from "./product-highlights";
 import { AddToCartForm } from "@/modules/cart/components/add-to-cart-form";
 import { ProductCareInfo } from "./product-care-info";
@@ -83,7 +84,10 @@ export function ProductDetails({
 			{/* 5. Estimation livraison dynamique */}
 			<DeliveryEstimator />
 
-			{/* 6. Réassurance (après CTA - "decision support") */}
+			{/* 6. CTA secondaire : personnalisation (porte de sortie éditoriale) */}
+			<ProductCustomizationLink product={product} />
+
+			{/* 7. Réassurance (après CTA - "decision support") */}
 			<ProductReassurance />
 
 			{/* 5. Caractéristiques principales */}

@@ -56,8 +56,11 @@ export async function RelatedProducts({ currentProductSlug, limit = 8 }: Related
 			<Reveal y={20} amount={0.3}>
 				<div className="space-y-2">
 					<h2 id="related-products-heading" className="text-2xl font-semibold tracking-tight">
-						D'autres créations que vous pourriez aimer <span aria-hidden="true">😊</span>
+						Dans la même veine
 					</h2>
+					<p className="text-muted-foreground text-sm">
+						Sélectionnées pour compléter cette création.
+					</p>
 				</div>
 			</Reveal>
 

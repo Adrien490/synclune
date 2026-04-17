@@ -50,10 +50,30 @@ vi.mock("lucide-react", () => ({
 	ArrowRight: (props: any) => (
 		<span data-testid="icon-arrow-right" aria-hidden={props["aria-hidden"]} />
 	),
+	ChevronRight: (props: any) => (
+		<span data-testid="icon-chevron-right" aria-hidden={props["aria-hidden"]} />
+	),
 
 	ShoppingBag: (props: any) => (
 		<span data-testid="icon-shopping-bag" aria-hidden={props["aria-hidden"]} />
 	),
+}));
+
+vi.mock("@/shared/components/ui/item", () => ({
+	Item: () => null,
+	ItemGroup: () => null,
+	ItemContent: () => null,
+	ItemTitle: () => null,
+	ItemMedia: () => null,
+	ItemActions: () => null,
+	ItemSeparator: () => null,
+	ItemDescription: () => null,
+	ItemFooter: () => null,
+}));
+
+// Force desktop rendering path (mobile section relies on Items mocked as null anyway)
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({

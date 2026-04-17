@@ -1,5 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+
+// Hoisted mock for triggerHaptic so tests can assert the haptic tier.
+const { mockTriggerHaptic } = vi.hoisted(() => ({ mockTriggerHaptic: vi.fn() }));
+
+vi.mock("../use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
+	useHaptic: () => mockTriggerHaptic,
+}));
+
 import {
 	useSwipeAction,
 	SWIPE_ACTION_THRESHOLD,
@@ -10,6 +19,37 @@ import {
 // ============================================================================
 // HELPERS
 // ============================================================================
+
+type ResizeCallback = (entries: Array<{ contentRect: { width: number } }>) => void;
+
+const resizeObservers: Array<{ cb: ResizeCallback; el: HTMLElement }> = [];
+
+class MockResizeObserver {
+	private cb: ResizeCallback;
+	constructor(cb: ResizeCallback) {
+		this.cb = cb;
+	}
+	observe(el: HTMLElement) {
+		resizeObservers.push({ cb: this.cb, el });
+	}
+	unobserve() {}
+	disconnect() {}
+}
+
+// Forcefully override jsdom's native ResizeObserver at module load.
+// `vi.stubGlobal` doesn't always take over a property installed by jsdom.
+Object.defineProperty(globalThis, "ResizeObserver", {
+	value: MockResizeObserver,
+	writable: true,
+	configurable: true,
+});
+
+/** Fire a resize on every observer tied to the given element. */
+function triggerResize(el: HTMLElement, width: number) {
+	for (const { cb, el: target } of resizeObservers) {
+		if (target === el) cb([{ contentRect: { width } }]);
+	}
+}
 
 function createMockElement(width = 400) {
 	const listeners: Record<string, EventListener> = {};
@@ -48,6 +88,8 @@ describe("useSwipeAction", () => {
 	beforeEach(() => {
 		onLeft = vi.fn<() => void>();
 		onRight = vi.fn<() => void>();
+		mockTriggerHaptic.mockClear();
+		resizeObservers.length = 0;
 		vi.useFakeTimers();
 	});
 
@@ -784,6 +826,177 @@ describe("useSwipeAction", () => {
 
 		it("exports OVERSWIPE_RATIO as 0.75", () => {
 			expect(OVERSWIPE_RATIO).toBe(0.75);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Haptic tiers (P1.2)
+	// -------------------------------------------------------------------------
+
+	describe("haptic tiers", () => {
+		it("fires `medium` on confirm (touchend above threshold)", () => {
+			const { el, listeners } = createMockElement();
+
+			renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			act(() => simulateTouch(listeners, "touchstart", 300));
+			act(() => {
+				simulateTouch(listeners, "touchmove", 300 - SWIPE_ACTION_THRESHOLD);
+				flushRAF();
+			});
+			act(() => simulateTouchEnd(listeners));
+
+			expect(onLeft).toHaveBeenCalledOnce();
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+			expect(mockTriggerHaptic).not.toHaveBeenCalledWith("heavy");
+		});
+
+		it("fires `heavy` on overswipe auto-trigger (not `medium`)", () => {
+			const { el, listeners } = createMockElement(400);
+
+			renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			// Swipe > 75% of 400px = 300px
+			act(() => simulateTouch(listeners, "touchstart", 400));
+			act(() => {
+				simulateTouch(listeners, "touchmove", 90);
+				flushRAF();
+			});
+
+			expect(onLeft).toHaveBeenCalledOnce();
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("heavy");
+			expect(mockTriggerHaptic).not.toHaveBeenCalledWith("medium");
+		});
+
+		it("fires haptic exactly once per action (no duplication)", () => {
+			const { el, listeners } = createMockElement();
+
+			renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			act(() => simulateTouch(listeners, "touchstart", 300));
+			act(() => {
+				simulateTouch(listeners, "touchmove", 300 - SWIPE_ACTION_THRESHOLD);
+				flushRAF();
+			});
+			act(() => simulateTouchEnd(listeners));
+
+			// Exactly 1 haptic fired (medium), not 2
+			expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// Exposed values for rubber-band (P1.1)
+	// -------------------------------------------------------------------------
+
+	describe("exposed containerWidth and effective thresholds", () => {
+		it("returns containerWidth primed from the element on mount", () => {
+			const { el } = createMockElement(350);
+
+			const { result } = renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			expect(result.current.containerWidth).toBe(350);
+		});
+
+		it("returns the effective left threshold (min of configured and 30% width)", () => {
+			// Narrow container: 200px * 30% = 60px < default 80
+			const { el } = createMockElement(200);
+
+			const { result } = renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			expect(result.current.effectiveLeftThreshold).toBe(60);
+		});
+
+		it("returns the effective right threshold (min of configured and 30% width)", () => {
+			// Wide container: 400px * 30% = 120px > default 80 → 80 wins
+			const { el } = createMockElement(400);
+
+			const { result } = renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					rightAction: { onAction: onRight },
+				}),
+			);
+
+			expect(result.current.effectiveRightThreshold).toBe(80);
+		});
+	});
+
+	// -------------------------------------------------------------------------
+	// ResizeObserver (P2.2)
+	// -------------------------------------------------------------------------
+
+	describe("ResizeObserver width tracking", () => {
+		it("updates containerWidth when the element is resized", () => {
+			const { el } = createMockElement(300);
+
+			const { result } = renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			expect(result.current.containerWidth).toBe(300);
+
+			act(() => {
+				triggerResize(el, 500);
+			});
+
+			expect(result.current.containerWidth).toBe(500);
+		});
+
+		it("recomputes leftProgress when resize changes the effective threshold", () => {
+			// Start at 400px → effective threshold = min(80, 120) = 80
+			const { el, listeners } = createMockElement(400);
+
+			const { result } = renderHook(() =>
+				useSwipeAction({
+					elementRef: { current: el },
+					leftAction: { onAction: onLeft },
+				}),
+			);
+
+			act(() => simulateTouch(listeners, "touchstart", 200));
+			act(() => {
+				simulateTouch(listeners, "touchmove", 200 - 40);
+				flushRAF();
+			});
+
+			// At width=400, swipe of -40 → progress 40/80 = 0.5
+			expect(result.current.leftProgress).toBeCloseTo(0.5);
+
+			// Shrink to 200px → effective threshold = 60, progress 40/60 ≈ 0.666
+			act(() => {
+				triggerResize(el, 200);
+			});
+
+			expect(result.current.leftProgress).toBeCloseTo(40 / 60);
 		});
 	});
 });

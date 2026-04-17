@@ -6,9 +6,11 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockToggle, mockIsHidden } = vi.hoisted(() => ({
+const { mockToggle, mockIsHidden, mockHaptic, mockIsDesktop } = vi.hoisted(() => ({
 	mockToggle: vi.fn(),
 	mockIsHidden: { value: false },
+	mockHaptic: vi.fn(),
+	mockIsDesktop: { value: true },
 }));
 
 // ============================================================================
@@ -57,6 +59,14 @@ vi.mock("@/shared/hooks/use-fab-visibility", () => ({
 		isSuccess: false,
 		isError: false,
 	})),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+}));
+
+vi.mock("@/shared/hooks/use-media-query", () => ({
+	useMediaQuery: vi.fn(() => mockIsDesktop.value),
 }));
 
 vi.mock("@/shared/components/ui/button", () => {
@@ -119,6 +129,7 @@ vi.mock("@/shared/utils/cn", () => ({
 // Import AFTER all mocks
 import { Fab } from "../fab";
 import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { useReducedMotion } from "motion/react";
 
 // ============================================================================
@@ -154,6 +165,7 @@ function setHidden(value: boolean) {
 beforeEach(() => {
 	vi.clearAllMocks();
 	mockIsHidden.value = false;
+	mockIsDesktop.value = true;
 	vi.mocked(useFabVisibility).mockImplementation(({ initialHidden: _initialHidden }) => ({
 		isHidden: mockIsHidden.value,
 		toggle: mockToggle,
@@ -163,6 +175,7 @@ beforeEach(() => {
 		isError: false,
 	}));
 	vi.mocked(useReducedMotion).mockReturnValue(false);
+	vi.mocked(useMediaQuery).mockImplementation(() => mockIsDesktop.value);
 });
 
 afterEach(cleanup);
@@ -360,27 +373,42 @@ describe("Fab", () => {
 		});
 	});
 
-	describe("aria-controls relationships", () => {
-		it("toggle button (hidden state) has aria-controls pointing to visible container id", () => {
+	describe("aria-pressed (toggle button state)", () => {
+		it("toggle button (hidden state) exposes aria-pressed='true'", () => {
 			setHidden(true);
 			render(<Fab {...DEFAULT_PROPS} initialHidden />);
 
-			// Button mock renders <div data-testid="button">
 			const toggleButton = screen
 				.getAllByTestId("button")
 				.find((el) => el.getAttribute("aria-label") === "Afficher");
 			expect(toggleButton).toBeDefined();
-			expect(toggleButton!.getAttribute("aria-controls")).toBe("fab-visible-admin-dashboard");
+			expect(toggleButton!.getAttribute("aria-pressed")).toBe("true");
 		});
 
-		it("close button (visible state) has aria-controls pointing to hidden container id", () => {
+		it("close button (visible state) exposes aria-pressed='false'", () => {
 			render(<Fab {...DEFAULT_PROPS} />);
 
 			const closeButton = screen
 				.getAllByTestId("button")
 				.find((el) => el.getAttribute("aria-label") === "Masquer");
 			expect(closeButton).toBeDefined();
-			expect(closeButton!.getAttribute("aria-controls")).toBe("fab-hidden-admin-dashboard");
+			expect(closeButton!.getAttribute("aria-pressed")).toBe("false");
+		});
+
+		it("does not render aria-controls (was broken: targets element absent from DOM in mode='wait')", () => {
+			render(<Fab {...DEFAULT_PROPS} />);
+			const closeButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Masquer");
+			expect(closeButton!.getAttribute("aria-controls")).toBeNull();
+
+			cleanup();
+			setHidden(true);
+			render(<Fab {...DEFAULT_PROPS} initialHidden />);
+			const toggleButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Afficher");
+			expect(toggleButton!.getAttribute("aria-controls")).toBeNull();
 		});
 	});
 
@@ -512,6 +540,125 @@ describe("Fab", () => {
 			expect(statusRegion).toBeInTheDocument();
 			expect(statusRegion.getAttribute("aria-live")).toBe("polite");
 			expect(statusRegion.className).toContain("sr-only");
+		});
+
+		it("status region has aria-atomic='true' to force full re-read", () => {
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			const statusRegion = screen.getByRole("status");
+			expect(statusRegion.getAttribute("aria-atomic")).toBe("true");
+		});
+	});
+
+	describe("haptic feedback (2026 mobile pattern)", () => {
+		it("fires haptic('selection') when the close (hide) button is clicked", () => {
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			const closeButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Masquer");
+			fireEvent.click(closeButton!);
+
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("fires haptic('selection') when the show toggle is clicked (hidden state)", () => {
+			setHidden(true);
+			render(<Fab {...DEFAULT_PROPS} initialHidden />);
+
+			const toggleButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Afficher");
+			fireEvent.click(toggleButton!);
+
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("fires haptic('light') when the main button is clicked (onClick variant)", () => {
+			const onClick = vi.fn();
+			render(<Fab {...DEFAULT_PROPS} onClick={onClick} />);
+
+			const mainBtn = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Ouvrir le menu d'actions");
+			fireEvent.click(mainBtn!);
+
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(onClick).toHaveBeenCalledOnce();
+		});
+
+		it("fires haptic('light') when the main link is clicked (href variant)", () => {
+			render(<Fab {...DEFAULT_PROPS} href="/admin" />);
+
+			const anchor = screen.getByRole("link", { hidden: true });
+			fireEvent.click(anchor);
+
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+		});
+	});
+
+	describe("safe-area iOS positioning (notch / Home Indicator)", () => {
+		it("visible container uses bottom safe-area inset", () => {
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			const visibleContainer = document.getElementById("fab-visible-admin-dashboard");
+			expect(visibleContainer).not.toBeNull();
+			expect(visibleContainer!.className).toContain(
+				"bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]",
+			);
+			expect(visibleContainer!.className).toContain(
+				"right-[max(1.5rem,env(safe-area-inset-right,0px))]",
+			);
+		});
+
+		it("hidden container uses bottom safe-area inset", () => {
+			setHidden(true);
+			render(<Fab {...DEFAULT_PROPS} initialHidden />);
+
+			const hiddenContainer = document.getElementById("fab-hidden-admin-dashboard");
+			expect(hiddenContainer).not.toBeNull();
+			expect(hiddenContainer!.className).toContain(
+				"bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))]",
+			);
+		});
+	});
+
+	describe("TooltipMaybe (mobile flash mitigation)", () => {
+		it("renders TooltipContent on desktop (useMediaQuery returns true)", () => {
+			mockIsDesktop.value = true;
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			expect(screen.getAllByTestId("tooltip-content").length).toBeGreaterThan(0);
+		});
+
+		it("does not render TooltipContent on mobile (useMediaQuery returns false)", () => {
+			mockIsDesktop.value = false;
+			render(<Fab {...DEFAULT_PROPS} />);
+
+			expect(screen.queryAllByTestId("tooltip-content")).toHaveLength(0);
+		});
+
+		it("main button still works on mobile when tooltip skipped", () => {
+			mockIsDesktop.value = false;
+			const onClick = vi.fn();
+			render(<Fab {...DEFAULT_PROPS} onClick={onClick} />);
+
+			const mainBtn = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Ouvrir le menu d'actions");
+			expect(mainBtn).toBeDefined();
+			fireEvent.click(mainBtn!);
+			expect(onClick).toHaveBeenCalledOnce();
+		});
+
+		it("hide tooltip skipped on mobile but button preserves aria-label", () => {
+			mockIsDesktop.value = false;
+			render(<Fab {...DEFAULT_PROPS} hideTooltip="Masquer" />);
+
+			const closeButton = screen
+				.getAllByTestId("button")
+				.find((el) => el.getAttribute("aria-label") === "Masquer");
+			expect(closeButton).toBeDefined();
 		});
 	});
 

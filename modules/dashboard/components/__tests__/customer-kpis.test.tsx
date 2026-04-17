@@ -15,6 +15,28 @@ vi.mock("lucide-react", () => ({
 	UserPlus: () => <span data-testid="icon-user-plus" />,
 	Repeat: () => <span data-testid="icon-repeat" />,
 	Crown: () => <span data-testid="icon-crown" />,
+	ChevronRight: () => <span data-testid="icon-chevron-right" />,
+}));
+
+vi.mock("@/shared/components/ui/item", () => ({
+	Item: () => null,
+	ItemGroup: () => null,
+	ItemContent: () => null,
+	ItemTitle: () => null,
+	ItemMedia: () => null,
+	ItemActions: () => null,
+	ItemSeparator: () => null,
+	ItemDescription: () => null,
+	ItemFooter: () => null,
+}));
+
+vi.mock("../stat-row", () => ({
+	StatRow: () => null,
+}));
+
+// Force desktop rendering path in jsdom (no matchMedia)
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 const mockKpiCard = vi.fn();

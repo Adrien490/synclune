@@ -13,10 +13,9 @@ const {
 	mockSuccess,
 	mockNotFound,
 	mockHandleActionError,
-	mockUpdateTag,
+	mockInvalidateCache,
 	mockLogAudit,
 	mockPrisma,
-	mockGetInvalidationTags,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -24,7 +23,7 @@ const {
 	mockSuccess: vi.fn(),
 	mockNotFound: vi.fn(),
 	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
+	mockInvalidateCache: vi.fn(),
 	mockLogAudit: vi.fn(),
 	mockPrisma: {
 		announcementBar: {
@@ -32,7 +31,6 @@ const {
 			create: vi.fn(),
 		},
 	},
-	mockGetInvalidationTags: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -55,9 +53,8 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_ANNOUNCEMENT_LIMITS: { DUPLICATE: "announcement:duplicate" },
 }));
-vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("../../constants/cache", () => ({
-	getAnnouncementInvalidationTags: mockGetInvalidationTags,
+	invalidateAnnouncementCache: mockInvalidateCache,
 }));
 
 import { duplicateAnnouncement } from "../duplicate-announcement";
@@ -96,7 +93,6 @@ describe("duplicateAnnouncement", () => {
 		mockValidateInput.mockReturnValue({ data: { id: VALID_CUID } });
 		mockPrisma.announcementBar.findUnique.mockResolvedValue(SOURCE);
 		mockPrisma.announcementBar.create.mockResolvedValue(DUPLICATED);
-		mockGetInvalidationTags.mockReturnValue(["active-announcement", "announcements-list"]);
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -209,8 +205,7 @@ describe("duplicateAnnouncement", () => {
 	it("should invalidate all announcement cache tags", async () => {
 		await duplicateAnnouncement(undefined, validFormData());
 
-		expect(mockUpdateTag).toHaveBeenCalledWith("active-announcement");
-		expect(mockUpdateTag).toHaveBeenCalledWith("announcements-list");
+		expect(mockInvalidateCache).toHaveBeenCalledTimes(1);
 	});
 
 	// ─── Audit log ────────────────────────────────────────────────────────────

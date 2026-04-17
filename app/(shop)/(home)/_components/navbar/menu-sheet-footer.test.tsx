@@ -55,12 +55,10 @@ describe("MenuSheetFooter", () => {
 		expect(screen.queryByLabelText(/administrateur/)).toBeNull();
 	});
 
-	it("renders admin link when isAdmin is true", () => {
+	it("does not render admin link even when isAdmin is true (admin link lives in MenuSheetNav)", () => {
 		render(<MenuSheetFooter isAdmin />);
 
-		const adminLink = screen.getByLabelText("Tableau de bord administrateur");
-		expect(adminLink).toBeInTheDocument();
-		expect(adminLink.getAttribute("href")).toBe("/admin");
+		expect(screen.queryByLabelText(/administrateur/)).toBeNull();
 	});
 
 	it("renders copyright with current year", () => {

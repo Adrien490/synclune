@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { SWIPE_DISMISS_THRESHOLD } from "./announcement-bar.constants";
 
 interface UseSwipeToDismissOptions {
@@ -71,6 +72,7 @@ export function useSwipeToDismiss({
 			setIsSwiping(false);
 
 			if (swipeOffsetRef.current < -SWIPE_DISMISS_THRESHOLD) {
+				triggerHaptic("medium");
 				onDismissRef.current();
 			}
 			setSwipeOffset(0);

@@ -15,16 +15,24 @@ vi.mock("next/link", () => ({
 		children,
 		className,
 		"aria-label": ariaLabel,
+		onClick,
 	}: {
 		href: string;
 		children: React.ReactNode;
 		className?: string;
 		"aria-label"?: string;
+		onClick?: (e: React.MouseEvent) => void;
 	}) => (
-		<a href={href} className={className} aria-label={ariaLabel}>
+		<a href={href} className={className} aria-label={ariaLabel} onClick={onClick}>
 			{children}
 		</a>
 	),
+}));
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("class-variance-authority", () => ({
@@ -220,6 +228,15 @@ describe("KpiCard", () => {
 			expect(label).toContain("CA du mois");
 			expect(label).toContain("1500 €");
 			expect(label).toContain("Cliquer pour voir les détails");
+		});
+
+		it("triggers a 'light' haptic when the link is tapped", async () => {
+			const { fireEvent } = await import("@testing-library/react");
+			render(<KpiCard title="CA du mois" value="1 500 €" href="/admin/ventes" />);
+
+			fireEvent.click(screen.getByRole("link"));
+
+			expect(mockHaptic).toHaveBeenCalledWith("light");
 		});
 	});
 

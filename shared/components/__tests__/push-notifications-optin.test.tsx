@@ -59,7 +59,7 @@ describe("PushNotificationsOptIn", () => {
 			const fallback = screen.queryByRole("status");
 			// Either the status falls into denied branch or the component renders null on JSDOM
 			// Both are acceptable: the key requirement is no crash
-			expect(fallback === null || fallback.textContent?.includes("bloquées")).toBe(true);
+			expect(fallback === null || fallback.textContent.includes("bloquées")).toBe(true);
 		});
 	});
 

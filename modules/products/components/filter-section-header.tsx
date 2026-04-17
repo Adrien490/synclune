@@ -65,13 +65,20 @@ export function SectionSearch({
 	placeholder = "Rechercher...",
 }: SectionSearchProps) {
 	return (
-		<div className="relative mb-2">
-			<Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+		<div className="relative mb-2" data-vaul-no-drag>
+			<Search
+				className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+				aria-hidden="true"
+			/>
 			<Input
-				type="text"
+				type="search"
+				inputMode="search"
+				enterKeyHint="search"
+				autoComplete="off"
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
 				placeholder={placeholder}
+				aria-label={placeholder}
 				className="h-10 pr-3 pl-8 text-xs"
 			/>
 		</div>

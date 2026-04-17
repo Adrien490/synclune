@@ -9,6 +9,7 @@ import {
 	calculateDiscountPercent,
 	hasActiveDiscount,
 } from "@/modules/products/services/product-pricing.service";
+import { CARTS_COUNT_MIN_THRESHOLD } from "@/modules/products/constants/social-proof.constants";
 import { NotifyBackInStockButton } from "@/modules/wishlist/components/notify-back-in-stock-button";
 
 interface ProductPriceProps {
@@ -61,6 +62,8 @@ export function ProductPriceDisplay({
 			<div
 				role="region"
 				aria-labelledby="product-price-title"
+				aria-live="polite"
+				aria-atomic="true"
 				className="space-y-4 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 			>
 				<div className="flex flex-wrap items-baseline gap-3">
@@ -98,8 +101,15 @@ export function ProductPriceDisplay({
 		<div
 			role="region"
 			aria-labelledby="product-price-selected"
+			aria-live="polite"
+			aria-atomic="true"
 			className="space-y-3 transition-opacity duration-200 group-has-[[data-pending]]/product-details:opacity-60"
 		>
+			{/* SR-only announce — explicit text read on variant change (complements aria-label) */}
+			<span className="sr-only">
+				Prix mis à jour : {formatEuro(selectedSku.priceInclTax)}
+				{hasDiscount ? `, réduit de ${discountPercent} pourcent` : ""}
+			</span>
 			<div className="flex flex-wrap items-baseline gap-3">
 				{/* Prix principal */}
 				<p
@@ -168,18 +178,19 @@ export function ProductPriceDisplay({
 				)}
 			</div>
 
-			{/* Badge "dans X paniers" - FOMO Etsy-style */}
-			{cartsCount !== undefined && cartsCount > 0 && stockStatus !== "out_of_stock" && (
-				<Badge
-					variant="outline"
-					className="border-pink-500/50 bg-pink-50 text-xs/5 tracking-normal text-pink-700 antialiased"
-					role="status"
-					aria-label={`Actuellement dans ${cartsCount} ${cartsCount === 1 ? "panier" : "paniers"}`}
-				>
-					Dans <span className="font-bold">{cartsCount}</span>{" "}
-					{cartsCount === 1 ? "panier" : "paniers"}
-				</Badge>
-			)}
+			{/* Badge "dans X paniers" - FOMO Etsy-style (seuil min = 2 pour crédibilité) */}
+			{cartsCount !== undefined &&
+				cartsCount >= CARTS_COUNT_MIN_THRESHOLD &&
+				stockStatus !== "out_of_stock" && (
+					<Badge
+						variant="outline"
+						className="border-pink-500/50 bg-pink-50 text-xs/5 tracking-normal text-pink-700 antialiased"
+						role="status"
+						aria-label={`Actuellement dans ${cartsCount} paniers`}
+					>
+						Dans <span className="font-bold">{cartsCount}</span> paniers
+					</Badge>
+				)}
 
 			{/* Message d'économie */}
 			{hasDiscount && (

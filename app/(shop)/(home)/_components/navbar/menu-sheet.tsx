@@ -15,8 +15,9 @@ import {
 } from "@/shared/components/ui/sheet";
 import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { useEdgeSwipe } from "@/shared/hooks/use-edge-swipe";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "@/shared/utils/cn";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
@@ -56,12 +57,28 @@ export function MenuSheet({
 }: MenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
-	useEdgeSwipe(openMenu, isOpen);
+	const wantsLogoutRef = useRef(false);
+	const haptic = useHaptic();
+
+	useEdgeSwipe(() => {
+		haptic("selection");
+		openMenu();
+	}, isOpen);
+
+	// Flag <html> when the sheet is open so CSS can scale the background content
+	// (iOS-like modal aesthetic). Guarded by prefers-reduced-motion in CSS.
+	useEffect(() => {
+		if (!isOpen) return;
+		document.documentElement.setAttribute("data-sheet-open", "");
+		return () => {
+			document.documentElement.removeAttribute("data-sheet-open");
+		};
+	}, [isOpen]);
 
 	function handleLogoutClick() {
+		haptic("medium");
+		wantsLogoutRef.current = true;
 		closeMenu();
-		// Small delay to let sheet close before opening the alert dialog
-		setTimeout(() => setShowLogout(true), 150);
 	}
 
 	return (
@@ -70,14 +87,24 @@ export function MenuSheet({
 				direction="left"
 				open={isOpen}
 				onOpenChange={(open) => {
+					haptic("light");
 					if (open) {
 						// Blur trigger before sheet opens to prevent aria-hidden conflict:
 						// Vaul/Radix sets aria-hidden on the header before focus moves to sheet content
 						if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+						openMenu();
+						return;
 					}
-					open ? openMenu() : closeMenu();
+					closeMenu();
+					if (wantsLogoutRef.current) {
+						wantsLogoutRef.current = false;
+						// Defer so Vaul starts its close transition before the alert dialog mounts —
+						// prevents focus-trap / aria-hidden conflicts between overlapping overlays.
+						setTimeout(() => setShowLogout(true), 150);
+					}
 				}}
 				preventScrollRestoration
+				scrollLockTimeout={500}
 			>
 				<SheetTrigger asChild>
 					<button
@@ -91,7 +118,15 @@ export function MenuSheet({
 					</button>
 				</SheetTrigger>
 
-				<SheetContent className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md">
+				<SheetContent
+					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md"
+					onOverlayClick={() => haptic("light")}
+				>
+					{/* Drag-handle pill (iOS-like grab affordance for swipe-to-close) */}
+					<div
+						aria-hidden="true"
+						className="bg-border/60 pointer-events-none absolute top-1/2 right-1 h-12 w-1 -translate-y-1/2 rounded-full"
+					/>
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
 						<SheetTitle className="font-cursive flex h-9 items-center text-xl font-bold">
 							Synclune
@@ -100,6 +135,11 @@ export function MenuSheet({
 							Menu de navigation - Découvrez nos bijoux et collections
 						</SheetDescription>
 					</SheetHeader>
+
+					{/* Live region: announces menu opening to screen readers (fires on mount) */}
+					<p role="status" aria-live="polite" className="sr-only">
+						Menu ouvert, {navItems.length} liens de navigation disponibles
+					</p>
 
 					{/* Scrollable content */}
 					<div className="min-h-0 flex-1">

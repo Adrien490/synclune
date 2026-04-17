@@ -36,6 +36,8 @@ import { CartSheetItemRow } from "./cart-sheet-item-row";
 import { RemoveCartItemAlertDialog } from "./remove-cart-item-alert-dialog";
 import { CartPriceChangeAlert } from "./cart-price-change-alert";
 import { CartSheetFooter } from "./cart-sheet-footer";
+import { CartClearButton } from "./cart-clear-button";
+import { ClearCartAlertDialog } from "./clear-cart-alert-dialog";
 import type { CartItem, GetCartReturn } from "../types/cart.types";
 import {
 	hasCartItemIssue,
@@ -181,7 +183,6 @@ function CartSheetBody({
 			)}
 			<div
 				role="presentation"
-				className="hidden sm:block"
 				onClick={(e) => {
 					if ((e.target as HTMLElement).closest("a")) {
 						close();
@@ -214,7 +215,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	const isMobile = useIsMobile();
 	const haptic = useHaptic();
 	const [isPending, startTransition] = useTransition();
-	const triggerRef = useRef<HTMLElement | null>(null);
+	const previousFocusRef = useRef<HTMLElement | null>(null);
 
 	const [optimisticCart, updateOptimisticCart] = useOptimistic(cart, cartReducer);
 
@@ -233,16 +234,32 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 
 	const handleOpenChange = (open: boolean) => {
 		if (open) {
-			triggerRef.current = document.querySelector<HTMLElement>(`[${CART_TARGET_ATTR}]`);
+			// Snapshot the element that had focus so we can restore it after close.
+			// Vaul/Radix restore natively to the trigger, but when the sheet is opened
+			// programmatically (FAB, navbar badge, Cmd+K palette), the activeElement
+			// may not be the cart trigger — so we snapshot explicitly. Falls back to
+			// the cart target (for fly-to-cart animation).
+			const active = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+			previousFocusRef.current =
+				active ?? document.querySelector<HTMLElement>(`[${CART_TARGET_ATTR}]`);
 			// Blur trigger before sheet opens to prevent aria-hidden conflict:
 			// Vaul/Radix sets aria-hidden on the header before focus moves to sheet content
-			if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+			active?.blur();
 			haptic("selection");
 		} else {
+			haptic("selection");
 			close();
-			// Return focus to trigger after close animation
-			requestAnimationFrame(() => triggerRef.current?.focus());
+			// Return focus to the saved element after Vaul portal teardown.
+			const target = previousFocusRef.current;
+			if (target && document.contains(target)) {
+				setTimeout(() => target.focus({ preventScroll: true }), 0);
+			}
+			previousFocusRef.current = null;
 		}
+	};
+
+	const handleOverlayClick = () => {
+		haptic("selection");
 	};
 
 	const bodyProps: CartSheetBodyProps = {
@@ -268,11 +285,14 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 						data-pending={isPending ? "" : undefined}
 						aria-busy={isPending}
 					>
-						<DrawerHeader className="shrink-0 border-b px-6 py-3">
+						<DrawerHeader className="relative shrink-0 border-b px-6 py-3">
 							<DrawerTitle>
 								Mon panier
 								{hasItems && (
-									<span className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50">
+									<span
+										aria-hidden="true"
+										className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+									>
 										{" "}
 										({totalItems})
 									</span>
@@ -281,6 +301,11 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							<DrawerDescription className="sr-only">
 								Gérez les articles de votre panier
 							</DrawerDescription>
+							{hasItems && (
+								<div className="absolute top-1/2 right-4 -translate-y-1/2">
+									<CartClearButton disabled={isPending} />
+								</div>
+							)}
 						</DrawerHeader>
 						<CartSheetBody {...bodyProps} />
 					</DrawerContent>
@@ -291,12 +316,16 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 						className="group/sheet flex w-full flex-col gap-0 p-0 pb-[max(0px,env(safe-area-inset-bottom))] sm:max-w-lg"
 						data-pending={isPending ? "" : undefined}
 						aria-busy={isPending}
+						onOverlayClick={handleOverlayClick}
 					>
-						<SheetHeader className="shrink-0 border-b px-6 py-4">
+						<SheetHeader className="relative shrink-0 border-b px-6 py-4">
 							<SheetTitle>
 								Mon panier
 								{hasItems && (
-									<span className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50">
+									<span
+										aria-hidden="true"
+										className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+									>
 										{" "}
 										({totalItems})
 									</span>
@@ -305,6 +334,11 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 							<SheetDescription className="sr-only">
 								Gérez les articles de votre panier
 							</SheetDescription>
+							{hasItems && (
+								<div className="absolute top-1/2 right-16 -translate-y-1/2">
+									<CartClearButton disabled={isPending} />
+								</div>
+							)}
 						</SheetHeader>
 						<CartSheetBody {...bodyProps} />
 					</SheetContent>
@@ -312,6 +346,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 			)}
 
 			<RemoveCartItemAlertDialog />
+			<ClearCartAlertDialog />
 		</CartOptimisticContext.Provider>
 	);
 }

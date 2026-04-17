@@ -9,14 +9,20 @@ import {
 	SheetClose,
 	SheetContent,
 	SheetFooter,
+	SheetHandle,
 	SheetHeader,
 	SheetDescription,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { cn } from "@/shared/utils/cn";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Filter, LoaderCircle, X } from "lucide-react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
+
+/** Snap points par défaut du bottom-sheet mobile (50% peek → 92% fullscreen). */
+const DEFAULT_MOBILE_SNAP_POINTS: (number | string)[] = [0.5, 0.92];
 
 export function FilterSheetWrapper({
 	activeFiltersCount = 0,
@@ -35,13 +41,39 @@ export function FilterSheetWrapper({
 	onOpenChange: controlledOnOpenChange,
 	trigger,
 	hideTrigger = false,
+	onOverlayClick,
+	snapPoints,
 }: FilterSheetWrapperProps) {
 	// Note: Ne pas utiliser de fallback pour permettre le mode uncontrolled
 	// Si controlledOpen est undefined, Vaul gère l'état en interne
+	const haptic = useHaptic();
+	const isMobile = useIsMobile();
+
+	// Mobile → bottom-sheet, desktop → right-side sheet
+	const direction = isMobile ? "bottom" : "right";
+	const effectiveSnapPoints = isMobile ? (snapPoints ?? DEFAULT_MOBILE_SNAP_POINTS) : undefined;
 
 	const handleApply = () => {
+		haptic("medium");
 		onApply?.();
 		controlledOnOpenChange?.(false);
+	};
+
+	const handleClearAll = () => {
+		haptic("light");
+		onClearAll?.();
+	};
+
+	const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
+		if (onOverlayClick) {
+			onOverlayClick(event);
+			return;
+		}
+		haptic("selection");
+	};
+
+	const handleCloseClick = () => {
+		haptic("selection");
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -88,15 +120,32 @@ export function FilterSheetWrapper({
 	);
 
 	return (
-		<Sheet direction="right" open={controlledOpen} onOpenChange={controlledOnOpenChange}>
+		<Sheet
+			direction={direction}
+			open={controlledOpen}
+			onOpenChange={controlledOnOpenChange}
+			snapPoints={effectiveSnapPoints}
+		>
 			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
 
 			<SheetContent
-				className="flex h-full w-full flex-col overflow-hidden p-0 sm:w-100 md:w-110"
+				className={cn(
+					"flex w-full flex-col overflow-hidden p-0",
+					// Desktop (right-side sheet) : width constrained, full height
+					!isMobile && "h-full sm:w-100 md:w-110",
+					// Mobile (bottom-sheet) : rounded top, native iOS feel
+					isMobile && "h-full rounded-t-2xl",
+				)}
 				onKeyDown={handleKeyDown}
 				title={title}
 				showCloseButton={false}
+				onOverlayClick={handleOverlayClick}
+				data-pending={isPending ? "" : undefined}
+				aria-busy={isPending}
 			>
+				{/* Vrai Vaul Handle (mobile bottom-sheet only) — draggable, 44px touch area */}
+				{isMobile && <SheetHandle />}
+
 				<SheetHeader
 					className="border-primary/10 from-background via-primary/2 to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
 					aria-labelledby="filter-sheet-title"
@@ -120,8 +169,8 @@ export function FilterSheetWrapper({
 								<Button
 									variant="ghost"
 									size="sm"
-									onClick={onClearAll}
-									className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-9 shrink-0 text-xs transition-colors"
+									onClick={handleClearAll}
+									className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-11 shrink-0 text-xs transition-colors"
 									aria-label="Effacer tous les filtres"
 								>
 									<X className="mr-1 h-3 w-3" aria-hidden="true" />
@@ -133,7 +182,8 @@ export function FilterSheetWrapper({
 								<Button
 									variant="ghost"
 									size="icon"
-									className="text-muted-foreground hover:text-foreground size-9 shrink-0"
+									onClick={handleCloseClick}
+									className="text-muted-foreground hover:text-foreground size-11 shrink-0"
 									aria-label="Fermer"
 								>
 									<X className="size-4" />
@@ -193,7 +243,7 @@ export function FilterSheetWrapper({
 							{/* Desktop: groupe de boutons */}
 							<ButtonGroup className="hidden w-full sm:flex" aria-label="Actions de filtrage">
 								<SheetClose asChild className="flex-1">
-									<Button variant="secondary" disabled={isPending}>
+									<Button variant="secondary" onClick={handleCloseClick} disabled={isPending}>
 										{cancelButtonText}
 									</Button>
 								</SheetClose>

@@ -4,19 +4,16 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrismaUserCount, mockPrismaUserFindUnique, mockPrismaQueryRaw, mockCacheDashboard } =
-	vi.hoisted(() => ({
-		mockPrismaUserCount: vi.fn(),
-		mockPrismaUserFindUnique: vi.fn(),
-		mockPrismaQueryRaw: vi.fn(),
-		mockCacheDashboard: vi.fn(),
-	}));
+const { mockPrismaUserCount, mockPrismaQueryRaw, mockCacheDashboard } = vi.hoisted(() => ({
+	mockPrismaUserCount: vi.fn(),
+	mockPrismaQueryRaw: vi.fn(),
+	mockCacheDashboard: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		user: {
 			count: mockPrismaUserCount,
-			findUnique: mockPrismaUserFindUnique,
 		},
 		$queryRaw: mockPrismaQueryRaw,
 	},
@@ -55,7 +52,13 @@ import { fetchCustomerKpis } from "../get-customer-kpis";
 // ============================================================================
 
 type ActiveCustomersRow = { userId: string; hasPriorOrder: boolean };
-type SpendRow = { userId: string; totalSpent: bigint | number; orderCount: bigint | number };
+type SpendRow = {
+	userId: string;
+	name: string | null;
+	email: string | null;
+	totalSpent: bigint | number;
+	orderCount: bigint | number;
+};
 
 function setupMocks({
 	newCustomersCurrent = 5,
@@ -63,7 +66,6 @@ function setupMocks({
 	currentActive = [] as ActiveCustomersRow[],
 	previousActive = [] as ActiveCustomersRow[],
 	topSpender = [] as SpendRow[],
-	topSpenderUser = null as { name: string | null; email: string } | null,
 } = {}) {
 	mockPrismaUserCount
 		.mockResolvedValueOnce(newCustomersCurrent)
@@ -73,12 +75,6 @@ function setupMocks({
 		.mockResolvedValueOnce(currentActive)
 		.mockResolvedValueOnce(previousActive)
 		.mockResolvedValueOnce(topSpender);
-
-	if (topSpenderUser !== null) {
-		mockPrismaUserFindUnique.mockResolvedValue(topSpenderUser);
-	} else {
-		mockPrismaUserFindUnique.mockResolvedValue(null);
-	}
 }
 
 // ============================================================================
@@ -255,13 +251,19 @@ describe("fetchCustomerKpis", () => {
 		const result = await fetchCustomerKpis();
 
 		expect(result.topSpender).toBeNull();
-		expect(mockPrismaUserFindUnique).not.toHaveBeenCalled();
 	});
 
-	it("should return top spender with name and email when user found", async () => {
+	it("should return top spender with name and email from JOIN (no follow-up query)", async () => {
 		setupMocks({
-			topSpender: [{ userId: "u1", totalSpent: BigInt(15000), orderCount: BigInt(3) }],
-			topSpenderUser: { name: "Alice", email: "alice@example.com" },
+			topSpender: [
+				{
+					userId: "u1",
+					name: "Alice",
+					email: "alice@example.com",
+					totalSpent: BigInt(15000),
+					orderCount: BigInt(3),
+				},
+			],
 		});
 
 		const result = await fetchCustomerKpis();
@@ -273,12 +275,13 @@ describe("fetchCustomerKpis", () => {
 			totalSpent: 15000,
 			orderCount: 3,
 		});
+		// Only 3 raw queries: activeCurrent, activePrevious, topSpender (no extra findUnique)
+		expect(mockPrismaQueryRaw).toHaveBeenCalledTimes(3);
 	});
 
 	it("should default name to 'Client' when user has no name", async () => {
 		setupMocks({
-			topSpender: [{ userId: "u1", totalSpent: 8000, orderCount: 2 }],
-			topSpenderUser: { name: null, email: "x@y.z" },
+			topSpender: [{ userId: "u1", name: null, email: "x@y.z", totalSpent: 8000, orderCount: 2 }],
 		});
 
 		const result = await fetchCustomerKpis();
@@ -287,10 +290,9 @@ describe("fetchCustomerKpis", () => {
 		expect(result.topSpender?.customerEmail).toBe("x@y.z");
 	});
 
-	it("should fallback to empty email when user not found anymore", async () => {
+	it("should fallback to empty email when user deleted (LEFT JOIN yields null)", async () => {
 		setupMocks({
-			topSpender: [{ userId: "u1", totalSpent: 5000, orderCount: 1 }],
-			topSpenderUser: null,
+			topSpender: [{ userId: "u1", name: null, email: null, totalSpent: 5000, orderCount: 1 }],
 		});
 
 		const result = await fetchCustomerKpis();
@@ -301,8 +303,15 @@ describe("fetchCustomerKpis", () => {
 
 	it("should convert bigint totalSpent and orderCount to numbers", async () => {
 		setupMocks({
-			topSpender: [{ userId: "u1", totalSpent: BigInt(99999), orderCount: BigInt(7) }],
-			topSpenderUser: { name: "Bob", email: "bob@x.com" },
+			topSpender: [
+				{
+					userId: "u1",
+					name: "Bob",
+					email: "bob@x.com",
+					totalSpent: BigInt(99999),
+					orderCount: BigInt(7),
+				},
+			],
 		});
 
 		const result = await fetchCustomerKpis();

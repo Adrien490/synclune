@@ -45,7 +45,7 @@ const REFUND = {
 	id: "refund-1",
 	status: "PENDING" as const,
 	amount: 4990,
-	reason: "REQUESTED_BY_CUSTOMER" as const,
+	reason: "CUSTOMER_REQUEST" as const,
 	createdAt: new Date("2026-04-01T12:00:00Z"),
 	order: {
 		id: "order-1",

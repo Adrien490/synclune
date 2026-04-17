@@ -6,6 +6,7 @@ import type { getMobileNavItems } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { useActiveNavbarItem } from "@/shared/hooks/use-active-navbar-item";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion, type Variants } from "motion/react";
@@ -69,22 +70,48 @@ export function MenuSheetNav({
 
 	const navRef = useRef<HTMLElement>(null);
 
-	// Scroll-to-active + focus management after open animation
-	// This component only mounts when the sheet is open (via Vaul portal)
+	// Scroll-to-active + focus management after open animation (WCAG 2.4.3).
+	// Component mounts via Vaul portal when the sheet opens. We listen for the
+	// Vaul content's transform transition to end instead of using a fixed
+	// setTimeout — aligns with the real animation duration and respects
+	// prefers-reduced-motion.
 	useEffect(() => {
-		const focusDelay = shouldReduceMotion ? 0 : 350;
-		const timer = setTimeout(() => {
-			const nav = navRef.current;
-			if (!nav) return;
+		const nav = navRef.current;
+		if (!nav) return;
 
-			// Scroll to active page link
-			const activePage = nav.querySelector<HTMLElement>('[aria-current="page"]');
+		function applyFocus() {
+			const n = navRef.current;
+			if (!n) return;
+			const activePage = n.querySelector<HTMLElement>('[aria-current="page"]');
 			activePage?.scrollIntoView({ block: "center", behavior: "smooth" });
+			n.querySelector<HTMLAnchorElement>("a")?.focus();
+		}
 
-			// Always focus first link for WCAG 2.4.3 focus order
-			nav.querySelector<HTMLAnchorElement>("a")?.focus();
-		}, focusDelay);
-		return () => clearTimeout(timer);
+		if (shouldReduceMotion) {
+			applyFocus();
+			return;
+		}
+
+		const sheetContent = nav.closest<HTMLElement>('[data-slot="sheet-content"]');
+		if (!sheetContent) {
+			applyFocus();
+			return;
+		}
+
+		function onTransitionEnd(event: TransitionEvent) {
+			if (event.propertyName !== "transform" || event.target !== sheetContent) return;
+			applyFocus();
+			sheetContent?.removeEventListener("transitionend", onTransitionEnd);
+		}
+
+		sheetContent.addEventListener("transitionend", onTransitionEnd);
+		// Safety fallback: if transitionend never fires (interrupted by reflow),
+		// focus after ~450ms anyway. Slightly longer than Vaul's exit animation.
+		const fallback = setTimeout(applyFocus, 450);
+		return () => {
+			sheetContent.removeEventListener("transitionend", onTransitionEnd);
+			clearTimeout(fallback);
+		};
 	}, [shouldReduceMotion]);
 
 	// Compute stagger delay in seconds (mirrors previous CSS timing)
@@ -160,6 +187,7 @@ export function MenuSheetNav({
 								"text-foreground/80 hover:bg-accent hover:text-foreground",
 								"motion-safe:active:scale-[0.97]",
 							)}
+							onClick={() => triggerHaptic("selection")}
 						>
 							Tableau de bord
 						</Link>

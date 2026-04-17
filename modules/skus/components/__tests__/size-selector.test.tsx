@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { userEvent } from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -13,6 +14,7 @@ const {
 	mockPathname,
 	mockSearchParamsGet,
 	mockSearchParamsToString,
+	mockTriggerHaptic,
 } = vi.hoisted(() => ({
 	mockFilterCompatibleSkus: vi.fn(),
 	mockUseRadioGroupKeyboard: vi.fn(),
@@ -21,6 +23,7 @@ const {
 	mockPathname: vi.fn(),
 	mockSearchParamsGet: vi.fn(),
 	mockSearchParamsToString: vi.fn(),
+	mockTriggerHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -42,6 +45,10 @@ vi.mock("@/modules/skus/services/sku-filter.service", () => ({
 
 vi.mock("@/shared/hooks/use-radio-group-keyboard", () => ({
 	useRadioGroupKeyboard: mockUseRadioGroupKeyboard,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
 }));
 
 vi.mock("motion/react", () => ({
@@ -217,6 +224,23 @@ describe("SizeSelector", () => {
 			const size52Button = screen.getByRole("radio", { name: /taille 52/i });
 
 			expect(size52Button).toHaveAttribute("aria-checked", "true");
+		});
+	});
+
+	describe("haptic feedback", () => {
+		it("triggers selection haptic when clicking an available size", async () => {
+			const product = makeProduct() as unknown as Parameters<typeof SizeSelector>[0]["product"];
+			render(<SizeSelector sizes={SIZES} product={product} shouldShow={true} />);
+			await userEvent.click(screen.getByRole("radio", { name: /taille 50/i }));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("does not trigger haptic when size is disabled", async () => {
+			mockFilterCompatibleSkus.mockReturnValue([]);
+			const product = makeProduct() as unknown as Parameters<typeof SizeSelector>[0]["product"];
+			render(<SizeSelector sizes={SIZES} product={product} shouldShow={true} />);
+			await userEvent.click(screen.getByRole("radio", { name: /taille 50/i }));
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
 		});
 	});
 });

@@ -6,6 +6,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { SectionHeader, SectionSearch, SEARCH_THRESHOLD } from "./filter-section-header";
 
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
@@ -37,6 +38,7 @@ export function MaterialFilterSection({
 	onToggle,
 	onReset,
 }: MaterialFilterSectionProps) {
+	const haptic = useHaptic();
 	if (materials.length === 0) return null;
 
 	return (
@@ -64,6 +66,7 @@ export function MaterialFilterSection({
 									id={`material-${material.slug}`}
 									checked={isSelected}
 									onCheckedChange={(checked) => {
+										haptic("selection");
 										onToggle(material.slug, checked === true);
 									}}
 									count={material._count?.skus}

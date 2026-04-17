@@ -50,7 +50,7 @@ export function AdminMobileHeader() {
 		<header
 			className={cn(
 				"pwa-header fixed inset-x-0 top-0 z-40 flex h-14 items-center md:hidden",
-				"transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
+				"motion-safe:transition-[background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-300 motion-safe:ease-out",
 				"border-b",
 				isScrolled
 					? "bg-background/95 border-border shadow-lg shadow-black/8 backdrop-blur-md"

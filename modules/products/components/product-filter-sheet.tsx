@@ -9,7 +9,6 @@ import {
 	useDeferredValue,
 	useEffect,
 	useEffectEvent,
-	useLayoutEffect,
 	useRef,
 	useState,
 	useTransition,
@@ -22,6 +21,7 @@ import { ColorFilterSection } from "./filter-section-colors";
 import { MaterialFilterSection } from "./filter-section-materials";
 import { RatingFilterSection } from "./filter-section-rating";
 import { AvailabilityFilterSection } from "./filter-section-availability";
+import { FilterActiveChips, type FilterChipDescriptor } from "./filter-active-chips";
 import {
 	AccordionContent,
 	AccordionItem,
@@ -50,6 +50,9 @@ const EMPTY_COLORS: GetColorsReturn["colors"] = [];
 const EMPTY_MATERIALS: MaterialOption[] = [];
 const EMPTY_PRODUCT_TYPES: ProductTypeOption[] = [];
 
+/** Ancre de la grille produits : scroll smooth au lieu de window.scrollTo(0). */
+const PRODUCTS_GRID_ANCHOR_ID = "product-container";
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -64,6 +67,21 @@ interface FilterSheetProps {
 }
 
 // ============================================================================
+// HELPERS
+// ============================================================================
+
+/** Scroll vers la grid produits si l'ancre existe, fallback top sinon. */
+function scrollToProductsGrid() {
+	if (typeof window === "undefined") return;
+	const anchor = document.getElementById(PRODUCTS_GRID_ANCHOR_ID);
+	if (anchor) {
+		anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+	} else {
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}
+}
+
+// ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
@@ -75,13 +93,12 @@ export function ProductFilterSheet({
 	activeProductTypeSlug,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
-	// Capture the trigger element before the sheet steals focus (WCAG 2.4.3)
-	const triggerRef = useRef<HTMLElement | null>(null);
-	useLayoutEffect(() => {
-		if (isOpen) {
-			triggerRef.current = document.activeElement as HTMLElement | null;
-		}
-	}, [isOpen]);
+
+	// Focus restoration (WCAG 2.4.3) — capture activeElement avant que le sheet
+	// ne vole le focus, puis restaure sur close via rAF (attend que Vaul ait
+	// fini son animation avant le focus, et preventScroll évite un jump iOS).
+	const previousFocusRef = useRef<HTMLElement | null>(null);
+
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
 	const pathname = usePathname();
 	const router = useRouter();
@@ -131,6 +148,16 @@ export function ProductFilterSheet({
 	const isOnCategoryPage = isProductCategoryPage(pathname);
 	const currentCategorySlug = getCategorySlugFromPath(pathname);
 
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (nextOpen) {
+			previousFocusRef.current = document.activeElement as HTMLElement | null;
+			open();
+		} else {
+			close();
+			requestAnimationFrame(() => previousFocusRef.current?.focus({ preventScroll: true }));
+		}
+	};
+
 	const applyFilters = (formData: FilterFormData) => {
 		const { fullUrl } = buildFilterURL({
 			formData,
@@ -142,7 +169,7 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(fullUrl);
-			window.scrollTo({ top: 0, behavior: "smooth" });
+			scrollToProductsGrid();
 		});
 	};
 
@@ -153,7 +180,7 @@ export function ProductFilterSheet({
 
 		startTransition(() => {
 			router.push(fullUrl);
-			window.scrollTo({ top: 0, behavior: "smooth" });
+			scrollToProductsGrid();
 		});
 	};
 
@@ -196,17 +223,52 @@ export function ProductFilterSheet({
 		return sections;
 	})();
 
+	// Supprime un filtre individuel via une chip (sans fermer la sheet).
+	const handleRemoveChip = (chip: FilterChipDescriptor) => {
+		switch (chip.kind) {
+			case "type": {
+				const current = form.state.values.productTypes;
+				form.setFieldValue(
+					"productTypes",
+					current.filter((s) => s !== chip.slug),
+				);
+				return;
+			}
+			case "color": {
+				const current = form.state.values.colors;
+				form.setFieldValue(
+					"colors",
+					current.filter((s) => s !== chip.slug),
+				);
+				return;
+			}
+			case "material": {
+				const current = form.state.values.materials;
+				form.setFieldValue(
+					"materials",
+					current.filter((s) => s !== chip.slug),
+				);
+				return;
+			}
+			case "price":
+				form.setFieldValue("priceRange", DEFAULT_PRICE_RANGE);
+				return;
+			case "rating":
+				form.setFieldValue("ratingMin", null);
+				return;
+			case "inStock":
+				form.setFieldValue("inStockOnly", false);
+				return;
+			case "onSale":
+				form.setFieldValue("onSale", false);
+				return;
+		}
+	};
+
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
-			onOpenChange={(newOpen) => {
-				if (newOpen) {
-					open();
-				} else {
-					close();
-					triggerRef.current?.focus();
-				}
-			}}
+			onOpenChange={handleOpenChange}
 			hideTrigger
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
@@ -223,6 +285,15 @@ export function ProductFilterSheet({
 					void form.handleSubmit();
 				}}
 			>
+				<FilterActiveChips
+					formData={form.state.values}
+					colors={sortedColors}
+					materials={sortedMaterials}
+					productTypes={sortedProductTypes}
+					defaultPriceRange={DEFAULT_PRICE_RANGE}
+					onRemove={handleRemoveChip}
+				/>
+
 				<Accordion
 					type="multiple"
 					defaultValue={defaultOpenSections}

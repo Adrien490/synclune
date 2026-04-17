@@ -35,7 +35,12 @@ vi.mock("@/shared/components/swipeable-card", () => ({
 			data-testid="swipeable-card"
 			className={className}
 			data-left-action-label={leftAction?.label}
+			role="button"
+			tabIndex={0}
 			onClick={leftAction?.onAction}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") leftAction?.onAction();
+			}}
 		>
 			{children}
 		</div>

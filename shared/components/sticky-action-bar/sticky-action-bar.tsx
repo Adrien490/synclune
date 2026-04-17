@@ -80,6 +80,11 @@ const baseItemClasses = cn(
 
 const activeItemClasses = "text-foreground";
 
+function isItemActive(item: StickyActionBarItem): boolean {
+	if (item.active === true) return true;
+	return (item.badgeCount ?? 0) > 0;
+}
+
 /**
  * Sous-header sticky (mobile uniquement) pour une rangée d'actions
  * contextuelles (Trier, Rechercher, Filtrer, Ajouter…).
@@ -142,7 +147,7 @@ export function StickyActionBar({ items, ariaLabel, className, endSlot }: Sticky
 	// Live region — announce active-state transitions (debounced clear 3s)
 	const announcementRef = useRef<HTMLSpanElement>(null);
 	const activeSignature = items
-		.filter((it) => it.active || (it.badgeCount ?? 0) > 0)
+		.filter(isItemActive)
 		.map(
 			(it) => `${it.key}:${it.announcement ?? it.label}${it.badgeCount ? `:${it.badgeCount}` : ""}`,
 		)
@@ -151,9 +156,7 @@ export function StickyActionBar({ items, ariaLabel, className, endSlot }: Sticky
 	useEffect(() => {
 		if (!announcementRef.current) return;
 
-		const parts = items
-			.filter((it) => it.active || (it.badgeCount ?? 0) > 0)
-			.map((it) => it.announcement ?? it.label);
+		const parts = items.filter(isItemActive).map((it) => it.announcement ?? it.label);
 
 		announcementRef.current.textContent = parts.join(". ");
 		const timer = setTimeout(() => {
@@ -191,7 +194,7 @@ export function StickyActionBar({ items, ariaLabel, className, endSlot }: Sticky
 						...(item.haspopup && { "aria-haspopup": item.haspopup }),
 						...(typeof item.expanded === "boolean" && { "aria-expanded": item.expanded }),
 					};
-					const isActive = item.active || (item.badgeCount ?? 0) > 0;
+					const isActive = isItemActive(item);
 					const className = cn(baseItemClasses, isActive && activeItemClasses);
 					const indicator =
 						item.badgeCount && item.badgeCount > 0 ? (

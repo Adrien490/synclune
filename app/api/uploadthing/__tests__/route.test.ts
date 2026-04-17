@@ -1,3 +1,4 @@
+import type { NextRequest } from "next/server";
 import { describe, it, expect, vi } from "vitest";
 
 // ============================================================================
@@ -44,13 +45,17 @@ describe("UploadThing route handler", () => {
 
 	it("exports GET handler", async () => {
 		expect(typeof GET).toBe("function");
-		const res = await GET();
+		const res = await GET(
+			new Request("http://localhost/api/uploadthing") as unknown as NextRequest,
+		);
 		expect(res.status).toBe(200);
 	});
 
 	it("exports POST handler", async () => {
 		expect(typeof POST).toBe("function");
-		const res = await POST();
+		const res = await POST(
+			new Request("http://localhost/api/uploadthing", { method: "POST" }) as unknown as NextRequest,
+		);
 		expect(res.status).toBe(200);
 	});
 });

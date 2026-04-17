@@ -2,57 +2,41 @@
 
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
-import { SheetClose } from "@/shared/components/ui/sheet";
 import { BRAND } from "@/shared/constants/brand";
-import { ROUTES } from "@/shared/constants/urls";
-import { LayoutDashboard } from "lucide-react";
-import Link from "next/link";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
+// Admin link lives in MenuSheetNav's dedicated section for better discoverability.
+// Footer stays focused on social + copyright.
 interface MenuSheetFooterProps {
-	isAdmin: boolean;
+	isAdmin?: boolean;
 }
 
-export function MenuSheetFooter({ isAdmin }: MenuSheetFooterProps) {
+export function MenuSheetFooter(_props: MenuSheetFooterProps) {
 	return (
 		<footer className="relative z-10 shrink-0 px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-			{/* Social links and admin */}
-			<div className="flex items-center justify-between">
-				<div className="flex items-center gap-3">
-					<a
-						href={BRAND.social.instagram.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
-						aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
-					>
-						<InstagramIcon decorative size={18} />
-					</a>
-					<a
-						href={BRAND.social.tiktok.url}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
-						aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
-					>
-						<TikTokIcon decorative size={18} />
-					</a>
-				</div>
-				<div className="flex items-center gap-2">
-					{isAdmin && (
-						<SheetClose asChild>
-							<Link
-								href={ROUTES.ADMIN.ROOT}
-								className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
-								aria-label="Tableau de bord administrateur"
-							>
-								<LayoutDashboard size={18} aria-hidden="true" />
-							</Link>
-						</SheetClose>
-					)}
-				</div>
+			<div className="flex items-center gap-3">
+				<a
+					href={BRAND.social.instagram.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
+					aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
+					onClick={() => triggerHaptic("selection")}
+				>
+					<InstagramIcon decorative size={18} />
+				</a>
+				<a
+					href={BRAND.social.tiktok.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
+					aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
+					onClick={() => triggerHaptic("selection")}
+				>
+					<TikTokIcon decorative size={18} />
+				</a>
 			</div>
 
-			{/* Copyright */}
 			<p className="text-muted-foreground mt-3 text-center text-xs" suppressHydrationWarning>
 				© {new Date().getFullYear()} {BRAND.name}
 			</p>

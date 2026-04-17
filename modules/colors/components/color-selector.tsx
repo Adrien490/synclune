@@ -10,6 +10,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { m, useReducedMotion } from "motion/react";
 
 interface ColorSelectorProps {
@@ -83,6 +84,7 @@ export function ColorSelector({
 
 	// Mettre à jour la couleur dans l'URL (optimiste)
 	const updateColor = (colorId: string | null) => {
+		triggerHaptic("selection");
 		startTransition(() => {
 			setOptimisticColor(colorId);
 			const params = new URLSearchParams(searchParams.toString());

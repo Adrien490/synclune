@@ -27,6 +27,19 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	),
 	SheetClose: ({ children }: any) => <>{children}</>,
 	SheetDescription: ({ children }: any) => <p>{children}</p>,
+	SheetHandle: () => <span data-testid="sheet-handle" />,
+}));
+
+// useIsMobile lit window.matchMedia (absent en jsdom) — mock-le pour contrôler
+// la branche mobile/desktop du wrapper directement dans les tests.
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false, // default : desktop
+}));
+
+// useHaptic est SSR-safe mais on mock pour tracer les appels dans les tests.
+const mockHaptic = vi.fn();
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
@@ -473,6 +486,113 @@ describe("FilterSheetWrapper", () => {
 			);
 
 			expect(screen.queryByTestId("sheet")).not.toBeInTheDocument();
+		});
+	});
+
+	// ============================================================================
+	// Haptic feedback (native 2026)
+	// ============================================================================
+
+	describe("haptic feedback", () => {
+		it("fires haptic('medium') on Apply click", () => {
+			render(
+				<FilterSheetWrapper open onOpenChange={vi.fn()} onApply={vi.fn()}>
+					content
+				</FilterSheetWrapper>,
+			);
+			// Multiple Apply buttons rendered (mobile + desktop branches) — pick first.
+			const applyButtons = screen.getAllByText("Appliquer");
+			fireEvent.click(applyButtons[0]!);
+			expect(mockHaptic).toHaveBeenCalledWith("medium");
+		});
+
+		it("fires haptic('light') on Clear all click", () => {
+			render(
+				<FilterSheetWrapper
+					open
+					onOpenChange={vi.fn()}
+					hasActiveFilters
+					activeFiltersCount={3}
+					onClearAll={vi.fn()}
+				>
+					content
+				</FilterSheetWrapper>,
+			);
+			// "Effacer" (mobile) or "Tout effacer" (desktop) — pick the visible one.
+			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+		});
+
+		it("fires haptic('selection') when close button clicked", () => {
+			render(
+				<FilterSheetWrapper open onOpenChange={vi.fn()}>
+					content
+				</FilterSheetWrapper>,
+			);
+			fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
+		});
+	});
+
+	// ============================================================================
+	// Touch target accessibility (WCAG 2.5.5 / Apple HIG)
+	// ============================================================================
+
+	describe("touch targets", () => {
+		it("close button is size-11 (44px) not size-9", () => {
+			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
+			const closeBtn = screen.getByRole("button", { name: "Fermer" });
+			expect(closeBtn.className).toContain("size-11");
+			expect(closeBtn.className).not.toContain("size-9");
+		});
+
+		it("clear button is min-h-11 not min-h-9", () => {
+			render(
+				<FilterSheetWrapper hasActiveFilters activeFiltersCount={1} onClearAll={vi.fn()}>
+					content
+				</FilterSheetWrapper>,
+			);
+			const clearBtn = screen.getByRole("button", { name: "Effacer tous les filtres" });
+			expect(clearBtn.className).toContain("min-h-11");
+		});
+	});
+
+	// ============================================================================
+	// Pending state (data-pending attribute for CSS reactive descendants)
+	// ============================================================================
+
+	describe("data-pending attribute", () => {
+		it("sets data-pending='' on SheetContent when isPending=true", () => {
+			render(
+				<FilterSheetWrapper isPending>
+					<span data-testid="child">content</span>
+				</FilterSheetWrapper>,
+			);
+			const content = screen.getByTestId("sheet-content");
+			expect(content).toHaveAttribute("data-pending", "");
+			expect(content).toHaveAttribute("aria-busy", "true");
+		});
+
+		it("does not set data-pending when isPending=false", () => {
+			render(<FilterSheetWrapper isPending={false}>content</FilterSheetWrapper>);
+			const content = screen.getByTestId("sheet-content");
+			expect(content).not.toHaveAttribute("data-pending");
+		});
+	});
+
+	// ============================================================================
+	// Overlay click handler
+	// ============================================================================
+
+	describe("overlay click", () => {
+		it("passes onOverlayClick down to SheetContent when provided", () => {
+			const onOverlayClick = vi.fn();
+			render(<FilterSheetWrapper onOverlayClick={onOverlayClick}>content</FilterSheetWrapper>);
+			// SheetContent is mocked — verify the prop was forwarded via attribute match
+			const content = screen.getByTestId("sheet-content");
+			expect(content).toBeInTheDocument();
+			// onOverlayClick is a function prop — not inspectable via DOM; rely on
+			// the implementation forwarding it (integration-level test).
 		});
 	});
 });

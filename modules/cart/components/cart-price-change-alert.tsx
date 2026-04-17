@@ -5,6 +5,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { Button } from "@/shared/components/ui/button";
 import { useUpdateCartPrices } from "@/modules/cart/hooks/use-update-cart-prices";
 import { RefreshCw } from "lucide-react";
+import { cn } from "@/shared/utils/cn";
 import {
 	detectPriceChanges,
 	isPriceIncrease,
@@ -15,25 +16,26 @@ interface CartPriceChangeAlertProps {
 }
 
 /**
- * Alerte visuelle affichée quand le prix d'un ou plusieurs articles a changé
+ * Alerte visuelle quand le prix d'un ou plusieurs articles a changé
  * depuis leur ajout au panier.
  *
- * Compare priceAtAdd (snapshot) vs sku.priceInclTax (prix actuel)
- * Permet à l'utilisateur de mettre à jour les prix snapshot vers les prix actuels
+ * UI séparée selon le type de changement :
+ * - Hausses présentes → alerte destructive/10 (sérieuse) avec role="alert"
+ * - Baisses uniquement → alerte verte positive "bonne nouvelle" avec role="status"
+ *
+ * Compare priceAtAdd (snapshot) vs sku.priceInclTax (prix actuel).
+ * Permet à l'utilisateur de mettre à jour les prix snapshot vers les prix actuels.
  */
 export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 	const { action, isPending } = useUpdateCartPrices();
 
-	// Calcul des changements de prix via le service
-	const {
-		itemsWithPriceChange,
-		itemsWithPriceDecrease: _itemsWithPriceDecrease,
-		totalSavings,
-	} = detectPriceChanges(items);
+	const { itemsWithPriceChange, itemsWithPriceIncrease, totalSavings } = detectPriceChanges(items);
 
 	if (itemsWithPriceChange.length === 0) {
 		return null;
 	}
+
+	const hasIncrease = itemsWithPriceIncrease.length > 0;
 
 	const handleUpdatePrices = () => {
 		action(new FormData());
@@ -41,17 +43,28 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 
 	return (
 		<div
-			className="border-b border-blue-200 bg-blue-50 px-6 py-2.5 text-xs text-blue-900 sm:text-sm"
-			role="alert"
+			className={cn(
+				"border-b px-6 py-2.5 text-xs sm:text-sm",
+				hasIncrease
+					? "border-destructive/20 bg-destructive/5 text-destructive-foreground"
+					: "border-green-200 bg-green-50 text-green-900",
+			)}
+			role={hasIncrease ? "alert" : "status"}
 			aria-live="polite"
 		>
 			<p className="mb-1 font-medium">
 				<span role="img" aria-hidden="true">
-					💎
+					{hasIncrease ? "⚠️" : "💚"}
 				</span>
-				<span className="sr-only">Information :</span> Prix mis à jour
+				<span className="sr-only">{hasIncrease ? "Attention :" : "Bonne nouvelle :"}</span>{" "}
+				{hasIncrease ? "Des prix ont changé" : "Des prix ont baissé !"}
 			</p>
-			<ul className="list-inside list-disc space-y-0.5 text-blue-800">
+			<ul
+				className={cn(
+					"list-inside list-disc space-y-0.5",
+					hasIncrease ? "text-destructive" : "text-green-800",
+				)}
+			>
 				{itemsWithPriceChange.map((item) => {
 					const priceIncreased = isPriceIncrease(item);
 					return (
@@ -60,7 +73,7 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 							<span className="line-through">{formatEuro(item.priceAtAdd)}</span> →{" "}
 							<span
 								className={
-									priceIncreased ? "font-semibold text-orange-800" : "font-semibold text-green-800"
+									priceIncreased ? "text-destructive font-semibold" : "font-semibold text-green-800"
 								}
 							>
 								{priceIncreased ? "↑ " : "↓ "}
@@ -73,9 +86,10 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					);
 				})}
 			</ul>
-			<p className="mt-2 text-xs text-blue-800/90">
-				Les prix ont changé depuis votre ajout au panier. Votre panier conserve les prix au moment
-				de l'ajout pour éviter toute surprise.
+			<p className={cn("mt-2 text-xs", hasIncrease ? "text-destructive/90" : "text-green-800/90")}>
+				{hasIncrease
+					? "Votre panier conserve les prix au moment de l'ajout pour éviter toute surprise."
+					: "Vous pouvez actualiser votre panier pour profiter des nouveaux prix."}
 			</p>
 
 			{/* Bouton pour actualiser les prix */}
@@ -85,7 +99,12 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 					disabled={isPending}
 					size="sm"
 					variant="outline"
-					className="w-full border-blue-300 text-blue-900 hover:bg-blue-100 sm:w-auto"
+					className={cn(
+						"w-full sm:w-auto",
+						hasIncrease
+							? "border-destructive/30 text-destructive hover:bg-destructive/10"
+							: "border-green-300 text-green-900 hover:bg-green-100",
+					)}
 				>
 					{isPending ? (
 						<>
@@ -99,11 +118,8 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 						</>
 					)}
 				</Button>
-				{totalSavings > 0 && (
+				{!hasIncrease && totalSavings > 0 && (
 					<p className="text-center text-xs font-medium text-green-800 sm:text-left">
-						<span role="img" aria-hidden="true">
-							💚
-						</span>{" "}
 						Économise {formatEuro(totalSavings)} en actualisant !
 					</p>
 				)}

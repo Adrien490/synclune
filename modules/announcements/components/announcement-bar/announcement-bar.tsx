@@ -1,12 +1,18 @@
 "use client";
 
 import { X } from "lucide-react";
-import { AnimatePresence, m } from "motion/react";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { cn } from "@/shared/utils/cn";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { isSafeLink, SWIPE_DISMISS_THRESHOLD } from "./announcement-bar.constants";
+import {
+	COUNTDOWN_DISPLAY_THRESHOLD_MS,
+	isSafeLink,
+	SWIPE_DISMISS_THRESHOLD,
+} from "./announcement-bar.constants";
 import { useAnnouncementBar } from "./use-announcement-bar";
+import { useCountdown } from "./use-countdown";
 
 export interface AnnouncementBarProps {
 	message: string;
@@ -16,6 +22,8 @@ export interface AnnouncementBarProps {
 	announcementId: string;
 	/** Hours before the banner can reappear after dismissal */
 	dismissDurationHours: number;
+	/** Optional end date — when within COUNTDOWN_DISPLAY_THRESHOLD, a countdown pill is shown */
+	endsAt?: Date | null;
 }
 
 /**
@@ -34,15 +42,24 @@ export function AnnouncementBar({
 	linkText,
 	announcementId,
 	dismissDurationHours,
+	endsAt = null,
 }: AnnouncementBarProps) {
 	const { isDismissed, barRef, dismiss, onExitComplete, swipeOffset, isSwiping } =
 		useAnnouncementBar({
 			announcementId,
 			dismissDurationHours,
 		});
+	const prefersReducedMotion = useReducedMotion();
 
 	// Validate link prop
 	const safeLink = link && isSafeLink(link) ? link : undefined;
+
+	const countdown = useCountdown(endsAt, COUNTDOWN_DISPLAY_THRESHOLD_MS);
+
+	const handleClose = () => {
+		triggerHaptic("light");
+		dismiss();
+	};
 
 	return (
 		<AnimatePresence mode="wait" onExitComplete={onExitComplete}>
@@ -55,16 +72,20 @@ export function AnnouncementBar({
 					animate={{ y: 0, opacity: 1 }}
 					exit={{ y: "-100%", opacity: 0 }}
 					transition={MOTION_CONFIG.spring.bar}
-					{...(swipeOffset < 0 && {
-						style: {
-							transform: `translateY(${swipeOffset}px)`,
-							opacity: Math.max(0, 1 + swipeOffset / SWIPE_DISMISS_THRESHOLD),
-							// Smooth spring-back when finger released but threshold not reached
-							...(!isSwiping && {
-								transition: "transform 150ms ease-out, opacity 150ms ease-out",
-							}),
-						},
-					})}
+					style={{
+						viewTransitionName: "announcement-bar",
+						...(swipeOffset < 0
+							? {
+									transform: `translateY(${swipeOffset}px)`,
+									opacity: Math.max(0, 1 + swipeOffset / SWIPE_DISMISS_THRESHOLD),
+									// Smooth spring-back when finger released but threshold not reached.
+									// Skipped under reduced-motion (WCAG 2.3.3).
+									...(!isSwiping && !prefersReducedMotion
+										? { transition: "transform 150ms ease-out, opacity 150ms ease-out" }
+										: {}),
+								}
+							: {}),
+					}}
 					// Scope Escape key to the bar
 					onKeyDown={(e) => {
 						if (e.key === "Escape") dismiss();
@@ -108,10 +129,26 @@ export function AnnouncementBar({
 						)}
 					</div>
 
+					{countdown ? (
+						<span
+							role="timer"
+							aria-live="off"
+							aria-label={`Offre se termine dans ${countdown.label}`}
+							className={cn(
+								"absolute top-1/2 right-14 hidden -translate-y-1/2 items-center gap-1 rounded-full px-2 py-0.5 sm:right-16",
+								"bg-primary-foreground/20 text-primary-foreground",
+								"font-mono text-[11px] font-semibold tracking-wider tabular-nums",
+								"xs:inline-flex",
+							)}
+						>
+							{countdown.label}
+						</span>
+					) : null}
+
 					<button
 						type="button"
-						onClick={dismiss}
-						className="hover:bg-primary-foreground/15 focus-visible:ring-primary-foreground absolute top-1/2 right-2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-hidden sm:right-3"
+						onClick={handleClose}
+						className="hover:bg-primary-foreground/15 focus-visible:ring-primary-foreground absolute top-1/2 right-2 flex min-h-11 min-w-11 -translate-y-1/2 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-hidden motion-safe:active:scale-95 sm:right-3"
 						aria-label="Fermer la barre d'annonce"
 					>
 						<X size={16} aria-hidden="true" />

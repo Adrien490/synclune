@@ -1,8 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { Download, FileJson, FileSpreadsheet, Loader2 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
+import {
+	Drawer,
+	DrawerBody,
+	DrawerClose,
+	DrawerContent,
+	DrawerDescription,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from "@/shared/components/ui/drawer";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -11,6 +23,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { cn } from "@/shared/utils/cn";
+import { CHART_STYLES } from "@/modules/dashboard/constants/chart-styles";
 import {
 	DEFAULT_PERIOD,
 	PERIOD_SEARCH_PARAM,
@@ -22,38 +38,117 @@ import type { ExportDashboardFormat } from "@/modules/dashboard/schemas/export-d
 interface ExportDashboardButtonProps {
 	className?: string;
 	variant?: "outline" | "ghost" | "secondary";
+	/** Render as a compact icon-only button (mobile header) */
+	iconOnly?: boolean;
 }
 
+/**
+ * Export trigger for the dashboard report.
+ *
+ * - **Mobile** : Vaul bottom-sheet `Drawer` with two full-width format rows (CSV / JSON).
+ *   Native iOS/Android feel, 56px tall touch targets, safe-area aware via Drawer primitive.
+ * - **Desktop** : compact `DropdownMenu` anchored to the trigger.
+ */
 export function ExportDashboardButton({
 	className,
 	variant = "outline",
+	iconOnly = false,
 }: ExportDashboardButtonProps) {
+	const isMobile = useIsMobile();
+	const [drawerOpen, setDrawerOpen] = useState(false);
 	const searchParams = useSearchParams();
 	const period = parsePeriod(searchParams.get(PERIOD_SEARCH_PARAM) ?? DEFAULT_PERIOD);
-	const { exportReport, isPending } = useExportDashboard();
+	const { exportReport, isPending } = useExportDashboard({
+		onSuccess: () => triggerHaptic("success"),
+	});
 
 	function handleExport(format: ExportDashboardFormat) {
+		triggerHaptic("selection");
+		setDrawerOpen(false);
 		exportReport({ period, format });
+	}
+
+	const triggerButton = (
+		<Button
+			type="button"
+			variant={variant}
+			size={iconOnly ? "icon" : "default"}
+			className={cn(
+				iconOnly ? CHART_STYLES.touchTarget.iconButton : CHART_STYLES.touchTarget.button,
+				className,
+			)}
+			disabled={isPending}
+			onClick={() => triggerHaptic("medium")}
+			aria-label="Exporter le rapport du tableau de bord"
+		>
+			{isPending ? (
+				<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+			) : (
+				<Download className="size-4" aria-hidden="true" />
+			)}
+			{!iconOnly && <span className="hidden md:inline">Exporter</span>}
+			{iconOnly && <span className="sr-only">Exporter</span>}
+		</Button>
+	);
+
+	if (isMobile) {
+		return (
+			<Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+				<DrawerTrigger asChild>{triggerButton}</DrawerTrigger>
+				<DrawerContent data-testid="export-dashboard-drawer">
+					<DrawerHeader>
+						<DrawerTitle>Exporter le tableau de bord</DrawerTitle>
+						<DrawerDescription>
+							Téléchargez un rapport pour la période sélectionnée.
+						</DrawerDescription>
+					</DrawerHeader>
+					<DrawerBody className="pb-0">
+						<div className="flex flex-col gap-2">
+							<button
+								type="button"
+								onClick={() => handleExport("csv")}
+								disabled={isPending}
+								className="hover:bg-accent focus-visible:ring-ring flex min-h-14 items-center gap-3 rounded-lg border px-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
+							>
+								<FileSpreadsheet className="text-primary size-5 shrink-0" aria-hidden="true" />
+								<div className="flex-1">
+									<p className="text-sm font-medium">CSV (tableur)</p>
+									<p className="text-muted-foreground text-xs">
+										Ouvre dans Excel, Numbers ou Google Sheets
+									</p>
+								</div>
+							</button>
+							<button
+								type="button"
+								onClick={() => handleExport("json")}
+								disabled={isPending}
+								className="hover:bg-accent focus-visible:ring-ring flex min-h-14 items-center gap-3 rounded-lg border px-4 text-left transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:opacity-60"
+							>
+								<FileJson className="text-primary size-5 shrink-0" aria-hidden="true" />
+								<div className="flex-1">
+									<p className="text-sm font-medium">JSON (brut)</p>
+									<p className="text-muted-foreground text-xs">
+										Données structurées pour traitement automatisé
+									</p>
+								</div>
+							</button>
+						</div>
+					</DrawerBody>
+					<DrawerFooter>
+						<DrawerClose asChild>
+							<Button variant="outline" className="min-h-11">
+								Annuler
+							</Button>
+						</DrawerClose>
+					</DrawerFooter>
+				</DrawerContent>
+			</Drawer>
+		);
 	}
 
 	return (
 		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					type="button"
-					variant={variant}
-					className={className}
-					disabled={isPending}
-					aria-label="Exporter le rapport du tableau de bord"
-				>
-					{isPending ? (
-						<Loader2 className="size-4 animate-spin" aria-hidden="true" />
-					) : (
-						<Download className="size-4" aria-hidden="true" />
-					)}
-					<span className="hidden md:inline">Exporter</span>
-				</Button>
-			</DropdownMenuTrigger>
+			<DropdownMenuTrigger asChild>{triggerButton}</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuLabel>Format du rapport</DropdownMenuLabel>
 				<DropdownMenuSeparator />

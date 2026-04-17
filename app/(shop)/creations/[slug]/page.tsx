@@ -17,6 +17,8 @@ import { getProductCartsCount } from "@/modules/cart/data/get-product-carts-coun
 import { PageHeader } from "@/shared/components/page-header";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { ProductDetails } from "@/modules/products/components/product-details";
+import { ProductMainSkeleton } from "@/modules/products/components/product-main-skeleton";
+import { StickyCartCTADesktop } from "@/modules/products/components/sticky-cart-cta-desktop";
 import { Gallery } from "@/modules/media/components/gallery";
 import { ProductInfo } from "@/modules/products/components/product-info";
 
@@ -173,8 +175,14 @@ export default async function ProductPage({
 				}}
 			/>
 
-			{/* Particules précieuses pour pages produits */}
-			<ParticleBackground count={8} size={[12, 80]} className="fixed inset-0 z-0" />
+			{/* Particules précieuses pour pages produits
+			    mobileCountRatio réduit à 0.35 pour limiter le coût paint mobile (iPhone 12 Pro / Android low-end) */}
+			<ParticleBackground
+				count={8}
+				size={[12, 80]}
+				mobileCountRatio={0.35}
+				className="fixed inset-0 z-0"
+			/>
 
 			<div className="relative z-10">
 				<PageHeader title={product.title} breadcrumbs={breadcrumbs} className="hidden sm:block" />
@@ -185,7 +193,7 @@ export default async function ProductPage({
 						<article id="product-main" className="space-y-12">
 							{/* Section principale - Galerie fixe et Informations scrollables */}
 							{/* group/product-details permet aux enfants de réagir au data-pending des sélecteurs */}
-							<Suspense fallback={null}>
+							<Suspense fallback={<ProductMainSkeleton />}>
 								<div className="group/product-details grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16">
 									{/* Galerie sticky sur desktop uniquement - avec hauteur max sécurisée */}
 									<section className="lg:sticky lg:top-20 lg:z-10 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-hidden">
@@ -214,6 +222,9 @@ export default async function ProductPage({
 									</section>
 								</div>
 							</Suspense>
+
+							{/* Sticky add-to-cart desktop (apparaît quand le CTA principal sort du viewport) */}
+							<StickyCartCTADesktop product={product} defaultSku={selectedSku} />
 
 							{/* Separator avant avis clients */}
 							<Separator className="bg-border" />

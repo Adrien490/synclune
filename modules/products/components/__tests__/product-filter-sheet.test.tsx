@@ -262,6 +262,45 @@ vi.mock("@/shared/components/ui/input", () => ({
 	Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
 }));
 
+vi.mock("@/shared/components/ui/switch", () => ({
+	Switch: ({
+		id,
+		checked,
+		onCheckedChange,
+		"aria-label": ariaLabel,
+	}: {
+		id?: string;
+		checked?: boolean;
+		onCheckedChange?: (checked: boolean) => void;
+		"aria-label"?: string;
+	}) => (
+		<input
+			type="checkbox"
+			role="switch"
+			data-testid={`switch-${id}`}
+			id={id}
+			aria-label={ariaLabel}
+			checked={!!checked}
+			onChange={(e) => onCheckedChange?.(e.target.checked)}
+		/>
+	),
+}));
+
+vi.mock("../filter-active-chips", () => ({
+	FilterActiveChips: ({
+		formData,
+	}: {
+		formData: { colors: string[]; materials: string[]; productTypes: string[] };
+	}) => (
+		<div
+			data-testid="filter-active-chips"
+			data-colors-count={formData.colors.length}
+			data-materials-count={formData.materials.length}
+			data-types-count={formData.productTypes.length}
+		/>
+	),
+}));
+
 // ============================================================================
 // TEST DATA
 // ============================================================================
@@ -656,14 +695,14 @@ describe("ProductFilterSheet", () => {
 			renderDefault();
 			// mockColors has only 3 items, so no search input
 			const colorSection = screen.getByTestId("section-colors");
-			const searchInputs = colorSection.querySelectorAll("input[type='text']");
+			const searchInputs = colorSection.querySelectorAll("input[type='search']");
 			expect(searchInputs.length).toBe(0);
 		});
 
 		it("shows search input when colors count exceeds SEARCH_THRESHOLD (8)", () => {
 			renderDefault({ colors: manyColors });
 			const colorSection = screen.getByTestId("section-colors");
-			const searchInput = colorSection.querySelector("input[type='text']");
+			const searchInput = colorSection.querySelector("input[type='search']");
 			expect(searchInput).toBeInTheDocument();
 		});
 
@@ -700,14 +739,14 @@ describe("ProductFilterSheet", () => {
 			renderDefault();
 			// mockMaterials has only 2 items
 			const materialsSection = screen.getByTestId("section-materials");
-			const searchInputs = materialsSection.querySelectorAll("input[type='text']");
+			const searchInputs = materialsSection.querySelectorAll("input[type='search']");
 			expect(searchInputs.length).toBe(0);
 		});
 
 		it("shows search input when materials count exceeds SEARCH_THRESHOLD (8)", () => {
 			renderDefault({ materials: manyMaterials });
 			const materialsSection = screen.getByTestId("section-materials");
-			const searchInput = materialsSection.querySelector("input[type='text']");
+			const searchInput = materialsSection.querySelector("input[type='search']");
 			expect(searchInput).toBeInTheDocument();
 		});
 
@@ -759,14 +798,14 @@ describe("ProductFilterSheet", () => {
 	// ============================================================================
 
 	describe("Disponibilité section", () => {
-		it("shows the 'En stock uniquement' checkbox", () => {
+		it("shows the 'En stock uniquement' switch", () => {
 			renderDefault();
-			expect(screen.getByTestId("checkbox-filter-in-stock")).toBeInTheDocument();
+			expect(screen.getByTestId("switch-filter-in-stock")).toBeInTheDocument();
 		});
 
-		it("shows the 'En promotion' checkbox", () => {
+		it("shows the 'En promotion' switch", () => {
 			renderDefault();
-			expect(screen.getByTestId("checkbox-filter-on-sale")).toBeInTheDocument();
+			expect(screen.getByTestId("switch-filter-on-sale")).toBeInTheDocument();
 		});
 
 		it("shows correct labels for availability options", () => {
@@ -896,7 +935,7 @@ describe("ProductFilterSheet", () => {
 		it("filters colors by search term (case-insensitive)", () => {
 			renderDefault({ colors: manyColors });
 			const colorSection = screen.getByTestId("section-colors");
-			const searchInput = colorSection.querySelector("input[type='text']");
+			const searchInput = colorSection.querySelector("input[type='search']");
 			expect(searchInput).toBeInTheDocument();
 
 			fireEvent.change(searchInput!, { target: { value: "rouge" } });
@@ -909,7 +948,7 @@ describe("ProductFilterSheet", () => {
 		it("shows 'Aucun résultat' when no colors match search term", () => {
 			renderDefault({ colors: manyColors });
 			const colorSection = screen.getByTestId("section-colors");
-			const searchInput = colorSection.querySelector("input[type='text']");
+			const searchInput = colorSection.querySelector("input[type='search']");
 
 			fireEvent.change(searchInput!, { target: { value: "zzznomatch" } });
 
@@ -932,7 +971,7 @@ describe("ProductFilterSheet", () => {
 		it("filters materials by search term", () => {
 			renderDefault({ materials: manyMaterials });
 			const materialsSection = screen.getByTestId("section-materials");
-			const searchInput = materialsSection.querySelector("input[type='text']");
+			const searchInput = materialsSection.querySelector("input[type='search']");
 			expect(searchInput).toBeInTheDocument();
 
 			fireEvent.change(searchInput!, { target: { value: "acier" } });
@@ -943,7 +982,7 @@ describe("ProductFilterSheet", () => {
 		it("shows 'Aucun résultat' when no materials match search term", () => {
 			renderDefault({ materials: manyMaterials });
 			const materialsSection = screen.getByTestId("section-materials");
-			const searchInput = materialsSection.querySelector("input[type='text']");
+			const searchInput = materialsSection.querySelector("input[type='search']");
 
 			fireEvent.change(searchInput!, { target: { value: "zzznomatch" } });
 

@@ -195,5 +195,48 @@ describe("DesktopNav", () => {
 
 			expect(mockPush).not.toHaveBeenCalled();
 		});
+
+		it("does not navigate on Escape key (Radix handles menu close)", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			fireEvent.keyDown(trigger, { key: "Escape" });
+
+			expect(mockPush).not.toHaveBeenCalled();
+		});
+
+		it("does not navigate on ArrowDown (Radix handles focus shift)", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			fireEvent.keyDown(trigger, { key: "ArrowDown" });
+
+			expect(mockPush).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("visual polish", () => {
+		it("applies tracking-[0.02em] premium letter-spacing on triggers and links", () => {
+			render(<DesktopNav navItems={navItems} />);
+
+			const link = screen.getByRole("link", { name: "Personnalisation" });
+			expect(link.className).toContain("tracking-[0.02em]");
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			expect(trigger.className).toContain("tracking-[0.02em]");
+		});
+
+		it("renders subtle primary-tinted hover background (gold/rose accent)", () => {
+			render(<DesktopNav navItems={navItems} />);
+			const link = screen.getByRole("link", { name: "Personnalisation" });
+			expect(link.className).toContain("hover:bg-primary/5");
+		});
+
+		it("binds the underline transition to --ease-spring token", () => {
+			render(<DesktopNav navItems={navItems} />);
+			const link = screen.getByRole("link", { name: "Personnalisation" });
+			expect(link.className).toContain("var(--ease-spring)");
+		});
 	});
 });

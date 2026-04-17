@@ -19,6 +19,17 @@ export const DASHBOARD_PERIODS: Record<DashboardPeriod, PeriodConfig> = {
 	year: { label: "Cette année", chartGranularity: "monthly" },
 } as const;
 
+/**
+ * Short labels for the mobile segmented control (must fit in ~70px at 375px viewport)
+ */
+export const DASHBOARD_PERIODS_SHORT: Record<DashboardPeriod, string> = {
+	"7d": "7j",
+	"30d": "30j",
+	month: "Mois",
+	quarter: "Trim.",
+	year: "Année",
+} as const;
+
 export const DEFAULT_PERIOD: DashboardPeriod = "month";
 
 export const PERIOD_SEARCH_PARAM = "period";

@@ -9,6 +9,9 @@ import { CartAbandonmentCard } from "@/modules/dashboard/components/cart-abandon
 import { SalesHeatmap } from "@/modules/dashboard/components/sales-heatmap";
 import { ComparisonModeSelector } from "@/modules/dashboard/components/comparison-mode-selector";
 import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
+import { DashboardPeriodSwipeWrapper } from "@/modules/dashboard/components/dashboard-period-swipe-wrapper";
+import { DashboardPullToRefreshBridge } from "@/modules/dashboard/components/dashboard-pull-to-refresh-bridge";
+import { DashboardRefreshAnnouncer } from "@/modules/dashboard/components/dashboard-refresh-announcer";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
 import { FulfillmentPipelineCard } from "@/modules/dashboard/components/fulfillment-pipeline";
@@ -70,6 +73,8 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
 	return (
 		<section aria-label="Tableau de bord">
+			<DashboardRefreshAnnouncer />
+			<DashboardPullToRefreshBridge />
 			<DashboardMobileHeader className="mb-6 md:hidden" />
 			<PageHeader
 				variant="compact"
@@ -85,111 +90,113 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				}
 			/>
 
-			<div className="space-y-8">
-				{/* Alertes prioritaires en haut (au-dessus des KPIs) */}
-				<Suspense>
-					<AlertsWrapper />
-				</Suspense>
-
-				{/* SECTION 1 — Performance ventes (KPIs principaux + comportement client) */}
-				<section aria-labelledby="dashboard-section-performance" className="space-y-4">
-					<SectionHeading id="dashboard-section-performance" label="Performance ventes" />
-
-					<Suspense
-						fallback={
-							<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
-						}
-					>
-						<KpisWrapper period={period} comparisonMode={comparisonMode} />
+			<DashboardPeriodSwipeWrapper>
+				<div className="space-y-8">
+					{/* Alertes prioritaires en haut (au-dessus des KPIs) */}
+					<Suspense>
+						<AlertsWrapper />
 					</Suspense>
 
-					<Suspense
-						fallback={
-							<KpisSkeleton count={0} compactCount={3} ariaLabel="Chargement des KPIs clients" />
-						}
-					>
-						<CustomerKpisWrapper period={period} comparisonMode={comparisonMode} />
-					</Suspense>
-				</section>
+					{/* SECTION 1 — Performance ventes (KPIs principaux + comportement client) */}
+					<section aria-labelledby="dashboard-section-performance" className="space-y-4">
+						<SectionHeading id="dashboard-section-performance" label="Performance ventes" />
 
-				{/* SECTION 2 — Insights opérationnels (Pipeline + Paniers) — 2-col sur xl+ */}
-				<section aria-labelledby="dashboard-section-operations" className="space-y-4">
-					<SectionHeading id="dashboard-section-operations" label="Insights opérationnels" />
+						<Suspense
+							fallback={
+								<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
+							}
+						>
+							<KpisWrapper period={period} comparisonMode={comparisonMode} />
+						</Suspense>
 
-					<div className="grid gap-6 xl:grid-cols-2">
-						<Suspense fallback={<FulfillmentSkeleton />}>
-							<FulfillmentWrapper />
+						<Suspense
+							fallback={
+								<KpisSkeleton count={0} compactCount={3} ariaLabel="Chargement des KPIs clients" />
+							}
+						>
+							<CustomerKpisWrapper period={period} comparisonMode={comparisonMode} />
+						</Suspense>
+					</section>
+
+					{/* SECTION 2 — Insights opérationnels (Pipeline + Paniers) — 2-col sur xl+ */}
+					<section aria-labelledby="dashboard-section-operations" className="space-y-4">
+						<SectionHeading id="dashboard-section-operations" label="Insights opérationnels" />
+
+						<div className="grid gap-6 xl:grid-cols-2">
+							<Suspense fallback={<FulfillmentSkeleton />}>
+								<FulfillmentWrapper />
+							</Suspense>
+
+							<Suspense
+								fallback={
+									<ChartSkeleton
+										heightClassName="h-32"
+										ariaLabel="Chargement des paniers abandonnés"
+									/>
+								}
+							>
+								<CartAbandonmentWrapper period={period} comparisonMode={comparisonMode} />
+							</Suspense>
+						</div>
+					</section>
+
+					{/* SECTION 3 — Tendances temporelles (Revenu + Heatmap) */}
+					<section aria-labelledby="dashboard-section-trends" className="space-y-4">
+						<SectionHeading id="dashboard-section-trends" label="Tendances & activité" />
+
+						<Suspense
+							fallback={
+								<ChartSkeleton
+									heightClassName="h-60 sm:h-72 md:h-75"
+									ariaLabel="Chargement du graphique des revenus"
+								/>
+							}
+						>
+							<RevenueChartWrapper period={period} />
 						</Suspense>
 
 						<Suspense
 							fallback={
 								<ChartSkeleton
-									heightClassName="h-32"
-									ariaLabel="Chargement des paniers abandonnés"
+									heightClassName="h-60 sm:h-72 md:h-[260px]"
+									ariaLabel="Chargement de la heatmap d'activité"
 								/>
 							}
 						>
-							<CartAbandonmentWrapper period={period} comparisonMode={comparisonMode} />
+							<SalesHeatmapWrapper period={period} />
 						</Suspense>
-					</div>
-				</section>
+					</section>
 
-				{/* SECTION 3 — Tendances temporelles (Revenu + Heatmap) */}
-				<section aria-labelledby="dashboard-section-trends" className="space-y-4">
-					<SectionHeading id="dashboard-section-trends" label="Tendances & activité" />
+					{/* SECTION 4 — Activité récente (Commandes + Produits + Promos) */}
+					<section aria-labelledby="dashboard-section-activity" className="space-y-4">
+						<SectionHeading id="dashboard-section-activity" label="Activité récente" />
 
-					<Suspense
-						fallback={
-							<ChartSkeleton
-								heightClassName="h-60 sm:h-[250px] md:h-75"
-								ariaLabel="Chargement du graphique des revenus"
-							/>
-						}
-					>
-						<RevenueChartWrapper period={period} />
-					</Suspense>
-
-					<Suspense
-						fallback={
-							<ChartSkeleton
-								heightClassName="h-60 sm:h-[250px] md:h-[260px]"
-								ariaLabel="Chargement de la heatmap d'activité"
-							/>
-						}
-					>
-						<SalesHeatmapWrapper period={period} />
-					</Suspense>
-				</section>
-
-				{/* SECTION 4 — Activité récente (Commandes + Produits + Promos) */}
-				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
-					<SectionHeading id="dashboard-section-activity" label="Activité récente" />
-
-					<DashboardListsTabs
-						ordersSlot={
-							<Suspense
-								fallback={
-									<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
-								}
-							>
-								<RecentOrdersWrapper />
-							</Suspense>
-						}
-						productsSlot={
-							<Suspense
-								fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
-							>
-								<TopProductsWrapper period={period} />
-							</Suspense>
-						}
-						discountsSlot={
-							<Suspense>
-								<ActiveDiscountsWrapper />
-							</Suspense>
-						}
-					/>
-				</section>
-			</div>
+						<DashboardListsTabs
+							ordersSlot={
+								<Suspense
+									fallback={
+										<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
+									}
+								>
+									<RecentOrdersWrapper />
+								</Suspense>
+							}
+							productsSlot={
+								<Suspense
+									fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des top produits" />}
+								>
+									<TopProductsWrapper period={period} />
+								</Suspense>
+							}
+							discountsSlot={
+								<Suspense>
+									<ActiveDiscountsWrapper />
+								</Suspense>
+							}
+						/>
+					</section>
+				</div>
+			</DashboardPeriodSwipeWrapper>
 		</section>
 	);
 }

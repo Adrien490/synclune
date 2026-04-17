@@ -13,12 +13,20 @@ vi.mock("@/shared/utils/format-euro", () => ({
 
 vi.mock("lucide-react", () => ({
 	Activity: () => <span data-testid="icon-activity" />,
+	X: () => <span data-testid="icon-x" />,
+}));
+
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
 }));
 
 import { SalesHeatmap } from "../sales-heatmap";
 
 afterEach(() => {
 	cleanup();
+	mockHaptic.mockClear();
 });
 
 // ============================================================================
@@ -89,8 +97,16 @@ describe("SalesHeatmap", () => {
 	it("renders 168 cells (7 days × 24 hours)", () => {
 		render(<SalesHeatmap data={makeData()} />);
 
-		const cells = screen.getAllByRole("img");
+		const cells = screen.getAllByRole("gridcell");
 		expect(cells).toHaveLength(168);
+	});
+
+	it("wraps cells in an ARIA grid with aria-label", () => {
+		render(<SalesHeatmap data={makeData()} />);
+
+		const grid = screen.getByRole("grid", { name: /activité par jour et heure/i });
+		expect(grid).toHaveAttribute("aria-rowcount", "7");
+		expect(grid).toHaveAttribute("aria-colcount", "24");
 	});
 
 	it("includes day labels (Dim, Lun, ..., Sam)", () => {
@@ -150,5 +166,68 @@ describe("SalesHeatmap", () => {
 		expect(screen.getByText("6h")).toBeInTheDocument();
 		expect(screen.getByText("12h")).toBeInTheDocument();
 		expect(screen.getByText("18h")).toBeInTheDocument();
+	});
+
+	// -------------------------------------------------------------------------
+	// Tap-to-reveal (native 2026 mobile pattern)
+	// -------------------------------------------------------------------------
+
+	it("exposes an sr-only live region for the selected cell detail panel", () => {
+		render(<SalesHeatmap data={makeData()} />);
+		const panel = screen.getByTestId("heatmap-selected-cell");
+		expect(panel).toHaveAttribute("role", "status");
+		expect(panel).toHaveAttribute("aria-live", "polite");
+	});
+
+	it("makes populated cells focusable and non-populated cells non-focusable", () => {
+		render(<SalesHeatmap data={makeData()} />);
+		const populatedCell = screen.getByLabelText(/lundi 14h — 5 commandes/);
+		const emptyCell = screen.getByLabelText("dimanche 0h — aucune commande");
+		expect(populatedCell).toHaveAttribute("tabindex", "0");
+		expect(emptyCell).toHaveAttribute("tabindex", "-1");
+	});
+
+	it("fires a 'selection' haptic and reveals details when a populated cell is tapped", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(<SalesHeatmap data={makeData()} />);
+
+		const cell = screen.getByLabelText(/lundi 14h — 5 commandes/);
+		fireEvent.click(cell);
+
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+		expect(screen.getByTestId("heatmap-selected-cell")).toHaveTextContent(/lundi 14h/i);
+		expect(screen.getByTestId("heatmap-selected-cell")).toHaveTextContent(/5 commandes/);
+	});
+
+	it("does not react to taps on empty cells", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(<SalesHeatmap data={makeData()} />);
+
+		const emptyCell = screen.getByLabelText("dimanche 0h — aucune commande");
+		fireEvent.click(emptyCell);
+
+		expect(mockHaptic).not.toHaveBeenCalled();
+	});
+
+	it("allows keyboard activation (Enter / Space)", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(<SalesHeatmap data={makeData()} />);
+
+		const cell = screen.getByLabelText(/lundi 14h — 5 commandes/);
+		fireEvent.keyDown(cell, { key: "Enter" });
+
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("toggles the panel off when the same cell is tapped twice", async () => {
+		const { fireEvent } = await import("@testing-library/react");
+		render(<SalesHeatmap data={makeData()} />);
+
+		const cell = screen.getByLabelText(/lundi 14h — 5 commandes/);
+		fireEvent.click(cell);
+		expect(cell).toHaveAttribute("aria-selected", "true");
+
+		fireEvent.click(cell);
+		expect(cell).toHaveAttribute("aria-selected", "false");
 	});
 });

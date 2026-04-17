@@ -36,6 +36,29 @@ html {
 		--navbar-height: 5rem;
 		--ab-height: 44px;
 	}
+	/* Scroll compact mode: home navbar shrinks h-20 → h-16 once scrolled past threshold.
+	 * Relies on :has() + [data-home-navbar][data-scrolled="true"] set by NavbarWrapper. */
+	html:has(header[data-home-navbar][data-scrolled="true"]) {
+		--navbar-height: 4rem;
+	}
+}
+
+/* ==========================================
+   MOBILE DRAWER BACKGROUND SCALE (iOS 2026 modal aesthetic)
+   Applied when MenuSheet toggles [data-sheet-open] on <html>.
+   Scope: mobile viewports only, skipped under reduced-motion.
+   ========================================== */
+main#main-content {
+	transform-origin: right center;
+	transition-property: transform;
+	transition-duration: 350ms;
+	transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
+	html[data-sheet-open] main#main-content {
+		transform: scale(0.97);
+	}
 }
 
 /* Admin layout — publie la hauteur du header admin pour les sticky sub-bars
@@ -88,6 +111,16 @@ html {
 	--duration-slower: 500ms;
 
 	/* ==========================================
+	   EASING TOKENS (cubic-bezier)
+	   — spring : iOS Vaul/sheet feel (déjà utilisé par drawer scale)
+	   — smooth-out : inertie douce post-interaction
+	   — premium  : micro-interactions luxe (underline, hover scale)
+	   ========================================== */
+	--ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+	--ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-premium: cubic-bezier(0.25, 0.1, 0.25, 1);
+
+	/* ==========================================
 	   TEXT SHADOWS POUR TITRES ÉLÉGANTS
 	   ========================================== */
 	--text-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.05);
@@ -100,6 +133,7 @@ html {
 	   ========================================== */
 	--z-overlay: 75;
 	--z-bar: 70;
+	--z-bar-desktop: 70;
 	--z-alert: 80;
 	--z-skip: 100;
 

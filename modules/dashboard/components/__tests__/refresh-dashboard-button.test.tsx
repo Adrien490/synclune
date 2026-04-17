@@ -14,6 +14,12 @@ vi.mock("@/modules/dashboard/hooks/use-refresh-dashboard", () => ({
 	useRefreshDashboard: mockUseRefreshDashboard,
 }));
 
+const mockHaptic = vi.hoisted(() => vi.fn());
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockHaptic,
+	useHaptic: () => mockHaptic,
+}));
+
 vi.mock("@/shared/components/refresh-button", () => ({
 	RefreshButton: ({
 		onRefresh,
@@ -132,5 +138,30 @@ describe("RefreshDashboardButton", () => {
 		render(<RefreshDashboardButton />);
 
 		expect(screen.getByTestId("refresh-button")).toHaveAttribute("data-pending", "true");
+	});
+
+	// -------------------------------------------------------------------------
+	// Haptic feedback
+	// -------------------------------------------------------------------------
+
+	it("triggers a 'light' haptic when the user taps the refresh button", () => {
+		mockUseRefreshDashboard.mockReturnValue({ refresh: mockRefresh, isPending: false });
+
+		render(<RefreshDashboardButton />);
+		screen.getByTestId("refresh-button").click();
+
+		expect(mockHaptic).toHaveBeenCalledWith("light");
+	});
+
+	it("wires onSuccess to a 'success' haptic", () => {
+		render(<RefreshDashboardButton />);
+
+		const lastCall = mockUseRefreshDashboard.mock.calls.at(-1) as
+			| [options?: { onSuccess?: () => void }]
+			| undefined;
+		const onSuccess = lastCall?.[0]?.onSuccess;
+		expect(typeof onSuccess).toBe("function");
+		onSuccess?.();
+		expect(mockHaptic).toHaveBeenCalledWith("success");
 	});
 });
