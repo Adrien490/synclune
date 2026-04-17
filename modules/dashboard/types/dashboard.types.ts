@@ -228,3 +228,23 @@ export type GetCustomerKpisReturn = {
 	};
 	topSpender: TopSpenderItem | null;
 };
+
+// ============================================================================
+// TYPES - CART ABANDONMENT
+// ============================================================================
+
+export type GetCartAbandonmentReturn = {
+	activeCarts: {
+		count: number;
+		totalValue: number;
+	};
+	abandonedEmailsSent: {
+		count: number;
+		evolution: number;
+	};
+	recoveryRate: {
+		rate: number;
+		recoveredCount: number;
+		evolution: number;
+	};
+};

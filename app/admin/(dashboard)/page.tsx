@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/nextjs";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { CustomerKpis } from "@/modules/dashboard/components/customer-kpis";
+import { CartAbandonmentCard } from "@/modules/dashboard/components/cart-abandonment-card";
 import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
@@ -29,6 +30,7 @@ import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchCustomerKpis } from "@/modules/dashboard/data/get-customer-kpis";
+import { fetchCartAbandonment } from "@/modules/dashboard/data/get-cart-abandonment";
 import { fetchKpiSparklines } from "@/modules/dashboard/data/get-kpi-sparklines";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
 import { fetchFulfillmentPipeline } from "@/modules/dashboard/data/get-fulfillment-pipeline";
@@ -98,6 +100,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				{/* Pipeline d'expedition */}
 				<Suspense fallback={<FulfillmentSkeleton />}>
 					<FulfillmentWrapper />
+				</Suspense>
+
+				{/* Paniers abandonnes & taux de recuperation */}
+				<Suspense
+					fallback={<ChartSkeleton height={180} ariaLabel="Chargement des paniers abandonnés" />}
+				>
+					<CartAbandonmentWrapper period={period} />
 				</Suspense>
 
 				{/* Graphique revenus */}
@@ -184,6 +193,20 @@ async function CustomerKpisWrapper({ period }: { period: DashboardPeriod }) {
 		return null;
 	}
 	return <CustomerKpis kpis={kpis} comparisonLabel={COMPARISON_LABELS[period]} />;
+}
+
+/**
+ * Wrapper async pour les paniers abandonnes - silencieux en cas d'erreur
+ */
+async function CartAbandonmentWrapper({ period }: { period: DashboardPeriod }) {
+	let data;
+	try {
+		data = await fetchCartAbandonment(period);
+	} catch (error) {
+		Sentry.captureException(error);
+		return null;
+	}
+	return <CartAbandonmentCard data={data} comparisonLabel={COMPARISON_LABELS[period]} />;
 }
 
 /**
