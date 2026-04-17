@@ -7,23 +7,10 @@ import {
 	type GET_DISCOUNT_VALIDATION_SELECT,
 } from "../constants/discount.constants";
 import {
-	type discountFiltersSchema,
 	type getDiscountSchema,
 	type getDiscountByCodeSchema,
 	type getDiscountsSchema,
-	type validateDiscountCodeSchema,
-	type createDiscountSchema,
-	type updateDiscountSchema,
-	type deleteDiscountSchema,
-	type bulkDeleteDiscountsSchema,
-	type toggleDiscountStatusSchema,
 } from "../schemas/discount.schemas";
-
-// ============================================================================
-// INFERRED TYPES FROM SCHEMAS
-// ============================================================================
-
-type DiscountFilters = z.infer<typeof discountFiltersSchema>;
 
 // ============================================================================
 // SERVICE TYPES (from services/)
@@ -40,10 +27,6 @@ export type DiscountStatus = "active" | "inactive" | "exhausted" | "scheduled" |
 
 export type Discount = Prisma.DiscountGetPayload<{
 	select: typeof GET_DISCOUNTS_SELECT;
-}>;
-
-type DiscountDetail = Prisma.DiscountGetPayload<{
-	select: typeof GET_DISCOUNT_SELECT;
 }>;
 
 export type DiscountValidation = Prisma.DiscountGetPayload<{
@@ -79,8 +62,6 @@ export type GetDiscountsReturn = {
 // VALIDATION TYPES
 // ============================================================================
 
-type ValidateDiscountCodeParams = z.infer<typeof validateDiscountCodeSchema>;
-
 export type ValidateDiscountCodeReturn = {
 	valid: boolean;
 	discount?: {
@@ -93,16 +74,6 @@ export type ValidateDiscountCodeReturn = {
 	};
 	error?: string;
 };
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-type CreateDiscountInput = z.infer<typeof createDiscountSchema>;
-type UpdateDiscountInput = z.infer<typeof updateDiscountSchema>;
-type DeleteDiscountInput = z.infer<typeof deleteDiscountSchema>;
-type BulkDeleteDiscountsInput = z.infer<typeof bulkDeleteDiscountsSchema>;
-type ToggleDiscountStatusInput = z.infer<typeof toggleDiscountStatusSchema>;
 
 // ============================================================================
 // DISCOUNT APPLICATION CONTEXT

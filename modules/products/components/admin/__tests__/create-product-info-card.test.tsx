@@ -142,7 +142,7 @@ function createMockForm(overrides?: Record<string, unknown>) {
 			children: (field: unknown) => React.ReactNode;
 			validators?: unknown;
 		}) => {
-			const value = defaultValues[name as keyof typeof defaultValues] ?? "";
+			const value = defaultValues[name as keyof typeof defaultValues];
 			return children({
 				name,
 				state: { value, meta: { errors: [] } },

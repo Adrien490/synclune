@@ -5,20 +5,11 @@ import {
 	type GET_PRODUCT_SELECT,
 	type GET_PRODUCTS_SELECT,
 	type GET_PRODUCTS_SORT_FIELDS,
-	type PRODUCT_LIST_SELECT,
 } from "../constants/product.constants";
 import {
 	type getProductSchema,
 	type getProductsSchema,
 	type productFiltersSchema,
-	type createProductSchema,
-	type updateProductSchema,
-	type deleteProductSchema,
-	type duplicateProductSchema,
-	type toggleProductStatusSchema,
-	type bulkDeleteProductsSchema,
-	type bulkArchiveProductsSchema,
-	type bulkChangeProductStatusSchema,
 } from "../schemas/product.schemas";
 
 // ============================================================================
@@ -36,10 +27,6 @@ export type GetProductReturn = Prisma.ProductGetPayload<{
 }>;
 
 export type ProductSku = GetProductReturn["skus"][0];
-type ProductType = GetProductReturn["type"];
-type ProductCollections = GetProductReturn["collections"];
-type ProductCollectionItem = ProductCollections[number];
-type ProductCollection = ProductCollectionItem["collection"];
 
 // Re-export depuis shared (évite la dépendance circulaire avec skus)
 // ============================================================================
@@ -69,27 +56,6 @@ export type GetProductsReturn = {
 export type Product = Prisma.ProductGetPayload<{
 	select: typeof GET_PRODUCTS_SELECT;
 }>;
-
-/**
- * Type minimal pour les listings produits (grids, carousels)
- * Utiliser avec PRODUCT_LIST_SELECT
- */
-type ProductListItem = Prisma.ProductGetPayload<{
-	select: typeof PRODUCT_LIST_SELECT;
-}>;
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-type CreateProductFormData = z.infer<typeof createProductSchema>;
-type UpdateProductFormData = z.infer<typeof updateProductSchema>;
-type DeleteProductInput = z.infer<typeof deleteProductSchema>;
-type DuplicateProductInput = z.infer<typeof duplicateProductSchema>;
-type ToggleProductStatusInput = z.infer<typeof toggleProductStatusSchema>;
-type BulkDeleteProductsInput = z.infer<typeof bulkDeleteProductsSchema>;
-type BulkArchiveProductsInput = z.infer<typeof bulkArchiveProductsSchema>;
-type BulkChangeProductStatusInput = z.infer<typeof bulkChangeProductStatusSchema>;
 
 // ============================================================================
 // PRODUCT CARD DATA (centralisé ici comme source de vérité)

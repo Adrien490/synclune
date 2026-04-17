@@ -77,11 +77,6 @@ export interface WebhookHandlerResult {
 }
 
 /**
- * Signature d'une fonction handler
- */
-type WebhookHandler<T = unknown> = (data: T) => Promise<WebhookHandlerResult | null>;
-
-/**
  * Types d'événements Stripe supportés
  */
 export type SupportedStripeEvent =

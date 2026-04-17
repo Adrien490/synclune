@@ -154,15 +154,6 @@ export const REFUND_STATUS_LABELS: Record<RefundStatus, string> = {
 	[RefundStatus.CANCELLED]: "Annulé",
 };
 
-const REFUND_STATUS_COLORS: Record<RefundStatus, string> = {
-	[RefundStatus.PENDING]: "#f59e0b", // Amber
-	[RefundStatus.APPROVED]: "#3b82f6", // Blue
-	[RefundStatus.COMPLETED]: "#22c55e", // Green
-	[RefundStatus.REJECTED]: "#ef4444", // Red
-	[RefundStatus.FAILED]: "#dc2626", // Red darker
-	[RefundStatus.CANCELLED]: "#6b7280", // Gray
-};
-
 export const REFUND_STATUS_VARIANTS: Record<RefundStatus, BadgeVariant> = {
 	[RefundStatus.PENDING]: "warning",
 	[RefundStatus.APPROVED]: "default",

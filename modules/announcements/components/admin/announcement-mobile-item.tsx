@@ -2,6 +2,7 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { formatDateTime } from "@/shared/utils/dates";
@@ -22,12 +23,18 @@ interface AnnouncementMobileItemProps {
 
 export function AnnouncementMobileItem({ announcement }: AnnouncementMobileItemProps) {
 	const { open } = useDialog<AnnouncementItemDrawerData>(ANNOUNCEMENT_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const status = computeAnnouncementStatus(announcement);
+
+	const handleOpen = () => {
+		haptic("selection");
+		open({ announcement });
+	};
 
 	return (
 		<button
 			type="button"
-			onClick={() => open({ announcement })}
+			onClick={handleOpen}
 			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
 			aria-label="Ouvrir la fiche de l'annonce"
 		>

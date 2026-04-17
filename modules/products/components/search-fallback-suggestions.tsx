@@ -96,6 +96,7 @@ export async function SearchFallbackSuggestions({
 								index={index}
 								isInWishlist={wishlistProductIds.has(product.id)}
 								sectionId="search-fallback"
+								disablePreload
 							/>
 						))}
 					</div>

@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -15,13 +16,22 @@ export async function refreshProductTypes(
 	_formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.REFRESH);
 		if ("error" in rateLimit) return rateLimit.error;
 
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name ?? adminUser.email,
+			action: "productType.refreshCache",
+			targetType: "productType",
+			targetId: "all",
+		});
 
 		return success("Types de produits rafraîchis");
 	} catch (e) {

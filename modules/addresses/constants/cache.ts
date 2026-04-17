@@ -21,16 +21,6 @@ export const ADDRESSES_CACHE_TAGS = {
 // ============================================
 
 /**
- * Configure le cache pour les adresses d'un utilisateur
- * - Utilisé pour : /account/profile, sélection d'adresse
- * - Durée : 5min fraîche, 1min revalidation
- */
-function cacheUserAddresses(userId: string) {
-	cacheLife("cart");
-	cacheTag(ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId));
-}
-
-/**
  * Configure le cache pour la recherche d'adresses (API publique BAN)
  * - Utilisé pour : autocomplétion d'adresse
  * - Durée : 4h fraîche, 1h revalidation, 30j expiration

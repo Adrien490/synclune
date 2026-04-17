@@ -116,7 +116,7 @@ export function parseFormIds(
 	const raw = safeFormGet(formData, key);
 	if (!raw) return { ids: [] };
 	try {
-		const parsed = JSON.parse(raw);
+		const parsed: unknown = JSON.parse(raw);
 		return { ids: Array.isArray(parsed) ? parsed : [] };
 	} catch {
 		return {

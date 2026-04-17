@@ -10,11 +10,6 @@ const {
 	mockCloseSearch,
 	mockOpenFilter,
 	mockCloseFilter,
-	mockIsSearchOpen,
-	mockIsFilterOpen,
-	_mockIsSkuSelectorOpen,
-	_mockIsMenuOpen,
-	mockIsAnySheetOpen,
 	mockSearchParams,
 	mockPathname,
 	mockCountActiveFilters,
@@ -24,11 +19,6 @@ const {
 	mockCloseSearch: vi.fn(),
 	mockOpenFilter: vi.fn(),
 	mockCloseFilter: vi.fn(),
-	mockIsSearchOpen: false,
-	mockIsFilterOpen: false,
-	_mockIsSkuSelectorOpen: false,
-	_mockIsMenuOpen: false,
-	mockIsAnySheetOpen: false,
 	mockSearchParams: new URLSearchParams(),
 	mockPathname: "/produits",
 	mockCountActiveFilters: vi
@@ -49,27 +39,13 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: (id: string) => {
 		if (id === "quick-search-dialog") {
-			return {
-				open: mockOpenSearch,
-				close: mockCloseSearch,
-				isOpen: mockIsSearchOpen,
-			};
+			return { open: mockOpenSearch, close: mockCloseSearch, isOpen: false };
 		}
 		if (id === "product-filter-sheet") {
-			return {
-				open: mockOpenFilter,
-				close: mockCloseFilter,
-				isOpen: mockIsFilterOpen,
-			};
+			return { open: mockOpenFilter, close: mockCloseFilter, isOpen: false };
 		}
-		// sku-selector-dialog and menu-sheet
 		return { open: vi.fn(), close: vi.fn(), isOpen: false };
 	},
-}));
-
-vi.mock("@/shared/providers/sheet-store-provider", () => ({
-	useSheetStore: (_selector: (state: { openSheet: string | null }) => unknown) =>
-		mockIsAnySheetOpen,
 }));
 
 vi.mock("@/modules/products/services/product-filter-params.service", () => ({
@@ -84,10 +60,6 @@ vi.mock("@/modules/products/constants/product.constants", () => ({
 		"price-descending": "Prix décroissant",
 		"created-descending": "Plus récents",
 	},
-}));
-
-vi.mock("@/modules/cart/components/sku-selector-dialog", () => ({
-	SKU_SELECTOR_DIALOG_ID: "sku-selector-dialog",
 }));
 
 vi.mock("@/modules/products/components/quick-search-dialog/constants", () => ({
@@ -116,33 +88,6 @@ vi.mock("@/shared/components/sort-drawer", () => ({
 			</button>
 		</div>
 	),
-}));
-
-vi.mock("@/shared/components/bottom-bar", () => ({
-	BottomBar: ({
-		children,
-		isHidden,
-		as: As = "div",
-		"aria-label": ariaLabel,
-	}: {
-		children: React.ReactNode;
-		isHidden?: boolean;
-		as?: React.ElementType;
-		"aria-label"?: string;
-		breakpointClass?: string;
-		zIndex?: string;
-		className?: string;
-	}) => (
-		<As data-testid="bottom-bar" data-hidden={isHidden} aria-label={ariaLabel}>
-			{children}
-		</As>
-	),
-	ActiveDot: () => <span data-testid="active-dot" />,
-	bottomBarContainerClass: "toolbar-container",
-	bottomBarItemClass: "toolbar-item",
-	bottomBarActiveItemClass: "toolbar-item-active",
-	bottomBarIconClass: "toolbar-icon",
-	bottomBarLabelClass: "toolbar-label",
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -189,10 +134,14 @@ afterEach(() => {
 
 describe("ProductSortBar", () => {
 	describe("rendering", () => {
-		it("renders the bottom bar with the toolbar", () => {
+		it("renders as a nav with the toolbar role", () => {
 			renderDefault();
-			expect(screen.getByTestId("bottom-bar")).toBeInTheDocument();
-			expect(screen.getByRole("toolbar")).toBeInTheDocument();
+			expect(
+				screen.getByRole("navigation", { name: "Tri, recherche et filtres" }),
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole("toolbar", { name: "Tri, recherche et filtres" }),
+			).toBeInTheDocument();
 		});
 
 		it("renders the three action buttons: Trier, Rechercher, Filtrer", () => {
@@ -210,9 +159,14 @@ describe("ProductSortBar", () => {
 			}
 		});
 
-		it("does not show active dot indicators when no active states", () => {
+		it("applies sticky positioning below the navbar", () => {
 			renderDefault();
-			expect(screen.queryAllByTestId("active-dot")).toHaveLength(0);
+			const nav = screen.getByRole("navigation", { name: "Tri, recherche et filtres" });
+			expect(nav.className).toContain("sticky");
+			expect(nav.className).toContain(
+				"top-[calc(var(--announcement-bar-height,0px)+var(--navbar-height))]",
+			);
+			expect(nav.className).toContain("md:hidden");
 		});
 	});
 
@@ -223,13 +177,11 @@ describe("ProductSortBar", () => {
 			expect(screen.getByTestId("sort-drawer")).toHaveAttribute("data-open", "true");
 		});
 
-		it("shows active dot on sort button when sortBy param is set", () => {
-			// Set a sortBy param on the shared mockSearchParams
-			mockSearchParams.set("sortBy", "price-ascending");
+		it("closes search and filter dialogs before opening the sort drawer", () => {
 			renderDefault();
-			// With an active sort, at least one ActiveDot should appear
-			expect(screen.queryAllByTestId("active-dot").length).toBeGreaterThanOrEqual(1);
-			mockSearchParams.delete("sortBy");
+			fireEvent.click(screen.getByText("Trier"));
+			expect(mockCloseSearch).toHaveBeenCalledOnce();
+			expect(mockCloseFilter).toHaveBeenCalledOnce();
 		});
 
 		it("uses active aria-label on sort button when sort is active", () => {
@@ -266,18 +218,12 @@ describe("ProductSortBar", () => {
 			expect(screen.getByTestId("filter-icon")).toBeInTheDocument();
 		});
 
-		it("shows active dot on filter button when active filters are present", () => {
+		it("shows an active filter count badge when filters are active", () => {
 			mockCountActiveFilters.mockReturnValue({ hasActiveFilters: true, activeFiltersCount: 2 });
 			renderDefault();
-			// At least one active dot should be shown (for filters)
-			expect(screen.queryAllByTestId("active-dot").length).toBeGreaterThanOrEqual(1);
-		});
-	});
-
-	describe("visibility", () => {
-		it("passes isHidden=false when no dialogs are open", () => {
-			renderDefault();
-			expect(screen.getByTestId("bottom-bar")).toHaveAttribute("data-hidden", "false");
+			const filterButton = screen.getByRole("button", { name: /2 filtres actifs/ });
+			expect(filterButton).toBeInTheDocument();
+			expect(filterButton.textContent).toContain("2");
 		});
 	});
 

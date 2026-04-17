@@ -8,6 +8,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
@@ -71,6 +72,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		if (open) {
 			if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 			setSearchQuery("");
+			triggerHaptic("light");
 			openMenu();
 		} else {
 			closeMenu();

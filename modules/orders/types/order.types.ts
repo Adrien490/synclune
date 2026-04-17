@@ -1,18 +1,11 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import { type z } from "zod";
 import { type PaginationInfo } from "@/shared/lib/pagination";
-import {
-	type GET_ORDER_SELECT,
-	type GET_ORDERS_SELECT,
-	type GET_ORDERS_SORT_FIELDS,
-} from "../constants/order.constants";
+import { type GET_ORDER_SELECT, type GET_ORDERS_SELECT } from "../constants/order.constants";
 import {
 	type getOrderSchema,
 	type getOrdersSchema,
 	type orderFiltersSchema,
-	type deleteOrderSchema,
-	type bulkDeleteOrdersSchema,
-	type cancelOrderSchema,
 } from "../schemas/order.schemas";
 
 // ============================================================================
@@ -30,15 +23,11 @@ export interface FetchOrderContext {
 	userId?: string;
 }
 
-type OrderItem = GetOrderReturn["items"][0];
-
 // ============================================================================
 // TYPES - ORDER LIST
 // ============================================================================
 
 export type OrderFilters = z.infer<typeof orderFiltersSchema>;
-
-type OrderSortField = (typeof GET_ORDERS_SORT_FIELDS)[number];
 
 export type GetOrdersParams = z.infer<typeof getOrdersSchema>;
 
@@ -46,18 +35,6 @@ export type GetOrdersReturn = {
 	orders: Array<Prisma.OrderGetPayload<{ select: typeof GET_ORDERS_SELECT }>>;
 	pagination: PaginationInfo;
 };
-
-type Order = Prisma.OrderGetPayload<{
-	select: typeof GET_ORDERS_SELECT;
-}>;
-
-// ============================================================================
-// TYPES - MUTATIONS
-// ============================================================================
-
-type DeleteOrderInput = z.infer<typeof deleteOrderSchema>;
-type BulkDeleteOrdersInput = z.infer<typeof bulkDeleteOrdersSchema>;
-type CancelOrderInput = z.infer<typeof cancelOrderSchema>;
 
 // ============================================================================
 // TYPES - SHIPPING

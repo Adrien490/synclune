@@ -5,10 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockUsePathname, mockGenerateBreadcrumbs, mockUseIsScrolled } = vi.hoisted(() => ({
+const {
+	mockUsePathname,
+	mockGenerateBreadcrumbs,
+	mockUseIsScrolled,
+	mockRouterBack,
+	mockOpenCommandPalette,
+	mockTriggerHaptic,
+} = vi.hoisted(() => ({
 	mockUsePathname: vi.fn(() => "/admin"),
 	mockGenerateBreadcrumbs: vi.fn(),
 	mockUseIsScrolled: vi.fn(() => false),
+	mockRouterBack: vi.fn(),
+	mockOpenCommandPalette: vi.fn(),
+	mockTriggerHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -17,10 +27,19 @@ const { mockUsePathname, mockGenerateBreadcrumbs, mockUseIsScrolled } = vi.hoist
 
 vi.mock("next/navigation", () => ({
 	usePathname: mockUsePathname,
+	useRouter: () => ({ back: mockRouterBack }),
 }));
 
 vi.mock("@/shared/hooks/use-is-scrolled", () => ({
 	useIsScrolled: mockUseIsScrolled,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
+}));
+
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({ isOpen: false, open: mockOpenCommandPalette, close: vi.fn() }),
 }));
 
 vi.mock("../dashboard-breadcrumb", () => ({

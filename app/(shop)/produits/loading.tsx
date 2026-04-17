@@ -14,6 +14,21 @@ export default function BijouxHubLoading() {
 
 			<section className="bg-background relative z-10 pt-[calc(var(--navbar-height)+1rem)] pb-12 sm:pt-4 lg:pt-6 lg:pb-16">
 				<div className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8">
+					{/* Mobile sticky sub-header skeleton (tri / recherche / filtres) */}
+					<div
+						aria-hidden
+						className="bg-background/80 border-border/50 -mx-4 border-b backdrop-blur-md sm:-mx-6 md:hidden"
+					>
+						<div className="divide-border/30 flex items-stretch divide-x">
+							{[0, 1, 2].map((i) => (
+								<div key={i} className="flex flex-1 items-center justify-center gap-1.5 px-2 py-3">
+									<Skeleton className="size-4 rounded" />
+									<Skeleton className="h-3 w-14 rounded" />
+								</div>
+							))}
+						</div>
+					</div>
+
 					{/* Toolbar skeleton - Desktop only */}
 					<div className="md:bg-card md:border-border/60 hidden min-w-0 p-0 md:flex md:rounded-lg md:border md:p-4 md:shadow-sm">
 						<div className="flex w-full flex-row items-center gap-2">
@@ -30,18 +45,6 @@ export default function BijouxHubLoading() {
 					<ProductListSkeleton />
 				</div>
 			</section>
-
-			{/* Bottom Action Bar Skeleton - Mobile only */}
-			<div className="bg-background/95 border-border fixed right-0 bottom-0 left-0 z-50 rounded-t-2xl border-x border-t pb-[env(safe-area-inset-bottom)] md:hidden">
-				<div className="flex h-14 items-stretch">
-					{[0, 1, 2].map((i) => (
-						<div key={i} className="flex flex-1 flex-col items-center justify-center gap-1">
-							<Skeleton className="size-5 rounded" />
-							<Skeleton className="h-3 w-12 rounded" />
-						</div>
-					))}
-				</div>
-			</div>
 		</div>
 	);
 }

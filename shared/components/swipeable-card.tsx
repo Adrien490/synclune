@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useSwipeAction, SWIPE_ACTION_THRESHOLD } from "@/shared/hooks/use-swipe-action";
 
 interface SwipeActionSlot {
@@ -86,20 +87,47 @@ export function SwipeableCard({
 }: SwipeableCardProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReducedMotion = useReducedMotion();
+	const haptic = useHaptic();
+	const hintFiredRef = useRef(false);
+	const confirmFiredRef = useRef(false);
+
+	const wrapOnAction = (onAction: () => void) => () => {
+		if (!confirmFiredRef.current) {
+			haptic("medium");
+			confirmFiredRef.current = true;
+		}
+		onAction();
+	};
 
 	const { swipeOffset, isSwiping, leftProgress, rightProgress } = useSwipeAction({
 		elementRef: containerRef,
 		enabled,
 		leftAction: leftAction
-			? { onAction: leftAction.onAction, threshold: leftAction.threshold ?? SWIPE_ACTION_THRESHOLD }
+			? {
+					onAction: wrapOnAction(leftAction.onAction),
+					threshold: leftAction.threshold ?? SWIPE_ACTION_THRESHOLD,
+				}
 			: undefined,
 		rightAction: rightAction
 			? {
-					onAction: rightAction.onAction,
+					onAction: wrapOnAction(rightAction.onAction),
 					threshold: rightAction.threshold ?? SWIPE_ACTION_THRESHOLD,
 				}
 			: undefined,
 	});
+
+	useEffect(() => {
+		const progress = Math.max(leftProgress, rightProgress);
+		if (!isSwiping) {
+			hintFiredRef.current = false;
+			confirmFiredRef.current = false;
+			return;
+		}
+		if (progress >= 0.4 && !hintFiredRef.current) {
+			hintFiredRef.current = true;
+			haptic("light");
+		}
+	}, [isSwiping, leftProgress, rightProgress, haptic]);
 
 	const snapTransition = prefersReducedMotion || isSwiping ? "none" : SNAP_BACK_TRANSITION;
 

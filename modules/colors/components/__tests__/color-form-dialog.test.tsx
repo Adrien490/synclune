@@ -183,41 +183,32 @@ vi.mock("@/shared/components/forms", () => ({
 }));
 
 vi.mock("@/modules/colors/components/color-picker", () => ({
-	ColorPicker: ({
-		children,
+	SimpleColorPicker: ({
 		value,
 		onChange,
+		disabled,
 	}: {
-		children: React.ReactNode;
 		value?: string;
-		onChange?: (rgba: { r: number; g: number; b: number; a: number }) => void;
-		className?: string;
+		onChange?: (hex: string) => void;
+		disabled?: boolean;
 	}) => {
-		// Capture onChange so tests can trigger it
-		mockColorPickerOnChange.current = onChange ?? null;
+		mockColorPickerOnChange.current = onChange ? (rgba) => onChange("#FF0000") : null;
 		return (
-			<div data-testid="color-picker" data-value={value}>
+			<div
+				data-testid="color-picker"
+				data-value={value}
+				data-disabled={disabled ? "true" : "false"}
+			>
 				<button
 					data-testid="color-picker-trigger"
 					type="button"
-					onClick={() => onChange?.({ r: 255, g: 0, b: 0, a: 1 })}
+					onClick={() => onChange?.("#FF0000")}
 				>
 					pick
 				</button>
-				{children}
 			</div>
 		);
 	},
-	ColorPickerSelection: ({ className: _className }: { className?: string }) => (
-		<div data-testid="color-picker-selection" />
-	),
-	ColorPickerHue: ({ className: _className }: { className?: string }) => (
-		<div data-testid="color-picker-hue" />
-	),
-	ColorPickerFormat: ({ className: _className }: { className?: string }) => (
-		<div data-testid="color-picker-format" />
-	),
-	ColorPickerOutput: () => <div data-testid="color-picker-output" />,
 }));
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
@@ -270,14 +261,6 @@ vi.mock("@/shared/components/ui/button", () => ({
 
 vi.mock("@/shared/components/ui/label", () => ({
 	Label: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
-}));
-
-vi.mock("color", () => ({
-	default: {
-		rgb: vi.fn(() => ({
-			hex: vi.fn(() => "#FF0000"),
-		})),
-	},
 }));
 
 // ============================================================================
@@ -419,24 +402,6 @@ describe("ColorFormDialog", () => {
 		expect(screen.getByPlaceholderText("ex: Rouge, Bleu Marine")).toBeInTheDocument();
 	});
 
-	// ─── Color picker sub-components ─────────────────────────────────────────
-
-	it("renders the color picker selection, hue, format and output", () => {
-		render(<ColorFormDialog />);
-		expect(screen.getByTestId("color-picker-selection")).toBeInTheDocument();
-		expect(screen.getByTestId("color-picker-hue")).toBeInTheDocument();
-		expect(screen.getByTestId("color-picker-format")).toBeInTheDocument();
-		expect(screen.getByTestId("color-picker-output")).toBeInTheDocument();
-	});
-
-	// ─── aria-live region for selected color ─────────────────────────────────
-
-	it("has an aria-live region for the selected color announcement", () => {
-		render(<ColorFormDialog />);
-		const liveRegion = document.querySelector("[aria-live='polite']");
-		expect(liveRegion).not.toBeNull();
-	});
-
 	// ─── Dialog close behavior ────────────────────────────────────────────────
 
 	it("calls close when onOpenChange fires with false and not pending", () => {
@@ -531,12 +496,10 @@ describe("ColorFormDialog", () => {
 
 	// ─── Color picker onChange interaction ────────────────────────────────────
 
-	it("calls Color.rgb and field.handleChange when color picker onChange fires", async () => {
-		const { default: Color } = await import("color");
+	it("calls field.handleChange with the hex when color picker onChange fires", () => {
 		render(<ColorFormDialog />);
 		const trigger = screen.getByTestId("color-picker-trigger");
 		fireEvent.click(trigger);
-		expect(Color.rgb).toHaveBeenCalledWith({ r: 255, g: 0, b: 0, a: 1 });
 		expect(mockFieldHandleChange).toHaveBeenCalledWith("#FF0000");
 	});
 

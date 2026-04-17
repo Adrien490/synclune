@@ -21,7 +21,7 @@ const {
 	mockPrisma: {
 		productType: {
 			findUnique: vi.fn(),
-			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 	},
 	mockRequireAdmin: vi.fn(),
@@ -72,6 +72,7 @@ function makeProductType(overrides: Record<string, unknown> = {}) {
 		id: "pt-1",
 		label: "Bague",
 		isSystem: false,
+		isActive: false,
 		...overrides,
 	};
 }
@@ -92,8 +93,9 @@ describe("toggleProductTypeStatus", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1", isActive: true } });
 		mockGetProductTypeInvalidationTags.mockReturnValue(["product-types-list"]);
-		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
-		mockPrisma.productType.update.mockResolvedValue({ id: "pt-1" });
+		// Happy path: updateMany affects 1 row, then findUnique returns label for audit
+		mockPrisma.productType.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.productType.findUnique.mockResolvedValue({ label: "Bague" });
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -134,14 +136,24 @@ describe("toggleProductTypeStatus", () => {
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
-	it("should return not found when product type does not exist", async () => {
+	it("should call updateMany atomically with isSystem=false and isActive NOT target", async () => {
+		await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
+		expect(mockPrisma.productType.updateMany).toHaveBeenCalledWith({
+			where: { id: "pt-1", isSystem: false, isActive: { not: true } },
+			data: { isActive: true },
+		});
+	});
+
+	it("should return not found when updateMany affects 0 rows AND type does not exist", async () => {
+		mockPrisma.productType.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.productType.findUnique.mockResolvedValue(null);
 		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
 		expect(mockNotFound).toHaveBeenCalledWith("Type de produit");
 		expect(result.status).toBe(ActionStatus.NOT_FOUND);
 	});
 
-	it("should return error when product type is a system type", async () => {
+	it("should return error when updateMany affects 0 rows AND type is system", async () => {
+		mockPrisma.productType.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.productType.findUnique.mockResolvedValue(
 			makeProductType({ isSystem: true, label: "Collier" }),
 		);
@@ -151,13 +163,20 @@ describe("toggleProductTypeStatus", () => {
 		expect(result.message).toContain("Collier");
 	});
 
+	it("should return idempotent success when updateMany affects 0 rows AND type already in state", async () => {
+		mockPrisma.productType.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.productType.findUnique.mockResolvedValue(
+			makeProductType({ isSystem: false, isActive: true }),
+		);
+		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
+		expect(mockSuccess).toHaveBeenCalledWith("Type déjà activé");
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockGetProductTypeInvalidationTags).not.toHaveBeenCalled();
+	});
+
 	it("should activate type and return correct success message", async () => {
 		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1", isActive: true } });
 		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
-		expect(mockPrisma.productType.update).toHaveBeenCalledWith({
-			where: { id: "pt-1" },
-			data: { isActive: true },
-		});
 		expect(mockSuccess).toHaveBeenCalledWith("Type activé avec succès");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
@@ -165,29 +184,22 @@ describe("toggleProductTypeStatus", () => {
 	it("should deactivate type and return correct success message", async () => {
 		mockValidateInput.mockReturnValue({ data: { productTypeId: "pt-1", isActive: false } });
 		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", false));
-		expect(mockPrisma.productType.update).toHaveBeenCalledWith({
-			where: { id: "pt-1" },
+		expect(mockPrisma.productType.updateMany).toHaveBeenCalledWith({
+			where: { id: "pt-1", isSystem: false, isActive: { not: false } },
 			data: { isActive: false },
 		});
 		expect(mockSuccess).toHaveBeenCalledWith("Type désactivé avec succès");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
-	it("should update DB with correct productTypeId", async () => {
-		await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
-		expect(mockPrisma.productType.update).toHaveBeenCalledWith(
-			expect.objectContaining({ where: { id: "pt-1" } }),
-		);
-	});
-
-	it("should invalidate cache after status update", async () => {
+	it("should invalidate cache after successful status update", async () => {
 		await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
 		expect(mockGetProductTypeInvalidationTags).toHaveBeenCalled();
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-list");
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.productType.update.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.productType.updateMany.mockRejectedValue(new Error("DB crash"));
 		const result = await toggleProductTypeStatus(undefined, makeFormData("pt-1", true));
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);

@@ -21,8 +21,6 @@ export const reviewMediaSchema = z.object({
 	altText: z.string().max(255, "Texte alternatif trop long").optional(),
 });
 
-type ReviewMediaInput = z.infer<typeof reviewMediaSchema>;
-
 // ============================================================================
 // CREATE REVIEW SCHEMA
 // ============================================================================
@@ -69,8 +67,6 @@ export const createReviewSchema = z.object({
 		.default([]),
 });
 
-type CreateReviewInput = z.infer<typeof createReviewSchema>;
-
 // ============================================================================
 // UPDATE REVIEW SCHEMA
 // ============================================================================
@@ -115,8 +111,6 @@ export const updateReviewSchema = z.object({
 		.default([]),
 });
 
-type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
-
 // ============================================================================
 // DELETE REVIEW SCHEMA
 // ============================================================================
@@ -127,8 +121,6 @@ type UpdateReviewInput = z.infer<typeof updateReviewSchema>;
 export const deleteReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
-
-type DeleteReviewInput = z.infer<typeof deleteReviewSchema>;
 
 // ============================================================================
 // MODERATION SCHEMAS (Admin)
@@ -141,8 +133,6 @@ export const moderateReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
 
-type ModerateReviewInput = z.infer<typeof moderateReviewSchema>;
-
 /**
  * Schéma pour masquer plusieurs avis en masse
  */
@@ -152,8 +142,6 @@ export const bulkHideReviewsSchema = z.object({
 		.min(1, "Sélectionnez au moins un avis")
 		.max(100, "Maximum 100 avis par opération"),
 });
-
-type BulkHideReviewsInput = z.infer<typeof bulkHideReviewsSchema>;
 
 /**
  * Schéma pour publier plusieurs avis en masse
@@ -165,8 +153,6 @@ export const bulkPublishReviewsSchema = z.object({
 		.max(100, "Maximum 100 avis par opération"),
 });
 
-type BulkPublishReviewsInput = z.infer<typeof bulkPublishReviewsSchema>;
-
 /**
  * Schéma pour supprimer plusieurs avis en masse (soft delete admin)
  */
@@ -176,8 +162,6 @@ export const bulkDeleteReviewsSchema = z.object({
 		.min(1, "Sélectionnez au moins un avis")
 		.max(100, "Maximum 100 avis par opération"),
 });
-
-type BulkDeleteReviewsInput = z.infer<typeof bulkDeleteReviewsSchema>;
 
 // ============================================================================
 // REVIEW RESPONSE SCHEMAS (Admin)
@@ -202,8 +186,6 @@ export const createReviewResponseSchema = z.object({
 		.trim(),
 });
 
-type CreateReviewResponseInput = z.infer<typeof createReviewResponseSchema>;
-
 /**
  * Schéma de validation pour la modification d'une réponse admin
  */
@@ -223,16 +205,12 @@ export const updateReviewResponseSchema = z.object({
 		.trim(),
 });
 
-type UpdateReviewResponseInput = z.infer<typeof updateReviewResponseSchema>;
-
 /**
  * Schéma de validation pour la suppression d'une réponse admin
  */
 export const deleteReviewResponseSchema = z.object({
 	id: z.cuid2("ID de réponse invalide"),
 });
-
-type DeleteReviewResponseInput = z.infer<typeof deleteReviewResponseSchema>;
 
 /**
  * Schema de validation pour l'envoi d'email de demande d'avis
@@ -241,16 +219,12 @@ export const sendReviewRequestEmailSchema = z.object({
 	orderId: z.cuid2("ID de commande invalide"),
 });
 
-type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailSchema>;
-
 /**
  * Schema de validation pour l'envoi d'email de rappel d'avis (admin)
  */
 export const sendReviewReminderEmailSchema = z.object({
 	orderId: z.cuid2("ID de commande invalide"),
 });
-
-type SendReviewReminderEmailInput = z.infer<typeof sendReviewReminderEmailSchema>;
 
 // ============================================================================
 // RESTORE SCHEMAS (Admin)
@@ -263,8 +237,6 @@ export const restoreReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
 
-type RestoreReviewInput = z.infer<typeof restoreReviewSchema>;
-
 /**
  * Schema pour restaurer plusieurs avis soft-deleted en masse (admin)
  */
@@ -274,8 +246,6 @@ export const bulkRestoreReviewsSchema = z.object({
 		.min(1, "Sélectionnez au moins un avis")
 		.max(100, "Maximum 100 avis par opération"),
 });
-
-type BulkRestoreReviewsInput = z.infer<typeof bulkRestoreReviewsSchema>;
 
 // ============================================================================
 // EXPORT SCHEMA (Admin)
@@ -303,24 +273,3 @@ export const exportReviewsSchema = z.object({
 });
 
 export type ExportReviewsInput = z.infer<typeof exportReviewsSchema>;
-
-// ============================================================================
-// STOREFRONT PARAMS SCHEMA
-// ============================================================================
-
-/**
- * Schéma de validation pour les paramètres de requête storefront
- */
-const getProductReviewsSchema = z.object({
-	productId: z.cuid2("ID de produit invalide"),
-	cursor: z.cuid2().optional(),
-	perPage: z.coerce
-		.number()
-		.min(1)
-		.max(REVIEW_CONFIG.MAX_PER_PAGE)
-		.default(REVIEW_CONFIG.DEFAULT_PER_PAGE),
-	sortBy: z.enum(["recent", "oldest", "highest-rating", "lowest-rating"]).default("recent"),
-	filterRating: z.coerce.number().int().min(1).max(5).optional(),
-});
-
-type GetProductReviewsInput = z.infer<typeof getProductReviewsSchema>;

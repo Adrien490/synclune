@@ -101,12 +101,13 @@ export function AddToCartCardButton({
 				size={isMobileFull ? "default" : "icon"}
 				className={cn(
 					isMobileFull
-						? // Mobile full-width: bouton discret avec bordure complète
+						? // Mobile full-width: bouton minimaliste — bordure seule, zero background
+							// pour alléger la densité visuelle en grille 2 colonnes (WCAG 2.5.5 tap target conservé h-11)
 							cn(
 								"h-11 w-full rounded-md",
-								"bg-primary/5 text-foreground",
-								"border-primary/50 border",
-								"hover:border-primary/70 hover:bg-primary/10",
+								"text-muted-foreground bg-transparent",
+								"border-border/80 border",
+								"hover:border-primary/60 hover:text-foreground hover:bg-primary/5",
 								"active:scale-[0.98]",
 								"text-sm font-medium",
 								"motion-safe:transition-all motion-safe:duration-200",

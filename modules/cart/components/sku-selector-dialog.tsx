@@ -17,7 +17,6 @@ import {
 import { useAppForm } from "@/shared/components/forms";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
-import type { Product } from "@/modules/products/types/product.types";
 import { PRODUCT_TYPES_REQUIRING_SIZE } from "@/modules/products/constants/product-texts.constants";
 import { slugify } from "@/shared/utils/generate-slug";
 

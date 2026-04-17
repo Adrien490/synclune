@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import Color from "color";
 import { PipetteIcon } from "lucide-react";
@@ -14,15 +15,12 @@ function parseHslFromHex(hex: string) {
 }
 
 export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDropperProps) => {
-	const { setHue, setSaturation, setLightness, setAlpha } = useColorPicker();
+	const { setHue, setSaturation, setLightness } = useColorPicker();
 
-	// Vérifier si l'API EyeDropper est supportée
 	const isSupported = typeof window !== "undefined" && "EyeDropper" in window;
 
 	const handleEyeDropper = async (): Promise<void> => {
-		if (!isSupported) {
-			return;
-		}
+		if (!isSupported) return;
 
 		let hex: string;
 		try {
@@ -30,7 +28,6 @@ export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDro
 			const result = await eyeDropper.open();
 			hex = result.sRGBHex;
 		} catch {
-			// L'utilisateur a annulé la sélection
 			return;
 		}
 
@@ -38,12 +35,31 @@ export const ColorPickerEyeDropper = ({ className, ...props }: ColorPickerEyeDro
 		setHue(h);
 		setSaturation(s);
 		setLightness(l);
-		setAlpha(100);
 	};
 
-	// Ne pas afficher le bouton si l'API n'est pas supportée
 	if (!isSupported) {
-		return null;
+		return (
+			<Tooltip>
+				<TooltipTrigger asChild>
+					{/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- span wraps disabled button so Tooltip can receive focus */}
+					<span className="inline-flex" tabIndex={0}>
+						<Button
+							data-slot="color-picker-eye-dropper"
+							className={cn("text-muted-foreground pointer-events-none shrink-0", className)}
+							size="icon"
+							variant="outline"
+							type="button"
+							disabled
+							aria-label="Pipette non disponible sur ce navigateur"
+							aria-disabled="true"
+						>
+							<PipetteIcon size={16} aria-hidden="true" />
+						</Button>
+					</span>
+				</TooltipTrigger>
+				<TooltipContent>Pipette non disponible sur ce navigateur</TooltipContent>
+			</Tooltip>
+		);
 	}
 
 	return (

@@ -37,9 +37,10 @@ export async function toggleMaterialStatus(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Verifier que le materiau existe
+		// Verifier que le materiau existe (select minimal: slug pour cache, name pour audit log)
 		const existingMaterial = await prisma.material.findUnique({
 			where: { id: validatedData.id },
+			select: { slug: true, name: true },
 		});
 
 		if (!existingMaterial) {

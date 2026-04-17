@@ -1,11 +1,7 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import { type z } from "zod";
 import { type PaginationInfo } from "@/shared/lib/pagination";
-import {
-	type GET_SUBSCRIBER_SELECT,
-	type GET_SUBSCRIBERS_SELECT,
-	type GET_SUBSCRIBERS_SORT_FIELDS,
-} from "../constants/subscriber.constants";
+import { type GET_SUBSCRIBERS_SELECT } from "../constants/subscriber.constants";
 import {
 	type getSubscribersSchema,
 	type subscriberFiltersSchema,
@@ -23,20 +19,10 @@ export interface NewsletterStats {
 }
 
 // ============================================================================
-// TYPES - SINGLE SUBSCRIBER
-// ============================================================================
-
-type Subscriber = Prisma.NewsletterSubscriberGetPayload<{
-	select: typeof GET_SUBSCRIBER_SELECT;
-}>;
-
-// ============================================================================
 // TYPES - SUBSCRIBER LIST
 // ============================================================================
 
 export type SubscriberFilters = z.infer<typeof subscriberFiltersSchema>;
-
-type SubscriberSortField = (typeof GET_SUBSCRIBERS_SORT_FIELDS)[number];
 
 export type GetSubscribersParams = z.infer<typeof getSubscribersSchema>;
 

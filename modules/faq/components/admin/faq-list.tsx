@@ -210,11 +210,11 @@ function SortableFaqItem({
 				isReordering && "pointer-events-none opacity-60",
 			)}
 		>
-			<div className="flex shrink-0 flex-col gap-0.5">
+			<div className="flex shrink-0 flex-col gap-1 sm:gap-0.5">
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-6 w-6 p-0"
+					className="h-11 w-11 p-0 sm:h-6 sm:w-6"
 					onClick={onMoveUp}
 					disabled={index === 0 || isReordering}
 					aria-label={`Monter "${item.question}"`}
@@ -224,7 +224,7 @@ function SortableFaqItem({
 				<button
 					type="button"
 					ref={handleRef}
-					className="text-muted-foreground hover:text-foreground flex cursor-grab items-center justify-center active:cursor-grabbing"
+					className="text-muted-foreground hover:text-foreground flex min-h-11 min-w-11 cursor-grab items-center justify-center active:cursor-grabbing sm:min-h-6 sm:min-w-6"
 					aria-label={`Réordonner "${item.question}"`}
 					aria-describedby="faq-drag-instructions"
 				>
@@ -233,7 +233,7 @@ function SortableFaqItem({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-6 w-6 p-0"
+					className="h-11 w-11 p-0 sm:h-6 sm:w-6"
 					onClick={onMoveDown}
 					disabled={index >= totalCount - 1 || isReordering}
 					aria-label={`Descendre "${item.question}"`}
@@ -260,7 +260,7 @@ function SortableFaqItem({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-9 w-9 p-0"
+					className="h-11 w-11 p-0 sm:h-9 sm:w-9"
 					onClick={onEdit}
 					aria-label={`Modifier "${item.question}"`}
 				>
@@ -269,7 +269,7 @@ function SortableFaqItem({
 				<Button
 					variant="ghost"
 					size="sm"
-					className="text-destructive hover:text-destructive h-9 w-9 p-0"
+					className="text-destructive hover:text-destructive h-11 w-11 p-0 sm:h-9 sm:w-9"
 					onClick={onDelete}
 					aria-label={`Supprimer "${item.question}"`}
 				>

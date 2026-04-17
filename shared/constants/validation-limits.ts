@@ -60,12 +60,3 @@ export const DATE_LIMITS = {
 	/** Date minimum pour les filtres (lancement du site) */
 	FILTERS_MIN: new Date("2020-01-01"),
 } as const;
-
-// ============================================================================
-// CONFIRMATIONS
-// ============================================================================
-
-const CONFIRMATION_TEXTS = {
-	/** Texte de confirmation pour suppression de compte */
-	DELETE_ACCOUNT: "SUPPRIMER",
-} as const;

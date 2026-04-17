@@ -163,20 +163,3 @@ export function maybeReduceMotion(
 
 	return transition ?? {};
 }
-
-/**
- * Creates a transition with reduced motion support
- */
-function createTransition(
-	duration: number = MOTION_CONFIG.duration.normal,
-	easing: Transition["ease"] = MOTION_CONFIG.easing.easeOut,
-	prefersReducedMotion: boolean = false,
-): Transition {
-	const transition: Transition = {
-		duration,
-		ease: easing,
-		type: "tween",
-	};
-
-	return maybeReduceMotion(transition, prefersReducedMotion);
-}

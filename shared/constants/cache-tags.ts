@@ -124,46 +124,6 @@ export const STOCK_THRESHOLDS = {
 } as const;
 
 // ============================================
-// HELPERS D'INVALIDATION CENTRALISÉS
-// ============================================
-
-/**
- * Retourne le tag des badges admin
- * Utiliser pour invalider les compteurs de la sidebar
- */
-function getAdminBadgesTag(): string {
-	return SHARED_CACHE_TAGS.ADMIN_BADGES;
-}
-
-/**
- * Retourne les tags pour l'invalidation de l'inventaire admin
- */
-function getAdminInventoryTags(): string[] {
-	return [SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
-}
-
-/**
- * Retourne les tags pour l'invalidation des commandes admin
- */
-function getAdminOrdersTags(): string[] {
-	return [SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
-}
-
-/**
- * Retourne les tags pour l'invalidation des clients admin
- */
-function getAdminCustomersTags(): string[] {
-	return [SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
-}
-
-// ============================================
-// TYPE EXPORTS
-// ============================================
-
-type SharedCacheTagKey = keyof typeof SHARED_CACHE_TAGS;
-type SharedCacheTagValue = (typeof SHARED_CACHE_TAGS)[SharedCacheTagKey];
-
-// ============================================
 // SESSION CACHE TAGS (évite cycle auth ↔ users)
 // ============================================
 

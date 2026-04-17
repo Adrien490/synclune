@@ -10,7 +10,7 @@ const { mockToast } = vi.hoisted(() => ({
 	},
 }));
 
-vi.mock("sonner", () => ({ toast: mockToast }));
+vi.mock("@/shared/utils/toast", () => ({ toast: mockToast }));
 
 import { createToastCallbacks, hasMessage } from "../create-toast-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -126,6 +126,69 @@ describe("createToastCallbacks", () => {
 			callbacks.onSuccess({ status: ActionStatus.SUCCESS } as never);
 
 			expect(mockToast.success).not.toHaveBeenCalled();
+		});
+
+		it("shows success toast with undoAction (default label + duration)", () => {
+			const onUndo = vi.fn();
+			const callbacks = createToastCallbacks({ undoAction: { onClick: onUndo } });
+			callbacks.onSuccess({ message: "Retiré", status: ActionStatus.SUCCESS });
+
+			expect(mockToast.success).toHaveBeenCalledTimes(1);
+			const call = mockToast.success.mock.calls[0] as [
+				string,
+				{ duration: number; action: { label: string; onClick: () => void } },
+			];
+			const [msg, opts] = call;
+			expect(msg).toBe("Retiré");
+			expect(opts.duration).toBe(5000);
+			expect(opts.action.label).toBe("Annuler");
+
+			opts.action.onClick();
+			expect(onUndo).toHaveBeenCalled();
+		});
+
+		it("supports custom undoAction label and duration", () => {
+			const callbacks = createToastCallbacks({
+				undoAction: { label: "Rétablir", onClick: vi.fn(), duration: 8000 },
+			});
+			callbacks.onSuccess({ message: "Supprimé", status: ActionStatus.SUCCESS });
+
+			const call = mockToast.success.mock.calls[0] as [
+				string,
+				{ duration: number; action: { label: string; onClick: () => void } },
+			];
+			const [, opts] = call;
+			expect(opts.duration).toBe(8000);
+			expect(opts.action.label).toBe("Rétablir");
+		});
+
+		it("prioritises undoAction over successAction when both are provided", () => {
+			const callbacks = createToastCallbacks({
+				successAction: { label: "Voir", onClick: vi.fn() },
+				undoAction: { onClick: vi.fn() },
+			});
+			callbacks.onSuccess({ message: "Done", status: ActionStatus.SUCCESS });
+
+			const call = mockToast.success.mock.calls[0] as [
+				string,
+				{ duration: number; action: { label: string; onClick: () => void } },
+			];
+			const [, opts] = call;
+			expect(opts.action.label).toBe("Annuler");
+		});
+
+		it("awaits a promise returned by undoAction.onClick without throwing", () => {
+			const onUndo = vi.fn().mockResolvedValue(undefined);
+			const callbacks = createToastCallbacks({ undoAction: { onClick: onUndo } });
+			callbacks.onSuccess({ message: "Retiré", status: ActionStatus.SUCCESS });
+
+			const call = mockToast.success.mock.calls[0] as [
+				string,
+				{ duration: number; action: { label: string; onClick: () => void } },
+			];
+			const [, opts] = call;
+			expect(() => opts.action.onClick()).not.toThrow();
+			expect(onUndo).toHaveBeenCalled();
 		});
 	});
 

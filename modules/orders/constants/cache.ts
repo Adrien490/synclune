@@ -50,16 +50,6 @@ export function cacheOrdersDashboard(tag?: string) {
 	}
 }
 
-/**
- * Configure le cache pour les commandes d'un utilisateur
- * - Utilisé pour : /orders, historique commandes client
- * - Durée : 2min fraîche, 1min revalidation, 5min expiration
- */
-function cacheUserOrders(userId: string) {
-	cacheLife("userOrders");
-	cacheTag(ORDERS_CACHE_TAGS.USER_ORDERS(userId));
-}
-
 // ============================================
 // INVALIDATION HELPERS
 // ============================================

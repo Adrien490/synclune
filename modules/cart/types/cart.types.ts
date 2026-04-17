@@ -10,10 +10,6 @@ export type GetCartReturn = Prisma.CartGetPayload<{
 	select: typeof GET_CART_SELECT;
 }> | null;
 
-type Cart = Prisma.CartGetPayload<{
-	select: typeof GET_CART_SELECT;
-}>;
-
 export type CartItem = NonNullable<GetCartReturn>["items"][0];
 
 // ============================================================================

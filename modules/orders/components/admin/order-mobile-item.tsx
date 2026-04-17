@@ -8,6 +8,7 @@ import {
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -41,8 +42,10 @@ interface OrderMobileItemProps {
 
 export function OrderMobileItem({ order }: OrderMobileItemProps) {
 	const { open } = useDialog<OrderItemDrawerData>(ORDER_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			order: {
 				id: order.id,

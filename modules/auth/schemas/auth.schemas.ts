@@ -50,8 +50,6 @@ export const changePasswordSchema = z
 		path: ["newPassword"],
 	});
 
-type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
-
 // ============================================================================
 // SIGN IN EMAIL SCHEMA
 // ============================================================================
@@ -61,8 +59,6 @@ export const signInEmailSchema = z.object({
 	password: z.string().min(1, { message: "Le mot de passe est requis" }),
 	callbackURL: callbackURLSchema,
 });
-
-type SignInEmailInput = z.infer<typeof signInEmailSchema>;
 
 // ============================================================================
 // SIGN IN SOCIAL SCHEMA
@@ -74,8 +70,6 @@ export const signInSocialSchema = z.object({
 	}),
 	callbackURL: callbackURLSchema,
 });
-
-type SignInSocialInput = z.infer<typeof signInSocialSchema>;
 
 // ============================================================================
 // SIGN UP EMAIL SCHEMA
@@ -93,8 +87,6 @@ export const signUpEmailSchema = z.object({
 	callbackURL: callbackURLSchema.optional(),
 });
 
-type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;
-
 // ============================================================================
 // REQUEST PASSWORD RESET SCHEMA
 // ============================================================================
@@ -102,8 +94,6 @@ type SignUpEmailInput = z.infer<typeof signUpEmailSchema>;
 export const requestPasswordResetSchema = z.object({
 	email: emailSchema,
 });
-
-type RequestPasswordResetInput = z.infer<typeof requestPasswordResetSchema>;
 
 // ============================================================================
 // RESET PASSWORD SCHEMA
@@ -120,8 +110,6 @@ export const resetPasswordSchema = z
 		path: ["confirmPassword"],
 	});
 
-type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
-
 // ============================================================================
 // RESEND VERIFICATION EMAIL SCHEMA
 // ============================================================================
@@ -129,5 +117,3 @@ type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export const resendVerificationEmailSchema = z.object({
 	email: emailSchema,
 });
-
-type ResendVerificationEmailInput = z.infer<typeof resendVerificationEmailSchema>;

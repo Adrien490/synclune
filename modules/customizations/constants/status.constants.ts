@@ -49,16 +49,6 @@ export const CUSTOMIZATION_STATUS_COLORS: Record<
 } as const;
 
 /**
- * Options pour le select de filtre par statut (admin)
- */
-const CUSTOMIZATION_STATUS_OPTIONS = Object.entries(CUSTOMIZATION_STATUS_LABELS).map(
-	([value, label]) => ({
-		value: value as CustomizationRequestStatus,
-		label,
-	}),
-);
-
-/**
  * Statuts considérés comme "ouverts" (non finalisés)
  */
 export const OPEN_STATUSES: CustomizationRequestStatus[] = ["PENDING", "IN_PROGRESS"] as const;

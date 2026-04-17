@@ -27,6 +27,8 @@ import { getMaterialOptions } from "@/modules/materials/data/get-material-option
 import { SORT_LABELS } from "@/modules/skus/constants/sku.constants";
 import { ProductVariantsDataTable } from "@/modules/skus/components/admin/skus-data-table";
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
+import { SkusMobileList } from "@/modules/skus/components/admin/skus-mobile-list";
+import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mobile-list-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
@@ -57,6 +59,9 @@ const BulkUpdatePriceDialog = dynamic(() =>
 	import("@/modules/skus/components/admin/bulk-update-price-dialog").then(
 		(mod) => mod.BulkUpdatePriceDialog,
 	),
+);
+const SkuItemDrawer = dynamic(() =>
+	import("@/modules/skus/components/admin/sku-item-drawer").then((mod) => mod.SkuItemDrawer),
 );
 
 export type ProductVariantsSearchParams = {
@@ -173,6 +178,7 @@ export default async function ProductVariantsPage({
 			<UpdatePriceDialog />
 			<BulkAdjustStockDialog />
 			<BulkUpdatePriceDialog />
+			<SkuItemDrawer />
 
 			{/* Breadcrumb personnalise avec titre du produit */}
 			<Breadcrumb className="hidden md:block">
@@ -259,6 +265,21 @@ export default async function ProductVariantsPage({
 						skusPromise={skusPromise}
 						productSlug={slug}
 						perPage={perPage}
+					/>
+				</Suspense>
+
+				<Suspense fallback={<SkusMobileListSkeleton />}>
+					<SkusMobileList
+						skusPromise={skusPromise}
+						productSlug={slug}
+						perPage={perPage}
+						hasActiveFilters={
+							Boolean(search) ||
+							Boolean(filters.stockStatus) ||
+							Boolean(filters.colorId?.length) ||
+							Boolean(filters.materialId?.length) ||
+							typeof filters.isActive === "boolean"
+						}
 					/>
 				</Suspense>
 			</div>

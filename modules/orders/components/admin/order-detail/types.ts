@@ -3,14 +3,6 @@ import type { OrderRefundItem } from "@/modules/orders/data/get-order-refunds";
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 
 // ============================================================================
-// SHARED TYPES
-// ============================================================================
-
-interface OrderDetailProps {
-	order: GetOrderReturn;
-}
-
-// ============================================================================
 // HEADER (Client Component)
 // ============================================================================
 
@@ -22,11 +14,6 @@ export interface OrderHeaderProps {
 // ============================================================================
 // STEPPER & ALERTS (Server Components)
 // ============================================================================
-
-interface OrderProgressStepperProps {
-	status: OrderStatus;
-	paymentStatus: PaymentStatus;
-}
 
 export interface OrderAlertsProps {
 	status: OrderStatus;

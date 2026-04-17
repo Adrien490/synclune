@@ -1,60 +1,11 @@
-import { type Prisma, type MediaType } from "@/app/generated/prisma/client";
-import type {
-	StockStatus as SharedStockStatus,
-	ProductStockInfo as SharedProductStockInfo,
-	ProductVariantInfo as SharedProductVariantInfo,
-} from "@/shared/types/product-sku.types";
+import { type Prisma } from "@/app/generated/prisma/client";
+import type { StockStatus as SharedStockStatus } from "@/shared/types/product-sku.types";
 
 // Re-export des types depuis product.types.ts (source de vérité)
 export type { ProductSku } from "./product.types";
 
 // Re-export depuis shared (évite la dépendance circulaire)
-type ProductVariantInfo = SharedProductVariantInfo;
 export type StockStatus = SharedStockStatus;
-type ProductStockInfo = SharedProductStockInfo;
-
-// ============================================================================
-// TYPES SPÉCIFIQUES AUX SERVICES
-// ============================================================================
-
-type SkuVariant = {
-	sku: string;
-	color?: {
-		id: string;
-		slug: string;
-		name: string;
-		hex: string;
-	};
-	material?: string;
-	size?: string;
-	priceInclTax: number;
-	compareAtPrice?: number;
-	inventory: number;
-	isActive: boolean;
-	images: Array<{
-		id: string;
-		url: string;
-		altText?: string;
-		isPrimary: boolean;
-	}>;
-};
-
-// ============================================================================
-// PRODUCT MEDIA
-// ============================================================================
-
-type ProductImage = {
-	id: string;
-	url: string;
-	alt: string;
-	mediaType: MediaType;
-	source: "default" | "selected" | "sku";
-	skuId?: string;
-};
-
-// ============================================================================
-// PRODUCT STOCK (types exportés en haut du fichier depuis shared)
-// ============================================================================
 
 // ============================================================================
 // PRODUCT PRICING (from services/)
@@ -72,18 +23,6 @@ export interface SkuForPricing {
 	compareAtPrice?: number | null;
 	inventory?: number;
 }
-
-// ============================================================================
-// PRODUCT JEWELRY
-// ============================================================================
-
-type JewelryDimensions = {
-	// Dimensions textuelles
-	dimensions?: string;
-
-	// Informations dérivées
-	requiresSize: boolean;
-};
 
 // ============================================================================
 // PRODUCT HIGHLIGHTS

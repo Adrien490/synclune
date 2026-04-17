@@ -81,6 +81,7 @@ export async function RelatedProducts({ currentProductSlug, limit = 8 }: Related
 									product={product}
 									isInWishlist={wishlistProductIds.has(product.id)}
 									sectionId="related"
+									disablePreload
 								/>
 							</CarouselItem>
 						))}

@@ -20,6 +20,7 @@ const {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -106,6 +107,9 @@ describe("bulkToggleMaterialStatus", () => {
 
 		mockPrisma.material.findMany.mockResolvedValue([{ slug: "argent-925" }, { slug: "or-14k" }]);
 		mockPrisma.material.updateMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 	});
 
 	// --------------------------------------------------------------------------

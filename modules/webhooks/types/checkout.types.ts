@@ -1,5 +1,3 @@
-import type { PostWebhookTask } from "./webhook.types";
-
 export interface OrderItem {
 	productTitle: string | null;
 	skuColor: string | null;
@@ -34,9 +32,4 @@ export interface OrderWithItems {
 	taxAmount: number;
 	total: number;
 	items: OrderItem[];
-}
-
-interface ProcessCheckoutResult {
-	order: OrderWithItems;
-	tasks: PostWebhookTask[];
 }

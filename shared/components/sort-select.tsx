@@ -10,7 +10,6 @@ import {
 	SelectValue,
 } from "@/shared/components/ui/select";
 import { useSortSelect } from "@/shared/hooks/use-sort-select";
-import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 import { useRef } from "react";

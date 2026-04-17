@@ -68,8 +68,6 @@ export const subscribeToNewsletterSchema = z.object({
 	}),
 });
 
-type SubscribeToNewsletterInput = z.infer<typeof subscribeToNewsletterSchema>;
-
 // ============================================================================
 // CONFIRMATION TOKEN SCHEMA
 // ============================================================================
@@ -89,8 +87,6 @@ export const confirmationTokenSchema = z.object({
 		}),
 });
 
-type ConfirmationTokenInput = z.infer<typeof confirmationTokenSchema>;
-
 // ============================================================================
 // UNSUBSCRIBE TOKEN SCHEMA
 // ============================================================================
@@ -104,4 +100,84 @@ export const unsubscribeTokenSchema = z.object({
 		}),
 });
 
-type UnsubscribeTokenInput = z.infer<typeof unsubscribeTokenSchema>;
+// ============================================================================
+// ADMIN BULK ACTIONS SCHEMAS
+// ============================================================================
+
+/**
+ * Schéma de validation pour le désabonnement en masse par un admin
+ * Aligné sur adminBulkDeleteSubscribersSchema (max 100 IDs CUID2)
+ */
+export const adminBulkUnsubscribeSchema = z.object({
+	subscriberIds: z
+		.array(z.string().cuid2("ID invalide"))
+		.min(1, "Au moins un abonné est requis")
+		.max(100, "Maximum 100 abonnés par opération"),
+});
+
+/**
+ * Schéma de validation pour le renvoi en masse d'email de confirmation
+ * Limite plus restrictive (50) car coûteux en envois email
+ */
+export const adminBulkResendConfirmationSchema = z.object({
+	subscriberIds: z
+		.array(z.string().cuid2("ID invalide"))
+		.min(1, "Au moins un abonné est requis")
+		.max(50, "Maximum 50 abonnés par opération de renvoi"),
+});
+
+/**
+ * Schéma de validation pour la restauration en masse de subscribers soft-deleted
+ */
+export const adminBulkRestoreSchema = z.object({
+	subscriberIds: z
+		.array(z.string().cuid2("ID invalide"))
+		.min(1, "Au moins un abonné est requis")
+		.max(100, "Maximum 100 abonnés par opération"),
+});
+
+// ============================================================================
+// ADMIN SINGLE ACTIONS SCHEMAS
+// ============================================================================
+
+/**
+ * Schéma de validation pour le renvoi individuel d'email de confirmation
+ */
+export const adminResendConfirmationSchema = z.object({
+	subscriberId: z.string().cuid2("ID invalide"),
+});
+
+/**
+ * Schéma de validation pour la réactivation d'un subscriber UNSUBSCRIBED
+ */
+export const adminReactivateSubscriberSchema = z.object({
+	subscriberId: z.string().cuid2("ID invalide"),
+});
+
+/**
+ * Schéma de validation pour la restauration d'un subscriber soft-deleted
+ */
+export const adminRestoreSubscriberSchema = z.object({
+	subscriberId: z.string().cuid2("ID invalide"),
+});
+
+// ============================================================================
+// GDPR & CHECKOUT SCHEMAS
+// ============================================================================
+
+/**
+ * Schéma pour l'export RGPD article 15 (droit d'accès)
+ * Recherche par email car le subscriber peut être soft-deleted
+ */
+export const gdprExportSubscriberSchema = z.object({
+	email: z.email("Format d'email invalide").max(254, "L'adresse email est trop longue"),
+});
+
+/**
+ * Schéma pour l'inscription depuis le checkout (post-paiement)
+ * Appelée par webhook Stripe ou order creation, pas par formulaire utilisateur
+ */
+export const subscribeFromCheckoutSchema = z.object({
+	email: z.email("Format d'email invalide").max(254, "L'adresse email est trop longue"),
+	orderId: z.string().cuid2("ID de commande invalide"),
+});

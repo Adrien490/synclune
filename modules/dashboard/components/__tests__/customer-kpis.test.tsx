@@ -24,7 +24,7 @@ vi.mock("../kpi-card", () => ({
 		return (
 			<div data-testid="kpi-card" data-title={props.title as string}>
 				<span data-testid="kpi-value">{props.value as string}</span>
-				<span data-testid="kpi-subtitle">{(props.subtitle as string) ?? ""}</span>
+				<span data-testid="kpi-subtitle">{(props.subtitle as string | undefined) ?? ""}</span>
 			</div>
 		);
 	},

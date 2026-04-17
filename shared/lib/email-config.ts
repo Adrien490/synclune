@@ -30,11 +30,6 @@ export const EMAIL_CONTACT = CONTACT_EMAIL;
 export const EMAIL_ADMIN = CONTACT_EMAIL;
 
 /**
- * Nom de l'entreprise pour les emails
- */
-const EMAIL_COMPANY_NAME = "Synclune";
-
-/**
  * Messages d'email prédéfinis
  */
 export const EMAIL_SUBJECTS = {

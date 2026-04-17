@@ -14,23 +14,6 @@ export type {
 export const MAX_COLLECTIONS_IN_MENU = 3;
 
 /**
- * Navigation desktop - Toujours visible sur écran ≥1024px
- *
- * Structure optimisée pour bijouterie artisanale:
- * Niveau 1: Les créations (mega menu), Les collections (mega menu), Personnalisation
- */
-const desktopNavItems = [
-	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations", icon: "gem", hasDropdown: true },
-	{
-		href: ROUTES.SHOP.COLLECTIONS,
-		label: "Les collections",
-		icon: "folder-open",
-		hasDropdown: true,
-	},
-	{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
-] as const;
-
-/**
  * Génère les items de navigation mobile en fonction de l'état de connexion
  *
  * Flow optimisé selon les bonnes pratiques bijouterie artisanale:

@@ -6,6 +6,7 @@ import { CircleCheck, EyeOff } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { RatingStars } from "@/shared/components/rating-stars";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -20,11 +21,17 @@ interface ReviewMobileItemProps {
 
 export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 	const { open } = useDialog<ReviewItemDrawerData>(REVIEW_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
+
+	const handleOpen = () => {
+		haptic("selection");
+		open({ review });
+	};
 
 	return (
 		<button
 			type="button"
-			onClick={() => open({ review })}
+			onClick={handleOpen}
 			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
 			aria-label={`Ouvrir la fiche de l'avis sur ${review.product.title}`}
 		>

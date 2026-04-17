@@ -1,9 +1,4 @@
-import type {
-	OrderStatus,
-	PaymentStatus,
-	FulfillmentStatus,
-	InvoiceStatus,
-} from "@/app/generated/prisma/enums";
+import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/enums";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // Re-export pour compatibilité
@@ -13,14 +8,6 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
 	SHIPPED: "Expédiée",
 	DELIVERED: "Livrée",
 	CANCELLED: "Annulée",
-};
-
-const ORDER_STATUS_COLORS: Record<OrderStatus, string> = {
-	PENDING: "#f59e0b", // yellow-500
-	PROCESSING: "#3b82f6", // blue-500
-	SHIPPED: "#a855f7", // purple-500
-	DELIVERED: "#10b981", // green-500
-	CANCELLED: "#ef4444", // red-500
 };
 
 export const ORDER_STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
@@ -40,15 +27,6 @@ export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 	REFUNDED: "Remboursée",
 };
 
-const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
-	PENDING: "#f59e0b", // yellow-500
-	PAID: "#10b981", // green-500
-	FAILED: "#ef4444", // red-500
-	EXPIRED: "#6b7280", // gray-500
-	PARTIALLY_REFUNDED: "#f97316", // orange-500
-	REFUNDED: "#6b7280", // gray-500
-};
-
 export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
 	PENDING: "warning",
 	PAID: "success",
@@ -56,22 +34,6 @@ export const PAYMENT_STATUS_VARIANTS: Record<PaymentStatus, BadgeVariant> = {
 	EXPIRED: "secondary",
 	PARTIALLY_REFUNDED: "warning",
 	REFUNDED: "secondary",
-};
-
-const SHIPPING_ZONE_LABELS: Record<string, string> = {
-	METROPOLITAN: "FR",
-	CORSE: "CORSE",
-	DOM: "DOM",
-	TOM: "TOM",
-	UNKNOWN: "—",
-};
-
-const SHIPPING_ZONE_COLORS: Record<string, string> = {
-	METROPOLITAN: "#3b82f6", // blue-500
-	CORSE: "#f59e0b", // yellow-500
-	DOM: "#10b981", // green-500
-	TOM: "#a855f7", // purple-500
-	UNKNOWN: "#6b7280", // gray-500
 };
 
 export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
@@ -82,14 +44,6 @@ export const FULFILLMENT_STATUS_LABELS: Record<FulfillmentStatus, string> = {
 	RETURNED: "Retournée",
 };
 
-const FULFILLMENT_STATUS_COLORS: Record<FulfillmentStatus, string> = {
-	UNFULFILLED: "#6b7280", // gray-500
-	PROCESSING: "#3b82f6", // blue-500
-	SHIPPED: "#a855f7", // purple-500
-	DELIVERED: "#10b981", // green-500
-	RETURNED: "#ef4444", // red-500
-};
-
 export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant> = {
 	UNFULFILLED: "outline",
 	PROCESSING: "default",
@@ -97,24 +51,3 @@ export const FULFILLMENT_STATUS_VARIANTS: Record<FulfillmentStatus, BadgeVariant
 	DELIVERED: "success",
 	RETURNED: "destructive",
 };
-
-const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
-	PENDING: "En cours de génération",
-	GENERATED: "Disponible",
-	VOIDED: "Annulée",
-};
-
-const INVOICE_STATUS_COLORS: Record<InvoiceStatus, string> = {
-	PENDING: "#f59e0b", // yellow-500
-	GENERATED: "#10b981", // green-500
-	VOIDED: "#6b7280", // gray-500
-};
-
-const INVOICE_STATUS_VARIANTS: Record<InvoiceStatus, BadgeVariant> = {
-	PENDING: "warning",
-	GENERATED: "success",
-	VOIDED: "secondary",
-};
-
-// Micro-entreprise : exonération de TVA (art. 293 B du CGI)
-const VAT_EXEMPTION_TEXT = "TVA non applicable, article 293 B du CGI";

@@ -65,16 +65,3 @@ export const LEADING_TRAILING_DASHES_PATTERN = /^-+|-+$/g;
 export const SLUG_MAX_LENGTH = 70;
 
 // ============================================================================
-// EXPORT GROUPÉ
-// ============================================================================
-
-/**
- * Tous les patterns de slug regroupés
- */
-const SLUG_PATTERNS = {
-	DIACRITICS: DIACRITICS_PATTERN,
-	FRENCH_LIGATURES,
-	NON_ALPHANUMERIC: NON_ALPHANUMERIC_PATTERN,
-	MULTIPLE_DASHES: MULTIPLE_DASHES_PATTERN,
-	LEADING_TRAILING_DASHES: LEADING_TRAILING_DASHES_PATTERN,
-} as const;

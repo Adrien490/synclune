@@ -10,7 +10,7 @@
  */
 
 import { SHIPPING_COUNTRIES, type ShippingCountry } from "@/shared/constants/countries";
-import type { ShippingCarrier, ShippingRate, AllowedShippingCountry } from "../types/order.types";
+import type { ShippingRate } from "../types/order.types";
 
 // Re-export pour compatibilité
 export type { ShippingRate };
@@ -50,12 +50,6 @@ export const SHIPPING_RATES = {
 		>[],
 	},
 } as const satisfies Record<string, ShippingRate>;
-
-/**
- * Liste de tous les pays où la livraison est possible
- * Utilise la source de vérité centralisée depuis @/shared/constants/countries
- */
-const ALLOWED_SHIPPING_COUNTRIES = SHIPPING_COUNTRIES;
 
 // ============================================================================
 // MIGRATION NOTICE

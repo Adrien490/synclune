@@ -123,14 +123,13 @@ const icons = {
 };
 
 /**
- * Toaster responsive avec position adaptée mobile/desktop
+ * Toaster responsive avec position et gestes adaptés mobile/desktop.
  *
- * - Desktop (>768px): top-center avec safe-area-inset-top
- * - Mobile (≤768px): bottom-center avec safe-area-inset-bottom
+ * - Desktop (>768px): top-center, swipe horizontal pour dismiss, gap 12px.
+ * - Mobile (≤768px): bottom-center, swipe vers le bas (natif iOS/Android), gap 8px.
  *
- * Note: On utilise useIsMobile (768px) au lieu de mobileOffset Sonner (600px)
- * pour cohérence avec le breakpoint du reste de l'app et contrôle simultané
- * de la position ET de l'offset.
+ * Le safe-area iOS (notch/home indicator) est respecté via `offset` env() et
+ * le CSS `[data-sonner-toaster]` dans app/styles/components.css.
  */
 export function AppToaster() {
 	const isMobile = useIsMobile();
@@ -143,12 +142,11 @@ export function AppToaster() {
 			visibleToasts={1}
 			icons={icons}
 			closeButton
+			swipeDirections={isMobile ? ["bottom"] : ["right", "left"]}
+			gap={isMobile ? 8 : 12}
 			offset={
 				isMobile ? "max(1rem, env(safe-area-inset-bottom))" : "max(1rem, env(safe-area-inset-top))"
 			}
-			toastOptions={{
-				className: isMobile ? "!mb-safe" : "!mt-safe",
-			}}
 		/>
 	);
 }

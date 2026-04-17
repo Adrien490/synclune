@@ -44,31 +44,42 @@ export async function toggleProductTypeStatus(
 
 		const { productTypeId, isActive } = validated.data;
 
-		// Verifier que le type existe et n'est pas systeme
-		const productType = await prisma.productType.findUnique({
-			where: { id: productTypeId },
-			select: { id: true, isSystem: true, isActive: true, label: true },
+		// updateMany atomique : guard isSystem=false + isActive != target inclus dans le WHERE
+		// evite la fenetre TOCTOU entre findUnique et update
+		const updateResult = await prisma.productType.updateMany({
+			where: {
+				id: productTypeId,
+				isSystem: false,
+				isActive: { not: isActive },
+			},
+			data: { isActive },
 		});
 
-		if (!productType) {
-			return notFound("Type de produit");
-		}
+		if (updateResult.count === 0) {
+			// Discriminer la raison : notFound / isSystem / deja dans l'etat demande
+			const productType = await prisma.productType.findUnique({
+				where: { id: productTypeId },
+				select: { id: true, isSystem: true, isActive: true, label: true },
+			});
 
-		if (productType.isSystem) {
-			return error(
-				`Le type "${productType.label}" est un type systeme et ne peut pas etre modifie`,
-			);
-		}
+			if (!productType) {
+				return notFound("Type de produit");
+			}
 
-		// Skip if already in the desired state
-		if (productType.isActive === isActive) {
+			if (productType.isSystem) {
+				return error(
+					`Le type "${productType.label}" est un type systeme et ne peut pas etre modifie`,
+				);
+			}
+
+			// Idempotent : deja dans l'etat demande
 			return success(`Type déjà ${isActive ? "activé" : "désactivé"}`);
 		}
 
-		// Mettre a jour le statut
-		await prisma.productType.update({
+		// Recuperer le label pour l'audit log (post-update pour etre coherent)
+		const updated = await prisma.productType.findUnique({
 			where: { id: productTypeId },
-			data: { isActive },
+			select: { label: true },
 		});
 
 		void logAudit({
@@ -77,7 +88,7 @@ export async function toggleProductTypeStatus(
 			action: "productType.toggleStatus",
 			targetType: "productType",
 			targetId: productTypeId,
-			metadata: { label: productType.label, isActive },
+			metadata: { label: updated?.label ?? "", isActive },
 		});
 
 		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));

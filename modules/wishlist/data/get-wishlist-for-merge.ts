@@ -1,13 +1,6 @@
 import { prisma } from "@/shared/lib/prisma";
 
 // ============================================================================
-// TYPES
-// ============================================================================
-
-type GuestWishlistForMerge = Awaited<ReturnType<typeof getGuestWishlistForMerge>>;
-type UserWishlistForMerge = Awaited<ReturnType<typeof getUserWishlistForMerge>>;
-
-// ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
 

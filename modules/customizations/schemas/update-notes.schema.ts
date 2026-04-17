@@ -7,5 +7,3 @@ export const updateNotesSchema = z.object({
 		.max(2000, "Les notes ne peuvent pas dépasser 2000 caractères")
 		.transform((val) => (val.trim() === "" ? null : val.trim())),
 });
-
-type UpdateNotesInput = z.infer<typeof updateNotesSchema>;

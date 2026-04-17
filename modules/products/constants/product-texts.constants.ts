@@ -133,52 +133,11 @@ export const PRODUCT_TEXTS = {
 } as const;
 
 /**
- * Configuration des types de produits avec leurs caractéristiques
- */
-const PRODUCT_TYPE_CONFIG = {
-	EARRINGS: {
-		name: "Boucles d'oreilles",
-		emoji: "💎",
-		defaultWeight: 8.5,
-		category: "accessories",
-	},
-	RINGS: {
-		name: "Bagues",
-		emoji: "💍",
-		defaultWeight: 5.2,
-		category: "jewelry",
-	},
-	NECKLACES: {
-		name: "Colliers",
-		emoji: "📿",
-		defaultWeight: 15.3,
-		category: "jewelry",
-	},
-	BRACELETS: {
-		name: "Bracelets",
-		emoji: "🔗",
-		defaultWeight: 12.8,
-		category: "accessories",
-	},
-	ENGRAVINGS: {
-		name: "Gravures",
-		emoji: "✨",
-		defaultWeight: 0,
-		category: "services",
-	},
-} as const;
-
-/**
  * Types de produits qui nécessitent obligatoirement une taille
  * (sauf si la taille est ajustable)
  * ⚠️ Aligné avec les slugs en base de données (lowercase)
  */
 export const PRODUCT_TYPES_REQUIRING_SIZE = ["ring", "bracelet"] as const;
-
-/**
- * Type helper pour les types de produits nécessitant une taille
- */
-type ProductTypeRequiringSize = (typeof PRODUCT_TYPES_REQUIRING_SIZE)[number];
 
 /**
  * Configuration des tailles d'images optimisées pour performance
@@ -202,15 +161,3 @@ export const MAX_COLOR_SWATCHES = 5;
 
 /** Number of products considered above-fold for image preloading */
 export const ABOVE_FOLD_THRESHOLD = 4;
-
-/** Number of days a product is considered "new" after creation */
-const NEW_PRODUCT_DAYS = 14;
-
-const VALIDATION_MESSAGES = {
-	REQUIRED_FIELD: "Ce champ est obligatoire",
-	EMAIL_INVALID: "Adresse email invalide",
-	TEXT_TOO_LONG: (max: number) => `Maximum ${max} caractères`,
-	TEXT_TOO_SHORT: (min: number) => `Minimum ${min} caractères`,
-	INVALID_SELECTION: "Sélection invalide",
-	CUSTOMIZATION_REQUIRED: "Veuillez compléter la personnalisation",
-} as const;

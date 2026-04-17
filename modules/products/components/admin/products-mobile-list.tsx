@@ -132,6 +132,7 @@ export function ProductsMobileList({
 											alt=""
 											width={48}
 											height={48}
+											sizes="48px"
 											className="size-12 rounded-md border object-cover"
 											{...(primaryImage.blurDataUrl
 												? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }

@@ -1,7 +1,6 @@
 "use client";
 
 import PhoneInput from "react-phone-number-input";
-import type { Country } from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
 import "react-phone-number-input/style.css";
 

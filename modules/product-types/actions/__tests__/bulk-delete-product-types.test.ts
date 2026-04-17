@@ -172,8 +172,9 @@ describe("bulkDeleteProductTypes", () => {
 			where: { id: { in: ["pt-1"] } },
 		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("1 type(s)");
+		expect(result.message).toContain("1 type(s) de produit");
 		expect(result.message).toContain("2 ignoré(s)");
+		expect(result.message).not.toContain("bijou");
 	});
 
 	it("should delete all types and return success when all are deletable", async () => {

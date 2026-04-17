@@ -18,6 +18,8 @@ import { Gem } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 import { CollectionCard } from "@/modules/collections/components/collection-card";
+import { SITE_URL } from "@/shared/constants/seo-config";
+import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 interface CollectionGridProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
@@ -49,8 +51,27 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
+	const itemListJsonLd = {
+		"@context": "https://schema.org",
+		"@type": "ItemList",
+		numberOfItems: collections.length,
+		itemListElement: collections.map((collection, index) => ({
+			"@type": "ListItem",
+			position: index + 1,
+			url: `${SITE_URL}/collections/${collection.slug}`,
+			name: collection.name,
+		})),
+	};
+
 	return (
 		<div className="space-y-8">
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: safeJsonLd(itemListJsonLd),
+				}}
+			/>
+
 			{/* Grille des collections */}
 			<Stagger
 				role="list"

@@ -242,13 +242,13 @@
 	border-radius: var(--radius);
 }
 
-/* Bouton close discret */
+/* Bouton close discret — visible 28px, hit area 44px (WCAG 2.5.5) */
 [data-sonner-toast] [data-close-button] {
 	position: absolute;
-	top: 0.375rem;
-	right: 0.375rem;
-	width: 1.5rem;
-	height: 1.5rem;
+	top: 0.5rem;
+	right: 0.5rem;
+	width: 1.75rem;
+	height: 1.75rem;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -262,10 +262,39 @@
 	color: var(--muted-foreground);
 }
 
+[data-sonner-toast] [data-close-button]::before {
+	content: "";
+	position: absolute;
+	inset: -0.5rem;
+}
+
 [data-sonner-toast] [data-close-button]:hover,
 [data-sonner-toast] [data-close-button]:focus-visible {
 	opacity: 1;
 	background: var(--muted);
+}
+
+/* Press feedback mobile — native iOS/Android-like */
+@media (hover: none) and (pointer: coarse) {
+	[data-sonner-toast]:active {
+		transform: scale(0.98);
+		transition: transform 80ms ease-out;
+	}
+}
+
+/* Lift on hover desktop — micro-interaction premium */
+@media (hover: hover) and (pointer: fine) {
+	[data-sonner-toast] {
+		transition:
+			transform 150ms ease-out,
+			box-shadow 150ms ease-out;
+	}
+	[data-sonner-toast]:hover {
+		transform: translateY(-1px);
+		box-shadow:
+			0 6px 16px -2px oklch(0.8593 0.097 340.78 / 0.16),
+			0 3px 8px -2px oklch(0.8593 0.097 340.78 / 0.1) !important;
+	}
 }
 
 /* Feedback swipe amélioré */
@@ -327,6 +356,11 @@
 	[data-sonner-toast] {
 		animation: none !important;
 		transition: none !important;
+	}
+
+	[data-sonner-toast]:hover,
+	[data-sonner-toast]:active {
+		transform: none !important;
 	}
 
 	[data-sonner-toast] svg.animate-spin {

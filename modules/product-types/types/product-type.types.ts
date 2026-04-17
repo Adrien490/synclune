@@ -9,13 +9,6 @@ import {
 	type getProductTypesSchema,
 	type getProductTypeSchema,
 	type productTypeFiltersSchema,
-	type createProductTypeSchema,
-	type updateProductTypeSchema,
-	type deleteProductTypeSchema,
-	type toggleProductTypeStatusSchema,
-	type bulkActivateProductTypesSchema,
-	type bulkDeactivateProductTypesSchema,
-	type bulkDeleteProductTypesSchema,
 } from "../schemas/product-type.schemas";
 
 // ============================================================================
@@ -54,18 +47,6 @@ export type GetProductTypeReturn = Prisma.ProductTypeGetPayload<{
 export type ProductType = Prisma.ProductTypeGetPayload<{
 	select: typeof GET_PRODUCT_TYPES_SELECT;
 }>;
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-type CreateProductTypeInput = z.infer<typeof createProductTypeSchema>;
-type UpdateProductTypeInput = z.infer<typeof updateProductTypeSchema>;
-type DeleteProductTypeInput = z.infer<typeof deleteProductTypeSchema>;
-type ToggleProductTypeStatusInput = z.infer<typeof toggleProductTypeStatusSchema>;
-type BulkActivateProductTypesInput = z.infer<typeof bulkActivateProductTypesSchema>;
-type BulkDeactivateProductTypesInput = z.infer<typeof bulkDeactivateProductTypesSchema>;
-type BulkDeleteProductTypesInput = z.infer<typeof bulkDeleteProductTypesSchema>;
 
 // ============================================================================
 // UI/FORM TYPES

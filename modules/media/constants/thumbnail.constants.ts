@@ -39,9 +39,6 @@ export const THUMBNAIL_CONFIG = {
 	fallbackDuration: 10,
 } as const;
 
-/** Type for thumbnail sizes */
-type ThumbnailSize = "MEDIUM";
-
 // ============================================================================
 // CLIENT-SIDE THUMBNAIL CONFIGURATION (Canvas API)
 // ============================================================================
@@ -128,16 +125,4 @@ export const VIDEO_MIGRATION_CONFIG = {
 	infoTimeout: 10_000,
 	/** Timeout for blur placeholder generation (ms) */
 	blurTimeout: 5_000,
-} as const;
-
-// ============================================================================
-// AUDIO PROCESSING CONFIGURATION
-// ============================================================================
-
-/** Configuration for video audio removal */
-const VIDEO_AUDIO_CONFIG = {
-	/** Automatically strip audio during upload */
-	stripAudioOnUpload: true,
-	/** FFmpeg timeout for audio removal (ms) - longer due to potential re-encoding */
-	stripAudioTimeout: 120_000,
 } as const;

@@ -14,35 +14,6 @@ const mode = process.env.ARCJET_MODE === "DRY_RUN" ? ("DRY_RUN" as const) : ("LI
  */
 
 /**
- * Instance Arcjet principale pour les routes API générales
- */
-const aj = arcjet({
-	key: process.env.ARCJET_KEY!,
-	rules: [
-		// Shield protège contre les attaques courantes (SQL injection, XSS, etc.)
-		shield({ mode }),
-
-		// Détection de bots - Autorise uniquement les crawlers légitimes
-		detectBot({
-			mode, // Bloque les requêtes. Utiliser "DRY_RUN" pour logs uniquement
-			allow: [
-				"CATEGORY:SEARCH_ENGINE", // Google, Bing, DuckDuckGo, etc.
-				"CATEGORY:MONITOR", // Services de monitoring (Uptime Robot, etc.)
-				"CATEGORY:PREVIEW", // Previews de liens (Slack, Discord, WhatsApp)
-			],
-		}),
-
-		// Rate limiting global : 10 requêtes par 10 secondes par IP
-		tokenBucket({
-			mode,
-			refillRate: 10, // Recharge 10 tokens par intervalle
-			interval: 10, // Intervalle de 10 secondes
-			capacity: 20, // Capacité max du bucket
-		}),
-	],
-});
-
-/**
  * Instance Arcjet spécifique pour la newsletter
  *
  * ✨ Configuration adaptée pour les inscriptions newsletter :

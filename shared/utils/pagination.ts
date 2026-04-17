@@ -60,10 +60,3 @@ export function constrainPerPage(
 ): number {
 	return Math.min(Math.max(1, value ?? defaultValue), maxValue);
 }
-
-// ============================================================================
-// TYPE EXPORTS
-// ============================================================================
-
-type PerPageSchema = ReturnType<typeof createPerPageSchema>;
-type PaginationSchema = ReturnType<typeof createPaginationSchema>;

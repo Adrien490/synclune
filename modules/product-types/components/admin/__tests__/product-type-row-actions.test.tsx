@@ -5,9 +5,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenDialog, mockOpenAlertDialog } = vi.hoisted(() => ({
+const { mockOpenDialog, mockOpenAlertDialog, mockDuplicateProductType } = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlertDialog: vi.fn(),
+	mockDuplicateProductType: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
@@ -16,6 +17,13 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => ({ open: mockOpenAlertDialog }),
+}));
+
+vi.mock("@/modules/product-types/hooks/use-duplicate-product-type", () => ({
+	useDuplicateProductType: () => ({
+		duplicateProductType: mockDuplicateProductType,
+		isPending: false,
+	}),
 }));
 
 vi.mock("@/modules/product-types/components/product-type-form-dialog", () => ({
@@ -93,6 +101,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
+	Copy: () => <svg data-testid="icon-copy" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	ExternalLink: () => <svg data-testid="icon-external-link" />,
 	Pencil: () => <svg data-testid="icon-pencil" />,

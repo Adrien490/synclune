@@ -4,7 +4,7 @@
  * Détermine la zone de livraison (métropole, Corse, DOM-TOM) à partir du code postal.
  */
 
-import type { ShippingZone, ShippingZoneResult } from "../types/shipping-zone.types";
+import type { ShippingZoneResult } from "../types/shipping-zone.types";
 
 // Départements métropolitains français
 const FRENCH_METROPOLITAN_DEPARTMENTS = [

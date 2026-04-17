@@ -4,7 +4,7 @@ import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
-import type { RefundSyncResult, RefundRecord } from "../types/webhook.types";
+import type { RefundRecord } from "../types/webhook.types";
 
 // Re-export types for backwards compatibility
 /** Valid currency codes */

@@ -90,7 +90,7 @@ export function AnnouncementItemDrawer() {
 								rel="noopener noreferrer"
 								className="underline-offset-4 hover:underline"
 							>
-								{announcement.linkText || announcement.link}
+								{announcement.linkText ?? announcement.link}
 							</a>
 						</dd>
 					</>

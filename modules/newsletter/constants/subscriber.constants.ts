@@ -53,18 +53,3 @@ export const SORT_LABELS = {
 export const GET_NEWSLETTER_STATUS_DEFAULT_SELECT = {
 	status: true,
 } as const satisfies Prisma.NewsletterSubscriberSelect;
-
-// ============================================================================
-// BULK OPERATIONS LIMITS
-// ============================================================================
-
-/**
- * Limites pour les opérations bulk sur les abonnés
- * Protège contre les DoS et les abus
- */
-const BULK_OPERATIONS = {
-	/** Nombre maximum d'IDs dans une opération bulk */
-	MAX_IDS: 1000,
-	/** Longueur max du JSON des IDs (~1000 CUID2 IDs) */
-	MAX_JSON_LENGTH: 30000,
-} as const;

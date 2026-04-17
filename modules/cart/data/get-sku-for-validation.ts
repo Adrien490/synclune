@@ -5,11 +5,6 @@ import { prisma } from "@/shared/lib/prisma";
 // TYPES
 // ============================================================================
 
-type SkuForValidation = Awaited<ReturnType<typeof fetchSkuForValidation>>;
-/** @deprecated Use SkuForValidation instead (identical query) */
-type SkuForDetails = SkuForValidation;
-type BatchSkuRow = NonNullable<Awaited<ReturnType<typeof fetchSkusForBatchValidation>>>[number];
-
 // ============================================================================
 // SINGLE SKU QUERIES
 // ============================================================================

@@ -73,8 +73,6 @@ export const customizationSchema = z.object({
 	website: z.string().optional().or(z.literal("")),
 });
 
-type CustomizationFormData = z.infer<typeof customizationSchema>;
-
 /**
  * Partial schema for validating localStorage draft data
  * Only validates the saveable fields (excludes website, inspirationMedias)

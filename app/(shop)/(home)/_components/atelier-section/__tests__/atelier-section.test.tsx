@@ -102,6 +102,7 @@ vi.mock("../polaroid-gallery", () => ({
 }));
 
 vi.mock("../../parallax-image", () => ({
+	// eslint-disable-next-line @next/next/no-img-element
 	ParallaxImage: ({ alt }: { alt: string }) => <img data-testid="parallax-image" alt={alt} />,
 }));
 

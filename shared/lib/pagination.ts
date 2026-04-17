@@ -16,11 +16,6 @@ export const DEFAULT_PER_PAGE = 20;
 export const PER_PAGE_OPTIONS = [20, 50, 100, 200] as const;
 
 /**
- * Default direction for cursor pagination
- */
-const DEFAULT_DIRECTION = "forward" as const;
-
-/**
  * Helper to build cursor-based pagination for Prisma queries
  * More performant than offset-based pagination for large datasets
  *

@@ -42,23 +42,27 @@ export async function bulkToggleMaterialStatus(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Recuperer les slugs avant mutation pour invalidation cache
-		const materials = await prisma.material.findMany({
-			where: { id: { in: validatedData.ids } },
-			select: { slug: true },
-		});
-		const slugs = materials.map((m) => m.slug);
+		// Transaction atomique: fetch slugs + updateMany dans la même transaction
+		// pour éviter un TOC race (un matériau créé entre les deux appels manquerait
+		// l'invalidation de son tag detail).
+		const { slugs, result } = await prisma.$transaction(async (tx) => {
+			const materials = await tx.material.findMany({
+				where: { id: { in: validatedData.ids } },
+				select: { slug: true },
+			});
 
-		// Mettre a jour le statut des materiaux
-		const result = await prisma.material.updateMany({
-			where: {
-				id: {
-					in: validatedData.ids,
+			const updateResult = await tx.material.updateMany({
+				where: {
+					id: {
+						in: validatedData.ids,
+					},
 				},
-			},
-			data: {
-				isActive: validatedData.isActive,
-			},
+				data: {
+					isActive: validatedData.isActive,
+				},
+			});
+
+			return { slugs: materials.map((m) => m.slug), result: updateResult };
 		});
 
 		void logAudit({

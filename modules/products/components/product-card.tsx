@@ -88,9 +88,8 @@ function ColorSwatchList({
 					<Link
 						href={`${productUrl}?color=${color.slug}`}
 						className={cn(
-							"border-foreground/15 relative block size-7 shrink-0 rounded-full border sm:size-8",
+							"focus-ring border-foreground/15 relative block size-7 shrink-0 rounded-full border sm:size-8",
 							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 transition-transform duration-150",
-							"focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2",
 							"after:absolute after:-inset-2 after:rounded-full after:content-['']",
 							!color.inStock && "opacity-50",
 						)}
@@ -209,6 +208,10 @@ export function ProductCard({
 
 	const { status: stockStatus, message: stockMessage, totalInventory: inventory } = stockInfo;
 
+	// No active SKU — produit en catalogue sans variante publiée (état "à venir")
+	const noActiveSku = defaultSku === null;
+	const outOfStockBadgeMessage = noActiveSku ? "Bientôt disponible" : stockMessage;
+
 	// Unique ID for aria-labelledby (combines sectionId + product.id to avoid collisions)
 	const titleId = sectionId
 		? `product-title-${sectionId}-${product.id}`
@@ -222,7 +225,8 @@ export function ProductCard({
 	const discountPercent = hasDiscount ? Math.round((1 - price / compareAtPrice) * 100) : 0;
 
 	// Stock badges take priority over promo badge (same position)
-	const showPromoBadge = hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge;
+	const showPromoBadge =
+		hasDiscount && stockStatus !== "out_of_stock" && !showUrgencyBadge && !noActiveSku;
 
 	const baseUrl = `/creations/${slug}`;
 	const productUrl =
@@ -235,7 +239,7 @@ export function ProductCard({
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];
 	if (stockStatus === "out_of_stock") {
-		badgeDescriptions.push(stockMessage);
+		badgeDescriptions.push(outOfStockBadgeMessage);
 	} else if (showUrgencyBadge) {
 		badgeDescriptions.push(
 			`Stock limité : plus que ${inventory} exemplaire${inventory > 1 ? "s" : ""} disponible${inventory > 1 ? "s" : ""}`,
@@ -292,7 +296,7 @@ export function ProductCard({
 						variant="secondary"
 						className="bg-foreground/80 text-background border-0 backdrop-blur-sm"
 					>
-						{stockMessage}
+						{outOfStockBadgeMessage}
 					</CardBadge>
 				)}
 				{showUrgencyBadge && <CardBadge variant="warning">{stockMessage}</CardBadge>}
@@ -318,9 +322,7 @@ export function ProductCard({
 						)}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
-						loading={isAboveFold ? "eager" : "lazy"}
-						fetchPriority={isAboveFold ? "high" : undefined}
-						preload={isAboveFold}
+						priority={isAboveFold}
 						sizes={IMAGE_SIZES.PRODUCT_CARD}
 					/>
 					{secondaryImage && (
@@ -352,7 +354,7 @@ export function ProductCard({
 				{/* Stretched link: title link with ::after covering the entire card */}
 				<Link
 					href={productUrl}
-					className="focus-visible:outline-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
+					className="focus-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
 				>
 					<h3
 						id={titleId}
@@ -363,15 +365,21 @@ export function ProductCard({
 				</Link>
 
 				{/* Prix — placed before colors for scannability (Baymard guideline) */}
-				<ProductPrice price={price} compareAtPrice={compareAtPrice} />
+				{!noActiveSku && <ProductPrice price={price} compareAtPrice={compareAtPrice} />}
 
-				{/* Average rating (server-compatible star display) */}
+				{/* Average rating — lien direct vers la section avis (saute le stretched link via z-30) */}
 				{product.reviewStats && product.reviewStats.totalCount > 0 && (
-					<ProductCardRating
-						averageRating={Number(product.reviewStats.averageRating)}
-						totalCount={product.reviewStats.totalCount}
-						productId={product.id}
-					/>
+					<Link
+						href={`${productUrl}#reviews`}
+						className="focus-ring relative z-30 inline-flex w-fit rounded-sm"
+						aria-label={`Lire les ${product.reviewStats.totalCount} avis`}
+					>
+						<ProductCardRating
+							averageRating={Number(product.reviewStats.averageRating)}
+							totalCount={product.reviewStats.totalCount}
+							productId={product.id}
+						/>
+					</Link>
 				)}
 
 				{/* Color swatches — individual links to product page with ?color= */}

@@ -12,12 +12,14 @@ const {
 	mockBulkDeleteDialog,
 	mockActivate,
 	mockDeactivate,
+	mockExport,
 } = vi.hoisted(() => ({
 	mockSelectedItems: { value: [] as string[] },
 	mockClearSelection: vi.fn(),
 	mockBulkDeleteDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
 	mockActivate: vi.fn(),
 	mockDeactivate: vi.fn(),
+	mockExport: vi.fn(),
 }));
 
 vi.mock("@/shared/contexts/selection-context", () => ({
@@ -44,6 +46,13 @@ vi.mock("@/modules/product-types/hooks/use-bulk-deactivate-product-types", () =>
 		deactivateProductTypes: mockDeactivate,
 		isPending: false,
 		onSuccess,
+	}),
+}));
+
+vi.mock("@/modules/product-types/hooks/use-export-product-types", () => ({
+	useExportProductTypes: () => ({
+		exportProductTypes: mockExport,
+		isPending: false,
 	}),
 }));
 
@@ -85,6 +94,17 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 		align?: string;
 		className?: string;
 	}) => <div data-testid="dropdown-content">{children}</div>,
+	DropdownMenuLabel: ({
+		children,
+		className,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<div data-testid="dropdown-label" className={className}>
+			{children}
+		</div>
+	),
 	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
 	DropdownMenuItem: ({
 		children,
@@ -106,6 +126,7 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
 	CircleX: () => <svg data-testid="icon-circle-x" />,
+	Download: () => <svg data-testid="icon-download" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
 }));

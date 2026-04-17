@@ -48,7 +48,7 @@ export async function ProductVariantsDataTable({
 
 	if (productSkus.length === 0) {
 		return (
-			<Card>
+			<Card className="hidden md:block">
 				<CardContent className="py-12">
 					<TableEmptyState
 						icon={Package}

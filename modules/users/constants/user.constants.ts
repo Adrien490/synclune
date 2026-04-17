@@ -47,7 +47,6 @@ export const GET_USERS_DEFAULT_PER_PAGE = 50;
 export const GET_USERS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_USERS_DEFAULT_SORT_BY = "createdAt";
 export const GET_USERS_DEFAULT_SORT_ORDER = "desc";
-const GET_USERS_ADMIN_FALLBACK_SORT_BY = "updatedAt";
 
 export const GET_USERS_SORT_FIELDS = ["createdAt", "updatedAt", "name", "email", "role"] as const;
 

@@ -12,22 +12,3 @@
  * ISO 4217 currency code
  */
 export const DEFAULT_CURRENCY = "EUR" as const;
-
-/**
- * Divisor to convert cents to euros
- * Amounts are stored in cents in the database (Stripe standard)
- *
- * @example
- * const priceInEuros = priceInCents / CURRENCY_DIVISOR; // 1500 -> 15.00
- */
-const CURRENCY_DIVISOR = 100;
-
-/**
- * Currency symbol for display
- */
-const CURRENCY_SYMBOL = "\u20AC" as const; // Euro sign
-
-/**
- * Currency locale for formatting
- */
-const CURRENCY_LOCALE = "fr-FR" as const;

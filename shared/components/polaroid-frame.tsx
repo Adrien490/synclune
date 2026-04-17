@@ -161,7 +161,7 @@ export function PolaroidFrame({
 				{/* Photo vignette — subtle edge darkening */}
 				<div
 					className="pointer-events-none absolute inset-0"
-					style={{ boxShadow: "inset 0 0 30px 5px rgba(0,0,0,0.08)" }}
+					style={{ boxShadow: "inset 0 0 30px 5px oklch(0 0 0 / 0.08)" }}
 					aria-hidden="true"
 				/>
 			</div>
@@ -171,7 +171,7 @@ export function PolaroidFrame({
 				<figcaption
 					className={cn(
 						"absolute right-0 bottom-2 left-0 text-center text-sm italic @sm:bottom-3 @sm:text-base",
-						captionColor ? undefined : "text-gray-600",
+						captionColor ? undefined : "text-muted-foreground",
 						"font-cursive",
 					)}
 					style={{

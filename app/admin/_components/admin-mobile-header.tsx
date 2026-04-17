@@ -1,24 +1,50 @@
 "use client";
 
 import { useIsScrolled } from "@/shared/hooks/use-is-scrolled";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { usePathname } from "next/navigation";
+import { ChevronLeft, Search } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { generateBreadcrumbs } from "./dashboard-breadcrumb";
+
+const DETAIL_ROUTE_PATTERNS = [
+	/^\/admin\/ventes\/commandes\/[^/]+$/,
+	/^\/admin\/ventes\/remboursements\/[^/]+$/,
+	/^\/admin\/catalogue\/produits\/[^/]+$/,
+	/^\/admin\/catalogue\/collections\/[^/]+$/,
+	/^\/admin\/clients\/[^/]+$/,
+	/^\/admin\/marketing\/personnalisations\/[^/]+$/,
+	/^\/admin\/marketing\/discounts\/[^/]+$/,
+	/^\/admin\/marketing\/avis\/[^/]+$/,
+	/^\/admin\/contenu\/annonces\/[^/]+$/,
+	/^\/admin\/contenu\/faq\/[^/]+$/,
+];
+
+function isDetailRoute(pathname: string): boolean {
+	return DETAIL_ROUTE_PATTERNS.some((re) => re.test(pathname));
+}
 
 /**
  * Mobile header for admin pages.
- * Shows current page title. Hidden on md+.
+ * Shows current page title + contextual actions. Hidden on md+.
  * Scroll-aware: transparent at top, glass effect on scroll.
  *
- * No hamburger needed — navigation is always accessible from the bottom bar:
- * - Global nav bar on standard pages
- * - "Menu" tab in the page-specific bottom bar on contextual pages (products, discounts)
+ * Navigation redundancies by design:
+ * - Bottom bar covers primary nav (Accueil, Commandes, Produits, Menu + FAB command palette)
+ * - Back button (here) appears on detail routes — backup for non-standalone browsers
+ *   where SwipeBackProvider is a no-op
+ * - Search icon mirrors the FAB command palette for thumb-reach users at the top
  */
 export function AdminMobileHeader() {
 	const pathname = usePathname();
+	const router = useRouter();
 	const isScrolled = useIsScrolled(20);
 	const breadcrumbs = generateBreadcrumbs(pathname);
 	const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label ?? "Administration";
+	const { open: openCommandPalette } = useDialog("command-palette");
+
+	const showBack = isDetailRoute(pathname);
 
 	return (
 		<header
@@ -33,10 +59,49 @@ export function AdminMobileHeader() {
 			role="banner"
 			aria-label="En-tête mobile administration"
 		>
-			<div className="flex w-full items-center px-4">
-				<h1 className="min-w-0 flex-1 truncate text-base font-semibold tracking-tight">
+			<div className="flex w-full items-center gap-2 px-2">
+				{showBack ? (
+					<button
+						type="button"
+						onClick={() => {
+							triggerHaptic("light");
+							router.back();
+						}}
+						aria-label="Retour"
+						className={cn(
+							"flex size-11 items-center justify-center rounded-full",
+							"text-muted-foreground hover:text-foreground active:bg-accent",
+							"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
+							"transition-colors",
+						)}
+					>
+						<ChevronLeft className="size-5" aria-hidden="true" />
+					</button>
+				) : (
+					<span className="size-11 shrink-0" aria-hidden="true" />
+				)}
+
+				<h1 className="min-w-0 flex-1 truncate text-center text-base font-semibold tracking-tight">
 					{pageTitle}
 				</h1>
+
+				<button
+					type="button"
+					onClick={() => {
+						triggerHaptic("light");
+						openCommandPalette();
+					}}
+					aria-label="Rechercher"
+					aria-haspopup="dialog"
+					className={cn(
+						"flex size-11 items-center justify-center rounded-full",
+						"text-muted-foreground hover:text-foreground active:bg-accent",
+						"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
+						"transition-colors",
+					)}
+				>
+					<Search className="size-5" aria-hidden="true" />
+				</button>
 			</div>
 		</header>
 	);

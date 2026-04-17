@@ -4,6 +4,7 @@ import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/enu
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -34,11 +35,17 @@ interface RefundMobileItemProps {
 
 export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 	const { open } = useDialog<RefundItemDrawerData>(REFUND_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
+
+	const handleOpen = () => {
+		haptic("selection");
+		open({ refund });
+	};
 
 	return (
 		<button
 			type="button"
-			onClick={() => open({ refund })}
+			onClick={handleOpen}
 			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
 			aria-label={`Ouvrir la fiche du remboursement ${refund.order.orderNumber}`}
 		>

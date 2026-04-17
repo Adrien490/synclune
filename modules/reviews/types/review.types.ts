@@ -141,13 +141,6 @@ export interface ReviewStats {
 // ============================================================================
 
 /**
- * Options de tri
- */
-type ReviewSortBy = "createdAt" | "rating" | "updatedAt";
-type ReviewSortOrder = "asc" | "desc";
-type ReviewStorefrontSort = "recent" | "oldest" | "highest-rating" | "lowest-rating";
-
-/**
  * Champs de tri unifiés (pattern get-products.ts)
  */
 export type ReviewSortField =
@@ -224,45 +217,6 @@ export interface ReviewableProduct {
 	orderItemId: string;
 	orderedAt: Date;
 	deliveredAt: Date | null;
-}
-
-// ============================================================================
-// REVIEW MEDIA TYPES
-// ============================================================================
-
-/**
- * Média d'un avis (photo)
- */
-interface ReviewMedia {
-	id: string;
-	url: string;
-	blurDataUrl: string | null;
-	altText: string | null;
-}
-
-// ============================================================================
-// REVIEW RESPONSE TYPES
-// ============================================================================
-
-/**
- * Réponse admin à un avis (affichage)
- */
-interface ReviewResponseDisplay {
-	content: string;
-	authorName: string;
-	createdAt: Date;
-}
-
-/**
- * Réponse admin complète (admin)
- */
-interface ReviewResponseAdmin {
-	id: string;
-	content: string;
-	authorId: string;
-	authorName: string;
-	createdAt: Date;
-	updatedAt: Date;
 }
 
 // ============================================================================

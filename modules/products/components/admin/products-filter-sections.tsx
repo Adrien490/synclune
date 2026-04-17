@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment -- TanStack Form field value is typed `any` by design */
+
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import {
 	AccordionContent,

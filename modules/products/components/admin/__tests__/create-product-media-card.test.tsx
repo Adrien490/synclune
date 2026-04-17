@@ -115,7 +115,6 @@ const defaultProps = {
 	isMediaUploading: false,
 	uploadProgress: null,
 	handleUpload: vi.fn(),
-	deletedImageUrls: [],
 	setDeletedImageUrls: vi.fn(),
 };
 
@@ -264,7 +263,6 @@ describe("CreateProductMediaCard", () => {
 						queued: 0,
 					}}
 					handleUpload={vi.fn()}
-					deletedImageUrls={[]}
 					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
@@ -284,7 +282,6 @@ describe("CreateProductMediaCard", () => {
 						queued: 0,
 					}}
 					handleUpload={vi.fn()}
-					deletedImageUrls={[]}
 					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
@@ -304,7 +301,6 @@ describe("CreateProductMediaCard", () => {
 						queued: 0,
 					}}
 					handleUpload={vi.fn()}
-					deletedImageUrls={[]}
 					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
@@ -324,7 +320,6 @@ describe("CreateProductMediaCard", () => {
 						queued: 0,
 					}}
 					handleUpload={vi.fn()}
-					deletedImageUrls={[]}
 					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
@@ -344,7 +339,6 @@ describe("CreateProductMediaCard", () => {
 						queued: 2,
 					}}
 					handleUpload={vi.fn()}
-					deletedImageUrls={[]}
 					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
@@ -364,7 +358,6 @@ describe("CreateProductMediaCard", () => {
 						queued: 0,
 					}}
 					handleUpload={vi.fn()}
-					deletedImageUrls={[]}
 					setDeletedImageUrls={vi.fn()}
 				/>,
 			);

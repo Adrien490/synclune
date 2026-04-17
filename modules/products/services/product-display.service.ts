@@ -22,7 +22,6 @@ import type {
 import type { ProductStockInfo, StockStatus } from "@/shared/types/product-sku.types";
 import {
 	getPrimarySkuForList,
-	getStockInfoForList,
 	type GetPrimarySkuOptions,
 } from "@/modules/skus/services/sku-selection.service";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -148,17 +147,6 @@ export function getPrimaryImageForList(product: ProductFromList): ExtractedImage
 	const primarySku = getPrimarySkuForList<SkuFromList, ProductFromList>(product);
 	const activeSkus = product.skus.filter((s) => s.isActive);
 	return getPrimaryImageFromSku(primarySku, product, activeSkus);
-}
-
-/**
- * Vérifie la disponibilité du produit pour les données structurées
- * Système simplifié : InStock ou OutOfStock uniquement
- */
-function getAvailabilityForList(product: ProductFromList): string {
-	const stockInfo = getStockInfoForList(product);
-	return stockInfo.status === "out_of_stock"
-		? "https://schema.org/OutOfStock"
-		: "https://schema.org/InStock";
 }
 
 // ============================================================================

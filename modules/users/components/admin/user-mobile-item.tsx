@@ -3,6 +3,7 @@
 import { CircleCheck } from "lucide-react";
 
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -24,10 +25,12 @@ interface UserMobileItemProps {
 
 export function UserMobileItem({ user }: UserMobileItemProps) {
 	const { open } = useDialog<UserItemDrawerData>(USER_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const displayName = user.name ?? "Utilisateur";
 	const orderCount = user._count.orders;
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			user: {
 				id: user.id,

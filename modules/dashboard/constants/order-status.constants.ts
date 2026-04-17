@@ -1,4 +1,4 @@
-import type { FulfillmentStatus, OrderStatus, PaymentStatus } from "@/app/generated/prisma/client";
+import type { FulfillmentStatus, OrderStatus } from "@/app/generated/prisma/client";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================================================
@@ -19,19 +19,6 @@ export const ORDER_STATUS_VARIANTS: Record<OrderStatus, BadgeVariant> = {
 	SHIPPED: "secondary",
 	DELIVERED: "success",
 	CANCELLED: "destructive",
-};
-
-// ============================================================================
-// PAYMENT STATUS
-// ============================================================================
-
-const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
-	PENDING: "En attente",
-	PAID: "Payée",
-	FAILED: "Échouée",
-	EXPIRED: "Expirée",
-	REFUNDED: "Remboursée",
-	PARTIALLY_REFUNDED: "Part. remboursée",
 };
 
 // ============================================================================

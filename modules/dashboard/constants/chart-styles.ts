@@ -61,5 +61,3 @@ export const CHART_STYLES = {
 		minChartWidth: "min-w-125 md:min-w-0",
 	},
 } as const;
-
-type ChartHeightKey = keyof typeof CHART_STYLES.height;

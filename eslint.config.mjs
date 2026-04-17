@@ -111,6 +111,28 @@ const eslintConfig = [
 			"@typescript-eslint/no-unsafe-return": "off",
 		},
 	},
+	{
+		files: ["test/factories.ts", "**/__tests__/**"],
+		rules: {
+			"@typescript-eslint/no-unused-vars": "off",
+		},
+	},
+	{
+		// shadcn/ui primitives re-export sub-parts (SidebarRail, PopoverAnchor, etc.) as
+		// public API; schema/type files export `z.infer` aliases likewise. Currently-unused
+		// names stay part of the module surface.
+		files: [
+			"shared/components/ui/**/*.{ts,tsx}",
+			"shared/schemas/**/*.{ts,tsx}",
+			"shared/types/**/*.{ts,tsx}",
+			"modules/**/schemas/**/*.{ts,tsx}",
+			"modules/**/types/**/*.{ts,tsx}",
+			"modules/**/constants/**/*.{ts,tsx}",
+		],
+		rules: {
+			"@typescript-eslint/no-unused-vars": "off",
+		},
+	},
 ];
 
 export default eslintConfig;

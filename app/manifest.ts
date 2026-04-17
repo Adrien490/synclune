@@ -126,6 +126,27 @@ export default function manifest(): MetadataRoute.Manifest {
 				url: "/commandes",
 				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
+			{
+				name: "Administration",
+				short_name: "Admin",
+				description: "Tableau de bord administrateur",
+				url: "/admin",
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+			},
+			{
+				name: "Commandes admin",
+				short_name: "Commandes admin",
+				description: "Gérer les commandes en attente",
+				url: "/admin/ventes/commandes",
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+			},
+			{
+				name: "Produits admin",
+				short_name: "Produits admin",
+				description: "Gérer le catalogue produits",
+				url: "/admin/catalogue/produits",
+				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
+			},
 		],
 	};
 }

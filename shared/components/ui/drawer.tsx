@@ -8,14 +8,6 @@ import { Drawer as DrawerPrimitive } from "vaul";
 // Context pour détecter si on est dans un Drawer (évite nested drawers)
 const DrawerContext = React.createContext<boolean>(false);
 
-/**
- * Hook pour savoir si le composant est rendu dans un Drawer.
- * Utilisé par ResponsiveSelect pour éviter les nested drawers.
- */
-function useIsInsideDrawer() {
-	return React.useContext(DrawerContext);
-}
-
 function Drawer({
 	open,
 	onOpenChange,
@@ -57,10 +49,6 @@ function DrawerPortal({ ...props }: React.ComponentProps<typeof DrawerPrimitive.
 
 function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.Close>) {
 	return <DrawerPrimitive.Close data-slot="drawer-close" {...props} />;
-}
-
-function DrawerNestedRoot({ ...props }: React.ComponentProps<typeof DrawerPrimitive.NestedRoot>) {
-	return <DrawerPrimitive.NestedRoot data-slot="drawer-nested-root" {...props} />;
 }
 
 /**

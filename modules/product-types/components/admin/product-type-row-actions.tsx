@@ -10,9 +10,10 @@ import {
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
+import { useDuplicateProductType } from "@/modules/product-types/hooks/use-duplicate-product-type";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { ExternalLink, EllipsisVertical, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, EllipsisVertical, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialog";
 
@@ -35,6 +36,7 @@ export function ProductTypeRowActions({
 }: ProductTypeRowActionsProps) {
 	const { open } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
+	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType();
 
 	const handleEdit = () => {
 		open({
@@ -53,6 +55,10 @@ export function ProductTypeRowActions({
 			label,
 			productsCount,
 		});
+	};
+
+	const handleDuplicate = () => {
+		duplicateProductType(productTypeId);
 	};
 
 	return (
@@ -88,6 +94,11 @@ export function ProductTypeRowActions({
 						<ExternalLink className="h-4 w-4" />
 						Voir les produits
 					</Link>
+				</DropdownMenuItem>
+
+				<DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
+					<Copy className="h-4 w-4" />
+					Dupliquer
 				</DropdownMenuItem>
 
 				{!isSystem && (

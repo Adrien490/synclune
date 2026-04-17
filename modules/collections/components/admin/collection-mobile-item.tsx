@@ -4,6 +4,7 @@ import { CollectionStatus } from "@/app/generated/prisma/enums";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { COLLECTION_ITEM_DRAWER_ID, type CollectionItemDrawerData } from "./collection-item-drawer";
@@ -30,10 +31,12 @@ const STATUS_CONFIG: Record<
 
 export function CollectionMobileItem({ collection }: CollectionMobileItemProps) {
 	const { open } = useDialog<CollectionItemDrawerData>(COLLECTION_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const productsCount = collection._count.products || 0;
 	const statusConfig = STATUS_CONFIG[collection.status];
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			collection: {
 				id: collection.id,

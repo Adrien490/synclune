@@ -6,7 +6,7 @@ import { UploadProgress } from "@/shared/components/media-upload/upload-progress
 import { cn } from "@/shared/utils/cn";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { Upload } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import type { MediaData } from "@/modules/skus/types/sku-form.types";
 
 interface SkuPrimaryImageFieldProps {

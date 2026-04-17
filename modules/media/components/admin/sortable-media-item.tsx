@@ -59,8 +59,8 @@ export function SortableMediaItem({
 	onMoveDown,
 	totalCount = 1,
 }: SortableMediaItemProps) {
-	const canMoveUp = index > 0 && onMoveUp;
-	const canMoveDown = index < totalCount - 1 && onMoveDown;
+	const canMoveUp = Boolean(index > 0 && onMoveUp);
+	const canMoveDown = Boolean(index < totalCount - 1 && onMoveDown);
 	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
 		index,

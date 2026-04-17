@@ -7,22 +7,26 @@ import { createMockFormData } from "@/test/factories";
 // ============================================================================
 
 const {
-	mockRequireAdmin,
+	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
+	mockLogAudit,
 	mockGetProductTypeInvalidationTags,
 } = vi.hoisted(() => ({
-	mockRequireAdmin: vi.fn(),
+	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
+	mockLogAudit: vi.fn(),
 	mockGetProductTypeInvalidationTags: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdminWithUser: mockRequireAdminWithUser,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -38,6 +42,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("../../utils/cache.utils", () => ({
 	getProductTypeInvalidationTags: mockGetProductTypeInvalidationTags,
 }));
@@ -50,6 +55,8 @@ import { refreshProductTypes } from "../refresh-product-types";
 
 const emptyFormData = createMockFormData({});
 
+const adminUser = { id: "admin-1", name: "Alice", email: "alice@test.com" };
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -58,7 +65,7 @@ describe("refreshProductTypes", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdminWithUser.mockResolvedValue({ user: adminUser });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockGetProductTypeInvalidationTags.mockReturnValue([
 			"product-types-list",
@@ -76,11 +83,12 @@ describe("refreshProductTypes", () => {
 	});
 
 	it("should return auth error when not admin", async () => {
-		mockRequireAdmin.mockResolvedValue({
+		mockRequireAdminWithUser.mockResolvedValue({
 			error: { status: ActionStatus.UNAUTHORIZED, message: "Non autorisé" },
 		});
 		const result = await refreshProductTypes(undefined, emptyFormData);
 		expect(result.status).toBe(ActionStatus.UNAUTHORIZED);
+		expect(mockLogAudit).not.toHaveBeenCalled();
 	});
 
 	it("should return rate limit error", async () => {
@@ -89,6 +97,7 @@ describe("refreshProductTypes", () => {
 		});
 		const result = await refreshProductTypes(undefined, emptyFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockLogAudit).not.toHaveBeenCalled();
 	});
 
 	it("should invalidate all cache tags", async () => {
@@ -97,6 +106,27 @@ describe("refreshProductTypes", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-detail");
 		expect(mockUpdateTag).toHaveBeenCalledTimes(2);
+	});
+
+	it("should emit audit log with action productType.refreshCache", async () => {
+		await refreshProductTypes(undefined, emptyFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith({
+			adminId: adminUser.id,
+			adminName: adminUser.name,
+			action: "productType.refreshCache",
+			targetType: "productType",
+			targetId: "all",
+		});
+	});
+
+	it("should fallback to email for adminName when name is null", async () => {
+		mockRequireAdminWithUser.mockResolvedValue({
+			user: { id: "admin-2", name: null, email: "bob@test.com" },
+		});
+		await refreshProductTypes(undefined, emptyFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({ adminName: "bob@test.com" }),
+		);
 	});
 
 	it("should return success message after refresh", async () => {

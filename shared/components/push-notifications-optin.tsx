@@ -78,11 +78,9 @@ export function PushNotificationsOptIn({ className }: { className?: string }) {
 			});
 
 			// Opt-in to periodic sync (best effort — Chrome/Edge Android only)
-			const permissions = (
-				navigator as Navigator & {
-					permissions?: { query: (d: { name: string }) => Promise<{ state: string }> };
-				}
-			).permissions;
+			const permissions = (navigator as Navigator).permissions as
+				| { query: (d: { name: string }) => Promise<{ state: string }> }
+				| undefined;
 			if (permissions) {
 				const status = await permissions
 					.query({ name: "periodic-background-sync" })

@@ -4,22 +4,19 @@ import { cn } from "@/shared/utils/cn";
 import Color from "color";
 import { createContext, useContext, useEffect, useEffectEvent, useReducer, useRef } from "react";
 import type { ColorPickerContextValue, ColorPickerProps } from "./types";
+import { normalizeHex } from "../../utils/hex-normalizer";
 
 type ColorState = {
 	hue: number;
 	saturation: number;
 	lightness: number;
-	alpha: number;
-	mode: string;
 };
 
 type ColorAction =
 	| { type: "SET_HUE"; hue: number }
 	| { type: "SET_SATURATION"; saturation: number }
 	| { type: "SET_LIGHTNESS"; lightness: number }
-	| { type: "SET_ALPHA"; alpha: number }
-	| { type: "SET_MODE"; mode: string }
-	| { type: "SET_FROM_VALUE"; hue: number; saturation: number; lightness: number; alpha: number };
+	| { type: "SET_FROM_HSL"; hue: number; saturation: number; lightness: number };
 
 function colorReducer(state: ColorState, action: ColorAction): ColorState {
 	switch (action.type) {
@@ -29,17 +26,11 @@ function colorReducer(state: ColorState, action: ColorAction): ColorState {
 			return { ...state, saturation: action.saturation };
 		case "SET_LIGHTNESS":
 			return { ...state, lightness: action.lightness };
-		case "SET_ALPHA":
-			return { ...state, alpha: action.alpha };
-		case "SET_MODE":
-			return { ...state, mode: action.mode };
-		case "SET_FROM_VALUE":
+		case "SET_FROM_HSL":
 			return {
-				...state,
 				hue: action.hue,
 				saturation: action.saturation,
 				lightness: action.lightness,
-				alpha: action.alpha,
 			};
 	}
 }
@@ -56,6 +47,16 @@ export const useColorPicker = (): ColorPickerContextValue => {
 	return context;
 };
 
+function hexToHsl(hex: string): { hue: number; saturation: number; lightness: number } {
+	const color = Color(hex);
+	const [h, s, l] = color.hsl().array();
+	return {
+		hue: h ?? 0,
+		saturation: s ?? 0,
+		lightness: l ?? 0,
+	};
+}
+
 export const ColorPicker = ({
 	value,
 	defaultValue = "#000000",
@@ -63,64 +64,45 @@ export const ColorPicker = ({
 	className,
 	...props
 }: ColorPickerProps) => {
-	const selectedColor = Color(value);
-	const defaultColor = Color(defaultValue);
+	const initialHsl = hexToHsl(
+		(typeof value === "string" && value) ||
+			(typeof defaultValue === "string" && defaultValue) ||
+			"#000000",
+	);
 
-	const normalizeAlpha = (v: number) => (isNaN(v) ? 1 : v);
+	const [state, dispatch] = useReducer(colorReducer, initialHsl);
+	const { hue, saturation, lightness } = state;
 
-	const [state, dispatch] = useReducer(colorReducer, {
-		hue: selectedColor.hue() || defaultColor.hue() || 0,
-		saturation: selectedColor.saturationl() || defaultColor.saturationl() || 100,
-		lightness: selectedColor.lightness() || defaultColor.lightness() || 50,
-		alpha:
-			normalizeAlpha(selectedColor.alpha()) * 100 ||
-			normalizeAlpha(defaultColor.alpha()) * 100 ||
-			100,
-		mode: "hex",
-	});
-
-	const { hue, saturation, lightness, alpha } = state;
-
-	// Refs pour éviter les boucles infinies
+	// Guard to avoid ping-pong between "value prop → state" sync and "state → onChange" notification.
 	const isUpdatingFromValue = useRef(false);
 
-	// Effect Event: notify parent without re-triggering the effect on onChange identity changes
 	const onNotifyChange = useEffectEvent(() => {
-		if (onChange) {
-			const color = Color.hsl(hue, saturation, lightness).alpha(alpha / 100);
-			const rgba = color.rgb().array();
-			onChange([rgba[0], rgba[1], rgba[2], alpha / 100]);
-		}
+		if (!onChange) return;
+		const hex = Color.hsl(hue, saturation, lightness).hex();
+		onChange(normalizeHex(hex));
 	});
 
-	// Sync controlled value → internal state (nécessaire pour composant contrôlé)
 	const prevValueRef = useRef(value);
 	useEffect(() => {
-		if (value && value !== prevValueRef.current) {
-			prevValueRef.current = value;
-			isUpdatingFromValue.current = true;
-			const color = Color(value);
-			const hslValues = color.hsl().array();
-			const normalizedAlpha = isNaN(color.alpha()) ? 1 : color.alpha();
-
-			dispatch({
-				type: "SET_FROM_VALUE",
-				hue: hslValues[0] ?? 0,
-				saturation: hslValues[1] ?? 100,
-				lightness: hslValues[2] ?? 50,
-				alpha: normalizedAlpha * 100 || 100,
-			});
-		}
+		if (typeof value !== "string" || value === prevValueRef.current) return;
+		prevValueRef.current = value;
+		isUpdatingFromValue.current = true;
+		const next = hexToHsl(value);
+		dispatch({ type: "SET_FROM_HSL", ...next });
 	}, [value]);
 
-	// Notify parent of changes (skip if updating from controlled value to avoid loop)
 	useEffect(() => {
 		if (isUpdatingFromValue.current) {
 			isUpdatingFromValue.current = false;
 			return;
 		}
 		onNotifyChange();
-	}, [hue, saturation, lightness, alpha]);
+	}, [hue, saturation, lightness]);
+
+	const setFromHex = (hex: string) => {
+		const next = hexToHsl(hex);
+		dispatch({ type: "SET_FROM_HSL", ...next });
+	};
 
 	return (
 		<ColorPickerContext.Provider
@@ -128,13 +110,10 @@ export const ColorPicker = ({
 				hue,
 				saturation,
 				lightness,
-				alpha,
-				mode: state.mode,
 				setHue: (h: number) => dispatch({ type: "SET_HUE", hue: h }),
 				setSaturation: (s: number) => dispatch({ type: "SET_SATURATION", saturation: s }),
 				setLightness: (l: number) => dispatch({ type: "SET_LIGHTNESS", lightness: l }),
-				setAlpha: (a: number) => dispatch({ type: "SET_ALPHA", alpha: a }),
-				setMode: (m: string) => dispatch({ type: "SET_MODE", mode: m }),
+				setFromHex,
 			}}
 		>
 			<div

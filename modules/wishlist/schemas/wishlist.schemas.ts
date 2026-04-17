@@ -9,8 +9,6 @@ export const wishlistProductSchema = z.object({
 	productId: z.cuid2({ message: "Produit invalide" }),
 });
 
-type WishlistProductInput = z.infer<typeof wishlistProductSchema>;
-
 // Aliases for semantic clarity in action imports
 export const addToWishlistSchema = wishlistProductSchema;
 export const removeFromWishlistSchema = wishlistProductSchema;

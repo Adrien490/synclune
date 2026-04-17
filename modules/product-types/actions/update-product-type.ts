@@ -75,15 +75,21 @@ export async function updateProductType(
 				? await generateSlug(prisma, "productType", validatedData.label)
 				: existingType.slug;
 
-		// 9. Mettre a jour le type
-		await prisma.productType.update({
-			where: { id: validatedData.id },
+		// 9. Mettre a jour le type (updateMany atomique avec guard isSystem=false pour eviter TOCTOU)
+		const updateResult = await prisma.productType.updateMany({
+			where: { id: validatedData.id, isSystem: false },
 			data: {
 				label: sanitizeText(validatedData.label),
 				description: validatedData.description ? sanitizeText(validatedData.description) : null,
 				slug,
 			},
 		});
+
+		if (updateResult.count === 0) {
+			return error(
+				"Le type ne peut plus être modifié (il a été supprimé ou est devenu un type système)",
+			);
+		}
 
 		void logAudit({
 			adminId: adminUser.id,

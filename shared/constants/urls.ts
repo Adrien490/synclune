@@ -141,11 +141,3 @@ export function buildUrl(path: string): string {
 	const cleanPath = path.startsWith("/") ? path : `/${path}`;
 	return `${cleanBase}${cleanPath}`;
 }
-
-/**
- * Helper to build production URLs (for canonical/SEO)
- */
-function buildProductionUrl(path: string): string {
-	const cleanPath = path.startsWith("/") ? path : `/${path}`;
-	return `${PRODUCTION_URL}${cleanPath}`;
-}

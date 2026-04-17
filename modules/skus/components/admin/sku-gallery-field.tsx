@@ -8,7 +8,7 @@ import { getCatalogDropzoneAppearance } from "@/modules/media/utils/upload-dropz
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, m } from "motion/react";
 import { ImagePlus, Info, Upload } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import type { MediaData } from "@/modules/skus/types/sku-form.types";
 import type { MediaUploadResult } from "@/modules/media/types/hooks.types";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";

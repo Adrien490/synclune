@@ -89,20 +89,6 @@ export const COUNTRY_NAMES: Record<ShippingCountry, string> = {
 // ==============================================================================
 
 /**
- * Vérifie si un code pays est autorisé pour la livraison
- */
-function isValidShippingCountry(country: string): country is ShippingCountry {
-	return SHIPPING_COUNTRIES.includes(country as ShippingCountry);
-}
-
-/**
- * Récupère le nom d'affichage d'un pays
- */
-function getCountryName(country: ShippingCountry): string {
-	return COUNTRY_NAMES[country];
-}
-
-/**
  * Liste des pays triée par nom pour l'affichage frontend
  * France et Monaco en premier, puis les autres par ordre alphabétique
  */

@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
@@ -106,6 +107,11 @@ export async function updateMaterial(
 
 		return success("Matériau modifié avec succès");
 	} catch (e) {
+		// Race TOC: même si le pre-check passe, deux mises à jour concurrentes peuvent
+		// violer la contrainte `@unique` sur `name`. Message aligné avec le pre-check.
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
+		}
 		return handleActionError(e, "Impossible de modifier le materiau");
 	}
 }

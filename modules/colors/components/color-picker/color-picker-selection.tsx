@@ -138,7 +138,7 @@ export function ColorPickerSelection({ className, ...props }: ColorPickerSelecti
 			<div
 				className={cn(
 					"pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/90 transition-transform motion-reduce:transition-none",
-					isDragging ? "h-5 w-5 scale-110" : "h-4 w-4",
+					isDragging ? "h-6 w-6 scale-110 md:h-5 md:w-5" : "h-5 w-5 md:h-4 md:w-4",
 				)}
 				style={{
 					left: `${positionX * 100}%`,

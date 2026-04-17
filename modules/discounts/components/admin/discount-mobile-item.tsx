@@ -4,6 +4,7 @@ import { DiscountType } from "@/app/generated/prisma/enums";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -42,12 +43,18 @@ const formatUsage = (usageCount: number, maxUsageCount: number | null) =>
 
 export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 	const { open } = useDialog<DiscountItemDrawerData>(DISCOUNT_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
+
+	const handleOpen = () => {
+		haptic("selection");
+		open({ discount });
+	};
 
 	return (
 		<button
 			type="button"
-			onClick={() => open({ discount })}
+			onClick={handleOpen}
 			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
 			aria-label={`Ouvrir la fiche du code ${discount.code}`}
 		>

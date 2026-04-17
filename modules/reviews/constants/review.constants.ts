@@ -1,5 +1,4 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
-import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================
 // CONFIGURATION
@@ -222,43 +221,6 @@ export const REVIEW_STATUS_LABELS = {
 	HIDDEN: "Masqué",
 } as const;
 
-/**
- * Variantes de badge pour l'affichage des statuts
- */
-const REVIEW_STATUS_VARIANTS: Record<string, BadgeVariant> = {
-	PUBLISHED: "success",
-	HIDDEN: "secondary",
-} as const;
-
-// ============================================
-// Tri (Sort Options)
-// ============================================
-
-/**
- * Options de tri disponibles
- */
-const REVIEW_SORT_OPTIONS = {
-	RECENT: "recent",
-	OLDEST: "oldest",
-	HIGHEST_RATING: "highest-rating",
-	LOWEST_RATING: "lowest-rating",
-} as const;
-
-/**
- * Labels français pour les options de tri
- */
-const REVIEW_SORT_LABELS: Record<string, string> = {
-	recent: "Plus récents",
-	oldest: "Plus anciens",
-	"highest-rating": "Meilleures notes",
-	"lowest-rating": "Notes les plus basses",
-};
-
-/**
- * Tri par défaut
- */
-const REVIEW_DEFAULT_SORT = REVIEW_SORT_OPTIONS.RECENT;
-
 // ============================================
 // Constantes unifiées (pattern get-products.ts)
 // ============================================
@@ -294,31 +256,6 @@ export const GET_REVIEWS_SORT_FIELDS = [
 	"updatedAt-desc",
 	"updatedAt-asc",
 ] as const;
-
-/**
- * Labels français pour les champs de tri
- */
-const REVIEW_SORT_FIELD_LABELS: Record<string, string> = {
-	"createdAt-desc": "Plus récents",
-	"createdAt-asc": "Plus anciens",
-	"rating-desc": "Meilleures notes",
-	"rating-asc": "Notes les plus basses",
-	"updatedAt-desc": "Modifié récemment",
-	"updatedAt-asc": "Modifié anciennement",
-};
-
-// ============================================
-// Schema.org / Rich Snippets
-// ============================================
-
-/**
- * Configuration pour les rich snippets Google
- */
-const REVIEW_SCHEMA_ORG = {
-	"@type": "AggregateRating",
-	bestRating: REVIEW_CONFIG.MAX_RATING,
-	worstRating: REVIEW_CONFIG.MIN_RATING,
-} as const;
 
 // ============================================
 // Dialog IDs

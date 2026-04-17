@@ -141,6 +141,11 @@ export function ProductCatalog({
 					id="product-container"
 					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
 				>
+					{/* Mobile sticky sub-header (tri / recherche / filtres) */}
+					<Suspense fallback={null}>
+						<ProductSortBar sortOptions={sortOptions} />
+					</Suspense>
+
 					{/* Desktop Toolbar - hidden on mobile */}
 					<Suspense fallback={null}>
 						<Toolbar
@@ -202,9 +207,6 @@ export function ProductCatalog({
 					maxPriceInEuros={maxPriceInEuros}
 					activeProductTypeSlug={activeProductType?.slug}
 				/>
-
-				{/* Bottom Action Bar Mobile */}
-				<ProductSortBar sortOptions={sortOptions} />
 			</Suspense>
 		</div>
 	);

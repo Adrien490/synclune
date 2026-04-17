@@ -3,6 +3,7 @@
 import { Paperclip, StickyNote } from "lucide-react";
 
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -28,9 +29,11 @@ interface CustomizationMobileItemProps {
 
 export function CustomizationMobileItem({ request }: CustomizationMobileItemProps) {
 	const { open } = useDialog<CustomizationItemDrawerData>(CUSTOMIZATION_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const inspirationCount = request._count.inspirationProducts;
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			request: {
 				id: request.id,

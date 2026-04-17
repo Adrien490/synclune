@@ -1062,6 +1062,14 @@ export const ADMIN_MATERIAL_REFRESH_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour la fusion de materiaux (admin)
+ */
+export const ADMIN_MATERIAL_MERGE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+/**
  * Toutes les limites admin materiaux
  */
 export const ADMIN_MATERIAL_LIMITS = {
@@ -1072,6 +1080,7 @@ export const ADMIN_MATERIAL_LIMITS = {
 	DUPLICATE: ADMIN_MATERIAL_DUPLICATE_LIMIT,
 	BULK_OPERATIONS: ADMIN_MATERIAL_BULK_OPERATIONS_LIMIT,
 	REFRESH: ADMIN_MATERIAL_REFRESH_LIMIT,
+	MERGE: ADMIN_MATERIAL_MERGE_LIMIT,
 } as const;
 
 // ========================================
@@ -1199,6 +1208,21 @@ export const ADMIN_PRODUCT_TYPE_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
+export const ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_MERGE_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: minutes(5),
+};
+
+export const ADMIN_PRODUCT_TYPE_EXPORT_LIMIT: RateLimitConfig = {
+	limit: 3,
+	windowMs: minutes(1),
+};
+
 export const ADMIN_PRODUCT_TYPE_LIMITS = {
 	CREATE: ADMIN_PRODUCT_TYPE_CREATE_LIMIT,
 	UPDATE: ADMIN_PRODUCT_TYPE_UPDATE_LIMIT,
@@ -1206,6 +1230,9 @@ export const ADMIN_PRODUCT_TYPE_LIMITS = {
 	TOGGLE_STATUS: ADMIN_PRODUCT_TYPE_TOGGLE_STATUS_LIMIT,
 	BULK_OPERATIONS: ADMIN_PRODUCT_TYPE_BULK_OPERATIONS_LIMIT,
 	REFRESH: ADMIN_PRODUCT_TYPE_REFRESH_LIMIT,
+	DUPLICATE: ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT,
+	MERGE: ADMIN_PRODUCT_TYPE_MERGE_LIMIT,
+	EXPORT: ADMIN_PRODUCT_TYPE_EXPORT_LIMIT,
 } as const;
 
 // ========================================
@@ -1679,11 +1706,56 @@ export const ADMIN_NEWSLETTER_BULK_DELETE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
+/**
+ * Limite pour le renvoi d'email de confirmation a un subscriber PENDING
+ */
+export const ADMIN_NEWSLETTER_RESEND_CONFIRMATION_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: hours(1),
+};
+
+/**
+ * Limite pour le renvoi en masse d'email de confirmation
+ */
+export const ADMIN_NEWSLETTER_BULK_RESEND_LIMIT: RateLimitConfig = {
+	limit: 3,
+	windowMs: hours(1),
+};
+
+/**
+ * Limite pour la reactivation d'un subscriber UNSUBSCRIBED (re-consent RGPD)
+ */
+export const ADMIN_NEWSLETTER_REACTIVATE_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: hours(1),
+};
+
+/**
+ * Limite pour la restauration d'un subscriber soft-deleted
+ */
+export const ADMIN_NEWSLETTER_RESTORE_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
+/**
+ * Limite pour l'export RGPD (article 15 - droit d'acces) des donnees subscriber
+ */
+export const ADMIN_NEWSLETTER_GDPR_EXPORT_LIMIT: RateLimitConfig = {
+	limit: 5,
+	windowMs: hours(1),
+};
+
 export const ADMIN_NEWSLETTER_LIMITS = {
 	REFRESH: ADMIN_NEWSLETTER_REFRESH_LIMIT,
 	UNSUBSCRIBE: ADMIN_NEWSLETTER_UNSUBSCRIBE_LIMIT,
 	DELETE: ADMIN_NEWSLETTER_DELETE_LIMIT,
 	BULK_DELETE: ADMIN_NEWSLETTER_BULK_DELETE_LIMIT,
+	RESEND_CONFIRMATION: ADMIN_NEWSLETTER_RESEND_CONFIRMATION_LIMIT,
+	BULK_RESEND: ADMIN_NEWSLETTER_BULK_RESEND_LIMIT,
+	REACTIVATE: ADMIN_NEWSLETTER_REACTIVATE_LIMIT,
+	RESTORE: ADMIN_NEWSLETTER_RESTORE_LIMIT,
+	GDPR_EXPORT: ADMIN_NEWSLETTER_GDPR_EXPORT_LIMIT,
 } as const;
 
 // ========================================

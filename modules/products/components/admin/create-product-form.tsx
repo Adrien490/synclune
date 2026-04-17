@@ -120,7 +120,6 @@ export function CreateProductForm({
 						isMediaUploading={isMediaUploading}
 						uploadProgress={uploadProgress}
 						handleUpload={handleUpload}
-						deletedImageUrls={deletedImageUrls}
 						setDeletedImageUrls={setDeletedImageUrls}
 					/>
 					<CreateProductInfoCard

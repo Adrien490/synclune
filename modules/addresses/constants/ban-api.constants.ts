@@ -23,29 +23,3 @@ export const SEARCH_ADDRESS_MAX_LIMIT = 15;
  * Type de localisant par défaut
  */
 export const SEARCH_ADDRESS_DEFAULT_TYPE = "PositionOfInterest,StreetAddress" as const;
-
-/**
- * Types de localisants disponibles
- */
-const LOCALISANT_TYPES = {
-	POI: "PositionOfInterest",
-	STREET: "StreetAddress",
-	BOTH: "PositionOfInterest,StreetAddress",
-} as const;
-
-/**
- * Territoires disponibles
- */
-const TERRITORIES = {
-	METROPOLE: "METROPOLE",
-	DOMTOM: "DOMTOM",
-} as const;
-
-/**
- * Labels pour les types de localisants (pour l'UI)
- */
-const LOCALISANT_TYPE_LABELS = {
-	[LOCALISANT_TYPES.POI]: "Point d'intérêt",
-	[LOCALISANT_TYPES.STREET]: "Adresse postale",
-	[LOCALISANT_TYPES.BOTH]: "Tous types",
-} as const;

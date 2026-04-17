@@ -5,8 +5,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useSheetStore } from "@/shared/providers/sheet-store-provider";
-import { SKU_SELECTOR_DIALOG_ID } from "@/modules/cart/components/sku-selector-dialog";
 import { QUICK_SEARCH_DIALOG_ID } from "@/modules/products/components/quick-search-dialog/constants";
 import {
 	PRODUCT_FILTER_DIALOG_ID,
@@ -17,15 +15,6 @@ import {
 	isProductCategoryPage,
 } from "@/modules/products/services/product-filter-params.service";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	BottomBar,
-	ActiveDot,
-	bottomBarContainerClass,
-	bottomBarItemClass,
-	bottomBarActiveItemClass,
-	bottomBarIconClass,
-	bottomBarLabelClass,
-} from "@/shared/components/bottom-bar";
 import { cn } from "@/shared/utils/cn";
 
 interface ProductSortBarProps {
@@ -36,50 +25,31 @@ interface ProductSortBarProps {
 }
 
 /**
- * Barre d'actions fixe en bas pour mobile (tri, recherche, filtres).
+ * Sous-header sticky discret (mobile uniquement) pour tri / recherche / filtres.
  *
- * Affiche 3 boutons:
- * - Recherche (ouvre QuickSearchDialog)
- * - Tri (ouvre SortDrawer)
- * - Filtres (ouvre ProductFilterSheet)
+ * Positionne juste sous la navbar (sticky), 3 boutons compacts qui ne
+ * bloquent pas la visibilite des produits. Convention e-commerce mobile
+ * (Zalando, ASOS, Etsy, Shein) : actions de listing en sticky header,
+ * wayfinding primaire en bottom nav.
  *
- * Visible uniquement sur mobile (md:hidden).
- * Respecte safe-area-inset-bottom pour iPhone X+.
- *
- * Accessibilite:
- * - role="toolbar" avec navigation par fleches gauche/droite
+ * Accessibilite :
+ * - `role="toolbar"` avec navigation par fleches gauche/droite
  * - Live region pour annoncer les changements d'etat
- * - Touch targets 56px minimum (Material Design 3)
+ * - Touch targets 44px (WCAG 2.5.5)
  */
 export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
-	const {
-		open: openSearch,
-		close: closeSearch,
-		isOpen: isSearchOpen,
-	} = useDialog(QUICK_SEARCH_DIALOG_ID);
-	const {
-		open: openFilter,
-		close: closeFilter,
-		isOpen: isFilterOpen,
-	} = useDialog(PRODUCT_FILTER_DIALOG_ID);
-	const { isOpen: isSkuSelectorOpen } = useDialog(SKU_SELECTOR_DIALOG_ID);
-	const { isOpen: isMenuOpen } = useDialog("menu-sheet");
-	const isAnySheetOpen = useSheetStore((state) => state.openSheet !== null);
-
-	const isHidden =
-		isSearchOpen || isFilterOpen || sortOpen || isSkuSelectorOpen || isAnySheetOpen || isMenuOpen;
+	const { open: openSearch, close: closeSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
+	const { open: openFilter, close: closeFilter } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 
 	const searchParams = useSearchParams();
 
-	// Refs for toolbar buttons (order: Sort, Search, Filters)
 	const sortButtonRef = useRef<HTMLButtonElement>(null);
 	const searchButtonRef = useRef<HTMLButtonElement>(null);
 	const filterButtonRef = useRef<HTMLButtonElement>(null);
 	const buttonRefs = [sortButtonRef, searchButtonRef, filterButtonRef];
 
-	// Active states
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const sortByValue = searchParams.get("sortBy");
 	const hasActiveSort = !!sortByValue;
@@ -90,7 +60,6 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 	const activeFiltersCount = urlFiltersCount + (isOnCategoryPage ? 1 : 0);
 	const hasActiveFilters = urlHasActiveFilters || isOnCategoryPage;
 
-	// Live region for screen reader announcements
 	const announcementRef = useRef<HTMLSpanElement>(null);
 	const prevStateRef = useRef({
 		hasActiveSearch,
@@ -132,7 +101,6 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 
 		if (announcementRef.current) announcementRef.current.textContent = parts;
 
-		// Clear after 3s to avoid re-announcements
 		const timer = setTimeout(() => {
 			if (announcementRef.current) announcementRef.current.textContent = "";
 		}, 3000);
@@ -146,7 +114,6 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		sortByValue,
 	]);
 
-	// Keyboard navigation for toolbar (arrow keys)
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
 		const buttonCount = 3;
 		let nextIndex: number | null = null;
@@ -178,23 +145,35 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 		}
 	};
 
-	const buttonClassName = cn(bottomBarItemClass, "min-w-18");
-	const activeButtonClassName = cn(buttonClassName, bottomBarActiveItemClass);
+	const buttonBase = cn(
+		"flex flex-1 items-center justify-center gap-1.5 h-11 min-w-0 px-2",
+		"text-xs font-medium text-muted-foreground",
+		"hover:text-foreground",
+		"active:bg-primary/5 active:scale-[0.98]",
+		"transition-[color,background-color,transform] duration-150",
+		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
+	);
+	const buttonActive = "text-foreground";
 
 	return (
 		<>
-			<BottomBar
-				as="nav"
+			<nav
 				aria-label="Tri, recherche et filtres"
-				isHidden={isHidden}
-				breakpointClass="md:hidden"
-				className={className}
+				className={cn(
+					"md:hidden",
+					"sticky top-[calc(var(--announcement-bar-height,0px)+var(--navbar-height))] z-30",
+					"bg-background/80 backdrop-blur-md",
+					"border-border/50 border-b",
+					// Extend past container horizontal padding for a full-bleed sticky strip.
+					"-mx-4 sm:-mx-6",
+					className,
+				)}
 			>
 				<div
 					role="toolbar"
 					aria-orientation="horizontal"
 					aria-label="Tri, recherche et filtres"
-					className={bottomBarContainerClass}
+					className="divide-border/30 flex items-stretch divide-x"
 				>
 					{/* Tri */}
 					<button
@@ -208,13 +187,15 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 0)}
 						onFocus={() => setFocusedIndex(0)}
 						tabIndex={focusedIndex === 0 ? 0 : -1}
-						className={hasActiveSort ? activeButtonClassName : buttonClassName}
+						className={cn(buttonBase, hasActiveSort && buttonActive)}
 						aria-label={hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri"}
 						aria-haspopup="dialog"
 					>
-						{hasActiveSort && <ActiveDot />}
-						<ArrowUpDown className={bottomBarIconClass} aria-hidden="true" />
-						<span className={bottomBarLabelClass}>Trier</span>
+						<ArrowUpDown className="size-4" aria-hidden="true" />
+						<span className="truncate">Trier</span>
+						{hasActiveSort && (
+							<span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden="true" />
+						)}
 					</button>
 
 					{/* Recherche */}
@@ -228,7 +209,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 1)}
 						onFocus={() => setFocusedIndex(1)}
 						tabIndex={focusedIndex === 1 ? 0 : -1}
-						className={hasActiveSearch ? activeButtonClassName : buttonClassName}
+						className={cn(buttonBase, hasActiveSearch && buttonActive)}
 						aria-label={
 							hasActiveSearch
 								? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
@@ -236,9 +217,11 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						}
 						aria-haspopup="dialog"
 					>
-						{hasActiveSearch && <ActiveDot />}
-						<Search className={bottomBarIconClass} aria-hidden="true" />
-						<span className={bottomBarLabelClass}>Rechercher</span>
+						<Search className="size-4" aria-hidden="true" />
+						<span className="truncate">Rechercher</span>
+						{hasActiveSearch && (
+							<span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden="true" />
+						)}
 					</button>
 
 					{/* Filtres */}
@@ -252,7 +235,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
 						onFocus={() => setFocusedIndex(2)}
 						tabIndex={focusedIndex === 2 ? 0 : -1}
-						className={hasActiveFilters ? activeButtonClassName : buttonClassName}
+						className={cn(buttonBase, hasActiveFilters && buttonActive)}
 						aria-label={
 							hasActiveFilters
 								? `${activeFiltersCount} filtre${activeFiltersCount > 1 ? "s" : ""} actif${activeFiltersCount > 1 ? "s" : ""}. Modifier les filtres`
@@ -260,13 +243,19 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						}
 						aria-haspopup="dialog"
 					>
-						{hasActiveFilters && <ActiveDot />}
-						<SlidersHorizontal className={bottomBarIconClass} aria-hidden="true" />
-						<span className={bottomBarLabelClass}>Filtrer</span>
+						<SlidersHorizontal className="size-4" aria-hidden="true" />
+						<span className="truncate">Filtrer</span>
+						{hasActiveFilters && (
+							<span
+								className="bg-primary text-primary-foreground inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+								aria-hidden="true"
+							>
+								{activeFiltersCount}
+							</span>
+						)}
 					</button>
 				</div>
 
-				{/* Live region pour screen readers */}
 				<span
 					ref={announcementRef}
 					role="status"
@@ -274,9 +263,8 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 					aria-atomic="true"
 					className="sr-only"
 				/>
-			</BottomBar>
+			</nav>
 
-			{/* SortDrawer */}
 			<SortDrawer
 				open={sortOpen}
 				onOpenChange={setSortOpen}

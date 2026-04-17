@@ -10,11 +10,6 @@ import {
 	type collectionFiltersSchema,
 	type getCollectionSchema,
 	type getCollectionsSchema,
-	type createCollectionSchema,
-	type updateCollectionSchema,
-	type deleteCollectionSchema,
-	type bulkDeleteCollectionsSchema,
-	type updateCollectionStatusSchema,
 } from "../schemas/collection.schemas";
 
 // ============================================================================
@@ -63,16 +58,6 @@ export type CollectionOption = {
 	id: string;
 	name: string;
 };
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-type CreateCollectionInput = z.infer<typeof createCollectionSchema>;
-type UpdateCollectionInput = z.infer<typeof updateCollectionSchema>;
-type DeleteCollectionInput = z.infer<typeof deleteCollectionSchema>;
-type BulkDeleteCollectionsInput = z.infer<typeof bulkDeleteCollectionsSchema>;
-type UpdateCollectionStatusInput = z.infer<typeof updateCollectionStatusSchema>;
 
 // ============================================================================
 // UI COMPONENT TYPES

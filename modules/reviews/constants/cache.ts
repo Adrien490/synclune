@@ -62,16 +62,6 @@ export function cacheProductReviewStats(productId: string) {
 }
 
 /**
- * Configure le cache pour les avis d'un utilisateur (espace client)
- * - Utilisé pour : Page "Mes avis"
- * - Durée : Cache privé court
- */
-function cacheUserReviews(userId: string) {
-	cacheLife("userOrders");
-	cacheTag(REVIEWS_CACHE_TAGS.USER(userId));
-}
-
-/**
  * Configure le cache pour les produits à évaluer
  * - Utilisé pour : Section "Donnez votre avis" dans espace client
  * - Durée : Cache privé court

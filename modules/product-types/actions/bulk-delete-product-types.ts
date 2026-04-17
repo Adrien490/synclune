@@ -50,7 +50,7 @@ export async function bulkDeleteProductTypes(
 		const { ids } = validated.data;
 
 		if (ids.length === 0) {
-			return error("Au moins un type de bijou doit être sélectionné");
+			return error("Au moins un type de produit doit être sélectionné");
 		}
 
 		// 4. Verifier et supprimer dans une transaction pour eviter les race conditions
@@ -120,7 +120,7 @@ export async function bulkDeleteProductTypes(
 
 		// 6. Construire le message de retour
 		const skipped = systemTypes.length + typesWithProducts.length;
-		let message = `${deletableTypes.length} type(s) de bijou supprimé(s)`;
+		let message = `${deletableTypes.length} type(s) de produit supprimé(s)`;
 		if (skipped > 0) {
 			const skippedReasons: string[] = [];
 			if (systemTypes.length > 0) {

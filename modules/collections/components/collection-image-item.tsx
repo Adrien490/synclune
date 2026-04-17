@@ -58,8 +58,7 @@ export function CollectionImageItem({
 				"active:scale-[0.97] active:brightness-95 active:saturate-110",
 			)}
 			sizes={sizes}
-			loading={isAboveFold ? "eager" : "lazy"}
-			preload={isAboveFold}
+			priority={isAboveFold}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}
 			blurDataURL={image.blurDataUrl ?? undefined}
 			quality={index === 0 ? COLLECTION_IMAGE_QUALITY : SECONDARY_IMAGE_QUALITY}

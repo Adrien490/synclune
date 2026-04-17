@@ -10,12 +10,6 @@ import {
 	type getRefundSchema,
 	type getRefundsSchema,
 	type refundFiltersSchema,
-	type createRefundSchema,
-	type createRefundItemSchema,
-	type approveRefundSchema,
-	type processRefundSchema,
-	type rejectRefundSchema,
-	type cancelRefundSchema,
 	type getOrderForRefundSchema,
 } from "../schemas/refund.schemas";
 
@@ -37,8 +31,6 @@ export type RefundDetail = Prisma.RefundGetPayload<{
 	select: typeof GET_REFUND_SELECT;
 }>;
 
-type RefundItem = RefundDetail["items"][0];
-
 // ============================================================================
 // FUNCTION TYPES - SINGLE
 // ============================================================================
@@ -58,17 +50,6 @@ export type GetRefundsReturn = {
 	refunds: Refund[];
 	pagination: PaginationInfo;
 };
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-type CreateRefundInput = z.infer<typeof createRefundSchema>;
-type CreateRefundItemInput = z.infer<typeof createRefundItemSchema>;
-type ApproveRefundInput = z.infer<typeof approveRefundSchema>;
-type ProcessRefundInput = z.infer<typeof processRefundSchema>;
-type RejectRefundInput = z.infer<typeof rejectRefundSchema>;
-type CancelRefundInput = z.infer<typeof cancelRefundSchema>;
 
 // ============================================================================
 // ORDER FOR REFUND TYPES (from data/)

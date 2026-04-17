@@ -20,6 +20,11 @@ vi.mock("@/shared/hooks/use-swipe-action", () => ({
 	SWIPE_ACTION_THRESHOLD: 80,
 }));
 
+const mockHaptic = vi.fn();
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+}));
+
 vi.mock("motion/react", () => ({
 	useReducedMotion: () => mockReducedMotion.value,
 }));
@@ -69,6 +74,8 @@ describe("SwipeableCard", () => {
 		mockSwipeAction.leftProgress = 0;
 		mockSwipeAction.rightProgress = 0;
 		mockReducedMotion.value = false;
+		mockHaptic.mockClear();
+		mockUseSwipeAction.mockClear();
 	});
 
 	// -------------------------------------------------------------------------
@@ -309,9 +316,7 @@ describe("SwipeableCard", () => {
 			);
 
 			const allDivs = container.querySelectorAll("div");
-			const sliding = Array.from(allDivs).find((div) =>
-				div.style.transform?.includes("translateX"),
-			);
+			const sliding = Array.from(allDivs).find((div) => div.style.transform.includes("translateX"));
 
 			expect(sliding?.style.transform).toBe("translateX(-50px)");
 		});
@@ -328,9 +333,7 @@ describe("SwipeableCard", () => {
 			);
 
 			const allDivs = container.querySelectorAll("div");
-			const sliding = Array.from(allDivs).find((div) =>
-				div.style.transform?.includes("translateX"),
-			);
+			const sliding = Array.from(allDivs).find((div) => div.style.transform.includes("translateX"));
 
 			expect(sliding?.style.transition).toBe("none");
 		});
@@ -374,9 +377,7 @@ describe("SwipeableCard", () => {
 			);
 
 			const allDivs = container.querySelectorAll("div");
-			const sliding = Array.from(allDivs).find((div) =>
-				div.style.transform?.includes("translateX"),
-			);
+			const sliding = Array.from(allDivs).find((div) => div.style.transform.includes("translateX"));
 
 			expect(sliding?.style.transition).toBe("none");
 		});
@@ -394,9 +395,7 @@ describe("SwipeableCard", () => {
 			);
 
 			const allDivs = container.querySelectorAll("div");
-			const sliding = Array.from(allDivs).find((div) =>
-				div.style.transform?.includes("translateX"),
-			);
+			const sliding = Array.from(allDivs).find((div) => div.style.transform.includes("translateX"));
 
 			expect(sliding?.style.transform).toBe("translateX(-40px)");
 		});
@@ -407,7 +406,7 @@ describe("SwipeableCard", () => {
 	// -------------------------------------------------------------------------
 
 	describe("useSwipeAction integration", () => {
-		it("passes leftAction config to useSwipeAction", () => {
+		it("passes leftAction onAction wrapper that invokes user callback", () => {
 			const onAction = vi.fn();
 
 			render(
@@ -418,12 +417,17 @@ describe("SwipeableCard", () => {
 
 			expect(mockUseSwipeAction).toHaveBeenCalledWith(
 				expect.objectContaining({
-					leftAction: expect.objectContaining({ onAction }),
+					leftAction: expect.objectContaining({ onAction: expect.any(Function) }),
 				}),
 			);
+
+			const forwarded = mockUseSwipeAction.mock.calls[0]?.[0]?.leftAction?.onAction;
+			forwarded?.();
+			expect(onAction).toHaveBeenCalledTimes(1);
+			expect(mockHaptic).toHaveBeenCalledWith("medium");
 		});
 
-		it("passes rightAction config to useSwipeAction", () => {
+		it("passes rightAction onAction wrapper that invokes user callback", () => {
 			const onAction = vi.fn();
 
 			render(
@@ -434,9 +438,14 @@ describe("SwipeableCard", () => {
 
 			expect(mockUseSwipeAction).toHaveBeenCalledWith(
 				expect.objectContaining({
-					rightAction: expect.objectContaining({ onAction }),
+					rightAction: expect.objectContaining({ onAction: expect.any(Function) }),
 				}),
 			);
+
+			const forwarded = mockUseSwipeAction.mock.calls[0]?.[0]?.rightAction?.onAction;
+			forwarded?.();
+			expect(onAction).toHaveBeenCalledTimes(1);
+			expect(mockHaptic).toHaveBeenCalledWith("medium");
 		});
 
 		it("passes undefined to useSwipeAction when no leftAction", () => {

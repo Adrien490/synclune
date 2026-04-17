@@ -12,7 +12,9 @@ import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminSidebarSkeleton } from "./_components/admin-sidebar-skeleton";
 import { CommandPalette } from "./_components/command-palette";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
+import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { SwipeBackProvider } from "@/shared/components/swipe-back-provider";
 
 /**
  * Metadata pour le dashboard admin
@@ -45,6 +47,8 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 	return (
 		<SidebarProvider>
 			<SkipLink targetId="admin-main-content" />
+			<PullToRefresh />
+			<SwipeBackProvider />
 			<Suspense fallback={<AdminSidebarSkeleton />}>
 				<AdminSidebar user={user} />
 			</Suspense>

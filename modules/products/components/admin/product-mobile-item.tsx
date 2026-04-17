@@ -7,6 +7,7 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { PRODUCT_ITEM_DRAWER_ID, type ProductItemDrawerData } from "./product-item-drawer";
@@ -61,12 +62,14 @@ const getPriceDisplay = (skus: Sku[]) => {
 
 export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	const { open } = useDialog<ProductItemDrawerData>(PRODUCT_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const statusConfig = STATUS_CONFIG[product.status];
 	const priceDisplay = getPriceDisplay(product.skus);
 	const stock = getTotalStock(product.skus);
 	const primaryImage = product.skus.flatMap((sku) => sku.images).find((img) => img.isPrimary);
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			product: {
 				id: product.id,
@@ -100,6 +103,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 						alt=""
 						width={48}
 						height={48}
+						sizes="48px"
 						className="size-12 shrink-0 rounded-md border object-cover"
 						{...(primaryImage.blurDataUrl
 							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }

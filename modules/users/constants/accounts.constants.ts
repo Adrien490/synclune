@@ -32,16 +32,5 @@ export const GET_ACCOUNTS_DEFAULT_PER_PAGE = 50;
 export const GET_ACCOUNTS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_ACCOUNTS_DEFAULT_SORT_BY = "createdAt";
 export const GET_ACCOUNTS_DEFAULT_SORT_ORDER = "desc";
-const GET_ACCOUNTS_ADMIN_FALLBACK_SORT_BY = "updatedAt";
 
 export const GET_ACCOUNTS_SORT_FIELDS = ["createdAt", "updatedAt", "providerId"] as const;
-
-// ============================================================================
-// CACHE SETTINGS
-// ============================================================================
-
-const GET_ACCOUNTS_DEFAULT_CACHE = {
-	revalidate: 60 * 5,
-	stale: 60 * 10,
-	expire: 60 * 30,
-} as const;

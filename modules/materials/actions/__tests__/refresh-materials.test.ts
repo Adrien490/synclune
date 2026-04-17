@@ -11,18 +11,21 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
+	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
+	mockLogAudit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_MATERIAL_LIMITS: { REFRESH: "mat-refresh" },
 }));
@@ -35,7 +38,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));
-vi.mock("../constants/cache", () => ({
+vi.mock("../../constants/cache", () => ({
 	MATERIALS_CACHE_TAGS: {
 		LIST: "materials-list",
 	},
@@ -58,7 +61,9 @@ describe("refreshMaterials", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdmin.mockResolvedValue({
+			user: { id: "admin-1", name: "Admin", email: "admin@example.com" },
+		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -94,6 +99,29 @@ describe("refreshMaterials", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("materials-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledTimes(2);
+	});
+
+	it("should log audit entry with admin info and action material.refresh", async () => {
+		await refreshMaterials(undefined, mockFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				adminId: "admin-1",
+				adminName: "Admin",
+				action: "material.refresh",
+				targetType: "material",
+				targetId: "all",
+			}),
+		);
+	});
+
+	it("should fall back to admin email when name is missing", async () => {
+		mockRequireAdmin.mockResolvedValue({
+			user: { id: "admin-1", name: null, email: "admin@example.com" },
+		});
+		await refreshMaterials(undefined, mockFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({ adminName: "admin@example.com" }),
+		);
 	});
 
 	it("should return success after cache invalidation", async () => {

@@ -6,6 +6,7 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuLabel,
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
@@ -13,8 +14,9 @@ import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/use-bulk-activate-product-types";
 import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/use-bulk-deactivate-product-types";
+import { useExportProductTypes } from "@/modules/product-types/hooks/use-export-product-types";
 import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
-import { CircleCheck, EllipsisVertical, Trash2, CircleX } from "lucide-react";
+import { CircleCheck, Download, EllipsisVertical, Trash2, CircleX } from "lucide-react";
 import { toast } from "sonner";
 
 export function ProductTypesSelectionToolbar() {
@@ -32,6 +34,8 @@ export function ProductTypesSelectionToolbar() {
 			clearSelection();
 		},
 	});
+
+	const { exportProductTypes, isPending: isExporting } = useExportProductTypes();
 
 	const handleActivate = () => {
 		if (selectedItems.length === 0) {
@@ -85,6 +89,19 @@ export function ProductTypesSelectionToolbar() {
 					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
 						<CircleX className="h-4 w-4" />
 						Désactiver
+					</DropdownMenuItem>
+					<DropdownMenuSeparator />
+					<DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs">
+						<Download className="h-3 w-3" />
+						Exporter tout
+					</DropdownMenuLabel>
+					<DropdownMenuItem onClick={() => exportProductTypes("csv")} disabled={isExporting}>
+						<Download className="h-4 w-4" />
+						Exporter en CSV
+					</DropdownMenuItem>
+					<DropdownMenuItem onClick={() => exportProductTypes("json")} disabled={isExporting}>
+						<Download className="h-4 w-4" />
+						Exporter en JSON
 					</DropdownMenuItem>
 					<DropdownMenuSeparator />
 					<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">

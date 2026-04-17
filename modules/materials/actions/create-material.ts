@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
@@ -83,6 +84,11 @@ export async function createMaterial(
 
 		return success("Matériau créé avec succès", { id: created.id, name: created.name });
 	} catch (e) {
+		// Race TOC: même si le pre-check passe, deux créations concurrentes peuvent violer
+		// la contrainte `@unique` sur `name` au niveau DB. On retourne un message clair.
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			return error("Ce nom de materiau existe deja. Veuillez en choisir un autre.");
+		}
 		return handleActionError(e, "Une erreur est survenue lors de la création du matériau");
 	}
 }

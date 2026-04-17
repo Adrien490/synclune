@@ -12,7 +12,7 @@ vi.mock("next/image", () => ({
 		fill,
 		className,
 		sizes,
-		preload,
+		priority,
 		placeholder,
 		blurDataURL,
 		quality,
@@ -22,7 +22,7 @@ vi.mock("next/image", () => ({
 		fill?: boolean;
 		className?: string;
 		sizes?: string;
-		preload?: boolean;
+		priority?: boolean;
 		placeholder?: string;
 		blurDataURL?: string;
 		quality?: number;
@@ -34,7 +34,7 @@ vi.mock("next/image", () => ({
 			data-fill={fill ? "true" : undefined}
 			className={className}
 			data-sizes={sizes}
-			data-preload={preload ? "true" : undefined}
+			data-priority={priority ? "true" : undefined}
 			data-placeholder={placeholder}
 			data-blur-url={blurDataURL}
 			data-quality={quality}
@@ -120,14 +120,14 @@ describe("CollectionImageItem", () => {
 		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "75");
 	});
 
-	it("sets preload=true when isAboveFold is true", () => {
+	it("sets priority=true when isAboveFold is true", () => {
 		renderItem({ isAboveFold: true });
-		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-preload", "true");
+		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-priority", "true");
 	});
 
-	it("does not set preload when isAboveFold is false", () => {
+	it("does not set priority when isAboveFold is false", () => {
 		renderItem({ isAboveFold: false });
-		expect(screen.getByTestId("collection-image")).not.toHaveAttribute("data-preload");
+		expect(screen.getByTestId("collection-image")).not.toHaveAttribute("data-priority");
 	});
 
 	it("passes the sizes prop to the image", () => {

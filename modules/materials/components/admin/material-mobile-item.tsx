@@ -2,6 +2,7 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { MATERIAL_ITEM_DRAWER_ID, type MaterialItemDrawerData } from "./material-item-drawer";
@@ -19,10 +20,12 @@ interface MaterialMobileItemProps {
 
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	const { open } = useDialog<MaterialItemDrawerData>(MATERIAL_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const skuCount = material._count.skus || 0;
 	const statusLabel = material.isActive ? "Actif" : "Inactif";
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			material: {
 				id: material.id,

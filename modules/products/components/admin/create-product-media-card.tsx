@@ -7,7 +7,7 @@ import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { ImagePlus, Info, Upload } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import type { CreateProductFormInstance } from "./create-product-form-types";
 
 // The field type from TanStack Form's render prop for media array fields
@@ -36,7 +36,6 @@ interface CreateProductMediaCardProps {
 		current?: string;
 	} | null;
 	handleUpload: (files: File[], field: MediaField) => void;
-	deletedImageUrls: string[];
 	setDeletedImageUrls: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
@@ -45,7 +44,6 @@ export function CreateProductMediaCard({
 	isMediaUploading,
 	uploadProgress,
 	handleUpload,
-	deletedImageUrls,
 	setDeletedImageUrls,
 }: CreateProductMediaCardProps) {
 	const maxMediaCount = ARRAY_LIMITS.SKU_MEDIA;

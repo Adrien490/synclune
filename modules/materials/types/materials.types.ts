@@ -5,24 +5,7 @@ import {
 	type GET_MATERIALS_SELECT,
 	type GET_MATERIAL_SELECT,
 } from "../constants/materials.constants";
-import {
-	type getMaterialsSchema,
-	type getMaterialSchema,
-	type createMaterialSchema,
-	type updateMaterialSchema,
-	type deleteMaterialSchema,
-	type bulkDeleteMaterialsSchema,
-	type toggleMaterialStatusSchema,
-	type bulkToggleMaterialStatusSchema,
-	type duplicateMaterialSchema,
-	type materialFiltersSchema,
-} from "../schemas/materials.schemas";
-
-// ============================================================================
-// INFERRED TYPES FROM SCHEMAS
-// ============================================================================
-
-type MaterialFilters = z.infer<typeof materialFiltersSchema>;
+import { type getMaterialsSchema, type getMaterialSchema } from "../schemas/materials.schemas";
 
 // ============================================================================
 // FUNCTION TYPES - LIST
@@ -46,26 +29,6 @@ export type GetMaterialParams = z.infer<typeof getMaterialSchema>;
 export type GetMaterialReturn = Prisma.MaterialGetPayload<{
 	select: typeof GET_MATERIAL_SELECT;
 }>;
-
-// ============================================================================
-// ENTITY TYPES
-// ============================================================================
-
-type Material = Prisma.MaterialGetPayload<{
-	select: typeof GET_MATERIALS_SELECT;
-}>;
-
-// ============================================================================
-// MUTATION TYPES
-// ============================================================================
-
-type CreateMaterialInput = z.infer<typeof createMaterialSchema>;
-type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
-type DeleteMaterialInput = z.infer<typeof deleteMaterialSchema>;
-type BulkDeleteMaterialsInput = z.infer<typeof bulkDeleteMaterialsSchema>;
-type ToggleMaterialStatusInput = z.infer<typeof toggleMaterialStatusSchema>;
-type BulkToggleMaterialStatusInput = z.infer<typeof bulkToggleMaterialStatusSchema>;
-type DuplicateMaterialInput = z.infer<typeof duplicateMaterialSchema>;
 
 // ============================================================================
 // OPTIONS TYPES (for selects/filters)

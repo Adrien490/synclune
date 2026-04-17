@@ -1,10 +1,7 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import { type PaginationInfo } from "@/shared/lib/pagination";
 import type { ActionState } from "@/shared/types/server-action";
-import {
-	type GET_WISHLIST_SELECT,
-	type GET_WISHLIST_ITEM_SELECT,
-} from "../constants/wishlist.constants";
+import { type GET_WISHLIST_ITEM_SELECT } from "../constants/wishlist.constants";
 
 // ============================================================================
 // TYPES - WISHLIST
@@ -21,14 +18,6 @@ export type GetWishlistParams = {
 	direction?: "forward" | "backward";
 	perPage?: number;
 };
-
-/**
- * Type complet de la wishlist avec ses relations
- * Inféré depuis le Prisma select pour garantir la cohérence
- */
-type Wishlist = Prisma.WishlistGetPayload<{
-	select: typeof GET_WISHLIST_SELECT;
-}>;
 
 /**
  * Type d'un article de wishlist avec ses données SKU et produit
@@ -59,32 +48,6 @@ export type GetWishlistReturn = {
  * Returns just the count as a number (used for badge display)
  */
 export type GetWishlistItemCountReturn = number;
-
-// ============================================================================
-// TYPES - ACTION RETURN DATA
-// ============================================================================
-
-/**
- * Données retournées par addToWishlist en cas de succès
- */
-type AddToWishlistData = {
-	wishlistItemId: string;
-};
-
-/**
- * Données retournées par removeFromWishlist en cas de succès
- */
-type RemoveFromWishlistData = {
-	removed: boolean;
-};
-
-/**
- * Données retournées par toggleWishlistItem en cas de succès
- */
-type ToggleWishlistItemData = {
-	action: "added" | "removed";
-	wishlistItemId?: string;
-};
 
 // ============================================================================
 // TYPES - WISHLIST MERGE

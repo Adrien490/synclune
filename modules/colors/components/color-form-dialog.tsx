@@ -1,13 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import {
-	ColorPicker,
-	ColorPickerFormat,
-	ColorPickerHue,
-	ColorPickerOutput,
-	ColorPickerSelection,
-} from "@/modules/colors/components/color-picker";
+import { SimpleColorPicker } from "@/modules/colors/components/color-picker";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -24,7 +18,6 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import Color from "color";
 
 export const COLOR_DIALOG_ID = "color-form";
 
@@ -50,7 +43,6 @@ export function ColorFormDialog() {
 		},
 	});
 
-	// Create action
 	const [, createAction, isCreatePending] = useActionState(
 		withCallbacks(
 			createColor,
@@ -75,7 +67,6 @@ export function ColorFormDialog() {
 		undefined,
 	);
 
-	// Update action
 	const [, updateAction, isUpdatePending] = useActionState(
 		withCallbacks(
 			updateColor,
@@ -91,7 +82,6 @@ export function ColorFormDialog() {
 	const isPending = isCreatePending || isUpdatePending;
 	const action = isUpdateMode ? updateAction : createAction;
 
-	// Reset form values when color data changes
 	useEffect(() => {
 		if (color) {
 			form.reset({
@@ -133,7 +123,6 @@ export function ColorFormDialog() {
 					<RequiredFieldsNote />
 
 					<div className="space-y-6">
-						{/* ColorPicker */}
 						<form.AppField
 							name="hex"
 							validators={{
@@ -151,35 +140,16 @@ export function ColorFormDialog() {
 										Couleur
 										<span className="text-destructive ml-1">*</span>
 									</Label>
-									<ColorPicker
+									<SimpleColorPicker
 										value={field.state.value}
-										onChange={(rgba) => {
-											const colorObj = Color.rgb(rgba);
-											const hex = colorObj.hex();
-											field.handleChange(hex);
-										}}
-										className="w-full"
-									>
-										<div className="space-y-4">
-											<div className="h-48 w-full">
-												<ColorPickerSelection className="h-full w-full" />
-											</div>
-											<ColorPickerHue className="w-full" />
-											<div className="flex gap-2">
-												<ColorPickerFormat className="flex-1" />
-												<ColorPickerOutput />
-											</div>
-										</div>
-									</ColorPicker>
-									<div aria-live="polite" className="sr-only">
-										Couleur sélectionnée : {field.state.value}
-									</div>
+										onChange={(hex) => field.handleChange(hex)}
+										disabled={isPending}
+									/>
 									<input type="hidden" name="hex" value={field.state.value} />
 								</div>
 							)}
 						</form.AppField>
 
-						{/* Nom */}
 						<form.AppField
 							name="name"
 							validators={{
@@ -206,7 +176,6 @@ export function ColorFormDialog() {
 						</form.AppField>
 					</div>
 
-					{/* Submit button */}
 					<div className="flex justify-end pt-4">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (

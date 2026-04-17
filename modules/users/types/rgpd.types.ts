@@ -1,14 +1,5 @@
 import { type z } from "zod";
-import {
-	type deleteAccountSchema,
-	type exportUserDataResponseSchema,
-} from "../schemas/user.schemas";
-
-// ============================================================================
-// DELETE ACCOUNT TYPES (RGPD - Suppression de compte)
-// ============================================================================
-
-type DeleteAccountInput = z.infer<typeof deleteAccountSchema>;
+import { type exportUserDataResponseSchema } from "../schemas/user.schemas";
 
 // ============================================================================
 // EXPORT USER DATA TYPES (RGPD - Droit à la portabilité)

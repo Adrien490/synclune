@@ -1,11 +1,7 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import { type z } from "zod";
 import { type PaginationInfo } from "@/shared/lib/pagination";
-import {
-	type GET_SESSION_SELECT,
-	type GET_SESSIONS_SELECT,
-	type GET_SESSIONS_SORT_FIELDS,
-} from "../constants/session.constants";
+import { type GET_SESSION_SELECT, type GET_SESSIONS_SELECT } from "../constants/session.constants";
 import {
 	type getSessionSchema,
 	type getSessionsSchema,
@@ -37,8 +33,6 @@ export interface FetchSessionContext {
 
 export type SessionFilters = z.infer<typeof sessionFiltersSchema>;
 
-type SessionSortField = (typeof GET_SESSIONS_SORT_FIELDS)[number];
-
 export type GetSessionsParams = z.infer<typeof getSessionsSchema>;
 
 export type GetSessionsReturn = {
@@ -51,7 +45,3 @@ export type GetSessionsReturn = {
 	>;
 	pagination: PaginationInfo;
 };
-
-type Session = Prisma.SessionGetPayload<{
-	select: typeof GET_SESSIONS_SELECT;
-}>;

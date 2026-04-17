@@ -24,7 +24,7 @@ const {
 		productType: {
 			findUnique: vi.fn(),
 			findFirst: vi.fn(),
-			update: vi.fn(),
+			updateMany: vi.fn(),
 		},
 	},
 	mockRequireAdmin: vi.fn(),
@@ -106,7 +106,7 @@ describe("updateProductType", () => {
 		mockGetProductTypeInvalidationTags.mockReturnValue(["product-types-list"]);
 		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 		mockPrisma.productType.findFirst.mockResolvedValue(null);
-		mockPrisma.productType.update.mockResolvedValue({ id: "pt-1" });
+		mockPrisma.productType.updateMany.mockResolvedValue({ count: 1 });
 		mockGenerateSlug.mockResolvedValue("bague-updated");
 		mockSanitizeText.mockImplementation((text: string) => text);
 
@@ -198,7 +198,7 @@ describe("updateProductType", () => {
 		);
 		await updateProductType(undefined, validFormData);
 		expect(mockGenerateSlug).not.toHaveBeenCalled();
-		expect(mockPrisma.productType.update).toHaveBeenCalledWith(
+		expect(mockPrisma.productType.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ slug: "bague" }),
 			}),
@@ -210,8 +210,8 @@ describe("updateProductType", () => {
 			.mockReturnValueOnce("Bague Updated sanitized")
 			.mockReturnValueOnce("Nouvelle description sanitized");
 		await updateProductType(undefined, validFormData);
-		expect(mockPrisma.productType.update).toHaveBeenCalledWith({
-			where: { id: "pt-1" },
+		expect(mockPrisma.productType.updateMany).toHaveBeenCalledWith({
+			where: { id: "pt-1", isSystem: false },
 			data: expect.objectContaining({
 				label: "Bague Updated sanitized",
 				description: "Nouvelle description sanitized",
@@ -224,12 +224,20 @@ describe("updateProductType", () => {
 			data: { id: "pt-1", label: "Bague Updated", description: undefined },
 		});
 		await updateProductType(undefined, validFormData);
-		expect(mockPrisma.productType.update).toHaveBeenCalledWith({
-			where: { id: "pt-1" },
+		expect(mockPrisma.productType.updateMany).toHaveBeenCalledWith({
+			where: { id: "pt-1", isSystem: false },
 			data: expect.objectContaining({
 				description: null,
 			}),
 		});
+	});
+
+	it("should return TOCTOU error when updateMany affects 0 rows (race: type became system or was deleted)", async () => {
+		mockPrisma.productType.updateMany.mockResolvedValue({ count: 0 });
+		const result = await updateProductType(undefined, validFormData);
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("ne peut plus être modifié"));
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockGetProductTypeInvalidationTags).not.toHaveBeenCalled();
 	});
 
 	it("should invalidate cache after update", async () => {
@@ -245,7 +253,7 @@ describe("updateProductType", () => {
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.productType.update.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.productType.updateMany.mockRejectedValue(new Error("DB crash"));
 		const result = await updateProductType(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);

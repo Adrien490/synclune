@@ -76,7 +76,7 @@ export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileList
 									</Badge>
 								</ItemTitle>
 								<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-									<span>{refund.order.customerName ?? refund.order.customerEmail}</span>
+									<span>{refund.order.customerName || refund.order.customerEmail}</span>
 									<span aria-hidden="true">·</span>
 									<span>{REFUND_REASON_LABELS[refund.reason as RefundReason]}</span>
 									<span aria-hidden="true">·</span>

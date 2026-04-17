@@ -72,6 +72,7 @@ export async function CartRecommendations({ limit = 4 }: CartRecommendationsProp
 						index={index}
 						isInWishlist={wishlistProductIds.has(product.id)}
 						sectionId="cart-reco"
+						disablePreload
 					/>
 				))}
 			</Stagger>

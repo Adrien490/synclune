@@ -32,6 +32,16 @@ export type CreateToastCallbacksOptions<T = ActionState> = {
 		label: string;
 		onClick: () => void;
 	};
+	/**
+	 * Action d'annulation (pattern native-like iOS/Android).
+	 * Si fourni, le toast de succès affichera un bouton pour annuler l'action
+	 * et prolongera la durée d'affichage pour laisser le temps d'agir.
+	 */
+	undoAction?: {
+		label?: string;
+		onClick: () => void | Promise<void>;
+		duration?: number;
+	};
 };
 
 // =============================================================================

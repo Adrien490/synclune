@@ -17,8 +17,6 @@ export const addRecentSearchSchema = z.object({
 		.max(100, "Terme de recherche trop long"),
 });
 
-type AddRecentSearchInput = z.infer<typeof addRecentSearchSchema>;
-
 /**
  * Schema pour supprimer une recherche recente
  */
@@ -30,5 +28,3 @@ export const removeRecentSearchSchema = z.object({
 		.min(1, "Terme manquant")
 		.max(100, "Terme de recherche trop long"),
 });
-
-type RemoveRecentSearchInput = z.infer<typeof removeRecentSearchSchema>;

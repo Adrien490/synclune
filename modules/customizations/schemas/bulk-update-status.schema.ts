@@ -8,5 +8,3 @@ export const bulkUpdateStatusSchema = z.object({
 		.max(100, "Maximum 100 demandes par operation"),
 	status: z.nativeEnum(CustomizationRequestStatus),
 });
-
-type BulkUpdateStatusInput = z.infer<typeof bulkUpdateStatusSchema>;

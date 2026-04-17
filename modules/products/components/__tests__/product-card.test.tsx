@@ -6,20 +6,37 @@ const { mockGetProductCardData } = vi.hoisted(() => ({
 	mockGetProductCardData: vi.fn(),
 }));
 
-// Mock next/image
+// Mock next/image — expose priority via data-attribute for test assertions
 vi.mock("next/image", () => ({
 	default: ({
 		src,
 		alt,
 		fill: _fill,
-		...props
+		priority,
+		placeholder: _placeholder,
+		blurDataURL: _blurDataURL,
+		quality: _quality,
+		sizes,
+		className,
 	}: {
 		src: string;
 		alt: string;
 		fill?: boolean;
-		[key: string]: unknown;
-		// eslint-disable-next-line @next/next/no-img-element
-	}) => <img src={src} alt={alt} {...props} />,
+		priority?: boolean;
+		placeholder?: string;
+		blurDataURL?: string;
+		quality?: number;
+		sizes?: string;
+		className?: string;
+	}) => (
+		<img
+			src={src}
+			alt={alt}
+			className={className}
+			data-sizes={sizes}
+			data-priority={priority ? "true" : undefined}
+		/>
+	),
 }));
 
 // Mock next/link
@@ -136,7 +153,17 @@ function createProduct(overrides: Partial<Product> = {}): Product {
 
 function createCardData(overrides: Partial<ReturnType<typeof mockGetProductCardData>> = {}) {
 	return {
-		defaultSku: null,
+		defaultSku: {
+			id: "sku-1",
+			isActive: true,
+			isDefault: true,
+			inventory: 10,
+			priceInclTax: 4800,
+			compareAtPrice: null,
+			color: null,
+			material: null,
+			size: null,
+		},
 		price: 4800,
 		compareAtPrice: null,
 		stockInfo: {
@@ -395,6 +422,126 @@ describe("ProductCard", () => {
 			// The title h3 has an id used by aria-labelledby on the article
 			const heading = screen.getByRole("heading", { name: "Bague Lune Argent" });
 			expect(heading).toBeInTheDocument();
+		});
+
+		it("aria-describedby points to an sr-only element containing badge descriptions", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					stockInfo: {
+						status: "low_stock",
+						totalInventory: 2,
+						availableSkus: 1,
+						message: "Plus que 2 !",
+					},
+				}),
+			);
+			const { container } = render(<ProductCard product={createProduct()} />);
+			const article = container.querySelector("article");
+			const descId = article?.getAttribute("aria-describedby");
+			expect(descId).toBeTruthy();
+			const srSpan = container.querySelector(`#${descId}`);
+			expect(srSpan).not.toBeNull();
+			expect(srSpan?.className).toContain("sr-only");
+			expect(srSpan?.textContent).toMatch(/Stock limité/);
+		});
+	});
+
+	describe("noActiveSku (coming soon) state", () => {
+		it("shows 'Bientôt disponible' badge when defaultSku is null", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					defaultSku: null,
+					stockInfo: {
+						status: "out_of_stock",
+						totalInventory: 0,
+						availableSkus: 0,
+						message: "Rupture de stock",
+					},
+					hasValidSku: false,
+				}),
+			);
+			render(<ProductCard product={createProduct()} />);
+			const matches = screen.getAllByText("Bientôt disponible");
+			expect(matches.length).toBeGreaterThanOrEqual(1);
+			expect(screen.queryByText("Rupture de stock")).toBeNull();
+		});
+
+		it("hides the price when defaultSku is null", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					defaultSku: null,
+					price: 0,
+					stockInfo: {
+						status: "out_of_stock",
+						totalInventory: 0,
+						availableSkus: 0,
+						message: "Rupture de stock",
+					},
+					hasValidSku: false,
+				}),
+			);
+			render(<ProductCard product={createProduct()} />);
+			expect(screen.queryByTestId("product-price")).toBeNull();
+		});
+
+		it("hides discount badge when defaultSku is null even with compareAtPrice", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					defaultSku: null,
+					price: 3600,
+					compareAtPrice: 4800,
+					stockInfo: {
+						status: "out_of_stock",
+						totalInventory: 0,
+						availableSkus: 0,
+						message: "Rupture de stock",
+					},
+					hasValidSku: false,
+				}),
+			);
+			render(<ProductCard product={createProduct()} />);
+			expect(screen.queryByTestId("badge-destructive")).toBeNull();
+		});
+	});
+
+	describe("rating link to reviews section", () => {
+		it("wraps the rating in a link pointing to #reviews", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			render(
+				<ProductCard
+					product={createProduct({
+						reviewStats: { averageRating: 4.3, totalCount: 12 },
+					} as unknown as Partial<Product>)}
+				/>,
+			);
+			const link = screen.getByLabelText("Lire les 12 avis");
+			expect(link).toBeInTheDocument();
+			expect(link.getAttribute("href")).toBe("/creations/bague-lune-argent#reviews");
+		});
+	});
+
+	describe("preload policy (priority prop)", () => {
+		it("sets priority=true for above-fold cards (index < 4)", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(<ProductCard product={createProduct()} index={0} />);
+			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).toHaveAttribute("data-priority", "true");
+		});
+
+		it("does not set priority for below-fold cards (index >= 4)", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(<ProductCard product={createProduct()} index={4} />);
+			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).not.toHaveAttribute("data-priority");
+		});
+
+		it("disablePreload overrides index=0 (no priority)", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(
+				<ProductCard product={createProduct()} index={0} disablePreload />,
+			);
+			const img = container.querySelector("img[src*='image.jpg']");
+			expect(img).not.toHaveAttribute("data-priority");
 		});
 	});
 });

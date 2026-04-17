@@ -6,7 +6,7 @@ import { getCatalogDropzoneAppearance } from "@/modules/media/utils/upload-dropz
 import { cn } from "@/shared/utils/cn";
 import type { AnyFieldApi } from "@tanstack/react-form";
 import { Upload } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 type MediaItem = {
 	url: string;

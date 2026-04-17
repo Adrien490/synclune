@@ -11,6 +11,11 @@
 @import "./styles/scroll-driven.css";
 @import "./styles/components.css";
 
+/* Focus ring centralisé (WCAG 2.4.7) — outline 2px sur token --ring */
+@utility focus-ring {
+	@apply focus-visible:outline-ring focus-visible:outline-2 focus-visible:outline-offset-2;
+}
+
 html {
 	scroll-behavior: smooth;
 	scroll-padding-top: calc(var(--navbar-height) + var(--announcement-bar-height, 0px));

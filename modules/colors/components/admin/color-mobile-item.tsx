@@ -8,6 +8,7 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { COLOR_ITEM_DRAWER_ID, type ColorItemDrawerData } from "./color-item-drawer";
@@ -25,10 +26,12 @@ interface ColorMobileItemProps {
 
 export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	const { open } = useDialog<ColorItemDrawerData>(COLOR_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const skuCount = color._count.skus || 0;
 	const statusLabel = color.isActive ? "Actif" : "Inactif";
 
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			color: {
 				id: color.id,

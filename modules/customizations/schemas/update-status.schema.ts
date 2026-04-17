@@ -5,5 +5,3 @@ export const updateStatusSchema = z.object({
 	requestId: z.cuid2(),
 	status: z.nativeEnum(CustomizationRequestStatus),
 });
-
-type UpdateStatusInput = z.infer<typeof updateStatusSchema>;

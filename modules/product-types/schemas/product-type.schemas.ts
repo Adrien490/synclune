@@ -125,3 +125,23 @@ export const bulkDeactivateProductTypesSchema = z.object({
 export const bulkDeleteProductTypesSchema = z.object({
 	ids: bulkIdsSchema,
 });
+
+export const duplicateProductTypeSchema = z.object({
+	productTypeId: z.cuid2("ID de type de produit invalide"),
+});
+
+export const mergeProductTypesSchema = z
+	.object({
+		sourceId: z.cuid2("ID source invalide"),
+		targetId: z.cuid2("ID cible invalide"),
+	})
+	.refine((data) => data.sourceId !== data.targetId, {
+		message: "Les types source et cible doivent être différents",
+		path: ["targetId"],
+	});
+
+export const exportProductTypesSchema = z.object({
+	format: z.enum(["csv", "json"], { message: "Format invalide" }),
+});
+
+export type ExportProductTypesFormat = z.infer<typeof exportProductTypesSchema>["format"];

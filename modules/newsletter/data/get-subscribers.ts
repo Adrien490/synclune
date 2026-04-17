@@ -8,7 +8,6 @@ import {
 	GET_SUBSCRIBERS_DEFAULT_PER_PAGE,
 	GET_SUBSCRIBERS_MAX_RESULTS_PER_PAGE,
 	GET_SUBSCRIBERS_SELECT,
-	SORT_OPTIONS,
 } from "../constants/subscriber.constants";
 import { getSubscribersSchema } from "../schemas/subscriber.schemas";
 import { buildSubscriberWhereClause } from "../services/subscriber-query-builder";
@@ -17,7 +16,6 @@ import type { GetSubscribersParams, GetSubscribersReturn } from "../types/subscr
 // Re-export pour compatibilité
 export { SORT_LABELS, SORT_OPTIONS } from "../constants/subscriber.constants";
 export type { GetSubscribersReturn } from "../types/subscriber.types";
-const GET_SUBSCRIBERS_SORT_FIELDS = Object.values(SORT_OPTIONS);
 
 // ============================================================================
 // MAIN FUNCTIONS
