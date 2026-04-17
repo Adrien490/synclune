@@ -3,6 +3,7 @@ import type {
 	GetRevenueChartReturn,
 	GetTopProductsReturn,
 	GetRecentOrdersReturn,
+	GetCustomerKpisReturn,
 } from "../types/dashboard.types";
 import type { ExportDashboardFormat } from "../schemas/export-dashboard.schema";
 import type { DashboardPeriod } from "../constants/period.constants";
@@ -18,6 +19,7 @@ export type DashboardExportSources = {
 	revenueChart: GetRevenueChartReturn;
 	topProducts: GetTopProductsReturn;
 	recentOrders: GetRecentOrdersReturn;
+	customerKpis: GetCustomerKpisReturn;
 };
 
 export type DashboardExportPayload = {
@@ -117,6 +119,49 @@ function buildTopProductsSection(topProducts: GetTopProductsReturn): string[] {
 	return ["## TOP PRODUITS", header, ...rows];
 }
 
+function buildCustomerKpisSection(customerKpis: GetCustomerKpisReturn): string[] {
+	const header = rowToCsv(["Indicateur", "Valeur", "Evolution (%)"]);
+	const rows = [
+		rowToCsv([
+			"Nouveaux clients",
+			customerKpis.newCustomers.count,
+			customerKpis.newCustomers.evolution,
+		]),
+		rowToCsv([
+			"Clients recurrents (%)",
+			customerKpis.returningRate.rate,
+			customerKpis.returningRate.evolution,
+		]),
+		rowToCsv([
+			"Clients actifs sur la periode",
+			customerKpis.returningRate.totalActiveCustomers,
+			"",
+		]),
+		rowToCsv(["Nombre de clients recurrents", customerKpis.returningRate.returningCount, ""]),
+		rowToCsv([
+			"Meilleur client",
+			customerKpis.topSpender ? customerKpis.topSpender.customerName : "—",
+			"",
+		]),
+		rowToCsv([
+			"Email meilleur client",
+			customerKpis.topSpender ? customerKpis.topSpender.customerEmail : "",
+			"",
+		]),
+		rowToCsv([
+			"Total depense meilleur client (EUR)",
+			customerKpis.topSpender ? customerKpis.topSpender.totalSpent : 0,
+			"",
+		]),
+		rowToCsv([
+			"Commandes meilleur client",
+			customerKpis.topSpender ? customerKpis.topSpender.orderCount : 0,
+			"",
+		]),
+	];
+	return ["## KPIS CLIENTS", header, ...rows];
+}
+
 function buildRecentOrdersSection(recentOrders: GetRecentOrdersReturn): string[] {
 	const header = rowToCsv([
 		"Numero",
@@ -156,6 +201,8 @@ function buildCsv(period: DashboardPeriod, sources: DashboardExportSources): str
 		...header,
 		...buildKpisSection(sources.kpis),
 		"",
+		...buildCustomerKpisSection(sources.customerKpis),
+		"",
 		...buildRevenueSection(sources.revenueChart),
 		"",
 		...buildTopProductsSection(sources.topProducts),
@@ -172,6 +219,7 @@ function buildJson(period: DashboardPeriod, sources: DashboardExportSources): st
 			periodLabel: DASHBOARD_PERIODS[period].label,
 			generatedAt: new Date().toISOString(),
 			kpis: sources.kpis,
+			customerKpis: sources.customerKpis,
 			revenueChart: sources.revenueChart,
 			topProducts: sources.topProducts,
 			recentOrders: sources.recentOrders,

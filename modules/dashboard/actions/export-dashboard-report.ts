@@ -10,6 +10,7 @@ import {
 	type ExportDashboardInput,
 } from "../schemas/export-dashboard.schema";
 import { fetchDashboardKpis } from "../data/get-kpis";
+import { fetchCustomerKpis } from "../data/get-customer-kpis";
 import { fetchDashboardRevenueChart } from "../data/get-revenue-chart";
 import { fetchTopProducts } from "../data/get-top-products";
 import { fetchDashboardRecentOrders } from "../data/get-recent-orders";
@@ -34,8 +35,9 @@ export async function exportDashboardReport(
 
 		const { period, format } = validation.data;
 
-		const [kpis, revenueChart, topProducts, recentOrders] = await Promise.all([
+		const [kpis, customerKpis, revenueChart, topProducts, recentOrders] = await Promise.all([
 			fetchDashboardKpis(period),
+			fetchCustomerKpis(period),
 			fetchDashboardRevenueChart(period),
 			fetchTopProducts(period),
 			fetchDashboardRecentOrders(),
@@ -43,6 +45,7 @@ export async function exportDashboardReport(
 
 		const payload = buildDashboardExport(period, format, {
 			kpis,
+			customerKpis,
 			revenueChart,
 			topProducts,
 			recentOrders,

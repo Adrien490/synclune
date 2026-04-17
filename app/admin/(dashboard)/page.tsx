@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
+import { CustomerKpis } from "@/modules/dashboard/components/customer-kpis";
 import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
@@ -27,6 +28,7 @@ import {
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
+import { fetchCustomerKpis } from "@/modules/dashboard/data/get-customer-kpis";
 import { fetchKpiSparklines } from "@/modules/dashboard/data/get-kpi-sparklines";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
 import { fetchFulfillmentPipeline } from "@/modules/dashboard/data/get-fulfillment-pipeline";
@@ -77,6 +79,15 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					}
 				>
 					<KpisWrapper period={period} />
+				</Suspense>
+
+				{/* KPIs clients (nouveaux, recurrents, meilleur client) */}
+				<Suspense
+					fallback={
+						<KpisSkeleton count={0} compactCount={3} ariaLabel="Chargement des KPIs clients" />
+					}
+				>
+					<CustomerKpisWrapper period={period} />
 				</Suspense>
 
 				{/* Alertes actionnables (ne rend rien si tout est ok) */}
@@ -158,6 +169,21 @@ async function KpisWrapper({ period }: { period: DashboardPeriod }) {
 			comparisonLabel={COMPARISON_LABELS[period]}
 		/>
 	);
+}
+
+/**
+ * Wrapper async pour les KPIs clients - silencieux en cas d'erreur
+ * (KPIs secondaires, ne doivent pas bloquer le rendu du dashboard)
+ */
+async function CustomerKpisWrapper({ period }: { period: DashboardPeriod }) {
+	let kpis;
+	try {
+		kpis = await fetchCustomerKpis(period);
+	} catch (error) {
+		Sentry.captureException(error);
+		return null;
+	}
+	return <CustomerKpis kpis={kpis} comparisonLabel={COMPARISON_LABELS[period]} />;
 }
 
 /**

@@ -4,8 +4,8 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { CHART_STYLES } from "../../constants/chart-styles";
 
 interface KpisSkeletonProps {
-	/** Nombre de cartes KPI featured (Row 1) */
-	count?: 2 | 3 | 4 | 6;
+	/** Nombre de cartes KPI featured (Row 1) — passer 0 pour ne rendre que la ligne compacte */
+	count?: 0 | 2 | 3 | 4 | 6;
 	/** Nombre de cartes KPI compactes (Row 2) */
 	compactCount?: number;
 	/** Label pour l'accessibilite */
@@ -71,24 +71,28 @@ export function KpisSkeleton({
 				? "lg:grid-cols-3"
 				: "lg:grid-cols-4";
 
+	const compactGridCols = compactCount === 3 ? "sm:grid-cols-3" : "grid-cols-2 lg:grid-cols-4";
+
 	return (
 		<div role="status" aria-busy="true" aria-label={ariaLabel} className="space-y-4">
 			{/* Row 1: Featured KPIs — horizontal scroll on mobile */}
-			<div
-				className={cn(
-					"scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2",
-					"sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0",
-					gridCols,
-				)}
-			>
-				{Array.from({ length: count }).map((_, i) => (
-					<KpiCardSkeleton key={i} />
-				))}
-			</div>
+			{count > 0 && (
+				<div
+					className={cn(
+						"scrollbar-none flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2",
+						"sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0",
+						gridCols,
+					)}
+				>
+					{Array.from({ length: count }).map((_, i) => (
+						<KpiCardSkeleton key={i} />
+					))}
+				</div>
+			)}
 
-			{/* Row 2: Compact KPIs — 2-col on mobile */}
+			{/* Row 2: Compact KPIs */}
 			{compactCount > 0 && (
-				<div className={cn("grid grid-cols-2", CHART_STYLES.spacing.kpiGap, "lg:grid-cols-4")}>
+				<div className={cn("grid", compactGridCols, CHART_STYLES.spacing.kpiGap)}>
 					{Array.from({ length: compactCount }).map((_, i) => (
 						<KpiCardCompactSkeleton key={i} />
 					))}

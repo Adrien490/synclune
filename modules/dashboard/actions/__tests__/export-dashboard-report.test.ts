@@ -13,6 +13,7 @@ const {
 	mockValidateInput,
 	mockSafeFormGet,
 	mockFetchKpis,
+	mockFetchCustomerKpis,
 	mockFetchRevenue,
 	mockFetchTopProducts,
 	mockFetchRecentOrders,
@@ -25,6 +26,7 @@ const {
 	mockValidateInput: vi.fn(),
 	mockSafeFormGet: vi.fn(),
 	mockFetchKpis: vi.fn(),
+	mockFetchCustomerKpis: vi.fn(),
 	mockFetchRevenue: vi.fn(),
 	mockFetchTopProducts: vi.fn(),
 	mockFetchRecentOrders: vi.fn(),
@@ -45,6 +47,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: mockSafeFormGet,
 }));
 vi.mock("../../data/get-kpis", () => ({ fetchDashboardKpis: mockFetchKpis }));
+vi.mock("../../data/get-customer-kpis", () => ({ fetchCustomerKpis: mockFetchCustomerKpis }));
 vi.mock("../../data/get-revenue-chart", () => ({
 	fetchDashboardRevenueChart: mockFetchRevenue,
 }));
@@ -78,6 +81,7 @@ describe("exportDashboardReport", () => {
 		mockSafeFormGet.mockImplementation((fd: FormData, key: string) => fd.get(key));
 		mockValidateInput.mockReturnValue({ data: validInput });
 		mockFetchKpis.mockResolvedValue({ kpis: "kpis-data" });
+		mockFetchCustomerKpis.mockResolvedValue({ customerKpis: "customer-kpis-data" });
 		mockFetchRevenue.mockResolvedValue({ revenue: "revenue-data" });
 		mockFetchTopProducts.mockResolvedValue({ products: [] });
 		mockFetchRecentOrders.mockResolvedValue({ orders: [] });
@@ -166,10 +170,11 @@ describe("exportDashboardReport", () => {
 	// Happy path
 	// -------------------------------------------------------------------------
 
-	it("fetches all 4 sources in parallel with the validated period", async () => {
+	it("fetches all 5 sources in parallel with the validated period", async () => {
 		await exportDashboardReport(undefined, formData);
 
 		expect(mockFetchKpis).toHaveBeenCalledWith("month");
+		expect(mockFetchCustomerKpis).toHaveBeenCalledWith("month");
 		expect(mockFetchRevenue).toHaveBeenCalledWith("month");
 		expect(mockFetchTopProducts).toHaveBeenCalledWith("month");
 		expect(mockFetchRecentOrders).toHaveBeenCalledWith();
@@ -180,6 +185,7 @@ describe("exportDashboardReport", () => {
 
 		expect(mockBuildExport).toHaveBeenCalledWith("month", "csv", {
 			kpis: { kpis: "kpis-data" },
+			customerKpis: { customerKpis: "customer-kpis-data" },
 			revenueChart: { revenue: "revenue-data" },
 			topProducts: { products: [] },
 			recentOrders: { orders: [] },

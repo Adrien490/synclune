@@ -125,6 +125,12 @@ describe("KpisSkeleton", () => {
 		expect(cards).toHaveLength(2);
 	});
 
+	it("renders only compact cards when count is 0", () => {
+		render(<KpisSkeleton count={0} compactCount={3} />);
+		const cards = screen.getAllByTestId("card");
+		expect(cards).toHaveLength(3);
+	});
+
 	it("uses the default aria-label", () => {
 		render(<KpisSkeleton />);
 		expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Chargement des indicateurs");

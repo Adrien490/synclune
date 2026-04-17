@@ -58,6 +58,22 @@ const baseSources: DashboardExportSources = {
 			},
 		],
 	},
+	customerKpis: {
+		newCustomers: { count: 12, evolution: 25 },
+		returningRate: {
+			rate: 40,
+			returningCount: 4,
+			totalActiveCustomers: 10,
+			evolution: 10,
+		},
+		topSpender: {
+			userId: "u1",
+			customerName: "Alice Dupont",
+			customerEmail: "alice@example.com",
+			totalSpent: 1500,
+			orderCount: 3,
+		},
+	},
 };
 
 describe("escapeCsvCell", () => {

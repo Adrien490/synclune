@@ -202,3 +202,29 @@ export type DashboardAlerts = {
 	lowStockSkus: number;
 	pendingCustomizations: number;
 };
+
+// ============================================================================
+// TYPES - CUSTOMER KPIs
+// ============================================================================
+
+export type TopSpenderItem = {
+	userId: string;
+	customerName: string;
+	customerEmail: string;
+	totalSpent: number;
+	orderCount: number;
+};
+
+export type GetCustomerKpisReturn = {
+	newCustomers: {
+		count: number;
+		evolution: number;
+	};
+	returningRate: {
+		rate: number;
+		returningCount: number;
+		totalActiveCustomers: number;
+		evolution: number;
+	};
+	topSpender: TopSpenderItem | null;
+};
