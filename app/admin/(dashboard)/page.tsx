@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { CustomerKpis } from "@/modules/dashboard/components/customer-kpis";
 import { CartAbandonmentCard } from "@/modules/dashboard/components/cart-abandonment-card";
+import { SalesHeatmap } from "@/modules/dashboard/components/sales-heatmap";
 import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
@@ -31,6 +32,7 @@ import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchCustomerKpis } from "@/modules/dashboard/data/get-customer-kpis";
 import { fetchCartAbandonment } from "@/modules/dashboard/data/get-cart-abandonment";
+import { fetchSalesHeatmap } from "@/modules/dashboard/data/get-sales-heatmap";
 import { fetchKpiSparklines } from "@/modules/dashboard/data/get-kpi-sparklines";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
 import { fetchFulfillmentPipeline } from "@/modules/dashboard/data/get-fulfillment-pipeline";
@@ -114,6 +116,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					fallback={<ChartSkeleton height={300} ariaLabel="Chargement du graphique des revenus" />}
 				>
 					<RevenueChartWrapper period={period} />
+				</Suspense>
+
+				{/* Heatmap d'activite (jour x heure) */}
+				<Suspense
+					fallback={<ChartSkeleton height={260} ariaLabel="Chargement de la heatmap d'activité" />}
+				>
+					<SalesHeatmapWrapper period={period} />
 				</Suspense>
 
 				{/* Commandes recentes + Top produits + Codes promo */}
@@ -255,6 +264,20 @@ async function RevenueChartWrapper({ period }: { period: DashboardPeriod }) {
 		);
 	}
 	return <LazyRevenueChart chartData={chartData} />;
+}
+
+/**
+ * Wrapper async pour la heatmap d'activite - silencieux en cas d'erreur
+ */
+async function SalesHeatmapWrapper({ period }: { period: DashboardPeriod }) {
+	let data;
+	try {
+		data = await fetchSalesHeatmap(period);
+	} catch (error) {
+		Sentry.captureException(error);
+		return null;
+	}
+	return <SalesHeatmap data={data} />;
 }
 
 /**

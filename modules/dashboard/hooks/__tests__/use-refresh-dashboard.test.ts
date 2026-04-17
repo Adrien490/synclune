@@ -20,6 +20,10 @@ vi.mock("sonner", () => ({
 		success: vi.fn(),
 		error: vi.fn(),
 		warning: vi.fn(),
+		info: vi.fn(),
+		message: vi.fn(),
+		promise: vi.fn(),
+		custom: vi.fn(),
 	},
 }));
 
