@@ -22,6 +22,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 			subtitle: { y: 15, delay: 0.1, duration: 0.4 },
 			carousel: { y: 20, delay: 0.2, duration: 0.5 },
 			cta: { y: 10, delay: 0.1, duration: 0.4 },
+			underline: { delay: 0.15 },
 		},
 	},
 }));

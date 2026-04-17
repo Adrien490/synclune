@@ -211,10 +211,13 @@ model Color {
   name     String       @unique @db.VarChar(100)
   hex      String       @db.VarChar(7)
   isActive Boolean      @default(true) // Coherence avec Material
+  position Int          @default(0) // Ordre chromatique custom (admin drag-and-drop)
   skus     ProductSku[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([position])
 }
 
 model Material {
@@ -258,7 +261,8 @@ model ProductCollection {
   addedAt DateTime @default(now())
 
   /// Produit mis en avant dans la collection (pour hero/banner)
-  /// Un seul produit peut etre featured par collection (gere cote applicatif)
+  /// Contrainte DB: un seul produit featured par collection
+  /// Index unique partiel via migration 20260417 (WHERE "isFeatured" = true)
   isFeatured Boolean @default(false)
 
   createdAt DateTime @default(now())
@@ -319,9 +323,10 @@ model ProductSku {
 
   size String? @db.VarChar(50)
 
-  // Prix en regime micro-entreprise (exonere de TVA - art. 293 B du CGI)
-  // Le nom "priceInclTax" est conserve pour compatibilite, mais il s'agit du prix FINAL sans TVA
-  // Exemple : 30 euros = 3000 centimes (prix que paie le client, sans TVA ajoutee)
+  // ATTENTION: Nom legacy trompeur. Il s'agit du PRIX FINAL paye par le client (en centimes).
+  // En micro-entreprise (art. 293 B CGI), aucune TVA n'est ajoutee : prix affiche = prix paye.
+  // Si bascule au regime reel TVA un jour, ce champ restera le prix final TTC (TVA incluse).
+  // Exemple : 30 euros = 3000 centimes
   priceInclTax   Int
   compareAtPrice Int? // Prix avant reduction (optionnel, pour afficher prix barre)
   inventory      Int     @default(0)
@@ -339,6 +344,9 @@ model ProductSku {
   // Garantir unicite des combinaisons produit/couleur/taille/materiau (actifs uniquement)
   // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL)
   // Permet de recreer un SKU soft-deleted avec la meme combinaison
+  //
+  // Contrainte DB: un seul SKU par defaut par produit (active SKUs uniquement)
+  // Index unique partiel via migration 20260417 (WHERE "isDefault" = true AND "deletedAt" IS NULL)
   @@index([colorId])
   @@index([materialId])
 }
@@ -367,6 +375,11 @@ model SkuMedia {
 // PANIER
 // ============================================================================
 
+enum CartFulfillmentType {
+  SHIPPING // Livraison domicile (defaut)
+  CLICK_AND_COLLECT // Retrait boutique
+}
+
 model Cart {
   id String @id @default(cuid())
 
@@ -379,6 +392,22 @@ model Cart {
   // Abandoned cart recovery
   abandonedEmailSentAt DateTime? // Date d'envoi de l'email de relance panier abandonne
 
+  // === GUEST CONTACT INFO (abandoned-cart recovery for non-authenticated users) ===
+  guestEmail       String?   @db.VarChar(255) // Email guest pour recovery (RGPD: consent requis)
+  guestPhone       String?   @db.VarChar(30) // Optionnel, pour SMS future
+  marketingConsent Boolean   @default(false) // Consentement RGPD pour emails marketing
+  guestContactAt   DateTime? // Timestamp capture contact (audit RGPD)
+
+  // === DISCOUNT CODE APPLIED (pre-checkout) ===
+  appliedDiscountCode String? @db.VarChar(30) // Code promo applique au panier
+  discountAmountCache Int? // Montant reduction snapshot (centimes, calcule a application)
+
+  // === ORDER NOTES ===
+  notes String? @db.VarChar(500) // Instructions speciales / demandes personnalisees
+
+  // === FULFILLMENT MODE ===
+  fulfillmentType CartFulfillmentType @default(SHIPPING)
+
   items CartItem[]
 
   createdAt DateTime @default(now())
@@ -386,6 +415,7 @@ model Cart {
 
   @@index([expiresAt])
   @@index([userId, abandonedEmailSentAt, updatedAt]) // abandoned-cart-emails cron
+  @@index([guestEmail, abandonedEmailSentAt, updatedAt]) // abandoned-cart-emails cron (guests)
 }
 
 model CartItem {
@@ -402,6 +432,10 @@ model CartItem {
   // Protege contre les changements de prix entre l'ajout et le paiement
   // Exemple: 29,99 euros = 2999 centimes
   priceAtAdd Int
+
+  // === GIFT OPTIONS ===
+  giftWrap    Boolean @default(false) // Emballage cadeau
+  giftMessage String? @db.VarChar(300) // Message cadeau (optionnel)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -498,12 +532,12 @@ enum OrderAction {
   TRACKING_UPDATED // Mise a jour du suivi
   ADDRESS_UPDATED // Mise a jour de l'adresse de livraison
   INVOICE_GENERATED // Facture generee
-  REFUND_CREATED    // Remboursement cree
-  REFUND_COMPLETED  // Remboursement confirme (Stripe)
-  REFUND_FAILED     // Echec du remboursement
-  DISPUTE_OPENED    // Litige ouvert
-  DISPUTE_RESOLVED  // Litige resolu
-  INVOICE_VOIDED    // Facture annulee (commande annulee apres facturation)
+  REFUND_CREATED // Remboursement cree
+  REFUND_COMPLETED // Remboursement confirme (Stripe)
+  REFUND_FAILED // Echec du remboursement
+  DISPUTE_OPENED // Litige ouvert
+  DISPUTE_RESOLVED // Litige resolu
+  INVOICE_VOIDED // Facture annulee (commande annulee apres facturation)
 }
 
 /// Statut de la facture associée à une commande
@@ -513,6 +547,9 @@ enum InvoiceStatus {
   VOIDED // Facture annulée (commande annulée après facturation)
 }
 
+/// Methode de paiement client. Mono-valeur volontaire : Stripe gere les sous-types
+/// (Apple Pay, Google Pay, Link) sous l'umbrella Card. Etendre uniquement si Stripe
+/// expose un nouveau type top-level (ex: SEPA_DEBIT, KLARNA, BANCONTACT).
 enum PaymentMethod {
   CARD
 }
@@ -551,7 +588,9 @@ model Order {
   // === MONTANTS (EN CENTIMES) ===
   subtotal       Int
   discountAmount Int    @default(0) // Montant total des reductions appliquees
-  taxAmount      Int    @default(0) // Micro-entreprise : Toujours 0 (exoneree de TVA - art. 293 B du CGI)
+  // Micro-entreprise: toujours 0 (exoneree TVA - art. 293 B CGI). Champ conserve pour evolutivite
+  // si depassement du seuil de franchise (37 500 EUR/an services en 2026). CHECK >= 0 en DB.
+  taxAmount      Int    @default(0)
   shippingCost   Int    @default(0) // Frais de livraison
   total          Int // Formule: MAX(0, subtotal - discountAmount + shippingCost)
   currency       String @default("EUR") @db.VarChar(3)
@@ -600,15 +639,15 @@ model Order {
   disputes       Dispute[]
 
   // === ADRESSE DE FACTURATION (DENORMALISEE - SNAPSHOT) ===
-  billingSameAsShipping Boolean  @default(true)
-  billingFirstName      String?  @db.VarChar(50)
-  billingLastName       String?  @db.VarChar(50)
-  billingAddress1       String?  @db.VarChar(255)
-  billingAddress2       String?  @db.VarChar(255)
-  billingPostalCode     String?  @db.VarChar(10)
-  billingCity           String?  @db.VarChar(100)
-  billingCountry        String?  @db.VarChar(2)
-  billingPhone          String?  @db.VarChar(20)
+  billingSameAsShipping Boolean @default(true)
+  billingFirstName      String? @db.VarChar(50)
+  billingLastName       String? @db.VarChar(50)
+  billingAddress1       String? @db.VarChar(255)
+  billingAddress2       String? @db.VarChar(255)
+  billingPostalCode     String? @db.VarChar(10)
+  billingCity           String? @db.VarChar(100)
+  billingCountry        String? @db.VarChar(2)
+  billingPhone          String? @db.VarChar(20)
 
   // === CONSENTEMENT (RGPD) ===
   newsletterOptIn Boolean @default(false)
@@ -801,7 +840,7 @@ model Refund {
   @@index([orderId])
   @@index([status, processedAt]) // reconcile-refunds cron
   @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
-  @@index([createdBy])             // Admin: remboursements par admin
+  @@index([createdBy]) // Admin: remboursements par admin
 }
 
 model RefundItem {
@@ -915,7 +954,7 @@ model Discount {
   usageCount Int @default(0) // Compteur d'utilisations
 
   // Etat
-  isActive           Boolean @default(true)
+  isActive            Boolean @default(true)
   manuallyDeactivated Boolean @default(false) // Set by admin toggle; prevents cron auto-reactivation
 
   // Relations
@@ -1163,8 +1202,8 @@ model AuditLog {
   id String @id @default(cuid())
 
   // Admin who performed the action
-  adminId   String  @db.VarChar(30)
-  adminName String  @db.VarChar(100) // Denormalized for persistence if admin deleted
+  adminId   String @db.VarChar(30)
+  adminName String @db.VarChar(100) // Denormalized for persistence if admin deleted
 
   // Action performed
   action     String @db.VarChar(50) // e.g. "product.create", "order.cancel", "refund.process"
@@ -1269,7 +1308,7 @@ model CustomizationMedia {
 model FailedEmail {
   id          String    @id @default(cuid())
   taskType    String    @db.VarChar(100) // ex: ORDER_CONFIRMATION_EMAIL
-  payload     Json      // Donnees necessaires pour relancer l'email
+  payload     Json // Donnees necessaires pour relancer l'email
   attempts    Int       @default(1)
   lastError   String    @db.Text
   nextRetryAt DateTime  @default(now())
@@ -1287,7 +1326,8 @@ model FailedEmail {
 
 /// Barre d'annonce promotionnelle affichee au-dessus du navbar
 /// Contenu ephemere sans obligation legale de retention (hard delete)
-/// Contrainte "1 seule active" enforced en app layer (transaction)
+/// Contrainte "1 seule active" enforced via partial unique index DB
+/// (cf. migration 20260417_announcement_only_one_active) + transaction applicative
 model AnnouncementBar {
   id                   String    @id @default(cuid())
   message              String    @db.VarChar(200)
@@ -1311,7 +1351,7 @@ model FaqItem {
   id        String   @id @default(cuid())
   question  String   @db.VarChar(300)
   answer    String   @db.Text
-  links     Json?                        // [{text: string, href: string}]
+  links     Json? // [{text: string, href: string}]
   position  Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -1326,14 +1366,16 @@ model FaqItem {
 
 /// Singleton: parametres globaux de la boutique (1 seule ligne, ID deterministe)
 /// Permet de fermer temporairement le storefront (maintenance, vacances, restock)
+/// Contrainte DB: CHECK (id = 'store-settings-singleton') via migration 20260417
+/// Empeche techniquement toute insertion d'une 2e ligne avec un autre ID
 model StoreSettings {
-  id             String    @id @default(cuid())
-  isClosed       Boolean   @default(false)
-  closureMessage String?   @db.VarChar(500)
-  closedAt       DateTime?
-  reopensAt      DateTime?
-  closedBy       String?   @db.VarChar(255)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id               String    @id @default("store-settings-singleton")
+  isClosed         Boolean   @default(false)
+  closureMessage   String?   @db.VarChar(500)
+  closedAt         DateTime?
+  reopensAt        DateTime?
+  closedBy         String?   @db.VarChar(255)
+  scheduledCloseAt DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 }
-

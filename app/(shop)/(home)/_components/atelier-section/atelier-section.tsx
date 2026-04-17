@@ -2,8 +2,8 @@ import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animati
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
 import { Button } from "@/shared/components/ui/button";
-import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { IMAGES } from "@/shared/constants/images";
+import { ParallaxImage } from "../parallax-image";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
@@ -88,7 +88,11 @@ export async function AtelierSection() {
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="atelier-section-title">Mon atelier</SectionTitle>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
+						<HandDrawnUnderline
+							color="var(--secondary)"
+							delay={MOTION_CONFIG.section.underline.delay}
+							className="mx-auto mt-2"
+						/>
 					</Fade>
 					<Fade
 						y={MOTION_CONFIG.section.subtitle.y}
@@ -101,12 +105,15 @@ export async function AtelierSection() {
 					</Fade>
 				</header>
 
-				{/* Placeholder until atelier photography is available — swap with ParallaxImage + ImageScrollOverlay */}
 				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 					<div className="relative mx-auto mb-10 aspect-[4/3] max-w-4xl overflow-hidden rounded-2xl sm:mb-14 sm:aspect-[16/7]">
-						<PlaceholderImage
-							className="h-full w-full rounded-2xl"
-							label="L'atelier de création Synclune, où chaque bijou prend vie"
+						<ParallaxImage
+							src={IMAGES.ATELIER}
+							alt="L'atelier de création Synclune, où chaque bijou prend vie"
+							blurDataURL={IMAGES.ATELIER_BLUR}
+							intensity={8}
+							sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 56rem"
+							className="rounded-2xl object-cover"
 						/>
 					</div>
 				</Fade>

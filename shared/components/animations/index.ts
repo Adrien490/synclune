@@ -21,7 +21,7 @@ export { SplitTextCSS } from "./split-text-css";
 // Scroll indicator
 // Background Animations (effets décoratifs)
 export { HandDrawnUnderline } from "./hand-drawn-accent";
-export { ParticleBackground } from "./particle-background/index";
+export { ParticleBackground, ParticleBackgroundError } from "./particle-background/index";
 
 // Types
 

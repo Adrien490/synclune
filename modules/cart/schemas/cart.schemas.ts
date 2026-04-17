@@ -62,3 +62,84 @@ export const validateSkuSchema = z.object({
 export const getSkuDetailsSchema = z.object({
 	skuId: z.cuid2(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
 });
+
+// ============================================================================
+// CART METADATA SCHEMAS (P1 + P2 + P3)
+// ============================================================================
+
+/**
+ * Schema pour appliquer un code promo au panier
+ */
+export const applyCartDiscountSchema = z.object({
+	code: z
+		.string()
+		.trim()
+		.min(1, CART_ERROR_MESSAGES.DISCOUNT_CODE_REQUIRED)
+		.max(30, CART_ERROR_MESSAGES.DISCOUNT_CODE_INVALID)
+		.transform((v) => v.toUpperCase()),
+});
+
+/**
+ * Schema pour capturer les infos contact guest (abandoned-cart recovery)
+ */
+export const setGuestContactInfoSchema = z.object({
+	email: z.email(CART_ERROR_MESSAGES.GUEST_EMAIL_INVALID).max(255),
+	phone: z
+		.string()
+		.trim()
+		.max(30)
+		.optional()
+		.transform((v) => (v === "" ? undefined : v)),
+	marketingConsent: z.boolean().default(false),
+});
+
+/**
+ * Schema pour definir les notes/instructions du panier
+ */
+export const setCartNotesSchema = z.object({
+	notes: z.string().max(500, CART_ERROR_MESSAGES.CART_NOTES_TOO_LONG).optional().default(""),
+});
+
+/**
+ * Schema pour definir le mode de fulfillment
+ */
+export const setFulfillmentModeSchema = z.object({
+	fulfillmentType: z.enum(["SHIPPING", "CLICK_AND_COLLECT"]),
+});
+
+/**
+ * Schema pour configurer les options cadeau sur un item
+ */
+export const setGiftOptionsSchema = z.object({
+	cartItemId: z.cuid2("ID de l'article invalide"),
+	giftWrap: z.boolean().default(false),
+	giftMessage: z
+		.string()
+		.max(300, CART_ERROR_MESSAGES.GIFT_MESSAGE_TOO_LONG)
+		.optional()
+		.transform((v) => (v === "" ? undefined : v)),
+});
+
+/**
+ * Schema pour supprimer plusieurs items en une fois
+ */
+export const removeMultipleItemsSchema = z.object({
+	cartItemIds: z
+		.array(z.cuid2("ID de l'article invalide"))
+		.min(1, "Au moins un article à supprimer")
+		.max(50, "Maximum 50 articles supprimables en une fois"),
+});
+
+/**
+ * Schema pour réajouter les items d'une commande au panier
+ */
+export const reorderFromOrderSchema = z.object({
+	orderId: z.cuid2("ID de commande invalide"),
+});
+
+/**
+ * Schema pour déplacer un item vers la wishlist
+ */
+export const moveToWishlistSchema = z.object({
+	cartItemId: z.cuid2("ID de l'article invalide"),
+});

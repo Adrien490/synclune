@@ -14,16 +14,27 @@ import { generateAnonymizedEmail } from "../utils/anonymization.utils";
 export async function anonymizeUserInTransaction(
 	tx: Prisma.TransactionClient,
 	userId: string,
+	options: { allowImmediate?: boolean } = {},
 ): Promise<void> {
-	// Guard: only anonymize users that are pending deletion (race condition with cancellation)
 	const user = await tx.user.findUnique({
 		where: { id: userId },
 		select: { accountStatus: true },
 	});
 
-	if (user?.accountStatus !== AccountStatus.PENDING_DELETION) {
+	// Idempotence: already anonymized → no-op
+	if (user?.accountStatus === AccountStatus.ANONYMIZED) {
+		return;
+	}
+
+	// Default path: only anonymize users that are pending deletion (race with cancellation)
+	// Immediate path (admin override): also accept ACTIVE or INACTIVE
+	const allowedStatuses = options.allowImmediate
+		? [AccountStatus.PENDING_DELETION, AccountStatus.ACTIVE, AccountStatus.INACTIVE]
+		: [AccountStatus.PENDING_DELETION];
+
+	if (!user || !allowedStatuses.includes(user.accountStatus)) {
 		throw new Error(
-			`Cannot anonymize user ${userId}: status is ${user?.accountStatus ?? "not found"}, expected PENDING_DELETION`,
+			`Cannot anonymize user ${userId}: status is ${user?.accountStatus ?? "not found"}, expected ${allowedStatuses.join("|")}`,
 		);
 	}
 

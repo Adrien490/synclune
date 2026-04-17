@@ -284,16 +284,12 @@ describe("createDiscount", () => {
 		);
 	});
 
-	it("should default startsAt to new Date() when not provided", async () => {
-		const beforeCreate = new Date();
+	it("should pass startsAt: undefined to Prisma when not provided (lets DB @default(now()) handle it)", async () => {
 		await createDiscount(undefined, validFormData);
 
 		const createCall = mockPrisma.discount.create.mock.calls[0]![0];
-		const startsAt = createCall.data.startsAt;
-
-		// startsAt should be a Date close to now (validatedData.startsAt is null → falls back to new Date())
-		expect(startsAt).toBeInstanceOf(Date);
-		expect(startsAt.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
+		// startsAt absent or undefined → Prisma @default(now()) takes over (single source of truth)
+		expect(createCall.data.startsAt).toBeUndefined();
 	});
 
 	it("should return success with discount id", async () => {

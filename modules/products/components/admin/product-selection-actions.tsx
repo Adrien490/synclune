@@ -27,6 +27,7 @@ interface ProductSelectionActionsProps {
 	products: Array<{
 		id: string;
 		status: "DRAFT" | "PUBLIC" | "ARCHIVED";
+		title?: string;
 	}>;
 }
 
@@ -101,8 +102,13 @@ export function ProductSelectionActions({ products }: ProductSelectionActionsPro
 			return;
 		}
 
+		const productTitles = selectedProducts
+			.map((p) => p.title)
+			.filter((title): title is string => Boolean(title));
+
 		bulkDeleteDialog.open({
 			productIds: selectedItems,
+			productTitles,
 		});
 	};
 

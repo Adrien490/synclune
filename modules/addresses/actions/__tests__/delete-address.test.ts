@@ -269,7 +269,7 @@ describe("deleteAddress", () => {
 	it("should return success message after successful deletion", async () => {
 		const result = await deleteAddress(undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith("Adresse supprimee avec succes");
+		expect(mockSuccess).toHaveBeenCalledWith("Adresse supprimée avec succès");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 

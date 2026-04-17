@@ -20,6 +20,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
 import { getDiscountInvalidationTags } from "../constants/cache";
+import { isCodeAvailable } from "../services/discount-uniqueness.service";
 
 /**
  * Crée un nouveau code promo
@@ -67,12 +68,7 @@ export async function createDiscount(
 		const sanitizedCode = sanitizeText(data.code);
 
 		// 4. Vérifier l'unicité du code
-		const existingDiscount = await prisma.discount.findUnique({
-			where: { code: sanitizedCode },
-			select: { id: true },
-		});
-
-		if (existingDiscount) {
+		if (!(await isCodeAvailable(sanitizedCode))) {
 			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
 		}
 
@@ -85,7 +81,7 @@ export async function createDiscount(
 				minOrderAmount: data.minOrderAmount,
 				maxUsageCount: data.maxUsageCount,
 				maxUsagePerUser: data.maxUsagePerUser,
-				startsAt: data.startsAt ?? new Date(),
+				startsAt: data.startsAt ?? undefined,
 				endsAt: data.endsAt,
 				isActive: true,
 			},

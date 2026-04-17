@@ -99,3 +99,31 @@ export function safeFormGetJSON<T>(formData: FormData, key: string): T | null {
 		return null;
 	}
 }
+
+/**
+ * Parse a FormData JSON array field (typically "ids" for bulk operations).
+ *
+ * Distinguishes:
+ * - Missing/empty field → returns empty array (schema validation decides if allowed)
+ * - Invalid JSON → returns an ActionState validation error ("Format des IDs invalide.")
+ *
+ * Used by bulk actions to avoid duplicating try/catch parsing logic.
+ */
+export function parseFormIds(
+	formData: FormData,
+	key = "ids",
+): { ids: unknown[] } | { error: ActionState } {
+	const raw = safeFormGet(formData, key);
+	if (!raw) return { ids: [] };
+	try {
+		const parsed = JSON.parse(raw);
+		return { ids: Array.isArray(parsed) ? parsed : [] };
+	} catch {
+		return {
+			error: {
+				status: ActionStatus.VALIDATION_ERROR,
+				message: "Format des IDs invalide.",
+			},
+		};
+	}
+}

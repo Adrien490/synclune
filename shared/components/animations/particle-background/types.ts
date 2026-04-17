@@ -58,6 +58,17 @@ export interface ParticleBackgroundProps {
 	scrollParallax?: boolean;
 	/** Repulsion magnetique des particules au curseur, desktop uniquement (défaut: false) */
 	interactive?: boolean;
+	/**
+	 * Paramètres de la repulsion magnetique (actif uniquement si `interactive`).
+	 * - `radius` : rayon d'influence, fraction de la diagonale du container (0-1, défaut: 0.15)
+	 * - `strength` : force maximale du déplacement en pixels (défaut: 30)
+	 */
+	repulsion?: { radius?: number; strength?: number };
+	/**
+	 * Ratio du nombre de particules sur mobile par rapport au desktop.
+	 * Défaut: 0.5 (count/2). Clamp à [0.25, 1].
+	 */
+	mobileCountRatio?: number;
 }
 
 /** Données d'une particule générée */
@@ -106,6 +117,10 @@ export interface ParticleSetProps {
 	cursorX?: MotionValue<number>;
 	/** Normalized cursor Y position (0-1) for repulsion */
 	cursorY?: MotionValue<number>;
+	/** Repulsion radius as fraction of container diagonal (0-1) */
+	repulsionRadius?: number;
+	/** Repulsion strength in pixels */
+	repulsionStrength?: number;
 }
 
 /** Type pour les presets d'animation */

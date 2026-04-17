@@ -18,7 +18,7 @@ import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-cu
 import { createOrderInTransaction } from "@/modules/payments/services/order-creation.service";
 import { buildStripeLineItems } from "@/modules/payments/services/checkout-line-items.service";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
-import { sanitizeText } from "@/shared/lib/sanitize";
+import { saveAddressInTransaction } from "@/modules/addresses/services/save-address.service";
 import { logger } from "@/shared/lib/logger";
 import Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
@@ -228,7 +228,18 @@ export async function confirmCheckout(
 			let addressSaved = true;
 			if (v.saveInfo && userId) {
 				try {
-					await saveAddressForUser(userId, firstName, lastName, v.shippingAddress);
+					await prisma.$transaction((tx) =>
+						saveAddressInTransaction(tx, userId, {
+							firstName,
+							lastName,
+							address1: v.shippingAddress.addressLine1,
+							address2: v.shippingAddress.addressLine2 ?? null,
+							postalCode: v.shippingAddress.postalCode,
+							city: v.shippingAddress.city,
+							country: v.shippingAddress.country,
+							phone: v.shippingAddress.phoneNumber,
+						}),
+					);
 				} catch (e) {
 					addressSaved = false;
 					logger.warn("Failed to save address during checkout", {
@@ -270,41 +281,5 @@ async function cleanupFailedCheckout(orderId: string, orderDiscountCode: string 
 			});
 		}
 		await tx.order.delete({ where: { id: orderId } });
-	});
-}
-
-async function saveAddressForUser(
-	userId: string,
-	firstName: string,
-	lastName: string,
-	address: {
-		addressLine1: string;
-		addressLine2?: string;
-		postalCode: string;
-		city: string;
-		country: string;
-		phoneNumber: string;
-	},
-) {
-	const MAX_ADDRESSES = 10;
-	await prisma.$transaction(async (tx) => {
-		const count = await tx.address.count({ where: { userId } });
-		if (count >= MAX_ADDRESSES) return;
-
-		const isFirst = count === 0;
-		await tx.address.create({
-			data: {
-				userId,
-				firstName: sanitizeText(firstName),
-				lastName: sanitizeText(lastName),
-				address1: sanitizeText(address.addressLine1),
-				address2: address.addressLine2 ? sanitizeText(address.addressLine2) : null,
-				postalCode: address.postalCode,
-				city: sanitizeText(address.city),
-				country: address.country,
-				phone: address.phoneNumber,
-				isDefault: isFirst,
-			},
-		});
 	});
 }

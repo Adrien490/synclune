@@ -22,6 +22,11 @@ const BulkDeleteProductTypesAlertDialog = dynamic(() =>
 		(mod) => mod.BulkDeleteProductTypesAlertDialog,
 	),
 );
+const ProductTypeItemDrawer = dynamic(() =>
+	import("@/modules/product-types/components/admin/product-type-item-drawer").then(
+		(mod) => mod.ProductTypeItemDrawer,
+	),
+);
 import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
 import { ProductTypesBottomBar } from "@/modules/product-types/components/admin/product-types-bottom-bar";
 import { getProductTypes, SORT_LABELS } from "@/modules/product-types/data/get-product-types";
@@ -93,6 +98,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 			<ProductTypeFormDialog />
 			<DeleteProductTypeAlertDialog />
 			<BulkDeleteProductTypesAlertDialog />
+			<ProductTypeItemDrawer />
 			<PageHeader
 				variant="compact"
 				title="Types de bijoux"

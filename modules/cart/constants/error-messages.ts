@@ -28,7 +28,25 @@ export const CART_ERROR_MESSAGES = {
 	// Messages de validation pré-commande
 	VALIDATION_FAILED: "Certains articles de votre panier ne sont plus disponibles",
 
-	// Erreurs générales
+	// Erreurs generales
 	GENERAL_ERROR: "Une erreur est survenue lors de l'opération",
 	INVALID_DATA: "Données invalides",
+
+	// Erreurs panier / metadata
+	CART_NOT_FOUND: "Panier introuvable",
+	CART_EMPTY: "Votre panier est vide",
+	CART_ALREADY_EMPTY: "Votre panier est déjà vide",
+
+	// Erreurs code promo
+	DISCOUNT_CODE_REQUIRED: "Code promo requis",
+	DISCOUNT_CODE_INVALID: "Code promo invalide",
+	DISCOUNT_CODE_NOT_APPLIED: "Aucun code promo appliqué au panier",
+
+	// Erreurs guest contact
+	GUEST_EMAIL_REQUIRED: "Email requis",
+	GUEST_EMAIL_INVALID: "Adresse email invalide",
+
+	// Erreurs gift options
+	GIFT_MESSAGE_TOO_LONG: "Le message cadeau ne peut pas dépasser 300 caractères",
+	CART_NOTES_TOO_LONG: "Les notes ne peuvent pas dépasser 500 caractères",
 } as const;

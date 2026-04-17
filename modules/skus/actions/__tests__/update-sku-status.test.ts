@@ -73,7 +73,11 @@ function createMockExistingSku(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		isDefault: false,
 		productId: "prod-1",
-		product: { slug: "bracelet-lune" },
+		product: {
+			slug: "bracelet-lune",
+			status: "DRAFT",
+			_count: { skus: 2 },
+		},
 		...overrides,
 	};
 }
@@ -191,5 +195,61 @@ describe("updateProductSkuStatus", () => {
 		const result = await updateProductSkuStatus(undefined, deactivateFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	// ============================================================================
+	// PUBLIC PRODUCT GUARD (P1.1)
+	// ============================================================================
+
+	it("should reject deactivation of the last active SKU of a PUBLIC product", async () => {
+		mockPrisma.productSku.findUnique.mockResolvedValue(
+			createMockExistingSku({
+				isActive: true,
+				isDefault: false,
+				product: {
+					slug: "bracelet-lune",
+					status: "PUBLIC",
+					_count: { skus: 1 },
+				},
+			}),
+		);
+		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
+		const result = await updateProductSkuStatus(undefined, deactivateFormData);
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	it("should allow deactivation when PUBLIC product still has another active SKU", async () => {
+		mockPrisma.productSku.findUnique.mockResolvedValue(
+			createMockExistingSku({
+				isActive: true,
+				isDefault: false,
+				product: {
+					slug: "bracelet-lune",
+					status: "PUBLIC",
+					_count: { skus: 2 },
+				},
+			}),
+		);
+		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
+		const result = await updateProductSkuStatus(undefined, deactivateFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("should ignore PUBLIC guard for DRAFT product even when last SKU", async () => {
+		mockPrisma.productSku.findUnique.mockResolvedValue(
+			createMockExistingSku({
+				isActive: true,
+				isDefault: false,
+				product: {
+					slug: "bracelet-lune",
+					status: "DRAFT",
+					_count: { skus: 1 },
+				},
+			}),
+		);
+		mockValidateInput.mockReturnValue({ data: { skuId: VALID_CUID, isActive: false } });
+		const result = await updateProductSkuStatus(undefined, deactivateFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 });

@@ -83,6 +83,20 @@ vi.mock("@/modules/customizations/components/admin/customization-status-badge", 
 
 vi.mock("@/modules/customizations/components/admin/update-notes-dialog", () => ({
 	UpdateNotesDialog: () => <div data-testid="update-notes-dialog" />,
+	UPDATE_NOTES_DIALOG_ID: "update-customization-notes",
+}));
+
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({
+		isOpen: false,
+		data: null,
+		open: vi.fn(),
+		close: vi.fn(),
+	}),
+}));
+
+vi.mock("@/shared/components/swipeable-card", () => ({
+	SwipeableCard: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@/shared/utils/dates", () => ({

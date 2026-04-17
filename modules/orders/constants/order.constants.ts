@@ -251,4 +251,24 @@ export const ORDER_ERROR_MESSAGES = {
 	UPDATE_SHIPPING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de livraison.",
 	CANNOT_UPDATE_ADDRESS_SHIPPED:
 		"L'adresse ne peut plus être modifiée car la commande a été expédiée.",
+	// Update billing address
+	UPDATE_BILLING_ADDRESS_FAILED: "Erreur lors de la modification de l'adresse de facturation.",
+	CANNOT_UPDATE_BILLING_INVOICED:
+		"L'adresse de facturation ne peut plus être modifiée car la facture a été générée.",
+	// Update note
+	UPDATE_NOTE_FAILED: "Erreur lors de la modification de la note.",
+	NOTE_NOT_FOUND: "Note introuvable.",
+	NOT_NOTE_AUTHOR: "Vous ne pouvez modifier que vos propres notes.",
+	// Reorder
+	REORDER_FAILED: "Erreur lors de l'ajout des articles au panier.",
+	REORDER_NO_AVAILABLE_ITEMS:
+		"Aucun article de cette commande n'est disponible à la vente actuellement.",
+	// Mark as fully refunded
+	MARK_AS_FULLY_REFUNDED_FAILED: "Erreur lors du marquage de la commande comme remboursée.",
+	CANNOT_REFUND_NOT_PAID: "Seules les commandes payées peuvent être marquées comme remboursées.",
+	ALREADY_FULLY_REFUNDED: "Cette commande est déjà entièrement remboursée.",
+	// Update customer info
+	UPDATE_CUSTOMER_INFO_FAILED: "Erreur lors de la modification des informations client.",
+	// Export single order
+	EXPORT_ORDER_FAILED: "Erreur lors de l'export de la commande.",
 } as const;

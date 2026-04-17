@@ -57,6 +57,11 @@ const ChangeCollectionStatusAlertDialog = dynamic(() =>
 		(mod) => mod.ChangeCollectionStatusAlertDialog,
 	),
 );
+const CollectionItemDrawer = dynamic(() =>
+	import("@/modules/collections/components/admin/collection-item-drawer").then(
+		(mod) => mod.CollectionItemDrawer,
+	),
+);
 
 type CollectionFiltersSearchParams = {
 	filter_hasProducts?: string;
@@ -118,6 +123,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 			<ArchiveCollectionAlertDialog />
 			<BulkArchiveCollectionsAlertDialog />
 			<ChangeCollectionStatusAlertDialog />
+			<CollectionItemDrawer />
 
 			<PageHeader
 				variant="compact"

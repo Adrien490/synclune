@@ -32,6 +32,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 			carousel: { y: 20, delay: 0.2, duration: 0.5 },
 			cta: { y: 10, delay: 0.1, duration: 0.4 },
 			grid: { stagger: 0.1, y: 20 },
+			underline: { delay: 0.15 },
 		},
 	},
 }));

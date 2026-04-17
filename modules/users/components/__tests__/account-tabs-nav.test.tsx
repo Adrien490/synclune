@@ -164,11 +164,11 @@ describe("AccountTabsNav", () => {
 			expect(bottomBar).toHaveAttribute("aria-label", "Navigation espace client");
 		});
 
-		it("renders 3 links inside the BottomBar", () => {
+		it("renders 4 links inside the BottomBar", () => {
 			render(<AccountTabsNav />);
 			const bottomBar = screen.getByTestId("bottom-bar");
 			const links = bottomBar.querySelectorAll("a");
-			expect(links).toHaveLength(3);
+			expect(links).toHaveLength(4);
 		});
 
 		it("mobile links point to correct hrefs", () => {
@@ -185,9 +185,10 @@ describe("AccountTabsNav", () => {
 			render(<AccountTabsNav />);
 			const bottomBar = screen.getByTestId("bottom-bar");
 			const spans = bottomBar.querySelectorAll("span.bottom-bar-label");
-			expect(spans).toHaveLength(3);
+			expect(spans).toHaveLength(4);
 			const labels = Array.from(spans).map((s) => s.textContent);
 			expect(labels).toContain("Commandes");
+			expect(labels).toContain("Personnalisations");
 			expect(labels).toContain("Adresses");
 			expect(labels).toContain("Paramètres");
 		});
@@ -432,7 +433,7 @@ describe("AccountTabsNav", () => {
 			const bottomBar = screen.getByTestId("bottom-bar");
 			// Lucide icons render as SVG elements
 			const svgs = bottomBar.querySelectorAll("svg");
-			expect(svgs).toHaveLength(3);
+			expect(svgs).toHaveLength(4);
 			svgs.forEach((svg) => {
 				expect(svg.getAttribute("aria-hidden")).toBe("true");
 			});

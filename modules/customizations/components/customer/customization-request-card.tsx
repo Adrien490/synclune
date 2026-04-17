@@ -11,6 +11,8 @@ import {
 	CUSTOMIZATION_STATUS_COLORS,
 } from "../../constants/status.constants";
 import type { CustomizationRequestStatus } from "../../types/customization.types";
+import { canCustomerCancel } from "../../services/customization-status.service";
+import { CancelCustomizationButton } from "./cancel-customization-button";
 
 interface CustomizationRequestCardProps {
 	request: UserCustomizationRequest;
@@ -87,6 +89,12 @@ export function CustomizationRequestCard({ request }: CustomizationRequestCardPr
 								+{request.inspirationProducts.length - 4}
 							</div>
 						)}
+					</div>
+				)}
+
+				{canCustomerCancel(status) && (
+					<div className="border-border/50 border-t pt-2">
+						<CancelCustomizationButton requestId={request.id} />
 					</div>
 				)}
 			</CardContent>

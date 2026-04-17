@@ -101,6 +101,7 @@ export function GalleryPinchZoom({
 					className="pointer-events-none object-cover select-none"
 					style={viewTransitionName ? { viewTransitionName } : undefined}
 					preload={preload}
+					fetchPriority={preload ? "high" : undefined}
 					quality={MAIN_IMAGE_QUALITY}
 					sizes={GALLERY_MAIN_SIZES}
 					placeholder={blurDataUrl ? "blur" : "empty"}

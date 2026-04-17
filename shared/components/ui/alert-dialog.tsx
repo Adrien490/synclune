@@ -50,8 +50,9 @@ function AlertDialogContent({
 			<AlertDialogPrimitive.Content
 				data-slot="alert-dialog-content"
 				className={cn(
-					// Position et taille
+					// Position et taille — max-h empêche l'overflow hors viewport
 					"fixed top-1/2 left-1/2 z-(--z-alert) w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 sm:max-w-105",
+					"flex max-h-[calc(100dvh-4rem)] flex-col overflow-hidden",
 					// Apparence - fond solide avec bordure rose subtile
 					"bg-card",
 					"border-primary/20 rounded-xl border",
@@ -75,7 +76,7 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
 	return (
 		<div
 			data-slot="alert-dialog-header"
-			className={cn("flex flex-col gap-1.5", className)}
+			className={cn("flex shrink-0 flex-col gap-1.5", className)}
 			{...props}
 		/>
 	);
@@ -85,7 +86,25 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
 	return (
 		<div
 			data-slot="alert-dialog-footer"
-			className={cn("flex flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end", className)}
+			className={cn(
+				"flex shrink-0 flex-col-reverse gap-2 pt-4 sm:flex-row sm:justify-end",
+				className,
+			)}
+			{...props}
+		/>
+	);
+}
+
+/**
+ * Zone de contenu scrollable entre le header et le footer d'un AlertDialog.
+ * Utiliser pour les dialogs dont le contenu peut dépasser la hauteur du viewport
+ * (ex: remboursements avec liste d'articles, confirmations bulk avec preview).
+ */
+function AlertDialogBody({ className, ...props }: React.ComponentProps<"div">) {
+	return (
+		<div
+			data-slot="alert-dialog-body"
+			className={cn("-mx-6 flex-1 overflow-y-auto px-6 py-4", className)}
 			{...props}
 		/>
 	);
@@ -139,6 +158,7 @@ function AlertDialogCancel({
 export {
 	AlertDialog,
 	AlertDialogAction,
+	AlertDialogBody,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,

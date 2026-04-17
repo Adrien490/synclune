@@ -95,6 +95,7 @@ export function ProductsMobileList({
 	const productsForSelection = products.map((p) => ({
 		id: p.id,
 		status: p.status,
+		title: p.title,
 	}));
 
 	return (

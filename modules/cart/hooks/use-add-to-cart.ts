@@ -7,6 +7,7 @@ import { useActionState, useRef, useTransition } from "react";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import type { ActionState } from "@/shared/types/server-action";
 
 interface UseAddToCartOptions {
@@ -44,6 +45,7 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 				createToastCallbacks({
 					showSuccessToast: false,
 					onSuccess: (result: unknown) => {
+						triggerHaptic("success");
 						if (shouldOpenSheet) {
 							openSheet("cart");
 						}
@@ -65,6 +67,7 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 						}
 					},
 					onError: () => {
+						triggerHaptic("error");
 						// Rollback du badge navbar avec la quantite reelle
 						// Sheet ne s'ouvre PAS en cas d'erreur
 						adjustCart(-pendingQuantityRef.current);

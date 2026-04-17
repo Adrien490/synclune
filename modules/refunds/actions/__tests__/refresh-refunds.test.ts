@@ -43,6 +43,12 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 		ADMIN_BADGES: "admin-badges",
 	},
 }));
+vi.mock("@/modules/dashboard/constants/cache", () => ({
+	DASHBOARD_CACHE_TAGS: {
+		KPIS: "dashboard-kpis",
+		RECENT_ORDERS: "dashboard-recent-orders",
+	},
+}));
 
 import { refreshRefunds } from "../refresh-refunds";
 
@@ -86,7 +92,7 @@ describe("refreshRefunds", () => {
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
-	it("should invalidate orders list and admin badges cache tags on success", async () => {
+	it("should invalidate orders list, admin badges, and dashboard tags on success", async () => {
 		mockSuccess.mockReturnValue({
 			status: ActionStatus.SUCCESS,
 			message: "Remboursements rafraichis",
@@ -94,7 +100,9 @@ describe("refreshRefunds", () => {
 		await refreshRefunds(undefined, mockFormData);
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(2);
+		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
+		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-recent-orders");
+		expect(mockUpdateTag).toHaveBeenCalledTimes(4);
 	});
 
 	it("should return success after cache invalidation", async () => {

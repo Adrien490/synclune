@@ -1,6 +1,12 @@
 "use server";
 
-import { OrderStatus, PaymentStatus, HistorySource } from "@/app/generated/prisma/client";
+import {
+	OrderStatus,
+	PaymentStatus,
+	HistorySource,
+	RefundReason,
+	RefundStatus,
+} from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendCancelOrderConfirmationEmail } from "@/modules/emails/services/status-emails";
@@ -48,8 +54,13 @@ export async function cancelOrder(
 		const rawId = safeFormGet(formData, "id");
 		const rawReason = safeFormGet(formData, "reason");
 		const sanitizedReason = rawReason ? sanitizeText(rawReason) : null;
+		const autoRefund = safeFormGet(formData, "autoRefund") === "true";
 
-		const validated = validateInput(cancelOrderSchema, { id: rawId, reason: sanitizedReason });
+		const validated = validateInput(cancelOrderSchema, {
+			id: rawId,
+			reason: sanitizedReason,
+			autoRefund,
+		});
 		if ("error" in validated) return validated.error;
 
 		const { id } = validated.data;
@@ -64,14 +75,17 @@ export async function cancelOrder(
 					status: true,
 					paymentStatus: true,
 					total: true,
+					stripePaymentIntentId: true,
 					userId: true,
 					customerEmail: true,
 					customerName: true,
 					shippingFirstName: true,
 					items: {
 						select: {
+							id: true,
 							skuId: true,
 							quantity: true,
+							price: true,
 						},
 					},
 				},
@@ -140,7 +154,34 @@ export async function cancelOrder(
 				await tx.discountUsage.deleteMany({ where: { orderId: id } });
 			}
 
-			// 4. Audit trail (Best Practice Stripe 2025)
+			// 4. Auto-refund: créer un Refund (status APPROVED) qui sera traité par
+			// le cron reconcile-refunds (appel Stripe asynchrone hors transaction)
+			let createdRefundId: string | null = null;
+			const wasPaid = found.paymentStatus === PaymentStatus.PAID;
+			if (autoRefund && wasPaid) {
+				const refund = await tx.refund.create({
+					data: {
+						orderId: id,
+						amount: found.total,
+						reason: RefundReason.CUSTOMER_REQUEST,
+						status: RefundStatus.APPROVED,
+						note: sanitizedReason ?? "Remboursement automatique sur annulation",
+						createdBy: adminUser.id,
+						items: {
+							create: found.items.map((item) => ({
+								orderItemId: item.id,
+								quantity: item.quantity,
+								amount: item.price * item.quantity,
+								restock: shouldRestoreStock,
+							})),
+						},
+					},
+					select: { id: true },
+				});
+				createdRefundId = refund.id;
+			}
+
+			// 5. Audit trail (Best Practice Stripe 2025)
 			await createOrderAuditTx(tx, {
 				orderId: id,
 				action: "CANCELLED",
@@ -156,6 +197,7 @@ export async function cancelOrder(
 					stockRestored: shouldRestoreStock,
 					itemsCount: found.items.length,
 					releasedDiscountIds,
+					autoRefundId: createdRefundId,
 				},
 			});
 
@@ -163,6 +205,7 @@ export async function cancelOrder(
 				...found,
 				_newPaymentStatus: newPaymentStatus,
 				_shouldRestoreStock: shouldRestoreStock,
+				_autoRefundId: createdRefundId,
 			};
 		});
 
@@ -202,6 +245,11 @@ export async function cancelOrder(
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
+		// Si auto-refund, invalider également le cache des remboursements de la commande
+		if (order._autoRefundId) {
+			updateTag(`order-refunds-${order.id}`);
+		}
+
 		// Fire-and-forget email to avoid blocking the admin response
 		if (order.customerEmail) {
 			const customerFirstName = extractCustomerFirstName(
@@ -224,9 +272,10 @@ export async function cancelOrder(
 			});
 		}
 
-		const refundMessage =
-			order._newPaymentStatus === PaymentStatus.REFUNDED
-				? " Statut passe a REFUNDED. Un remboursement Stripe doit etre effectue separement si necessaire."
+		const refundMessage = order._autoRefundId
+			? ` Remboursement Stripe planifié (${(order.total / 100).toFixed(2)} €), sera traité par le cron reconcile-refunds.`
+			: order._newPaymentStatus === PaymentStatus.REFUNDED
+				? " Statut passé à REFUNDED. Un remboursement Stripe doit être effectué séparément si nécessaire."
 				: "";
 
 		const stockMessage =

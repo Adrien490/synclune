@@ -48,6 +48,7 @@ export const ROUTES = {
 		FAVORITES: "/favoris",
 		ADDRESSES: "/adresses",
 		SETTINGS: "/parametres",
+		CUSTOMIZATIONS: "/personnalisations",
 	},
 
 	// Shop

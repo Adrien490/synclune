@@ -15,6 +15,8 @@ import {
 } from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 
+import { sendRefundCancelledEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -63,6 +65,8 @@ export async function cancelRefund(
 						user: {
 							select: {
 								id: true,
+								email: true,
+								name: true,
 							},
 						},
 					},
@@ -98,6 +102,32 @@ export async function cancelRefund(
 		updateTag(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 		if (refund.order.user?.id) {
 			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(refund.order.user.id));
+		}
+
+		// Envoyer l'email de notification au client (non bloquant)
+		// Un refund annulé peut avoir été créé par le client via request-return,
+		// il est visible dans son espace. Le silence serait une rupture de confiance.
+		if (refund.order.user?.email) {
+			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refund.order.id));
+
+			sendRefundCancelledEmail({
+				to: refund.order.user.email,
+				orderNumber: refund.order.orderNumber,
+				customerName: refund.order.user.name ?? "Client",
+				refundAmount: refund.amount,
+				orderDetailsUrl,
+			}).catch((emailError) => {
+				prisma.orderNote
+					.create({
+						data: {
+							orderId: refund.order.id,
+							content: `[EMAIL] Échec notification annulation remboursement (commande ${refund.order.orderNumber}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
+							authorId: "system",
+							authorName: "Système (cancel-refund)",
+						},
+					})
+					.catch(() => {});
+			});
 		}
 
 		void logAudit({

@@ -49,31 +49,38 @@ export async function updateCollectionStatus(
 
 		const { id, status } = validated.data;
 
-		// 4. Verifier que la collection existe
-		const existingCollection = await prisma.collection.findUnique({
-			where: { id },
-			select: {
-				id: true,
-				name: true,
-				slug: true,
-				status: true,
-			},
+		// 4. Transaction atomique : lire + muter pour garantir oldStatus coherent dans l'audit
+		const existingCollection = await prisma.$transaction(async (tx) => {
+			const collection = await tx.collection.findUnique({
+				where: { id },
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+					status: true,
+				},
+			});
+
+			if (!collection) {
+				throw new Error("NOT_FOUND");
+			}
+
+			if (collection.status === status) {
+				return { ...collection, skipped: true as const };
+			}
+
+			await tx.collection.update({
+				where: { id },
+				data: { status },
+			});
+
+			return { ...collection, skipped: false as const };
 		});
 
-		if (!existingCollection) {
-			return notFound("Collection");
-		}
-
-		// 5. Verifier si le statut a change
-		if (existingCollection.status === status) {
+		// 5. Si statut deja applique, retourner immediatement sans invalidation ni audit
+		if (existingCollection.skipped) {
 			return success(`La collection est déjà ${COLLECTION_STATUS_LABELS[status].toLowerCase()}.`);
 		}
-
-		// 6. Mettre a jour le statut
-		await prisma.collection.update({
-			where: { id },
-			data: { status },
-		});
 
 		// 7. Invalidate cache tags
 		const collectionTags = getCollectionInvalidationTags(existingCollection.slug);
@@ -107,6 +114,9 @@ export async function updateCollectionStatus(
 			newStatus: status,
 		});
 	} catch (e) {
+		if (e instanceof Error && e.message === "NOT_FOUND") {
+			return notFound("Collection");
+		}
 		return handleActionError(e, "Erreur lors de la mise à jour du statut");
 	}
 }

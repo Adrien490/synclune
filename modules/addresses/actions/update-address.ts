@@ -72,7 +72,7 @@ export async function updateAddress(
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
-		return success("Adresse modifiee avec succes");
+		return success("Adresse modifiée avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la modification de l'adresse");
 	}

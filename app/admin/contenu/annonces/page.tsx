@@ -25,6 +25,12 @@ const DeleteAnnouncementAlertDialog = dynamic(() =>
 	),
 );
 
+const AnnouncementItemDrawer = dynamic(() =>
+	import("@/modules/announcements/components/admin/announcement-item-drawer").then(
+		(mod) => mod.AnnouncementItemDrawer,
+	),
+);
+
 export const metadata: Metadata = {
 	title: "Annonces - Administration",
 	description: "Gérer les annonces promotionnelles",
@@ -78,6 +84,7 @@ export default async function AnnouncementsAdminPage() {
 
 			<AnnouncementFormDialog />
 			<DeleteAnnouncementAlertDialog />
+			<AnnouncementItemDrawer />
 		</>
 	);
 }

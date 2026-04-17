@@ -7,8 +7,14 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
 export const BULK_DELETE_PRODUCTS_DIALOG_ID = "bulk-delete-products";
 
+type BulkDeleteProductsData = {
+	productIds: string[];
+	productTitles?: string[];
+	[key: string]: unknown;
+};
+
 export function BulkDeleteProductsAlertDialog() {
-	const dialog = useAlertDialog(BULK_DELETE_PRODUCTS_DIALOG_ID);
+	const dialog = useAlertDialog<BulkDeleteProductsData>(BULK_DELETE_PRODUCTS_DIALOG_ID);
 	const { clearSelection } = useSelectionContext();
 
 	const { action, isPending } = useBulkDeleteProducts({
@@ -17,6 +23,8 @@ export function BulkDeleteProductsAlertDialog() {
 			dialog.close();
 		},
 	});
+
+	const productTitles = dialog.data?.productTitles ?? [];
 
 	return (
 		<BulkDeleteDialog
@@ -44,6 +52,22 @@ export function BulkDeleteProductsAlertDialog() {
 					</p>
 				</div>
 			)}
+			previewItems={
+				productTitles.length > 0 ? (
+					<div className="space-y-2">
+						<p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+							Produits concernés
+						</p>
+						<ul className="border-border/60 bg-muted/30 divide-y rounded-md border text-sm">
+							{productTitles.map((title, index) => (
+								<li key={`${index}-${title}`} className="truncate px-3 py-2" title={title}>
+									{title}
+								</li>
+							))}
+						</ul>
+					</div>
+				) : null
+			}
 		/>
 	);
 }

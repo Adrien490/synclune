@@ -7,20 +7,24 @@ import { createMockFormData } from "@/test/factories";
 // ============================================================================
 
 const {
-	mockRequireAdmin,
+	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
+	mockLogAudit,
 } = vi.hoisted(() => ({
-	mockRequireAdmin: vi.fn(),
+	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
+	mockLogAudit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({
+	requireAdminWithUser: mockRequireAdminWithUser,
+}));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -32,6 +36,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: { ADMIN_CUSTOMERS_LIST: "admin-customers-list", ADMIN_BADGES: "admin-badges" },
 }));
@@ -43,6 +48,7 @@ import { refreshUsers } from "../refresh-users";
 // ============================================================================
 
 const emptyFormData = createMockFormData({});
+const adminUser = { id: "admin-1", name: "Admin", email: "admin@test.com", role: "ADMIN" };
 
 // ============================================================================
 // TESTS
@@ -53,7 +59,8 @@ describe("refreshUsers", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
-		mockRequireAdmin.mockResolvedValue({ user: { id: "1", role: "ADMIN" } });
+		mockRequireAdminWithUser.mockResolvedValue({ user: adminUser });
+		mockLogAudit.mockResolvedValue(undefined);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -71,11 +78,11 @@ describe("refreshUsers", () => {
 		});
 		const result = await refreshUsers(undefined, emptyFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockRequireAdminWithUser).not.toHaveBeenCalled();
 	});
 
 	it("should return auth error when not admin", async () => {
-		mockRequireAdmin.mockResolvedValue({
+		mockRequireAdminWithUser.mockResolvedValue({
 			error: { status: ActionStatus.FORBIDDEN, message: "Admin only" },
 		});
 		const result = await refreshUsers(undefined, emptyFormData);
@@ -97,9 +104,32 @@ describe("refreshUsers", () => {
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockRequireAdmin.mockRejectedValue(new Error("Unexpected crash"));
+		mockRequireAdminWithUser.mockRejectedValue(new Error("Unexpected crash"));
 		const result = await refreshUsers(undefined, emptyFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	it("should log audit entry on success", async () => {
+		await refreshUsers(undefined, emptyFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				adminId: adminUser.id,
+				adminName: adminUser.name,
+				action: "user.refresh",
+				targetType: "user",
+				targetId: "list",
+			}),
+		);
+	});
+
+	it("should fall back to email for adminName when name is null", async () => {
+		mockRequireAdminWithUser.mockResolvedValue({
+			user: { id: "admin-2", name: null, email: "noname@test.com", role: "ADMIN" },
+		});
+		await refreshUsers(undefined, emptyFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({ adminName: "noname@test.com" }),
+		);
 	});
 });

@@ -18,6 +18,7 @@ const {
 	mockGetReviewModerationTags,
 	mockSafeParse,
 	mockSanitizeText,
+	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		reviewResponse: { findFirst: vi.fn(), update: vi.fn() },
@@ -32,6 +33,7 @@ const {
 	mockGetReviewModerationTags: vi.fn(),
 	mockSafeParse: vi.fn(),
 	mockSanitizeText: vi.fn(),
+	mockLogAudit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -61,7 +63,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 }));
 vi.mock("@/shared/lib/audit-log", () => ({
-	logAudit: vi.fn(),
+	logAudit: mockLogAudit,
 }));
 vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: mockSanitizeText,
@@ -92,6 +94,7 @@ const NEW_CONTENT = "Merci pour votre retour !";
 function makeResponse(overrides: Record<string, unknown> = {}) {
 	return {
 		id: RESPONSE_ID,
+		content: "Ancien contenu",
 		review: { id: "rev-1", productId: "prod-1" },
 		...overrides,
 	};
@@ -212,6 +215,28 @@ describe("updateReviewResponse", () => {
 			createMockFormData({ id: RESPONSE_ID, content: NEW_CONTENT }),
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("logs audit with previousContent and newContent for moderation history", async () => {
+		mockSanitizeText.mockImplementation((text: string) => text);
+
+		await updateReviewResponse(
+			undefined,
+			createMockFormData({ id: RESPONSE_ID, content: NEW_CONTENT }),
+		);
+
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: "review.updateResponse",
+				targetType: "reviewResponse",
+				targetId: RESPONSE_ID,
+				metadata: {
+					reviewId: "rev-1",
+					previousContent: "Ancien contenu",
+					newContent: NEW_CONTENT,
+				},
+			}),
+		);
 	});
 
 	it("calls handleActionError on unexpected exception", async () => {

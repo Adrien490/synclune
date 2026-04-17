@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useEffectEvent } from "react";
+import { triggerHaptic } from "./use-haptic";
 
 /** Default swipe distance (px) to trigger an action */
 const SWIPE_ACTION_THRESHOLD = 80;
@@ -93,9 +94,11 @@ export function useSwipeAction({
 
 	// Stable event callbacks — avoids stale closure + no dependency needed in effect
 	const onLeftAction = useEffectEvent(() => {
+		triggerHaptic("medium");
 		leftAction?.onAction();
 	});
 	const onRightAction = useEffectEvent(() => {
+		triggerHaptic("medium");
 		rightAction?.onAction();
 	});
 

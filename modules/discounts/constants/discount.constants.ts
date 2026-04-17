@@ -122,4 +122,13 @@ export const DISCOUNT_ERROR_MESSAGES = {
 	UPDATE_FAILED: "Erreur lors de la modification du code promo",
 	DELETE_FAILED: "Erreur lors de la suppression du code promo",
 	HAS_USAGES: "Ce code promo a déjà été utilisé et ne peut pas être supprimé",
+	NOT_DELETED: "Ce code promo n'est pas supprimé",
+	RESTORE_FAILED: "Erreur lors de la restauration du code promo",
+	BULK_GENERATE_FAILED: "Erreur lors de la génération des codes promo",
+	BULK_GENERATE_NO_CODES: "Aucun code n'a pu être généré (collisions persistantes)",
+	EXTEND_FAILED: "Erreur lors de la prolongation du code promo",
+	EXTEND_NO_END_DATE: "Ce code promo n'a pas de date de fin à prolonger",
+	RESET_COUNTER_FAILED: "Erreur lors de la réinitialisation du compteur",
+	EXPORT_USAGES_FAILED: "Erreur lors de l'export des utilisations",
+	NO_USAGES_TO_EXPORT: "Ce code promo n'a aucune utilisation à exporter",
 } as const;

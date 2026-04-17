@@ -7,6 +7,7 @@ import { PaymentStatus } from "@/app/generated/prisma/browser";
 import {
 	CircleCheck,
 	CreditCard,
+	Download,
 	Edit,
 	Mail,
 	Ellipsis,
@@ -17,6 +18,10 @@ import {
 	Undo2,
 	CircleX,
 } from "lucide-react";
+import { useActionState } from "react";
+import { exportSingleOrder } from "@/modules/orders/actions/export-single-order";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { Button } from "@/shared/components/ui/button";
 import {
 	DropdownMenu,
@@ -53,6 +58,25 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 
 	const permissions = getOrderPermissions(order);
 	const { canMarkAsReturned } = permissions;
+
+	const [, exportAction, isExporting] = useActionState(
+		withCallbacks(
+			exportSingleOrder,
+			createToastCallbacks({
+				onSuccess: (state) => {
+					if (!state.csv || !state.filename) return;
+					const blob = new Blob([state.csv], { type: "text/csv;charset=utf-8" });
+					const url = URL.createObjectURL(blob);
+					const link = document.createElement("a");
+					link.href = url;
+					link.download = state.filename;
+					link.click();
+					URL.revokeObjectURL(url);
+				},
+			}),
+		),
+		undefined,
+	);
 
 	// Handlers
 	const handleMarkAsPaid = () => {
@@ -179,6 +203,19 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 						<DropdownMenuItem onClick={handleResendEmail}>
 							<Mail className="h-4 w-4" aria-hidden="true" />
 							Renvoyer un email
+						</DropdownMenuItem>
+						<DropdownMenuItem asChild>
+							<form action={exportAction}>
+								<input type="hidden" name="id" value={order.id} />
+								<button
+									type="submit"
+									disabled={isExporting}
+									className="flex w-full items-center gap-2 px-2 py-1.5 text-sm"
+								>
+									<Download className="h-4 w-4" aria-hidden="true" />
+									{isExporting ? "Export..." : "Exporter en CSV"}
+								</button>
+							</form>
 						</DropdownMenuItem>
 						{permissions.canUpdateTracking && (
 							<DropdownMenuItem onClick={handleUpdateTracking}>

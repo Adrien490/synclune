@@ -15,6 +15,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 		section: {
 			title: { y: 20, duration: 0.5 },
 			cta: { y: 10, delay: 0.1, duration: 0.4 },
+			underline: { delay: 0.15 },
 		},
 	},
 }));

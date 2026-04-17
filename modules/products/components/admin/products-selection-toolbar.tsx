@@ -7,6 +7,7 @@ interface ProductsSelectionToolbarProps {
 	products: Array<{
 		id: string;
 		status: "DRAFT" | "PUBLIC" | "ARCHIVED";
+		title?: string;
 	}>;
 }
 

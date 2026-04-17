@@ -43,6 +43,17 @@ vi.mock("../announcement-row-actions", () => ({
 	),
 }));
 
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({
+		isOpen: false,
+		data: undefined,
+		open: vi.fn(),
+		close: vi.fn(),
+		toggle: vi.fn(),
+		clearData: vi.fn(),
+	}),
+}));
+
 vi.mock("@/shared/utils/dates", () => ({
 	formatDateTime: mockFormatDateTime,
 }));
@@ -341,26 +352,22 @@ describe("AnnouncementsMobileList", () => {
 		});
 	});
 
-	// ─── Row actions ──────────────────────────────────────────────────────────
+	// ─── Item interaction ─────────────────────────────────────────────────────
 
-	describe("row actions", () => {
-		it("renders AnnouncementRowActions for each announcement", async () => {
+	describe("item interaction", () => {
+		it("renders a clickable button per announcement", async () => {
 			await renderWithSuspense([
 				createAnnouncement({ id: "ann_1" }),
 				createAnnouncement({ id: "ann_2" }),
 			]);
-			expect(screen.getAllByTestId("announcement-row-actions")).toHaveLength(2);
+			expect(screen.getAllByRole("button", { name: /Ouvrir la fiche de l'annonce/i })).toHaveLength(
+				2,
+			);
 		});
 
-		it("passes correct announcement id to row actions", async () => {
+		it("renders one listitem per announcement", async () => {
 			await renderWithSuspense([createAnnouncement({ id: "ann_xyz" })]);
-			expect(screen.getByTestId("announcement-row-actions")).toHaveAttribute("data-id", "ann_xyz");
-		});
-
-		it("renders row actions inside ItemActions", async () => {
-			await renderWithSuspense([createAnnouncement()]);
-			const actions = screen.getByTestId("item-actions");
-			expect(actions).toContainElement(screen.getByTestId("announcement-row-actions"));
+			expect(screen.getAllByRole("listitem")).toHaveLength(1);
 		});
 	});
 });

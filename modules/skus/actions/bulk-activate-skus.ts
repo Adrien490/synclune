@@ -7,7 +7,7 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
+import { BusinessError, handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { bulkActivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
@@ -48,32 +48,32 @@ export async function bulkActivateSkus(
 			};
 		}
 
-		// Récupérer les infos des SKUs pour validation et invalidation du cache
-		const skusData = await prisma.productSku.findMany({
-			where: { id: { in: ids } },
-			select: {
-				id: true,
-				sku: true,
-				productId: true,
-				product: { select: { slug: true } },
-			},
-		});
+		// Transaction atomique: lecture de validation + ecriture
+		const skusData = await prisma.$transaction(async (tx) => {
+			const found = await tx.productSku.findMany({
+				where: { id: { in: ids } },
+				select: {
+					id: true,
+					sku: true,
+					productId: true,
+					product: { select: { slug: true } },
+				},
+			});
 
-		if (skusData.length !== ids.length) {
-			const missing = ids.length - skusData.length;
-			return {
-				status: ActionStatus.ERROR,
-				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
-			};
-		}
+			if (found.length !== ids.length) {
+				const missing = ids.length - found.length;
+				throw new BusinessError(
+					`${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
+				);
+			}
 
-		// Activer toutes les variantes dans une transaction atomique
-		await prisma.$transaction([
-			prisma.productSku.updateMany({
+			await tx.productSku.updateMany({
 				where: { id: { in: ids } },
 				data: { isActive: true },
-			}),
-		]);
+			});
+
+			return found;
+		});
 
 		// Invalider le cache (deduplique automatiquement les tags)
 		const uniqueTags = collectBulkInvalidationTags(skusData);

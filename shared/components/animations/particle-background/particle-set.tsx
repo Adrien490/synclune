@@ -56,11 +56,11 @@ function SvgShape({
 /** Max vertical offset in pixels for scroll parallax (closest particles) */
 const SCROLL_PARALLAX_RANGE = 40;
 
-/** Max repulsion offset in pixels */
-const REPULSION_STRENGTH = 30;
+/** Default repulsion offset in pixels when not overridden via props */
+export const DEFAULT_REPULSION_STRENGTH = 30;
 
-/** Repulsion radius as fraction of container diagonal (0-1) */
-const REPULSION_RADIUS = 0.15;
+/** Default repulsion radius as fraction of container diagonal (0-1) */
+export const DEFAULT_REPULSION_RADIUS = 0.15;
 
 /**
  * Animated particle with mouse parallax.
@@ -83,6 +83,8 @@ function AnimatedParticle({
 	interactive,
 	cursorX,
 	cursorY,
+	repulsionRadius,
+	repulsionStrength,
 }: {
 	p: Particle;
 	animationStyle: ParticleSetProps["animationStyle"];
@@ -95,6 +97,8 @@ function AnimatedParticle({
 	interactive?: boolean;
 	cursorX: MotionValue<number>;
 	cursorY: MotionValue<number>;
+	repulsionRadius: number;
+	repulsionStrength: number;
 }) {
 	const { isSvg, svgConfig, shapeStyles } = resolveShape(p);
 	const style = particleStyle(p, highContrast);
@@ -112,9 +116,9 @@ function AnimatedParticle({
 			const dx = p.x / 100 - (cx as number);
 			const dy = p.y / 100 - (cy as number);
 			const dist = Math.sqrt(dx * dx + dy * dy);
-			if (dist > 0.001 && dist <= REPULSION_RADIUS) {
-				const factor = (1 - dist / REPULSION_RADIUS) ** 2;
-				x += (dx / dist) * factor * REPULSION_STRENGTH;
+			if (dist > 0.001 && dist <= repulsionRadius) {
+				const factor = (1 - dist / repulsionRadius) ** 2;
+				x += (dx / dist) * factor * repulsionStrength;
 			}
 		}
 		return x;
@@ -132,9 +136,9 @@ function AnimatedParticle({
 				const dx = p.x / 100 - (cx as number);
 				const dy = p.y / 100 - (cy as number);
 				const dist = Math.sqrt(dx * dx + dy * dy);
-				if (dist > 0.001 && dist <= REPULSION_RADIUS) {
-					const factor = (1 - dist / REPULSION_RADIUS) ** 2;
-					y += (dy / dist) * factor * REPULSION_STRENGTH;
+				if (dist > 0.001 && dist <= repulsionRadius) {
+					const factor = (1 - dist / repulsionRadius) ** 2;
+					y += (dy / dist) * factor * repulsionStrength;
 				}
 			}
 			return y;
@@ -236,6 +240,8 @@ export function ParticleSet({
 	interactive,
 	cursorX,
 	cursorY,
+	repulsionRadius = DEFAULT_REPULSION_RADIUS,
+	repulsionStrength = DEFAULT_REPULSION_STRENGTH,
 }: ParticleSetProps) {
 	// Shared fallback MotionValues — created once per set, not per particle
 	const fallback = useMotionValue(0);
@@ -280,6 +286,8 @@ export function ParticleSet({
 					interactive={interactive}
 					cursorX={resolvedCursorX}
 					cursorY={resolvedCursorY}
+					repulsionRadius={repulsionRadius}
+					repulsionStrength={repulsionStrength}
 				/>
 			))}
 		</>

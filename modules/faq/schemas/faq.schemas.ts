@@ -55,3 +55,27 @@ export const reorderFaqItemsSchema = z.object({
 		}),
 	),
 });
+
+export const toggleFaqItemStatusSchema = z.object({
+	id: z.cuid2("ID invalide"),
+	isActive: z.boolean(),
+});
+
+export const duplicateFaqItemSchema = z.object({
+	id: z.cuid2("ID invalide"),
+});
+
+export const bulkDeleteFaqItemsSchema = z.object({
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Au moins une question doit être sélectionnée")
+		.max(50, "Maximum 50 questions à la fois"),
+});
+
+export const bulkToggleFaqItemStatusSchema = z.object({
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Au moins une question doit être sélectionnée")
+		.max(50, "Maximum 50 questions à la fois"),
+	isActive: z.boolean(),
+});

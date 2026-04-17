@@ -53,7 +53,8 @@ export async function createFaqItem(
 			return error(linkError);
 		}
 
-		// Get the next position
+		// TOCTOU: simultaneous creates may collide on the same position.
+		// Acceptable: ORDER BY position then createdAt keeps insertion order stable.
 		const maxPosition = await prisma.faqItem.aggregate({
 			_max: { position: true },
 		});

@@ -9,6 +9,8 @@ import { OrderSummaryCard } from "@/modules/orders/components/customer/order-sum
 import { OrderAddressesCard } from "@/modules/orders/components/customer/order-addresses-card";
 import { RequestReturnButton } from "@/modules/refunds/components/customer/request-return-button";
 import { CancelOrderButton } from "@/modules/orders/components/customer/cancel-order-button";
+import { DownloadInvoiceButton } from "@/modules/orders/components/customer/download-invoice-button";
+import { ReorderButton } from "@/modules/orders/components/customer/reorder-button";
 import {
 	isReturnEligible,
 	getReturnDaysRemaining,
@@ -40,10 +42,14 @@ export async function OrderDetailContent({ orderNumber }: OrderDetailContentProp
 			<div className="space-y-6 md:col-span-1">
 				<OrderSummaryCard order={order} />
 				<OrderAddressesCard order={order} />
+				{order.paymentStatus === "PAID" && (
+					<DownloadInvoiceButton orderNumber={order.orderNumber} />
+				)}
 				{canRequestReturn && (
 					<RequestReturnButton orderId={order.id} daysRemaining={daysRemaining} />
 				)}
 				{order.status === "PENDING" && <CancelOrderButton orderId={order.id} />}
+				{order.status === "DELIVERED" && <ReorderButton orderId={order.id} />}
 			</div>
 		</div>
 	);

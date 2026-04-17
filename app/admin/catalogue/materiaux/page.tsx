@@ -27,6 +27,11 @@ const DeleteMaterialAlertDialog = dynamic(() =>
 		(mod) => mod.DeleteMaterialAlertDialog,
 	),
 );
+const MaterialItemDrawer = dynamic(() =>
+	import("@/modules/materials/components/admin/material-item-drawer").then(
+		(mod) => mod.MaterialItemDrawer,
+	),
+);
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
 import { MaterialsBottomBar } from "@/modules/materials/components/admin/materials-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -132,6 +137,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 
 			<MaterialFormDialog />
 			<DeleteMaterialAlertDialog />
+			<MaterialItemDrawer />
 			<MaterialsBottomBar />
 		</>
 	);

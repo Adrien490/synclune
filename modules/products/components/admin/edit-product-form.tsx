@@ -63,7 +63,7 @@ export function EditProductForm({
 			<h1 className="mb-6 text-2xl font-semibold">{product.title}</h1>
 			<form
 				action={action}
-				className="space-y-6 pb-32"
+				className="space-y-6"
 				onSubmit={() => {
 					void form.handleSubmit();
 				}}
@@ -393,30 +393,38 @@ export function EditProductForm({
 							/>
 						)}
 					</form.Field>
-
-					{/* Footer */}
-					<form.AppForm>
-						<div className="mt-6">
-							<div className="flex justify-end">
-								<form.Subscribe selector={(state) => [state.canSubmit]}>
-									{([canSubmit]) => (
-										<Button
-											type="submit"
-											disabled={!canSubmit || isPending || isMediaUploading}
-											className="min-w-40"
-										>
-											{isPending
-												? "Enregistrement..."
-												: isMediaUploading
-													? "Upload en cours..."
-													: "Enregistrer les modifications"}
-										</Button>
-									)}
-								</form.Subscribe>
-							</div>
-						</div>
-					</form.AppForm>
 				</div>
+
+				{/* Footer sticky : bouton Enregistrer toujours visible */}
+				<form.AppForm>
+					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-4 mt-6 border-t px-4 py-3 backdrop-blur-md md:bottom-0 md:-mx-6 md:px-6">
+						<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+							<Button
+								type="button"
+								variant="outline"
+								onClick={() => router.push("/admin/catalogue/produits")}
+								className="sm:min-w-32"
+							>
+								Annuler
+							</Button>
+							<form.Subscribe selector={(state) => [state.canSubmit]}>
+								{([canSubmit]) => (
+									<Button
+										type="submit"
+										disabled={!canSubmit || isPending || isMediaUploading}
+										className="sm:min-w-40"
+									>
+										{isPending
+											? "Enregistrement..."
+											: isMediaUploading
+												? "Upload en cours..."
+												: "Enregistrer les modifications"}
+									</Button>
+								)}
+							</form.Subscribe>
+						</div>
+					</div>
+				</form.AppForm>
 			</form>
 		</>
 	);

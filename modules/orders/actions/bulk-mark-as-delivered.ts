@@ -135,7 +135,7 @@ export async function bulkMarkAsDelivered(
 			for (const order of eligibleOrders) {
 				if (order.customerEmail) {
 					const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
-					sendDeliveryConfirmationEmail({
+					void sendDeliveryConfirmationEmail({
 						to: order.customerEmail,
 						orderNumber: order.orderNumber,
 						customerName: extractCustomerFirstName(order.customerName, order.shippingFirstName),

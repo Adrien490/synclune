@@ -11,18 +11,21 @@ const {
 	mockSuccess,
 	mockHandleActionError,
 	mockUpdateTag,
+	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockUpdateTag: vi.fn(),
+	mockLogAudit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	ADMIN_COLOR_LIMITS: { REFRESH: "refresh" },
 }));
@@ -42,7 +45,7 @@ describe("refreshColors", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 
 		mockSuccess.mockImplementation((msg: string) => ({
@@ -79,6 +82,17 @@ describe("refreshColors", () => {
 		expect(mockUpdateTag).toHaveBeenCalledTimes(2);
 		expect(mockUpdateTag).toHaveBeenCalledWith("colors-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
+	});
+
+	it("writes an audit log entry", async () => {
+		await refreshColors(undefined, new FormData());
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				adminId: "admin-1",
+				action: "color.refresh",
+				targetType: "cache",
+			}),
+		);
 	});
 
 	it("returns success message", async () => {

@@ -15,6 +15,8 @@ const {
 	mockTx,
 	mockCreateStripeRefund,
 	mockUpdateTag,
+	mockSendRefundConfirmationEmail,
+	mockBuildUrl,
 } = vi.hoisted(() => {
 	const mockTx = {
 		$queryRaw: vi.fn(),
@@ -34,10 +36,14 @@ const {
 			$transaction: vi.fn(),
 			refund: { update: vi.fn() },
 			productSku: { findMany: vi.fn() },
+			user: { findUnique: vi.fn() },
+			orderNote: { create: vi.fn() },
 		},
 		mockTx,
 		mockCreateStripeRefund: vi.fn(),
 		mockUpdateTag: vi.fn(),
+		mockSendRefundConfirmationEmail: vi.fn(),
+		mockBuildUrl: vi.fn(),
 	};
 });
 
@@ -85,6 +91,17 @@ vi.mock("next/cache", () => ({
 
 vi.mock("../../lib/stripe-refund", () => ({
 	createStripeRefund: mockCreateStripeRefund,
+}));
+
+vi.mock("@/modules/emails/services/refund-emails", () => ({
+	sendRefundConfirmationEmail: mockSendRefundConfirmationEmail,
+}));
+
+vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: mockBuildUrl,
+	ROUTES: {
+		ACCOUNT: { ORDER_DETAIL: (id: string) => `/commandes/${id}` },
+	},
 }));
 
 vi.mock("../../schemas/refund.schemas", () => ({
@@ -204,6 +221,13 @@ describe("processRefund", () => {
 			status: "error",
 			message: msg,
 		}));
+		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
+		mockSendRefundConfirmationEmail.mockResolvedValue(undefined);
+		mockPrisma.user.findUnique.mockResolvedValue({
+			email: "client@example.com",
+			name: "Marie Dupont",
+		});
+		mockPrisma.orderNote.create.mockResolvedValue({});
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -540,5 +564,92 @@ describe("processRefund", () => {
 		const result = await processRefund(undefined, makeFormData());
 
 		expect(result.message).toContain("123.45");
+	});
+
+	// ========================================================================
+	// Customer confirmation email (after SAGA Phase 3 success)
+	// ========================================================================
+
+	function setupSuccessfulRefundFlow(refundRow = makeRefundRow()) {
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		mockTx.$queryRaw
+			.mockResolvedValueOnce([refundRow])
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
+		mockCreateStripeRefund.mockResolvedValue({ success: true, refundId: "re_ok" });
+		mockPrisma.$transaction.mockImplementationOnce(async (fn: (tx: typeof mockTx) => unknown) =>
+			fn(mockTx),
+		);
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
+	}
+
+	it("should send confirmation email to customer after successful processing", async () => {
+		setupSuccessfulRefundFlow();
+
+		await processRefund(undefined, makeFormData());
+		await new Promise((r) => setImmediate(r));
+
+		expect(mockSendRefundConfirmationEmail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: "client@example.com",
+				orderNumber: "SYN-001",
+				customerName: "Marie Dupont",
+				refundAmount: 5000,
+				originalOrderTotal: 10000,
+				isPartialRefund: true,
+				reason: "CUSTOMER_REQUEST",
+			}),
+		);
+	});
+
+	it("should flag full refund as isPartialRefund=false", async () => {
+		setupSuccessfulRefundFlow(makeRefundRow({ amount: 10000, order_total: 10000 }));
+
+		await processRefund(undefined, makeFormData());
+		await new Promise((r) => setImmediate(r));
+
+		expect(mockSendRefundConfirmationEmail).toHaveBeenCalledWith(
+			expect.objectContaining({ isPartialRefund: false }),
+		);
+	});
+
+	it("should not send confirmation email when order has no user_id", async () => {
+		setupSuccessfulRefundFlow(makeRefundRow({ order_user_id: null }));
+
+		await processRefund(undefined, makeFormData());
+		await new Promise((r) => setImmediate(r));
+
+		expect(mockSendRefundConfirmationEmail).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+	});
+
+	it("should not send confirmation email when user has no email", async () => {
+		setupSuccessfulRefundFlow();
+		mockPrisma.user.findUnique.mockResolvedValue({ email: null, name: "Client" });
+
+		await processRefund(undefined, makeFormData());
+		await new Promise((r) => setImmediate(r));
+
+		expect(mockSendRefundConfirmationEmail).not.toHaveBeenCalled();
+	});
+
+	it("should create fallback OrderNote when email sending fails", async () => {
+		setupSuccessfulRefundFlow();
+		mockSendRefundConfirmationEmail.mockRejectedValue(new Error("SMTP down"));
+
+		await processRefund(undefined, makeFormData());
+		await new Promise((r) => setImmediate(r));
+
+		expect(mockPrisma.orderNote.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					orderId: "order-1",
+					content: expect.stringContaining("SMTP down"),
+					authorId: "system",
+				}),
+			}),
+		);
 	});
 });

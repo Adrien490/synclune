@@ -9,6 +9,7 @@ import { posthogEvents } from "@/shared/lib/posthog-events";
 import { ActionStatus } from "@/shared/types/server-action";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
@@ -124,6 +125,8 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 			// Utilise la ref pour lire l'état actuel (évite closure stale)
 			const currentState = isInWishlistRef.current;
 			const newState = !currentState;
+
+			triggerHaptic(newState ? "medium" : "light");
 
 			// Mise à jour optimistic de l'icône coeur
 			setOptimisticIsInWishlist(newState);

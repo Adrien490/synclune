@@ -21,6 +21,7 @@ const {
 	mockPrisma: {
 		user: { findUnique: vi.fn(), update: vi.fn() },
 		order: { count: vi.fn() },
+		refund: { count: vi.fn() },
 	},
 	mockRequireAuth: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -85,6 +86,7 @@ describe("deleteAccount", () => {
 		mockValidateInput.mockReturnValue({ data: { confirmation: "SUPPRIMER MON COMPTE" } });
 		mockPrisma.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
 		mockPrisma.order.count.mockResolvedValue(0);
+		mockPrisma.refund.count.mockResolvedValue(0);
 		mockPrisma.user.update.mockResolvedValue({});
 		mockHeaders.mockResolvedValue(new Headers());
 		mockAuth.api.signOut.mockResolvedValue({});
@@ -136,6 +138,22 @@ describe("deleteAccount", () => {
 		const result = await deleteAccount(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("2 commande");
+	});
+
+	it("should return error when user has in-flight refunds", async () => {
+		mockPrisma.order.count.mockResolvedValue(0);
+		mockPrisma.refund.count.mockResolvedValue(1);
+		const result = await deleteAccount(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("remboursement");
+		expect(mockPrisma.user.update).not.toHaveBeenCalled();
+	});
+
+	it("should pass when refunds are all completed or cancelled", async () => {
+		mockPrisma.order.count.mockResolvedValue(0);
+		mockPrisma.refund.count.mockResolvedValue(0);
+		const result = await deleteAccount(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should set PENDING_DELETION status", async () => {

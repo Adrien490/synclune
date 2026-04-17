@@ -19,6 +19,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		color: { findMany: vi.fn(), updateMany: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -84,6 +85,9 @@ describe("bulkToggleColorStatus", () => {
 		mockValidateInput.mockReturnValue({ data: { ids: COLOR_IDS, isActive: true } });
 		mockPrisma.color.findMany.mockResolvedValue([{ slug: "or" }, { slug: "argent" }]);
 		mockPrisma.color.updateMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
+			fn(mockPrisma),
+		);
 		mockGetColorInvalidationTags.mockReturnValue(["colors-list"]);
 
 		mockSuccess.mockImplementation((msg: string) => ({

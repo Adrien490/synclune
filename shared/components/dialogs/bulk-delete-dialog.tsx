@@ -3,6 +3,7 @@
 import {
 	AlertDialog,
 	AlertDialogAction,
+	AlertDialogBody,
 	AlertDialogCancel,
 	AlertDialogContent,
 	AlertDialogDescription,
@@ -30,6 +31,12 @@ interface BulkDeleteDialogProps {
 	 * Receives the count of items to delete.
 	 */
 	description: ReactNode | ((count: number) => ReactNode);
+	/**
+	 * Optional preview items shown in a scrollable list before confirmation.
+	 * When provided, renders a bulleted list of labels (max-h 12rem).
+	 * Safety net against accidental destructive actions on large selections.
+	 */
+	previewItems?: ReactNode | ((ids: string[]) => ReactNode);
 	/** Form action from useActionState */
 	action: (formData: FormData) => void;
 	/** Whether the action is pending */
@@ -81,6 +88,7 @@ export function BulkDeleteDialog({
 	dialogId,
 	title = "Confirmer la suppression",
 	description,
+	previewItems,
 	action,
 	isPending,
 	idsFieldName = "ids",
@@ -101,6 +109,7 @@ export function BulkDeleteDialog({
 	const count = ids.length;
 
 	const renderedDescription = typeof description === "function" ? description(count) : description;
+	const renderedPreview = typeof previewItems === "function" ? previewItems(ids) : previewItems;
 
 	const handleAction = (formData: FormData) => {
 		action(formData);
@@ -109,7 +118,7 @@ export function BulkDeleteDialog({
 	return (
 		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
-				<form action={handleAction}>
+				<form action={handleAction} className="flex min-h-0 flex-1 flex-col">
 					<input type="hidden" name={idsFieldName} value={JSON.stringify(ids)} />
 
 					<AlertDialogHeader>
@@ -118,6 +127,7 @@ export function BulkDeleteDialog({
 							<div>{renderedDescription}</div>
 						</AlertDialogDescription>
 					</AlertDialogHeader>
+					{renderedPreview && <AlertDialogBody>{renderedPreview}</AlertDialogBody>}
 					<AlertDialogFooter>
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler

@@ -17,6 +17,11 @@ const NewsletterBottomBar = dynamic(() =>
 		(mod) => mod.NewsletterBottomBar,
 	),
 );
+const SubscriberItemDrawer = dynamic(() =>
+	import("@/modules/newsletter/components/admin/subscriber-item-drawer").then(
+		(mod) => mod.SubscriberItemDrawer,
+	),
+);
 import { ExportSubscribersButton } from "@/modules/newsletter/components/admin/export-subscribers-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { getFirstParam } from "@/shared/utils/params";
@@ -173,6 +178,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
 
 			{/* Bottom bar mobile */}
 			<NewsletterBottomBar />
+			<SubscriberItemDrawer />
 		</>
 	);
 }

@@ -63,6 +63,7 @@ async function fetchGuestCartForMerge(sessionId: string) {
 							product: {
 								select: {
 									id: true,
+									title: true,
 									status: true,
 									deletedAt: true,
 								},

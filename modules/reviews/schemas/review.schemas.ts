@@ -243,6 +243,67 @@ export const sendReviewRequestEmailSchema = z.object({
 
 type SendReviewRequestEmailInput = z.infer<typeof sendReviewRequestEmailSchema>;
 
+/**
+ * Schema de validation pour l'envoi d'email de rappel d'avis (admin)
+ */
+export const sendReviewReminderEmailSchema = z.object({
+	orderId: z.cuid2("ID de commande invalide"),
+});
+
+type SendReviewReminderEmailInput = z.infer<typeof sendReviewReminderEmailSchema>;
+
+// ============================================================================
+// RESTORE SCHEMAS (Admin)
+// ============================================================================
+
+/**
+ * Schema pour restaurer un avis soft-deleted (admin)
+ */
+export const restoreReviewSchema = z.object({
+	id: z.cuid2("ID d'avis invalide"),
+});
+
+type RestoreReviewInput = z.infer<typeof restoreReviewSchema>;
+
+/**
+ * Schema pour restaurer plusieurs avis soft-deleted en masse (admin)
+ */
+export const bulkRestoreReviewsSchema = z.object({
+	ids: z
+		.array(z.cuid2("ID d'avis invalide"))
+		.min(1, "Sélectionnez au moins un avis")
+		.max(100, "Maximum 100 avis par opération"),
+});
+
+type BulkRestoreReviewsInput = z.infer<typeof bulkRestoreReviewsSchema>;
+
+// ============================================================================
+// EXPORT SCHEMA (Admin)
+// ============================================================================
+
+export const EXPORT_REVIEWS_FORMATS = ["csv", "json"] as const;
+export type ExportReviewsFormat = (typeof EXPORT_REVIEWS_FORMATS)[number];
+
+export const EXPORT_REVIEWS_PERIODS = ["7d", "30d", "90d", "year", "all"] as const;
+export type ExportReviewsPeriod = (typeof EXPORT_REVIEWS_PERIODS)[number];
+
+/**
+ * Schema pour l'export CSV/JSON des avis (admin)
+ *
+ * - `period` restreint la fenetre temporelle (createdAt)
+ * - `format` choisit entre CSV (RFC 4180) et JSON
+ * - `includeHidden` inclut les avis en statut HIDDEN (masques)
+ * - `includeDeleted` inclut les avis soft-deleted (RGPD)
+ */
+export const exportReviewsSchema = z.object({
+	period: z.enum(EXPORT_REVIEWS_PERIODS, { message: "Période invalide" }).default("30d"),
+	format: z.enum(EXPORT_REVIEWS_FORMATS, { message: "Format invalide" }),
+	includeHidden: z.coerce.boolean().default(false),
+	includeDeleted: z.coerce.boolean().default(false),
+});
+
+export type ExportReviewsInput = z.infer<typeof exportReviewsSchema>;
+
 // ============================================================================
 // STOREFRONT PARAMS SCHEMA
 // ============================================================================

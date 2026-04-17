@@ -5,7 +5,6 @@ import {
 	validateInput,
 	handleActionError,
 	success,
-	error,
 	forbidden,
 	safeFormGet,
 } from "@/shared/lib/actions";
@@ -56,11 +55,11 @@ export async function removeFromCart(
 			},
 		});
 
+		// 5. Uniform forbidden() for both "not found" and "wrong owner" to prevent IDOR enumeration
+		// (no information leak about whether the cartItem id exists)
 		if (!cartItem) {
-			return error("Article introuvable dans le panier");
+			return forbidden();
 		}
-
-		// 5. Vérifier l'appartenance du panier
 
 		const isOwner = userId
 			? cartItem.cart.userId === userId

@@ -16,6 +16,8 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
+import { sendRefundConfirmationEmail } from "@/modules/emails/services/refund-emails";
+import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
@@ -326,6 +328,45 @@ export async function processRefund(
 					restockedItems: restockedCount,
 				},
 			});
+
+			// Envoyer l'email de confirmation au client (non bloquant)
+			// Le webhook charge.refunded sert de filet de sécurité — la
+			// déduplication côté email/Resend repose sur le refund_id via tag.
+			if (refundData.refund.order_user_id) {
+				const customerInfo = await prisma.user.findUnique({
+					where: { id: refundData.refund.order_user_id },
+					select: { email: true, name: true },
+				});
+
+				if (customerInfo?.email) {
+					const isPartialRefund =
+						refundData.totalRefundedBefore + refundData.refund.amount <
+						refundData.refund.order_total;
+					const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refundData.refund.order_id));
+
+					sendRefundConfirmationEmail({
+						to: customerInfo.email,
+						orderNumber: refundData.refund.order_number,
+						customerName: customerInfo.name ?? "Client",
+						refundAmount: refundData.refund.amount,
+						originalOrderTotal: refundData.refund.order_total,
+						reason: refundData.refund.reason,
+						isPartialRefund,
+						orderDetailsUrl,
+					}).catch((emailError) => {
+						prisma.orderNote
+							.create({
+								data: {
+									orderId: refundData.refund.order_id,
+									content: `[EMAIL] Échec notification confirmation remboursement (commande ${refundData.refund.order_number}) : ${emailError instanceof Error ? emailError.message : String(emailError)}`,
+									authorId: "system",
+									authorName: "Système (process-refund)",
+								},
+							})
+							.catch(() => {});
+					});
+				}
+			}
 
 			const restockMessage =
 				restockedCount > 0 ? ` Stock restauré pour ${restockedCount} article(s).` : "";

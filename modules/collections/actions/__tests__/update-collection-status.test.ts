@@ -20,6 +20,7 @@ const {
 			findUnique: vi.fn(),
 			update: vi.fn(),
 		},
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -141,6 +142,9 @@ describe("updateCollectionStatus", () => {
 
 		mockPrisma.collection.findUnique.mockResolvedValue(createMockCollection());
 		mockPrisma.collection.update.mockResolvedValue({});
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 	});
 
 	// --------------------------------------------------------------------------

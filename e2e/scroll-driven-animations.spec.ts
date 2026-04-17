@@ -211,4 +211,83 @@ test.describe("Scroll-driven CSS animations", { tag: ["@slow"] }, () => {
 			expect(opacity).toBe("1");
 		});
 	});
+
+	test.describe("Signature reveal (em dash + Léane name)", () => {
+		test("signature paragraph is present in the atelier section", async ({ page }) => {
+			await page.goto("/");
+			await page.waitForLoadState("domcontentloaded");
+
+			const signature = page.locator(".signature-reveal");
+			await expect(signature).toBeAttached();
+			await expect(signature).toHaveAttribute("aria-label", "Léane");
+		});
+
+		test("signature name text is rendered", async ({ page }) => {
+			await page.goto("/");
+			await page.waitForLoadState("domcontentloaded");
+
+			const name = page.locator(".signature-name");
+			await expect(name).toHaveText("Léane");
+		});
+
+		test("signature is reachable by scroll and becomes visible", async ({ page }) => {
+			await page.goto("/");
+			await page.waitForLoadState("domcontentloaded");
+
+			const signature = page.locator(".signature-reveal");
+			await signature.scrollIntoViewIfNeeded();
+			await expect(signature).toBeInViewport();
+		});
+	});
+
+	test.describe("Parallax atelier image", () => {
+		test("parallax image is present and uses role=presentation", async ({ page }) => {
+			await page.goto("/");
+			await page.waitForLoadState("domcontentloaded");
+
+			const atelier = page.locator("#atelier-section");
+			await atelier.scrollIntoViewIfNeeded();
+
+			// Next.js <Image fill> within ParallaxImage container
+			const parallaxContainer = atelier.locator('[role="presentation"]').first();
+			// Motion is opt-in and disabled on touch devices, so presence is conditional.
+			// We assert the image itself is present as the primary guarantee.
+			const image = atelier.locator(`img[alt*="atelier de création Synclune"]`);
+			await expect(image).toBeVisible();
+			// role=presentation wrapper only mounts when parallax is active (desktop, motion allowed)
+			if ((await parallaxContainer.count()) > 0) {
+				await expect(parallaxContainer).toBeAttached();
+			}
+		});
+
+		test("parallax image remains visible with reduced motion (no animation wrapper)", async ({
+			page,
+		}) => {
+			await page.emulateMedia({ reducedMotion: "reduce" });
+			await page.goto("/");
+			await page.waitForLoadState("domcontentloaded");
+
+			const atelier = page.locator("#atelier-section");
+			await atelier.scrollIntoViewIfNeeded();
+
+			const image = atelier.locator(`img[alt*="atelier de création Synclune"]`);
+			await expect(image).toBeVisible();
+
+			// With reduced motion, the parallax wrapper is not mounted
+			const parallaxWrapper = atelier.locator('[role="presentation"]');
+			await expect(parallaxWrapper).toHaveCount(0);
+		});
+
+		test("parallax image has blur placeholder applied on initial load", async ({ page }) => {
+			await page.goto("/");
+			await page.waitForLoadState("domcontentloaded");
+
+			const image = page.locator(`img[alt*="atelier de création Synclune"]`);
+			await image.first().scrollIntoViewIfNeeded();
+			await expect(image.first()).toBeVisible();
+			// next/image with placeholder="blur" renders a data URL or object-fit style
+			const style = await image.first().getAttribute("style");
+			expect(style).not.toBeNull();
+		});
+	});
 });

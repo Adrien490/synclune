@@ -104,3 +104,14 @@ export const toggleAnnouncementStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	isActive: z.boolean(),
 });
+
+export const bulkDeleteAnnouncementsSchema = z.object({
+	ids: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Au moins une annonce doit être sélectionnée")
+		.max(50, "Maximum 50 annonces à la fois"),
+});
+
+export const duplicateAnnouncementSchema = z.object({
+	id: z.cuid2("ID invalide"),
+});

@@ -20,6 +20,11 @@ export const WISHLIST_ERROR_MESSAGES = {
 	ITEM_NOT_FOUND: "Cet article n'est pas dans votre wishlist",
 	WISHLIST_FULL: "Votre wishlist est pleine (500 articles max)",
 	PRODUCT_NOT_PUBLIC: "Ce produit n'est pas disponible",
+	WISHLIST_ALREADY_EMPTY: "Votre wishlist est deja vide",
+	SKU_NOT_FOUND: "Variante introuvable",
+	SKU_INACTIVE: "Cette variante n'est plus disponible",
+	OUT_OF_STOCK: "Cet article n'est plus en stock",
+	INSUFFICIENT_STOCK: "Stock insuffisant pour cet article",
 	UNAUTHORIZED: "Non autorise",
 	GENERAL_ERROR: "Une erreur est survenue",
 } as const;

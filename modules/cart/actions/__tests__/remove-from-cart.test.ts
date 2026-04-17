@@ -136,11 +136,12 @@ describe("removeFromCart", () => {
 		expect(result).toEqual({ status: "validation_error", message: "ID invalide" });
 	});
 
-	it("returns error when cart item not found", async () => {
+	it("returns forbidden when cart item not found (no IDOR leak)", async () => {
 		mockPrisma.cartItem.findUnique.mockResolvedValue(null);
 
 		await removeFromCart(undefined, makeFormData());
-		expect(mockError).toHaveBeenCalledWith("Article introuvable dans le panier");
+		expect(mockForbidden).toHaveBeenCalled();
+		expect(mockError).not.toHaveBeenCalled();
 	});
 
 	it("returns forbidden when userId does not match owner", async () => {

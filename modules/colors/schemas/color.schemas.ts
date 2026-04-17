@@ -112,3 +112,25 @@ export const bulkToggleColorStatusSchema = z.object({
 export const duplicateColorSchema = z.object({
 	colorId: z.cuid2("ID de couleur invalide"),
 });
+
+export const mergeColorsSchema = z
+	.object({
+		sourceId: z.cuid2("ID de couleur source invalide"),
+		targetId: z.cuid2("ID de couleur cible invalide"),
+	})
+	.refine((data) => data.sourceId !== data.targetId, {
+		message: "La couleur source et la couleur cible doivent être différentes",
+		path: ["targetId"],
+	});
+
+export const reorderColorsSchema = z.object({
+	items: z
+		.array(
+			z.object({
+				id: z.cuid2("ID invalide"),
+				position: z.number().int().min(0),
+			}),
+		)
+		.min(1, "Aucune couleur à réordonner")
+		.max(500, "Maximum 500 couleurs par opération"),
+});

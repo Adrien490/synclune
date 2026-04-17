@@ -118,6 +118,9 @@ describe("bulkActivateSkus", () => {
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
 		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation((async (
+			fn: (tx: typeof mockPrisma) => Promise<unknown>,
+		) => fn(mockPrisma)) as unknown as (ops: unknown[]) => Promise<unknown[]>);
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,

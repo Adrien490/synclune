@@ -325,6 +325,8 @@ export function ProductsBottomBar({
 								<input
 									name="search"
 									type="search"
+									inputMode="search"
+									enterKeyHint="search"
 									// eslint-disable-next-line jsx-a11y/no-autofocus -- Drawer context: user explicitly opened search
 									autoFocus
 									defaultValue={searchParams.get("search") ?? ""}

@@ -52,3 +52,11 @@ export function isFirstResponse(
 export function isFinalStatus(status: CustomizationRequestStatus): boolean {
 	return ALLOWED_TRANSITIONS[status].length === 0;
 }
+
+/**
+ * Checks if a customer can cancel their own request.
+ * Customer can only cancel PENDING requests (artisan not yet engaged).
+ */
+export function canCustomerCancel(status: CustomizationRequestStatus): boolean {
+	return status === "PENDING";
+}

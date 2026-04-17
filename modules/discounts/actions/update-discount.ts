@@ -21,6 +21,7 @@ import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-he
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
 import { getDiscountInvalidationTags, DISCOUNT_CACHE_TAGS } from "../constants/cache";
+import { isCodeAvailable } from "../services/discount-uniqueness.service";
 
 /**
  * Met à jour un code promo existant
@@ -75,14 +76,8 @@ export async function updateDiscount(
 		}
 
 		// Vérifier l'unicité du code si modifié (includes soft-deleted, matches @unique constraint)
-		if (sanitizedCode !== existing.code) {
-			const codeExists = await prisma.discount.findUnique({
-				where: { code: sanitizedCode },
-				select: { id: true },
-			});
-			if (codeExists) {
-				return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
-			}
+		if (sanitizedCode !== existing.code && !(await isCodeAvailable(sanitizedCode, id))) {
+			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);
 		}
 
 		await prisma.discount.update({

@@ -55,12 +55,14 @@ function makeCartItem(overrides: Record<string, unknown> = {}) {
 	return {
 		id: "ci-1",
 		priceAtAdd: 4999,
+		quantity: 1,
 		sku: {
 			id: "sku-1",
 			priceInclTax: 4999,
 			isActive: true,
 			deletedAt: null,
 			product: {
+				title: "Bague",
 				status: "PUBLIC",
 				deletedAt: null,
 			},
@@ -142,7 +144,7 @@ describe("updateCartPrices", () => {
 		const result = await updateCartPrices();
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual({ updatedCount: 0 });
+		expect(result.data).toMatchObject({ updatedCount: 0 });
 		expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
 	});
 
@@ -166,8 +168,49 @@ describe("updateCartPrices", () => {
 		const result = await updateCartPrices();
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual({ updatedCount: 1 });
+		expect(result.data).toMatchObject({ updatedCount: 1 });
 		expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
+	});
+
+	it("returns increased/decreased arrays and totals for price deltas", async () => {
+		const items = [
+			makeCartItem({
+				id: "ci-1",
+				priceAtAdd: 4000,
+				quantity: 2,
+				sku: {
+					id: "sku-1",
+					priceInclTax: 5000,
+					isActive: true,
+					deletedAt: null,
+					product: { title: "Bague Soleil", status: "PUBLIC", deletedAt: null },
+				},
+			}),
+			makeCartItem({
+				id: "ci-2",
+				priceAtAdd: 3000,
+				quantity: 1,
+				sku: {
+					id: "sku-2",
+					priceInclTax: 2500,
+					isActive: true,
+					deletedAt: null,
+					product: { title: "Collier Lune", status: "PUBLIC", deletedAt: null },
+				},
+			}),
+		];
+		mockPrisma.cart.findFirst.mockResolvedValue(makeCart(items));
+
+		const result = await updateCartPrices();
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.data).toMatchObject({
+			updatedCount: 2,
+			totalIncrease: 2000,
+			totalSavings: 500,
+		});
+		expect((result.data as { increased: unknown[] }).increased).toHaveLength(1);
+		expect((result.data as { decreased: unknown[] }).decreased).toHaveLength(1);
 	});
 
 	it("excludes soft-deleted SKUs from updates", async () => {
@@ -189,7 +232,7 @@ describe("updateCartPrices", () => {
 		const result = await updateCartPrices();
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual({ updatedCount: 0 });
+		expect(result.data).toMatchObject({ updatedCount: 0 });
 		expect(mockPrisma.$executeRaw).not.toHaveBeenCalled();
 	});
 
@@ -212,7 +255,7 @@ describe("updateCartPrices", () => {
 		const result = await updateCartPrices();
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toEqual({ updatedCount: 0 });
+		expect(result.data).toMatchObject({ updatedCount: 0 });
 	});
 
 	it("excludes non-PUBLIC products from updates", async () => {
@@ -233,7 +276,7 @@ describe("updateCartPrices", () => {
 
 		const result = await updateCartPrices();
 
-		expect(result.data).toEqual({ updatedCount: 0 });
+		expect(result.data).toMatchObject({ updatedCount: 0 });
 	});
 
 	it("excludes soft-deleted products from updates", async () => {
@@ -254,7 +297,7 @@ describe("updateCartPrices", () => {
 
 		const result = await updateCartPrices();
 
-		expect(result.data).toEqual({ updatedCount: 0 });
+		expect(result.data).toMatchObject({ updatedCount: 0 });
 	});
 
 	it("invalidates cart cache tags after update", async () => {

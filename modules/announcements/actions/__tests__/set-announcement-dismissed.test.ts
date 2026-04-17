@@ -5,14 +5,23 @@ import { ActionStatus } from "@/shared/types/server-action";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockDismissAnnouncementAction, mockSuccess, mockError, mockValidateInput } = vi.hoisted(
-	() => ({
-		mockDismissAnnouncementAction: vi.fn(),
-		mockSuccess: vi.fn(),
-		mockError: vi.fn(),
-		mockValidateInput: vi.fn(),
-	}),
-);
+const {
+	mockDismissAnnouncementAction,
+	mockSuccess,
+	mockError,
+	mockValidateInput,
+	mockEnforceRateLimit,
+	mockGetClientIp,
+	mockHeaders,
+} = vi.hoisted(() => ({
+	mockDismissAnnouncementAction: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+	mockValidateInput: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
+	mockGetClientIp: vi.fn(),
+	mockHeaders: vi.fn(),
+}));
 
 vi.mock("../dismiss-announcement", () => ({
 	dismissAnnouncementAction: mockDismissAnnouncementAction,
@@ -26,6 +35,22 @@ vi.mock("@/shared/lib/actions", () => ({
 		status: ActionStatus.ERROR,
 		message: msg,
 	}),
+}));
+
+vi.mock("@/shared/lib/actions/rate-limit", () => ({
+	enforceRateLimit: mockEnforceRateLimit,
+}));
+
+vi.mock("@/shared/lib/rate-limit", () => ({
+	getClientIp: mockGetClientIp,
+}));
+
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	PUBLIC_ANNOUNCEMENT_DISMISS_LIMIT: { limit: 60, windowMs: 60_000 },
+}));
+
+vi.mock("next/headers", () => ({
+	headers: mockHeaders,
 }));
 
 import { setAnnouncementDismissed } from "../set-announcement-dismissed";
@@ -50,6 +75,9 @@ describe("setAnnouncementDismissed", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
+		mockHeaders.mockResolvedValue(new Headers({ "x-forwarded-for": "203.0.113.1" }));
+		mockGetClientIp.mockResolvedValue("203.0.113.1");
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({
 			success: true,
 			data: { announcementId: "abc-123", dismissDurationHours: 24 },
@@ -64,6 +92,45 @@ describe("setAnnouncementDismissed", () => {
 			message: msg,
 		}));
 	});
+
+	// ─── Rate limit ───────────────────────────────────────────────────────────
+
+	it("should return rate limit error when exceeded", async () => {
+		const rateLimitError = { status: ActionStatus.ERROR, message: "Trop de requêtes" };
+		mockEnforceRateLimit.mockResolvedValue({ error: rateLimitError });
+
+		const fd = createFormData({ announcementId: "abc-123", dismissDurationHours: "24" });
+		const result = await setAnnouncementDismissed(undefined, fd);
+
+		expect(result).toEqual(rateLimitError);
+		expect(mockDismissAnnouncementAction).not.toHaveBeenCalled();
+	});
+
+	it("should call enforceRateLimit with IP-scoped key", async () => {
+		const fd = createFormData({ announcementId: "abc-123", dismissDurationHours: "24" });
+		await setAnnouncementDismissed(undefined, fd);
+
+		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
+			"announcement-dismiss:203.0.113.1",
+			{ limit: 60, windowMs: 60_000 },
+			"203.0.113.1",
+		);
+	});
+
+	it("should fallback to 'unknown' IP when client IP cannot be resolved", async () => {
+		mockGetClientIp.mockResolvedValue(null);
+
+		const fd = createFormData({ announcementId: "abc-123", dismissDurationHours: "24" });
+		await setAnnouncementDismissed(undefined, fd);
+
+		expect(mockEnforceRateLimit).toHaveBeenCalledWith(
+			"announcement-dismiss:unknown",
+			expect.anything(),
+			"unknown",
+		);
+	});
+
+	// ─── Core behavior ────────────────────────────────────────────────────────
 
 	it("should return success when dismiss succeeds", async () => {
 		const fd = createFormData({ announcementId: "abc-123", dismissDurationHours: "24" });

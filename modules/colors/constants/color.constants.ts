@@ -10,6 +10,7 @@ export const GET_COLORS_SELECT = {
 	slug: true,
 	hex: true,
 	isActive: true,
+	position: true,
 	createdAt: true,
 	updatedAt: true,
 	_count: {
@@ -45,9 +46,11 @@ export const GET_COLORS_MAX_RESULTS_PER_PAGE = 200;
 // SORT CONSTANTS
 // ============================================================================
 
-export const GET_COLORS_DEFAULT_SORT_BY = "name-ascending";
+export const GET_COLORS_DEFAULT_SORT_BY = "position-ascending";
 
 export const GET_COLORS_SORT_FIELDS = [
+	"position-ascending",
+	"position-descending",
 	"name-ascending",
 	"name-descending",
 	"skuCount-ascending",
@@ -55,6 +58,8 @@ export const GET_COLORS_SORT_FIELDS = [
 ] as const;
 
 const COLORS_SORT_OPTIONS = {
+	POSITION_ASC: "position-ascending",
+	POSITION_DESC: "position-descending",
 	NAME_ASC: "name-ascending",
 	NAME_DESC: "name-descending",
 	SKU_COUNT_ASC: "skuCount-ascending",
@@ -62,6 +67,8 @@ const COLORS_SORT_OPTIONS = {
 } as const;
 
 export const COLORS_SORT_LABELS = {
+	[COLORS_SORT_OPTIONS.POSITION_ASC]: "Ordre chromatique",
+	[COLORS_SORT_OPTIONS.POSITION_DESC]: "Ordre chromatique (inverse)",
 	[COLORS_SORT_OPTIONS.NAME_ASC]: "Nom (A-Z)",
 	[COLORS_SORT_OPTIONS.NAME_DESC]: "Nom (Z-A)",
 	[COLORS_SORT_OPTIONS.SKU_COUNT_ASC]: "Moins de SKU",

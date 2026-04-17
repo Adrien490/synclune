@@ -12,8 +12,9 @@ import {
 	CUSTOMIZATION_STATUS_COLORS,
 } from "@/modules/customizations/constants/status.constants";
 import { formatDateTime } from "@/shared/utils/dates";
-import { ArrowLeft, Mail, Phone, User, Package, Sparkles, FileText, ImageIcon } from "lucide-react";
+import { ArrowLeft, Mail, Phone, User, FileText, ImageIcon } from "lucide-react";
 import { UpdateStatusForm } from "@/modules/customizations/components/admin/update-status-form";
+import { InspirationProductsManager } from "@/modules/customizations/components/admin/inspiration-products-manager";
 
 export const metadata: Metadata = {
 	title: "Détail demande | Administration",
@@ -142,52 +143,16 @@ export default async function CustomizationDetailPage({ params }: CustomizationD
 						</Card>
 					)}
 
-					{/* Inspirations */}
-					{request.inspirationProducts.length > 0 && (
-						<Card>
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2 text-lg">
-									<Sparkles className="h-5 w-5" />
-									Créations inspirantes ({request.inspirationProducts.length})
-								</CardTitle>
-							</CardHeader>
-							<CardContent>
-								<div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-									{request.inspirationProducts.map((product) => {
-										const primaryImage = product.skus[0]?.images[0];
-										return (
-											<Link
-												key={product.id}
-												href={`/admin/catalogue/produits/${product.slug}`}
-												className="group bg-card hover:border-primary block overflow-hidden rounded-lg border transition-colors"
-											>
-												<div className="bg-muted relative aspect-square">
-													{primaryImage ? (
-														<Image
-															src={primaryImage.url}
-															alt={product.title}
-															fill
-															sizes="(max-width: 640px) 50vw, 33vw"
-															className="object-cover"
-														/>
-													) : (
-														<div className="absolute inset-0 flex items-center justify-center">
-															<Package className="text-muted-foreground h-8 w-8" />
-														</div>
-													)}
-												</div>
-												<div className="p-2">
-													<p className="group-hover:text-primary truncate text-sm font-medium">
-														{product.title}
-													</p>
-												</div>
-											</Link>
-										);
-									})}
-								</div>
-							</CardContent>
-						</Card>
-					)}
+					{/* Produits inspirants - éditables par l'admin */}
+					<InspirationProductsManager
+						requestId={request.id}
+						products={request.inspirationProducts.map((product) => ({
+							id: product.id,
+							title: product.title,
+							slug: product.slug,
+							imageUrl: product.skus[0]?.images[0]?.url,
+						}))}
+					/>
 				</div>
 
 				{/* Sidebar */}

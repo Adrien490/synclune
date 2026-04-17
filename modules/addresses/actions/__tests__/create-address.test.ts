@@ -15,23 +15,33 @@ const {
 	mockSuccess,
 	mockError,
 	mockSanitizeText,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		address: {
-			count: vi.fn(),
-			create: vi.fn(),
+	MockBusinessError,
+} = vi.hoisted(() => {
+	class MockBusinessError extends Error {
+		constructor(message: string) {
+			super(message);
+			this.name = "BusinessError";
+		}
+	}
+	return {
+		mockPrisma: {
+			address: {
+				count: vi.fn(),
+				create: vi.fn(),
+			},
+			$transaction: vi.fn(),
 		},
-		$transaction: vi.fn(),
-	},
-	mockRequireAuth: vi.fn(),
-	mockEnforceRateLimit: vi.fn(),
-	mockUpdateTag: vi.fn(),
-	mockValidateInput: vi.fn(),
-	mockHandleActionError: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
-	mockSanitizeText: vi.fn(),
-}));
+		mockRequireAuth: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+		mockSanitizeText: vi.fn(),
+		MockBusinessError,
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -60,6 +70,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
+	BusinessError: MockBusinessError,
 }));
 
 vi.mock("@/shared/lib/sanitize", () => ({
@@ -150,9 +161,9 @@ describe("createAddress", () => {
 			status: ActionStatus.ERROR,
 			message,
 		}));
-		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
+		mockHandleActionError.mockImplementation((e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
-			message: fallback,
+			message: e instanceof MockBusinessError ? e.message : fallback,
 		}));
 	});
 

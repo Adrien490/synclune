@@ -90,6 +90,7 @@ vi.mock("lucide-react", () => {
 	return {
 		CircleCheck: stub,
 		CreditCard: stub,
+		Download: stub,
 		Edit: stub,
 		Mail: stub,
 		Ellipsis: stub,
@@ -101,6 +102,16 @@ vi.mock("lucide-react", () => {
 		CircleX: stub,
 	};
 });
+
+vi.mock("@/modules/orders/actions/export-single-order", () => ({
+	exportSingleOrder: vi.fn(),
+}));
+vi.mock("@/shared/utils/with-callbacks", () => ({
+	withCallbacks: (action: unknown) => action,
+}));
+vi.mock("@/shared/utils/create-toast-callbacks", () => ({
+	createToastCallbacks: () => ({}),
+}));
 
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({ children, onClick, ...props }: any) => (

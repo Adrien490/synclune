@@ -54,7 +54,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 					]}
 					count={10}
 					size={[25, 90]}
-					opacity={[0.3, 0.7]}
+					opacity={[0.5, 0.85]}
 					blur={[4, 12]}
 					animationStyle="drift"
 					depthParallax={true}

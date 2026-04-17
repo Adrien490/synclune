@@ -10,7 +10,7 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { MAX_CART_ITEMS } from "@/modules/cart/constants/cart";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { checkMergeCartsRateLimit } from "@/modules/cart/lib/cart-rate-limit";
-import type { MergeCartsResult } from "../types/cart.types";
+import type { MergeCartsResult, MergeCartTruncatedItem } from "../types/cart.types";
 import { getGuestCartForMerge, getUserCartForMerge } from "@/modules/cart/data/get-cart-for-merge";
 
 // Re-export pour retrocompatibilite
@@ -78,9 +78,14 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 			return {
 				status: ActionStatus.SUCCESS,
 				message: "Aucun article à fusionner",
-				data: { mergedItems: 0, conflicts: 0 },
+				data: { mergedItems: 0, conflicts: 0, truncatedItems: [], skippedItems: [] },
 			};
 		}
+
+		// Track skipped items (SKU inactive / product non-PUBLIC) for UI feedback
+		const skippedItems: MergeCartTruncatedItem[] = [];
+		// Track truncated items (MAX_CART_ITEMS exceeded) for UI feedback
+		const truncatedItems: MergeCartTruncatedItem[] = [];
 
 		// 3. Créer le panier utilisateur s'il n'existe pas
 		let targetCart = userCart;
@@ -102,6 +107,11 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 		for (const guestItem of guestCart.items) {
 			// Skip les produits inactifs (déjà chargé dans guestCart.items)
 			if (!guestItem.sku.isActive || guestItem.sku.product.status !== "PUBLIC") {
+				skippedItems.push({
+					skuId: guestItem.skuId,
+					quantity: guestItem.quantity,
+					productTitle: guestItem.sku.product.title,
+				});
 				continue;
 			}
 
@@ -127,8 +137,18 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 				...itemsToValidate.filter((i) => userItemsMap.has(i.skuId)).map((i) => i.skuId),
 				...allowedNewSkuIds,
 			]);
+			// Build title lookup from guestCart.items for truncation feedback
+			const titleBySkuId = new Map(
+				guestCart.items.map((item) => [item.skuId, item.sku.product.title]),
+			);
 			for (let i = itemsToValidate.length - 1; i >= 0; i--) {
-				if (!allowedSkuIds.has(itemsToValidate[i]!.skuId)) {
+				const entry = itemsToValidate[i]!;
+				if (!allowedSkuIds.has(entry.skuId)) {
+					truncatedItems.push({
+						skuId: entry.skuId,
+						quantity: entry.quantity,
+						productTitle: titleBySkuId.get(entry.skuId) ?? "",
+					});
 					itemsToValidate.splice(i, 1);
 				}
 			}
@@ -206,12 +226,19 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 			updateTag(CART_CACHE_TAGS.PRODUCT_CARTS(productId));
 		});
 
+		const hasLoss = truncatedItems.length > 0 || skippedItems.length > 0;
+		const message = hasLoss
+			? `Paniers fusionnés. ${truncatedItems.length} article${truncatedItems.length > 1 ? "s" : ""} non ajouté${truncatedItems.length > 1 ? "s" : ""} (limite atteinte)${skippedItems.length > 0 ? `, ${skippedItems.length} indisponible${skippedItems.length > 1 ? "s" : ""}` : ""}`
+			: "Paniers fusionnés avec succès";
+
 		return {
 			status: ActionStatus.SUCCESS,
-			message: "Paniers fusionnés avec succès",
+			message,
 			data: {
 				mergedItems: mergedCount,
 				conflicts: conflictCount,
+				truncatedItems,
+				skippedItems,
 			},
 		};
 	} catch (error) {

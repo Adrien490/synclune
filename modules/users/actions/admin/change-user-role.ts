@@ -37,7 +37,7 @@ export async function changeUserRole(
 		// 3. Extraire et valider les donnees
 		const rawData = {
 			id: safeFormGet(formData, "id"),
-			role: formData.get("role") as Role,
+			role: safeFormGet(formData, "role"),
 		};
 
 		const validation = validateInput(changeUserRoleSchema, rawData);

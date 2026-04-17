@@ -61,6 +61,7 @@ export async function updateReviewResponse(
 			},
 			select: {
 				id: true,
+				content: true,
 				review: {
 					select: {
 						id: true,
@@ -86,7 +87,11 @@ export async function updateReviewResponse(
 			action: "review.updateResponse",
 			targetType: "reviewResponse",
 			targetId: id,
-			metadata: { reviewId: response.review.id },
+			metadata: {
+				reviewId: response.review.id,
+				previousContent: response.content,
+				newContent: sanitizedContent,
+			},
 		});
 
 		// 5. Invalider le cache

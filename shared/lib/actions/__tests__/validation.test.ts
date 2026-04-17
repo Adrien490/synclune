@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { z } from "zod";
-import { validateInput, validateFormData, safeFormGet, safeFormGetJSON } from "../validation";
+import {
+	validateInput,
+	validateFormData,
+	safeFormGet,
+	safeFormGetJSON,
+	parseFormIds,
+} from "../validation";
 import { ActionStatus } from "@/shared/types/server-action";
 
 const testSchema = z.object({
@@ -140,5 +146,52 @@ describe("safeFormGetJSON", () => {
 		fd.set("data", JSON.stringify({ name: "test", nested: { a: 1 } }));
 		const result = safeFormGetJSON<{ name: string; nested: { a: number } }>(fd, "data");
 		expect(result?.nested.a).toBe(1);
+	});
+});
+
+describe("parseFormIds", () => {
+	it("parses a JSON array of ids", () => {
+		const fd = new FormData();
+		fd.set("ids", JSON.stringify(["id1", "id2", "id3"]));
+		const result = parseFormIds(fd);
+		expect(result).toEqual({ ids: ["id1", "id2", "id3"] });
+	});
+
+	it("returns empty array when field is missing", () => {
+		const fd = new FormData();
+		const result = parseFormIds(fd);
+		expect(result).toEqual({ ids: [] });
+	});
+
+	it("returns empty array for empty string field", () => {
+		const fd = new FormData();
+		fd.set("ids", "");
+		const result = parseFormIds(fd);
+		expect(result).toEqual({ ids: [] });
+	});
+
+	it("returns error ActionState for malformed JSON", () => {
+		const fd = new FormData();
+		fd.set("ids", "not-json{");
+		const result = parseFormIds(fd);
+		expect("error" in result).toBe(true);
+		if ("error" in result) {
+			expect(result.error.status).toBe(ActionStatus.VALIDATION_ERROR);
+			expect(result.error.message).toBe("Format des IDs invalide.");
+		}
+	});
+
+	it("coerces non-array JSON to empty array", () => {
+		const fd = new FormData();
+		fd.set("ids", JSON.stringify({ notAnArray: true }));
+		const result = parseFormIds(fd);
+		expect(result).toEqual({ ids: [] });
+	});
+
+	it("supports a custom key", () => {
+		const fd = new FormData();
+		fd.set("productIds", JSON.stringify(["p1", "p2"]));
+		const result = parseFormIds(fd, "productIds");
+		expect(result).toEqual({ ids: ["p1", "p2"] });
 	});
 });

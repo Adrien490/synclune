@@ -28,7 +28,23 @@ function ItemSeparator({ className, ...props }: React.ComponentProps<typeof Sepa
 }
 
 const itemVariants = cva(
-	"group/item flex items-center border border-transparent text-sm rounded-md transition-colors [a]:hover:bg-accent/50 [a]:transition-colors duration-100 flex-wrap outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+	[
+		"group/item flex items-center border border-transparent text-sm rounded-md flex-wrap",
+		// Container query scope: children can adapt to item's own width (@md:, @lg:, ...)
+		"@container/item",
+		"transition-[background-color,border-color,transform,box-shadow] duration-150 ease-out",
+		"outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]",
+		// Mobile touch: disable 300ms tap delay + iOS tap highlight (we provide our own feedback)
+		"touch-manipulation [-webkit-tap-highlight-color:transparent]",
+		// Desktop hover (existing behaviour preserved for asChild <a>)
+		"[a]:hover:bg-accent/50 [a]:transition-colors",
+		// Press feedback: Item-as-link (asChild) + any descendant link tapped
+		"[a]:active:bg-accent/70 active:scale-[0.985] active:shadow-xs",
+		"has-[a:active]:bg-accent/40 has-[a:active]:scale-[0.985] has-[a:active]:shadow-xs",
+		// Respect reduced-motion users
+		"motion-reduce:transition-[background-color,border-color,box-shadow]",
+		"motion-reduce:active:scale-100 motion-reduce:has-[a:active]:scale-100",
+	].join(" "),
 	{
 		variants: {
 			variant: {

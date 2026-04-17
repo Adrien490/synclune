@@ -42,6 +42,16 @@ export async function reorderFaqItems(
 
 		const { items } = validated.data;
 
+		const uniqueIds = new Set(items.map((item) => item.id));
+		if (uniqueIds.size !== items.length) {
+			return error("Identifiants dupliqués détectés dans le réordonnancement");
+		}
+
+		const uniquePositions = new Set(items.map((item) => item.position));
+		if (uniquePositions.size !== items.length) {
+			return error("Positions dupliquées détectées dans le réordonnancement");
+		}
+
 		// Batch update positions in a transaction
 		await prisma.$transaction(
 			items.map((item) =>

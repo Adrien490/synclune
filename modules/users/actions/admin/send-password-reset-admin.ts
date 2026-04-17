@@ -5,7 +5,14 @@ import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	notFound,
+	handleActionError,
+	enforceRateLimit,
+} from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { auth } from "@/modules/auth/lib/auth";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
@@ -29,6 +36,13 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 		// 2b. Validation du userId
 		const validation = validateInput(adminUserIdSchema, { userId });
 		if ("error" in validation) return validation.error;
+
+		// 2c. Rate limit per-target (protege l'utilisateur contre le flood multi-admin)
+		const targetRateCheck = await enforceRateLimit(
+			`send-reset-target:${userId}`,
+			ADMIN_USER_LIMITS.SEND_RESET_TARGET,
+		);
+		if ("error" in targetRateCheck) return targetRateCheck.error;
 
 		// 3. Récupérer l'utilisateur
 		const user = await prisma.user.findUnique({

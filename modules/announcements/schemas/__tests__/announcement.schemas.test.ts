@@ -7,6 +7,8 @@ import {
 	updateAnnouncementSchema,
 	deleteAnnouncementSchema,
 	toggleAnnouncementStatusSchema,
+	bulkDeleteAnnouncementsSchema,
+	duplicateAnnouncementSchema,
 } from "../announcement.schemas";
 
 const VALID_CUID = "clh1234567890abcdefghijklm";
@@ -245,5 +247,55 @@ describe("toggleAnnouncementStatusSchema", () => {
 		expect(toggleAnnouncementStatusSchema.safeParse({ id: "bad-id", isActive: true }).success).toBe(
 			false,
 		);
+	});
+});
+
+// ============================================================================
+// bulkDeleteAnnouncementsSchema
+// ============================================================================
+
+describe("bulkDeleteAnnouncementsSchema", () => {
+	it("accepts a non-empty array of valid ids", () => {
+		expect(bulkDeleteAnnouncementsSchema.safeParse({ ids: [VALID_CUID] }).success).toBe(true);
+	});
+
+	it("rejects an empty array", () => {
+		expect(bulkDeleteAnnouncementsSchema.safeParse({ ids: [] }).success).toBe(false);
+	});
+
+	it("rejects more than 50 ids", () => {
+		const ids = Array.from({ length: 51 }, () => VALID_CUID);
+		expect(bulkDeleteAnnouncementsSchema.safeParse({ ids }).success).toBe(false);
+	});
+
+	it("accepts exactly 50 ids", () => {
+		const ids = Array.from({ length: 50 }, () => VALID_CUID);
+		expect(bulkDeleteAnnouncementsSchema.safeParse({ ids }).success).toBe(true);
+	});
+
+	it("rejects when ids contains an invalid cuid2", () => {
+		expect(bulkDeleteAnnouncementsSchema.safeParse({ ids: ["not-a-cuid"] }).success).toBe(false);
+	});
+
+	it("rejects when ids is missing", () => {
+		expect(bulkDeleteAnnouncementsSchema.safeParse({}).success).toBe(false);
+	});
+});
+
+// ============================================================================
+// duplicateAnnouncementSchema
+// ============================================================================
+
+describe("duplicateAnnouncementSchema", () => {
+	it("accepts a valid cuid2", () => {
+		expect(duplicateAnnouncementSchema.safeParse({ id: VALID_CUID }).success).toBe(true);
+	});
+
+	it("rejects missing id", () => {
+		expect(duplicateAnnouncementSchema.safeParse({}).success).toBe(false);
+	});
+
+	it("rejects invalid id format", () => {
+		expect(duplicateAnnouncementSchema.safeParse({ id: "not-a-cuid2" }).success).toBe(false);
 	});
 });

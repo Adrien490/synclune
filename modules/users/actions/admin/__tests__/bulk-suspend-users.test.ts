@@ -58,6 +58,16 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	parseFormIds: (formData: FormData) => {
+		const raw = formData.get("ids");
+		if (typeof raw !== "string" || !raw) return { ids: [] };
+		try {
+			const parsed = JSON.parse(raw);
+			return { ids: Array.isArray(parsed) ? parsed : [] };
+		} catch {
+			return { error: { status: "VALIDATION_ERROR", message: "Format des IDs invalide." } };
+		}
+	},
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,
@@ -172,8 +182,7 @@ describe("bulkSuspendUsers", () => {
 
 		const result = await bulkSuspendUsers(undefined, badFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Format des IDs invalide.");
-		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toBe("Format des IDs invalide.");
 	});
 
 	// ──────────────────────────────────────────────────────────────

@@ -10,9 +10,11 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
 import { LoaderCircle } from "lucide-react";
+import { useState } from "react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
 
@@ -25,24 +27,30 @@ interface CancelOrderData {
 
 export function CancelOrderAlertDialog() {
 	const cancelDialog = useAlertDialog<CancelOrderData>(CANCEL_ORDER_DIALOG_ID);
+	const [autoRefund, setAutoRefund] = useState(true);
 
 	const { action, isPending } = useCancelOrder({
 		onSuccess: () => {
 			cancelDialog.close();
+			setAutoRefund(true);
 		},
 	});
 
 	const handleOpenChange = (open: boolean) => {
 		if (!open && !isPending) {
 			cancelDialog.close();
+			setAutoRefund(true);
 		}
 	};
+
+	const isPaid = cancelDialog.data?.isPaid ?? false;
 
 	return (
 		<AlertDialog open={cancelDialog.isOpen} onOpenChange={handleOpenChange}>
 			<AlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={cancelDialog.data?.orderId ?? ""} />
+					<input type="hidden" name="autoRefund" value={isPaid && autoRefund ? "true" : "false"} />
 
 					<AlertDialogHeader>
 						<AlertDialogTitle>Confirmer l'annulation</AlertDialogTitle>
@@ -52,11 +60,32 @@ export function CancelOrderAlertDialog() {
 									Êtes-vous sûr de vouloir annuler la commande{" "}
 									<strong>{cancelDialog.data?.orderNumber}</strong> ?
 								</p>
-								{cancelDialog.data?.isPaid && (
-									<p className="mt-2 text-amber-600">
-										Cette commande a été payée. Le statut de paiement sera passé à REFUNDED.
-										N'oubliez pas de procéder au remboursement via Stripe.
-									</p>
+								{isPaid && (
+									<div className="mt-3 space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/50 dark:bg-amber-950/20">
+										<p className="text-amber-700 dark:text-amber-400">
+											Cette commande a été payée. Le statut de paiement passera à REFUNDED.
+										</p>
+										<label
+											htmlFor="cancel-order-auto-refund"
+											className="flex items-center gap-2 text-sm"
+										>
+											<Checkbox
+												id="cancel-order-auto-refund"
+												checked={autoRefund}
+												onCheckedChange={(v) => setAutoRefund(v === true)}
+												disabled={isPending}
+											/>
+											<span>
+												Créer automatiquement le remboursement Stripe (sera traité par le cron)
+											</span>
+										</label>
+										{!autoRefund && (
+											<p className="text-muted-foreground text-xs">
+												Sans cette option, le remboursement Stripe devra être créé manuellement
+												depuis le module Remboursements.
+											</p>
+										)}
+									</div>
 								)}
 								<p className="text-muted-foreground mt-4 text-sm">
 									La commande restera en base de données pour préserver la traçabilité comptable

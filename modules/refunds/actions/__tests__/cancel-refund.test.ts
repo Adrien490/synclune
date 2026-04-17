@@ -13,6 +13,8 @@ const {
 	mockError,
 	mockPrisma,
 	mockUpdateTag,
+	mockSendRefundCancelledEmail,
+	mockBuildUrl,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -25,8 +27,13 @@ const {
 			findUnique: vi.fn(),
 			update: vi.fn(),
 		},
+		orderNote: {
+			create: vi.fn(),
+		},
 	},
 	mockUpdateTag: vi.fn(),
+	mockSendRefundCancelledEmail: vi.fn(),
+	mockBuildUrl: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -59,6 +66,19 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
+}));
+
+vi.mock("@/modules/emails/services/refund-emails", () => ({
+	sendRefundCancelledEmail: mockSendRefundCancelledEmail,
+}));
+
+vi.mock("@/shared/constants/urls", () => ({
+	buildUrl: mockBuildUrl,
+	ROUTES: {
+		ACCOUNT: {
+			ORDER_DETAIL: (id: string) => `/commandes/${id}`,
+		},
+	},
 }));
 
 vi.mock("../../constants/refund.constants", () => ({
@@ -128,6 +148,8 @@ function makeRefund(overrides: Record<string, unknown> = {}) {
 			orderNumber: "SYN-001",
 			user: {
 				id: "user-1",
+				email: "client@example.com",
+				name: "Marie Dupont",
 			},
 		},
 		...overrides,
@@ -162,6 +184,9 @@ describe("cancelRefund", () => {
 			status: "error",
 			message: msg,
 		}));
+		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
+		mockSendRefundCancelledEmail.mockResolvedValue(undefined);
+		mockPrisma.orderNote.create.mockResolvedValue({});
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -360,6 +385,59 @@ describe("cancelRefund", () => {
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			dbError,
 			"Erreur lors de l'annulation du remboursement.",
+		);
+	});
+
+	it("should send cancellation email to customer", async () => {
+		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
+		mockPrisma.refund.update.mockResolvedValue({});
+
+		await cancelRefund(undefined, makeFormData());
+
+		expect(mockSendRefundCancelledEmail).toHaveBeenCalledWith(
+			expect.objectContaining({
+				to: "client@example.com",
+				orderNumber: "SYN-001",
+				customerName: "Marie Dupont",
+				refundAmount: 5000,
+			}),
+		);
+	});
+
+	it("should not send email when user has no email", async () => {
+		mockPrisma.refund.findUnique.mockResolvedValue(
+			makeRefund({
+				order: {
+					id: "order-1",
+					orderNumber: "SYN-001",
+					user: { id: "user-1", email: null, name: "Client" },
+				},
+			}),
+		);
+		mockPrisma.refund.update.mockResolvedValue({});
+
+		await cancelRefund(undefined, makeFormData());
+
+		expect(mockSendRefundCancelledEmail).not.toHaveBeenCalled();
+	});
+
+	it("should create fallback OrderNote when email sending fails", async () => {
+		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
+		mockPrisma.refund.update.mockResolvedValue({});
+		mockSendRefundCancelledEmail.mockRejectedValue(new Error("SMTP error"));
+
+		await cancelRefund(undefined, makeFormData());
+		// Wait for the .catch() handler to execute
+		await new Promise((r) => setImmediate(r));
+
+		expect(mockPrisma.orderNote.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({
+					orderId: "order-1",
+					content: expect.stringContaining("SMTP error"),
+					authorId: "system",
+				}),
+			}),
 		);
 	});
 });

@@ -93,7 +93,7 @@ function makeGuestItem(skuId: string, quantity: number, overrides: Record<string
 		priceAtAdd: 2999,
 		sku: {
 			isActive: true,
-			product: { id: `prod-${skuId}`, status: "PUBLIC" },
+			product: { id: `prod-${skuId}`, title: `Product ${skuId}`, status: "PUBLIC" },
 			...((overrides.sku as Record<string, unknown> | undefined) ?? {}),
 		},
 	};
@@ -379,6 +379,50 @@ describe("mergeCarts", () => {
 		if ("data" in result) {
 			expect(result.data.mergedItems).toBe(1);
 			expect(result.data.conflicts).toBe(1);
+			expect(result.data.truncatedItems).toEqual([]);
+			expect(result.data.skippedItems).toEqual([]);
+		}
+	});
+
+	it("reports skippedItems when SKU inactive or product not PUBLIC", async () => {
+		mockGetGuestCartForMerge.mockResolvedValue(
+			makeGuestCart([
+				makeGuestItem("sku-inactive", 2, {
+					sku: {
+						isActive: false,
+						product: {
+							id: "prod-sku-inactive",
+							title: "Product inactive",
+							status: "PUBLIC",
+						},
+					},
+				}),
+				makeGuestItem("sku-draft", 1, {
+					sku: {
+						isActive: true,
+						product: { id: "prod-sku-draft", title: "Product draft", status: "DRAFT" },
+					},
+				}),
+			]),
+		);
+		mockGetUserCartForMerge.mockResolvedValue(makeUserCart());
+		mockBatchValidateSkusForMerge.mockResolvedValue(new Map());
+
+		mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) =>
+			fn({
+				cartItem: { create: vi.fn(), update: vi.fn() },
+				cart: { delete: vi.fn() },
+			}),
+		);
+
+		const result = await mergeCarts("user-1", "sess-1");
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		if ("data" in result) {
+			expect(result.data.skippedItems).toHaveLength(2);
+			expect(result.data.skippedItems.map((i) => i.skuId).sort()).toEqual([
+				"sku-draft",
+				"sku-inactive",
+			]);
 		}
 	});
 });

@@ -126,6 +126,8 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 							<input
 								ref={searchInputRef}
 								type="search"
+								inputMode="search"
+								enterKeyHint="search"
 								value={searchQuery}
 								onChange={(e) => setSearchQuery(e.target.value)}
 								placeholder="Rechercher une page..."

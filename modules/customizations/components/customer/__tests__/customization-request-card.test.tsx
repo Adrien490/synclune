@@ -22,6 +22,14 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
+vi.mock("../cancel-customization-button", () => ({
+	CancelCustomizationButton: ({ requestId }: { requestId: string }) => (
+		<button type="button" data-testid="cancel-customization-button" data-request-id={requestId}>
+			Annuler la demande
+		</button>
+	),
+}));
+
 import { CustomizationRequestCard } from "../customization-request-card";
 
 afterEach(cleanup);

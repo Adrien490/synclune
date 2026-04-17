@@ -213,7 +213,7 @@ describe("updateAddress", () => {
 	it("should return success message after update", async () => {
 		const result = await updateAddress(ADDRESS_ID, undefined, validFormData);
 
-		expect(mockSuccess).toHaveBeenCalledWith("Adresse modifiee avec succes");
+		expect(mockSuccess).toHaveBeenCalledWith("Adresse modifiée avec succès");
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 

@@ -122,6 +122,7 @@ export function GalleryHoverZoom({
 					fill
 					className="object-cover"
 					preload={preload}
+					fetchPriority={preload ? "high" : undefined}
 					quality={quality}
 					sizes={sizes}
 					placeholder={blurDataUrl ? "blur" : "empty"}
@@ -155,6 +156,7 @@ export function GalleryHoverZoom({
 					transformOrigin: "center center",
 				}}
 				preload={preload}
+				fetchPriority={preload ? "high" : undefined}
 				quality={quality}
 				sizes={sizes}
 				placeholder={blurDataUrl ? "blur" : "empty"}

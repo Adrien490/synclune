@@ -50,15 +50,18 @@ export function StructuredData({
 			],
 		});
 
-		// Article schema for the atelier story section
+		// Article schema for the atelier story section.
+		// datePublished reflects when the story was first published;
+		// dateModified tracks the last deploy so search engines see fresh content.
+		const articlePublishedAt = process.env.NEXT_PUBLIC_SITE_PUBLISHED_AT ?? "2025-01-15";
 		graphSchemas.push({
 			"@type": "Article",
 			"@id": `${SITE_URL}/#atelier-article`,
 			headline: "L'histoire de Léane, créatrice de bijoux artisanaux Synclune",
 			url: `${SITE_URL}/#atelier-section`,
 			image: `${SITE_URL}/opengraph-image`,
-			datePublished: "2025-01-15",
-			dateModified: process.env.DEPLOY_DATE ?? "2025-01-15",
+			datePublished: articlePublishedAt,
+			dateModified: process.env.DEPLOY_DATE ?? articlePublishedAt,
 			author: {
 				"@id": `${SITE_URL}/#founder`,
 			},

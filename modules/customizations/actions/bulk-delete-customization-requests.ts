@@ -14,14 +14,7 @@ import {
 	CUSTOMIZATION_ERROR_MESSAGES,
 	CUSTOMIZATION_SUCCESS_MESSAGES,
 } from "../constants/error-messages";
-import { z } from "zod";
-
-const bulkDeleteCustomizationRequestsSchema = z.object({
-	requestIds: z
-		.array(z.string().cuid2("ID invalide"))
-		.min(1, "Au moins une demande est requise")
-		.max(100, "Maximum 100 demandes par opération"),
-});
+import { bulkDeleteCustomizationSchema } from "../schemas/delete-customization.schema";
 
 /**
  * Suppression en masse (soft delete) de demandes de personnalisation par un administrateur
@@ -42,7 +35,7 @@ export async function bulkDeleteCustomizationRequests(
 
 	// 3. Validation
 	const requestIds = formData.getAll("requestIds") as string[];
-	const validation = validateInput(bulkDeleteCustomizationRequestsSchema, { requestIds });
+	const validation = validateInput(bulkDeleteCustomizationSchema, { requestIds });
 	if ("error" in validation) return validation.error;
 
 	const { requestIds: validatedIds } = validation.data;

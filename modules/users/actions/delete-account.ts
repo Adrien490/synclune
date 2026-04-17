@@ -1,6 +1,6 @@
 "use server";
 
-import { AccountStatus, OrderStatus } from "@/app/generated/prisma/client";
+import { AccountStatus, OrderStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
@@ -53,19 +53,33 @@ export async function deleteAccount(
 			return error("Une demande de suppression est déjà en cours pour votre compte.");
 		}
 
-		// 5. Check no pending orders
-		const pendingOrders = await prisma.order.count({
-			where: {
-				userId,
-				status: {
-					in: [OrderStatus.PENDING, OrderStatus.PROCESSING, OrderStatus.SHIPPED],
+		// 5. Check no pending orders or in-flight refunds
+		const [pendingOrders, pendingRefunds] = await Promise.all([
+			prisma.order.count({
+				where: {
+					userId,
+					status: {
+						in: [OrderStatus.PENDING, OrderStatus.PROCESSING, OrderStatus.SHIPPED],
+					},
 				},
-			},
-		});
+			}),
+			prisma.refund.count({
+				where: {
+					order: { userId },
+					status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] },
+				},
+			}),
+		]);
 
 		if (pendingOrders > 0) {
 			return error(
 				`Vous avez ${pendingOrders} commande(s) en cours. Veuillez attendre leur livraison avant de supprimer votre compte.`,
+			);
+		}
+
+		if (pendingRefunds > 0) {
+			return error(
+				`Vous avez ${pendingRefunds} remboursement(s) en cours. Veuillez attendre leur traitement avant de supprimer votre compte.`,
 			);
 		}
 

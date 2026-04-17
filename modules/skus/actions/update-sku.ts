@@ -18,6 +18,7 @@ import {
 import { BusinessError, handleActionError, safeFormGet } from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { logger } from "@/shared/lib/logger";
+import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -116,12 +117,19 @@ export async function updateProductSku(
 				select: {
 					id: true,
 					sku: true,
+					isActive: true,
 					productId: true,
 					product: {
 						select: {
 							id: true,
 							title: true,
 							slug: true,
+							status: true,
+							_count: {
+								select: {
+									skus: { where: { isActive: true, deletedAt: null } },
+								},
+							},
 						},
 					},
 					images: {
@@ -132,6 +140,15 @@ export async function updateProductSku(
 
 			if (!existingSku) {
 				throw new BusinessError("Le SKU spécifié n'existe pas.");
+			}
+
+			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
+			if (existingSku.isActive && !validatedData.isActive) {
+				assertPublicProductKeepsActiveSku({
+					productStatus: existingSku.product.status,
+					activeTotal: existingSku.product._count.skus,
+					activeAffected: 1,
+				});
 			}
 
 			// Validate color if provided

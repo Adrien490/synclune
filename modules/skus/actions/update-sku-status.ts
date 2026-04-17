@@ -16,6 +16,7 @@ import {
 } from "@/shared/lib/actions";
 import { updateProductSkuStatusSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
+import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
 
 /**
  * Server Action pour mettre a jour le statut actif/inactif d'un SKU
@@ -60,6 +61,12 @@ export async function updateProductSkuStatus(
 					product: {
 						select: {
 							slug: true,
+							status: true,
+							_count: {
+								select: {
+									skus: { where: { isActive: true, deletedAt: null } },
+								},
+							},
 						},
 					},
 				},
@@ -74,6 +81,15 @@ export async function updateProductSkuStatus(
 				throw new BusinessError(
 					"Impossible de désactiver la variante principale d'un produit. Veuillez d'abord définir une autre variante comme principale.",
 				);
+			}
+
+			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste apres desactivation
+			if (!validatedIsActive && existing.isActive) {
+				assertPublicProductKeepsActiveSku({
+					productStatus: existing.product.status,
+					activeTotal: existing.product._count.skus,
+					activeAffected: 1,
+				});
 			}
 
 			const updated = await tx.productSku.update({

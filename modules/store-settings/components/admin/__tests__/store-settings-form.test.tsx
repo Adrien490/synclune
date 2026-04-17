@@ -241,6 +241,7 @@ function makeSettings(overrides: Partial<StoreSettingsAdmin> = {}): StoreSetting
 		reopensAt: null,
 		closedAt: null,
 		closedBy: null,
+		scheduledCloseAt: null,
 		updatedAt: new Date("2026-01-01T10:00:00Z"),
 		...overrides,
 	};

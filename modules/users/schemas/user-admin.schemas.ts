@@ -52,6 +52,54 @@ export const bulkChangeUserRoleSchema = z.object({
 });
 
 // ============================================================================
+// TOGGLE EMAIL VERIFIED SCHEMA (Admin)
+// ============================================================================
+
+export const toggleEmailVerifiedSchema = z.object({
+	id: z.cuid2("ID utilisateur invalide"),
+});
+
+// ============================================================================
+// BULK INVALIDATE SESSIONS SCHEMA (Admin)
+// ============================================================================
+
+export const bulkInvalidateSessionsSchema = z.object({
+	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
+});
+
+// ============================================================================
+// ANONYMIZE NOW SCHEMA (Admin GDPR Art. 17 - immediate)
+// ============================================================================
+
+export const anonymizeUserImmediatelySchema = z.object({
+	id: z.cuid2("ID utilisateur invalide"),
+	confirmation: z.string().min(1, "Confirmation requise").max(500, "Confirmation trop longue"),
+	reason: z
+		.string()
+		.trim()
+		.min(10, "Raison d'anonymisation requise (minimum 10 caracteres)")
+		.max(500, "Raison trop longue"),
+});
+
+// ============================================================================
+// UNLINK OAUTH ACCOUNT SCHEMA (User self-service)
+// ============================================================================
+
+export const unlinkOAuthAccountSchema = z.object({
+	providerId: z.string().trim().min(1, "Fournisseur requis").max(50, "Fournisseur invalide"),
+});
+
+// ============================================================================
+// EXPORT USERS LIST SCHEMA (Admin CSV/JSON)
+// ============================================================================
+
+export const exportUsersListSchema = z.object({
+	format: z.enum(["csv", "json"]),
+	role: z.enum([Role.USER, Role.ADMIN]).optional(),
+	accountStatus: z.enum(["ACTIVE", "INACTIVE", "PENDING_DELETION", "ANONYMIZED"]).optional(),
+});
+
+// ============================================================================
 // DIRECT PARAM SCHEMAS (Admin)
 // ============================================================================
 

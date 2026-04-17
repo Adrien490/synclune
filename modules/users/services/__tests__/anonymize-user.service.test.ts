@@ -224,4 +224,33 @@ describe("anonymizeUserInTransaction", () => {
 		expect(mockTx.customizationRequest.updateMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.order.updateMany).toHaveBeenCalledTimes(1);
 	});
+
+	it("should be idempotent when user is already ANONYMIZED (no-op)", async () => {
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "ANONYMIZED" });
+
+		await expect(anonymizeUserInTransaction(mockTx as never, "user_abc")).resolves.toBeUndefined();
+
+		expect(mockTx.user.update).not.toHaveBeenCalled();
+		expect(mockTx.session.deleteMany).not.toHaveBeenCalled();
+	});
+
+	it("should allow ACTIVE users when allowImmediate: true (admin GDPR override)", async () => {
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
+
+		await anonymizeUserInTransaction(mockTx as never, "user_abc", { allowImmediate: true });
+
+		expect(mockTx.user.update).toHaveBeenCalledWith({
+			where: { id: "user_abc" },
+			data: expect.objectContaining({ accountStatus: "ANONYMIZED" }),
+		});
+	});
+
+	it("should still reject ACTIVE users without allowImmediate (default strict path)", async () => {
+		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "ACTIVE" });
+
+		await expect(anonymizeUserInTransaction(mockTx as never, "user_abc")).rejects.toThrow(
+			"Cannot anonymize user user_abc: status is ACTIVE, expected PENDING_DELETION",
+		);
+		expect(mockTx.user.update).not.toHaveBeenCalled();
+	});
 });

@@ -20,11 +20,7 @@ import {
 	CUSTOMIZATION_ERROR_MESSAGES,
 	CUSTOMIZATION_SUCCESS_MESSAGES,
 } from "../constants/error-messages";
-import { z } from "zod";
-
-const deleteCustomizationRequestSchema = z.object({
-	requestId: z.string().cuid2("ID invalide"),
-});
+import { deleteCustomizationSchema } from "../schemas/delete-customization.schema";
 
 /**
  * Suppression (soft delete) d'une demande de personnalisation par un administrateur
@@ -44,7 +40,7 @@ export async function deleteCustomizationRequest(
 	if ("error" in rateLimit) return rateLimit.error;
 
 	// 3. Validation
-	const validation = validateInput(deleteCustomizationRequestSchema, {
+	const validation = validateInput(deleteCustomizationSchema, {
 		requestId: safeFormGet(formData, "requestId"),
 	});
 	if ("error" in validation) return validation.error;

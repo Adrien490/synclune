@@ -7,10 +7,14 @@ import { ADMIN_SKU_BULK_OPERATIONS_LIMIT } from "@/shared/lib/rate-limit-config"
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
-import { handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
+import { BusinessError, handleActionError, safeFormGet, validateInput } from "@/shared/lib/actions";
 import { bulkDeactivateSkusSchema } from "../schemas/sku.schemas";
 import { collectBulkInvalidationTags, invalidateTags } from "../utils/cache.utils";
 import { BULK_SKU_LIMITS } from "../constants/sku.constants";
+import {
+	assertBulkPublicProductsKeepActiveSku,
+	type BulkProductActiveBreakdown,
+} from "../services/validate-public-active-sku.service";
 
 export async function bulkDeactivateSkus(
 	prevState: ActionState | undefined,
@@ -48,39 +52,64 @@ export async function bulkDeactivateSkus(
 			};
 		}
 
-		// Récupérer les infos des SKUs pour validation et invalidation du cache
-		const skusData = await prisma.productSku.findMany({
-			where: { id: { in: ids } },
-			select: {
-				id: true,
-				sku: true,
-				productId: true,
-				isDefault: true,
-				product: { select: { slug: true } },
-			},
-		});
+		// Transaction atomique: lecture, validations metier, ecriture
+		const skusData = await prisma.$transaction(async (tx) => {
+			const found = await tx.productSku.findMany({
+				where: { id: { in: ids } },
+				select: {
+					id: true,
+					sku: true,
+					productId: true,
+					isDefault: true,
+					isActive: true,
+					product: {
+						select: {
+							slug: true,
+							status: true,
+							skus: {
+								where: { isActive: true, deletedAt: null },
+								select: { id: true },
+							},
+						},
+					},
+				},
+			});
 
-		if (skusData.length !== ids.length) {
-			const missing = ids.length - skusData.length;
-			return {
-				status: ActionStatus.ERROR,
-				message: `${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
-			};
-		}
+			if (found.length !== ids.length) {
+				const missing = ids.length - found.length;
+				throw new BusinessError(
+					`${missing} variante(s) introuvable(s) sur ${ids.length} sélectionnée(s)`,
+				);
+			}
 
-		// Verifier qu'aucune variante par defaut n'est selectionnee
-		const defaultSkus = skusData.filter((s) => s.isDefault);
-		if (defaultSkus.length > 0) {
-			return {
-				status: ActionStatus.ERROR,
-				message: "Impossible de désactiver une variante par défaut",
-			};
-		}
+			// Verifier qu'aucune variante par defaut n'est selectionnee
+			const defaultSkus = found.filter((s) => s.isDefault);
+			if (defaultSkus.length > 0) {
+				throw new BusinessError("Impossible de désactiver une variante par défaut");
+			}
 
-		// Desactiver toutes les variantes
-		await prisma.productSku.updateMany({
-			where: { id: { in: ids } },
-			data: { isActive: false },
+			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste par produit
+			const breakdown: BulkProductActiveBreakdown = new Map();
+			for (const sku of found) {
+				const existing = breakdown.get(sku.productId);
+				if (existing) {
+					if (sku.isActive) existing.activeAffected++;
+				} else {
+					breakdown.set(sku.productId, {
+						productStatus: sku.product.status,
+						activeTotal: sku.product.skus.length,
+						activeAffected: sku.isActive ? 1 : 0,
+					});
+				}
+			}
+			assertBulkPublicProductsKeepActiveSku(breakdown);
+
+			await tx.productSku.updateMany({
+				where: { id: { in: ids } },
+				data: { isActive: false },
+			});
+
+			return found;
 		});
 
 		// Invalider le cache (deduplique automatiquement les tags)

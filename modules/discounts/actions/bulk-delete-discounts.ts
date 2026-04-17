@@ -62,10 +62,12 @@ export async function bulkDeleteDiscounts(
 			data: { deletedAt: new Date() },
 		});
 
-		// Invalider le cache pour chaque discount supprimé
+		// Invalider le cache pour chaque discount supprimé (dédup pour éviter les appels redondants)
+		const tagsToInvalidate = new Set<string>();
 		for (const discount of discounts.filter((d) => deletableIds.includes(d.id))) {
-			getDiscountInvalidationTags(discount.code).forEach((tag) => updateTag(tag));
+			getDiscountInvalidationTags(discount.code).forEach((tag) => tagsToInvalidate.add(tag));
 		}
+		tagsToInvalidate.forEach((tag) => updateTag(tag));
 
 		void logAudit({
 			adminId: adminUser.id,

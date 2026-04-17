@@ -84,6 +84,28 @@ vi.mock("lucide-react", () => ({
 	LoaderCircle: ({ className }: { className?: string }) => (
 		<span data-testid="loader" className={className} />
 	),
+	CheckIcon: () => <span data-testid="icon-check" />,
+	MinusIcon: () => <span data-testid="icon-minus" />,
+}));
+
+vi.mock("@/shared/components/ui/checkbox", () => ({
+	Checkbox: ({
+		checked,
+		onCheckedChange,
+		disabled,
+	}: {
+		checked?: boolean;
+		onCheckedChange?: (v: boolean) => void;
+		disabled?: boolean;
+	}) => (
+		<input
+			type="checkbox"
+			data-testid="checkbox-auto-refund"
+			checked={checked}
+			disabled={disabled}
+			onChange={(e) => onCheckedChange?.(e.target.checked)}
+		/>
+	),
 }));
 
 import { CancelOrderAlertDialog } from "../cancel-order-alert-dialog";
@@ -140,15 +162,13 @@ describe("CancelOrderAlertDialog", () => {
 
 		render(<CancelOrderAlertDialog />);
 
-		expect(screen.getByText(/Le statut de paiement sera passé à REFUNDED/)).toBeInTheDocument();
+		expect(screen.getByText(/Le statut de paiement passera à REFUNDED/)).toBeInTheDocument();
 	});
 
 	it("hides paid warning when isPaid is false", () => {
 		render(<CancelOrderAlertDialog />);
 
-		expect(
-			screen.queryByText(/Le statut de paiement sera passé à REFUNDED/),
-		).not.toBeInTheDocument();
+		expect(screen.queryByText(/Le statut de paiement passera à REFUNDED/)).not.toBeInTheDocument();
 	});
 
 	// ─── Hidden input ─────────────────────────────────────────────────────────
@@ -177,5 +197,38 @@ describe("CancelOrderAlertDialog", () => {
 		render(<CancelOrderAlertDialog />);
 
 		expect(screen.getByText("Fermer")).toBeDisabled();
+	});
+
+	// ─── autoRefund hidden input + checkbox ──────────────────────────────────
+
+	it("autoRefund hidden input is 'false' when order is not paid", () => {
+		render(<CancelOrderAlertDialog />);
+		const input = document.querySelector('input[name="autoRefund"]') as HTMLInputElement;
+		expect(input).toBeTruthy();
+		expect(input.value).toBe("false");
+	});
+
+	it("autoRefund hidden input is 'true' by default when order is paid", () => {
+		mockDialogState = {
+			...mockDialogState,
+			data: { ...mockDialogState.data, isPaid: true },
+		};
+		render(<CancelOrderAlertDialog />);
+		const input = document.querySelector('input[name="autoRefund"]') as HTMLInputElement;
+		expect(input.value).toBe("true");
+	});
+
+	it("renders autoRefund checkbox only when order is paid", () => {
+		mockDialogState = {
+			...mockDialogState,
+			data: { ...mockDialogState.data, isPaid: true },
+		};
+		render(<CancelOrderAlertDialog />);
+		expect(screen.getByTestId("checkbox-auto-refund")).toBeInTheDocument();
+	});
+
+	it("does not render autoRefund checkbox when order is not paid", () => {
+		render(<CancelOrderAlertDialog />);
+		expect(screen.queryByTestId("checkbox-auto-refund")).not.toBeInTheDocument();
 	});
 });

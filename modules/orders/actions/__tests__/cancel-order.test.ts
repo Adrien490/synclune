@@ -26,6 +26,7 @@ const {
 		orderHistory: { create: vi.fn() },
 		discountUsage: { findMany: vi.fn(), deleteMany: vi.fn() },
 		discount: { update: vi.fn() },
+		refund: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdminWithUser: vi.fn(),
@@ -165,6 +166,7 @@ describe("cancelOrder", () => {
 		mockPrisma.discountUsage.findMany.mockResolvedValue([]);
 		mockPrisma.discountUsage.deleteMany.mockResolvedValue({});
 		mockPrisma.discount.update.mockResolvedValue({});
+		mockPrisma.refund.create.mockResolvedValue({ id: "refund-auto-1" });
 
 		vi.mocked(cancelOrderSchema.safeParse).mockReturnValue({
 			success: true,
@@ -397,5 +399,97 @@ describe("cancelOrder", () => {
 
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	// ========================================================================
+	// AUTO REFUND
+	// ========================================================================
+
+	describe("autoRefund", () => {
+		it("should NOT create refund when autoRefund=false even on PAID order", async () => {
+			const order = createTxOrder({
+				paymentStatus: "PAID",
+				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 1000 }],
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			const fdNoAuto = createMockFormData({ id: VALID_CUID, autoRefund: "false" });
+
+			await cancelOrder(undefined, fdNoAuto);
+
+			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+		});
+
+		it("should NOT create refund when autoRefund=true but order is PENDING", async () => {
+			const order = createTxOrder({
+				paymentStatus: "PENDING",
+				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 1000 }],
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			const fd = createMockFormData({ id: VALID_CUID, autoRefund: "true" });
+
+			await cancelOrder(undefined, fd);
+
+			expect(mockPrisma.refund.create).not.toHaveBeenCalled();
+		});
+
+		it("should create APPROVED refund when autoRefund=true on PAID order", async () => {
+			const order = createTxOrder({
+				paymentStatus: "PAID",
+				total: 4999,
+				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 4999 }],
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			const fd = createMockFormData({ id: VALID_CUID, autoRefund: "true" });
+
+			const result = await cancelOrder(undefined, fd);
+
+			expect(result.status).toBe(ActionStatus.SUCCESS);
+			expect(mockPrisma.refund.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					data: expect.objectContaining({
+						orderId: VALID_CUID,
+						amount: 4999,
+						status: "APPROVED",
+						reason: "CUSTOMER_REQUEST",
+						items: {
+							create: [
+								expect.objectContaining({
+									orderItemId: "oi-1",
+									quantity: 1,
+									amount: 4999,
+								}),
+							],
+						},
+					}),
+				}),
+			);
+		});
+
+		it("should include refund cache tag invalidation when refund is created", async () => {
+			const order = createTxOrder({
+				paymentStatus: "PAID",
+				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 1000 }],
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			const fd = createMockFormData({ id: VALID_CUID, autoRefund: "true" });
+
+			await cancelOrder(undefined, fd);
+
+			expect(mockUpdateTag).toHaveBeenCalledWith(`order-refunds-${order.id}`);
+		});
+
+		it("should mention 'Remboursement Stripe planifié' in success message", async () => {
+			const order = createTxOrder({
+				paymentStatus: "PAID",
+				total: 1234,
+				items: [{ id: "oi-1", skuId: "sku-1", quantity: 1, price: 1234 }],
+			});
+			mockPrisma.order.findUnique.mockResolvedValue(order);
+			const fd = createMockFormData({ id: VALID_CUID, autoRefund: "true" });
+
+			const result = await cancelOrder(undefined, fd);
+
+			expect(result.message).toContain("Remboursement Stripe planifié");
+		});
 	});
 });

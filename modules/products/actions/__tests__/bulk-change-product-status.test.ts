@@ -222,6 +222,18 @@ describe("bulkChangeProductStatus", () => {
 		);
 	});
 
+	it("should defensively exclude ARCHIVED products in the updateMany WHERE clause (TOC race guard)", async () => {
+		await bulkChangeProductStatus(undefined, validFormData);
+		expect(mockPrisma.product.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					id: { in: productIds },
+					status: { not: "ARCHIVED" },
+				}),
+			}),
+		);
+	});
+
 	it("should invalidate product cache tags for each product", async () => {
 		await bulkChangeProductStatus(undefined, validFormData);
 		expect(mockGetProductInvalidationTags).toHaveBeenCalledTimes(existingProducts.length);

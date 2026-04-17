@@ -27,6 +27,9 @@ export async function requestEmailChange(
 		const validation = validateInput(changeEmailSchema, rawData);
 		if ("error" in validation) return validation.error;
 
+		// Cache invalidation is delegated to Better Auth: the email stays unchanged until
+		// the user confirms via the verification link; the post-callback hook (`sendChangeEmailVerification`)
+		// updates the DB and invalidates user caches at that point.
 		await auth.api.changeEmail({
 			body: { newEmail: validation.data.newEmail, callbackURL: "/parametres" },
 			headers: await headers(),

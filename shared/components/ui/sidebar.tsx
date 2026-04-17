@@ -701,6 +701,7 @@ export {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
+	SidebarMenuSkeleton,
 	SidebarProvider,
 	SidebarSeparator,
 	SidebarTrigger,

@@ -47,6 +47,11 @@ export async function toggleColorStatus(
 			return error("Cette couleur n'existe pas");
 		}
 
+		// Short-circuit if status is already the desired value
+		if (existingColor.isActive === validatedData.isActive) {
+			return success(validatedData.isActive ? "Couleur déjà active" : "Couleur déjà inactive");
+		}
+
 		// Update status
 		await prisma.color.update({
 			where: { id: validatedData.id },

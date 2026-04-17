@@ -9,6 +9,7 @@ const {
 	mockPrisma,
 	mockRequireAdminWithUser,
 	mockEnforceRateLimit,
+	mockEnforceRateLimitStandalone,
 	mockValidateInput,
 	mockSuccess,
 	mockError,
@@ -22,6 +23,7 @@ const {
 	},
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
+	mockEnforceRateLimitStandalone: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
@@ -46,7 +48,10 @@ vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 }));
 
 vi.mock("@/shared/lib/rate-limit-config", () => ({
-	ADMIN_USER_LIMITS: { SEND_RESET: "user-send-reset" },
+	ADMIN_USER_LIMITS: {
+		SEND_RESET: "user-send-reset",
+		SEND_RESET_TARGET: "user-send-reset-target",
+	},
 }));
 
 vi.mock("@/shared/lib/actions", () => ({
@@ -59,6 +64,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 	notFound: mockNotFound,
 	handleActionError: mockHandleActionError,
+	enforceRateLimit: mockEnforceRateLimitStandalone,
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({
@@ -99,6 +105,7 @@ describe("sendPasswordResetAdmin", () => {
 		vi.resetAllMocks();
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
+		mockEnforceRateLimitStandalone.mockResolvedValue({ success: true });
 		mockRequireAdminWithUser.mockResolvedValue({
 			user: { id: "admin-123", name: "Admin", email: "admin@example.com" },
 		});
@@ -257,6 +264,33 @@ describe("sendPasswordResetAdmin", () => {
 	// ──────────────────────────────────────────────────────────────
 	// Error handling
 	// ──────────────────────────────────────────────────────────────
+
+	// ──────────────────────────────────────────────────────────────
+	// Per-target rate limit (P2.3)
+	// ──────────────────────────────────────────────────────────────
+
+	it("should return per-target rate limit error when same user flooded", async () => {
+		const targetRateError = {
+			status: ActionStatus.ERROR,
+			message: "Trop d'emails envoyes a cet utilisateur",
+		};
+		mockEnforceRateLimitStandalone.mockResolvedValue({ error: targetRateError });
+
+		const result = await sendPasswordResetAdmin("user-456");
+
+		expect(result).toEqual(targetRateError);
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+		expect(mockAuth.api.requestPasswordReset).not.toHaveBeenCalled();
+	});
+
+	it("should use target-scoped rate limit identifier", async () => {
+		await sendPasswordResetAdmin("user-456");
+
+		expect(mockEnforceRateLimitStandalone).toHaveBeenCalledWith(
+			"send-reset-target:user-456",
+			"user-send-reset-target",
+		);
+	});
 
 	it("should call handleActionError on unexpected exception", async () => {
 		mockAuth.api.requestPasswordReset.mockRejectedValue(new Error("Email service down"));

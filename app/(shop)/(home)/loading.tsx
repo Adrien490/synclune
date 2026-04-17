@@ -3,7 +3,6 @@ import { AtelierSectionSkeleton } from "./_components/atelier-section";
 import { FaqSectionSkeleton } from "@/modules/faq/components/faq-section-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
-import { NewsletterSectionSkeleton } from "./_components/newsletter-section-skeleton";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
 /**
@@ -11,7 +10,7 @@ import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
  * Reproduit EXACTEMENT la structure de la page réelle pour éviter le CLS
  *
  * Structure : Hero → LatestCreations → Collections → Reviews
- *           → AtelierSection → FAQ → Newsletter
+ *           → AtelierSection → FAQ
  */
 export default function HomeLoading() {
 	return (
@@ -40,9 +39,6 @@ export default function HomeLoading() {
 
 			{/* 6. FAQ */}
 			<FaqSectionSkeleton />
-
-			{/* 7. Newsletter */}
-			<NewsletterSectionSkeleton />
 		</div>
 	);
 }

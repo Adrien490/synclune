@@ -47,6 +47,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 			grid: { stagger: 0, y: 0 },
 			content: { duration: 0 },
 			cta: { y: 0, delay: 0, duration: 0 },
+			underline: { delay: 0 },
 		},
 		stagger: { slow: 0 },
 		duration: { normal: 0, emphasis: 0 },
@@ -98,6 +99,10 @@ vi.mock("../signature-reveal", () => ({
 
 vi.mock("../polaroid-gallery", () => ({
 	PolaroidGallery: () => <div data-testid="polaroid-gallery" />,
+}));
+
+vi.mock("../../parallax-image", () => ({
+	ParallaxImage: ({ alt }: { alt: string }) => <img data-testid="parallax-image" alt={alt} />,
 }));
 
 import { processSteps } from "../process-steps";

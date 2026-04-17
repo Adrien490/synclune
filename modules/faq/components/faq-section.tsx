@@ -98,7 +98,11 @@ export async function FaqSection() {
 				<header className="mb-10 text-center lg:mb-12">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="faq-title">Questions fréquentes</SectionTitle>
-						<HandDrawnUnderline color="var(--secondary)" delay={0.15} className="mx-auto mt-2" />
+						<HandDrawnUnderline
+							color="var(--secondary)"
+							delay={MOTION_CONFIG.section.underline.delay}
+							className="mx-auto mt-2"
+						/>
 					</Fade>
 					<Fade
 						y={MOTION_CONFIG.section.subtitle.y}

@@ -11,6 +11,7 @@ import { FulfillmentPipelineCard } from "@/modules/dashboard/components/fulfillm
 import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
+import { ExportDashboardButton } from "@/modules/dashboard/components/export-dashboard-button";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
 import { TopProductsList } from "@/modules/dashboard/components/top-products-list";
 import { ActiveDiscounts } from "@/modules/dashboard/components/active-discounts";
@@ -62,6 +63,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				actions={
 					<div className="flex items-center gap-2">
 						<PeriodSelector />
+						<ExportDashboardButton />
 						<RefreshDashboardButton />
 					</div>
 				}

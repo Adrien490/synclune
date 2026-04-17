@@ -7,7 +7,14 @@ import { Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	handleActionError,
+	parseFormIds,
+	safeFormGet,
+} from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkChangeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -28,17 +35,12 @@ export async function bulkChangeUserRole(
 		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les donnees
-		const idsString = formData.get("ids");
-		let parsedIds: unknown;
-		try {
-			parsedIds = idsString ? JSON.parse(idsString as string) : [];
-		} catch {
-			return error("Format des IDs invalide.");
-		}
+		const parseResult = parseFormIds(formData);
+		if ("error" in parseResult) return parseResult.error;
 
 		const validation = validateInput(bulkChangeUserRoleSchema, {
-			ids: parsedIds,
-			role: formData.get("role") as Role,
+			ids: parseResult.ids,
+			role: safeFormGet(formData, "role"),
 		});
 		if ("error" in validation) return validation.error;
 

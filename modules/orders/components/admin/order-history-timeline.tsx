@@ -19,7 +19,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { cn } from "@/shared/utils/cn";
-import type { OrderAction, HistorySource } from "@/app/generated/prisma/client";
+import type { OrderAction, HistorySource } from "@/app/generated/prisma/enums";
 
 const VISIBLE_COUNT = 5;
 

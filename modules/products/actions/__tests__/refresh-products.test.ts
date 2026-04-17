@@ -12,15 +12,18 @@ const {
 	mockUpdateTag,
 	mockHandleActionError,
 	mockSuccess,
+	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockHandleActionError: vi.fn(),
 	mockSuccess: vi.fn(),
+	mockLogAudit: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdmin: mockRequireAdmin }));
+vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAdminWithUser: mockRequireAdmin }));
+vi.mock("@/shared/lib/audit-log", () => ({ logAudit: mockLogAudit }));
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
 }));
@@ -66,7 +69,9 @@ describe("refreshProducts", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockRequireAdmin.mockResolvedValue({ success: true });
+		mockRequireAdmin.mockResolvedValue({
+			user: { id: "admin-1", name: "Admin", email: "admin@synclune.fr" },
+		});
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 
 		mockSuccess.mockImplementation((msg: string) => ({
@@ -106,6 +111,36 @@ describe("refreshProducts", () => {
 	it("should invalidate exactly 5 cache tags", async () => {
 		await refreshProducts(undefined, emptyFormData);
 		expect(mockUpdateTag).toHaveBeenCalledTimes(5);
+	});
+
+	it("should invalidate each cache tag exactly once", async () => {
+		await refreshProducts(undefined, emptyFormData);
+		const calls = mockUpdateTag.mock.calls.flat();
+		const unique = new Set(calls);
+		expect(unique.size).toBe(calls.length);
+	});
+
+	it("should write an audit log entry with action product.refreshCache", async () => {
+		await refreshProducts(undefined, emptyFormData);
+		expect(mockLogAudit).toHaveBeenCalledTimes(1);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({
+				action: "product.refreshCache",
+				targetType: "product",
+				targetId: "all",
+				adminId: "admin-1",
+			}),
+		);
+	});
+
+	it("should fall back to admin email when name is missing in audit log", async () => {
+		mockRequireAdmin.mockResolvedValue({
+			user: { id: "admin-1", name: null, email: "admin@synclune.fr" },
+		});
+		await refreshProducts(undefined, emptyFormData);
+		expect(mockLogAudit).toHaveBeenCalledWith(
+			expect.objectContaining({ adminName: "admin@synclune.fr" }),
+		);
 	});
 
 	it("should return success with confirmation message", async () => {

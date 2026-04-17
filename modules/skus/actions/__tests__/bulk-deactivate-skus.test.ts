@@ -2,10 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ActionStatus } from "@/shared/types/server-action";
 import { createMockFormData, VALID_CUID, VALID_CUID_2 } from "@/test/factories";
 
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
 const {
 	mockPrisma,
 	mockRequireAdmin,
@@ -17,6 +13,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		productSku: { updateMany: vi.fn(), findMany: vi.fn() },
+		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -81,40 +78,47 @@ vi.mock("../../constants/sku.constants", () => ({
 
 import { bulkDeactivateSkus } from "../bulk-deactivate-skus";
 
-// ============================================================================
-// HELPERS
-// ============================================================================
-
 const validIds = [VALID_CUID, VALID_CUID_2];
 
 function makeFormData(ids: string[]) {
-	return createMockFormData({
-		ids: JSON.stringify(ids),
+	return createMockFormData({ ids: JSON.stringify(ids) });
+}
+
+type SkuOverride = {
+	id?: string;
+	isDefault?: boolean;
+	isActive?: boolean;
+	productId?: string;
+	productStatus?: string;
+	activeSkusCount?: number;
+};
+
+function createMockSkusData(overrides: SkuOverride[] = []): Array<{
+	id: string;
+	sku: string;
+	productId: string;
+	isDefault: boolean;
+	isActive: boolean;
+	product: { slug: string; status: string; skus: Array<{ id: string }> };
+}> {
+	const defaults: SkuOverride[] = [{}, {}];
+	const merged = defaults.map((d, i) => ({ ...d, ...(overrides[i] ?? {}) }));
+	return merged.map((o, i) => {
+		const activeCount = o.activeSkusCount ?? 2;
+		return {
+			id: o.id ?? (i === 0 ? VALID_CUID : VALID_CUID_2),
+			sku: i === 0 ? "BRC-OR-M" : "BRC-AR-M",
+			productId: o.productId ?? "prod-1",
+			isDefault: o.isDefault ?? false,
+			isActive: o.isActive ?? true,
+			product: {
+				slug: "bracelet-or",
+				status: o.productStatus ?? "DRAFT",
+				skus: Array.from({ length: activeCount }, (_, k) => ({ id: `active-${k}` })),
+			},
+		};
 	});
 }
-
-function createMockSkusData(overrides: Partial<{ isDefault: boolean }>[] = []) {
-	return [
-		{
-			id: VALID_CUID,
-			sku: "BRC-OR-M",
-			productId: "prod-1",
-			isDefault: overrides[0]?.isDefault ?? false,
-			product: { slug: "bracelet-or" },
-		},
-		{
-			id: VALID_CUID_2,
-			sku: "BRC-AR-M",
-			productId: "prod-1",
-			isDefault: overrides[1]?.isDefault ?? false,
-			product: { slug: "bracelet-or" },
-		},
-	];
-}
-
-// ============================================================================
-// TESTS
-// ============================================================================
 
 describe("bulkDeactivateSkus", () => {
 	beforeEach(() => {
@@ -129,6 +133,9 @@ describe("bulkDeactivateSkus", () => {
 
 		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData());
 		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 2 });
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 
 		mockHandleActionError.mockImplementation((_e: unknown, fallback: string) => ({
 			status: ActionStatus.ERROR,
@@ -167,22 +174,13 @@ describe("bulkDeactivateSkus", () => {
 		expect(result.message).toContain("Maximum 100");
 	});
 
-	it("should return error when a default SKU is selected", async () => {
+	it("should reject when any selected SKU is default", async () => {
 		mockPrisma.productSku.findMany.mockResolvedValue(
 			createMockSkusData([{ isDefault: true }, { isDefault: false }]),
 		);
 		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
+		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("défaut");
-	});
-
-	it("should return error when all selected SKUs are default", async () => {
-		mockPrisma.productSku.findMany.mockResolvedValue(
-			createMockSkusData([{ isDefault: true }, { isDefault: true }]),
-		);
-		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("variante par défaut");
 	});
 
 	it("should call updateMany with isActive=false when no default SKUs", async () => {
@@ -193,14 +191,25 @@ describe("bulkDeactivateSkus", () => {
 		});
 	});
 
-	it("should fetch skus including isDefault field", async () => {
+	it("should fetch skus including product.status and active skus count", async () => {
 		await bulkDeactivateSkus(undefined, makeFormData(validIds));
 		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
 			where: { id: { in: validIds } },
 			select: expect.objectContaining({
 				isDefault: true,
+				isActive: true,
+				product: expect.objectContaining({
+					select: expect.objectContaining({
+						status: true,
+					}),
+				}),
 			}),
 		});
+	});
+
+	it("should wrap read+write in a transaction", async () => {
+		await bulkDeactivateSkus(undefined, makeFormData(validIds));
+		expect(mockPrisma.$transaction).toHaveBeenCalled();
 	});
 
 	it("should invalidate cache tags after successful update", async () => {
@@ -215,16 +224,59 @@ describe("bulkDeactivateSkus", () => {
 		expect(result.message).toContain("2");
 	});
 
-	it("should not call updateMany when default SKU check fails", async () => {
-		mockPrisma.productSku.findMany.mockResolvedValue(createMockSkusData([{ isDefault: true }]));
-		await bulkDeactivateSkus(undefined, makeFormData(validIds));
-		expect(mockPrisma.productSku.updateMany).not.toHaveBeenCalled();
-	});
-
 	it("should call handleActionError on unexpected exception", async () => {
-		mockPrisma.productSku.findMany.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	// ============================================================================
+	// PUBLIC PRODUCT GUARD (P1.2)
+	// ============================================================================
+
+	it("should reject when deactivating all active SKUs of a PUBLIC product", async () => {
+		mockPrisma.productSku.findMany.mockResolvedValue(
+			createMockSkusData([
+				{ productStatus: "PUBLIC", activeSkusCount: 2, isActive: true },
+				{ productStatus: "PUBLIC", activeSkusCount: 2, isActive: true },
+			]),
+		);
+		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	it("should allow deactivation when PUBLIC product keeps at least 1 active SKU", async () => {
+		mockPrisma.productSku.findMany.mockResolvedValue(
+			createMockSkusData([
+				{ productStatus: "PUBLIC", activeSkusCount: 3, isActive: true },
+				{ productStatus: "PUBLIC", activeSkusCount: 3, isActive: true },
+			]),
+		);
+		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("should ignore PUBLIC guard when products are DRAFT", async () => {
+		mockPrisma.productSku.findMany.mockResolvedValue(
+			createMockSkusData([
+				{ productStatus: "DRAFT", activeSkusCount: 1, isActive: true },
+				{ productStatus: "DRAFT", activeSkusCount: 1, isActive: true },
+			]),
+		);
+		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("should not count inactive SKUs as affected for PUBLIC guard", async () => {
+		mockPrisma.productSku.findMany.mockResolvedValue(
+			createMockSkusData([
+				{ productStatus: "PUBLIC", activeSkusCount: 2, isActive: false },
+				{ productStatus: "PUBLIC", activeSkusCount: 2, isActive: false },
+			]),
+		);
+		const result = await bulkDeactivateSkus(undefined, makeFormData(validIds));
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 });

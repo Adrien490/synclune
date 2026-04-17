@@ -219,6 +219,8 @@ export const REFUND_ERROR_MESSAGES = {
 	PROCESS_FAILED: "Erreur lors du traitement du remboursement.",
 	REJECT_FAILED: "Erreur lors du rejet du remboursement.",
 	CANCEL_FAILED: "Erreur lors de l'annulation du remboursement.",
+	RETRY_FAILED: "Erreur lors de la relance du remboursement.",
+	NOT_FAILED: "Seuls les remboursements en échec peuvent être relancés.",
 	ALREADY_PROCESSED: "Ce remboursement a déjà été traité.",
 	ALREADY_APPROVED: "Ce remboursement est déjà approuvé.",
 	ALREADY_REJECTED: "Ce remboursement a déjà été refusé.",

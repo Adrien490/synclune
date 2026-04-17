@@ -3,8 +3,9 @@
 import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { handleActionError, success } from "@/shared/lib/actions";
+import { logAudit } from "@/shared/lib/audit-log";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -16,14 +17,24 @@ export async function refreshColors(
 	_formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+		const auth = await requireAdminWithUser();
+		if ("error" in auth) return auth.error;
+		const { user: adminUser } = auth;
 
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.REFRESH);
 		if ("error" in rateLimit) return rateLimit.error;
 
 		updateTag(COLORS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+
+		void logAudit({
+			adminId: adminUser.id,
+			adminName: adminUser.name ?? adminUser.email,
+			action: "color.refresh",
+			targetType: "cache",
+			targetId: COLORS_CACHE_TAGS.LIST,
+			metadata: { tags: [COLORS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES] },
+		});
 
 		return success("Couleurs rafraîchies");
 	} catch (e) {

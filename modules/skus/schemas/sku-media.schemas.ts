@@ -1,0 +1,79 @@
+import { z } from "zod";
+import { TEXT_LIMITS, ARRAY_LIMITS } from "@/shared/constants/validation-limits";
+
+/**
+ * Reordonnancement des medias d'un SKU (drag-and-drop admin)
+ * Prend un skuId + la liste ordonnee des mediaIds.
+ * La position 0 sera attribuee au premier element du tableau.
+ */
+export const reorderSkuMediaSchema = z.object({
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	mediaIds: z
+		.array(z.cuid2({ message: "ID media invalide" }))
+		.min(1, { message: "Au moins un media est requis" })
+		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1, {
+			message: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1} medias par SKU`,
+		}),
+});
+
+/**
+ * Definition du media principal d'un SKU (isPrimary=true)
+ * Un seul media primary par SKU (contrainte metier).
+ */
+export const setPrimarySkuMediaSchema = z.object({
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	mediaId: z.cuid2({ message: "ID media invalide" }),
+});
+
+/**
+ * Mise a jour chirurgicale du texte alternatif d'un media (WCAG)
+ */
+export const updateSkuMediaAltTextSchema = z.object({
+	mediaId: z.cuid2({ message: "ID media invalide" }),
+	altText: z
+		.string()
+		.trim()
+		.max(TEXT_LIMITS.MEDIA_ALT_TEXT.max, {
+			message: `Le texte alternatif ne peut pas dépasser ${TEXT_LIMITS.MEDIA_ALT_TEXT.max} caracteres`,
+		})
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" || val === undefined ? null : val)),
+});
+
+/**
+ * Restauration d'un SKU soft-deleted
+ */
+export const restoreSkuSchema = z.object({
+	skuId: z.cuid2({ message: "ID SKU invalide" }),
+});
+
+/**
+ * Restauration bulk de SKUs soft-deleted
+ */
+const cuid2Schema = z.cuid2({ message: "ID invalide dans le tableau" });
+
+const parseJsonIdsArray = z.string().transform((str, ctx): string[] | typeof z.NEVER => {
+	try {
+		const parsed: unknown = JSON.parse(str);
+		if (!Array.isArray(parsed)) {
+			ctx.addIssue({ code: "custom", message: "Format invalide: tableau attendu" });
+			return z.NEVER;
+		}
+		const items = parsed as unknown as unknown[];
+		for (const id of items) {
+			if (typeof id !== "string" || !cuid2Schema.safeParse(id).success) {
+				ctx.addIssue({ code: "custom", message: "ID invalide dans le tableau" });
+				return z.NEVER;
+			}
+		}
+		return items as string[];
+	} catch {
+		ctx.addIssue({ code: "custom", message: "JSON invalide" });
+		return z.NEVER;
+	}
+});
+
+export const bulkRestoreSkusSchema = z.object({
+	ids: parseJsonIdsArray,
+});

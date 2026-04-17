@@ -121,11 +121,14 @@ export async function bulkChangeProductStatus(
 		}
 
 		// 6. Mettre a jour le statut
+		// Filtre status != ARCHIVED en defense contre TOC race
+		// (un produit pourrait etre archive entre le pre-check et l'update)
 		await prisma.product.updateMany({
 			where: {
 				id: {
 					in: validatedData.productIds,
 				},
+				status: { not: "ARCHIVED" },
 			},
 			data: {
 				status: validatedData.targetStatus,

@@ -212,6 +212,7 @@ export const bulkDeleteOrdersSchema = z.object({
 export const cancelOrderSchema = z.object({
 	id: z.cuid2(),
 	reason: z.string().max(500).optional(),
+	autoRefund: z.boolean().optional().default(false),
 });
 
 // ============================================================================
@@ -459,6 +460,45 @@ export const deleteOrderNoteSchema = z.object({
 	noteId: z.cuid2({ message: "ID note invalide" }),
 });
 
+/**
+ * Schema pour l'édition d'une note de commande
+ * Réservé à l'auteur de la note (vérifié dans l'action)
+ */
+export const updateOrderNoteSchema = z.object({
+	noteId: z.cuid2({ message: "ID note invalide" }),
+	content: z
+		.string()
+		.min(1, "La note ne peut pas être vide")
+		.max(5000, "Note trop longue (max 5000 caractères)"),
+});
+
+/**
+ * Schema pour transition explicite paymentStatus -> REFUNDED admin
+ * Sans annulation de la commande (geste commercial, remboursement hors-bord Stripe)
+ */
+export const markAsFullyRefundedSchema = z.object({
+	id: z.cuid2(),
+	reason: z.string().min(3).max(500).optional(),
+});
+
+/**
+ * Schema pour la correction des informations client d'une commande
+ * Admin only - ex: typo email post-checkout
+ */
+export const updateOrderCustomerInfoSchema = z.object({
+	id: z.cuid2(),
+	customerEmail: z.email("Email invalide").max(255),
+	customerName: z.string().min(1).max(100),
+	customerPhone: z.string().max(20).optional().or(z.literal("")),
+});
+
+/**
+ * Schema pour l'export CSV unitaire d'une commande (admin)
+ */
+export const exportSingleOrderSchema = z.object({
+	id: z.cuid2(),
+});
+
 // ============================================================================
 // GET ORDER BY ID SCHEMA
 // ============================================================================
@@ -489,3 +529,36 @@ export const updateOrderShippingAddressSchema = z.object({
 	shippingCity: z.string().min(1).max(100),
 	shippingCountry: z.string().length(2).default("FR"),
 });
+
+/**
+ * Schema for updating the billing address of an order before invoice generation
+ * Admin only - used to correct address errors before fiscal invoice (Art. 286 CGI)
+ */
+export const updateOrderBillingAddressSchema = z
+	.object({
+		id: z.cuid2(),
+		billingSameAsShipping: z.boolean(),
+		billingFirstName: z.string().min(1).max(50).optional(),
+		billingLastName: z.string().min(1).max(50).optional(),
+		billingAddress1: z.string().min(1).max(255).optional(),
+		billingAddress2: z.string().max(255).optional().or(z.literal("")),
+		billingPostalCode: z.string().min(1).max(10).optional(),
+		billingCity: z.string().min(1).max(100).optional(),
+		billingCountry: z.string().length(2).optional(),
+		billingPhone: z.string().min(1).max(20).optional(),
+	})
+	.refine(
+		(data) =>
+			data.billingSameAsShipping ||
+			(data.billingFirstName &&
+				data.billingLastName &&
+				data.billingAddress1 &&
+				data.billingPostalCode &&
+				data.billingCity &&
+				data.billingCountry &&
+				data.billingPhone),
+		{
+			message: "Tous les champs de facturation sont requis si l'adresse diffère de la livraison.",
+			path: ["billingSameAsShipping"],
+		},
+	);

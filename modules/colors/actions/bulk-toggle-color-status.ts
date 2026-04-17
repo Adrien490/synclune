@@ -36,25 +36,25 @@ export async function bulkToggleColorStatus(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Fetch colors to get slugs for cache invalidation
-		const colors = await prisma.color.findMany({
-			where: { id: { in: validatedData.ids } },
-			select: { slug: true },
-		});
+		// Fetch slugs + update atomically to avoid stale cache tags under concurrency
+		const { slugsToInvalidate, result } = await prisma.$transaction(async (tx) => {
+			const colors = await tx.color.findMany({
+				where: { id: { in: validatedData.ids } },
+				select: { slug: true },
+			});
 
-		// Store slugs BEFORE update — captured from the current DB state
-		const slugsToInvalidate = colors.map((c) => c.slug);
-
-		// Update colors status
-		const result = await prisma.color.updateMany({
-			where: {
-				id: {
-					in: validatedData.ids,
+			const updateResult = await tx.color.updateMany({
+				where: {
+					id: {
+						in: validatedData.ids,
+					},
 				},
-			},
-			data: {
-				isActive: validatedData.isActive,
-			},
+				data: {
+					isActive: validatedData.isActive,
+				},
+			});
+
+			return { slugsToInvalidate: colors.map((c) => c.slug), result: updateResult };
 		});
 
 		void logAudit({

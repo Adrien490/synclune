@@ -7,7 +7,13 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
-import { validateInput, success, error, handleActionError } from "@/shared/lib/actions";
+import {
+	validateInput,
+	success,
+	error,
+	handleActionError,
+	parseFormIds,
+} from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { bulkSuspendUsersSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -28,15 +34,10 @@ export async function bulkSuspendUsers(
 		const { user: adminUser } = auth;
 
 		// 3. Extraire et valider les IDs
-		const idsString = formData.get("ids");
-		let parsedIds: unknown;
-		try {
-			parsedIds = idsString ? JSON.parse(idsString as string) : [];
-		} catch {
-			return error("Format des IDs invalide.");
-		}
+		const parseResult = parseFormIds(formData);
+		if ("error" in parseResult) return parseResult.error;
 
-		const validation = validateInput(bulkSuspendUsersSchema, { ids: parsedIds });
+		const validation = validateInput(bulkSuspendUsersSchema, { ids: parseResult.ids });
 		if ("error" in validation) return validation.error;
 
 		const validatedData = validation.data;

@@ -69,7 +69,7 @@ export async function deleteAddress(
 		// Revalidation du cache avec tags
 		getUserAddressesInvalidationTags(user.id).forEach((tag) => updateTag(tag));
 
-		return success("Adresse supprimee avec succes");
+		return success("Adresse supprimée avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la suppression de l'adresse");
 	}

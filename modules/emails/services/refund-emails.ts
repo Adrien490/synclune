@@ -1,6 +1,7 @@
 import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
 import { RefundApprovedEmail } from "@/emails/refund-approved-email";
 import { RefundRejectedEmail } from "@/emails/refund-rejected-email";
+import { RefundCancelledEmail } from "@/emails/refund-cancelled-email";
 import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import type { EmailResult } from "../types/email.types";
@@ -81,6 +82,38 @@ export async function sendRefundApprovedEmail({
 		{
 			to,
 			subject: EMAIL_SUBJECTS.REFUND_APPROVED,
+			replyTo: EMAIL_CONTACT,
+			tags: [{ name: "category", value: "payment" }],
+		},
+	);
+}
+
+/**
+ * Envoie un email au client lorsque sa demande de remboursement est annulee
+ */
+export async function sendRefundCancelledEmail({
+	to,
+	orderNumber,
+	customerName,
+	refundAmount,
+	orderDetailsUrl,
+}: {
+	to: string;
+	orderNumber: string;
+	customerName: string;
+	refundAmount: number;
+	orderDetailsUrl: string;
+}): Promise<EmailResult> {
+	return renderAndSend(
+		RefundCancelledEmail({
+			orderNumber,
+			customerName,
+			refundAmount,
+			orderDetailsUrl,
+		}),
+		{
+			to,
+			subject: EMAIL_SUBJECTS.REFUND_CANCELLED,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
 		},

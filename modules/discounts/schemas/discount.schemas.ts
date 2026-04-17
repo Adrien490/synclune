@@ -195,3 +195,109 @@ export const bulkToggleDiscountStatusSchema = z.object({
 		.max(100, "Maximum 100 codes à la fois"),
 	isActive: z.boolean(),
 });
+
+// ============================================================================
+// RESTORE SCHEMA
+// ============================================================================
+
+export const restoreDiscountSchema = z.object({
+	id: z.cuid2("ID invalide"),
+});
+
+// ============================================================================
+// BULK GENERATE SCHEMA
+// ============================================================================
+
+const BULK_GENERATE_MAX_COUNT = 1000;
+
+/**
+ * Schema pour la génération en masse de codes promo (campagnes marketing).
+ *
+ * Format final du code : `${prefix}${suffix}` où suffix est aléatoire (base32 sans I/O/0/1).
+ * Total length doit rester ≤ 30 caractères (contrainte DB VarChar).
+ *
+ * Inline les refinements du discount au lieu d'utiliser discountRefinements()
+ * (qui est typé pour `baseDiscountSchema` avec `code`).
+ */
+export const bulkGenerateDiscountsSchema = baseDiscountSchema
+	.omit({ code: true })
+	.extend({
+		prefix: z
+			.string()
+			.trim()
+			.toUpperCase()
+			.regex(
+				/^[A-Z0-9-]*$/,
+				"Le préfixe ne peut contenir que des lettres majuscules, chiffres et tirets",
+			)
+			.max(20, "Le préfixe ne peut pas dépasser 20 caractères")
+			.default(""),
+		suffixLength: z
+			.number()
+			.int()
+			.min(4, "Le suffixe doit avoir au moins 4 caractères")
+			.max(12, "Le suffixe ne peut pas dépasser 12 caractères"),
+		count: z
+			.number()
+			.int()
+			.min(1, "Quantité minimum: 1")
+			.max(BULK_GENERATE_MAX_COUNT, `Quantité maximum: ${BULK_GENERATE_MAX_COUNT}`),
+	})
+	.refine(
+		(data) => {
+			if (data.type === "PERCENTAGE" && data.value > 100) return false;
+			return true;
+		},
+		{ message: "Un pourcentage ne peut pas dépasser 100%", path: ["value"] },
+	)
+	.refine(
+		(data) => {
+			if (data.startsAt && data.endsAt && data.startsAt >= data.endsAt) return false;
+			return true;
+		},
+		{ message: "La date de fin doit être postérieure à la date de début", path: ["endsAt"] },
+	)
+	.refine(
+		(data) => {
+			if (
+				data.maxUsagePerUser != null &&
+				data.maxUsageCount != null &&
+				data.maxUsagePerUser > data.maxUsageCount
+			)
+				return false;
+			return true;
+		},
+		{
+			message: "Le nombre max par utilisateur ne peut pas dépasser le nombre max total",
+			path: ["maxUsagePerUser"],
+		},
+	)
+	.refine((data) => data.prefix.length + data.suffixLength <= 30, {
+		message: "Préfixe + suffixe doit faire ≤ 30 caractères",
+		path: ["suffixLength"],
+	});
+
+// ============================================================================
+// EXTEND VALIDITY SCHEMA
+// ============================================================================
+
+export const extendDiscountValiditySchema = z.object({
+	id: z.cuid2("ID invalide"),
+	days: z.number().int().min(1, "Au moins 1 jour").max(365, "Maximum 365 jours"),
+});
+
+// ============================================================================
+// RESET COUNTER SCHEMA
+// ============================================================================
+
+export const resetDiscountCounterSchema = z.object({
+	id: z.cuid2("ID invalide"),
+});
+
+// ============================================================================
+// EXPORT USAGES SCHEMA
+// ============================================================================
+
+export const exportDiscountUsagesSchema = z.object({
+	id: z.cuid2("ID invalide"),
+});

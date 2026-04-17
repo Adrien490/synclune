@@ -194,4 +194,111 @@ describe("updateProductSku", () => {
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
+
+	// ============================================================================
+	// PUBLIC PRODUCT GUARD (P1.3)
+	// ============================================================================
+
+	it("should reject deactivating last active SKU of a PUBLIC product", async () => {
+		mockSafeParse.mockReturnValue({
+			success: true,
+			data: {
+				skuId: VALID_CUID,
+				priceInclTaxEuros: 59.99,
+				inventory: 15,
+				isActive: false,
+				isDefault: false,
+				colorId: "",
+				materialId: "",
+				size: "",
+				primaryImage: null,
+				galleryMedia: [],
+			},
+		});
+		mockPrisma.productSku.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			sku: "BRC-01",
+			isActive: true,
+			productId: "prod-1",
+			product: {
+				id: "prod-1",
+				title: "Bracelet",
+				slug: "test",
+				status: "PUBLIC",
+				_count: { skus: 1 },
+			},
+			images: [],
+		});
+		const result = await updateProductSku(undefined, validFormData);
+		expect(mockHandleActionError).toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	it("should allow deactivation when PUBLIC product has other active SKUs", async () => {
+		mockSafeParse.mockReturnValue({
+			success: true,
+			data: {
+				skuId: VALID_CUID,
+				priceInclTaxEuros: 59.99,
+				inventory: 15,
+				isActive: false,
+				isDefault: false,
+				colorId: "",
+				materialId: "",
+				size: "",
+				primaryImage: null,
+				galleryMedia: [],
+			},
+		});
+		mockPrisma.productSku.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			sku: "BRC-01",
+			isActive: true,
+			productId: "prod-1",
+			product: {
+				id: "prod-1",
+				title: "Bracelet",
+				slug: "test",
+				status: "PUBLIC",
+				_count: { skus: 3 },
+			},
+			images: [],
+		});
+		const result = await updateProductSku(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
+
+	it("should ignore PUBLIC guard when product is DRAFT", async () => {
+		mockSafeParse.mockReturnValue({
+			success: true,
+			data: {
+				skuId: VALID_CUID,
+				priceInclTaxEuros: 59.99,
+				inventory: 15,
+				isActive: false,
+				isDefault: false,
+				colorId: "",
+				materialId: "",
+				size: "",
+				primaryImage: null,
+				galleryMedia: [],
+			},
+		});
+		mockPrisma.productSku.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			sku: "BRC-01",
+			isActive: true,
+			productId: "prod-1",
+			product: {
+				id: "prod-1",
+				title: "Bracelet",
+				slug: "test",
+				status: "DRAFT",
+				_count: { skus: 1 },
+			},
+			images: [],
+		});
+		const result = await updateProductSku(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
 });

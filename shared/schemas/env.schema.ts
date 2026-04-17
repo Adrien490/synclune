@@ -86,6 +86,10 @@ export const envSchema = z
 			.string()
 			.regex(/^\d{4}-\d{2}-\d{2}$/, "DEPLOY_DATE doit être au format YYYY-MM-DD")
 			.optional(),
+		NEXT_PUBLIC_SITE_PUBLISHED_AT: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, "NEXT_PUBLIC_SITE_PUBLISHED_AT doit être au format YYYY-MM-DD")
+			.optional(),
 
 		// ========================================
 		// Node

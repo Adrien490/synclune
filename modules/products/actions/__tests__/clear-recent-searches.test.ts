@@ -118,4 +118,20 @@ describe("clearRecentSearches", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockHandleActionError).toHaveBeenCalled();
 	});
+
+	it("should be idempotent when invoked twice with no existing cookie", async () => {
+		await clearRecentSearches(undefined, emptyFormData);
+		await clearRecentSearches(undefined, emptyFormData);
+		expect(cookieStore.delete).toHaveBeenCalledTimes(2);
+		expect(cookieStore.delete).toHaveBeenNthCalledWith(1, "recent-searches");
+		expect(cookieStore.delete).toHaveBeenNthCalledWith(2, "recent-searches");
+	});
+
+	it("should still delete the cookie even when invalidation tag helper returns empty", async () => {
+		mockGetRecentSearchesInvalidationTags.mockReturnValue([]);
+		const result = await clearRecentSearches(undefined, emptyFormData);
+		expect(cookieStore.delete).toHaveBeenCalledWith("recent-searches");
+		expect(mockUpdateTag).not.toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+	});
 });

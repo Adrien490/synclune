@@ -140,6 +140,34 @@ describe("reorderFaqItems", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("faq-items-list");
 	});
 
+	it("should reject duplicate ids in payload", async () => {
+		const dup = [
+			{ id: VALID_CUID, position: 0 },
+			{ id: VALID_CUID, position: 1 },
+		];
+		mockValidateInput.mockReturnValue({ data: { items: dup } });
+		const result = await reorderFaqItems(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockError).toHaveBeenCalledWith(
+			"Identifiants dupliqués détectés dans le réordonnancement",
+		);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+	});
+
+	it("should reject duplicate positions in payload", async () => {
+		const dup = [
+			{ id: VALID_CUID, position: 1 },
+			{ id: VALID_CUID_2, position: 1 },
+		];
+		mockValidateInput.mockReturnValue({ data: { items: dup } });
+		const result = await reorderFaqItems(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(mockError).toHaveBeenCalledWith(
+			"Positions dupliquées détectées dans le réordonnancement",
+		);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+	});
+
 	it("should call handleActionError on unexpected exception", async () => {
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await reorderFaqItems(undefined, validFormData);

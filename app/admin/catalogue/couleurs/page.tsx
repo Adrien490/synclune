@@ -25,6 +25,9 @@ const DeleteColorAlertDialog = dynamic(() =>
 		(mod) => mod.DeleteColorAlertDialog,
 	),
 );
+const ColorItemDrawer = dynamic(() =>
+	import("@/modules/colors/components/admin/color-item-drawer").then((mod) => mod.ColorItemDrawer),
+);
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
 import { ColorsBottomBar } from "@/modules/colors/components/admin/colors-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -131,6 +134,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 
 			<ColorFormDialog />
 			<DeleteColorAlertDialog />
+			<ColorItemDrawer />
 			<ColorsBottomBar />
 		</>
 	);

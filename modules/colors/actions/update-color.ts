@@ -86,7 +86,10 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			action: "color.update",
 			targetType: "color",
 			targetId: validatedData.id,
-			metadata: { name: validatedData.name, hex: validatedData.hex },
+			metadata: {
+				before: { name: existingColor.name, hex: existingColor.hex },
+				after: { name: validatedData.name, hex: validatedData.hex },
+			},
 		});
 
 		// Invalidate cache — use Set to avoid duplicate list/badges tags when slug changes

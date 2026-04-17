@@ -125,6 +125,9 @@ export const MOTION_CONFIG = {
 		footer: { y: 10, duration: 0.4, stagger: 0.08 },
 		carousel: { y: 20, duration: 0.8, delay: 0.2 },
 		content: { y: 20, duration: 0.6, delay: 0.2 },
+		// Delay for the hand-drawn underline beneath each SectionTitle,
+		// tuned so the ink reveal starts once the title is fading in.
+		underline: { delay: 0.15 },
 	},
 
 	// Background animation presets

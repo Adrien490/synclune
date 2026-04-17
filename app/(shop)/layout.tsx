@@ -1,7 +1,9 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
+import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
 import { AnnouncementBarWrapper } from "@/modules/announcements/components/announcement-bar-wrapper";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
@@ -9,6 +11,7 @@ import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
+import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
@@ -27,7 +30,11 @@ export default function ShopLayout({ children }: ShopLayoutProps) {
 }
 
 async function ShopLayoutContent({ children }: ShopLayoutProps) {
-	const storeStatus = await getStoreStatus();
+	const [storeStatus, session] = await Promise.all([
+		getStoreStatus(),
+		getSession().catch(() => null),
+	]);
+	const isAuthenticated = Boolean(session?.user);
 
 	if (storeStatus.isClosed) {
 		const admin = await isAdmin();
@@ -64,6 +71,8 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<Suspense fallback={null}>
 				<AdminDashboardFab />
 			</Suspense>
+			<ShopMobileBottomNav isAuthenticated={isAuthenticated} />
+			<PullToRefresh />
 			<CookieBanner />
 			<ConditionalAnalytics />
 			<WebVitalsReporter />
