@@ -41,7 +41,7 @@ export function SubscriberMobileItem({ subscriber }: SubscriberMobileItemProps) 
 				aria-roledescription="carte abonne"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{subscriber.email}</span>
 						{subscriber.status === "CONFIRMED" ? (
 							<span className="inline-flex items-center gap-1 text-xs text-green-600">

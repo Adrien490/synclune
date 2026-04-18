@@ -38,10 +38,10 @@ beforeEach(() => {
 // ============================================================================
 
 describe("cacheCurrentUser", () => {
-	it("sets dashboard cache life and CURRENT_USER tag", () => {
+	it("sets session cache life and CURRENT_USER tag", () => {
 		cacheCurrentUser("user-123");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("session");
 		expect(mockCacheTag).toHaveBeenCalledWith("user-user-123");
 	});
 

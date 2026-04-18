@@ -1,8 +1,11 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
-import { FlexRow } from "./_components/flex-row";
+import { EmailSummaryRow } from "./_components/email-summary-row";
 
 interface ReturnConfirmationEmailProps {
 	orderNumber: string;
@@ -21,67 +24,35 @@ export const ReturnConfirmationEmail = ({
 }: ReturnConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Retour enregistré - ${orderNumber}`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Retour enregistré</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Retour enregistré</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, le retour de votre commande {orderNumber} a été enregistré.
 					{reason && ` Motif : ${reason}`}
 				</Text>
 			</Section>
 
-			{/* Détails */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "600",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{orderNumber}
-							</Text>
-						}
-					/>
-					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Montant initial</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{formatEuro(orderTotal)}
-							</Text>
-						}
-					/>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<EmailSummaryRow
+					style={{ marginBottom: "8px" }}
+					label="Commande"
+					value={orderNumber}
+					variant="mono"
+				/>
+				<EmailSummaryRow label="Montant initial" value={formatEuro(orderTotal)} variant="mono" />
+			</EmailCard>
 
-			{/* Info */}
-			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.text.small}>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 					Le retour sera examiné sous 2 à 5 jours ouvrés. Vous recevrez un email de confirmation si
 					un remboursement est prévu.
 				</Text>
-			</Section>
+			</EmailCard>
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
-					Voir ma commande
-				</Button>
-			</Section>
+			<EmailCTA href={orderDetailsUrl}>Voir ma commande</EmailCTA>
 		</EmailLayout>
 	);
 };

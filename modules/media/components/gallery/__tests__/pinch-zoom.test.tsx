@@ -1,11 +1,11 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPinchZoom } = vi.hoisted(() => ({
+const { mockPinchZoom, mockHaptic } = vi.hoisted(() => ({
 	mockPinchZoom: {
 		scale: 1,
 		position: { x: 0, y: 0 },
@@ -13,6 +13,7 @@ const { mockPinchZoom } = vi.hoisted(() => ({
 		isInteracting: false,
 		handleKeyDown: vi.fn(),
 	},
+	mockHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -28,6 +29,10 @@ vi.mock("motion/react", () => ({
 
 vi.mock("@/shared/hooks", () => ({
 	usePinchZoom: () => mockPinchZoom,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("next/image", () => ({
@@ -133,5 +138,41 @@ describe("GalleryPinchZoom", () => {
 		const { container } = render(<GalleryPinchZoom {...defaultProps} />);
 		const img = container.querySelector("img");
 		expect(img).toHaveAttribute("src", "https://example.com/photo.jpg");
+	});
+
+	// ─── Zoom entry announcement (P1.4) ──────────────────────────────────────
+
+	it("announces assertive zoom entry hint on transition to zoomed", async () => {
+		const { rerender } = render(<GalleryPinchZoom {...defaultProps} />);
+		// Transition: not zoomed → zoomed
+		await act(async () => {
+			mockPinchZoom.isZoomed = true;
+			mockPinchZoom.scale = 2;
+			rerender(<GalleryPinchZoom {...defaultProps} />);
+		});
+		await waitFor(() => {
+			const alert = screen.getByRole("alert");
+			expect(alert).toHaveTextContent(/Zoom activé/);
+			expect(alert).toHaveTextContent(/Échap/);
+		});
+	});
+
+	it("does not render zoom entry hint on initial render when already zoomed", () => {
+		mockPinchZoom.isZoomed = true;
+		mockPinchZoom.scale = 2;
+		render(<GalleryPinchZoom {...defaultProps} />);
+		// previousZoomedRef captures initial value, so no transition fires on mount
+		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+	});
+
+	it("fires haptic selection on zoom transition", async () => {
+		const { rerender } = render(<GalleryPinchZoom {...defaultProps} />);
+		mockHaptic.mockClear();
+		await act(async () => {
+			mockPinchZoom.isZoomed = true;
+			mockPinchZoom.scale = 2;
+			rerender(<GalleryPinchZoom {...defaultProps} />);
+		});
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
 	});
 });

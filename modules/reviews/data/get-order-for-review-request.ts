@@ -1,5 +1,6 @@
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { cacheOrderForReviewRequest } from "../constants/cache";
 
 // ============================================================================
 // TYPES
@@ -28,6 +29,9 @@ export async function getOrderForReviewRequest(orderId: string): Promise<OrderFo
 // ============================================================================
 
 async function fetchOrderForReviewRequest(orderId: string) {
+	"use cache";
+	cacheOrderForReviewRequest(orderId);
+
 	try {
 		return await prisma.order.findUnique({
 			where: { id: orderId, ...notDeleted },

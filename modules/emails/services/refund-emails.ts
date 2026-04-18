@@ -1,24 +1,11 @@
-import { RefundConfirmationEmail } from "@/emails/refund-confirmation-email";
-import { RefundApprovedEmail } from "@/emails/refund-approved-email";
+import { RefundStatusEmail } from "@/emails/refund-status-email";
 import { RefundRejectedEmail } from "@/emails/refund-rejected-email";
 import { RefundCancelledEmail } from "@/emails/refund-cancelled-email";
 import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import type { EmailResult } from "../types/email.types";
 
-/**
- * Envoie un email de confirmation de remboursement au client
- */
-export async function sendRefundConfirmationEmail({
-	to,
-	orderNumber,
-	customerName,
-	refundAmount,
-	originalOrderTotal,
-	reason,
-	isPartialRefund,
-	orderDetailsUrl,
-}: {
+type RefundEmailParams = {
 	to: string;
 	orderNumber: string;
 	customerName: string;
@@ -27,19 +14,25 @@ export async function sendRefundConfirmationEmail({
 	reason: string;
 	isPartialRefund: boolean;
 	orderDetailsUrl: string;
-}): Promise<EmailResult> {
+};
+
+/**
+ * Envoie un email de confirmation de remboursement au client (remboursement exécuté).
+ */
+export async function sendRefundConfirmationEmail(params: RefundEmailParams): Promise<EmailResult> {
 	return renderAndSend(
-		RefundConfirmationEmail({
-			orderNumber,
-			customerName,
-			refundAmount,
-			originalOrderTotal,
-			reason,
-			isPartialRefund,
-			orderDetailsUrl,
+		RefundStatusEmail({
+			status: "confirmed",
+			orderNumber: params.orderNumber,
+			customerName: params.customerName,
+			refundAmount: params.refundAmount,
+			originalOrderTotal: params.originalOrderTotal,
+			reason: params.reason,
+			isPartialRefund: params.isPartialRefund,
+			orderDetailsUrl: params.orderDetailsUrl,
 		}),
 		{
-			to,
+			to: params.to,
 			subject: EMAIL_SUBJECTS.REFUND_CONFIRMATION,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
@@ -48,39 +41,22 @@ export async function sendRefundConfirmationEmail({
 }
 
 /**
- * Envoie un email au client lorsque sa demande de remboursement est approuvee
+ * Envoie un email au client lorsque sa demande de remboursement est approuvée.
  */
-export async function sendRefundApprovedEmail({
-	to,
-	orderNumber,
-	customerName,
-	refundAmount,
-	originalOrderTotal,
-	reason,
-	isPartialRefund,
-	orderDetailsUrl,
-}: {
-	to: string;
-	orderNumber: string;
-	customerName: string;
-	refundAmount: number;
-	originalOrderTotal: number;
-	reason: string;
-	isPartialRefund: boolean;
-	orderDetailsUrl: string;
-}): Promise<EmailResult> {
+export async function sendRefundApprovedEmail(params: RefundEmailParams): Promise<EmailResult> {
 	return renderAndSend(
-		RefundApprovedEmail({
-			orderNumber,
-			customerName,
-			refundAmount,
-			originalOrderTotal,
-			reason,
-			isPartialRefund,
-			orderDetailsUrl,
+		RefundStatusEmail({
+			status: "approved",
+			orderNumber: params.orderNumber,
+			customerName: params.customerName,
+			refundAmount: params.refundAmount,
+			originalOrderTotal: params.originalOrderTotal,
+			reason: params.reason,
+			isPartialRefund: params.isPartialRefund,
+			orderDetailsUrl: params.orderDetailsUrl,
 		}),
 		{
-			to,
+			to: params.to,
 			subject: EMAIL_SUBJECTS.REFUND_APPROVED,
 			replyTo: EMAIL_CONTACT,
 			tags: [{ name: "category", value: "payment" }],
@@ -89,7 +65,7 @@ export async function sendRefundApprovedEmail({
 }
 
 /**
- * Envoie un email au client lorsque sa demande de remboursement est annulee
+ * Envoie un email au client lorsque sa demande de remboursement est annulée.
  */
 export async function sendRefundCancelledEmail({
 	to,
@@ -121,7 +97,7 @@ export async function sendRefundCancelledEmail({
 }
 
 /**
- * Envoie un email au client lorsque sa demande de remboursement est rejetee
+ * Envoie un email au client lorsque sa demande de remboursement est rejetée.
  */
 export async function sendRefundRejectedEmail({
 	to,

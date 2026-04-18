@@ -96,6 +96,10 @@ vi.mock("../../constants/cache", () => ({
 		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 	},
+	REFUNDS_CACHE_TAGS: {
+		LIST: "refunds-list",
+		DETAIL: (id: string) => `refund-${id}`,
+	},
 }));
 
 vi.mock("@/shared/constants/cache-tags", () => ({

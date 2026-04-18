@@ -1,8 +1,12 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { AdminShippingAddress, OrderItem } from "@/modules/emails/types/email.types";
-import { Button, Hr, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Hr, Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
+import { EmailSummaryRow } from "./_components/email-summary-row";
 import { FlexRow } from "./_components/flex-row";
 
 interface AdminNewOrderEmailProps {
@@ -37,66 +41,44 @@ export const AdminNewOrderEmail = ({
 			preview={`Nouvelle commande ${orderNumber} - ${formatEuro(total)}`}
 			headerText="Nouvelle Commande"
 		>
-			{/* Résumé */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.primary,
-								}}
-							>
-								{orderNumber}
-							</Text>
-						}
-					/>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Montant</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{formatEuro(total)}
-							</Text>
-						}
-					/>
-					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Articles</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{totalItems} article{totalItems > 1 ? "s" : ""}
-							</Text>
-						}
-					/>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<EmailSummaryRow
+					style={{ marginBottom: "8px" }}
+					label="Commande"
+					value={orderNumber}
+					variant="highlight"
+				/>
+				<EmailSummaryRow
+					style={{ marginBottom: "8px" }}
+					label="Montant"
+					value={formatEuro(total)}
+					variant="mono"
+				/>
+				<EmailSummaryRow
+					label="Articles"
+					value={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{totalItems} article{totalItems > 1 ? "s" : ""}
+						</Text>
+					}
+				/>
+			</EmailCard>
 
-			{/* Client */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Client</Text>
-				<Section style={EMAIL_STYLES.section.card}>
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+					Client
+				</EmailHeading>
+				<EmailCard>
 					<Text
+						className={EMAIL_CLASSES.text.body}
 						style={{
 							margin: 0,
 							fontSize: "14px",
@@ -106,20 +88,28 @@ export const AdminNewOrderEmail = ({
 					>
 						{customerName}
 					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>{customerEmail}</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+					>
+						{customerEmail}
+					</Text>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+					>
 						{shippingAddress.phone}
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* Adresse */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
 					Adresse de livraison
-				</Text>
-				<Section style={EMAIL_STYLES.section.card}>
+				</EmailHeading>
+				<EmailCard>
 					<Text
+						className={EMAIL_CLASSES.text.body}
 						style={{
 							margin: 0,
 							fontSize: "14px",
@@ -128,22 +118,33 @@ export const AdminNewOrderEmail = ({
 					>
 						{shippingAddress.firstName} {shippingAddress.lastName}
 					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+					>
 						{shippingAddress.address1}
 					</Text>
 					{shippingAddress.address2 && (
-						<Text style={EMAIL_STYLES.text.small}>{shippingAddress.address2}</Text>
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							{shippingAddress.address2}
+						</Text>
 					)}
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+					>
 						{shippingAddress.postalCode} {shippingAddress.city}
 					</Text>
-					<Text style={EMAIL_STYLES.text.small}>{shippingAddress.country}</Text>
-				</Section>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+						{shippingAddress.country}
+					</Text>
+				</EmailCard>
 			</Section>
 
-			{/* Articles */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Articles</Text>
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+					Articles
+				</EmailHeading>
 
 				{items.map((item, index) => (
 					<FlexRow
@@ -156,6 +157,7 @@ export const AdminNewOrderEmail = ({
 						left={
 							<>
 								<Text
+									className={EMAIL_CLASSES.text.body}
 									style={{
 										margin: 0,
 										fontSize: "14px",
@@ -166,15 +168,22 @@ export const AdminNewOrderEmail = ({
 									{item.productTitle}
 								</Text>
 								{item.skuSize && (
-									<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+									<Text
+										className={EMAIL_CLASSES.text.secondary}
+										style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+									>
 										Taille: {item.skuSize}
 									</Text>
 								)}
 								{item.skuColor && (
-									<Text style={EMAIL_STYLES.text.small}>Couleur: {item.skuColor}</Text>
+									<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+										Couleur: {item.skuColor}
+									</Text>
 								)}
 								{item.skuMaterial && (
-									<Text style={EMAIL_STYLES.text.small}>Matière: {item.skuMaterial}</Text>
+									<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+										Matière: {item.skuMaterial}
+									</Text>
 								)}
 								<Text
 									style={{
@@ -191,6 +200,7 @@ export const AdminNewOrderEmail = ({
 						}
 						right={
 							<Text
+								className={EMAIL_CLASSES.text.body}
 								style={{
 									margin: 0,
 									fontFamily: "monospace",
@@ -207,55 +217,25 @@ export const AdminNewOrderEmail = ({
 
 				<Hr style={{ borderColor: EMAIL_COLORS.border, margin: "16px 0" }} />
 
-				<FlexRow
+				<EmailSummaryRow
 					style={{ marginBottom: "8px" }}
-					left={<Text style={EMAIL_STYLES.text.small}>Sous-total</Text>}
-					right={
-						<Text
-							style={{
-								margin: 0,
-								fontFamily: "monospace",
-								fontSize: "14px",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							{formatEuro(subtotal)}
-						</Text>
-					}
+					label="Sous-total"
+					value={formatEuro(subtotal)}
+					variant="mono"
 				/>
 				{discount > 0 && (
-					<FlexRow
+					<EmailSummaryRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Réduction</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									color: EMAIL_COLORS.primary,
-								}}
-							>
-								-{formatEuro(discount)}
-							</Text>
-						}
+						label="Réduction"
+						value={`-${formatEuro(discount)}`}
+						variant="highlight"
 					/>
 				)}
-				<FlexRow
+				<EmailSummaryRow
 					style={{ marginBottom: "16px" }}
-					left={<Text style={EMAIL_STYLES.text.small}>Frais de port</Text>}
-					right={
-						<Text
-							style={{
-								margin: 0,
-								fontFamily: "monospace",
-								fontSize: "14px",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							{formatEuro(shipping)}
-						</Text>
-					}
+					label="Frais de port"
+					value={formatEuro(shipping)}
+					variant="mono"
 				/>
 
 				<Hr style={{ borderColor: EMAIL_COLORS.border, margin: "12px 0" }} />
@@ -263,6 +243,7 @@ export const AdminNewOrderEmail = ({
 				<FlexRow
 					left={
 						<Text
+							className={EMAIL_CLASSES.text.body}
 							style={{
 								margin: 0,
 								fontSize: "16px",
@@ -289,12 +270,7 @@ export const AdminNewOrderEmail = ({
 				/>
 			</Section>
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
-					Voir dans le Dashboard
-				</Button>
-			</Section>
+			<EmailCTA href={dashboardUrl}>Voir dans le Dashboard</EmailCTA>
 		</EmailLayout>
 	);
 };

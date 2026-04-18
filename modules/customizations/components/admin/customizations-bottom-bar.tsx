@@ -85,6 +85,7 @@ export function CustomizationsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, email..."
 				ariaLabel="Rechercher une demande"
+				scope="customizations"
 			/>
 
 			<CustomizationsStatusDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

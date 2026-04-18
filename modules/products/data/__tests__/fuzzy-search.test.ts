@@ -2,15 +2,19 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mocks (hoisted to avoid reference errors) ──────────────────
 
-const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout } = vi.hoisted(() => ({
-	mockTransaction: vi.fn(),
-	mockSetTrigramThreshold: vi.fn(),
-	mockSetStatementTimeout: vi.fn(),
-}));
+const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout, mockLogger } =
+	vi.hoisted(() => ({
+		mockTransaction: vi.fn(),
+		mockSetTrigramThreshold: vi.fn(),
+		mockSetStatementTimeout: vi.fn(),
+		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: { $transaction: mockTransaction },
 }));
+
+vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("../../utils/trigram-helpers", () => ({
 	setTrigramThreshold: mockSetTrigramThreshold,
@@ -128,6 +132,11 @@ describe("fuzzySearchProductIds", () => {
 
 		const result = await fuzzySearchProductIds("collier");
 		expect(result).toEqual({ ids: [], totalCount: 0 });
+		expect(mockLogger.error).toHaveBeenCalledWith(
+			expect.stringContaining("Fuzzy search error"),
+			expect.any(Error),
+			expect.objectContaining({ service: "fuzzySearchProductIds" }),
+		);
 	});
 
 	it("returns empty result on timeout", async () => {

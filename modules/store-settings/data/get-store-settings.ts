@@ -23,7 +23,6 @@ async function fetchStoreSettings(): Promise<StoreSettingsAdmin | null> {
 				reopensAt: true,
 				closedAt: true,
 				closedBy: true,
-				scheduledCloseAt: true,
 				updatedAt: true,
 			},
 		});

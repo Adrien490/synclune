@@ -8,7 +8,6 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { PRODUCT_ITEM_DRAWER_ID, type ProductItemDrawerData } from "./product-item-drawer";
@@ -63,14 +62,12 @@ const getPriceDisplay = (skus: Sku[]) => {
 
 export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	const { open } = useDialog<ProductItemDrawerData>(PRODUCT_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const statusConfig = STATUS_CONFIG[product.status];
 	const priceDisplay = getPriceDisplay(product.skus);
 	const stock = getTotalStock(product.skus);
 	const primaryImage = product.skus.flatMap((sku) => sku.images).find((img) => img.isPrimary);
 
 	const handleOpen = () => {
-		haptic("selection");
 		open({
 			product: {
 				id: product.id,
@@ -122,7 +119,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 					</div>
 				)}
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{product.title}</span>
 						<Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
 					</ItemTitle>

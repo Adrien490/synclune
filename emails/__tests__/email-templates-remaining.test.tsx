@@ -3,8 +3,7 @@ import { render } from "@react-email/render";
 import { CancelOrderConfirmationEmail } from "../cancel-order-confirmation-email";
 import { DeliveryConfirmationEmail } from "../delivery-confirmation-email";
 import { PaymentFailedEmail } from "../payment-failed-email";
-import { RefundApprovedEmail } from "../refund-approved-email";
-import { RefundConfirmationEmail } from "../refund-confirmation-email";
+import { RefundStatusEmail } from "../refund-status-email";
 import { RefundRejectedEmail } from "../refund-rejected-email";
 import { ReturnConfirmationEmail } from "../return-confirmation-email";
 import { TrackingUpdateEmail } from "../tracking-update-email";
@@ -166,11 +165,12 @@ describe("PaymentFailedEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// RefundApprovedEmail
+// RefundStatusEmail — approved
 // ---------------------------------------------------------------------------
 
-describe("RefundApprovedEmail", () => {
+describe("RefundStatusEmail (approved)", () => {
 	const baseProps = {
+		status: "approved" as const,
 		orderNumber: "CMD-2024-ABCD1234",
 		customerName: "Marie",
 		refundAmount: 8990,
@@ -181,41 +181,42 @@ describe("RefundApprovedEmail", () => {
 	};
 
 	it("renders without error", async () => {
-		const html = await render(<RefundApprovedEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).toContain("<!DOCTYPE");
 		expect(html.length).toBeGreaterThan(100);
 	});
 
 	it("contains expected heading", async () => {
-		const html = await render(<RefundApprovedEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).toContain("Remboursement accepté");
 	});
 
 	it("contains dynamic data", async () => {
-		const html = await render(<RefundApprovedEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).toContain("CMD-2024-ABCD1234");
 		expect(html).toContain("Marie");
 	});
 
 	it("shows original order total when isPartialRefund is true", async () => {
 		const html = await render(
-			<RefundApprovedEmail {...baseProps} refundAmount={4500} isPartialRefund={true} />,
+			<RefundStatusEmail {...baseProps} refundAmount={4500} isPartialRefund={true} />,
 		);
 		expect(html).toContain("Montant initial");
 	});
 
 	it("does not show original order total when isPartialRefund is false", async () => {
-		const html = await render(<RefundApprovedEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).not.toContain("Montant initial");
 	});
 });
 
 // ---------------------------------------------------------------------------
-// RefundConfirmationEmail
+// RefundStatusEmail — confirmed
 // ---------------------------------------------------------------------------
 
-describe("RefundConfirmationEmail", () => {
+describe("RefundStatusEmail (confirmed)", () => {
 	const baseProps = {
+		status: "confirmed" as const,
 		orderNumber: "CMD-2024-ABCD1234",
 		customerName: "Marie",
 		refundAmount: 8990,
@@ -226,18 +227,18 @@ describe("RefundConfirmationEmail", () => {
 	};
 
 	it("renders without error", async () => {
-		const html = await render(<RefundConfirmationEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).toContain("<!DOCTYPE");
 		expect(html.length).toBeGreaterThan(100);
 	});
 
 	it("contains expected heading", async () => {
-		const html = await render(<RefundConfirmationEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).toContain("Remboursement effectué");
 	});
 
 	it("contains dynamic data", async () => {
-		const html = await render(<RefundConfirmationEmail {...baseProps} />);
+		const html = await render(<RefundStatusEmail {...baseProps} />);
 		expect(html).toContain("CMD-2024-ABCD1234");
 		expect(html).toContain("Marie");
 	});

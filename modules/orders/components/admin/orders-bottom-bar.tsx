@@ -91,6 +91,7 @@ export function OrdersBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Rechercher par numéro, email, client..."
 				ariaLabel="Rechercher une commande"
+				scope="orders"
 			/>
 
 			<OrdersFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

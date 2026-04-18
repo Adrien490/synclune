@@ -161,7 +161,7 @@ describe("AdminMobileHeader", () => {
 
 			render(<AdminMobileHeader />);
 
-			expect(screen.getByRole("banner")).toHaveClass("backdrop-blur-md");
+			expect(screen.getByRole("banner")).toHaveClass("backdrop-blur-xl");
 		});
 	});
 

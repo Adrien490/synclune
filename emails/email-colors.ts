@@ -72,9 +72,12 @@ export const EMAIL_STYLES = {
 	},
 
 	heading: {
+		/**
+		 * Premier titre de contenu - hiérarchie sémantique (rendu visuel identique au h2 pour éviter de casser la charte)
+		 */
 		h1: {
 			margin: 0,
-			fontSize: "28px",
+			fontSize: "24px",
 			fontWeight: "bold" as const,
 			color: EMAIL_COLORS.text.primary,
 		},
@@ -124,7 +127,7 @@ export const EMAIL_STYLES = {
 		},
 		outline: {
 			display: "inline-block",
-			padding: "12px 28px",
+			padding: "16px 28px",
 			backgroundColor: EMAIL_COLORS.background.white,
 			color: EMAIL_COLORS.primary,
 			fontSize: "14px",
@@ -166,6 +169,36 @@ export const EMAIL_STYLES = {
 			wordBreak: "break-all" as const,
 		},
 	},
+} as const;
+
+/**
+ * Classes CSS appliquées via className sur les éléments d'emails.
+ * Utilisées par les media queries injectées dans EmailLayout <Head>
+ * pour responsive mobile (@media max-width: 480px) et dark mode
+ * (@media prefers-color-scheme: dark).
+ *
+ * Inline styles ne répondent pas aux media queries email — ces classes
+ * servent de hooks pour les overrides CSS globaux.
+ */
+export const EMAIL_CLASSES = {
+	container: "email-container",
+	card: "email-card",
+	footer: "email-footer",
+	header: "email-header",
+	heading: {
+		h1: "email-h1",
+		h2: "email-h2",
+		h3: "email-h3",
+	},
+	text: {
+		body: "email-text-primary",
+		secondary: "email-text-secondary",
+	},
+	button: {
+		primary: "email-button-primary",
+		outline: "email-button-outline",
+	},
+	codeBlock: "email-code-block",
 } as const;
 
 /**

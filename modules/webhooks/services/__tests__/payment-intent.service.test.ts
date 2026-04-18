@@ -17,6 +17,9 @@ const {
 			findMany: vi.fn(),
 			update: vi.fn(),
 		},
+		orderHistory: {
+			create: vi.fn(),
+		},
 	};
 
 	return {
@@ -88,14 +91,14 @@ describe("markOrderAsPaid", () => {
 	});
 
 	it("should update order to PAID and PROCESSING on happy path", async () => {
-		mockTx.order.findFirst.mockResolvedValue({ paymentStatus: "PENDING" });
+		mockTx.order.findFirst.mockResolvedValue({ status: "PENDING", paymentStatus: "PENDING" });
 		mockTx.order.update.mockResolvedValue({});
 
 		await markOrderAsPaid("order-1", "pi_abc123");
 
 		expect(mockTx.order.findFirst).toHaveBeenCalledWith({
 			where: { id: "order-1", deletedAt: null },
-			select: { paymentStatus: true },
+			select: { status: true, paymentStatus: true },
 		});
 		expect(mockTx.order.update).toHaveBeenCalledWith({
 			where: { id: "order-1" },
@@ -104,6 +107,15 @@ describe("markOrderAsPaid", () => {
 				paymentStatus: "PAID",
 				stripePaymentIntentId: "pi_abc123",
 				paidAt: expect.any(Date),
+			}),
+		});
+		expect(mockTx.orderHistory.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({
+				orderId: "order-1",
+				action: "PAID",
+				newPaymentStatus: "PAID",
+				source: "WEBHOOK",
+				authorName: "Stripe",
 			}),
 		});
 	});

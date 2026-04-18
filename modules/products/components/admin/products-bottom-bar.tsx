@@ -135,6 +135,7 @@ export function ProductsBottomBar({
 				onOpenChange={onOpenChange("search")}
 				placeholder="Rechercher par titre, type..."
 				ariaLabel="Rechercher un produit par titre ou type"
+				scope="products"
 			/>
 		</>
 	);

@@ -12,6 +12,8 @@ const {
 	mockEnforceRateLimit,
 	mockAuth,
 	mockHeaders,
+	mockCookies,
+	mockCookieDelete,
 	mockUpdateTag,
 	mockValidateInput,
 	mockHandleActionError,
@@ -27,6 +29,8 @@ const {
 	mockEnforceRateLimit: vi.fn(),
 	mockAuth: { api: { signOut: vi.fn() } },
 	mockHeaders: vi.fn(),
+	mockCookies: vi.fn(),
+	mockCookieDelete: vi.fn(),
 	mockUpdateTag: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockHandleActionError: vi.fn(),
@@ -43,8 +47,11 @@ vi.mock("@/shared/lib/rate-limit-config", () => ({
 	USER_LIMITS: { DELETE_ACCOUNT: "user-delete-account" },
 }));
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
-vi.mock("next/headers", () => ({ headers: mockHeaders }));
+vi.mock("next/headers", () => ({ headers: mockHeaders, cookies: mockCookies }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag, cacheLife: vi.fn(), cacheTag: vi.fn() }));
+vi.mock("@/modules/products/constants/recent-searches", () => ({
+	RECENT_SEARCHES_COOKIE_NAME: "recent-searches",
+}));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -89,6 +96,7 @@ describe("deleteAccount", () => {
 		mockPrisma.refund.count.mockResolvedValue(0);
 		mockPrisma.user.update.mockResolvedValue({});
 		mockHeaders.mockResolvedValue(new Headers());
+		mockCookies.mockResolvedValue({ delete: mockCookieDelete });
 		mockAuth.api.signOut.mockResolvedValue({});
 
 		mockSuccess.mockImplementation((msg: string) => ({
@@ -169,6 +177,11 @@ describe("deleteAccount", () => {
 	it("should sign out user after deletion request", async () => {
 		await deleteAccount(undefined, validFormData);
 		expect(mockAuth.api.signOut).toHaveBeenCalled();
+	});
+
+	it("should purge recent searches cookie (RGPD)", async () => {
+		await deleteAccount(undefined, validFormData);
+		expect(mockCookieDelete).toHaveBeenCalledWith("recent-searches");
 	});
 
 	it("should invalidate cache tags", async () => {

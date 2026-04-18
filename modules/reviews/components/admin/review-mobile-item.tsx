@@ -37,7 +37,7 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3" aria-roledescription="carte avis">
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="hover:text-primary truncate font-semibold">
 							{review.product.title}
 						</span>

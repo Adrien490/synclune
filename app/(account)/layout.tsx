@@ -32,12 +32,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 	return (
 		<>
 			<PullToRefresh />
-			{(storeStatus.isClosed || storeStatus.scheduledCloseAt) && (
-				<MaintenanceBanner
-					closureMessage={storeStatus.isClosed ? storeStatus.closureMessage : null}
-					scheduledCloseAt={storeStatus.scheduledCloseAt}
-				/>
-			)}
+			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
 			<Suspense fallback={null}>
 				<AnnouncementBarWrapper />
 			</Suspense>

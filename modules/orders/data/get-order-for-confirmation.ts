@@ -1,6 +1,8 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { z } from "zod";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 // Lightweight select for the confirmation page
 const CONFIRMATION_ORDER_SELECT = {
@@ -48,12 +50,24 @@ const confirmationParamsSchema = z.object({
 export async function getOrderForConfirmation(orderId: string, orderNumber: string) {
 	const validation = confirmationParamsSchema.safeParse({ orderId, orderNumber });
 	if (!validation.success) return null;
+	return fetchOrderForConfirmation(validation.data.orderId, validation.data.orderNumber);
+}
+
+/**
+ * Cached inner fetch. Profile `realtime` (30s stale / 15s revalidate / 1min expire)
+ * pour gerer les F5 post-paiement sans hammer DB tout en affichant le statut
+ * webhook Stripe a jour rapidement. Invalide par getOrderInvalidationTags (webhooks).
+ */
+async function fetchOrderForConfirmation(orderId: string, orderNumber: string) {
+	"use cache";
+	cacheLife("realtime");
+	cacheTag(ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
 
 	try {
 		return await prisma.order.findFirst({
 			where: {
-				id: validation.data.orderId,
-				orderNumber: validation.data.orderNumber,
+				id: orderId,
+				orderNumber,
 				...notDeleted,
 			},
 			select: CONFIRMATION_ORDER_SELECT,

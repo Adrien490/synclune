@@ -54,6 +54,13 @@ export const posthogEvents = {
 		});
 	},
 
+	searchSuggestionAccepted(originalQuery: string, suggestion: string) {
+		getPostHog()?.capture("search_suggestion_accepted", {
+			original_query: originalQuery,
+			suggestion,
+		});
+	},
+
 	newsletterSubscribed() {
 		getPostHog()?.capture("newsletter_subscribed");
 	},

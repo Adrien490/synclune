@@ -27,13 +27,11 @@ const OPEN_STATUS = {
 	isClosed: false,
 	closureMessage: null,
 	reopensAt: null,
-	scheduledCloseAt: null,
 };
 const CLOSED_STATUS = {
 	isClosed: true,
 	closureMessage: "Maintenance en cours",
 	reopensAt: new Date("2026-04-01T10:00:00Z"),
-	scheduledCloseAt: null,
 };
 
 // ============================================================================
@@ -63,7 +61,6 @@ describe("getStoreStatus", () => {
 				isClosed: true,
 				closureMessage: true,
 				reopensAt: true,
-				scheduledCloseAt: true,
 			},
 		});
 	});
@@ -90,7 +87,6 @@ describe("getStoreStatus", () => {
 			isClosed: false,
 			closureMessage: null,
 			reopensAt: null,
-			scheduledCloseAt: null,
 		});
 	});
 
@@ -101,7 +97,6 @@ describe("getStoreStatus", () => {
 			isClosed: false,
 			closureMessage: null,
 			reopensAt: null,
-			scheduledCloseAt: null,
 		});
 	});
 

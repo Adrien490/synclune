@@ -1,5 +1,8 @@
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 type CustomizationStatus = "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
@@ -44,55 +47,64 @@ export const CustomizationStatusEmail = ({
 
 	return (
 		<EmailLayout preview={config.preview}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>{config.title}</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">{config.title}</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {firstName}, {config.body.charAt(0).toLowerCase()}
 					{config.body.slice(1)}
 				</Text>
 			</Section>
 
-			{/* Details card */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>Type de création</Text>
-					<Text
-						style={{
-							margin: "0 0 12px 0",
-							fontSize: "14px",
-							fontWeight: "600",
-							color: EMAIL_COLORS.text.primary,
-						}}
-					>
-						{productTypeLabel}
-					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>Détails</Text>
-					<Text
-						style={{
-							margin: 0,
-							fontSize: "14px",
-							color: EMAIL_COLORS.text.primary,
-						}}
-					>
-						{details}
-					</Text>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<Text
+					className={EMAIL_CLASSES.text.secondary}
+					style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}
+				>
+					Type de création
+				</Text>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{
+						margin: "0 0 12px 0",
+						fontSize: "14px",
+						fontWeight: "600",
+						color: EMAIL_COLORS.text.primary,
+					}}
+				>
+					{productTypeLabel}
+				</Text>
+				<Text
+					className={EMAIL_CLASSES.text.secondary}
+					style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}
+				>
+					Détails
+				</Text>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{
+						margin: 0,
+						fontSize: "14px",
+						color: EMAIL_COLORS.text.primary,
+					}}
+				>
+					{details}
+				</Text>
+			</EmailCard>
 
-			{/* Admin notes */}
 			{adminNotes && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Section
-						style={{
-							...EMAIL_STYLES.section.card,
-							borderLeft: `3px solid ${EMAIL_COLORS.primary}`,
-						}}
-					>
-						<Text style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}>
+					<EmailCard style={{ borderLeft: `3px solid ${EMAIL_COLORS.primary}` }}>
+						<Text
+							className={EMAIL_CLASSES.text.secondary}
+							style={{ ...EMAIL_STYLES.text.small, marginBottom: "4px" }}
+						>
 							Note de notre artisan
 						</Text>
 						<Text
+							className={EMAIL_CLASSES.text.body}
 							style={{
 								margin: 0,
 								fontSize: "14px",
@@ -102,23 +114,15 @@ export const CustomizationStatusEmail = ({
 						>
 							{adminNotes}
 						</Text>
-					</Section>
+					</EmailCard>
 				</Section>
 			)}
 
-			{/* CTA for completed status */}
-			{status === "COMPLETED" && (
-				<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-					<Button href={shopUrl} style={EMAIL_STYLES.button.primary}>
-						Voir les créations
-					</Button>
-				</Section>
-			)}
+			{status === "COMPLETED" && <EmailCTA href={shopUrl}>Voir les créations</EmailCTA>}
 
-			{/* Contact for cancelled status */}
 			{status === "CANCELLED" && (
 				<Section style={{ marginBottom: "32px" }}>
-					<Text style={EMAIL_STYLES.text.body}>
+					<Text className={EMAIL_CLASSES.text.body} style={EMAIL_STYLES.text.body}>
 						Notre équipe reste à votre disposition pour toute nouvelle demande de personnalisation.
 					</Text>
 				</Section>

@@ -76,7 +76,7 @@ describe("sendReviewRequestEmail", () => {
 		);
 	});
 
-	it("should include List-Unsubscribe headers", async () => {
+	it("should propagate unsubscribeUrl for RFC 8058 one-click headers", async () => {
 		const unsubscribeUrl = "https://test.com/newsletter/desabonnement?token=abc";
 
 		await sendReviewRequestEmail({
@@ -91,10 +91,7 @@ describe("sendReviewRequestEmail", () => {
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.anything(),
 			expect.objectContaining({
-				headers: {
-					"List-Unsubscribe": `<${unsubscribeUrl}>`,
-					"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-				},
+				unsubscribeUrl,
 			}),
 		);
 	});
@@ -168,7 +165,7 @@ describe("sendReviewResponseEmail", () => {
 		);
 	});
 
-	it("should not include List-Unsubscribe headers", async () => {
+	it("should not include unsubscribe info (transactional email)", async () => {
 		await sendReviewResponseEmail({
 			to: "customer@test.com",
 			customerName: "Marie Dupont",
@@ -181,6 +178,7 @@ describe("sendReviewResponseEmail", () => {
 
 		const callArgs = mockRenderAndSend.mock.calls[0]![1];
 		expect(callArgs).not.toHaveProperty("headers");
+		expect(callArgs).not.toHaveProperty("unsubscribeUrl");
 	});
 
 	it("should return the result from renderAndSend", async () => {

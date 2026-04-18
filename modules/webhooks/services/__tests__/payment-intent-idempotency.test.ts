@@ -14,6 +14,9 @@ const { mockTx, mockPrisma, mockStripeRefunds, mockSendAdminRefundFailedAlert } 
 			findMany: vi.fn(),
 			update: vi.fn(),
 		},
+		orderHistory: {
+			create: vi.fn(),
+		},
 	};
 
 	return {

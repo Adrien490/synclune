@@ -63,7 +63,6 @@ describe("getStoreSettings", () => {
 				reopensAt: true,
 				closedAt: true,
 				closedBy: true,
-				scheduledCloseAt: true,
 				updatedAt: true,
 			},
 		});

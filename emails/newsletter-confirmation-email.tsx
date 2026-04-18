@@ -1,5 +1,8 @@
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface NewsletterConfirmationEmailProps {
@@ -11,25 +14,25 @@ export const NewsletterConfirmationEmail = ({
 }: NewsletterConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview="Confirmez votre inscription à la newsletter Synclune pour recevoir nos nouveautés">
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Confirmation</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Confirmation</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Cliquez sur le bouton pour confirmer votre inscription à la newsletter.
 				</Text>
 			</Section>
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-				<Button href={confirmationUrl} style={EMAIL_STYLES.button.primary}>
-					Confirmer
-				</Button>
-			</Section>
+			<EmailCTA href={confirmationUrl} marginBottom="24px">
+				Confirmer
+			</EmailCTA>
 
-			{/* Info */}
-			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "32px" }}>
-				<Text style={EMAIL_STYLES.text.small}>Ce lien expire dans 7 jours.</Text>
-			</Section>
+			<EmailCard style={{ marginBottom: "32px" }}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+					Ce lien expire dans 7 jours.
+				</Text>
+			</EmailCard>
 		</EmailLayout>
 	);
 };

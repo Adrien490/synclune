@@ -3,11 +3,24 @@ import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
+export type SitemapProduct = {
+	slug: string;
+	title: string;
+	type: { label: string } | null;
+	skus: Array<{
+		images: Array<{
+			url: string;
+			altText: string | null;
+			isPrimary: boolean;
+		}>;
+	}>;
+};
+
 /**
  * Fetches public products with their SKU images for the image sitemap.
  * Cached with the sitemap-images tag for targeted invalidation.
  */
-export async function getSitemapProducts() {
+export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 	"use cache";
 	cacheLife("collections");
 	cacheTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);

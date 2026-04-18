@@ -435,3 +435,80 @@ export async function generateVideoThumbnail(
 		throw error;
 	}
 }
+
+// ============================================================================
+// LIGHTWEIGHT PREVIEW (P2.4)
+// ============================================================================
+
+export interface VideoMetadataPreview {
+	/** Video duration in seconds */
+	durationSec: number;
+	/** Data URL for a single first-frame thumbnail (256px wide, low quality) */
+	previewDataUrl: string;
+}
+
+/**
+ * Extracts a lightweight preview (duration + first-frame thumbnail as data URL)
+ * from a local video File without uploading. Used for pending upload previews.
+ *
+ * Returns null if Canvas is unsupported or extraction fails — callers should
+ * fall back to a filename-only preview.
+ */
+export async function getVideoMetadata(
+	videoFile: File,
+	signal?: AbortSignal,
+): Promise<VideoMetadataPreview | null> {
+	if (!isThumbnailGenerationSupported()) return null;
+	if (signal?.aborted) return null;
+
+	let loaded: { video: HTMLVideoElement; objectUrl: string } | null = null;
+	try {
+		loaded = await loadVideo(videoFile, signal);
+		const { video } = loaded;
+		const durationSec = Number.isFinite(video.duration) ? video.duration : 0;
+
+		const previewWidth = 256;
+		const frame = await captureFrameAtPosition(video, 0.1, signal);
+		if (!frame) return { durationSec, previewDataUrl: "" };
+
+		const aspectRatio = video.videoHeight / video.videoWidth;
+		const height = Math.round(previewWidth * aspectRatio);
+		const { canvas: outCanvas, ctx: outCtx } = createCanvas(previewWidth, height);
+		outCtx.drawImage(frame.canvas as CanvasImageSource, 0, 0, previewWidth, height);
+
+		let previewDataUrl = "";
+		if (outCanvas instanceof OffscreenCanvas) {
+			const tempCanvas = document.createElement("canvas");
+			tempCanvas.width = previewWidth;
+			tempCanvas.height = height;
+			const tempCtx = tempCanvas.getContext("2d");
+			if (tempCtx) {
+				tempCtx.drawImage(frame.canvas as CanvasImageSource, 0, 0, previewWidth, height);
+				previewDataUrl = tempCanvas.toDataURL("image/jpeg", 0.5);
+			}
+		} else {
+			previewDataUrl = outCanvas.toDataURL("image/jpeg", 0.5);
+		}
+
+		return { durationSec, previewDataUrl };
+	} catch {
+		return null;
+	} finally {
+		if (loaded) {
+			URL.revokeObjectURL(loaded.objectUrl);
+			loaded.video.src = "";
+			loaded.video.load();
+		}
+	}
+}
+
+/** Formats seconds into MM:SS (or HH:MM:SS if >= 1h) */
+export function formatVideoDuration(seconds: number): string {
+	if (!Number.isFinite(seconds) || seconds <= 0) return "0:00";
+	const total = Math.round(seconds);
+	const hh = Math.floor(total / 3600);
+	const mm = Math.floor((total % 3600) / 60);
+	const ss = total % 60;
+	const pad = (n: number) => n.toString().padStart(2, "0");
+	return hh > 0 ? `${hh}:${pad(mm)}:${pad(ss)}` : `${mm}:${pad(ss)}`;
+}

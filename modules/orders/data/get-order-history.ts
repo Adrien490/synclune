@@ -6,11 +6,13 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 
 const orderIdSchema = z.cuid2();
 
+export type OrderHistoryEntry = Awaited<ReturnType<typeof fetchOrderHistory>>[number];
+
 /**
  * Récupère l'historique d'une commande (plus récent en premier)
  * Limité à 100 entrées pour éviter les requêtes non bornées
  */
-export async function getOrderHistory(orderId: string) {
+export async function getOrderHistory(orderId: string): Promise<OrderHistoryEntry[]> {
 	const admin = await requireAdmin();
 	if ("error" in admin) return [];
 

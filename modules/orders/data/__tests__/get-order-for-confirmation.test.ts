@@ -15,6 +15,17 @@ vi.mock("@/shared/lib/prisma", () => ({
 	notDeleted: { deletedAt: null },
 }));
 
+vi.mock("next/cache", () => ({
+	cacheLife: vi.fn(),
+	cacheTag: vi.fn(),
+}));
+
+vi.mock("../../constants/cache", () => ({
+	ORDERS_CACHE_TAGS: {
+		CONFIRMATION: (orderId: string) => `order-confirmation-${orderId}`,
+	},
+}));
+
 // Must be imported after mocks
 import { getOrderForConfirmation } from "../get-order-for-confirmation";
 

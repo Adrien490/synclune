@@ -20,8 +20,6 @@ import type { StoreSettingsAdmin } from "../../types/store-settings.types";
 import { EditClosureMessageForm } from "./edit-closure-message-form";
 import { EditReopensAtForm } from "./edit-reopens-at-form";
 import { REOPEN_STORE_DIALOG_ID, ReopenStoreDialog } from "./reopen-store-dialog";
-import { ScheduleClosureForm } from "./schedule-closure-form";
-import { ScheduledClosureCard } from "./scheduled-closure-card";
 
 interface StoreSettingsFormProps {
 	settings: StoreSettingsAdmin;
@@ -112,31 +110,6 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 					)}
 				</CardContent>
 			</Card>
-
-			{/* ─── Section 2 : Programmation (visible si OUVERTE) ──────────────── */}
-			{!settings.isClosed && (
-				<Card>
-					<CardHeader>
-						<CardTitle>Fermeture programmée</CardTitle>
-						<CardDescription>
-							{settings.scheduledCloseAt
-								? "Une fermeture est planifiée. Elle sera automatiquement appliquée à la date prévue."
-								: "Planifiez à l'avance une fermeture (congés, événement…). Elle sera appliquée automatiquement."}
-						</CardDescription>
-					</CardHeader>
-					<CardContent>
-						{settings.scheduledCloseAt ? (
-							<ScheduledClosureCard
-								scheduledCloseAt={settings.scheduledCloseAt}
-								closureMessage={settings.closureMessage}
-								reopensAt={settings.reopensAt}
-							/>
-						) : (
-							<ScheduleClosureForm />
-						)}
-					</CardContent>
-				</Card>
-			)}
 
 			<ReopenStoreDialog previousFocusRef={previousFocusRef} />
 		</div>

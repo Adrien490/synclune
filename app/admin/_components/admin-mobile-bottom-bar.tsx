@@ -9,10 +9,12 @@ import {
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
+	bottomBarBadgeClass,
 } from "@/shared/components/bottom-bar";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, ShoppingBag, Package, Menu, Search } from "lucide-react";
@@ -23,6 +25,7 @@ interface AdminMobileBottomBarProps {
 }
 
 export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
+	const mounted = useMounted();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
@@ -75,7 +78,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					<tab.icon className={bottomBarIconClass} aria-hidden="true" />
 					{badgeCount != null && badgeCount > 0 && (
 						<span
-							className="bg-primary text-primary-foreground absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+							className={bottomBarBadgeClass}
 							aria-label={`${badgeCount} commande${badgeCount > 1 ? "s" : ""} en attente`}
 						>
 							{badgeCount > 99 ? "99+" : badgeCount}
@@ -87,7 +90,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 		);
 	}
 
-	if (typeof document === "undefined") return null;
+	if (!mounted) return null;
 
 	return createPortal(
 		<BottomBar as="nav" aria-label="Navigation principale administration" isHidden={isHidden}>

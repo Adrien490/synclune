@@ -240,8 +240,9 @@ describe("multiSelectVariants", () => {
 		expect(result).toContain("secondary");
 	});
 
-	it("includes base transition classes", () => {
+	it("includes motion-safe transition tokens (duration-slow)", () => {
 		const result = multiSelectVariants({});
-		expect(result).toContain("transition-all");
+		expect(result).toContain("motion-safe:transition-colors");
+		expect(result).toContain("motion-safe:duration-[var(--duration-slow)]");
 	});
 });

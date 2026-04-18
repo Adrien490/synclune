@@ -20,12 +20,11 @@ async function fetchStoreStatus(): Promise<StoreStatus> {
 				isClosed: true,
 				closureMessage: true,
 				reopensAt: true,
-				scheduledCloseAt: true,
 			},
 		});
 
 		if (!settings) {
-			return { isClosed: false, closureMessage: null, reopensAt: null, scheduledCloseAt: null };
+			return { isClosed: false, closureMessage: null, reopensAt: null };
 		}
 
 		return settings;
@@ -34,6 +33,6 @@ async function fetchStoreStatus(): Promise<StoreStatus> {
 			service: "getStoreStatus",
 		});
 		// Fail open: if DB is down, don't block the storefront
-		return { isClosed: false, closureMessage: null, reopensAt: null, scheduledCloseAt: null };
+		return { isClosed: false, closureMessage: null, reopensAt: null };
 	}
 }

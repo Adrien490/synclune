@@ -1,5 +1,8 @@
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { TrackingInfo } from "./_components/tracking-info";
 
@@ -30,46 +33,45 @@ export const ShippingConfirmationEmail = ({
 }: ShippingConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Commande ${orderNumber} expédiée`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Commande expédiée</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Commande expédiée</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, votre commande {orderNumber} est en route.
 				</Text>
 			</Section>
 
-			{/* Suivi */}
 			<Section style={{ marginBottom: "24px" }}>
 				<TrackingInfo carrierLabel={carrierLabel} trackingNumber={trackingNumber} />
 			</Section>
 
-			{/* Adresse */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
 					Adresse de livraison
-				</Text>
-				<Section style={EMAIL_STYLES.section.card}>
-					<Text style={{ ...EMAIL_STYLES.text.body, margin: 0 }}>
+				</EmailHeading>
+				<EmailCard>
+					<Text
+						className={EMAIL_CLASSES.text.body}
+						style={{ ...EMAIL_STYLES.text.body, margin: 0 }}
+					>
 						{shippingAddress.firstName} {shippingAddress.lastName}
 					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+					>
 						{shippingAddress.address1}
 						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 					</Text>
-					<Text style={EMAIL_STYLES.text.small}>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 						{shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* CTA */}
-			{trackingUrl && (
-				<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-					<Button href={trackingUrl} style={EMAIL_STYLES.button.primary}>
-						Suivre mon colis
-					</Button>
-				</Section>
-			)}
+			{trackingUrl && <EmailCTA href={trackingUrl}>Suivre mon colis</EmailCTA>}
 		</EmailLayout>
 	);
 };

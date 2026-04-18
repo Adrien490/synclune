@@ -1,12 +1,13 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsDesktop } = vi.hoisted(() => ({
+const { mockIsDesktop, mockHaptic } = vi.hoisted(() => ({
 	mockIsDesktop: { value: true },
+	mockHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -22,6 +23,10 @@ vi.mock("motion/react", () => ({
 
 vi.mock("@/shared/hooks", () => ({
 	useMediaQuery: () => mockIsDesktop.value,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("@/modules/media/utils/media-utils", () => ({
@@ -207,5 +212,29 @@ describe("GallerySlide", () => {
 	it("shows loading spinner initially for video", () => {
 		render(<GallerySlide {...defaultImageProps} media={createVideoMedia()} />);
 		expect(screen.getByRole("status", { name: /Chargement de la vidéo/i })).toBeInTheDocument();
+	});
+
+	// ─── Video error fallback (P1.2) ─────────────────────────────────────────
+
+	it("retry button has min-h-11 touch target after video error", () => {
+		const { container } = render(
+			<GallerySlide {...defaultImageProps} media={createVideoMedia()} />,
+		);
+		const video = container.querySelector("video")!;
+		fireEvent.error(video);
+		const retryBtn = screen.getByRole("button", { name: /Réessayer/i });
+		expect(retryBtn.className).toMatch(/min-h-11/);
+		expect(retryBtn.className).toMatch(/touch-manipulation/);
+	});
+
+	it("fires haptic medium when retry button clicked", () => {
+		const { container } = render(
+			<GallerySlide {...defaultImageProps} media={createVideoMedia()} />,
+		);
+		const video = container.querySelector("video")!;
+		fireEvent.error(video);
+		mockHaptic.mockClear();
+		screen.getByRole("button", { name: /Réessayer/i }).click();
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 });

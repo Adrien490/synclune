@@ -4,7 +4,7 @@ import { AccountStatus, OrderStatus, RefundStatus } from "@/app/generated/prisma
 import { prisma } from "@/shared/lib/prisma";
 import type { ActionState } from "@/shared/types/server-action";
 import { auth } from "@/modules/auth/lib/auth";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { requireAuth } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
@@ -13,6 +13,7 @@ import { USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteAccountSchema } from "../schemas/user.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { USERS_CACHE_TAGS } from "../constants/cache";
+import { RECENT_SEARCHES_COOKIE_NAME } from "@/modules/products/constants/recent-searches";
 
 /**
  * Server Action to request deferred account deletion (GDPR right to erasure)
@@ -98,7 +99,11 @@ export async function deleteAccount(
 			headers: headersList,
 		});
 
-		// 8. Invalidate cache
+		// 8. RGPD: purge device-local search history cookie
+		const cookieStore = await cookies();
+		cookieStore.delete(RECENT_SEARCHES_COOKIE_NAME);
+
+		// 9. Invalidate cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(USERS_CACHE_TAGS.CURRENT_USER(userId));

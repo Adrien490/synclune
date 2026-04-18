@@ -74,6 +74,7 @@ export function ProductTypesBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Label, slug..."
 				ariaLabel="Rechercher un type de produit"
+				scope="product-types"
 			/>
 		</>
 	);

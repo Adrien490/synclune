@@ -13,6 +13,7 @@ const {
 	mockBuildCursorPagination,
 	mockProcessCursorResults,
 	mockBuildUserWhereClause,
+	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		user: { findMany: vi.fn() },
@@ -24,6 +25,7 @@ const {
 	mockBuildCursorPagination: vi.fn(),
 	mockProcessCursorResults: vi.fn(),
 	mockBuildUserWhereClause: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -42,6 +44,14 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/shared/lib/fuzzy-search", () => ({
 	fuzzySearchIds: mockFuzzySearchIds,
+}));
+
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	ADMIN_SEARCH_LIMIT: { limit: 60, windowMs: 60_000 },
 }));
 
 vi.mock("@/shared/lib/pagination", () => ({
@@ -139,6 +149,7 @@ function setupDefaults() {
 		pagination: makePagination(),
 	});
 	mockFuzzySearchIds.mockResolvedValue(null);
+	mockEnforceRateLimit.mockResolvedValue({ success: true });
 }
 
 // ============================================================================
@@ -227,6 +238,31 @@ describe("getUsers", () => {
 				]),
 			}),
 		);
+	});
+
+	it("enforces admin search rate limit before fuzzy search", async () => {
+		mockGetUsersSchema.safeParse.mockReturnValue({
+			success: true,
+			data: makeValidParams({ search: "alice" }),
+		});
+
+		await getUsers(makeValidParams({ search: "alice" }));
+
+		expect(mockEnforceRateLimit).toHaveBeenCalledWith({ limit: 60, windowMs: 60_000 });
+	});
+
+	it("skips fuzzy search when rate-limited", async () => {
+		mockGetUsersSchema.safeParse.mockReturnValue({
+			success: true,
+			data: makeValidParams({ search: "alice" }),
+		});
+		mockEnforceRateLimit.mockResolvedValue({
+			error: { status: "error", message: "Rate limit" },
+		});
+
+		await getUsers(makeValidParams({ search: "alice" }));
+
+		expect(mockFuzzySearchIds).not.toHaveBeenCalled();
 	});
 
 	it("uses validated sortBy from schema when no explicit sortBy is provided", async () => {

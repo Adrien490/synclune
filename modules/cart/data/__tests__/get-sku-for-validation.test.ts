@@ -5,12 +5,19 @@ import { VALID_SKU_ID, VALID_CUID, VALID_CUID_2 } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockFindUnique, mockFindMany } = vi.hoisted(() => ({
+const { mockFindUnique, mockFindMany, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
 	mockFindUnique: vi.fn(),
 	mockFindMany: vi.fn(),
+	mockCacheLife: vi.fn(),
+	mockCacheTag: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
+
+vi.mock("next/cache", () => ({
+	cacheLife: mockCacheLife,
+	cacheTag: mockCacheTag,
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -21,11 +28,7 @@ vi.mock("@/shared/lib/prisma", () => ({
 	},
 }));
 
-import {
-	fetchSkuForValidation,
-	fetchSkuForDetails,
-	fetchSkusForBatchValidation,
-} from "../get-sku-for-validation";
+import { fetchSkuForValidation, fetchSkusForBatchValidation } from "../get-sku-for-validation";
 
 // ============================================================================
 // FACTORIES
@@ -160,16 +163,6 @@ describe("fetchSkuForValidation", () => {
 		const result = await fetchSkuForValidation(VALID_SKU_ID);
 
 		expect(result?.deletedAt).toBeInstanceOf(Date);
-	});
-});
-
-// ============================================================================
-// TESTS: fetchSkuForDetails (deprecated alias)
-// ============================================================================
-
-describe("fetchSkuForDetails", () => {
-	it("is identical to fetchSkuForValidation", () => {
-		expect(fetchSkuForDetails).toBe(fetchSkuForValidation);
 	});
 });
 

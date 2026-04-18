@@ -49,7 +49,7 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 				aria-roledescription="carte materiau"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{material.name}</span>
 						<Badge variant={material.isActive ? "default" : "secondary"}>{statusLabel}</Badge>
 					</ItemTitle>

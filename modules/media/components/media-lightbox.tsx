@@ -11,6 +11,7 @@ import "yet-another-react-lightbox/plugins/counter.css";
 
 import type { Slide } from "yet-another-react-lightbox";
 import { useReducedMotion } from "motion/react";
+import { Keyboard } from "lucide-react";
 import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
@@ -68,6 +69,21 @@ export default function MediaLightbox({
 		});
 	};
 
+	// Keyboard shortcut help popover — desktop only, toggled via "?" key or button
+	const [helpOpen, setHelpOpen] = useState(false);
+
+	useEffect(() => {
+		if (!open) return;
+		const handler = (e: KeyboardEvent) => {
+			if (e.key === "?" || (e.key === "/" && e.shiftKey)) {
+				e.preventDefault();
+				setHelpOpen((prev) => !prev);
+			}
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [open]);
+
 	if (!open) return null;
 
 	const currentSlide = slides[currentIndex];
@@ -84,6 +100,59 @@ export default function MediaLightbox({
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					{announcement}
 				</div>
+
+				{/* Keyboard shortcut help — desktop only (P2.6) */}
+				<button
+					type="button"
+					onClick={() => setHelpOpen((prev) => !prev)}
+					aria-label="Afficher les raccourcis clavier"
+					aria-expanded={helpOpen}
+					aria-controls="lightbox-kbd-help"
+					className="fixed top-4 left-4 z-[9999] hidden size-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-black/80 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none sm:flex"
+					style={{
+						top: "calc(env(safe-area-inset-top, 0px) + 16px)",
+						left: "calc(env(safe-area-inset-left, 0px) + 16px)",
+					}}
+				>
+					<Keyboard className="size-4" aria-hidden="true" />
+				</button>
+
+				{helpOpen && (
+					<div
+						id="lightbox-kbd-help"
+						role="region"
+						aria-label="Raccourcis clavier"
+						className="fixed top-16 left-4 z-[9999] hidden max-w-xs rounded-lg bg-black/85 p-4 text-sm text-white shadow-xl backdrop-blur-md sm:block"
+						style={{
+							top: "calc(env(safe-area-inset-top, 0px) + 64px)",
+							left: "calc(env(safe-area-inset-left, 0px) + 16px)",
+						}}
+					>
+						<p className="mb-2 font-medium">Raccourcis clavier</p>
+						<dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
+							<dt>
+								<kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono">Échap</kbd>
+							</dt>
+							<dd>Fermer</dd>
+							<dt>
+								<kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono">← →</kbd>
+							</dt>
+							<dd>Naviguer</dd>
+							<dt>
+								<kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono">+ / -</kbd>
+							</dt>
+							<dd>Zoomer</dd>
+							<dt>
+								<kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono">Double-clic</kbd>
+							</dt>
+							<dd>Réinitialiser</dd>
+							<dt>
+								<kbd className="rounded bg-white/20 px-1.5 py-0.5 font-mono">?</kbd>
+							</dt>
+							<dd>Afficher / masquer cette aide</dd>
+						</dl>
+					</div>
+				)}
 				<Lightbox
 					open={open}
 					close={handleClose}

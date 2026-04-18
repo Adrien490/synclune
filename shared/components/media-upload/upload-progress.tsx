@@ -6,8 +6,14 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { AlertTriangle, Check, LoaderCircle, RefreshCw, X } from "lucide-react";
+import type { FileProgress } from "@/modules/media/types/hooks.types";
 
-export type UploadPhase = "validating" | "uploading" | "generating-thumbnails" | "done";
+export type UploadPhase =
+	| "validating"
+	| "compressing"
+	| "uploading"
+	| "generating-thumbnails"
+	| "done";
 
 interface UploadProgressProps {
 	/** Progress percentage (0-100) */
@@ -26,6 +32,10 @@ interface UploadProgressProps {
 	currentFileName?: string;
 	/** If provided, renders a 44px cancel button (X icon) — variant default only */
 	onCancel?: () => void;
+	/** Number of files successfully uploaded — enriches the completion SR announcement */
+	completedCount?: number;
+	/** Per-file progress entries — when provided, renders a scrollable list (variant default only) */
+	files?: FileProgress[];
 }
 
 /**
@@ -41,12 +51,19 @@ export function UploadProgress({
 	phase,
 	currentFileName,
 	onCancel,
+	completedCount,
+	files,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const haptic = useHaptic();
-	const isComplete = progress >= 100 && !isProcessing && phase !== "generating-thumbnails";
+	const isComplete =
+		progress >= 100 &&
+		!isProcessing &&
+		phase !== "generating-thumbnails" &&
+		phase !== "compressing";
 	const isThumbnailing = phase === "generating-thumbnails";
-	const isServerProcessing = (progress >= 100 && isProcessing) || isThumbnailing;
+	const isCompressing = phase === "compressing";
+	const isServerProcessing = (progress >= 100 && isProcessing) || isThumbnailing || isCompressing;
 
 	const handleCancel = () => {
 		haptic("medium");
@@ -54,21 +71,29 @@ export function UploadProgress({
 	};
 
 	const queueText = queuedCount > 0 ? `, ${queuedCount} en attente` : "";
+	const completedText =
+		completedCount !== undefined && completedCount > 0
+			? `${completedCount} fichier${completedCount > 1 ? "s" : ""} envoyé${completedCount > 1 ? "s" : ""}`
+			: "Téléversement terminé";
 	const srText = isComplete
-		? "Téléversement terminé"
-		: isThumbnailing
-			? "Génération des miniatures vidéo en cours"
-			: isServerProcessing
-				? "Traitement du fichier en cours"
-				: `Téléversement en cours, ${progress} pourcent${queueText}`;
+		? completedText
+		: isCompressing
+			? "Compression des fichiers en cours"
+			: isThumbnailing
+				? "Génération des miniatures vidéo en cours"
+				: isServerProcessing
+					? "Traitement du fichier en cours"
+					: `Téléversement en cours, ${progress} pourcent${queueText}`;
 
 	const phaseLabel = isComplete
 		? "Terminé"
-		: isThumbnailing
-			? "Génération des miniatures…"
-			: isServerProcessing
-				? "Traitement…"
-				: `Téléversement… ${progress}%`;
+		: isCompressing
+			? "Compression…"
+			: isThumbnailing
+				? "Génération des miniatures…"
+				: isServerProcessing
+					? "Traitement…"
+					: `Téléversement… ${progress}%`;
 
 	if (variant === "compact") {
 		return (
@@ -172,6 +197,10 @@ export function UploadProgress({
 				)}
 			</div>
 
+			{files && files.length > 0 && !isComplete && (
+				<FileProgressList files={files} reducedMotion={shouldReduceMotion} />
+			)}
+
 			{onCancel && !isComplete && (
 				<Button
 					type="button"
@@ -189,13 +218,100 @@ export function UploadProgress({
 	);
 }
 
+// ----------------------------------------------------------------------------
+// Per-file progress list (P2.1)
+// ----------------------------------------------------------------------------
+
+interface FileProgressListProps {
+	files: FileProgress[];
+	reducedMotion: boolean | null;
+}
+
+function FileProgressList({ files, reducedMotion }: FileProgressListProps) {
+	return (
+		<ul
+			className="bg-muted/20 flex max-h-40 w-full flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
+			aria-label="Détails par fichier"
+		>
+			{files.map((file) => (
+				<FileProgressItem key={file.fileName} file={file} reducedMotion={reducedMotion} />
+			))}
+		</ul>
+	);
+}
+
+const stateLabels: Record<FileProgress["state"], string> = {
+	queued: "En attente",
+	validating: "Validation",
+	compressing: "Compression",
+	uploading: "Envoi",
+	done: "OK",
+	failed: "Échec",
+};
+
+interface FileProgressItemProps {
+	file: FileProgress;
+	reducedMotion: boolean | null;
+}
+
+function FileProgressItem({ file, reducedMotion }: FileProgressItemProps) {
+	const isDone = file.state === "done";
+	const isFailed = file.state === "failed";
+	const isActive = file.state === "uploading" || file.state === "compressing";
+
+	return (
+		<li
+			className={cn(
+				"flex items-center gap-2 rounded-sm px-1.5 py-1",
+				!reducedMotion && "transition-colors duration-200",
+				isDone && "bg-emerald-500/10",
+				isFailed && "bg-destructive/10",
+			)}
+			data-state={file.state}
+		>
+			<span
+				className={cn(
+					"flex size-4 shrink-0 items-center justify-center rounded-full",
+					isDone && "bg-emerald-500/30",
+					isFailed && "bg-destructive/30",
+					isActive && "bg-primary/20",
+					!isDone && !isFailed && !isActive && "bg-muted",
+				)}
+				aria-hidden="true"
+			>
+				{isDone ? (
+					<Check className="size-3 text-emerald-700" />
+				) : isFailed ? (
+					<AlertTriangle className="text-destructive size-3" />
+				) : isActive ? (
+					<LoaderCircle className={cn("text-primary size-3", !reducedMotion && "animate-spin")} />
+				) : null}
+			</span>
+			<span className="flex-1 truncate" title={file.fileName}>
+				{file.fileName}
+			</span>
+			<span
+				className={cn(
+					"text-muted-foreground tabular-nums",
+					isDone && "text-emerald-700",
+					isFailed && "text-destructive",
+				)}
+			>
+				{stateLabels[file.state]}
+			</span>
+		</li>
+	);
+}
+
 interface UploadErrorBannerProps {
 	/** List of failed files */
-	failedFiles: { fileName: string; error: string }[];
+	failedFiles: { fileName: string; error: string; file?: File }[];
 	/** Triggered when user clicks the retry CTA */
 	onRetry: () => void;
 	/** Triggered when user dismisses the banner */
 	onDismiss: () => void;
+	/** When provided, renders per-file cards with individual retry buttons */
+	onRetryOne?: (file: File) => void;
 	/** Additional CSS classes */
 	className?: string;
 }
@@ -209,6 +325,7 @@ export function UploadErrorBanner({
 	failedFiles,
 	onRetry,
 	onDismiss,
+	onRetryOne,
 	className,
 }: UploadErrorBannerProps) {
 	const haptic = useHaptic();
@@ -224,6 +341,11 @@ export function UploadErrorBanner({
 		onDismiss();
 	};
 
+	const handleRetryOne = (file: File) => {
+		haptic("medium");
+		onRetryOne?.(file);
+	};
+
 	const count = failedFiles.length;
 	const previewNames = failedFiles
 		.slice(0, 3)
@@ -236,47 +358,86 @@ export function UploadErrorBanner({
 			role="alert"
 			aria-live="assertive"
 			className={cn(
-				"border-destructive/40 bg-destructive/5 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between",
+				"border-destructive/40 bg-destructive/5 flex flex-col gap-3 rounded-lg border p-3",
 				className,
 			)}
 		>
-			<div className="flex items-start gap-2 sm:items-center">
-				<AlertTriangle
-					className="text-destructive mt-0.5 size-5 shrink-0 sm:mt-0"
-					aria-hidden="true"
-				/>
-				<div className="min-w-0">
-					<p className="text-destructive text-sm font-medium">
-						{count} fichier{count > 1 ? "s" : ""} en échec
-					</p>
-					<p className="text-muted-foreground truncate text-xs" title={previewNames}>
-						{previewNames}
-						{suffix}
-					</p>
+			<div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+				<div className="flex items-start gap-2 sm:items-center">
+					<AlertTriangle
+						className="text-destructive mt-0.5 size-5 shrink-0 sm:mt-0"
+						aria-hidden="true"
+					/>
+					<div className="min-w-0">
+						<p className="text-destructive text-sm font-medium">
+							{count} fichier{count > 1 ? "s" : ""} en échec
+						</p>
+						{!onRetryOne && (
+							<p className="text-muted-foreground truncate text-xs" title={previewNames}>
+								{previewNames}
+								{suffix}
+							</p>
+						)}
+					</div>
+				</div>
+				<div className="flex shrink-0 gap-2">
+					<Button
+						type="button"
+						variant="outline"
+						size="sm"
+						onClick={handleRetry}
+						className="min-h-11 gap-1.5"
+					>
+						<RefreshCw className="size-3.5" aria-hidden="true" />
+						Tout réessayer
+					</Button>
+					<Button
+						type="button"
+						variant="ghost"
+						size="icon"
+						onClick={handleDismiss}
+						className="size-11"
+						aria-label="Ignorer les erreurs d'upload"
+					>
+						<X className="size-4" aria-hidden="true" />
+					</Button>
 				</div>
 			</div>
-			<div className="flex shrink-0 gap-2">
-				<Button
-					type="button"
-					variant="outline"
-					size="sm"
-					onClick={handleRetry}
-					className="min-h-11 gap-1.5"
+
+			{onRetryOne && (
+				<ul
+					className="bg-background/50 flex max-h-40 flex-col gap-1.5 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
+					aria-label="Fichiers en échec"
 				>
-					<RefreshCw className="size-3.5" aria-hidden="true" />
-					Réessayer
-				</Button>
-				<Button
-					type="button"
-					variant="ghost"
-					size="icon"
-					onClick={handleDismiss}
-					className="size-11"
-					aria-label="Ignorer les erreurs d'upload"
-				>
-					<X className="size-4" aria-hidden="true" />
-				</Button>
-			</div>
+					{failedFiles.map((entry) => (
+						<li key={entry.fileName} className="flex items-start gap-2 rounded-sm px-2 py-1.5">
+							<AlertTriangle
+								className="text-destructive mt-0.5 size-3.5 shrink-0"
+								aria-hidden="true"
+							/>
+							<div className="min-w-0 flex-1">
+								<p className="truncate font-medium" title={entry.fileName}>
+									{entry.fileName}
+								</p>
+								<p className="text-muted-foreground text-[11px]">{entry.error}</p>
+							</div>
+							{entry.file && (
+								<Button
+									type="button"
+									variant="ghost"
+									size="sm"
+									onClick={() => handleRetryOne(entry.file!)}
+									className="min-h-11 shrink-0 gap-1 px-2 text-xs"
+									aria-label={`Réessayer ${entry.fileName}`}
+								>
+									<RefreshCw className="size-3" aria-hidden="true" />
+									<span className="hidden sm:inline">Réessayer</span>
+								</Button>
+							)}
+						</li>
+					))}
+				</ul>
+			)}
 		</div>
 	);
 }

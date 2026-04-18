@@ -1320,6 +1320,7 @@ model FailedEmail {
   @@index([resolvedAt, nextRetryAt]) // retry cron: resolvedAt IS NULL AND nextRetryAt <= now()
 }
 
+
 // ============================================================================
 // CONTENU EDITABLE (CMS)
 // ============================================================================

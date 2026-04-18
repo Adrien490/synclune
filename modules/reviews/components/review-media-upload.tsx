@@ -55,27 +55,35 @@ export function ReviewMediaUpload({
 	const remaining = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length;
 	const canAddMore = remaining > 0 && !disabled;
 
-	const { upload, retryFailed, clearFailed, isUploading, progress, failedFiles, queuedCount } =
-		useMediaUpload({
-			endpoint: "reviewMedia",
-			maxFiles: REVIEW_CONFIG.MAX_MEDIA_COUNT,
-			maxSizeImage: REVIEW_MAX_SIZE,
-			onSuccess: (results) => {
-				haptic("success");
-				const newMedia = [
-					...media,
-					...results.map((r) => ({ url: r.url, blurDataUrl: r.blurDataUrl })),
-				].slice(0, REVIEW_CONFIG.MAX_MEDIA_COUNT);
-				onChange(newMedia);
-				setPendingFiles([]);
-				toast.success(
-					`${results.length} photo${results.length > 1 ? "s" : ""} ajoutée${results.length > 1 ? "s" : ""}`,
-				);
-			},
-			onError: () => {
-				haptic("error");
-			},
-		});
+	const {
+		upload,
+		retryFailed,
+		retrySingle,
+		clearFailed,
+		isUploading,
+		progress,
+		failedFiles,
+		queuedCount,
+	} = useMediaUpload({
+		endpoint: "reviewMedia",
+		maxFiles: REVIEW_CONFIG.MAX_MEDIA_COUNT,
+		maxSizeImage: REVIEW_MAX_SIZE,
+		onSuccess: (results) => {
+			haptic("success");
+			const newMedia = [
+				...media,
+				...results.map((r) => ({ url: r.url, blurDataUrl: r.blurDataUrl })),
+			].slice(0, REVIEW_CONFIG.MAX_MEDIA_COUNT);
+			onChange(newMedia);
+			setPendingFiles([]);
+			toast.success(
+				`${results.length} photo${results.length > 1 ? "s" : ""} ajoutée${results.length > 1 ? "s" : ""}`,
+			);
+		},
+		onError: () => {
+			haptic("error");
+		},
+	});
 
 	const handleFilesSelected = (files: File[]) => {
 		const remainingSlots = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length - pendingFiles.length;
@@ -174,6 +182,7 @@ export function ReviewMediaUpload({
 				<UploadErrorBanner
 					failedFiles={failedFiles}
 					onRetry={() => void retryFailed()}
+					onRetryOne={(file) => void retrySingle(file)}
 					onDismiss={clearFailed}
 				/>
 			)}
@@ -281,6 +290,8 @@ export function ReviewMediaUpload({
 						phase={progress.phase}
 						currentFileName={progress.current}
 						queuedCount={queuedCount}
+						completedCount={progress.completed}
+						files={progress.files}
 					/>
 				</div>
 			)}

@@ -12,7 +12,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { updateTag } from "next/cache";
 
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
-import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { requestReturnSchema } from "../schemas/refund.schemas";
@@ -177,6 +177,7 @@ export async function requestReturn(
 
 		// 9. Invalidate caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
+		updateTag(REFUNDS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 		updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(result.userId!));

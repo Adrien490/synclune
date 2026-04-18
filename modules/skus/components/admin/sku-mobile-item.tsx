@@ -102,7 +102,7 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</div>
 				)}
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0 flex-wrap">
 						<span className="truncate font-semibold">{sku.sku}</span>
 						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
 						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}

@@ -1,6 +1,10 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Link, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Link, Section, Text } from "@react-email/components";
+import { LEGAL_URLS } from "@/shared/constants/legal-urls";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface RefundCancelledEmailProps {
@@ -19,41 +23,41 @@ export const RefundCancelledEmail = ({
 	return (
 		<EmailLayout preview={`Demande de remboursement de ${formatEuro(refundAmount)} annulée`}>
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Demande de remboursement annulée</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Demande de remboursement annulée</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, votre demande de remboursement de{" "}
 					<strong>{formatEuro(refundAmount)}</strong> concernant la commande{" "}
 					<strong>{orderNumber}</strong> a été annulée par notre équipe.
 				</Text>
 			</Section>
 
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<Text
-						style={{
-							margin: 0,
-							fontSize: "14px",
-							color: EMAIL_COLORS.text.primary,
-						}}
-					>
-						Aucun prélèvement ni remboursement n'a été effectué. Votre commande reste dans son état
-						actuel.
-					</Text>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{
+						margin: 0,
+						fontSize: "14px",
+						color: EMAIL_COLORS.text.primary,
+					}}
+				>
+					Aucun prélèvement ni remboursement n'a été effectué. Votre commande reste dans son état
+					actuel.
+				</Text>
+			</EmailCard>
 
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.text.body}>
+				<Text className={EMAIL_CLASSES.text.body} style={EMAIL_STYLES.text.body}>
 					Si cette annulation ne correspond pas à votre demande, ou si vous souhaitez initier une
 					nouvelle demande de remboursement, n'hésitez pas à nous contacter.
 				</Text>
 			</Section>
 
-			<Section style={{ marginBottom: "12px", textAlign: "center" }}>
-				<Button href="https://synclune.fr/contact" style={EMAIL_STYLES.button.primary}>
-					Nous contacter
-				</Button>
-			</Section>
+			<EmailCTA href={LEGAL_URLS.CONTACT} marginBottom="12px">
+				Nous contacter
+			</EmailCTA>
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
 				<Link href={orderDetailsUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
 					Voir ma commande

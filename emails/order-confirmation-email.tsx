@@ -1,8 +1,13 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { OrderItem, ShippingAddress } from "@/modules/emails/types/email.types";
-import { Button, Hr, Link, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Hr, Link, Section, Text } from "@react-email/components";
+import { LEGAL_URLS } from "@/shared/constants/legal-urls";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
+import { EmailSummaryRow } from "./_components/email-summary-row";
 import { FlexRow } from "./_components/flex-row";
 
 interface OrderConfirmationEmailProps {
@@ -30,23 +35,20 @@ export const OrderConfirmationEmail = ({
 }: OrderConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Commande ${orderNumber} confirmée`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Commande confirmée</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Commande confirmée</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, votre commande est enregistrée.
 				</Text>
 			</Section>
 
-			{/* Numéro de commande */}
-			<Section
-				style={{
-					...EMAIL_STYLES.section.card,
-					marginBottom: "24px",
-					textAlign: "center",
-				}}
-			>
-				<Text style={EMAIL_STYLES.text.small}>Numéro de commande</Text>
+			<EmailCard style={{ marginBottom: "24px", textAlign: "center" }}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+					Numéro de commande
+				</Text>
 				<Text
 					style={{
 						margin: "4px 0 0 0",
@@ -58,11 +60,12 @@ export const OrderConfirmationEmail = ({
 				>
 					{orderNumber}
 				</Text>
-			</Section>
+			</EmailCard>
 
-			{/* Articles */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Articles</Text>
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+					Articles
+				</EmailHeading>
 
 				{items.map((item, index) => (
 					<FlexRow
@@ -75,6 +78,7 @@ export const OrderConfirmationEmail = ({
 						left={
 							<>
 								<Text
+									className={EMAIL_CLASSES.text.body}
 									style={{
 										margin: 0,
 										fontSize: "15px",
@@ -84,7 +88,10 @@ export const OrderConfirmationEmail = ({
 								>
 									{item.productTitle}
 								</Text>
-								<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+								<Text
+									className={EMAIL_CLASSES.text.secondary}
+									style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+								>
 									{[item.skuSize, item.skuColor, item.skuMaterial].filter(Boolean).join(" · ")} ×{" "}
 									{item.quantity}
 								</Text>
@@ -92,6 +99,7 @@ export const OrderConfirmationEmail = ({
 						}
 						right={
 							<Text
+								className={EMAIL_CLASSES.text.body}
 								style={{
 									margin: 0,
 									fontFamily: "monospace",
@@ -108,62 +116,31 @@ export const OrderConfirmationEmail = ({
 
 				<Hr style={{ ...EMAIL_STYLES.hr, margin: "16px 0" }} />
 
-				{/* Totaux */}
-				<FlexRow
+				<EmailSummaryRow
 					style={{ marginBottom: "8px" }}
-					left={<Text style={EMAIL_STYLES.text.small}>Sous-total</Text>}
-					right={
-						<Text
-							style={{
-								margin: 0,
-								fontFamily: "monospace",
-								fontSize: "14px",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							{formatEuro(subtotal)}
-						</Text>
-					}
+					label="Sous-total"
+					value={formatEuro(subtotal)}
+					variant="mono"
 				/>
 				{discount > 0 && (
-					<FlexRow
+					<EmailSummaryRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Réduction</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									color: EMAIL_COLORS.primary,
-								}}
-							>
-								-{formatEuro(discount)}
-							</Text>
-						}
+						label="Réduction"
+						value={`-${formatEuro(discount)}`}
+						variant="highlight"
 					/>
 				)}
-				<FlexRow
+				<EmailSummaryRow
 					style={{ marginBottom: "8px" }}
-					left={<Text style={EMAIL_STYLES.text.small}>Livraison</Text>}
-					right={
-						<Text
-							style={{
-								margin: 0,
-								fontFamily: "monospace",
-								fontSize: "14px",
-								color: EMAIL_COLORS.text.primary,
-							}}
-						>
-							{formatEuro(shipping)}
-						</Text>
-					}
+					label="Livraison"
+					value={formatEuro(shipping)}
+					variant="mono"
 				/>
 
 				<Hr style={{ ...EMAIL_STYLES.hr, margin: "12px 0" }} />
 
 				<FlexRow
-					left={<Text style={EMAIL_STYLES.heading.h3}>Total</Text>}
+					left={<EmailHeading level="h3">Total</EmailHeading>}
 					right={
 						<Text
 							style={{
@@ -180,55 +157,59 @@ export const OrderConfirmationEmail = ({
 				/>
 			</Section>
 
-			{/* Adresse */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Livraison</Text>
-				<Section style={EMAIL_STYLES.section.card}>
-					<Text style={{ ...EMAIL_STYLES.text.body, margin: 0 }}>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Livraison
+				</EmailHeading>
+				<EmailCard>
+					<Text
+						className={EMAIL_CLASSES.text.body}
+						style={{ ...EMAIL_STYLES.text.body, margin: 0 }}
+					>
 						{shippingAddress.firstName} {shippingAddress.lastName}
 					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
+					>
 						{shippingAddress.address1}
 						{shippingAddress.address2 && `, ${shippingAddress.address2}`}
 					</Text>
-					<Text style={EMAIL_STYLES.text.small}>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 						{shippingAddress.postalCode} {shippingAddress.city}, {shippingAddress.country}
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={trackingUrl} style={EMAIL_STYLES.button.primary}>
-					Suivre ma commande
-				</Button>
-			</Section>
+			<EmailCTA href={trackingUrl}>Suivre ma commande</EmailCTA>
 
-			{/* Informations légales */}
 			<Section style={{ marginBottom: "24px" }}>
 				<Hr style={{ ...EMAIL_STYLES.hr, margin: "0 0 16px 0" }} />
-				<Text style={EMAIL_STYLES.text.small}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 					Conformément à l'article L221-18 du Code de la consommation, vous disposez d'un délai de
 					14 jours à compter de la réception de votre commande pour exercer votre droit de
 					rétractation, sans avoir à justifier de motifs ni à payer de pénalités.
 				</Text>
-				<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
+				<Text
+					className={EMAIL_CLASSES.text.secondary}
+					style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}
+				>
 					<Link
-						href="https://synclune.fr/cgv"
+						href={LEGAL_URLS.CGV}
 						style={{ color: EMAIL_COLORS.text.secondary, textDecoration: "underline" }}
 					>
 						Conditions générales de vente
 					</Link>
 					{" · "}
 					<Link
-						href="https://synclune.fr/retractation"
+						href={LEGAL_URLS.WITHDRAWAL}
 						style={{ color: EMAIL_COLORS.text.secondary, textDecoration: "underline" }}
 					>
 						Formulaire de rétractation
 					</Link>
 					{" · "}
 					<Link
-						href="https://synclune.fr/confidentialite"
+						href={LEGAL_URLS.PRIVACY}
 						style={{ color: EMAIL_COLORS.text.secondary, textDecoration: "underline" }}
 					>
 						Politique de confidentialité

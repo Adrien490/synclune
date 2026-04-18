@@ -35,6 +35,9 @@ export const REVIEWS_CACHE_TAGS = {
 
 	/** Avis mis en avant sur la homepage */
 	HOMEPAGE: "homepage-reviews",
+
+	/** Commande chargee pour l'envoi d'email de demande d'avis (cron + webhook) */
+	ORDER_FOR_REQUEST: (orderId: string) => `review-request-order-${orderId}`,
 } as const;
 
 // ============================================
@@ -89,6 +92,16 @@ export function cacheReviewsAdmin() {
 export function cacheHomepageReviews() {
 	cacheLife("products");
 	cacheTag(REVIEWS_CACHE_TAGS.HOMEPAGE);
+}
+
+/**
+ * Configure le cache pour le chargement d'une commande avant envoi d'email de demande d'avis
+ * - Utilisé par : cron review-request-emails (daily), webhook order.delivered
+ * - Profil "userOrders" : 2min stale, 1min revalidate, 10min expire
+ */
+export function cacheOrderForReviewRequest(orderId: string) {
+	cacheLife("userOrders");
+	cacheTag(REVIEWS_CACHE_TAGS.ORDER_FOR_REQUEST(orderId));
 }
 
 // ============================================

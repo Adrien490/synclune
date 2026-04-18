@@ -1,5 +1,8 @@
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface PasswordChangedEmailProps {
@@ -14,17 +17,19 @@ export const PasswordChangedEmail = ({
 	resetUrl,
 }: PasswordChangedEmailProps) => (
 	<EmailLayout preview="Mot de passe modifié">
-		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
-			<Text style={EMAIL_STYLES.heading.h2}>Mot de passe modifié</Text>
-			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+			<EmailHeading level="h1">Mot de passe modifié</EmailHeading>
+			<Text
+				className={EMAIL_CLASSES.text.body}
+				style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+			>
 				Bonjour {userName}, votre mot de passe a été modifié le {changeDate}.
 			</Text>
 		</Section>
 
-		{/* Avertissement */}
-		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
+		<EmailCard style={{ marginBottom: "24px" }}>
 			<Text
+				className={EMAIL_CLASSES.text.body}
 				style={{
 					...EMAIL_STYLES.text.body,
 					margin: 0,
@@ -33,17 +38,15 @@ export const PasswordChangedEmail = ({
 			>
 				Ce n'était pas vous ?
 			</Text>
-			<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
+			<Text
+				className={EMAIL_CLASSES.text.secondary}
+				style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}
+			>
 				Réinitialisez votre mot de passe immédiatement.
 			</Text>
-		</Section>
+		</EmailCard>
 
-		{/* CTA */}
-		<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-			<Button href={resetUrl} style={EMAIL_STYLES.button.primary}>
-				Réinitialiser
-			</Button>
-		</Section>
+		<EmailCTA href={resetUrl}>Réinitialiser</EmailCTA>
 	</EmailLayout>
 );
 

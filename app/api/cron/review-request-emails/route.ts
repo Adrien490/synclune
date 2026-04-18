@@ -18,16 +18,13 @@ export async function GET() {
 	try {
 		const result = await sendDelayedReviewRequestEmails();
 
-		const totalErrors = result.errors + result.reminderErrors;
-		if (totalErrors > 0) {
+		if (result.errors > 0) {
 			sendAdminCronFailedAlert({
 				job: "review-request-emails",
-				errors: totalErrors,
+				errors: result.errors,
 				details: {
 					found: result.found,
 					sent: result.sent,
-					remindersFound: result.remindersFound,
-					remindersSent: result.remindersSent,
 				},
 			}).catch((e) =>
 				logger.error("Cron review-request-emails failed to send admin alert", e, {

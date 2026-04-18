@@ -2,11 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { Skeleton, SkeletonGroup, SkeletonText } from "@/shared/components/ui/skeleton";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import { SEARCH_SYNONYMS } from "../../constants/search-synonyms";
 import type { QuickSearchProduct } from "../../data/quick-search-products";
@@ -25,11 +27,13 @@ const MAX_COLOR_SWATCHES = 3;
  * Shows thumbnail, title with highlighted match, price, and color swatches.
  */
 export function SearchResultItem({ product, query, onSelect }: SearchResultItemProps) {
+	const router = useRouter();
 	const defaultSku = product.skus.find((s) => s.isDefault) ?? product.skus[0];
 	if (!defaultSku) return null;
 
 	const image = defaultSku.images[0];
 	const isOutOfStock = product.skus.every((s) => s.inventory <= 0);
+	const href = `/creations/${product.slug}`;
 
 	// Expand query words with synonyms for highlighting
 	// (e.g. searching "anneau" also highlights "bague" in the title)
@@ -53,11 +57,21 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 
 	const extraColors = colors.length > MAX_COLOR_SWATCHES ? colors.length - MAX_COLOR_SWATCHES : 0;
 
+	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		// Let the browser handle modifier clicks (new tab, etc.)
+		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+		event.preventDefault();
+		onSelect();
+		withViewTransition(() => router.push(href));
+	};
+
 	return (
 		<Tap scale={0.97}>
 			<Link
-				href={`/creations/${product.slug}`}
-				onClick={onSelect}
+				href={href}
+				prefetch
+				onClick={handleClick}
+				onPointerEnter={() => router.prefetch(href)}
 				data-active={undefined}
 				role="option"
 				aria-selected={false}
@@ -69,8 +83,11 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 					"data-[active=true]:bg-muted",
 				)}
 			>
-				{/* Thumbnail */}
-				<div className="bg-muted size-12 shrink-0 overflow-hidden rounded-lg">
+				{/* Thumbnail (view-transition morph to PDP) */}
+				<div
+					className="bg-muted size-12 shrink-0 overflow-hidden rounded-lg"
+					style={{ viewTransitionName: `pdp-thumb-${product.slug}` }}
+				>
 					{image ? (
 						<Image
 							src={image.url}

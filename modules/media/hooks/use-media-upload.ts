@@ -21,6 +21,8 @@ import type {
 	UseMediaUploadReturn,
 	VideoThumbnailResult,
 	FailedUpload,
+	FileProgress,
+	FileProgressState,
 } from "../types/hooks.types";
 import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
 
@@ -97,6 +99,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 						completed: 0,
 						queued: 0,
 						phase: "validating" as const,
+						files: [],
 						...update,
 					};
 			onProgressRef.current?.(newProgress);
@@ -104,8 +107,40 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		});
 	};
 
+	const setFileProgressList = (files: File[]) => {
+		const entries: FileProgress[] = files.map((file) => ({
+			fileName: file.name,
+			state: "queued",
+			percent: 0,
+			sizeBytes: file.size,
+			mediaType: getMediaTypeFromFile(file),
+		}));
+		updateProgress({ files: entries });
+	};
+
+	const updateFileEntry = (fileName: string, update: Partial<FileProgress>) => {
+		setProgress((prev) => {
+			if (!prev?.files) return prev;
+			const nextFiles = prev.files.map((entry) =>
+				entry.fileName === fileName ? { ...entry, ...update } : entry,
+			);
+			const next = { ...prev, files: nextFiles };
+			onProgressRef.current?.(next);
+			return next;
+		});
+	};
+
+	const markFileState = (fileName: string, state: FileProgressState, error?: string) => {
+		updateFileEntry(fileName, {
+			state,
+			percent: state === "done" ? 100 : state === "failed" ? 0 : undefined,
+			error,
+		});
+	};
+
 	const pushFailed = (file: File, error: string) => {
 		setFailedFiles((prev) => [...prev, { fileName: file.name, error, file }]);
+		markFileState(file.name, "failed", error);
 	};
 
 	/**
@@ -114,14 +149,31 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	 */
 	const prepareFiles = async (files: File[]): Promise<File[]> => {
 		const prepared: File[] = [];
+		const needsCompression = files.some(
+			(f) => getMediaTypeFromFile(f) === "IMAGE" && f.size > 1024 * 1024,
+		);
+		if (needsCompression) {
+			updateProgress({ phase: "compressing" });
+		}
+		let originalBytes = 0;
+		let compressedBytes = 0;
 		for (const file of files) {
 			if (getMediaTypeFromFile(file) === "VIDEO") {
 				prepared.push(file);
 				continue;
 			}
+			if (file.size > 1024 * 1024) {
+				updateProgress({ phase: "compressing", current: file.name });
+				markFileState(file.name, "compressing");
+			}
 			try {
+				const originalSize = file.size;
 				const result = await compressImage(file);
 				prepared.push(result.file);
+				if (originalSize > 1024 * 1024 && result.file.size < originalSize) {
+					originalBytes += originalSize;
+					compressedBytes += result.file.size;
+				}
 			} catch (err) {
 				if (err instanceof HeicDecodeError) {
 					toast.error("Format HEIC non supporté", {
@@ -139,6 +191,19 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				}
 			}
 		}
+
+		// Surface compression savings once per batch when meaningful (≥ 30% saved)
+		if (originalBytes > 0) {
+			const ratio = compressedBytes / originalBytes;
+			if (ratio < 0.7) {
+				const percent = Math.round((1 - ratio) * 100);
+				toast.info(`Photos optimisées -${percent}%`, {
+					description: "Économie de bande passante mobile",
+					duration: 4000,
+				});
+			}
+		}
+
 		return prepared;
 	};
 
@@ -327,6 +392,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	): Promise<MediaUploadResult[]> => {
 		// 1. Pre-compress images (> 1MB) and surface HEIC decode failures
 		updateProgress({ phase: "validating" });
+		setFileProgressList(rawFiles);
 		const prepared = await prepareFiles(rawFiles);
 		if (signal.aborted) {
 			throw new DOMException("Operation annulee", "AbortError");
@@ -354,18 +420,19 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				current: images[0]?.name ?? `${images.length} image(s)`,
 				phase: "uploading",
 			});
+			for (const f of images) markFileState(f.name, "uploading");
 			try {
 				const imageResults = await uploadImages(images, signal);
 				uploadResults.push(...imageResults);
 				cumulativeCompletedRef.current += imageResults.length;
 				updateProgress({ completed: cumulativeCompletedRef.current });
 
-				if (imageResults.length < images.length) {
-					const succeededNames = new Set(imageResults.map((r) => r.fileName));
-					for (const f of images) {
-						if (!succeededNames.has(f.name)) {
-							pushFailed(f, "Échec du téléversement");
-						}
+				const succeededNames = new Set(imageResults.map((r) => r.fileName));
+				for (const f of images) {
+					if (succeededNames.has(f.name)) {
+						markFileState(f.name, "done");
+					} else {
+						pushFailed(f, "Échec du téléversement");
 					}
 				}
 			} catch (err) {
@@ -378,10 +445,18 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		if (videos.length > 0) {
 			updateProgress({ phase: "generating-thumbnails" });
+			for (const f of videos) markFileState(f.name, "uploading");
 			const videoResults = await uploadVideos(videos, signal);
 			uploadResults.push(...videoResults);
 			cumulativeCompletedRef.current += videoResults.length;
 			updateProgress({ completed: cumulativeCompletedRef.current });
+			const succeededVideoNames = new Set(videoResults.map((r) => r.fileName));
+			for (const f of videos) {
+				if (succeededVideoNames.has(f.name)) {
+					markFileState(f.name, "done");
+				}
+				// failed videos are already surfaced via pushFailed() inside uploadVideos
+			}
 		}
 
 		return uploadResults;
@@ -493,6 +568,12 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		return upload(toRetry);
 	};
 
+	const retrySingle = async (file: File): Promise<MediaUploadResult | null> => {
+		setFailedFiles((prev) => prev.filter((entry) => entry.file !== file));
+		const results = await upload([file]);
+		return results[0] ?? null;
+	};
+
 	const clearFailed = () => {
 		setFailedFiles([]);
 	};
@@ -503,6 +584,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		validateFiles,
 		cancel,
 		retryFailed,
+		retrySingle,
 		clearFailed,
 		isUploading: isUploadThingUploading || progress !== null,
 		progress,

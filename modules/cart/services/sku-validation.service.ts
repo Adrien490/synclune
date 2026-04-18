@@ -8,7 +8,6 @@ import type {
 import { validateSkuSchema, getSkuDetailsSchema } from "@/modules/cart/schemas/cart.schemas";
 import {
 	fetchSkuForValidation,
-	fetchSkuForDetails,
 	fetchSkusForBatchValidation,
 } from "@/modules/cart/data/get-sku-for-validation";
 
@@ -120,7 +119,7 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 		// Validation des inputs
 		const validatedInput = getSkuDetailsSchema.parse(input);
 
-		const sku = await fetchSkuForDetails(validatedInput.skuId);
+		const sku = await fetchSkuForValidation(validatedInput.skuId);
 
 		if (!sku) {
 			return {

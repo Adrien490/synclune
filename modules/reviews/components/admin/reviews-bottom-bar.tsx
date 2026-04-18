@@ -72,6 +72,7 @@ export function ReviewsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Client, produit..."
 				ariaLabel="Rechercher un avis"
+				scope="reviews"
 			/>
 		</>
 	);

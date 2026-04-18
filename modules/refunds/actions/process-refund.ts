@@ -12,7 +12,7 @@ import { logger } from "@/shared/lib/logger";
 import { ActionStatus } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
-import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 
@@ -185,6 +185,8 @@ export async function processRefund(
 
 			// Invalidate cache so UI reflects FAILED status
 			updateTag(ORDERS_CACHE_TAGS.LIST);
+			updateTag(REFUNDS_CACHE_TAGS.LIST);
+			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
 			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
 			if (refundData.refund.order_user_id) {
@@ -276,6 +278,8 @@ export async function processRefund(
 
 			// Invalider le cache commandes et badges (paymentStatus a changé)
 			updateTag(ORDERS_CACHE_TAGS.LIST);
+			updateTag(REFUNDS_CACHE_TAGS.LIST);
+			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
 			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 			updateTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));

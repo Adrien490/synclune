@@ -199,7 +199,7 @@ describe("subscribeToNewsletter", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
-	it("should return CONFLICT status when subscriber is already confirmed", async () => {
+	it("should return SUCCESS (not CONFLICT) when subscriber already confirmed (anti-enumeration)", async () => {
 		mockSubscribeToNewsletterInternal.mockResolvedValue({
 			success: true,
 			alreadySubscribed: true,
@@ -212,7 +212,7 @@ describe("subscribeToNewsletter", () => {
 			createMockFormData({ email: "user@example.com", consent: "true" }),
 		);
 
-		expect(result.status).toBe(ActionStatus.CONFLICT);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toBe(
 			"Si cette adresse n'est pas encore inscrite, un email de confirmation vous a été envoyé.",
 		);

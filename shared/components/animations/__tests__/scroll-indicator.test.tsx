@@ -5,10 +5,9 @@ import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion, mockScrollY, mockTriggerHaptic } = vi.hoisted(() => ({
+const { mockReducedMotion, mockScrollY } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
 	mockScrollY: { value: 0, listeners: [] as ((v: number) => void)[] },
-	mockTriggerHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -60,10 +59,6 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 		easing: { easeInOut: [0.25, 0.1, 0.25, 1] },
 		background: { scrollIndicator: { duration: 1.5 } },
 	},
-}));
-
-vi.mock("@/shared/hooks/use-haptic", () => ({
-	useHaptic: () => mockTriggerHaptic,
 }));
 
 // ============================================================================
@@ -209,13 +204,5 @@ describe("ScrollIndicator", () => {
 		render(<ScrollIndicator targetIds="section-1" />);
 		const button = screen.getByRole("button");
 		expect(button.tagName).toBe("BUTTON");
-	});
-
-	it("triggers haptic 'light' on click", () => {
-		const target = createTargetElement("haptic-target");
-		target.scrollIntoView = vi.fn();
-		render(<ScrollIndicator targetIds="haptic-target" />);
-		fireEvent.click(screen.getByRole("button"));
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
 	});
 });

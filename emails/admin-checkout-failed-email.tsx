@@ -1,6 +1,9 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
@@ -25,83 +28,91 @@ export const AdminCheckoutFailedEmail = ({
 			preview={`Échec création session Stripe — Commande ${orderNumber}`}
 			headerText="Échec checkout Stripe"
 			footer={
-				<Text style={EMAIL_STYLES.text.tiny}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
 					Vérifiez les logs Vercel et le dashboard Stripe pour plus d'informations.
 				</Text>
 			}
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-				<Text style={EMAIL_STYLES.text.small}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 					La création de la session Stripe Checkout a échoué. La commande a été nettoyée
 					automatiquement.
 				</Text>
 			</Section>
 
-			{/* Details */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{orderNumber}
-							</Text>
-						}
-					/>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Client</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{customerEmail}
-							</Text>
-						}
-					/>
-					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Montant</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{formatEuro(total)}
-							</Text>
-						}
-					/>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Commande
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontFamily: "monospace",
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{orderNumber}
+						</Text>
+					}
+				/>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Client
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{customerEmail}
+						</Text>
+					}
+				/>
+				<FlexRow
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Montant
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{formatEuro(total)}
+						</Text>
+					}
+				/>
+			</EmailCard>
 
-			{/* Error details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Erreur</Text>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Erreur
+				</EmailHeading>
 				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
-			{/* CTA */}
-			<Section style={{ textAlign: "center", marginBottom: "32px" }}>
-				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
-					Voir le dashboard
-				</Button>
-			</Section>
+			<EmailCTA href={dashboardUrl}>Voir le dashboard</EmailCTA>
 		</EmailLayout>
 	);
 };

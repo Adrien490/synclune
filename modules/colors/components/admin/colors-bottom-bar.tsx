@@ -72,6 +72,7 @@ export function ColorsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, slug, hex..."
 				ariaLabel="Rechercher une couleur"
+				scope="colors"
 			/>
 		</>
 	);

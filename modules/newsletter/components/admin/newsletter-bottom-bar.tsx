@@ -72,6 +72,7 @@ export function NewsletterBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Rechercher un email..."
 				ariaLabel="Rechercher un abonne"
+				scope="newsletter"
 			/>
 		</>
 	);

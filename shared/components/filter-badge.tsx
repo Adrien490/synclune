@@ -3,7 +3,7 @@
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 import { m, useMotionValue, useReducedMotion, useTransform } from "motion/react";
@@ -15,11 +15,12 @@ const ANIMATION_PROPS = {
 } as const;
 
 const ICON_VARIANTS = {
-	initial: { opacity: 0.4 },
+	initial: { opacity: 0.6 },
 	hover: { opacity: 1 },
 } as const;
 
 const DRAG_CONSTRAINTS = { left: 0, right: 0 } as const;
+const DRAG_DISMISS_THRESHOLD = 80;
 
 interface FilterBadgeProps {
 	filter: FilterDefinition;
@@ -33,11 +34,20 @@ interface FilterBadgeProps {
 
 export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: FilterBadgeProps) {
 	const shouldReduceMotion = useReducedMotion();
-	const isMobile = useIsMobile();
+	const isTouchDevice = useIsTouchDevice();
 
-	// Swipe-to-dismiss on mobile (hooks must be called before early return)
+	// Swipe-to-dismiss on touch devices (hooks must be called before early return)
 	const x = useMotionValue(0);
-	const opacity = useTransform(x, [-100, 0, 100], [0.3, 1, 0.3]);
+	const dragOpacity = useTransform(
+		x,
+		[-DRAG_DISMISS_THRESHOLD, 0, DRAG_DISMISS_THRESHOLD],
+		[0.2, 1, 0.2],
+	);
+	const dragScale = useTransform(
+		x,
+		[-DRAG_DISMISS_THRESHOLD, 0, DRAG_DISMISS_THRESHOLD],
+		[0.92, 1, 0.92],
+	);
 
 	const formatted = formatFilter?.(filter);
 
@@ -53,7 +63,7 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 
 	// Optimistic removal - instant badge disappearance
 	const handleRemove = () => {
-		triggerHaptic("light");
+		triggerHaptic("selection");
 		let value: string | undefined;
 
 		if (typeof filter.value === "string") {
@@ -76,7 +86,8 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 		},
 		shouldReduceMotion ?? false,
 	);
-	const enableDrag = isMobile && !shouldReduceMotion;
+	const enableDrag = isTouchDevice && !shouldReduceMotion;
+	const enableHover = !isTouchDevice && !shouldReduceMotion;
 
 	return (
 		<m.button
@@ -85,16 +96,20 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 			transition={transitionProps}
 			onClick={handleRemove}
 			aria-label={ariaLabelRemove}
-			whileHover={shouldReduceMotion ? undefined : "hover"}
+			whileHover={enableHover ? "hover" : undefined}
 			drag={enableDrag ? "x" : false}
 			dragConstraints={DRAG_CONSTRAINTS}
 			dragElastic={0.3}
 			onDragEnd={(_, info) => {
-				if (Math.abs(info.offset.x) > 80) {
+				if (Math.abs(info.offset.x) > DRAG_DISMISS_THRESHOLD) {
 					handleRemove();
 				}
 			}}
-			style={{ x, opacity: enableDrag ? opacity : undefined }}
+			style={{
+				x,
+				opacity: enableDrag ? dragOpacity : undefined,
+				scale: enableDrag ? dragScale : undefined,
+			}}
 			className={cn(
 				// Layout
 				"flex items-center gap-1.5",
@@ -107,7 +122,7 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 				// Max width
 				"max-w-70 sm:max-w-80",
 				// States
-				"cursor-pointer",
+				"can-hover:cursor-pointer touch-manipulation",
 				"transition-colors duration-150",
 				"can-hover:hover:bg-accent can-hover:hover:border-primary/40",
 				// Active (mobile)

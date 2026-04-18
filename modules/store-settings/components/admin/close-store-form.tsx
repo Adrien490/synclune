@@ -9,6 +9,7 @@ import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
@@ -28,11 +29,14 @@ export function CloseStoreForm() {
 			onSuccess: (result) => {
 				createToastCallbacks({ loadingMessage: "Fermeture de la boutique..." }).onSuccess(result);
 				form.reset();
+				allowNavigation();
 				router.push("/admin/configuration/boutique");
 			},
 		}),
 		undefined,
 	);
+
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty && !isPending);
 
 	return (
 		<form

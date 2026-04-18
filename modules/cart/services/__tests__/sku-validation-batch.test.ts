@@ -10,7 +10,6 @@ const { mockFetchSkusForBatchValidation } = vi.hoisted(() => ({
 
 vi.mock("@/modules/cart/data/get-sku-for-validation", () => ({
 	fetchSkuForValidation: vi.fn(),
-	fetchSkuForDetails: vi.fn(),
 	fetchSkusForBatchValidation: mockFetchSkusForBatchValidation,
 }));
 

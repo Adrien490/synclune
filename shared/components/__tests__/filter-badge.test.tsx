@@ -5,10 +5,21 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion, mockIsMobile } = vi.hoisted(() => ({
-	mockReducedMotion: { value: false },
-	mockIsMobile: { value: false },
-}));
+const { mockReducedMotion, mockIsTouchDevice, lastMotionProps, mockTriggerHaptic } = vi.hoisted(
+	() => ({
+		mockReducedMotion: { value: false as boolean | null },
+		mockIsTouchDevice: { value: false },
+		lastMotionProps: {
+			value: null as {
+				drag?: unknown;
+				onDragEnd?: (event: unknown, info: { offset: { x: number; y: number } }) => void;
+				whileHover?: unknown;
+				style?: Record<string, unknown>;
+			} | null,
+		},
+		mockTriggerHaptic: vi.fn(),
+	}),
+);
 
 // ============================================================================
 // MODULE MOCKS
@@ -26,17 +37,23 @@ vi.mock("motion/react", () => {
 						animate: _a,
 						exit: _e,
 						transition: _t,
-						whileHover: _wh,
-						drag: _d,
+						whileHover,
+						drag,
 						dragConstraints: _dc,
 						dragElastic: _de,
-						onDragEnd: _ode,
-						style: _s,
+						onDragEnd,
+						style,
 						variants: _v,
 						...props
 					}: Record<string, unknown> & { children?: unknown },
 					ref: unknown,
 				) => {
+					lastMotionProps.value = {
+						drag,
+						onDragEnd: onDragEnd as never,
+						whileHover,
+						style: style as Record<string, unknown> | undefined,
+					};
 					const { createElement } = require("react");
 					return createElement("button", { ref, ...props }, children);
 				},
@@ -71,8 +88,12 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	maybeReduceMotion: (config: unknown) => config,
 }));
 
-vi.mock("@/shared/hooks/use-mobile", () => ({
-	useIsMobile: () => mockIsMobile.value,
+vi.mock("@/shared/hooks/use-touch-device", () => ({
+	useIsTouchDevice: () => mockIsTouchDevice.value,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -105,7 +126,8 @@ describe("FilterBadge", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockReducedMotion.value = false;
-		mockIsMobile.value = false;
+		mockIsTouchDevice.value = false;
+		lastMotionProps.value = null;
 	});
 
 	afterEach(cleanup);
@@ -191,5 +213,88 @@ describe("FilterBadge", () => {
 		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
 		const iconSpan = screen.getByTestId("x-icon").closest("[aria-hidden]");
 		expect(iconSpan).toHaveAttribute("aria-hidden", "true");
+	});
+
+	// ========================================================================
+	// HAPTIC
+	// ========================================================================
+
+	it('triggers "selection" haptic on click (aligned with filter-sections pattern)', () => {
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		fireEvent.click(screen.getByRole("button"));
+		expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	// ========================================================================
+	// DRAG (touch devices only)
+	// ========================================================================
+
+	it("disables drag on non-touch devices (desktop mouse)", () => {
+		mockIsTouchDevice.value = false;
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		expect(lastMotionProps.value?.drag).toBe(false);
+	});
+
+	it("enables drag=x on touch devices", () => {
+		mockIsTouchDevice.value = true;
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		expect(lastMotionProps.value?.drag).toBe("x");
+	});
+
+	it("disables drag when user prefers reduced motion (even on touch)", () => {
+		mockIsTouchDevice.value = true;
+		mockReducedMotion.value = true;
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		expect(lastMotionProps.value?.drag).toBe(false);
+	});
+
+	it("calls onRemove when swipe exceeds 80px threshold", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 120, y: 0 } });
+		expect(onRemove).toHaveBeenCalledWith("color", "red");
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("calls onRemove when swipe exceeds 80px threshold in either direction", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: -120, y: 0 } });
+		expect(onRemove).toHaveBeenCalledWith("color", "red");
+	});
+
+	it("does not call onRemove when swipe is below 80px threshold", () => {
+		mockIsTouchDevice.value = true;
+		const onRemove = vi.fn();
+		render(<FilterBadge filter={baseFilter} onRemove={onRemove} />);
+		lastMotionProps.value?.onDragEnd?.({}, { offset: { x: 50, y: 0 } });
+		expect(onRemove).not.toHaveBeenCalled();
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
+	});
+
+	// ========================================================================
+	// HOVER (desktop only)
+	// ========================================================================
+
+	it("enables whileHover on non-touch desktop", () => {
+		mockIsTouchDevice.value = false;
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		expect(lastMotionProps.value?.whileHover).toBe("hover");
+	});
+
+	it("disables whileHover on touch devices (prevents sticky hover state)", () => {
+		mockIsTouchDevice.value = true;
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		expect(lastMotionProps.value?.whileHover).toBeUndefined();
+	});
+
+	it("disables whileHover when user prefers reduced motion", () => {
+		mockIsTouchDevice.value = false;
+		mockReducedMotion.value = true;
+		render(<FilterBadge filter={baseFilter} onRemove={vi.fn()} />);
+		expect(lastMotionProps.value?.whileHover).toBeUndefined();
 	});
 });

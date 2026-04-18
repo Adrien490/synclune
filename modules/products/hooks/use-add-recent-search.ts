@@ -4,6 +4,7 @@ import { useActionState, useTransition } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
 import { addRecentSearch } from "@/modules/products/actions/add-recent-search";
+import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
 
 interface UseAddRecentSearchOptions {
 	/** Callback apres ajout reussi */
@@ -31,6 +32,9 @@ export function useAddRecentSearch(options?: UseAddRecentSearchOptions) {
 
 	const [isTransitionPending, startTransition] = useTransition();
 
+	const consentAccepted = useCookieConsentStore((state) => state.accepted);
+	const hasHydrated = useCookieConsentStore((state) => state._hasHydrated);
+
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(addRecentSearch, {
 			onSuccess: (result) => {
@@ -46,10 +50,12 @@ export function useAddRecentSearch(options?: UseAddRecentSearchOptions) {
 	);
 
 	/**
-	 * Ajoute un terme aux recherches recentes
+	 * Ajoute un terme aux recherches recentes.
+	 * RGPD : skip silencieusement si le consentement n'est pas accordé.
 	 */
 	const add = (term: string) => {
 		if (isTransitionPending || isActionPending) return;
+		if (!hasHydrated || consentAccepted !== true) return;
 		startTransition(() => {
 			const formData = new FormData();
 			formData.set("term", term);

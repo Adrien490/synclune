@@ -1,5 +1,8 @@
-import { Button, Hr, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Hr, Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface ReviewResponseEmailProps {
@@ -24,15 +27,24 @@ export const ReviewResponseEmail = ({
 	return (
 		<EmailLayout
 			preview={previewText}
-			footer={<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>}
+			footer={
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
+					Merci pour votre confiance !
+				</Text>
+			}
 		>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Nous avons répondu à votre avis !</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Nous avons répondu à votre avis !</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName},
 				</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}
+				>
 					Merci d'avoir pris le temps de partager votre avis sur <strong>{productTitle}</strong>.
 					Nous avons lu votre retour avec attention et nous tenions à vous répondre.
 				</Text>
@@ -40,17 +52,18 @@ export const ReviewResponseEmail = ({
 
 			<Hr style={{ ...EMAIL_STYLES.hr, margin: "24px 0" }} />
 
-			{/* Rappel de l'avis original */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Votre avis</Text>
-				<Section
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+					Votre avis
+				</EmailHeading>
+				<EmailCard
 					style={{
-						...EMAIL_STYLES.section.card,
 						borderLeft: `3px solid ${EMAIL_COLORS.border}`,
 						borderRadius: "0 8px 8px 0",
 					}}
 				>
 					<Text
+						className={EMAIL_CLASSES.text.secondary}
 						style={{
 							...EMAIL_STYLES.text.body,
 							fontStyle: "italic",
@@ -59,21 +72,24 @@ export const ReviewResponseEmail = ({
 					>
 						&ldquo;{reviewContent}&rdquo;
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* Réponse de l'équipe */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Notre réponse</Text>
-				<Section
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+					Notre réponse
+				</EmailHeading>
+				<EmailCard
 					style={{
-						...EMAIL_STYLES.section.card,
 						borderLeft: `3px solid ${EMAIL_COLORS.primary}`,
 						borderRadius: "0 8px 8px 0",
 					}}
 				>
-					<Text style={EMAIL_STYLES.text.body}>{responseContent}</Text>
+					<Text className={EMAIL_CLASSES.text.body} style={EMAIL_STYLES.text.body}>
+						{responseContent}
+					</Text>
 					<Text
+						className={EMAIL_CLASSES.text.secondary}
 						style={{
 							...EMAIL_STYLES.text.small,
 							marginTop: "12px",
@@ -82,17 +98,12 @@ export const ReviewResponseEmail = ({
 					>
 						— {responseAuthorName}
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
 			<Hr style={{ ...EMAIL_STYLES.hr, margin: "24px 0" }} />
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={productUrl} style={EMAIL_STYLES.button.primary}>
-					Voir le produit
-				</Button>
-			</Section>
+			<EmailCTA href={productUrl}>Voir le produit</EmailCTA>
 		</EmailLayout>
 	);
 };

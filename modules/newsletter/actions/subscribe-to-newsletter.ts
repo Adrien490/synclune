@@ -3,7 +3,7 @@
 import { ajNewsletter } from "@/shared/lib/arcjet";
 import { getBaseUrl } from "@/shared/constants/urls";
 import { getClientIp } from "@/shared/lib/rate-limit";
-import { validateInput, handleActionError, success, error, conflict } from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { headers } from "next/headers";
 import { subscribeToNewsletterSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
@@ -66,11 +66,9 @@ export async function subscribeToNewsletter(
 			return error(internalResult.message);
 		}
 
-		if (internalResult.alreadySubscribed) {
-			return conflict(internalResult.message);
-		}
-
-		// Cache already invalidated by subscribeToNewsletterInternal
+		// Return success for all cases (including alreadySubscribed) to prevent
+		// email enumeration via response status. Internal already returns a
+		// generic message that doesn't reveal subscription state.
 		return success(internalResult.message);
 	} catch (e) {
 		return handleActionError(e, "Une erreur est survenue. Veuillez réessayer plus tard.");

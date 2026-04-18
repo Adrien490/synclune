@@ -1,12 +1,10 @@
 "use client";
 
+import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
-
-// Context pour détecter si on est dans un Drawer (évite nested drawers)
-const DrawerContext = React.createContext<boolean>(false);
 
 function Drawer({
 	open,
@@ -27,15 +25,15 @@ function Drawer({
 		}
 	};
 
+	// Stacking : si un Drawer/Sheet Vaul parent est déjà monté, on utilise
+	// `NestedRoot` pour empiler proprement (animation scale + focus-trap chaîné).
+	const isInsideVaul = useIsInsideVaul();
+	const VaulRoot = isInsideVaul ? DrawerPrimitive.NestedRoot : DrawerPrimitive.Root;
+
 	return (
-		<DrawerContext.Provider value={true}>
-			<DrawerPrimitive.Root
-				data-slot="drawer"
-				open={open}
-				onOpenChange={wrappedOnOpenChange}
-				{...props}
-			/>
-		</DrawerContext.Provider>
+		<VaulNestedProvider>
+			<VaulRoot data-slot="drawer" open={open} onOpenChange={wrappedOnOpenChange} {...props} />
+		</VaulNestedProvider>
 	);
 }
 

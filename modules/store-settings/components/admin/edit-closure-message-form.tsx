@@ -5,6 +5,7 @@ import { useActionState } from "react";
 
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -16,6 +17,8 @@ interface EditClosureMessageFormProps {
 }
 
 export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFormProps) {
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+
 	const form = useAppForm({
 		defaultValues: { closureMessage: currentMessage },
 	});
@@ -29,7 +32,18 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 	);
 
 	return (
-		<form action={formAction} className="space-y-3" aria-busy={isPending}>
+		<form
+			ref={formRef}
+			action={formAction}
+			onInvalidCapture={onInvalidCapture}
+			onSubmit={() => {
+				queueMicrotask(() => {
+					focusFirstInvalid();
+				});
+			}}
+			className="space-y-3"
+			aria-busy={isPending}
+		>
 			<form.AppField name="closureMessage">
 				{(field) => (
 					<field.TextareaField
@@ -40,6 +54,8 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 						rows={3}
 						required
 						disabled={isPending}
+						enterKeyHint="next"
+						autoCapitalize="sentences"
 					/>
 				)}
 			</form.AppField>

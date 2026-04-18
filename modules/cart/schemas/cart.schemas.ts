@@ -80,20 +80,6 @@ export const applyCartDiscountSchema = z.object({
 });
 
 /**
- * Schema pour capturer les infos contact guest (abandoned-cart recovery)
- */
-export const setGuestContactInfoSchema = z.object({
-	email: z.email(CART_ERROR_MESSAGES.GUEST_EMAIL_INVALID).max(255),
-	phone: z
-		.string()
-		.trim()
-		.max(30)
-		.optional()
-		.transform((v) => (v === "" ? undefined : v)),
-	marketingConsent: z.boolean().default(false),
-});
-
-/**
  * Schema pour definir les notes/instructions du panier
  */
 export const setCartNotesSchema = z.object({

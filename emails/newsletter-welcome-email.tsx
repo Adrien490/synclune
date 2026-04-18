@@ -1,5 +1,7 @@
-import { Button, Link, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Link, Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface NewsletterWelcomeEmailProps {
@@ -19,24 +21,26 @@ export const NewsletterWelcomeEmail = ({
 		<EmailLayout
 			preview={promoCode ? `Bienvenue — Votre code -10% : ${promoCode}` : "Bienvenue"}
 			footer={
-				<Text style={EMAIL_STYLES.text.tiny}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
 					<Link href={unsubscribeUrl} style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}>
 						Se désinscrire
 					</Link>
 				</Text>
 			}
 		>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Bienvenue</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Bienvenue</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Vous êtes inscrit à la newsletter avec {email}.
 				</Text>
 			</Section>
 
-			{/* Promo code */}
 			{promoCode && (
 				<Section
+					className={EMAIL_CLASSES.card}
 					style={{
 						marginBottom: "24px",
 						padding: "24px",
@@ -45,7 +49,10 @@ export const NewsletterWelcomeEmail = ({
 						textAlign: "center",
 					}}
 				>
-					<Text style={{ ...EMAIL_STYLES.text.body, fontWeight: "600", marginBottom: "8px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.body}
+						style={{ ...EMAIL_STYLES.text.body, fontWeight: "600", marginBottom: "8px" }}
+					>
 						Pour vous remercier, profitez de -10% sur votre première commande :
 					</Text>
 					<Text
@@ -59,18 +66,13 @@ export const NewsletterWelcomeEmail = ({
 					>
 						{promoCode}
 					</Text>
-					<Text style={EMAIL_STYLES.text.small}>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 						Utilisez ce code au moment du paiement. Valable 30 jours, une seule utilisation.
 					</Text>
 				</Section>
 			)}
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={shopUrl} style={EMAIL_STYLES.button.primary}>
-					{promoCode ? "Profiter de -10%" : "Voir les créations"}
-				</Button>
-			</Section>
+			<EmailCTA href={shopUrl}>{promoCode ? "Profiter de -10%" : "Voir les créations"}</EmailCTA>
 		</EmailLayout>
 	);
 };

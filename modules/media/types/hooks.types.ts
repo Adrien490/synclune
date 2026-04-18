@@ -52,6 +52,29 @@ export interface MediaUploadResult {
 	thumbnailUrl?: string;
 }
 
+export type FileProgressState =
+	| "queued"
+	| "validating"
+	| "compressing"
+	| "uploading"
+	| "done"
+	| "failed";
+
+export interface FileProgress {
+	/** Original file name */
+	fileName: string;
+	/** Current file state */
+	state: FileProgressState;
+	/** Percent 0-100 (only meaningful for "uploading"; 100 on "done") */
+	percent: number;
+	/** Original file size in bytes */
+	sizeBytes: number;
+	/** Media type */
+	mediaType: "IMAGE" | "VIDEO";
+	/** Human-readable error message if state === "failed" */
+	error?: string;
+}
+
 export interface UploadProgress {
 	/** Total number of files (current batch + queued) */
 	total: number;
@@ -62,7 +85,9 @@ export interface UploadProgress {
 	/** Number of files waiting in queue */
 	queued: number;
 	/** Current phase */
-	phase: "validating" | "generating-thumbnails" | "uploading" | "done";
+	phase: "validating" | "compressing" | "generating-thumbnails" | "uploading" | "done";
+	/** Per-file progress entries (opt-in, keeps the total stable even after failures) */
+	files?: FileProgress[];
 }
 
 export interface FailedUpload {
@@ -85,6 +110,8 @@ export interface UseMediaUploadReturn {
 	cancel: () => void;
 	/** Re-upload all files currently in the failedFiles list */
 	retryFailed: () => Promise<MediaUploadResult[]>;
+	/** Re-upload a single previously failed file (by reference) */
+	retrySingle: (file: File) => Promise<MediaUploadResult | null>;
 	/** Clear the failedFiles list (after user dismisses the error banner) */
 	clearFailed: () => void;
 	/** Whether an upload is in progress (including queued files) */

@@ -1,18 +1,24 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
+import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { prisma } from "@/shared/lib/prisma";
 
 // ============================================================================
-// TYPES
-// ============================================================================
-
-// ============================================================================
-// SINGLE SKU QUERIES
+// SINGLE SKU QUERY
 // ============================================================================
 
 /**
  * Fetches a SKU with all relations needed for validation (stock check, soft-delete check)
+ *
+ * Cached with `realtime` profile (30s stale / 15s revalidate / 1min expire).
+ * Tags: SKU_STOCK (invalidated on inventory mutations) + SKU_DETAIL_BY_ID
+ * (invalidated on price/status/soft-delete changes).
  */
 export async function fetchSkuForValidation(skuId: string) {
+	"use cache";
+	cacheLife("realtime");
+	cacheTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId), PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
+
 	return prisma.productSku.findUnique({
 		where: { id: skuId },
 		select: {
@@ -60,19 +66,23 @@ export async function fetchSkuForValidation(skuId: string) {
 	});
 }
 
-/**
- * @deprecated Use fetchSkuForValidation instead (identical query)
- */
-export const fetchSkuForDetails = fetchSkuForValidation;
-
 // ============================================================================
 // BATCH SKU QUERY
 // ============================================================================
 
 /**
  * Fetches multiple SKUs in a single query for batch validation (merge carts, cart validation)
+ *
+ * Cached with `realtime` profile. Tags each SKU with SKU_STOCK so any inventory
+ * mutation on any SKU in the batch invalidates this cache entry.
  */
 export async function fetchSkusForBatchValidation(skuIds: string[]) {
+	"use cache";
+	cacheLife("realtime");
+	for (const skuId of skuIds) {
+		cacheTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId), PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
+	}
+
 	return prisma.productSku.findMany({
 		where: { id: { in: skuIds } },
 		select: {

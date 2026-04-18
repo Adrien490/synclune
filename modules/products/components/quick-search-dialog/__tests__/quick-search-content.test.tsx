@@ -49,6 +49,26 @@ vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: (n: number) => `${(n / 100).toFixed(2)} €`,
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (cb: () => void) => cb(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: vi.fn(),
+	useHaptic: () => vi.fn(),
+}));
+
+vi.mock("@/shared/lib/posthog-events", () => ({
+	posthogEvents: {
+		searchPerformed: vi.fn(),
+		searchSuggestionAccepted: vi.fn(),
+	},
+}));
+
 vi.mock("@/modules/products/constants/search-synonyms", () => ({
 	SEARCH_SYNONYMS: new Map(),
 }));

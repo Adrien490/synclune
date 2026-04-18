@@ -94,18 +94,11 @@ describe("sendBackInStockEmail", () => {
 		expect(options.replyTo).toBe("contact@synclune.fr");
 	});
 
-	it("calls renderAndSend with List-Unsubscribe header containing the unsubscribe URL", async () => {
+	it("propagates unsubscribeUrl for RFC 8058 one-click headers", async () => {
 		await sendBackInStockEmail(defaultParams);
 
 		const options = mockRenderAndSend.mock.calls[0]![1];
-		expect(options.headers["List-Unsubscribe"]).toBe(`<${defaultParams.unsubscribeUrl}>`);
-	});
-
-	it("calls renderAndSend with List-Unsubscribe-Post header for one-click", async () => {
-		await sendBackInStockEmail(defaultParams);
-
-		const options = mockRenderAndSend.mock.calls[0]![1];
-		expect(options.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+		expect(options.unsubscribeUrl).toBe(defaultParams.unsubscribeUrl);
 	});
 
 	it("calls renderAndSend with marketing category tag", async () => {

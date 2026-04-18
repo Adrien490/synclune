@@ -4,16 +4,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockFetchSkuForValidation, mockFetchSkuForDetails, mockFetchSkusForBatchValidation } =
-	vi.hoisted(() => ({
-		mockFetchSkuForValidation: vi.fn(),
-		mockFetchSkuForDetails: vi.fn(),
-		mockFetchSkusForBatchValidation: vi.fn(),
-	}));
+const { mockFetchSkuForValidation, mockFetchSkusForBatchValidation } = vi.hoisted(() => ({
+	mockFetchSkuForValidation: vi.fn(),
+	mockFetchSkusForBatchValidation: vi.fn(),
+}));
 
 vi.mock("@/modules/cart/data/get-sku-for-validation", () => ({
 	fetchSkuForValidation: mockFetchSkuForValidation,
-	fetchSkuForDetails: mockFetchSkuForDetails,
 	fetchSkusForBatchValidation: mockFetchSkusForBatchValidation,
 }));
 
@@ -220,7 +217,7 @@ describe("getSkuDetails", () => {
 	});
 
 	it("should return success with sku data", async () => {
-		mockFetchSkuForDetails.mockResolvedValue(createSkuRow());
+		mockFetchSkuForValidation.mockResolvedValue(createSkuRow());
 
 		const result = await getSkuDetails({ skuId: SKU_ID });
 
@@ -230,7 +227,7 @@ describe("getSkuDetails", () => {
 	});
 
 	it("should return error when SKU not found", async () => {
-		mockFetchSkuForDetails.mockResolvedValue(null);
+		mockFetchSkuForValidation.mockResolvedValue(null);
 
 		const result = await getSkuDetails({ skuId: SKU_ID });
 
@@ -243,11 +240,11 @@ describe("getSkuDetails", () => {
 
 		expect(result.success).toBe(false);
 		expect(result.error).toBeDefined();
-		expect(mockFetchSkuForDetails).not.toHaveBeenCalled();
+		expect(mockFetchSkuForValidation).not.toHaveBeenCalled();
 	});
 
 	it("should return general error on unexpected exception", async () => {
-		mockFetchSkuForDetails.mockRejectedValue(new Error("timeout"));
+		mockFetchSkuForValidation.mockRejectedValue(new Error("timeout"));
 
 		const result = await getSkuDetails({ skuId: SKU_ID });
 

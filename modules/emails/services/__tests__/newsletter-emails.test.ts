@@ -110,7 +110,7 @@ describe("sendNewsletterWelcomeEmail", () => {
 		);
 	});
 
-	it("should include List-Unsubscribe headers", async () => {
+	it("should propagate unsubscribeUrl for RFC 8058 one-click headers", async () => {
 		const unsubscribeUrl = "https://test.com/newsletter/desabonnement?token=xyz";
 
 		await sendNewsletterWelcomeEmail({
@@ -121,10 +121,7 @@ describe("sendNewsletterWelcomeEmail", () => {
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.anything(),
 			expect.objectContaining({
-				headers: {
-					"List-Unsubscribe": `<${unsubscribeUrl}>`,
-					"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-				},
+				unsubscribeUrl,
 			}),
 		);
 	});

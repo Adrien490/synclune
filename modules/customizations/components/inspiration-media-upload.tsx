@@ -46,24 +46,32 @@ export function InspirationMediaUpload({
 	const remaining = MAX_INSPIRATION_MEDIAS - medias.length;
 	const canAddMore = remaining > 0;
 
-	const { upload, retryFailed, clearFailed, isUploading, progress, failedFiles, queuedCount } =
-		useMediaUpload({
-			endpoint: "customizationMedia",
-			maxFiles: MAX_INSPIRATION_MEDIAS,
-			maxSizeImage: CUSTOMIZATION_MAX_SIZE,
-			onSuccess: (results) => {
-				haptic("success");
-				const newMedias = [
-					...medias,
-					...results.map((r) => ({ url: r.url, blurDataUrl: r.blurDataUrl })),
-				].slice(0, MAX_INSPIRATION_MEDIAS);
-				onMediasChange(newMedias);
-				setPendingFiles([]);
-			},
-			onError: () => {
-				haptic("error");
-			},
-		});
+	const {
+		upload,
+		retryFailed,
+		retrySingle,
+		clearFailed,
+		isUploading,
+		progress,
+		failedFiles,
+		queuedCount,
+	} = useMediaUpload({
+		endpoint: "customizationMedia",
+		maxFiles: MAX_INSPIRATION_MEDIAS,
+		maxSizeImage: CUSTOMIZATION_MAX_SIZE,
+		onSuccess: (results) => {
+			haptic("success");
+			const newMedias = [
+				...medias,
+				...results.map((r) => ({ url: r.url, blurDataUrl: r.blurDataUrl })),
+			].slice(0, MAX_INSPIRATION_MEDIAS);
+			onMediasChange(newMedias);
+			setPendingFiles([]);
+		},
+		onError: () => {
+			haptic("error");
+		},
+	});
 
 	const handleFilesSelected = (files: File[]) => {
 		const remainingSlots = MAX_INSPIRATION_MEDIAS - medias.length - pendingFiles.length;
@@ -175,6 +183,7 @@ export function InspirationMediaUpload({
 				<UploadErrorBanner
 					failedFiles={failedFiles}
 					onRetry={() => void retryFailed()}
+					onRetryOne={(file) => void retrySingle(file)}
 					onDismiss={clearFailed}
 				/>
 			)}
@@ -274,6 +283,8 @@ export function InspirationMediaUpload({
 						phase={progress.phase}
 						currentFileName={progress.current}
 						queuedCount={queuedCount}
+						completedCount={progress.completed}
+						files={progress.files}
 					/>
 				</div>
 			)}

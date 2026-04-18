@@ -71,6 +71,10 @@ import { useCreateProductForm } from "../use-create-product-form";
 
 const SUCCESS = { status: "success" as const, message: "Produit créé" };
 const ERROR = { status: "error" as const, message: "Erreur création" };
+const VALIDATION_ERROR = {
+	status: "validation_error" as const,
+	message: "Le slug existe déjà",
+};
 
 // ============================================================================
 // Tests
@@ -186,11 +190,63 @@ describe("useCreateProductForm", () => {
 		expect(mockCreateProduct).toHaveBeenCalledTimes(1);
 	});
 
+	// ──────────── onError callback ────────────
+
+	it("calls onError with the message when action fails with ERROR status", async () => {
+		mockCreateProduct.mockResolvedValue(ERROR);
+		const onError = vi.fn();
+		const { result } = renderHook(() => useCreateProductForm({ onError }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onError).toHaveBeenCalledWith("Erreur création");
+	});
+
+	it("does not call onError when action succeeds", async () => {
+		const onError = vi.fn();
+		const { result } = renderHook(() => useCreateProductForm({ onError }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onError).not.toHaveBeenCalled();
+	});
+
+	// ──────────── onValidationError callback ────────────
+
+	it("calls onValidationError (not onError) when status is VALIDATION_ERROR", async () => {
+		mockCreateProduct.mockResolvedValue(VALIDATION_ERROR);
+		const onError = vi.fn();
+		const onValidationError = vi.fn();
+		const { result } = renderHook(() => useCreateProductForm({ onError, onValidationError }));
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(onValidationError).toHaveBeenCalledWith("Le slug existe déjà");
+		expect(onError).not.toHaveBeenCalled();
+	});
+
 	// ──────────── formErrors ────────────
 
 	it("formErrors is an empty array by default", () => {
 		const { result } = renderHook(() => useCreateProductForm());
 
 		expect(result.current.formErrors).toEqual([]);
+	});
+
+	it("formErrors exposes the server error message after a failed submission", async () => {
+		mockCreateProduct.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useCreateProductForm());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(result.current.formErrors).toContain("Erreur création");
 	});
 });

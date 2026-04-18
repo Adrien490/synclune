@@ -1,5 +1,14 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+// ============================================================================
+// HOISTED MOCKS
+// ============================================================================
+
+const { mockUseIsMobile, mockTriggerHaptic } = vi.hoisted(() => ({
+	mockUseIsMobile: vi.fn(() => false),
+	mockTriggerHaptic: vi.fn(() => true),
+}));
 
 // ============================================================================
 // MODULE MOCKS
@@ -24,6 +33,54 @@ vi.mock("@/shared/components/media-upload/media-upload-grid", () => ({
 	}) => <div data-testid="media-upload-grid" data-count={media.length} />,
 }));
 
+vi.mock("@/shared/components/media-upload/upload-progress", () => ({
+	UploadProgress: ({
+		progress,
+		phase,
+		queuedCount,
+		currentFileName,
+		onCancel,
+	}: {
+		progress: number;
+		phase?: string;
+		queuedCount?: number;
+		currentFileName?: string;
+		onCancel?: () => void;
+	}) => (
+		<div
+			data-testid="upload-progress-bar"
+			data-progress={progress}
+			data-phase={phase}
+			data-queued={queuedCount}
+			data-current={currentFileName}
+		>
+			{onCancel && (
+				<button data-testid="upload-cancel" onClick={onCancel}>
+					Annuler
+				</button>
+			)}
+		</div>
+	),
+	UploadErrorBanner: ({
+		failedFiles,
+		onRetry,
+		onDismiss,
+	}: {
+		failedFiles: Array<{ fileName: string; error: string }>;
+		onRetry: () => void;
+		onDismiss: () => void;
+	}) => (
+		<div data-testid="upload-error-banner" data-count={failedFiles.length}>
+			<button data-testid="banner-retry" onClick={onRetry}>
+				Réessayer
+			</button>
+			<button data-testid="banner-dismiss" onClick={onDismiss}>
+				Ignorer
+			</button>
+		</div>
+	),
+}));
+
 vi.mock("@/shared/components/ui/card", () => ({
 	Card: ({ children }: { children: React.ReactNode }) => <div data-testid="card">{children}</div>,
 	CardContent: ({ children }: { children: React.ReactNode }) => (
@@ -35,6 +92,33 @@ vi.mock("@/shared/components/ui/card", () => ({
 	CardTitle: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="card-title">{children}</div>
 	),
+}));
+
+vi.mock("@/shared/components/ui/button", () => ({
+	Button: ({
+		children,
+		onClick,
+		disabled,
+		"aria-label": ariaLabel,
+	}: {
+		children: React.ReactNode;
+		onClick?: () => void;
+		disabled?: boolean;
+		"aria-label"?: string;
+	}) => (
+		<button data-testid="button" onClick={onClick} disabled={disabled} aria-label={ariaLabel}>
+			{children}
+		</button>
+	),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: mockUseIsMobile,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockTriggerHaptic,
+	triggerHaptic: mockTriggerHaptic,
 }));
 
 vi.mock("@/modules/media/utils/uploadthing", () => ({
@@ -65,6 +149,7 @@ vi.mock("@/shared/constants/validation-limits", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
+	Camera: (props: Record<string, unknown>) => <svg data-testid="icon-camera" {...props} />,
 	ImagePlus: (props: Record<string, unknown>) => <svg data-testid="icon-image-plus" {...props} />,
 	Info: (props: Record<string, unknown>) => <svg data-testid="icon-info" {...props} />,
 	Upload: (props: Record<string, unknown>) => <svg data-testid="icon-upload" {...props} />,
@@ -116,13 +201,21 @@ const defaultProps = {
 	uploadProgress: null,
 	handleUpload: vi.fn(),
 	setDeletedImageUrls: vi.fn(),
+	failedFiles: [],
+	onCancel: vi.fn(),
+	onRetry: vi.fn(),
+	onDismissErrors: vi.fn(),
 };
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	mockUseIsMobile.mockReturnValue(false);
+	mockTriggerHaptic.mockClear();
+});
 
 describe("CreateProductMediaCard", () => {
 	describe("rendering", () => {
@@ -249,88 +342,34 @@ describe("CreateProductMediaCard", () => {
 		});
 	});
 
-	describe("upload progress state", () => {
-		it("shows uploading phase text when uploading in empty state", () => {
+	describe("upload progress (shared component)", () => {
+		it("renders shared UploadProgress bar with computed percent during upload", () => {
 			const form = createMediaForm();
 			render(
 				<CreateProductMediaCard
 					form={form as never}
+					{...defaultProps}
 					isMediaUploading={true}
 					uploadProgress={{
 						phase: "uploading",
 						completed: 1,
-						total: 3,
+						total: 4,
 						queued: 0,
 					}}
-					handleUpload={vi.fn()}
-					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
-			expect(screen.getByText("Upload en cours...")).toBeInTheDocument();
+			const bar = screen.getByTestId("upload-progress-bar");
+			expect(bar).toBeInTheDocument();
+			expect(bar).toHaveAttribute("data-progress", "25");
+			expect(bar).toHaveAttribute("data-phase", "uploading");
 		});
 
-		it("shows file count during upload", () => {
+		it("propagates queued count to UploadProgress", () => {
 			const form = createMediaForm();
 			render(
 				<CreateProductMediaCard
 					form={form as never}
-					isMediaUploading={true}
-					uploadProgress={{
-						phase: "uploading",
-						completed: 2,
-						total: 5,
-						queued: 0,
-					}}
-					handleUpload={vi.fn()}
-					setDeletedImageUrls={vi.fn()}
-				/>,
-			);
-			expect(screen.getByText("2 / 5 fichier(s)")).toBeInTheDocument();
-		});
-
-		it("shows validating phase text", () => {
-			const form = createMediaForm();
-			render(
-				<CreateProductMediaCard
-					form={form as never}
-					isMediaUploading={true}
-					uploadProgress={{
-						phase: "validating",
-						completed: 0,
-						total: 2,
-						queued: 0,
-					}}
-					handleUpload={vi.fn()}
-					setDeletedImageUrls={vi.fn()}
-				/>,
-			);
-			expect(screen.getByText("Validation des fichiers...")).toBeInTheDocument();
-		});
-
-		it("shows generating thumbnails phase text", () => {
-			const form = createMediaForm();
-			render(
-				<CreateProductMediaCard
-					form={form as never}
-					isMediaUploading={true}
-					uploadProgress={{
-						phase: "generating-thumbnails",
-						completed: 0,
-						total: 1,
-						queued: 0,
-					}}
-					handleUpload={vi.fn()}
-					setDeletedImageUrls={vi.fn()}
-				/>,
-			);
-			expect(screen.getByText("Génération des miniatures...")).toBeInTheDocument();
-		});
-
-		it("shows queued count when queued > 0", () => {
-			const form = createMediaForm();
-			render(
-				<CreateProductMediaCard
-					form={form as never}
+					{...defaultProps}
 					isMediaUploading={true}
 					uploadProgress={{
 						phase: "uploading",
@@ -338,18 +377,40 @@ describe("CreateProductMediaCard", () => {
 						total: 3,
 						queued: 2,
 					}}
-					handleUpload={vi.fn()}
-					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
-			expect(screen.getByText("+2 en attente")).toBeInTheDocument();
+			expect(screen.getByTestId("upload-progress-bar")).toHaveAttribute("data-queued", "2");
 		});
 
-		it("shows role=status for a11y during upload", () => {
+		it("propagates current file name to UploadProgress", () => {
 			const form = createMediaForm();
 			render(
 				<CreateProductMediaCard
 					form={form as never}
+					{...defaultProps}
+					isMediaUploading={true}
+					uploadProgress={{
+						phase: "compressing",
+						completed: 0,
+						total: 2,
+						queued: 0,
+						current: "photo.heic",
+					}}
+				/>,
+			);
+			const bar = screen.getByTestId("upload-progress-bar");
+			expect(bar).toHaveAttribute("data-phase", "compressing");
+			expect(bar).toHaveAttribute("data-current", "photo.heic");
+		});
+
+		it("renders cancel button wired to onCancel", () => {
+			const form = createMediaForm();
+			const onCancel = vi.fn();
+			render(
+				<CreateProductMediaCard
+					form={form as never}
+					{...defaultProps}
+					onCancel={onCancel}
 					isMediaUploading={true}
 					uploadProgress={{
 						phase: "uploading",
@@ -357,11 +418,113 @@ describe("CreateProductMediaCard", () => {
 						total: 1,
 						queued: 0,
 					}}
-					handleUpload={vi.fn()}
-					setDeletedImageUrls={vi.fn()}
 				/>,
 			);
-			expect(screen.getByRole("status")).toBeInTheDocument();
+			fireEvent.click(screen.getByTestId("upload-cancel"));
+			expect(onCancel).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe("error banner", () => {
+		it("renders UploadErrorBanner when failedFiles has entries", () => {
+			const form = createMediaForm();
+			render(
+				<CreateProductMediaCard
+					form={form as never}
+					{...defaultProps}
+					failedFiles={[
+						{ fileName: "a.jpg", error: "boom", file: new File([], "a.jpg") },
+						{ fileName: "b.jpg", error: "boom", file: new File([], "b.jpg") },
+					]}
+				/>,
+			);
+			const banner = screen.getByTestId("upload-error-banner");
+			expect(banner).toHaveAttribute("data-count", "2");
+		});
+
+		it("does not render UploadErrorBanner when failedFiles is empty", () => {
+			const form = createMediaForm();
+			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
+			expect(screen.queryByTestId("upload-error-banner")).not.toBeInTheDocument();
+		});
+
+		it("wires retry callback", () => {
+			const form = createMediaForm();
+			const onRetry = vi.fn();
+			render(
+				<CreateProductMediaCard
+					form={form as never}
+					{...defaultProps}
+					onRetry={onRetry}
+					failedFiles={[{ fileName: "a.jpg", error: "boom", file: new File([], "a.jpg") }]}
+				/>,
+			);
+			fireEvent.click(screen.getByTestId("banner-retry"));
+			expect(onRetry).toHaveBeenCalledTimes(1);
+		});
+
+		it("wires dismiss callback", () => {
+			const form = createMediaForm();
+			const onDismissErrors = vi.fn();
+			render(
+				<CreateProductMediaCard
+					form={form as never}
+					{...defaultProps}
+					onDismissErrors={onDismissErrors}
+					failedFiles={[{ fileName: "a.jpg", error: "boom", file: new File([], "a.jpg") }]}
+				/>,
+			);
+			fireEvent.click(screen.getByTestId("banner-dismiss"));
+			expect(onDismissErrors).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe("camera capture button (mobile only)", () => {
+		it("renders camera button when on mobile", () => {
+			mockUseIsMobile.mockReturnValue(true);
+			const form = createMediaForm();
+			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
+			expect(screen.getByTestId("icon-camera")).toBeInTheDocument();
+			expect(screen.getByLabelText("Prendre une photo avec l'appareil photo")).toBeInTheDocument();
+		});
+
+		it("does not render camera button on desktop", () => {
+			mockUseIsMobile.mockReturnValue(false);
+			const form = createMediaForm();
+			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
+			expect(screen.queryByTestId("icon-camera")).not.toBeInTheDocument();
+		});
+
+		it("camera input has accept=image/* and capture=environment", () => {
+			mockUseIsMobile.mockReturnValue(true);
+			const form = createMediaForm();
+			const { container } = render(
+				<CreateProductMediaCard form={form as never} {...defaultProps} />,
+			);
+			const input = container.querySelector<HTMLInputElement>('input[type="file"][capture]');
+			expect(input).not.toBeNull();
+			expect(input?.getAttribute("accept")).toBe("image/*");
+			expect(input?.getAttribute("capture")).toBe("environment");
+			expect(input?.multiple).toBe(true);
+		});
+
+		it("camera button click forwards selected files to handleUpload", () => {
+			mockUseIsMobile.mockReturnValue(true);
+			const handleUpload = vi.fn();
+			const form = createMediaForm();
+			const { container } = render(
+				<CreateProductMediaCard
+					form={form as never}
+					{...defaultProps}
+					handleUpload={handleUpload}
+				/>,
+			);
+			const input = container.querySelector<HTMLInputElement>('input[type="file"][capture]')!;
+			const file = new File(["x"], "shot.jpg", { type: "image/jpeg" });
+			Object.defineProperty(input, "files", { value: [file], configurable: true });
+			fireEvent.change(input);
+			expect(handleUpload).toHaveBeenCalledTimes(1);
+			expect(handleUpload.mock.calls[0]![0]).toEqual([file]);
 		});
 	});
 });

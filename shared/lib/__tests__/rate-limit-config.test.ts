@@ -1082,8 +1082,6 @@ describe("ADMIN_STORE_SETTINGS_LIMITS", () => {
 		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("REOPEN_STORE");
 		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("UPDATE_CLOSURE_MESSAGE");
 		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("UPDATE_REOPENS_AT");
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("SCHEDULE_CLOSURE");
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("CANCEL_SCHEDULED_CLOSURE");
 	});
 
 	it("all entries have valid config shape", () => {

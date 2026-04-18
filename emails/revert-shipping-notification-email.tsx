@@ -1,5 +1,8 @@
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface RevertShippingNotificationEmailProps {
@@ -17,20 +20,27 @@ export const RevertShippingNotificationEmail = ({
 }: RevertShippingNotificationEmailProps) => {
 	return (
 		<EmailLayout preview={`Mise à jour de l'expédition - ${orderNumber}`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Expédition mise à jour</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Expédition mise à jour</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, le précédent numéro de suivi de votre commande {orderNumber} n'est
 					plus valide. Votre commande est de nouveau en préparation.
 				</Text>
 			</Section>
 
-			{/* Raison */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<Text style={{ ...EMAIL_STYLES.text.small, fontWeight: "600" }}>Motif</Text>
+				<EmailCard>
 					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, fontWeight: "600" }}
+					>
+						Motif
+					</Text>
+					<Text
+						className={EMAIL_CLASSES.text.body}
 						style={{
 							margin: 0,
 							marginTop: "4px",
@@ -40,23 +50,17 @@ export const RevertShippingNotificationEmail = ({
 					>
 						{reason}
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* Info */}
-			<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.text.small}>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
 					Vous recevrez un nouvel email avec les informations de suivi dès que le colis sera
 					réexpédié.
 				</Text>
-			</Section>
+			</EmailCard>
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
-					Suivre ma commande
-				</Button>
-			</Section>
+			<EmailCTA href={orderDetailsUrl}>Suivre ma commande</EmailCTA>
 		</EmailLayout>
 	);
 };

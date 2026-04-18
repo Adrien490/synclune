@@ -50,9 +50,11 @@ import { sendEmail, renderAndSend } from "../send-email";
 // ============================================================================
 
 describe("sendEmail", () => {
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.resetAllMocks();
 		vi.stubEnv("RESEND_API_KEY", "re_test_123");
+		const { __resetEmailDedupCacheForTests } = await import("../send-email");
+		__resetEmailDedupCacheForTests();
 	});
 
 	it("should return error for missing recipient (empty string)", async () => {
@@ -260,9 +262,11 @@ describe("sendEmail", () => {
 describe("renderAndSend", () => {
 	const mockComponent = { type: "div", props: {}, key: null } as unknown as React.ReactElement;
 
-	beforeEach(() => {
+	beforeEach(async () => {
 		vi.resetAllMocks();
 		vi.stubEnv("RESEND_API_KEY", "re_test_123");
+		const { __resetEmailDedupCacheForTests } = await import("../send-email");
+		__resetEmailDedupCacheForTests();
 	});
 
 	it("should return error for missing recipient without calling render", async () => {

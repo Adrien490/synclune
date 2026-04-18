@@ -15,6 +15,10 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma, notDeleted: { delete
 vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 vi.mock("../../constants/cache", () => ({
 	cacheReviewsAdmin: vi.fn(),
+	cacheOrderForReviewRequest: vi.fn(),
+	REVIEWS_CACHE_TAGS: {
+		ORDER_FOR_REQUEST: (orderId: string) => `review-request-order-${orderId}`,
+	},
 }));
 
 import { getOrderForReviewRequest } from "../get-order-for-review-request";

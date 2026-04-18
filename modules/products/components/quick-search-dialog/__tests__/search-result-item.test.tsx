@@ -49,6 +49,14 @@ vi.mock("@/modules/products/constants/search-synonyms", () => ({
 	SEARCH_SYNONYMS: new Map(),
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (cb: () => void) => cb(),
+}));
+
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { SearchResultItem, SearchResultsSkeleton } from "../search-result-item";

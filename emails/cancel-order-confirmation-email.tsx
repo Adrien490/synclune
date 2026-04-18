@@ -1,8 +1,11 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES, REFUND_DELAY_TEXT } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_STYLES, REFUND_DELAY_TEXT } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
-import { FlexRow } from "./_components/flex-row";
+import { EmailSummaryRow } from "./_components/email-summary-row";
 
 interface CancelOrderConfirmationEmailProps {
 	orderNumber: string;
@@ -23,57 +26,31 @@ export const CancelOrderConfirmationEmail = ({
 }: CancelOrderConfirmationEmailProps) => {
 	return (
 		<EmailLayout preview={`Commande ${orderNumber} annulée`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Commande annulée</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Commande annulée</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, votre commande {orderNumber} a été annulée.
 					{reason && ` Raison : ${reason}`}
 				</Text>
 			</Section>
 
-			{/* Détails */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "600",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{orderNumber}
-							</Text>
-						}
-					/>
-					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Montant</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{formatEuro(orderTotal)}
-							</Text>
-						}
-					/>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<EmailSummaryRow
+					style={{ marginBottom: "8px" }}
+					label="Commande"
+					value={orderNumber}
+					variant="mono"
+				/>
+				<EmailSummaryRow label="Montant" value={formatEuro(orderTotal)} variant="mono" />
+			</EmailCard>
 
-			{/* Info remboursement */}
 			{wasRefunded && (
-				<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
+				<EmailCard style={{ marginBottom: "24px" }}>
 					<Text
+						className={EMAIL_CLASSES.text.body}
 						style={{
 							...EMAIL_STYLES.text.body,
 							margin: 0,
@@ -82,18 +59,16 @@ export const CancelOrderConfirmationEmail = ({
 					>
 						Remboursement
 					</Text>
-					<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
+					<Text
+						className={EMAIL_CLASSES.text.secondary}
+						style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}
+					>
 						Le remboursement de {formatEuro(orderTotal)} sera crédité sous {REFUND_DELAY_TEXT}.
 					</Text>
-				</Section>
+				</EmailCard>
 			)}
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={orderDetailsUrl} style={EMAIL_STYLES.button.primary}>
-					Voir ma commande
-				</Button>
-			</Section>
+			<EmailCTA href={orderDetailsUrl}>Voir ma commande</EmailCTA>
 		</EmailLayout>
 	);
 };

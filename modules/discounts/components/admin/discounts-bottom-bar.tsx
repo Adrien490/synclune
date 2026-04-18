@@ -87,6 +87,7 @@ export function DiscountsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Rechercher un code promo..."
 				ariaLabel="Rechercher un code promo"
+				scope="discounts"
 			/>
 
 			<DiscountsFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

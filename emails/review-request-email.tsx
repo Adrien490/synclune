@@ -1,5 +1,8 @@
-import { Button, Column, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Column, Hr, Img, Link, Row, Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface ReviewableProduct {
@@ -34,8 +37,10 @@ export const ReviewRequestEmail = ({
 			preview={previewText}
 			footer={
 				<>
-					<Text style={EMAIL_STYLES.text.tiny}>Merci pour votre confiance !</Text>
-					<Text style={EMAIL_STYLES.text.tiny}>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
+						Merci pour votre confiance !
+					</Text>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
 						<Link
 							href={unsubscribeUrl}
 							style={{ ...EMAIL_STYLES.link, textDecoration: "underline" }}
@@ -46,33 +51,41 @@ export const ReviewRequestEmail = ({
 				</>
 			}
 		>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>
+				<EmailHeading level="h1">
 					{singleProduct ? "Votre avis compte !" : "Vos avis comptent !"}
-				</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName},
 				</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}
+				>
 					{singleProduct
 						? "Votre commande a bien été livrée. Nous espérons que votre création vous plaît !"
 						: "Votre commande a bien été livrée. Nous espérons que vos créations vous plaisent !"}
 				</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "8px" }}
+				>
 					Prenez quelques instants pour partager votre expérience. Votre avis aide d'autres clientes
 					à faire leur choix et nous permet d'améliorer nos créations.
 				</Text>
 			</Section>
 
-			{/* Produits */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "16px" }}>
+				<EmailHeading level="h3" style={{ marginBottom: "16px" }}>
 					{singleProduct ? "Votre création" : "Vos créations"}
-				</Text>
+				</EmailHeading>
 
 				{products.map((product, index) => (
 					<Row
+						role="presentation"
 						key={product.slug}
 						style={{
 							marginBottom: index < products.length - 1 ? "16px" : "0",
@@ -101,6 +114,7 @@ export const ReviewRequestEmail = ({
 							}}
 						>
 							<Text
+								className={EMAIL_CLASSES.text.body}
 								style={{
 									margin: 0,
 									fontSize: "16px",
@@ -112,6 +126,7 @@ export const ReviewRequestEmail = ({
 							</Text>
 							{product.skuVariants && (
 								<Text
+									className={EMAIL_CLASSES.text.secondary}
 									style={{
 										...EMAIL_STYLES.text.small,
 										marginTop: "4px",
@@ -127,15 +142,9 @@ export const ReviewRequestEmail = ({
 
 			<Hr style={{ ...EMAIL_STYLES.hr, margin: "24px 0" }} />
 
-			{/* Message incitatif */}
-			<Section
-				style={{
-					...EMAIL_STYLES.section.card,
-					marginBottom: "24px",
-					textAlign: "center",
-				}}
-			>
+			<EmailCard style={{ marginBottom: "24px", textAlign: "center" }}>
 				<Text
+					className={EMAIL_CLASSES.text.body}
 					style={{
 						...EMAIL_STYLES.text.body,
 						marginTop: "12px",
@@ -145,17 +154,16 @@ export const ReviewRequestEmail = ({
 					Chaque avis est lu avec attention et contribue
 					<br />à faire grandir notre petite marque artisanale.
 				</Text>
-			</Section>
+			</EmailCard>
 
-			{/* CTA */}
 			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={reviewUrl} style={EMAIL_STYLES.button.primary}>
+				<EmailCTA href={reviewUrl} marginBottom="12px">
 					Donner mon avis
-				</Button>
+				</EmailCTA>
 				<Text
+					className={EMAIL_CLASSES.text.secondary}
 					style={{
 						...EMAIL_STYLES.text.tiny,
-						marginTop: "12px",
 					}}
 				>
 					Cela ne prend que 2 minutes

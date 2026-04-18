@@ -1,5 +1,8 @@
-import { Button, Column, Img, Row, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Column, Img, Row, Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface CustomizationConfirmationEmailProps {
@@ -24,24 +27,21 @@ export const CustomizationConfirmationEmail = ({
 
 	return (
 		<EmailLayout preview={`Votre demande de ${productTypeLabel} personnalisé est bien enregistrée`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Demande reçue</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Demande reçue</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {firstName}, votre demande de {productTypeLabel} personnalisé est bien
 					enregistrée. Je reviens vers vous dès que possible.
 				</Text>
 			</Section>
 
-			{/* Type de produit */}
-			<Section
-				style={{
-					...EMAIL_STYLES.section.card,
-					marginBottom: "24px",
-					textAlign: "center",
-				}}
-			>
-				<Text style={EMAIL_STYLES.text.small}>Type de création</Text>
+			<EmailCard style={{ marginBottom: "24px", textAlign: "center" }}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+					Type de création
+				</Text>
 				<Text
 					style={{
 						margin: "4px 0 0 0",
@@ -52,31 +52,35 @@ export const CustomizationConfirmationEmail = ({
 				>
 					{productTypeLabel}
 				</Text>
-			</Section>
+			</EmailCard>
 
-			{/* Inspirations */}
 			{hasInspirations && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Inspirations</Text>
-					<Section style={EMAIL_STYLES.section.card}>
+					<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+						Inspirations
+					</EmailHeading>
+					<EmailCard>
 						{inspirationProducts.map((product) => (
-							<Text key={product.title} style={EMAIL_STYLES.text.small}>
+							<Text
+								key={product.title}
+								className={EMAIL_CLASSES.text.secondary}
+								style={EMAIL_STYLES.text.small}
+							>
 								• {product.title}
 							</Text>
 						))}
-					</Section>
+					</EmailCard>
 				</Section>
 			)}
 
-			{/* Images d'inspiration */}
 			{hasMedias && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+					<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
 						Vos images d'inspiration
-					</Text>
-					<Section style={EMAIL_STYLES.section.card}>
+					</EmailHeading>
+					<EmailCard>
 						{Array.from({ length: Math.ceil(inspirationMedias.length / 2) }, (_, rowIndex) => (
-							<Row key={rowIndex} style={{ marginBottom: "8px" }}>
+							<Row key={rowIndex} role="presentation" style={{ marginBottom: "8px" }}>
 								{inspirationMedias.slice(rowIndex * 2, rowIndex * 2 + 2).map((media) => (
 									<Column
 										key={media.url}
@@ -102,17 +106,19 @@ export const CustomizationConfirmationEmail = ({
 								))}
 							</Row>
 						))}
-					</Section>
+					</EmailCard>
 				</Section>
 			)}
 
-			{/* Description */}
 			<Section style={{ marginBottom: "32px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Description</Text>
-				<Section style={EMAIL_STYLES.section.card}>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Description
+				</EmailHeading>
+				<EmailCard>
 					{details.split("\n").map((line, i) => (
 						<Text
 							key={i}
+							className={EMAIL_CLASSES.text.body}
 							style={{
 								...EMAIL_STYLES.text.small,
 								color: EMAIL_STYLES.text.body.color,
@@ -122,15 +128,10 @@ export const CustomizationConfirmationEmail = ({
 							{line || "\u00A0"}
 						</Text>
 					))}
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* CTA */}
-			<Section style={{ textAlign: "center", marginBottom: "32px" }}>
-				<Button href={shopUrl} style={EMAIL_STYLES.button.primary}>
-					Découvrir nos créations
-				</Button>
-			</Section>
+			<EmailCTA href={shopUrl}>Découvrir nos créations</EmailCTA>
 		</EmailLayout>
 	);
 };

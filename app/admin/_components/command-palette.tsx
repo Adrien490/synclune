@@ -93,20 +93,22 @@ export function CommandPalette() {
 
 	function handleOpenChange(nextOpen: boolean) {
 		if (nextOpen) {
-			// Snapshot current focus target so we can restore after close.
-			// Radix/Vaul restore to the trigger natively, but this palette has
-			// three entry points (header icon, FAB, ⌘K from any field) so the
-			// snapshot guarantees focus returns to wherever the user was.
-			if (document.activeElement instanceof HTMLElement) {
+			// Snapshot current focus target so we can restore after close (desktop
+			// keyboard users). Skip on mobile: programmatic .focus() on the trigger
+			// re-activates :focus-visible in Chromium, leaving a visible ring after
+			// tap-driven close which is perceived as a bug.
+			if (!isMobile && document.activeElement instanceof HTMLElement) {
 				previousFocusRef.current = document.activeElement;
 				document.activeElement.blur();
 			}
 			open();
 		} else {
 			close();
-			const target = previousFocusRef.current;
-			if (target && document.contains(target)) {
-				setTimeout(() => target.focus({ preventScroll: true }), 0);
+			if (!isMobile) {
+				const target = previousFocusRef.current;
+				if (target && document.contains(target)) {
+					setTimeout(() => target.focus({ preventScroll: true }), 0);
+				}
 			}
 			previousFocusRef.current = null;
 		}

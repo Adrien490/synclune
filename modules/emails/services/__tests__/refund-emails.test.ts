@@ -8,12 +8,8 @@ vi.mock("../send-email", () => ({
 	renderAndSend: mockRenderAndSend,
 }));
 
-vi.mock("@/emails/refund-confirmation-email", () => ({
-	RefundConfirmationEmail: vi.fn((props) => ({ type: "RefundConfirmationEmail", props })),
-}));
-
-vi.mock("@/emails/refund-approved-email", () => ({
-	RefundApprovedEmail: vi.fn((props) => ({ type: "RefundApprovedEmail", props })),
+vi.mock("@/emails/refund-status-email", () => ({
+	RefundStatusEmail: vi.fn((props) => ({ type: "RefundStatusEmail", props })),
 }));
 
 vi.mock("@/emails/refund-rejected-email", () => ({
@@ -57,8 +53,9 @@ describe("sendRefundConfirmationEmail", () => {
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
-				type: "RefundConfirmationEmail",
+				type: "RefundStatusEmail",
 				props: expect.objectContaining({
+					status: "confirmed",
 					orderNumber: "CMD-001",
 					customerName: "Marie Dupont",
 					refundAmount: 5000,
@@ -106,8 +103,9 @@ describe("sendRefundApprovedEmail", () => {
 
 		expect(mockRenderAndSend).toHaveBeenCalledWith(
 			expect.objectContaining({
-				type: "RefundApprovedEmail",
+				type: "RefundStatusEmail",
 				props: expect.objectContaining({
+					status: "approved",
 					orderNumber: "CMD-001",
 					customerName: "Marie Dupont",
 					refundAmount: 5000,

@@ -5,7 +5,6 @@ import * as Sentry from "@sentry/nextjs";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { CustomerKpis } from "@/modules/dashboard/components/customer-kpis";
-import { CartAbandonmentCard } from "@/modules/dashboard/components/cart-abandonment-card";
 import { SalesHeatmap } from "@/modules/dashboard/components/sales-heatmap";
 import { ComparisonModeSelector } from "@/modules/dashboard/components/comparison-mode-selector";
 import { DashboardMobileActionBar } from "@/modules/dashboard/components/dashboard-mobile-action-bar";
@@ -35,7 +34,6 @@ import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchCustomerKpis } from "@/modules/dashboard/data/get-customer-kpis";
-import { fetchCartAbandonment } from "@/modules/dashboard/data/get-cart-abandonment";
 import { fetchSalesHeatmap } from "@/modules/dashboard/data/get-sales-heatmap";
 import { fetchKpiSparklines } from "@/modules/dashboard/data/get-kpi-sparklines";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
@@ -118,26 +116,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						</Suspense>
 					</section>
 
-					{/* SECTION 2 — Insights opérationnels (Pipeline + Paniers) — 2-col sur xl+ */}
+					{/* SECTION 2 — Insights opérationnels (Pipeline) */}
 					<section aria-labelledby="dashboard-section-operations" className="space-y-4">
 						<SectionHeading id="dashboard-section-operations" label="Insights opérationnels" />
 
-						<div className="grid gap-6 xl:grid-cols-2">
-							<Suspense fallback={<FulfillmentSkeleton />}>
-								<FulfillmentWrapper />
-							</Suspense>
-
-							<Suspense
-								fallback={
-									<ChartSkeleton
-										heightClassName="h-32"
-										ariaLabel="Chargement des paniers abandonnés"
-									/>
-								}
-							>
-								<CartAbandonmentWrapper period={period} comparisonMode={comparisonMode} />
-							</Suspense>
-						</div>
+						<Suspense fallback={<FulfillmentSkeleton />}>
+							<FulfillmentWrapper />
+						</Suspense>
 					</section>
 
 					{/* SECTION 3 — Tendances temporelles (Revenu + Heatmap) */}
@@ -273,28 +258,6 @@ async function CustomerKpisWrapper({
 		return null;
 	}
 	return <CustomerKpis kpis={kpis} comparisonLabel={getComparisonLabel(period, comparisonMode)} />;
-}
-
-/**
- * Wrapper async pour les paniers abandonnes - silencieux en cas d'erreur
- */
-async function CartAbandonmentWrapper({
-	period,
-	comparisonMode,
-}: {
-	period: DashboardPeriod;
-	comparisonMode: ComparisonMode;
-}) {
-	let data;
-	try {
-		data = await fetchCartAbandonment(period);
-	} catch (error) {
-		Sentry.captureException(error);
-		return null;
-	}
-	return (
-		<CartAbandonmentCard data={data} comparisonLabel={getComparisonLabel(period, comparisonMode)} />
-	);
 }
 
 /**

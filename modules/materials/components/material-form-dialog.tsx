@@ -16,6 +16,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 export const MATERIAL_DIALOG_ID = "material-form";
 
@@ -32,6 +33,7 @@ interface MaterialDialogData extends Record<string, unknown> {
 
 export function MaterialFormDialog() {
 	const { isOpen, close, data } = useDialog<MaterialDialogData>(MATERIAL_DIALOG_ID);
+	const haptic = useHaptic();
 	const material = data?.material;
 	const isUpdateMode = !!material;
 
@@ -61,6 +63,7 @@ export function MaterialFormDialog() {
 					) {
 						data?.onCreated?.(result.data.id);
 					}
+					haptic("success");
 					close();
 					form.reset();
 				},
@@ -76,6 +79,7 @@ export function MaterialFormDialog() {
 			createToastCallbacks({
 				loadingMessage: "Mise à jour du matériau...",
 				onSuccess: () => {
+					haptic("success");
 					close();
 				},
 			}),

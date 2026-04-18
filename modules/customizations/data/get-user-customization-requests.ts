@@ -45,7 +45,7 @@ export async function getUserCustomizationRequests() {
 
 async function fetchUserCustomizationRequests(userId: string) {
 	"use cache: private";
-	cacheLife("dashboard");
+	cacheLife("userOrders");
 	cacheTag(CUSTOMIZATION_CACHE_TAGS.USER_REQUESTS(userId));
 
 	try {

@@ -72,6 +72,7 @@ export function MaterialsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, slug, description..."
 				ariaLabel="Rechercher un materiau"
+				scope="materials"
 			/>
 		</>
 	);

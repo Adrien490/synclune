@@ -1,6 +1,7 @@
-import { Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "../email-colors";
-import { FlexRow } from "./flex-row";
+import { Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS } from "../email-colors";
+import { EmailCard } from "./email-card";
+import { EmailSummaryRow } from "./email-summary-row";
 
 interface TrackingInfoProps {
 	carrierLabel: string;
@@ -9,12 +10,13 @@ interface TrackingInfoProps {
 
 export const TrackingInfo = ({ carrierLabel, trackingNumber }: TrackingInfoProps) => {
 	return (
-		<Section style={EMAIL_STYLES.section.card}>
-			<FlexRow
+		<EmailCard>
+			<EmailSummaryRow
 				style={{ marginBottom: "8px" }}
-				left={<Text style={EMAIL_STYLES.text.small}>Transporteur</Text>}
-				right={
+				label="Transporteur"
+				value={
 					<Text
+						className={EMAIL_CLASSES.text.body}
 						style={{
 							margin: 0,
 							fontSize: "14px",
@@ -26,23 +28,12 @@ export const TrackingInfo = ({ carrierLabel, trackingNumber }: TrackingInfoProps
 					</Text>
 				}
 			/>
-			<FlexRow
+			<EmailSummaryRow
 				style={{ marginBottom: "0" }}
-				left={<Text style={EMAIL_STYLES.text.small}>Numéro de suivi</Text>}
-				right={
-					<Text
-						style={{
-							margin: 0,
-							fontFamily: "monospace",
-							fontSize: "14px",
-							fontWeight: "600",
-							color: EMAIL_COLORS.text.primary,
-						}}
-					>
-						{trackingNumber}
-					</Text>
-				}
+				label="Numéro de suivi"
+				value={trackingNumber}
+				variant="mono"
 			/>
-		</Section>
+		</EmailCard>
 	);
 };

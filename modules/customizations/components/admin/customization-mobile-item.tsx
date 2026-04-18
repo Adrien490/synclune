@@ -62,7 +62,7 @@ export function CustomizationMobileItem({ request }: CustomizationMobileItemProp
 				aria-roledescription="carte demande"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate">{request.firstName}</span>
 						<CustomizationStatusBadge status={request.status} />
 					</ItemTitle>

@@ -31,6 +31,9 @@ export const ORDERS_CACHE_TAGS = {
 
 	/** Remboursements d'une commande */
 	REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
+
+	/** Commande pour page de confirmation post-paiement (public, double-lookup id+orderNumber) */
+	CONFIRMATION: (orderId: string) => `order-confirmation-${orderId}`,
 } as const;
 
 // ============================================
@@ -79,7 +82,7 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 	}
 
 	if (orderId) {
-		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId));
+		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId), ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
 	}
 
 	return tags;
@@ -100,7 +103,7 @@ export function getOrderMetadataInvalidationTags(userId?: string, orderId?: stri
 	}
 
 	if (orderId) {
-		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId));
+		tags.push(ORDERS_CACHE_TAGS.HISTORY(orderId), ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
 	}
 
 	return tags;

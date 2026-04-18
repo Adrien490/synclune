@@ -95,6 +95,7 @@ export function RefundsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Numero de commande, email..."
 				ariaLabel="Rechercher un remboursement"
+				scope="refunds"
 			/>
 		</>
 	);

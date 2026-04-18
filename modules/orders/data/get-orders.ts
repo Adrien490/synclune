@@ -1,9 +1,11 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_SEARCH_LIMIT } from "@/shared/lib/rate-limit-config";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 import { cacheOrdersDashboard } from "../constants/cache";
 
@@ -40,13 +42,18 @@ export async function getOrders(params: GetOrdersParams): Promise<GetOrdersRetur
 	const validatedParams = validation.data;
 	let fuzzyIds: string[] | null = null;
 	if (validatedParams.search && validatedParams.search.trim().length >= 3) {
-		fuzzyIds = await fuzzySearchIds(validatedParams.search, {
-			columns: [
-				{ table: "Order", column: "customerName" },
-				{ table: "Order", column: "customerEmail" },
-			],
-			baseCondition: Prisma.sql`AND "Order"."deletedAt" IS NULL`,
-		});
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_SEARCH_LIMIT);
+		if ("error" in rateCheck) {
+			fuzzyIds = [];
+		} else {
+			fuzzyIds = await fuzzySearchIds(validatedParams.search, {
+				columns: [
+					{ table: "Order", column: "customerName" },
+					{ table: "Order", column: "customerEmail" },
+				],
+				baseCondition: Prisma.sql`AND "Order"."deletedAt" IS NULL`,
+			});
+		}
 	}
 
 	return fetchOrders(validatedParams, fuzzyIds);

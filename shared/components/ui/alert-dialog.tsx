@@ -5,6 +5,7 @@ import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
 import { buttonVariants } from "@/shared/components/ui/button";
+import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
@@ -41,6 +42,7 @@ function AlertDialog({
 	...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
 	const isMobile = useIsMobile();
+	const isInsideVaul = useIsInsideVaul();
 	const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen ?? false);
 	const isControlled = openProp !== undefined;
 	const open = isControlled ? !!openProp : uncontrolledOpen;
@@ -72,14 +74,21 @@ function AlertDialog({
 	};
 
 	if (isMobile) {
+		// Quand l'AlertDialog s'ouvre à l'intérieur d'un Sheet/Drawer Vaul déjà
+		// monté, on utilise `Drawer.NestedRoot` pour empiler le bottom-sheet par
+		// dessus le parent (scale + translate automatique, focus-trap chaîné,
+		// scroll-lock cumulatif). Sinon on crée un `Drawer.Root` racine.
+		const VaulRoot = isInsideVaul ? DrawerPrimitive.NestedRoot : DrawerPrimitive.Root;
 		return (
 			<AlertDialogCtx.Provider value={ctx}>
-				<DrawerPrimitive.Root
-					open={open}
-					onOpenChange={ctx.onOpenChange}
-					direction="bottom"
-					{...(props as React.ComponentProps<typeof DrawerPrimitive.Root>)}
-				/>
+				<VaulNestedProvider>
+					<VaulRoot
+						open={open}
+						onOpenChange={ctx.onOpenChange}
+						direction="bottom"
+						{...(props as React.ComponentProps<typeof DrawerPrimitive.Root>)}
+					/>
+				</VaulNestedProvider>
 			</AlertDialogCtx.Provider>
 		);
 	}

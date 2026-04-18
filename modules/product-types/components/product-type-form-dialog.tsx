@@ -16,6 +16,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 export const PRODUCT_TYPE_DIALOG_ID = "product-type-form";
 
@@ -31,6 +32,7 @@ interface ProductTypeDialogData extends Record<string, unknown> {
 
 export function ProductTypeFormDialog() {
 	const { isOpen, close, data } = useDialog<ProductTypeDialogData>(PRODUCT_TYPE_DIALOG_ID);
+	const haptic = useHaptic();
 	const productType = data?.productType;
 	const isUpdateMode = !!productType;
 
@@ -59,6 +61,7 @@ export function ProductTypeFormDialog() {
 					) {
 						data?.onCreated?.(result.data.id);
 					}
+					haptic("success");
 					close();
 					form.reset();
 				},
@@ -74,6 +77,7 @@ export function ProductTypeFormDialog() {
 			createToastCallbacks({
 				loadingMessage: "Mise à jour du type...",
 				onSuccess: () => {
+					haptic("success");
 					close();
 				},
 			}),

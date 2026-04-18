@@ -1,6 +1,9 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
@@ -32,113 +35,139 @@ export const AdminInvoiceFailedEmail = ({
 			headerText="Échec génération facture"
 		>
 			<Section style={{ marginBottom: "24px", textAlign: "center" }}>
-				<Text style={EMAIL_STYLES.text.small}>Conformité légale - Action requise</Text>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+					Conformité légale - Action requise
+				</Text>
 			</Section>
 
-			{/* Details */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Commande
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontFamily: "monospace",
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{orderNumber}
+						</Text>
+					}
+				/>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Montant
+						</Text>
+					}
+					right={
+						<Text
+							style={{
+								margin: 0,
+								fontFamily: "monospace",
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.primary,
+							}}
+						>
+							{formatEuro(amount)}
+						</Text>
+					}
+				/>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Client
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{customerEmail}
+						</Text>
+					}
+				/>
+				{customerCompanyName && (
 					<FlexRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
+						left={
+							<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+								Entreprise
+							</Text>
+						}
 						right={
 							<Text
+								className={EMAIL_CLASSES.text.body}
+								style={{
+									margin: 0,
+									fontSize: "14px",
+									color: EMAIL_COLORS.text.primary,
+								}}
+							>
+								{customerCompanyName}
+							</Text>
+						}
+					/>
+				)}
+				{customerSiret && (
+					<FlexRow
+						left={
+							<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+								SIRET
+							</Text>
+						}
+						right={
+							<Text
+								className={EMAIL_CLASSES.text.body}
 								style={{
 									margin: 0,
 									fontFamily: "monospace",
 									fontSize: "14px",
-									fontWeight: "bold",
 									color: EMAIL_COLORS.text.primary,
 								}}
 							>
-								{orderNumber}
+								{customerSiret}
 							</Text>
 						}
 					/>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Montant</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.primary,
-								}}
-							>
-								{formatEuro(amount)}
-							</Text>
-						}
-					/>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Client</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{customerEmail}
-							</Text>
-						}
-					/>
-					{customerCompanyName && (
-						<FlexRow
-							style={{ marginBottom: "8px" }}
-							left={<Text style={EMAIL_STYLES.text.small}>Entreprise</Text>}
-							right={
-								<Text
-									style={{
-										margin: 0,
-										fontSize: "14px",
-										color: EMAIL_COLORS.text.primary,
-									}}
-								>
-									{customerCompanyName}
-								</Text>
-							}
-						/>
-					)}
-					{customerSiret && (
-						<FlexRow
-							left={<Text style={EMAIL_STYLES.text.small}>SIRET</Text>}
-							right={
-								<Text
-									style={{
-										margin: 0,
-										fontFamily: "monospace",
-										fontSize: "14px",
-										color: EMAIL_COLORS.text.primary,
-									}}
-								>
-									{customerSiret}
-								</Text>
-							}
-						/>
-					)}
-				</Section>
-			</Section>
+				)}
+			</EmailCard>
 
-			{/* Error */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Erreur</Text>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Erreur
+				</EmailHeading>
 				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
-			{/* Stripe ID */}
 			{stripePaymentIntentId && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>
+					<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
 						Identifiant Stripe
-					</Text>
-					<Section style={EMAIL_STYLES.section.card}>
-						<Text style={EMAIL_STYLES.text.tiny}>Payment Intent ID</Text>
+					</EmailHeading>
+					<EmailCard>
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
+							Payment Intent ID
+						</Text>
 						<Text
+							className={EMAIL_CLASSES.text.body}
 							style={{
 								margin: 0,
 								marginTop: "4px",
@@ -149,16 +178,11 @@ export const AdminInvoiceFailedEmail = ({
 						>
 							{stripePaymentIntentId}
 						</Text>
-					</Section>
+					</EmailCard>
 				</Section>
 			)}
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
-					Voir la commande
-				</Button>
-			</Section>
+			<EmailCTA href={dashboardUrl}>Voir la commande</EmailCTA>
 		</EmailLayout>
 	);
 };

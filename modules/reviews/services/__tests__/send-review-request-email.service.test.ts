@@ -57,6 +57,14 @@ vi.mock("../../constants/review.constants", () => ({
 		EMAIL_FAILED: "Erreur envoi email",
 	},
 }));
+vi.mock("next/cache", () => ({
+	updateTag: vi.fn(),
+}));
+vi.mock("../../constants/cache", () => ({
+	REVIEWS_CACHE_TAGS: {
+		ORDER_FOR_REQUEST: (orderId: string) => `review-request-order-${orderId}`,
+	},
+}));
 
 import {
 	executeReviewRequestEmail,

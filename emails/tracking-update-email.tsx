@@ -1,5 +1,7 @@
-import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { TrackingInfo } from "./_components/tracking-info";
 
@@ -20,28 +22,22 @@ export const TrackingUpdateEmail = ({
 }: TrackingUpdateEmailProps) => {
 	return (
 		<EmailLayout preview={`Suivi mis à jour - ${orderNumber}`}>
-			{/* Titre */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={EMAIL_STYLES.heading.h2}>Suivi mis à jour</Text>
-				<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+				<EmailHeading level="h1">Suivi mis à jour</EmailHeading>
+				<Text
+					className={EMAIL_CLASSES.text.body}
+					style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+				>
 					Bonjour {customerName}, les informations de suivi de votre commande {orderNumber} ont été
 					mises à jour.
 				</Text>
 			</Section>
 
-			{/* Suivi */}
 			<Section style={{ marginBottom: "24px" }}>
 				<TrackingInfo carrierLabel={carrierLabel} trackingNumber={trackingNumber} />
 			</Section>
 
-			{/* CTA */}
-			{trackingUrl && (
-				<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-					<Button href={trackingUrl} style={EMAIL_STYLES.button.primary}>
-						Suivre mon colis
-					</Button>
-				</Section>
-			)}
+			{trackingUrl && <EmailCTA href={trackingUrl}>Suivre mon colis</EmailCTA>}
 		</EmailLayout>
 	);
 };

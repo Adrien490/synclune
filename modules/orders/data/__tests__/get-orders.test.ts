@@ -14,6 +14,7 @@ const {
 	mockFuzzySearchIds,
 	mockBuildCursorPagination,
 	mockProcessCursorResults,
+	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
@@ -26,6 +27,7 @@ const {
 	mockFuzzySearchIds: vi.fn(),
 	mockBuildCursorPagination: vi.fn(),
 	mockProcessCursorResults: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -49,6 +51,14 @@ vi.mock("@/shared/lib/pagination", () => ({
 
 vi.mock("@/shared/lib/fuzzy-search", () => ({
 	fuzzySearchIds: mockFuzzySearchIds,
+}));
+
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	ADMIN_SEARCH_LIMIT: { limit: 60, windowMs: 60_000 },
 }));
 
 vi.mock("@/shared/utils/sort-direction", () => ({
@@ -155,6 +165,7 @@ function setupDefaults() {
 	mockBuildOrderWhereClause.mockReturnValue({ deletedAt: null });
 	mockGetSortDirection.mockReturnValue("desc");
 	mockFuzzySearchIds.mockResolvedValue(null);
+	mockEnforceRateLimit.mockResolvedValue({ success: true });
 	mockBuildCursorPagination.mockReturnValue({ take: 11 });
 	const orders = [makeOrder()];
 	mockPrisma.order.findMany.mockResolvedValue(orders);
@@ -236,6 +247,28 @@ describe("getOrders", () => {
 
 		expect(mockFuzzySearchIds).not.toHaveBeenCalled();
 		expect(mockBuildOrderWhereClause).toHaveBeenCalledWith(paramsWithShortSearch, null);
+	});
+
+	it("enforces admin search rate limit before fuzzy search", async () => {
+		const paramsWithSearch = { ...makeValidParams(), search: "alice" };
+		mockSchema.safeParse.mockReturnValue({ success: true, data: paramsWithSearch });
+
+		await getOrders(paramsWithSearch);
+
+		expect(mockEnforceRateLimit).toHaveBeenCalledWith({ limit: 60, windowMs: 60_000 });
+	});
+
+	it("skips fuzzy search and returns empty when rate-limited", async () => {
+		const paramsWithSearch = { ...makeValidParams(), search: "alice" };
+		mockSchema.safeParse.mockReturnValue({ success: true, data: paramsWithSearch });
+		mockEnforceRateLimit.mockResolvedValue({
+			error: { status: "error", message: "Rate limit" },
+		});
+
+		await getOrders(paramsWithSearch);
+
+		expect(mockFuzzySearchIds).not.toHaveBeenCalled();
+		expect(mockBuildOrderWhereClause).toHaveBeenCalledWith(paramsWithSearch, []);
 	});
 
 	it("does not perform fuzzy search when search is undefined", async () => {

@@ -38,10 +38,7 @@ export async function sendNewsletterWelcomeEmail({
 	return renderAndSend(NewsletterWelcomeEmail({ email: to, unsubscribeUrl, shopUrl, promoCode }), {
 		to,
 		subject: EMAIL_SUBJECTS.NEWSLETTER_WELCOME,
-		headers: {
-			"List-Unsubscribe": `<${unsubscribeUrl}>`,
-			"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-		},
+		unsubscribeUrl,
 		tags: [{ name: "category", value: "marketing" }],
 	});
 }

@@ -36,7 +36,6 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const pathname = usePathname();
 	const navRef = useRef<HTMLElement>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
-	const previousFocusRef = useRef<HTMLElement | null>(null);
 
 	// Close on navigation
 	useEffect(() => {
@@ -72,14 +71,6 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 
 	function handleOpenChange(open: boolean) {
 		if (open) {
-			// Save trigger element so we can restore focus after close.
-			// Vaul/Radix restore to the trigger natively, but when the sheet is
-			// opened programmatically (bottom-bar tap, palette action), the trigger
-			// may already have lost focus — so we snapshot explicitly.
-			if (document.activeElement instanceof HTMLElement) {
-				previousFocusRef.current = document.activeElement;
-				document.activeElement.blur();
-			}
 			setSearchQuery("");
 			triggerHaptic("light");
 			openMenu();
@@ -87,12 +78,9 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 			triggerHaptic("selection");
 			closeMenu();
 			setSearchQuery("");
-			// Restore focus on next tick — after Vaul portal teardown.
-			const target = previousFocusRef.current;
-			if (target && document.contains(target)) {
-				setTimeout(() => target.focus({ preventScroll: true }), 0);
-			}
-			previousFocusRef.current = null;
+			// No programmatic focus restoration: sheet is mobile-only (md:hidden),
+			// and .focus() on the trigger re-activates :focus-visible in Chromium
+			// after tap-driven close, leaving a visible ring.
 		}
 	}
 

@@ -28,16 +28,6 @@ vi.mock("../edit-reopens-at-form", () => ({
 	EditReopensAtForm: () => <div data-testid="edit-reopens-at-form" />,
 }));
 
-vi.mock("../schedule-closure-form", () => ({
-	ScheduleClosureForm: () => <div data-testid="schedule-closure-form" />,
-}));
-
-vi.mock("../scheduled-closure-card", () => ({
-	ScheduledClosureCard: ({ scheduledCloseAt }: { scheduledCloseAt: Date }) => (
-		<div data-testid="scheduled-closure-card">{scheduledCloseAt.toISOString()}</div>
-	),
-}));
-
 import { StoreSettingsForm } from "../store-settings-form";
 
 import type { StoreSettingsAdmin } from "../../../types/store-settings.types";
@@ -50,14 +40,13 @@ function makeSettings(overrides: Partial<StoreSettingsAdmin> = {}): StoreSetting
 		reopensAt: null,
 		closedAt: null,
 		closedBy: null,
-		scheduledCloseAt: null,
 		updatedAt: new Date("2026-04-18T00:00:00Z"),
 		...overrides,
 	};
 }
 
 describe("StoreSettingsForm", () => {
-	// ─── OPEN, no scheduled ─────────────────────────────────────────────────
+	// ─── OPEN ──────────────────────────────────────────────────────────────
 
 	it("shows 'Ouverte' badge and 'Fermer' link when store is open", () => {
 		render(<StoreSettingsForm settings={makeSettings()} />);
@@ -66,22 +55,6 @@ describe("StoreSettingsForm", () => {
 		const link = screen.getByRole("link", { name: /Fermer la boutique/i });
 		expect(link).toBeInTheDocument();
 		expect(link).toHaveAttribute("href", "/admin/configuration/boutique/fermer");
-	});
-
-	it("renders ScheduleClosureForm when open and no scheduled closure", () => {
-		render(<StoreSettingsForm settings={makeSettings()} />);
-		expect(screen.getByTestId("schedule-closure-form")).toBeInTheDocument();
-		expect(screen.queryByTestId("scheduled-closure-card")).not.toBeInTheDocument();
-	});
-
-	// ─── OPEN, with scheduled ───────────────────────────────────────────────
-
-	it("renders ScheduledClosureCard when open with scheduled closure", () => {
-		const scheduledCloseAt = new Date("2026-05-01T10:00:00Z");
-		render(<StoreSettingsForm settings={makeSettings({ scheduledCloseAt })} />);
-
-		expect(screen.getByTestId("scheduled-closure-card")).toBeInTheDocument();
-		expect(screen.queryByTestId("schedule-closure-form")).not.toBeInTheDocument();
 	});
 
 	// ─── CLOSED ─────────────────────────────────────────────────────────────
@@ -114,20 +87,6 @@ describe("StoreSettingsForm", () => {
 
 		expect(screen.getByTestId("edit-closure-message-form")).toBeInTheDocument();
 		expect(screen.getByTestId("edit-reopens-at-form")).toBeInTheDocument();
-	});
-
-	it("hides Programmation card when closed", () => {
-		render(
-			<StoreSettingsForm
-				settings={makeSettings({
-					isClosed: true,
-					closureMessage: "Maintenance",
-				})}
-			/>,
-		);
-
-		expect(screen.queryByTestId("schedule-closure-form")).not.toBeInTheDocument();
-		expect(screen.queryByTestId("scheduled-closure-card")).not.toBeInTheDocument();
 	});
 
 	it("displays closedBy and closedAt metadata when closed", () => {

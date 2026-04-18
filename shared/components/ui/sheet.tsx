@@ -4,6 +4,7 @@ import { XIcon } from "lucide-react";
 import * as React from "react";
 import { Drawer as SheetPrimitive } from "vaul";
 
+import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 
@@ -36,19 +37,27 @@ function Sheet({
 		id: "sheet",
 	});
 
+	// Stacking : si on est déjà dans un Drawer/Sheet Vaul, on monte un
+	// `NestedRoot` (animation scale parent + focus-trap chaîné) au lieu d'un
+	// nouveau `Root` qui écraserait le parent.
+	const isInsideVaul = useIsInsideVaul();
+	const VaulRoot = isInsideVaul ? SheetPrimitive.NestedRoot : SheetPrimitive.Root;
+
 	// snapPoints, activeSnapPoint, fadeFromIndex sont forwardés via ...props
 	// (types natifs de Vaul.Root — discriminated union on snapPoints presence).
 	return (
 		<SheetContext.Provider value={{ direction }}>
-			<SheetPrimitive.Root
-				data-slot="sheet"
-				direction={direction}
-				open={open}
-				onOpenChange={onOpenChange}
-				scrollLockTimeout={scrollLockTimeout}
-				noBodyStyles
-				{...props}
-			/>
+			<VaulNestedProvider>
+				<VaulRoot
+					data-slot="sheet"
+					direction={direction}
+					open={open}
+					onOpenChange={onOpenChange}
+					scrollLockTimeout={scrollLockTimeout}
+					noBodyStyles
+					{...props}
+				/>
+			</VaulNestedProvider>
 		</SheetContext.Provider>
 	);
 }

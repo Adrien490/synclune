@@ -74,6 +74,7 @@ export function CollectionsBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, slug, description..."
 				ariaLabel="Rechercher une collection"
+				scope="collections"
 			/>
 		</>
 	);

@@ -101,4 +101,40 @@ test.describe("Quick Search Dialog", () => {
 		const trigger = page.getByRole("button", { name: /ouvrir la recherche rapide/i }).first();
 		await expect(trigger).toBeVisible();
 	});
+
+	test("unlikely query shows zero-result empty state with category pills", async ({ page }) => {
+		await page
+			.getByRole("button", { name: /ouvrir la recherche rapide/i })
+			.first()
+			.click();
+
+		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
+		await input.fill("zxqvwpnmjk");
+
+		// Wait for debounce + server action
+		await expect(page.getByText(/aucun résultat/i)).toBeVisible({ timeout: 5000 });
+	});
+
+	test("SearchAction JSON-LD uses the ?search= query parameter", async ({ page }) => {
+		// Validates P1.1 fix (schema.org SearchAction pointing to actual param name)
+		await page.goto("/");
+		const jsonLdPayloads = await page
+			.locator('script[type="application/ld+json"]')
+			.allTextContents();
+		const hasFixedSearchAction = jsonLdPayloads.some((raw) => {
+			try {
+				const parsed = JSON.parse(raw);
+				const data = Array.isArray(parsed) ? parsed : [parsed];
+				return data.some(
+					(entry) =>
+						entry?.potentialAction?.["@type"] === "SearchAction" &&
+						typeof entry?.potentialAction?.target?.urlTemplate === "string" &&
+						entry.potentialAction.target.urlTemplate.includes("?search="),
+				);
+			} catch {
+				return false;
+			}
+		});
+		expect(hasFixedSearchAction).toBe(true);
+	});
 });

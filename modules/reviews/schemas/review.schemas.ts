@@ -219,13 +219,6 @@ export const sendReviewRequestEmailSchema = z.object({
 	orderId: z.cuid2("ID de commande invalide"),
 });
 
-/**
- * Schema de validation pour l'envoi d'email de rappel d'avis (admin)
- */
-export const sendReviewReminderEmailSchema = z.object({
-	orderId: z.cuid2("ID de commande invalide"),
-});
-
 // ============================================================================
 // RESTORE SCHEMAS (Admin)
 // ============================================================================

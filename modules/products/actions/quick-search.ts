@@ -1,5 +1,6 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { z } from "zod";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { logger } from "@/shared/lib/logger";
@@ -18,6 +19,7 @@ const EMPTY_RESULT: QuickSearchResult = {
 const quickSearchSchema = z.string().trim().max(100);
 
 export async function quickSearch(query: string): Promise<QuickSearchResult> {
+	const startTime = performance.now();
 	try {
 		const rateCheck = await enforceRateLimitForCurrentUser(PRODUCT_SEARCH_LIMIT);
 		if ("error" in rateCheck) return { kind: "rate-limited" };
@@ -29,16 +31,38 @@ export async function quickSearch(query: string): Promise<QuickSearchResult> {
 
 		const result = await quickSearchProducts(sanitizedQuery);
 
-		// Structured logging for search analytics (picked up by log aggregator)
 		if (result.kind === "success" && result.totalCount === 0) {
+			const responseTimeMs = Math.round(performance.now() - startTime);
+			const sanitizedTerm = sanitizeForLog(sanitizedQuery);
+			const hasSuggestion = Boolean(result.suggestion);
+
 			logger.warn(
-				`Zero-result search | term="${sanitizeForLog(sanitizedQuery)}" | suggestion="${result.suggestion ?? "none"}"`,
+				`Zero-result search | term="${sanitizedTerm}" | suggestion="${result.suggestion ?? "none"}" | duration=${responseTimeMs}ms`,
 				{ action: "quick-search" },
 			);
+
+			Sentry.captureMessage("search.zero_result", {
+				level: "info",
+				tags: {
+					action: "quick-search",
+					kind: "zero-result",
+					hasSuggestion: String(hasSuggestion),
+				},
+				extra: {
+					term: sanitizedTerm,
+					suggestion: result.suggestion ?? null,
+					responseTimeMs,
+				},
+			});
 		}
 
 		return result;
-	} catch {
+	} catch (error) {
+		logger.error("Quick search failed", error, {
+			action: "quick-search",
+			service: "quick-search",
+			term: sanitizeForLog(query),
+		});
 		return { kind: "error" };
 	}
 }

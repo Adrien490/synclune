@@ -2,8 +2,6 @@
  * Animations Synclune — wrappers Motion / CSS production-ready 2026.
  *
  * Tous les wrappers respectent prefers-reduced-motion.
- * Les composants interactifs (Tap, ErrorShake, ScrollIndicator, AnimatedNumber opt-in)
- * intègrent useHaptic (Vibration API) avec fallback no-op iOS Safari.
  *
  * Le LazyMotion + features domAnimation sont déjà montés au niveau racine via
  * `shared/providers/motion-provider.tsx` — les composants utilisent `m.` (~6kb).
@@ -24,7 +22,7 @@ export type {
 	ViewportAmount,
 } from "./types";
 
-// Gestures & interactivité (haptic)
+// Gestures & interactivité
 export { Tap, type TapProps } from "./tap";
 export { Hover, type HoverProps } from "./hover";
 export { Pulse, type PulseProps } from "./pulse";

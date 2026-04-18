@@ -37,6 +37,10 @@ vi.mock("../constants/cache", () => ({
 	ORDERS_CACHE_TAGS: {
 		LIST: "orders-list",
 	},
+	REFUNDS_CACHE_TAGS: {
+		LIST: "refunds-list",
+		DETAIL: (id: string) => `refund-${id}`,
+	},
 }));
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {
@@ -92,17 +96,18 @@ describe("refreshRefunds", () => {
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
-	it("should invalidate orders list, admin badges, and dashboard tags on success", async () => {
+	it("should invalidate orders list, refunds list, admin badges, and dashboard tags on success", async () => {
 		mockSuccess.mockReturnValue({
 			status: ActionStatus.SUCCESS,
 			message: "Remboursements rafraichis",
 		});
 		await refreshRefunds(undefined, mockFormData);
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("refunds-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
 		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-recent-orders");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(4);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(5);
 	});
 
 	it("should return success after cache invalidation", async () => {

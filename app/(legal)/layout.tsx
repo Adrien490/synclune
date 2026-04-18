@@ -18,12 +18,7 @@ export default async function LegalLayout({ children }: { children: React.ReactN
 
 	return (
 		<>
-			{(storeStatus.isClosed || storeStatus.scheduledCloseAt) && (
-				<MaintenanceBanner
-					closureMessage={storeStatus.isClosed ? storeStatus.closureMessage : null}
-					scheduledCloseAt={storeStatus.scheduledCloseAt}
-				/>
-			)}
+			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
 			<Suspense fallback={null}>
 				<AnnouncementBarWrapper />
 			</Suspense>

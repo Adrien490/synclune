@@ -1,10 +1,12 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { cacheLife, cacheTag } from "next/cache";
 import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
+import { ADMIN_SEARCH_LIMIT } from "@/shared/lib/rate-limit-config";
 import { z } from "zod";
 
 import {
@@ -42,13 +44,18 @@ export async function getUsers(params: GetUsersParams): Promise<GetUsersReturn> 
 		// Fuzzy search on name/email for typo tolerance
 		let fuzzyIds: string[] | null = null;
 		if (validatedParams.search && validatedParams.search.trim().length >= 3) {
-			fuzzyIds = await fuzzySearchIds(validatedParams.search, {
-				columns: [
-					{ table: "User", column: "name", nullable: true },
-					{ table: "User", column: "email" },
-				],
-				baseCondition: Prisma.sql`AND "User"."deletedAt" IS NULL`,
-			});
+			const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_SEARCH_LIMIT);
+			if ("error" in rateCheck) {
+				fuzzyIds = [];
+			} else {
+				fuzzyIds = await fuzzySearchIds(validatedParams.search, {
+					columns: [
+						{ table: "User", column: "name", nullable: true },
+						{ table: "User", column: "email" },
+					],
+					baseCondition: Prisma.sql`AND "User"."deletedAt" IS NULL`,
+				});
+			}
 		}
 
 		return await fetchUsers(validatedParams, fuzzyIds);

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ChevronRight, Search } from "lucide-react";
 import { posthogEvents } from "@/shared/lib/posthog-events";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -86,14 +87,18 @@ export function QuickSearchContent({
 					<div className="space-y-4 px-4 py-4">
 						{/* Spell suggestion */}
 						{suggestion && (
-							<p className="text-muted-foreground text-sm">
+							<p role="status" aria-live="polite" className="text-muted-foreground text-sm">
 								Vouliez-vous dire{" "}
 								<button
 									type="button"
 									role="option"
 									aria-selected={false}
 									aria-label={`Rechercher ${suggestion}`}
-									onClick={() => onSearch(suggestion)}
+									onClick={() => {
+										triggerHaptic("selection");
+										posthogEvents.searchSuggestionAccepted(query, suggestion);
+										onSearch(suggestion);
+									}}
 									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 								>
 									{suggestion}
@@ -144,14 +149,22 @@ export function QuickSearchContent({
 
 						{/* Rate limited */}
 						{isRateLimited && (
-							<p className="text-muted-foreground py-4 text-center text-sm">
+							<p
+								role="status"
+								aria-live="polite"
+								className="text-muted-foreground py-4 text-center text-sm"
+							>
 								Trop de requêtes, veuillez patienter quelques instants.
 							</p>
 						)}
 
 						{/* Server error */}
 						{isError && !isRateLimited && (
-							<p className="text-muted-foreground py-4 text-center text-sm">
+							<p
+								role="alert"
+								aria-live="assertive"
+								className="text-muted-foreground py-4 text-center text-sm"
+							>
 								Une erreur est survenue lors de la recherche. Veuillez réessayer.
 							</p>
 						)}
@@ -182,7 +195,7 @@ export function QuickSearchContent({
 
 						{/* Empty state */}
 						{showEmptyState && (
-							<Empty variant="borderless" size="sm">
+							<Empty variant="borderless" size="sm" role="status" aria-live="polite">
 								<EmptyHeader>
 									<EmptyMedia variant="icon">
 										<Search className="size-5" aria-hidden="true" />

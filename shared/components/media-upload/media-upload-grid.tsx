@@ -11,8 +11,11 @@ import { Play } from "lucide-react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useLightbox } from "@/shared/hooks";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "@/shared/utils/toast";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import { lazy, Suspense } from "react";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
@@ -49,6 +52,7 @@ export function MediaUploadGrid({
 }: MediaUploadGridProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
+	const isMobile = useIsMobile();
 
 	// Image loading state
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -69,9 +73,12 @@ export function MediaUploadGrid({
 	// Condition to show the hint (only when there are at least 2 medias)
 	const hasMultipleMedia = media.length > 1;
 
-	// Show long-press hint for new users on mobile (once only)
+	// Show long-press hint for new users on mobile (once only) — P2.5
 	useEffect(() => {
 		if (typeof window === "undefined") return;
+		// Desktop drag-and-drop is discoverable via the alternative Up/Down buttons;
+		// the hint targets mobile users who need to discover the long-press gesture.
+		if (!isMobile) return;
 		try {
 			const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
 			if (hasSeenHint) return;
@@ -82,7 +89,10 @@ export function MediaUploadGrid({
 
 		// Show the hint only if there are at least 2 medias
 		if (hasMultipleMedia) {
-			queueMicrotask(() => setShowLongPressHint(true));
+			queueMicrotask(() => {
+				setShowLongPressHint(true);
+				triggerHaptic("selection");
+			});
 			const timer = setTimeout(() => {
 				setShowLongPressHint(false);
 				try {
@@ -93,7 +103,7 @@ export function MediaUploadGrid({
 			}, UI_DELAYS.HINT_DISAPPEAR_MS);
 			return () => clearTimeout(timer);
 		}
-	}, [hasMultipleMedia]);
+	}, [hasMultipleMedia, isMobile]);
 
 	// Prepare slides for the lightbox
 	const slides: Slide[] = media.map((m) => {
@@ -151,6 +161,7 @@ export function MediaUploadGrid({
 
 		// Prevent a video from ending up in first position (covers all cases)
 		if (newMedia[0]?.mediaType === "VIDEO") {
+			triggerHaptic("error");
 			toast.error("La première position doit être une image, pas une vidéo.");
 			setAnnouncement("Impossible de placer une vidéo en première position.");
 			return;
@@ -159,7 +170,8 @@ export function MediaUploadGrid({
 		const draggedMedia = media[oldIndex];
 		const mediaType = draggedMedia?.mediaType === "VIDEO" ? "Vidéo" : "Image";
 
-		onChange(newMedia);
+		triggerHaptic("selection");
+		withViewTransition(() => onChange(newMedia));
 
 		// Screen reader feedback
 		setAnnouncement(`${mediaType} déplacée en position ${newIndex + 1}.`);
@@ -175,12 +187,14 @@ export function MediaUploadGrid({
 				const newMedia = media.filter((_, i) => i !== index);
 				// Prevent a video in first position after deletion
 				if (newMedia[0]?.mediaType === "VIDEO") {
+					triggerHaptic("error");
 					toast.error(
 						"Impossible : une vidéo passerait en première position. Réorganisez d'abord.",
 					);
 					return;
 				}
-				onChange(newMedia);
+				triggerHaptic("success");
+				withViewTransition(() => onChange(newMedia));
 			},
 		});
 	};
@@ -191,10 +205,12 @@ export function MediaUploadGrid({
 		const newMedia = arrayMove(media, index, index - 1);
 		// Prevent a video in first position
 		if (newMedia[0]?.mediaType === "VIDEO") {
+			triggerHaptic("error");
 			toast.error("La première position doit être une image, pas une vidéo.");
 			return;
 		}
-		onChange(newMedia);
+		triggerHaptic("selection");
+		withViewTransition(() => onChange(newMedia));
 		setAnnouncement(`Média déplacé en position ${index}.`);
 	};
 
@@ -203,10 +219,12 @@ export function MediaUploadGrid({
 		const newMedia = arrayMove(media, index, index + 1);
 		// Prevent a video in first position
 		if (newMedia[0]?.mediaType === "VIDEO") {
+			triggerHaptic("error");
 			toast.error("La première position doit être une image, pas une vidéo.");
 			return;
 		}
-		onChange(newMedia);
+		triggerHaptic("selection");
+		withViewTransition(() => onChange(newMedia));
 		setAnnouncement(`Média déplacé en position ${index + 2}.`);
 	};
 

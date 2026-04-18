@@ -27,10 +27,7 @@ export async function sendBackInStockEmail({
 			to,
 			subject: EMAIL_SUBJECTS.BACK_IN_STOCK,
 			replyTo: EMAIL_CONTACT,
-			headers: {
-				"List-Unsubscribe": `<${unsubscribeUrl}>`,
-				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-			},
+			unsubscribeUrl,
 			tags: [{ name: "category", value: "marketing" }],
 		},
 	);

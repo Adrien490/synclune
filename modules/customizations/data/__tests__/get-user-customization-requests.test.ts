@@ -181,13 +181,13 @@ describe("getUserCustomizationRequests", () => {
 		expect(result).toEqual([]);
 	});
 
-	it("calls cacheLife with dashboard profile", async () => {
+	it("calls cacheLife with userOrders profile (user-scoped, ~2min stale)", async () => {
 		mockGetSession.mockResolvedValue({ user: { id: "user-1" } });
 		mockPrisma.customizationRequest.findMany.mockResolvedValue([]);
 
 		await getUserCustomizationRequests();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("userOrders");
 	});
 
 	it("calls cacheTag with user-specific requests tag", async () => {

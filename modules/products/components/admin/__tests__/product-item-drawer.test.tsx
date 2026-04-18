@@ -268,12 +268,14 @@ describe("ProductItemDrawer", () => {
 		expect(screen.queryByText("Passer en brouillon")).not.toBeInTheDocument();
 	});
 
-	it("Dupliquer déclenche haptic light + ouvre l'alert + ferme le drawer", () => {
+	it("Dupliquer déclenche haptic light + ouvre l'alert (drawer reste empilé)", () => {
 		setData();
 		render(<ProductItemDrawer />);
 		fireEvent.click(screen.getByText("Dupliquer"));
 		expect(mockHaptic).toHaveBeenCalledWith("light");
-		expect(mockDrawerClose).toHaveBeenCalled();
+		// L'AlertDialog s'empile au-dessus du drawer (Vaul NestedRoot) — le drawer
+		// parent ne doit PAS se fermer pour préserver le contexte visuel.
+		expect(mockDrawerClose).not.toHaveBeenCalled();
 		expect(mockDuplicateOpen).toHaveBeenCalledWith({
 			productId: "p-1",
 			productTitle: "Anneau doré",

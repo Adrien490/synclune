@@ -290,4 +290,17 @@ describe("Gallery", () => {
 			expect(region).toHaveAttribute("aria-roledescription", "carrousel");
 		});
 	});
+
+	describe("mobile thumbnail safe-area (P1.1)", () => {
+		it("applies safe-area insets on mobile thumbnail scroll container", () => {
+			const images = [createMedia("m-1"), createMedia("m-2")];
+			vi.mocked(buildGallery).mockReturnValue(images);
+			const { container } = render(<Gallery product={createProduct()} title="Bague étoile" />);
+			// Find mobile tablist wrapper — the one inside md:hidden wrapper
+			const mobileTablist = container.querySelector(
+				'[role="tablist"][aria-label="Vignettes"].pl-\\[env\\(safe-area-inset-left\\,0px\\)\\]',
+			);
+			expect(mobileTablist).toBeInTheDocument();
+		});
+	});
 });

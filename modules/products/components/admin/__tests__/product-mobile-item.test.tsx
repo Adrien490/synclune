@@ -36,7 +36,14 @@ vi.mock("@/shared/components/selectable-mobile-card", () => ({
 		ariaLabel: string;
 		onOpen?: () => void;
 	}) => (
-		<button type="button" onClick={onOpen} aria-label={ariaLabel}>
+		<button
+			type="button"
+			onClick={() => {
+				mockHaptic("selection");
+				onOpen?.();
+			}}
+			aria-label={ariaLabel}
+		>
 			{children}
 		</button>
 	),

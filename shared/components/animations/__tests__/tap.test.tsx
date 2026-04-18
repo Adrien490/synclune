@@ -1,9 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import { render, screen, cleanup } from "@testing-library/react";
 
-const { mockReducedMotion, mockTriggerHaptic } = vi.hoisted(() => ({
+const { mockReducedMotion } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
-	mockTriggerHaptic: vi.fn(),
 }));
 
 vi.mock("motion/react", () => {
@@ -18,12 +17,10 @@ vi.mock("motion/react", () => {
 						animate,
 						whileHover,
 						whileTap,
-						onTapStart,
 						transition: _t,
 						...props
 					}: Record<string, unknown> & {
 						children?: unknown;
-						onTapStart?: (e: unknown) => void;
 					},
 					ref: unknown,
 				) => {
@@ -36,7 +33,6 @@ vi.mock("motion/react", () => {
 							"data-animate": animate ? JSON.stringify(animate) : undefined,
 							"data-while-hover": whileHover ? JSON.stringify(whileHover) : undefined,
 							"data-while-tap": whileTap ? JSON.stringify(whileTap) : undefined,
-							onPointerDown: onTapStart,
 							...props,
 						},
 						children,
@@ -47,10 +43,6 @@ vi.mock("motion/react", () => {
 		useReducedMotion: () => mockReducedMotion.value,
 	};
 });
-
-vi.mock("@/shared/hooks/use-haptic", () => ({
-	useHaptic: () => mockTriggerHaptic,
-}));
 
 vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: {
@@ -111,24 +103,5 @@ describe("Tap", () => {
 	it("does not set whileHover", () => {
 		const { container } = render(<Tap>Content</Tap>);
 		expect(container.firstChild).not.toHaveAttribute("data-while-hover");
-	});
-
-	it("triggers haptic 'selection' on tap by default", () => {
-		const { container } = render(<Tap>Content</Tap>);
-		fireEvent.pointerDown(container.firstChild as Element);
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
-		expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
-	});
-
-	it("triggers haptic with the custom pattern", () => {
-		const { container } = render(<Tap haptic="medium">Content</Tap>);
-		fireEvent.pointerDown(container.firstChild as Element);
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
-	});
-
-	it("does not trigger haptic when haptic={false}", () => {
-		const { container } = render(<Tap haptic={false}>Content</Tap>);
-		fireEvent.pointerDown(container.firstChild as Element);
-		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 });

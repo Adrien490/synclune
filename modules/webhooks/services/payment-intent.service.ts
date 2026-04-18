@@ -1,9 +1,10 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
-import { type Prisma } from "@/app/generated/prisma/client";
+import { type Prisma, HistorySource, OrderAction } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { createOrderAuditTx } from "@/modules/orders/utils/order-audit";
 import type { PaymentFailureDetails } from "../types/webhook.types";
 
 // Re-export types for backwards compatibility
@@ -20,7 +21,7 @@ export async function markOrderAsPaid(orderId: string, paymentIntentId: string):
 			// Vérification d'idempotence
 			const order = await tx.order.findFirst({
 				where: { id: orderId, ...notDeleted },
-				select: { paymentStatus: true },
+				select: { status: true, paymentStatus: true },
 			});
 
 			if (!order) {
@@ -45,6 +46,18 @@ export async function markOrderAsPaid(orderId: string, paymentIntentId: string):
 					stripePaymentIntentId: paymentIntentId,
 					paidAt: new Date(),
 				},
+			});
+
+			await createOrderAuditTx(tx, {
+				orderId,
+				action: OrderAction.PAID,
+				previousStatus: order.status,
+				newStatus: "PROCESSING",
+				previousPaymentStatus: order.paymentStatus,
+				newPaymentStatus: "PAID",
+				authorName: "Stripe",
+				source: HistorySource.WEBHOOK,
+				metadata: { paymentIntentId },
 			});
 
 			logger.info(`✅ [WEBHOOK] Order ${orderId} marked as PAID via payment_intent.succeeded`, {
@@ -163,7 +176,7 @@ export async function markOrderAsFailed(
 		async (tx: Prisma.TransactionClient) => {
 			const order = await tx.order.findFirst({
 				where: { id: orderId, ...notDeleted },
-				select: { paymentStatus: true },
+				select: { status: true, paymentStatus: true },
 			});
 
 			if (!order) {
@@ -189,6 +202,23 @@ export async function markOrderAsFailed(
 					paymentFailureCode: failureDetails.code,
 					paymentDeclineCode: failureDetails.declineCode,
 					paymentFailureMessage: failureDetails.message,
+				},
+			});
+
+			await createOrderAuditTx(tx, {
+				orderId,
+				action: OrderAction.CANCELLED,
+				previousStatus: order.status,
+				newStatus: "CANCELLED",
+				previousPaymentStatus: order.paymentStatus,
+				newPaymentStatus: "FAILED",
+				authorName: "Stripe",
+				source: HistorySource.WEBHOOK,
+				metadata: {
+					paymentIntentId,
+					failureCode: failureDetails.code,
+					declineCode: failureDetails.declineCode,
+					failureMessage: failureDetails.message,
 				},
 			});
 
@@ -235,6 +265,18 @@ export async function markOrderAsCancelled(
 					paymentStatus: "FAILED",
 					stripePaymentIntentId: paymentIntentId,
 				},
+			});
+
+			await createOrderAuditTx(tx, {
+				orderId,
+				action: OrderAction.CANCELLED,
+				previousStatus: order.status,
+				newStatus: "CANCELLED",
+				previousPaymentStatus: order.paymentStatus,
+				newPaymentStatus: "FAILED",
+				authorName: "Stripe",
+				source: HistorySource.WEBHOOK,
+				metadata: { paymentIntentId, reason: "payment_intent.canceled" },
 			});
 
 			logger.info(`❌ [WEBHOOK] Order ${orderId} marked as CANCELLED`, { service: "webhook" });

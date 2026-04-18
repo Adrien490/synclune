@@ -262,6 +262,10 @@ describe("CreateProductForm", () => {
 			upload: vi.fn(),
 			isUploading: false,
 			progress: null,
+			failedFiles: [],
+			cancel: vi.fn(),
+			retryFailed: vi.fn(),
+			clearFailed: vi.fn(),
 		});
 
 		mockUseRouter.mockReturnValue({
@@ -395,6 +399,10 @@ describe("CreateProductForm", () => {
 				upload: vi.fn(),
 				isUploading: true,
 				progress: { phase: "uploading", completed: 0, total: 1, current: "file.jpg" },
+				failedFiles: [],
+				cancel: vi.fn(),
+				retryFailed: vi.fn(),
+				clearFailed: vi.fn(),
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
@@ -413,26 +421,15 @@ describe("CreateProductForm", () => {
 				upload: vi.fn(),
 				isUploading: true,
 				progress: { phase: "uploading", completed: 1, total: 3, current: "image.jpg" },
+				failedFiles: [],
+				cancel: vi.fn(),
+				retryFailed: vi.fn(),
+				clearFailed: vi.fn(),
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
 			const statusElements = screen.getAllByRole("status");
-			expect(statusElements.some((el) => el.textContent!.includes("Upload en cours..."))).toBe(
-				true,
-			);
-			expect(screen.getByText("1 / 3 fichier(s)")).toBeInTheDocument();
-		});
-
-		it("shows validation phase text", () => {
-			setup();
-			mockUseMediaUpload.mockReturnValue({
-				upload: vi.fn(),
-				isUploading: true,
-				progress: { phase: "validating", completed: 0, total: 2, current: null },
-			});
-			render(<CreateProductForm {...defaultProps} />);
-
-			expect(screen.getByText("Validation des fichiers...")).toBeInTheDocument();
+			expect(statusElements.some((el) => /Téléversement/.test(String(el.textContent)))).toBe(true);
 		});
 
 		it("shows thumbnail generation phase text", () => {
@@ -441,10 +438,14 @@ describe("CreateProductForm", () => {
 				upload: vi.fn(),
 				isUploading: true,
 				progress: { phase: "generating-thumbnails", completed: 0, total: 1, current: null },
+				failedFiles: [],
+				cancel: vi.fn(),
+				retryFailed: vi.fn(),
+				clearFailed: vi.fn(),
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Génération des miniatures...")).toBeInTheDocument();
+			expect(screen.getAllByText(/Génération des miniatures/).length).toBeGreaterThan(0);
 		});
 	});
 

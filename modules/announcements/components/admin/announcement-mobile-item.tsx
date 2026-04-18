@@ -1,6 +1,5 @@
 "use client";
 
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
@@ -27,12 +26,15 @@ export function AnnouncementMobileItem({ announcement }: AnnouncementMobileItemP
 	const status = computeAnnouncementStatus(announcement);
 
 	const handleOpen = () => {
-		triggerHaptic("light");
 		open({ announcement });
 	};
 
 	return (
-		<SelectableMobileCard itemId={announcement.id} ariaLabel="Annonce" onOpen={handleOpen}>
+		<SelectableMobileCard
+			itemId={announcement.id}
+			ariaLabel={`Annonce : ${announcement.message}. Statut : ${ANNOUNCEMENT_STATUS_LABELS[status]}`}
+			onOpen={handleOpen}
+		>
 			<Item
 				variant="outline"
 				size="sm"
@@ -40,8 +42,8 @@ export function AnnouncementMobileItem({ announcement }: AnnouncementMobileItemP
 				aria-roledescription="carte annonce"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
-						<span className="truncate">{announcement.message}</span>
+					<ItemTitle className="w-full min-w-0">
+						<span className="line-clamp-2 min-w-0">{announcement.message}</span>
 						<Badge
 							variant="secondary"
 							className={cn("shrink-0 text-xs", ANNOUNCEMENT_STATUS_COLORS[status])}

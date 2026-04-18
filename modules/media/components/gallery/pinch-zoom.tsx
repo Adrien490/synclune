@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
@@ -61,11 +61,17 @@ export function GalleryPinchZoom({
 
 	// Haptic on zoom toggle (enter / exit zoom state) — not on every pinch frame
 	const previousZoomedRef = useRef(isZoomed);
+	// Assertive SR announcement fired once on zoom entry (cleared after 2s)
+	const [zoomEntryHint, setZoomEntryHint] = useState(false);
 	useEffect(() => {
-		if (previousZoomedRef.current !== isZoomed) {
-			haptic("selection");
-			previousZoomedRef.current = isZoomed;
-		}
+		if (previousZoomedRef.current === isZoomed) return;
+		haptic("selection");
+		previousZoomedRef.current = isZoomed;
+		if (!isZoomed) return;
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- transient SR hint tied to external hook's zoom transition
+		setZoomEntryHint(true);
+		const timer = setTimeout(() => setZoomEntryHint(false), 2000);
+		return () => clearTimeout(timer);
 	}, [isZoomed, haptic]);
 
 	const transitionClass = prefersReduced ? "" : "transition-transform duration-200 ease-out";
@@ -141,6 +147,13 @@ export function GalleryPinchZoom({
 			{isZoomed && (
 				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
 					Zoom {Math.round(scale * 100)} pourcent
+				</div>
+			)}
+
+			{/* Zoom entry hint — assertive, fired once on enter */}
+			{zoomEntryHint && (
+				<div className="sr-only" role="alert" aria-live="assertive" aria-atomic="true">
+					Zoom activé. Appuyez sur Échap pour revenir.
 				</div>
 			)}
 

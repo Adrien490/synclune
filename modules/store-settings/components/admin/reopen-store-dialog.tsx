@@ -73,6 +73,7 @@ export function ReopenStoreDialog({ previousFocusRef }: ReopenStoreDialogProps) 
 							aria-busy={isPending}
 							onClick={() => triggerHaptic("light")}
 							className="min-h-11"
+							style={{ viewTransitionName: "store-status-action" }}
 						>
 							{isPending && <LoaderCircle className="mr-2 size-4 animate-spin" />}
 							{isPending ? "Réouverture..." : "Réouvrir la boutique"}

@@ -85,7 +85,7 @@ describe("loadMoreReviews", () => {
 	// Rate limiting
 	// ──────────────────────────────────────────────────────────────
 
-	it("should return EMPTY without error when rate limited", async () => {
+	it("should return EMPTY with error message when rate limited", async () => {
 		mockEnforceRateLimit.mockResolvedValue({ error: { message: "Too many requests" } });
 
 		const result = await loadMoreReviews(defaultParams);
@@ -93,7 +93,7 @@ describe("loadMoreReviews", () => {
 		expect(result.reviews).toEqual([]);
 		expect(result.nextCursor).toBeNull();
 		expect(result.hasMore).toBe(false);
-		expect(result.error).toBeUndefined();
+		expect(result.error).toBe("Trop de requêtes. Veuillez patienter.");
 	});
 
 	it("should not call getReviews when rate limited", async () => {

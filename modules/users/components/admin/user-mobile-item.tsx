@@ -53,7 +53,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 				aria-roledescription="carte client"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{displayName}</span>
 						{user.emailVerified ? (
 							<CircleCheck className="h-4 w-4 shrink-0 text-green-600" aria-label="Email verifie" />

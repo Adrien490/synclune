@@ -119,6 +119,7 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 	bottomBarActiveItemClass: "active",
 	bottomBarIconClass: "icon",
 	bottomBarLabelClass: "label",
+	bottomBarBadgeClass: "badge",
 }));
 
 import { AdminMobileBottomBar } from "../admin-mobile-bottom-bar";

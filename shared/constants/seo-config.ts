@@ -292,7 +292,7 @@ export function getWebSiteSchema() {
 			"@type": "SearchAction",
 			target: {
 				"@type": "EntryPoint",
-				urlTemplate: `${SITE_URL}/produits?q={search_term_string}`,
+				urlTemplate: `${SITE_URL}/produits?search={search_term_string}`,
 			},
 			"query-input": "required name=search_term_string",
 		},

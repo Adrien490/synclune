@@ -1,3 +1,4 @@
+import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
 import { sendReviewRequestEmail } from "@/modules/emails/services/review-emails";
 import { SITE_URL } from "@/shared/constants/seo-config";
@@ -5,6 +6,7 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { success, notFound, error, validationError, handleActionError } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 
+import { REVIEWS_CACHE_TAGS } from "../constants/cache";
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
 import { getOrderForReviewRequest } from "../data/get-order-for-review-request";
 
@@ -72,6 +74,7 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 		where: { id: orderId },
 		data: { reviewRequestSentAt: new Date() },
 	});
+	updateTag(REVIEWS_CACHE_TAGS.ORDER_FOR_REQUEST(orderId));
 
 	// 6. Send email
 	const unsubscribeUrl = buildUrl(ROUTES.NOTIFICATIONS.UNSUBSCRIBE);
@@ -90,6 +93,7 @@ export async function executeReviewRequestEmail(orderId: string): Promise<Action
 			where: { id: orderId },
 			data: { reviewRequestSentAt: null },
 		});
+		updateTag(REVIEWS_CACHE_TAGS.ORDER_FOR_REQUEST(orderId));
 		return error(REVIEW_ERROR_MESSAGES.EMAIL_FAILED);
 	}
 

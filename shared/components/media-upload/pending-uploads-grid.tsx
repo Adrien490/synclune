@@ -5,9 +5,14 @@ import ScrollFade from "@/shared/components/scroll-fade";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { formatFileSize } from "@/modules/media/utils/upload-helpers";
+import {
+	formatVideoDuration,
+	getVideoMetadata,
+	type VideoMetadataPreview,
+} from "@/modules/media/hooks/use-video-thumbnail";
 import { cn } from "@/shared/utils/cn";
-import { Loader2, X } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { Loader2, Play, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 interface PendingUploadsGridProps {
 	/** Files awaiting confirmation */
@@ -69,6 +74,37 @@ export function PendingUploadsGrid({
 		};
 	}, [previews]);
 
+	// Video metadata previews (P2.4) — async first-frame + duration extraction
+	const [videoPreviews, setVideoPreviews] = useState<Map<string, VideoMetadataPreview>>(
+		() => new Map(),
+	);
+
+	useEffect(() => {
+		const controller = new AbortController();
+		const toProcess = files
+			.map((file, index) => ({ file, key: `${file.name}-${file.lastModified}-${index}` }))
+			.filter(({ file, key }) => file.type.startsWith("video/") && !videoPreviews.has(key));
+
+		if (toProcess.length === 0) return;
+
+		void (async () => {
+			for (const { file, key } of toProcess) {
+				if (controller.signal.aborted) return;
+				const metadata = await getVideoMetadata(file, controller.signal);
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- signal.aborted can become true during await
+				if (controller.signal.aborted || !metadata) continue;
+				setVideoPreviews((prev) => {
+					if (prev.has(key)) return prev;
+					const next = new Map(prev);
+					next.set(key, metadata);
+					return next;
+				});
+			}
+		})();
+
+		return () => controller.abort();
+	}, [files, videoPreviews]);
+
 	if (files.length === 0) return null;
 
 	const handleRemove = (index: number) => {
@@ -91,13 +127,17 @@ export function PendingUploadsGrid({
 	const items = files.map((file, index) => {
 		const preview = previews[index];
 		const isVideo = file.type.startsWith("video/");
+		const itemKey = `${file.name}-${file.lastModified}-${index}`;
+		const videoMeta = isVideo ? videoPreviews.get(itemKey) : undefined;
+		const videoPreviewUrl = videoMeta?.previewDataUrl ?? "";
+		const videoDuration = videoMeta ? formatVideoDuration(videoMeta.durationSec) : null;
 
 		return (
 			<div
-				key={`${file.name}-${file.lastModified}-${index}`}
+				key={itemKey}
 				className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg border"
 			>
-				{preview ? (
+				{!isVideo && preview ? (
 					// eslint-disable-next-line @next/next/no-img-element -- blob URL preview, not an optimised remote image
 					<img
 						src={preview}
@@ -106,11 +146,34 @@ export function PendingUploadsGrid({
 						loading="lazy"
 						decoding="async"
 					/>
+				) : isVideo && videoPreviewUrl ? (
+					// eslint-disable-next-line @next/next/no-img-element -- client-generated data URL thumbnail
+					<img
+						src={videoPreviewUrl}
+						alt={`Aperçu vidéo ${file.name}`}
+						className="size-full object-cover"
+						loading="lazy"
+						decoding="async"
+					/>
+				) : isVideo ? (
+					<div className="bg-muted flex size-full animate-pulse items-center justify-center motion-reduce:animate-none">
+						<Loader2
+							className="text-muted-foreground size-4 animate-spin motion-reduce:animate-none"
+							aria-label="Extraction de la miniature vidéo"
+						/>
+					</div>
 				) : (
 					<div className="bg-muted flex size-full items-center justify-center">
-						<span className="text-muted-foreground text-xs uppercase">
-							{isVideo ? "Vidéo" : "Fichier"}
-						</span>
+						<span className="text-muted-foreground text-xs uppercase">Fichier</span>
+					</div>
+				)}
+
+				{isVideo && (
+					<div
+						className="pointer-events-none absolute inset-0 flex items-center justify-center"
+						aria-hidden="true"
+					>
+						<Play className="size-5 text-white drop-shadow-md" fill="currentColor" />
 					</div>
 				)}
 
@@ -130,8 +193,18 @@ export function PendingUploadsGrid({
 					<X className="size-3.5" aria-hidden="true" />
 				</button>
 
-				{/* File size pill */}
-				<div className="pointer-events-none absolute right-1 bottom-1 left-1 flex justify-end">
+				{/* Info pills: duration (videos) + file size */}
+				<div className="pointer-events-none absolute right-1 bottom-1 left-1 flex items-center justify-between gap-1">
+					{videoDuration ? (
+						<span
+							className="bg-background/90 text-foreground rounded px-1 text-[10px] tabular-nums shadow-sm"
+							aria-hidden="true"
+						>
+							{videoDuration}
+						</span>
+					) : (
+						<span />
+					)}
 					<span
 						className="bg-background/90 text-foreground rounded px-1 text-[10px] tabular-nums shadow-sm"
 						aria-hidden="true"

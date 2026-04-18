@@ -33,10 +33,14 @@ export async function loadMoreReviews(
 ): Promise<LoadMoreReviewsResult> {
 	try {
 		const validation = loadMoreReviewsSchema.safeParse(params);
-		if (!validation.success) return EMPTY;
+		if (!validation.success) {
+			return { ...EMPTY, error: "Paramètres invalides" };
+		}
 
 		const rateCheck = await enforceRateLimitForCurrentUser(REVIEW_LOAD_MORE_LIMIT);
-		if ("error" in rateCheck) return EMPTY;
+		if ("error" in rateCheck) {
+			return { ...EMPTY, error: "Trop de requêtes. Veuillez patienter." };
+		}
 
 		const { productId, cursor, filterRating, sortBy } = validation.data;
 

@@ -61,6 +61,18 @@ vi.mock("../../constants/cache", () => ({
 		LIST: "orders-list",
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 	},
+	REFUNDS_CACHE_TAGS: {
+		LIST: "refunds-list",
+		DETAIL: (id: string) => `refund-${id}`,
+	},
+	cacheRefunds: () => {
+		mockCacheLife("dashboard");
+		mockCacheTag("refunds-list");
+	},
+	cacheRefundDetail: (id: string) => {
+		mockCacheLife("dashboard");
+		mockCacheTag(`refund-${id}`, "refunds-list");
+	},
 }));
 
 vi.mock("../../schemas/refund.schemas", () => ({
@@ -215,10 +227,10 @@ describe("getRefunds", () => {
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
-	it("calls cacheTag with orders-list tag", async () => {
+	it("calls cacheTag with refunds-list tag (dedicated refunds scope)", async () => {
 		await getRefunds(makeValidParams() as never);
 
-		expect(mockCacheTag).toHaveBeenCalledWith("orders-list");
+		expect(mockCacheTag).toHaveBeenCalledWith("refunds-list");
 	});
 
 	it("uses GET_REFUNDS_SELECT for the DB query", async () => {

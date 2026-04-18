@@ -4,7 +4,6 @@ import {
 	closeStoreSchema,
 	updateClosureMessageSchema,
 	updateReopensAtSchema,
-	scheduleClosureSchema,
 } from "../store-settings.schemas";
 
 // ============================================================================
@@ -164,114 +163,5 @@ describe("updateReopensAtSchema", () => {
 		if (!result.success) {
 			expect(result.error.issues[0]?.path).toContain("reopensAt");
 		}
-	});
-});
-
-// ============================================================================
-// scheduleClosureSchema
-// ============================================================================
-
-describe("scheduleClosureSchema", () => {
-	afterEach(() => {
-		vi.useRealTimers();
-	});
-
-	it("accepts future scheduledCloseAt with valid message and later reopensAt", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "2026-07-01T10:00:00Z",
-			closureMessage: "Vacances",
-			reopensAt: "2026-08-01T10:00:00Z",
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts scheduledCloseAt without reopensAt (indefinite closure)", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "2026-07-01T10:00:00Z",
-			closureMessage: "Vacances",
-			reopensAt: "",
-		});
-		expect(result.success).toBe(true);
-		if (result.success) {
-			expect(result.data.reopensAt).toBeNull();
-		}
-	});
-
-	it("rejects missing scheduledCloseAt", () => {
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "",
-			closureMessage: "Test",
-			reopensAt: "",
-		});
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error.issues[0]?.path).toContain("scheduledCloseAt");
-		}
-	});
-
-	it("rejects scheduledCloseAt in the past", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "2026-01-01T10:00:00Z",
-			closureMessage: "Test",
-			reopensAt: "",
-		});
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error.issues[0]?.path).toContain("scheduledCloseAt");
-		}
-	});
-
-	it("rejects reopensAt equal to scheduledCloseAt", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const sameDate = "2026-07-01T10:00:00Z";
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: sameDate,
-			closureMessage: "Test",
-			reopensAt: sameDate,
-		});
-		expect(result.success).toBe(false);
-		if (!result.success) {
-			expect(result.error.issues[0]?.path).toContain("reopensAt");
-		}
-	});
-
-	it("rejects reopensAt before scheduledCloseAt", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "2026-08-01T10:00:00Z",
-			closureMessage: "Test",
-			reopensAt: "2026-07-01T10:00:00Z",
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects empty closure message", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "2026-07-01T10:00:00Z",
-			closureMessage: "",
-			reopensAt: "",
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("rejects message exceeding 500 characters", () => {
-		vi.useFakeTimers();
-		vi.setSystemTime(new Date("2026-04-01T12:00:00Z"));
-		const result = scheduleClosureSchema.safeParse({
-			scheduledCloseAt: "2026-07-01T10:00:00Z",
-			closureMessage: "a".repeat(501),
-			reopensAt: "",
-		});
-		expect(result.success).toBe(false);
 	});
 });

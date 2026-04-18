@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { Button } from "@/shared/components/ui/button";
 import { cn } from "@/shared/utils/cn";
 
@@ -47,11 +48,12 @@ export function SelectionBottomSheet({
 		useSelectionContext();
 	const haptic = useHaptic();
 	const prefersReducedMotion = useReducedMotion();
+	const mounted = useMounted();
 	const count = getSelectedCount();
 	const visible = count > 0;
 	const allPageSelected = pageItemIds ? areAllSelected(pageItemIds) : false;
 
-	if (typeof document === "undefined") return null;
+	if (!mounted) return null;
 
 	const handleClear = () => {
 		haptic("light");

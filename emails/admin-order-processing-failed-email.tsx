@@ -1,6 +1,9 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import { Button, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { ErrorCodeBlock } from "./_components/error-code-block";
 import { FlexRow } from "./_components/flex-row";
@@ -29,7 +32,7 @@ export const AdminOrderProcessingFailedEmail = ({
 			preview={`[URGENT] Paiement reçu — Échec traitement commande ${orderNumber}`}
 			headerText="Échec traitement commande"
 			footer={
-				<Text style={EMAIL_STYLES.text.tiny}>
+				<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
 					Le paiement a été encaissé mais la commande n'a pas pu être traitée. Une intervention
 					manuelle est requise.
 				</Text>
@@ -48,71 +51,87 @@ export const AdminOrderProcessingFailedEmail = ({
 				</Text>
 			</Section>
 
-			{/* Details */}
-			<Section style={{ marginBottom: "24px" }}>
-				<Section style={EMAIL_STYLES.section.card}>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Commande</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontFamily: "monospace",
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{orderNumber}
-							</Text>
-						}
-					/>
-					<FlexRow
-						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Client</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontSize: "14px",
-									color: EMAIL_COLORS.text.primary,
-								}}
-							>
-								{customerEmail}
-							</Text>
-						}
-					/>
-					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Montant encaissé</Text>}
-						right={
-							<Text
-								style={{
-									margin: 0,
-									fontSize: "14px",
-									fontWeight: "bold",
-									color: EMAIL_COLORS.primary,
-								}}
-							>
-								{formatEuro(total)}
-							</Text>
-						}
-					/>
-				</Section>
-			</Section>
+			<EmailCard style={{ marginBottom: "24px" }}>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Commande
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontFamily: "monospace",
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{orderNumber}
+						</Text>
+					}
+				/>
+				<FlexRow
+					style={{ marginBottom: "8px" }}
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Client
+						</Text>
+					}
+					right={
+						<Text
+							className={EMAIL_CLASSES.text.body}
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								color: EMAIL_COLORS.text.primary,
+							}}
+						>
+							{customerEmail}
+						</Text>
+					}
+				/>
+				<FlexRow
+					left={
+						<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+							Montant encaissé
+						</Text>
+					}
+					right={
+						<Text
+							style={{
+								margin: 0,
+								fontSize: "14px",
+								fontWeight: "bold",
+								color: EMAIL_COLORS.primary,
+							}}
+						>
+							{formatEuro(total)}
+						</Text>
+					}
+				/>
+			</EmailCard>
 
-			{/* Error details */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Erreur</Text>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Erreur
+				</EmailHeading>
 				<ErrorCodeBlock error={errorMessage} />
 			</Section>
 
-			{/* Stripe IDs */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Identifiants Stripe</Text>
-				<Section style={EMAIL_STYLES.section.card}>
-					<Text style={EMAIL_STYLES.text.tiny}>Payment Intent ID</Text>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Identifiants Stripe
+				</EmailHeading>
+				<EmailCard>
+					<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.tiny}>
+						Payment Intent ID
+					</Text>
 					<Text
+						className={EMAIL_CLASSES.text.body}
 						style={{
 							margin: 0,
 							marginTop: "4px",
@@ -123,13 +142,13 @@ export const AdminOrderProcessingFailedEmail = ({
 					>
 						{paymentIntentId}
 					</Text>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* CTAs */}
 			<Section style={{ marginBottom: "12px", textAlign: "center" }}>
 				<Button
 					href={stripeDashboardUrl}
+					className={EMAIL_CLASSES.button.primary}
 					style={{
 						...EMAIL_STYLES.button.primary,
 						backgroundColor: EMAIL_COLORS.stripe,
@@ -138,11 +157,7 @@ export const AdminOrderProcessingFailedEmail = ({
 					Ouvrir Stripe
 				</Button>
 			</Section>
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button href={dashboardUrl} style={EMAIL_STYLES.button.primary}>
-					Voir la commande
-				</Button>
-			</Section>
+			<EmailCTA href={dashboardUrl}>Voir la commande</EmailCTA>
 		</EmailLayout>
 	);
 };

@@ -75,6 +75,17 @@ vi.mock("sonner", () => ({
 	},
 }));
 
+const mockConsentState: { accepted: boolean | null; _hasHydrated: boolean } = {
+	accepted: true,
+	_hasHydrated: true,
+};
+
+vi.mock("@/shared/providers/cookie-consent-store-provider", () => ({
+	useCookieConsentStore: (
+		selector: (s: { accepted: boolean | null; _hasHydrated: boolean }) => unknown,
+	) => selector(mockConsentState),
+}));
+
 // ============================================================================
 // Imports (after mocks)
 // ============================================================================
@@ -625,6 +636,8 @@ describe("useUpdateProductCollections", () => {
 describe("useAddRecentSearch", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockConsentState.accepted = true;
+		mockConsentState._hasHydrated = true;
 		mockAddRecentSearch.mockResolvedValue({
 			...SUCCESS,
 			data: { searches: ["bague", "collier"] },
@@ -671,6 +684,29 @@ describe("useAddRecentSearch", () => {
 		});
 
 		expect(onError).toHaveBeenCalled();
+	});
+
+	it("skips action silently when RGPD consent is not accepted", async () => {
+		mockConsentState.accepted = false;
+		const { result } = renderHook(() => useAddRecentSearch());
+
+		await act(async () => {
+			result.current.add("bague argent");
+		});
+
+		expect(mockAddRecentSearch).not.toHaveBeenCalled();
+	});
+
+	it("skips action when consent store has not hydrated yet", async () => {
+		mockConsentState.accepted = true;
+		mockConsentState._hasHydrated = false;
+		const { result } = renderHook(() => useAddRecentSearch());
+
+		await act(async () => {
+			result.current.add("bague argent");
+		});
+
+		expect(mockAddRecentSearch).not.toHaveBeenCalled();
 	});
 });
 

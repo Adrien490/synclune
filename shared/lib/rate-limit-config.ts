@@ -548,6 +548,16 @@ export const ADMIN_ORDER_LIMITS = {
 } as const;
 
 /**
+ * Limite pour la recherche fuzzy admin (orders/users)
+ *
+ * Protège les indexes GIN trgm contre scraping si session admin compromise
+ */
+export const ADMIN_SEARCH_LIMIT: RateLimitConfig = {
+	limit: 60,
+	windowMs: minutes(1),
+};
+
+/**
  * Toutes les limites de recherche/consultation
  */
 /**
@@ -1619,16 +1629,6 @@ export const ADMIN_REVIEW_MODERATE_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour l'envoi d'emails de rappel d'avis (admin)
- *
- * Plus stricte que SEND_EMAIL pour eviter la perception de spam client
- */
-export const ADMIN_REVIEW_SEND_REMINDER_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
  * Limite pour la restauration d'un avis soft-deleted (admin)
  */
 export const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
@@ -1648,7 +1648,6 @@ export const ADMIN_REVIEW_EXPORT_LIMIT: RateLimitConfig = {
 
 export const ADMIN_REVIEW_LIMITS = {
 	SEND_EMAIL: ADMIN_REVIEW_SEND_EMAIL_LIMIT,
-	SEND_REMINDER: ADMIN_REVIEW_SEND_REMINDER_LIMIT,
 	BULK_OPERATIONS: ADMIN_REVIEW_BULK_OPERATIONS_LIMIT,
 	RESPONSE: ADMIN_REVIEW_RESPONSE_LIMIT,
 	MODERATE: ADMIN_REVIEW_MODERATE_LIMIT,
@@ -1947,23 +1946,11 @@ export const ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
-export const ADMIN_STORE_SETTINGS_SCHEDULE_CLOSURE_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_STORE_SETTINGS_CANCEL_SCHEDULED_CLOSURE_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
 export const ADMIN_STORE_SETTINGS_LIMITS = {
 	CLOSE_STORE: ADMIN_STORE_SETTINGS_CLOSE_STORE_LIMIT,
 	REOPEN_STORE: ADMIN_STORE_SETTINGS_REOPEN_STORE_LIMIT,
 	UPDATE_CLOSURE_MESSAGE: ADMIN_STORE_SETTINGS_UPDATE_CLOSURE_MESSAGE_LIMIT,
 	UPDATE_REOPENS_AT: ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT,
-	SCHEDULE_CLOSURE: ADMIN_STORE_SETTINGS_SCHEDULE_CLOSURE_LIMIT,
-	CANCEL_SCHEDULED_CLOSURE: ADMIN_STORE_SETTINGS_CANCEL_SCHEDULED_CLOSURE_LIMIT,
 } as const;
 
 /**

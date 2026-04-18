@@ -1,5 +1,8 @@
-import { Button, Column, Img, Link, Row, Section, Text } from "@react-email/components";
-import { EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { Column, Img, Link, Row, Section, Text } from "@react-email/components";
+import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailCTA } from "./_components/email-cta";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 import { FlexRow } from "./_components/flex-row";
 
@@ -27,15 +30,21 @@ export const CustomizationRequestEmail = ({
 			preview={`Demande de personnalisation de ${firstName}`}
 			headerText="Nouvelle demande"
 		>
-			{/* Client */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Client</Text>
-				<Section style={EMAIL_STYLES.section.card}>
+				<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+					Client
+				</EmailHeading>
+				<EmailCard>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Prénom</Text>}
+						left={
+							<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+								Prénom
+							</Text>
+						}
 						right={
 							<Text
+								className={EMAIL_CLASSES.text.body}
 								style={{
 									margin: 0,
 									fontSize: "14px",
@@ -48,7 +57,11 @@ export const CustomizationRequestEmail = ({
 					/>
 					<FlexRow
 						style={{ marginBottom: "8px" }}
-						left={<Text style={EMAIL_STYLES.text.small}>Email</Text>}
+						left={
+							<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+								Email
+							</Text>
+						}
 						right={
 							<Link
 								href={`mailto:${email}`}
@@ -66,7 +79,11 @@ export const CustomizationRequestEmail = ({
 					{phone && (
 						<FlexRow
 							style={{ marginBottom: "8px" }}
-							left={<Text style={EMAIL_STYLES.text.small}>Téléphone</Text>}
+							left={
+								<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+									Téléphone
+								</Text>
+							}
 							right={
 								<Link
 									href={`tel:${phone}`}
@@ -83,7 +100,11 @@ export const CustomizationRequestEmail = ({
 						/>
 					)}
 					<FlexRow
-						left={<Text style={EMAIL_STYLES.text.small}>Type</Text>}
+						left={
+							<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
+								Type
+							</Text>
+						}
 						right={
 							<Text
 								style={{
@@ -97,32 +118,36 @@ export const CustomizationRequestEmail = ({
 							</Text>
 						}
 					/>
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* Inspirations */}
 			{inspirationProducts && inspirationProducts.length > 0 && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>Inspirations</Text>
-					<Section style={EMAIL_STYLES.section.card}>
+					<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
+						Inspirations
+					</EmailHeading>
+					<EmailCard>
 						{inspirationProducts.map((product) => (
-							<Text key={product.title} style={EMAIL_STYLES.text.small}>
+							<Text
+								key={product.title}
+								className={EMAIL_CLASSES.text.secondary}
+								style={EMAIL_STYLES.text.small}
+							>
 								• {product.title}
 							</Text>
 						))}
-					</Section>
+					</EmailCard>
 				</Section>
 			)}
 
-			{/* Images d'inspiration */}
 			{inspirationMedias && inspirationMedias.length > 0 && (
 				<Section style={{ marginBottom: "24px" }}>
-					<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "12px" }}>
+					<EmailHeading level="h3" style={{ marginBottom: "12px" }}>
 						Images d'inspiration
-					</Text>
-					<Section style={EMAIL_STYLES.section.card}>
+					</EmailHeading>
+					<EmailCard>
 						{Array.from({ length: Math.ceil(inspirationMedias.length / 2) }, (_, rowIndex) => (
-							<Row key={rowIndex} style={{ marginBottom: "8px" }}>
+							<Row key={rowIndex} role="presentation" style={{ marginBottom: "8px" }}>
 								{inspirationMedias.slice(rowIndex * 2, rowIndex * 2 + 2).map((media) => (
 									<Column
 										key={media.url}
@@ -148,17 +173,19 @@ export const CustomizationRequestEmail = ({
 								))}
 							</Row>
 						))}
-					</Section>
+					</EmailCard>
 				</Section>
 			)}
 
-			{/* Détails */}
 			<Section style={{ marginBottom: "24px" }}>
-				<Text style={{ ...EMAIL_STYLES.heading.h3, marginBottom: "8px" }}>Description</Text>
-				<Section style={EMAIL_STYLES.section.card}>
+				<EmailHeading level="h3" style={{ marginBottom: "8px" }}>
+					Description
+				</EmailHeading>
+				<EmailCard>
 					{details.split("\n").map((line, i) => (
 						<Text
 							key={i}
+							className={EMAIL_CLASSES.text.body}
 							style={{
 								margin: 0,
 								fontSize: "14px",
@@ -169,18 +196,12 @@ export const CustomizationRequestEmail = ({
 							{line || "\u00A0"}
 						</Text>
 					))}
-				</Section>
+				</EmailCard>
 			</Section>
 
-			{/* CTA */}
-			<Section style={{ marginBottom: "32px", textAlign: "center" }}>
-				<Button
-					href={`mailto:${email}?subject=RE: Demande de personnalisation - Synclune`}
-					style={EMAIL_STYLES.button.primary}
-				>
-					Répondre au client
-				</Button>
-			</Section>
+			<EmailCTA href={`mailto:${email}?subject=RE: Demande de personnalisation - Synclune`}>
+				Répondre au client
+			</EmailCTA>
 		</EmailLayout>
 	);
 };

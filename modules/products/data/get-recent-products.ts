@@ -55,8 +55,15 @@ export async function getRecentProducts(
 /**
  * Fonction cachee qui recupere les produits par slugs
  *
- * Cache: private (isole par utilisateur via cookies)
- * Invalide par: updateTag("recent-products-list") dans addRecentProduct
+ * Cache: private (isole par utilisateur - la cle de cache inclut les slugs
+ * derives du cookie utilisateur, donc pas de fuite inter-utilisateurs).
+ *
+ * Note: Le tag `RECENT_PRODUCTS_CACHE_TAGS.LIST` est volontairement global.
+ * Il permet un bust simultane pour tous les users quand le catalogue change
+ * (produit supprime/archivee). Acceptable car les visites sont peu frequentes
+ * et chaque user a un cache independant (keyed par slugs).
+ *
+ * Invalide par: updateTag("recent-products-list") lors de mutations produits.
  */
 async function fetchProductsBySlugs(slugs: string[]): Promise<ProductCarouselItem[]> {
 	"use cache: private";

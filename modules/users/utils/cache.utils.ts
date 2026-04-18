@@ -15,10 +15,10 @@ import { USERS_CACHE_TAGS } from "../constants/cache";
 /**
  * Configure le cache pour l'utilisateur courant
  * - Utilisé pour : session, profil utilisateur
- * - Durée : 1min fraîche, 30s revalidation, 5min expiration
+ * - Profil "session" : 1min stale, 30s revalidation, 5min expiration (sémantique user)
  */
 export function cacheCurrentUser(userId: string) {
-	cacheLife("dashboard");
+	cacheLife("session");
 	cacheTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 }
 

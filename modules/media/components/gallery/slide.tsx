@@ -5,6 +5,7 @@ import { CircleAlert, RefreshCw } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { useMediaQuery } from "@/shared/hooks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { MAIN_IMAGE_QUALITY } from "@/modules/media/constants/image-config.constants";
 import {
 	GALLERY_ZOOM_LEVEL,
@@ -56,6 +57,8 @@ interface VideoErrorFallbackProps {
 }
 
 function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
+	const haptic = useHaptic();
+
 	return (
 		<div
 			className="bg-muted/80 absolute inset-0 z-10 flex flex-col items-center justify-center"
@@ -76,9 +79,10 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 					type="button"
 					onClick={(e) => {
 						e.stopPropagation();
+						haptic("medium");
 						onRetry();
 					}}
-					className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
+					className="bg-primary text-primary-foreground hover:bg-primary/90 flex min-h-11 touch-manipulation items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
 				>
 					<RefreshCw className="h-4 w-4" aria-hidden="true" />
 					Réessayer

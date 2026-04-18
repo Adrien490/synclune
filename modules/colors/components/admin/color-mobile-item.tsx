@@ -58,7 +58,7 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{color.name}</span>
 						<Badge variant={color.isActive ? "default" : "secondary"}>{statusLabel}</Badge>
 					</ItemTitle>

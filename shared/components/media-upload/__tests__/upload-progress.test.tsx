@@ -166,6 +166,35 @@ describe("UploadProgress", () => {
 			const srSpan = document.querySelector(".sr-only");
 			expect(srSpan?.textContent).toContain("3 en attente");
 		});
+
+		// P1.5 — completedCount enriches success announcement
+		it("annonce 'X fichiers envoyés' quand completedCount est fourni à la fin", () => {
+			render(<UploadProgress progress={100} isProcessing={false} completedCount={5} />);
+
+			const srSpan = document.querySelector(".sr-only");
+			expect(srSpan?.textContent).toBe("5 fichiers envoyés");
+		});
+
+		it("utilise le singulier quand completedCount = 1", () => {
+			render(<UploadProgress progress={100} isProcessing={false} completedCount={1} />);
+
+			const srSpan = document.querySelector(".sr-only");
+			expect(srSpan?.textContent).toBe("1 fichier envoyé");
+		});
+
+		it("fallback sur 'Téléversement terminé' quand completedCount n'est pas fourni", () => {
+			render(<UploadProgress progress={100} isProcessing={false} />);
+
+			const srSpan = document.querySelector(".sr-only");
+			expect(srSpan?.textContent).toBe("Téléversement terminé");
+		});
+
+		it("fallback sur 'Téléversement terminé' quand completedCount = 0", () => {
+			render(<UploadProgress progress={100} isProcessing={false} completedCount={0} />);
+
+			const srSpan = document.querySelector(".sr-only");
+			expect(srSpan?.textContent).toBe("Téléversement terminé");
+		});
 	});
 
 	// -------------------------------------------------------------------------

@@ -34,6 +34,7 @@ export function CreateProductInfoCard({
 			role="region"
 			aria-label="Informations générales du bijou"
 			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+			style={{ viewTransitionName: "product-create-info" }}
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
 				<CardTitle className="text-muted-foreground lg:text-foreground text-sm font-semibold tracking-wide uppercase lg:text-base lg:font-semibold lg:tracking-normal lg:normal-case">
@@ -89,7 +90,7 @@ export function CreateProductInfoCard({
 					)}
 				</form.AppField>
 
-				<form.AppField name="typeId">
+				<form.AppField name="typeId" listeners={{ onChange: () => haptic("selection") }}>
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel htmlFor={field.name} optional>
@@ -140,7 +141,10 @@ export function CreateProductInfoCard({
 									label: c.name,
 								}))}
 								defaultValue={field.state.value}
-								onValueChange={(values) => field.handleChange(values)}
+								onValueChange={(values) => {
+									haptic("selection");
+									field.handleChange(values);
+								}}
 								placeholder="Sélectionner des collections"
 								maxCount={2}
 								hideSelectAll

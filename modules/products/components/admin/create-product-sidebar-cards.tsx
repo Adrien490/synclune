@@ -28,7 +28,7 @@ export function CreateProductSidebarCards({
 	materials,
 }: CreateProductSidebarCardsProps) {
 	return (
-		<div className="space-y-6">
+		<div className="space-y-6 [scrollbar-gutter:stable] lg:sticky lg:top-[calc(var(--admin-header-height,3.5rem)+1rem)] lg:max-h-[calc(100dvh-var(--admin-header-height,3.5rem)-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
 			<VariantCard form={form} colors={colors} materials={materials} />
 			<PricingCard form={form} />
 			<StockCard form={form} />
@@ -214,8 +214,10 @@ function VariantCard({
 							<FieldLabel optional>Taille</FieldLabel>
 							<field.InputGroupField
 								placeholder="Ex: 52, Ajustable, 18cm..."
+								inputMode="text"
 								enterKeyHint="next"
 								autoCapitalize="none"
+								autoComplete="off"
 							/>
 						</div>
 					)}

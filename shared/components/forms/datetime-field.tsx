@@ -29,6 +29,8 @@ interface DateTimeFieldProps {
 	className?: string;
 	/** Affiche uniquement la date (sans l'heure) */
 	dateOnly?: boolean;
+	/** Texte d'aide affiché sous le champ, lié via aria-describedby */
+	helpText?: string;
 }
 
 /**
@@ -58,8 +60,14 @@ export function DateTimeField({
 	disabled,
 	className,
 	dateOnly = false,
+	helpText,
 }: DateTimeFieldProps) {
 	const field = useFieldContext<string>();
+	const helpTextId = helpText ? `${field.name}-help` : undefined;
+	const describedBy =
+		[helpTextId, field.state.meta.errors.length > 0 ? `${field.name}-error` : null]
+			.filter(Boolean)
+			.join(" ") || undefined;
 
 	// Parse la valeur ISO en Date
 	const parseValue = (value: string | null | undefined): Date | undefined => {
@@ -165,7 +173,7 @@ export function DateTimeField({
 					disabled={disabled}
 					required={required}
 					aria-invalid={hasError}
-					aria-describedby={hasError ? `${field.name}-error` : undefined}
+					aria-describedby={describedBy}
 					aria-required={required}
 					className={cn(inputVariants(), "w-full")}
 				/>
@@ -192,7 +200,7 @@ export function DateTimeField({
 							variant="outline"
 							disabled={disabled}
 							aria-invalid={hasError}
-							aria-describedby={hasError ? `${field.name}-error` : undefined}
+							aria-describedby={describedBy}
 							aria-required={required}
 							className={cn(
 								"min-h-11 w-full justify-start text-left font-normal",
@@ -244,6 +252,12 @@ export function DateTimeField({
 
 			{/* Hidden input for form submission */}
 			<input type="hidden" name={field.name} value={field.state.value} />
+
+			{helpText && (
+				<p id={helpTextId} className="text-muted-foreground text-xs">
+					{helpText}
+				</p>
+			)}
 
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>

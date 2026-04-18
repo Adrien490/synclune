@@ -109,46 +109,32 @@ export function OrderItemDrawer() {
 		order.paymentStatus !== PaymentStatus.PAID &&
 		order.paymentStatus !== PaymentStatus.REFUNDED;
 
-	const closeAndOpen = (openFn: () => void) => () => {
-		drawer.close();
-		openFn();
-	};
-
-	const handleMarkAsPaid = closeAndOpen(() =>
-		markAsPaidAlert.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
-	const handleMarkAsShipped = closeAndOpen(() =>
-		markAsShippedAlert.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
-	const handleMarkAsDelivered = closeAndOpen(() =>
-		markAsDeliveredAlert.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
-	const handleMarkAsProcessing = closeAndOpen(() =>
-		markAsProcessingAlert.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
-	const handleRevertToProcessing = closeAndOpen(() =>
+	const handleMarkAsPaid = () =>
+		markAsPaidAlert.open({ orderId: order.id, orderNumber: order.orderNumber });
+	const handleMarkAsShipped = () =>
+		markAsShippedAlert.open({ orderId: order.id, orderNumber: order.orderNumber });
+	const handleMarkAsDelivered = () =>
+		markAsDeliveredAlert.open({ orderId: order.id, orderNumber: order.orderNumber });
+	const handleMarkAsProcessing = () =>
+		markAsProcessingAlert.open({ orderId: order.id, orderNumber: order.orderNumber });
+	const handleRevertToProcessing = () =>
 		revertToProcessingAlert.open({
 			orderId: order.id,
 			orderNumber: order.orderNumber,
 			trackingNumber: order.trackingNumber,
-		}),
-	);
-	const handleMarkAsReturned = closeAndOpen(() =>
-		markAsReturnedAlert.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
-	const handleCancel = closeAndOpen(() =>
+		});
+	const handleMarkAsReturned = () =>
+		markAsReturnedAlert.open({ orderId: order.id, orderNumber: order.orderNumber });
+	const handleCancel = () =>
 		cancelAlert.open({
 			orderId: order.id,
 			orderNumber: order.orderNumber,
 			isPaid: order.paymentStatus === PaymentStatus.PAID,
-		}),
-	);
-	const handleDelete = closeAndOpen(() =>
-		deleteAlert.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
-	const handleOpenNotes = closeAndOpen(() =>
-		notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber }),
-	);
+		});
+	const handleDelete = () =>
+		deleteAlert.open({ orderId: order.id, orderNumber: order.orderNumber });
+	const handleOpenNotes = () =>
+		notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber });
 
 	return (
 		<AdminItemDrawer

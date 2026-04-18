@@ -4,8 +4,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { cacheLife, cacheTag } from "next/cache";
-import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { cacheRefunds } from "../constants/cache";
 
 import {
 	GET_REFUNDS_DEFAULT_PER_PAGE,
@@ -54,8 +53,7 @@ export async function getRefunds(params: GetRefundsParams): Promise<GetRefundsRe
  */
 async function fetchRefunds(params: GetRefundsParams): Promise<GetRefundsReturn> {
 	"use cache";
-	cacheLife("dashboard");
-	cacheTag(ORDERS_CACHE_TAGS.LIST);
+	cacheRefunds();
 
 	try {
 		const where = buildRefundWhereClause(params);

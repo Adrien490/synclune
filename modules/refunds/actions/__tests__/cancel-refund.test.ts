@@ -95,6 +95,10 @@ vi.mock("../../constants/cache", () => ({
 		USER_ORDERS: (userId: string) => `orders-user-${userId}`,
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 	},
+	REFUNDS_CACHE_TAGS: {
+		LIST: "refunds-list",
+		DETAIL: (id: string) => `refund-${id}`,
+	},
 }));
 
 vi.mock("@/shared/constants/cache-tags", () => ({
@@ -317,20 +321,22 @@ describe("cancelRefund", () => {
 		);
 	});
 
-	it("should invalidate all 7 cache tags when order has a user", async () => {
+	it("should invalidate all 9 cache tags when order has a user", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.update.mockResolvedValue({});
 
 		await cancelRefund(undefined, makeFormData());
 
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("refunds-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("refund-refund-1");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-refunds-order-1");
 		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
 		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-revenue-chart");
 		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-recent-orders");
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(7);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(9);
 	});
 
 	it("should invalidate user-specific cache tag when order has a user", async () => {

@@ -37,6 +37,22 @@ vi.mock("../../constants/cache", () => ({
 		LIST: "orders-list",
 		REFUNDS: (orderId: string) => `order-refunds-${orderId}`,
 	},
+	REFUNDS_CACHE_TAGS: {
+		LIST: "refunds-list",
+		DETAIL: (id: string) => `refund-${id}`,
+	},
+	cacheRefunds: () => {
+		mockCacheLife("dashboard");
+		mockCacheTag("refunds-list");
+	},
+	cacheRefundDetail: (id: string, orderId?: string) => {
+		mockCacheLife("dashboard");
+		if (orderId) {
+			mockCacheTag(`refund-${id}`, "refunds-list", `order-refunds-${orderId}`);
+		} else {
+			mockCacheTag(`refund-${id}`, "refunds-list");
+		}
+	},
 }));
 
 vi.mock("../../schemas/refund.schemas", () => ({
@@ -186,7 +202,7 @@ describe("getRefundById", () => {
 		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
 	});
 
-	it("calls cacheTag with orders-list and refund-specific tags in a single call", async () => {
+	it("calls cacheTag with dedicated refund detail and list tags", async () => {
 		mockSchema.safeParse.mockReturnValue({
 			success: true,
 			data: { id: "refund-cuid-001" },
@@ -194,9 +210,8 @@ describe("getRefundById", () => {
 
 		await getRefundById({ id: "refund-cuid-001" });
 
-		// The source calls cacheTag(ORDERS_CACHE_TAGS.LIST, ORDERS_CACHE_TAGS.REFUNDS(params.id))
-		// which passes both tags as separate arguments to a single cacheTag call
-		expect(mockCacheTag).toHaveBeenCalledWith("orders-list", "order-refunds-refund-cuid-001");
+		// cacheRefundDetail(id) tags with REFUNDS_CACHE_TAGS.DETAIL(id) + REFUNDS_CACHE_TAGS.LIST
+		expect(mockCacheTag).toHaveBeenCalledWith("refund-refund-cuid-001", "refunds-list");
 	});
 
 	it("returns null on DB error", async () => {

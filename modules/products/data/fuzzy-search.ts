@@ -210,9 +210,10 @@ export async function fuzzySearchProductIds(
 		};
 	} catch (error) {
 		const durationMs = Math.round(performance.now() - startTime);
-		logger.warn(
-			`Fuzzy search error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms | error="${error instanceof Error ? error.message : error}"`,
-			{ service: "fuzzySearchProductIds" },
+		logger.error(
+			`Fuzzy search error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms`,
+			error,
+			{ service: "fuzzySearchProductIds", durationMs },
 		);
 		return { ids: [], totalCount: 0 };
 	}

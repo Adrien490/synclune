@@ -18,6 +18,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 export const COLOR_DIALOG_ID = "color-form";
 
@@ -33,6 +34,7 @@ interface ColorDialogData extends Record<string, unknown> {
 
 export function ColorFormDialog() {
 	const { isOpen, close, data } = useDialog<ColorDialogData>(COLOR_DIALOG_ID);
+	const haptic = useHaptic();
 	const color = data?.color;
 	const isUpdateMode = !!color;
 
@@ -60,6 +62,7 @@ export function ColorFormDialog() {
 					) {
 						data?.onCreated?.(result.data.id);
 					}
+					haptic("success");
 					close();
 					form.reset();
 				},
@@ -74,6 +77,7 @@ export function ColorFormDialog() {
 			createToastCallbacks({
 				loadingMessage: "Mise à jour de la couleur...",
 				onSuccess: () => {
+					haptic("success");
 					close();
 				},
 			}),

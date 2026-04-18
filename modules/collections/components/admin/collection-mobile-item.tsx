@@ -60,7 +60,7 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 				aria-roledescription="carte collection"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{collection.name}</span>
 						<Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
 					</ItemTitle>

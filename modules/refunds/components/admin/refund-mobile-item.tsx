@@ -56,7 +56,7 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 				aria-roledescription="carte remboursement"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{refund.order.orderNumber}</span>
 						<Badge variant={REFUND_STATUS_VARIANTS[refund.status]}>
 							{REFUND_STATUS_LABELS[refund.status]}

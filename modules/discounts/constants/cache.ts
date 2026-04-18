@@ -25,19 +25,19 @@ export const DISCOUNT_CACHE_TAGS = {
 // ============================================
 
 /**
- * Configure le cache pour les codes promo
+ * Configure le cache pour les codes promo (liste admin)
  * - Utilisé pour : /admin/marketing/codes-promo
- * - Profil "cart" : 5min stale, 1min revalidation
+ * - Profil "dashboard" : 1min stale, 30s revalidation (cohérence admin)
  */
 export function cacheDiscounts() {
-	cacheLife("cart");
+	cacheLife("dashboard");
 	cacheTag(DISCOUNT_CACHE_TAGS.LIST);
 }
 
 /**
  * Configure le cache pour un code promo spécifique
- * - Utilisé pour : validation checkout, détail admin
- * - Durée : 5min fraîche, 1min revalidation, 30min expiration
+ * - Utilisé pour : validation checkout (public) + détail admin
+ * - Profil "cart" : 5min stale, 1min revalidation, 30min expiration
  */
 export function cacheDiscountDetail(idOrCode: string) {
 	cacheLife("cart");

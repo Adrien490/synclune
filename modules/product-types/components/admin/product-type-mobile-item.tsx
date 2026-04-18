@@ -55,7 +55,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				aria-roledescription="carte type de bijou"
 			>
 				<ItemContent className="min-w-0">
-					<ItemTitle>
+					<ItemTitle className="w-full min-w-0 flex-wrap">
 						<span className="truncate font-semibold">{productType.label}</span>
 						<Badge variant={productType.isActive ? "default" : "secondary"}>{statusLabel}</Badge>
 						{productType.isSystem ? <Badge variant="outline">Systeme</Badge> : null}

@@ -1,4 +1,3 @@
-import { ReviewReminderEmail } from "@/emails/review-reminder-email";
 import { ReviewRequestEmail } from "@/emails/review-request-email";
 import { ReviewResponseEmail } from "@/emails/review-response-email";
 import { EMAIL_CONTACT, EMAIL_SUBJECTS } from "../constants/email.constants";
@@ -34,41 +33,7 @@ export async function sendReviewRequestEmail({
 			to,
 			subject: EMAIL_SUBJECTS.REVIEW_REQUEST,
 			replyTo: EMAIL_CONTACT,
-			headers: {
-				"List-Unsubscribe": `<${unsubscribeUrl}>`,
-				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-			},
-			tags: [{ name: "category", value: "order" }],
-		},
-	);
-}
-
-/**
- * Envoie un rappel de demande d'avis (2e tentative)
- */
-export async function sendReviewReminderEmail({
-	to,
-	customerName,
-	orderNumber,
-	reviewUrl,
-	unsubscribeUrl,
-}: {
-	to: string;
-	customerName: string;
-	orderNumber: string;
-	reviewUrl: string;
-	unsubscribeUrl: string;
-}): Promise<EmailResult> {
-	return renderAndSend(
-		ReviewReminderEmail({ customerName, orderNumber, reviewUrl, unsubscribeUrl }),
-		{
-			to,
-			subject: EMAIL_SUBJECTS.REVIEW_REMINDER,
-			replyTo: EMAIL_CONTACT,
-			headers: {
-				"List-Unsubscribe": `<${unsubscribeUrl}>`,
-				"List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-			},
+			unsubscribeUrl,
 			tags: [{ name: "category", value: "order" }],
 		},
 	);

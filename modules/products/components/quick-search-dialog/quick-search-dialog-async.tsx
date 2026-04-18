@@ -1,9 +1,9 @@
 import { getQuickSearchData } from "@/modules/products/data/get-quick-search-data";
 
-import { QuickSearchDialog } from "./quick-search-dialog";
+import { QuickSearchDialogLazy } from "./quick-search-dialog-lazy";
 
 export async function QuickSearchDialogAsync() {
 	const data = await getQuickSearchData();
 
-	return <QuickSearchDialog {...data} />;
+	return <QuickSearchDialogLazy {...data} />;
 }

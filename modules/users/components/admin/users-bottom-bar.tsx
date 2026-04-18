@@ -86,6 +86,7 @@ export function UsersBottomBar() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, email..."
 				ariaLabel="Rechercher un client"
+				scope="users"
 			/>
 		</>
 	);

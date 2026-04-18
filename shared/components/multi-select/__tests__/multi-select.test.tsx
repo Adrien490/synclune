@@ -6,9 +6,11 @@ import * as React from "react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsMobile, mockMounted } = vi.hoisted(() => ({
+const { mockIsMobile, mockMounted, mockHaptic, mockReducedMotion } = vi.hoisted(() => ({
 	mockIsMobile: { value: false },
 	mockMounted: { value: true },
+	mockHaptic: { fn: vi.fn(() => true) },
+	mockReducedMotion: { value: false },
 }));
 
 // ============================================================================
@@ -21,6 +23,18 @@ vi.mock("@/shared/hooks/use-mobile", () => ({
 
 vi.mock("@/shared/hooks/use-mounted", () => ({
 	useMounted: () => mockMounted.value,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic.fn,
+}));
+
+vi.mock("motion/react", () => ({
+	useReducedMotion: () => mockReducedMotion.value,
+}));
+
+vi.mock("@/shared/utils/view-transition", () => ({
+	withViewTransition: <T,>(cb: () => T): T => cb(),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -36,6 +50,7 @@ vi.mock("lucide-react", () => ({
 	CheckIcon: () => <svg data-testid="icon-check" />,
 	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
 	CircleX: () => <svg data-testid="icon-circle-x" />,
+	SearchX: () => <svg data-testid="icon-search-x" />,
 	XIcon: () => <svg data-testid="icon-x" />,
 }));
 
@@ -195,6 +210,8 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mockIsMobile.value = false;
 	mockMounted.value = true;
+	mockReducedMotion.value = false;
+	mockHaptic.fn = vi.fn(() => true);
 });
 
 afterEach(cleanup);
@@ -408,6 +425,234 @@ describe("MultiSelect", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={[]} />);
 
 			expect(screen.getByText("Aucune option sélectionnée")).toBeInTheDocument();
+		});
+	});
+
+	// ============================================================================
+	// HAPTIC FEEDBACK (2026 natif)
+	// ============================================================================
+
+	describe("haptic feedback", () => {
+		it("fires selection haptic when opening the popover (desktop)", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+			expect(mockHaptic.fn).toHaveBeenCalledWith("selection");
+		});
+
+		it("fires selection haptic when toggling an option", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} closeOnSelect={false} />);
+			fireEvent.click(screen.getByRole("combobox"));
+			mockHaptic.fn.mockClear();
+
+			const rougeOption = screen.getByRole("option", { name: /rouge, non sélectionné/i });
+			fireEvent.click(rougeOption);
+
+			expect(mockHaptic.fn).toHaveBeenCalledWith("selection");
+		});
+
+		it("fires light haptic on clear (top-right X)", () => {
+			render(
+				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge", "bleu"]} />,
+			);
+			mockHaptic.fn.mockClear();
+
+			fireEvent.click(screen.getByRole("button", { name: "Effacer les 2 options sélectionnées" }));
+			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
+		});
+
+		it("fires light haptic when select-all toggled on", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} closeOnSelect={false} />);
+			fireEvent.click(screen.getByRole("combobox"));
+			mockHaptic.fn.mockClear();
+
+			fireEvent.click(screen.getByText("(Tout sélectionner)"));
+			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
+		});
+
+		it("fires medium haptic on mobile Terminer button", () => {
+			mockIsMobile.value = true;
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+
+			fireEvent.click(screen.getByRole("combobox"));
+			mockHaptic.fn.mockClear();
+
+			fireEvent.click(screen.getByRole("button", { name: "Terminer la sélection" }));
+			expect(mockHaptic.fn).toHaveBeenCalledWith("medium");
+		});
+	});
+
+	// ============================================================================
+	// MOBILE INPUT ATTRIBUTES (iOS/Android natif)
+	// ============================================================================
+
+	describe("mobile search input attrs", () => {
+		beforeEach(() => {
+			mockIsMobile.value = true;
+		});
+
+		it("has inputMode=search and enterKeyHint=search", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			expect(input).toHaveAttribute("inputMode", "search");
+			expect(input).toHaveAttribute("enterKeyHint", "search");
+			expect(input).toHaveAttribute("autoCapitalize", "off");
+			expect(input).toHaveAttribute("autoCorrect", "off");
+			expect(input).toHaveAttribute("spellCheck", "false");
+		});
+
+		it("does NOT have autoFocus on mobile drawer input", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			expect(input).not.toHaveAttribute("autoFocus");
+			expect(input).not.toHaveAttribute("autofocus");
+		});
+
+		it("has data-vaul-no-drag to prevent drawer drag from input", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			expect(input).toHaveAttribute("data-vaul-no-drag");
+		});
+	});
+
+	describe("desktop search input attrs", () => {
+		it("has inputMode=search + enterKeyHint=search + autoFocus", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			expect(input).toHaveAttribute("inputMode", "search");
+			expect(input).toHaveAttribute("enterKeyHint", "search");
+			expect(input).toHaveAttribute("autoCapitalize", "off");
+		});
+	});
+
+	// ============================================================================
+	// KEYBOARD SHORTCUTS — Desktop power-user (P1 2026)
+	// ============================================================================
+
+	describe("keyboard shortcuts", () => {
+		it("Escape with non-empty search clears the search (no close)", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			fireEvent.change(input, { target: { value: "rou" } });
+			expect(input).toHaveValue("rou");
+
+			mockHaptic.fn.mockClear();
+			fireEvent.keyDown(input, { key: "Escape" });
+
+			expect(input).toHaveValue("");
+			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
+		});
+
+		it("Escape with empty search does NOT fire haptic (Radix handles close)", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			mockHaptic.fn.mockClear();
+			fireEvent.keyDown(input, { key: "Escape" });
+
+			expect(mockHaptic.fn).not.toHaveBeenCalledWith("light");
+		});
+
+		it("Cmd+A toggles all options (select all when none selected)", () => {
+			const onValueChange = vi.fn();
+			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} closeOnSelect={false} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			onValueChange.mockClear();
+			fireEvent.keyDown(input, { key: "a", metaKey: true });
+
+			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu", "vert", "jaune", "violet"]);
+		});
+
+		it("Ctrl+A toggles all options (Windows/Linux shortcut)", () => {
+			const onValueChange = vi.fn();
+			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} closeOnSelect={false} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			onValueChange.mockClear();
+			fireEvent.keyDown(input, { key: "a", ctrlKey: true });
+
+			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu", "vert", "jaune", "violet"]);
+		});
+	});
+
+	// ============================================================================
+	// EMPTY STATE — Enhanced 2026 UX
+	// ============================================================================
+
+	describe("empty state", () => {
+		it("shows SearchX icon + clear-search button when search yields no results", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			fireEvent.change(input, { target: { value: "zzzzz-no-match" } });
+
+			expect(screen.getByTestId("icon-search-x")).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Effacer la recherche" })).toBeInTheDocument();
+		});
+
+		it("clicking 'Effacer la recherche' resets search and fires light haptic", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+
+			const input = screen.getByTestId("command-input");
+			fireEvent.change(input, { target: { value: "nomatch" } });
+
+			mockHaptic.fn.mockClear();
+			fireEvent.click(screen.getByRole("button", { name: "Effacer la recherche" }));
+
+			expect(input).toHaveValue("");
+			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
+		});
+	});
+
+	// ============================================================================
+	// REDUCED MOTION GUARDS
+	// ============================================================================
+
+	describe("prefers-reduced-motion", () => {
+		it("zeroes animationDuration on selected badge when reduced-motion is on", () => {
+			mockReducedMotion.value = true;
+			render(
+				<MultiSelect
+					options={OPTIONS}
+					onValueChange={vi.fn()}
+					defaultValue={["rouge"]}
+					animation={0.5}
+					animationConfig={{ badgeAnimation: "bounce", duration: 0.5 }}
+				/>,
+			);
+
+			const badge = screen.getAllByTestId("badge")[0]!;
+			expect(badge.getAttribute("style")).toMatch(/animation-duration:\s*0s/i);
+		});
+
+		it("keeps animationDuration when reduced-motion is off", () => {
+			mockReducedMotion.value = false;
+			render(
+				<MultiSelect
+					options={OPTIONS}
+					onValueChange={vi.fn()}
+					defaultValue={["rouge"]}
+					animationConfig={{ badgeAnimation: "bounce", duration: 0.7 }}
+				/>,
+			);
+
+			const badge = screen.getAllByTestId("badge")[0]!;
+			expect(badge.getAttribute("style")).toMatch(/animation-duration:\s*0\.7s/i);
 		});
 	});
 });

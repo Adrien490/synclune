@@ -1,4 +1,5 @@
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
 
 interface MediaValue {
@@ -52,6 +53,7 @@ export function useMediaFieldUpload({
 		});
 
 		if (files.length > remaining) {
+			triggerHaptic("error");
 			toast.warning(`Seulement ${remaining} média(s) ajouté(s)`);
 		}
 
@@ -60,23 +62,31 @@ export function useMediaFieldUpload({
 			!isUploading &&
 			filesToUpload[0]?.type.startsWith("video/")
 		) {
+			triggerHaptic("error");
 			toast.error("La première image doit être une image, pas une vidéo");
 			return;
 		}
 
 		if (filesToUpload.length === 0) return;
 
-		const results = await uploadMedia(filesToUpload);
-		const altText = getAltText();
-		results.forEach((result) => {
-			field.pushValue({
-				url: result.url,
-				altText,
-				mediaType: result.mediaType,
-				thumbnailUrl: result.thumbnailUrl,
-				blurDataUrl: result.blurDataUrl,
+		triggerHaptic("medium");
+		try {
+			const results = await uploadMedia(filesToUpload);
+			const altText = getAltText();
+			results.forEach((result) => {
+				field.pushValue({
+					url: result.url,
+					altText,
+					mediaType: result.mediaType,
+					thumbnailUrl: result.thumbnailUrl,
+					blurDataUrl: result.blurDataUrl,
+				});
 			});
-		});
+			if (results.length > 0) triggerHaptic("success");
+		} catch (err) {
+			triggerHaptic("error");
+			throw err;
+		}
 	};
 
 	return { handleUpload };

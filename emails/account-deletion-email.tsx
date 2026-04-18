@@ -1,5 +1,7 @@
 import { Section, Text } from "@react-email/components";
-import { EMAIL_STYLES } from "./email-colors";
+import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
+import { EmailCard } from "./_components/email-card";
+import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
 
 interface AccountDeletionEmailProps {
@@ -9,18 +11,20 @@ interface AccountDeletionEmailProps {
 
 export const AccountDeletionEmail = ({ userName, deletionDate }: AccountDeletionEmailProps) => (
 	<EmailLayout preview="Votre compte a été supprimé">
-		{/* Titre */}
 		<Section style={{ marginBottom: "24px" }}>
-			<Text style={EMAIL_STYLES.heading.h2}>Compte supprimé</Text>
-			<Text style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}>
+			<EmailHeading level="h1">Compte supprimé</EmailHeading>
+			<Text
+				className={EMAIL_CLASSES.text.body}
+				style={{ ...EMAIL_STYLES.text.body, marginTop: "12px" }}
+			>
 				Bonjour {userName}, votre compte Synclune a été supprimé le {deletionDate} conformément à
 				votre demande.
 			</Text>
 		</Section>
 
-		{/* Info retention */}
-		<Section style={{ ...EMAIL_STYLES.section.card, marginBottom: "24px" }}>
+		<EmailCard style={{ marginBottom: "24px" }}>
 			<Text
+				className={EMAIL_CLASSES.text.body}
 				style={{
 					...EMAIL_STYLES.text.body,
 					margin: 0,
@@ -29,16 +33,18 @@ export const AccountDeletionEmail = ({ userName, deletionDate }: AccountDeletion
 			>
 				Conservation légale des données
 			</Text>
-			<Text style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}>
+			<Text
+				className={EMAIL_CLASSES.text.secondary}
+				style={{ ...EMAIL_STYLES.text.small, marginTop: "8px" }}
+			>
 				Conformément à l'article L123-22 du Code de Commerce, les données relatives à vos commandes
 				et factures sont conservées pendant 10 ans à des fins comptables et fiscales. Vos données
 				personnelles (nom, email, adresse) ont été anonymisées.
 			</Text>
-		</Section>
+		</EmailCard>
 
-		{/* Contact */}
 		<Section style={{ marginBottom: "32px" }}>
-			<Text style={EMAIL_STYLES.text.body}>
+			<Text className={EMAIL_CLASSES.text.body} style={EMAIL_STYLES.text.body}>
 				Si vous avez des questions, n'hésitez pas à nous contacter. Nous vous remercions pour votre
 				confiance.
 			</Text>

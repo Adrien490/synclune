@@ -117,7 +117,7 @@ function GalleryThumbnailList({
 			<ScrollFade axis="horizontal">
 				<div
 					ref={tablistRef}
-					className="flex flex-nowrap gap-2 py-1"
+					className="flex flex-nowrap gap-2 py-1 pr-[env(safe-area-inset-right,0px)] pl-[env(safe-area-inset-left,0px)]"
 					role="tablist"
 					aria-label="Vignettes"
 				>
@@ -179,6 +179,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 		watchDrag: images.length > 1,
 	});
 
+	// Track pointer drag to differentiate swipe-triggered selects from button-triggered ones
+	const isDraggingRef = useRef(false);
+
 	// Connection-aware prefetch range with intelligent fallback
 	// Safari/Firefox don't support navigator.connection
 	// Fallback: mobile viewport without connection API = treat as moderate connection
@@ -226,9 +229,17 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 	// Effect Event to handle onSelect without re-registration
 	const onSelect = useEffectEvent(() => {
-		if (emblaApi) {
-			setCurrent(emblaApi.selectedScrollSnap());
+		if (!emblaApi) return;
+		setCurrent(emblaApi.selectedScrollSnap());
+		// Haptic only on swipe-triggered selects (buttons already emit "selection" on click)
+		if (isDraggingRef.current) {
+			haptic("light");
+			isDraggingRef.current = false;
 		}
+	});
+
+	const onPointerDown = useEffectEvent(() => {
+		isDraggingRef.current = true;
 	});
 
 	// Sync index when carousel changes
@@ -237,9 +248,11 @@ function GalleryContent({ product, title }: GalleryProps) {
 
 		onSelect();
 		emblaApi.on("select", onSelect);
+		emblaApi.on("pointerDown", onPointerDown);
 
 		return () => {
 			emblaApi.off("select", onSelect);
+			emblaApi.off("pointerDown", onPointerDown);
 		};
 	}, [emblaApi]);
 

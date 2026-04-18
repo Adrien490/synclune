@@ -381,4 +381,89 @@ describe("bulkDeleteOrders", () => {
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
+
+	// --------------------------------------------------------------------------
+	// Race conditions & partial-failure (P1-6)
+	// --------------------------------------------------------------------------
+
+	it("should run eligibility filter + updateMany in the same transaction (atomic)", async () => {
+		const deletable = createDeletableOrder({ id: "order-1" });
+		mockPrisma.order.findMany.mockResolvedValue([deletable]);
+
+		await bulkDeleteOrders(undefined, makeFormData());
+
+		// Single $transaction call wrapping both findMany + updateMany (prevents TOCTOU
+		// where the order becomes paid between the eligibility check and the delete).
+		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		// Both reads and writes go through the tx callback, not raw prisma
+		expect(mockPrisma.order.findMany).toHaveBeenCalledTimes(1);
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledTimes(1);
+	});
+
+	it("should rollback by not invalidating cache when transaction throws mid-flight", async () => {
+		const deletable = createDeletableOrder({ id: "order-1" });
+		mockPrisma.order.findMany.mockResolvedValue([deletable]);
+		// Simulate transaction failure after eligibility but before commit
+		mockPrisma.order.updateMany.mockRejectedValue(new Error("Serialization failure"));
+
+		const result = await bulkDeleteOrders(undefined, makeFormData());
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		// Cache must NOT be invalidated if the mutation threw
+		expect(mockUpdateTag).not.toHaveBeenCalled();
+		expect(mockHandleActionError).toHaveBeenCalled();
+	});
+
+	it("should handle mixed eligible/ineligible list without losing the eligible ones", async () => {
+		const eligible = createDeletableOrder({ id: "eligible-1", paymentStatus: "PENDING" });
+		const paid = createDeletableOrder({
+			id: "already-paid",
+			paymentStatus: "PAID",
+			orderNumber: "SYN-2026-0002",
+		});
+		const invoiced = createDeletableOrder({
+			id: "invoiced",
+			invoiceNumber: "INV-001",
+			orderNumber: "SYN-2026-0003",
+		});
+		mockPrisma.order.findMany.mockResolvedValue([eligible, paid, invoiced]);
+
+		const result = await bulkDeleteOrders(
+			undefined,
+			makeFormData([eligible.id, paid.id, invoiced.id]),
+		);
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { id: { in: ["eligible-1"] } },
+			}),
+		);
+		// Skipped count = 2 surfaced in the success message
+		expect(result.message).toMatch(/2/);
+	});
+
+	it("should not leak partial writes when concurrent callers target overlapping orders", async () => {
+		// Simulate two quasi-simultaneous bulkDelete calls. Each sees the same snapshot
+		// in findMany, but the transactional updateMany is the source of truth. Using
+		// updateMany with `where: { id: { in: [...] } }` is idempotent (no-op on already
+		// soft-deleted rows), so the second caller completes gracefully.
+		const order = createDeletableOrder({ id: "shared-order" });
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockPrisma.order.updateMany
+			.mockResolvedValueOnce({ count: 1 })
+			.mockResolvedValueOnce({ count: 0 }); // already deleted by concurrent call
+
+		const [firstResult, secondResult] = await Promise.all([
+			bulkDeleteOrders(undefined, makeFormData([order.id])),
+			bulkDeleteOrders(undefined, makeFormData([order.id])),
+		]);
+
+		expect(firstResult.status).toBe(ActionStatus.SUCCESS);
+		expect(secondResult.status).toBe(ActionStatus.SUCCESS);
+		// Both callers must go through the transaction
+		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
+		// No partial write leaked — updateMany invoked exactly once per caller
+		expect(mockPrisma.order.updateMany).toHaveBeenCalledTimes(2);
+	});
 });

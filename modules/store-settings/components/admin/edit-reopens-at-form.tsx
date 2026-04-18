@@ -5,6 +5,7 @@ import { useActionState } from "react";
 
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -17,6 +18,7 @@ interface EditReopensAtFormProps {
 }
 
 export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) {
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const initialValue = formatDateForInput(currentReopensAt);
 
 	const form = useAppForm({
@@ -32,7 +34,18 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 	);
 
 	return (
-		<form action={formAction} className="space-y-3" aria-busy={isPending}>
+		<form
+			ref={formRef}
+			action={formAction}
+			onInvalidCapture={onInvalidCapture}
+			onSubmit={() => {
+				queueMicrotask(() => {
+					focusFirstInvalid();
+				});
+			}}
+			className="space-y-3"
+			aria-busy={isPending}
+		>
 			<form.AppField name="reopensAt">
 				{(field) => (
 					<field.DateTimeField
@@ -40,12 +53,10 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 						placeholder="Sélectionner une date"
 						optional
 						disabled={isPending}
+						helpText="Laisser vide pour désactiver la réouverture automatique."
 					/>
 				)}
 			</form.AppField>
-			<p className="text-muted-foreground text-xs">
-				Laisser vide pour désactiver la réouverture automatique.
-			</p>
 
 			<form.Subscribe selector={(state) => state.values.reopensAt !== initialValue}>
 				{(isDirty) => (

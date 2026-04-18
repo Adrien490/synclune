@@ -13,7 +13,7 @@ import { updateTag } from "next/cache";
 import { sendRefundApprovedEmail } from "@/modules/emails/services/refund-emails";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
-import { ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -93,6 +93,7 @@ export async function bulkApproveRefunds(
 
 		// Invalidate admin caches
 		updateTag(ORDERS_CACHE_TAGS.LIST);
+		updateTag(REFUNDS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(DASHBOARD_CACHE_TAGS.KPIS);
 		updateTag(DASHBOARD_CACHE_TAGS.REVENUE_CHART);

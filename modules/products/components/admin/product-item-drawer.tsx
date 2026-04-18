@@ -111,46 +111,29 @@ export function ProductItemDrawer() {
 		fn();
 	};
 
-	const closeAndOpen = (openFn: () => void) => () => {
-		drawer.close();
-		openFn();
-	};
-
-	const handleDuplicate = withHaptic(
-		"light",
-		closeAndOpen(() => duplicateAlert.open({ productId: id, productTitle: title })),
+	const handleDuplicate = withHaptic("light", () =>
+		duplicateAlert.open({ productId: id, productTitle: title }),
 	);
-	const handleManageCollections = withHaptic(
-		"light",
-		closeAndOpen(() => collectionsDialog.open({ productId: id, productTitle: title })),
+	const handleManageCollections = withHaptic("light", () =>
+		collectionsDialog.open({ productId: id, productTitle: title }),
 	);
 	const handleChangeStatus = (targetStatus: ProductStatus) =>
-		withHaptic(
-			"light",
-			closeAndOpen(() =>
-				changeStatusAlert.open({
-					productId: id,
-					productTitle: title,
-					currentStatus: status,
-					targetStatus,
-				}),
-			),
+		withHaptic("light", () =>
+			changeStatusAlert.open({
+				productId: id,
+				productTitle: title,
+				currentStatus: status,
+				targetStatus,
+			}),
 		);
-	const handleArchive = withHaptic(
-		"medium",
-		closeAndOpen(() =>
-			archiveAlert.open({ productId: id, productTitle: title, productStatus: status }),
-		),
+	const handleArchive = withHaptic("medium", () =>
+		archiveAlert.open({ productId: id, productTitle: title, productStatus: status }),
 	);
-	const handleRestore = withHaptic(
-		"medium",
-		closeAndOpen(() =>
-			archiveAlert.open({ productId: id, productTitle: title, productStatus: status }),
-		),
+	const handleRestore = withHaptic("medium", () =>
+		archiveAlert.open({ productId: id, productTitle: title, productStatus: status }),
 	);
-	const handleDelete = withHaptic(
-		"heavy",
-		closeAndOpen(() => deleteAlert.open({ productId: id, productTitle: title })),
+	const handleDelete = withHaptic("heavy", () =>
+		deleteAlert.open({ productId: id, productTitle: title }),
 	);
 	const handleNavigate = () => {
 		haptic("selection");

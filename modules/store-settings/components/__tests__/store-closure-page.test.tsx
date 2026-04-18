@@ -31,7 +31,6 @@ function makeStatus(overrides: Partial<StoreStatus> = {}): StoreStatus {
 		isClosed: true,
 		closureMessage: "Nous sommes en vacances !",
 		reopensAt: null,
-		scheduledCloseAt: null,
 		...overrides,
 	};
 }
