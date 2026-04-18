@@ -1,13 +1,14 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
+import { CircleCheck, EllipsisVertical, EyeOff, LoaderCircle, Trash2 } from "lucide-react";
+
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -17,19 +18,12 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { SelectionToolbar } from "@/shared/components/selection-toolbar";
+import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useBulkPublishReviews } from "@/modules/reviews/hooks/use-bulk-publish-reviews";
-import { useBulkHideReviews } from "@/modules/reviews/hooks/use-bulk-hide-reviews";
 import { useBulkDeleteReviews } from "@/modules/reviews/hooks/use-bulk-delete-reviews";
-import {
-	CircleCheck,
-	EyeOff,
-	LoaderCircle,
-	EllipsisVertical as MoreVerticalIcon,
-	Trash2,
-} from "lucide-react";
+import { useBulkHideReviews } from "@/modules/reviews/hooks/use-bulk-hide-reviews";
+import { useBulkPublishReviews } from "@/modules/reviews/hooks/use-bulk-publish-reviews";
 
 export function ReviewsSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
@@ -63,38 +57,64 @@ export function ReviewsSelectionToolbar() {
 
 	if (selectedItems.length === 0) return null;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "moderation",
+			items: [
+				{
+					key: "publish",
+					label: "Publier",
+					icon: CircleCheck,
+					onSelect: () => publishDialog.open(),
+				},
+				{
+					key: "hide",
+					label: "Masquer",
+					icon: EyeOff,
+					onSelect: () => hideDialog.open(),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: () => deleteDialog.open(),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} avis sélectionné${selectedItems.length > 1 ? "s" : ""}`;
+
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-muted-foreground text-sm">
-					{selectedItems.length} avis sélectionné{selectedItems.length > 1 ? "s" : ""}
-				</span>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+				<span className="text-muted-foreground text-sm">{label}</span>
+				<ResponsiveActionMenu>
+					<ResponsiveActionMenuTrigger asChild>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-11 w-11 p-0"
+							aria-label="Actions de la sélection"
+						>
 							<span className="sr-only">Ouvrir le menu</span>
-							<MoreVerticalIcon className="h-4 w-4" />
+							<EllipsisVertical className="h-4 w-4" />
 						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-50">
-						<DropdownMenuItem onClick={() => publishDialog.open()}>
-							<CircleCheck className="h-4 w-4" />
-							Publier
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => hideDialog.open()}>
-							<EyeOff className="h-4 w-4" />
-							Masquer
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => deleteDialog.open()} variant="destructive">
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+					</ResponsiveActionMenuTrigger>
+					<ResponsiveActionMenuContent
+						title="Actions groupées"
+						description={label}
+						sections={sections}
+					/>
+				</ResponsiveActionMenu>
 			</SelectionToolbar>
 
-			{/* Publish Dialog */}
 			<AlertDialog
 				open={publishDialog.isOpen}
 				onOpenChange={(open) => (open ? publishDialog.open() : publishDialog.close())}
@@ -134,7 +154,6 @@ export function ReviewsSelectionToolbar() {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Hide Dialog */}
 			<AlertDialog
 				open={hideDialog.isOpen}
 				onOpenChange={(open) => (open ? hideDialog.open() : hideDialog.close())}
@@ -174,7 +193,6 @@ export function ReviewsSelectionToolbar() {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Delete Dialog */}
 			<AlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}

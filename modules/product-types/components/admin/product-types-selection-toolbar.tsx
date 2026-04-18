@@ -1,115 +1,127 @@
 "use client";
 
+import { CircleCheck, CircleX, Download, EllipsisVertical, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/use-bulk-activate-product-types";
 import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/use-bulk-deactivate-product-types";
 import { useExportProductTypes } from "@/modules/product-types/hooks/use-export-product-types";
+
 import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
-import { CircleCheck, Download, EllipsisVertical, Trash2, CircleX } from "lucide-react";
-import { toast } from "sonner";
 
 export function ProductTypesSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_PRODUCT_TYPES_DIALOG_ID);
 
 	const { activateProductTypes, isPending: isActivating } = useBulkActivateProductTypes({
-		onSuccess: () => {
-			clearSelection();
-		},
+		onSuccess: () => clearSelection(),
 	});
 
 	const { deactivateProductTypes, isPending: isDeactivating } = useBulkDeactivateProductTypes({
-		onSuccess: () => {
-			clearSelection();
-		},
+		onSuccess: () => clearSelection(),
 	});
 
 	const { exportProductTypes, isPending: isExporting } = useExportProductTypes();
 
-	const handleActivate = () => {
+	const requireSelection = (action: () => void) => () => {
 		if (selectedItems.length === 0) {
 			toast.error("Veuillez sélectionner au moins un type de bijou.");
 			return;
 		}
-
-		activateProductTypes(selectedItems);
-	};
-
-	const handleDeactivate = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins un type de bijou.");
-			return;
-		}
-
-		deactivateProductTypes(selectedItems);
-	};
-
-	const handleBulkDelete = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins un type de bijou.");
-			return;
-		}
-
-		bulkDeleteDialog.open({
-			productTypeIds: selectedItems,
-		});
+		action();
 	};
 
 	if (selectedItems.length === 0) return null;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "toggle",
+			items: [
+				{
+					key: "activate",
+					label: "Activer",
+					icon: CircleCheck,
+					disabled: isActivating,
+					onSelect: requireSelection(() => activateProductTypes(selectedItems)),
+				},
+				{
+					key: "deactivate",
+					label: "Désactiver",
+					icon: CircleX,
+					disabled: isDeactivating,
+					onSelect: requireSelection(() => deactivateProductTypes(selectedItems)),
+				},
+			],
+		},
+		{
+			key: "export",
+			label: "Exporter tout",
+			items: [
+				{
+					key: "csv",
+					label: "Exporter en CSV",
+					icon: Download,
+					disabled: isExporting,
+					onSelect: () => exportProductTypes("csv"),
+				},
+				{
+					key: "json",
+					label: "Exporter en JSON",
+					icon: Download,
+					disabled: isExporting,
+					onSelect: () => exportProductTypes("json"),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: requireSelection(() =>
+						bulkDeleteDialog.open({ productTypeIds: selectedItems }),
+					),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} type${selectedItems.length > 1 ? "s" : ""} sélectionné${selectedItems.length > 1 ? "s" : ""}`;
+
 	return (
 		<SelectionToolbar>
-			<span className="text-muted-foreground text-sm">
-				{selectedItems.length} type{selectedItems.length > 1 ? "s" : ""} sélectionné
-				{selectedItems.length > 1 ? "s" : ""}
-			</span>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+			<span className="text-muted-foreground text-sm">{label}</span>
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0"
+						aria-label="Actions de la sélection"
+					>
 						<span className="sr-only">Ouvrir le menu</span>
 						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-50">
-					<DropdownMenuItem onClick={handleActivate} disabled={isActivating}>
-						<CircleCheck className="h-4 w-4" />
-						Activer
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
-						<CircleX className="h-4 w-4" />
-						Désactiver
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuLabel className="text-muted-foreground flex items-center gap-2 text-xs">
-						<Download className="h-3 w-3" />
-						Exporter tout
-					</DropdownMenuLabel>
-					<DropdownMenuItem onClick={() => exportProductTypes("csv")} disabled={isExporting}>
-						<Download className="h-4 w-4" />
-						Exporter en CSV
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => exportProductTypes("json")} disabled={isExporting}>
-						<Download className="h-4 w-4" />
-						Exporter en JSON
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">
-						<Trash2 className="h-4 w-4" />
-						Supprimer
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions groupées"
+					description={label}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 		</SelectionToolbar>
 	);
 }

@@ -82,46 +82,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuLabel: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => (
-		<div data-testid="dropdown-label" className={className}>
-			{children}
-		</div>
-	),
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		variant,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
-		disabled?: boolean;
-	}) => (
-		<button role="menuitem" onClick={onClick} data-variant={variant} aria-disabled={disabled}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,

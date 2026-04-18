@@ -38,11 +38,11 @@ vi.mock("@/modules/products/hooks/use-bulk-change-product-status", () => ({
 	}),
 }));
 
-vi.mock("./bulk-archive-products-alert-dialog", () => ({
+vi.mock("../bulk-archive-products-alert-dialog", () => ({
 	BULK_ARCHIVE_PRODUCTS_DIALOG_ID: "bulk-archive-products",
 }));
 
-vi.mock("./bulk-delete-products-alert-dialog", () => ({
+vi.mock("../bulk-delete-products-alert-dialog", () => ({
 	BULK_DELETE_PRODUCTS_DIALOG_ID: "bulk-delete-products",
 }));
 
@@ -70,43 +70,54 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		variant,
-		disabled,
-		className,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const React = await import("react");
+	type ActionMenuItem = {
+		key: string;
+		label: string;
+		description?: string;
+		variant?: "default" | "destructive";
 		disabled?: boolean;
-		className?: string;
-	}) => (
-		<button
-			role="menuitem"
-			onClick={onClick}
-			data-variant={variant}
-			aria-disabled={disabled}
-			className={className}
-		>
-			{children}
-		</button>
-	),
-}));
+		hidden?: boolean;
+		onSelect?: () => void;
+		href?: string;
+	};
+	type ActionMenuSection = { key: string; label?: string; items: ActionMenuItem[] };
+	return {
+		ResponsiveActionMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		ResponsiveActionMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		ResponsiveActionMenuContent: ({
+			title,
+			sections,
+		}: {
+			title: string;
+			sections: ActionMenuSection[];
+		}) => (
+			<div role="menu" aria-label={title}>
+				{sections.map((section) => {
+					const visible = section.items.filter((it) => !it.hidden);
+					if (visible.length === 0) return null;
+					return (
+						<div key={section.key} data-section={section.key}>
+							{visible.map((item) => (
+								<button
+									key={item.key}
+									role="menuitem"
+									type="button"
+									onClick={item.onSelect}
+									aria-disabled={item.disabled || undefined}
+									data-variant={item.variant}
+								>
+									{item.label}
+								</button>
+							))}
+						</div>
+					);
+				})}
+			</div>
+		),
+	};
+});
 
 vi.mock("lucide-react", () => ({
 	Archive: () => <svg data-testid="icon-archive" />,
@@ -143,10 +154,6 @@ function renderActions(
 	return render(<ProductSelectionActions products={products} />);
 }
 
-// ============================================================================
-// TESTS
-// ============================================================================
-
 afterEach(cleanup);
 
 describe("ProductSelectionActions", () => {
@@ -155,152 +162,138 @@ describe("ProductSelectionActions", () => {
 		mockSelectedItems.value = [];
 	});
 
-	// ─── Visibility ───────────────────────────────────────────────────────────
-
 	describe("visibility", () => {
 		it("returns null when no items are selected", () => {
 			const { container } = renderActions([PUBLIC_PRODUCT], []);
 			expect(container.firstChild).toBeNull();
 		});
 
-		it("renders when items are selected", () => {
+		it("renders the action menu when items are selected", () => {
 			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
-		});
-
-		it("shows sr-only 'Ouvrir le menu' text", () => {
-			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			expect(screen.getByText("Ouvrir le menu")).toBeInTheDocument();
+			expect(screen.getByRole("menu", { name: "Actions groupées" })).toBeInTheDocument();
 		});
 	});
 
-	// ─── All DRAFT selected ───────────────────────────────────────────────────
-
 	describe("all DRAFT products selected", () => {
-		it("shows 'Publier' menu item", () => {
+		it("shows 'Publier'", () => {
 			renderActions([DRAFT_PRODUCT], ["prod-draft"]);
-			expect(screen.getByText("Publier")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Publier" })).toBeInTheDocument();
 		});
 
-		it("does not show 'Mettre en brouillon'", () => {
+		it("hides 'Mettre en brouillon'", () => {
 			renderActions([DRAFT_PRODUCT], ["prod-draft"]);
-			expect(screen.queryByText("Mettre en brouillon")).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole("menuitem", { name: "Mettre en brouillon" }),
+			).not.toBeInTheDocument();
 		});
 
-		it("shows 'Archiver' menu item", () => {
+		it("shows 'Archiver'", () => {
 			renderActions([DRAFT_PRODUCT], ["prod-draft"]);
-			expect(screen.getByText("Archiver")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Archiver" })).toBeInTheDocument();
 		});
 
-		it("calls changeProductStatus with PUBLIC on 'Publier' click", () => {
+		it("calls changeProductStatus(PUBLIC) on 'Publier' click", () => {
 			renderActions([DRAFT_PRODUCT], ["prod-draft"]);
-			fireEvent.click(screen.getByText("Publier"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Publier" }));
 			expect(mockChangeProductStatus).toHaveBeenCalledWith(["prod-draft"], "PUBLIC");
 		});
 	});
 
-	// ─── All PUBLIC selected ──────────────────────────────────────────────────
-
 	describe("all PUBLIC products selected", () => {
-		it("shows 'Mettre en brouillon' menu item", () => {
+		it("shows 'Mettre en brouillon'", () => {
 			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			expect(screen.getByText("Mettre en brouillon")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Mettre en brouillon" })).toBeInTheDocument();
 		});
 
-		it("does not show 'Publier'", () => {
+		it("hides 'Publier'", () => {
 			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			expect(screen.queryByText("Publier")).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Publier" })).not.toBeInTheDocument();
 		});
 
-		it("shows 'Archiver' menu item", () => {
+		it("shows 'Archiver'", () => {
 			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			expect(screen.getByText("Archiver")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Archiver" })).toBeInTheDocument();
 		});
 
-		it("calls changeProductStatus with DRAFT on 'Mettre en brouillon' click", () => {
+		it("calls changeProductStatus(DRAFT) on 'Mettre en brouillon' click", () => {
 			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			fireEvent.click(screen.getByText("Mettre en brouillon"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Mettre en brouillon" }));
 			expect(mockChangeProductStatus).toHaveBeenCalledWith(["prod-public"], "DRAFT");
 		});
 	});
 
-	// ─── All ARCHIVED selected ────────────────────────────────────────────────
-
 	describe("all ARCHIVED products selected", () => {
-		it("shows 'Restaurer' menu item", () => {
+		it("shows 'Restaurer'", () => {
 			renderActions([ARCHIVED_PRODUCT], ["prod-archived"]);
-			expect(screen.getByText("Restaurer")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Restaurer" })).toBeInTheDocument();
 		});
 
-		it("shows 'Supprimer' menu item", () => {
+		it("shows 'Supprimer définitivement' as destructive", () => {
 			renderActions([ARCHIVED_PRODUCT], ["prod-archived"]);
-			expect(screen.getByText("Supprimer")).toBeInTheDocument();
+			const item = screen.getByRole("menuitem", { name: "Supprimer définitivement" });
+			expect(item).toBeInTheDocument();
+			expect(item).toHaveAttribute("data-variant", "destructive");
 		});
 
-		it("does not show 'Archiver'", () => {
+		it("hides 'Archiver' and status actions", () => {
 			renderActions([ARCHIVED_PRODUCT], ["prod-archived"]);
-			expect(screen.queryByText("Archiver")).not.toBeInTheDocument();
-		});
-
-		it("does not show 'Publier' or 'Mettre en brouillon'", () => {
-			renderActions([ARCHIVED_PRODUCT], ["prod-archived"]);
-			expect(screen.queryByText("Publier")).not.toBeInTheDocument();
-			expect(screen.queryByText("Mettre en brouillon")).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Archiver" })).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Publier" })).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole("menuitem", { name: "Mettre en brouillon" }),
+			).not.toBeInTheDocument();
 		});
 
 		it("opens bulk archive dialog with PUBLIC target on 'Restaurer' click", () => {
 			renderActions([ARCHIVED_PRODUCT], ["prod-archived"]);
-			fireEvent.click(screen.getByText("Restaurer"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Restaurer" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productIds: ["prod-archived"], targetStatus: "PUBLIC" }),
 			);
 		});
 
-		it("opens bulk delete dialog on 'Supprimer' click", () => {
+		it("opens bulk delete dialog on 'Supprimer définitivement' click", () => {
 			renderActions([ARCHIVED_PRODUCT], ["prod-archived"]);
-			fireEvent.click(screen.getByText("Supprimer"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Supprimer définitivement" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productIds: ["prod-archived"] }),
 			);
 		});
 	});
 
-	// ─── Mixed status (some archived, some not) ────────────────────────────────
-
 	describe("mixed archived/non-archived selection", () => {
-		it("shows 'Sélection mixte' message", () => {
+		it("shows mixed-warning disabled row", () => {
 			renderActions([PUBLIC_PRODUCT, ARCHIVED_PRODUCT], ["prod-public", "prod-archived"]);
-			expect(screen.getByText("Sélection mixte archivé/non-archivé")).toBeInTheDocument();
+			const warning = screen.getByRole("menuitem", {
+				name: "Sélection mixte archivé/non-archivé",
+			});
+			expect(warning).toHaveAttribute("aria-disabled", "true");
 		});
 
-		it("does not show 'Archiver' or 'Restaurer'", () => {
+		it("hides 'Archiver' and 'Restaurer'", () => {
 			renderActions([PUBLIC_PRODUCT, ARCHIVED_PRODUCT], ["prod-public", "prod-archived"]);
-			expect(screen.queryByText("Archiver")).not.toBeInTheDocument();
-			expect(screen.queryByText("Restaurer")).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Archiver" })).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Restaurer" })).not.toBeInTheDocument();
 		});
 	});
-
-	// ─── Mixed non-archived (draft + public) ──────────────────────────────────
 
 	describe("mixed DRAFT and PUBLIC selection", () => {
 		it("shows both 'Publier' and 'Mettre en brouillon'", () => {
 			renderActions([DRAFT_PRODUCT, PUBLIC_PRODUCT], ["prod-draft", "prod-public"]);
-			expect(screen.getByText("Publier")).toBeInTheDocument();
-			expect(screen.getByText("Mettre en brouillon")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Publier" })).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Mettre en brouillon" })).toBeInTheDocument();
 		});
 
 		it("shows 'Archiver'", () => {
 			renderActions([DRAFT_PRODUCT, PUBLIC_PRODUCT], ["prod-draft", "prod-public"]);
-			expect(screen.getByText("Archiver")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Archiver" })).toBeInTheDocument();
 		});
 	});
-
-	// ─── Bulk archive action ───────────────────────────────────────────────────
 
 	describe("bulk archive action", () => {
 		it("opens bulk archive dialog with ARCHIVED target on 'Archiver' click", () => {
 			renderActions([PUBLIC_PRODUCT], ["prod-public"]);
-			fireEvent.click(screen.getByText("Archiver"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Archiver" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productIds: ["prod-public"], targetStatus: "ARCHIVED" }),
 			);

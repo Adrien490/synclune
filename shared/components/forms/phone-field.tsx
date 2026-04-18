@@ -28,7 +28,9 @@ const CustomInput = forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
 			<input
 				ref={ref}
 				type="tel"
+				inputMode="tel"
 				autoComplete="tel"
+				autoCapitalize="off"
 				autoCorrect="off"
 				data-slot="input"
 				className={cn(inputBaseStyles, "rounded-l-none border-l-0", className)}

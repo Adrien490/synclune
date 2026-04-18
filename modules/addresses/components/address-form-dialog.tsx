@@ -358,7 +358,7 @@ function AddressFormContent({
 				{/* Fin du contenu scrollable */}
 
 				{/* Footer fixe */}
-				<div className="mt-4 flex shrink-0 justify-end border-t pt-4">
+				<div className="mt-4 flex shrink-0 justify-end border-t pt-4 pb-[max(0px,env(safe-area-inset-bottom))]">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">

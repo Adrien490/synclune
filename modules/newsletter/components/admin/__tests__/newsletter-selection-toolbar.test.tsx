@@ -102,32 +102,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} data-variant={variant}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -227,16 +206,10 @@ describe("NewsletterSelectionToolbar", () => {
 
 	// ─── Dropdown ─────────────────────────────────────────────────────────────
 
-	it("renders dropdown trigger when items are selected", () => {
+	it("renders the action menu when items are selected", () => {
 		mockSelectedItems.current = ["sub-1"];
 		render(<NewsletterSelectionToolbar />);
-		expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
-	});
-
-	it("renders dropdown content with menu items", () => {
-		mockSelectedItems.current = ["sub-1"];
-		render(<NewsletterSelectionToolbar />);
-		expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
+		expect(screen.getByRole("menu", { name: "Actions groupées" })).toBeInTheDocument();
 	});
 
 	it("shows 'Désabonner' menu item", () => {

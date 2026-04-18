@@ -58,11 +58,13 @@ function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.C
  */
 function DrawerHandle({
 	className,
+	"aria-label": ariaLabel = "Glisser pour fermer",
 	...props
 }: React.ComponentProps<typeof DrawerPrimitive.Handle>) {
 	return (
 		<DrawerPrimitive.Handle
 			data-slot="drawer-handle"
+			aria-label={ariaLabel}
 			className={cn(
 				"bg-primary/20 mx-auto mt-4 h-1.5 w-25 shrink-0 rounded-full",
 				"cursor-grab active:cursor-grabbing",
@@ -95,11 +97,19 @@ function DrawerOverlay({
 function DrawerContent({
 	className,
 	children,
+	onOverlayClick,
 	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Content>) {
+}: React.ComponentProps<typeof DrawerPrimitive.Content> & {
+	/**
+	 * Callback fired when the scrim (overlay) is tapped/clicked.
+	 * Utile pour déclencher un haptic `selection` sur dismiss mobile
+	 * — cohérent avec le pattern Sheet primitive.
+	 */
+	onOverlayClick?: React.MouseEventHandler<HTMLDivElement>;
+}) {
 	return (
 		<DrawerPortal data-slot="drawer-portal">
-			<DrawerOverlay />
+			<DrawerOverlay onClick={onOverlayClick} />
 			<DrawerPrimitive.Content
 				data-slot="drawer-content"
 				className={cn(

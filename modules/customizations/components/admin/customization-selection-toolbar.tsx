@@ -1,9 +1,14 @@
 "use client";
 
-import { CircleCheck, Clock, LoaderCircle, EllipsisVertical, CircleX, Trash2 } from "lucide-react";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { CircleCheck, CircleX, Clock, EllipsisVertical, LoaderCircle, Trash2 } from "lucide-react";
 
-import type { CustomizationRequestStatus } from "../../types/customization.types";
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -14,19 +19,13 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 
-import { useBulkUpdateCustomizationStatus } from "../../hooks/use-bulk-update-customization-status";
-import { useBulkDeleteCustomizationRequests } from "../../hooks/use-bulk-delete-customization-requests";
 import { CUSTOMIZATION_STATUS_LABELS } from "../../constants/status.constants";
+import { useBulkDeleteCustomizationRequests } from "../../hooks/use-bulk-delete-customization-requests";
+import { useBulkUpdateCustomizationStatus } from "../../hooks/use-bulk-update-customization-status";
+import type { CustomizationRequestStatus } from "../../types/customization.types";
 
 export function CustomizationSelectionToolbar() {
 	const { selectedItems, clearSelection } = useSelectionContext();
@@ -58,69 +57,93 @@ export function CustomizationSelectionToolbar() {
 	const targetStatus = statusDialog.data?.targetStatus ?? null;
 
 	const handleBulkDelete = (formData: FormData) => {
-		selectedItems.forEach((id) => {
-			formData.append("requestIds", id);
-		});
+		selectedItems.forEach((id) => formData.append("requestIds", id));
 		deleteAction(formData);
 	};
 
 	const handleSubmit = (formData: FormData) => {
 		if (!targetStatus) return;
-
-		// Add all selected IDs to form data
-		selectedItems.forEach((id) => {
-			formData.append("requestIds", id);
-		});
+		selectedItems.forEach((id) => formData.append("requestIds", id));
 		formData.set("status", targetStatus);
-
 		action(formData);
 	};
+
+	const sections: ActionMenuSection[] = [
+		{
+			key: "progress",
+			items: [
+				{
+					key: "in_progress",
+					label: "Marquer en cours",
+					icon: LoaderCircle,
+					onSelect: () => handleOpenDialog("IN_PROGRESS"),
+				},
+				{
+					key: "completed",
+					label: "Marquer terminées",
+					icon: CircleCheck,
+					onSelect: () => handleOpenDialog("COMPLETED"),
+				},
+			],
+		},
+		{
+			key: "reset",
+			items: [
+				{
+					key: "pending",
+					label: "Remettre en attente",
+					icon: Clock,
+					onSelect: () => handleOpenDialog("PENDING"),
+				},
+				{
+					key: "cancelled",
+					label: "Annuler",
+					icon: CircleX,
+					variant: "destructive",
+					onSelect: () => handleOpenDialog("CANCELLED"),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: () => deleteDialog.open(),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} demande${selectedItems.length > 1 ? "s" : ""} sélectionnée${selectedItems.length > 1 ? "s" : ""}`;
 
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-muted-foreground text-sm">
-					{selectedItems.length} demande{selectedItems.length > 1 ? "s" : ""} sélectionnée
-					{selectedItems.length > 1 ? "s" : ""}
-				</span>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+				<span className="text-muted-foreground text-sm">{label}</span>
+				<ResponsiveActionMenu>
+					<ResponsiveActionMenuTrigger asChild>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-11 w-11 p-0"
+							aria-label="Actions de la sélection"
+						>
 							<span className="sr-only">Ouvrir le menu</span>
 							<EllipsisVertical className="h-4 w-4" />
 						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-50">
-						<DropdownMenuItem onClick={() => handleOpenDialog("IN_PROGRESS")}>
-							<LoaderCircle className="h-4 w-4" />
-							Marquer en cours
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => handleOpenDialog("COMPLETED")}>
-							<CircleCheck className="h-4 w-4" />
-							Marquer terminées
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => handleOpenDialog("PENDING")}>
-							<Clock className="h-4 w-4" />
-							Remettre en attente
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={() => handleOpenDialog("CANCELLED")}
-							className="text-destructive focus:text-destructive"
-						>
-							<CircleX className="h-4 w-4" />
-							Annuler
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => deleteDialog.open()} variant="destructive">
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+					</ResponsiveActionMenuTrigger>
+					<ResponsiveActionMenuContent
+						title="Actions groupées"
+						description={label}
+						sections={sections}
+					/>
+				</ResponsiveActionMenu>
 			</SelectionToolbar>
 
-			{/* Confirmation Dialog */}
 			<AlertDialog
 				open={statusDialog.isOpen}
 				onOpenChange={(open) => (open ? statusDialog.open() : statusDialog.close())}
@@ -161,7 +184,6 @@ export function CustomizationSelectionToolbar() {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Bulk Delete Dialog */}
 			<AlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}

@@ -62,30 +62,78 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 
 	return (
 		<div className="space-y-4">
-			<div className="overflow-hidden rounded-lg border">
+			{/* Mobile: card list (<sm) */}
+			<ul aria-label="Liste de vos commandes" className="flex flex-col gap-3 sm:hidden">
+				{orders.map((order) => (
+					<li key={order.id}>
+						<Link
+							href={`/commandes/${order.orderNumber}`}
+							aria-label={`Voir la commande ${order.orderNumber} du ${format(order.createdAt, "d MMMM yyyy", { locale: fr })}`}
+							className="border-border bg-card hover:border-primary/40 focus-visible:ring-ring active:bg-accent/50 block rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+						>
+							<article className="space-y-3">
+								<header className="flex items-start justify-between gap-3">
+									<div className="flex flex-col gap-0.5">
+										<span className="text-sm font-semibold tabular-nums">{order.orderNumber}</span>
+										<time
+											dateTime={order.createdAt.toISOString()}
+											className="text-muted-foreground text-xs"
+										>
+											{format(order.createdAt, "d MMMM yyyy", { locale: fr })}
+										</time>
+									</div>
+									<span className="text-base font-semibold tabular-nums">
+										{formatEuro(order.total)}
+									</span>
+								</header>
+								<div className="flex flex-wrap items-center gap-2">
+									<Badge
+										variant={ORDER_STATUS_VARIANTS[order.status]}
+										className="whitespace-nowrap"
+									>
+										{ORDER_STATUS_LABELS[order.status]}
+									</Badge>
+									<Badge
+										variant={FULFILLMENT_STATUS_VARIANTS[order.fulfillmentStatus]}
+										className="whitespace-nowrap"
+									>
+										{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
+									</Badge>
+									<span className="text-muted-foreground ml-auto text-xs">
+										{order._count.items} article{order._count.items > 1 ? "s" : ""}
+									</span>
+								</div>
+							</article>
+						</Link>
+					</li>
+				))}
+			</ul>
+
+			{/* Desktop: table (>=sm) */}
+			<div className="hidden overflow-hidden rounded-lg border sm:block">
 				<TableScrollContainer>
 					<Table role="table" aria-label="Liste de vos commandes" className="min-w-full">
 						<TableHeader>
 							<TableRow>
-								<TableHead scope="col" className="w-[25%] sm:w-[15%]">
+								<TableHead scope="col" className="w-[15%]">
 									Commande
 								</TableHead>
-								<TableHead scope="col" className="hidden w-[15%] sm:table-cell">
+								<TableHead scope="col" className="w-[15%]">
 									Date
 								</TableHead>
-								<TableHead scope="col" className="w-[20%] sm:w-[15%]">
+								<TableHead scope="col" className="w-[15%]">
 									Statut
 								</TableHead>
 								<TableHead scope="col" className="hidden w-[15%] lg:table-cell">
 									Livraison
 								</TableHead>
-								<TableHead scope="col" className="hidden w-[10%] text-center sm:table-cell">
+								<TableHead scope="col" className="w-[10%] text-center">
 									Articles
 								</TableHead>
-								<TableHead scope="col" className="w-[15%] text-right sm:w-[10%]">
+								<TableHead scope="col" className="w-[10%] text-right">
 									Total
 								</TableHead>
-								<TableHead scope="col" className="w-[20%] text-right sm:w-[10%]">
+								<TableHead scope="col" className="w-[10%] text-right">
 									<span className="sr-only">Actions</span>
 								</TableHead>
 							</TableRow>
@@ -96,7 +144,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 									<TableCell>
 										<span className="text-sm font-medium tabular-nums">{order.orderNumber}</span>
 									</TableCell>
-									<TableCell className="hidden sm:table-cell">
+									<TableCell>
 										<span className="text-muted-foreground text-sm whitespace-nowrap">
 											{format(order.createdAt, "d MMM yyyy", {
 												locale: fr,
@@ -119,7 +167,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 											{FULFILLMENT_STATUS_LABELS[order.fulfillmentStatus]}
 										</Badge>
 									</TableCell>
-									<TableCell className="hidden text-center sm:table-cell">
+									<TableCell className="text-center">
 										<span className="text-muted-foreground text-sm">{order._count.items}</span>
 									</TableCell>
 									<TableCell className="text-right">

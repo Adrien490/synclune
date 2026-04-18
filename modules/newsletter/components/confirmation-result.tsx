@@ -1,6 +1,7 @@
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
 import { confirmNewsletterSubscription } from "@/modules/newsletter/services/confirm-newsletter-subscription";
+import { NewsletterHapticMount } from "@/modules/newsletter/components/newsletter-haptic-mount";
 import Link from "next/link";
 
 interface ConfirmationResultProps {
@@ -30,6 +31,7 @@ export async function ConfirmationResult({ token }: ConfirmationResultProps) {
 
 	return (
 		<div className="space-y-6 text-center">
+			<NewsletterHapticMount pattern={result.success ? "success" : "error"} />
 			<div className="text-6xl">{result.success ? "🎉" : "😔"}</div>
 			<h2 className="font-display text-foreground text-xl sm:text-2xl">
 				{result.success ? "Inscription confirmée !" : "Confirmation impossible"}

@@ -8,7 +8,4 @@ export {
 	bottomBarIconClass,
 	bottomBarLabelClass,
 	bottomBarBadgeClass,
-	bottomBarCenterActionClass,
-	bottomBarCenterButtonClass,
-	bottomBarCenterLabelClass,
 } from "./bottom-bar";

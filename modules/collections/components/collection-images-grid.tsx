@@ -10,6 +10,8 @@ interface CollectionImagesGridProps {
 	collectionName: string;
 	isAboveFold?: boolean;
 	variant?: CollectionImagesVariant;
+	/** Collection slug — forwarded to the first image as view-transition-name key. */
+	collectionSlug?: string;
 }
 
 /**
@@ -26,6 +28,7 @@ export function CollectionImagesGrid({
 	collectionName,
 	isAboveFold = false,
 	variant = "default",
+	collectionSlug,
 }: CollectionImagesGridProps) {
 	const count = images.length;
 	const ariaLabel = `Aperçu de ${count} produit${count > 1 ? "s" : ""} de la collection ${collectionName}`;
@@ -38,6 +41,7 @@ export function CollectionImagesGrid({
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
 				variant={variant}
+				collectionSlug={collectionSlug}
 			/>
 		);
 	}
@@ -50,6 +54,7 @@ export function CollectionImagesGrid({
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
 				variant={variant}
+				collectionSlug={collectionSlug}
 			/>
 		);
 	}
@@ -62,6 +67,7 @@ export function CollectionImagesGrid({
 				isAboveFold={isAboveFold}
 				ariaLabel={ariaLabel}
 				variant={variant}
+				collectionSlug={collectionSlug}
 			/>
 		);
 	}
@@ -73,6 +79,7 @@ export function CollectionImagesGrid({
 			isAboveFold={isAboveFold}
 			ariaLabel={ariaLabel}
 			variant={variant}
+			collectionSlug={collectionSlug}
 		/>
 	);
 }
@@ -86,6 +93,7 @@ interface LayoutProps {
 	isAboveFold: boolean;
 	ariaLabel: string;
 	variant: CollectionImagesVariant;
+	collectionSlug?: string;
 }
 
 /** 1 image : pleine largeur */
@@ -95,6 +103,7 @@ function SingleImageLayout({
 	isAboveFold,
 	ariaLabel,
 	variant,
+	collectionSlug,
 }: LayoutProps & { image: CollectionImage }) {
 	const sizes =
 		variant === "compact"
@@ -114,6 +123,7 @@ function SingleImageLayout({
 				isAboveFold={isAboveFold}
 				sizes={sizes}
 				staggerIndex={0}
+				collectionSlug={collectionSlug}
 			/>
 		</div>
 	);
@@ -126,6 +136,7 @@ function TwoImagesLayout({
 	isAboveFold,
 	ariaLabel,
 	variant,
+	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
 	const sizes =
 		variant === "compact"
@@ -147,6 +158,7 @@ function TwoImagesLayout({
 						isAboveFold={isAboveFold && i === 0}
 						sizes={sizes}
 						staggerIndex={i}
+						collectionSlug={collectionSlug}
 					/>
 				</div>
 			))}
@@ -161,6 +173,7 @@ function ThreeImagesLayout({
 	isAboveFold,
 	ariaLabel,
 	variant,
+	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
 	const mainSizes =
 		variant === "compact"
@@ -186,6 +199,7 @@ function ThreeImagesLayout({
 					isAboveFold={isAboveFold}
 					sizes={mainSizes}
 					staggerIndex={0}
+					collectionSlug={collectionSlug}
 				/>
 			</div>
 			{/* 2 petites images */}
@@ -211,6 +225,7 @@ function BentoGridLayout({
 	isAboveFold,
 	ariaLabel,
 	variant,
+	collectionSlug,
 }: LayoutProps & { images: CollectionImage[] }) {
 	const mainSizes =
 		variant === "compact"
@@ -246,6 +261,7 @@ function BentoGridLayout({
 					isAboveFold={isAboveFold}
 					sizes={mainSizes}
 					staggerIndex={0}
+					collectionSlug={collectionSlug}
 				/>
 			</div>
 

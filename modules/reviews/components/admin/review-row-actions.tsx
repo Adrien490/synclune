@@ -1,13 +1,22 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	EllipsisVertical,
+	ExternalLink,
+	Eye,
+	EyeOff,
+	LoaderCircle,
+	MessageSquare,
+} from "lucide-react";
+import dynamic from "next/dynamic";
+import { useState } from "react";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -17,20 +26,10 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import {
-	Eye,
-	EyeOff,
-	ExternalLink,
-	LoaderCircle,
-	EllipsisVertical,
-	MessageSquare,
-} from "lucide-react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
-import { useState } from "react";
+import { Button } from "@/shared/components/ui/button";
 
-import type { ReviewAdmin } from "../../types/review.types";
 import { useReviewModeration } from "../../hooks/use-review-moderation";
+import type { ReviewAdmin } from "../../types/review.types";
 
 const ReviewDetailDialog = dynamic(() =>
 	import("./review-detail-dialog").then((mod) => mod.ReviewDetailDialog),
@@ -40,9 +39,6 @@ interface ReviewRowActionsProps {
 	review: ReviewAdmin;
 }
 
-/**
- * Actions disponibles pour chaque ligne d'avis dans l'admin
- */
 export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 	const [moderateDialogOpen, setModerateDialogOpen] = useState(false);
 	const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -53,10 +49,50 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 
 	const isPublished = review.status === "PUBLISHED";
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "navigate",
+			items: [
+				{
+					key: "detail",
+					label: "Voir le détail",
+					icon: Eye,
+					onSelect: () => setDetailDialogOpen(true),
+				},
+				{
+					key: "product",
+					label: "Voir le produit",
+					icon: ExternalLink,
+					href: `/creations/${review.product.slug}`,
+					external: true,
+				},
+				{
+					key: "reply",
+					label: "Répondre",
+					icon: MessageSquare,
+					hidden: !!review.response,
+					onSelect: () => setDetailDialogOpen(true),
+				},
+			],
+		},
+		{
+			key: "moderation",
+			items: [
+				{
+					key: "toggle",
+					label: isPublished ? "Masquer" : "Publier",
+					icon: isPublished ? EyeOff : Eye,
+					variant: isPublished ? "destructive" : "default",
+					onSelect: () => setModerateDialogOpen(true),
+				},
+			],
+		},
+	];
+
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
 					<Button
 						variant="ghost"
 						className="h-11 w-11 p-0 transition-transform active:scale-95"
@@ -64,63 +100,10 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 					>
 						<EllipsisVertical className="h-4 w-4" aria-hidden="true" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end">
-					{/* Voir le détail */}
-					<DropdownMenuItem
-						onSelect={() => setDetailDialogOpen(true)}
-						className="flex cursor-pointer items-center"
-					>
-						<Eye className="mr-2 h-4 w-4" aria-hidden="true" />
-						Voir le détail
-					</DropdownMenuItem>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions avis" sections={sections} />
+			</ResponsiveActionMenu>
 
-					{/* Voir le produit */}
-					<DropdownMenuItem asChild>
-						<Link
-							href={`/creations/${review.product.slug}`}
-							target="_blank"
-							className="flex cursor-pointer items-center"
-						>
-							<ExternalLink className="mr-2 h-4 w-4" aria-hidden="true" />
-							Voir le produit
-						</Link>
-					</DropdownMenuItem>
-
-					{/* Répondre */}
-					{!review.response && (
-						<DropdownMenuItem
-							onSelect={() => setDetailDialogOpen(true)}
-							className="flex cursor-pointer items-center"
-						>
-							<MessageSquare className="mr-2 h-4 w-4" aria-hidden="true" />
-							Répondre
-						</DropdownMenuItem>
-					)}
-
-					<DropdownMenuSeparator />
-
-					{/* Masquer / Afficher */}
-					<DropdownMenuItem
-						onClick={() => setModerateDialogOpen(true)}
-						className="flex cursor-pointer items-center"
-					>
-						{isPublished ? (
-							<>
-								<EyeOff className="mr-2 h-4 w-4" aria-hidden="true" />
-								Masquer
-							</>
-						) : (
-							<>
-								<Eye className="mr-2 h-4 w-4" aria-hidden="true" />
-								Publier
-							</>
-						)}
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
-
-			{/* Dialog de détail (lazy-loaded) */}
 			{detailDialogOpen && (
 				<ReviewDetailDialog
 					review={review}
@@ -129,7 +112,6 @@ export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 				/>
 			)}
 
-			{/* Dialog de confirmation modération */}
 			<AlertDialog open={moderateDialogOpen} onOpenChange={setModerateDialogOpen}>
 				<AlertDialogContent>
 					<AlertDialogHeader>

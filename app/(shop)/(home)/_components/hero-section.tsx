@@ -2,13 +2,12 @@ import { HeroFloatingImages } from "./floating-images";
 import { HeroRotatingWord } from "./hero-rotating-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
-import { Button } from "@/shared/components/ui/button";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
 import { Heart } from "lucide-react";
-import Link from "next/link";
 import { Suspense } from "react";
+import { HeroCtaButtons } from "./hero-cta-buttons";
 import { ParticleBackground, ScrollIndicator } from "./hero-decorations";
 
 async function HeroFloatingImagesAsync({
@@ -106,27 +105,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 						</div>
 
 						{/* CTA - Immediate render for LCP */}
-						<div className="flex w-full flex-col gap-4 sm:w-auto sm:flex-row sm:gap-5">
-							<Button
-								asChild
-								size="lg"
-								className="w-full font-medium tracking-wide transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:w-auto"
-							>
-								<Link href="/produits" className="flex items-center justify-center">
-									Découvrir la boutique
-								</Link>
-							</Button>
-							<Button
-								asChild
-								size="lg"
-								variant="secondary"
-								className="w-full font-medium transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98] sm:w-auto"
-							>
-								<Link href="/personnalisation" className="flex items-center justify-center">
-									Créer mon bijou
-								</Link>
-							</Button>
-						</div>
+						<HeroCtaButtons />
 					</div>
 				</div>
 			</div>

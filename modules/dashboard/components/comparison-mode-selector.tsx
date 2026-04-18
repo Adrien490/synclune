@@ -38,7 +38,7 @@ interface ComparisonModeSelectorProps {
  * Updates ?comparison= search param, triggering server-side data refetch.
  *
  * - `variant="select"` (default) — dropdown, used in the desktop `PageHeader` toolbar.
- * - `variant="segmented"` — 2-column Tabs, used in the mobile `DashboardMobileHeader`.
+ * - `variant="segmented"` — 2-column Tabs, used in the mobile `DashboardPeriodSheet`.
  *   Faster to switch, more discoverable, reduces mobile chrome height.
  */
 export function ComparisonModeSelector({

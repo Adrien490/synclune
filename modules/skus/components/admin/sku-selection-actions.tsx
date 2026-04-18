@@ -1,13 +1,24 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	CircleCheck,
+	CircleX,
+	DollarSign,
+	EllipsisVertical,
+	FileDown,
+	LoaderCircle,
+	Package,
+	Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -17,44 +28,29 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useBulkActivateSkus } from "@/modules/skus/hooks/use-bulk-activate-skus";
 import { useBulkDeactivateSkus } from "@/modules/skus/hooks/use-bulk-deactivate-skus";
 import { useBulkDeleteSkus } from "@/modules/skus/hooks/use-bulk-delete-skus";
+
 import { BULK_ADJUST_STOCK_DIALOG_ID } from "./bulk-adjust-stock-dialog";
 import { BULK_UPDATE_PRICE_DIALOG_ID } from "./bulk-update-price-dialog";
-import {
-	CircleCheck,
-	DollarSign,
-	FileDown,
-	LoaderCircle,
-	EllipsisVertical as MoreVerticalIcon,
-	Package,
-	Trash2,
-	CircleX,
-} from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
 
 export function ProductVariantSelectionActions() {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-	// Dialog hooks (Zustand)
 	const bulkAdjustStockDialog = useDialog(BULK_ADJUST_STOCK_DIALOG_ID);
 	const bulkUpdatePriceDialog = useDialog(BULK_UPDATE_PRICE_DIALOG_ID);
 
 	const { activateSkus, isPending: isActivating } = useBulkActivateSkus({
-		onSuccess: () => {
-			clearSelection();
-		},
+		onSuccess: () => clearSelection(),
 	});
 
 	const { deactivateSkus, isPending: isDeactivating } = useBulkDeactivateSkus({
-		onSuccess: () => {
-			clearSelection();
-		},
+		onSuccess: () => clearSelection(),
 	});
 
 	const { deleteSkus, isPending: isDeleting } = useBulkDeleteSkus({
@@ -64,103 +60,101 @@ export function ProductVariantSelectionActions() {
 		},
 	});
 
-	const handleExportCSV = () => {
+	const requireSelection = (action: () => void) => () => {
 		if (selectedItems.length === 0) {
 			toast.error("Veuillez sélectionner au moins une variante.");
 			return;
 		}
-		toast.info("Export CSV non implémenté");
-	};
-
-	const handleActivate = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
-			return;
-		}
-		activateSkus(selectedItems);
-	};
-
-	const handleDeactivate = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
-			return;
-		}
-		deactivateSkus(selectedItems);
-	};
-
-	const handleAdjustStock = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
-			return;
-		}
-		bulkAdjustStockDialog.open({ skuIds: selectedItems });
-	};
-
-	const handleUpdatePrice = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
-			return;
-		}
-		bulkUpdatePriceDialog.open({ skuIds: selectedItems });
-	};
-
-	const handleDeleteClick = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une variante.");
-			return;
-		}
-		setDeleteDialogOpen(true);
+		action();
 	};
 
 	if (selectedItems.length === 0) return null;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "export",
+			items: [
+				{
+					key: "export-csv",
+					label: "Exporter CSV",
+					icon: FileDown,
+					onSelect: requireSelection(() => toast.info("Export CSV non implémenté")),
+				},
+			],
+		},
+		{
+			key: "inventory",
+			label: "Inventaire",
+			items: [
+				{
+					key: "adjust-stock",
+					label: "Ajuster le stock",
+					icon: Package,
+					onSelect: requireSelection(() => bulkAdjustStockDialog.open({ skuIds: selectedItems })),
+				},
+				{
+					key: "update-price",
+					label: "Modifier le prix",
+					icon: DollarSign,
+					onSelect: requireSelection(() => bulkUpdatePriceDialog.open({ skuIds: selectedItems })),
+				},
+			],
+		},
+		{
+			key: "status",
+			items: [
+				{
+					key: "activate",
+					label: "Activer",
+					icon: CircleCheck,
+					disabled: isActivating,
+					onSelect: requireSelection(() => activateSkus(selectedItems)),
+				},
+				{
+					key: "deactivate",
+					label: "Désactiver",
+					icon: CircleX,
+					disabled: isDeactivating,
+					onSelect: requireSelection(() => deactivateSkus(selectedItems)),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: requireSelection(() => setDeleteDialogOpen(true)),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} variante${selectedItems.length > 1 ? "s" : ""} sélectionnée${selectedItems.length > 1 ? "s" : ""}`;
+
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0"
+						aria-label="Actions de la sélection"
+					>
 						<span className="sr-only">Ouvrir le menu</span>
-						<MoreVerticalIcon className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-50">
-					<DropdownMenuItem onClick={handleExportCSV}>
-						<FileDown className="h-4 w-4" />
-						Exporter CSV
-					</DropdownMenuItem>
-
-					<DropdownMenuSeparator />
-
-					<DropdownMenuItem onClick={handleAdjustStock}>
-						<Package className="h-4 w-4" />
-						Ajuster le stock
-					</DropdownMenuItem>
-
-					<DropdownMenuItem onClick={handleUpdatePrice}>
-						<DollarSign className="h-4 w-4" />
-						Modifier le prix
-					</DropdownMenuItem>
-
-					<DropdownMenuSeparator />
-
-					<DropdownMenuItem onClick={handleActivate} disabled={isActivating}>
-						<CircleCheck className="h-4 w-4" />
-						Activer
-					</DropdownMenuItem>
-
-					<DropdownMenuItem onClick={handleDeactivate} disabled={isDeactivating}>
-						<CircleX className="h-4 w-4" />
-						Désactiver
-					</DropdownMenuItem>
-
-					<DropdownMenuSeparator />
-
-					<DropdownMenuItem onClick={handleDeleteClick} variant="destructive">
-						<Trash2 className="h-4 w-4" />
-						Supprimer
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions groupées"
+					description={label}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>

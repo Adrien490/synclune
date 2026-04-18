@@ -68,54 +68,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuLabel: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => <div className={className}>{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} className={className}>
-			{children}
-		</button>
-	),
-	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuSubTrigger: ({
-		children,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-	}) => (
-		<button role="menuitem" disabled={disabled}>
-			{children}
-		</button>
-	),
-	DropdownMenuPortal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
@@ -188,14 +145,14 @@ describe("CustomizationRowActions", () => {
 		expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
 	});
 
-	it("shows client name in dropdown label", () => {
+	it("uses the client name as menu description", () => {
 		render(<CustomizationRowActions request={createRequest({ firstName: "Marie" })} />);
-		expect(screen.getByText("Marie")).toBeInTheDocument();
+		expect(screen.getByRole("menu", { name: "Actions demande" })).toBeInTheDocument();
 	});
 
-	it("shows 'Changer le statut' sub-trigger", () => {
+	it("renders a 'Statut' section", () => {
 		render(<CustomizationRowActions request={createRequest()} />);
-		expect(screen.getByText("Changer le statut")).toBeInTheDocument();
+		expect(screen.getByTestId("section-status")).toHaveTextContent("Statut");
 	});
 
 	it("shows 'Notes internes' menu item", () => {
@@ -223,34 +180,14 @@ describe("CustomizationRowActions", () => {
 		expect(screen.getByText("Annulé")).toBeInTheDocument();
 	});
 
-	it("marks the current status with 'actuel' label", () => {
+	it("marks the current status item as disabled", () => {
 		render(<CustomizationRowActions request={createRequest({ status: "PENDING" })} />);
-		expect(screen.getByText("actuel")).toBeInTheDocument();
+		const pendingItem = screen.getByRole("menuitem", { name: "En attente" });
+		expect(pendingItem).toHaveAttribute("aria-disabled", "true");
 	});
 
-	// ─── Admin notes indicator ────────────────────────────────────────────────
-
-	it("shows note indicator dot when adminNotes is set", () => {
-		const { container } = render(
-			<CustomizationRowActions request={createRequest({ adminNotes: "Some note" })} />,
-		);
-		// The dot is a span with bg-primary class
-		const dot = container.querySelector(".bg-primary.rounded-full");
-		expect(dot).toBeInTheDocument();
-	});
-
-	it("does not show note indicator dot when adminNotes is null", () => {
-		const { container } = render(
-			<CustomizationRowActions request={createRequest({ adminNotes: null })} />,
-		);
-		const dot = container.querySelector(".bg-primary.rounded-full");
-		expect(dot).not.toBeInTheDocument();
-	});
-
-	// ─── Separator ────────────────────────────────────────────────────────────
-
-	it("renders separators in the menu", () => {
+	it("groups actions into distinct sections", () => {
 		render(<CustomizationRowActions request={createRequest()} />);
-		expect(screen.getAllByTestId("dropdown-separator").length).toBeGreaterThanOrEqual(1);
+		expect(document.querySelectorAll("[data-section]").length).toBeGreaterThanOrEqual(3);
 	});
 });

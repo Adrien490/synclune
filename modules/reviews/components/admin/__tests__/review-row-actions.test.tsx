@@ -53,38 +53,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({ children }: { children: React.ReactNode; align?: string }) => (
-		<div data-testid="dropdown-content">{children}</div>
-	),
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		onSelect,
-		asChild,
-		className,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		onSelect?: () => void;
-		asChild?: boolean;
-		className?: string;
-	}) =>
-		asChild ? (
-			<div role="menuitem" className={className}>
-				{children}
-			</div>
-		) : (
-			<button role="menuitem" onClick={onClick ?? onSelect} className={className}>
-				{children}
-			</button>
-		),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -183,9 +156,9 @@ describe("ReviewRowActions", () => {
 		expect(screen.getByText("Voir le produit")).toBeInTheDocument();
 	});
 
-	it("renders the separator", () => {
+	it("groups actions into navigate + moderation sections", () => {
 		render(<ReviewRowActions review={createReview()} />);
-		expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+		expect(document.querySelectorAll("[data-section]").length).toBeGreaterThanOrEqual(2);
 	});
 
 	it("shows 'Masquer' when review is PUBLISHED", () => {
@@ -204,7 +177,7 @@ describe("ReviewRowActions", () => {
 				review={createReview({ product: { id: "p1", title: "T", slug: "bague-argent" } })}
 			/>,
 		);
-		const link = screen.getByRole("link", { name: /Voir le produit/ });
+		const link = screen.getByRole("menuitem", { name: /Voir le produit/ });
 		expect(link).toHaveAttribute("href", "/creations/bague-argent");
 	});
 

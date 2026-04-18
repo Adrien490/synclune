@@ -9,16 +9,13 @@ import {
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
-	bottomBarCenterActionClass,
-	bottomBarCenterButtonClass,
-	bottomBarCenterLabelClass,
 } from "@/shared/components/bottom-bar";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Package, Menu, Sparkles } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Menu, Search } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 interface AdminMobileBottomBarProps {
@@ -97,22 +94,20 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 			<div className={bottomBarContainerClass}>
 				{leftTabs.map(renderTab)}
 
-				{/* FAB central — ouvre la command palette (recherche + actions rapides) */}
-				<div className={bottomBarCenterActionClass}>
-					<button
-						type="button"
-						onClick={() => {
-							triggerHaptic("medium");
-							openCommandPalette();
-						}}
-						aria-label="Ouvrir la recherche et les actions rapides"
-						aria-haspopup="dialog"
-						className={bottomBarCenterButtonClass}
-					>
-						<Sparkles className="size-6" aria-hidden="true" />
-					</button>
-					<span className={bottomBarCenterLabelClass}>Actions</span>
-				</div>
+				{/* Onglet Recherche — ouvre la command palette (recherche + actions rapides) */}
+				<button
+					type="button"
+					onClick={() => {
+						triggerHaptic("medium");
+						openCommandPalette();
+					}}
+					aria-label="Ouvrir la recherche"
+					aria-haspopup="dialog"
+					className={bottomBarItemClass}
+				>
+					<Search className={bottomBarIconClass} aria-hidden="true" />
+					<span className={bottomBarLabelClass}>Recherche</span>
+				</button>
 
 				{rightTabs.map(renderTab)}
 

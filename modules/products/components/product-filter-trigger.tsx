@@ -4,6 +4,7 @@ import { Filter } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { cn } from "@/shared/utils/cn";
@@ -56,7 +57,10 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 			<Button
 				variant="ghost"
 				size="icon"
-				onClick={() => open()}
+				onClick={() => {
+					triggerHaptic("light");
+					open();
+				}}
 				className={cn("relative size-11", className)}
 				aria-label={`Filtres${hasActiveFilters ? ` (${activeFiltersCount} actifs)` : ""}`}
 			>

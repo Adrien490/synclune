@@ -197,6 +197,7 @@ function FieldError({
 			<div className="min-h-0 overflow-hidden">
 				<div
 					role="alert"
+					aria-live="polite"
 					aria-atomic="true"
 					className="text-destructive wrap-break-words text-sm font-normal"
 					{...props}

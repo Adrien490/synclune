@@ -8,7 +8,7 @@ import { CustomerKpis } from "@/modules/dashboard/components/customer-kpis";
 import { CartAbandonmentCard } from "@/modules/dashboard/components/cart-abandonment-card";
 import { SalesHeatmap } from "@/modules/dashboard/components/sales-heatmap";
 import { ComparisonModeSelector } from "@/modules/dashboard/components/comparison-mode-selector";
-import { DashboardMobileHeader } from "@/modules/dashboard/components/dashboard-mobile-header";
+import { DashboardMobileActionBar } from "@/modules/dashboard/components/dashboard-mobile-action-bar";
 import { DashboardPeriodSwipeWrapper } from "@/modules/dashboard/components/dashboard-period-swipe-wrapper";
 import { DashboardPullToRefreshBridge } from "@/modules/dashboard/components/dashboard-pull-to-refresh-bridge";
 import { DashboardRefreshAnnouncer } from "@/modules/dashboard/components/dashboard-refresh-announcer";
@@ -75,7 +75,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 		<section aria-label="Tableau de bord">
 			<DashboardRefreshAnnouncer />
 			<DashboardPullToRefreshBridge />
-			<DashboardMobileHeader className="mb-6 md:hidden" />
+			<DashboardMobileActionBar className="mb-6 md:hidden" />
 			<PageHeader
 				variant="compact"
 				title="Tableau de bord"

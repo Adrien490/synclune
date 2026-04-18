@@ -281,7 +281,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 			{isMobile ? (
 				<Drawer open={isOpen} onOpenChange={handleOpenChange}>
 					<DrawerContent
-						className="group/sheet flex h-[92vh] flex-col gap-0 px-0"
+						className="group/sheet mt-0 flex h-[100dvh] max-h-[100dvh] flex-col gap-0 rounded-t-none px-0 pt-[env(safe-area-inset-top)]"
 						data-pending={isPending ? "" : undefined}
 						aria-busy={isPending}
 					>

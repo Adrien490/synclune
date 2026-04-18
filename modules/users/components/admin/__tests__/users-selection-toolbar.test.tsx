@@ -2,10 +2,6 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
 const { mockSelectedItems, mockClearSelection } = vi.hoisted(() => ({
 	mockSelectedItems: { value: [] as string[] },
 	mockClearSelection: vi.fn(),
@@ -70,71 +66,28 @@ vi.mock("@/shared/components/ui/button", () => ({
 		children,
 		disabled,
 		type,
-		variant,
-		size: _size,
-		className: _className,
+		...rest
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		type?: string;
-		variant?: string;
-		size?: string;
-		className?: string;
+		[key: string]: unknown;
 	}) => (
-		<button
-			disabled={disabled}
-			type={type as "button" | "submit" | "reset" | undefined}
-			data-variant={variant}
-		>
+		<button disabled={disabled} type={type as "button" | "submit" | "reset" | undefined} {...rest}>
 			{children}
 		</button>
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div>{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-		align: _align,
-		className: _dropdownClassName,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} data-variant={variant}>
-			{children}
-		</button>
-	),
-	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
-		<button role="menuitem">{children}</button>
-	),
-	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
-	AlertDialog: ({
-		children,
-		open,
-	}: {
-		children: React.ReactNode;
-		open: boolean;
-		onOpenChange?: (v: boolean) => void;
-	}) => (open ? <div data-testid="alert-dialog">{children}</div> : null),
+	AlertDialog: ({ children, open }: { children: React.ReactNode; open: boolean }) =>
+		open ? <div data-testid="alert-dialog">{children}</div> : null,
 	AlertDialogContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	AlertDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	AlertDialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -151,21 +104,19 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 
 vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
-	LoaderCircle: () => <svg data-testid="icon-loader" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
-	RotateCcw: () => <svg data-testid="icon-rotate" />,
-	Trash2: () => <svg data-testid="icon-trash" />,
 	CircleX: () => <svg data-testid="icon-circle-x" />,
+	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
+	LoaderCircle: () => <svg data-testid="icon-loader" />,
+	RotateCcw: () => <svg data-testid="icon-rotate" />,
+	Shield: () => <svg data-testid="icon-shield" />,
+	Trash2: () => <svg data-testid="icon-trash" />,
+	UserMinus: () => <svg data-testid="icon-user-minus" />,
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
 import { UsersSelectionToolbar } from "../users-selection-toolbar";
-
-// ============================================================================
-// TESTS
-// ============================================================================
 
 afterEach(() => {
 	cleanup();
@@ -183,15 +134,11 @@ beforeEach(() => {
 });
 
 describe("UsersSelectionToolbar", () => {
-	// ─── Empty state ──────────────────────────────────────────────────────────
-
 	it("renders nothing when no items selected", () => {
 		mockSelectedItems.value = [];
 		const { container } = render(<UsersSelectionToolbar userIds={[]} />);
 		expect(container.firstChild).toBeNull();
 	});
-
-	// ─── With selection ───────────────────────────────────────────────────────
 
 	it("renders toolbar when items are selected", () => {
 		mockSelectedItems.value = ["user-1", "user-2"];
@@ -199,36 +146,35 @@ describe("UsersSelectionToolbar", () => {
 		expect(screen.getByTestId("selection-toolbar")).toBeInTheDocument();
 	});
 
-	it("shows singular 'utilisateur selectionne' for 1 item", () => {
+	it("shows singular label for 1 item", () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		const text = document.body.textContent!;
-		expect(text).toContain("1 utilisateur");
-		expect(text).not.toContain("utilisateurs");
+		expect(document.body.textContent).toContain("1 utilisateur");
 	});
 
-	it("shows plural 'utilisateurs selectionnes' for multiple items", () => {
+	it("shows plural label for multiple items", () => {
 		mockSelectedItems.value = ["user-1", "user-2", "user-3"];
 		render(<UsersSelectionToolbar userIds={["user-1", "user-2", "user-3"]} />);
-		const text = document.body.textContent!;
-		expect(text).toContain("3 utilisateurs");
+		expect(document.body.textContent).toContain("3 utilisateurs");
 	});
 
 	it("renders bulk action menu items", () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		expect(screen.getByText("Suspendre")).toBeInTheDocument();
-		expect(screen.getByText("Restaurer")).toBeInTheDocument();
-		expect(screen.getByText("Supprimer")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Suspendre" })).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Restaurer" })).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Supprimer" })).toHaveAttribute(
+			"data-variant",
+			"destructive",
+		);
 	});
 
-	it("renders role change submenu", () => {
+	it("exposes flat role actions (Promouvoir admin / Rétrograder utilisateur)", () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		expect(screen.getByText("Changer le role")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Promouvoir admin" })).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Rétrograder utilisateur" })).toBeInTheDocument();
 	});
-
-	// ─── Dialogs ──────────────────────────────────────────────────────────────
 
 	it("renders delete dialog when deleteDialog.isOpen is true", () => {
 		mockSelectedItems.value = ["user-1"];
@@ -252,37 +198,39 @@ describe("UsersSelectionToolbar", () => {
 		expect(document.body.textContent).toContain("Restaurer les utilisateurs");
 	});
 
-	// ─── Click interactions ───────────────────────────────────────────────────
-
 	it("clicking 'Suspendre' opens suspend dialog", async () => {
 		mockSelectedItems.value = ["user-1", "user-2"];
 		render(<UsersSelectionToolbar userIds={["user-1", "user-2"]} />);
-		await userEvent.click(screen.getByText("Suspendre"));
+		await userEvent.click(screen.getByRole("menuitem", { name: "Suspendre" }));
 		expect(mockSuspendDialog.open).toHaveBeenCalled();
 	});
 
 	it("clicking 'Restaurer' opens restore dialog", async () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		await userEvent.click(screen.getByText("Restaurer"));
+		await userEvent.click(screen.getByRole("menuitem", { name: "Restaurer" }));
 		expect(mockRestoreDialog.open).toHaveBeenCalled();
 	});
 
 	it("clicking 'Supprimer' opens delete dialog", async () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		await userEvent.click(screen.getByText("Supprimer"));
+		await userEvent.click(screen.getByRole("menuitem", { name: "Supprimer" }));
 		expect(mockDeleteDialog.open).toHaveBeenCalled();
 	});
 
 	it("clicking 'Promouvoir admin' opens promote dialog", async () => {
 		mockSelectedItems.value = ["user-1"];
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		const promoteBtn = screen.queryByText("Promouvoir admin");
-		if (promoteBtn) {
-			await userEvent.click(promoteBtn);
-			expect(mockPromoteDialog.open).toHaveBeenCalled();
-		}
+		await userEvent.click(screen.getByRole("menuitem", { name: "Promouvoir admin" }));
+		expect(mockPromoteDialog.open).toHaveBeenCalled();
+	});
+
+	it("clicking 'Rétrograder utilisateur' opens demote dialog", async () => {
+		mockSelectedItems.value = ["user-1"];
+		render(<UsersSelectionToolbar userIds={["user-1"]} />);
+		await userEvent.click(screen.getByRole("menuitem", { name: "Rétrograder utilisateur" }));
+		expect(mockDemoteDialog.open).toHaveBeenCalled();
 	});
 
 	it("renders promote dialog when promoteDialog.isOpen is true", () => {
@@ -296,6 +244,6 @@ describe("UsersSelectionToolbar", () => {
 		mockSelectedItems.value = ["user-1"];
 		mockDemoteDialog.isOpen = true;
 		render(<UsersSelectionToolbar userIds={["user-1"]} />);
-		expect(document.body.textContent).toContain("Retrograder");
+		expect(document.body.textContent).toContain("Rétrograder");
 	});
 });

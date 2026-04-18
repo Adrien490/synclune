@@ -2,6 +2,7 @@
 
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
@@ -52,6 +53,7 @@ export function FilterBadge({ filter, formatFilter, onRemove, compactMobile }: F
 
 	// Optimistic removal - instant badge disappearance
 	const handleRemove = () => {
+		triggerHaptic("light");
 		let value: string | undefined;
 
 		if (typeof filter.value === "string") {

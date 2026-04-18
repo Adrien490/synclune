@@ -1,22 +1,25 @@
 "use client";
 
-"use client";
-
-import { startTransition } from "react";
-import type { CustomizationRequestStatus } from "../../types/customization.types";
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuPortal,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	CircleCheck,
+	CircleX,
+	Clock,
+	Copy,
+	EllipsisVertical,
+	LoaderCircle,
+	Mail,
+	StickyNote,
+	Trash2,
+} from "lucide-react";
+import { startTransition, useState } from "react";
+import { toast } from "sonner";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -26,28 +29,14 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import {
-	CircleCheck,
-	Clock,
-	Copy,
-	LoaderCircle,
-	Mail,
-	EllipsisVertical,
-	StickyNote,
-	CircleX,
-	Trash2,
-} from "lucide-react";
-import { cn } from "@/shared/utils/cn";
-import { toast } from "sonner";
-import { useState } from "react";
 
-import { useUpdateCustomizationStatus } from "../../hooks/use-update-customization-status";
+import { CUSTOMIZATION_STATUS_LABELS } from "../../constants/status.constants";
 import { useDeleteCustomizationRequest } from "../../hooks/use-delete-customization-request";
-import {
-	CUSTOMIZATION_STATUS_LABELS,
-	CUSTOMIZATION_STATUS_COLORS,
-} from "../../constants/status.constants";
+import { useUpdateCustomizationStatus } from "../../hooks/use-update-customization-status";
+import type { CustomizationRequestStatus } from "../../types/customization.types";
+
 import { UPDATE_NOTES_DIALOG_ID } from "./update-notes-dialog";
 
 interface CustomizationRowActionsProps {
@@ -67,7 +56,7 @@ const STATUS_ICONS: Record<CustomizationRequestStatus, typeof Clock> = {
 	CANCELLED: CircleX,
 };
 
-const ALL_STATUSES: CustomizationRequestStatus[] = [
+const STATUS_ORDER: CustomizationRequestStatus[] = [
 	"PENDING",
 	"IN_PROGRESS",
 	"COMPLETED",
@@ -86,19 +75,10 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 
 	const handleStatusChange = (newStatus: CustomizationRequestStatus) => {
 		if (newStatus === request.status) return;
-
 		const formData = new FormData();
 		formData.set("requestId", request.id);
 		formData.set("status", newStatus);
 		startTransition(() => action(formData));
-	};
-
-	const handleOpenNotes = () => {
-		notesDialog.open({
-			requestId: request.id,
-			clientName,
-			currentNotes: request.adminNotes,
-		});
 	};
 
 	const handleCopyEmail = async () => {
@@ -117,10 +97,74 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 		);
 	};
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "status",
+			label: "Statut",
+			items: STATUS_ORDER.map((status) => ({
+				key: `status-${status}`,
+				label: CUSTOMIZATION_STATUS_LABELS[status],
+				description: status === request.status ? "Statut actuel" : undefined,
+				icon: STATUS_ICONS[status],
+				disabled: isPending || status === request.status,
+				variant: status === "CANCELLED" ? ("destructive" as const) : ("default" as const),
+				onSelect: () => handleStatusChange(status),
+			})),
+		},
+		{
+			key: "notes",
+			items: [
+				{
+					key: "notes",
+					label: "Notes internes",
+					description: request.adminNotes ? "Notes existantes" : undefined,
+					icon: StickyNote,
+					onSelect: () =>
+						notesDialog.open({
+							requestId: request.id,
+							clientName,
+							currentNotes: request.adminNotes,
+						}),
+				},
+			],
+		},
+		{
+			key: "email",
+			label: "Email",
+			items: [
+				{
+					key: "copy",
+					label: "Copier l'email",
+					icon: Copy,
+					onSelect: handleCopyEmail,
+				},
+				{
+					key: "reply",
+					label: "Répondre par email",
+					icon: Mail,
+					onSelect: handleReplyEmail,
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					disabled: isPending || isDeletePending,
+					onSelect: () => setDeleteDialogOpen(true),
+				},
+			],
+		},
+	];
+
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
 					<Button
 						variant="ghost"
 						size="sm"
@@ -129,84 +173,13 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 					>
 						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-52">
-					<DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
-						{clientName}
-					</DropdownMenuLabel>
-					<DropdownMenuSeparator />
-
-					{/* Changer le statut */}
-					<DropdownMenuSub>
-						<DropdownMenuSubTrigger disabled={isPending}>
-							<Clock className="h-4 w-4" />
-							Changer le statut
-						</DropdownMenuSubTrigger>
-						<DropdownMenuPortal>
-							<DropdownMenuSubContent>
-								{ALL_STATUSES.map((status) => {
-									const Icon = STATUS_ICONS[status];
-									const isCurrentStatus = status === request.status;
-									const colors = CUSTOMIZATION_STATUS_COLORS[status];
-
-									return (
-										<DropdownMenuItem
-											key={status}
-											onClick={() => handleStatusChange(status)}
-											disabled={isPending || isCurrentStatus}
-											className={isCurrentStatus ? "bg-muted" : ""}
-										>
-											<span
-												className={cn(
-													"inline-flex h-4 w-4 items-center justify-center rounded-full",
-													colors.dot,
-												)}
-											>
-												<Icon className="h-3 w-3 text-white" />
-											</span>
-											{CUSTOMIZATION_STATUS_LABELS[status]}
-											{isCurrentStatus && (
-												<span className="text-muted-foreground ml-auto text-xs">actuel</span>
-											)}
-										</DropdownMenuItem>
-									);
-								})}
-							</DropdownMenuSubContent>
-						</DropdownMenuPortal>
-					</DropdownMenuSub>
-
-					{/* Notes internes */}
-					<DropdownMenuItem onClick={handleOpenNotes}>
-						<StickyNote className="h-4 w-4" />
-						Notes internes
-						{request.adminNotes && <span className="bg-primary ml-auto h-2 w-2 rounded-full" />}
-					</DropdownMenuItem>
-
-					<DropdownMenuSeparator />
-
-					{/* Actions email */}
-					<DropdownMenuItem onClick={handleCopyEmail}>
-						<Copy className="h-4 w-4" />
-						Copier l'email
-					</DropdownMenuItem>
-
-					<DropdownMenuItem onClick={handleReplyEmail}>
-						<Mail className="h-4 w-4" />
-						Répondre par email
-					</DropdownMenuItem>
-
-					<DropdownMenuSeparator />
-
-					<DropdownMenuItem
-						variant="destructive"
-						onClick={() => setDeleteDialogOpen(true)}
-						disabled={isPending || isDeletePending}
-					>
-						<Trash2 className="h-4 w-4" />
-						Supprimer
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions demande"
+					description={clientName}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>

@@ -1,18 +1,5 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useSetDefaultSku } from "@/modules/skus/hooks/use-set-default-sku";
-import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-status";
-import { useDuplicateSku } from "@/modules/skus/hooks/use-duplicate-sku";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	Check,
 	Copy,
@@ -24,9 +11,22 @@ import {
 	PowerOff,
 	Trash2,
 } from "lucide-react";
-import Link from "next/link";
-import { DELETE_PRODUCT_SKU_DIALOG_ID } from "./delete-sku-alert-dialog";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { Button } from "@/shared/components/ui/button";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDuplicateSku } from "@/modules/skus/hooks/use-duplicate-sku";
+import { useSetDefaultSku } from "@/modules/skus/hooks/use-set-default-sku";
+import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-status";
+
 import { ADJUST_STOCK_DIALOG_ID } from "./adjust-stock-dialog";
+import { DELETE_PRODUCT_SKU_DIALOG_ID } from "./delete-sku-alert-dialog";
 import { UPDATE_PRICE_DIALOG_ID } from "./update-price-dialog";
 
 interface ProductSkuRowActionsProps {
@@ -57,42 +57,90 @@ export function ProductSkuRowActions({
 	const { toggleStatus, isPending: isToggling } = useUpdateProductSkuStatus();
 	const { duplicate, isPending: isDuplicating } = useDuplicateSku();
 
-	const handleDelete = () => {
-		deleteDialog.open({
-			skuId,
-			skuName,
-			isDefault,
-		});
-	};
-
-	const handleSetDefault = () => {
-		setAsDefault(skuId);
-	};
-
-	const handleToggleStatus = () => {
-		toggleStatus(skuId, !isActive);
-	};
-
-	const handleAdjustStock = () => {
-		adjustStockDialog.open({
-			skuId,
-			skuName,
-			currentStock: inventory,
-		});
-	};
-
-	const handleUpdatePrice = () => {
-		updatePriceDialog.open({
-			skuId,
-			skuName,
-			currentPrice: priceInclTax,
-			currentCompareAtPrice: compareAtPrice,
-		});
-	};
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "edit",
+					label: "Modifier",
+					icon: Pencil,
+					href: `/admin/catalogue/produits/${productSlug}/variantes/${skuId}/modifier`,
+				},
+				{
+					key: "toggle",
+					label: isActive ? "Désactiver" : "Activer",
+					icon: isActive ? PowerOff : Power,
+					disabled: isToggling,
+					hidden: isDefault,
+					onSelect: () => toggleStatus(skuId, !isActive),
+				},
+				{
+					key: "adjust-stock",
+					label: "Ajuster le stock",
+					icon: Package,
+					onSelect: () => adjustStockDialog.open({ skuId, skuName, currentStock: inventory }),
+				},
+				{
+					key: "update-price",
+					label: "Modifier le prix",
+					icon: DollarSign,
+					onSelect: () =>
+						updatePriceDialog.open({
+							skuId,
+							skuName,
+							currentPrice: priceInclTax,
+							currentCompareAtPrice: compareAtPrice,
+						}),
+				},
+				{
+					key: "duplicate",
+					label: "Dupliquer",
+					icon: Copy,
+					disabled: isDuplicating,
+					onSelect: () => duplicate(skuId, skuName),
+				},
+			],
+		},
+		{
+			key: "default",
+			items: [
+				{
+					key: "set-default",
+					label: "Définir par défaut",
+					icon: Check,
+					disabled: isPending,
+					hidden: isDefault,
+					onSelect: () => setAsDefault(skuId),
+				},
+				{
+					key: "default-badge",
+					label: "Variante par défaut",
+					description: "Cette variante est le choix par défaut — non supprimable",
+					disabled: true,
+					hidden: !isDefault,
+					onSelect: () => {},
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					hidden: isDefault,
+					onSelect: () => deleteDialog.open({ skuId, skuName, isDefault }),
+				},
+			],
+		},
+	];
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -100,73 +148,14 @@ export function ProductSkuRowActions({
 					aria-label="Actions pour cette variante"
 				>
 					<EllipsisVertical className="h-4 w-4" />
-					<span className="sr-only">Ouvrir le menu d'actions</span>
+					<span className="sr-only">Ouvrir le menu d&apos;actions</span>
 				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-45">
-				{/* Modifier */}
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/catalogue/produits/${productSlug}/variantes/${skuId}/modifier`}>
-						<Pencil className="h-4 w-4" />
-						Modifier
-					</Link>
-				</DropdownMenuItem>
-
-				{/* Activer/Désactiver - Non disponible pour la variante par défaut */}
-				{!isDefault && (
-					<DropdownMenuItem onClick={handleToggleStatus} disabled={isToggling}>
-						{isActive ? (
-							<>
-								<PowerOff className="h-4 w-4" />
-								Désactiver
-							</>
-						) : (
-							<>
-								<Power className="h-4 w-4" />
-								Activer
-							</>
-						)}
-					</DropdownMenuItem>
-				)}
-
-				{/* Ajuster stock */}
-				<DropdownMenuItem onClick={handleAdjustStock}>
-					<Package className="h-4 w-4" />
-					Ajuster le stock
-				</DropdownMenuItem>
-
-				{/* Modifier prix */}
-				<DropdownMenuItem onClick={handleUpdatePrice}>
-					<DollarSign className="h-4 w-4" />
-					Modifier le prix
-				</DropdownMenuItem>
-
-				{/* Dupliquer */}
-				<DropdownMenuItem onClick={() => duplicate(skuId, skuName)} disabled={isDuplicating}>
-					<Copy className="h-4 w-4" />
-					Dupliquer
-				</DropdownMenuItem>
-
-				<DropdownMenuSeparator />
-
-				{!isDefault ? (
-					<>
-						<DropdownMenuItem onClick={handleSetDefault} disabled={isPending}>
-							<Check className="h-4 w-4" />
-							Définir par défaut
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem variant="destructive" onClick={handleDelete}>
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</>
-				) : (
-					<DropdownMenuItem disabled className="text-muted-foreground">
-						Variante par défaut
-					</DropdownMenuItem>
-				)}
-			</DropdownMenuContent>
-		</DropdownMenu>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent
+				title="Actions variante"
+				description={skuName}
+				sections={sections}
+			/>
+		</ResponsiveActionMenu>
 	);
 }

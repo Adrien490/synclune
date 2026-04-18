@@ -16,6 +16,8 @@ interface CollectionImageItemProps {
 	isAboveFold?: boolean;
 	sizes: string;
 	staggerIndex?: number;
+	/** Collection slug used as view-transition-name key (only applied on index 0). */
+	collectionSlug?: string;
 }
 
 /**
@@ -37,6 +39,7 @@ export function CollectionImageItem({
 	isAboveFold = false,
 	sizes,
 	staggerIndex = 0,
+	collectionSlug,
 }: CollectionImageItemProps) {
 	// Alt text: utiliser celui fourni, sinon generer un descriptif contextuel
 	const altText = image.alt ?? `Bijou artisanal ${index + 1} de la collection ${collectionName}`;
@@ -57,6 +60,11 @@ export function CollectionImageItem({
 				// Mobile: tap feedback enrichi (coherence ProductCard)
 				"active:scale-[0.97] active:brightness-95 active:saturate-110",
 			)}
+			style={
+				collectionSlug && index === 0
+					? { viewTransitionName: `collection-${collectionSlug}` }
+					: undefined
+			}
 			sizes={sizes}
 			priority={isAboveFold}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}

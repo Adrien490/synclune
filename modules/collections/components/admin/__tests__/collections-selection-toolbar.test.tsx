@@ -66,35 +66,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div>{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		disabled,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		disabled?: boolean;
-		variant?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} aria-disabled={disabled} data-variant={variant}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("sonner", () => ({
 	toast: { error: vi.fn() },
@@ -162,13 +138,13 @@ describe("CollectionsSelectionToolbar", () => {
 	it("shows singular count text for 1 selected item", () => {
 		mockSelectedItems.current = ["1"];
 		render(<CollectionsSelectionToolbar collections={nonArchivedCollections} />);
-		expect(screen.getByText(/1 collection selectionnee/)).toBeInTheDocument();
+		expect(screen.getByText(/1 collection sélectionnée/)).toBeInTheDocument();
 	});
 
 	it("shows plural count text for multiple selected items", () => {
 		mockSelectedItems.current = ["1", "2"];
 		render(<CollectionsSelectionToolbar collections={nonArchivedCollections} />);
-		expect(screen.getByText(/2 collections selectionnees/)).toBeInTheDocument();
+		expect(screen.getByText(/2 collections sélectionnées/)).toBeInTheDocument();
 	});
 
 	// ─── Non-archived: Archiver ───────────────────────────────────────────────
@@ -236,7 +212,7 @@ describe("CollectionsSelectionToolbar", () => {
 		];
 		mockSelectedItems.current = ["1", "2"];
 		render(<CollectionsSelectionToolbar collections={mixedCollections} />);
-		expect(screen.getByText(/Selection mixte/)).toBeInTheDocument();
+		expect(screen.getByText(/Sélection mixte/)).toBeInTheDocument();
 	});
 
 	// ─── Mixed DRAFT/PUBLIC (non-archived) ────────────────────────────────────

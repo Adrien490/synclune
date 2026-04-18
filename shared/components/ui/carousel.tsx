@@ -6,6 +6,7 @@ import * as React from "react";
 import { useEffectEvent } from "react";
 
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
 type CarouselApi = UseEmblaCarouselType[1];
@@ -99,12 +100,20 @@ function Carousel({
 		}
 	};
 
+	const hasSelectedOnceRef = React.useRef(false);
+
 	// Effect Event pour gérer onSelect sans re-registration
 	const onSelect = useEffectEvent((carouselApi: CarouselApi) => {
 		if (!carouselApi) return;
 		setCanScrollPrev(carouselApi.canScrollPrev());
 		setCanScrollNext(carouselApi.canScrollNext());
 		setSelectedIndex(carouselApi.selectedScrollSnap());
+		// Haptic feedback on slide change (skip first mount fire)
+		if (hasSelectedOnceRef.current) {
+			triggerHaptic("selection");
+		} else {
+			hasSelectedOnceRef.current = true;
+		}
 	});
 
 	// Effect Event pour gérer reInit sans re-registration

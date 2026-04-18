@@ -2,6 +2,7 @@
 
 import { AnimatedHeartIcon } from "@/shared/components/icons/animated-heart-icon";
 import { useWishlistToggle } from "@/modules/wishlist/hooks/use-wishlist-toggle";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { Button } from "@/shared/components/ui/button";
 
@@ -67,7 +68,10 @@ export function WishlistButton({
 				type="submit"
 				variant="ghost"
 				size="icon"
-				onClick={(e) => e.stopPropagation()}
+				onClick={(e) => {
+					e.stopPropagation();
+					triggerHaptic(isInWishlist ? "selection" : "light");
+				}}
 				className={cn(
 					// Taille configurable (md = 44px conforme WCAG 2.5.5)
 					buttonSize,

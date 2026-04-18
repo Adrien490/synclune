@@ -43,32 +43,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -133,10 +112,10 @@ describe("RefundSelectionActions", () => {
 	});
 
 	describe("with selection", () => {
-		it("renders the dropdown trigger when items are selected", () => {
+		it("renders the action menu when items are selected", () => {
 			mockSelectedItems.value = ["refund-1", "refund-2"];
 			render(<RefundSelectionActions />);
-			expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
+			expect(screen.getByRole("menu", { name: "Actions groupées" })).toBeInTheDocument();
 		});
 
 		it("shows 'Ouvrir le menu' sr-only text", () => {
@@ -148,19 +127,15 @@ describe("RefundSelectionActions", () => {
 		it("shows 'Approuver' menu item", () => {
 			mockSelectedItems.value = ["refund-1"];
 			render(<RefundSelectionActions />);
-			expect(screen.getByText("Approuver")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Approuver" })).toBeInTheDocument();
 		});
 
-		it("shows 'Refuser' menu item", () => {
+		it("marks 'Refuser' as destructive", () => {
 			mockSelectedItems.value = ["refund-1"];
 			render(<RefundSelectionActions />);
-			expect(screen.getByText("Refuser")).toBeInTheDocument();
-		});
-
-		it("shows dropdown separator between menu items", () => {
-			mockSelectedItems.value = ["refund-1"];
-			render(<RefundSelectionActions />);
-			expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+			const reject = screen.getByRole("menuitem", { name: "Refuser" });
+			expect(reject).toBeInTheDocument();
+			expect(reject).toHaveAttribute("data-variant", "destructive");
 		});
 	});
 

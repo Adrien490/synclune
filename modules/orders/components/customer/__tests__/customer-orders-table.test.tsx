@@ -276,7 +276,8 @@ describe("CustomerOrdersTable", () => {
 		});
 		const jsx = await CustomerOrdersTable({ ordersPromise: promise, perPage: 10 });
 		render(jsx);
-		expect(screen.getByText("CMD-001")).toBeInTheDocument();
+		// Order number appears in both mobile card (sm:hidden) and desktop table (sm:block)
+		expect(screen.getAllByText("CMD-001").length).toBeGreaterThan(0);
 	});
 
 	it("renders view link for each order", async () => {
@@ -291,6 +292,7 @@ describe("CustomerOrdersTable", () => {
 		});
 		const jsx = await CustomerOrdersTable({ ordersPromise: promise, perPage: 10 });
 		render(jsx);
+		// Desktop keeps the original "Voir la commande #..." label
 		expect(screen.getByRole("link", { name: "Voir la commande #CMD-001" })).toHaveAttribute(
 			"href",
 			"/commandes/CMD-001",

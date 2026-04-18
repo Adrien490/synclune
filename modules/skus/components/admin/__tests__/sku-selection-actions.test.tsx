@@ -94,34 +94,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		disabled?: boolean;
-		variant?: string;
-	}) => (
-		<button onClick={onClick} disabled={disabled} data-testid="dropdown-item">
-			{children}
-		</button>
-	),
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -202,12 +179,12 @@ describe("ProductVariantSelectionActions", () => {
 
 	// ─── With selection ───────────────────────────────────────────────────────
 
-	it("renders dropdown trigger when items are selected", () => {
+	it("renders the action menu when items are selected", () => {
 		mockSelectedItems = ["sku_1", "sku_2"];
 
 		render(<ProductVariantSelectionActions />);
 
-		expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
+		expect(screen.getByRole("menu", { name: "Actions groupées" })).toBeInTheDocument();
 	});
 
 	it("renders menu trigger button with sr-only label when items are selected", () => {
@@ -216,14 +193,6 @@ describe("ProductVariantSelectionActions", () => {
 		render(<ProductVariantSelectionActions />);
 
 		expect(screen.getByText("Ouvrir le menu")).toBeInTheDocument();
-	});
-
-	it("renders dropdown content with menu items when items are selected", () => {
-		mockSelectedItems = ["sku_1", "sku_2"];
-
-		render(<ProductVariantSelectionActions />);
-
-		expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
 	});
 
 	it("shows 'Exporter CSV' menu item", () => {

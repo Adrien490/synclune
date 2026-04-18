@@ -136,17 +136,14 @@ export function ActiveDiscounts({ data }: ActiveDiscountsProps) {
 						return (
 							<div key={discount.id} className="flex items-center justify-between gap-2">
 								<div className="flex min-w-0 items-center gap-2">
-									<Tag
-										className="text-muted-foreground h-3.5 w-3.5 flex-shrink-0"
-										aria-hidden="true"
-									/>
+									<Tag className="text-muted-foreground h-3.5 w-3.5 shrink-0" aria-hidden="true" />
 									<code className="truncate text-sm font-semibold">{discount.code}</code>
 									<Badge variant="outline" className="text-xs">
 										{formatDiscountValue(discount.type, discount.value)}
 									</Badge>
 								</div>
 
-								<div className="flex flex-shrink-0 items-center gap-2">
+								<div className="flex shrink-0 items-center gap-2">
 									{hasWarning && (
 										<TriangleAlert
 											className="text-warning h-3.5 w-3.5"

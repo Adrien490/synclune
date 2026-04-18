@@ -11,6 +11,13 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/shared/components/ui/dialog";
+import {
+	Drawer,
+	DrawerContent,
+	DrawerDescription,
+	DrawerHeader,
+	DrawerTitle,
+} from "@/shared/components/ui/drawer";
 import { cn } from "@/shared/utils/cn";
 
 const Command = React.forwardRef<
@@ -28,6 +35,9 @@ const Command = React.forwardRef<
 	/>
 ));
 Command.displayName = CommandPrimitive.displayName;
+
+const COMMAND_STYLING =
+	"[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]]:min-h-11 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5 [&_[data-slot=command-input-wrapper]_svg]:h-5 [&_[data-slot=command-input-wrapper]_svg]:w-5";
 
 function CommandDialog({
 	title = "Command Palette",
@@ -52,11 +62,38 @@ function CommandDialog({
 				className={cn("overflow-hidden p-0", className)}
 				showCloseButton={showCloseButton}
 			>
-				<Command className="[&_[cmdk-group-heading]]:text-muted-foreground **:data-[slot=command-input-wrapper]:h-12 [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5 [&_[data-slot=command-input-wrapper]_svg]:h-5 [&_[data-slot=command-input-wrapper]_svg]:w-5">
-					{children}
-				</Command>
+				<Command className={COMMAND_STYLING}>{children}</Command>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+function CommandDrawer({
+	title = "Recherche rapide",
+	description,
+	children,
+	className,
+	onOverlayClick,
+	...props
+}: React.ComponentProps<typeof Drawer> & {
+	title?: string;
+	description?: string;
+	className?: string;
+	onOverlayClick?: React.MouseEventHandler<HTMLDivElement>;
+}) {
+	return (
+		<Drawer direction="bottom" {...props}>
+			<DrawerContent
+				className={cn("bg-popover flex max-h-[90vh] flex-col p-0!", className)}
+				onOverlayClick={onOverlayClick}
+			>
+				<DrawerHeader className="sr-only">
+					<DrawerTitle>{title}</DrawerTitle>
+					{description ? <DrawerDescription>{description}</DrawerDescription> : null}
+				</DrawerHeader>
+				<Command className={cn("min-h-0 flex-1", COMMAND_STYLING)}>{children}</Command>
+			</DrawerContent>
+		</Drawer>
 	);
 }
 
@@ -153,6 +190,7 @@ CommandItem.displayName = CommandPrimitive.Item.displayName;
 export {
 	Command,
 	CommandDialog,
+	CommandDrawer,
 	CommandEmpty,
 	CommandGroup,
 	CommandInput,

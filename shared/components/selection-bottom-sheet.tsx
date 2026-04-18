@@ -71,6 +71,7 @@ export function SelectionBottomSheet({
 					key="selection-bottom-sheet"
 					role="toolbar"
 					aria-label={`${count} élément${count > 1 ? "s" : ""} sélectionné${count > 1 ? "s" : ""}`}
+					data-hide-on-keyboard=""
 					initial={prefersReducedMotion ? { opacity: 0 } : { y: 100, opacity: 0 }}
 					animate={prefersReducedMotion ? { opacity: 1 } : { y: 0, opacity: 1 }}
 					exit={prefersReducedMotion ? { opacity: 0 } : { y: 100, opacity: 0 }}
@@ -80,10 +81,9 @@ export function SelectionBottomSheet({
 					className={cn(
 						"fixed right-0 bottom-0 left-0 z-(--z-bar) md:hidden",
 						"pb-[env(safe-area-inset-bottom)]",
-						"bg-background/95 backdrop-blur-md",
-						"border-border border-x border-t",
-						"rounded-t-2xl",
-						"shadow-[0_-4px_20px_rgba(0,0,0,0.08)]",
+						"bg-background/80 backdrop-blur-xl",
+						"border-border/60 border-t",
+						"shadow-[0_-0.5px_0_rgba(0,0,0,0.06)]",
 						className,
 					)}
 				>

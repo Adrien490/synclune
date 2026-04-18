@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
 	CommandDialog,
+	CommandDrawer,
 	CommandEmpty,
 	CommandGroup,
 	CommandInput,
@@ -11,6 +12,9 @@ import {
 	CommandList,
 	CommandSeparator,
 } from "@/shared/components/ui/command";
+import ScrollFade from "@/shared/components/scroll-fade";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { navigationData } from "./navigation-config";
 import { Plus, Layers, Ticket, CircleHelp, Megaphone } from "lucide-react";
@@ -48,9 +52,15 @@ const QUICK_ACTIONS = [
 	},
 ] as const;
 
+const MOBILE_AUTOFOCUS_DELAY_MS = 350;
+
 export function CommandPalette() {
 	const { isOpen, open, close, toggle } = useDialog("command-palette");
 	const router = useRouter();
+	const pathname = usePathname();
+	const isMobile = useIsMobile();
+	const previousFocusRef = useRef<HTMLElement | null>(null);
+	const mobileInputRef = useRef<HTMLInputElement>(null);
 
 	useEffect(() => {
 		function handleKeyDown(e: KeyboardEvent) {
@@ -64,20 +74,59 @@ export function CommandPalette() {
 		return () => document.removeEventListener("keydown", handleKeyDown);
 	}, [toggle]);
 
+	// Close on route change — palette can be open when user uses browser back,
+	// URL bar, or swipe-back gesture. Pattern aligned with AdminMenuSheet.
+	useEffect(() => {
+		if (isOpen) close();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pathname]);
+
+	// Mobile: delay autofocus until Vaul transition settles, otherwise iOS
+	// keyboard pops before the sheet is in place and scrolls the viewport.
+	useEffect(() => {
+		if (!isOpen || !isMobile) return;
+		const t = setTimeout(() => {
+			mobileInputRef.current?.focus({ preventScroll: true });
+		}, MOBILE_AUTOFOCUS_DELAY_MS);
+		return () => clearTimeout(t);
+	}, [isOpen, isMobile]);
+
+	function handleOpenChange(nextOpen: boolean) {
+		if (nextOpen) {
+			// Snapshot current focus target so we can restore after close.
+			// Radix/Vaul restore to the trigger natively, but this palette has
+			// three entry points (header icon, FAB, ⌘K from any field) so the
+			// snapshot guarantees focus returns to wherever the user was.
+			if (document.activeElement instanceof HTMLElement) {
+				previousFocusRef.current = document.activeElement;
+				document.activeElement.blur();
+			}
+			open();
+		} else {
+			close();
+			const target = previousFocusRef.current;
+			if (target && document.contains(target)) {
+				setTimeout(() => target.focus({ preventScroll: true }), 0);
+			}
+			previousFocusRef.current = null;
+		}
+	}
+
 	function handleSelect(url: string) {
+		triggerHaptic("selection");
 		close();
 		router.push(url);
 	}
 
-	return (
-		<CommandDialog
-			open={isOpen}
-			onOpenChange={(v) => (v ? open() : close())}
-			title="Recherche rapide"
-			description="Naviguer ou creer rapidement"
-		>
-			<CommandInput placeholder="Rechercher une page ou une action..." />
-			<CommandList>
+	function renderList(options: { mobile: boolean }) {
+		return (
+			<CommandList
+				className={
+					options.mobile
+						? "max-h-none overflow-visible pb-[max(1rem,env(safe-area-inset-bottom))]"
+						: undefined
+				}
+			>
 				<CommandEmpty>Aucun resultat.</CommandEmpty>
 
 				<CommandGroup heading="Actions rapides">
@@ -117,6 +166,50 @@ export function CommandPalette() {
 					</CommandGroup>
 				))}
 			</CommandList>
+		);
+	}
+
+	if (isMobile) {
+		return (
+			<CommandDrawer
+				open={isOpen}
+				onOpenChange={handleOpenChange}
+				title="Recherche rapide"
+				description="Naviguer ou creer rapidement"
+				onOverlayClick={() => triggerHaptic("selection")}
+			>
+				<CommandInput
+					ref={mobileInputRef}
+					placeholder="Rechercher une page ou une action..."
+					inputMode="search"
+					enterKeyHint="search"
+				/>
+				<div className="min-h-0 flex-1">
+					<ScrollFade axis="vertical" fadeFromClass="from-popover" className="overscroll-contain">
+						{renderList({ mobile: true })}
+					</ScrollFade>
+				</div>
+			</CommandDrawer>
+		);
+	}
+
+	return (
+		<CommandDialog
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			title="Recherche rapide"
+			description="Naviguer ou creer rapidement"
+		>
+			<div className="relative">
+				<CommandInput placeholder="Rechercher une page ou une action..." />
+				<kbd
+					aria-hidden="true"
+					className="bg-muted text-muted-foreground pointer-events-none absolute top-1/2 right-3 hidden h-6 -translate-y-1/2 items-center gap-0.5 rounded border px-1.5 font-mono text-[10px] font-medium sm:inline-flex"
+				>
+					<span className="text-sm">⌘</span>K
+				</kbd>
+			</div>
+			{renderList({ mobile: false })}
 		</CommandDialog>
 	);
 }

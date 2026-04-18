@@ -1,17 +1,23 @@
 "use client";
 
-import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	CircleCheck,
+	CircleX,
+	EllipsisVertical,
+	LoaderCircle,
+	RotateCcw,
+	Shield,
+	Trash2,
+	UserMinus,
+} from "lucide-react";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -21,20 +27,13 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useBulkDeleteUsers } from "@/modules/users/hooks/use-bulk-delete-users";
-import { useBulkSuspendUsers } from "@/modules/users/hooks/use-bulk-suspend-users";
-import { useBulkRestoreUsers } from "@/modules/users/hooks/use-bulk-restore-users";
-import { useBulkChangeUserRole } from "@/modules/users/hooks/use-bulk-change-user-role";
-import {
-	CircleCheck,
-	LoaderCircle,
-	EllipsisVertical,
-	RotateCcw,
-	Trash2,
-	CircleX,
-} from "lucide-react";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useBulkChangeUserRole } from "@/modules/users/hooks/use-bulk-change-user-role";
+import { useBulkDeleteUsers } from "@/modules/users/hooks/use-bulk-delete-users";
+import { useBulkRestoreUsers } from "@/modules/users/hooks/use-bulk-restore-users";
+import { useBulkSuspendUsers } from "@/modules/users/hooks/use-bulk-suspend-users";
 
 interface UsersSelectionToolbarProps {
 	userIds: string[];
@@ -81,53 +80,82 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 
 	if (selectedItems.length === 0) return null;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "role",
+			label: "Rôle",
+			items: [
+				{
+					key: "promote",
+					label: "Promouvoir admin",
+					icon: Shield,
+					onSelect: () => promoteDialog.open(),
+				},
+				{
+					key: "demote",
+					label: "Rétrograder utilisateur",
+					icon: UserMinus,
+					onSelect: () => demoteDialog.open(),
+				},
+			],
+		},
+		{
+			key: "status",
+			items: [
+				{
+					key: "suspend",
+					label: "Suspendre",
+					icon: CircleX,
+					onSelect: () => suspendDialog.open(),
+				},
+				{
+					key: "restore",
+					label: "Restaurer",
+					icon: RotateCcw,
+					onSelect: () => restoreDialog.open(),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: () => deleteDialog.open(),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} utilisateur${selectedItems.length > 1 ? "s" : ""} sélectionné${selectedItems.length > 1 ? "s" : ""}`;
+
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-muted-foreground text-sm">
-					{selectedItems.length} utilisateur{selectedItems.length > 1 ? "s" : ""} selectionne
-					{selectedItems.length > 1 ? "s" : ""}
-				</span>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+				<span className="text-muted-foreground text-sm">{label}</span>
+				<ResponsiveActionMenu>
+					<ResponsiveActionMenuTrigger asChild>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-11 w-11 p-0"
+							aria-label="Actions de la sélection"
+						>
 							<span className="sr-only">Ouvrir le menu</span>
 							<EllipsisVertical className="h-4 w-4" />
 						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-50">
-						<DropdownMenuSub>
-							<DropdownMenuSubTrigger>Changer le role</DropdownMenuSubTrigger>
-							<DropdownMenuSubContent>
-								<DropdownMenuItem onClick={() => promoteDialog.open()}>
-									<CircleCheck className="h-4 w-4" />
-									Promouvoir admin
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={() => demoteDialog.open()}>
-									<CircleX className="h-4 w-4" />
-									Retrograder utilisateur
-								</DropdownMenuItem>
-							</DropdownMenuSubContent>
-						</DropdownMenuSub>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => suspendDialog.open()}>
-							<CircleX className="h-4 w-4" />
-							Suspendre
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => restoreDialog.open()}>
-							<RotateCcw className="h-4 w-4" />
-							Restaurer
-						</DropdownMenuItem>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => deleteDialog.open()} variant="destructive">
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+					</ResponsiveActionMenuTrigger>
+					<ResponsiveActionMenuContent
+						title="Actions groupées"
+						description={label}
+						sections={sections}
+					/>
+				</ResponsiveActionMenu>
 			</SelectionToolbar>
 
-			{/* Delete Dialog */}
 			<AlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
@@ -138,7 +166,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Supprimer les utilisateurs</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir supprimer{" "}
+								Êtes-vous sûr de vouloir supprimer{" "}
 								<span className="font-semibold">
 									{selectedItems.length} utilisateur
 									{selectedItems.length > 1 ? "s" : ""}
@@ -146,7 +174,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 								?
 								<br />
 								<br />
-								Les comptes seront desactives mais les donnees seront conservees.
+								Les comptes seront désactivés mais les données seront conservées.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -171,7 +199,6 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Suspend Dialog */}
 			<AlertDialog
 				open={suspendDialog.isOpen}
 				onOpenChange={(open) => (open ? suspendDialog.open() : suspendDialog.close())}
@@ -182,7 +209,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Suspendre les utilisateurs</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir suspendre{" "}
+								Êtes-vous sûr de vouloir suspendre{" "}
 								<span className="font-semibold">
 									{selectedItems.length} utilisateur
 									{selectedItems.length > 1 ? "s" : ""}
@@ -215,7 +242,6 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Restore Dialog */}
 			<AlertDialog
 				open={restoreDialog.isOpen}
 				onOpenChange={(open) => (open ? restoreDialog.open() : restoreDialog.close())}
@@ -226,7 +252,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Restaurer les utilisateurs</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir restaurer{" "}
+								Êtes-vous sûr de vouloir restaurer{" "}
 								<span className="font-semibold">
 									{selectedItems.length} utilisateur
 									{selectedItems.length > 1 ? "s" : ""}
@@ -234,7 +260,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 								?
 								<br />
 								<br />
-								Les comptes supprimes ou suspendus seront reactives.
+								Les comptes supprimés ou suspendus seront réactivés.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -259,7 +285,6 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Promote to Admin Dialog */}
 			<AlertDialog
 				open={promoteDialog.isOpen}
 				onOpenChange={(open) => (open ? promoteDialog.open() : promoteDialog.close())}
@@ -271,16 +296,16 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir promouvoir{" "}
+								Êtes-vous sûr de vouloir promouvoir{" "}
 								<span className="font-semibold">
 									{selectedItems.length} utilisateur
 									{selectedItems.length > 1 ? "s" : ""}
 								</span>{" "}
-								au role d&apos;administrateur ?
+								au rôle d&apos;administrateur ?
 								<br />
 								<br />
 								<span className="font-medium text-amber-600">
-									Les administrateurs ont acces a toutes les fonctionnalites du dashboard.
+									Les administrateurs ont accès à toutes les fonctionnalités du dashboard.
 								</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
@@ -306,7 +331,6 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Demote to User Dialog */}
 			<AlertDialog
 				open={demoteDialog.isOpen}
 				onOpenChange={(open) => (open ? demoteDialog.open() : demoteDialog.close())}
@@ -316,17 +340,17 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 						<input type="hidden" name="ids" value={JSON.stringify(selectedItems)} />
 						<input type="hidden" name="role" value="USER" />
 						<AlertDialogHeader>
-							<AlertDialogTitle>Retrograder en utilisateur</AlertDialogTitle>
+							<AlertDialogTitle>Rétrograder en utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir retrograder{" "}
+								Êtes-vous sûr de vouloir rétrograder{" "}
 								<span className="font-semibold">
 									{selectedItems.length} utilisateur
 									{selectedItems.length > 1 ? "s" : ""}
 								</span>{" "}
-								au role d&apos;utilisateur standard ?
+								au rôle d&apos;utilisateur standard ?
 								<br />
 								<br />
-								Ils perdront l&apos;acces au dashboard administrateur.
+								Ils perdront l&apos;accès au dashboard administrateur.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -337,12 +361,12 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 								{isChangeRolePending ? (
 									<>
 										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Retrogradation...
+										Rétrogradation...
 									</>
 								) : (
 									<>
 										<CircleX className="mr-2 h-4 w-4" />
-										Retrograder
+										Rétrograder
 									</>
 								)}
 							</Button>

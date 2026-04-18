@@ -117,4 +117,35 @@ describe("useRefreshDashboard", () => {
 
 		expect(mockRefreshDashboard).toHaveBeenCalledTimes(1);
 	});
+
+	// -------------------------------------------------------------------------
+	// lastRefreshedAt timestamp
+	// -------------------------------------------------------------------------
+
+	it("exposes lastRefreshedAt=null before any refresh", () => {
+		const { result } = renderHook(() => useRefreshDashboard());
+
+		expect(result.current.lastRefreshedAt).toBeNull();
+	});
+
+	it("sets lastRefreshedAt to a Date after a successful refresh", async () => {
+		const { result } = renderHook(() => useRefreshDashboard());
+
+		await act(async () => {
+			result.current.refresh();
+		});
+
+		expect(result.current.lastRefreshedAt).toBeInstanceOf(Date);
+	});
+
+	it("does NOT set lastRefreshedAt when the action fails", async () => {
+		mockRefreshDashboard.mockResolvedValue(ERROR);
+		const { result } = renderHook(() => useRefreshDashboard());
+
+		await act(async () => {
+			result.current.refresh();
+		});
+
+		expect(result.current.lastRefreshedAt).toBeNull();
+	});
 });

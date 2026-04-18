@@ -95,46 +95,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <div data-testid="dropdown-trigger">{children}</div>,
-	DropdownMenuContent: ({
-		children,
-		align: _align,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-		disabled,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-		disabled?: boolean;
-		asChild?: boolean;
-	}) => (
-		<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
-			{children}
-		</button>
-	),
-	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
-		<button role="menuitem">{children}</button>
-	),
-	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -179,15 +144,17 @@ vi.mock("next/link", () => ({
 
 vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
+	CircleX: () => <svg data-testid="icon-circle-x" />,
 	Download: () => <svg data-testid="icon-download" />,
+	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Eye: () => <svg data-testid="icon-eye" />,
 	KeyRound: () => <svg data-testid="icon-key" />,
 	LoaderCircle: () => <svg data-testid="icon-loader" />,
 	LogOut: () => <svg data-testid="icon-logout" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	RotateCcw: () => <svg data-testid="icon-rotate" />,
+	Shield: () => <svg data-testid="icon-shield" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
-	CircleX: () => <svg data-testid="icon-circle-x" />,
+	UserMinus: () => <svg data-testid="icon-user-minus" />,
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));
@@ -249,7 +216,7 @@ describe("UsersRowActions", () => {
 
 	it("'Voir commandes' links to /admin/ventes/commandes with userId", () => {
 		render(<UsersRowActions user={createUser({ id: "user-42" })} />);
-		const link = screen.getByRole("link", { name: /Voir commandes/i });
+		const link = screen.getByRole("menuitem", { name: /Voir commandes/i });
 		expect(link).toHaveAttribute("href", "/admin/ventes/commandes?userId=user-42");
 	});
 
@@ -285,9 +252,10 @@ describe("UsersRowActions", () => {
 		expect(screen.getByText("Supprimer")).toBeInTheDocument();
 	});
 
-	it("shows role change submenu for non-deleted user", () => {
+	it("shows role change actions for non-deleted user", () => {
 		render(<UsersRowActions user={createUser({ deletedAt: null })} />);
-		expect(screen.getByText("Changer le role")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Promouvoir admin" })).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Rétrograder utilisateur" })).toBeInTheDocument();
 	});
 
 	// ─── Deleted user ─────────────────────────────────────────────────────────
@@ -302,9 +270,10 @@ describe("UsersRowActions", () => {
 		expect(screen.queryByText("Supprimer")).toBeNull();
 	});
 
-	it("does not show role change submenu when user is deleted", () => {
+	it("does not show role change actions when user is deleted", () => {
 		render(<UsersRowActions user={createUser({ deletedAt: new Date() })} />);
-		expect(screen.queryByText("Changer le role")).toBeNull();
+		expect(screen.queryByRole("menuitem", { name: "Promouvoir admin" })).toBeNull();
+		expect(screen.queryByRole("menuitem", { name: "Rétrograder utilisateur" })).toBeNull();
 	});
 
 	// ─── Dialogs ──────────────────────────────────────────────────────────────

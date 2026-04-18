@@ -193,5 +193,111 @@ describe("AdminMobileHeader", () => {
 
 			expect(screen.getByRole("banner")).toHaveClass("z-40");
 		});
+
+		it("header uses --admin-header-height var for height (single source of truth)", () => {
+			render(<AdminMobileHeader />);
+
+			expect(screen.getByRole("banner")).toHaveClass("h-[var(--admin-header-height,3.5rem)]");
+		});
+
+		it("inner row uses --admin-main-x var for horizontal padding (gutter parity with main)", () => {
+			render(<AdminMobileHeader />);
+
+			const banner = screen.getByRole("banner");
+			const inner = banner.firstElementChild as HTMLElement;
+			expect(inner.className).toContain("px-[var(--admin-main-x,1.5rem)]");
+		});
+	});
+
+	// ============================================================================
+	// Accessibility: live region announces page title changes
+	// ============================================================================
+
+	describe("aria-live announcer", () => {
+		it("renders a polite live region with the current page title", () => {
+			mockGenerateBreadcrumbs.mockReturnValue([
+				{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
+				{ label: "Commandes", href: "/admin/ventes/commandes", isCurrentPage: true },
+			]);
+
+			render(<AdminMobileHeader />);
+
+			const live = screen.getByRole("status");
+			expect(live).toHaveAttribute("aria-live", "polite");
+			expect(live).toHaveAttribute("aria-atomic", "true");
+			expect(live).toHaveTextContent("Page actuelle : Commandes");
+		});
+	});
+
+	// ============================================================================
+	// Detail routes: parent breadcrumb label
+	// ============================================================================
+
+	describe("parent breadcrumb on detail routes", () => {
+		it("shows parent label above title on detail routes", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits/bracelet-x");
+			mockGenerateBreadcrumbs.mockReturnValue([
+				{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
+				{ label: "Catalogue", href: "/admin/catalogue", isCurrentPage: false },
+				{ label: "Produits", href: "/admin/catalogue/produits", isCurrentPage: false },
+				{
+					label: "Bracelet X",
+					href: "/admin/catalogue/produits/bracelet-x",
+					isCurrentPage: true,
+				},
+			]);
+
+			render(<AdminMobileHeader />);
+
+			expect(screen.getByText("Produits")).toBeInTheDocument();
+			expect(screen.getByRole("heading", { name: "Bracelet X" })).toBeInTheDocument();
+		});
+
+		it("does not show parent label on non-detail routes", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
+			mockGenerateBreadcrumbs.mockReturnValue([
+				{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
+				{ label: "Catalogue", href: "/admin/catalogue", isCurrentPage: false },
+				{ label: "Produits", href: "/admin/catalogue/produits", isCurrentPage: true },
+			]);
+
+			render(<AdminMobileHeader />);
+
+			expect(screen.queryByText("Catalogue")).not.toBeInTheDocument();
+			expect(screen.getByRole("heading", { name: "Produits" })).toBeInTheDocument();
+		});
+	});
+
+	// ============================================================================
+	// Haptic feedback
+	// ============================================================================
+
+	describe("haptic feedback", () => {
+		it("back button fires selection haptic (iOS HIG navigation pattern)", () => {
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits/bracelet-x");
+			mockGenerateBreadcrumbs.mockReturnValue([
+				{ label: "Tableau de bord", href: "/admin", isCurrentPage: false },
+				{ label: "Produits", href: "/admin/catalogue/produits", isCurrentPage: false },
+				{
+					label: "Bracelet X",
+					href: "/admin/catalogue/produits/bracelet-x",
+					isCurrentPage: true,
+				},
+			]);
+
+			render(<AdminMobileHeader />);
+			screen.getByRole("button", { name: "Retour" }).click();
+
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+			expect(mockRouterBack).toHaveBeenCalledTimes(1);
+		});
+
+		it("search button fires light haptic (secondary action)", () => {
+			render(<AdminMobileHeader />);
+			screen.getByRole("button", { name: "Rechercher" }).click();
+
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+			expect(mockOpenCommandPalette).toHaveBeenCalledTimes(1);
+		});
 	});
 });

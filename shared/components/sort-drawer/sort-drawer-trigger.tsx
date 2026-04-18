@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
 import { SortDrawer } from "./sort-drawer";
@@ -51,7 +52,10 @@ export function SortDrawerTrigger({
 			<Button
 				variant="ghost"
 				size="icon"
-				onClick={() => setOpen(true)}
+				onClick={() => {
+					triggerHaptic("light");
+					setOpen(true);
+				}}
 				className={cn("relative size-11", className)}
 				aria-label="Trier"
 			>

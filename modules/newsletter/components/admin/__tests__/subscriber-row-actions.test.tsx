@@ -68,35 +68,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		disabled,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		disabled?: boolean;
-		variant?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} disabled={disabled} data-variant={variant}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -179,9 +155,9 @@ describe("SubscriberRowActions", () => {
 		).toBeInTheDocument();
 	});
 
-	it("renders dropdown trigger", () => {
+	it("renders the action menu", () => {
 		render(<SubscriberRowActions subscriber={createSubscriber()} />);
-		expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
+		expect(screen.getByRole("menu", { name: "Actions abonné" })).toBeInTheDocument();
 	});
 
 	// ─── Menu items ────────────────────────────────────────────────────────────
@@ -196,9 +172,9 @@ describe("SubscriberRowActions", () => {
 		expect(screen.getByRole("menuitem", { name: /Supprimer \(RGPD\)/i })).toBeInTheDocument();
 	});
 
-	it("renders separator between menu items", () => {
+	it("groups actions into manage + danger sections", () => {
 		render(<SubscriberRowActions subscriber={createSubscriber()} />);
-		expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+		expect(document.querySelectorAll("[data-section]").length).toBeGreaterThanOrEqual(2);
 	});
 
 	// ─── Disabled states ───────────────────────────────────────────────────────
@@ -206,13 +182,13 @@ describe("SubscriberRowActions", () => {
 	it("disables 'Désabonner' when status is UNSUBSCRIBED", () => {
 		render(<SubscriberRowActions subscriber={createSubscriber({ status: "UNSUBSCRIBED" })} />);
 		const unsubscribeItem = screen.getByRole("menuitem", { name: /Désabonner/i });
-		expect(unsubscribeItem).toBeDisabled();
+		expect(unsubscribeItem).toHaveAttribute("aria-disabled", "true");
 	});
 
 	it("does not disable 'Désabonner' when status is CONFIRMED", () => {
 		render(<SubscriberRowActions subscriber={createSubscriber({ status: "CONFIRMED" })} />);
 		const unsubscribeItem = screen.getByRole("menuitem", { name: /Désabonner/i });
-		expect(unsubscribeItem).not.toBeDisabled();
+		expect(unsubscribeItem).not.toHaveAttribute("aria-disabled", "true");
 	});
 
 	it("does not disable 'Désabonner' when status is PENDING", () => {

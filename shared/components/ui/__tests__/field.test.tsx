@@ -181,10 +181,11 @@ describe("FieldError", () => {
 	// ARIA
 	// ============================================================================
 
-	it("has role='alert' and aria-atomic='true'", () => {
+	it("has role='alert', aria-live='polite' and aria-atomic='true'", () => {
 		render(<FieldError errors={["test"]} />);
 		const alert = screen.getByRole("alert");
 		expect(alert).toHaveAttribute("aria-atomic", "true");
+		expect(alert).toHaveAttribute("aria-live", "polite");
 	});
 
 	// ============================================================================

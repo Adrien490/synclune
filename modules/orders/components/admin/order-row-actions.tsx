@@ -1,30 +1,12 @@
 "use client";
 
-import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/browser";
-import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
-import type { OrderStateInput } from "@/modules/orders/types/order.types";
-import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuPortal,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	CircleCheck,
+	CircleX,
 	CreditCard,
-	Eye,
-	ExternalLink,
-	Mail,
 	EllipsisVertical,
+	ExternalLink,
+	Eye,
 	Package,
 	PackageCheck,
 	PackageX,
@@ -34,19 +16,31 @@ import {
 	Trash2,
 	Truck,
 	Undo2,
-	CircleX,
 } from "lucide-react";
-import Link from "next/link";
+
+import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/browser";
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { Button } from "@/shared/components/ui/button";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-email";
+import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
+import type { OrderStateInput } from "@/modules/orders/types/order.types";
+
 import { CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
 import { DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";
-import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
-import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
 import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
+import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
 import { MARK_AS_PROCESSING_DIALOG_ID } from "./mark-as-processing-alert-dialog";
-import { REVERT_TO_PROCESSING_DIALOG_ID } from "./revert-to-processing-dialog";
 import { MARK_AS_RETURNED_DIALOG_ID } from "./mark-as-returned-alert-dialog";
+import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
 import { ORDER_NOTES_DIALOG_ID } from "./order-notes-dialog";
+import { REVERT_TO_PROCESSING_DIALOG_ID } from "./revert-to-processing-dialog";
 
 interface OrderRowActionsProps {
 	order: {
@@ -72,15 +66,9 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 
-	// Hook pour renvoyer les emails
 	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
-	// =========================================================================
-	// STATE MACHINE (canonical source: order-status-validation.service)
-	// =========================================================================
-
 	const permissions = getOrderPermissions(order as unknown as OrderStateInput);
-
 	const isShipped = order.status === OrderStatus.SHIPPED;
 	const isDelivered = order.status === OrderStatus.DELIVERED;
 
@@ -96,89 +84,160 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	} = permissions;
 
 	const canTrack = isShipped && order.trackingUrl;
-
-	// Deletable if never paid (no PAID or REFUNDED status) and no invoice
 	const canDelete =
 		!order.invoiceNumber &&
 		order.paymentStatus !== PaymentStatus.PAID &&
 		order.paymentStatus !== PaymentStatus.REFUNDED;
 
-	// =========================================================================
-	// HANDLERS
-	// =========================================================================
+	const open = (data: object) => ({ orderId: order.id, orderNumber: order.orderNumber, ...data });
 
-	const handleMarkAsPaid = () => {
-		markAsPaidDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	const handleMarkAsShipped = () => {
-		markAsShippedDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	const handleMarkAsDelivered = () => {
-		markAsDeliveredDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	const handleCancel = () => {
-		cancelDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-			isPaid: order.paymentStatus === PaymentStatus.PAID,
-		});
-	};
-
-	const handleDelete = () => {
-		deleteDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	const handleMarkAsProcessing = () => {
-		markAsProcessingDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	const handleRevertToProcessing = () => {
-		revertToProcessingDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-			trackingNumber: order.trackingNumber,
-		});
-	};
-
-	const handleMarkAsReturned = () => {
-		markAsReturnedDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	const handleOpenNotes = () => {
-		notesDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-		});
-	};
-
-	// =========================================================================
-	// RENDER
-	// =========================================================================
+	const sections: ActionMenuSection[] = [
+		{
+			key: "info",
+			items: [
+				{
+					key: "view",
+					label: "Voir les détails",
+					icon: Eye,
+					href: `/admin/ventes/commandes/${order.id}`,
+				},
+				{
+					key: "notes",
+					label: "Notes internes",
+					icon: StickyNote,
+					onSelect: () => notesDialog.open(open({})),
+				},
+			],
+		},
+		{
+			key: "emails",
+			label: "Renvoyer un email",
+			items: [
+				{
+					key: "email-confirmation",
+					label: "Confirmation de commande",
+					icon: ShoppingBag,
+					disabled: isResendingEmail,
+					onSelect: () => resendEmail(order.id, "confirmation"),
+				},
+				{
+					key: "email-shipping",
+					label: "Expédition",
+					icon: Truck,
+					disabled: isResendingEmail,
+					hidden: !((isShipped || isDelivered) && order.trackingNumber),
+					onSelect: () => resendEmail(order.id, "shipping"),
+				},
+				{
+					key: "email-delivery",
+					label: "Livraison",
+					icon: PackageCheck,
+					disabled: isResendingEmail,
+					hidden: !isDelivered,
+					onSelect: () => resendEmail(order.id, "delivery"),
+				},
+			],
+		},
+		{
+			key: "fulfillment",
+			label: "Fulfillment",
+			items: [
+				{
+					key: "mark-paid",
+					label: "Marquer comme payée",
+					icon: CreditCard,
+					hidden: !canMarkAsPaid,
+					onSelect: () => markAsPaidDialog.open(open({})),
+				},
+				{
+					key: "mark-processing",
+					label: "Passer en préparation",
+					icon: Package,
+					hidden: !canMarkAsProcessing,
+					onSelect: () => markAsProcessingDialog.open(open({})),
+				},
+				{
+					key: "mark-shipped",
+					label: "Marquer comme expédiée",
+					icon: Truck,
+					hidden: !canMarkAsShipped,
+					onSelect: () => markAsShippedDialog.open(open({})),
+				},
+				{
+					key: "tracking",
+					label: "Suivre le colis",
+					icon: ExternalLink,
+					hidden: !canTrack,
+					href: order.trackingUrl ?? "#",
+					external: true,
+				},
+				{
+					key: "mark-delivered",
+					label: "Marquer comme livrée",
+					icon: CircleCheck,
+					hidden: !canMarkAsDelivered,
+					onSelect: () => markAsDeliveredDialog.open(open({})),
+				},
+				{
+					key: "revert-processing",
+					label: "Annuler l'expédition",
+					icon: Undo2,
+					hidden: !canRevertToProcessing,
+					onSelect: () =>
+						revertToProcessingDialog.open(open({ trackingNumber: order.trackingNumber })),
+				},
+				{
+					key: "mark-returned",
+					label: "Marquer comme retourné",
+					icon: PackageX,
+					hidden: !canMarkAsReturned,
+					onSelect: () => markAsReturnedDialog.open(open({})),
+				},
+			],
+		},
+		{
+			key: "refund",
+			items: [
+				{
+					key: "refund",
+					label: "Créer un remboursement",
+					icon: RotateCcw,
+					hidden: !canRefund,
+					href: `/admin/ventes/remboursements/nouveau?orderId=${order.id}`,
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "cancel",
+					label: "Annuler la commande",
+					icon: CircleX,
+					variant: "destructive",
+					hidden: !canCancel,
+					onSelect: () =>
+						cancelDialog.open({
+							orderId: order.id,
+							orderNumber: order.orderNumber,
+							isPaid: order.paymentStatus === PaymentStatus.PAID,
+						}),
+				},
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					hidden: !canDelete,
+					onSelect: () => deleteDialog.open(open({})),
+				},
+			],
+		},
+	];
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -187,160 +246,12 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 				>
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-48">
-				<DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
-					{order.orderNumber}
-				</DropdownMenuLabel>
-				<DropdownMenuSeparator />
-
-				{/* Toujours visible : Voir */}
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/ventes/commandes/${order.id}`}>
-						<Eye className="h-4 w-4" />
-						Voir les détails
-					</Link>
-				</DropdownMenuItem>
-
-				{/* Notes internes */}
-				<DropdownMenuItem onClick={handleOpenNotes}>
-					<StickyNote className="h-4 w-4" />
-					Notes internes
-				</DropdownMenuItem>
-
-				{/* Renvoyer un email */}
-				<DropdownMenuSub>
-					<DropdownMenuSubTrigger disabled={isResendingEmail}>
-						<Mail className="h-4 w-4" />
-						Renvoyer un email
-					</DropdownMenuSubTrigger>
-					<DropdownMenuPortal>
-						<DropdownMenuSubContent>
-							<DropdownMenuItem
-								onClick={() => resendEmail(order.id, "confirmation")}
-								disabled={isResendingEmail}
-							>
-								<ShoppingBag className="h-4 w-4" />
-								Confirmation de commande
-							</DropdownMenuItem>
-							{(isShipped || isDelivered) && order.trackingNumber && (
-								<DropdownMenuItem
-									onClick={() => resendEmail(order.id, "shipping")}
-									disabled={isResendingEmail}
-								>
-									<Truck className="h-4 w-4" />
-									Expédition
-								</DropdownMenuItem>
-							)}
-							{isDelivered && (
-								<DropdownMenuItem
-									onClick={() => resendEmail(order.id, "delivery")}
-									disabled={isResendingEmail}
-								>
-									<PackageCheck className="h-4 w-4" />
-									Livraison
-								</DropdownMenuItem>
-							)}
-						</DropdownMenuSubContent>
-					</DropdownMenuPortal>
-				</DropdownMenuSub>
-
-				{/* PENDING : Marquer comme payée */}
-				{canMarkAsPaid && (
-					<DropdownMenuItem onClick={handleMarkAsPaid}>
-						<CreditCard className="h-4 w-4" />
-						Marquer comme payée
-					</DropdownMenuItem>
-				)}
-
-				{/* PENDING + PAID : Passer en préparation */}
-				{canMarkAsProcessing && (
-					<DropdownMenuItem onClick={handleMarkAsProcessing}>
-						<Package className="h-4 w-4" />
-						Passer en préparation
-					</DropdownMenuItem>
-				)}
-
-				{/* PROCESSING : Marquer comme expédiée */}
-				{canMarkAsShipped && (
-					<DropdownMenuItem onClick={handleMarkAsShipped}>
-						<Truck className="h-4 w-4" />
-						Marquer comme expédiée
-					</DropdownMenuItem>
-				)}
-
-				{/* SHIPPED : Suivre le colis */}
-				{canTrack && (
-					<DropdownMenuItem asChild>
-						<a href={order.trackingUrl!} target="_blank" rel="noopener noreferrer">
-							<ExternalLink className="h-4 w-4" />
-							Suivre le colis
-						</a>
-					</DropdownMenuItem>
-				)}
-
-				{/* SHIPPED : Marquer comme livrée */}
-				{canMarkAsDelivered && (
-					<DropdownMenuItem onClick={handleMarkAsDelivered}>
-						<CircleCheck className="h-4 w-4" />
-						Marquer comme livrée
-					</DropdownMenuItem>
-				)}
-
-				{/* SHIPPED : Annuler l'expédition */}
-				{canRevertToProcessing && (
-					<DropdownMenuItem onClick={handleRevertToProcessing}>
-						<Undo2 className="h-4 w-4" />
-						Annuler l'expédition
-					</DropdownMenuItem>
-				)}
-
-				{/* DELIVERED : Marquer comme retourné */}
-				{canMarkAsReturned && (
-					<DropdownMenuItem onClick={handleMarkAsReturned}>
-						<PackageX className="h-4 w-4" />
-						Marquer comme retourné
-					</DropdownMenuItem>
-				)}
-
-				{/* PROCESSING/SHIPPED/DELIVERED : Remboursement */}
-				{canRefund && (
-					<>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem asChild>
-							<Link href={`/admin/ventes/remboursements/nouveau?orderId=${order.id}`}>
-								<RotateCcw className="h-4 w-4" />
-								Créer un remboursement
-							</Link>
-						</DropdownMenuItem>
-					</>
-				)}
-
-				{/* Annulation */}
-				{canCancel && (
-					<>
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							onClick={handleCancel}
-							className="text-destructive focus:text-destructive"
-						>
-							<CircleX className="h-4 w-4" />
-							Annuler la commande
-						</DropdownMenuItem>
-					</>
-				)}
-
-				{/* Suppression (seulement si aucune facture et jamais payée) */}
-				{canDelete && (
-					<DropdownMenuItem
-						onClick={handleDelete}
-						className="text-destructive focus:text-destructive"
-					>
-						<Trash2 className="h-4 w-4" />
-						Supprimer
-					</DropdownMenuItem>
-				)}
-			</DropdownMenuContent>
-		</DropdownMenu>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent
+				title="Actions"
+				description={`Commande ${order.orderNumber}`}
+				sections={sections}
+			/>
+		</ResponsiveActionMenu>
 	);
 }

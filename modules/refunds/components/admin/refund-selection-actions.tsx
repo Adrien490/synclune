@@ -1,13 +1,14 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
+import { CircleCheck, CircleX, EllipsisVertical, LoaderCircle } from "lucide-react";
+import { useState } from "react";
+
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -17,11 +18,10 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkApproveRefunds } from "@/modules/refunds/hooks/use-bulk-approve-refunds";
 import { useBulkRejectRefunds } from "@/modules/refunds/hooks/use-bulk-reject-refunds";
-import { CircleCheck, LoaderCircle, EllipsisVertical, CircleX } from "lucide-react";
-import { useState } from "react";
 
 export function RefundSelectionActions() {
 	const { selectedItems, clearSelection } = useSelectionContext();
@@ -47,29 +47,55 @@ export function RefundSelectionActions() {
 
 	if (selectedItems.length === 0) return null;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "decision",
+			items: [
+				{
+					key: "approve",
+					label: "Approuver",
+					icon: CircleCheck,
+					onSelect: () => setApproveDialogOpen(true),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "reject",
+					label: "Refuser",
+					icon: CircleX,
+					variant: "destructive",
+					onSelect: () => setRejectDialogOpen(true),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} remboursement${selectedItems.length > 1 ? "s" : ""} sélectionné${selectedItems.length > 1 ? "s" : ""}`;
+
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0"
+						aria-label="Actions de la sélection"
+					>
 						<span className="sr-only">Ouvrir le menu</span>
 						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-50">
-					<DropdownMenuItem onClick={() => setApproveDialogOpen(true)}>
-						<CircleCheck className="h-4 w-4" />
-						Approuver
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => setRejectDialogOpen(true)} variant="destructive">
-						<CircleX className="h-4 w-4" />
-						Refuser
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions groupées"
+					description={label}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 
-			{/* Approve Dialog */}
 			<AlertDialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
 				<AlertDialogContent>
 					<form action={approveAction}>
@@ -109,7 +135,6 @@ export function RefundSelectionActions() {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Reject Dialog */}
 			<AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
 				<AlertDialogContent>
 					<form action={rejectAction}>

@@ -8,6 +8,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { CircleCheck, LoaderCircle, CircleX } from "lucide-react";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
 import { useEffect, useRef } from "react";
@@ -24,12 +25,19 @@ export function RequestPasswordResetForm() {
 
 	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
 
-	// Focus on error when it appears
+	// Focus on error when it appears + haptic feedback
 	useEffect(() => {
 		if (isActionError) {
 			errorRef.current?.focus();
+			triggerHaptic("error");
 		}
 	}, [state?.message, state?.status, isActionError]);
+
+	useEffect(() => {
+		if (state?.status === ActionStatus.SUCCESS) {
+			triggerHaptic("success");
+		}
+	}, [state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -40,7 +48,14 @@ export function RequestPasswordResetForm() {
 
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
-			<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+			<form
+				action={action}
+				className="space-y-6"
+				onSubmit={() => {
+					triggerHaptic("medium");
+					void form.handleSubmit();
+				}}
+			>
 				{/* Indication des champs obligatoires */}
 				<RequiredFieldsNote />
 
@@ -88,7 +103,10 @@ export function RequestPasswordResetForm() {
 									label="Email"
 									type="email"
 									inputMode="email"
+									enterKeyHint="send"
 									autoComplete="email"
+									autoCapitalize="none"
+									autoCorrect="off"
 									spellCheck={false}
 									disabled={isPending || state?.status === ActionStatus.SUCCESS}
 									required

@@ -80,6 +80,7 @@ export function CollectionCard({
 					images={displayImages}
 					collectionName={name}
 					isAboveFold={isAboveFold}
+					collectionSlug={slug}
 				/>
 			) : (
 				<div

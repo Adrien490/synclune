@@ -71,33 +71,11 @@ vi.mock("../bulk-delete-orders-alert-dialog", () => ({
 	BULK_DELETE_ORDERS_DIALOG_ID: "bulk-delete-orders",
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} data-variant={variant}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({
@@ -157,7 +135,7 @@ describe("OrderSelectionActions", () => {
 		it("renders when items are selected", () => {
 			mockSelectedItems.value = ["order-1", "order-2"];
 			render(<OrderSelectionActions />);
-			expect(screen.getByTestId("dropdown-trigger")).toBeInTheDocument();
+			expect(screen.getByRole("menu", { name: "Actions groupées" })).toBeInTheDocument();
 		});
 	});
 

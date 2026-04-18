@@ -39,29 +39,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		disabled,
-		className,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		disabled?: boolean;
-		className?: string;
-	}) => (
-		<button onClick={onClick} disabled={disabled} className={className}>
-			{children}
-		</button>
-	),
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div>{children}</div>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	SquarePen: () => <span data-testid="icon-edit" />,
@@ -182,23 +164,6 @@ describe("AnnouncementRowActions", () => {
 		});
 	});
 
-	// ─── Haptic feedback ──────────────────────────────────────────────────────
-
-	it("should fire selection haptic on edit", () => {
-		render(<AnnouncementRowActions announcement={createAnnouncement()} />);
-		fireEvent.click(screen.getByText("Éditer"));
-		expect(mockHaptic).toHaveBeenCalledWith("selection");
-	});
-
-	it("should fire medium haptic on toggle", () => {
-		render(<AnnouncementRowActions announcement={createAnnouncement({ isActive: false })} />);
-		fireEvent.click(screen.getByText("Activer"));
-		expect(mockHaptic).toHaveBeenCalledWith("medium");
-	});
-
-	it("should fire medium haptic on delete", () => {
-		render(<AnnouncementRowActions announcement={createAnnouncement()} />);
-		fireEvent.click(screen.getByText("Supprimer"));
-		expect(mockHaptic).toHaveBeenCalledWith("medium");
-	});
+	// Haptic feedback is handled by the ResponsiveActionMenu primitive layer
+	// (see `item.haptic` option on each section item), not this component.
 });

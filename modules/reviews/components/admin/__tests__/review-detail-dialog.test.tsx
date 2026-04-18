@@ -8,8 +8,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({}));
 
-vi.mock("@/shared/components/ui/dialog", () => ({
-	Dialog: ({
+vi.mock("@/shared/components/responsive-dialog", () => ({
+	ResponsiveDialog: ({
 		children,
 		open,
 	}: {
@@ -17,15 +17,29 @@ vi.mock("@/shared/components/ui/dialog", () => ({
 		open?: boolean;
 		onOpenChange?: (open: boolean) => void;
 	}) => (open ? <div data-testid="dialog">{children}</div> : null),
-	DialogContent: ({ children }: { children: React.ReactNode; className?: string }) => (
-		<div data-testid="dialog-content">{children}</div>
+	ResponsiveDialogContent: ({
+		children,
+		className,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<div data-testid="dialog-content" className={className}>
+			{children}
+		</div>
 	),
-	DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DialogTitle: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-		<h2 className={className}>{children}</h2>
+	ResponsiveDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	ResponsiveDialogTitle: ({
+		children,
+		className,
+	}: {
+		children: React.ReactNode;
+		className?: string;
+	}) => <h2 className={className}>{children}</h2>,
+	ResponsiveDialogDescription: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+		<div data-testid="dialog-description">{children}</div>
 	),
-	DialogDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
-	DialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+	ResponsiveDialogTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
 		<div data-testid="dialog-trigger">{children}</div>
 	),
 }));
@@ -226,5 +240,10 @@ describe("ReviewDetailDialog", () => {
 			<ReviewDetailDialog review={createReview()} open={true} trigger={<button>Open</button>} />,
 		);
 		expect(screen.getByTestId("dialog-trigger")).toBeInTheDocument();
+	});
+
+	it("uses ResponsiveDialog with sm:max-w-2xl for desktop width constraint", () => {
+		render(<ReviewDetailDialog review={createReview()} open={true} />);
+		expect(screen.getByTestId("dialog-content").className).toContain("sm:max-w-2xl");
 	});
 });

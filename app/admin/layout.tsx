@@ -15,6 +15,7 @@ import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SwipeBackProvider } from "@/shared/components/swipe-back-provider";
+import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
 
 /**
  * Metadata pour le dashboard admin
@@ -49,6 +50,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			<SkipLink targetId="admin-main-content" />
 			<PullToRefresh />
 			<SwipeBackProvider />
+			<VisualViewportBridge />
 			<Suspense fallback={<AdminSidebarSkeleton />}>
 				<AdminSidebar user={user} />
 			</Suspense>
@@ -59,7 +61,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 					id="admin-main-content"
 					tabIndex={-1}
 					style={{ "--admin-main-x": "1.5rem" } as React.CSSProperties}
-					className="space-y-6 px-[var(--admin-main-x)] pt-20 pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
+					className="space-y-6 px-[var(--admin-main-x)] pt-[calc(var(--admin-header-height,3.5rem)+env(safe-area-inset-top,0px)+1rem)] pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
 				>
 					<Suspense fallback={<AdminContentSkeleton />}>
 						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
@@ -93,7 +95,7 @@ function AdminContentSkeleton() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement du contenu"
-			className="space-y-6 p-6 pt-20 md:pt-6"
+			className="space-y-6 p-6 pt-[calc(var(--admin-header-height,3.5rem)+env(safe-area-inset-top,0px)+1rem)] md:pt-6"
 		>
 			<Skeleton shape="text" className="h-8 w-64" />
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

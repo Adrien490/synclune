@@ -105,44 +105,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		disabled,
-		asChild,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		disabled?: boolean;
-		asChild?: boolean;
-		variant?: string;
-		className?: string;
-	}) =>
-		asChild ? (
-			<div data-testid="dropdown-item-link">{children}</div>
-		) : (
-			<button onClick={onClick} disabled={disabled} data-testid="dropdown-item">
-				{children}
-			</button>
-		),
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuTrigger: ({
-		children,
-		asChild: _asChild,
-	}: {
-		children: React.ReactNode;
-		asChild?: boolean;
-	}) => <div data-testid="dropdown-trigger">{children}</div>,
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	Check: () => <span data-testid="icon-check" />,
@@ -191,10 +158,10 @@ describe("ProductSkuRowActions", () => {
 		expect(screen.getByLabelText("Actions pour cette variante")).toBeInTheDocument();
 	});
 
-	it("renders dropdown content", () => {
+	it("renders the action menu", () => {
 		render(<ProductSkuRowActions {...defaultProps} />);
 
-		expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
+		expect(screen.getByRole("menu", { name: "Actions variante" })).toBeInTheDocument();
 	});
 
 	// ─── Common actions (always present) ──────────────────────────────────────

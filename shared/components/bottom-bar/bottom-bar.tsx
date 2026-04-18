@@ -31,7 +31,7 @@ export const bottomBarItemClass = cn(
  * outlines so the active state remains perceivable without relying on color alone.
  */
 export const bottomBarActiveItemClass = cn(
-	"text-foreground bg-primary/5",
+	"text-foreground",
 	"forced-colors:outline forced-colors:outline-2 forced-colors:outline-[Highlight]",
 	"contrast-more:outline contrast-more:outline-2 contrast-more:outline-current",
 );
@@ -63,30 +63,6 @@ export const bottomBarBadgeClass = cn(
 	"ring-2 ring-background",
 	"forced-colors:outline forced-colors:outline-1 forced-colors:outline-[CanvasText]",
 );
-
-// ---------------------------------------------------------------------------
-// Center action (FAB) class constants
-// ---------------------------------------------------------------------------
-
-/** Wrapper class for a prominent center action slot (overflow-visible for FAB protrusion). */
-export const bottomBarCenterActionClass = cn(
-	"flex-1 flex flex-col items-center justify-center",
-	"relative overflow-visible",
-);
-
-/** Inner floating button/link class for center action (FAB-style). */
-export const bottomBarCenterButtonClass = cn(
-	"bg-primary text-primary-foreground",
-	"size-14 rounded-full",
-	"-mt-6 shadow-lg shadow-primary/25",
-	"flex items-center justify-center",
-	"active:scale-95 transition-transform duration-150",
-	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-	"forced-colors:outline forced-colors:outline-2 forced-colors:outline-[ButtonText]",
-);
-
-/** Label class for center action (below the floating button). */
-export const bottomBarCenterLabelClass = "text-[10px] font-semibold text-primary mt-0.5";
 
 // ---------------------------------------------------------------------------
 // ActiveDot
@@ -223,17 +199,18 @@ export function BottomBar({
 			animate={isHidden ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
 			transition={prefersReducedMotion ? { duration: 0 } : MOTION_CONFIG.spring.bar}
 			aria-label={ariaLabel}
+			data-hide-on-keyboard=""
 			{...(isHidden && { inert: true })}
 			className={cn(
 				breakpointClass,
 				"fixed right-0 bottom-0 left-0",
 				zIndex,
 				"pb-[env(safe-area-inset-bottom)]",
-				// bg-background/95 acts as fallback when backdrop-filter is unsupported
-				"bg-background/95 backdrop-blur-md",
-				"border-border border-x border-t",
-				"rounded-t-2xl",
-				"shadow-[0_-4px_20px_oklch(0_0_0/0.08)]",
+				// bg-background/80 acts as fallback when backdrop-filter is unsupported;
+				// stronger blur + lower opacity produces the native iOS Tab Bar material.
+				"bg-background/80 backdrop-blur-xl",
+				"border-border/60 border-t",
+				"shadow-[0_-0.5px_0_oklch(0_0_0/0.06)]",
 				isHidden && "pointer-events-none",
 				className,
 			)}

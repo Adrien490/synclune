@@ -114,7 +114,7 @@ describe("Button", () => {
 				<svg />
 			</Button>,
 		);
-		expect(screen.getByRole("button")).toHaveClass("size-10");
+		expect(screen.getByRole("button")).toHaveClass("size-11");
 	});
 
 	it("forwards type=submit", () => {

@@ -1,6 +1,7 @@
 "use client";
 
 import * as FocusScope from "@radix-ui/react-focus-scope";
+import { useEffect, useRef } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
@@ -37,6 +38,21 @@ export default function MediaLightbox({
 	onIndexChange,
 }: MediaLightboxProps) {
 	const prefersReducedMotion = useReducedMotion();
+	const previousActiveElementRef = useRef<HTMLElement | null>(null);
+
+	useEffect(() => {
+		if (open) {
+			previousActiveElementRef.current = document.activeElement as HTMLElement | null;
+		}
+	}, [open]);
+
+	const handleClose = () => {
+		const target = previousActiveElementRef.current;
+		close();
+		requestAnimationFrame(() => {
+			target?.focus({ preventScroll: true });
+		});
+	};
 
 	if (!open) return null;
 
@@ -45,7 +61,7 @@ export default function MediaLightbox({
 			<div role="dialog" aria-modal="true" aria-label="Galerie en plein écran">
 				<Lightbox
 					open={open}
-					close={close}
+					close={handleClose}
 					slides={slides}
 					index={index}
 					on={{

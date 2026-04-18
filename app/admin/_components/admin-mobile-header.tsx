@@ -45,11 +45,13 @@ export function AdminMobileHeader() {
 	const { open: openCommandPalette } = useDialog("command-palette");
 
 	const showBack = isDetailRoute(pathname);
+	const parentLabel = breadcrumbs.length >= 2 ? breadcrumbs[breadcrumbs.length - 2]?.label : null;
+	const showParent = Boolean(showBack && parentLabel);
 
 	return (
 		<header
 			className={cn(
-				"pwa-header fixed inset-x-0 top-0 z-40 flex h-14 items-center md:hidden",
+				"pwa-header fixed inset-x-0 top-0 z-40 flex h-[var(--admin-header-height,3.5rem)] items-center md:hidden",
 				"motion-safe:transition-[background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-300 motion-safe:ease-out",
 				"border-b",
 				isScrolled
@@ -59,17 +61,17 @@ export function AdminMobileHeader() {
 			role="banner"
 			aria-label="En-tête mobile administration"
 		>
-			<div className="flex w-full items-center gap-2 px-2">
-				{showBack ? (
+			<div className="flex w-full items-center gap-2 px-[var(--admin-main-x,1.5rem)]">
+				{showBack && (
 					<button
 						type="button"
 						onClick={() => {
-							triggerHaptic("light");
+							triggerHaptic("selection");
 							router.back();
 						}}
 						aria-label="Retour"
 						className={cn(
-							"flex size-11 items-center justify-center rounded-full",
+							"-ml-2.5 flex size-11 shrink-0 items-center justify-center rounded-full",
 							"text-muted-foreground hover:text-foreground active:bg-accent",
 							"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
 							"transition-colors",
@@ -77,13 +79,27 @@ export function AdminMobileHeader() {
 					>
 						<ChevronLeft className="size-5" aria-hidden="true" />
 					</button>
-				) : (
-					<span className="size-11 shrink-0" aria-hidden="true" />
 				)}
 
-				<h1 className="min-w-0 flex-1 truncate text-left text-base leading-none font-semibold tracking-tight">
-					{pageTitle}
-				</h1>
+				<div className="min-w-0 flex-1">
+					{showParent && (
+						<p className="text-muted-foreground mb-0.5 truncate text-[10px] leading-none font-medium tracking-wider uppercase">
+							{parentLabel}
+						</p>
+					)}
+					<h1
+						className={cn(
+							"min-w-0 truncate text-left leading-none font-semibold tracking-tight",
+							showParent ? "text-sm" : "text-base",
+						)}
+					>
+						{pageTitle}
+					</h1>
+				</div>
+
+				<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+					Page actuelle : {pageTitle}
+				</span>
 
 				<button
 					type="button"
@@ -94,7 +110,7 @@ export function AdminMobileHeader() {
 					aria-label="Rechercher"
 					aria-haspopup="dialog"
 					className={cn(
-						"flex size-11 items-center justify-center rounded-full",
+						"-mr-2.5 flex size-11 shrink-0 items-center justify-center rounded-full",
 						"text-muted-foreground hover:text-foreground active:bg-accent",
 						"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
 						"transition-colors",

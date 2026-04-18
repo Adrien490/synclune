@@ -51,9 +51,6 @@ import {
 	bottomBarIconClass,
 	bottomBarLabelClass,
 	bottomBarBadgeClass,
-	bottomBarCenterActionClass,
-	bottomBarCenterButtonClass,
-	bottomBarCenterLabelClass,
 } from "../bottom-bar";
 
 afterEach(() => {
@@ -293,7 +290,10 @@ describe("Exported class constants", () => {
 
 	it("bottomBarActiveItemClass contains active styles", () => {
 		expect(bottomBarActiveItemClass).toContain("text-foreground");
-		expect(bottomBarActiveItemClass).toContain("bg-primary/5");
+	});
+
+	it("bottomBarActiveItemClass does not add background tint (refined 2026)", () => {
+		expect(bottomBarActiveItemClass).not.toContain("bg-primary/5");
 	});
 
 	it("bottomBarActiveItemClass includes forced-colors outline", () => {
@@ -322,32 +322,6 @@ describe("Exported class constants", () => {
 	it("bottomBarLabelClass defines text size and truncation", () => {
 		expect(bottomBarLabelClass).toContain("text-xs");
 		expect(bottomBarLabelClass).toContain("truncate");
-	});
-
-	it("bottomBarCenterActionClass contains overflow-visible", () => {
-		expect(bottomBarCenterActionClass).toContain("overflow-visible");
-		expect(bottomBarCenterActionClass).toContain("flex-1");
-	});
-
-	it("bottomBarCenterButtonClass contains FAB styles", () => {
-		expect(bottomBarCenterButtonClass).toContain("bg-primary");
-		expect(bottomBarCenterButtonClass).toContain("rounded-full");
-		expect(bottomBarCenterButtonClass).toContain("size-14");
-		expect(bottomBarCenterButtonClass).toContain("shadow-lg");
-	});
-
-	it("bottomBarCenterButtonClass contains focus-visible styles", () => {
-		expect(bottomBarCenterButtonClass).toContain("focus-visible");
-	});
-
-	it("bottomBarCenterButtonClass includes forced-colors outline", () => {
-		expect(bottomBarCenterButtonClass).toContain("forced-colors:outline");
-		expect(bottomBarCenterButtonClass).toContain("forced-colors:outline-[ButtonText]");
-	});
-
-	it("bottomBarCenterLabelClass defines text size and color", () => {
-		expect(bottomBarCenterLabelClass).toContain("text-primary");
-		expect(bottomBarCenterLabelClass).toContain("font-semibold");
 	});
 });
 

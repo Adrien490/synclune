@@ -1,22 +1,23 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
+import { Copy, EllipsisVertical, Eye, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { Copy, Eye, EllipsisVertical, Pencil, Trash2, Power, PowerOff } from "lucide-react";
-import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
-import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
-import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useDuplicateDiscount } from "@/modules/discounts/hooks/use-duplicate-discount";
-import { DISCOUNT_USAGES_DIALOG_ID } from "./discount-usages-dialog";
 import type { Discount } from "@/modules/discounts/types/discount.types";
+
+import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
+import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
+import { DISCOUNT_USAGES_DIALOG_ID } from "./discount-usages-dialog";
+import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
 
 interface DiscountRowActionsProps {
 	discount: Discount;
@@ -31,28 +32,15 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 
 	const canDelete = discount.usageCount === 0;
 
-	const handleViewUsages = () => {
-		openUsagesDialog({
-			discountId: discount.id,
-			discountCode: discount.code,
-		});
-	};
-
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label={`Actions pour ${discount.code}`}
-				>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
-				<DropdownMenuItem
-					onClick={() => {
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "edit",
+					label: "Modifier",
+					icon: Pencil,
+					onSelect: () =>
 						openEditDialog({
 							discount: {
 								id: discount.id,
@@ -66,57 +54,73 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 								startsAt: discount.startsAt,
 								endsAt: discount.endsAt,
 							},
-						});
-					}}
-				>
-					<Pencil className="h-4 w-4" />
-					Modifier
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => duplicate(discount.id)} disabled={isDuplicating}>
-					<Copy className="h-4 w-4" />
-					Dupliquer
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={handleViewUsages}>
-					<Eye className="h-4 w-4" />
-					Voir les utilisations
-				</DropdownMenuItem>
-				<DropdownMenuItem
-					onClick={() => {
+						}),
+				},
+				{
+					key: "duplicate",
+					label: "Dupliquer",
+					icon: Copy,
+					disabled: isDuplicating,
+					onSelect: () => duplicate(discount.id),
+				},
+				{
+					key: "usages",
+					label: "Voir les utilisations",
+					icon: Eye,
+					onSelect: () =>
+						openUsagesDialog({ discountId: discount.id, discountCode: discount.code }),
+				},
+				{
+					key: "toggle",
+					label: discount.isActive ? "Désactiver" : "Activer",
+					icon: discount.isActive ? PowerOff : Power,
+					onSelect: () =>
 						openToggleDialog({
 							discountId: discount.id,
 							discountCode: discount.code,
 							isActive: discount.isActive,
-						});
-					}}
-				>
-					{discount.isActive ? (
-						<>
-							<PowerOff className="h-4 w-4" />
-							Désactiver
-						</>
-					) : (
-						<>
-							<Power className="h-4 w-4" />
-							Activer
-						</>
-					)}
-				</DropdownMenuItem>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem
-					onClick={() => {
+						}),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					description: canDelete ? undefined : "Ce code a déjà été utilisé",
+					icon: Trash2,
+					variant: "destructive",
+					disabled: !canDelete,
+					onSelect: () =>
 						openDeleteDialog({
 							discountId: discount.id,
 							discountCode: discount.code,
 							usageCount: discount.usageCount,
-						});
-					}}
-					className="text-destructive"
-					disabled={!canDelete}
+						}),
+				},
+			],
+		},
+	];
+
+	return (
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					aria-label={`Actions pour ${discount.code}`}
 				>
-					<Trash2 className="h-4 w-4" />
-					Supprimer
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
+					<EllipsisVertical className="h-4 w-4" />
+				</Button>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent
+				title="Actions"
+				description={discount.code}
+				sections={sections}
+			/>
+		</ResponsiveActionMenu>
 	);
 }

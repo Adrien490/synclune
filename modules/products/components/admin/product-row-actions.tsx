@@ -1,31 +1,28 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 import {
 	Archive,
 	ArchiveRestore,
 	Copy,
+	EllipsisVertical,
 	Eye,
-	FilePenLine,
 	FolderPlus,
 	LayoutList,
-	EllipsisVertical,
 	Pencil,
 	Trash2,
+	Upload,
 } from "lucide-react";
-import Link from "next/link";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { Button } from "@/shared/components/ui/button";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+
 import { ARCHIVE_PRODUCT_DIALOG_ID } from "./archive-product-alert-dialog";
 import { CHANGE_PRODUCT_STATUS_DIALOG_ID } from "./change-product-status-alert-dialog";
 import { DELETE_PRODUCT_DIALOG_ID } from "./delete-product-alert-dialog";
@@ -51,49 +48,120 @@ export function ProductRowActions({
 	const duplicateDialog = useAlertDialog(DUPLICATE_PRODUCT_DIALOG_ID);
 	const collectionsDialog = useDialog(MANAGE_COLLECTIONS_DIALOG_ID);
 
-	const handleManageCollections = () => {
-		collectionsDialog.open({
-			productId,
-			productTitle,
-		});
-	};
-
-	const handleChangeStatus = (targetStatus: "DRAFT" | "PUBLIC" | "ARCHIVED") => {
-		changeStatusDialog.open({
-			productId,
-			productTitle,
-			currentStatus: productStatus,
-			targetStatus,
-		});
-	};
-
-	const handleDuplicate = () => {
-		duplicateDialog.open({
-			productId,
-			productTitle,
-		});
-	};
-
-	const handleArchive = () => {
-		archiveDialog.open({
-			productId,
-			productTitle,
-			productStatus,
-		});
-	};
-
-	const handleDelete = () => {
-		deleteDialog.open({
-			productId,
-			productTitle,
-		});
-	};
-
 	const isArchived = productStatus === "ARCHIVED";
+	const isDraft = productStatus === "DRAFT";
+	const isPublic = productStatus === "PUBLIC";
+
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "view",
+					label: "Voir la fiche",
+					icon: Eye,
+					href: `/creations/${productSlug}`,
+					external: true,
+				},
+				{
+					key: "edit",
+					label: "Modifier",
+					icon: Pencil,
+					href: `/admin/catalogue/produits/${productSlug}/modifier`,
+				},
+				{
+					key: "duplicate",
+					label: "Dupliquer",
+					icon: Copy,
+					onSelect: () => duplicateDialog.open({ productId, productTitle }),
+				},
+				{
+					key: "variants",
+					label: "Gérer variantes",
+					icon: LayoutList,
+					href: `/admin/catalogue/produits/${productSlug}/variantes`,
+				},
+				{
+					key: "collections",
+					label: "Gérer collections",
+					icon: FolderPlus,
+					onSelect: () => collectionsDialog.open({ productId, productTitle }),
+				},
+			],
+		},
+		{
+			key: "status",
+			label: "Statut",
+			items: [
+				{
+					key: "draft",
+					label: "Marquer comme brouillon",
+					icon: Pencil,
+					disabled: isDraft,
+					hidden: isArchived,
+					onSelect: () =>
+						changeStatusDialog.open({
+							productId,
+							productTitle,
+							currentStatus: productStatus,
+							targetStatus: "DRAFT",
+						}),
+				},
+				{
+					key: "public",
+					label: "Publier",
+					description: "Rendre visible sur la boutique",
+					icon: Upload,
+					disabled: isPublic,
+					hidden: isArchived,
+					onSelect: () =>
+						changeStatusDialog.open({
+							productId,
+							productTitle,
+							currentStatus: productStatus,
+							targetStatus: "PUBLIC",
+						}),
+				},
+			],
+		},
+		{
+			key: "archive",
+			items: [
+				{
+					key: "archive",
+					label: "Archiver",
+					icon: Archive,
+					hidden: isArchived,
+					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
+				},
+				{
+					key: "restore",
+					label: "Restaurer",
+					icon: ArchiveRestore,
+					hidden: !isArchived,
+					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer définitivement",
+					description: "Action irréversible",
+					icon: Trash2,
+					variant: "destructive",
+					hidden: !isArchived,
+					onSelect: () => deleteDialog.open({ productId, productTitle }),
+				},
+			],
+		},
+	];
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -102,102 +170,8 @@ export function ProductRowActions({
 				>
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-50">
-				{/* ACTIONS COMMUNES À TOUS LES BIJOUX */}
-
-				{/* Voir - Page détails produit */}
-				<DropdownMenuItem asChild>
-					<Link href={`/creations/${productSlug}`} target="_blank">
-						<Eye className="h-4 w-4" />
-						Voir
-					</Link>
-				</DropdownMenuItem>
-
-				{/* Modifier - Édition complète */}
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/catalogue/produits/${productSlug}/modifier`}>
-						<Pencil className="h-4 w-4" />
-						Modifier
-					</Link>
-				</DropdownMenuItem>
-
-				{/* Dupliquer - Créer une copie */}
-				<DropdownMenuItem onClick={handleDuplicate}>
-					<Copy className="h-4 w-4" />
-					Dupliquer
-				</DropdownMenuItem>
-
-				{/* Gérer variantes - Ouvre la liste des SKUs associés */}
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/catalogue/produits/${productSlug}/variantes`}>
-						<LayoutList className="h-4 w-4" />
-						Gérer variantes
-					</Link>
-				</DropdownMenuItem>
-
-				{/* Gérer collections */}
-				<DropdownMenuItem onClick={handleManageCollections}>
-					<FolderPlus className="h-4 w-4" />
-					Gérer collections
-				</DropdownMenuItem>
-
-				<DropdownMenuSeparator />
-
-				{/* ACTIONS CONDITIONNELLES SELON LE STATUT */}
-
-				{!isArchived && (
-					<>
-						{/* Changer statut - Uniquement pour produits non-archivés */}
-						<DropdownMenuSub>
-							<DropdownMenuSubTrigger>
-								<FilePenLine className="h-4 w-4" />
-								<span>Changer statut</span>
-							</DropdownMenuSubTrigger>
-							<DropdownMenuSubContent>
-								<DropdownMenuItem
-									onClick={() => handleChangeStatus("DRAFT")}
-									disabled={productStatus === "DRAFT"}
-								>
-									Brouillon
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => handleChangeStatus("PUBLIC")}
-									disabled={productStatus === "PUBLIC"}
-								>
-									Public
-								</DropdownMenuItem>
-							</DropdownMenuSubContent>
-						</DropdownMenuSub>
-
-						<DropdownMenuSeparator />
-
-						{/* Archiver - Action directe pour produits actifs */}
-						<DropdownMenuItem onClick={handleArchive}>
-							<Archive className="h-4 w-4" />
-							Archiver
-						</DropdownMenuItem>
-					</>
-				)}
-
-				{isArchived && (
-					<>
-						{/* Restaurer - Action directe pour produits archivés */}
-						<DropdownMenuItem onClick={handleArchive}>
-							<ArchiveRestore className="h-4 w-4" />
-							Restaurer
-						</DropdownMenuItem>
-
-						<DropdownMenuSeparator />
-
-						{/* Supprimer - Uniquement pour les produits archivés */}
-						<DropdownMenuItem variant="destructive" onClick={handleDelete}>
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</>
-				)}
-			</DropdownMenuContent>
-		</DropdownMenu>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent title="Actions" description={productTitle} sections={sections} />
+		</ResponsiveActionMenu>
 	);
 }

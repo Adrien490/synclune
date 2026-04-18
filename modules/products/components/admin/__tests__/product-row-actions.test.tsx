@@ -22,23 +22,23 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDialog }),
 }));
 
-vi.mock("./archive-product-alert-dialog", () => ({
+vi.mock("../archive-product-alert-dialog", () => ({
 	ARCHIVE_PRODUCT_DIALOG_ID: "archive-product",
 }));
 
-vi.mock("./change-product-status-alert-dialog", () => ({
+vi.mock("../change-product-status-alert-dialog", () => ({
 	CHANGE_PRODUCT_STATUS_DIALOG_ID: "change-product-status",
 }));
 
-vi.mock("./delete-product-alert-dialog", () => ({
+vi.mock("../delete-product-alert-dialog", () => ({
 	DELETE_PRODUCT_DIALOG_ID: "delete-product",
 }));
 
-vi.mock("./duplicate-product-alert-dialog", () => ({
+vi.mock("../duplicate-product-alert-dialog", () => ({
 	DUPLICATE_PRODUCT_DIALOG_ID: "duplicate-product",
 }));
 
-vi.mock("./manage-collections-dialog", () => ({
+vi.mock("../manage-collections-dialog", () => ({
 	MANAGE_COLLECTIONS_DIALOG_ID: "manage-product-collections",
 }));
 
@@ -59,6 +59,76 @@ vi.mock("@/modules/auth/lib/auth", () => ({
 vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: vi.fn(),
 }));
+
+// Flatten the ResponsiveActionMenu to render every section in an
+// always-visible list so tests can query items without opening a drawer.
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const React = await import("react");
+	type ActionMenuItem = {
+		key: string;
+		label: string;
+		description?: string;
+		icon?: React.ComponentType<{ className?: string }>;
+		variant?: "default" | "destructive";
+		disabled?: boolean;
+		hidden?: boolean;
+		onSelect?: () => void;
+		href?: string;
+		external?: boolean;
+	};
+	type ActionMenuSection = {
+		key: string;
+		label?: string;
+		items: ActionMenuItem[];
+	};
+	return {
+		ResponsiveActionMenu: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		ResponsiveActionMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+		ResponsiveActionMenuContent: ({
+			title,
+			sections,
+		}: {
+			title: string;
+			sections: ActionMenuSection[];
+		}) => (
+			<div role="menu" aria-label={title}>
+				{sections.map((section) => {
+					const visible = section.items.filter((it) => !it.hidden);
+					if (visible.length === 0) return null;
+					return (
+						<div key={section.key} data-section={section.key}>
+							{section.label ? <p data-testid={`section-${section.key}`}>{section.label}</p> : null}
+							{visible.map((item) =>
+								item.href ? (
+									<a
+										key={item.key}
+										role="menuitem"
+										href={item.href}
+										target={item.external ? "_blank" : undefined}
+										data-variant={item.variant}
+									>
+										{item.label}
+									</a>
+								) : (
+									<button
+										key={item.key}
+										role="menuitem"
+										type="button"
+										onClick={item.onSelect}
+										aria-disabled={item.disabled || undefined}
+										data-variant={item.variant}
+									>
+										{item.label}
+									</button>
+								),
+							)}
+						</div>
+					);
+				})}
+			</div>
+		),
+	};
+});
 
 vi.mock("next/link", () => ({
 	default: ({
@@ -94,61 +164,17 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		disabled,
-		variant,
-		asChild,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		disabled?: boolean;
-		variant?: string;
-		asChild?: boolean;
-	}) => {
-		if (asChild) {
-			return <button role="menuitem">{children}</button>;
-		}
-		return (
-			<button role="menuitem" onClick={onClick} aria-disabled={disabled} data-variant={variant}>
-				{children}
-			</button>
-		);
-	},
-	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="submenu-trigger">{children}</div>
-	),
-	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="submenu-content">{children}</div>
-	),
-}));
-
 vi.mock("lucide-react", () => ({
 	Archive: () => <svg data-testid="icon-archive" />,
 	ArchiveRestore: () => <svg data-testid="icon-archive-restore" />,
 	Copy: () => <svg data-testid="icon-copy" />,
+	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Eye: () => <svg data-testid="icon-eye" />,
-	FilePenLine: () => <svg data-testid="icon-file-pen" />,
 	FolderPlus: () => <svg data-testid="icon-folder-plus" />,
 	LayoutList: () => <svg data-testid="icon-layout-list" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Pencil: () => <svg data-testid="icon-pencil" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
+	Upload: () => <svg data-testid="icon-upload" />,
 }));
 
 // ============================================================================
@@ -188,8 +214,6 @@ describe("ProductRowActions", () => {
 		vi.clearAllMocks();
 	});
 
-	// ─── Rendering ────────────────────────────────────────────────────────────
-
 	describe("rendering", () => {
 		it("renders trigger button with contextual aria-label", () => {
 			renderActions();
@@ -198,116 +222,121 @@ describe("ProductRowActions", () => {
 
 		it("renders common menu items for all statuses", () => {
 			renderActions();
-			expect(screen.getByText("Voir")).toBeInTheDocument();
+			expect(screen.getByText("Voir la fiche")).toBeInTheDocument();
 			expect(screen.getByText("Modifier")).toBeInTheDocument();
 			expect(screen.getByText("Dupliquer")).toBeInTheDocument();
 			expect(screen.getByText("Gérer variantes")).toBeInTheDocument();
 			expect(screen.getByText("Gérer collections")).toBeInTheDocument();
 		});
 
-		it("renders 'Voir' as link to product page", () => {
+		it("renders 'Voir la fiche' as external link to product page", () => {
 			renderActions();
-			const link = screen.getByText("Voir").closest("a");
+			const link = screen.getByRole("menuitem", { name: "Voir la fiche" });
 			expect(link).toHaveAttribute("href", "/creations/bague-lune");
 			expect(link).toHaveAttribute("target", "_blank");
 		});
 
 		it("renders 'Modifier' as link to edit page", () => {
 			renderActions();
-			const link = screen.getByText("Modifier").closest("a");
-			expect(link).toHaveAttribute("href", "/admin/catalogue/produits/bague-lune/modifier");
+			expect(screen.getByRole("menuitem", { name: "Modifier" })).toHaveAttribute(
+				"href",
+				"/admin/catalogue/produits/bague-lune/modifier",
+			);
 		});
 
 		it("renders 'Gérer variantes' as link to variants page", () => {
 			renderActions();
-			const link = screen.getByText("Gérer variantes").closest("a");
-			expect(link).toHaveAttribute("href", "/admin/catalogue/produits/bague-lune/variantes");
+			expect(screen.getByRole("menuitem", { name: "Gérer variantes" })).toHaveAttribute(
+				"href",
+				"/admin/catalogue/produits/bague-lune/variantes",
+			);
 		});
 	});
 
-	// ─── Status-based conditional rendering ───────────────────────────────────
-
 	describe("conditional rendering based on status", () => {
-		it("shows 'Changer statut' submenu for PUBLIC products", () => {
+		it("shows status actions for PUBLIC products", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			expect(screen.getByText("Changer statut")).toBeInTheDocument();
+			expect(screen.getByText("Marquer comme brouillon")).toBeInTheDocument();
+			expect(screen.getByText("Publier")).toBeInTheDocument();
 		});
 
-		it("shows 'Changer statut' submenu for DRAFT products", () => {
+		it("shows status actions for DRAFT products", () => {
 			renderActions({ productStatus: "DRAFT" });
-			expect(screen.getByText("Changer statut")).toBeInTheDocument();
+			expect(screen.getByText("Marquer comme brouillon")).toBeInTheDocument();
+			expect(screen.getByText("Publier")).toBeInTheDocument();
 		});
 
 		it("shows 'Archiver' for non-archived products", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			expect(screen.getByText("Archiver")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Archiver" })).toBeInTheDocument();
 		});
 
 		it("shows 'Restaurer' for archived products", () => {
 			renderActions({ productStatus: "ARCHIVED" });
-			expect(screen.getByText("Restaurer")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Restaurer" })).toBeInTheDocument();
 		});
 
-		it("shows 'Supprimer' for archived products", () => {
+		it("shows 'Supprimer définitivement' for archived products", () => {
 			renderActions({ productStatus: "ARCHIVED" });
-			expect(screen.getByText("Supprimer")).toBeInTheDocument();
+			const item = screen.getByRole("menuitem", { name: "Supprimer définitivement" });
+			expect(item).toBeInTheDocument();
+			expect(item).toHaveAttribute("data-variant", "destructive");
 		});
 
-		it("does not show 'Changer statut' for archived products", () => {
+		it("hides status actions for archived products", () => {
 			renderActions({ productStatus: "ARCHIVED" });
-			expect(screen.queryByText("Changer statut")).not.toBeInTheDocument();
+			expect(screen.queryByText("Marquer comme brouillon")).not.toBeInTheDocument();
+			expect(screen.queryByText("Publier")).not.toBeInTheDocument();
 		});
 
-		it("does not show 'Archiver' for archived products", () => {
+		it("hides 'Archiver' for archived products", () => {
 			renderActions({ productStatus: "ARCHIVED" });
-			expect(screen.queryByText("Archiver")).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Archiver" })).not.toBeInTheDocument();
 		});
 
-		it("does not show 'Restaurer' for non-archived products", () => {
+		it("hides 'Restaurer' for non-archived products", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			expect(screen.queryByText("Restaurer")).not.toBeInTheDocument();
+			expect(screen.queryByRole("menuitem", { name: "Restaurer" })).not.toBeInTheDocument();
 		});
 
-		it("does not show 'Supprimer' for non-archived products", () => {
+		it("hides 'Supprimer définitivement' for non-archived products", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			expect(screen.queryByText("Supprimer")).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole("menuitem", { name: "Supprimer définitivement" }),
+			).not.toBeInTheDocument();
 		});
 	});
 
-	// ─── Status submenu options ────────────────────────────────────────────────
-
-	describe("status submenu", () => {
-		it("shows 'Brouillon' and 'Public' options in submenu", () => {
+	describe("status actions disabled state", () => {
+		it("disables 'Publier' when product is already PUBLIC", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			expect(screen.getByText("Brouillon")).toBeInTheDocument();
-			expect(screen.getByText("Public")).toBeInTheDocument();
+			expect(screen.getByRole("menuitem", { name: "Publier" })).toHaveAttribute(
+				"aria-disabled",
+				"true",
+			);
 		});
 
-		it("disables 'Public' option when product is already PUBLIC", () => {
-			renderActions({ productStatus: "PUBLIC" });
-			const publicItem = screen.getByText("Public").closest("[role='menuitem']");
-			expect(publicItem).toHaveAttribute("aria-disabled", "true");
-		});
-
-		it("disables 'Brouillon' option when product is already DRAFT", () => {
+		it("disables 'Marquer comme brouillon' when product is already DRAFT", () => {
 			renderActions({ productStatus: "DRAFT" });
-			const draftItem = screen.getByText("Brouillon").closest("[role='menuitem']");
-			expect(draftItem).toHaveAttribute("aria-disabled", "true");
+			expect(screen.getByRole("menuitem", { name: "Marquer comme brouillon" })).toHaveAttribute(
+				"aria-disabled",
+				"true",
+			);
 		});
 
-		it("enables 'Brouillon' option when product is PUBLIC", () => {
+		it("enables 'Marquer comme brouillon' when product is PUBLIC", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			const draftItem = screen.getByText("Brouillon").closest("[role='menuitem']");
-			expect(draftItem).not.toHaveAttribute("aria-disabled", "true");
+			expect(screen.getByRole("menuitem", { name: "Marquer comme brouillon" })).not.toHaveAttribute(
+				"aria-disabled",
+				"true",
+			);
 		});
 	});
-
-	// ─── Interactions ─────────────────────────────────────────────────────────
 
 	describe("interactions", () => {
 		it("opens duplicate dialog on 'Dupliquer' click", () => {
 			renderActions();
-			fireEvent.click(screen.getByText("Dupliquer"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Dupliquer" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productId: "prod-1", productTitle: "Bague Lune" }),
 			);
@@ -315,7 +344,7 @@ describe("ProductRowActions", () => {
 
 		it("opens collections dialog on 'Gérer collections' click", () => {
 			renderActions();
-			fireEvent.click(screen.getByText("Gérer collections"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Gérer collections" }));
 			expect(mockOpenDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productId: "prod-1", productTitle: "Bague Lune" }),
 			);
@@ -323,7 +352,7 @@ describe("ProductRowActions", () => {
 
 		it("opens archive dialog on 'Archiver' click for PUBLIC product", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			fireEvent.click(screen.getByText("Archiver"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Archiver" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productId: "prod-1", productStatus: "PUBLIC" }),
 			);
@@ -331,23 +360,23 @@ describe("ProductRowActions", () => {
 
 		it("opens archive dialog on 'Restaurer' click for ARCHIVED product", () => {
 			renderActions({ productStatus: "ARCHIVED" });
-			fireEvent.click(screen.getByText("Restaurer"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Restaurer" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productId: "prod-1", productStatus: "ARCHIVED" }),
 			);
 		});
 
-		it("opens delete dialog on 'Supprimer' click for ARCHIVED product", () => {
+		it("opens delete dialog on 'Supprimer définitivement' click for ARCHIVED product", () => {
 			renderActions({ productStatus: "ARCHIVED" });
-			fireEvent.click(screen.getByText("Supprimer"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Supprimer définitivement" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({ productId: "prod-1", productTitle: "Bague Lune" }),
 			);
 		});
 
-		it("opens change-status dialog when clicking 'Brouillon'", () => {
+		it("opens change-status dialog when clicking 'Marquer comme brouillon'", () => {
 			renderActions({ productStatus: "PUBLIC" });
-			fireEvent.click(screen.getByText("Brouillon"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Marquer comme brouillon" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({
 					productId: "prod-1",
@@ -357,9 +386,9 @@ describe("ProductRowActions", () => {
 			);
 		});
 
-		it("opens change-status dialog when clicking 'Public'", () => {
+		it("opens change-status dialog when clicking 'Publier'", () => {
 			renderActions({ productStatus: "DRAFT" });
-			fireEvent.click(screen.getByText("Public"));
+			fireEvent.click(screen.getByRole("menuitem", { name: "Publier" }));
 			expect(mockOpenAlertDialog).toHaveBeenCalledWith(
 				expect.objectContaining({
 					productId: "prod-1",
@@ -370,8 +399,6 @@ describe("ProductRowActions", () => {
 		});
 	});
 
-	// ─── Accessibility ────────────────────────────────────────────────────────
-
 	describe("accessibility", () => {
 		it("has accessible trigger button with product-specific aria-label", () => {
 			renderActions({ productTitle: "Collier Étoile" });
@@ -380,9 +407,9 @@ describe("ProductRowActions", () => {
 			).toBeInTheDocument();
 		});
 
-		it("renders separator between common and conditional actions", () => {
-			renderActions();
-			expect(screen.getAllByTestId("dropdown-separator").length).toBeGreaterThanOrEqual(1);
+		it("groups status items under 'Statut' section heading", () => {
+			renderActions({ productStatus: "PUBLIC" });
+			expect(screen.getByTestId("section-status")).toHaveTextContent("Statut");
 		});
 	});
 });

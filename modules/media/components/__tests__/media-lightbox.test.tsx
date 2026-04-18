@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -31,6 +31,7 @@ vi.mock("yet-another-react-lightbox", () => ({
 	default: ({
 		open,
 		slides,
+		close,
 	}: {
 		open: boolean;
 		close: () => void;
@@ -38,7 +39,14 @@ vi.mock("yet-another-react-lightbox", () => ({
 		index: number;
 		plugins: unknown[];
 		[key: string]: unknown;
-	}) => (open ? <div data-testid="lightbox" data-slides={slides.length} /> : null),
+	}) =>
+		open ? (
+			<div data-testid="lightbox" data-slides={slides.length}>
+				<button data-testid="lightbox-close" onClick={close}>
+					close
+				</button>
+			</div>
+		) : null,
 }));
 
 vi.mock("yet-another-react-lightbox/plugins/zoom", () => ({ default: {} }));
@@ -125,5 +133,53 @@ describe("MediaLightbox", () => {
 	it("passes correct slide count to lightbox", () => {
 		render(<MediaLightbox {...defaultProps} />);
 		expect(screen.getByTestId("lightbox")).toHaveAttribute("data-slides", "2");
+	});
+
+	it("restores focus to the previously active element after close", async () => {
+		const trigger = document.createElement("button");
+		trigger.textContent = "Open gallery";
+		document.body.appendChild(trigger);
+		trigger.focus();
+		expect(document.activeElement).toBe(trigger);
+
+		const close = vi.fn();
+		render(<MediaLightbox {...defaultProps} close={close} />);
+
+		fireEvent.click(screen.getByTestId("lightbox-close"));
+		expect(close).toHaveBeenCalledTimes(1);
+
+		// rAF callback fires on next frame
+		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		expect(document.activeElement).toBe(trigger);
+
+		trigger.remove();
+	});
+
+	it("snapshots the active element on open, not on every render", async () => {
+		const first = document.createElement("button");
+		first.textContent = "First";
+		document.body.appendChild(first);
+		first.focus();
+
+		const close = vi.fn();
+		const { rerender } = render(<MediaLightbox {...defaultProps} close={close} />);
+
+		// Swap focus after open — should NOT change the stored ref
+		const second = document.createElement("button");
+		second.textContent = "Second";
+		document.body.appendChild(second);
+		second.focus();
+
+		// Rerender with open=true still — useEffect should not re-run (open deps unchanged)
+		rerender(<MediaLightbox {...defaultProps} close={close} />);
+
+		fireEvent.click(screen.getByTestId("lightbox-close"));
+		await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+		// Focus should go back to the FIRST button (snapshot taken on open)
+		expect(document.activeElement).toBe(first);
+
+		first.remove();
+		second.remove();
 	});
 });

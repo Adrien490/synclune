@@ -1,20 +1,20 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
+import { Copy, EllipsisVertical, ExternalLink, SquarePen, Trash2 } from "lucide-react";
+
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDuplicateColor } from "@/modules/colors/hooks/use-duplicate-color";
-import { Copy, SquarePen, ExternalLink, EllipsisVertical, Trash2 } from "lucide-react";
-import Link from "next/link";
-import { COLOR_DIALOG_ID } from "./color-form-dialog";
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import { DELETE_COLOR_DIALOG_ID } from "@/modules/colors/components/admin/delete-color-alert-dialog";
+import { Button } from "@/shared/components/ui/button";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useDuplicateColor } from "@/modules/colors/hooks/use-duplicate-color";
+
+import { COLOR_DIALOG_ID } from "./color-form-dialog";
 
 interface ColorsRowActionsProps {
 	colorId: string;
@@ -33,27 +33,51 @@ export function ColorsRowActions({
 	const { open: openAlert } = useAlertDialog(DELETE_COLOR_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateColor();
 
-	const handleEdit = () => {
-		openDialog({
-			color: {
-				id: colorId,
-				name: colorName,
-				hex: colorHex,
-				slug: colorSlug,
-			},
-		});
-	};
-
-	const handleDelete = () => {
-		openAlert({
-			colorId,
-			colorName,
-		});
-	};
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "edit",
+					label: "Éditer",
+					icon: SquarePen,
+					onSelect: () =>
+						openDialog({
+							color: { id: colorId, name: colorName, hex: colorHex, slug: colorSlug },
+						}),
+				},
+				{
+					key: "duplicate",
+					label: "Dupliquer",
+					icon: Copy,
+					disabled: isDuplicating,
+					onSelect: () => duplicate(colorId),
+				},
+				{
+					key: "variants",
+					label: "Voir les variantes",
+					icon: ExternalLink,
+					href: `/admin/catalogue/inventaire?colorId=${colorId}`,
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: () => openAlert({ colorId, colorName }),
+				},
+			],
+		},
+	];
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -62,28 +86,8 @@ export function ColorsRowActions({
 				>
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
-				<DropdownMenuItem onClick={handleEdit}>
-					<SquarePen className="h-4 w-4" />
-					Éditer
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => duplicate(colorId)} disabled={isDuplicating}>
-					<Copy className="h-4 w-4" />
-					Dupliquer
-				</DropdownMenuItem>
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/catalogue/inventaire?colorId=${colorId}`}>
-						<ExternalLink className="h-4 w-4" />
-						Voir les variantes
-					</Link>
-				</DropdownMenuItem>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={handleDelete} className="text-destructive">
-					<Trash2 className="h-4 w-4" />
-					Supprimer
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent title="Actions" description={colorName} sections={sections} />
+		</ResponsiveActionMenu>
 	);
 }

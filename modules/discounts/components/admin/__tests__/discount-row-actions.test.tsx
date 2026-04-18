@@ -54,31 +54,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({ children }: { children: React.ReactNode; align?: string }) => (
-		<div data-testid="dropdown-content">{children}</div>
-	),
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-		disabled?: boolean;
-	}) => (
-		<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	Copy: () => <svg data-testid="icon-copy" />,
@@ -185,14 +165,9 @@ describe("DiscountRowActions", () => {
 		expect(deleteItem).not.toHaveAttribute("aria-disabled", "true");
 	});
 
-	it("applies destructive styling to 'Supprimer' item", () => {
+	it("marks 'Supprimer' as destructive variant", () => {
 		render(<DiscountRowActions discount={createDiscount()} />);
-		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
-		expect(deleteItem).toHaveClass("text-destructive");
-	});
-
-	it("renders separator before 'Supprimer'", () => {
-		render(<DiscountRowActions discount={createDiscount()} />);
-		expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+		const deleteItem = screen.getByRole("menuitem", { name: "Supprimer" });
+		expect(deleteItem).toHaveAttribute("data-variant", "destructive");
 	});
 });

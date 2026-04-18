@@ -40,6 +40,12 @@ interface ExportDashboardButtonProps {
 	variant?: "outline" | "ghost" | "secondary";
 	/** Render as a compact icon-only button (mobile header) */
 	iconOnly?: boolean;
+	/**
+	 * Custom trigger element (e.g. a toolbar button in DashboardMobileActionBar).
+	 * When provided, replaces the default `<Button>` trigger. The Drawer/Dropdown
+	 * logic remains untouched — only the clickable surface changes.
+	 */
+	triggerSlot?: React.ReactNode;
 }
 
 /**
@@ -53,6 +59,7 @@ export function ExportDashboardButton({
 	className,
 	variant = "outline",
 	iconOnly = false,
+	triggerSlot,
 }: ExportDashboardButtonProps) {
 	const isMobile = useIsMobile();
 	const [drawerOpen, setDrawerOpen] = useState(false);
@@ -68,7 +75,7 @@ export function ExportDashboardButton({
 		exportReport({ period, format });
 	}
 
-	const triggerButton = (
+	const defaultTrigger = (
 		<Button
 			type="button"
 			variant={variant}
@@ -90,6 +97,8 @@ export function ExportDashboardButton({
 			{iconOnly && <span className="sr-only">Exporter</span>}
 		</Button>
 	);
+
+	const triggerButton = triggerSlot ?? defaultTrigger;
 
 	if (isMobile) {
 		return (

@@ -1,29 +1,30 @@
 "use client";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
-import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useSelectionContext } from "@/shared/contexts/selection-context";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import {
 	Archive,
 	ArchiveRestore,
+	EllipsisVertical,
 	FilePenLine,
 	Globe,
-	EllipsisVertical,
 	Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { CollectionStatus } from "@/app/generated/prisma/enums";
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
+import { Button } from "@/shared/components/ui/button";
+import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkArchiveCollections } from "@/modules/collections/hooks/use-bulk-archive-collections";
-import { BULK_DELETE_COLLECTIONS_DIALOG_ID } from "./bulk-delete-collections-alert-dialog";
+
 import { BULK_ARCHIVE_COLLECTIONS_DIALOG_ID } from "./bulk-archive-collections-alert-dialog";
+import { BULK_DELETE_COLLECTIONS_DIALOG_ID } from "./bulk-delete-collections-alert-dialog";
 
 interface CollectionsSelectionToolbarProps {
 	collections: Array<{
@@ -43,175 +44,153 @@ export function CollectionsSelectionToolbar({ collections }: CollectionsSelectio
 		onSuccess: () => clearSelection(),
 	});
 
-	// Determiner le statut des collections selectionnees
 	const selectedCollections = collections.filter((c) => selectedItems.includes(c.id));
 
-	const selectedCollectionsStatus = (() => {
+	const status = (() => {
 		if (selectedCollections.length === 0) {
 			return {
 				allArchived: false,
 				hasArchived: false,
-				hasNonArchived: false,
 				allDraft: false,
 				allPublic: false,
 				hasMixedStatus: false,
 			};
 		}
-
 		const allArchived = selectedCollections.every((c) => c.status === CollectionStatus.ARCHIVED);
 		const hasArchived = selectedCollections.some((c) => c.status === CollectionStatus.ARCHIVED);
 		const hasNonArchived = selectedCollections.some((c) => c.status !== CollectionStatus.ARCHIVED);
 		const allDraft = selectedCollections.every((c) => c.status === CollectionStatus.DRAFT);
 		const allPublic = selectedCollections.every((c) => c.status === CollectionStatus.PUBLIC);
 		const hasMixedStatus = !allArchived && !allDraft && !allPublic && hasNonArchived;
-
-		return {
-			allArchived,
-			hasArchived,
-			hasNonArchived,
-			allDraft,
-			allPublic,
-			hasMixedStatus,
-		};
+		return { allArchived, hasArchived, allDraft, allPublic, hasMixedStatus };
 	})();
 
-	const handleBulkArchive = () => {
+	const requireSelection = (action: () => void) => () => {
 		if (selectedItems.length === 0) {
 			toast.error("Veuillez sélectionner au moins une collection.");
 			return;
 		}
+		action();
+	};
 
+	const handleBulkArchive = requireSelection(() =>
 		bulkArchiveDialog.open({
 			collectionIds: selectedItems,
 			targetStatus: CollectionStatus.ARCHIVED,
-		});
-	};
-
-	const handleBulkRestore = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une collection.");
-			return;
-		}
-
+		}),
+	);
+	const handleBulkRestore = requireSelection(() =>
 		bulkArchiveDialog.open({
 			collectionIds: selectedItems,
 			targetStatus: CollectionStatus.PUBLIC,
-		});
-	};
-
-	const handleBulkDelete = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une collection.");
-			return;
-		}
-
-		// Calculate total products count from selected collections
-		const selectedCollections = collections.filter((c) => selectedItems.includes(c.id));
+		}),
+	);
+	const handleBulkDelete = requireSelection(() => {
 		const totalProductsCount = selectedCollections.reduce((sum, c) => sum + c.productsCount, 0);
-
-		bulkDeleteDialog.open({
-			collectionIds: selectedItems,
-			totalProductsCount,
-		});
-	};
-
-	const handlePublish = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une collection.");
-			return;
-		}
-
-		bulkChangeStatus(selectedItems, CollectionStatus.PUBLIC);
-	};
-
-	const handleUnpublish = () => {
-		if (selectedItems.length === 0) {
-			toast.error("Veuillez sélectionner au moins une collection.");
-			return;
-		}
-
-		bulkChangeStatus(selectedItems, CollectionStatus.DRAFT);
-	};
+		bulkDeleteDialog.open({ collectionIds: selectedItems, totalProductsCount });
+	});
+	const handlePublish = requireSelection(() =>
+		bulkChangeStatus(selectedItems, CollectionStatus.PUBLIC),
+	);
+	const handleUnpublish = requireSelection(() =>
+		bulkChangeStatus(selectedItems, CollectionStatus.DRAFT),
+	);
 
 	if (selectedItems.length === 0) return null;
 
+	const showStatusSection =
+		!status.allArchived &&
+		!status.hasArchived &&
+		(status.allDraft || status.allPublic || status.hasMixedStatus);
+
+	const sections: ActionMenuSection[] = [
+		{
+			key: "status",
+			label: "Statut",
+			items: [
+				{
+					key: "publish",
+					label: "Publier",
+					icon: Globe,
+					disabled: isChangingStatus,
+					hidden: !showStatusSection || !(status.allDraft || status.hasMixedStatus),
+					onSelect: handlePublish,
+				},
+				{
+					key: "unpublish",
+					label: "Mettre en brouillon",
+					icon: FilePenLine,
+					disabled: isChangingStatus,
+					hidden: !showStatusSection || !(status.allPublic || status.hasMixedStatus),
+					onSelect: handleUnpublish,
+				},
+			],
+		},
+		{
+			key: "archive",
+			items: [
+				{
+					key: "archive",
+					label: "Archiver",
+					icon: Archive,
+					hidden: status.allArchived || status.hasArchived,
+					onSelect: handleBulkArchive,
+				},
+				{
+					key: "restore",
+					label: "Restaurer",
+					icon: ArchiveRestore,
+					hidden: !status.allArchived,
+					onSelect: handleBulkRestore,
+				},
+				{
+					key: "mixed-warning",
+					label: "Sélection mixte archivé/non-archivé",
+					description: "Désélectionne les archivées pour continuer",
+					disabled: true,
+					hidden: !(status.hasArchived && !status.allArchived),
+					onSelect: () => {},
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					hidden: !status.allArchived,
+					onSelect: handleBulkDelete,
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} collection${selectedItems.length > 1 ? "s" : ""} sélectionnée${selectedItems.length > 1 ? "s" : ""}`;
+
 	return (
 		<SelectionToolbar>
-			<span className="text-muted-foreground text-sm">
-				{selectedItems.length} collection{selectedItems.length > 1 ? "s" : ""} selectionnee
-				{selectedItems.length > 1 ? "s" : ""}
-			</span>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+			<span className="text-muted-foreground text-sm">{label}</span>
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0"
+						aria-label="Actions de la sélection"
+					>
 						<span className="sr-only">Ouvrir le menu</span>
 						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-50">
-					{/* Actions de changement de statut (DRAFT/PUBLIC) */}
-					{!selectedCollectionsStatus.allArchived && !selectedCollectionsStatus.hasArchived && (
-						<>
-							{selectedCollectionsStatus.allDraft && (
-								<DropdownMenuItem onClick={handlePublish} disabled={isChangingStatus}>
-									<Globe className="h-4 w-4" />
-									Publier
-								</DropdownMenuItem>
-							)}
-							{selectedCollectionsStatus.allPublic && (
-								<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
-									<FilePenLine className="h-4 w-4" />
-									Mettre en brouillon
-								</DropdownMenuItem>
-							)}
-							{selectedCollectionsStatus.hasMixedStatus && (
-								<>
-									<DropdownMenuItem onClick={handlePublish} disabled={isChangingStatus}>
-										<Globe className="h-4 w-4" />
-										Publier
-									</DropdownMenuItem>
-									<DropdownMenuItem onClick={handleUnpublish} disabled={isChangingStatus}>
-										<FilePenLine className="h-4 w-4" />
-										Mettre en brouillon
-									</DropdownMenuItem>
-								</>
-							)}
-
-							<DropdownMenuSeparator />
-						</>
-					)}
-
-					{/* Actions conditionnelles selon le statut archive */}
-					{selectedCollectionsStatus.allArchived ? (
-						<>
-							{/* Tous archives : Restaurer + Supprimer */}
-							<DropdownMenuItem onClick={handleBulkRestore}>
-								<ArchiveRestore className="h-4 w-4" />
-								Restaurer
-							</DropdownMenuItem>
-							<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">
-								<Trash2 className="h-4 w-4" />
-								Supprimer
-							</DropdownMenuItem>
-						</>
-					) : selectedCollectionsStatus.hasArchived ? (
-						<>
-							{/* Mix archive/non-archive : Message d'erreur */}
-							<DropdownMenuItem disabled className="text-muted-foreground cursor-not-allowed">
-								Selection mixte archive/non-archive
-							</DropdownMenuItem>
-						</>
-					) : (
-						<>
-							{/* Tous non-archives : Archiver */}
-							<DropdownMenuItem onClick={handleBulkArchive}>
-								<Archive className="h-4 w-4" />
-								Archiver
-							</DropdownMenuItem>
-						</>
-					)}
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions groupées"
+					description={label}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 		</SelectionToolbar>
 	);
 }

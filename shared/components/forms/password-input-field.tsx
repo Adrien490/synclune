@@ -4,6 +4,7 @@ import { Field, FieldError } from "@/shared/components/ui/field";
 import { FieldLabel } from "./field-label";
 import { Input } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
@@ -53,9 +54,13 @@ export const PasswordInputField = ({
 	const toggleButton = (
 		<button
 			type="button"
-			onClick={() => setShowPassword(!showPassword)}
+			onClick={() => {
+				triggerHaptic("selection");
+				setShowPassword(!showPassword);
+			}}
 			className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm p-0.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
 			aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+			aria-pressed={showPassword}
 		>
 			{showPassword ? (
 				<EyeOff className="size-4" aria-hidden="true" />

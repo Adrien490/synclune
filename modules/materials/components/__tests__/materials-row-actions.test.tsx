@@ -54,38 +54,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({ children }: { children: React.ReactNode; align?: string }) => (
-		<div data-testid="dropdown-content">{children}</div>
-	),
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-		disabled,
-		asChild,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-		disabled?: boolean;
-		asChild?: boolean;
-	}) =>
-		asChild ? (
-			<div role="menuitem" className={className}>
-				{children}
-			</div>
-		) : (
-			<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
-				{children}
-			</button>
-		),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("next/link", () => ({
 	default: ({ children, href }: { children: React.ReactNode; href: string }) => (
@@ -185,22 +158,17 @@ describe("MaterialsRowActions", () => {
 		expect(screen.getByText("Supprimer")).toBeInTheDocument();
 	});
 
-	it("applies destructive styling to 'Supprimer' item", () => {
+	it("marks 'Supprimer' as destructive variant", () => {
 		render(<MaterialsRowActions {...createProps()} />);
-		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
-		expect(deleteItem).toHaveClass("text-destructive");
-	});
-
-	it("renders separator before 'Supprimer'", () => {
-		render(<MaterialsRowActions {...createProps()} />);
-		expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+		const deleteItem = screen.getByRole("menuitem", { name: "Supprimer" });
+		expect(deleteItem).toHaveAttribute("data-variant", "destructive");
 	});
 
 	// ─── Link ─────────────────────────────────────────────────────────────────
 
 	it("links 'Voir les variantes' to inventory filtered by materialId", () => {
 		render(<MaterialsRowActions {...createProps({ materialId: "mat-42" })} />);
-		const link = screen.getByRole("link", { name: /Voir les variantes/ });
+		const link = screen.getByRole("menuitem", { name: "Voir les variantes" });
 		expect(link).toHaveAttribute("href", "/admin/catalogue/inventaire?materialId=mat-42");
 	});
 });

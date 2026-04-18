@@ -67,33 +67,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div>{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-	}) => (
-		<button role="menuitem" onClick={onClick} className={className}>
-			{children}
-		</button>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	AlertDialog: ({ children, open }: { children: React.ReactNode; open?: boolean }) =>
@@ -159,15 +137,16 @@ describe("CustomizationSelectionToolbar", () => {
 		expect(screen.getByText("Annuler")).toBeInTheDocument();
 	});
 
-	it("applies destructive class to Annuler item", () => {
+	it("marks 'Annuler' as destructive variant", () => {
 		render(<CustomizationSelectionToolbar />);
-		const cancelItem = screen.getByText("Annuler").closest("[role='menuitem']");
-		expect(cancelItem?.className).toContain("text-destructive");
+		const cancelItem = screen.getByRole("menuitem", { name: "Annuler" });
+		expect(cancelItem).toHaveAttribute("data-variant", "destructive");
 	});
 
-	it("renders separator between action groups", () => {
+	it("groups status actions into distinct sections", () => {
 		render(<CustomizationSelectionToolbar />);
-		expect(screen.getAllByTestId("dropdown-separator").length).toBeGreaterThanOrEqual(1);
+		// progress + reset + danger → at least 3 sections rendered
+		expect(document.querySelectorAll("[data-section]").length).toBeGreaterThanOrEqual(3);
 	});
 
 	it("returns null when no items are selected", () => {

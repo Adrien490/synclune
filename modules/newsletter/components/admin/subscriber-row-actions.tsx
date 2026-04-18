@@ -1,14 +1,15 @@
 "use client";
 
+import { CircleX, EllipsisVertical, LoaderCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/shared/components/ui/button";
+
+import { NewsletterStatus } from "@/app/generated/prisma/browser";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -18,10 +19,10 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import { EllipsisVertical, CircleX, Trash2, LoaderCircle } from "lucide-react";
-import { useAdminUnsubscribeNewsletter } from "../../hooks/use-admin-unsubscribe-newsletter";
+import { Button } from "@/shared/components/ui/button";
+
 import { useAdminDeleteNewsletterSubscriber } from "../../hooks/use-admin-delete-newsletter-subscriber";
-import { NewsletterStatus } from "@/app/generated/prisma/browser";
+import { useAdminUnsubscribeNewsletter } from "../../hooks/use-admin-unsubscribe-newsletter";
 
 interface SubscriberRowActionsProps {
 	subscriber: {
@@ -47,40 +48,55 @@ export function SubscriberRowActions({ subscriber }: SubscriberRowActionsProps) 
 	const isPending = isUnsubscribePending || isDeletePending;
 	const isAlreadyUnsubscribed = subscriber.status === NewsletterStatus.UNSUBSCRIBED;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "unsubscribe",
+					label: "Désabonner",
+					icon: CircleX,
+					disabled: isPending || isAlreadyUnsubscribed,
+					onSelect: () => setUnsubscribeDialogOpen(true),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer (RGPD)",
+					description: "Anonymisation pour conformité légale",
+					icon: Trash2,
+					variant: "destructive",
+					disabled: isPending,
+					onSelect: () => setDeleteDialogOpen(true),
+				},
+			],
+		},
+	];
+
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
 					<Button
 						variant="ghost"
 						size="sm"
-						className="h-8 w-8 p-0"
+						className="h-11 w-11 p-0"
 						aria-label={`Actions pour ${subscriber.email}`}
 					>
 						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-48">
-					<DropdownMenuItem
-						onClick={() => setUnsubscribeDialogOpen(true)}
-						disabled={isPending || isAlreadyUnsubscribed}
-					>
-						<CircleX className="h-4 w-4" />
-						Désabonner
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem
-						variant="destructive"
-						onClick={() => setDeleteDialogOpen(true)}
-						disabled={isPending}
-					>
-						<Trash2 className="h-4 w-4" />
-						Supprimer (RGPD)
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions abonné"
+					description={subscriber.email}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 
-			{/* Unsubscribe Dialog */}
 			<AlertDialog open={unsubscribeDialogOpen} onOpenChange={setUnsubscribeDialogOpen}>
 				<AlertDialogContent>
 					<form action={unsubscribeAction}>
@@ -111,7 +127,6 @@ export function SubscriberRowActions({ subscriber }: SubscriberRowActionsProps) 
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Delete Dialog */}
 			<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
 				<AlertDialogContent>
 					<form action={deleteAction}>

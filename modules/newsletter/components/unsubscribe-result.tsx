@@ -1,5 +1,6 @@
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { unsubscribeNewsletter } from "@/modules/newsletter/services/unsubscribe-newsletter";
+import { NewsletterHapticMount } from "@/modules/newsletter/components/newsletter-haptic-mount";
 
 interface UnsubscribeResultProps {
 	token?: string;
@@ -25,6 +26,7 @@ export async function UnsubscribeResult({ token }: UnsubscribeResultProps) {
 
 	return (
 		<div className="space-y-6 text-center">
+			<NewsletterHapticMount pattern={result.success ? "success" : "error"} />
 			<div className="text-6xl">{result.success ? "👋" : "😔"}</div>
 			<h2 className="font-display text-foreground text-xl sm:text-2xl">
 				{result.success ? "Désinscription confirmée" : "Désinscription impossible"}

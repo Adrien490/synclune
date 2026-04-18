@@ -1,13 +1,13 @@
 "use client";
 
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/shared/components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+	ResponsiveDialogTrigger,
+} from "@/shared/components/responsive-dialog";
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
 import { formatDateShort } from "@/shared/utils/dates";
@@ -40,26 +40,28 @@ export function ReviewDetailDialog({
 	const isPublished = review.status === "PUBLISHED";
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			{trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
-			<DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-				<DialogHeader>
-					<DialogTitle className="flex items-center gap-2">
+		<ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+			{trigger && <ResponsiveDialogTrigger asChild>{trigger}</ResponsiveDialogTrigger>}
+			<ResponsiveDialogContent className="sm:max-w-2xl">
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle className="flex items-center gap-2">
 						<MessageSquare className="size-5" aria-hidden="true" />
 						Détail de l&apos;avis
-					</DialogTitle>
-					<DialogDescription>
-						Avis sur{" "}
-						<Link
-							href={`/creations/${review.product.slug}`}
-							target="_blank"
-							className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
-						>
-							{review.product.title}
-							<ExternalLink className="size-3" aria-hidden="true" />
-						</Link>
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription asChild>
+						<div>
+							Avis sur{" "}
+							<Link
+								href={`/creations/${review.product.slug}`}
+								target="_blank"
+								className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
+							>
+								{review.product.title}
+								<ExternalLink className="size-3" aria-hidden="true" />
+							</Link>
+						</div>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<div className="space-y-6 py-4">
 					{/* Informations client */}
@@ -161,7 +163,7 @@ export function ReviewDetailDialog({
 						)}
 					</div>
 				</div>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

@@ -77,64 +77,22 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-		disabled,
-		asChild: _asChild,
-		variant,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-		disabled?: boolean;
-		asChild?: boolean;
-		variant?: string;
-	}) => (
-		<button
-			role="menuitem"
-			onClick={onClick}
-			className={className}
-			aria-disabled={disabled}
-			data-variant={variant}
-		>
-			{children}
-		</button>
-	),
-	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="dropdown-sub">{children}</div>
-	),
-	DropdownMenuSubTrigger: ({ children }: { children: React.ReactNode }) => (
-		<button data-testid="dropdown-sub-trigger">{children}</button>
-	),
-	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="dropdown-sub-content">{children}</div>
-	),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	Archive: () => <svg data-testid="icon-archive" />,
 	ArchiveRestore: () => <svg data-testid="icon-archive-restore" />,
+	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Eye: () => <svg data-testid="icon-eye" />,
 	FilePenLine: () => <svg data-testid="icon-file-pen-line" />,
-	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Package: () => <svg data-testid="icon-package" />,
 	Pencil: () => <svg data-testid="icon-pencil" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
+	Upload: () => <svg data-testid="icon-upload" />,
 }));
 
 import { CollectionRowActions } from "../collection-row-actions";
@@ -174,76 +132,81 @@ describe("CollectionRowActions", () => {
 
 	// ─── Non-archived state ───────────────────────────────────────────────────
 
-	it("shows 'Voir' menu item for non-archived collection", () => {
+	it("shows 'Voir la page publique' menu item for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.getByText("Voir")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Voir la page publique" })).toBeInTheDocument();
 	});
 
 	it("shows 'Modifier' menu item for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.getByText("Modifier")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Modifier" })).toBeInTheDocument();
 	});
 
-	it("shows 'Gerer les produits' menu item for non-archived collection", () => {
+	it("shows 'Gérer les produits' menu item for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.getByText("Gerer les produits")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Gérer les produits" })).toBeInTheDocument();
 	});
 
-	it("shows 'Changer statut' submenu trigger for non-archived collection", () => {
+	it("shows flat status actions for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.getByTestId("dropdown-sub-trigger")).toBeInTheDocument();
-		expect(screen.getByText("Changer statut")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Marquer comme brouillon" })).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Publier" })).toBeInTheDocument();
 	});
 
 	it("shows 'Archiver' menu item for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.getByText("Archiver")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Archiver" })).toBeInTheDocument();
 	});
 
 	it("does not show 'Restaurer' for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.queryByText("Restaurer")).not.toBeInTheDocument();
+		expect(screen.queryByRole("menuitem", { name: "Restaurer" })).not.toBeInTheDocument();
 	});
 
-	it("does not show 'Supprimer' for non-archived collection", () => {
+	it("does not show 'Supprimer définitivement' for non-archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="PUBLIC" />);
-		expect(screen.queryByText("Supprimer")).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("menuitem", { name: "Supprimer définitivement" }),
+		).not.toBeInTheDocument();
 	});
 
 	// ─── Archived state ───────────────────────────────────────────────────────
 
-	it("shows 'Voir' menu item for archived collection", () => {
+	it("shows 'Voir la page publique' menu item for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.getByText("Voir")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Voir la page publique" })).toBeInTheDocument();
 	});
 
 	it("shows 'Modifier' menu item for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.getByText("Modifier")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Modifier" })).toBeInTheDocument();
 	});
 
-	it("shows 'Gerer les produits' menu item for archived collection", () => {
+	it("shows 'Gérer les produits' menu item for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.getByText("Gerer les produits")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Gérer les produits" })).toBeInTheDocument();
 	});
 
 	it("shows 'Restaurer' menu item for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.getByText("Restaurer")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Restaurer" })).toBeInTheDocument();
 	});
 
-	it("shows 'Supprimer' menu item for archived collection", () => {
+	it("shows 'Supprimer définitivement' menu item for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.getByText("Supprimer")).toBeInTheDocument();
+		expect(screen.getByRole("menuitem", { name: "Supprimer définitivement" })).toBeInTheDocument();
 	});
 
 	it("does not show 'Archiver' for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.queryByText("Archiver")).not.toBeInTheDocument();
+		expect(screen.queryByRole("menuitem", { name: "Archiver" })).not.toBeInTheDocument();
 	});
 
-	it("does not show 'Changer statut' submenu for archived collection", () => {
+	it("does not show flat status actions for archived collection", () => {
 		render(<CollectionRowActions {...defaultProps} collectionStatus="ARCHIVED" />);
-		expect(screen.queryByTestId("dropdown-sub")).not.toBeInTheDocument();
+		expect(
+			screen.queryByRole("menuitem", { name: "Marquer comme brouillon" }),
+		).not.toBeInTheDocument();
+		expect(screen.queryByRole("menuitem", { name: "Publier" })).not.toBeInTheDocument();
 	});
 });

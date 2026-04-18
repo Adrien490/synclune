@@ -1,13 +1,21 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	CircleCheck,
+	CircleX,
+	EllipsisVertical,
+	LoaderCircle,
+	Package,
+	Trash2,
+	Truck,
+} from "lucide-react";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -17,22 +25,15 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
+import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useBulkMarkAsDelivered } from "@/modules/orders/hooks/use-bulk-mark-as-delivered";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useBulkCancelOrders } from "@/modules/orders/hooks/use-bulk-cancel-orders";
+import { useBulkMarkAsDelivered } from "@/modules/orders/hooks/use-bulk-mark-as-delivered";
 import { useBulkMarkAsProcessing } from "@/modules/orders/hooks/use-bulk-mark-as-processing";
 import { useBulkMarkAsShipped } from "@/modules/orders/hooks/use-bulk-mark-as-shipped";
-import {
-	CircleCheck,
-	LoaderCircle,
-	EllipsisVertical as MoreVerticalIcon,
-	Trash2,
-	CircleX,
-	Package,
-	Truck,
-} from "lucide-react";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
+
 import { BULK_DELETE_ORDERS_DIALOG_ID } from "./bulk-delete-orders-alert-dialog";
 
 export function OrderSelectionActions() {
@@ -79,45 +80,81 @@ export function OrderSelectionActions() {
 	if (selectedItems.length === 0) return null;
 
 	const handleBulkDelete = () => {
-		bulkDeleteDialog.open({
-			orderIds: selectedItems,
-		});
+		bulkDeleteDialog.open({ orderIds: selectedItems });
 	};
+
+	const sections: ActionMenuSection[] = [
+		{
+			key: "fulfillment",
+			label: "Fulfillment",
+			items: [
+				{
+					key: "processing",
+					label: "Mettre en préparation",
+					icon: Package,
+					onSelect: () => processingDialog.open(),
+				},
+				{
+					key: "shipped",
+					label: "Marquer expédiées",
+					icon: Truck,
+					onSelect: () => shippedDialog.open(),
+				},
+				{
+					key: "delivered",
+					label: "Marquer livrées",
+					icon: CircleCheck,
+					onSelect: () => deliveredDialog.open(),
+				},
+			],
+		},
+		{
+			key: "cancel",
+			items: [
+				{
+					key: "cancel",
+					label: "Annuler",
+					icon: CircleX,
+					onSelect: () => cancelDialog.open(),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: handleBulkDelete,
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} commande${selectedItems.length > 1 ? "s" : ""} sélectionnée${selectedItems.length > 1 ? "s" : ""}`;
 
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0"
+						aria-label="Actions de la sélection"
+					>
 						<span className="sr-only">Ouvrir le menu</span>
-						<MoreVerticalIcon className="h-4 w-4" />
+						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end" className="w-50">
-					<DropdownMenuItem onClick={() => processingDialog.open()}>
-						<Package className="h-4 w-4" />
-						Mettre en préparation
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => shippedDialog.open()}>
-						<Truck className="h-4 w-4" />
-						Marquer expédiées
-					</DropdownMenuItem>
-					<DropdownMenuItem onClick={() => deliveredDialog.open()}>
-						<CircleCheck className="h-4 w-4" />
-						Marquer livrées
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={() => cancelDialog.open()}>
-						<CircleX className="h-4 w-4" />
-						Annuler
-					</DropdownMenuItem>
-					<DropdownMenuSeparator />
-					<DropdownMenuItem onClick={handleBulkDelete} variant="destructive">
-						<Trash2 className="h-4 w-4" />
-						Supprimer
-					</DropdownMenuItem>
-				</DropdownMenuContent>
-			</DropdownMenu>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions groupées"
+					description={label}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 
 			{/* Mark as Processing Dialog */}
 			<AlertDialog

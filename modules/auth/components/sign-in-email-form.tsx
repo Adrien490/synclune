@@ -9,6 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { AUTH_ERROR_CODES } from "@/modules/auth/constants/error-messages";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
@@ -25,10 +26,11 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 
 	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
 
-	// Focus on error when it appears
+	// Focus on error when it appears + haptic feedback
 	useEffect(() => {
 		if (isActionError) {
 			errorRef.current?.focus();
+			triggerHaptic("error");
 		}
 	}, [state?.message, state?.status, isActionError]);
 
@@ -43,7 +45,14 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
-			<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+			<form
+				action={action}
+				className="space-y-6"
+				onSubmit={() => {
+					triggerHaptic("medium");
+					void form.handleSubmit();
+				}}
+			>
 				{/* Indication des champs obligatoires */}
 				<RequiredFieldsNote />
 
@@ -99,7 +108,10 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 									label="Email"
 									type="email"
 									inputMode="email"
+									enterKeyHint="next"
 									autoComplete="email"
+									autoCapitalize="none"
+									autoCorrect="off"
 									spellCheck={false}
 									disabled={isPending}
 									required
@@ -121,6 +133,7 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 								<field.PasswordInputField
 									label="Mot de passe"
 									autoComplete="current-password"
+									enterKeyHint="done"
 									disabled={isPending}
 									required
 								/>

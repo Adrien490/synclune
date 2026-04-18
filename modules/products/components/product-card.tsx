@@ -320,6 +320,7 @@ export function ProductCard({
 							!secondaryImage &&
 								"motion-safe:can-hover:group-hover:scale-[1.08] ease-out motion-safe:transition-[transform] motion-safe:duration-300",
 						)}
+						style={{ viewTransitionName: `product-${product.id}` }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
 						priority={isAboveFold}

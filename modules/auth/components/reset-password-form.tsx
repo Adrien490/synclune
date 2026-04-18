@@ -8,6 +8,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { CircleCheck, CircleX } from "lucide-react";
 import Link from "next/link";
 import { useResetPassword } from "@/modules/auth/hooks/use-reset-password";
@@ -29,12 +30,19 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
 	const { shake, onShakeComplete } = useFormErrorShake(isActionError, state?.message);
 
-	// Focus on error when it appears
+	// Focus on error when it appears + haptic feedback
 	useEffect(() => {
 		if (isActionError) {
 			errorRef.current?.focus();
+			triggerHaptic("error");
 		}
 	}, [state?.message, state?.status, isActionError]);
+
+	useEffect(() => {
+		if (state?.status === ActionStatus.SUCCESS) {
+			triggerHaptic("success");
+		}
+	}, [state?.status]);
 
 	// TanStack Form setup
 	const form = useAppForm({
@@ -47,7 +55,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
-			<form action={action} className="space-y-6" onSubmit={() => form.handleSubmit()}>
+			<form
+				action={action}
+				className="space-y-6"
+				onSubmit={() => {
+					triggerHaptic("medium");
+					void form.handleSubmit();
+				}}
+			>
 				{/* Indication des champs obligatoires */}
 				<RequiredFieldsNote />
 
@@ -110,6 +125,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 									<field.PasswordInputField
 										label="Nouveau mot de passe"
 										autoComplete="new-password"
+										enterKeyHint="next"
 										disabled={isPending}
 										required
 									/>
@@ -143,6 +159,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 								<field.PasswordInputField
 									label="Confirmer le mot de passe"
 									autoComplete="new-password"
+									enterKeyHint="done"
 									disabled={isPending}
 									required
 								/>

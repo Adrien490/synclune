@@ -6,6 +6,7 @@ import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
+import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
@@ -30,6 +31,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
 
 	return (
 		<>
+			<PullToRefresh />
 			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
 			<Suspense fallback={null}>
 				<AnnouncementBarWrapper />

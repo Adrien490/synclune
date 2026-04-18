@@ -1,35 +1,31 @@
 "use client";
 
-import { CollectionStatus } from "@/app/generated/prisma/enums";
-import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
-import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import {
 	Archive,
 	ArchiveRestore,
-	Eye,
-	FilePenLine,
 	EllipsisVertical,
+	Eye,
 	Package,
 	Pencil,
 	Trash2,
+	Upload,
 } from "lucide-react";
-import Link from "next/link";
-import { COLLECTION_DIALOG_ID } from "./collection-form-dialog";
-import { DELETE_COLLECTION_DIALOG_ID } from "./delete-collection-alert-dialog";
+
+import { CollectionStatus } from "@/app/generated/prisma/enums";
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { Button } from "@/shared/components/ui/button";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+
 import { ARCHIVE_COLLECTION_DIALOG_ID } from "./archive-collection-alert-dialog";
 import { CHANGE_COLLECTION_STATUS_DIALOG_ID } from "./change-collection-status-alert-dialog";
+import { COLLECTION_DIALOG_ID } from "./collection-form-dialog";
+import { DELETE_COLLECTION_DIALOG_ID } from "./delete-collection-alert-dialog";
 
 interface CollectionRowActionsProps {
 	collectionId: string;
@@ -53,58 +49,26 @@ export function CollectionRowActions({
 	const { open: openArchiveDialog } = useAlertDialog(ARCHIVE_COLLECTION_DIALOG_ID);
 	const { open: openChangeStatusDialog } = useAlertDialog(CHANGE_COLLECTION_STATUS_DIALOG_ID);
 
-	const handleChangeStatus = (targetStatus: CollectionStatus) => {
-		openChangeStatusDialog({
-			collectionId,
-			collectionName,
-			currentStatus: collectionStatus,
-			targetStatus,
-		});
-	};
-
-	const handleArchive = () => {
-		openArchiveDialog({
-			collectionId,
-			collectionName,
-			collectionStatus,
-		});
-	};
-
-	const handleDelete = () => {
-		openDeleteDialog({
-			collectionId,
-			collectionName,
-			productsCount,
-		});
-	};
-
 	const isArchived = collectionStatus === CollectionStatus.ARCHIVED;
+	const isDraft = collectionStatus === CollectionStatus.DRAFT;
+	const isPublic = collectionStatus === CollectionStatus.PUBLIC;
 
-	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions pour cette collection"
-				>
-					<span className="sr-only">Ouvrir le menu d'actions</span>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-50">
-				{/* Voir - Page collection publique */}
-				<DropdownMenuItem asChild>
-					<Link href={`/collections/${collectionSlug}`} target="_blank">
-						<Eye className="h-4 w-4" />
-						Voir
-					</Link>
-				</DropdownMenuItem>
-
-				{/* Modifier */}
-				<DropdownMenuItem
-					onClick={() => {
+	const sections: ActionMenuSection[] = [
+		{
+			key: "navigate",
+			items: [
+				{
+					key: "view",
+					label: "Voir la page publique",
+					icon: Eye,
+					href: `/collections/${collectionSlug}`,
+					external: true,
+				},
+				{
+					key: "edit",
+					label: "Modifier",
+					icon: Pencil,
+					onSelect: () =>
 						openEditDialog({
 							collection: {
 								id: collectionId,
@@ -113,76 +77,103 @@ export function CollectionRowActions({
 								description: collectionDescription,
 								status: collectionStatus,
 							},
-						});
-					}}
+						}),
+				},
+				{
+					key: "manage",
+					label: "Gérer les produits",
+					icon: Package,
+					href: `/admin/catalogue/collections/${collectionSlug}`,
+				},
+			],
+		},
+		{
+			key: "status",
+			label: "Statut",
+			items: [
+				{
+					key: "draft",
+					label: "Marquer comme brouillon",
+					icon: Pencil,
+					disabled: isDraft,
+					hidden: isArchived,
+					onSelect: () =>
+						openChangeStatusDialog({
+							collectionId,
+							collectionName,
+							currentStatus: collectionStatus,
+							targetStatus: CollectionStatus.DRAFT,
+						}),
+				},
+				{
+					key: "public",
+					label: "Publier",
+					icon: Upload,
+					disabled: isPublic,
+					hidden: isArchived,
+					onSelect: () =>
+						openChangeStatusDialog({
+							collectionId,
+							collectionName,
+							currentStatus: collectionStatus,
+							targetStatus: CollectionStatus.PUBLIC,
+						}),
+				},
+			],
+		},
+		{
+			key: "archive",
+			items: [
+				{
+					key: "archive",
+					label: "Archiver",
+					icon: Archive,
+					hidden: isArchived,
+					onSelect: () => openArchiveDialog({ collectionId, collectionName, collectionStatus }),
+				},
+				{
+					key: "restore",
+					label: "Restaurer",
+					icon: ArchiveRestore,
+					hidden: !isArchived,
+					onSelect: () => openArchiveDialog({ collectionId, collectionName, collectionStatus }),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer définitivement",
+					description: "Action irréversible",
+					icon: Trash2,
+					variant: "destructive",
+					hidden: !isArchived,
+					onSelect: () => openDeleteDialog({ collectionId, collectionName, productsCount }),
+				},
+			],
+		},
+	];
+
+	return (
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					aria-label="Actions pour cette collection"
 				>
-					<Pencil className="h-4 w-4" />
-					Modifier
-				</DropdownMenuItem>
-
-				{/* Gerer les produits */}
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/catalogue/collections/${collectionSlug}`}>
-						<Package className="h-4 w-4" />
-						Gerer les produits
-					</Link>
-				</DropdownMenuItem>
-
-				<DropdownMenuSeparator />
-
-				{/* Actions conditionnelles selon le statut */}
-				{!isArchived && (
-					<>
-						{/* Changer statut - Uniquement DRAFT/PUBLIC */}
-						<DropdownMenuSub>
-							<DropdownMenuSubTrigger>
-								<FilePenLine className="h-4 w-4" />
-								<span>Changer statut</span>
-							</DropdownMenuSubTrigger>
-							<DropdownMenuSubContent>
-								<DropdownMenuItem
-									onClick={() => handleChangeStatus(CollectionStatus.DRAFT)}
-									disabled={collectionStatus === CollectionStatus.DRAFT}
-								>
-									{COLLECTION_STATUS_LABELS[CollectionStatus.DRAFT]}
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() => handleChangeStatus(CollectionStatus.PUBLIC)}
-									disabled={collectionStatus === CollectionStatus.PUBLIC}
-								>
-									{COLLECTION_STATUS_LABELS[CollectionStatus.PUBLIC]}
-								</DropdownMenuItem>
-							</DropdownMenuSubContent>
-						</DropdownMenuSub>
-
-						<DropdownMenuSeparator />
-
-						{/* Archiver */}
-						<DropdownMenuItem onClick={handleArchive}>
-							<Archive className="h-4 w-4" />
-							Archiver
-						</DropdownMenuItem>
-					</>
-				)}
-
-				{isArchived && (
-					<>
-						{/* Restaurer */}
-						<DropdownMenuItem onClick={handleArchive}>
-							<ArchiveRestore className="h-4 w-4" />
-							Restaurer
-						</DropdownMenuItem>
-
-						<DropdownMenuSeparator />
-
-						{/* Supprimer - Uniquement pour les collections archivees */}
-						<DropdownMenuItem variant="destructive" onClick={handleDelete}>
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</>
-				)}
-			</DropdownMenuContent>
-		</DropdownMenu>
+					<span className="sr-only">Ouvrir le menu d&apos;actions</span>
+					<EllipsisVertical className="h-4 w-4" />
+				</Button>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent
+				title="Actions collection"
+				description={collectionName}
+				sections={sections}
+			/>
+		</ResponsiveActionMenu>
 	);
 }

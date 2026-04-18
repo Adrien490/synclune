@@ -1,29 +1,29 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+	Copy,
+	EllipsisVertical,
+	ExternalLink,
+	Power,
+	PowerOff,
+	SquarePen,
+	Trash2,
+} from "lucide-react";
+
+import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
 import { useDuplicateMaterial } from "@/modules/materials/hooks/use-duplicate-material";
 import { useToggleMaterialStatus } from "@/modules/materials/hooks/use-toggle-material-status";
 import {
-	Copy,
-	SquarePen,
-	ExternalLink,
-	EllipsisVertical,
-	Power,
-	PowerOff,
-	Trash2,
-} from "lucide-react";
-import Link from "next/link";
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { Button } from "@/shared/components/ui/button";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+
 import { MATERIAL_DIALOG_ID } from "./material-form-dialog";
-import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
 
 interface MaterialsRowActionsProps {
 	materialId: string;
@@ -45,32 +45,64 @@ export function MaterialsRowActions({
 	const { duplicate, isPending: isDuplicating } = useDuplicateMaterial();
 	const { toggleStatus, isPending: isToggling } = useToggleMaterialStatus();
 
-	const handleEdit = () => {
-		openDialog({
-			material: {
-				id: materialId,
-				name: materialName,
-				slug: materialSlug,
-				description: materialDescription,
-				isActive: materialIsActive,
-			},
-		});
-	};
-
-	const handleDelete = () => {
-		openAlert({
-			materialId,
-			materialName,
-		});
-	};
-
-	const handleToggle = () => {
-		toggleStatus(materialId, !materialIsActive);
-	};
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "edit",
+					label: "Éditer",
+					icon: SquarePen,
+					onSelect: () =>
+						openDialog({
+							material: {
+								id: materialId,
+								name: materialName,
+								slug: materialSlug,
+								description: materialDescription,
+								isActive: materialIsActive,
+							},
+						}),
+				},
+				{
+					key: "duplicate",
+					label: "Dupliquer",
+					icon: Copy,
+					disabled: isDuplicating,
+					onSelect: () => duplicate(materialId),
+				},
+				{
+					key: "variants",
+					label: "Voir les variantes",
+					icon: ExternalLink,
+					href: `/admin/catalogue/inventaire?materialId=${materialId}`,
+				},
+				{
+					key: "toggle",
+					label: materialIsActive ? "Désactiver" : "Activer",
+					icon: materialIsActive ? PowerOff : Power,
+					disabled: isToggling,
+					onSelect: () => toggleStatus(materialId, !materialIsActive),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: () => openAlert({ materialId, materialName }),
+				},
+			],
+		},
+	];
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -79,41 +111,8 @@ export function MaterialsRowActions({
 				>
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end">
-				<DropdownMenuItem onClick={handleEdit}>
-					<SquarePen className="h-4 w-4" />
-					Éditer
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={() => duplicate(materialId)} disabled={isDuplicating}>
-					<Copy className="h-4 w-4" />
-					Dupliquer
-				</DropdownMenuItem>
-				<DropdownMenuItem asChild>
-					<Link href={`/admin/catalogue/inventaire?materialId=${materialId}`}>
-						<ExternalLink className="h-4 w-4" />
-						Voir les variantes
-					</Link>
-				</DropdownMenuItem>
-				<DropdownMenuItem onClick={handleToggle} disabled={isToggling}>
-					{materialIsActive ? (
-						<>
-							<PowerOff className="h-4 w-4" />
-							Désactiver
-						</>
-					) : (
-						<>
-							<Power className="h-4 w-4" />
-							Activer
-						</>
-					)}
-				</DropdownMenuItem>
-				<DropdownMenuSeparator />
-				<DropdownMenuItem onClick={handleDelete} className="text-destructive">
-					<Trash2 className="h-4 w-4" />
-					Supprimer
-				</DropdownMenuItem>
-			</DropdownMenuContent>
-		</DropdownMenu>
+			</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenuContent title="Actions" description={materialName} sections={sections} />
+		</ResponsiveActionMenu>
 	);
 }

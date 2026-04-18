@@ -40,7 +40,7 @@ vi.mock("lucide-react", async (importOriginal) => {
 		ShoppingBag: (props: Record<string, unknown>) => <svg data-testid="icon-orders" {...props} />,
 		Package: (props: Record<string, unknown>) => <svg data-testid="icon-products" {...props} />,
 		Menu: (props: Record<string, unknown>) => <svg data-testid="icon-menu" {...props} />,
-		Sparkles: (props: Record<string, unknown>) => <svg data-testid="icon-sparkles" {...props} />,
+		Search: (props: Record<string, unknown>) => <svg data-testid="icon-search" {...props} />,
 	};
 });
 
@@ -119,9 +119,6 @@ vi.mock("@/shared/components/bottom-bar", () => ({
 	bottomBarActiveItemClass: "active",
 	bottomBarIconClass: "icon",
 	bottomBarLabelClass: "label",
-	bottomBarCenterActionClass: "center-action",
-	bottomBarCenterButtonClass: "center-button",
-	bottomBarCenterLabelClass: "center-label",
 }));
 
 import { AdminMobileBottomBar } from "../admin-mobile-bottom-bar";
@@ -159,38 +156,38 @@ describe("AdminMobileBottomBar", () => {
 			);
 		});
 
-		it("renders 3 tab links + FAB + 1 menu button", () => {
+		it("renders 3 tab links + search button + 1 menu button", () => {
 			render(<AdminMobileBottomBar />);
 			expect(screen.getByText("Accueil")).toBeInTheDocument();
 			expect(screen.getByText("Commandes")).toBeInTheDocument();
-			expect(screen.getByText("Actions")).toBeInTheDocument();
+			expect(screen.getByText("Recherche")).toBeInTheDocument();
 			expect(screen.getByText("Produits")).toBeInTheDocument();
 			expect(screen.getByText("Menu")).toBeInTheDocument();
 		});
 	});
 
-	describe("FAB center button", () => {
-		it("renders Sparkles icon", () => {
+	describe("search button", () => {
+		it("renders Search icon", () => {
 			render(<AdminMobileBottomBar />);
-			expect(screen.getByTestId("icon-sparkles")).toBeInTheDocument();
+			expect(screen.getByTestId("icon-search")).toBeInTheDocument();
 		});
 
 		it("opens command palette on click", () => {
 			render(<AdminMobileBottomBar />);
-			fireEvent.click(screen.getByLabelText("Ouvrir la recherche et les actions rapides"));
+			fireEvent.click(screen.getByLabelText("Ouvrir la recherche"));
 			expect(mockOpenCommandPalette).toHaveBeenCalled();
 		});
 
-		it("triggers medium haptic on FAB click", () => {
+		it("triggers medium haptic on click", () => {
 			render(<AdminMobileBottomBar />);
-			fireEvent.click(screen.getByLabelText("Ouvrir la recherche et les actions rapides"));
+			fireEvent.click(screen.getByLabelText("Ouvrir la recherche"));
 			expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
 		});
 
 		it("has aria-haspopup=dialog", () => {
 			render(<AdminMobileBottomBar />);
-			const fab = screen.getByLabelText("Ouvrir la recherche et les actions rapides");
-			expect(fab).toHaveAttribute("aria-haspopup", "dialog");
+			const button = screen.getByLabelText("Ouvrir la recherche");
+			expect(button).toHaveAttribute("aria-haspopup", "dialog");
 		});
 	});
 

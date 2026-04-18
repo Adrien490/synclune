@@ -113,58 +113,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({
-		children,
-	}: {
-		children: React.ReactNode;
-		align?: string;
-		className?: string;
-	}) => <div data-testid="dropdown-content">{children}</div>,
-	DropdownMenuLabel: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => <div className={className}>{children}</div>,
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		asChild: _asChild,
-		className,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		asChild?: boolean;
-		className?: string;
-		disabled?: boolean;
-	}) => (
-		<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
-			{children}
-		</button>
-	),
-	DropdownMenuSub: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuSubTrigger: ({
-		children,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-	}) => (
-		<button role="menuitem" aria-disabled={disabled}>
-			{children}
-		</button>
-	),
-	DropdownMenuSubContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuPortal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 // Dialog ID sibling mocks
 vi.mock("../cancel-order-alert-dialog", () => ({ CANCEL_ORDER_DIALOG_ID: "cancel-order" }));

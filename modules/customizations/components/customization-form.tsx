@@ -2,6 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import {
 	ResponsiveSelect,
 	type ResponsiveSelectOption,
@@ -39,6 +40,7 @@ export function CustomizationForm({ productTypes, userInfo }: CustomizationFormP
 					data-pending={isPending ? "" : undefined}
 					aria-busy={isPending}
 					onSubmit={() => {
+						triggerHaptic("medium");
 						captureFormValues();
 						void form.handleSubmit();
 					}}
@@ -134,6 +136,7 @@ export function CustomizationForm({ productTypes, userInfo }: CustomizationFormP
 								rows={4}
 								maxLength={2000}
 								showCounter
+								enterKeyHint="next"
 								placeholder="Décrivez votre idée de bijou... Par exemple : Je cherche un bracelet pour un anniversaire de mariage, dans des tons dorés avec des perles..."
 							/>
 						)}
@@ -183,6 +186,7 @@ export function CustomizationForm({ productTypes, userInfo }: CustomizationFormP
 								autoComplete="given-name"
 								autoCapitalize="words"
 								autoCorrect="off"
+								enterKeyHint="next"
 							/>
 						)}
 					</form.AppField>
@@ -209,8 +213,10 @@ export function CustomizationForm({ productTypes, userInfo }: CustomizationFormP
 								required
 								inputMode="email"
 								autoComplete="email"
+								autoCapitalize="none"
 								spellCheck={false}
 								autoCorrect="off"
+								enterKeyHint="next"
 							/>
 						)}
 					</form.AppField>
@@ -223,12 +229,13 @@ export function CustomizationForm({ productTypes, userInfo }: CustomizationFormP
 								optional
 								defaultCountry="FR"
 								placeholder="06 12 34 56 78"
+								enterKeyHint="send"
 							/>
 						)}
 					</form.AppField>
 
 					{/* Submit sticky sur mobile */}
-					<div className="bg-background/95 border-border/50 sticky bottom-0 -mx-4 flex justify-center border-t px-4 py-4 backdrop-blur-sm sm:static sm:mx-0 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0 sm:py-4 sm:backdrop-blur-none">
+					<div className="bg-background/95 border-border/50 sticky bottom-0 -mx-4 flex justify-center border-t px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-sm sm:static sm:mx-0 sm:justify-start sm:border-0 sm:bg-transparent sm:px-0 sm:py-4 sm:backdrop-blur-none">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button

@@ -1,16 +1,26 @@
 "use client";
 
-import { Button } from "@/shared/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuSub,
-	DropdownMenuSubContent,
-	DropdownMenuSubTrigger,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
+	CircleCheck,
+	CircleX,
+	Download,
+	EllipsisVertical,
+	Eye,
+	KeyRound,
+	LoaderCircle,
+	LogOut,
+	RotateCcw,
+	Shield,
+	Trash2,
+	UserMinus,
+} from "lucide-react";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -20,27 +30,15 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
-import {
-	CircleCheck,
-	Download,
-	Eye,
-	KeyRound,
-	LoaderCircle,
-	LogOut,
-	EllipsisVertical,
-	RotateCcw,
-	Trash2,
-	CircleX,
-} from "lucide-react";
-import Link from "next/link";
+import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useDeleteUser } from "@/modules/users/hooks/use-delete-user";
-import { useSuspendUser } from "@/modules/users/hooks/use-suspend-user";
-import { useRestoreUser } from "@/modules/users/hooks/use-restore-user";
 import { useChangeUserRole } from "@/modules/users/hooks/use-change-user-role";
+import { useDeleteUser } from "@/modules/users/hooks/use-delete-user";
 import { useExportUserDataAdmin } from "@/modules/users/hooks/use-export-user-data-admin";
 import { useInvalidateUserSessions } from "@/modules/users/hooks/use-invalidate-user-sessions";
+import { useRestoreUser } from "@/modules/users/hooks/use-restore-user";
 import { useSendPasswordResetAdmin } from "@/modules/users/hooks/use-send-password-reset-admin";
+import { useSuspendUser } from "@/modules/users/hooks/use-suspend-user";
 
 interface UsersRowActionsProps {
 	user: {
@@ -63,15 +61,12 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 	const { action: deleteAction, isPending: isDeletePending } = useDeleteUser({
 		onSuccess: () => deleteDialog.close(),
 	});
-
 	const { action: suspendAction, isPending: isSuspendPending } = useSuspendUser({
 		onSuccess: () => suspendDialog.close(),
 	});
-
 	const { action: restoreAction, isPending: isRestorePending } = useRestoreUser({
 		onSuccess: () => restoreDialog.close(),
 	});
-
 	const { action: changeRoleAction, isPending: isChangeRolePending } = useChangeUserRole({
 		onSuccess: () => {
 			promoteDialog.close();
@@ -92,15 +87,118 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 		isExportPending ||
 		isInvalidatePending ||
 		isResetPending;
+
 	const isDeleted = !!user.deletedAt;
 	const isSuspended = !!user.suspendedAt;
 	const isAdmin = user.role === "ADMIN";
 	const displayName = user.name || user.email;
 
+	const sections: ActionMenuSection[] = [
+		{
+			key: "navigate",
+			items: [
+				{
+					key: "orders",
+					label: "Voir commandes",
+					icon: Eye,
+					href: `/admin/ventes/commandes?userId=${user.id}`,
+				},
+			],
+		},
+		{
+			key: "account",
+			label: "Compte",
+			items: [
+				{
+					key: "export",
+					label: "Exporter données (RGPD)",
+					icon: Download,
+					disabled: isExportPending,
+					onSelect: () => exportData(user.id, displayName),
+				},
+				{
+					key: "logout",
+					label: "Forcer la déconnexion",
+					icon: LogOut,
+					disabled: isInvalidatePending,
+					onSelect: () => invalidateSessions(user.id, displayName),
+				},
+				{
+					key: "reset",
+					label: "Envoyer reset mot de passe",
+					icon: KeyRound,
+					disabled: isResetPending,
+					onSelect: () => sendReset(user.id, displayName),
+				},
+			],
+		},
+		{
+			key: "role",
+			label: "Rôle",
+			items: [
+				{
+					key: "promote",
+					label: "Promouvoir admin",
+					icon: Shield,
+					disabled: isAdmin,
+					hidden: isDeleted,
+					onSelect: () => promoteDialog.open(),
+				},
+				{
+					key: "demote",
+					label: "Rétrograder utilisateur",
+					icon: UserMinus,
+					disabled: !isAdmin,
+					hidden: isDeleted,
+					onSelect: () => demoteDialog.open(),
+				},
+			],
+		},
+		{
+			key: "status",
+			items: [
+				{
+					key: "suspend",
+					label: "Suspendre",
+					icon: CircleX,
+					hidden: isDeleted || isSuspended,
+					onSelect: () => suspendDialog.open(),
+				},
+				{
+					key: "unsuspend",
+					label: "Lever la suspension",
+					icon: RotateCcw,
+					hidden: isDeleted || !isSuspended,
+					onSelect: () => restoreDialog.open(),
+				},
+				{
+					key: "restore",
+					label: "Restaurer",
+					icon: RotateCcw,
+					hidden: !isDeleted,
+					onSelect: () => restoreDialog.open(),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer",
+					icon: Trash2,
+					variant: "destructive",
+					hidden: isDeleted,
+					onSelect: () => deleteDialog.open(),
+				},
+			],
+		},
+	];
+
 	return (
 		<>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
 					<Button
 						variant="ghost"
 						className="h-11 w-11 p-0 transition-transform active:scale-95"
@@ -108,110 +206,14 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 					>
 						<EllipsisVertical className="h-4 w-4" />
 					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent align="end">
-					{/* Navigation vers les données utilisateur */}
-					<DropdownMenuItem asChild>
-						<Link
-							href={`/admin/ventes/commandes?userId=${user.id}`}
-							className="flex cursor-pointer items-center"
-						>
-							<Eye className="mr-2 h-4 w-4" />
-							Voir commandes
-						</Link>
-					</DropdownMenuItem>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent
+					title="Actions utilisateur"
+					description={displayName}
+					sections={sections}
+				/>
+			</ResponsiveActionMenu>
 
-					<DropdownMenuSeparator />
-
-					{/* Export RGPD */}
-					<DropdownMenuItem
-						onClick={() => exportData(user.id, displayName)}
-						disabled={isExportPending}
-						className="flex cursor-pointer items-center"
-					>
-						<Download className="mr-2 h-4 w-4" />
-						Exporter données (RGPD)
-					</DropdownMenuItem>
-
-					{/* Forcer déconnexion */}
-					<DropdownMenuItem
-						onClick={() => invalidateSessions(user.id, displayName)}
-						disabled={isInvalidatePending}
-						className="flex cursor-pointer items-center"
-					>
-						<LogOut className="mr-2 h-4 w-4" />
-						Forcer la déconnexion
-					</DropdownMenuItem>
-
-					{/* Reset mot de passe */}
-					<DropdownMenuItem
-						onClick={() => sendReset(user.id, displayName)}
-						disabled={isResetPending}
-						className="flex cursor-pointer items-center"
-					>
-						<KeyRound className="mr-2 h-4 w-4" />
-						Envoyer reset mot de passe
-					</DropdownMenuItem>
-
-					{!isDeleted && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuSub>
-								<DropdownMenuSubTrigger>Changer le role</DropdownMenuSubTrigger>
-								<DropdownMenuSubContent>
-									<DropdownMenuItem onClick={() => promoteDialog.open()} disabled={isAdmin}>
-										<CircleCheck className="mr-2 h-4 w-4" />
-										Promouvoir admin
-									</DropdownMenuItem>
-									<DropdownMenuItem onClick={() => demoteDialog.open()} disabled={!isAdmin}>
-										<CircleX className="mr-2 h-4 w-4" />
-										Retrograder utilisateur
-									</DropdownMenuItem>
-								</DropdownMenuSubContent>
-							</DropdownMenuSub>
-							<DropdownMenuSeparator />
-							{!isSuspended ? (
-								<DropdownMenuItem
-									className="flex cursor-pointer items-center"
-									onClick={() => suspendDialog.open()}
-								>
-									<CircleX className="mr-2 h-4 w-4" />
-									Suspendre
-								</DropdownMenuItem>
-							) : (
-								<DropdownMenuItem
-									className="flex cursor-pointer items-center"
-									onClick={() => restoreDialog.open()}
-								>
-									<RotateCcw className="mr-2 h-4 w-4" />
-									Lever la suspension
-								</DropdownMenuItem>
-							)}
-							<DropdownMenuItem
-								className="text-destructive focus:text-destructive flex cursor-pointer items-center"
-								onClick={() => deleteDialog.open()}
-							>
-								<Trash2 className="mr-2 h-4 w-4" />
-								Supprimer
-							</DropdownMenuItem>
-						</>
-					)}
-					{isDeleted && (
-						<>
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								className="flex cursor-pointer items-center"
-								onClick={() => restoreDialog.open()}
-							>
-								<RotateCcw className="mr-2 h-4 w-4" />
-								Restaurer
-							</DropdownMenuItem>
-						</>
-					)}
-				</DropdownMenuContent>
-			</DropdownMenu>
-
-			{/* Delete Dialog */}
 			<AlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
@@ -222,11 +224,11 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Supprimer l&apos;utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir supprimer{" "}
+								Êtes-vous sûr de vouloir supprimer{" "}
 								<span className="font-semibold">{displayName}</span> ?
 								<br />
 								<br />
-								Le compte sera desactive mais les donnees seront conservees.
+								Le compte sera désactivé mais les données seront conservées.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -251,7 +253,6 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Suspend Dialog */}
 			<AlertDialog
 				open={suspendDialog.isOpen}
 				onOpenChange={(open) => (open ? suspendDialog.open() : suspendDialog.close())}
@@ -262,7 +263,7 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Suspendre l&apos;utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir suspendre{" "}
+								Êtes-vous sûr de vouloir suspendre{" "}
 								<span className="font-semibold">{displayName}</span> ?
 								<br />
 								<br />
@@ -291,7 +292,6 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Restore Dialog */}
 			<AlertDialog
 				open={restoreDialog.isOpen}
 				onOpenChange={(open) => (open ? restoreDialog.open() : restoreDialog.close())}
@@ -302,11 +302,11 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Restaurer l&apos;utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir restaurer{" "}
+								Êtes-vous sûr de vouloir restaurer{" "}
 								<span className="font-semibold">{displayName}</span> ?
 								<br />
 								<br />
-								Le compte sera reactive.
+								Le compte sera réactivé.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -331,7 +331,6 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Promote to Admin Dialog */}
 			<AlertDialog
 				open={promoteDialog.isOpen}
 				onOpenChange={(open) => (open ? promoteDialog.open() : promoteDialog.close())}
@@ -343,12 +342,12 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<AlertDialogHeader>
 							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir promouvoir{" "}
-								<span className="font-semibold">{displayName}</span> au role d&apos;administrateur ?
+								Êtes-vous sûr de vouloir promouvoir{" "}
+								<span className="font-semibold">{displayName}</span> au rôle d&apos;administrateur ?
 								<br />
 								<br />
 								<span className="font-medium text-amber-600">
-									Les administrateurs ont acces a toutes les fonctionnalites du dashboard.
+									Les administrateurs ont accès à toutes les fonctionnalités du dashboard.
 								</span>
 							</AlertDialogDescription>
 						</AlertDialogHeader>
@@ -374,7 +373,6 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Demote to User Dialog */}
 			<AlertDialog
 				open={demoteDialog.isOpen}
 				onOpenChange={(open) => (open ? demoteDialog.open() : demoteDialog.close())}
@@ -384,14 +382,14 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="USER" />
 						<AlertDialogHeader>
-							<AlertDialogTitle>Retrograder en utilisateur</AlertDialogTitle>
+							<AlertDialogTitle>Rétrograder en utilisateur</AlertDialogTitle>
 							<AlertDialogDescription>
-								Etes-vous sur de vouloir retrograder{" "}
-								<span className="font-semibold">{displayName}</span> au role d&apos;utilisateur
+								Êtes-vous sûr de vouloir rétrograder{" "}
+								<span className="font-semibold">{displayName}</span> au rôle d&apos;utilisateur
 								standard ?
 								<br />
 								<br />
-								Il perdra l&apos;acces au dashboard administrateur.
+								Il perdra l&apos;accès au dashboard administrateur.
 							</AlertDialogDescription>
 						</AlertDialogHeader>
 						<AlertDialogFooter>
@@ -402,12 +400,12 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 								{isChangeRolePending ? (
 									<>
 										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Retrogradation...
+										Rétrogradation...
 									</>
 								) : (
 									<>
 										<CircleX className="mr-2 h-4 w-4" />
-										Retrograder
+										Rétrograder
 									</>
 								)}
 							</Button>

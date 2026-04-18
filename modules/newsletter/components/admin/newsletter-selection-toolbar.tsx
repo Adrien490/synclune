@@ -1,6 +1,14 @@
 "use client";
 
-import { Trash2, LoaderCircle, EllipsisVertical, MailX } from "lucide-react";
+import { EllipsisVertical, LoaderCircle, MailX, Trash2 } from "lucide-react";
+
+import {
+	ResponsiveActionMenu,
+	ResponsiveActionMenuContent,
+	ResponsiveActionMenuTrigger,
+	type ActionMenuSection,
+} from "@/shared/components/responsive-action-menu";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import {
 	AlertDialog,
 	AlertDialogCancel,
@@ -11,15 +19,9 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+
 import { useAdminBulkDeleteNewsletterSubscribers } from "../../hooks/use-admin-bulk-delete-newsletter-subscribers";
 import { useAdminBulkUnsubscribeNewsletter } from "../../hooks/use-admin-bulk-unsubscribe-newsletter";
 
@@ -49,47 +51,68 @@ export function NewsletterSelectionToolbar() {
 	if (selectedItems.length === 0) return null;
 
 	const handleBulkDelete = (formData: FormData) => {
-		selectedItems.forEach((id) => {
-			formData.append("subscriberIds", id);
-		});
+		selectedItems.forEach((id) => formData.append("subscriberIds", id));
 		deleteAction(formData);
 	};
 
 	const handleBulkUnsubscribe = (formData: FormData) => {
-		selectedItems.forEach((id) => {
-			formData.append("subscriberIds", id);
-		});
+		selectedItems.forEach((id) => formData.append("subscriberIds", id));
 		unsubscribeAction(formData);
 	};
+
+	const sections: ActionMenuSection[] = [
+		{
+			key: "manage",
+			items: [
+				{
+					key: "unsubscribe",
+					label: "Désabonner",
+					icon: MailX,
+					onSelect: () => unsubscribeDialog.open(),
+				},
+			],
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "delete",
+					label: "Supprimer (RGPD)",
+					description: "Anonymisation pour conformité légale",
+					icon: Trash2,
+					variant: "destructive",
+					onSelect: () => deleteDialog.open(),
+				},
+			],
+		},
+	];
+
+	const label = `${selectedItems.length} abonné${selectedItems.length > 1 ? "s" : ""} sélectionné${selectedItems.length > 1 ? "s" : ""}`;
 
 	return (
 		<>
 			<SelectionToolbar>
-				<span className="text-muted-foreground text-sm">
-					{selectedItems.length} abonné{selectedItems.length > 1 ? "s" : ""} sélectionné
-					{selectedItems.length > 1 ? "s" : ""}
-				</span>
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+				<span className="text-muted-foreground text-sm">{label}</span>
+				<ResponsiveActionMenu>
+					<ResponsiveActionMenuTrigger asChild>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="h-11 w-11 p-0"
+							aria-label="Actions de la sélection"
+						>
 							<span className="sr-only">Ouvrir le menu</span>
 							<EllipsisVertical className="h-4 w-4" />
 						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="w-48">
-						<DropdownMenuItem onClick={() => unsubscribeDialog.open()}>
-							<MailX className="h-4 w-4" />
-							Désabonner
-						</DropdownMenuItem>
-						<DropdownMenuItem onClick={() => deleteDialog.open()} variant="destructive">
-							<Trash2 className="h-4 w-4" />
-							Supprimer (RGPD)
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+					</ResponsiveActionMenuTrigger>
+					<ResponsiveActionMenuContent
+						title="Actions groupées"
+						description={label}
+						sections={sections}
+					/>
+				</ResponsiveActionMenu>
 			</SelectionToolbar>
 
-			{/* Bulk Delete Dialog */}
 			<AlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
@@ -137,7 +160,6 @@ export function NewsletterSelectionToolbar() {
 				</AlertDialogContent>
 			</AlertDialog>
 
-			{/* Bulk Unsubscribe Dialog */}
 			<AlertDialog
 				open={unsubscribeDialog.isOpen}
 				onOpenChange={(open) => (open ? unsubscribeDialog.open() : unsubscribeDialog.close())}

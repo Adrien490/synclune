@@ -56,49 +56,11 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
-		<div data-testid="dropdown-trigger">{children}</div>
-	),
-	DropdownMenuContent: ({ children }: { children: React.ReactNode; align?: string }) => (
-		<div data-testid="dropdown-content">{children}</div>
-	),
-	DropdownMenuLabel: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => (
-		<div data-testid="dropdown-label" className={className}>
-			{children}
-		</div>
-	),
-	DropdownMenuSeparator: () => <hr data-testid="dropdown-separator" />,
-	DropdownMenuItem: ({
-		children,
-		onClick,
-		className,
-		disabled,
-		asChild,
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		className?: string;
-		disabled?: boolean;
-		asChild?: boolean;
-	}) =>
-		asChild ? (
-			<div role="menuitem" className={className}>
-				{children}
-			</div>
-		) : (
-			<button role="menuitem" onClick={onClick} className={className} aria-disabled={disabled}>
-				{children}
-			</button>
-		),
-}));
+vi.mock("@/shared/components/responsive-action-menu", async () => {
+	const { buildResponsiveActionMenuMock } =
+		await import("@/shared/components/responsive-action-menu/test-mock");
+	return buildResponsiveActionMenuMock();
+});
 
 vi.mock("lucide-react", () => ({
 	Copy: () => <svg data-testid="icon-copy" />,
@@ -161,15 +123,10 @@ describe("ProductTypeRowActions", () => {
 		expect(screen.getByText("Supprimer")).toBeInTheDocument();
 	});
 
-	it("applies destructive styling to 'Supprimer' item", () => {
+	it("marks 'Supprimer' as destructive variant", () => {
 		render(<ProductTypeRowActions {...defaultProps} isSystem={false} />);
-		const deleteItem = screen.getByText("Supprimer").closest("[role='menuitem']");
-		expect(deleteItem).toHaveClass("text-destructive");
-	});
-
-	it("renders separator before 'Supprimer' when not a system type", () => {
-		render(<ProductTypeRowActions {...defaultProps} isSystem={false} />);
-		expect(screen.getByTestId("dropdown-separator")).toBeInTheDocument();
+		const deleteItem = screen.getByRole("menuitem", { name: "Supprimer" });
+		expect(deleteItem).toHaveAttribute("data-variant", "destructive");
 	});
 
 	// ─── System type ──────────────────────────────────────────────────────────
