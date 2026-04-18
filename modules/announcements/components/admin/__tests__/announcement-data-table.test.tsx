@@ -44,6 +44,18 @@ vi.mock("../announcement-row-actions", () => ({
 	),
 }));
 
+vi.mock("../announcement-selection-toolbar", () => ({
+	AnnouncementSelectionToolbar: ({ announcementIds }: { announcementIds: string[] }) => (
+		<div data-testid="selection-toolbar" data-ids={announcementIds.join(",")} />
+	),
+}));
+
+vi.mock("@/shared/components/table-selection-cell", () => ({
+	TableSelectionCell: ({ type, itemId }: { type: string; itemId?: string }) => (
+		<input type="checkbox" data-testid={`selection-${type}-${itemId ?? "header"}`} />
+	),
+}));
+
 vi.mock("@/shared/components/ui/badge", () => ({
 	Badge: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<span data-testid="badge" className={className}>

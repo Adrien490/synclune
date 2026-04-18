@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Pencil, ShieldCheck, Trash2 } from "lucide-react";
+import { Copy, ExternalLink, Pencil, ShieldCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 import { AdminItemDrawer } from "@/shared/components/admin-item-drawer";
@@ -10,6 +10,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
+import { useDuplicateProductType } from "@/modules/product-types/hooks/use-duplicate-product-type";
 import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialog";
 
 export const PRODUCT_TYPE_ITEM_DRAWER_ID = "product-type-item-drawer";
@@ -31,6 +32,9 @@ export function ProductTypeItemDrawer() {
 	const drawer = useDialog<ProductTypeItemDrawerData>(PRODUCT_TYPE_ITEM_DRAWER_ID);
 	const formDialog = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteAlert = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
+	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType({
+		onSuccess: () => drawer.close(),
+	});
 
 	const productType = drawer.data?.productType;
 
@@ -112,8 +116,21 @@ export function ProductTypeItemDrawer() {
 					<Button
 						variant="outline"
 						size="lg"
+						className="h-12 justify-start gap-3"
+						onClick={() => duplicateProductType(id)}
+						disabled={isDuplicating}
+					>
+						<Copy className="size-4" aria-hidden="true" />
+						Dupliquer
+					</Button>
+				) : null}
+				{!isSystem ? (
+					<Button
+						variant="outline"
+						size="lg"
 						className="text-destructive hover:text-destructive h-12 justify-start gap-3"
 						onClick={handleDelete}
+						disabled={isDuplicating}
 					>
 						<Trash2 className="size-4" aria-hidden="true" />
 						Supprimer

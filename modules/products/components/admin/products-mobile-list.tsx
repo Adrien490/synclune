@@ -1,61 +1,12 @@
 import { use } from "react";
 import { Package } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
-import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
-import {
-	Item,
-	ItemActions,
-	ItemContent,
-	ItemDescription,
-	ItemGroup,
-	ItemTitle,
-} from "@/shared/components/ui/item";
-import { Badge } from "@/shared/components/ui/badge";
-import { ProductStatus } from "@/app/generated/prisma/client";
+import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetProductsReturn } from "@/modules/products/types/product.types";
-import { ProductRowActions } from "./product-row-actions";
+import { ProductMobileItem } from "./product-mobile-item";
 import { ProductsSelectionToolbar } from "./products-selection-toolbar";
-
-const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
-	style: "currency",
-	currency: "EUR",
-});
-
-const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
-
-const STATUS_CONFIG: Record<
-	ProductStatus,
-	{ label: string; variant: "default" | "secondary" | "outline" }
-> = {
-	[ProductStatus.PUBLIC]: { label: "Public", variant: "default" },
-	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
-	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
-};
-
-type ProductWithSkus = { skus: Array<{ priceInclTax: number; inventory: number }> };
-
-const getTotalStock = (product: ProductWithSkus) => {
-	return product.skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
-};
-
-const getPriceRange = (product: ProductWithSkus) => {
-	if (product.skus.length === 0) return null;
-	const prices = product.skus.map((sku) => sku.priceInclTax);
-	const minPrice = Math.min(...prices);
-	const maxPrice = Math.max(...prices);
-	return { minPrice, maxPrice };
-};
-
-const formatPriceDisplay = (priceData: { minPrice: number; maxPrice: number } | null) => {
-	if (!priceData) return "—";
-	const { minPrice, maxPrice } = priceData;
-	if (minPrice === maxPrice) return formatPrice(minPrice);
-	return `${formatPrice(minPrice)} – ${formatPrice(maxPrice)}`;
-};
 
 interface ProductsMobileListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -106,94 +57,11 @@ export function ProductsMobileList({
 			<ProductsSelectionToolbar products={productsForSelection} pageItemIds={productIds} />
 
 			<ItemGroup aria-label="Produits" className="gap-2">
-				{products.map((product) => {
-					const status = STATUS_CONFIG[product.status];
-					const priceRange = getPriceRange(product);
-					const totalStock = getTotalStock(product);
-					const primaryImage = product.skus
-						.flatMap((sku) => sku.images)
-						.find((img) => img.isPrimary);
-
-					return (
-						<div key={product.id} role="listitem">
-							<SelectableMobileCard itemId={product.id} ariaLabel={`Produit ${product.title}`}>
-								<Item
-									variant="outline"
-									size="sm"
-									className="gap-3"
-									aria-roledescription="carte produit"
-								>
-									{/* Image miniature */}
-									{primaryImage ? (
-										<Link
-											href={`/admin/catalogue/produits/${product.slug}/modifier`}
-											className="shrink-0"
-											tabIndex={-1}
-											aria-hidden="true"
-											onClick={(e) => e.stopPropagation()}
-											onPointerDown={(e) => e.stopPropagation()}
-										>
-											<Image
-												src={primaryImage.thumbnailUrl ?? primaryImage.url}
-												alt=""
-												width={48}
-												height={48}
-												sizes="48px"
-												className="size-12 rounded-md border object-cover"
-												{...(primaryImage.blurDataUrl
-													? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
-													: {})}
-											/>
-										</Link>
-									) : (
-										<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-											<Package className="text-muted-foreground size-5" aria-hidden="true" />
-										</div>
-									)}
-
-									<ItemContent className="min-w-0">
-										<ItemTitle>
-											<Link
-												href={`/admin/catalogue/produits/${product.slug}/modifier`}
-												onClick={(e) => e.stopPropagation()}
-												onPointerDown={(e) => e.stopPropagation()}
-												className="truncate font-semibold hover:underline"
-											>
-												{product.title}
-											</Link>
-											<Badge variant={status.variant}>{status.label}</Badge>
-										</ItemTitle>
-										<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-											<span className="font-medium">{formatPriceDisplay(priceRange)}</span>
-											<span aria-hidden="true">·</span>
-											<span>{totalStock} en stock</span>
-											<span aria-hidden="true">·</span>
-											<span>
-												{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
-											</span>
-											{product.type && (
-												<>
-													<span aria-hidden="true">·</span>
-													<span>{product.type.label}</span>
-												</>
-											)}
-										</ItemDescription>
-									</ItemContent>
-									<ItemActions>
-										<StopEventPropagation>
-											<ProductRowActions
-												productId={product.id}
-												productSlug={product.slug}
-												productTitle={product.title}
-												productStatus={product.status}
-											/>
-										</StopEventPropagation>
-									</ItemActions>
-								</Item>
-							</SelectableMobileCard>
-						</div>
-					);
-				})}
+				{products.map((product) => (
+					<div key={product.id} role="listitem">
+						<ProductMobileItem product={product} />
+					</div>
+				))}
 			</ItemGroup>
 
 			<CursorPagination

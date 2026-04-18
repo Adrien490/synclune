@@ -28,7 +28,7 @@ export function NavbarWrapper({ children }: NavbarWrapperProps) {
 				"pwa-header",
 				"group fixed inset-x-0 z-40",
 				"top-[var(--announcement-bar-height)]",
-				"transition-[top,background-color,border-color,box-shadow,backdrop-filter] duration-300 ease-out",
+				"ease-out motion-safe:transition-[top,background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-[var(--duration-slow)]",
 				"border-b",
 				isScrolled
 					? "bg-background/95 border-border shadow-lg shadow-black/8 backdrop-blur-md"

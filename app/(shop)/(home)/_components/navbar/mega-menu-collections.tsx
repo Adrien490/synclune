@@ -7,6 +7,7 @@ import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
 import { ROUTES } from "@/shared/constants/urls";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ArrowRight, Gem } from "lucide-react";
 
@@ -40,13 +41,14 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 			<NavigationMenuLink asChild>
 				<Link
 					href={ROUTES.SHOP.COLLECTIONS}
+					onClick={() => triggerHaptic("selection")}
 					aria-current={isViewAllActive ? "page" : undefined}
 					className={cn(
 						"flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
 						"bg-accent/40 hover:bg-accent",
 						"text-foreground",
 						"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-						"mb-4 transition-colors duration-200",
+						"mb-4 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 						"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
 						isViewAllActive && "bg-accent font-medium",
 					)}
@@ -70,11 +72,12 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 							<NavigationMenuLink asChild>
 								<Link
 									href={collection.href}
+									onClick={() => triggerHaptic("light")}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
 										"group/card bg-card flex flex-col! overflow-hidden rounded-xl",
 										"border-2 border-transparent shadow-sm",
-										"transition-[transform,border-color,box-shadow] duration-300 ease-out",
+										"ease-out motion-safe:transition-[transform,border-color,box-shadow] motion-safe:duration-[var(--duration-slow)]",
 										"motion-reduce:transition-colors",
 										"motion-safe:can-hover:hover:border-primary/40",
 										"can-hover:hover:shadow-premium-rose",
@@ -103,7 +106,7 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 											className={cn(
 												"mx-auto mb-2 h-px w-10",
 												"via-primary/40 bg-linear-to-r from-transparent to-transparent",
-												"origin-center transition-[transform,opacity] duration-300",
+												"origin-center motion-safe:transition-[transform,opacity] motion-safe:duration-[var(--duration-slow)]",
 												"scale-x-[0.67]",
 												"motion-reduce:scale-x-100",
 												"motion-safe:can-hover:group-hover/card:scale-x-100 motion-safe:can-hover:group-hover/card:via-primary/60",

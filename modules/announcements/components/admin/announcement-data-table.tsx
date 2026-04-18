@@ -2,6 +2,7 @@
 
 import { use } from "react";
 
+import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Table,
@@ -21,6 +22,7 @@ import {
 	ANNOUNCEMENT_STATUS_COLORS,
 } from "../../utils/announcement-status";
 import { AnnouncementRowActions } from "./announcement-row-actions";
+import { AnnouncementSelectionToolbar } from "./announcement-selection-toolbar";
 
 interface AnnouncementDataTableProps {
 	announcementsPromise: Promise<AnnouncementListItem[]>;
@@ -28,6 +30,7 @@ interface AnnouncementDataTableProps {
 
 export function AnnouncementDataTable({ announcementsPromise }: AnnouncementDataTableProps) {
 	const announcements = use(announcementsPromise);
+	const announcementIds = announcements.map((a) => a.id);
 
 	if (announcements.length === 0) {
 		return (
@@ -41,54 +44,63 @@ export function AnnouncementDataTable({ announcementsPromise }: AnnouncementData
 	}
 
 	return (
-		<div className="hidden rounded-md border md:block">
-			<Table className="table-fixed">
-				<TableHeader>
-					<TableRow>
-						<TableHead className="w-[35%]">Message</TableHead>
-						<TableHead className="w-[15%]">Statut</TableHead>
-						<TableHead className="w-[15%]">Début</TableHead>
-						<TableHead className="w-[15%]">Fin</TableHead>
-						<TableHead className="w-[8%]">
-							<span className="sr-only">Actions</span>
-						</TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody>
-					{announcements.map((announcement) => {
-						const status = computeAnnouncementStatus(announcement);
-						return (
-							<TableRow key={announcement.id}>
-								<TableCell>
-									<div className="max-w-xs truncate font-medium">{announcement.message}</div>
-									{announcement.linkText && (
-										<div className="text-muted-foreground mt-0.5 text-xs">
-											Lien : {announcement.linkText}
-										</div>
-									)}
-								</TableCell>
-								<TableCell>
-									<Badge
-										variant="secondary"
-										className={cn("text-xs", ANNOUNCEMENT_STATUS_COLORS[status])}
-									>
-										{ANNOUNCEMENT_STATUS_LABELS[status]}
-									</Badge>
-								</TableCell>
-								<TableCell className="text-muted-foreground text-sm">
-									{formatDateTime(announcement.startsAt)}
-								</TableCell>
-								<TableCell className="text-muted-foreground text-sm">
-									{announcement.endsAt ? formatDateTime(announcement.endsAt) : "—"}
-								</TableCell>
-								<TableCell>
-									<AnnouncementRowActions announcement={announcement} />
-								</TableCell>
-							</TableRow>
-						);
-					})}
-				</TableBody>
-			</Table>
+		<div className="hidden md:block">
+			<AnnouncementSelectionToolbar announcementIds={announcementIds} />
+			<div className="rounded-md border">
+				<Table className="table-fixed">
+					<TableHeader>
+						<TableRow>
+							<TableHead className="w-[4%]">
+								<TableSelectionCell type="header" itemIds={announcementIds} />
+							</TableHead>
+							<TableHead className="w-[31%]">Message</TableHead>
+							<TableHead className="w-[15%]">Statut</TableHead>
+							<TableHead className="w-[15%]">Début</TableHead>
+							<TableHead className="w-[15%]">Fin</TableHead>
+							<TableHead className="w-[8%]">
+								<span className="sr-only">Actions</span>
+							</TableHead>
+						</TableRow>
+					</TableHeader>
+					<TableBody>
+						{announcements.map((announcement) => {
+							const status = computeAnnouncementStatus(announcement);
+							return (
+								<TableRow key={announcement.id}>
+									<TableCell>
+										<TableSelectionCell type="row" itemId={announcement.id} />
+									</TableCell>
+									<TableCell>
+										<div className="max-w-xs truncate font-medium">{announcement.message}</div>
+										{announcement.linkText && (
+											<div className="text-muted-foreground mt-0.5 text-xs">
+												Lien : {announcement.linkText}
+											</div>
+										)}
+									</TableCell>
+									<TableCell>
+										<Badge
+											variant="secondary"
+											className={cn("text-xs", ANNOUNCEMENT_STATUS_COLORS[status])}
+										>
+											{ANNOUNCEMENT_STATUS_LABELS[status]}
+										</Badge>
+									</TableCell>
+									<TableCell className="text-muted-foreground text-sm">
+										{formatDateTime(announcement.startsAt)}
+									</TableCell>
+									<TableCell className="text-muted-foreground text-sm">
+										{announcement.endsAt ? formatDateTime(announcement.endsAt) : "—"}
+									</TableCell>
+									<TableCell>
+										<AnnouncementRowActions announcement={announcement} />
+									</TableCell>
+								</TableRow>
+							);
+						})}
+					</TableBody>
+				</Table>
+			</div>
 		</div>
 	);
 }

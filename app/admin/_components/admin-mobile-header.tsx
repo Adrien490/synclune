@@ -19,6 +19,7 @@ const DETAIL_ROUTE_PATTERNS = [
 	/^\/admin\/marketing\/avis\/[^/]+$/,
 	/^\/admin\/contenu\/annonces\/[^/]+$/,
 	/^\/admin\/contenu\/faq\/[^/]+$/,
+	/^\/admin\/configuration\/boutique\/fermer$/,
 ];
 
 function isDetailRoute(pathname: string): boolean {

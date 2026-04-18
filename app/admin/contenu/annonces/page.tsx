@@ -31,6 +31,12 @@ const AnnouncementItemDrawer = dynamic(() =>
 	),
 );
 
+const BulkDeleteAnnouncementsAlertDialog = dynamic(() =>
+	import("@/modules/announcements/components/admin/bulk-delete-announcements-alert-dialog").then(
+		(mod) => mod.BulkDeleteAnnouncementsAlertDialog,
+	),
+);
+
 export const metadata: Metadata = {
 	title: "Annonces - Administration",
 	description: "Gérer les annonces promotionnelles",
@@ -84,6 +90,7 @@ export default async function AnnouncementsAdminPage() {
 
 			<AnnouncementFormDialog />
 			<DeleteAnnouncementAlertDialog />
+			<BulkDeleteAnnouncementsAlertDialog />
 			<AnnouncementItemDrawer />
 		</>
 	);

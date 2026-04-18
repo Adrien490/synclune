@@ -232,37 +232,37 @@ describe("DiscountUsagesDialog", () => {
 		});
 	});
 
-	it("shows order number as link", async () => {
+	it("shows order number as link in mobile and desktop views", async () => {
 		mockGetDiscountUsages.mockResolvedValue({
 			usages: [createUsage()],
 			totalAmount: 1000,
 		});
 		render(<DiscountUsagesDialog />);
 		await waitFor(() => {
-			expect(screen.getByText("CMD-001")).toBeInTheDocument();
+			expect(screen.getAllByText("CMD-001").length).toBeGreaterThanOrEqual(1);
 		});
 	});
 
-	it("shows user name and email", async () => {
+	it("shows user name and email in mobile and desktop views", async () => {
 		mockGetDiscountUsages.mockResolvedValue({
 			usages: [createUsage()],
 			totalAmount: 1000,
 		});
 		render(<DiscountUsagesDialog />);
 		await waitFor(() => {
-			expect(screen.getByText("Alice Dupont")).toBeInTheDocument();
-			expect(screen.getByText("alice@example.com")).toBeInTheDocument();
+			expect(screen.getAllByText("Alice Dupont").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("alice@example.com").length).toBeGreaterThanOrEqual(1);
 		});
 	});
 
-	it("shows 'Invité' when user is null", async () => {
+	it("shows 'Invité' when user is null in mobile and desktop views", async () => {
 		mockGetDiscountUsages.mockResolvedValue({
 			usages: [createUsage({ user: null })],
 			totalAmount: 1000,
 		});
 		render(<DiscountUsagesDialog />);
 		await waitFor(() => {
-			expect(screen.getByText("Invité")).toBeInTheDocument();
+			expect(screen.getAllByText("Invité").length).toBeGreaterThanOrEqual(1);
 		});
 	});
 

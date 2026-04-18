@@ -15,21 +15,68 @@ vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
 vi.mock("@/modules/media/utils/uploadthing", () => ({
-	UploadDropzone: ({
-		"aria-label": ariaLabel,
-	}: {
-		endpoint: string;
-		onClientUploadComplete?: (res: unknown[]) => void;
-		onUploadError?: (error: Error) => void;
-		config?: unknown;
-		"aria-label"?: string;
-		appearance?: unknown;
-		content?: unknown;
-	}) => <div data-testid="upload-dropzone" aria-label={ariaLabel} />,
+	UploadDropzone: ({ "aria-label": ariaLabel }: { "aria-label"?: string }) => (
+		<div data-testid="upload-dropzone" aria-label={ariaLabel} />
+	),
+	useUploadThing: () => ({
+		startUpload: vi.fn(),
+		isUploading: false,
+	}),
+}));
+
+vi.mock("@/modules/media/hooks/use-media-upload", () => ({
+	useMediaUpload: () => ({
+		upload: vi.fn(),
+		uploadSingle: vi.fn(),
+		validateFiles: vi.fn(),
+		cancel: vi.fn(),
+		retryFailed: vi.fn(),
+		clearFailed: vi.fn(),
+		isUploading: false,
+		progress: null,
+		queuedCount: 0,
+		failedFiles: [],
+		getMediaType: () => "IMAGE",
+		isOversized: () => false,
+	}),
 }));
 
 vi.mock("@/shared/components/media-upload/upload-progress", () => ({
 	UploadProgress: () => <div data-testid="upload-progress" />,
+	UploadErrorBanner: () => null,
+}));
+
+vi.mock("@/shared/components/media-upload/upload-action-sheet", () => ({
+	UploadActionSheet: ({
+		desktopFallback,
+		triggerLabel,
+	}: {
+		desktopFallback?: React.ReactNode;
+		triggerLabel?: string;
+	}) => (
+		<div data-testid="upload-action-sheet" aria-label={triggerLabel}>
+			{desktopFallback}
+		</div>
+	),
+}));
+
+vi.mock("@/shared/components/media-upload/pending-uploads-grid", () => ({
+	PendingUploadsGrid: () => <div data-testid="pending-grid" />,
+}));
+
+vi.mock("@/shared/components/scroll-fade", () => ({
+	default: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="scroll-fade">{children}</div>
+	),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => () => true,
+	triggerHaptic: () => true,
 }));
 
 vi.mock("@/shared/components/forms", () => ({
@@ -60,9 +107,6 @@ vi.mock("next/image", () => ({
 		alt: string;
 		fill?: boolean;
 		className?: string;
-		sizes?: string;
-		placeholder?: string;
-		blurDataURL?: string;
 	}) => (
 		// eslint-disable-next-line @next/next/no-img-element
 		<img src={src} alt={alt} data-fill={fill} className={className} />
@@ -77,7 +121,7 @@ vi.mock("lucide-react", () => ({
 }));
 
 vi.mock("sonner", () => ({
-	toast: { error: vi.fn(), success: vi.fn() },
+	toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
 }));
 
 import { InspirationMediaUpload } from "../inspiration-media-upload";
@@ -106,8 +150,6 @@ describe("InspirationMediaUpload", () => {
 		vi.clearAllMocks();
 	});
 
-	// ─── Basic rendering ──────────────────────────────────────────────────────
-
 	it("renders the field label", () => {
 		render(
 			<InspirationMediaUpload
@@ -130,7 +172,7 @@ describe("InspirationMediaUpload", () => {
 		expect(screen.getByText(/Ajoutez jusqu'à 5 images/)).toBeInTheDocument();
 	});
 
-	it("renders the upload dropzone when medias is empty", () => {
+	it("renders the upload action sheet when medias is empty", () => {
 		render(
 			<InspirationMediaUpload
 				medias={[]}
@@ -138,10 +180,10 @@ describe("InspirationMediaUpload", () => {
 				onDeleteMedia={mockOnDeleteMedia}
 			/>,
 		);
-		expect(screen.getByTestId("upload-dropzone")).toBeInTheDocument();
+		expect(screen.getByTestId("upload-action-sheet")).toBeInTheDocument();
 	});
 
-	it("renders the upload dropzone with accessible label", () => {
+	it("desktop fallback dropzone has accessible label", () => {
 		render(
 			<InspirationMediaUpload
 				medias={[]}
@@ -164,8 +206,6 @@ describe("InspirationMediaUpload", () => {
 		expect(hidden).toBeInTheDocument();
 		expect(hidden).toHaveAttribute("type", "hidden");
 	});
-
-	// ─── With media items ─────────────────────────────────────────────────────
 
 	it("renders image previews when medias are provided", () => {
 		const medias = [
@@ -210,9 +250,7 @@ describe("InspirationMediaUpload", () => {
 		expect(mockOnDeleteMedia).toHaveBeenCalledWith("https://example.com/img1.jpg");
 	});
 
-	// ─── Max reached ─────────────────────────────────────────────────────────
-
-	it("hides dropzone when max (5) medias are reached", () => {
+	it("hides upload trigger when max (5) medias are reached", () => {
 		const medias = Array.from({ length: 5 }, (_, i) =>
 			createMedia({ url: `https://example.com/img${i + 1}.jpg` }),
 		);
@@ -223,7 +261,7 @@ describe("InspirationMediaUpload", () => {
 				onDeleteMedia={mockOnDeleteMedia}
 			/>,
 		);
-		expect(screen.queryByTestId("upload-dropzone")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("upload-action-sheet")).not.toBeInTheDocument();
 	});
 
 	it("uses default alt text when altText is not provided", () => {

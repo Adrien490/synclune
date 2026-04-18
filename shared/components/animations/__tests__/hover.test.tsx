@@ -5,8 +5,9 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion } = vi.hoisted(() => ({
+const { mockReducedMotion, mockIsTouchDevice } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
+	mockIsTouchDevice: { value: false },
 }));
 
 // ============================================================================
@@ -58,6 +59,10 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
+vi.mock("@/shared/hooks", () => ({
+	useIsTouchDevice: () => mockIsTouchDevice.value,
+}));
+
 // ============================================================================
 // IMPORT UNDER TEST
 // ============================================================================
@@ -68,6 +73,7 @@ describe("Hover", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockReducedMotion.value = false;
+		mockIsTouchDevice.value = false;
 	});
 
 	afterEach(cleanup);
@@ -140,5 +146,17 @@ describe("Hover", () => {
 		mockReducedMotion.value = true;
 		render(<Hover>Link text</Hover>);
 		expect(screen.getByText("Link text")).toBeInTheDocument();
+	});
+
+	it("does not set whileHover on touch devices (sticky-focus iOS guard)", () => {
+		mockIsTouchDevice.value = true;
+		const { container } = render(<Hover>Content</Hover>);
+		expect(container.firstChild).not.toHaveAttribute("data-while-hover");
+	});
+
+	it("renders children normally on touch devices", () => {
+		mockIsTouchDevice.value = true;
+		render(<Hover>Touch content</Hover>);
+		expect(screen.getByText("Touch content")).toBeInTheDocument();
 	});
 });

@@ -78,6 +78,7 @@ vi.mock("lucide-react", () => ({
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
 	Clock: () => <svg data-testid="icon-clock" />,
 	Copy: () => <svg data-testid="icon-copy" />,
+	Eye: () => <svg data-testid="icon-eye" />,
 	LoaderCircle: () => <svg data-testid="icon-loader" />,
 	Mail: () => <svg data-testid="icon-mail" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,

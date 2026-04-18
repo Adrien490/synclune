@@ -184,7 +184,7 @@ export async function AtelierSection() {
 								asChild
 								size="lg"
 								variant="secondary"
-								className="transition-[scale,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+								className="ease-out hover:shadow-md motion-safe:transition-[scale,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
 							>
 								<Link
 									href="/personnalisation"

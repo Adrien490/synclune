@@ -7,6 +7,7 @@ import type { NavItemChild, MegaMenuProduct } from "@/shared/constants/navigatio
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { formatPrice } from "@/modules/products/utils/format-price";
 import { ROUTES } from "@/shared/constants/urls";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { MegaMenuColumn } from "./mega-menu-column";
 
@@ -54,10 +55,11 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
 										href={ROUTES.SHOP.PRODUCT(product.slug)}
+										onClick={() => triggerHaptic("light")}
 										className={cn(
 											"group/product flex flex-col gap-2",
 											"rounded-lg p-1.5",
-											"transition-all duration-300 ease-out",
+											"ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
 											"hover:bg-accent/50",
 											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 											"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
@@ -67,7 +69,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 										<div
 											className={cn(
 												"bg-muted relative aspect-square overflow-hidden rounded-lg",
-												"transition-[transform,box-shadow] duration-300 ease-out",
+												"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
 												"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
 												"can-hover:group-hover/product:shadow-md",
 											)}

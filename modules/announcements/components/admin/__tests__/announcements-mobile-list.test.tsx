@@ -43,6 +43,12 @@ vi.mock("../announcement-row-actions", () => ({
 	),
 }));
 
+vi.mock("../announcement-selection-toolbar", () => ({
+	AnnouncementSelectionToolbar: ({ announcementIds }: { announcementIds: string[] }) => (
+		<div data-testid="selection-toolbar" data-ids={announcementIds.join(",")} />
+	),
+}));
+
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({
 		isOpen: false,

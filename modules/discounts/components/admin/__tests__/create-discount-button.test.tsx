@@ -6,12 +6,18 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpen } = vi.hoisted(() => ({
+const { mockOpen, mockHaptic } = vi.hoisted(() => ({
 	mockOpen: vi.fn(),
+	mockHaptic: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpen }),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 vi.mock("@/modules/discounts/components/admin/discount-form-dialog", () => ({
@@ -62,5 +68,12 @@ describe("CreateDiscountButton", () => {
 		render(<CreateDiscountButton />);
 		await user.click(screen.getByTestId("create-discount-button"));
 		expect(mockOpen).toHaveBeenCalledTimes(1);
+	});
+
+	it("triggers selection haptic when clicked", async () => {
+		const user = userEvent.setup();
+		render(<CreateDiscountButton />);
+		await user.click(screen.getByTestId("create-discount-button"));
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
 	});
 });

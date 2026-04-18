@@ -5,14 +5,20 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenDialog, mockOpenAlertDialog, mockDuplicate } = vi.hoisted(() => ({
+const { mockOpenDialog, mockOpenAlertDialog, mockDuplicate, mockHaptic } = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlertDialog: vi.fn(),
 	mockDuplicate: vi.fn(),
+	mockHaptic: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDialog }),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
@@ -169,5 +175,21 @@ describe("DiscountRowActions", () => {
 		render(<DiscountRowActions discount={createDiscount()} />);
 		const deleteItem = screen.getByRole("menuitem", { name: "Supprimer" });
 		expect(deleteItem).toHaveAttribute("data-variant", "destructive");
+	});
+
+	// ─── Haptic & motion-safe ─────────────────────────────────────────────────
+
+	it("triggers selection haptic on trigger pointerdown", () => {
+		render(<DiscountRowActions discount={createDiscount()} />);
+		const trigger = screen.getByRole("button", { name: /Actions pour/ });
+		// Simulate pointerdown to match native iOS instant haptic pattern
+		trigger.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("applies motion-safe modifier to active:scale-95 class on trigger", () => {
+		render(<DiscountRowActions discount={createDiscount()} />);
+		const trigger = screen.getByRole("button", { name: /Actions pour/ });
+		expect(trigger.className).toContain("motion-safe:active:scale-95");
 	});
 });

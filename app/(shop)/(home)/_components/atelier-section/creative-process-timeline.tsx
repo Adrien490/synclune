@@ -8,7 +8,7 @@ function StepIllustration({ stepId }: { stepId: string }) {
 	const Illustration = STEP_ILLUSTRATIONS[stepId];
 	if (!Illustration) return null;
 	return (
-		<Illustration className="h-7 w-7 motion-safe:transition-[color,filter,rotate,translate,scale,opacity] motion-safe:duration-300" />
+		<Illustration className="h-7 w-7 motion-safe:transition-[color,filter,rotate,translate,scale,opacity] motion-safe:duration-[var(--duration-slow)]" />
 	);
 }
 
@@ -34,7 +34,7 @@ export function CreativeProcessTimeline() {
 							id={`creative-step-${step.id}`}
 							className={cn(
 								"group timeline-step-scroll relative rounded-xl p-3 text-center",
-								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5",
+								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:-translate-y-0.5",
 							)}
 							aria-describedby={`creative-step-${step.id}-desc`}
 							data-atelier-haptic="step"
@@ -44,7 +44,7 @@ export function CreativeProcessTimeline() {
 							{/* Icon circle with illustration overlay */}
 							<div
 								className={cn(
-									"relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-300",
+									"relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)]",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,
@@ -96,7 +96,7 @@ export function CreativeProcessTimeline() {
 							id={`creative-step-${step.id}`}
 							className={cn(
 								"group relative -m-2 flex items-start gap-4 rounded-xl p-2",
-								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5",
+								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:-translate-y-0.5",
 							)}
 							aria-describedby={`creative-step-${step.id}-desc`}
 							data-atelier-haptic="step"
@@ -106,7 +106,7 @@ export function CreativeProcessTimeline() {
 							{/* Desktop (sm-lg): icon circles */}
 							<div
 								className={cn(
-									"relative z-20 hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-300 sm:flex lg:hidden",
+									"relative z-20 hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)] sm:flex lg:hidden",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,

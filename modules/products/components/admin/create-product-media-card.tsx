@@ -218,6 +218,7 @@ function EmptyMediaState({
 						onUploadError={(error) => {
 							toast.error(`Erreur: ${error.message}`);
 						}}
+						config={{ mode: "auto", appendOnPaste: true }}
 						aria-label="Zone d'upload des médias du bijou"
 						className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
 						appearance={{
@@ -317,6 +318,7 @@ function InlineUploadZone({
 				onUploadError={(error) => {
 					toast.error(`Erreur: ${error.message}`);
 				}}
+				config={{ mode: "auto", appendOnPaste: true }}
 				className="h-full min-h-0 w-full flex-1"
 				appearance={{
 					container: ({ isDragActive }) => ({

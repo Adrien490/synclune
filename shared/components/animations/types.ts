@@ -25,6 +25,12 @@ export interface SlideProps {
 	distance?: number;
 	delay?: number;
 	duration?: number;
+	/** Active animation au scroll avec whileInView */
+	inView?: boolean;
+	/** N'anime qu'une fois au scroll (défaut: true si inView) */
+	once?: boolean;
+	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
+	disableOnTouch?: boolean;
 }
 
 /**

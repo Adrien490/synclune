@@ -272,7 +272,7 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		isPending,
 		isMobile,
 		close,
-		recommendations,
+		recommendations: isMobile ? undefined : recommendations,
 		shouldReduceMotion,
 	};
 

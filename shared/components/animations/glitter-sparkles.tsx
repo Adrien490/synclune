@@ -11,7 +11,7 @@ import { MOTION_CONFIG } from "./motion.config";
 // TYPES
 // ============================================================================
 
-interface GlitterSparklesProps {
+export interface GlitterSparklesProps {
 	/** Classes Tailwind additionnelles pour le conteneur */
 	className?: string;
 	/** Nombre de paillettes (défaut: 25 desktop, 12 mobile) */

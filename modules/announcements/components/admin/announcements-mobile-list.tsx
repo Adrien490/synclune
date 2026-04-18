@@ -8,6 +8,7 @@ import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { AnnouncementListItem } from "../../types/announcement.types";
 import { AnnouncementMobileItem } from "./announcement-mobile-item";
+import { AnnouncementSelectionToolbar } from "./announcement-selection-toolbar";
 
 interface AnnouncementsMobileListProps {
 	announcementsPromise: Promise<AnnouncementListItem[]>;
@@ -15,6 +16,7 @@ interface AnnouncementsMobileListProps {
 
 export function AnnouncementsMobileList({ announcementsPromise }: AnnouncementsMobileListProps) {
 	const announcements = use(announcementsPromise);
+	const announcementIds = announcements.map((a) => a.id);
 
 	if (announcements.length === 0) {
 		return (
@@ -29,7 +31,8 @@ export function AnnouncementsMobileList({ announcementsPromise }: AnnouncementsM
 	}
 
 	return (
-		<div className="space-y-4 md:hidden">
+		<div className="space-y-4 pb-20 md:hidden md:pb-0">
+			<AnnouncementSelectionToolbar announcementIds={announcementIds} />
 			<ItemGroup aria-label="Annonces" className="gap-2">
 				{announcements.map((announcement) => (
 					<div key={announcement.id} role="listitem">

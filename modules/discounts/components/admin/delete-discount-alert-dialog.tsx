@@ -12,6 +12,7 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDeleteDiscount } from "@/modules/discounts/hooks/use-delete-discount";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 
 export const DELETE_DISCOUNT_DIALOG_ID = "delete-discount";
@@ -25,9 +26,11 @@ interface DeleteDiscountData {
 
 export function DeleteDiscountAlertDialog() {
 	const deleteDialog = useAlertDialog<DeleteDiscountData>(DELETE_DISCOUNT_DIALOG_ID);
+	const haptic = useHaptic();
 
 	const { action, isPending } = useDeleteDiscount({
 		onSuccess: () => {
+			haptic("success");
 			deleteDialog.close();
 		},
 	});
@@ -75,6 +78,7 @@ export function DeleteDiscountAlertDialog() {
 							type="submit"
 							disabled={isPending || usageCount > 0}
 							aria-busy={isPending}
+							onPointerDown={() => haptic("heavy")}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}

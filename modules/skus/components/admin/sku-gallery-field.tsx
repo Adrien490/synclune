@@ -120,6 +120,7 @@ export function SkuGalleryField({
 						onUploadError={(error) => {
 							toast.error(`Erreur: ${error.message}`);
 						}}
+						config={{ mode: "auto", appendOnPaste: true }}
 						className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
 						appearance={getCatalogDropzoneAppearance({
 							height: "min(140px, 20vh)",

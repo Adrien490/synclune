@@ -1,17 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockReducedMotion } = vi.hoisted(() => ({
+const { mockReducedMotion, mockIsInView } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
+	mockIsInView: { value: true },
 }));
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
 
 vi.mock("motion/react", () => {
 	const { forwardRef: fRef } = require("react");
@@ -47,6 +40,7 @@ vi.mock("motion/react", () => {
 			),
 		},
 		useReducedMotion: () => mockReducedMotion.value,
+		useInView: () => mockIsInView.value,
 	};
 });
 
@@ -58,16 +52,13 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
-// ============================================================================
-// IMPORT UNDER TEST
-// ============================================================================
-
 import { Pulse } from "../pulse";
 
 describe("Pulse", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockReducedMotion.value = false;
+		mockIsInView.value = true;
 	});
 
 	afterEach(cleanup);
@@ -110,5 +101,18 @@ describe("Pulse", () => {
 		mockReducedMotion.value = true;
 		render(<Pulse>Indicator</Pulse>);
 		expect(screen.getByText("Indicator")).toBeInTheDocument();
+	});
+
+	it("pauses animation when out of view (pauseOnOutOfView default true)", () => {
+		mockIsInView.value = false;
+		const { container } = render(<Pulse>Content</Pulse>);
+		expect(container.firstChild).not.toHaveAttribute("data-animate");
+	});
+
+	it("animates when out of view but pauseOnOutOfView is disabled", () => {
+		mockIsInView.value = false;
+		const { container } = render(<Pulse pauseOnOutOfView={false}>Content</Pulse>);
+		const animate = JSON.parse((container.firstChild as Element).getAttribute("data-animate")!);
+		expect(animate.scale).toEqual([1, 1.1, 1]);
 	});
 });

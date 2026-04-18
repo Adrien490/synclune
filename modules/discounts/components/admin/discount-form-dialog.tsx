@@ -19,6 +19,8 @@ import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.con
 import { useActionState } from "react";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 export const DISCOUNT_DIALOG_ID = "discount-form";
 
@@ -44,6 +46,8 @@ export function DiscountFormDialog() {
 	const { isOpen, close, data } = useDialog<DiscountDialogData>(DISCOUNT_DIALOG_ID);
 	const discount = data?.discount;
 	const isUpdateMode = !!discount;
+	const haptic = useHaptic();
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	// Single form instance
 	const form = useAppForm({
@@ -65,8 +69,12 @@ export function DiscountFormDialog() {
 			createDiscount,
 			createToastCallbacks({
 				onSuccess: () => {
+					haptic("success");
 					close();
 					form.reset();
+				},
+				onError: () => {
+					haptic("error");
 				},
 			}),
 		),
@@ -79,7 +87,11 @@ export function DiscountFormDialog() {
 			updateDiscount,
 			createToastCallbacks({
 				onSuccess: () => {
+					haptic("success");
 					close();
+				},
+				onError: () => {
+					haptic("error");
 				},
 			}),
 		),
@@ -137,7 +149,17 @@ export function DiscountFormDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<form action={action} className="flex min-h-0 flex-1 flex-col">
+				<form
+					ref={formRef}
+					action={action}
+					onSubmit={(event) => {
+						if (!form.state.canSubmit) {
+							event.preventDefault();
+							focusFirstInvalid();
+						}
+					}}
+					className="flex min-h-0 flex-1 flex-col"
+				>
 					{/* Contenu scrollable */}
 					<div className="flex-1 space-y-6 overflow-y-auto pr-2">
 						{/* Hidden field for ID in update mode */}
@@ -184,6 +206,12 @@ export function DiscountFormDialog() {
 											placeholder="ex: BIENVENUE10, ETE2025"
 											disabled={isPending}
 											className="uppercase"
+											autoCapitalize="characters"
+											autoComplete="off"
+											spellCheck={false}
+											autoCorrect="off"
+											enterKeyHint="next"
+											maxLength={30}
 										/>
 									</div>
 								)}
@@ -240,6 +268,8 @@ export function DiscountFormDialog() {
 														disabled={isPending}
 														min={1}
 														max={currentType === "PERCENTAGE" ? 100 : undefined}
+														inputMode={currentType === "PERCENTAGE" ? "numeric" : "decimal"}
+														enterKeyHint="next"
 													/>
 													<p className="text-muted-foreground text-xs">
 														{currentType === "PERCENTAGE"
@@ -268,6 +298,8 @@ export function DiscountFormDialog() {
 											placeholder="ex: 5000"
 											disabled={isPending}
 											min={0}
+											inputMode="decimal"
+											enterKeyHint="next"
 										/>
 										<p className="text-muted-foreground text-xs">
 											{field.state.value && field.state.value > 0
@@ -293,6 +325,8 @@ export function DiscountFormDialog() {
 												placeholder="Illimité"
 												disabled={isPending}
 												min={1}
+												inputMode="numeric"
+												enterKeyHint="next"
 											/>
 										</div>
 									)}
@@ -311,6 +345,8 @@ export function DiscountFormDialog() {
 												placeholder="Illimité"
 												disabled={isPending}
 												min={1}
+												inputMode="numeric"
+												enterKeyHint="done"
 											/>
 										</div>
 									)}
@@ -346,7 +382,7 @@ export function DiscountFormDialog() {
 					{/* Fin du contenu scrollable */}
 
 					{/* Footer fixe */}
-					<div className="mt-4 flex shrink-0 justify-end border-t pt-4">
+					<div className="mt-4 flex shrink-0 justify-end border-t pt-4 pr-[max(0rem,env(safe-area-inset-right))] pb-[max(0rem,env(safe-area-inset-bottom))] pl-[max(0rem,env(safe-area-inset-left))]">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">

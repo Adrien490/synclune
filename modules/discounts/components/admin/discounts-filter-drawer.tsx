@@ -10,6 +10,7 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/shared/components/ui/drawer";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { DiscountType } from "@/app/generated/prisma/browser";
 import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
@@ -52,11 +53,13 @@ export function DiscountsFilterDrawer({ open, onOpenChange }: DiscountsFilterDra
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const haptic = useHaptic();
 
 	const currentFilter = getCurrentFilter(searchParams);
 	const [optimisticFilter, setOptimisticFilter] = useOptimistic(currentFilter);
 
 	const handleSelect = (value: string) => {
+		haptic("selection");
 		startTransition(() => {
 			setOptimisticFilter(value);
 			const params = new URLSearchParams(searchParams);
@@ -93,7 +96,11 @@ export function DiscountsFilterDrawer({ open, onOpenChange }: DiscountsFilterDra
 					<DrawerTitle>Filtrer les codes promo</DrawerTitle>
 				</DrawerHeader>
 				<DrawerBody>
-					<div role="listbox" aria-label="Filtrer les codes promo" className="flex flex-col gap-1">
+					<div
+						role="listbox"
+						aria-label="Filtrer les codes promo"
+						className="flex flex-col gap-1 pb-[max(0rem,env(safe-area-inset-bottom))]"
+					>
 						{FILTER_OPTIONS.map((option) => {
 							const isSelected = optimisticFilter === option.value;
 

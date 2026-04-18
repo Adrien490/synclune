@@ -1,6 +1,7 @@
 "use client";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { useHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import {
 	m,
@@ -19,7 +20,7 @@ function formatNumber(value: number, decimalPlaces: number, locale: string): str
 	}).format(Number(value.toFixed(decimalPlaces)));
 }
 
-interface AnimatedNumberProps {
+export interface AnimatedNumberProps {
 	/** Valeur cible a atteindre */
 	value: number;
 	/** Valeur de depart (default: 0) */
@@ -39,6 +40,8 @@ interface AnimatedNumberProps {
 	/** Callbacks d'animation */
 	onAnimationStart?: () => void;
 	onAnimationComplete?: () => void;
+	/** Pattern haptic à déclencher en fin de count (opt-in, défaut: false) */
+	hapticOnComplete?: HapticPattern | false;
 }
 
 export function AnimatedNumber({
@@ -52,9 +55,11 @@ export function AnimatedNumber({
 	formatter,
 	onAnimationStart,
 	onAnimationComplete,
+	hapticOnComplete = false,
 }: AnimatedNumberProps) {
 	const ref = useRef<HTMLSpanElement>(null);
 	const shouldReduceMotion = useReducedMotion();
+	const triggerHaptic = useHaptic();
 	const isInView = useInView(ref, { once: true, margin: "0px" });
 
 	const initialValue = direction === "down" ? value : startValue;
@@ -74,6 +79,9 @@ export function AnimatedNumber({
 
 	const onComplete = useEffectEvent(() => {
 		onAnimationComplete?.();
+		if (hapticOnComplete !== false) {
+			triggerHaptic(hapticOnComplete);
+		}
 	});
 
 	// Declencher l'animation quand le composant entre dans le viewport

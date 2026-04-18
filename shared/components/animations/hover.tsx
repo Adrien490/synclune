@@ -2,9 +2,10 @@
 
 import { m, useReducedMotion } from "motion/react";
 import { type ReactNode } from "react";
+import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 
-interface HoverProps {
+export interface HoverProps {
 	children: ReactNode;
 	className?: string;
 	scale?: number;
@@ -15,8 +16,10 @@ interface HoverProps {
 }
 
 /**
- * Animation hover avec whileHover
- * Améliore l'interactivité des éléments cliquables/survolables
+ * Animation hover avec whileHover.
+ *
+ * Mobile native 2026: désactivé sur appareils tactiles pour éviter le sticky-focus
+ * iOS Safari (tap déclenche hover figé jusqu'au prochain tap ailleurs).
  */
 export function Hover({
 	children,
@@ -28,12 +31,14 @@ export function Hover({
 	duration = 0.2,
 }: HoverProps) {
 	const shouldReduceMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
+	const skipHover = shouldReduceMotion === true || isTouchDevice;
 
 	return (
 		<m.div
 			className={className}
 			whileHover={
-				shouldReduceMotion
+				skipHover
 					? undefined
 					: {
 							scale,

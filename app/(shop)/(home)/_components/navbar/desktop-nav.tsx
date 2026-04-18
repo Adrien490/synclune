@@ -28,7 +28,7 @@ const linkClasses = cn(
 	"relative h-auto px-3 py-2 rounded-sm text-sm font-medium tracking-[0.02em]",
 	"text-foreground/85 hover:text-foreground",
 	"data-[active=true]:text-foreground",
-	"transition-[color,background-color] duration-200",
+	"motion-safe:transition-[color,background-color] motion-safe:duration-[var(--duration-normal)]",
 	// Subtle rose accent halo on hover (premium brand touch, stays under underline)
 	"motion-safe:hover:bg-primary/5 data-[state=open]:bg-primary/5",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -106,8 +106,8 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 									"top-(--navbar-height)!",
 									"mt-0! rounded-none! border-0! p-0!",
 									"bg-background border-border border-b shadow-md",
-									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-200",
-									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-150",
+									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-[var(--duration-normal)]",
+									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-[var(--duration-fast)]",
 									"motion-reduce:animate-none",
 								)}
 							>

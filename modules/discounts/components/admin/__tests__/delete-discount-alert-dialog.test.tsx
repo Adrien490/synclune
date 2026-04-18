@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockDialog, mockAction, mockIsPending } = vi.hoisted(() => ({
+const { mockDialog, mockAction, mockIsPending, mockHaptic } = vi.hoisted(() => ({
 	mockDialog: {
 		isOpen: true,
 		data: {
@@ -23,10 +23,16 @@ const { mockDialog, mockAction, mockIsPending } = vi.hoisted(() => ({
 	},
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
+	mockHaptic: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 vi.mock("@/modules/discounts/hooks/use-delete-discount", () => ({
@@ -70,12 +76,19 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 		children,
 		disabled,
 		"aria-busy": ariaBusy,
+		onPointerDown,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		"aria-busy"?: boolean;
+		onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
 	}) => (
-		<button data-testid="submit-button" disabled={disabled} aria-busy={ariaBusy}>
+		<button
+			data-testid="submit-button"
+			disabled={disabled}
+			aria-busy={ariaBusy}
+			onPointerDown={onPointerDown}
+		>
 			{children}
 		</button>
 	),
@@ -175,5 +188,12 @@ describe("DeleteDiscountAlertDialog", () => {
 		mockIsPending.value = true;
 		render(<DeleteDiscountAlertDialog />);
 		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+	});
+
+	it("triggers heavy haptic on submit pointerdown (destructive)", () => {
+		render(<DeleteDiscountAlertDialog />);
+		const submit = screen.getByTestId("submit-button");
+		submit.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		expect(mockHaptic).toHaveBeenCalledWith("heavy");
 	});
 });

@@ -30,7 +30,7 @@ export function ProductCardColorSwatches({
 						onClick={() => triggerHaptic("selection")}
 						className={cn(
 							"focus-ring border-foreground/15 relative block size-7 shrink-0 rounded-full border sm:size-8",
-							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 transition-transform duration-150",
+							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]",
 							"after:absolute after:-inset-2 after:rounded-full after:content-['']",
 							!color.inStock && "opacity-50",
 						)}

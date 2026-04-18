@@ -1,11 +1,11 @@
 import { use } from "react";
 import { ReviewStatus } from "@/app/generated/prisma/client";
 import { MessageSquare, CircleCheck, EyeOff } from "lucide-react";
-import Link from "next/link";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
+import { StopPropagationLink } from "@/shared/components/stop-propagation-link";
 import {
 	Item,
 	ItemActions,
@@ -52,16 +52,13 @@ export function ReviewsMobileList({ reviewsPromise, perPage }: ReviewsMobileList
 							<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte avis">
 								<ItemContent className="min-w-0">
 									<ItemTitle>
-										<Link
+										<StopPropagationLink
 											href={`/creations/${review.product.slug}`}
 											target="_blank"
-											onClick={(e) => e.stopPropagation()}
-											onPointerDown={(e) => e.stopPropagation()}
-											onKeyDown={(e) => e.stopPropagation()}
 											className="hover:text-primary truncate font-semibold transition-colors"
 										>
 											{review.product.title}
-										</Link>
+										</StopPropagationLink>
 										{review.status === ReviewStatus.PUBLISHED ? (
 											<Badge variant="default" className="gap-1">
 												<CircleCheck className="size-3" aria-hidden="true" />

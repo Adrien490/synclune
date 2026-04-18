@@ -38,7 +38,7 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 					>
 						<User
 							size={20}
-							className="transition-transform duration-300 ease-out group-hover:scale-105"
+							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105"
 							aria-hidden="true"
 						/>
 					</Link>
@@ -59,14 +59,18 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 						>
 							<User
 								size={20}
-								className="transition-transform duration-300 ease-out group-hover:scale-105 group-data-[state=open]:scale-105"
+								className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105 motion-safe:group-data-[state=open]:scale-105"
 								aria-hidden="true"
 							/>
 						</DropdownMenuTrigger>
 					</TooltipTrigger>
 					<TooltipContent className="hidden lg:block">Mon compte</TooltipContent>
 				</Tooltip>
-				<DropdownMenuContent align="end" sideOffset={8} className="w-60 motion-safe:duration-200">
+				<DropdownMenuContent
+					align="end"
+					sideOffset={8}
+					className="w-60 motion-safe:duration-[var(--duration-normal)]"
+				>
 					{(userName ?? userEmail) && (
 						<>
 							<DropdownMenuLabel className="flex flex-col gap-0.5 py-2">

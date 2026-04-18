@@ -4,6 +4,7 @@ import { m, useMotionValueEvent, useReducedMotion, useScroll, useTransform } fro
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "./motion.config";
 
@@ -41,6 +42,7 @@ export function ScrollIndicator({
 	className,
 }: ScrollIndicatorProps) {
 	const shouldReduceMotion = useReducedMotion();
+	const triggerHaptic = useHaptic();
 	const { scrollY } = useScroll();
 	const [isVisible, setIsVisible] = useState(true);
 
@@ -53,6 +55,7 @@ export function ScrollIndicator({
 	});
 
 	const handleClick = () => {
+		triggerHaptic("light");
 		const ids = Array.isArray(targetIds) ? targetIds : [targetIds];
 		for (const id of ids) {
 			const target = document.getElementById(id);

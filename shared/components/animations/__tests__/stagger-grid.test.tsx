@@ -5,8 +5,9 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion } = vi.hoisted(() => ({
+const { mockReducedMotion, mockIsTouchDevice } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
+	mockIsTouchDevice: { value: false },
 }));
 
 // ============================================================================
@@ -59,6 +60,10 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
+vi.mock("@/shared/hooks", () => ({
+	useIsTouchDevice: () => mockIsTouchDevice.value,
+}));
+
 // ============================================================================
 // IMPORT UNDER TEST
 // ============================================================================
@@ -69,6 +74,7 @@ describe("StaggerGrid", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockReducedMotion.value = false;
+		mockIsTouchDevice.value = false;
 	});
 
 	afterEach(cleanup);

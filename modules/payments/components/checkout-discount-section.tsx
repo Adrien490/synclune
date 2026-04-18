@@ -104,6 +104,12 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 															placeholder="Entrer un code"
 															className="uppercase"
 															aria-label="Code promo"
+															autoCapitalize="characters"
+															autoComplete="off"
+															autoCorrect="off"
+															spellCheck={false}
+															enterKeyHint="send"
+															maxLength={30}
 															onKeyDown={(e: React.KeyboardEvent) => {
 																if (e.key === "Enter") {
 																	e.preventDefault();

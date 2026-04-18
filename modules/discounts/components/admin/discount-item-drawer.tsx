@@ -7,6 +7,7 @@ import { DiscountType } from "@/app/generated/prisma/enums";
 import { AdminItemDrawer } from "@/shared/components/admin-item-drawer";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -58,6 +59,7 @@ export function DiscountItemDrawer() {
 	const deleteAlert = useAlertDialog(DELETE_DISCOUNT_DIALOG_ID);
 	const toggleAlert = useAlertDialog(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateDiscount();
+	const haptic = useHaptic();
 
 	const discount = drawer.data?.discount;
 
@@ -73,6 +75,7 @@ export function DiscountItemDrawer() {
 	const canDelete = discount.usageCount === 0;
 
 	const handleEdit = () => {
+		haptic("selection");
 		drawer.close();
 		formDialog.open({
 			discount: {
@@ -91,16 +94,19 @@ export function DiscountItemDrawer() {
 	};
 
 	const handleDuplicate = () => {
+		haptic("selection");
 		duplicate(discount.id);
 		drawer.close();
 	};
 
 	const handleViewUsages = () => {
+		haptic("selection");
 		drawer.close();
 		usagesDialog.open({ discountId: discount.id, discountCode: discount.code });
 	};
 
 	const handleToggle = () => {
+		haptic("medium");
 		drawer.close();
 		toggleAlert.open({
 			discountId: discount.id,
@@ -110,6 +116,7 @@ export function DiscountItemDrawer() {
 	};
 
 	const handleDelete = () => {
+		haptic("heavy");
 		drawer.close();
 		deleteAlert.open({
 			discountId: discount.id,
@@ -159,6 +166,11 @@ export function DiscountItemDrawer() {
 			</dl>
 
 			<div role="group" aria-label="Actions" className="flex flex-col gap-2">
+				{isDuplicating ? (
+					<span role="status" aria-live="polite" className="sr-only">
+						Duplication en cours…
+					</span>
+				) : null}
 				<Button
 					variant="outline"
 					size="lg"
@@ -211,10 +223,16 @@ export function DiscountItemDrawer() {
 					className="text-destructive hover:text-destructive h-12 justify-start gap-3"
 					onClick={handleDelete}
 					disabled={!canDelete}
+					aria-describedby={!canDelete ? "discount-delete-disabled-hint" : undefined}
 				>
 					<Trash2 className="size-4" aria-hidden="true" />
 					Supprimer
 				</Button>
+				{!canDelete ? (
+					<span id="discount-delete-disabled-hint" className="sr-only">
+						Ce code a déjà été utilisé et ne peut pas être supprimé
+					</span>
+				) : null}
 			</div>
 		</AdminItemDrawer>
 	);

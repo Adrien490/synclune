@@ -154,7 +154,7 @@ export function PolaroidGallery() {
 								className={cn(
 									p.scatterClass,
 									"polaroid-scatter",
-									"motion-safe:transition-shadow motion-safe:duration-300",
+									"motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]",
 									GLOW_CLASSES[p.glowColor],
 								)}
 								style={

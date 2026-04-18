@@ -55,6 +55,11 @@ const ManageCollectionsDialog = dynamic(() =>
 		(mod) => mod.ManageCollectionsDialog,
 	),
 );
+const ProductItemDrawer = dynamic(() =>
+	import("@/modules/products/components/admin/product-item-drawer").then(
+		(mod) => mod.ProductItemDrawer,
+	),
+);
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
@@ -133,6 +138,7 @@ export default function ProductsAdminPage({ searchParams }: ProductsAdminPagePro
 			<DeleteProductAlertDialog />
 			<DuplicateProductAlertDialog />
 			<ManageCollectionsDialog />
+			<ProductItemDrawer />
 		</>
 	);
 }

@@ -19,7 +19,7 @@ export function MenuSheetFooter(_props: MenuSheetFooterProps) {
 					href={BRAND.social.instagram.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
+					className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full motion-safe:transition-all motion-safe:duration-[var(--duration-fast)] motion-safe:active:scale-95"
 					aria-label="Suivre Synclune sur Instagram (nouvelle fenêtre)"
 					onClick={() => triggerHaptic("selection")}
 				>
@@ -29,7 +29,7 @@ export function MenuSheetFooter(_props: MenuSheetFooterProps) {
 					href={BRAND.social.tiktok.url}
 					target="_blank"
 					rel="noopener noreferrer"
-					className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full transition-all duration-150 active:scale-95"
+					className="text-muted-foreground hover:text-foreground hover:bg-accent inline-flex size-11 items-center justify-center rounded-full motion-safe:transition-all motion-safe:duration-[var(--duration-fast)] motion-safe:active:scale-95"
 					aria-label="Suivre Synclune sur TikTok (nouvelle fenêtre)"
 					onClick={() => triggerHaptic("selection")}
 				>

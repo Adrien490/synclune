@@ -6,14 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockSelectedItems, mockClearSelection, mockBulkDeleteDialog, mockToggle } = vi.hoisted(
-	() => ({
+const { mockSelectedItems, mockClearSelection, mockBulkDeleteDialog, mockToggle, mockHaptic } =
+	vi.hoisted(() => ({
 		mockSelectedItems: { value: [] as string[] },
 		mockClearSelection: vi.fn(),
 		mockBulkDeleteDialog: { isOpen: false, data: null, open: vi.fn(), close: vi.fn() },
 		mockToggle: vi.fn(),
-	}),
-);
+		mockHaptic: vi.fn(),
+	}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
+}));
 
 vi.mock("@/shared/contexts/selection-context", () => ({
 	useSelectionContext: () => ({
@@ -176,5 +181,24 @@ describe("DiscountsSelectionToolbar", () => {
 		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
 		const deleteBtn = screen.getByText("Supprimer").closest("button");
 		expect(deleteBtn).toHaveAttribute("data-variant", "destructive");
+	});
+
+	// ─── Haptic & a11y ────────────────────────────────────────────────────────
+
+	it("wraps selection count in role=status aria-live=polite (SR count updates)", () => {
+		mockSelectedItems.value = ["d-1", "d-2"];
+		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
+		const label = screen.getByText(/2 codes promo sélectionnés/);
+		expect(label).toHaveAttribute("role", "status");
+		expect(label).toHaveAttribute("aria-live", "polite");
+		expect(label).toHaveAttribute("aria-atomic", "true");
+	});
+
+	it("triggers selection haptic on trigger pointerdown", () => {
+		mockSelectedItems.value = ["d-1"];
+		render(<DiscountsSelectionToolbar discountIds={["d-1", "d-2"]} discounts={defaultDiscounts} />);
+		const trigger = screen.getByRole("button", { name: "Actions de la sélection" });
+		trigger.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
 	});
 });

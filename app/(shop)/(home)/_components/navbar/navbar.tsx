@@ -111,14 +111,14 @@ export async function Navbar() {
 					aria-label="Navigation principale"
 					data-announcement-focus-fallback
 					tabIndex={-1}
-					className="transition-all duration-300 ease-in-out outline-none"
+					className="outline-none motion-safe:transition-all motion-safe:duration-[var(--duration-slow)] motion-safe:ease-in-out"
 				>
 					<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 						<div
 							className={cn(
 								"flex h-16 items-center gap-4 sm:h-20",
 								// Scroll compact: shrink sm:h-20 → sm:h-16 when wrapper is scrolled
-								"motion-safe:transition-[height] motion-safe:duration-300 motion-safe:ease-out",
+								"motion-safe:transition-[height] motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
 								"group-data-[scrolled=true]:sm:h-16",
 							)}
 						>
@@ -142,7 +142,7 @@ export async function Navbar() {
 									className={cn(
 										"hidden max-w-full min-w-0 origin-left lg:flex",
 										// Scroll compact: subtle scale-down of desktop logo when scrolled
-										"motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-out",
+										"motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:ease-out",
 										"group-data-[scrolled=true]:motion-safe:scale-90",
 									)}
 									shadow

@@ -3,6 +3,14 @@
 import { useSortable } from "@dnd-kit/react/sortable";
 import { Button } from "@/shared/components/ui/button";
 import {
+	Drawer,
+	DrawerClose,
+	DrawerContent,
+	DrawerHeader,
+	DrawerTitle,
+	DrawerTrigger,
+} from "@/shared/components/ui/drawer";
+import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
@@ -12,6 +20,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -63,6 +72,8 @@ export function SortableMediaItem({
 	const canMoveUp = Boolean(index > 0 && onMoveUp);
 	const canMoveDown = Boolean(index < totalCount - 1 && onMoveDown);
 	const haptic = useHaptic();
+	const isMobile = useIsMobile();
+	const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
 	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
 		index,
@@ -85,27 +96,84 @@ export function SortableMediaItem({
 		}
 	}, [isDragSource, haptic]);
 
+	const closeMobileActions = () => setMobileActionsOpen(false);
+
 	const handleOpenLightbox = () => {
 		haptic("selection");
+		closeMobileActions();
 		onOpenLightbox(index);
 	};
 
 	const handleOpenDeleteDialog = () => {
 		haptic("medium");
+		closeMobileActions();
 		onOpenDeleteDialog();
 	};
 
 	const handleMoveUp = () => {
 		if (!onMoveUp) return;
 		haptic("selection");
+		closeMobileActions();
 		onMoveUp();
 	};
 
 	const handleMoveDown = () => {
 		if (!onMoveDown) return;
 		haptic("selection");
+		closeMobileActions();
 		onMoveDown();
 	};
+
+	const mobileActionItems = (
+		<div className="flex flex-col gap-1 pb-2">
+			<button
+				type="button"
+				onClick={handleOpenLightbox}
+				className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+			>
+				<Expand className="text-muted-foreground size-5" aria-hidden="true" />
+				<span className="text-sm font-medium">Agrandir</span>
+			</button>
+			{canMoveUp && (
+				<button
+					type="button"
+					onClick={handleMoveUp}
+					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+				>
+					<ArrowUp className="text-muted-foreground size-5" aria-hidden="true" />
+					<span className="text-sm font-medium">Déplacer vers le haut</span>
+				</button>
+			)}
+			{canMoveDown && (
+				<button
+					type="button"
+					onClick={handleMoveDown}
+					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+				>
+					<ArrowDown className="text-muted-foreground size-5" aria-hidden="true" />
+					<span className="text-sm font-medium">Déplacer vers le bas</span>
+				</button>
+			)}
+			<button
+				type="button"
+				onClick={handleOpenDeleteDialog}
+				className="hover:bg-destructive/10 active:bg-destructive/15 text-destructive flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+			>
+				<Trash2 className="size-5" aria-hidden="true" />
+				<span className="text-sm font-semibold">Supprimer</span>
+			</button>
+			<DrawerClose asChild>
+				<Button
+					type="button"
+					variant="ghost"
+					className="mt-1 min-h-12 w-full"
+					onClick={() => haptic("light")}
+				>
+					Annuler
+				</Button>
+			</DrawerClose>
+		</div>
+	);
 
 	return (
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- sortable item needs keyboard interactions
@@ -243,7 +311,7 @@ export function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Drag handle */}
+			{/* Drag handle — 44px WCAG 2.5.5 */}
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<button
@@ -260,7 +328,7 @@ export function SortableMediaItem({
 							shouldReduceMotion ? "" : "motion-safe:transition-opacity",
 						)}
 					>
-						<div className="flex h-10 w-10 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
+						<div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
 							<GripVertical className="h-5 w-5 text-white" aria-hidden="true" />
 						</div>
 					</button>
@@ -334,50 +402,74 @@ export function SortableMediaItem({
 				</Tooltip>
 			</div>
 
-			{/* Mobile actions */}
+			{/* Mobile actions — Drawer Vaul bottom-sheet (was DropdownMenu) */}
 			<div className="absolute top-2 right-2 z-20 sm:hidden">
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button
-							type="button"
-							variant="secondary"
-							size="icon"
-							className="h-11 w-11 rounded-full border-0 bg-black/70 hover:bg-black/90"
-							aria-label={`Actions pour le média ${index + 1}`}
-						>
-							<EllipsisVertical className="h-5 w-5 text-white" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="min-w-40">
-						<DropdownMenuItem onClick={handleOpenLightbox} className="min-h-11 gap-2 py-3">
-							<Expand className="h-4 w-4" />
-							Agrandir
-						</DropdownMenuItem>
-						{/* WCAG 2.5.7: Drag alternatives */}
-						{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
-						{canMoveUp && (
-							<DropdownMenuItem onClick={handleMoveUp} className="min-h-11 gap-2 py-3">
-								<ArrowUp className="h-4 w-4" />
-								Déplacer vers le haut
+				{isMobile ? (
+					<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
+						<DrawerTrigger asChild>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								onClick={() => haptic("light")}
+								className="h-11 w-11 rounded-full border-0 bg-black/70 hover:bg-black/90"
+								aria-label={`Actions pour le média ${index + 1}`}
+							>
+								<EllipsisVertical className="h-5 w-5 text-white" />
+							</Button>
+						</DrawerTrigger>
+						<DrawerContent onOverlayClick={() => haptic("selection")} className="max-h-[60vh]">
+							<DrawerHeader>
+								<DrawerTitle>
+									Actions sur {isVideo ? "la vidéo" : "l'image"} {index + 1}
+								</DrawerTitle>
+							</DrawerHeader>
+							{mobileActionItems}
+						</DrawerContent>
+					</Drawer>
+				) : (
+					<DropdownMenu>
+						<DropdownMenuTrigger asChild>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								className="h-11 w-11 rounded-full border-0 bg-black/70 hover:bg-black/90"
+								aria-label={`Actions pour le média ${index + 1}`}
+							>
+								<EllipsisVertical className="h-5 w-5 text-white" />
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent align="end" className="min-w-40">
+							<DropdownMenuItem onClick={handleOpenLightbox} className="min-h-11 gap-2 py-3">
+								<Expand className="h-4 w-4" />
+								Agrandir
 							</DropdownMenuItem>
-						)}
-						{canMoveDown && (
-							<DropdownMenuItem onClick={handleMoveDown} className="min-h-11 gap-2 py-3">
-								<ArrowDown className="h-4 w-4" />
-								Déplacer vers le bas
+							{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
+							{canMoveUp && (
+								<DropdownMenuItem onClick={handleMoveUp} className="min-h-11 gap-2 py-3">
+									<ArrowUp className="h-4 w-4" />
+									Déplacer vers le haut
+								</DropdownMenuItem>
+							)}
+							{canMoveDown && (
+								<DropdownMenuItem onClick={handleMoveDown} className="min-h-11 gap-2 py-3">
+									<ArrowDown className="h-4 w-4" />
+									Déplacer vers le bas
+								</DropdownMenuItem>
+							)}
+							<DropdownMenuSeparator />
+							<DropdownMenuItem
+								variant="destructive"
+								onClick={handleOpenDeleteDialog}
+								className="min-h-11 gap-2 py-3"
+							>
+								<Trash2 className="h-4 w-4" />
+								Supprimer
 							</DropdownMenuItem>
-						)}
-						<DropdownMenuSeparator />
-						<DropdownMenuItem
-							variant="destructive"
-							onClick={handleOpenDeleteDialog}
-							className="min-h-11 gap-2 py-3"
-						>
-							<Trash2 className="h-4 w-4" />
-							Supprimer
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+						</DropdownMenuContent>
+					</DropdownMenu>
+				)}
 			</div>
 		</div>
 	);

@@ -5,10 +5,14 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion, mockSpringValue } = vi.hoisted(() => ({
-	mockReducedMotion: { value: false },
-	mockSpringValue: { current: 0 },
-}));
+const { mockReducedMotion, mockSpringValue, mockTriggerHaptic, mockSpringSubscriber } = vi.hoisted(
+	() => ({
+		mockReducedMotion: { value: false },
+		mockSpringValue: { current: 0 },
+		mockTriggerHaptic: vi.fn(),
+		mockSpringSubscriber: { fn: undefined as ((current: number) => void) | undefined },
+	}),
+);
 
 // ============================================================================
 // MODULE MOCKS
@@ -35,7 +39,10 @@ vi.mock("motion/react", () => {
 			return {
 				set: vi.fn(),
 				get: () => mockSpringValue.current,
-				on: vi.fn(() => () => {}),
+				on: vi.fn((_evt: string, cb: (current: number) => void) => {
+					mockSpringSubscriber.fn = cb;
+					return () => {};
+				}),
 			};
 		},
 		useTransform: (_spring: unknown, formatter: (n: number) => string) => {
@@ -54,6 +61,10 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockTriggerHaptic,
+}));
+
 // ============================================================================
 // IMPORT UNDER TEST
 // ============================================================================
@@ -65,6 +76,7 @@ describe("AnimatedNumber", () => {
 		vi.clearAllMocks();
 		mockReducedMotion.value = false;
 		mockSpringValue.current = 0;
+		mockSpringSubscriber.fn = undefined;
 	});
 
 	afterEach(cleanup);
@@ -137,5 +149,19 @@ describe("AnimatedNumber", () => {
 		render(<AnimatedNumber value={1234} locale="en-US" />);
 		const text = screen.getByRole("status").textContent!;
 		expect(text).toBe("1,234");
+	});
+
+	it("triggers haptic on complete when hapticOnComplete is set", () => {
+		mockReducedMotion.value = false;
+		render(<AnimatedNumber value={100} hapticOnComplete="success" />);
+		mockSpringSubscriber.fn?.(100);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("success");
+	});
+
+	it("does not trigger haptic by default (hapticOnComplete=false)", () => {
+		mockReducedMotion.value = false;
+		render(<AnimatedNumber value={100} />);
+		mockSpringSubscriber.fn?.(100);
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 });

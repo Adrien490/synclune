@@ -11,6 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
 import { cn } from "@/shared/utils/cn";
 import { LoaderCircle } from "lucide-react";
@@ -26,9 +27,11 @@ interface ToggleDiscountStatusData {
 
 export function ToggleDiscountStatusAlertDialog() {
 	const dialog = useAlertDialog<ToggleDiscountStatusData>(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
+	const haptic = useHaptic();
 
 	const { action, isPending } = useToggleDiscountStatus({
 		onSuccess: () => {
+			haptic("success");
 			dialog.close();
 		},
 	});
@@ -75,6 +78,7 @@ export function ToggleDiscountStatusAlertDialog() {
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
+							onPointerDown={() => haptic("medium")}
 							className={cn(
 								"text-white",
 								isActive ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700",

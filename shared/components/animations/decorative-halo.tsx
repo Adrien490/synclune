@@ -4,7 +4,7 @@ import "./decorative-halo.css";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 
-interface DecorativeHaloProps {
+export interface DecorativeHaloProps {
 	/**
 	 * Taille du halo principal
 	 */
@@ -122,7 +122,7 @@ export function DecorativeHalo({
 /**
  * Composant pour créer un groupe de halos décoratifs autour d'un élément
  */
-interface DecorativeHaloGroupProps {
+export interface DecorativeHaloGroupProps {
 	/**
 	 * Container className
 	 */

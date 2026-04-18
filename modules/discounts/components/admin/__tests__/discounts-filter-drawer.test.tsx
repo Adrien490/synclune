@@ -6,9 +6,15 @@ import type * as ReactType from "react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPush, mockSearchParams } = vi.hoisted(() => ({
+const { mockPush, mockSearchParams, mockHaptic } = vi.hoisted(() => ({
 	mockPush: vi.fn(),
 	mockSearchParams: new URLSearchParams(),
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 // ============================================================================
@@ -316,6 +322,12 @@ describe("DiscountsFilterDrawer", () => {
 			renderDrawer(true, onOpenChange);
 			fireEvent.click(screen.getByRole("option", { name: "Actifs uniquement" }));
 			expect(onOpenChange).toHaveBeenCalledWith(false);
+		});
+
+		it("triggers selection haptic when a filter option is clicked", () => {
+			renderDrawer();
+			fireEvent.click(screen.getByRole("option", { name: "Actifs uniquement" }));
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
 		});
 	});
 

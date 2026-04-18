@@ -13,6 +13,7 @@ vi.mock("sonner", () => ({
 	toast: {
 		success: vi.fn(),
 		error: vi.fn(),
+		warning: vi.fn(),
 	},
 }));
 
@@ -27,15 +28,46 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
+vi.mock("@/shared/components/scroll-fade", () => ({
+	default: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="scroll-fade">{children}</div>
+	),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => () => true,
+	triggerHaptic: () => true,
+}));
+
 vi.mock("@/shared/components/media-upload/upload-progress", () => ({
-	UploadProgress: ({
-		progress,
-		variant,
+	UploadProgress: ({ progress }: { progress?: number }) => (
+		<div data-testid="upload-progress" data-progress={progress} />
+	),
+	UploadErrorBanner: () => null,
+}));
+
+vi.mock("@/shared/components/media-upload/upload-action-sheet", () => ({
+	UploadActionSheet: ({
+		desktopFallback,
+		triggerLabel,
 	}: {
-		progress?: number;
-		variant?: string;
-		isProcessing?: boolean;
-	}) => <div data-testid="upload-progress" data-progress={progress} data-variant={variant} />,
+		desktopFallback?: React.ReactNode;
+		triggerLabel?: string;
+	}) => (
+		<div data-testid="upload-action-sheet" aria-label={triggerLabel}>
+			{desktopFallback}
+		</div>
+	),
+}));
+
+vi.mock("@/shared/components/media-upload/pending-uploads-grid", () => ({
+	PendingUploadsGrid: ({ files }: { files: File[] }) => (
+		<div data-testid="pending-grid" data-count={files.length} />
+	),
 }));
 
 vi.mock("@/modules/media/utils/uploadthing", () => ({
@@ -43,17 +75,9 @@ vi.mock("@/modules/media/utils/uploadthing", () => ({
 		"aria-label": ariaLabel,
 		content,
 	}: {
-		endpoint: string;
 		"aria-label"?: string;
-		onUploadBegin?: () => void;
-		onClientUploadComplete?: (res: unknown[]) => void;
-		onUploadError?: (error: { message: string }) => void;
-		config?: unknown;
-		appearance?: unknown;
 		content?: {
-			label?: (args: { isUploading: boolean }) => React.ReactNode;
-			uploadIcon?: (args: { isUploading: boolean; uploadProgress: number }) => React.ReactNode;
-			allowedContent?: () => null;
+			label?: (args: { isUploading: boolean; isDragActive?: boolean }) => React.ReactNode;
 			button?: () => React.ReactNode;
 		};
 	}) => (
@@ -62,11 +86,27 @@ vi.mock("@/modules/media/utils/uploadthing", () => ({
 			{content?.button?.()}
 		</div>
 	),
+	useUploadThing: () => ({
+		startUpload: vi.fn(),
+		isUploading: false,
+	}),
 }));
 
-vi.mock("lucide-react", () => ({
-	Camera: () => <svg data-testid="icon-camera" />,
-	X: () => <svg data-testid="icon-x" />,
+vi.mock("@/modules/media/hooks/use-media-upload", () => ({
+	useMediaUpload: () => ({
+		upload: vi.fn(),
+		uploadSingle: vi.fn(),
+		validateFiles: vi.fn(),
+		cancel: vi.fn(),
+		retryFailed: vi.fn(),
+		clearFailed: vi.fn(),
+		isUploading: false,
+		progress: null,
+		queuedCount: 0,
+		failedFiles: [],
+		getMediaType: () => "IMAGE",
+		isOversized: () => false,
+	}),
 }));
 
 import { ReviewMediaUpload } from "../review-media-upload";
@@ -100,12 +140,12 @@ describe("ReviewMediaUpload", () => {
 		expect(document.body).toBeTruthy();
 	});
 
-	it("renders the upload dropzone when media count is below limit", () => {
+	it("renders the upload action sheet when media count is below limit", () => {
 		render(<ReviewMediaUpload media={[]} onChange={vi.fn()} />);
-		expect(screen.getByTestId("upload-dropzone")).toBeInTheDocument();
+		expect(screen.getByTestId("upload-action-sheet")).toBeInTheDocument();
 	});
 
-	it("renders dropzone with correct aria-label", () => {
+	it("desktop fallback dropzone has correct aria-label", () => {
 		render(<ReviewMediaUpload media={[]} onChange={vi.fn()} />);
 		expect(screen.getByTestId("upload-dropzone")).toHaveAttribute(
 			"aria-label",
@@ -113,10 +153,10 @@ describe("ReviewMediaUpload", () => {
 		);
 	});
 
-	it("does not render upload dropzone when at max limit (3 media)", () => {
+	it("does not render upload trigger when at max limit (3 media)", () => {
 		const media = [createMedia(1), createMedia(2), createMedia(3)];
 		render(<ReviewMediaUpload media={media} onChange={vi.fn()} />);
-		expect(screen.queryByTestId("upload-dropzone")).toBeNull();
+		expect(screen.queryByTestId("upload-action-sheet")).toBeNull();
 	});
 
 	it("shows limit reached message when at max", () => {
@@ -177,23 +217,16 @@ describe("ReviewMediaUpload", () => {
 		expect(removeButton).toBeDisabled();
 	});
 
-	it("does not render dropzone when disabled", () => {
+	it("does not render upload trigger when disabled", () => {
 		render(<ReviewMediaUpload media={[]} onChange={vi.fn()} disabled={true} />);
-		expect(screen.queryByTestId("upload-dropzone")).toBeNull();
+		expect(screen.queryByTestId("upload-action-sheet")).toBeNull();
 	});
 
-	it("renders 'Ajouter des photos' text in dropzone", () => {
+	it("action sheet trigger label mentions adding photos", () => {
 		render(<ReviewMediaUpload media={[]} onChange={vi.fn()} />);
-		expect(screen.getAllByText("Ajouter des photos").length).toBeGreaterThan(0);
-	});
-
-	it("renders remaining count text correctly when 1 media present", () => {
-		render(<ReviewMediaUpload media={[createMedia(1)]} onChange={vi.fn()} />);
-		expect(screen.getByText(/2 restantes/)).toBeInTheDocument();
-	});
-
-	it("renders remaining count text correctly when no media present", () => {
-		render(<ReviewMediaUpload media={[]} onChange={vi.fn()} />);
-		expect(screen.getByText(/3 restantes/)).toBeInTheDocument();
+		expect(screen.getByTestId("upload-action-sheet")).toHaveAttribute(
+			"aria-label",
+			"Ajouter des photos",
+		);
 	});
 });

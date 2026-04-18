@@ -11,13 +11,13 @@
 export function NavbarSkeleton() {
 	return (
 		<header
-			className="fixed inset-x-0 top-[var(--announcement-bar-height)] z-40 border-b border-transparent bg-transparent pt-[env(safe-area-inset-top)] transition-all duration-300 ease-out"
+			className="fixed inset-x-0 top-[var(--announcement-bar-height)] z-40 border-b border-transparent bg-transparent pt-[env(safe-area-inset-top)] ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			aria-busy="true"
 			aria-label="Chargement de la navigation"
 		>
 			<nav
 				aria-label="Navigation principale en cours de chargement"
-				className="transition-all duration-300 ease-in-out"
+				className="ease-in-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]"
 			>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<div className="flex h-16 items-center gap-4 sm:h-20">

@@ -9,6 +9,7 @@ import {
 	type ActionMenuSection,
 } from "@/shared/components/responsive-action-menu";
 import { Button } from "@/shared/components/ui/button";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useDuplicateDiscount } from "@/modules/discounts/hooks/use-duplicate-discount";
@@ -29,6 +30,7 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 	const { open: openToggleDialog } = useAlertDialog(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
 	const { open: openUsagesDialog } = useDialog(DISCOUNT_USAGES_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateDiscount();
+	const haptic = useHaptic();
 
 	const canDelete = discount.usageCount === 0;
 
@@ -110,8 +112,9 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
 					aria-label={`Actions pour ${discount.code}`}
+					onPointerDown={() => haptic("selection")}
 				>
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>

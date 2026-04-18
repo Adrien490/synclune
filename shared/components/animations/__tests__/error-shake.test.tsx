@@ -5,9 +5,10 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockReducedMotion, capturedOnAnimationComplete } = vi.hoisted(() => ({
+const { mockReducedMotion, capturedOnAnimationComplete, mockTriggerHaptic } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
 	capturedOnAnimationComplete: { fn: undefined as (() => void) | undefined },
+	mockTriggerHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -67,6 +68,10 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) =>
 		(args as (string | boolean | null | undefined)[]).filter(Boolean).join(" "),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockTriggerHaptic,
 }));
 
 // ============================================================================
@@ -178,5 +183,28 @@ describe("ErrorShake", () => {
 	it("always renders animate attribute (never undefined)", () => {
 		const { container } = render(<ErrorShake shake={false}>Content</ErrorShake>);
 		expect(container.firstChild).toHaveAttribute("data-animate");
+	});
+
+	it("triggers haptic 'error' when shake transitions to true", () => {
+		const { rerender } = render(<ErrorShake shake={false}>Content</ErrorShake>);
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
+
+		rerender(<ErrorShake shake={true}>Content</ErrorShake>);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("error");
+		expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+	});
+
+	it("does not trigger haptic when disableHaptic is true", () => {
+		render(
+			<ErrorShake shake={true} disableHaptic>
+				Content
+			</ErrorShake>,
+		);
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
+	});
+
+	it("does not trigger haptic when shake stays false", () => {
+		render(<ErrorShake shake={false}>Content</ErrorShake>);
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 });

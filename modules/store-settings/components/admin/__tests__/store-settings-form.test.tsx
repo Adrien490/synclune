@@ -13,11 +13,6 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	}),
 }));
 
-vi.mock("../close-store-dialog", () => ({
-	CLOSE_STORE_DIALOG_ID: "close-store",
-	CloseStoreDialog: () => <div data-testid="close-store-dialog" />,
-}));
-
 vi.mock("../reopen-store-dialog", () => ({
 	REOPEN_STORE_DIALOG_ID: "reopen-store",
 	ReopenStoreDialog: () => <div data-testid="reopen-store-dialog" />,
@@ -64,11 +59,13 @@ function makeSettings(overrides: Partial<StoreSettingsAdmin> = {}): StoreSetting
 describe("StoreSettingsForm", () => {
 	// ─── OPEN, no scheduled ─────────────────────────────────────────────────
 
-	it("shows 'Ouverte' badge and 'Fermer' button when store is open", () => {
+	it("shows 'Ouverte' badge and 'Fermer' link when store is open", () => {
 		render(<StoreSettingsForm settings={makeSettings()} />);
 
 		expect(screen.getByText("Ouverte")).toBeInTheDocument();
-		expect(screen.getByRole("button", { name: /Fermer la boutique/i })).toBeInTheDocument();
+		const link = screen.getByRole("link", { name: /Fermer la boutique/i });
+		expect(link).toBeInTheDocument();
+		expect(link).toHaveAttribute("href", "/admin/configuration/boutique/fermer");
 	});
 
 	it("renders ScheduleClosureForm when open and no scheduled closure", () => {
@@ -151,9 +148,8 @@ describe("StoreSettingsForm", () => {
 
 	// ─── Dialogs always mounted ─────────────────────────────────────────────
 
-	it("always mounts close + reopen dialogs", () => {
+	it("always mounts reopen dialog", () => {
 		render(<StoreSettingsForm settings={makeSettings()} />);
-		expect(screen.getByTestId("close-store-dialog")).toBeInTheDocument();
 		expect(screen.getByTestId("reopen-store-dialog")).toBeInTheDocument();
 	});
 });

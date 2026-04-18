@@ -110,7 +110,7 @@ export async function Footer() {
 									<li key={item.href}>
 										<Link
 											href={item.href}
-											className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
+											className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
 										</Link>
@@ -131,7 +131,7 @@ export async function Footer() {
 								{/* Email - CTA principal avec style proéminent */}
 								<a
 									href={`mailto:${BRAND.contact.email}`}
-									className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
+									className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 									aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 								>
 									{BRAND.contact.email}
@@ -157,13 +157,13 @@ export async function Footer() {
 										href={BRAND.social.instagram.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
+										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
 										<InstagramIcon
 											decorative
 											size={20}
-											className="text-foreground transition-transform duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)]"
+											className="text-foreground group-hover:drop-shadow-[0_0_6px_var(--color-glow-pink)] motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)] motion-safe:group-hover:scale-110"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.instagram.handle}
@@ -175,13 +175,13 @@ export async function Footer() {
 										href={BRAND.social.tiktok.url}
 										target="_blank"
 										rel="noopener noreferrer"
-										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2"
+										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
 										<TikTokIcon
 											decorative
 											size={20}
-											className="text-foreground transition-transform duration-200 group-hover:scale-110 group-hover:drop-shadow-[0_0_6px_var(--color-glow-mint)]"
+											className="text-foreground group-hover:drop-shadow-[0_0_6px_var(--color-glow-mint)] motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)] motion-safe:group-hover:scale-110"
 										/>
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.tiktok.handle}
@@ -219,7 +219,7 @@ export async function Footer() {
 						</h3>
 						<p className="text-muted-foreground flex items-center gap-2 text-sm">
 							<span>Sécurisé par</span>
-							<StripeWordmark className="text-muted-foreground hover:text-foreground transition-colors duration-200" />
+							<StripeWordmark className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]" />
 						</p>
 						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
 							<li>
@@ -251,7 +251,7 @@ export async function Footer() {
 									key={link.href}
 									href={link.href}
 									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
-									className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 sm:justify-start"
+									className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
 								>
 									{link.label}
 								</Link>

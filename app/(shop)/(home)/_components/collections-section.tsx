@@ -127,11 +127,11 @@ export async function CollectionsSection() {
 							{showArrows && (
 								<>
 									<CarouselPrevious
-										className="top-[40%] left-4 hidden opacity-80 transition-opacity duration-300 group-hover/carousel:opacity-100 md:flex"
+										className="top-[40%] left-4 hidden opacity-80 group-hover/carousel:opacity-100 motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)] md:flex"
 										aria-label="Voir les collections précédentes"
 									/>
 									<CarouselNext
-										className="top-[40%] right-4 hidden opacity-80 transition-opacity duration-300 group-hover/carousel:opacity-100 md:flex"
+										className="top-[40%] right-4 hidden opacity-80 group-hover/carousel:opacity-100 motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)] md:flex"
 										aria-label="Voir les collections suivantes"
 									/>
 								</>

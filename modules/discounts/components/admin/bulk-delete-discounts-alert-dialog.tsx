@@ -13,6 +13,7 @@ import {
 import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useBulkDeleteDiscounts } from "@/modules/discounts/hooks/use-bulk-delete-discounts";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 
 export const BULK_DELETE_DISCOUNTS_DIALOG_ID = "bulk-delete-discounts";
@@ -26,9 +27,11 @@ interface BulkDeleteDiscountsData {
 export function BulkDeleteDiscountsAlertDialog() {
 	const dialog = useAlertDialog<BulkDeleteDiscountsData>(BULK_DELETE_DISCOUNTS_DIALOG_ID);
 	const { clearSelection } = useSelectionContext();
+	const haptic = useHaptic();
 
 	const { action, isPending } = useBulkDeleteDiscounts({
 		onSuccess: () => {
+			haptic("success");
 			clearSelection();
 			dialog.close();
 		},
@@ -76,7 +79,12 @@ export function BulkDeleteDiscountsAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						<AlertDialogAction
+							type="submit"
+							disabled={isPending}
+							aria-busy={isPending}
+							onPointerDown={() => haptic("heavy")}
+						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>

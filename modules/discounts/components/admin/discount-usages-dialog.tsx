@@ -18,6 +18,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import {
 	getDiscountUsages,
 	type DiscountUsageItem,
@@ -65,12 +66,18 @@ function usagesReducer(state: UsagesState, action: UsagesAction): UsagesState {
 
 export function DiscountUsagesDialog() {
 	const { isOpen, data, close } = useDialog<DiscountUsagesDialogData>(DISCOUNT_USAGES_DIALOG_ID);
+	const haptic = useHaptic();
 	const [state, dispatch] = useReducer(usagesReducer, {
 		usages: [],
 		totalAmount: 0,
 		isLoading: false,
 		error: null,
 	});
+
+	const handleClose = () => {
+		haptic("light");
+		close();
+	};
 
 	const { usages, totalAmount, isLoading, error } = state;
 
@@ -99,7 +106,7 @@ export function DiscountUsagesDialog() {
 	}, [isOpen, data]);
 
 	return (
-		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
+		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
 			<ResponsiveDialogContent className="sm:max-w-175">
 				<ResponsiveDialogHeader>
 					<ResponsiveDialogTitle>Utilisations du code promo</ResponsiveDialogTitle>
@@ -108,16 +115,19 @@ export function DiscountUsagesDialog() {
 					</ResponsiveDialogDescription>
 				</ResponsiveDialogHeader>
 
-				<div className="flex-1 overflow-auto">
+				<div className="flex-1 overflow-auto" role="status" aria-live="polite" aria-atomic="true">
 					{isLoading ? (
 						<div className="flex items-center justify-center py-12">
-							<LoaderCircle className="text-muted-foreground h-6 w-6 animate-spin" />
+							<LoaderCircle
+								className="text-muted-foreground h-6 w-6 motion-safe:animate-spin"
+								aria-label="Chargement des utilisations"
+							/>
 						</div>
 					) : error ? (
 						<div className="text-destructive py-12 text-center">{error}</div>
 					) : usages.length === 0 ? (
 						<div className="text-muted-foreground py-12 text-center">
-							<Receipt className="mx-auto mb-3 h-12 w-12 opacity-50" />
+							<Receipt className="mx-auto mb-3 h-12 w-12 opacity-50" aria-hidden="true" />
 							<p>Ce code n'a pas encore été utilisé</p>
 						</div>
 					) : (
@@ -135,7 +145,47 @@ export function DiscountUsagesDialog() {
 								</div>
 							</div>
 
-							<Table>
+							{/* Mobile cards */}
+							<ul className="space-y-2 md:hidden" aria-label="Liste des utilisations">
+								{usages.map((usage) => (
+									<li key={usage.id} className="bg-card rounded-lg border p-3 text-sm">
+										<div className="text-muted-foreground text-xs">
+											{format(new Date(usage.createdAt), "d MMM yyyy HH:mm", {
+												locale: fr,
+											})}
+										</div>
+										<div className="mt-1 flex items-start justify-between gap-3">
+											<div className="min-w-0 flex-1">
+												{usage.user ? (
+													<>
+														<div className="truncate font-medium">
+															{usage.user.name ?? "Sans nom"}
+														</div>
+														<div className="text-muted-foreground truncate text-xs">
+															{usage.user.email}
+														</div>
+													</>
+												) : (
+													<span className="text-muted-foreground">Invité</span>
+												)}
+												<Link
+													href={`/admin/ventes/commandes/${usage.order.id}`}
+													className="text-primary mt-1 inline-flex min-h-11 items-center gap-1 text-sm hover:underline"
+												>
+													{usage.order.orderNumber}
+													<ExternalLink className="h-3 w-3" aria-hidden="true" />
+												</Link>
+											</div>
+											<span className="shrink-0 font-medium text-green-600">
+												-{(usage.amountApplied / 100).toFixed(2)} €
+											</span>
+										</div>
+									</li>
+								))}
+							</ul>
+
+							{/* Desktop table */}
+							<Table className="hidden md:table">
 								<TableHeader>
 									<TableRow>
 										<TableHead>Date</TableHead>
@@ -168,7 +218,7 @@ export function DiscountUsagesDialog() {
 													className="text-primary flex items-center gap-1 text-sm hover:underline"
 												>
 													{usage.order.orderNumber}
-													<ExternalLink className="h-3 w-3" />
+													<ExternalLink className="h-3 w-3" aria-hidden="true" />
 												</Link>
 											</TableCell>
 											<TableCell className="text-right font-medium text-green-600">
@@ -182,8 +232,8 @@ export function DiscountUsagesDialog() {
 					)}
 				</div>
 
-				<div className="flex justify-end border-t pt-4">
-					<Button variant="outline" onClick={close}>
+				<div className="flex justify-end border-t pt-4 pr-[max(0rem,env(safe-area-inset-right))] pb-[max(0rem,env(safe-area-inset-bottom))] pl-[max(0rem,env(safe-area-inset-left))]">
+					<Button variant="outline" onClick={handleClose}>
 						Fermer
 					</Button>
 				</div>

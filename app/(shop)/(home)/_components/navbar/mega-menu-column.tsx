@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { LoadingIndicator } from "@/shared/components/navigation";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import {
 	ArrowRight,
@@ -84,13 +85,14 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 				<NavigationMenuLink asChild>
 					<Link
 						href={primaryItem.href}
+						onClick={() => triggerHaptic("selection")}
 						aria-current={pathname === primaryItem.href ? "page" : undefined}
 						className={cn(
 							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
 							"bg-accent/40 hover:bg-accent",
 							"text-foreground",
 							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-							"mb-2 transition-colors duration-200",
+							"mb-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 							"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
 							pathname === primaryItem.href && "bg-accent font-medium",
 						)}
@@ -122,19 +124,20 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 							<NavigationMenuLink asChild>
 								<Link
 									href={item.href}
+									onClick={() => triggerHaptic("light")}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
 										"relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
 										"hover:bg-accent hover:text-accent-foreground",
 										"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-										"transition-colors duration-200",
+										"motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 										isActive && "bg-accent/50 font-medium",
 									)}
 								>
 									{Icon && (
 										<Icon
 											className={cn(
-												"text-foreground/40 size-4 shrink-0 transition-colors duration-200",
+												"text-foreground/40 size-4 shrink-0 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
 												"group-hover:text-foreground/60",
 												isActive && "text-primary/80",
 											)}
@@ -155,13 +158,14 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 					<NavigationMenuLink asChild>
 						<Link
 							href={viewAllLink.href}
+							onClick={() => triggerHaptic("selection")}
 							aria-current={pathname === viewAllLink.href ? "page" : undefined}
 							className={cn(
 								"relative inline-flex min-h-11 flex-row! items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium",
 								"text-foreground hover:text-foreground",
 								"hover:bg-accent/50",
 								"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-								"transition-colors",
+								"motion-safe:transition-colors",
 							)}
 						>
 							{viewAllLink.label}

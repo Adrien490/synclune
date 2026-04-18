@@ -1,17 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockReducedMotion } = vi.hoisted(() => ({
+const { mockReducedMotion, mockTriggerHaptic } = vi.hoisted(() => ({
 	mockReducedMotion: { value: false },
+	mockTriggerHaptic: vi.fn(),
 }));
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
 
 vi.mock("motion/react", () => {
 	const { forwardRef: fRef } = require("react");
@@ -25,9 +18,13 @@ vi.mock("motion/react", () => {
 						animate,
 						whileHover,
 						whileTap,
+						onTapStart,
 						transition: _t,
 						...props
-					}: Record<string, unknown> & { children?: unknown },
+					}: Record<string, unknown> & {
+						children?: unknown;
+						onTapStart?: (e: unknown) => void;
+					},
 					ref: unknown,
 				) => {
 					const { createElement } = require("react");
@@ -39,6 +36,7 @@ vi.mock("motion/react", () => {
 							"data-animate": animate ? JSON.stringify(animate) : undefined,
 							"data-while-hover": whileHover ? JSON.stringify(whileHover) : undefined,
 							"data-while-tap": whileTap ? JSON.stringify(whileTap) : undefined,
+							onPointerDown: onTapStart,
 							...props,
 						},
 						children,
@@ -50,6 +48,10 @@ vi.mock("motion/react", () => {
 	};
 });
 
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockTriggerHaptic,
+}));
+
 vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: {
 		duration: { normal: 0.2, slow: 0.3 },
@@ -57,10 +59,6 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 		easing: { easeInOut: [0.25, 0.1, 0.25, 1], easeOut: [0, 0, 0.2, 1] },
 	},
 }));
-
-// ============================================================================
-// IMPORT UNDER TEST
-// ============================================================================
 
 import { Tap } from "../tap";
 
@@ -82,9 +80,9 @@ describe("Tap", () => {
 		expect(container.firstChild).toHaveClass("my-class");
 	});
 
-	it("has tabIndex={-1}", () => {
+	it("does not force tabIndex on the wrapper (preserves child focus management)", () => {
 		const { container } = render(<Tap>Content</Tap>);
-		expect(container.firstChild).toHaveAttribute("tabindex", "-1");
+		expect(container.firstChild).not.toHaveAttribute("tabindex");
 	});
 
 	it("forwards role prop", () => {
@@ -113,5 +111,24 @@ describe("Tap", () => {
 	it("does not set whileHover", () => {
 		const { container } = render(<Tap>Content</Tap>);
 		expect(container.firstChild).not.toHaveAttribute("data-while-hover");
+	});
+
+	it("triggers haptic 'selection' on tap by default", () => {
+		const { container } = render(<Tap>Content</Tap>);
+		fireEvent.pointerDown(container.firstChild as Element);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+	});
+
+	it("triggers haptic with the custom pattern", () => {
+		const { container } = render(<Tap haptic="medium">Content</Tap>);
+		fireEvent.pointerDown(container.firstChild as Element);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	it("does not trigger haptic when haptic={false}", () => {
+		const { container } = render(<Tap haptic={false}>Content</Tap>);
+		fireEvent.pointerDown(container.firstChild as Element);
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 });

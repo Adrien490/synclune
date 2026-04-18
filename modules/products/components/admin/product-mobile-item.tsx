@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
+import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -80,16 +81,22 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 				stock,
 				variantsCount: product.skus.length,
 				typeLabel: product.type?.label ?? null,
+				primaryImage: primaryImage
+					? {
+							url: primaryImage.url,
+							thumbnailUrl: primaryImage.thumbnailUrl ?? null,
+							blurDataUrl: primaryImage.blurDataUrl ?? null,
+						}
+					: null,
 			},
 		});
 	};
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className="focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none focus-visible:ring-[3px]"
-			aria-label={`Ouvrir la fiche du produit ${product.title}`}
+		<SelectableMobileCard
+			itemId={product.id}
+			ariaLabel={`Produit ${product.title}`}
+			onOpen={handleOpen}
 		>
 			<Item
 				variant="outline"
@@ -136,6 +143,6 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</SelectableMobileCard>
 	);
 }

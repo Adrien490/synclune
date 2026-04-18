@@ -1,9 +1,13 @@
 "use client";
 
+import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
-import { Check, LoaderCircle } from "lucide-react";
+import { AlertTriangle, Check, LoaderCircle, RefreshCw, X } from "lucide-react";
+
+export type UploadPhase = "validating" | "uploading" | "generating-thumbnails" | "done";
 
 interface UploadProgressProps {
 	/** Progress percentage (0-100) */
@@ -16,21 +20,17 @@ interface UploadProgressProps {
 	isProcessing?: boolean;
 	/** Number of files waiting in queue */
 	queuedCount?: number;
+	/** Current upload phase — drives the status label */
+	phase?: UploadPhase;
+	/** Currently processed file name — shown in default variant */
+	currentFileName?: string;
+	/** If provided, renders a 44px cancel button (X icon) — variant default only */
+	onCancel?: () => void;
 }
 
 /**
  * Upload progress display component.
  * Used in media drop zones.
- *
- * Features:
- * - Full accessibility (aria-live, role, aria-busy)
- * - Reduced-motion support
- * - Completion state at 100%
- * - Responsive mobile/desktop
- *
- * Variants:
- * - default: Spinner + progress bar + percentage (for empty dropzone)
- * - compact: Spinner + percentage only (for thumbnail zone in grid)
  */
 export function UploadProgress({
 	progress,
@@ -38,19 +38,37 @@ export function UploadProgress({
 	className,
 	isProcessing = false,
 	queuedCount = 0,
+	phase,
+	currentFileName,
+	onCancel,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
-	// Three states: uploading (0-99%), processing (100% + isProcessing), complete (100% + !isProcessing)
-	const isComplete = progress >= 100 && !isProcessing;
-	const isServerProcessing = progress >= 100 && isProcessing;
+	const haptic = useHaptic();
+	const isComplete = progress >= 100 && !isProcessing && phase !== "generating-thumbnails";
+	const isThumbnailing = phase === "generating-thumbnails";
+	const isServerProcessing = (progress >= 100 && isProcessing) || isThumbnailing;
 
-	// Accessible text for screen readers
+	const handleCancel = () => {
+		haptic("medium");
+		onCancel?.();
+	};
+
 	const queueText = queuedCount > 0 ? `, ${queuedCount} en attente` : "";
 	const srText = isComplete
 		? "Téléversement terminé"
-		: isServerProcessing
-			? "Traitement du fichier en cours"
-			: `Téléversement en cours, ${progress} pourcent${queueText}`;
+		: isThumbnailing
+			? "Génération des miniatures vidéo en cours"
+			: isServerProcessing
+				? "Traitement du fichier en cours"
+				: `Téléversement en cours, ${progress} pourcent${queueText}`;
+
+	const phaseLabel = isComplete
+		? "Terminé"
+		: isThumbnailing
+			? "Génération des miniatures…"
+			: isServerProcessing
+				? "Traitement…"
+				: `Téléversement… ${progress}%`;
 
 	if (variant === "compact") {
 		return (
@@ -60,10 +78,8 @@ export function UploadProgress({
 				aria-busy={!isComplete}
 				className={cn("flex flex-col items-center gap-2 sm:gap-1.5", className)}
 			>
-				{/* Screen reader text */}
 				<span className="sr-only">{srText}</span>
 
-				{/* Icon - Spinner or Check */}
 				{isComplete ? (
 					<div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 sm:h-5 sm:w-5">
 						<Check className="h-4 w-4 text-emerald-600 sm:h-3 sm:w-3" aria-hidden="true" />
@@ -78,7 +94,6 @@ export function UploadProgress({
 					/>
 				)}
 
-				{/* Percentage or state */}
 				<span
 					className={cn(
 						"text-sm font-medium sm:text-xs",
@@ -87,7 +102,7 @@ export function UploadProgress({
 					)}
 					aria-hidden="true"
 				>
-					{isComplete ? "OK" : isServerProcessing ? "Traitement..." : `${progress}%`}
+					{isComplete ? "OK" : isServerProcessing ? "Traitement…" : `${progress}%`}
 				</span>
 			</div>
 		);
@@ -103,10 +118,8 @@ export function UploadProgress({
 				className,
 			)}
 		>
-			{/* Screen reader text */}
 			<span className="sr-only">{srText}</span>
 
-			{/* Icon - Spinner or Check */}
 			{isComplete ? (
 				<div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 sm:h-10 sm:w-10">
 					<Check className="h-6 w-6 text-emerald-600 sm:h-5 sm:w-5" aria-hidden="true" />
@@ -121,7 +134,6 @@ export function UploadProgress({
 				/>
 			)}
 
-			{/* Progress bar + text */}
 			<div className="w-full space-y-2 sm:space-y-1.5">
 				<Progress
 					value={progress}
@@ -142,17 +154,128 @@ export function UploadProgress({
 					)}
 					aria-hidden="true"
 				>
-					{isComplete
-						? "Terminé"
-						: isServerProcessing
-							? "Traitement..."
-							: `Téléversement... ${progress}%`}
+					{phaseLabel}
 				</p>
+				{currentFileName && !isComplete && (
+					<p
+						className="text-muted-foreground truncate text-center text-xs"
+						aria-hidden="true"
+						title={currentFileName}
+					>
+						{currentFileName}
+					</p>
+				)}
 				{queuedCount > 0 && !isComplete && (
 					<p className="text-muted-foreground text-center text-xs" aria-hidden="true">
 						+{queuedCount} en attente
 					</p>
 				)}
+			</div>
+
+			{onCancel && !isComplete && (
+				<Button
+					type="button"
+					variant="ghost"
+					size="sm"
+					onClick={handleCancel}
+					className="h-11 min-w-11 gap-1.5 px-3"
+					aria-label="Annuler l'upload"
+				>
+					<X className="h-4 w-4" aria-hidden="true" />
+					<span className="text-xs">Annuler</span>
+				</Button>
+			)}
+		</div>
+	);
+}
+
+interface UploadErrorBannerProps {
+	/** List of failed files */
+	failedFiles: { fileName: string; error: string }[];
+	/** Triggered when user clicks the retry CTA */
+	onRetry: () => void;
+	/** Triggered when user dismisses the banner */
+	onDismiss: () => void;
+	/** Additional CSS classes */
+	className?: string;
+}
+
+/**
+ * Banner displayed when one or more uploads failed.
+ * Lists file names + provides a retry CTA.
+ * 44px minimum touch targets, role=alert.
+ */
+export function UploadErrorBanner({
+	failedFiles,
+	onRetry,
+	onDismiss,
+	className,
+}: UploadErrorBannerProps) {
+	const haptic = useHaptic();
+	if (failedFiles.length === 0) return null;
+
+	const handleRetry = () => {
+		haptic("medium");
+		onRetry();
+	};
+
+	const handleDismiss = () => {
+		haptic("light");
+		onDismiss();
+	};
+
+	const count = failedFiles.length;
+	const previewNames = failedFiles
+		.slice(0, 3)
+		.map((f) => f.fileName)
+		.join(", ");
+	const suffix = count > 3 ? ` et ${count - 3} autre(s)` : "";
+
+	return (
+		<div
+			role="alert"
+			aria-live="assertive"
+			className={cn(
+				"border-destructive/40 bg-destructive/5 flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between",
+				className,
+			)}
+		>
+			<div className="flex items-start gap-2 sm:items-center">
+				<AlertTriangle
+					className="text-destructive mt-0.5 size-5 shrink-0 sm:mt-0"
+					aria-hidden="true"
+				/>
+				<div className="min-w-0">
+					<p className="text-destructive text-sm font-medium">
+						{count} fichier{count > 1 ? "s" : ""} en échec
+					</p>
+					<p className="text-muted-foreground truncate text-xs" title={previewNames}>
+						{previewNames}
+						{suffix}
+					</p>
+				</div>
+			</div>
+			<div className="flex shrink-0 gap-2">
+				<Button
+					type="button"
+					variant="outline"
+					size="sm"
+					onClick={handleRetry}
+					className="min-h-11 gap-1.5"
+				>
+					<RefreshCw className="size-3.5" aria-hidden="true" />
+					Réessayer
+				</Button>
+				<Button
+					type="button"
+					variant="ghost"
+					size="icon"
+					onClick={handleDismiss}
+					className="size-11"
+					aria-label="Ignorer les erreurs d'upload"
+				>
+					<X className="size-4" aria-hidden="true" />
+				</Button>
 			</div>
 		</div>
 	);

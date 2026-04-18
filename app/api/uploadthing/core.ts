@@ -32,12 +32,17 @@ if (!process.env.UPLOADTHING_TOKEN) {
 
 // Types MIME autorisés pour la validation serveur
 // SVG intentionally excluded: can contain embedded scripts (XSS vector)
+// HEIC/HEIF: iPhone default format. Le client compresse en WebP/JPEG avant upload
+// (compress-image.ts), mais on tolère le passage HEIC brut au cas où le navigateur
+// supporte le décodage natif (Safari) ou si la compression échoue silencieusement.
 const ALLOWED_IMAGE_TYPES = [
 	"image/jpeg",
 	"image/png",
 	"image/webp",
 	"image/gif",
 	"image/avif",
+	"image/heic",
+	"image/heif",
 ] as const;
 
 const ALLOWED_VIDEO_TYPES = ["video/mp4"] as const;

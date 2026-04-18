@@ -1,4 +1,4 @@
-interface SplitTextCSSProps {
+export interface SplitTextCSSProps {
 	children: string;
 	/** Stagger delay between words (ms) */
 	stagger?: number;

@@ -26,7 +26,7 @@ export function SectionCtaLink({
 	hapticPattern = "selection",
 	"aria-describedby": ariaDescribedBy,
 	variant = "outline",
-	className = "transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]",
+	className = "ease-out hover:shadow-md motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
 }: SectionCtaLinkProps) {
 	const haptic = useHaptic();
 

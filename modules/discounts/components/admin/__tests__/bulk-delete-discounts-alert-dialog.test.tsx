@@ -5,10 +5,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockClose, mockClearSelection, mockBulkDelete } = vi.hoisted(() => ({
+const { mockClose, mockClearSelection, mockBulkDelete, mockHaptic } = vi.hoisted(() => ({
 	mockClose: vi.fn(),
 	mockClearSelection: vi.fn(),
 	mockBulkDelete: vi.fn(),
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 let mockDialogState = {
@@ -75,12 +81,19 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 		children,
 		disabled,
 		"aria-busy": ariaBusy,
+		onPointerDown,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		"aria-busy"?: boolean;
+		onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
 	}) => (
-		<button data-testid="submit-button" disabled={disabled} aria-busy={ariaBusy}>
+		<button
+			data-testid="submit-button"
+			disabled={disabled}
+			aria-busy={ariaBusy}
+			onPointerDown={onPointerDown}
+		>
 			{children}
 		</button>
 	),
@@ -186,5 +199,12 @@ describe("BulkDeleteDiscountsAlertDialog", () => {
 		mockIsPending = true;
 		render(<BulkDeleteDiscountsAlertDialog />);
 		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+	});
+
+	it("triggers heavy haptic on bulk submit pointerdown (destructive)", () => {
+		render(<BulkDeleteDiscountsAlertDialog />);
+		const submit = screen.getByTestId("submit-button");
+		submit.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		expect(mockHaptic).toHaveBeenCalledWith("heavy");
 	});
 });

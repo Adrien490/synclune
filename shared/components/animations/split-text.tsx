@@ -3,7 +3,7 @@
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { m, useReducedMotion } from "motion/react";
 
-interface SplitTextProps {
+export interface SplitTextProps {
 	children: string;
 	/** Stagger delay between words (seconds) */
 	stagger?: number;

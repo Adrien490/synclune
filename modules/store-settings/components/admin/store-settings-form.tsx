@@ -1,6 +1,7 @@
 "use client";
 
 import { Lock, Unlock } from "lucide-react";
+import Link from "next/link";
 import { useRef } from "react";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -12,10 +13,10 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
 import type { StoreSettingsAdmin } from "../../types/store-settings.types";
-import { CLOSE_STORE_DIALOG_ID, CloseStoreDialog } from "./close-store-dialog";
 import { EditClosureMessageForm } from "./edit-closure-message-form";
 import { EditReopensAtForm } from "./edit-reopens-at-form";
 import { REOPEN_STORE_DIALOG_ID, ReopenStoreDialog } from "./reopen-store-dialog";
@@ -32,14 +33,8 @@ const dateTimeFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
-	const closeDialog = useAlertDialog(CLOSE_STORE_DIALOG_ID);
 	const reopenDialog = useAlertDialog(REOPEN_STORE_DIALOG_ID);
 	const previousFocusRef = useRef<HTMLElement | null>(null);
-
-	const handleOpenCloseDialog = () => {
-		previousFocusRef.current = document.activeElement as HTMLElement | null;
-		closeDialog.open();
-	};
 
 	const handleOpenReopenDialog = () => {
 		previousFocusRef.current = document.activeElement as HTMLElement | null;
@@ -103,14 +98,15 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 						</>
 					) : (
 						<div className="flex justify-end">
-							<Button
-								type="button"
-								variant="destructive"
-								onClick={handleOpenCloseDialog}
-								className="min-h-11"
-							>
-								<Lock className="mr-2 size-4" />
-								Fermer la boutique
+							<Button variant="destructive" asChild className="min-h-11">
+								<Link
+									href="/admin/configuration/boutique/fermer"
+									onClick={() => triggerHaptic("light")}
+									style={{ viewTransitionName: "store-status-action" }}
+								>
+									<Lock className="mr-2 size-4" />
+									Fermer la boutique
+								</Link>
 							</Button>
 						</div>
 					)}
@@ -142,7 +138,6 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 				</Card>
 			)}
 
-			<CloseStoreDialog previousFocusRef={previousFocusRef} />
 			<ReopenStoreDialog previousFocusRef={previousFocusRef} />
 		</div>
 	);

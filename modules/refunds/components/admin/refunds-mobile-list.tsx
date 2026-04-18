@@ -6,6 +6,7 @@ import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
+import { StopPropagationLink } from "@/shared/components/stop-propagation-link";
 import {
 	Item,
 	ItemActions,
@@ -72,14 +73,12 @@ export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileList
 							>
 								<ItemContent className="min-w-0">
 									<ItemTitle>
-										<Link
+										<StopPropagationLink
 											href={`/admin/ventes/commandes/${refund.order.id}`}
-											onClick={(e) => e.stopPropagation()}
-											onPointerDown={(e) => e.stopPropagation()}
 											className="truncate font-semibold hover:underline"
 										>
 											{refund.order.orderNumber}
-										</Link>
+										</StopPropagationLink>
 										<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
 											{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
 										</Badge>

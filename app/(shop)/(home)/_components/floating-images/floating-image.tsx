@@ -105,7 +105,7 @@ export function FloatingImage({
 						prefetch
 						onPointerMove={handlePointerMove}
 						onClick={handleClick}
-						className="group focus-visible:ring-primary focus-visible:ring-offset-background relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-shadow duration-300 hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+						className="group focus-visible:ring-primary focus-visible:ring-offset-background relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]"
 						style={
 							{
 								"--img-glow": position.glowColor,
@@ -116,14 +116,14 @@ export function FloatingImage({
 					>
 						{/* Glow layer — visible on hover */}
 						<div
-							className="absolute -inset-3 rounded-3xl opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-60"
+							className="absolute -inset-3 rounded-3xl opacity-0 blur-xl motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:opacity-60"
 							style={{ backgroundColor: position.glowColor }}
 						/>
 
 						{/* Pointer-tracking spotlight — native 2026 pattern (Apple/Linear/Vercel) */}
 						<div
 							aria-hidden="true"
-							className="pointer-events-none absolute inset-0 z-20 opacity-0 mix-blend-overlay group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-200 motion-reduce:hidden"
+							className="pointer-events-none absolute inset-0 z-20 opacity-0 mix-blend-overlay group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)] motion-reduce:hidden"
 							style={{
 								background:
 									"radial-gradient(160px circle at var(--mx) var(--my), rgb(255 255 255 / 0.22), transparent 65%)",
@@ -150,7 +150,7 @@ export function FloatingImage({
 
 						{/* Preview pill — product title on hover */}
 						<div
-							className="pointer-events-none absolute right-2 bottom-2 left-2 z-30 flex justify-center opacity-0 group-hover:translate-y-0 group-hover:opacity-100 motion-safe:translate-y-1 motion-safe:transition-[opacity,transform] motion-safe:delay-150 motion-safe:duration-300"
+							className="pointer-events-none absolute right-2 bottom-2 left-2 z-30 flex justify-center opacity-0 group-hover:translate-y-0 group-hover:opacity-100 motion-safe:translate-y-1 motion-safe:transition-[opacity,transform] motion-safe:delay-[var(--duration-fast)] motion-safe:duration-[var(--duration-slow)]"
 							aria-hidden="true"
 						>
 							<span className="bg-background/80 text-foreground max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-md">

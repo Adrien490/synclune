@@ -12,6 +12,7 @@ import { ProductCareInfo } from "./product-care-info";
 import { VariantSelector } from "@/modules/skus/components/sku-selector";
 import { Separator } from "@/shared/components/ui/separator";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
+import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
@@ -56,24 +57,29 @@ export function ProductDetails({
 
 	return (
 		<div className="space-y-8">
-			{/* 1. Prix (Baymard: visible en premier) */}
-			<AnimatePresence mode="wait">
-				<m.div
-					key={`price-${currentSku.id || "no-sku"}`}
-					variants={fadeVariants}
-					initial="initial"
-					animate="animate"
-					exit="exit"
-					transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-				>
-					<ProductPriceDisplay
-						selectedSku={currentSku}
-						product={product}
-						cartsCount={cartsCount}
-						isInWishlist={isInWishlist}
-					/>
-				</m.div>
-			</AnimatePresence>
+			{/* 1. Prix (Baymard: visible en premier) — wrapper stable aria-live pour que les
+			    lecteurs d'écran annoncent le changement malgré le remount AnimatePresence */}
+			<div aria-live="polite" aria-atomic="false">
+				<AnimatePresence mode="wait">
+					<m.div
+						key={`price-${currentSku.id || "no-sku"}`}
+						variants={fadeVariants}
+						initial="initial"
+						animate="animate"
+						exit="exit"
+						transition={{
+							duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.normal,
+						}}
+					>
+						<ProductPriceDisplay
+							selectedSku={currentSku}
+							product={product}
+							cartsCount={cartsCount}
+							isInWishlist={isInWishlist}
+						/>
+					</m.div>
+				</AnimatePresence>
+			</div>
 
 			{/* 2. Sélection des variantes */}
 			<VariantSelector product={product} defaultSku={defaultSku} />
@@ -90,19 +96,24 @@ export function ProductDetails({
 			{/* 7. Réassurance (après CTA - "decision support") */}
 			<ProductReassurance />
 
-			{/* 5. Caractéristiques principales */}
-			<AnimatePresence mode="wait">
-				<m.div
-					key={`chars-${currentSku.id || "no-sku"}`}
-					variants={fadeVariants}
-					initial="initial"
-					animate="animate"
-					exit="exit"
-					transition={{ duration: prefersReducedMotion ? 0 : 0.15, delay: 0.05 }}
-				>
-					<ProductCharacteristics selectedSku={currentSku} />
-				</m.div>
-			</AnimatePresence>
+			{/* 5. Caractéristiques principales — wrapper stable aria-live */}
+			<div aria-live="polite" aria-atomic="false">
+				<AnimatePresence mode="wait">
+					<m.div
+						key={`chars-${currentSku.id || "no-sku"}`}
+						variants={fadeVariants}
+						initial="initial"
+						animate="animate"
+						exit="exit"
+						transition={{
+							duration: prefersReducedMotion ? 0 : MOTION_CONFIG.duration.fast,
+							delay: 0.05,
+						}}
+					>
+						<ProductCharacteristics selectedSku={currentSku} />
+					</m.div>
+				</AnimatePresence>
+			</div>
 
 			<Separator className="bg-border" />
 

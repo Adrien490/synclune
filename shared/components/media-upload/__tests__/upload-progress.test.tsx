@@ -45,8 +45,8 @@ describe("UploadProgress", () => {
 			const progressBar = screen.getByRole("progressbar");
 			expect(progressBar).toBeTruthy();
 
-			// Visible text
-			expect(screen.getByText("Téléversement... 50%")).toBeTruthy();
+			// Visible text (Unicode horizontal ellipsis)
+			expect(screen.getByText("Téléversement… 50%")).toBeTruthy();
 		});
 
 		it("affiche le spinner et 'Traitement...' quand isProcessing=true à 100%", () => {
@@ -55,7 +55,7 @@ describe("UploadProgress", () => {
 			const status = screen.getByRole("status");
 			expect(status.getAttribute("aria-busy")).toBe("true");
 
-			expect(screen.getByText("Traitement...")).toBeTruthy();
+			expect(screen.getByText("Traitement…")).toBeTruthy();
 
 			// LoaderCircle must be present (not Check icon)
 			container.querySelector('[aria-hidden="true"] + *');

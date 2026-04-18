@@ -5,9 +5,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAction, mockIsPending } = vi.hoisted(() => ({
+const { mockAction, mockIsPending, mockHaptic } = vi.hoisted(() => ({
 	mockAction: vi.fn(),
 	mockIsPending: { value: false },
+	mockHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 let mockDialogState = {
@@ -78,17 +84,20 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 		disabled,
 		className,
 		"aria-busy": ariaBusy,
+		onPointerDown,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		className?: string;
 		"aria-busy"?: boolean;
+		onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
 	}) => (
 		<button
 			data-testid="submit-button"
 			disabled={disabled}
 			className={className}
 			aria-busy={ariaBusy}
+			onPointerDown={onPointerDown}
 		>
 			{children}
 		</button>
@@ -194,5 +203,12 @@ describe("ToggleDiscountStatusAlertDialog", () => {
 		mockIsPending.value = true;
 		render(<ToggleDiscountStatusAlertDialog />);
 		expect(screen.getByTestId("cancel-button")).toBeDisabled();
+	});
+
+	it("triggers medium haptic on toggle submit pointerdown", () => {
+		render(<ToggleDiscountStatusAlertDialog />);
+		const submit = screen.getByTestId("submit-button");
+		submit.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 });

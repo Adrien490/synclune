@@ -65,6 +65,15 @@ export interface UploadProgress {
 	phase: "validating" | "generating-thumbnails" | "uploading" | "done";
 }
 
+export interface FailedUpload {
+	/** Name of the file that failed */
+	fileName: string;
+	/** Human-readable French error message (toast-ready) */
+	error: string;
+	/** The original File so the caller can retry */
+	file: File;
+}
+
 export interface UseMediaUploadReturn {
 	/** Upload multiple files with validation */
 	upload: (files: File[]) => Promise<MediaUploadResult[]>;
@@ -74,12 +83,18 @@ export interface UseMediaUploadReturn {
 	validateFiles: (files: File[]) => File[];
 	/** Cancel the current upload */
 	cancel: () => void;
+	/** Re-upload all files currently in the failedFiles list */
+	retryFailed: () => Promise<MediaUploadResult[]>;
+	/** Clear the failedFiles list (after user dismisses the error banner) */
+	clearFailed: () => void;
 	/** Whether an upload is in progress (including queued files) */
 	isUploading: boolean;
 	/** Current progress */
 	progress: UploadProgress | null;
 	/** Number of files waiting in queue */
 	queuedCount: number;
+	/** Files that failed during the last upload session — empty after retryFailed/clearFailed */
+	failedFiles: FailedUpload[];
 	/** Utility to determine the media type */
 	getMediaType: (file: File) => "IMAGE" | "VIDEO";
 	/** Utility to check if a file is too large */

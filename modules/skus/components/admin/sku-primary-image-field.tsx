@@ -190,6 +190,7 @@ export function SkuPrimaryImageField({
 							}}
 							config={{
 								mode: "auto",
+								appendOnPaste: true,
 							}}
 						/>
 					</div>

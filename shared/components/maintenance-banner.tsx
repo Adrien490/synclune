@@ -24,7 +24,7 @@ export function MaintenanceBanner({ closureMessage, scheduledCloseAt }: Maintena
 		return (
 			<div
 				role="status"
-				className="fixed inset-x-0 bottom-0 z-50 border-t border-blue-600/30 bg-blue-500/95 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium text-blue-50 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-md"
+				className="fixed inset-x-0 bottom-0 z-50 border-t border-blue-600/30 bg-blue-500/95 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium text-blue-50 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-md max-md:bottom-[calc(var(--bottom-bar-height,0px)+env(safe-area-inset-bottom,0px))] max-md:pb-2.5"
 			>
 				<div className="mx-auto flex items-center justify-center gap-2">
 					<CalendarClock className="size-4 shrink-0" aria-hidden="true" />
@@ -46,7 +46,7 @@ export function MaintenanceBanner({ closureMessage, scheduledCloseAt }: Maintena
 	return (
 		<div
 			role="status"
-			className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-600/30 bg-amber-500/95 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium text-amber-950 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-md"
+			className="fixed inset-x-0 bottom-0 z-50 border-t border-amber-600/30 bg-amber-500/95 px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] text-center text-sm font-medium text-amber-950 shadow-[0_-2px_10px_rgba(0,0,0,0.1)] backdrop-blur-md max-md:bottom-[calc(var(--bottom-bar-height,0px)+env(safe-area-inset-bottom,0px))] max-md:pb-2.5"
 		>
 			<div className="mx-auto flex items-center justify-center gap-2">
 				<Construction className="size-4 shrink-0" aria-hidden="true" />

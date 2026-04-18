@@ -36,7 +36,7 @@ export function NavbarIconButtons({
 					>
 						<Heart
 							size={20}
-							className="transition-transform duration-300 ease-out group-hover:scale-105"
+							className="ease-out motion-safe:transition-transform motion-safe:duration-[var(--duration-slow)] motion-safe:group-hover:scale-105"
 							aria-hidden="true"
 						/>
 						<WishlistBadge />

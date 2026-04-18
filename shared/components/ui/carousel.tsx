@@ -70,10 +70,12 @@ function Carousel({
 	const [selectedIndex, setSelectedIndex] = React.useState(0);
 
 	const scrollPrev = () => {
+		triggerHaptic("selection");
 		api?.scrollPrev();
 	};
 
 	const scrollNext = () => {
+		triggerHaptic("selection");
 		api?.scrollNext();
 	};
 
@@ -325,13 +327,13 @@ function CarouselPrevious({
 				"shadow-lg hover:shadow-xl",
 				// Colors
 				"text-primary-foreground",
-				"hover:bg-primary/90 hover:scale-105",
+				"hover:bg-primary/90 motion-safe:hover:scale-105",
 				// Focus visible (keyboard accessibility)
 				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 				// Disabled states (opacity-60 pour contraste WCAG AA)
 				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
-				"transition-all duration-300",
+				"motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
 				className,
 			)}
 			disabled={!canScrollPrev}
@@ -374,13 +376,13 @@ function CarouselNext({
 				"shadow-lg hover:shadow-xl",
 				// Colors
 				"text-primary-foreground",
-				"hover:bg-primary/90 hover:scale-105",
+				"hover:bg-primary/90 motion-safe:hover:scale-105",
 				// Focus visible (keyboard accessibility)
 				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2",
 				// Disabled states (opacity-60 pour contraste WCAG AA)
 				"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-60",
 				// Smooth transitions
-				"transition-all duration-300",
+				"motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
 				className,
 			)}
 			disabled={!canScrollNext}

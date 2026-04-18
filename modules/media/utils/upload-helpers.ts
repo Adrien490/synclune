@@ -41,8 +41,27 @@ export function getMediaTypeFromFile(file: File): "IMAGE" | "VIDEO" {
 }
 
 /**
- * Checks if a file has a valid media MIME type (image/* or video/*)
+ * Checks if a file has a valid media MIME type (image/* or video/*).
+ * iOS sometimes drops the MIME type → also accept files whose extension matches.
  */
+const FALLBACK_IMAGE_EXTENSIONS = [
+	".heic",
+	".heif",
+	".jpg",
+	".jpeg",
+	".png",
+	".webp",
+	".gif",
+	".avif",
+];
+const FALLBACK_VIDEO_EXTENSIONS = [".mp4", ".mov"];
+
 export function isValidMediaType(file: File): boolean {
-	return file.type.startsWith("image/") || file.type.startsWith("video/");
+	if (file.type.startsWith("image/") || file.type.startsWith("video/")) return true;
+	// iOS Safari occasionally yields empty MIME for HEIC drops — fall back to extension
+	const name = file.name.toLowerCase();
+	return (
+		FALLBACK_IMAGE_EXTENSIONS.some((ext) => name.endsWith(ext)) ||
+		FALLBACK_VIDEO_EXTENSIONS.some((ext) => name.endsWith(ext))
+	);
 }

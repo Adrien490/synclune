@@ -6,6 +6,7 @@ import {
 	Clock,
 	Copy,
 	EllipsisVertical,
+	Eye,
 	LoaderCircle,
 	Mail,
 	StickyNote,
@@ -98,6 +99,17 @@ export function CustomizationRowActions({ request }: CustomizationRowActionsProp
 	};
 
 	const sections: ActionMenuSection[] = [
+		{
+			key: "navigate",
+			items: [
+				{
+					key: "view",
+					label: "Voir la demande",
+					icon: Eye,
+					href: `/admin/marketing/personnalisations/${request.id}`,
+				},
+			],
+		},
 		{
 			key: "status",
 			label: "Statut",

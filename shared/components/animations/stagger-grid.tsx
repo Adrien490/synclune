@@ -2,9 +2,10 @@
 
 import { m, useReducedMotion } from "motion/react";
 import React, { isValidElement, type ReactNode, type Key } from "react";
+import { useIsTouchDevice } from "@/shared/hooks";
 import { MOTION_CONFIG } from "./motion.config";
 
-interface StaggerGridProps extends React.AriaAttributes {
+export interface StaggerGridProps extends React.AriaAttributes {
 	children: ReactNode;
 	className?: string;
 	/** Stagger delay between items (default: 0.06) */
@@ -13,7 +14,10 @@ interface StaggerGridProps extends React.AriaAttributes {
 	delay?: number;
 	/** Y offset for entrance animation (default: 20) */
 	y?: number;
-	/** Scale factor for entrance (default: 0.95) */
+	/**
+	 * Scale factor for entrance (default: 0.95).
+	 * Mobile: passer 1 si grille volumineuse pour épargner GPU (composited layer).
+	 */
 	scale?: number;
 	/** Enable scroll-triggered animation */
 	inView?: boolean;
@@ -23,6 +27,8 @@ interface StaggerGridProps extends React.AriaAttributes {
 	amount?: number;
 	/** HTML role attribute */
 	role?: string;
+	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
+	disableOnTouch?: boolean;
 	/** Data attributes */
 	[key: `data-${string}`]: string | undefined;
 }
@@ -52,32 +58,35 @@ export function StaggerGrid({
 	once = true,
 	amount = 0.1,
 	role,
+	disableOnTouch = false,
 	...rest
 }: StaggerGridProps) {
 	const shouldReduceMotion = useReducedMotion();
+	const isTouchDevice = useIsTouchDevice();
+	const skipAnimation = shouldReduceMotion === true || (disableOnTouch && isTouchDevice);
 
 	const containerVariants = {
 		hidden: {},
 		visible: {
 			transition: {
-				staggerChildren: shouldReduceMotion ? 0 : stagger,
-				delayChildren: shouldReduceMotion ? 0 : delay,
+				staggerChildren: skipAnimation ? 0 : stagger,
+				delayChildren: skipAnimation ? 0 : delay,
 			},
 		},
 	};
 
 	const itemVariants = {
 		hidden: {
-			opacity: shouldReduceMotion ? 1 : 0,
-			y: shouldReduceMotion ? 0 : y,
-			scale: shouldReduceMotion ? 1 : scale,
+			opacity: skipAnimation ? 1 : 0,
+			y: skipAnimation ? 0 : y,
+			scale: skipAnimation ? 1 : scale,
 		},
 		visible: {
 			opacity: 1,
 			y: 0,
 			scale: 1,
 			transition: {
-				duration: shouldReduceMotion ? 0 : MOTION_CONFIG.duration.slow,
+				duration: skipAnimation ? 0 : MOTION_CONFIG.duration.slow,
 				ease: MOTION_CONFIG.easing.easeOut,
 			},
 		},

@@ -116,6 +116,7 @@ export function EditProductMediaSection({
 							onUploadError={(error) => {
 								toast.error(`Erreur: ${error.message}`);
 							}}
+							config={{ mode: "auto", appendOnPaste: true }}
 							className="ut-loading-text:!hidden ut-readying:!hidden ut-uploading:after:!hidden w-full *:before:hidden! *:after:hidden! [&>*::after]:hidden! [&>*::before]:hidden!"
 							aria-label="Zone d'upload des médias"
 							appearance={getCatalogDropzoneAppearance()}

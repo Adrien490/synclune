@@ -12,6 +12,7 @@ import {
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { Button } from "@/shared/components/ui/button";
 import { useSelectionContext } from "@/shared/contexts/selection-context";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkToggleDiscountStatus } from "@/modules/discounts/hooks/use-bulk-toggle-discount-status";
 
@@ -32,6 +33,7 @@ export function DiscountsSelectionToolbar({
 }: DiscountsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_DISCOUNTS_DIALOG_ID);
+	const haptic = useHaptic();
 
 	const { toggle, isPending } = useBulkToggleDiscountStatus({
 		onSuccess: clearSelection,
@@ -95,7 +97,14 @@ export function DiscountsSelectionToolbar({
 
 	return (
 		<SelectionToolbar pageItemIds={discountIds}>
-			<span className="text-muted-foreground text-sm">{label}</span>
+			<span
+				className="text-muted-foreground text-sm"
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+			>
+				{label}
+			</span>
 			<ResponsiveActionMenu>
 				<ResponsiveActionMenuTrigger asChild>
 					<Button
@@ -104,6 +113,7 @@ export function DiscountsSelectionToolbar({
 						className="h-11 w-11 p-0"
 						disabled={isPending}
 						aria-label="Actions de la sélection"
+						onPointerDown={() => haptic("selection")}
 					>
 						<span className="sr-only">Ouvrir le menu</span>
 						<EllipsisVertical className="h-4 w-4" />
