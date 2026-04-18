@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { REVIEW_HOMEPAGE_SELECT } from "../constants/review.constants";
 import { cacheHomepageReviews } from "../constants/cache";
@@ -34,7 +35,10 @@ export async function getFeaturedReviews(): Promise<ReviewHomepage[]> {
 
 		// Fallback to unfiltered if fewer than 3 pass the quality filter
 		return (quality.length >= 3 ? quality : typed).slice(0, 6);
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch featured reviews", error, {
+			service: "getFeaturedReviews",
+		});
 		return [];
 	}
 }

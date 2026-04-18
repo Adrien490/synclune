@@ -5,22 +5,20 @@ import type { Prisma } from "@/app/generated/prisma/browser";
 // ============================================================================
 
 /**
- * Select pour les listings produits (grids, carousels)
- * Optimisé pour:
- * - Affichage des swatches couleur interactifs
- * - Changement d'image dynamique sur sélection couleur
- * - Support du dialog de sélection SKU
+ * Select mince pour carousels et grilles légères (related / recent / cross-sell).
  *
- * Inclut tous les SKUs actifs pour:
- * - Calcul des couleurs disponibles
- * - Récupération des images par variante
- * - Vérification du stock
+ * Scope volontairement limité aux champs consommés par ProductCard /
+ * getProductCardData : id, slug, title, type.label, reviewStats, skus actifs
+ * avec couleur/matériau/taille et UNIQUEMENT l'image primaire.
+ *
+ * Ne PAS utiliser pour le PLP ni l'admin — voir GET_PRODUCTS_SELECT.
  */
-export const PRODUCT_LIST_SELECT = {
+export const PRODUCT_CAROUSEL_SELECT = {
 	id: true,
 	slug: true,
 	title: true,
 	status: true,
+	createdAt: true,
 	type: {
 		select: {
 			id: true,
@@ -62,7 +60,9 @@ export const PRODUCT_LIST_SELECT = {
 				where: { isPrimary: true },
 				take: 1,
 				select: {
+					id: true,
 					url: true,
+					thumbnailUrl: true,
 					blurDataUrl: true,
 					altText: true,
 					mediaType: true,

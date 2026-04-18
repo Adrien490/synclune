@@ -33,7 +33,6 @@ import type { ProductFromList, SkuFromList } from "@/modules/products/types/prod
 function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 	return {
 		id: "sku-1",
-		sku: "SKU-001",
 		isActive: true,
 		isDefault: true,
 		inventory: 10,

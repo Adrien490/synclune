@@ -98,8 +98,21 @@ vi.mock("@/modules/wishlist/hooks/use-remove-from-wishlist", () => ({
 	})),
 }));
 
-vi.mock("sonner", () => ({
-	toast: { success: vi.fn() },
+vi.mock("@/shared/utils/toast", () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
+vi.mock("@/modules/wishlist/actions/add-to-wishlist", () => ({
+	addToWishlist: vi.fn(),
+}));
+
+vi.mock("@/shared/stores/badge-counts-store", () => ({
+	useBadgeCountsStore: (sel: (s: { incrementWishlist: () => void }) => unknown) =>
+		sel({ incrementWishlist: vi.fn() }),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));

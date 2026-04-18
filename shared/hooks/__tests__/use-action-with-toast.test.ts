@@ -14,7 +14,7 @@ const { mockToastSuccess, mockToastError, mockToastWarning, mockToastLoading, mo
 		mockToastDismiss: vi.fn(),
 	}));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/utils/toast", () => ({
 	toast: {
 		success: mockToastSuccess,
 		error: mockToastError,

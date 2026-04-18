@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useActionWithToast } from "@/shared/hooks/use-action-with-toast";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import { addToWishlist } from "@/modules/wishlist/actions/add-to-wishlist";
 
 interface CartItemMoveToWishlistProps {

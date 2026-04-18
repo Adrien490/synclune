@@ -13,7 +13,7 @@ import {
 } from "@/modules/media/utils/upload-helpers";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
 import { withRetry } from "@/shared/utils/with-retry";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import type {
 	UseMediaUploadOptions,
 	MediaUploadResult,

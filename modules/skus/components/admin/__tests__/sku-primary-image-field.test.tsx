@@ -186,6 +186,7 @@ describe("SkuPrimaryImageField", () => {
 
 		expect(toast.error).toHaveBeenCalledWith(
 			"Vous ne pouvez uploader qu'une seule image principale",
+			expect.any(Object),
 		);
 		expect(defaultProps.onChange).not.toHaveBeenCalled();
 	});
@@ -217,6 +218,7 @@ describe("SkuPrimaryImageField", () => {
 
 		expect(toast.error).toHaveBeenCalledWith(
 			"Les vidéos ne peuvent pas être utilisées comme média principal",
+			expect.any(Object),
 		);
 		expect(defaultProps.onChange).not.toHaveBeenCalled();
 	});
@@ -246,7 +248,10 @@ describe("SkuPrimaryImageField", () => {
 			await capturedOnChange!([largeFile]);
 		});
 
-		expect(toast.error).toHaveBeenCalledWith("L'image dépasse la limite de 16MB");
+		expect(toast.error).toHaveBeenCalledWith(
+			"L'image dépasse la limite de 16MB",
+			expect.any(Object),
+		);
 		expect(defaultProps.onChange).not.toHaveBeenCalled();
 	});
 
@@ -296,7 +301,7 @@ describe("SkuPrimaryImageField", () => {
 			await capturedOnChange!([validFile]);
 		});
 
-		expect(toast.error).toHaveBeenCalledWith("Échec de l'upload");
+		expect(toast.error).toHaveBeenCalledWith("Échec de l'upload", expect.any(Object));
 		expect(defaultProps.onChange).not.toHaveBeenCalled();
 	});
 
@@ -431,7 +436,7 @@ describe("SkuPrimaryImageField", () => {
 			capturedOnUploadError!(new Error("connexion refusée"));
 		});
 
-		expect(toast.error).toHaveBeenCalledWith("Erreur: connexion refusée");
+		expect(toast.error).toHaveBeenCalledWith("Erreur: connexion refusée", expect.any(Object));
 	});
 
 	it("shows toast.error with empty string when error has no message", async () => {
@@ -442,6 +447,6 @@ describe("SkuPrimaryImageField", () => {
 			capturedOnUploadError!(new Error(""));
 		});
 
-		expect(toast.error).toHaveBeenCalledWith("Erreur: ");
+		expect(toast.error).toHaveBeenCalledWith("Erreur: ", expect.any(Object));
 	});
 });

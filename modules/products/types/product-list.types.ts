@@ -3,10 +3,14 @@
  * Ces types travaillent avec les données minimales de get-products
  */
 
-import type { GetProductsReturn } from "@/modules/products/data/get-products";
+import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 
-/** Produit tel que retourné par getProducts (données minimales pour listes) */
-export type ProductFromList = GetProductsReturn["products"][0];
+/**
+ * Produit consommé par ProductCard / getProductCardData.
+ * Basé sur PRODUCT_CAROUSEL_SELECT (sous-ensemble de GET_PRODUCTS_SELECT).
+ * Un Product (payload PLP) reste assignable ici via typage structurel.
+ */
+export type ProductFromList = ProductCarouselItem;
 
 /** SKU tel que retourné dans ProductFromList */
 export type SkuFromList = ProductFromList["skus"][0];

@@ -135,6 +135,7 @@ function createMockForm(overrides?: Record<string, unknown>) {
 		"initialSku.priceInclTaxEuros": 0,
 		"initialSku.compareAtPriceEuros": undefined,
 		"initialSku.inventory": 0,
+		status: "DRAFT",
 		...overrides,
 	};
 
@@ -198,6 +199,21 @@ function createMockForm(overrides?: Record<string, unknown>) {
 						{inputChildren}
 					</div>
 				),
+				RadioGroupField: ({
+					options,
+				}: {
+					options: Array<{ value: string; label: string }>;
+					label?: string;
+				}) => (
+					<div data-testid={`field-${name}`} role="radiogroup">
+						{options.map((opt) => (
+							<label key={opt.value}>
+								<input type="radio" name={name} value={opt.value} />
+								{opt.label}
+							</label>
+						))}
+					</div>
+				),
 			});
 		},
 	};
@@ -222,7 +238,7 @@ describe("CreateProductSidebarCards", () => {
 		return form;
 	}
 
-	describe("renders 3 cards", () => {
+	describe("renders 4 cards", () => {
 		it("renders Variante card title", () => {
 			setup();
 			expect(screen.getByText("Variante")).toBeInTheDocument();
@@ -238,10 +254,15 @@ describe("CreateProductSidebarCards", () => {
 			expect(screen.getByText("Stock")).toBeInTheDocument();
 		});
 
-		it("renders 3 card wrappers", () => {
+		it("renders Statut card title", () => {
+			setup();
+			expect(screen.getByText("Statut")).toBeInTheDocument();
+		});
+
+		it("renders 4 card wrappers", () => {
 			setup();
 			const cards = screen.getAllByTestId("card");
-			expect(cards.length).toBe(3);
+			expect(cards.length).toBe(4);
 		});
 	});
 
@@ -377,6 +398,33 @@ describe("CreateProductSidebarCards", () => {
 		it("renders helper text for stock field", () => {
 			setup();
 			expect(screen.getByText("Laissez vide ou 0 si le bijou est en rupture")).toBeInTheDocument();
+		});
+	});
+
+	describe("StatusCard", () => {
+		it("renders status radiogroup field", () => {
+			setup();
+			expect(screen.getByTestId("field-status")).toBeInTheDocument();
+		});
+
+		it("renders Visibilité label", () => {
+			setup();
+			expect(screen.getByText("Visibilité")).toBeInTheDocument();
+		});
+
+		it("renders both Brouillon and Public options", () => {
+			setup();
+			expect(screen.getByText("Brouillon")).toBeInTheDocument();
+			expect(screen.getByText("Public")).toBeInTheDocument();
+		});
+
+		it("renders helper text explaining visibility impact", () => {
+			setup();
+			expect(
+				screen.getByText(
+					"Un brouillon reste invisible côté boutique. Public le rend visible immédiatement.",
+				),
+			).toBeInTheDocument();
 		});
 	});
 });

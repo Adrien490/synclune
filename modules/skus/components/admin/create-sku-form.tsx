@@ -9,7 +9,7 @@ import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { Euro, Package } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import { SkuPrimaryImageField } from "./sku-primary-image-field";
 import { SkuGalleryField } from "./sku-gallery-field";

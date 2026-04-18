@@ -1,5 +1,6 @@
 import { getSession as getCurrentSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_SESSION_SELECT } from "../constants/session.constants";
@@ -66,7 +67,8 @@ export async function fetchSession(
 			...rest,
 			tokenMasked: token ? `${token.slice(0, 4)}...${token.slice(-2)}` : null,
 		};
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch session", error, { service: "fetchSession" });
 		return null;
 	}
 }

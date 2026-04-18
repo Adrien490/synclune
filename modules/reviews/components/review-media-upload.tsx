@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 import {
 	UploadProgress,

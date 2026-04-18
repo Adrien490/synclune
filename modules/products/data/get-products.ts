@@ -90,7 +90,10 @@ export async function getProducts(
 					useExactOnly = true;
 					rateLimited = true;
 				}
-			} catch {
+			} catch (error) {
+				logger.error("Failed to check search rate limit", error, {
+					service: "getProducts",
+				});
 				// On rate limit error, continue without blocking
 			}
 

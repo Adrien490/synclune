@@ -13,7 +13,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 import { AdminItemDrawer } from "@/shared/components/admin-item-drawer";
 import {

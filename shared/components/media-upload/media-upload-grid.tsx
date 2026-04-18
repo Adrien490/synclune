@@ -12,7 +12,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useLightbox } from "@/shared/hooks";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 import { lazy, Suspense } from "react";
 import { STORAGE_KEYS } from "@/shared/constants/storage-keys";

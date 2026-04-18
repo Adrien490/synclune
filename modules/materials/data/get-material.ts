@@ -1,5 +1,6 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { cacheMaterialDetail } from "../constants/cache";
@@ -60,7 +61,8 @@ async function fetchMaterial(
 		});
 
 		return material;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch material", error, { service: "fetchMaterial" });
 		return null;
 	}
 }

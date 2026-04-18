@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { z } from "zod";
 
@@ -57,7 +58,10 @@ export async function getOrderForConfirmation(orderId: string, orderNumber: stri
 			},
 			select: CONFIRMATION_ORDER_SELECT,
 		});
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch order for confirmation", error, {
+			service: "getOrderForConfirmation",
+		});
 		return null;
 	}
 }

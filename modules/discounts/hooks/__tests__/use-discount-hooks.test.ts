@@ -54,7 +54,7 @@ vi.mock("@/modules/discounts/actions/refresh-discounts", () => ({
 	refreshDiscounts: mockRefreshDiscounts,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/utils/toast", () => ({
 	toast: {
 		loading: mockToastLoading,
 		dismiss: mockToastDismiss,

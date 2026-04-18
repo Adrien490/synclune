@@ -1,5 +1,5 @@
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 interface MediaValue {
 	url: string;

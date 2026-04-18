@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -39,7 +40,10 @@ export async function getMaxProductPrice(): Promise<number> {
 		// et arrondir à la dizaine supérieure pour une meilleure UX
 		const finalMaxPrice = maxPrice > 0 ? maxPrice : 20000; // 200€ par défaut
 		return Math.ceil(finalMaxPrice / 1000) * 1000; // Arrondir aux 10€ supérieurs (prix en centimes)
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch max product price", error, {
+			service: "getMaxProductPrice",
+		});
 		// Retourner une valeur par défaut en cas d'erreur
 		return 20000; // 200€ par défaut (prix en centimes)
 	}

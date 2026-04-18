@@ -4,6 +4,8 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { Accordion } from "@/shared/components/ui/accordion";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAppForm } from "@/shared/components/forms";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
 	useDeferredValue,
@@ -53,6 +55,10 @@ const EMPTY_PRODUCT_TYPES: ProductTypeOption[] = [];
 /** Ancre de la grille produits : scroll smooth au lieu de window.scrollTo(0). */
 const PRODUCTS_GRID_ANCHOR_ID = "product-container";
 
+/** Ordre stable des sections Accordion pour retrouver l'item DOM via index. */
+const SECTION_ORDER = ["types", "price", "colors", "materials", "rating", "availability"] as const;
+type SectionValue = (typeof SECTION_ORDER)[number];
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -93,11 +99,17 @@ export function ProductFilterSheet({
 	activeProductTypeSlug,
 }: FilterSheetProps) {
 	const { isOpen, open, close } = useDialog(PRODUCT_FILTER_DIALOG_ID);
+	const isMobile = useIsMobile();
 
 	// Focus restoration (WCAG 2.4.3) — capture activeElement avant que le sheet
 	// ne vole le focus, puis restaure sur close via rAF (attend que Vaul ait
 	// fini son animation avant le focus, et preventScroll évite un jump iOS).
 	const previousFocusRef = useRef<HTMLElement | null>(null);
+
+	// Ref sur la racine Accordion pour focus le premier input d'une section
+	// déroulée manuellement (desktop uniquement — évite d'ouvrir le clavier
+	// soft iOS/Android lors du tap).
+	const accordionRef = useRef<HTMLDivElement>(null);
 
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
 	const pathname = usePathname();
@@ -168,7 +180,7 @@ export function ProductFilterSheet({
 		});
 
 		startTransition(() => {
-			router.push(fullUrl);
+			withViewTransition(() => router.push(fullUrl));
 			scrollToProductsGrid();
 		});
 	};
@@ -179,8 +191,31 @@ export function ProductFilterSheet({
 		const fullUrl = buildClearFiltersURL(searchParams);
 
 		startTransition(() => {
-			router.push(fullUrl);
+			withViewTransition(() => router.push(fullUrl));
 			scrollToProductsGrid();
+		});
+	};
+
+	// P1.4 — Quand une section Accordion est dépliée manuellement (desktop),
+	// focus le premier input interactif pour accélérer la navigation clavier.
+	// Skip sur mobile : éviter d'ouvrir le clavier soft au tap d'une section.
+	const handleAccordionValueChange = (values: string[]) => {
+		const prev = previousOpenSectionsRef.current;
+		previousOpenSectionsRef.current = values;
+		if (isMobile) return;
+		const newlyOpened = values.find(
+			(v) => !prev.includes(v) && SECTION_ORDER.includes(v as SectionValue),
+		) as SectionValue | undefined;
+		if (!newlyOpened) return;
+		const index = SECTION_ORDER.indexOf(newlyOpened);
+		if (index < 0 || !accordionRef.current) return;
+		requestAnimationFrame(() => {
+			const item = accordionRef.current?.children[index] as HTMLElement | undefined;
+			if (!item) return;
+			const focusable = item.querySelector<HTMLElement>(
+				'input:not([type="hidden"]):not([disabled]), [role="slider"]:not([disabled])',
+			);
+			focusable?.focus({ preventScroll: true });
 		});
 	};
 
@@ -205,23 +240,34 @@ export function ProductFilterSheet({
 			)
 		: sortedMaterials;
 
-	// Default open sections: types + price + any section with active filters
-	const defaultOpenSections = (() => {
+	// Default open sections: types + price + any section with active filters.
+	// Lazy-initialized to keep the array stable across re-renders and to allow
+	// the ref below to snapshot it at mount without accessing refs during render.
+	const [defaultOpenSections] = useState<string[]>(() => {
 		const sections = ["types", "price"];
-		if (initialValues.colors.length > 0) {
-			sections.push("colors");
-		}
-		if (initialValues.materials.length > 0) {
-			sections.push("materials");
-		}
-		if (initialValues.ratingMin !== null) {
-			sections.push("rating");
-		}
-		if (initialValues.inStockOnly || initialValues.onSale) {
-			sections.push("availability");
-		}
+		if (initialValues.colors.length > 0) sections.push("colors");
+		if (initialValues.materials.length > 0) sections.push("materials");
+		if (initialValues.ratingMin !== null) sections.push("rating");
+		if (initialValues.inStockOnly || initialValues.onSale) sections.push("availability");
 		return sections;
-	})();
+	});
+	const previousOpenSectionsRef = useRef<string[]>(defaultOpenSections);
+
+	// P2.2 — Compte des filtres actifs dans le formulaire (pas l'URL) pour
+	// annoncer les toggles avant Apply. Mis à jour à chaque ajout/retrait via
+	// chip ou section.
+	const formValues = form.state.values;
+	const pendingFilterCount =
+		formValues.productTypes.length +
+		formValues.colors.length +
+		formValues.materials.length +
+		(formValues.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
+		formValues.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
+			? 1
+			: 0) +
+		(formValues.ratingMin !== null ? 1 : 0) +
+		(formValues.inStockOnly ? 1 : 0) +
+		(formValues.onSale ? 1 : 0);
 
 	// Supprime un filtre individuel via une chip (sans fermer la sheet).
 	const handleRemoveChip = (chip: FilterChipDescriptor) => {
@@ -295,8 +341,10 @@ export function ProductFilterSheet({
 				/>
 
 				<Accordion
+					ref={accordionRef}
 					type="multiple"
 					defaultValue={defaultOpenSections}
+					onValueChange={handleAccordionValueChange}
 					className="w-full"
 					aria-label="Filtres de recherche"
 				>
@@ -419,6 +467,14 @@ export function ProductFilterSheet({
 						}}
 					/>
 				</Accordion>
+
+				{/* P2.2 — Live region : annonce le nombre de filtres en attente à
+				    chaque changement du formulaire (chip retirée, toggle, reset). */}
+				<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+					{pendingFilterCount === 0
+						? "Aucun filtre sélectionné"
+						: `${pendingFilterCount} filtre${pendingFilterCount > 1 ? "s" : ""} sélectionné${pendingFilterCount > 1 ? "s" : ""}`}
+				</div>
 			</form>
 		</FilterSheetWrapper>
 	);

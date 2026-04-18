@@ -1,4 +1,5 @@
 import nextConfig from "eslint-config-next";
+import localPlugin from "./eslint-plugin-local/index.mjs";
 
 const eslintConfig = [
 	{
@@ -16,6 +17,7 @@ const eslintConfig = [
 			"**/prisma/migrations/**",
 			"public/sw*",
 			"public/swe-worker*",
+			"eslint-plugin-local/**",
 		],
 	},
 	...nextConfig,
@@ -52,6 +54,30 @@ const eslintConfig = [
 			"prefer-const": "warn",
 			"no-console": ["warn", { allow: ["warn", "error"] }],
 			"react/no-unescaped-entities": "off",
+			"no-restricted-imports": [
+				"error",
+				{
+					paths: [
+						{
+							name: "sonner",
+							importNames: ["toast"],
+							message:
+								"Utilise `import { toast } from '@/shared/utils/toast'` pour bénéficier du haptic et de la sanitisation.",
+						},
+					],
+				},
+			],
+		},
+	},
+	{
+		files: [
+			"shared/utils/toast.ts",
+			"shared/components/ui/toaster.tsx",
+			"**/__tests__/**",
+			"**/*.test.{ts,tsx}",
+		],
+		rules: {
+			"no-restricted-imports": "off",
 		},
 	},
 	{
@@ -101,6 +127,19 @@ const eslintConfig = [
 		rules: {
 			"react-hooks/rules-of-hooks": "off",
 			"no-console": "off",
+		},
+	},
+	{
+		files: ["**/*.{ts,tsx}"],
+		plugins: { local: localPlugin },
+		rules: {
+			"local/require-cache-life": "error",
+		},
+	},
+	{
+		files: ["**/__tests__/**", "**/*.test.{ts,tsx}", "**/*.spec.{ts,tsx}"],
+		rules: {
+			"local/require-cache-life": "off",
 		},
 	},
 	{

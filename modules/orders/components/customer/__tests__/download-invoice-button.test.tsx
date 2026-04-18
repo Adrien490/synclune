@@ -36,9 +36,38 @@ vi.mock("lucide-react", () => ({
 	LoaderCircle: () => <svg data-testid="icon-loader" />,
 }));
 
-vi.mock("sonner", () => ({
-	toast: { error: vi.fn() },
-}));
+const { mockToast } = vi.hoisted(() => {
+	const toast = {
+		success: vi.fn(),
+		error: vi.fn(),
+		promise: vi.fn(
+			(
+				promise: Promise<unknown>,
+				opts: {
+					loading?: string;
+					success?: string | ((d: unknown) => string);
+					error?: string | ((e: unknown) => string);
+				},
+			) => {
+				promise.then(
+					(data) => {
+						const msg = typeof opts.success === "function" ? opts.success(data) : opts.success;
+						if (msg) toast.success(msg);
+					},
+					(err) => {
+						const msg = typeof opts.error === "function" ? opts.error(err) : opts.error;
+						if (msg) toast.error(msg);
+					},
+				);
+				return "toast-id";
+			},
+		),
+	};
+	return { mockToast: toast };
+});
+
+vi.mock("sonner", () => ({ toast: mockToast }));
+vi.mock("@/shared/utils/toast", () => ({ toast: mockToast }));
 
 import { DownloadInvoiceButton } from "../download-invoice-button";
 

@@ -12,6 +12,7 @@ import { ConditionalAnalytics } from "@/shared/components/conditional-analytics"
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
+import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
 import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
@@ -78,6 +79,7 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			</Suspense>
 			<ShopMobileBottomNav isAuthenticated={isAuthenticated} />
 			<PullToRefresh />
+			<VisualViewportBridge />
 			<CookieBanner />
 			<ConditionalAnalytics />
 			<WebVitalsReporter />

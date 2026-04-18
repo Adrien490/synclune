@@ -6,6 +6,7 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { m } from "motion/react";
 import { AlertCircleIcon, SearchIcon } from "lucide-react";
@@ -133,7 +134,11 @@ function AutocompleteLoadingSkeletons({
 	return (
 		<>
 			{[...Array<unknown>(count)].map((_, i) => (
-				<li key={`skeleton-${i}`} className="px-3 py-3 md:py-2" aria-hidden="true">
+				<li
+					key={`skeleton-${i}`}
+					className="min-h-11 px-3 py-3 md:min-h-0 md:py-2"
+					aria-hidden="true"
+				>
 					<div className="flex items-center gap-3">
 						{hasImage && (
 							<Skeleton
@@ -175,6 +180,7 @@ function AutocompleteEmptyState({ noResultsMessage }: { noResultsMessage: string
 }
 
 function AutocompleteErrorState({ error, onRetry }: { error: string; onRetry?: () => void }) {
+	const haptic = useHaptic();
 	return (
 		<li className="w-full">
 			<Empty>
@@ -184,7 +190,15 @@ function AutocompleteErrorState({ error, onRetry }: { error: string; onRetry?: (
 					</EmptyMedia>
 					<EmptyTitle className="text-destructive">{error}</EmptyTitle>
 					{onRetry && (
-						<Button variant="ghost" size="sm" onClick={onRetry}>
+						<Button
+							variant="ghost"
+							size="sm"
+							onClick={() => {
+								haptic("medium");
+								onRetry();
+							}}
+							className="min-h-11"
+						>
 							Réessayer
 						</Button>
 					)}
@@ -239,11 +253,13 @@ function AutocompleteItem<T>({
 			aria-posinset={index + 1}
 			aria-setsize={itemCount}
 			className={cn(
-				"cursor-pointer px-3 py-3 transition-colors duration-150 select-none md:py-2",
-				isActive ? "bg-accent" : "bg-card hover:bg-muted",
+				"min-h-11 cursor-pointer touch-manipulation px-3 py-3 transition-colors duration-150 select-none [-webkit-tap-highlight-color:transparent] md:min-h-0 md:py-2",
+				isActive ? "bg-accent" : "bg-card hover:bg-muted active:bg-accent",
 			)}
 			onClick={() => onSelect(item)}
-			onMouseEnter={() => onHover(index)}
+			onPointerEnter={(e) => {
+				if (e.pointerType !== "touch") onHover(index);
+			}}
 			tabIndex={-1}
 			initial={AUTOCOMPLETE_ANIMATIONS.item.initial}
 			animate={AUTOCOMPLETE_ANIMATIONS.item.animate}

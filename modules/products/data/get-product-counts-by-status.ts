@@ -1,5 +1,6 @@
 import { ProductStatus } from "@/app/generated/prisma/client";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -57,7 +58,10 @@ async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 		});
 
 		return result;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch product counts by status", error, {
+			service: "fetchProductCountsByStatus",
+		});
 		return {
 			[ProductStatus.PUBLIC]: 0,
 			[ProductStatus.DRAFT]: 0,

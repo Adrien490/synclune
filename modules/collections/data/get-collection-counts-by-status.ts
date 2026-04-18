@@ -1,5 +1,6 @@
 import { CollectionStatus } from "@/app/generated/prisma/client";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -60,7 +61,10 @@ async function fetchCollectionCountsByStatus(): Promise<CollectionCountsByStatus
 		});
 
 		return result;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch collection counts by status", error, {
+			service: "fetchCollectionCountsByStatus",
+		});
 		return {
 			[CollectionStatus.PUBLIC]: 0,
 			[CollectionStatus.DRAFT]: 0,

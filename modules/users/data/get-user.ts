@@ -1,6 +1,7 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { cacheCurrentUser } from "../constants/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_USER_SELECT } from "../constants/user.constants";
@@ -75,7 +76,8 @@ export async function fetchUser(userId: string): Promise<GetUserReturn> {
 		});
 
 		return user;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch user", error, { service: "fetchUser" });
 		return null;
 	}
 }

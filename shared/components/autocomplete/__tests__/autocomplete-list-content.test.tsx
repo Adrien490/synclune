@@ -1,9 +1,22 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+
+// ============================================================================
+// HOISTED MOCKS
+// ============================================================================
+
+const { mockHaptic } = vi.hoisted(() => ({
+	mockHaptic: vi.fn(),
+}));
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
+}));
 
 vi.mock("motion/react", () => {
 	const { createElement, forwardRef } = require("react");
@@ -166,6 +179,10 @@ const mockItems: TestItem[] = [
 // SETUP
 // ============================================================================
 
+beforeEach(() => {
+	mockHaptic.mockClear();
+});
+
 afterEach(cleanup);
 
 // ============================================================================
@@ -304,5 +321,65 @@ describe("AutocompleteListContent", () => {
 
 		expect(screen.getByTestId("alert-circle-icon")).toBeInTheDocument();
 		expect(screen.queryByTestId("skeleton")).toBeNull();
+	});
+
+	// ─── Touch ergonomics (WCAG 2.5.5) ─────────────────────────────────────
+
+	it("items expose min-h-11 and touch-manipulation for mobile tap targets", () => {
+		render(<AutocompleteListContent {...defaultProps} items={mockItems} hasResults={true} />);
+
+		const options = screen.getAllByRole("option");
+		options.forEach((option) => {
+			expect(option.className).toContain("min-h-11");
+			expect(option.className).toContain("touch-manipulation");
+		});
+	});
+
+	it("skeleton rows expose min-h-11 on mobile", () => {
+		render(<AutocompleteListContent {...defaultProps} isLoading={true} loadingSkeletonCount={2} />);
+		const items = document.querySelectorAll("li");
+		items.forEach((li) => {
+			expect(li.className).toContain("min-h-11");
+		});
+	});
+
+	it("retry button triggers 'medium' haptic before onRetry", () => {
+		const onRetry = vi.fn();
+		render(<AutocompleteListContent {...defaultProps} error="Erreur" onRetry={onRetry} />);
+		fireEvent.click(screen.getByTestId("retry-button"));
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
+		expect(onRetry).toHaveBeenCalledTimes(1);
+	});
+
+	it("onItemHover is NOT called for touch pointer enter", () => {
+		const onItemHover = vi.fn();
+		render(
+			<AutocompleteListContent
+				{...defaultProps}
+				items={mockItems}
+				hasResults={true}
+				onItemHover={onItemHover}
+			/>,
+		);
+		const option = screen.getAllByRole("option")[0]!;
+		fireEvent.pointerEnter(option, { pointerType: "touch" });
+		expect(onItemHover).not.toHaveBeenCalled();
+	});
+
+	it("onItemHover IS called for non-touch pointer enter", () => {
+		const onItemHover = vi.fn();
+		render(
+			<AutocompleteListContent
+				{...defaultProps}
+				items={mockItems}
+				hasResults={true}
+				onItemHover={onItemHover}
+			/>,
+		);
+		const option = screen.getAllByRole("option")[1]!;
+		// jsdom-dispatched pointer events without explicit pointerType default to ""
+		// which our guard treats as non-touch (desktop/mouse path)
+		fireEvent.pointerEnter(option);
+		expect(onItemHover).toHaveBeenCalledWith(1);
 	});
 });

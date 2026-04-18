@@ -140,6 +140,7 @@ export function ProductCatalog({
 				<div
 					id="product-container"
 					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
+					style={{ viewTransitionName: "product-grid" }}
 				>
 					{/* Mobile sticky sub-header (tri / recherche / filtres) */}
 					<Suspense fallback={null}>

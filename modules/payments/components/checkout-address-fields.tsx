@@ -72,6 +72,8 @@ function AddressAutocompleteField({
 					minQueryLength={2}
 					showSearchIcon={false}
 					showEmptyState={false}
+					enterKeyHint="next"
+					autoCapitalize="words"
 				/>
 			)}
 		</form.AppField>

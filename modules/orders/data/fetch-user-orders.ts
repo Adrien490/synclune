@@ -1,4 +1,5 @@
 import { type Prisma, PaymentStatus } from "@/app/generated/prisma/client";
+import { logger } from "@/shared/lib/logger";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
@@ -86,7 +87,8 @@ export async function fetchUserOrders(
 			orders: items,
 			pagination,
 		};
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch user orders", error, { service: "fetchUserOrders" });
 		// En cas d'erreur, retourner un resultat vide
 		return {
 			orders: [],

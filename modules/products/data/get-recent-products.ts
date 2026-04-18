@@ -3,8 +3,8 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
-import type { Product } from "../types/product.types";
+import { PRODUCT_CAROUSEL_SELECT } from "../constants/product.constants";
+import type { ProductCarouselItem } from "../types/product.types";
 import { serializeProducts } from "../utils/serialize-product";
 import { getRecentProductSlugs } from "./get-recent-product-slugs";
 import { RECENT_PRODUCTS_DISPLAY_LIMIT } from "../constants/recent-products";
@@ -26,7 +26,9 @@ interface GetRecentProductsOptions {
  * @param options.limit - Nombre max de produits (default: 8)
  * @returns Liste des produits recemment vus
  */
-export async function getRecentProducts(options?: GetRecentProductsOptions): Promise<Product[]> {
+export async function getRecentProducts(
+	options?: GetRecentProductsOptions,
+): Promise<ProductCarouselItem[]> {
 	const { excludeSlug, limit = RECENT_PRODUCTS_DISPLAY_LIMIT } = options ?? {};
 
 	// 1. Recuperer les slugs depuis le cookie (acces runtime)
@@ -56,7 +58,7 @@ export async function getRecentProducts(options?: GetRecentProductsOptions): Pro
  * Cache: private (isole par utilisateur via cookies)
  * Invalide par: updateTag("recent-products-list") dans addRecentProduct
  */
-async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
+async function fetchProductsBySlugs(slugs: string[]): Promise<ProductCarouselItem[]> {
 	"use cache: private";
 	cacheLife("relatedProducts"); // 30m stale, 10m revalidate, 3h expire
 	cacheTag(RECENT_PRODUCTS_CACHE_TAGS.LIST);
@@ -73,14 +75,14 @@ async function fetchProductsBySlugs(slugs: string[]): Promise<Product[]> {
 					},
 				},
 			},
-			select: GET_PRODUCTS_SELECT,
+			select: PRODUCT_CAROUSEL_SELECT,
 		});
 
 		// Trier selon l'ordre des slugs (plus recent en premier)
 		const productsBySlug = new Map(products.map((p) => [p.slug, p]));
 		const orderedProducts = slugs
 			.map((slug) => productsBySlug.get(slug))
-			.filter((p): p is Product => p !== undefined);
+			.filter((p): p is ProductCarouselItem => p !== undefined);
 
 		return serializeProducts(orderedProducts);
 	} catch (e) {

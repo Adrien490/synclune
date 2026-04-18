@@ -8,6 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
 import { MATERIAL_DIALOG_ID } from "@/modules/materials/components/material-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Euro, Info, Package, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type {
@@ -31,9 +32,13 @@ export function CreateProductSidebarCards({
 			<VariantCard form={form} colors={colors} materials={materials} />
 			<PricingCard form={form} />
 			<StockCard form={form} />
+			<StatusCard form={form} />
 		</div>
 	);
 }
+
+const MOBILE_SECTION_TITLE =
+	"text-muted-foreground text-sm font-semibold tracking-wide uppercase lg:text-foreground lg:text-base lg:font-semibold lg:normal-case lg:tracking-normal";
 
 // Variant card with color, material, and size fields
 function VariantCard({
@@ -46,14 +51,19 @@ function VariantCard({
 	materials: CreateProductFormProps["materials"];
 }) {
 	const router = useRouter();
+	const haptic = useHaptic();
 	const colorDialog = useDialog(COLOR_DIALOG_ID);
 	const materialDialog = useDialog(MATERIAL_DIALOG_ID);
 
 	return (
-		<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
-			<CardHeader className="hidden lg:grid lg:px-6">
+		<Card
+			role="region"
+			aria-label="Variante initiale"
+			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+		>
+			<CardHeader className="px-0 sm:px-0 lg:px-6">
 				<div className="flex items-center gap-1">
-					<CardTitle>Variante</CardTitle>
+					<CardTitle className={MOBILE_SECTION_TITLE}>Variante</CardTitle>
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<Button
@@ -76,7 +86,10 @@ function VariantCard({
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
-				<form.AppField name="initialSku.colorId">
+				<form.AppField
+					name="initialSku.colorId"
+					listeners={{ onChange: () => haptic("selection") }}
+				>
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel htmlFor={field.name} optional>
@@ -133,14 +146,15 @@ function VariantCard({
 									variant="outline"
 									size="icon"
 									className="shrink-0"
-									onClick={() =>
+									onClick={() => {
+										haptic("light");
 										colorDialog.open({
 											onCreated: (id: string) => {
 												field.handleChange(id);
 												router.refresh();
 											},
-										})
-									}
+										});
+									}}
 									aria-label="Créer une nouvelle couleur"
 								>
 									<Plus className="h-4 w-4" />
@@ -150,7 +164,10 @@ function VariantCard({
 					)}
 				</form.AppField>
 
-				<form.AppField name="initialSku.materialId">
+				<form.AppField
+					name="initialSku.materialId"
+					listeners={{ onChange: () => haptic("selection") }}
+				>
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel htmlFor={field.name} optional>
@@ -173,14 +190,15 @@ function VariantCard({
 									variant="outline"
 									size="icon"
 									className="shrink-0"
-									onClick={() =>
+									onClick={() => {
+										haptic("light");
 										materialDialog.open({
 											onCreated: (id: string) => {
 												field.handleChange(id);
 												router.refresh();
 											},
-										})
-									}
+										});
+									}}
 									aria-label="Créer un nouveau matériau"
 								>
 									<Plus className="h-4 w-4" />
@@ -194,7 +212,11 @@ function VariantCard({
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel optional>Taille</FieldLabel>
-							<field.InputGroupField placeholder="Ex: 52, Ajustable, 18cm..." />
+							<field.InputGroupField
+								placeholder="Ex: 52, Ajustable, 18cm..."
+								enterKeyHint="next"
+								autoCapitalize="none"
+							/>
 						</div>
 					)}
 				</form.AppField>
@@ -206,21 +228,33 @@ function VariantCard({
 // Pricing card with price and compare-at-price fields
 function PricingCard({ form }: { form: CreateProductFormInstance }) {
 	return (
-		<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
-			<CardHeader className="hidden lg:grid lg:px-6">
-				<CardTitle>Tarification</CardTitle>
+		<Card
+			role="region"
+			aria-label="Tarification"
+			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+		>
+			<CardHeader className="px-0 sm:px-0 lg:px-6">
+				<CardTitle className={MOBILE_SECTION_TITLE}>Tarification</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
 				<form.AppField name="initialSku.priceInclTaxEuros">
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel required>Prix de vente final</FieldLabel>
-							<field.InputGroupField type="number" step="0.01" required>
+							<field.InputGroupField
+								type="number"
+								step="0.01"
+								required
+								enterKeyHint="next"
+								aria-describedby="price-sale-hint"
+							>
 								<InputGroupAddon>
 									<Euro className="h-4 w-4" />
 								</InputGroupAddon>
 							</field.InputGroupField>
-							<p className="text-muted-foreground text-xs">Le prix que paiera le client</p>
+							<p id="price-sale-hint" className="text-muted-foreground text-xs">
+								Le prix que paiera le client
+							</p>
 						</div>
 					)}
 				</form.AppField>
@@ -248,14 +282,57 @@ function PricingCard({ form }: { form: CreateProductFormInstance }) {
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel optional>Ancien prix (affiché barré)</FieldLabel>
-							<field.InputGroupField type="number" step="0.01">
+							<field.InputGroupField
+								type="number"
+								step="0.01"
+								enterKeyHint="done"
+								aria-describedby="price-compare-hint"
+							>
 								<InputGroupAddon>
 									<Euro className="h-4 w-4" />
 								</InputGroupAddon>
 							</field.InputGroupField>
-							<p className="text-muted-foreground text-xs">
+							<p id="price-compare-hint" className="text-muted-foreground text-xs">
 								Sera affiché barré à côté du prix actuel (ex:{" "}
 								<span className="line-through">45€</span> → 39€)
+							</p>
+						</div>
+					)}
+				</form.AppField>
+			</CardContent>
+		</Card>
+	);
+}
+
+// Status card with DRAFT / PUBLIC radio (visible to prevent mis-tap at submit time)
+function StatusCard({ form }: { form: CreateProductFormInstance }) {
+	const haptic = useHaptic();
+
+	return (
+		<Card
+			role="region"
+			aria-label="Statut du bijou"
+			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+		>
+			<CardHeader className="px-0 sm:px-0 lg:px-6">
+				<CardTitle className={MOBILE_SECTION_TITLE}>Statut</CardTitle>
+			</CardHeader>
+			<CardContent className="px-0 sm:px-0 lg:px-6">
+				<form.AppField name="status" listeners={{ onChange: () => haptic("selection") }}>
+					{(field) => (
+						<div className="space-y-2">
+							<FieldLabel htmlFor={field.name} required>
+								Visibilité
+							</FieldLabel>
+							<field.RadioGroupField
+								label=""
+								options={[
+									{ value: "DRAFT", label: "Brouillon" },
+									{ value: "PUBLIC", label: "Public" },
+								]}
+							/>
+							<p className="text-muted-foreground text-xs">
+								Un brouillon reste invisible côté boutique. Public le rend visible immédiatement.
 							</p>
 						</div>
 					)}
@@ -268,22 +345,32 @@ function PricingCard({ form }: { form: CreateProductFormInstance }) {
 // Stock card with inventory field
 function StockCard({ form }: { form: CreateProductFormInstance }) {
 	return (
-		<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
-			<CardHeader className="hidden lg:grid lg:px-6">
-				<CardTitle>Stock</CardTitle>
+		<Card
+			role="region"
+			aria-label="Stock"
+			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+		>
+			<CardHeader className="px-0 sm:px-0 lg:px-6">
+				<CardTitle className={MOBILE_SECTION_TITLE}>Stock</CardTitle>
 			</CardHeader>
 			<CardContent className="px-0 sm:px-0 lg:px-6">
 				<form.AppField name="initialSku.inventory">
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel optional>Quantité en stock</FieldLabel>
-							<field.InputGroupField type="number" min={0} inputMode="numeric">
+							<field.InputGroupField
+								type="number"
+								min={0}
+								inputMode="numeric"
+								enterKeyHint="done"
+								aria-describedby="stock-hint"
+							>
 								<InputGroupAddon align="inline-end">
 									<Package className="text-muted-foreground h-4 w-4" />
 									<InputGroupText className="text-muted-foreground text-xs">unités</InputGroupText>
 								</InputGroupAddon>
 							</field.InputGroupField>
-							<p className="text-muted-foreground text-xs">
+							<p id="stock-hint" className="text-muted-foreground text-xs">
 								Laissez vide ou 0 si le bijou est en rupture
 							</p>
 						</div>

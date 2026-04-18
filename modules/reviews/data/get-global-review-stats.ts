@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { REVIEWS_CACHE_TAGS } from "../constants/cache";
 import type { GlobalReviewStats } from "../types/review.types";
@@ -39,7 +40,10 @@ export async function getGlobalReviewStats(): Promise<GlobalReviewStats> {
 			totalReviews,
 			averageRating: Math.round(averageRating * 100) / 100,
 		};
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch global review stats", error, {
+			service: "getGlobalReviewStats",
+		});
 		return { totalReviews: 0, averageRating: 0 };
 	}
 }

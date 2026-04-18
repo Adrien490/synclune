@@ -49,9 +49,15 @@ export function CreateProductMediaCard({
 	const maxMediaCount = ARRAY_LIMITS.SKU_MEDIA;
 
 	return (
-		<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
-			<CardHeader className="hidden lg:grid lg:px-6">
-				<CardTitle>Médias</CardTitle>
+		<Card
+			role="region"
+			aria-label="Médias du bijou"
+			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+		>
+			<CardHeader className="px-0 sm:px-0 lg:px-6">
+				<CardTitle className="text-muted-foreground lg:text-foreground text-sm font-semibold tracking-wide uppercase lg:text-base lg:font-semibold lg:tracking-normal lg:normal-case">
+					Médias
+				</CardTitle>
 			</CardHeader>
 			<CardContent className="px-0 sm:px-0 lg:px-6">
 				<form.Field

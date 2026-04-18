@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, CircleX, Download, EllipsisVertical, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 import {
 	ResponsiveActionMenu,

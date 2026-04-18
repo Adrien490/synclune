@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { CollectionStatus } from "@/app/generated/prisma/client";
 
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 
@@ -21,7 +22,10 @@ export async function getPublicCollectionSlugs(): Promise<{ slug: string }[]> {
 		});
 
 		return collections;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch public collection slugs", error, {
+			service: "getPublicCollectionSlugs",
+		});
 		return [];
 	}
 }

@@ -196,7 +196,7 @@ function createMockForm(overrides: FormOverrides = {}) {
 			description: "",
 			typeId: "",
 			collectionIds: overrides.collectionIds ?? [],
-			status: overrides.status ?? "DRAFT",
+			status: overrides.status ?? "PUBLIC",
 			initialSku: {
 				...defaultInitialSku,
 				...overrides.initialSku,
@@ -344,33 +344,42 @@ describe("CreateProductForm", () => {
 	// Submit buttons
 	// --------------------------------------------------------------------------
 
-	describe("submit buttons", () => {
-		it("renders draft and publish buttons", () => {
+	describe("submit button", () => {
+		it("renders single submit button with PUBLIC label by default", () => {
 			setup();
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByText("Enregistrer comme brouillon")).toBeInTheDocument();
-			expect(screen.getByText("Publier le bijou")).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Publier le bijou" })).toBeInTheDocument();
+			expect(screen.queryByText("Enregistrer le brouillon")).not.toBeInTheDocument();
 		});
 
-		it("disables buttons when form cannot submit", () => {
+		it("renders submit button with DRAFT label when status=DRAFT", () => {
+			setup({ status: "DRAFT" });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("button", { name: "Enregistrer le brouillon" })).toBeInTheDocument();
+			expect(screen.queryByText("Publier le bijou")).not.toBeInTheDocument();
+		});
+
+		it("disables submit button when form cannot submit", () => {
 			setup({ canSubmit: false });
 			render(<CreateProductForm {...defaultProps} />);
 
-			const buttons = screen.getAllByRole("button", { name: /brouillon|publier/i });
-			buttons.forEach((button) => {
-				expect(button).toBeDisabled();
-			});
+			expect(screen.getByRole("button", { name: /brouillon|publier/i })).toBeDisabled();
 		});
 
-		it("disables buttons when pending", () => {
+		it("disables submit button when pending (PUBLIC)", () => {
 			setup({}, { isPending: true });
 			render(<CreateProductForm {...defaultProps} />);
 
-			const buttons = screen.getAllByRole("button", { name: /enregistrement|publication/i });
-			buttons.forEach((button) => {
-				expect(button).toBeDisabled();
-			});
+			expect(screen.getByRole("button", { name: /publication/i })).toBeDisabled();
+		});
+
+		it("disables submit button when pending (DRAFT)", () => {
+			setup({ status: "DRAFT" }, { isPending: true });
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("button", { name: /enregistrement/i })).toBeDisabled();
 		});
 
 		it("shows pending state announcement for screen readers", () => {
@@ -380,7 +389,7 @@ describe("CreateProductForm", () => {
 			expect(screen.getByRole("status")).toHaveTextContent("Envoi du formulaire en cours...");
 		});
 
-		it("disables buttons when media is uploading", () => {
+		it("disables submit button when media is uploading", () => {
 			setup();
 			mockUseMediaUpload.mockReturnValue({
 				upload: vi.fn(),
@@ -390,7 +399,6 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(screen.getByRole("button", { name: /upload en cours/i })).toBeDisabled();
-			expect(screen.getByRole("button", { name: /brouillon/i })).toBeDisabled();
 		});
 	});
 
@@ -460,27 +468,12 @@ describe("CreateProductForm", () => {
 	// --------------------------------------------------------------------------
 
 	describe("form errors", () => {
-		it("does not render alert when no form errors", () => {
-			setup();
-			render(<CreateProductForm {...defaultProps} />);
-
-			expect(screen.queryByTestId("form-alert")).not.toBeInTheDocument();
-		});
-
-		it("renders alert when form errors are present", () => {
+		it("never renders global errors alert (errors display under fields)", () => {
 			setup({}, { formErrors: ["Le titre est déjà utilisé"] });
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByTestId("form-alert")).toBeInTheDocument();
-			expect(screen.getByText("Le titre est déjà utilisé")).toBeInTheDocument();
-		});
-
-		it("renders multiple error messages", () => {
-			setup({}, { formErrors: ["Erreur A", "Erreur B"] });
-			render(<CreateProductForm {...defaultProps} />);
-
-			expect(screen.getByText("Erreur A")).toBeInTheDocument();
-			expect(screen.getByText("Erreur B")).toBeInTheDocument();
+			expect(screen.queryByTestId("form-alert")).not.toBeInTheDocument();
+			expect(screen.queryByText("Le titre est déjà utilisé")).not.toBeInTheDocument();
 		});
 	});
 
@@ -511,21 +504,21 @@ describe("CreateProductForm", () => {
 	// --------------------------------------------------------------------------
 
 	describe("hidden inputs", () => {
-		it("renders hidden input for status with default DRAFT value", () => {
+		it("renders hidden input for status with default PUBLIC value", () => {
 			setup();
 			const { container } = render(<CreateProductForm {...defaultProps} />);
 
 			const statusInput = container.querySelector('input[name="status"]');
 			expect(statusInput).toBeInTheDocument();
-			expect(statusInput).toHaveAttribute("value", "DRAFT");
+			expect(statusInput).toHaveAttribute("value", "PUBLIC");
 		});
 
-		it("renders hidden input for status with PUBLIC value", () => {
-			setup({ status: "PUBLIC" });
+		it("renders hidden input for status with DRAFT value", () => {
+			setup({ status: "DRAFT" });
 			const { container } = render(<CreateProductForm {...defaultProps} />);
 
 			const statusInput = container.querySelector('input[name="status"]');
-			expect(statusInput).toHaveAttribute("value", "PUBLIC");
+			expect(statusInput).toHaveAttribute("value", "DRAFT");
 		});
 
 		it("renders hidden input for collectionIds as serialized JSON", () => {
@@ -593,6 +586,19 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(screen.getByText("Variante")).toBeInTheDocument();
+		});
+
+		it("renders the Statut card with visibility label and help text", () => {
+			setup();
+			render(<CreateProductForm {...defaultProps} />);
+
+			expect(screen.getByRole("region", { name: "Statut du bijou" })).toBeInTheDocument();
+			expect(screen.getByText("Visibilité")).toBeInTheDocument();
+			expect(
+				screen.getByText(
+					"Un brouillon reste invisible côté boutique. Public le rend visible immédiatement.",
+				),
+			).toBeInTheDocument();
 		});
 
 		it("renders collections multi-select", () => {

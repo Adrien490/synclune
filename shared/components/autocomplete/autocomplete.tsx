@@ -2,6 +2,7 @@
 
 import { Input } from "@/shared/components/ui/input";
 import { Spinner } from "@/shared/components/ui/spinner";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
@@ -44,10 +45,16 @@ export function Autocomplete<T>({
 	"aria-invalid": ariaInvalid,
 	"aria-describedby": ariaDescribedBy,
 	"aria-required": ariaRequired,
+	inputMode = AUTOCOMPLETE_DEFAULTS.inputMode,
+	enterKeyHint = AUTOCOMPLETE_DEFAULTS.enterKeyHint,
+	autoCorrect = AUTOCOMPLETE_DEFAULTS.autoCorrect,
+	autoCapitalize = AUTOCOMPLETE_DEFAULTS.autoCapitalize,
+	spellCheck = AUTOCOMPLETE_DEFAULTS.spellCheck,
 }: AutocompleteProps<T>) {
 	const isMobileDetected = useIsMobile();
 	const mounted = useMounted();
 	const isMobile = mounted && isMobileDetected;
+	const haptic = useHaptic();
 
 	// IDs uniques pour eviter les collisions
 	const id = useId();
@@ -164,6 +171,7 @@ export function Autocomplete<T>({
 		onChange("");
 		setIsOpen(false);
 		setActiveIndex(-1);
+		haptic("light");
 
 		// Annuler tout debounce en cours
 		if (debounceRef.current) {
@@ -172,6 +180,7 @@ export function Autocomplete<T>({
 	};
 
 	const handleItemSelect = (item: T) => {
+		haptic("selection");
 		onSelect(item);
 		setIsOpen(false);
 		setActiveIndex(-1);
@@ -185,7 +194,8 @@ export function Autocomplete<T>({
 		activeIndex,
 		setIsOpen,
 		setActiveIndex,
-		onSelect,
+		onSelect: handleItemSelect,
+		onHaptic: haptic,
 	});
 
 	// Taille d'image adaptee mobile/desktop
@@ -232,6 +242,11 @@ export function Autocomplete<T>({
 						aria-invalid={ariaInvalid}
 						aria-required={ariaRequired}
 						autoComplete="off"
+						inputMode={inputMode}
+						enterKeyHint={enterKeyHint}
+						autoCorrect={autoCorrect}
+						autoCapitalize={autoCapitalize}
+						spellCheck={spellCheck}
 					/>
 				</div>
 
@@ -265,7 +280,7 @@ export function Autocomplete<T>({
 							id={listboxId}
 							role="listbox"
 							aria-label="Résultats de recherche"
-							className="bg-background absolute z-50 mt-1 max-h-80 w-full overflow-auto rounded-md border py-1 text-sm shadow-lg focus:outline-hidden"
+							className="bg-background absolute z-50 mt-1 max-h-[min(20rem,calc(var(--vvh,100dvh)*0.5))] w-full overflow-auto overscroll-contain rounded-md border py-1 text-sm shadow-lg focus:outline-hidden"
 							initial={AUTOCOMPLETE_ANIMATIONS.dropdown.initial}
 							animate={AUTOCOMPLETE_ANIMATIONS.dropdown.animate}
 							exit={AUTOCOMPLETE_ANIMATIONS.dropdown.exit}

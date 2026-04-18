@@ -18,7 +18,10 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 	let cookieStore;
 	try {
 		cookieStore = await cookies();
-	} catch {
+	} catch (error) {
+		logger.error("Failed to read cookies for recent product slugs", error, {
+			service: "getRecentProductSlugs",
+		});
 		return [];
 	}
 	const cookie = cookieStore.get(RECENT_PRODUCTS_COOKIE_NAME);

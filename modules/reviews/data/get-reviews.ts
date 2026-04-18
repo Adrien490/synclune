@@ -93,9 +93,6 @@ async function fetchReviews(
 			GET_REVIEWS_MAX_PER_PAGE,
 		);
 
-		// Compter le total
-		const totalCount = await prisma.productReview.count({ where });
-
 		// Construire la pagination cursor avec le helper centralisé
 		const cursorConfig = buildCursorPagination({
 			cursor: params.cursor,
@@ -103,13 +100,16 @@ async function fetchReviews(
 			take: perPage,
 		});
 
-		// Récupérer les avis avec pagination cursor
-		const reviews = (await prisma.productReview.findMany({
-			where,
-			select,
-			orderBy,
-			...cursorConfig,
-		})) as Review[];
+		// Paralléliser count et findMany (~2× latence économisée)
+		const [totalCount, reviews] = await Promise.all([
+			prisma.productReview.count({ where }),
+			prisma.productReview.findMany({
+				where,
+				select,
+				orderBy,
+				...cursorConfig,
+			}) as Promise<Review[]>,
+		]);
 
 		// Traiter les résultats avec le helper centralisé
 		const { items, pagination } = processCursorResults(

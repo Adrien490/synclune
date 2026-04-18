@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { logger } from "@/shared/lib/logger";
 import {
 	RECENT_SEARCHES_COOKIE_NAME,
 	RECENT_SEARCHES_MAX_ITEMS,
@@ -17,7 +18,10 @@ export async function getRecentSearches(): Promise<string[]> {
 	let cookieStore;
 	try {
 		cookieStore = await cookies();
-	} catch {
+	} catch (error) {
+		logger.error("Failed to read cookies for recent searches", error, {
+			service: "getRecentSearches",
+		});
 		return [];
 	}
 	const cookie = cookieStore.get(RECENT_SEARCHES_COOKIE_NAME);
@@ -33,8 +37,10 @@ export async function getRecentSearches(): Promise<string[]> {
 				.filter((s): s is string => typeof s === "string" && s.length <= 100)
 				.slice(0, RECENT_SEARCHES_MAX_ITEMS);
 		}
-	} catch {
-		// Ignore les erreurs de parsing
+	} catch (error) {
+		logger.error("Failed to parse recent searches cookie", error, {
+			service: "getRecentSearches",
+		});
 	}
 
 	return [];

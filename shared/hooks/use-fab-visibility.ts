@@ -5,7 +5,7 @@ import { setFabVisibility } from "@/shared/actions/set-fab-visibility";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { ActionStatus } from "@/shared/types/server-action";
 import type { FabKey } from "@/shared/constants/fab";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 interface UseFabVisibilityOptions {
 	/** Clé du FAB (type-safe) */

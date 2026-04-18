@@ -32,6 +32,16 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	showResultsCount: false,
 	/** Afficher l'etat vide quand aucun resultat */
 	showEmptyState: true,
+	/** Mode clavier virtuel mobile (search context par defaut) */
+	inputMode: "search",
+	/** Action du bouton Enter du clavier virtuel */
+	enterKeyHint: "search",
+	/** Auto-correction desactivee par defaut (contexte recherche) */
+	autoCorrect: "off",
+	/** Auto-majuscule desactivee par defaut (contexte recherche) */
+	autoCapitalize: "off",
+	/** Spellcheck desactive par defaut */
+	spellCheck: false,
 } as const;
 
 /**

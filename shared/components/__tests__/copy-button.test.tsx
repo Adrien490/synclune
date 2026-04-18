@@ -82,7 +82,7 @@ describe("CopyButton", () => {
 
 		await vi.waitFor(() => {
 			expect(writeText).toHaveBeenCalledWith("MON-CODE");
-			expect(mockToast.success).toHaveBeenCalledWith("Numéro copié");
+			expect(mockToast.success).toHaveBeenCalledWith("Numéro copié", expect.any(Object));
 		});
 	});
 
@@ -94,7 +94,10 @@ describe("CopyButton", () => {
 		fireEvent.click(screen.getByRole("button"));
 
 		await vi.waitFor(() => {
-			expect(mockToast.error).toHaveBeenCalledWith("Impossible de copier dans le presse-papiers");
+			expect(mockToast.error).toHaveBeenCalledWith(
+				"Impossible de copier dans le presse-papiers",
+				expect.any(Object),
+			);
 		});
 	});
 

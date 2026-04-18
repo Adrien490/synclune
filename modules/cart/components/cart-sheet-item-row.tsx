@@ -242,6 +242,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 				{/* Supprimer - à droite (fallback keyboard/desktop — WCAG 2.1 AA) */}
 				<CartItemRemoveButton
 					cartItemId={item.id}
+					skuId={item.sku.id}
 					itemName={item.sku.product.title}
 					quantity={item.quantity}
 				/>

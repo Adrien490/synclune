@@ -272,7 +272,7 @@ describe("ProductVariantSelectionActions", () => {
 		render(<ProductVariantSelectionActions />);
 		await userEvent.click(screen.getByText("Exporter CSV"));
 
-		expect(toast.info).toHaveBeenCalledWith("Export CSV non implémenté");
+		expect(toast.info).toHaveBeenCalledWith("Export CSV non implémenté", expect.any(Object));
 	});
 
 	it("clicking 'Activer' calls activateSkus with selected items", async () => {

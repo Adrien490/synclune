@@ -13,7 +13,7 @@ vi.mock("@/modules/cart/actions/update-cart-prices", () => ({
 	updateCartPrices: mockUpdateCartPrices,
 }));
 
-vi.mock("sonner", () => ({
+vi.mock("@/shared/utils/toast", () => ({
 	toast: {
 		loading: vi.fn(),
 		dismiss: vi.fn(),
@@ -213,7 +213,7 @@ describe("useUpdateCartPrices", () => {
 
 	describe("toast integration", () => {
 		it("shows a loading toast during the action", async () => {
-			const { toast } = await import("sonner");
+			const { toast } = await import("@/shared/utils/toast");
 			const { result } = renderHook(() => useUpdateCartPrices());
 
 			await act(async () => {
@@ -224,7 +224,7 @@ describe("useUpdateCartPrices", () => {
 		});
 
 		it("shows a success toast when action succeeds", async () => {
-			const { toast } = await import("sonner");
+			const { toast } = await import("@/shared/utils/toast");
 			const { result } = renderHook(() => useUpdateCartPrices());
 
 			await act(async () => {
@@ -236,7 +236,7 @@ describe("useUpdateCartPrices", () => {
 
 		it("shows an error toast when action fails", async () => {
 			mockUpdateCartPrices.mockResolvedValue(ERROR_RESULT);
-			const { toast } = await import("sonner");
+			const { toast } = await import("@/shared/utils/toast");
 			const { result } = renderHook(() => useUpdateCartPrices());
 
 			await act(async () => {

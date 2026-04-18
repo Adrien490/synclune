@@ -21,7 +21,7 @@ import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { Download, LoaderCircle } from "lucide-react";
 import { useReducer } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 type PeriodType = "all" | "year" | "month" | "custom";
 
@@ -89,7 +89,6 @@ export function ExportOrdersButton() {
 	});
 
 	async function handleExport() {
-		dispatch({ type: "SET_EXPORTING", isExporting: true });
 		const params = new URLSearchParams({ periodType: state.periodType });
 
 		if (state.periodType === "year" || state.periodType === "month") {
@@ -101,23 +100,25 @@ export function ExportOrdersButton() {
 		if (state.periodType === "custom") {
 			if (!state.dateFrom || !state.dateTo) {
 				toast.error("Veuillez renseigner les dates de début et de fin");
-				dispatch({ type: "SET_EXPORTING", isExporting: false });
 				return;
 			}
 			params.set("dateFrom", state.dateFrom);
 			params.set("dateTo", state.dateTo);
 		}
 
-		try {
-			const response = await fetch(`/api/admin/orders/export?${params}`);
+		dispatch({ type: "SET_EXPORTING", isExporting: true });
 
+		const task = (async () => {
+			let response: Response;
+			try {
+				response = await fetch(`/api/admin/orders/export?${params}`);
+			} catch {
+				throw new Error("Erreur lors de l'export");
+			}
 			if (!response.ok) {
 				const errorMessage = await parseErrorResponse(response);
-				toast.error(errorMessage ?? "Erreur lors de l'export");
-				dispatch({ type: "SET_EXPORTING", isExporting: false });
-				return;
+				throw new Error(errorMessage ?? "Erreur lors de l'export");
 			}
-
 			const blob = await response.blob();
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
@@ -125,12 +126,20 @@ export function ExportOrdersButton() {
 			link.download = parseExportFilename(response);
 			link.click();
 			URL.revokeObjectURL(url);
+		})();
 
-			toast.success("Export téléchargé");
+		toast.promise(task, {
+			loading: "Export en cours…",
+			success: "Export téléchargé",
+			error: (err) => (err instanceof Error ? err.message : "Erreur lors de l'export"),
+		});
+
+		try {
+			await task;
 			dispatch({ type: "SET_OPEN", open: false });
-			dispatch({ type: "SET_EXPORTING", isExporting: false });
 		} catch {
-			toast.error("Erreur lors de l'export");
+			// error surfaced by toast.promise
+		} finally {
 			dispatch({ type: "SET_EXPORTING", isExporting: false });
 		}
 	}

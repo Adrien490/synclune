@@ -8,6 +8,7 @@ import { Trash2 } from "lucide-react";
 
 interface CartItemRemoveButtonProps {
 	cartItemId: string;
+	skuId?: string;
 	itemName: string;
 	quantity: number;
 	isPending?: boolean;
@@ -21,6 +22,7 @@ interface CartItemRemoveButtonProps {
  */
 export function CartItemRemoveButton({
 	cartItemId,
+	skuId,
 	itemName,
 	quantity,
 	isPending = false,
@@ -32,6 +34,7 @@ export function CartItemRemoveButton({
 		haptic("light");
 		openAlertDialog(REMOVE_CART_ITEM_DIALOG_ID, {
 			cartItemId,
+			skuId,
 			itemName,
 			quantity,
 		});

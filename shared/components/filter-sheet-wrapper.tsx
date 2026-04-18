@@ -14,11 +14,23 @@ import {
 	SheetDescription,
 	SheetTrigger,
 } from "@/shared/components/ui/sheet";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { Filter, LoaderCircle, X } from "lucide-react";
+import { useState } from "react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
 /** Snap point par défaut du bottom-sheet mobile : quasi-fullscreen 92%.
@@ -46,15 +58,26 @@ export function FilterSheetWrapper({
 	hideTrigger = false,
 	onOverlayClick,
 	snapPoints,
+	confirmClearThreshold = 3,
 }: FilterSheetWrapperProps) {
 	// Note: Ne pas utiliser de fallback pour permettre le mode uncontrolled
 	// Si controlledOpen est undefined, Vaul gère l'état en interne
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
+	// Tablette portrait (iPad 810×1080, Galaxy Tab) → bottom-sheet plus naturel
+	// qu'un right-side sheet de 400px. Desktop ≥1024 paysage inchangé.
+	const isTabletPortrait = useMediaQuery(
+		"(max-width: 1023px) and (min-width: 768px) and (orientation: portrait)",
+	);
+	const useBottomSheet = isMobile || isTabletPortrait;
 
-	// Mobile → bottom-sheet, desktop → right-side sheet
-	const direction = isMobile ? "bottom" : "right";
-	const effectiveSnapPoints = isMobile ? (snapPoints ?? DEFAULT_MOBILE_SNAP_POINTS) : undefined;
+	const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+
+	// Mobile / tablette portrait → bottom-sheet, desktop → right-side sheet
+	const direction = useBottomSheet ? "bottom" : "right";
+	const effectiveSnapPoints = useBottomSheet
+		? (snapPoints ?? DEFAULT_MOBILE_SNAP_POINTS)
+		: undefined;
 
 	const handleApply = () => {
 		haptic("medium");
@@ -63,8 +86,19 @@ export function FilterSheetWrapper({
 	};
 
 	const handleClearAll = () => {
+		if (activeFiltersCount >= confirmClearThreshold) {
+			haptic("error");
+			setConfirmClearOpen(true);
+			return;
+		}
 		haptic("light");
 		onClearAll?.();
+	};
+
+	const handleConfirmClear = () => {
+		haptic("light");
+		onClearAll?.();
+		setConfirmClearOpen(false);
 	};
 
 	const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
@@ -134,10 +168,10 @@ export function FilterSheetWrapper({
 			<SheetContent
 				className={cn(
 					"flex w-full flex-col overflow-hidden p-0",
-					// Desktop (right-side sheet) : width constrained, full height
-					!isMobile && "h-full sm:w-100 md:w-110",
-					// Mobile (bottom-sheet) : rounded top, native iOS feel
-					isMobile && "h-full rounded-t-2xl",
+					// Desktop paysage (right-side sheet) : width constrained, full height
+					!useBottomSheet && "h-full sm:w-100 md:w-110",
+					// Mobile / tablette portrait (bottom-sheet) : rounded top, native iOS feel
+					useBottomSheet && "h-full rounded-t-2xl",
 				)}
 				onKeyDown={handleKeyDown}
 				title={title}
@@ -146,8 +180,8 @@ export function FilterSheetWrapper({
 				data-pending={isPending ? "" : undefined}
 				aria-busy={isPending}
 			>
-				{/* Vrai Vaul Handle (mobile bottom-sheet only) — draggable, 44px touch area */}
-				{isMobile && <SheetHandle />}
+				{/* Vrai Vaul Handle (bottom-sheet only) — draggable, 44px touch area */}
+				{useBottomSheet && <SheetHandle />}
 
 				<SheetHeader
 					className="border-primary/10 from-background via-primary/2 to-background relative shrink-0 border-b bg-linear-to-r px-6 py-5"
@@ -177,8 +211,8 @@ export function FilterSheetWrapper({
 									aria-label="Effacer tous les filtres"
 								>
 									<X className="mr-1 h-3 w-3" aria-hidden="true" />
-									<span className="hidden sm:inline">Tout effacer</span>
-									<span className="sm:hidden">Effacer</span>
+									<span className="hidden md:inline">Tout effacer</span>
+									<span className="md:hidden">Effacer</span>
 								</Button>
 							)}
 							<SheetClose asChild>
@@ -207,7 +241,7 @@ export function FilterSheetWrapper({
 					)}
 				</SheetHeader>
 
-				<ScrollArea className="min-h-0 flex-1">
+				<ScrollArea className="min-h-0 flex-1 overscroll-contain">
 					<div
 						className={cn(
 							"px-6 py-4 transition-opacity duration-200",
@@ -274,6 +308,24 @@ export function FilterSheetWrapper({
 					{isPending && "Mise à jour des filtres en cours..."}
 				</div>
 			</SheetContent>
+
+			<AlertDialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+				<AlertDialogContent>
+					<AlertDialogHeader>
+						<AlertDialogTitle>Effacer tous les filtres ?</AlertDialogTitle>
+						<AlertDialogDescription>
+							{activeFiltersCount} filtre{activeFiltersCount > 1 ? "s sont actifs" : " est actif"}.
+							Cette action ne peut pas être annulée.
+						</AlertDialogDescription>
+					</AlertDialogHeader>
+					<AlertDialogFooter>
+						<AlertDialogCancel type="button">Annuler</AlertDialogCancel>
+						<AlertDialogAction type="button" onClick={handleConfirmClear}>
+							Tout effacer
+						</AlertDialogAction>
+					</AlertDialogFooter>
+				</AlertDialogContent>
+			</AlertDialog>
 		</Sheet>
 	);
 }

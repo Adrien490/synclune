@@ -15,11 +15,17 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
+import { useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { addToCart } from "@/modules/cart/actions/add-to-cart";
+import { ActionStatus } from "@/shared/types/server-action";
+import { toast } from "@/shared/utils/toast";
 
 export const REMOVE_CART_ITEM_DIALOG_ID = "remove-cart-item";
 
 interface RemoveCartItemData {
 	cartItemId: string;
+	skuId?: string;
 	itemName: string;
 	quantity: number;
 	[key: string]: unknown;
@@ -37,12 +43,46 @@ export function RemoveCartItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveCartItemData>(REMOVE_CART_ITEM_DIALOG_ID);
 	const cartOptimistic = useCartOptimisticSafe();
 	const haptic = useHaptic();
+	const router = useRouter();
+	const [, startUndoTransition] = useTransition();
+
+	const buildUndoHandler = (skuId: string, quantity: number) => () => {
+		const fd = new FormData();
+		fd.set("skuId", skuId);
+		fd.set("quantity", String(quantity));
+		startUndoTransition(async () => {
+			const result = await addToCart(undefined, fd);
+			if (result.status === ActionStatus.SUCCESS) {
+				router.refresh();
+				toast.success("Article restauré dans le panier");
+			} else {
+				toast.error(result.message);
+			}
+		});
+	};
 
 	const { action, isPending } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
+			const snapshot = removeDialog.data;
 			// 1. Fermer le dialog
 			removeDialog.close();
+
+			// 2. Toast avec undo (si skuId dispo + itemName)
+			if (snapshot?.skuId) {
+				toast.success("Article retiré du panier", {
+					description: snapshot.itemName
+						? `${snapshot.itemName} · Vous pouvez annuler`
+						: "Vous pouvez annuler",
+					duration: 5000,
+					action: {
+						label: "Annuler",
+						onClick: buildUndoHandler(snapshot.skuId, snapshot.quantity),
+					},
+				});
+			} else {
+				toast.success("Article retiré du panier");
+			}
 		},
 		trackingData: removeDialog.data
 			? {

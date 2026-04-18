@@ -1,4 +1,5 @@
 import type React from "react";
+import type { HapticPattern } from "@/shared/hooks/use-haptic";
 
 interface UseAutocompleteKeyboardParams<T> {
 	isOpen: boolean;
@@ -9,6 +10,7 @@ interface UseAutocompleteKeyboardParams<T> {
 	setIsOpen: (open: boolean) => void;
 	setActiveIndex: (index: number | ((prev: number) => number)) => void;
 	onSelect: (item: T) => void;
+	onHaptic?: (pattern: HapticPattern) => void;
 }
 
 export function useAutocompleteKeyboard<T>({
@@ -20,6 +22,7 @@ export function useAutocompleteKeyboard<T>({
 	setIsOpen,
 	setActiveIndex,
 	onSelect,
+	onHaptic,
 }: UseAutocompleteKeyboardParams<T>) {
 	const handleKeyDown = (e: React.KeyboardEvent) => {
 		if (!isOpen) {
@@ -65,6 +68,7 @@ export function useAutocompleteKeyboard<T>({
 				e.preventDefault();
 				setIsOpen(false);
 				setActiveIndex(-1);
+				onHaptic?.("light");
 				break;
 
 			case "Tab":

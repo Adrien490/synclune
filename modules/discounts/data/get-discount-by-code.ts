@@ -1,3 +1,4 @@
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { cacheDiscountDetail } from "../constants/cache";
@@ -42,7 +43,10 @@ async function fetchDiscountByCode(
 		});
 
 		return discount;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch discount by code", error, {
+			service: "fetchDiscountByCode",
+		});
 		return null;
 	}
 }

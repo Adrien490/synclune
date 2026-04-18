@@ -10,7 +10,7 @@ import { Button } from "@/shared/components/ui/button";
 import { ResponsiveDialogFooter } from "@/shared/components/responsive-dialog";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
-import type { Product } from "@/modules/products/types/product.types";
+import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { cn } from "@/shared/utils/cn";
 import { slugify } from "@/shared/utils/generate-slug";
@@ -48,7 +48,7 @@ export interface SkuSelectorFormContentProps {
 	onMaterialChange: (material: string) => void;
 	onSizeChange: (size: string) => void;
 	onQuantityChange: (quantity: number) => void;
-	product: Product;
+	product: ProductCarouselItem;
 	activeSkus: ActiveSku[];
 	colors: ColorOption[];
 	materials: MaterialOption[];

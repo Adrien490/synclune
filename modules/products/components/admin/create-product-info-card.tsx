@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { MultiSelect } from "@/shared/components/multi-select";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type {
@@ -25,12 +26,19 @@ export function CreateProductInfoCard({
 	collections,
 }: CreateProductInfoCardProps) {
 	const router = useRouter();
+	const haptic = useHaptic();
 	const typeDialog = useDialog(PRODUCT_TYPE_DIALOG_ID);
 
 	return (
-		<Card className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md">
-			<CardHeader className="hidden lg:grid lg:px-6">
-				<CardTitle>Informations</CardTitle>
+		<Card
+			role="region"
+			aria-label="Informations générales du bijou"
+			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
+		>
+			<CardHeader className="px-0 sm:px-0 lg:px-6">
+				<CardTitle className="text-muted-foreground lg:text-foreground text-sm font-semibold tracking-wide uppercase lg:text-base lg:font-semibold lg:tracking-normal lg:normal-case">
+					Informations
+				</CardTitle>
 			</CardHeader>
 			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
 				<form.AppField
@@ -47,8 +55,13 @@ export function CreateProductInfoCard({
 							<FieldLabel htmlFor={field.name} required>
 								Titre du bijou
 							</FieldLabel>
-							{/* eslint-disable-next-line jsx-a11y/no-autofocus */}
-							<field.InputField label="" required autoFocus />
+							<field.InputField
+								label=""
+								required
+								enterKeyHint="next"
+								autoCapitalize="words"
+								autoComplete="off"
+							/>
 						</div>
 					)}
 				</form.AppField>
@@ -69,6 +82,9 @@ export function CreateProductInfoCard({
 							rows={3}
 							maxLength={500}
 							showCounter
+							enterKeyHint="done"
+							autoCapitalize="sentences"
+							spellCheck
 						/>
 					)}
 				</form.AppField>
@@ -96,14 +112,15 @@ export function CreateProductInfoCard({
 									variant="outline"
 									size="icon"
 									className="shrink-0"
-									onClick={() =>
+									onClick={() => {
+										haptic("light");
 										typeDialog.open({
 											onCreated: (id: string) => {
 												field.handleChange(id);
 												router.refresh();
 											},
-										})
-									}
+										});
+									}}
 									aria-label="Créer un nouveau type de produit"
 								>
 									<Plus className="h-4 w-4" />
@@ -127,8 +144,9 @@ export function CreateProductInfoCard({
 								placeholder="Sélectionner des collections"
 								maxCount={2}
 								hideSelectAll
+								aria-describedby="collections-hint"
 							/>
-							<p className="text-muted-foreground text-xs">
+							<p id="collections-hint" className="text-muted-foreground text-xs">
 								Un produit peut appartenir à plusieurs collections
 							</p>
 						</div>

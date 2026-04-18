@@ -69,7 +69,7 @@ vi.mock("../../constants/related-products.constants", () => ({
 }));
 
 vi.mock("../../constants/product.constants", () => ({
-	GET_PRODUCTS_SELECT: { id: true, slug: true, title: true },
+	PRODUCT_CAROUSEL_SELECT: { id: true, slug: true, title: true },
 }));
 
 vi.mock("../../constants/cache", () => ({

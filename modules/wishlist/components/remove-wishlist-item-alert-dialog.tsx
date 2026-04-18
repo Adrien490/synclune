@@ -15,8 +15,13 @@ import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { type AlertDialogData } from "@/shared/stores/alert-dialog-store";
 import { WISHLIST_DIALOG_IDS } from "@/modules/wishlist/constants/dialog-ids";
-import { toast } from "sonner";
+import { addToWishlist } from "@/modules/wishlist/actions/add-to-wishlist";
+import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
+import { ActionStatus } from "@/shared/types/server-action";
+import { toast } from "@/shared/utils/toast";
 import { LoaderCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
 
 type RemoveWishlistItemData = AlertDialogData & {
 	productId: string;
@@ -34,18 +39,44 @@ type RemoveWishlistItemData = AlertDialogData & {
  */
 export function RemoveWishlistItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveWishlistItemData>(WISHLIST_DIALOG_IDS.REMOVE_ITEM);
+	const router = useRouter();
+	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
+	const [, startUndoTransition] = useTransition();
 
 	// Connect to optimistic list context for immediate visual feedback
 	const wishlistListOptimistic = useWishlistListOptimistic();
 
+	const buildUndoHandler = (productId: string) => () => {
+		incrementWishlist();
+		const fd = new FormData();
+		fd.set("productId", productId);
+		startUndoTransition(async () => {
+			const result = await addToWishlist(undefined, fd);
+			if (result.status === ActionStatus.SUCCESS) {
+				router.refresh();
+				toast.success("Article restauré");
+			} else {
+				toast.error(result.message);
+			}
+		});
+	};
+
 	const { action, isPending } = useRemoveFromWishlist({
 		onOptimisticRemove: wishlistListOptimistic?.onItemRemoved,
 		onSuccess: () => {
+			const productId = removeDialog.data?.productId;
 			removeDialog.close();
 
-			// Toast de confirmation empathique
+			// Toast de confirmation empathique avec undo 5s
 			toast.success("Article retiré de votre wishlist", {
 				description: "Vous pourrez toujours le retrouver dans nos créations.",
+				duration: 5000,
+				action: productId
+					? {
+							label: "Annuler",
+							onClick: buildUndoHandler(productId),
+						}
+					: undefined,
 			});
 		},
 	});

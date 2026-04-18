@@ -72,6 +72,14 @@ export interface FilterSheetWrapperProps {
 	 * Ignored on desktop (right-side sheet).
 	 */
 	snapPoints?: (number | string)[];
+	/**
+	 * Si le nombre de filtres actifs est strictement supérieur ou égal à ce
+	 * seuil, le bouton "Tout effacer" ouvre un AlertDialog de confirmation
+	 * avant de déclencher `onClearAll`. Passez `0` pour toujours confirmer,
+	 * `Infinity` pour désactiver complètement.
+	 * @default 3
+	 */
+	confirmClearThreshold?: number;
 }
 
 /**

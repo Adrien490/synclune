@@ -39,6 +39,18 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
+vi.mock("@/modules/cart/actions/add-to-cart", () => ({
+	addToCart: vi.fn(),
+}));
+
+vi.mock("@/shared/utils/toast", () => ({
+	toast: { success: vi.fn(), error: vi.fn() },
+}));
+
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => ({
 		isOpen: mockIsOpen.value,

@@ -172,6 +172,31 @@ describe("parseFilterValuesFromURL", () => {
 		const result = parseFilterValuesFromURL(makeParseParams("onSale=false"));
 		expect(result.onSale).toBe(false);
 	});
+
+	it("should clamp negative priceMin to 0", () => {
+		const result = parseFilterValuesFromURL(makeParseParams("priceMin=-50"));
+		expect(result.priceRange[0]).toBe(0);
+	});
+
+	it("should clamp priceMax to defaultPriceRange[1] when over", () => {
+		const result = parseFilterValuesFromURL(makeParseParams("priceMax=9999"));
+		expect(result.priceRange[1]).toBe(DEFAULT_PRICE_RANGE[1]);
+	});
+
+	it("should clamp priceMin to priceMax when priceMin > priceMax", () => {
+		const result = parseFilterValuesFromURL(makeParseParams("priceMin=400&priceMax=100"));
+		// priceMax ≥ priceMin invariant enforced
+		expect(result.priceRange[0]).toBeLessThanOrEqual(result.priceRange[1]);
+	});
+
+	it("should deduplicate productTypes from activeProductTypeSlug and type param", () => {
+		const result = parseFilterValuesFromURL(
+			makeParseParams("type=bagues&type=bagues&type=colliers", {
+				activeProductTypeSlug: "bagues",
+			}),
+		);
+		expect(result.productTypes).toEqual(["bagues", "colliers"]);
+	});
 });
 
 // ============================================================================

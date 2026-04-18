@@ -5,6 +5,7 @@ import {
 	type GET_PRODUCT_SELECT,
 	type GET_PRODUCTS_SELECT,
 	type GET_PRODUCTS_SORT_FIELDS,
+	type PRODUCT_CAROUSEL_SELECT,
 } from "../constants/product.constants";
 import {
 	type getProductSchema,
@@ -55,6 +56,15 @@ export type GetProductsReturn = {
 
 export type Product = Prisma.ProductGetPayload<{
 	select: typeof GET_PRODUCTS_SELECT;
+}>;
+
+/**
+ * Payload allégé pour carousels et grilles légères (related / recent / cross-sell).
+ * Sous-ensemble structurel de Product : un Product peut être passé partout où
+ * ProductCarouselItem est attendu (typage structurel).
+ */
+export type ProductCarouselItem = Prisma.ProductGetPayload<{
+	select: typeof PRODUCT_CAROUSEL_SELECT;
 }>;
 
 // ============================================================================

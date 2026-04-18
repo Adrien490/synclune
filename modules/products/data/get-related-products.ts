@@ -1,4 +1,5 @@
 import { auth } from "@/modules/auth/lib/auth";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { headers } from "next/headers";
@@ -7,9 +8,9 @@ import {
 	RELATED_PRODUCTS_DEFAULT_LIMIT,
 	RELATED_PRODUCTS_STRATEGY,
 } from "../constants/related-products.constants";
-import { GET_PRODUCTS_SELECT } from "../constants/product.constants";
+import { PRODUCT_CAROUSEL_SELECT } from "../constants/product.constants";
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
-import type { Product } from "../types/product.types";
+import type { ProductCarouselItem } from "../types/product.types";
 import { serializeProducts } from "../utils/serialize-product";
 
 // ============================================================================
@@ -26,7 +27,7 @@ import { serializeProducts } from "../utils/serialize-product";
 export async function getRelatedProducts(options?: {
 	currentProductSlug?: string;
 	limit?: number;
-}): Promise<Product[]> {
+}): Promise<ProductCarouselItem[]> {
 	const limit = options?.limit ?? RELATED_PRODUCTS_DEFAULT_LIMIT;
 	const currentProductSlug = options?.currentProductSlug;
 
@@ -50,7 +51,7 @@ export async function getRelatedProducts(options?: {
 /**
  * Produits similaires publics pour visiteurs non authentifiés
  */
-async function fetchPublicRelatedProducts(limit: number): Promise<Product[]> {
+async function fetchPublicRelatedProducts(limit: number): Promise<ProductCarouselItem[]> {
 	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
@@ -67,14 +68,17 @@ async function fetchPublicRelatedProducts(limit: number): Promise<Product[]> {
 					},
 				},
 			},
-			select: GET_PRODUCTS_SELECT,
+			select: PRODUCT_CAROUSEL_SELECT,
 			orderBy: {
 				createdAt: "desc",
 			},
 			take: limit,
 		});
 		return serializeProducts(products);
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch public related products", error, {
+			service: "fetchPublicRelatedProducts",
+		});
 		return [];
 	}
 }
@@ -82,7 +86,10 @@ async function fetchPublicRelatedProducts(limit: number): Promise<Product[]> {
 /**
  * Produits similaires personnalisés basés sur l'historique utilisateur
  */
-async function fetchPersonalizedRelatedProducts(userId: string, limit: number): Promise<Product[]> {
+async function fetchPersonalizedRelatedProducts(
+	userId: string,
+	limit: number,
+): Promise<ProductCarouselItem[]> {
 	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
@@ -134,7 +141,7 @@ async function fetchPersonalizedRelatedProducts(userId: string, limit: number): 
 							: []),
 					],
 				},
-				select: GET_PRODUCTS_SELECT,
+				select: PRODUCT_CAROUSEL_SELECT,
 				orderBy: {
 					createdAt: "desc",
 				},
@@ -157,14 +164,17 @@ async function fetchPersonalizedRelatedProducts(userId: string, limit: number): 
 					},
 				},
 			},
-			select: GET_PRODUCTS_SELECT,
+			select: PRODUCT_CAROUSEL_SELECT,
 			orderBy: {
 				createdAt: "desc",
 			},
 			take: limit,
 		});
 		return serializeProducts(fallbackProducts);
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch personalized related products", error, {
+			service: "fetchPersonalizedRelatedProducts",
+		});
 		return [];
 	}
 }
@@ -176,7 +186,7 @@ async function fetchPersonalizedRelatedProducts(userId: string, limit: number): 
 async function fetchContextualRelatedProducts(
 	currentProductSlug: string,
 	limit: number,
-): Promise<Product[]> {
+): Promise<ProductCarouselItem[]> {
 	"use cache";
 	cacheLife("relatedProducts");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(currentProductSlug));
@@ -207,10 +217,10 @@ async function fetchContextualRelatedProducts(
 			.map((sku) => sku.colorId)
 			.filter((id): id is string => id !== null);
 
-		const relatedProducts: Product[] = [];
+		const relatedProducts: ProductCarouselItem[] = [];
 		const addedProductIds = new Set<string>();
 
-		const addProducts = (products: Product[], maxCount: number) => {
+		const addProducts = (products: ProductCarouselItem[], maxCount: number) => {
 			let added = 0;
 			for (const product of products) {
 				if (added >= maxCount || relatedProducts.length >= limit) {
@@ -250,7 +260,7 @@ async function fetchContextualRelatedProducts(
 									some: { collectionId: { in: currentCollectionIds } },
 								},
 							},
-							select: GET_PRODUCTS_SELECT,
+							select: PRODUCT_CAROUSEL_SELECT,
 							orderBy: { createdAt: "desc" },
 							take: RELATED_PRODUCTS_STRATEGY.SAME_COLLECTION,
 						})
@@ -270,7 +280,7 @@ async function fetchContextualRelatedProducts(
 										}
 									: {}),
 							},
-							select: GET_PRODUCTS_SELECT,
+							select: PRODUCT_CAROUSEL_SELECT,
 							orderBy: { createdAt: "desc" },
 							take: RELATED_PRODUCTS_STRATEGY.SAME_TYPE,
 						})
@@ -290,7 +300,7 @@ async function fetchContextualRelatedProducts(
 								},
 								typeId: currentProduct.typeId ? { not: currentProduct.typeId } : undefined,
 							},
-							select: GET_PRODUCTS_SELECT,
+							select: PRODUCT_CAROUSEL_SELECT,
 							orderBy: { createdAt: "desc" },
 							take: RELATED_PRODUCTS_STRATEGY.SIMILAR_COLORS,
 						})
@@ -299,7 +309,7 @@ async function fetchContextualRelatedProducts(
 				// STRATÉGIE 4 : Newest products to fill remaining slots
 				prisma.product.findMany({
 					where: baseWhere,
-					select: GET_PRODUCTS_SELECT,
+					select: PRODUCT_CAROUSEL_SELECT,
 					orderBy: { createdAt: "desc" },
 					take: limit + 5,
 				}),
@@ -312,7 +322,10 @@ async function fetchContextualRelatedProducts(
 		addProducts(newestProducts, limit - relatedProducts.length);
 
 		return serializeProducts(relatedProducts);
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch contextual related products", error, {
+			service: "fetchContextualRelatedProducts",
+		});
 		return fetchPublicRelatedProducts(limit);
 	}
 }

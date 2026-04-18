@@ -3,7 +3,7 @@
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { dispatchFlyToCart } from "@/modules/cart/lib/fly-to-cart";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import type { Product } from "@/modules/products/types/product.types";
+import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { SKU_SELECTOR_DIALOG_ID } from "./sku-selector-dialog";
 import { cn } from "@/shared/utils/cn";
 import { ShoppingCart, LoaderCircle } from "lucide-react";
@@ -16,7 +16,7 @@ interface AddToCartCardButtonProps {
 	 * Produit complet pour déterminer si une sélection de variante est nécessaire.
 	 * Required pour ouvrir le dialog de sélection SKU si le produit a plusieurs variantes.
 	 */
-	product: Product;
+	product: ProductCarouselItem;
 	/** Couleur pré-sélectionnée depuis les swatches de la ProductCard */
 	preselectedColor?: string | null;
 	/** Variante d'affichage: "icon" (défaut) ou "mobile-full" (pleine largeur mobile) */

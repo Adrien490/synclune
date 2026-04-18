@@ -18,7 +18,7 @@ import {
 	getProductCollections,
 } from "@/modules/products/data/get-product-collections";
 import { LoaderCircle, FolderOpen } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 export const MANAGE_COLLECTIONS_DIALOG_ID = "manage-product-collections";
 

@@ -128,7 +128,7 @@ export function FilterActiveChips({
 	return (
 		<section
 			aria-label={`Filtres actifs : ${chips.length}`}
-			className="border-border/50 -mx-6 mb-4 border-b px-6 pb-3"
+			className="border-border/50 bg-background/85 sticky top-0 z-10 -mx-6 -mt-4 mb-4 border-b px-6 pt-4 pb-3 backdrop-blur-md"
 		>
 			<ScrollFade axis="horizontal" hideScrollbar>
 				<ul className="flex flex-nowrap items-center gap-2 py-1">

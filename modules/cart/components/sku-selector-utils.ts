@@ -1,4 +1,4 @@
-import type { Product } from "@/modules/products/types/product.types";
+import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { getPrimaryImageForList } from "@/modules/products/services/product-display.service";
 import { slugify } from "@/shared/utils/generate-slug";
 
@@ -8,7 +8,7 @@ import { slugify } from "@/shared/utils/generate-slug";
 
 export type ColorOption = { slug: string; hex: string; name: string };
 export type MaterialOption = { slug: string; name: string };
-export type ActiveSku = NonNullable<Product["skus"]>[number];
+export type ActiveSku = NonNullable<ProductCarouselItem["skus"]>[number];
 
 export interface ImageSelection {
 	url: string;
@@ -141,7 +141,7 @@ export function buildAvailabilityMaps(
 export function getImageForColor(
 	selectedColor: string,
 	activeSkus: ActiveSku[],
-	product: Product,
+	product: ProductCarouselItem,
 ): ImageSelection {
 	if (selectedColor) {
 		const skuWithColor = activeSkus.find(

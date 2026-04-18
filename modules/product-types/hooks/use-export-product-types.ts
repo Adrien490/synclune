@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useTransition } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 import { exportProductTypes } from "@/modules/product-types/actions/export-product-types";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";

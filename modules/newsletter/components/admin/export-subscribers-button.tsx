@@ -3,7 +3,7 @@
 import { Button } from "@/shared/components/ui/button";
 import { Download, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 export function ExportSubscribersButton() {
 	const [isExporting, setIsExporting] = useState(false);
@@ -11,35 +11,43 @@ export function ExportSubscribersButton() {
 	async function handleExport() {
 		setIsExporting(true);
 
-		try {
-			const response = await fetch("/api/admin/newsletter/export");
-
+		const task = (async () => {
+			let response: Response;
+			try {
+				response = await fetch("/api/admin/newsletter/export");
+			} catch {
+				throw new Error("Erreur lors de l'export");
+			}
 			if (!response.ok) {
 				let errorMessage = "Erreur lors de l'export";
 				try {
 					const data = (await response.json()) as { error?: string } | null;
 					if (data?.error) errorMessage = data.error;
 				} catch {
-					// Ignore parse error
+					// ignore parse error
 				}
-				toast.error(errorMessage);
-				return;
+				throw new Error(errorMessage);
 			}
-
 			const blob = await response.blob();
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement("a");
 			link.href = url;
-
 			const disposition = response.headers.get("Content-Disposition");
 			link.download = disposition?.match(/filename="(.+)"/)?.[1] ?? "newsletter-export.csv";
-
 			link.click();
 			URL.revokeObjectURL(url);
+		})();
 
-			toast.success("Export téléchargé");
+		toast.promise(task, {
+			loading: "Export en cours…",
+			success: "Export téléchargé",
+			error: (err) => (err instanceof Error ? err.message : "Erreur lors de l'export"),
+		});
+
+		try {
+			await task;
 		} catch {
-			toast.error("Erreur lors de l'export");
+			// error surfaced by toast.promise
 		} finally {
 			setIsExporting(false);
 		}

@@ -1,4 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
@@ -24,7 +25,8 @@ export async function getSkuById(skuId: string): Promise<SkuWithImages | null> {
 
 	try {
 		return await fetchSkuById(skuId);
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch sku by id", error, { service: "getSkuById" });
 		return null;
 	}
 }

@@ -18,7 +18,7 @@ const { mockSonner, mockHaptic } = vi.hoisted(() => ({
 vi.mock("sonner", () => ({ toast: mockSonner }));
 vi.mock("@/shared/hooks/use-haptic", () => ({ triggerHaptic: mockHaptic }));
 
-import { toast, sanitizeErrorMessage, GENERIC_ERROR_MESSAGE } from "../toast";
+import { toast, sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration } from "../toast";
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -79,16 +79,47 @@ describe("sanitizeErrorMessage", () => {
 	});
 });
 
+describe("computeDuration", () => {
+	it("respects MIN_DURATION floor per type", () => {
+		// "Bijou créé" = 2 mots = ~800ms+500 = 1300 → floor success=2000
+		expect(computeDuration("Bijou créé", "success")).toBe(2000);
+		// Short error → floor error=5000
+		expect(computeDuration("Erreur", "error")).toBe(5000);
+		// Short warning → floor warning=4000
+		expect(computeDuration("Stop", "warning")).toBe(4000);
+	});
+
+	it("scales up for long messages (WPS-based)", () => {
+		// 12 mots / 2.5 = 4.8s → 4800+500 = 5300 (dépasse floor success 2000)
+		const twelveWords = "Votre commande a bien été prise en compte et sera expédiée demain matin";
+		const result = computeDuration(twelveWords, "success");
+		expect(result).toBeGreaterThanOrEqual(5300);
+	});
+
+	it("returns floor for non-string messages", () => {
+		expect(computeDuration(null, "success")).toBe(2000);
+		expect(computeDuration(undefined, "error")).toBe(5000);
+		expect(computeDuration({ jsx: true }, "info")).toBe(2500);
+	});
+
+	it("returns floor for empty string", () => {
+		expect(computeDuration("", "warning")).toBe(4000);
+	});
+});
+
 describe("toast wrapper", () => {
 	describe("success", () => {
-		it("triggers success haptic and forwards to sonner", () => {
+		it("triggers success haptic and forwards to sonner with computed duration", () => {
 			toast.success("Bijou créé");
 
 			expect(mockHaptic).toHaveBeenCalledWith("success");
-			expect(mockSonner.success).toHaveBeenCalledWith("Bijou créé");
+			expect(mockSonner.success).toHaveBeenCalledWith(
+				"Bijou créé",
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
 		});
 
-		it("forwards options (action, duration)", () => {
+		it("caller duration overrides computed duration", () => {
 			const action = { label: "Voir", onClick: vi.fn() };
 			toast.success("Ajouté", { action, duration: 5000 });
 
@@ -106,26 +137,42 @@ describe("toast wrapper", () => {
 			expect(mockHaptic).toHaveBeenCalledWith("error");
 		});
 
-		it("passes clean FR message through", () => {
+		it("passes clean FR message through with error duration floor", () => {
 			toast.error("Impossible de charger la page");
 
-			expect(mockSonner.error).toHaveBeenCalledWith("Impossible de charger la page");
+			expect(mockSonner.error).toHaveBeenCalledWith(
+				"Impossible de charger la page",
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
 		});
 
 		it("sanitizes technical error messages", () => {
 			toast.error("Erreur: Prisma connection failed (P2002)");
 
-			expect(mockSonner.error).toHaveBeenCalledWith(GENERIC_ERROR_MESSAGE);
+			expect(mockSonner.error).toHaveBeenCalledWith(
+				GENERIC_ERROR_MESSAGE,
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
 		});
 
 		it("sanitizes TypeError messages", () => {
 			toast.error("TypeError: Cannot read properties of undefined");
 
-			expect(mockSonner.error).toHaveBeenCalledWith(GENERIC_ERROR_MESSAGE);
+			expect(mockSonner.error).toHaveBeenCalledWith(
+				GENERIC_ERROR_MESSAGE,
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
+		});
+
+		it("dismisses pending non-error toast (priority lane)", () => {
+			mockSonner.success.mockReturnValueOnce("success-id-42");
+			toast.success("Bijou ajouté");
+			toast.error("Stock insuffisant");
+
+			expect(mockSonner.dismiss).toHaveBeenCalledWith("success-id-42");
 		});
 
 		it("passes through non-string messages unchanged (ReactNode)", () => {
-			// Sonner accepts JSX as first param; we must not call .test on it
 			const node = "react-node-placeholder";
 			toast.error(node);
 
@@ -134,23 +181,31 @@ describe("toast wrapper", () => {
 	});
 
 	describe("warning", () => {
-		it("triggers medium haptic and forwards message", () => {
+		it("triggers medium haptic and forwards message with warning duration floor", () => {
 			toast.warning("Attention");
 
 			expect(mockHaptic).toHaveBeenCalledWith("medium");
-			expect(mockSonner.warning).toHaveBeenCalledWith("Attention");
+			expect(mockSonner.warning).toHaveBeenCalledWith(
+				"Attention",
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
 		});
 	});
 
-	describe("pass-through methods (no haptic)", () => {
-		it("info() does not trigger haptic", () => {
+	describe("info", () => {
+		it("does not trigger haptic, forwards with info duration floor", () => {
 			toast.info("Info");
 
 			expect(mockHaptic).not.toHaveBeenCalled();
-			expect(mockSonner.info).toHaveBeenCalledWith("Info");
+			expect(mockSonner.info).toHaveBeenCalledWith(
+				"Info",
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
 		});
+	});
 
-		it("loading() does not trigger haptic", () => {
+	describe("pass-through methods (no haptic, no duration override)", () => {
+		it("loading() does not trigger haptic or duration", () => {
 			toast.loading("Chargement...");
 
 			expect(mockHaptic).not.toHaveBeenCalled();
@@ -161,6 +216,32 @@ describe("toast wrapper", () => {
 			toast.dismiss("toast-id-1");
 
 			expect(mockSonner.dismiss).toHaveBeenCalledWith("toast-id-1");
+		});
+	});
+
+	describe("screen reader announcer", () => {
+		it("updates sr-only polite region on success (after rAF)", async () => {
+			const polite = document.createElement("div");
+			polite.id = "toast-live-polite";
+			document.body.appendChild(polite);
+
+			toast.success("Bijou ajouté");
+			await new Promise((r) => requestAnimationFrame(r));
+
+			expect(polite.textContent).toBe("Bijou ajouté");
+			polite.remove();
+		});
+
+		it("updates sr-only assertive region on error (sanitized)", async () => {
+			const assertive = document.createElement("div");
+			assertive.id = "toast-live-assertive";
+			document.body.appendChild(assertive);
+
+			toast.error("TypeError: boom");
+			await new Promise((r) => requestAnimationFrame(r));
+
+			expect(assertive.textContent).toBe(GENERIC_ERROR_MESSAGE);
+			assertive.remove();
 		});
 	});
 

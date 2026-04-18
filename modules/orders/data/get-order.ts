@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { type Prisma } from "@/app/generated/prisma/client";
@@ -61,7 +62,8 @@ export async function fetchOrder(
 		});
 
 		return order;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch order", error, { service: "fetchOrder" });
 		return null;
 	}
 }

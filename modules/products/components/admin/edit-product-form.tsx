@@ -9,7 +9,7 @@ import { useUpdateProductForm } from "@/modules/products/hooks/use-update-produc
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { Euro } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import { EditProductMediaSection } from "./edit-product-media-section";
 

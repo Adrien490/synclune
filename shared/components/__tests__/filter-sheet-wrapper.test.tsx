@@ -56,6 +56,33 @@ vi.mock("@/shared/components/ui/button", () => ({
 			{children}
 		</button>
 	),
+	buttonVariants: () => "",
+}));
+
+// AlertDialog est mocké pour isoler le wrapper ; seuls les 2 boutons de la
+// confirm (Annuler / Tout effacer) sont exposés quand `open=true`.
+vi.mock("@/shared/components/ui/alert-dialog", () => ({
+	AlertDialog: ({ open, children }: any) =>
+		open ? <div data-testid="alert-dialog">{children}</div> : null,
+	AlertDialogContent: ({ children }: any) => <div>{children}</div>,
+	AlertDialogHeader: ({ children }: any) => <div>{children}</div>,
+	AlertDialogFooter: ({ children }: any) => <div>{children}</div>,
+	AlertDialogTitle: ({ children }: any) => <h2>{children}</h2>,
+	AlertDialogDescription: ({ children }: any) => <p>{children}</p>,
+	AlertDialogAction: ({ children, onClick, ...props }: any) => (
+		<button onClick={onClick} data-testid="alert-dialog-action" {...props}>
+			{children}
+		</button>
+	),
+	AlertDialogCancel: ({ children, ...props }: any) => (
+		<button data-testid="alert-dialog-cancel" {...props}>
+			{children}
+		</button>
+	),
+}));
+
+vi.mock("@/shared/hooks/use-media-query", () => ({
+	useMediaQuery: () => false,
 }));
 
 vi.mock("@/shared/components/ui/button-group", () => ({
@@ -506,21 +533,67 @@ describe("FilterSheetWrapper", () => {
 			expect(mockHaptic).toHaveBeenCalledWith("medium");
 		});
 
-		it("fires haptic('light') on Clear all click", () => {
+		it("fires haptic('light') on Clear all click when below confirm threshold", () => {
+			const onClearAll = vi.fn();
 			render(
 				<FilterSheetWrapper
 					open
 					onOpenChange={vi.fn()}
 					hasActiveFilters
-					activeFiltersCount={3}
-					onClearAll={vi.fn()}
+					activeFiltersCount={2}
+					onClearAll={onClearAll}
 				>
 					content
 				</FilterSheetWrapper>,
 			);
-			// "Effacer" (mobile) or "Tout effacer" (desktop) — pick the visible one.
 			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
 			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(onClearAll).toHaveBeenCalledTimes(1);
+		});
+
+		it("fires haptic('error') and opens confirm dialog when ≥ confirm threshold", () => {
+			const onClearAll = vi.fn();
+			render(
+				<FilterSheetWrapper
+					open
+					onOpenChange={vi.fn()}
+					hasActiveFilters
+					activeFiltersCount={5}
+					onClearAll={onClearAll}
+				>
+					content
+				</FilterSheetWrapper>,
+			);
+			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			expect(mockHaptic).toHaveBeenCalledWith("error");
+			// onClearAll must NOT have fired yet — user must confirm first
+			expect(onClearAll).not.toHaveBeenCalled();
+			// Confirm dialog is now open
+			expect(screen.getByTestId("alert-dialog")).toBeInTheDocument();
+
+			// Confirm via the action button
+			fireEvent.click(screen.getByTestId("alert-dialog-action"));
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(onClearAll).toHaveBeenCalledTimes(1);
+		});
+
+		it("bypasses confirm when confirmClearThreshold=Infinity", () => {
+			const onClearAll = vi.fn();
+			render(
+				<FilterSheetWrapper
+					open
+					onOpenChange={vi.fn()}
+					hasActiveFilters
+					activeFiltersCount={99}
+					confirmClearThreshold={Number.POSITIVE_INFINITY}
+					onClearAll={onClearAll}
+				>
+					content
+				</FilterSheetWrapper>,
+			);
+			fireEvent.click(screen.getByRole("button", { name: "Effacer tous les filtres" }));
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(onClearAll).toHaveBeenCalledTimes(1);
 		});
 
 		it("fires haptic('selection') when close button clicked", () => {

@@ -5,9 +5,10 @@ import { render, screen, fireEvent, cleanup, act } from "@testing-library/react"
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsMobile, mockMounted } = vi.hoisted(() => ({
+const { mockIsMobile, mockMounted, mockHaptic } = vi.hoisted(() => ({
 	mockIsMobile: { value: false },
 	mockMounted: { value: true },
+	mockHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -20,6 +21,11 @@ vi.mock("@/shared/hooks/use-mobile", () => ({
 
 vi.mock("@/shared/hooks/use-mounted", () => ({
 	useMounted: () => mockMounted.value,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 
 vi.mock("motion/react", () => {
@@ -188,6 +194,7 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mockIsMobile.value = false;
 	mockMounted.value = true;
+	mockHaptic.mockClear();
 	Element.prototype.scrollIntoView = vi.fn();
 });
 
@@ -842,6 +849,147 @@ describe("Autocomplete", () => {
 
 			rerender(<Autocomplete {...DEFAULT_PROPS} value="" items={[]} />);
 			expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Mobile virtual keyboard attrs
+	// --------------------------------------------------------------------------
+
+	describe("mobile virtual keyboard attrs", () => {
+		it("sets inputMode='search' by default", () => {
+			renderAutocomplete();
+			expect(getInput()).toHaveAttribute("inputmode", "search");
+		});
+
+		it("sets enterKeyHint='search' by default", () => {
+			renderAutocomplete();
+			expect(getInput()).toHaveAttribute("enterkeyhint", "search");
+		});
+
+		it("sets autoCorrect='off' by default", () => {
+			renderAutocomplete();
+			expect(getInput()).toHaveAttribute("autocorrect", "off");
+		});
+
+		it("sets autoCapitalize='off' by default", () => {
+			renderAutocomplete();
+			expect(getInput()).toHaveAttribute("autocapitalize", "off");
+		});
+
+		it("disables spellcheck by default", () => {
+			renderAutocomplete();
+			expect(getInput()).toHaveAttribute("spellcheck", "false");
+		});
+
+		it("forwards enterKeyHint override to the input", () => {
+			renderAutocomplete({ enterKeyHint: "next" });
+			expect(getInput()).toHaveAttribute("enterkeyhint", "next");
+		});
+
+		it("forwards autoCapitalize override to the input", () => {
+			renderAutocomplete({ autoCapitalize: "words" });
+			expect(getInput()).toHaveAttribute("autocapitalize", "words");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Haptic feedback
+	// --------------------------------------------------------------------------
+
+	describe("haptic feedback", () => {
+		it("triggers 'light' haptic when clear button is clicked", () => {
+			renderAutocomplete({ value: "ab", showClearButton: true });
+			fireEvent.click(screen.getByRole("button", { name: /Effacer/i }));
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+		});
+
+		it("triggers 'selection' haptic when an item is clicked", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			fireEvent.click(screen.getAllByRole("option")[0]!);
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("triggers 'selection' haptic when selecting via Enter", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			fireEvent.keyDown(getInput(), { key: "ArrowDown" });
+			fireEvent.keyDown(getInput(), { key: "Enter" });
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("triggers 'light' haptic on Escape key", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			fireEvent.keyDown(getInput(), { key: "Escape" });
+			expect(mockHaptic).toHaveBeenCalledWith("light");
+		});
+
+		it("triggers 'medium' haptic when retry button is clicked", () => {
+			const onRetry = vi.fn();
+			renderAutocomplete({ value: "ba", items: [], error: "Erreur", onRetry });
+			fireEvent.focus(getInput());
+			fireEvent.click(screen.getByRole("button", { name: /Réessayer/i }));
+			expect(mockHaptic).toHaveBeenCalledWith("medium");
+			expect(onRetry).toHaveBeenCalledTimes(1);
+		});
+
+		it("does not trigger haptic on Tab close", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			mockHaptic.mockClear();
+			fireEvent.keyDown(getInput(), { key: "Tab" });
+			expect(mockHaptic).not.toHaveBeenCalled();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Touch ergonomics (mobile WCAG 2.5.5)
+	// --------------------------------------------------------------------------
+
+	describe("touch ergonomics", () => {
+		it("applies min-h-11 and touch-manipulation classes on items", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			const option = screen.getAllByRole("option")[0]!;
+			expect(option.className).toContain("min-h-11");
+			expect(option.className).toContain("touch-manipulation");
+		});
+
+		it("applies active:bg-accent class on items (tap feedback)", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			const option = screen.getAllByRole("option")[0]!;
+			expect(option.className).toContain("active:bg-accent");
+		});
+
+		it("does not set active index on pointer enter from touch (touch-skip guard)", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			const option = screen.getAllByRole("option")[1]!;
+			fireEvent.pointerEnter(option, { pointerType: "touch" });
+			expect(option).toHaveAttribute("aria-selected", "false");
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Viewport-aware listbox height
+	// --------------------------------------------------------------------------
+
+	describe("viewport-aware listbox height", () => {
+		it("uses --vvh CSS variable for max-height (virtual keyboard aware)", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			const listbox = screen.getByRole("listbox");
+			expect(listbox.className).toContain("max-h-[min(20rem,calc(var(--vvh,100dvh)*0.5))]");
+		});
+
+		it("applies overscroll-contain to prevent body bounce", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS });
+			fireEvent.focus(getInput());
+			const listbox = screen.getByRole("listbox");
+			expect(listbox.className).toContain("overscroll-contain");
 		});
 	});
 });

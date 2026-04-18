@@ -1,5 +1,6 @@
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
 import { type Prisma } from "@/app/generated/prisma/client";
@@ -69,7 +70,8 @@ async function fetchOrderItem(
 		});
 
 		return orderItem;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch order item", error, { service: "fetchOrderItem" });
 		return null;
 	}
 }

@@ -65,4 +65,14 @@ export interface AutocompleteProps<T> {
 	"aria-describedby"?: string;
 	/** ARIA: marks the input as required */
 	"aria-required"?: boolean | "true" | "false";
+	/** Mobile virtual keyboard mode (defaut: "search") */
+	inputMode?: "search" | "text" | "none" | "tel" | "url" | "email" | "numeric" | "decimal";
+	/** Mobile virtual keyboard action button (defaut: "search") */
+	enterKeyHint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send";
+	/** Autocorrection navigateur (defaut: "off" - contexte recherche) */
+	autoCorrect?: "on" | "off";
+	/** Auto-majuscule mobile (defaut: "off" - contexte recherche) */
+	autoCapitalize?: "off" | "none" | "on" | "sentences" | "words" | "characters";
+	/** Verification orthographique (defaut: false) */
+	spellCheck?: boolean;
 }

@@ -13,7 +13,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
 import { StarIcon } from "@/shared/components/icons/star-icon";
-import type { Product } from "@/modules/products/types/product.types";
+import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import type { ComponentProps, ReactNode } from "react";
 import type { SkuFromList } from "@/modules/products/types/product-list.types";
@@ -28,7 +28,7 @@ function buildSkuUrl(baseUrl: string, sku: SkuFromList): string {
 }
 
 interface ProductCardProps {
-	product: Product;
+	product: ProductCarouselItem;
 	/** Index dans la liste (pour priority images above-fold) */
 	index?: number;
 	/** Indique si le produit est dans la wishlist */

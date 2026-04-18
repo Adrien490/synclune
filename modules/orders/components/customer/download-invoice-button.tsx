@@ -4,7 +4,7 @@ import { Button } from "@/shared/components/ui/button";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { Download, LoaderCircle } from "lucide-react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/shared/utils/toast";
 
 interface DownloadInvoiceButtonProps {
 	orderNumber: string;
@@ -16,26 +16,19 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 	async function handleDownload() {
 		triggerHaptic("medium");
 		setIsDownloading(true);
-		let response: Response;
-		try {
-			response = await fetch(`/api/orders/${orderNumber}/invoice`);
-		} catch {
-			triggerHaptic("error");
-			toast.error("Impossible de télécharger la facture");
-			setIsDownloading(false);
-			return;
-		}
 
-		try {
+		const task = (async () => {
+			let response: Response;
+			try {
+				response = await fetch(`/api/orders/${orderNumber}/invoice`);
+			} catch {
+				throw new Error("Impossible de télécharger la facture");
+			}
 			if (!response.ok) {
-				triggerHaptic("error");
 				if (response.status === 404) {
-					toast.error("La facture n'est pas encore disponible");
-				} else {
-					toast.error("Erreur lors du téléchargement de la facture");
+					throw new Error("La facture n'est pas encore disponible");
 				}
-				setIsDownloading(false);
-				return;
+				throw new Error("Erreur lors du téléchargement de la facture");
 			}
 			const blob = await response.blob();
 			const url = URL.createObjectURL(blob);
@@ -44,11 +37,19 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 			link.download = `facture-${orderNumber}.pdf`;
 			link.click();
 			URL.revokeObjectURL(url);
-			triggerHaptic("success");
-			setIsDownloading(false);
+		})();
+
+		toast.promise(task, {
+			loading: "Téléchargement…",
+			success: "Facture téléchargée",
+			error: (err) => (err instanceof Error ? err.message : "Impossible de télécharger la facture"),
+		});
+
+		try {
+			await task;
 		} catch {
-			triggerHaptic("error");
-			toast.error("Erreur lors du téléchargement de la facture");
+			// error surfaced by toast.promise (haptic déjà déclenché par wrapper toast.error)
+		} finally {
 			setIsDownloading(false);
 		}
 	}

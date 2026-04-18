@@ -332,6 +332,7 @@ describe("MediaUploadGrid", () => {
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
 				"La première position doit être une image, pas une vidéo.",
+				expect.any(Object),
 			);
 		});
 
@@ -345,6 +346,7 @@ describe("MediaUploadGrid", () => {
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
 				"La première position doit être une image, pas une vidéo.",
+				expect.any(Object),
 			);
 		});
 	});
@@ -378,6 +380,7 @@ describe("MediaUploadGrid", () => {
 			expect(mockOnChange).not.toHaveBeenCalled();
 			expect(mockToast.error).toHaveBeenCalledWith(
 				"Impossible : une vidéo passerait en première position. Réorganisez d'abord.",
+				expect.any(Object),
 			);
 		});
 	});

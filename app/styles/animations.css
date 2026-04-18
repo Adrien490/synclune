@@ -27,7 +27,6 @@
 
 	.animate-sparkle-pulse {
 		animation: sparkle-pulse 2s ease-in-out infinite;
-		will-change: transform, opacity;
 	}
 
 	/* Animation heart-beat pour toast error */
@@ -43,7 +42,6 @@
 
 	.animate-heart-beat {
 		animation: heart-beat 2s ease-in-out infinite;
-		will-change: transform;
 	}
 
 	/* Animation wishlist button - single pop subtil (200ms) */

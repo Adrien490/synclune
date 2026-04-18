@@ -3,6 +3,7 @@ import { isAdmin } from "@/modules/auth/utils/guards";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { cacheUserAccounts } from "../constants/cache";
 import { cacheDashboard } from "@/shared/lib/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 
 import { GET_ACCOUNT_DEFAULT_SELECT } from "../constants/account.constants";
@@ -63,7 +64,8 @@ export async function fetchAccount(
 		});
 
 		return account;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch account", error, { service: "fetchAccount" });
 		return null;
 	}
 }

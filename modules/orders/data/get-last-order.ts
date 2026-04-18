@@ -1,6 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
 import { GET_LAST_ORDER_DEFAULT_SELECT } from "../constants/last-order.constants";
@@ -49,7 +50,8 @@ export async function fetchLastOrder(userId: string): Promise<GetLastOrderReturn
 		});
 
 		return lastOrder;
-	} catch {
+	} catch (error) {
+		logger.error("Failed to fetch last order", error, { service: "fetchLastOrder" });
 		return null;
 	}
 }
