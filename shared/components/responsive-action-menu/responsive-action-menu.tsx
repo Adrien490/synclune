@@ -296,23 +296,20 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 	const Icon = item.icon;
 	const hapticPattern: HapticPattern =
 		item.haptic ?? (item.variant === "destructive" ? "medium" : "light");
+	const isInert = item.disabled === true || item.pending === true;
+	const ariaBusy = item.pending === true ? true : undefined;
 
 	if (item.href) {
 		return (
-			<DropdownMenuItem
-				asChild
-				disabled={item.disabled || item.pending}
-				variant={item.variant}
-				aria-busy={item.pending || undefined}
-			>
+			<DropdownMenuItem asChild disabled={isInert} variant={item.variant} aria-busy={ariaBusy}>
 				<Link
 					href={item.href}
 					target={item.external ? "_blank" : undefined}
 					rel={item.external ? "noopener noreferrer" : undefined}
-					tabIndex={item.disabled || item.pending ? -1 : undefined}
-					aria-disabled={item.disabled || item.pending || undefined}
+					tabIndex={isInert ? -1 : undefined}
+					aria-disabled={isInert ? true : undefined}
 					onClick={(e) => {
-						if (item.disabled || item.pending) {
+						if (isInert) {
 							e.preventDefault();
 							return;
 						}
@@ -332,9 +329,9 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 
 	return (
 		<DropdownMenuItem
-			disabled={item.disabled || item.pending}
+			disabled={isInert}
 			variant={item.variant}
-			aria-busy={item.pending || undefined}
+			aria-busy={ariaBusy}
 			onSelect={(e) => {
 				if (item.pending) {
 					e.preventDefault();
@@ -357,7 +354,8 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 function MobileActionRow({ item }: { item: ActionMenuItem }) {
 	const Icon = item.icon;
 	const isDestructive = item.variant === "destructive";
-	const isInert = item.disabled || item.pending;
+	const isInert = item.disabled === true || item.pending === true;
+	const ariaBusy = item.pending === true ? true : undefined;
 	const hapticPattern: HapticPattern = item.haptic ?? (isDestructive ? "medium" : "light");
 
 	const body = (
@@ -419,8 +417,8 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 					target={item.external ? "_blank" : undefined}
 					rel={item.external ? "noopener noreferrer" : undefined}
 					tabIndex={isInert ? -1 : undefined}
-					aria-disabled={isInert || undefined}
-					aria-busy={item.pending || undefined}
+					aria-disabled={isInert ? true : undefined}
+					aria-busy={ariaBusy}
 					onClick={(e) => {
 						if (isInert) {
 							e.preventDefault();
@@ -443,7 +441,7 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 				type="button"
 				role="menuitem"
 				disabled={isInert}
-				aria-busy={item.pending || undefined}
+				aria-busy={ariaBusy}
 				onClick={() => {
 					if (isInert) return;
 					triggerHaptic(hapticPattern);

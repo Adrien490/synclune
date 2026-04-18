@@ -73,7 +73,7 @@ export function buildResponsiveActionMenuMock() {
 									role="menuitem"
 									type="button"
 									onClick={item.onSelect}
-									aria-disabled={item.disabled || undefined}
+									aria-disabled={item.disabled === true ? true : undefined}
 									data-variant={item.variant}
 								>
 									{item.label}
