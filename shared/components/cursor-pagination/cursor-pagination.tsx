@@ -15,6 +15,7 @@ import { Button } from "../ui/button";
 import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
 import { PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
 
 const PAGINATION_BUTTON_CLASSES = [
@@ -38,6 +39,7 @@ export function CursorPagination({
 	focusTargetRef,
 }: CursorPaginationProps) {
 	const perPageId = useId();
+	const haptic = useHaptic();
 	const {
 		cursor,
 		pathname,
@@ -48,6 +50,23 @@ export function CursorPagination({
 		handleReset,
 		handlePerPageChange,
 	} = useCursorPagination({ nextCursor, prevCursor, focusTargetRef });
+
+	const onPrevious = () => {
+		haptic("light");
+		handlePrevious();
+	};
+	const onNext = () => {
+		haptic("light");
+		handleNext();
+	};
+	const onReset = () => {
+		haptic("selection");
+		handleReset();
+	};
+	const onPerPageChange = (value: string) => {
+		haptic("selection");
+		handlePerPageChange(Number(value));
+	};
 
 	const isFirstPage = !cursor;
 	const canNavigate = hasNextPage || hasPreviousPage;
@@ -112,14 +131,10 @@ export function CursorPagination({
 					<label htmlFor={perPageId} className="text-muted-foreground hidden text-xs sm:block">
 						Par page
 					</label>
-					<Select
-						value={String(perPage)}
-						onValueChange={(value) => handlePerPageChange(Number(value))}
-						disabled={isPending}
-					>
+					<Select value={String(perPage)} onValueChange={onPerPageChange} disabled={isPending}>
 						<SelectTrigger
 							id={perPageId}
-							className="h-9 w-20"
+							className="h-11 w-20 sm:h-9"
 							aria-label="Nombre de résultats par page"
 						>
 							<SelectValue>{perPage}</SelectValue>
@@ -162,7 +177,7 @@ export function CursorPagination({
 						variant="outline"
 						size="sm"
 						disabled={isFirstPage || isPending}
-						onClick={handleReset}
+						onClick={onReset}
 						className={cn(RESET_BUTTON_SIZE, "cursor-pointer gap-1", ...PAGINATION_BUTTON_CLASSES)}
 						aria-label="Retour au début"
 					>
@@ -180,7 +195,7 @@ export function CursorPagination({
 							variant="outline"
 							size="icon"
 							disabled={!hasPreviousPage || isPending}
-							onClick={handlePrevious}
+							onClick={onPrevious}
 							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
 							aria-label="Page précédente"
 						>
@@ -211,7 +226,7 @@ export function CursorPagination({
 							variant="outline"
 							size="icon"
 							disabled={!hasNextPage || isPending}
-							onClick={handleNext}
+							onClick={onNext}
 							className={cn(NAV_BUTTON_SIZE, "cursor-pointer", ...PAGINATION_BUTTON_CLASSES)}
 							aria-label="Page suivante"
 						>

@@ -1,36 +1,58 @@
+import { Settings2 } from "lucide-react";
 import { type Metadata } from "next";
+import { Suspense } from "react";
 
-import { PageHeader } from "@/shared/components/page-header";
 import { getStoreSettings } from "@/modules/store-settings/data/get-store-settings";
 import { StoreSettingsForm } from "@/modules/store-settings/components/admin/store-settings-form";
+import { StoreSettingsFormSkeleton } from "@/modules/store-settings/components/admin/store-settings-form-skeleton";
+import { PageHeader } from "@/shared/components/page-header";
 
 export const metadata: Metadata = {
 	title: "Paramètres boutique - Administration",
 	description: "Gérer l'ouverture et la fermeture de la boutique",
 };
 
-export default async function StoreSettingsPage() {
-	const settings = await getStoreSettings();
-
-	if (!settings) {
-		return (
-			<div className="text-muted-foreground py-12 text-center">
-				Paramètres boutique introuvables. Veuillez exécuter le seed.
-			</div>
-		);
-	}
-
+export default function StoreSettingsPage() {
 	return (
 		<>
 			<PageHeader
 				variant="compact"
 				title="Paramètres boutique"
-				description="Gérez l'ouverture et la fermeture temporaire de la boutique"
+				description="Gérez l'ouverture, la fermeture et la programmation de la boutique"
 			/>
 
 			<div className="mx-auto max-w-2xl">
-				<StoreSettingsForm settings={settings} />
+				<Suspense fallback={<StoreSettingsFormSkeleton />}>
+					<StoreSettingsFormLoader />
+				</Suspense>
 			</div>
 		</>
+	);
+}
+
+async function StoreSettingsFormLoader() {
+	const settings = await getStoreSettings();
+
+	if (!settings) {
+		return <StoreSettingsEmptyState />;
+	}
+
+	return <StoreSettingsForm settings={settings} />;
+}
+
+function StoreSettingsEmptyState() {
+	return (
+		<div className="border-border bg-card flex flex-col items-center gap-3 rounded-xl border p-10 text-center">
+			<div className="bg-muted flex size-12 items-center justify-center rounded-full">
+				<Settings2 className="text-muted-foreground size-6" aria-hidden="true" />
+			</div>
+			<h2 className="text-foreground text-base font-medium">
+				Paramètres de la boutique non initialisés
+			</h2>
+			<p className="text-muted-foreground max-w-md text-sm">
+				La configuration n'a pas pu être chargée. Vérifiez que la base de données est joignable et
+				que la migration initiale a bien été appliquée.
+			</p>
+		</div>
 	);
 }

@@ -8,7 +8,6 @@ import { CollectionStatus } from "@/app/generated/prisma/client";
 import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
-import { Button } from "@/shared/components/ui/button";
 import {
 	Carousel,
 	CarouselContent,
@@ -20,7 +19,7 @@ import {
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 import { Heart } from "lucide-react";
-import Link from "next/link";
+import { SectionCtaLink } from "./section-cta-link";
 
 export async function CollectionsSection() {
 	const { collections } = await getCollections({
@@ -107,7 +106,7 @@ export async function CollectionsSection() {
 										<CarouselItem
 											key={collection.id}
 											index={index}
-											className="basis-[clamp(200px,72vw,280px)] pl-4 sm:pl-6 md:basis-1/3 lg:basis-1/4"
+											className="basis-[clamp(240px,78vw,300px)] pl-4 sm:pl-6 md:basis-1/3 lg:basis-1/4"
 										>
 											<CollectionCard
 												slug={collection.slug}
@@ -153,14 +152,9 @@ export async function CollectionsSection() {
 						once
 						className="text-center"
 					>
-						<Button
-							asChild
-							size="lg"
-							variant="outline"
-							className="transition-[transform,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
-						>
-							<Link href="/collections">Explorer les collections</Link>
-						</Button>
+						<SectionCtaLink href="/collections" hapticPattern="selection">
+							Explorer les collections
+						</SectionCtaLink>
 					</Fade>
 				</div>
 			</div>

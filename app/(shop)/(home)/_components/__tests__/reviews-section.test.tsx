@@ -100,6 +100,7 @@ vi.mock("next/link", () => ({
 
 vi.mock("@/shared/constants/spacing", () => ({
 	SECTION_SPACING: { section: "py-16" },
+	CONTAINER_CLASS: "container",
 }));
 
 vi.mock("@/shared/components/rating-stars", () => ({

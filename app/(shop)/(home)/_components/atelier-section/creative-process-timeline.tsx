@@ -35,11 +35,9 @@ export function CreativeProcessTimeline() {
 							className={cn(
 								"group timeline-step-scroll relative rounded-xl p-3 text-center",
 								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5",
-								"focus-visible:ring-secondary/50 focus-visible:ring-2 focus-visible:outline-none",
 							)}
-							// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard-navigable timeline steps
-							tabIndex={0}
 							aria-describedby={`creative-step-${step.id}-desc`}
+							data-atelier-haptic="step"
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
@@ -99,11 +97,9 @@ export function CreativeProcessTimeline() {
 							className={cn(
 								"group relative -m-2 flex items-start gap-4 rounded-xl p-2",
 								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-300 motion-safe:hover:-translate-y-0.5",
-								"focus-visible:ring-secondary/50 focus-visible:ring-2 focus-visible:outline-none",
 							)}
-							// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- keyboard-navigable timeline steps
-							tabIndex={0}
 							aria-describedby={`creative-step-${step.id}-desc`}
+							data-atelier-haptic="step"
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 

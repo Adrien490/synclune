@@ -43,6 +43,7 @@ export async function sendCrossSellEmails(): Promise<{
 			crossSellEmailSentAt: null,
 			userId: { not: null },
 			user: { deletedAt: null },
+			newsletterOptIn: true,
 		},
 		select: {
 			id: true,

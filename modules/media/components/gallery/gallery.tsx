@@ -22,6 +22,7 @@ import { GalleryCounter } from "@/shared/components/gallery/counter";
 import { GalleryNavigation } from "@/shared/components/gallery/navigation";
 import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
 import { useLightbox } from "@/shared/hooks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { lazy } from "react";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { GallerySlide } from "./slide";
@@ -141,6 +142,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const [thumbnailErrors, setThumbnailErrors] = useState<Set<string>>(new Set());
 	const { isOpen, open, close } = useLightbox();
 	const prefersReduced = useReducedMotion();
+	const haptic = useHaptic();
 	const galleryRef = useRef<HTMLDivElement>(null);
 
 	const handleThumbnailError = (mediaId: string) => {
@@ -281,8 +283,14 @@ function GalleryContent({ product, title }: GalleryProps) {
 	}, [emblaApi, images.length]);
 
 	// Navigation
-	const scrollPrev = () => emblaApi?.scrollPrev();
-	const scrollNext = () => emblaApi?.scrollNext();
+	const scrollPrev = () => {
+		haptic("selection");
+		emblaApi?.scrollPrev();
+	};
+	const scrollNext = () => {
+		haptic("selection");
+		emblaApi?.scrollNext();
+	};
 	const scrollTo = (index: number) => emblaApi?.scrollTo(index);
 
 	// Conditional transition classes (composable only: transform, opacity)

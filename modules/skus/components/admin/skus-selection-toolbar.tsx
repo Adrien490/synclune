@@ -3,9 +3,15 @@
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { ProductVariantSelectionActions } from "./sku-selection-actions";
 
-export function ProductVariantsSelectionToolbar() {
+interface ProductVariantsSelectionToolbarProps {
+	pageItemIds?: string[];
+}
+
+export function ProductVariantsSelectionToolbar({
+	pageItemIds,
+}: ProductVariantsSelectionToolbarProps = {}) {
 	return (
-		<SelectionToolbar>
+		<SelectionToolbar pageItemIds={pageItemIds}>
 			<ProductVariantSelectionActions />
 		</SelectionToolbar>
 	);

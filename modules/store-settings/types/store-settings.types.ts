@@ -1,8 +1,9 @@
-/** Minimal store status for storefront gate */
+/** Minimal store status for storefront gate (extended with scheduledCloseAt for admin banner) */
 export interface StoreStatus {
 	isClosed: boolean;
 	closureMessage: string | null;
 	reopensAt: Date | null;
+	scheduledCloseAt: Date | null;
 }
 
 /** Result returned by assertStoreOpen() when store is closed */
@@ -16,6 +17,5 @@ export interface StoreSettingsAdmin extends StoreStatus {
 	id: string;
 	closedAt: Date | null;
 	closedBy: string | null;
-	scheduledCloseAt: Date | null;
 	updatedAt: Date;
 }

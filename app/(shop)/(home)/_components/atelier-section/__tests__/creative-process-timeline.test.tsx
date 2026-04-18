@@ -103,14 +103,15 @@ describe("CreativeProcessTimeline", () => {
 		}
 	});
 
-	it("each desktop step has tabIndex=0 for keyboard navigation", () => {
+	it("each desktop step is tagged with data-atelier-haptic for event delegation", () => {
 		const { container } = render(<CreativeProcessTimeline />);
 
 		const desktopList = container.querySelector(".hidden.lg\\:block ol");
 		const items = desktopList!.querySelectorAll("li");
 
 		items.forEach((li) => {
-			expect(li.getAttribute("tabindex")).toBe("0");
+			expect(li.getAttribute("data-atelier-haptic")).toBe("step");
+			expect(li.getAttribute("tabindex")).toBeNull();
 		});
 	});
 

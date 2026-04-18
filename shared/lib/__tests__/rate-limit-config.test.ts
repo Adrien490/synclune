@@ -178,7 +178,6 @@ import {
 	ADMIN_FAQ_REORDER_LIMIT,
 	ADMIN_FAQ_LIMITS,
 	// Admin - store settings
-	ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT,
 	ADMIN_STORE_SETTINGS_LIMITS,
 } from "@/shared/lib/rate-limit-config";
 
@@ -351,8 +350,6 @@ describe("individual rate limit configs - valid shape", () => {
 		["ADMIN_FAQ_UPDATE_LIMIT", ADMIN_FAQ_UPDATE_LIMIT],
 		["ADMIN_FAQ_DELETE_LIMIT", ADMIN_FAQ_DELETE_LIMIT],
 		["ADMIN_FAQ_REORDER_LIMIT", ADMIN_FAQ_REORDER_LIMIT],
-		// Admin - store settings
-		["ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT", ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT],
 	];
 
 	it.each(configs)("%s has limit > 0 and windowMs > 0", (_name, config) => {
@@ -1081,13 +1078,12 @@ describe("ADMIN_FAQ_LIMITS", () => {
 
 describe("ADMIN_STORE_SETTINGS_LIMITS", () => {
 	it("contains expected keys", () => {
-		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("TOGGLE_CLOSURE");
-	});
-
-	it("references the correct individual config", () => {
-		expect(ADMIN_STORE_SETTINGS_LIMITS.TOGGLE_CLOSURE).toBe(
-			ADMIN_STORE_SETTINGS_TOGGLE_CLOSURE_LIMIT,
-		);
+		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("CLOSE_STORE");
+		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("REOPEN_STORE");
+		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("UPDATE_CLOSURE_MESSAGE");
+		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("UPDATE_REOPENS_AT");
+		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("SCHEDULE_CLOSURE");
+		expect(ADMIN_STORE_SETTINGS_LIMITS).toHaveProperty("CANCEL_SCHEDULED_CLOSURE");
 	});
 
 	it("all entries have valid config shape", () => {

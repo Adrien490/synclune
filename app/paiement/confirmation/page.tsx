@@ -110,6 +110,17 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					item_count: order.items.length,
 				}}
 			/>
+			<PostHogTrack
+				event="payment_succeeded"
+				properties={{
+					order_id: order.id,
+					order_number: order.orderNumber,
+					amount: order.total,
+					currency: "EUR",
+					is_guest: !session,
+					is_pending_async: isPending,
+				}}
+			/>
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<h1 className="sr-only">Confirmation de commande</h1>

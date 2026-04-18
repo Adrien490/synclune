@@ -65,6 +65,7 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		handleSubmit: mockHandleSubmit,
 		reset: mockReset,
+		state: { isValid: true },
 	}),
 }));
 

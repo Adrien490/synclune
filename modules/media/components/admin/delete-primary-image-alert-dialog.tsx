@@ -14,6 +14,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-files";
 import { startTransition } from "react";
 import { LoaderCircle } from "lucide-react";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 export const DELETE_PRIMARY_IMAGE_DIALOG_ID = "delete-primary-image";
 
@@ -26,6 +27,7 @@ interface DeletePrimaryImageData {
 
 export function DeletePrimaryImageAlertDialog() {
 	const deleteDialog = useAlertDialog<DeletePrimaryImageData>(DELETE_PRIMARY_IMAGE_DIALOG_ID);
+	const haptic = useHaptic();
 
 	const { isPending, deleteFiles } = useDeleteUploadThingFiles({
 		onSuccess: () => {
@@ -44,6 +46,8 @@ export function DeletePrimaryImageAlertDialog() {
 		const { imageUrl, skipUtapiDelete, onRemove } = deleteDialog.data ?? {};
 
 		if (!imageUrl) return;
+
+		haptic("medium");
 
 		// If skipUtapiDelete, just remove locally without calling UTAPI
 		if (skipUtapiDelete) {

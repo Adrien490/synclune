@@ -211,4 +211,43 @@ describe("PasswordInputField", () => {
 		render(<PasswordInputField disabled />);
 		expect(document.querySelector("input")).toBeDisabled();
 	});
+
+	// ============================================================================
+	// MOBILE NATIVE 2026 — TOUCH TARGET WCAG 2.5.5 (44×44)
+	// ============================================================================
+
+	it("toggle button has extended hit-area via pseudo-element (44×44 WCAG 2.5.5)", () => {
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		render(<PasswordInputField />);
+		const toggleBtn = screen.getByRole("button", { name: "Afficher le mot de passe" });
+		// Check the className includes the invisible hit-area extension
+		expect(toggleBtn.className).toContain("after:absolute");
+		expect(toggleBtn.className).toContain("after:inset-[-12px]");
+		expect(toggleBtn.className).toContain("after:content-['']");
+	});
+
+	it("toggle button is a relative-positioned container for pseudo-element", () => {
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		render(<PasswordInputField />);
+		const toggleBtn = screen.getByRole("button", { name: "Afficher le mot de passe" });
+		expect(toggleBtn.className).toContain("relative");
+	});
+
+	it("toggle button respects prefers-reduced-motion (motion-safe transition)", () => {
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		render(<PasswordInputField />);
+		const toggleBtn = screen.getByRole("button", { name: "Afficher le mot de passe" });
+		expect(toggleBtn.className).toContain("motion-safe:transition-colors");
+	});
+
+	it("toggle button has aria-pressed reflecting current visibility state", () => {
+		vi.mocked(useFieldContext).mockReturnValue(makeFieldContext() as any);
+		render(<PasswordInputField />);
+		const toggleBtn = screen.getByRole("button", { name: "Afficher le mot de passe" });
+		expect(toggleBtn.getAttribute("aria-pressed")).toBe("false");
+		fireEvent.click(toggleBtn);
+		expect(
+			screen.getByRole("button", { name: "Masquer le mot de passe" }).getAttribute("aria-pressed"),
+		).toBe("true");
+	});
 });

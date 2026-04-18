@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import type { BadgeCountsStoreProviderProps } from "@/shared/types/store.types";
@@ -12,8 +12,9 @@ import type { BadgeCountsStoreProviderProps } from "@/shared/types/store.types";
  * Les hooks (useWishlistToggle, useAddToCart, etc.) mettent ensuite
  * à jour le store de façon optimistic.
  *
- * Le store est resynchronisé si les valeurs initiales changent
- * (ex: après navigation ou refresh serveur).
+ * Le store est resynchronisé quand les valeurs initiales changent
+ * (ex: après navigation ou refresh serveur). L'effect ne se relance
+ * que si les deps primitives changent — pas besoin de refs pour tracker.
  */
 export function BadgeCountsStoreProvider({
 	initialWishlistCount,
@@ -23,24 +24,9 @@ export function BadgeCountsStoreProvider({
 	const setWishlistCount = useBadgeCountsStore((state) => state.setWishlistCount);
 	const setCartCount = useBadgeCountsStore((state) => state.setCartCount);
 
-	// Refs pour tracker les valeurs précédentes et détecter les changements serveur
-	const prevWishlistRef = useRef<number | null>(null);
-	const prevCartRef = useRef<number | null>(null);
-
 	useEffect(() => {
-		// Initialisation ou resync si les valeurs serveur ont changé
-		const wishlistChanged = prevWishlistRef.current !== initialWishlistCount;
-		const cartChanged = prevCartRef.current !== initialCartCount;
-
-		if (wishlistChanged) {
-			setWishlistCount(initialWishlistCount);
-			prevWishlistRef.current = initialWishlistCount;
-		}
-
-		if (cartChanged) {
-			setCartCount(initialCartCount);
-			prevCartRef.current = initialCartCount;
-		}
+		setWishlistCount(initialWishlistCount);
+		setCartCount(initialCartCount);
 	}, [initialWishlistCount, initialCartCount, setWishlistCount, setCartCount]);
 
 	return <>{children}</>;

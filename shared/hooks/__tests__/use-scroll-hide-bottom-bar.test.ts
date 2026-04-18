@@ -137,4 +137,29 @@ describe("useScrollHideBottomBar", () => {
 
 		expect(removeSpy).toHaveBeenCalledWith("scroll", expect.any(Function));
 	});
+
+	it("skips scroll tracking when prefers-reduced-motion is set (WCAG 2.3.3)", () => {
+		vi.stubGlobal(
+			"matchMedia",
+			vi.fn(
+				(query: string) =>
+					({
+						matches: query === "(prefers-reduced-motion: reduce)",
+						media: query,
+						addEventListener: vi.fn(),
+						removeEventListener: vi.fn(),
+						addListener: vi.fn(),
+						removeListener: vi.fn(),
+						dispatchEvent: vi.fn(),
+						onchange: null,
+					}) as unknown as MediaQueryList,
+			),
+		);
+
+		const addSpy = vi.spyOn(window, "addEventListener");
+		const { result } = renderHook(() => useScrollHideBottomBar());
+
+		expect(result.current).toBe(false);
+		expect(addSpy).not.toHaveBeenCalledWith("scroll", expect.any(Function), expect.anything());
+	});
 });

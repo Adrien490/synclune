@@ -1,154 +1,149 @@
 "use client";
 
-import { useActionState } from "react";
+import { Lock, Unlock } from "lucide-react";
+import { useRef } from "react";
 
-import { useAppForm } from "@/shared/components/forms";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-
-import { toggleStoreClosure } from "../../actions/toggle-store-closure";
-import type { StoreSettingsAdmin } from "../../types/store-settings.types";
 import {
-	TOGGLE_STORE_CLOSURE_DIALOG_ID,
-	ToggleStoreClosureAlertDialog,
-} from "./toggle-store-closure-alert-dialog";
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/shared/components/ui/card";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
-function formatDateForInput(date: Date): string {
-	const d = new Date(date);
-	const year = d.getFullYear();
-	const month = String(d.getMonth() + 1).padStart(2, "0");
-	const day = String(d.getDate()).padStart(2, "0");
-	const hours = String(d.getHours()).padStart(2, "0");
-	const minutes = String(d.getMinutes()).padStart(2, "0");
-	return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
+import type { StoreSettingsAdmin } from "../../types/store-settings.types";
+import { CLOSE_STORE_DIALOG_ID, CloseStoreDialog } from "./close-store-dialog";
+import { EditClosureMessageForm } from "./edit-closure-message-form";
+import { EditReopensAtForm } from "./edit-reopens-at-form";
+import { REOPEN_STORE_DIALOG_ID, ReopenStoreDialog } from "./reopen-store-dialog";
+import { ScheduleClosureForm } from "./schedule-closure-form";
+import { ScheduledClosureCard } from "./scheduled-closure-card";
 
 interface StoreSettingsFormProps {
 	settings: StoreSettingsAdmin;
 }
 
+const dateTimeFormatter = new Intl.DateTimeFormat("fr-FR", {
+	dateStyle: "medium",
+	timeStyle: "short",
+});
+
 export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
-	const form = useAppForm({
-		defaultValues: {
-			isClosed: settings.isClosed,
-			closureMessage: settings.closureMessage ?? "",
-			reopensAt: settings.reopensAt ? formatDateForInput(settings.reopensAt) : "",
-		},
-	});
+	const closeDialog = useAlertDialog(CLOSE_STORE_DIALOG_ID);
+	const reopenDialog = useAlertDialog(REOPEN_STORE_DIALOG_ID);
+	const previousFocusRef = useRef<HTMLElement | null>(null);
 
-	const confirmDialog = useAlertDialog(TOGGLE_STORE_CLOSURE_DIALOG_ID);
-
-	const [, formAction, isPending] = useActionState(
-		withCallbacks(toggleStoreClosure, {
-			...createToastCallbacks({}),
-			onSuccess: (result) => {
-				createToastCallbacks({}).onSuccess(result);
-				confirmDialog.close();
-			},
-		}),
-		undefined,
-	);
-
-	const closedAtFormatted = settings.closedAt
-		? new Intl.DateTimeFormat("fr-FR", {
-				dateStyle: "medium",
-				timeStyle: "short",
-			}).format(new Date(settings.closedAt))
-		: null;
-
-	const handleSubmit = () => {
-		const values = form.state.values;
-		confirmDialog.open({
-			isClosed: values.isClosed,
-			closureMessage: values.closureMessage,
-			reopensAt: values.reopensAt,
-		});
+	const handleOpenCloseDialog = () => {
+		previousFocusRef.current = document.activeElement as HTMLElement | null;
+		closeDialog.open();
 	};
 
+	const handleOpenReopenDialog = () => {
+		previousFocusRef.current = document.activeElement as HTMLElement | null;
+		reopenDialog.open();
+	};
+
+	const closedAtFormatted = settings.closedAt
+		? dateTimeFormatter.format(new Date(settings.closedAt))
+		: null;
+
 	return (
-		<>
-			<div className="space-y-6">
-				{/* Current status badge */}
-				<div className="flex items-start gap-3">
-					<span className="text-muted-foreground mt-0.5 text-sm font-medium">Statut actuel :</span>
-					<div>
+		<div className="space-y-6">
+			{/* ─── Section 1 : Statut actuel ─────────────────────────────────── */}
+			<Card>
+				<CardHeader>
+					<div className="flex items-center justify-between gap-3">
+						<CardTitle>Statut actuel</CardTitle>
 						{settings.isClosed ? (
-							<Badge variant="destructive">Fermée</Badge>
+							<Badge variant="destructive" className="gap-1">
+								<Lock className="size-3" aria-hidden="true" />
+								Fermée
+							</Badge>
 						) : (
-							<Badge variant="success">Ouverte</Badge>
-						)}
-						{settings.isClosed && closedAtFormatted && settings.closedBy && (
-							<p className="text-muted-foreground mt-1 text-xs">
-								par {settings.closedBy} le {closedAtFormatted}
-							</p>
+							<Badge variant="success" className="gap-1">
+								<Unlock className="size-3" aria-hidden="true" />
+								Ouverte
+							</Badge>
 						)}
 					</div>
-				</div>
+					<CardDescription>
+						{settings.isClosed
+							? "Les clients voient une page d'indisponibilité et ne peuvent pas commander."
+							: "La boutique accepte les commandes normalement."}
+					</CardDescription>
+				</CardHeader>
 
-				{/* Toggle switch */}
-				<form.AppField name="isClosed">
-					{(field) => <field.SwitchField label="Boutique fermée" />}
-				</form.AppField>
-
-				{/* Closure fields (visible only when closing) */}
-				<form.Subscribe selector={(state) => state.values.isClosed}>
-					{(isClosed) =>
-						isClosed ? (
-							<div className="space-y-4">
-								<form.AppField name="closureMessage">
-									{(field) => (
-										<field.TextareaField
-											label="Message de fermeture"
-											placeholder="La boutique est temporairement fermée pour maintenance..."
-											maxLength={500}
-											showCounter
-											rows={3}
-											required
-										/>
-									)}
-								</form.AppField>
-
-								<form.AppField name="reopensAt">
-									{(field) => (
-										<field.DateTimeField
-											label="Date de réouverture"
-											placeholder="Sélectionner une date"
-											optional
-										/>
-									)}
-								</form.AppField>
+				<CardContent className="space-y-4">
+					{settings.isClosed ? (
+						<>
+							{closedAtFormatted && settings.closedBy && (
 								<p className="text-muted-foreground text-xs">
-									La boutique sera automatiquement réouverte à cette date.
+									Fermée par{" "}
+									<span className="text-foreground font-medium">{settings.closedBy}</span> le{" "}
+									{closedAtFormatted}
 								</p>
+							)}
+
+							<div className="space-y-6 border-t pt-4">
+								<EditClosureMessageForm currentMessage={settings.closureMessage ?? ""} />
+								<div className="border-t pt-4">
+									<EditReopensAtForm currentReopensAt={settings.reopensAt} />
+								</div>
 							</div>
-						) : null
-					}
-				</form.Subscribe>
 
-				<form.Subscribe
-					selector={(state) => ({
-						isClosed: state.values.isClosed,
-						closureMessage: state.values.closureMessage,
-						canSubmit: state.canSubmit,
-					})}
-				>
-					{({ isClosed, closureMessage, canSubmit }) => (
-						<Button
-							type="button"
-							variant={isClosed ? "destructive" : "default"}
-							disabled={!canSubmit || isPending || (isClosed && !closureMessage.trim())}
-							onClick={handleSubmit}
-						>
-							{isClosed ? "Fermer la boutique" : "Réouvrir la boutique"}
-						</Button>
+							<div className="flex justify-end border-t pt-4">
+								<Button type="button" onClick={handleOpenReopenDialog} className="min-h-11">
+									<Unlock className="mr-2 size-4" />
+									Réouvrir la boutique
+								</Button>
+							</div>
+						</>
+					) : (
+						<div className="flex justify-end">
+							<Button
+								type="button"
+								variant="destructive"
+								onClick={handleOpenCloseDialog}
+								className="min-h-11"
+							>
+								<Lock className="mr-2 size-4" />
+								Fermer la boutique
+							</Button>
+						</div>
 					)}
-				</form.Subscribe>
-			</div>
+				</CardContent>
+			</Card>
 
-			<ToggleStoreClosureAlertDialog action={formAction} isPending={isPending} />
-		</>
+			{/* ─── Section 2 : Programmation (visible si OUVERTE) ──────────────── */}
+			{!settings.isClosed && (
+				<Card>
+					<CardHeader>
+						<CardTitle>Fermeture programmée</CardTitle>
+						<CardDescription>
+							{settings.scheduledCloseAt
+								? "Une fermeture est planifiée. Elle sera automatiquement appliquée à la date prévue."
+								: "Planifiez à l'avance une fermeture (congés, événement…). Elle sera appliquée automatiquement."}
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						{settings.scheduledCloseAt ? (
+							<ScheduledClosureCard
+								scheduledCloseAt={settings.scheduledCloseAt}
+								closureMessage={settings.closureMessage}
+								reopensAt={settings.reopensAt}
+							/>
+						) : (
+							<ScheduleClosureForm />
+						)}
+					</CardContent>
+				</Card>
+			)}
+
+			<CloseStoreDialog previousFocusRef={previousFocusRef} />
+			<ReopenStoreDialog previousFocusRef={previousFocusRef} />
+		</div>
 	);
 }

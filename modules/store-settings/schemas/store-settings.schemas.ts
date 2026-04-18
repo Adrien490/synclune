@@ -1,34 +1,5 @@
 import { z } from "zod";
 
-export const toggleStoreClosureSchema = z
-	.object({
-		isClosed: z.boolean(),
-		closureMessage: z
-			.string()
-			.max(500, "Le message ne peut pas dépasser 500 caractères")
-			.optional()
-			.default(""),
-		reopensAt: z
-			.string()
-			.optional()
-			.default("")
-			.transform((val) => (val === "" ? null : new Date(val))),
-	})
-	.refine((data) => !data.isClosed || data.closureMessage.length > 0, {
-		message: "Un message de fermeture est requis",
-		path: ["closureMessage"],
-	})
-	.refine(
-		(data) => {
-			if (!data.isClosed || !data.reopensAt) return true;
-			return data.reopensAt.getTime() > Date.now();
-		},
-		{
-			message: "La date de réouverture doit être dans le futur",
-			path: ["reopensAt"],
-		},
-	);
-
 export const closeStoreSchema = z
 	.object({
 		closureMessage: z
@@ -118,7 +89,6 @@ export const scheduleClosureSchema = z
 		},
 	);
 
-export type ToggleStoreClosureInput = z.infer<typeof toggleStoreClosureSchema>;
 export type CloseStoreInput = z.infer<typeof closeStoreSchema>;
 export type UpdateClosureMessageInput = z.infer<typeof updateClosureMessageSchema>;
 export type UpdateReopensAtInput = z.infer<typeof updateReopensAtSchema>;

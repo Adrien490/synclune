@@ -8,6 +8,7 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import Link from "next/link";
+import { AtelierHapticBridge } from "./atelier-haptic-bridge";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
 import { PolaroidGallery } from "./polaroid-gallery";
 import { processSteps } from "./process-steps";
@@ -83,124 +84,120 @@ export async function AtelierSection() {
 				Aller au bouton sur-mesure
 			</a>
 
-			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-				{/* Header */}
-				<header className="mb-10 text-center lg:mb-14">
-					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-						<SectionTitle id="atelier-section-title">Mon atelier</SectionTitle>
-						<HandDrawnUnderline
-							color="var(--secondary)"
-							delay={MOTION_CONFIG.section.underline.delay}
-							className="mx-auto mt-2"
-						/>
+			<AtelierHapticBridge>
+				<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
+					{/* Header */}
+					<header className="mb-10 text-center lg:mb-14">
+						<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+							<SectionTitle id="atelier-section-title">Mon atelier</SectionTitle>
+							<HandDrawnUnderline
+								color="var(--secondary)"
+								delay={MOTION_CONFIG.section.underline.delay}
+								className="mx-auto mt-2"
+							/>
+						</Fade>
+						<Fade
+							y={MOTION_CONFIG.section.subtitle.y}
+							delay={MOTION_CONFIG.section.subtitle.delay}
+							duration={MOTION_CONFIG.section.subtitle.duration}
+						>
+							<p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal text-balance">
+								Là où chaque bijou prend vie, un geste à la fois.
+							</p>
+						</Fade>
+					</header>
+
+					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
+						<div className="relative mx-auto mb-10 aspect-[4/3] max-w-4xl overflow-hidden rounded-2xl sm:mb-14 sm:aspect-[16/7]">
+							<ParallaxImage
+								src={IMAGES.ATELIER}
+								alt="L'atelier de création Synclune, où chaque bijou prend vie"
+								blurDataURL={IMAGES.ATELIER_BLUR}
+								intensity={8}
+								sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 56rem"
+								className="rounded-2xl object-cover"
+							/>
+						</div>
 					</Fade>
+
+					{/* Confession text with progressive reveal */}
 					<Fade
 						y={MOTION_CONFIG.section.subtitle.y}
 						delay={MOTION_CONFIG.section.subtitle.delay}
 						duration={MOTION_CONFIG.section.subtitle.duration}
+						inView
+						once
 					>
-						<p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal">
-							Depuis mon atelier
-						</p>
-					</Fade>
-				</header>
+						<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
+							<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
+								<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
+							</p>
 
-				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
-					<div className="relative mx-auto mb-10 aspect-[4/3] max-w-4xl overflow-hidden rounded-2xl sm:mb-14 sm:aspect-[16/7]">
-						<ParallaxImage
-							src={IMAGES.ATELIER}
-							alt="L'atelier de création Synclune, où chaque bijou prend vie"
-							blurDataURL={IMAGES.ATELIER_BLUR}
-							intensity={8}
-							sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 56rem"
-							className="rounded-2xl object-cover"
-						/>
-					</div>
-				</Fade>
-
-				{/* Confession text with progressive reveal */}
-				<Fade
-					y={MOTION_CONFIG.section.subtitle.y}
-					delay={MOTION_CONFIG.section.subtitle.delay}
-					duration={MOTION_CONFIG.section.subtitle.duration}
-					inView
-					once
-				>
-					<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
-						<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
-							<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
-						</p>
-
-						<div className="text-muted-foreground space-y-4 text-base leading-relaxed sm:space-y-6 sm:text-lg">
-							<Fade inView once y={15} delay={0}>
-								<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
-							</Fade>
-							<Fade inView once y={15} delay={0.2}>
-								<p>
-									<span className="sm:hidden">
-										Des amies ont voulu les mêmes, puis des amies d'amies… et me voilà dans mon
-										atelier !
-									</span>
-									<span className="hidden sm:inline">
+							<div className="text-muted-foreground space-y-4 text-base leading-relaxed text-balance sm:space-y-6 sm:text-lg">
+								<Fade inView once y={15} delay={0}>
+									<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
+								</Fade>
+								<Fade inView once y={15} delay={0.2}>
+									<p>
 										Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà,
-										dans mon petit atelier ! C'était pas prévu à la base{" "}
-										<span aria-hidden="true">😂</span>
-									</span>
-								</p>
-							</Fade>
-							<Fade inView once y={15} delay={0.4}>
-								<p>
-									<span className="sm:hidden">
-										Chaque bijou est peint et assemblé à la main, en quelques exemplaires seulement.
-									</span>
-									<span className="hidden sm:inline">
+										dans mon petit atelier ! C'était pas prévu à la base.
+									</p>
+								</Fade>
+								<Fade inView once y={15} delay={0.4}>
+									<p>
 										Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
 										assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de
 										dix).
-									</span>
-								</p>
-							</Fade>
+									</p>
+								</Fade>
+							</div>
+
+							{/* Signature with ink-flow reveal */}
+							<SignatureReveal />
 						</div>
+					</Fade>
 
-						{/* Signature with ink-flow reveal */}
-						<SignatureReveal />
+					{/* Creative process timeline */}
+					<div className="mt-10 sm:mt-16">
+						<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
+							<CreativeProcessTimeline />
+						</Fade>
 					</div>
-				</Fade>
 
-				{/* Creative process timeline */}
-				<div className="mt-10 sm:mt-16">
-					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
-						<CreativeProcessTimeline />
-					</Fade>
-				</div>
+					{/* Polaroid gallery */}
+					<PolaroidGallery />
 
-				{/* Polaroid gallery */}
-				<PolaroidGallery />
-
-				{/* CTA */}
-				<div id="atelier-cta" className="mt-12 sm:mt-16">
-					<Fade
-						y={MOTION_CONFIG.section.cta.y}
-						delay={MOTION_CONFIG.section.cta.delay}
-						duration={MOTION_CONFIG.section.cta.duration}
-						inView
-						once
-						className="text-center"
-					>
-						<p className="text-muted-foreground mb-4 text-base sm:text-lg">
-							Envie d'un bijou qui vous ressemble vraiment ?
-						</p>
-						<Button
-							asChild
-							size="lg"
-							variant="secondary"
-							className="transition-[scale,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+					{/* CTA */}
+					<div id="atelier-cta" className="mt-12 sm:mt-16">
+						<Fade
+							y={MOTION_CONFIG.section.cta.y}
+							delay={MOTION_CONFIG.section.cta.delay}
+							duration={MOTION_CONFIG.section.cta.duration}
+							inView
+							once
+							className="text-center"
 						>
-							<Link href="/personnalisation">Créer votre bijou sur-mesure</Link>
-						</Button>
-					</Fade>
+							<p className="text-muted-foreground mb-4 text-base sm:text-lg">
+								Envie d'un bijou qui vous ressemble vraiment ?
+							</p>
+							<Button
+								asChild
+								size="lg"
+								variant="secondary"
+								className="transition-[scale,box-shadow] duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+							>
+								<Link
+									href="/personnalisation"
+									data-atelier-haptic="cta"
+									style={{ viewTransitionName: "atelier-cta-personnalisation" }}
+								>
+									Créer votre bijou sur-mesure
+								</Link>
+							</Button>
+						</Fade>
+					</div>
 				</div>
-			</div>
+			</AtelierHapticBridge>
 		</section>
 	);
 }

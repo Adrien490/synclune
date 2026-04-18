@@ -76,6 +76,11 @@ export async function syncAsyncPayments(): Promise<{
 	let errors = 0;
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const tagsToInvalidate = new Set<string>();
+	const stockRestoreFailures: Array<{
+		orderId: string;
+		orderNumber: string;
+		error: string;
+	}> = [];
 
 	for (const order of pendingOrders) {
 		if (Date.now() > deadline) {
@@ -130,20 +135,11 @@ export async function syncAsyncPayments(): Promise<{
 						orderNumber: order.orderNumber,
 						orderId: order.id,
 					});
-					sendAdminCronFailedAlert({
-						job: "sync-async-payments",
-						errors: 1,
-						details: {
-							issue: "stock-restore-failed",
-							orderNumber: order.orderNumber,
-							orderId: order.id,
-							error: stockErrorMessage,
-						},
-					}).catch((e) =>
-						logger.error("Failed to send stock restore alert", e, {
-							cronJob: "sync-async-payments",
-						}),
-					);
+					stockRestoreFailures.push({
+						orderId: order.id,
+						orderNumber: order.orderNumber,
+						error: stockErrorMessage,
+					});
 				}
 				updated++;
 			}
@@ -168,6 +164,22 @@ export async function syncAsyncPayments(): Promise<{
 		for (const tag of tagsToInvalidate) {
 			updateTag(tag);
 		}
+	}
+
+	// Emit a single aggregated alert for all stock-restore failures (avoid per-order inbox spam)
+	if (stockRestoreFailures.length > 0) {
+		sendAdminCronFailedAlert({
+			job: "sync-async-payments",
+			errors: stockRestoreFailures.length,
+			details: {
+				issue: "stock-restore-failed",
+				failures: stockRestoreFailures,
+			},
+		}).catch((e) =>
+			logger.error("Failed to send stock restore alert", e, {
+				cronJob: "sync-async-payments",
+			}),
+		);
 	}
 
 	logger.info("Sync completed", { cronJob: "sync-async-payments", updated, errors });

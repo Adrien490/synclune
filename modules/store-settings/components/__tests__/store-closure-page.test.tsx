@@ -14,6 +14,10 @@ vi.mock("next/link", () => ({
 	),
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 import { StoreClosurePage } from "../store-closure-page";
 
 import type { StoreStatus } from "../../types/store-settings.types";
@@ -27,6 +31,7 @@ function makeStatus(overrides: Partial<StoreStatus> = {}): StoreStatus {
 		isClosed: true,
 		closureMessage: "Nous sommes en vacances !",
 		reopensAt: null,
+		scheduledCloseAt: null,
 		...overrides,
 	};
 }
@@ -122,17 +127,19 @@ describe("StoreClosurePage", () => {
 
 	// ─── Accessibility ────────────────────────────────────────────────────
 
-	it("has aria-live polite on the content area", () => {
-		const { container } = render(<StoreClosurePage status={makeStatus()} />);
-
-		const liveRegion = container.querySelector("[aria-live]");
-		expect(liveRegion).toHaveAttribute("aria-live", "polite");
-	});
-
 	it("hides decorative elements from screen readers", () => {
 		const { container } = render(<StoreClosurePage status={makeStatus()} />);
 
 		const hiddenElements = container.querySelectorAll("[aria-hidden=true]");
 		expect(hiddenElements.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("renders countdown timer with role=timer when reopensAt is in the future", () => {
+		const future = new Date(Date.now() + 3 * 60 * 60 * 1000); // +3h
+		render(<StoreClosurePage status={makeStatus({ reopensAt: future })} />);
+
+		const timer = screen.getByRole("timer");
+		expect(timer).toBeInTheDocument();
+		expect(timer).toHaveAttribute("aria-live", "off");
 	});
 });

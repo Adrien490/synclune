@@ -8,6 +8,8 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useResendCooldown } from "@/modules/auth/hooks/use-resend-cooldown";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { CircleCheck, LoaderCircle, CircleX } from "lucide-react";
 import { useRequestPasswordReset } from "@/modules/auth/hooks/use-request-password-reset";
@@ -16,6 +18,7 @@ import { useEffect, useRef } from "react";
 export function RequestPasswordResetForm() {
 	const { action, isPending, state } = useRequestPasswordReset();
 	const errorRef = useRef<HTMLDivElement>(null);
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	const isActionError =
 		!!state?.message &&
@@ -46,14 +49,33 @@ export function RequestPasswordResetForm() {
 		},
 	});
 
+	const {
+		remainingSeconds,
+		isCoolingDown,
+		start: startCooldown,
+	} = useResendCooldown({
+		storageKey: "password-reset-cooldown",
+	});
+
+	// Start cooldown on success (anti-spam aligned with AUTH_RATE_LIMIT_RULES: 3/min)
+	useEffect(() => {
+		if (state?.status === ActionStatus.SUCCESS) {
+			startCooldown();
+		}
+	}, [state?.status, startCooldown]);
+
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
 			<form
+				ref={formRef}
 				action={action}
 				className="space-y-6"
-				onSubmit={() => {
+				onSubmit={async () => {
 					triggerHaptic("medium");
-					void form.handleSubmit();
+					await form.handleSubmit();
+					if (!form.state.isValid) {
+						focusFirstInvalid();
+					}
 				}}
 			>
 				{/* Indication des champs obligatoires */}
@@ -119,26 +141,35 @@ export function RequestPasswordResetForm() {
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
 						<Button
-							disabled={!canSubmit || isPending || state?.status === ActionStatus.SUCCESS}
+							disabled={
+								!canSubmit || isPending || state?.status === ActionStatus.SUCCESS || isCoolingDown
+							}
 							className="w-full"
 							type="submit"
+							aria-busy={isPending}
 						>
 							{state?.status === ActionStatus.SUCCESS ? (
 								"Email envoyé"
 							) : isPending ? (
 								<>
-									<LoaderCircle
-										className="mr-2 h-4 w-4 motion-safe:animate-spin"
-										aria-hidden="true"
-									/>
-									Envoi en cours...
+									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									<span>Envoi en cours...</span>
 								</>
+							) : isCoolingDown ? (
+								`Renvoyer dans ${remainingSeconds}s`
 							) : (
 								"Envoyer le lien de réinitialisation"
 							)}
 						</Button>
 					)}
 				</form.Subscribe>
+
+				{/* SR-only announcement for cooldown countdown (polite, non-intrusive) */}
+				{isCoolingDown && !isPending && state?.status !== ActionStatus.SUCCESS && (
+					<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+						Veuillez patienter {remainingSeconds} secondes avant de renvoyer le lien.
+					</span>
+				)}
 			</form>
 		</ErrorShake>
 	);

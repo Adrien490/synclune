@@ -23,11 +23,17 @@ import { getStoreStatus } from "../get-store-status";
 // HELPERS
 // ============================================================================
 
-const OPEN_STATUS = { isClosed: false, closureMessage: null, reopensAt: null };
+const OPEN_STATUS = {
+	isClosed: false,
+	closureMessage: null,
+	reopensAt: null,
+	scheduledCloseAt: null,
+};
 const CLOSED_STATUS = {
 	isClosed: true,
 	closureMessage: "Maintenance en cours",
 	reopensAt: new Date("2026-04-01T10:00:00Z"),
+	scheduledCloseAt: null,
 };
 
 // ============================================================================
@@ -57,6 +63,7 @@ describe("getStoreStatus", () => {
 				isClosed: true,
 				closureMessage: true,
 				reopensAt: true,
+				scheduledCloseAt: true,
 			},
 		});
 	});
@@ -79,13 +86,23 @@ describe("getStoreStatus", () => {
 	it("returns open status when singleton does not exist (fail-open)", async () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue(null);
 		const result = await getStoreStatus();
-		expect(result).toEqual({ isClosed: false, closureMessage: null, reopensAt: null });
+		expect(result).toEqual({
+			isClosed: false,
+			closureMessage: null,
+			reopensAt: null,
+			scheduledCloseAt: null,
+		});
 	});
 
 	it("returns open status on database error (fail-open)", async () => {
 		mockPrisma.storeSettings.findUnique.mockRejectedValue(new Error("Connection lost"));
 		const result = await getStoreStatus();
-		expect(result).toEqual({ isClosed: false, closureMessage: null, reopensAt: null });
+		expect(result).toEqual({
+			isClosed: false,
+			closureMessage: null,
+			reopensAt: null,
+			scheduledCloseAt: null,
+		});
 	});
 
 	it("logs error on database failure", async () => {

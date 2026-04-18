@@ -23,6 +23,7 @@ export function CollectionsMobileList({ collectionsPromise, perPage }: Collectio
 		status: collection.status,
 		productsCount: collection._count.products,
 	}));
+	const collectionIds = collections.map((c) => c.id);
 
 	if (collections.length === 0) {
 		return (
@@ -39,7 +40,7 @@ export function CollectionsMobileList({ collectionsPromise, perPage }: Collectio
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<CollectionsSelectionToolbar collections={collectionsData} />
+			<CollectionsSelectionToolbar collections={collectionsData} pageItemIds={collectionIds} />
 
 			<ItemGroup aria-label="Collections" className="gap-2">
 				{collections.map((collection) => (

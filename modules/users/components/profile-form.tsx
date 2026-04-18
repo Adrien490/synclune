@@ -54,6 +54,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 							autoComplete="given-name"
 							autoCapitalize="words"
 							autoCorrect="off"
+							enterKeyHint="done"
 						/>
 					)}
 				</form.AppField>

@@ -33,13 +33,13 @@ export default function AuthError({
 					}
 					description={
 						<p className="text-muted-foreground text-lg md:text-xl">
-							Impossible de charger cette page. Veuillez reessayer.
+							Impossible de charger cette page. Veuillez réessayer.
 						</p>
 					}
 					actions={
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
 							<Button size="lg" onClick={reset}>
-								Reessayer
+								Réessayer
 							</Button>
 							<Button asChild variant="secondary" size="lg">
 								<Link href="/connexion">Page de connexion</Link>

@@ -1,9 +1,17 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, act, cleanup } from "@testing-library/react";
 
+const mockPathname = vi.fn(() => "/");
+vi.mock("next/navigation", () => ({
+	usePathname: () => mockPathname(),
+}));
+
 import { SheetStoreProvider, useSheet } from "../sheet-store-provider";
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	mockPathname.mockReturnValue("/");
+});
 
 function TestConsumer() {
 	const sheet = useSheet("cart");
@@ -91,5 +99,28 @@ describe("SheetStoreProvider", () => {
 		);
 
 		spy.mockRestore();
+	});
+
+	it("closes open sheet when pathname changes", () => {
+		mockPathname.mockReturnValue("/");
+		const { rerender } = render(
+			<SheetStoreProvider>
+				<TestConsumer />
+			</SheetStoreProvider>,
+		);
+
+		act(() => {
+			screen.getByTestId("btn-open").click();
+		});
+		expect(screen.getByTestId("is-open")).toHaveTextContent("true");
+
+		mockPathname.mockReturnValue("/creations");
+		rerender(
+			<SheetStoreProvider>
+				<TestConsumer />
+			</SheetStoreProvider>,
+		);
+
+		expect(screen.getByTestId("is-open")).toHaveTextContent("false");
 	});
 });

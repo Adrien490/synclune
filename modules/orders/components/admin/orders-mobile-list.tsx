@@ -14,6 +14,7 @@ interface OrdersMobileListProps {
 
 export function OrdersMobileList({ ordersPromise, perPage }: OrdersMobileListProps) {
 	const { orders, pagination } = use(ordersPromise);
+	const orderIds = orders.map((o) => o.id);
 
 	if (orders.length === 0) {
 		return (
@@ -29,7 +30,7 @@ export function OrdersMobileList({ ordersPromise, perPage }: OrdersMobileListPro
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<OrdersSelectionToolbar />
+			<OrdersSelectionToolbar pageItemIds={orderIds} />
 
 			<ItemGroup aria-label="Commandes" className="gap-2">
 				{orders.map((order) => (

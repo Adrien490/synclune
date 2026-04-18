@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 /** Minimum horizontal swipe distance (px) to trigger removal on mobile */
 const SWIPE_REMOVE_THRESHOLD = 80;
@@ -42,6 +43,7 @@ export function useSwipeToRemove({
 	const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 	const isTrackingRef = useRef(false);
 	const swipeOffsetRef = useRef(0);
+	const thresholdCrossedRef = useRef(false);
 	const onRemoveRef = useRef(onRemove);
 
 	useEffect(() => {
@@ -61,6 +63,7 @@ export function useSwipeToRemove({
 			if (!touch) return;
 			touchStartRef.current = { x: touch.clientX, y: touch.clientY };
 			isTrackingRef.current = true;
+			thresholdCrossedRef.current = false;
 			setIsSwiping(true);
 		}
 
@@ -81,7 +84,14 @@ export function useSwipeToRemove({
 			if (!isTrackingRef.current) return;
 
 			// Only track leftward swipes (negative delta), clamp to 0
-			setSwipeOffset(Math.min(0, deltaX));
+			const clamped = Math.min(0, deltaX);
+			setSwipeOffset(clamped);
+
+			// Fire haptic once when threshold is crossed during swipe
+			if (!thresholdCrossedRef.current && clamped < -SWIPE_REMOVE_THRESHOLD) {
+				thresholdCrossedRef.current = true;
+				triggerHaptic("medium");
+			}
 		}
 
 		function onTouchEnd() {

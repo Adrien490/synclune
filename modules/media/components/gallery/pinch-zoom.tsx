@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import { usePinchZoom } from "@/shared/hooks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import {
 	MAIN_IMAGE_QUALITY,
 	GALLERY_MAIN_SIZES,
@@ -49,6 +50,7 @@ export function GalleryPinchZoom({
 }: GalleryPinchZoomProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const prefersReduced = useReducedMotion();
+	const haptic = useHaptic();
 
 	const { scale, position, isZoomed, isInteracting, handleKeyDown } = usePinchZoom({
 		containerRef,
@@ -56,6 +58,15 @@ export function GalleryPinchZoom({
 		onTap,
 		config: PINCH_ZOOM_CONFIG,
 	});
+
+	// Haptic on zoom toggle (enter / exit zoom state) — not on every pinch frame
+	const previousZoomedRef = useRef(isZoomed);
+	useEffect(() => {
+		if (previousZoomedRef.current !== isZoomed) {
+			haptic("selection");
+			previousZoomedRef.current = isZoomed;
+		}
+	}, [isZoomed, haptic]);
 
 	const transitionClass = prefersReduced ? "" : "transition-transform duration-200 ease-out";
 

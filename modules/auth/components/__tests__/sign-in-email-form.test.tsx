@@ -25,6 +25,12 @@ vi.mock("@/shared/components/forms", () => ({
 							type={props.type ?? "text"}
 							disabled={props.disabled}
 							required={props.required}
+							inputMode={props.inputMode}
+							enterKeyHint={props.enterKeyHint}
+							autoComplete={props.autoComplete}
+							autoCapitalize={props.autoCapitalize}
+							autoCorrect={props.autoCorrect}
+							spellCheck={props.spellCheck}
 						/>
 					</div>
 				),
@@ -36,6 +42,8 @@ vi.mock("@/shared/components/forms", () => ({
 							type="password"
 							disabled={props.disabled}
 							required={props.required}
+							autoComplete={props.autoComplete}
+							enterKeyHint={props.enterKeyHint}
 						/>
 					</div>
 				),
@@ -55,6 +63,7 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
+		state: { isValid: true },
 	}),
 }));
 
@@ -266,5 +275,40 @@ describe("SignInEmailForm", () => {
 		expect(form).not.toBeNull();
 		fireEvent.submit(form!);
 		expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
+	});
+
+	// ─── Mobile native 2026 attributes ────────────────────────────────────────
+
+	it("email input has mobile keyboard attributes (inputMode, enterKeyHint, autoComplete)", () => {
+		render(<SignInEmailForm callbackURL="/" />);
+		const emailInput = screen.getByTestId("field-email").querySelector("input")!;
+		expect(emailInput.getAttribute("inputMode")).toBe("email");
+		expect(emailInput.getAttribute("enterKeyHint")).toBe("next");
+		expect(emailInput.getAttribute("autoComplete")).toBe("email");
+		expect(emailInput.getAttribute("autoCapitalize")).toBe("none");
+		expect(emailInput.getAttribute("autoCorrect")).toBe("off");
+	});
+
+	it("password input has autoComplete='current-password' and enterKeyHint='done'", () => {
+		render(<SignInEmailForm callbackURL="/" />);
+		const passwordInput = screen.getByTestId("field-password").querySelector("input")!;
+		expect(passwordInput.getAttribute("autoComplete")).toBe("current-password");
+		expect(passwordInput.getAttribute("enterKeyHint")).toBe("done");
+	});
+
+	it("submit button has aria-busy when pending", () => {
+		mockIsPending.value = true;
+		render(<SignInEmailForm callbackURL="/" />);
+		expect(screen.getByRole("button", { name: /connexion/i }).getAttribute("aria-busy")).toBe(
+			"true",
+		);
+	});
+
+	it("error alert has role='alert' with aria-live='assertive' (urgent screen reader announcement)", () => {
+		mockState.value = { status: "error", message: "Identifiants invalides" };
+		render(<SignInEmailForm callbackURL="/" />);
+		const alert = screen.getByTestId("error-alert");
+		expect(alert.getAttribute("role")).toBe("alert");
+		expect(alert.getAttribute("aria-live")).toBe("assertive");
 	});
 });

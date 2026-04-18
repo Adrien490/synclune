@@ -1,12 +1,13 @@
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
 
-const { useReducedMotionMock } = vi.hoisted(() => ({
+const { useReducedMotionMock, triggerHapticMock } = vi.hoisted(() => ({
 	useReducedMotionMock: vi.fn<() => boolean | null>(() => false),
+	triggerHapticMock: vi.fn(),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -24,11 +25,53 @@ vi.mock("motion/react", () => ({
 }));
 
 vi.mock("next/image", () => ({
-	default: ({ src, alt }: { src: string; alt: string; [key: string]: unknown }) => (
+	default: ({
+		src,
+		alt,
+		priority,
+		fetchPriority,
+		loading,
+	}: {
+		src: string;
+		alt: string;
+		priority?: boolean;
+		fetchPriority?: string;
+		loading?: string;
+		[key: string]: unknown;
+	}) => (
 		// biome-ignore lint/a11y/useAltText: test mock
 		// eslint-disable-next-line @next/next/no-img-element
-		<img src={src} alt={alt} data-testid="floating-img" />
+		<img
+			src={src}
+			alt={alt}
+			data-testid="floating-img"
+			data-priority={priority ? "true" : "false"}
+			data-fetch-priority={fetchPriority}
+			data-loading={loading}
+		/>
 	),
+}));
+
+vi.mock("next/link", () => ({
+	default: ({
+		href,
+		children,
+		prefetch,
+		...rest
+	}: {
+		href: string;
+		children: React.ReactNode;
+		prefetch?: boolean;
+		[key: string]: unknown;
+	}) => (
+		<a href={href} data-prefetch={prefetch ? "true" : "false"} {...rest}>
+			{children}
+		</a>
+	),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => triggerHapticMock,
 }));
 
 vi.mock("@/shared/hooks", () => ({
@@ -98,5 +141,98 @@ describe("HeroFloatingImagesInner", () => {
 		const wrapper = container.querySelector("[aria-hidden]");
 		expect(wrapper?.className).toContain("hidden");
 		expect(wrapper?.className).toContain("md:block");
+	});
+
+	it("marks only the first image as priority/fetchPriority=high (LCP optimization)", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const images = container.querySelectorAll("[data-testid='floating-img']");
+		expect(images[0]?.getAttribute("data-priority")).toBe("true");
+		expect(images[0]?.getAttribute("data-fetch-priority")).toBe("high");
+		expect(images[0]?.getAttribute("data-loading")).not.toBe("lazy");
+
+		for (let i = 1; i < images.length; i++) {
+			expect(images[i]?.getAttribute("data-priority")).toBe("false");
+			expect(images[i]?.getAttribute("data-fetch-priority")).toBe("auto");
+			expect(images[i]?.getAttribute("data-loading")).toBe("lazy");
+		}
+	});
+
+	it("sets prefetch=true on each image link (Next.js warm cache)", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const links = container.querySelectorAll("a[href^='/creations/']");
+		expect(links.length).toBe(4);
+		for (const link of links) {
+			expect(link.getAttribute("data-prefetch")).toBe("true");
+		}
+	});
+
+	it("renders preview pill with product title for each image", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		for (let i = 0; i < 4; i++) {
+			expect(container.textContent).toContain(`Product ${i}`);
+		}
+	});
+
+	it("triggers haptic light on link click", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const firstLink = container.querySelector("a[href='/creations/product-0']");
+		expect(firstLink).not.toBeNull();
+		fireEvent.click(firstLink!);
+
+		expect(triggerHapticMock).toHaveBeenCalledWith("light");
+	});
+
+	it("updates spotlight CSS vars --mx/--my on pointer move", () => {
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const firstLink = container.querySelector<HTMLAnchorElement>("a[href='/creations/product-0']");
+		expect(firstLink).not.toBeNull();
+
+		firstLink!.getBoundingClientRect = () =>
+			({
+				left: 0,
+				top: 0,
+				width: 200,
+				height: 250,
+				right: 200,
+				bottom: 250,
+				x: 0,
+				y: 0,
+				toJSON: () => ({}),
+			}) as DOMRect;
+
+		fireEvent.pointerMove(firstLink!, { clientX: 100, clientY: 125 });
+
+		expect(firstLink!.style.getPropertyValue("--mx")).toBe("50%");
+		expect(firstLink!.style.getPropertyValue("--my")).toBe("50%");
+	});
+
+	it("does not trigger haptic or update spotlight vars under reduced motion", () => {
+		useReducedMotionMock.mockReturnValue(true);
+		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const firstLink = container.querySelector<HTMLAnchorElement>("a[href='/creations/product-0']");
+		firstLink!.getBoundingClientRect = () =>
+			({
+				left: 0,
+				top: 0,
+				width: 200,
+				height: 250,
+				right: 200,
+				bottom: 250,
+				x: 0,
+				y: 0,
+				toJSON: () => ({}),
+			}) as DOMRect;
+
+		fireEvent.pointerMove(firstLink!, { clientX: 10, clientY: 10 });
+
+		// Initial inline default value stays (50%) — handler is skipped under reduced motion
+		expect(firstLink!.style.getPropertyValue("--mx")).toBe("50%");
+		expect(firstLink!.style.getPropertyValue("--my")).toBe("50%");
 	});
 });

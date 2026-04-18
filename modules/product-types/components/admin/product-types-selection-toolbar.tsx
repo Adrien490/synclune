@@ -19,7 +19,13 @@ import { useExportProductTypes } from "@/modules/product-types/hooks/use-export-
 
 import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
 
-export function ProductTypesSelectionToolbar() {
+interface ProductTypesSelectionToolbarProps {
+	pageItemIds?: string[];
+}
+
+export function ProductTypesSelectionToolbar({
+	pageItemIds,
+}: ProductTypesSelectionToolbarProps = {}) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_PRODUCT_TYPES_DIALOG_ID);
 
@@ -102,7 +108,7 @@ export function ProductTypesSelectionToolbar() {
 	const label = `${selectedItems.length} type${selectedItems.length > 1 ? "s" : ""} sélectionné${selectedItems.length > 1 ? "s" : ""}`;
 
 	return (
-		<SelectionToolbar>
+		<SelectionToolbar pageItemIds={pageItemIds}>
 			<span className="text-muted-foreground text-sm">{label}</span>
 			<ResponsiveActionMenu>
 				<ResponsiveActionMenuTrigger asChild>

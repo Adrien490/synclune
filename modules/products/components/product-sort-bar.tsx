@@ -15,6 +15,7 @@ import {
 	isProductCategoryPage,
 } from "@/modules/products/services/product-filter-params.service";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
 interface ProductSortBarProps {
@@ -180,6 +181,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						ref={sortButtonRef}
 						type="button"
 						onClick={() => {
+							triggerHaptic("selection");
 							closeSearch();
 							closeFilter();
 							setSortOpen(true);
@@ -203,6 +205,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						ref={searchButtonRef}
 						type="button"
 						onClick={() => {
+							triggerHaptic("selection");
 							setSortOpen(false);
 							openSearch();
 						}}
@@ -229,6 +232,7 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 						ref={filterButtonRef}
 						type="button"
 						onClick={() => {
+							triggerHaptic("selection");
 							setSortOpen(false);
 							openFilter();
 						}}

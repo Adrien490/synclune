@@ -11,6 +11,7 @@ import {
 	AlertDialogTitle,
 } from "@/shared/components/ui/alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useDeleteAddress } from "../hooks/use-delete-address";
 import { LoaderCircle } from "lucide-react";
 
@@ -68,7 +69,12 @@ export function DeleteAddressAlertDialog() {
 						<AlertDialogCancel type="button" disabled={isPending}>
 							Annuler
 						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						<AlertDialogAction
+							type="submit"
+							disabled={isPending}
+							aria-busy={isPending}
+							onClick={() => triggerHaptic("medium")}
+						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}
 						</AlertDialogAction>

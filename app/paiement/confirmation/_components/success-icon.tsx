@@ -1,8 +1,10 @@
 "use client";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { m, useReducedMotion } from "motion/react";
 import { CircleCheck } from "lucide-react";
+import { useEffect } from "react";
 
 /**
  * Animated success icon for the order confirmation page.
@@ -11,6 +13,10 @@ import { CircleCheck } from "lucide-react";
  */
 export function SuccessIcon() {
 	const shouldReduceMotion = useReducedMotion();
+
+	useEffect(() => {
+		triggerHaptic("success");
+	}, []);
 
 	if (shouldReduceMotion) {
 		return (

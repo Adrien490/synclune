@@ -99,10 +99,11 @@ export function ProductsMobileList({
 		status: p.status,
 		title: p.title,
 	}));
+	const productIds = products.map((p) => p.id);
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<ProductsSelectionToolbar products={productsForSelection} />
+			<ProductsSelectionToolbar products={productsForSelection} pageItemIds={productIds} />
 
 			<ItemGroup aria-label="Produits" className="gap-2">
 				{products.map((product) => {

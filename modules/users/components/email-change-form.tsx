@@ -36,6 +36,11 @@ export function EmailChangeForm() {
 						type="email"
 						disabled={isPending}
 						autoComplete="email"
+						inputMode="email"
+						enterKeyHint="send"
+						autoCapitalize="none"
+						autoCorrect="off"
+						spellCheck={false}
 						placeholder="nouvelle@adresse.com"
 					/>
 				)}

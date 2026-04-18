@@ -20,6 +20,7 @@ export function ProductTypesMobileList({
 	perPage,
 }: ProductTypesMobileListProps) {
 	const { productTypes, pagination } = use(productTypesPromise);
+	const productTypeIds = productTypes.map((pt) => pt.id);
 
 	if (productTypes.length === 0) {
 		return (
@@ -36,7 +37,7 @@ export function ProductTypesMobileList({
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<ProductTypesSelectionToolbar />
+			<ProductTypesSelectionToolbar pageItemIds={productTypeIds} />
 
 			<ItemGroup aria-label="Types de bijoux" className="gap-2">
 				{productTypes.map((productType) => (

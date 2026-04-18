@@ -29,6 +29,8 @@ interface PolaroidFrameProps {
 	vintage?: boolean;
 	className?: string;
 	style?: React.CSSProperties;
+	/** Optional data-* attributes forwarded to the figure root (e.g. `data-atelier-haptic`). */
+	"data-atelier-haptic"?: string;
 }
 
 const tiltClasses: Record<TiltDirection, string> = {
@@ -88,6 +90,7 @@ export function PolaroidFrame({
 	vintage = false,
 	className,
 	style: externalStyle,
+	...dataProps
 }: PolaroidFrameProps) {
 	const hasCustomDegree = tiltDegree !== undefined;
 	const rotateDeg = hasCustomDegree ? tiltDegree : { left: -2, right: 2, none: 0 }[tilt];
@@ -103,6 +106,7 @@ export function PolaroidFrame({
 
 	return (
 		<figure
+			{...dataProps}
 			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- intentional: keyboard-navigable gallery item
 			tabIndex={0}
 			className={cn(

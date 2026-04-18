@@ -96,10 +96,21 @@ vi.mock("lucide-react", () => ({
 	Lock: ({ className }: { className?: string }) => (
 		<svg data-testid="icon-lock" className={className} />
 	),
+	ShieldCheck: ({ className }: { className?: string }) => (
+		<svg data-testid="icon-shield" className={className} />
+	),
 }));
 
 vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: (cents: number) => `${(cents / 100).toFixed(2)} €`,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => vi.fn(),
+}));
+
+vi.mock("../../utils/track-payment-event", () => ({
+	trackPaymentError: vi.fn(),
 }));
 
 // ============================================================================
@@ -210,5 +221,21 @@ describe("PayButton", () => {
 		await userEvent.click(screen.getByRole("button"));
 		expect(screen.getByTestId("payment-error-alert")).toBeInTheDocument();
 		expect(screen.getByText("Stock insuffisant")).toBeInTheDocument();
+	});
+
+	// ─── Phase transitions ────────────────────────────────────────────────────
+
+	it("calls confirmCheckout with form data when submission succeeds up to 3DS", async () => {
+		mockConfirmCheckout.mockResolvedValue({ success: true, orderId: "order-123" });
+		render(<PayButton {...defaultProps} />);
+		await userEvent.click(screen.getByRole("button"));
+		expect(mockConfirmCheckout).toHaveBeenCalledTimes(1);
+		expect(mockStripe.value?.confirmPayment).toHaveBeenCalled();
+	});
+
+	it("renders status live region sr-only for phase announcements", () => {
+		render(<PayButton {...defaultProps} />);
+		const liveRegions = screen.getAllByRole("status");
+		expect(liveRegions.length).toBeGreaterThanOrEqual(1);
 	});
 });

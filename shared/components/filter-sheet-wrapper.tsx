@@ -21,8 +21,11 @@ import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { Filter, LoaderCircle, X } from "lucide-react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
-/** Snap points par défaut du bottom-sheet mobile (50% peek → 92% fullscreen). */
-const DEFAULT_MOBILE_SNAP_POINTS: (number | string)[] = [0.5, 0.92];
+/** Snap point par défaut du bottom-sheet mobile : quasi-fullscreen 92%.
+ *  Un seul snap → ouverture directe à 92%, drag vers le bas = dismiss.
+ *  Les filtres ont beaucoup de contenu (types/prix/couleurs/matériaux/notes/dispo),
+ *  un peek à 50% masquerait la majorité des sections. */
+const DEFAULT_MOBILE_SNAP_POINTS: (number | string)[] = [0.92];
 
 export function FilterSheetWrapper({
 	activeFiltersCount = 0,

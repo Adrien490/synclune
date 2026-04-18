@@ -127,6 +127,24 @@ describe("AtelierSectionSkeleton", () => {
 		expect(polaroidSkeletons).toHaveLength(4);
 	});
 
+	it("polaroid grid uses min-[340px] breakpoint to match real component (CLS parity)", () => {
+		const { container } = render(<AtelierSectionSkeleton />);
+
+		const polaroidGrid = container.querySelector(".grid-cols-1");
+		expect(polaroidGrid!.className).toContain("min-[340px]:grid-cols-2");
+		expect(polaroidGrid!.className).not.toContain("min-[400px]:");
+	});
+
+	it("polaroid skeletons are always visible (no hidden lg:block — CLS parity)", () => {
+		const { container } = render(<AtelierSectionSkeleton />);
+
+		const polaroidGrid = container.querySelector(".grid-cols-1");
+		const polaroidSkeletons = polaroidGrid!.querySelectorAll("[data-testid='skeleton']");
+		polaroidSkeletons.forEach((skel) => {
+			expect(skel.className).not.toContain("hidden");
+		});
+	});
+
 	it("renders CTA skeleton at the bottom", () => {
 		const { container } = render(<AtelierSectionSkeleton />);
 

@@ -14,6 +14,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useClearCart } from "../hooks/use-clear-cart";
 import { LoaderCircle } from "lucide-react";
+import { startTransition } from "react";
 
 import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";
 export { CLEAR_CART_DIALOG_ID };
@@ -34,7 +35,10 @@ export function ClearCartAlertDialog() {
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		haptic("error");
-		action(new FormData(e.currentTarget));
+		const formData = new FormData(e.currentTarget);
+		startTransition(() => {
+			action(formData);
+		});
 	};
 
 	return (

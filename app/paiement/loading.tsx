@@ -160,14 +160,15 @@ export default function CheckoutLoading() {
 								<section className="space-y-5">
 									<SectionHeading width="w-24" />
 
-									{/* Stripe PaymentElement placeholder */}
-									<div className="animate-pulse space-y-4 rounded-xl border p-6">
+									{/* Stripe PaymentElement placeholder (CLS-safe: min-h reserves vertical space for real element) */}
+									<div className="min-h-[360px] animate-pulse space-y-4 rounded-xl border p-6">
 										<Skeleton className="h-4 w-40" />
-										<Skeleton className="h-10 w-full rounded" />
+										<Skeleton className="h-11 w-full rounded" />
 										<div className="grid grid-cols-2 gap-4">
-											<Skeleton className="h-10 rounded" />
-											<Skeleton className="h-10 rounded" />
+											<Skeleton className="h-11 rounded" />
+											<Skeleton className="h-11 rounded" />
 										</div>
+										<Skeleton className="h-11 w-full rounded" />
 									</div>
 
 									{/* Terms + button */}

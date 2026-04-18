@@ -11,6 +11,7 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -22,7 +23,7 @@ import {
 	Trash2,
 } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MediaItem } from "@/modules/media/types/hooks.types";
 
 export interface SortableMediaItemProps {
@@ -61,6 +62,7 @@ export function SortableMediaItem({
 }: SortableMediaItemProps) {
 	const canMoveUp = Boolean(index > 0 && onMoveUp);
 	const canMoveDown = Boolean(index < totalCount - 1 && onMoveDown);
+	const haptic = useHaptic();
 	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
 		index,
@@ -70,6 +72,40 @@ export function SortableMediaItem({
 	const isVideo = media.mediaType === "VIDEO";
 	const [thumbnailError, setThumbnailError] = useState(false);
 	const showThumbnail = isVideo && media.thumbnailUrl && !thumbnailError;
+
+	// Haptic on drag start (enter drag source state)
+	const wasDragSourceRef = useRef(false);
+	useEffect(() => {
+		if (isDragSource && !wasDragSourceRef.current) {
+			haptic("medium");
+			wasDragSourceRef.current = true;
+		} else if (!isDragSource && wasDragSourceRef.current) {
+			haptic("light");
+			wasDragSourceRef.current = false;
+		}
+	}, [isDragSource, haptic]);
+
+	const handleOpenLightbox = () => {
+		haptic("selection");
+		onOpenLightbox(index);
+	};
+
+	const handleOpenDeleteDialog = () => {
+		haptic("medium");
+		onOpenDeleteDialog();
+	};
+
+	const handleMoveUp = () => {
+		if (!onMoveUp) return;
+		haptic("selection");
+		onMoveUp();
+	};
+
+	const handleMoveDown = () => {
+		if (!onMoveDown) return;
+		haptic("selection");
+		onMoveDown();
+	};
 
 	return (
 		// eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- sortable item needs keyboard interactions
@@ -135,7 +171,7 @@ export function SortableMediaItem({
 								onTouchEnd={(e) => {
 									if (isDraggingAny) return;
 									e.stopPropagation();
-									onOpenLightbox(index);
+									handleOpenLightbox();
 								}}
 								onMouseEnter={(e) => {
 									if (e.currentTarget.readyState === 0) {
@@ -161,7 +197,7 @@ export function SortableMediaItem({
 							onClick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
-								onOpenLightbox(index);
+								handleOpenLightbox();
 							}}
 							className={cn(
 								"absolute inset-0 flex cursor-pointer items-center justify-center",
@@ -267,7 +303,7 @@ export function SortableMediaItem({
 							onClick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
-								onOpenLightbox(index);
+								handleOpenLightbox();
 							}}
 							className="h-9 w-9 rounded-full border-0 bg-black/70 hover:bg-black/90"
 							aria-label={`Agrandir le média ${index + 1}`}
@@ -286,7 +322,7 @@ export function SortableMediaItem({
 							onClick={(e) => {
 								e.preventDefault();
 								e.stopPropagation();
-								onOpenDeleteDialog();
+								handleOpenDeleteDialog();
 							}}
 							className="hover:bg-destructive h-9 w-9 rounded-full border-0 bg-black/70"
 							aria-label={`Supprimer le média ${index + 1}`}
@@ -313,20 +349,20 @@ export function SortableMediaItem({
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="min-w-40">
-						<DropdownMenuItem onClick={() => onOpenLightbox(index)} className="gap-2 py-2.5">
+						<DropdownMenuItem onClick={handleOpenLightbox} className="min-h-11 gap-2 py-3">
 							<Expand className="h-4 w-4" />
 							Agrandir
 						</DropdownMenuItem>
 						{/* WCAG 2.5.7: Drag alternatives */}
 						{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
 						{canMoveUp && (
-							<DropdownMenuItem onClick={onMoveUp} className="gap-2 py-2.5">
+							<DropdownMenuItem onClick={handleMoveUp} className="min-h-11 gap-2 py-3">
 								<ArrowUp className="h-4 w-4" />
 								Déplacer vers le haut
 							</DropdownMenuItem>
 						)}
 						{canMoveDown && (
-							<DropdownMenuItem onClick={onMoveDown} className="gap-2 py-2.5">
+							<DropdownMenuItem onClick={handleMoveDown} className="min-h-11 gap-2 py-3">
 								<ArrowDown className="h-4 w-4" />
 								Déplacer vers le bas
 							</DropdownMenuItem>
@@ -334,8 +370,8 @@ export function SortableMediaItem({
 						<DropdownMenuSeparator />
 						<DropdownMenuItem
 							variant="destructive"
-							onClick={onOpenDeleteDialog}
-							className="gap-2 py-2.5"
+							onClick={handleOpenDeleteDialog}
+							className="min-h-11 gap-2 py-3"
 						>
 							<Trash2 className="h-4 w-4" />
 							Supprimer

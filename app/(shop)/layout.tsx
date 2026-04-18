@@ -51,7 +51,12 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 
 	return (
 		<>
-			{storeStatus.isClosed && <MaintenanceBanner closureMessage={storeStatus.closureMessage} />}
+			{(storeStatus.isClosed || storeStatus.scheduledCloseAt) && (
+				<MaintenanceBanner
+					closureMessage={storeStatus.isClosed ? storeStatus.closureMessage : null}
+					scheduledCloseAt={storeStatus.scheduledCloseAt}
+				/>
+			)}
 			<Suspense fallback={null}>
 				<AnnouncementBarWrapper />
 			</Suspense>

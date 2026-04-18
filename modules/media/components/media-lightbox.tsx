@@ -1,7 +1,7 @@
 "use client";
 
 import * as FocusScope from "@radix-ui/react-focus-scope";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import Counter from "yet-another-react-lightbox/plugins/counter";
@@ -12,6 +12,7 @@ import "yet-another-react-lightbox/plugins/counter.css";
 import type { Slide } from "yet-another-react-lightbox";
 import { useReducedMotion } from "motion/react";
 import { LIGHTBOX_CONFIG, UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 interface MediaLightboxProps {
 	open: boolean;
@@ -29,6 +30,9 @@ interface MediaLightboxProps {
  * - Custom premium styling
  * - Keyboard navigation (arrows, Esc)
  * - Index synchronization with parent via onIndexChange
+ * - Haptic feedback on swipe / close (iOS/Android)
+ * - aria-live region announcing index changes (WCAG 4.1.3)
+ * - Safe-area insets on counter + close button (iOS notch / home indicator)
  */
 export default function MediaLightbox({
 	open,
@@ -38,7 +42,16 @@ export default function MediaLightbox({
 	onIndexChange,
 }: MediaLightboxProps) {
 	const prefersReducedMotion = useReducedMotion();
+	const haptic = useHaptic();
 	const previousActiveElementRef = useRef<HTMLElement | null>(null);
+	// Internal index tracks the slide effectively shown by the lightbox.
+	// Syncs with the `index` prop when it changes externally (controlled navigation).
+	const [currentIndex, setCurrentIndex] = useState(index);
+	const [prevIndex, setPrevIndex] = useState(index);
+	if (prevIndex !== index) {
+		setPrevIndex(index);
+		setCurrentIndex(index);
+	}
 
 	useEffect(() => {
 		if (open) {
@@ -48,6 +61,7 @@ export default function MediaLightbox({
 
 	const handleClose = () => {
 		const target = previousActiveElementRef.current;
+		haptic("selection");
 		close();
 		requestAnimationFrame(() => {
 			target?.focus({ preventScroll: true });
@@ -56,9 +70,20 @@ export default function MediaLightbox({
 
 	if (!open) return null;
 
+	const currentSlide = slides[currentIndex];
+	const isVideo = currentSlide && "type" in currentSlide && currentSlide.type === "video";
+	const total = slides.length;
+	const announcement = isVideo
+		? `Vidéo ${currentIndex + 1} sur ${total}`
+		: `Image ${currentIndex + 1} sur ${total}`;
+
 	return (
 		<FocusScope.Root trapped onMountAutoFocus={(e) => e.preventDefault()}>
 			<div role="dialog" aria-modal="true" aria-label="Galerie en plein écran">
+				{/* Screen reader announcement of current index (WCAG 4.1.3) */}
+				<div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+					{announcement}
+				</div>
 				<Lightbox
 					open={open}
 					close={handleClose}
@@ -66,6 +91,10 @@ export default function MediaLightbox({
 					index={index}
 					on={{
 						view: ({ index: newIndex }) => {
+							if (newIndex !== currentIndex) {
+								haptic("light");
+							}
+							setCurrentIndex(newIndex);
 							onIndexChange?.(newIndex);
 						},
 					}}
@@ -82,7 +111,12 @@ export default function MediaLightbox({
 						scrollToZoom: true,
 					}}
 					counter={{
-						container: { style: { top: "unset", bottom: LIGHTBOX_CONFIG.COUNTER_BOTTOM_OFFSET } },
+						container: {
+							style: {
+								top: "unset",
+								bottom: `max(${LIGHTBOX_CONFIG.COUNTER_BOTTOM_OFFSET}px, env(safe-area-inset-bottom, 0px) + 16px)`,
+							},
+						},
 					}}
 					video={{
 						autoPlay: !prefersReducedMotion,
@@ -102,6 +136,10 @@ export default function MediaLightbox({
 						button: {
 							filter: "none",
 							color: "white",
+						},
+						toolbar: {
+							paddingTop: "env(safe-area-inset-top, 0px)",
+							paddingRight: "env(safe-area-inset-right, 0px)",
 						},
 					}}
 					className="synclune-lightbox"

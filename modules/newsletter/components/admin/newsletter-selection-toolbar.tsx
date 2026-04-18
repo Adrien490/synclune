@@ -25,7 +25,11 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAdminBulkDeleteNewsletterSubscribers } from "../../hooks/use-admin-bulk-delete-newsletter-subscribers";
 import { useAdminBulkUnsubscribeNewsletter } from "../../hooks/use-admin-bulk-unsubscribe-newsletter";
 
-export function NewsletterSelectionToolbar() {
+interface NewsletterSelectionToolbarProps {
+	pageItemIds?: string[];
+}
+
+export function NewsletterSelectionToolbar({ pageItemIds }: NewsletterSelectionToolbarProps = {}) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const deleteDialog = useDialog("bulk-newsletter-delete");
 	const unsubscribeDialog = useDialog("bulk-newsletter-unsubscribe");
@@ -91,7 +95,7 @@ export function NewsletterSelectionToolbar() {
 
 	return (
 		<>
-			<SelectionToolbar>
+			<SelectionToolbar pageItemIds={pageItemIds}>
 				<span className="text-muted-foreground text-sm">{label}</span>
 				<ResponsiveActionMenu>
 					<ResponsiveActionMenuTrigger asChild>

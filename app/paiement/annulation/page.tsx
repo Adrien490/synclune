@@ -8,6 +8,7 @@ import {
 	CardTitle,
 } from "@/shared/components/ui/card";
 import { getCheckoutCancelMessage } from "@/modules/payments/constants/checkout-cancel-messages";
+import { PostHogTrack } from "@/shared/components/posthog-track";
 import { Info, ShoppingBag } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -45,6 +46,13 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	const ErrorIcon = errorInfo.icon;
 	return (
 		<div className="relative min-h-screen">
+			<PostHogTrack
+				event="payment_failed"
+				properties={{
+					order_id: orderId ?? null,
+					reason: reason ?? "canceled",
+				}}
+			/>
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">

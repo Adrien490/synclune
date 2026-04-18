@@ -113,6 +113,14 @@ describe("sendCrossSellEmails", () => {
 		expect(call.take).toBe(25);
 	});
 
+	it("filters out orders without explicit newsletter opt-in (CNIL/RGPD)", async () => {
+		await sendCrossSellEmails();
+
+		const call = mockPrisma.order.findMany.mock.calls[0]![0];
+		expect(call.where.newsletterOptIn).toBe(true);
+		expect(call.where.user).toEqual({ deletedAt: null });
+	});
+
 	it("skips orders with no matching product type or collection", async () => {
 		const orderWithNoTypes = makeOrder({
 			items: [

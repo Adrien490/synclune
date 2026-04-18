@@ -7,6 +7,7 @@ import { BRAND } from "@/shared/constants/brand";
 import { ROUTES } from "@/shared/constants/urls";
 
 import type { StoreStatus } from "../types/store-settings.types";
+import { StoreReopenCountdown } from "./store-reopen-countdown";
 
 interface StoreClosurePageProps {
 	status: StoreStatus;
@@ -25,7 +26,7 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 	return (
 		<>
 			<meta name="robots" content="noindex, nofollow" />
-			<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br px-4">
+			<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br px-[max(1rem,env(safe-area-inset-left))] py-[max(1.5rem,env(safe-area-inset-bottom))]">
 				{/* CSS-only decorative blobs */}
 				<div aria-hidden="true">
 					<div className="bg-primary/10 absolute top-[10%] left-[15%] size-32 rounded-full blur-2xl motion-safe:animate-[drift_20s_ease-in-out_infinite]" />
@@ -34,7 +35,7 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 					<div className="bg-secondary/10 absolute top-[30%] right-[30%] size-16 rounded-full blur-2xl motion-safe:animate-[drift_22s_ease-in-out_4s_infinite_reverse]" />
 				</div>
 
-				<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center" aria-live="polite">
+				<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 					<div className="space-y-4">
 						<p className="mb-4 text-6xl md:text-8xl" aria-hidden="true">
 							🔒
@@ -57,11 +58,14 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 					</div>
 
 					{formattedReopensAt && reopensAtDate && (
-						<p className="text-muted-foreground text-sm">
-							Réouverture prévue le{" "}
-							<time dateTime={reopensAtDate.toISOString()}>{formattedReopensAt}</time> (heure de
-							Paris)
-						</p>
+						<div className="space-y-1">
+							<p className="text-muted-foreground text-sm">
+								Réouverture prévue le{" "}
+								<time dateTime={reopensAtDate.toISOString()}>{formattedReopensAt}</time> (heure de
+								Paris)
+							</p>
+							<StoreReopenCountdown reopensAt={reopensAtDate} />
+						</div>
 					)}
 
 					<div className="flex justify-center">

@@ -533,6 +533,22 @@ describe("useLogout", () => {
 		vi.useRealTimers();
 	});
 
+	it("resets badge counts store on success to prevent leak across users", async () => {
+		vi.useFakeTimers();
+		const { useBadgeCountsStore } = await import("@/shared/stores/badge-counts-store");
+		useBadgeCountsStore.setState({ wishlistCount: 7, cartCount: 3 });
+
+		const { result } = renderHook(() => useLogout());
+
+		await act(async () => {
+			result.current.action(new FormData());
+		});
+
+		expect(useBadgeCountsStore.getState().wishlistCount).toBe(0);
+		expect(useBadgeCountsStore.getState().cartCount).toBe(0);
+		vi.useRealTimers();
+	});
+
 	it("redirects to / after a delay on success", async () => {
 		vi.useFakeTimers();
 		const { result } = renderHook(() => useLogout());

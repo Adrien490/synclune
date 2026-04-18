@@ -10,6 +10,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { useReducedMotion } from "motion/react";
 import Image from "next/image";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 interface GalleryThumbnailProps {
 	media: ProductMedia;
@@ -38,18 +39,24 @@ export function GalleryThumbnail({
 	isLCPCandidate = false,
 }: GalleryThumbnailProps) {
 	const prefersReduced = useReducedMotion();
+	const haptic = useHaptic();
 	const isVideo = media.mediaType === "VIDEO";
 	const thumbnailSrc = isVideo ? media.thumbnailUrl : media.url;
 	const alt = media.alt || `${title} - ${isVideo ? "Vidéo" : "Photo"} ${index + 1}`;
 
 	const transitionClass = prefersReduced ? "" : "transition-all duration-200";
 
+	const handleClick = () => {
+		if (!isActive) haptic("selection");
+		onClick();
+	};
+
 	return (
 		<button
 			type="button"
 			role="tab"
 			aria-controls={`gallery-panel-${index}`}
-			onClick={onClick}
+			onClick={handleClick}
 			className={cn(
 				"group relative aspect-square w-full overflow-hidden rounded-xl",
 				"border-2",

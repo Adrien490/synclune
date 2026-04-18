@@ -58,7 +58,7 @@ export const PasswordInputField = ({
 				triggerHaptic("selection");
 				setShowPassword(!showPassword);
 			}}
-			className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-sm p-0.5 transition-colors focus-visible:ring-2 focus-visible:outline-none"
+			className="text-muted-foreground hover:text-foreground focus-visible:ring-ring relative inline-flex items-center justify-center rounded-sm p-0.5 transition-colors after:absolute after:inset-[-12px] after:content-[''] focus-visible:ring-2 focus-visible:outline-none motion-safe:transition-colors"
 			aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
 			aria-pressed={showPassword}
 		>

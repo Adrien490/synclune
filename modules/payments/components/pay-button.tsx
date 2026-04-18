@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useStripe, useElements } from "@stripe/react-stripe-js";
 import { Button } from "@/shared/components/ui/button";
 import { Alert, AlertDescription } from "@/shared/components/ui/alert";
-import { LoaderCircle, Lock } from "lucide-react";
+import { LoaderCircle, Lock, ShieldCheck } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { confirmCheckout } from "../actions/confirm-checkout";
+import { trackPaymentError } from "../utils/track-payment-event";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 
 interface PayButtonProps {
@@ -19,9 +20,13 @@ interface PayButtonProps {
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
 }
 
+type Phase = "idle" | "validating" | "creating-order" | "awaiting-3ds";
+
 /**
  * Payment button inside <Elements>.
- * Orchestrates: validate form → confirmCheckout server action → stripe.confirmPayment.
+ * Orchestrates: validate form -> confirmCheckout server action -> stripe.confirmPayment.
+ *
+ * Phases surface distinct messages so users understand latency (esp. 3DS challenge).
  */
 export function PayButton({
 	total,
@@ -34,8 +39,11 @@ export function PayButton({
 	const stripe = useStripe();
 	const elements = useElements();
 	const haptic = useHaptic();
-	const [isProcessing, setIsProcessing] = useState(false);
+	const [phase, setPhase] = useState<Phase>("idle");
 	const [error, setError] = useState<string | null>(null);
+
+	const isProcessing = phase !== "idle";
+	const isAwaiting3ds = phase === "awaiting-3ds";
 
 	function showError(message: string) {
 		setError(message);
@@ -46,14 +54,14 @@ export function PayButton({
 		if (!stripe || !elements) return;
 
 		haptic("medium");
-		setIsProcessing(true);
+		setPhase("validating");
 		setError(null);
 
 		try {
 			// 1. Get form data from parent (may validate unapplied discount code)
 			const formData = await getFormData();
 			if (!formData) {
-				setIsProcessing(false);
+				setPhase("idle");
 				return;
 			}
 
@@ -61,17 +69,32 @@ export function PayButton({
 			const { error: submitError } = await elements.submit();
 			if (submitError) {
 				showError(submitError.message ?? "Erreur de validation du paiement.");
-				setIsProcessing(false);
+				trackPaymentError({
+					type: submitError.type,
+					code: submitError.code,
+					message: submitError.message,
+					phase: "elements-submit",
+				});
+				setPhase("idle");
 				return;
 			}
+
+			setPhase("creating-order");
 
 			// 3. Server action: create order + update PI with order metadata
 			const result = await confirmCheckout(formData);
 			if (!result.success) {
 				showError(result.error);
-				setIsProcessing(false);
+				trackPaymentError({
+					type: "server_action",
+					message: result.error,
+					phase: "confirm-checkout",
+				});
+				setPhase("idle");
 				return;
 			}
+
+			setPhase("awaiting-3ds");
 
 			// 4. Confirm payment with Stripe (triggers 3DS if needed)
 			const { error: confirmError } = await stripe.confirmPayment({
@@ -89,21 +112,49 @@ export function PayButton({
 
 			// If confirmPayment returns, it means there was an error
 			// (successful payments redirect to return_url)
-
-			showError(
+			const userMessage =
 				confirmError.type === "card_error" || confirmError.type === "validation_error"
 					? (confirmError.message ?? "Erreur de paiement.")
-					: "Une erreur est survenue lors du paiement.",
-			);
+					: "Une erreur est survenue lors du paiement.";
+			showError(userMessage);
+			trackPaymentError({
+				type: confirmError.type,
+				code: confirmError.code,
+				message: confirmError.message,
+				phase: "confirm-payment",
+			});
 		} catch {
 			showError("Une erreur inattendue est survenue. Veuillez réessayer.");
+			trackPaymentError({ type: "unknown", phase: "exception" });
 		} finally {
-			setIsProcessing(false);
+			setPhase((prev) => (prev === "awaiting-3ds" || prev === "creating-order" ? "idle" : prev));
 		}
 	}
 
+	const phaseMessage =
+		phase === "validating"
+			? "Validation..."
+			: phase === "creating-order"
+				? "Création de la commande..."
+				: phase === "awaiting-3ds"
+					? "Vérification 3D Secure..."
+					: "";
+
 	return (
 		<div className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:static md:space-y-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
+			<span role="status" aria-live="polite" className="sr-only">
+				{phaseMessage}
+			</span>
+
+			{isAwaiting3ds && (
+				<Alert role="status" aria-live="polite">
+					<ShieldCheck className="size-4" />
+					<AlertDescription>
+						Vérification 3D Secure en cours — une fenêtre de votre banque va s&apos;ouvrir.
+					</AlertDescription>
+				</Alert>
+			)}
+
 			{error && (
 				<Alert variant="destructive" role="alert" aria-live="assertive">
 					<AlertDescription>{error}</AlertDescription>
@@ -121,7 +172,7 @@ export function PayButton({
 				{isProcessing ? (
 					<>
 						<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
-						<span>Traitement...</span>
+						<span>{phaseMessage || "Traitement..."}</span>
 					</>
 				) : (
 					<>

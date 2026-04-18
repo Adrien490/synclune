@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { Download, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -13,11 +14,13 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 	const [isDownloading, setIsDownloading] = useState(false);
 
 	async function handleDownload() {
+		triggerHaptic("medium");
 		setIsDownloading(true);
 		let response: Response;
 		try {
 			response = await fetch(`/api/orders/${orderNumber}/invoice`);
 		} catch {
+			triggerHaptic("error");
 			toast.error("Impossible de télécharger la facture");
 			setIsDownloading(false);
 			return;
@@ -25,6 +28,7 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 
 		try {
 			if (!response.ok) {
+				triggerHaptic("error");
 				if (response.status === 404) {
 					toast.error("La facture n'est pas encore disponible");
 				} else {
@@ -40,8 +44,10 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 			link.download = `facture-${orderNumber}.pdf`;
 			link.click();
 			URL.revokeObjectURL(url);
+			triggerHaptic("success");
 			setIsDownloading(false);
 		} catch {
+			triggerHaptic("error");
 			toast.error("Erreur lors du téléchargement de la facture");
 			setIsDownloading(false);
 		}

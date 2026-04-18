@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
-import { Elements } from "@stripe/react-stripe-js";
+import { useRef } from "react";
+import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
@@ -11,42 +11,34 @@ import type {
 	AppliedDiscount,
 	ValidateDiscountCodeReturn,
 } from "@/modules/discounts/types/discount.types";
-import { CircleAlert, Lock, WifiOff } from "lucide-react";
+import { CircleAlert, WifiOff } from "lucide-react";
 import type { ShippingCountry } from "@/shared/constants/countries";
-import Link from "next/link";
+import { useOnlineStatus } from "@/shared/hooks/use-online-status";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { usePaymentIntent } from "../hooks/use-payment-intent";
 
 import { CheckoutSummary } from "./checkout-summary";
 import { CheckoutSection } from "./checkout-section";
 import { ShippingMethodSection } from "./shipping-method-section";
-import { PayButton } from "./pay-button";
-import { StripeWordmark } from "./stripe-wordmark";
 import { CheckoutContactSection } from "./checkout-contact-section";
 import { CheckoutAddressFields } from "./checkout-address-fields";
 import { CheckoutDiscountSection } from "./checkout-discount-section";
+import { PaymentSectionSkeleton } from "./payment-section-skeleton";
 import { validateDiscountCode } from "@/modules/discounts/actions/validate-discount-code";
-import { cn } from "@/shared/utils/cn";
-import { getStripe } from "@/shared/lib/stripe-client";
-import { stripeAppearance } from "../constants/stripe-appearance";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
-import { PaymentElement } from "@stripe/react-stripe-js";
 
-// Offline detection via useSyncExternalStore for SSR safety
-function subscribeOnline(callback: () => void) {
-	window.addEventListener("online", callback);
-	window.addEventListener("offline", callback);
-	return () => {
-		window.removeEventListener("online", callback);
-		window.removeEventListener("offline", callback);
-	};
-}
-function getOnlineSnapshot() {
-	return navigator.onLine;
-}
-function getServerSnapshot() {
-	return true;
-}
+/**
+ * Stripe bundle (`@stripe/react-stripe-js` ~100KB gzip) is loaded on-demand
+ * via `next/dynamic` to keep it off the critical path. `ssr: false` is required
+ * because Elements mounts against `window.Stripe`.
+ */
+const CheckoutStripeSection = dynamic(
+	() => import("./checkout-stripe-section").then((mod) => ({ default: mod.CheckoutStripeSection })),
+	{
+		ssr: false,
+		loading: () => <PaymentSectionSkeleton />,
+	},
+);
 
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
@@ -58,12 +50,11 @@ interface CheckoutFormProps {
  * Single-page checkout form (Shopify-style).
  *
  * Sections: Contact, Livraison, Mode d'expédition, Code promo, Paiement.
- * Card-only payment via Stripe PaymentElement.
+ * Payment via Stripe PaymentElement + ExpressCheckoutElement (Apple Pay / Google Pay / Link).
  */
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
 	const headingRef = useRef<HTMLHeadingElement>(null);
-	const [isPaymentReady, setIsPaymentReady] = useState(false);
 
 	const { form } = useCheckoutForm({ session, addresses });
 
@@ -75,7 +66,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 
-	const isOnline = useSyncExternalStore(subscribeOnline, getOnlineSnapshot, getServerSnapshot);
+	const isOnline = useOnlineStatus();
 
 	// Initialize Payment Intent
 	const pi = usePaymentIntent({
@@ -214,117 +205,31 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								{/* === SECTION 5: Payment === */}
 								<CheckoutSection title="Paiement">
 									{pi.isLoading ? (
-										<div
-											className="animate-pulse space-y-4 rounded-xl border p-6"
-											aria-busy="true"
-											role="status"
-										>
-											<span className="sr-only">Chargement du formulaire de paiement…</span>
-											<div className="bg-muted h-4 w-40 rounded" />
-											<div className="bg-muted h-10 w-full rounded" />
-											<div className="grid grid-cols-2 gap-4">
-												<div className="bg-muted h-10 rounded" />
-												<div className="bg-muted h-10 rounded" />
-											</div>
-										</div>
+										<PaymentSectionSkeleton />
 									) : pi.clientSecret ? (
-										<Elements
-											stripe={getStripe()}
-											options={{
-												clientSecret: pi.clientSecret,
-												appearance: stripeAppearance,
-												locale: "fr",
-											}}
+										<form.Subscribe
+											selector={(s) => ({
+												canSubmit: s.canSubmit,
+												email: s.values.email,
+												billingName: s.values.shipping.fullName,
+											})}
 										>
-											<div className="space-y-6">
-												<p className="text-muted-foreground text-sm">
-													Toutes les transactions sont sécurisées et chiffrées.
-												</p>
-
-												{!isPaymentReady && (
-													<div className="animate-pulse space-y-4" aria-busy="true" role="status">
-														<span className="sr-only">Chargement du formulaire de paiement…</span>
-														<div className="bg-muted h-4 w-40 rounded" />
-														<div className="bg-muted h-10 w-full rounded" />
-														<div className="grid grid-cols-2 gap-4">
-															<div className="bg-muted h-10 rounded" />
-															<div className="bg-muted h-10 rounded" />
-														</div>
-													</div>
-												)}
-												<div
-													className={cn(
-														"bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm",
-														!isPaymentReady && "hidden",
-													)}
-												>
-													<PaymentElement onReady={() => setIsPaymentReady(true)} />
-												</div>
-
-												{/* Terms notice + Pay button */}
-												<div className="space-y-3">
-													<p className="text-muted-foreground text-center text-xs">
-														En passant commande, vous acceptez nos{" "}
-														<Link
-															href="/cgv"
-															className="text-foreground underline hover:no-underline"
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															conditions générales de vente
-														</Link>{" "}
-														et notre{" "}
-														<Link
-															href="/confidentialite"
-															className="text-foreground underline hover:no-underline"
-															target="_blank"
-															rel="noopener noreferrer"
-														>
-															politique de confidentialité
-														</Link>
-														.
-													</p>
-													<form.Subscribe
-														selector={(s) => ({
-															canSubmit: s.canSubmit,
-															email: s.values.email,
-															billingName: s.values.shipping.fullName,
-														})}
-													>
-														{({ canSubmit, email, billingName }) => (
-															<PayButton
-																total={total}
-																disabled={!canSubmit}
-																shippingUnavailable={shippingUnavailable}
-																email={
-																	isGuest
-																		? (email as string) || undefined
-																		: session.user.email || undefined
-																}
-																billingName={(billingName as string) || undefined}
-																getFormData={getFormData}
-															/>
-														)}
-													</form.Subscribe>
-												</div>
-
-												{/* Trust badges */}
-												<div className="border-primary/5 bg-primary/2 rounded-xl border p-4">
-													<div className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs">
-														<span className="inline-flex items-center gap-1">
-															<Lock className="h-3 w-3" />
-															Paiement sécurisé
-														</span>
-														<span aria-hidden="true" className="text-border hidden sm:inline">
-															|
-														</span>
-														<span className="inline-flex items-center gap-1">
-															Propulsé par <StripeWordmark className="h-4 w-auto opacity-50" />
-														</span>
-													</div>
-												</div>
-											</div>
-										</Elements>
+											{({ canSubmit, email, billingName }) => (
+												<CheckoutStripeSection
+													clientSecret={pi.clientSecret!}
+													total={total}
+													canSubmit={canSubmit}
+													shippingUnavailable={shippingUnavailable}
+													email={
+														isGuest
+															? (email as string) || undefined
+															: session.user.email || undefined
+													}
+													billingName={(billingName as string) || undefined}
+													getFormData={getFormData}
+												/>
+											)}
+										</form.Subscribe>
 									) : null}
 								</CheckoutSection>
 							</div>

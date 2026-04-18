@@ -12,7 +12,7 @@ export function AtelierSectionSkeleton() {
 			className={`bg-muted/20 relative overflow-hidden mask-t-from-97% mask-t-to-100% mask-b-from-97% mask-b-to-100% ${SECTION_SPACING.spacious}`}
 			aria-label="Chargement de la section atelier"
 		>
-			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className="mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 				{/* Header skeleton */}
 				<div className="mb-10 text-center lg:mb-14">
 					<Skeleton className="bg-muted/50 mx-auto h-10 w-48 sm:h-12" />
@@ -75,11 +75,11 @@ export function AtelierSectionSkeleton() {
 
 				{/* Polaroid gallery skeleton */}
 				<div className="mt-12 sm:mt-16">
-					<div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-2">
+					<div className="mx-auto grid max-w-5xl grid-cols-1 gap-4 min-[340px]:grid-cols-2 sm:gap-6 lg:grid-cols-4 lg:gap-4">
 						<Skeleton className="bg-muted/40 aspect-4/3 w-full rounded-xl" />
 						<Skeleton className="bg-muted/40 aspect-4/3 w-full rounded-xl" />
-						<Skeleton className="bg-muted/40 hidden aspect-4/3 w-full rounded-xl lg:block" />
-						<Skeleton className="bg-muted/40 hidden aspect-4/3 w-full rounded-xl lg:block" />
+						<Skeleton className="bg-muted/40 aspect-4/3 w-full rounded-xl" />
+						<Skeleton className="bg-muted/40 aspect-4/3 w-full rounded-xl" />
 					</div>
 				</div>
 

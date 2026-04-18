@@ -10,6 +10,8 @@ import { MediaTypeBadge } from "@/shared/components/ui/media-type-badge";
 import { MediaErrorFallback } from "@/modules/media/components/media-error-fallback";
 import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dialog";
 import { isVideoUrl } from "@/modules/media/utils/media-type-detection";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { cn } from "@/shared/utils/cn";
 
 /**
  * Detects the media type from URL if not provided.
@@ -38,6 +40,12 @@ interface PrimaryImageUploadProps {
 	 * Product name for descriptive alt text (a11y)
 	 */
 	productName?: string;
+	/**
+	 * Aspect ratio of the preview.
+	 * - `"product"` (default) mirrors the PDP: 3/4 on mobile, 4/5 on desktop.
+	 * - `"square"` keeps the 1/1 ratio (useful for SKU tiles / thumbnails).
+	 */
+	aspectRatio?: "product" | "square";
 }
 
 export function PrimaryImageUpload({
@@ -48,10 +56,12 @@ export function PrimaryImageUpload({
 	renderUploadZone,
 	skipUtapiDelete,
 	productName,
+	aspectRatio = "product",
 }: PrimaryImageUploadProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [videoError, setVideoError] = useState(false);
 	const deleteDialog = useAlertDialog(DELETE_PRIMARY_IMAGE_DIALOG_ID);
+	const haptic = useHaptic();
 
 	// Auto-detect mediaType if not provided
 	const effectiveMediaType = mediaType ?? detectMediaTypeFromUrl(imageUrl);
@@ -75,12 +85,15 @@ export function PrimaryImageUpload({
 
 	const handleOpenDeleteDialog = () => {
 		if (!imageUrl) return;
+		haptic("medium");
 		deleteDialog.open({
 			imageUrl,
 			skipUtapiDelete,
 			onRemove,
 		});
 	};
+
+	const aspectClass = aspectRatio === "square" ? "aspect-square" : "aspect-3/4 sm:aspect-4/5";
 
 	return (
 		<div className="space-y-3">
@@ -95,7 +108,12 @@ export function PrimaryImageUpload({
 						transition={{ duration: 0.3 }}
 						className="relative w-full max-w-xs sm:max-w-sm"
 					>
-						<div className="border-primary/20 group bg-muted relative aspect-square w-full overflow-hidden rounded-lg border-2 shadow">
+						<div
+							className={cn(
+								"border-primary/20 group bg-muted relative w-full overflow-hidden rounded-lg border-2 shadow",
+								aspectClass,
+							)}
+						>
 							{effectiveMediaType === "VIDEO" ? (
 								<div
 									className="relative h-full w-full"

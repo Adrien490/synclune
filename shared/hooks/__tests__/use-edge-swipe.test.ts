@@ -325,4 +325,29 @@ describe("useEdgeSwipe", () => {
 			expect(onOpen).not.toHaveBeenCalled();
 		});
 	});
+
+	describe("reduced motion (WCAG 2.3.3)", () => {
+		it("skips gesture tracking when prefers-reduced-motion is set", () => {
+			matchMediaMock.mockImplementation(
+				(query: string) =>
+					({
+						matches: query === "(prefers-reduced-motion: reduce)",
+						media: query,
+						addEventListener: vi.fn(),
+						removeEventListener: vi.fn(),
+						addListener: vi.fn(),
+						removeListener: vi.fn(),
+						dispatchEvent: vi.fn(),
+						onchange: null,
+					}) as unknown as MediaQueryList,
+			);
+
+			const onOpen = vi.fn();
+			renderHook(() => useEdgeSwipe(onOpen, false));
+
+			swipeFromEdge();
+
+			expect(onOpen).not.toHaveBeenCalled();
+		});
+	});
 });

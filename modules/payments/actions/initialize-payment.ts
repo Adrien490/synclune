@@ -150,12 +150,15 @@ export async function initializePayment(
 			const idempotencyKey = `pi-init-${userId ?? sessionId}-${cartHash}`;
 
 			// Create Payment Intent
+			// `automatic_payment_methods` with `allow_redirects: "never"` enables
+			// card wallets (Apple Pay, Google Pay) + Link while excluding redirect-based
+			// methods (SEPA debit, Klarna, Bancontact) that would bypass our checkout UX.
 			const paymentIntent = await withStripeCircuitBreaker(() =>
 				stripe.paymentIntents.create(
 					{
 						amount: total,
 						currency: DEFAULT_CURRENCY.toLowerCase(),
-						payment_method_types: ["card"],
+						automatic_payment_methods: { enabled: true, allow_redirects: "never" },
 						...(stripeCustomerId && { customer: stripeCustomerId }),
 						metadata: {
 							userId: userId ?? "guest",

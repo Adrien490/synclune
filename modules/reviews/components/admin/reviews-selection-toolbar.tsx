@@ -25,7 +25,11 @@ import { useBulkDeleteReviews } from "@/modules/reviews/hooks/use-bulk-delete-re
 import { useBulkHideReviews } from "@/modules/reviews/hooks/use-bulk-hide-reviews";
 import { useBulkPublishReviews } from "@/modules/reviews/hooks/use-bulk-publish-reviews";
 
-export function ReviewsSelectionToolbar() {
+interface ReviewsSelectionToolbarProps {
+	pageItemIds?: string[];
+}
+
+export function ReviewsSelectionToolbar({ pageItemIds }: ReviewsSelectionToolbarProps = {}) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 
 	const publishDialog = useDialog("bulk-publish-reviews");
@@ -93,7 +97,7 @@ export function ReviewsSelectionToolbar() {
 
 	return (
 		<>
-			<SelectionToolbar>
+			<SelectionToolbar pageItemIds={pageItemIds}>
 				<span className="text-muted-foreground text-sm">{label}</span>
 				<ResponsiveActionMenu>
 					<ResponsiveActionMenuTrigger asChild>

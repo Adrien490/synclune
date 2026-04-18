@@ -37,15 +37,19 @@ vi.mock("@/shared/components/polaroid-frame", () => ({
 	PolaroidFrame: ({
 		children,
 		caption,
+		...rest
 	}: {
 		children: React.ReactNode;
 		caption: string;
 		[key: string]: unknown;
-	}) => (
-		<div data-testid="polaroid-frame" data-caption={caption}>
-			{children}
-		</div>
-	),
+	}) => {
+		const haptic = rest["data-atelier-haptic"] as string | undefined;
+		return (
+			<div data-testid="polaroid-frame" data-caption={caption} data-atelier-haptic={haptic}>
+				{children}
+			</div>
+		);
+	},
 }));
 
 vi.mock("../polaroid-doodles", () => ({
@@ -120,5 +124,15 @@ describe("PolaroidGallery", () => {
 		expect(captions).toContain("Mes petits trésors");
 		expect(captions).toContain("L'inspiration du jour");
 		expect(captions).toContain("Mon coin créatif");
+	});
+
+	it("each polaroid frame is tagged for haptic event delegation", () => {
+		render(<PolaroidGallery />);
+
+		const frames = screen.getAllByTestId("polaroid-frame");
+		expect(frames).toHaveLength(4);
+		frames.forEach((frame) => {
+			expect(frame.getAttribute("data-atelier-haptic")).toBe("polaroid");
+		});
 	});
 });

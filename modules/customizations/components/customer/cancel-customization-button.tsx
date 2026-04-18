@@ -6,6 +6,7 @@ import { CircleX, LoaderCircle } from "lucide-react";
 
 import { cancelCustomizationRequestCustomer } from "@/modules/customizations/actions/cancel-customization-request-customer";
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -45,7 +46,10 @@ export function CancelCustomizationButton({ requestId }: CancelCustomizationButt
 				variant="outline"
 				size="sm"
 				className="w-full"
-				onClick={() => setOpen(true)}
+				onClick={() => {
+					triggerHaptic("selection");
+					setOpen(true);
+				}}
 			>
 				<CircleX className="mr-2 h-3.5 w-3.5" aria-hidden="true" />
 				Annuler la demande
@@ -80,7 +84,12 @@ export function CancelCustomizationButton({ requestId }: CancelCustomizationButt
 							>
 								Ne pas annuler
 							</Button>
-							<Button type="submit" variant="destructive" disabled={isPending}>
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={isPending}
+								onClick={() => triggerHaptic("medium")}
+							>
 								{isPending ? (
 									<>
 										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />

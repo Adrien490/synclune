@@ -18,6 +18,7 @@ interface NewsletterMobileListProps {
 
 export function NewsletterMobileList({ subscribersPromise, perPage }: NewsletterMobileListProps) {
 	const { subscribers, pagination } = use(subscribersPromise);
+	const subscriberIds = subscribers.map((s) => s.id);
 
 	if (subscribers.length === 0) {
 		return (
@@ -38,7 +39,7 @@ export function NewsletterMobileList({ subscribersPromise, perPage }: Newsletter
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<NewsletterSelectionToolbar />
+			<NewsletterSelectionToolbar pageItemIds={subscriberIds} />
 
 			<ItemGroup aria-label="Abonnes newsletter" className="gap-2">
 				{subscribers.map((subscriber) => (

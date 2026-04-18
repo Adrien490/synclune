@@ -25,6 +25,12 @@ vi.mock("@/shared/components/forms", () => ({
 							type={props.type ?? "text"}
 							disabled={props.disabled}
 							required={props.required}
+							inputMode={props.inputMode}
+							enterKeyHint={props.enterKeyHint}
+							autoComplete={props.autoComplete}
+							autoCapitalize={props.autoCapitalize}
+							autoCorrect={props.autoCorrect}
+							spellCheck={props.spellCheck}
 						/>
 					</div>
 				),
@@ -36,6 +42,8 @@ vi.mock("@/shared/components/forms", () => ({
 							type="password"
 							disabled={props.disabled}
 							required={props.required}
+							autoComplete={props.autoComplete}
+							enterKeyHint={props.enterKeyHint}
 						/>
 					</div>
 				),
@@ -55,6 +63,7 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		handleSubmit: mockHandleSubmit,
 		reset: vi.fn(),
+		state: { isValid: true, values: { email: "" } },
 	}),
 }));
 
@@ -253,5 +262,23 @@ describe("RequestPasswordResetForm", () => {
 		expect(form).not.toBeNull();
 		fireEvent.submit(form!);
 		expect(mockHandleSubmit).toHaveBeenCalledTimes(1);
+	});
+
+	// ─── Mobile native 2026 attributes ────────────────────────────────────────
+
+	it("email input has mobile keyboard attributes (enterKeyHint='send')", () => {
+		render(<RequestPasswordResetForm />);
+		const emailInput = screen.getByTestId("field-email").querySelector("input")!;
+		expect(emailInput.getAttribute("inputMode")).toBe("email");
+		expect(emailInput.getAttribute("enterKeyHint")).toBe("send");
+		expect(emailInput.getAttribute("autoComplete")).toBe("email");
+		expect(emailInput.getAttribute("autoCapitalize")).toBe("none");
+		expect(emailInput.getAttribute("autoCorrect")).toBe("off");
+	});
+
+	it("submit button has aria-busy when pending", () => {
+		mockIsPending.value = true;
+		render(<RequestPasswordResetForm />);
+		expect(screen.getByRole("button").getAttribute("aria-busy")).toBe("true");
 	});
 });

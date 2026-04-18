@@ -13,7 +13,9 @@ export function useEdgeSwipe(onOpen: () => void, isOpen: boolean, maxWidth = 102
 	const onOpenStable = useEffectEvent(onOpen);
 
 	useEffect(() => {
-		if (typeof window === "undefined") return;
+		if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+		// WCAG 2.3.3 — users who prefer reduced motion skip gesture-triggered animations
+		if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 		const mql = window.matchMedia(`(min-width: ${maxWidth}px)`);
 
 		let startX = 0;

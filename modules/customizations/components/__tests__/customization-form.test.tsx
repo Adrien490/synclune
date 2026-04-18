@@ -16,7 +16,11 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 vi.mock("@/modules/customizations/hooks/use-customization-form", () => ({
 	useCustomizationForm: () => ({
 		form: {
-			state: { isDirty: false, values: { inspirationMedias: [], deletedImageUrls: [] } },
+			state: {
+				isDirty: false,
+				isValid: true,
+				values: { inspirationMedias: [], deletedImageUrls: [] },
+			},
 			AppField: ({
 				children,
 				name: _name,

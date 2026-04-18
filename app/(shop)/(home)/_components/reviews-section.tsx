@@ -1,9 +1,7 @@
 import { use } from "react";
-import Link from "next/link";
 
 import { Fade, HandDrawnUnderline, Reveal, Stagger } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { Button } from "@/shared/components/ui/button";
 import {
 	Carousel,
 	CarouselContent,
@@ -12,9 +10,10 @@ import {
 } from "@/shared/components/ui/carousel";
 import { SectionTitle } from "@/shared/components/section-title";
 import { RatingStars } from "@/shared/components/rating-stars";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { formatRating } from "@/shared/utils/rating-utils";
 import { HomepageReviewCard } from "@/modules/reviews/components/homepage-review-card";
+import { SectionCtaLink } from "./section-cta-link";
 
 import type { ReviewHomepage, GlobalReviewStats } from "@/modules/reviews/types/review.types";
 
@@ -52,7 +51,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 				Passer le carrousel d&apos;avis
 			</a>
 
-			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className={`relative ${CONTAINER_CLASS}`}>
 				{/* Header */}
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
@@ -83,7 +82,16 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 							delay={MOTION_CONFIG.section.subtitle.delay}
 							duration={MOTION_CONFIG.section.subtitle.duration}
 						>
-							<div className="mt-4 flex items-center justify-center gap-2">
+							<div
+								role="status"
+								aria-live="polite"
+								aria-atomic="true"
+								className="mt-4 flex items-center justify-center gap-2"
+							>
+								<span className="sr-only">
+									Note moyenne : {formatRating(stats.averageRating)} sur 5, basée sur{" "}
+									{stats.totalReviews} avis.
+								</span>
 								<RatingStars rating={stats.averageRating} size="sm" />
 								<span className="text-foreground text-sm font-medium" aria-hidden="true">
 									{formatRating(stats.averageRating)}
@@ -152,16 +160,9 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 						once
 						className="text-center"
 					>
-						<Button
-							asChild
-							size="lg"
-							variant="outline"
-							className="transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
-						>
-							<Link href="/produits?sortBy=rating-descending">
-								Voir les créations les mieux notées
-							</Link>
-						</Button>
+						<SectionCtaLink href="/produits?sortBy=rating-descending" hapticPattern="selection">
+							Voir les créations les mieux notées
+						</SectionCtaLink>
 					</Fade>
 				</div>
 			</div>

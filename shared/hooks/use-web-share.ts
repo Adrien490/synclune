@@ -32,6 +32,14 @@ export function useWebShare() {
 	);
 
 	async function share(data: ShareData): Promise<"shared" | "copied" | "dismissed"> {
+		// Validate URL early — navigator.share() rejects silently on malformed URLs,
+		// which then falls back to clipboard and writes garbage data.
+		try {
+			new URL(data.url);
+		} catch {
+			return "dismissed";
+		}
+
 		if (canShare) {
 			try {
 				await navigator.share(data);

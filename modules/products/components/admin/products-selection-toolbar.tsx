@@ -9,11 +9,12 @@ interface ProductsSelectionToolbarProps {
 		status: "DRAFT" | "PUBLIC" | "ARCHIVED";
 		title?: string;
 	}>;
+	pageItemIds?: string[];
 }
 
-export function ProductsSelectionToolbar({ products }: ProductsSelectionToolbarProps) {
+export function ProductsSelectionToolbar({ products, pageItemIds }: ProductsSelectionToolbarProps) {
 	return (
-		<SelectionToolbar>
+		<SelectionToolbar pageItemIds={pageItemIds}>
 			<ProductSelectionActions products={products} />
 		</SelectionToolbar>
 	);

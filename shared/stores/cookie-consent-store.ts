@@ -1,5 +1,5 @@
 import { createStore } from "zustand/vanilla";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { persist, createJSONStorage, devtools } from "zustand/middleware";
 
 import type { CookieConsentState, CookieConsentStore } from "@/shared/types/store.types";
 import { noopStorage } from "./noop-storage";
@@ -42,90 +42,84 @@ export const defaultInitState: CookieConsentState = {
  */
 export const createCookieConsentStore = (initState: CookieConsentState = defaultInitState) => {
 	return createStore<CookieConsentStore>()(
-		persist(
-			(set) => ({
-				...initState,
+		devtools(
+			persist(
+				(set) => ({
+					...initState,
 
-				// Actions
-				acceptCookies: () => {
-					set({
-						accepted: true,
-						bannerVisible: false,
-						consentDate: new Date().toISOString(),
-						policyVersion: CURRENT_POLICY_VERSION,
-					});
-				},
+					acceptCookies: () => {
+						set({
+							accepted: true,
+							bannerVisible: false,
+							consentDate: new Date().toISOString(),
+							policyVersion: CURRENT_POLICY_VERSION,
+						});
+					},
 
-				rejectCookies: () => {
-					set({
-						accepted: false,
-						bannerVisible: false,
-						consentDate: new Date().toISOString(),
-						policyVersion: CURRENT_POLICY_VERSION,
-					});
-				},
+					rejectCookies: () => {
+						set({
+							accepted: false,
+							bannerVisible: false,
+							consentDate: new Date().toISOString(),
+							policyVersion: CURRENT_POLICY_VERSION,
+						});
+					},
 
-				showBanner: () => {
-					set({ bannerVisible: true });
-				},
+					showBanner: () => {
+						set({ bannerVisible: true });
+					},
 
-				hideBanner: () => {
-					set({ bannerVisible: false });
-				},
+					hideBanner: () => {
+						set({ bannerVisible: false });
+					},
 
-				resetConsent: () => {
-					set({
-						accepted: null,
-						bannerVisible: true,
-						consentDate: null,
-						policyVersion: 0,
-					});
-				},
-			}),
-			{
-				name: "cookie-consent", // Clé localStorage
-				storage: createJSONStorage(() =>
-					typeof window !== "undefined" ? localStorage : noopStorage,
-				),
-				// Only persist consent-related data (not derived UI state)
-				partialize: (state) => ({
-					accepted: state.accepted,
-					consentDate: state.consentDate,
-					policyVersion: state.policyVersion,
+					resetConsent: () => {
+						set({
+							accepted: null,
+							bannerVisible: true,
+							consentDate: null,
+							policyVersion: 0,
+						});
+					},
 				}),
-				// Vérifier la version de la politique au chargement
-				onRehydrateStorage: () => (state) => {
-					if (state) {
-						let needsBanner = false;
+				{
+					name: "cookie-consent",
+					storage: createJSONStorage(() =>
+						typeof window !== "undefined" ? localStorage : noopStorage,
+					),
+					partialize: (state) => ({
+						accepted: state.accepted,
+						consentDate: state.consentDate,
+						policyVersion: state.policyVersion,
+					}),
+					onRehydrateStorage: () => (state) => {
+						if (state) {
+							let needsBanner = false;
 
-						// Vérifier version politique
-						if (state.policyVersion < CURRENT_POLICY_VERSION) {
-							needsBanner = true;
-						}
-
-						// Vérifier expiration du consentement (6 mois CNIL)
-						if (state.consentDate) {
-							const consentDate = new Date(state.consentDate);
-							const now = new Date();
-							const monthsDiff = getMonthsDifference(now, consentDate);
-
-							if (monthsDiff >= CONSENT_EXPIRY_MONTHS) {
-								// Consentement expiré → réinitialiser
+							if (state.policyVersion < CURRENT_POLICY_VERSION) {
 								needsBanner = true;
-								state.accepted = null;
-								state.consentDate = null;
-								state.policyVersion = 0;
 							}
+
+							if (state.consentDate) {
+								const consentDate = new Date(state.consentDate);
+								const now = new Date();
+								const monthsDiff = getMonthsDifference(now, consentDate);
+
+								if (monthsDiff >= CONSENT_EXPIRY_MONTHS) {
+									needsBanner = true;
+									state.accepted = null;
+									state.consentDate = null;
+									state.policyVersion = 0;
+								}
+							}
+
+							state.bannerVisible = needsBanner || state.accepted === null;
+							state._hasHydrated = true;
 						}
-
-						// Derive bannerVisible: show if no valid consent exists
-						state.bannerVisible = needsBanner || state.accepted === null;
-
-						// Marquer comme hydraté
-						state._hasHydrated = true;
-					}
+					},
 				},
-			},
+			),
+			{ name: "CookieConsentStore", enabled: process.env.NODE_ENV === "development" },
 		),
 	);
 };

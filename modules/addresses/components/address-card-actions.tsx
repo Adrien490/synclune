@@ -11,6 +11,7 @@ import { Star, Pencil, Trash2, LoaderCircle, EllipsisVertical } from "lucide-rea
 import { useSetDefaultAddress } from "../hooks/use-set-default-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { ADDRESS_DIALOG_ID, DELETE_ADDRESS_DIALOG_ID } from "../constants/dialog.constants";
 import type { UserAddress } from "../types/user-addresses.types";
 
@@ -41,23 +42,36 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				{!address.isDefault && (
-					<DropdownMenuItem onClick={() => handleSetDefault(address.id)} disabled={isPending}>
+					<DropdownMenuItem
+						onClick={() => {
+							triggerHaptic("selection");
+							handleSetDefault(address.id);
+						}}
+						disabled={isPending}
+					>
 						<Star className="mr-2 h-4 w-4" aria-hidden="true" />
 						Définir par défaut
 					</DropdownMenuItem>
 				)}
-				<DropdownMenuItem onClick={() => editDialog.open({ address })} disabled={isPending}>
+				<DropdownMenuItem
+					onClick={() => {
+						triggerHaptic("selection");
+						editDialog.open({ address });
+					}}
+					disabled={isPending}
+				>
 					<Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
 					Modifier
 				</DropdownMenuItem>
 				<DropdownMenuItem
-					onClick={() =>
+					onClick={() => {
+						triggerHaptic("selection");
 						deleteDialog.open({
 							addressId: address.id,
 							addressLabel: `${address.firstName} ${address.lastName} - ${address.city}`,
 							isDefault: address.isDefault,
-						})
-					}
+						});
+					}}
 					disabled={isPending}
 					className="text-destructive"
 				>

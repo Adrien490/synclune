@@ -8,6 +8,7 @@ import {
 	type ResponsiveSelectOption,
 } from "@/modules/customizations/components/responsive-select";
 import { FieldLabel } from "@/shared/components/forms";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { AnimatePresence, motion } from "motion/react";
 
@@ -24,6 +25,7 @@ interface CustomizationFormProps {
 export function CustomizationForm({ productTypes, userInfo }: CustomizationFormProps) {
 	const { form, action, isPending, isSubmitted, submittedData, captureFormValues } =
 		useCustomizationForm({ userInfo });
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	// Avertir l'utilisateur des changements non sauvegardés
 	useUnsavedChanges(form.state.isDirty && !isPending);
@@ -35,14 +37,18 @@ export function CustomizationForm({ productTypes, userInfo }: CustomizationFormP
 			) : (
 				<motion.form
 					key="form"
+					ref={formRef}
 					action={action}
 					className="space-y-6"
 					data-pending={isPending ? "" : undefined}
 					aria-busy={isPending}
-					onSubmit={() => {
+					onSubmit={async () => {
 						triggerHaptic("medium");
 						captureFormValues();
-						void form.handleSubmit();
+						await form.handleSubmit();
+						if (!form.state.isValid) {
+							focusFirstInvalid();
+						}
 					}}
 					exit={{ opacity: 0, y: -8 }}
 					transition={{ duration: 0.2 }}

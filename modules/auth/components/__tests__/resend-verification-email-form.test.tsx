@@ -22,6 +22,12 @@ vi.mock("@/shared/components/forms", () => ({
 							type={props.type ?? "text"}
 							disabled={props.disabled}
 							required={props.required}
+							inputMode={props.inputMode}
+							enterKeyHint={props.enterKeyHint}
+							autoComplete={props.autoComplete}
+							autoCapitalize={props.autoCapitalize}
+							autoCorrect={props.autoCorrect}
+							spellCheck={props.spellCheck}
 						/>
 					</div>
 				),
@@ -33,6 +39,8 @@ vi.mock("@/shared/components/forms", () => ({
 							type="password"
 							disabled={props.disabled}
 							required={props.required}
+							autoComplete={props.autoComplete}
+							enterKeyHint={props.enterKeyHint}
 						/>
 					</div>
 				),
@@ -48,6 +56,7 @@ vi.mock("@/shared/components/forms", () => ({
 		},
 		handleSubmit: vi.fn(),
 		reset: vi.fn(),
+		state: { isValid: true, values: { email: "" } },
 	}),
 }));
 
@@ -174,5 +183,38 @@ describe("ResendVerificationEmailForm", () => {
 		render(<ResendVerificationEmailForm />);
 		expect(screen.queryByTestId("success-alert")).toBeNull();
 		expect(screen.queryByTestId("error-alert")).toBeNull();
+	});
+
+	// ─── Mobile native 2026 attributes ────────────────────────────────────────
+
+	it("email input has mobile keyboard attributes (enterKeyHint='send')", () => {
+		render(<ResendVerificationEmailForm />);
+		const emailInput = screen.getByTestId("field-email").querySelector("input")!;
+		expect(emailInput.getAttribute("inputMode")).toBe("email");
+		expect(emailInput.getAttribute("enterKeyHint")).toBe("send");
+		expect(emailInput.getAttribute("autoComplete")).toBe("email");
+	});
+
+	it("submit button has aria-busy when pending", () => {
+		mockIsPending.value = true;
+		render(<ResendVerificationEmailForm />);
+		const button = screen.getByRole("button");
+		expect(button.getAttribute("aria-busy")).toBe("true");
+	});
+
+	it("success alert has role='status' with aria-live='polite'", () => {
+		mockState.value = { status: "success", message: "Email envoyé" };
+		render(<ResendVerificationEmailForm />);
+		const alert = screen.getByTestId("success-alert");
+		expect(alert.getAttribute("role")).toBe("status");
+		expect(alert.getAttribute("aria-live")).toBe("polite");
+	});
+
+	it("error alert has role='alert' with aria-live='assertive'", () => {
+		mockState.value = { status: "error", message: "Impossible d'envoyer" };
+		render(<ResendVerificationEmailForm />);
+		const alert = screen.getByTestId("error-alert");
+		expect(alert.getAttribute("role")).toBe("alert");
+		expect(alert.getAttribute("aria-live")).toBe("assertive");
 	});
 });

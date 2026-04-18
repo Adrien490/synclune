@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, Search, Heart, ShoppingBag, User } from "lucide-react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import {
 	BottomBar,
@@ -18,6 +19,7 @@ import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { ROUTES } from "@/shared/constants/urls";
 import { useMounted } from "@/shared/hooks/use-mounted";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { cn } from "@/shared/utils/cn";
 
@@ -54,6 +56,37 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 
 	// Delay mount until after hydration to avoid createPortal SSR mismatch.
 	const mounted = useMounted();
+
+	// Announce badge count changes to assistive tech (skip first render).
+	const prevCountsRef = useRef<{ cart: number; wishlist: number } | null>(null);
+	const [announcement, setAnnouncement] = useState<string>("");
+	const announce = useEffectEvent((msg: string) => setAnnouncement(msg));
+	useEffect(() => {
+		const prev = prevCountsRef.current;
+		if (prev === null) {
+			prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };
+			return;
+		}
+		const messages: string[] = [];
+		if (cartCount !== prev.cart) {
+			messages.push(
+				cartCount === 0
+					? "Panier vide"
+					: `Panier : ${cartCount} article${cartCount > 1 ? "s" : ""}`,
+			);
+		}
+		if (wishlistCount !== prev.wishlist) {
+			messages.push(
+				wishlistCount === 0
+					? "Favoris vides"
+					: `Favoris : ${wishlistCount} article${wishlistCount > 1 ? "s" : ""}`,
+			);
+		}
+		if (messages.length > 0) {
+			announce(messages.join(", "));
+		}
+		prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };
+	}, [cartCount, wishlistCount]);
 
 	const isHidden = HIDDEN_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`));
 
@@ -114,6 +147,9 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 
 	return createPortal(
 		<BottomBar as="nav" aria-label="Navigation principale de la boutique" isHidden={isHidden}>
+			<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+				{announcement}
+			</div>
 			<div className={bottomBarContainerClass}>
 				{tabs.map((tab) => {
 					const iconEl = (
@@ -135,7 +171,10 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 							<button
 								key={tab.id}
 								type="button"
-								onClick={tab.onClick}
+								onClick={() => {
+									triggerHaptic("selection");
+									tab.onClick();
+								}}
 								className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
 								aria-haspopup="dialog"
 								aria-label={tab.label}
@@ -151,6 +190,9 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 						<Link
 							key={tab.id}
 							href={tab.href}
+							onClick={() => {
+								if (!tab.isActive) triggerHaptic("selection");
+							}}
 							className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
 							aria-current={tab.isActive ? "page" : undefined}
 						>

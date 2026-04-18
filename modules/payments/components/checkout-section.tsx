@@ -11,7 +11,7 @@ interface CheckoutSectionProps {
  */
 export function CheckoutSection({ title, children }: CheckoutSectionProps) {
 	return (
-		<section className="space-y-5">
+		<section className="scroll-mt-24 scroll-mb-32 space-y-5 md:scroll-mt-28 lg:scroll-mb-0">
 			<h2 className="font-display text-lg font-medium tracking-wide sm:text-xl">{title}</h2>
 			{children}
 		</section>

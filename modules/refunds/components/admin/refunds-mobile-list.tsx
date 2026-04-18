@@ -34,6 +34,7 @@ interface RefundsMobileListProps {
 
 export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileListProps) {
 	const { refunds, pagination } = use(refundsPromise);
+	const refundIds = refunds.map((r) => r.id);
 
 	if (refunds.length === 0) {
 		return (
@@ -54,7 +55,7 @@ export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileList
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<RefundsSelectionToolbar />
+			<RefundsSelectionToolbar pageItemIds={refundIds} />
 
 			<ItemGroup aria-label="Remboursements" className="gap-2">
 				{refunds.map((refund) => (

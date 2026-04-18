@@ -36,13 +36,14 @@ export function SignInSocialForm({ callbackURL }: { callbackURL: string }) {
 							type="submit"
 							variant="outline"
 							size="lg"
-							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 transition-all duration-300"
+							aria-busy={isPending}
+							className="bg-background/50 hover:bg-background/70 border-border hover:border-primary/30 disabled:hover:border-border group w-full border-2 motion-safe:transition-all motion-safe:duration-300"
 						>
 							{isPending ? (
-								<LoaderCircle className="h-5 w-5 motion-safe:animate-spin" aria-hidden="true" />
+								<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
 							) : (
 								<div className="flex w-full items-center justify-center gap-3">
-									<span className="transition-transform duration-300 group-hover:scale-110">
+									<span className="motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-110">
 										{provider.icon}
 									</span>
 									<span className="font-medium">{`Continuer avec ${provider.name}`}</span>

@@ -1,8 +1,13 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useRef } from "react";
 
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+
+function prefersReducedMotion() {
+	if (typeof window === "undefined") return false;
+	return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
 
 /**
  * Finds the first field marked with `aria-invalid="true"` (or failing native
@@ -53,38 +58,36 @@ export function useFocusFirstError() {
 	const formRef = useRef<HTMLFormElement>(null);
 	const debounceRef = useRef(false);
 
-	const focusElement = useCallback((element: HTMLElement) => {
-		element.scrollIntoView({ block: "center", behavior: "smooth" });
+	const focusElement = (element: HTMLElement) => {
+		element.scrollIntoView({
+			block: "center",
+			behavior: prefersReducedMotion() ? "auto" : "smooth",
+		});
 		if (typeof (element as HTMLInputElement).focus === "function") {
 			(element as HTMLInputElement).focus({ preventScroll: true });
 		}
 		triggerHaptic("error");
-	}, []);
+	};
 
-	const focusFirstInvalid = useCallback(() => {
+	const focusFirstInvalid = () => {
 		const root = formRef.current;
 		if (!root) return false;
-		const first = root.querySelector<HTMLElement>(
-			"[aria-invalid='true']:not([aria-invalid='false'])",
-		);
+		const first = root.querySelector<HTMLElement>('[aria-invalid="true"]');
 		if (!first) return false;
 		focusElement(first);
 		return true;
-	}, [focusElement]);
+	};
 
-	const onInvalidCapture: React.FormEventHandler<HTMLFormElement> = useCallback(
-		(event) => {
-			if (debounceRef.current) return;
-			const target = event.target;
-			if (!(target instanceof HTMLElement)) return;
-			debounceRef.current = true;
-			focusElement(target);
-			window.setTimeout(() => {
-				debounceRef.current = false;
-			}, 300);
-		},
-		[focusElement],
-	);
+	const onInvalidCapture: React.FormEventHandler<HTMLFormElement> = (event) => {
+		if (debounceRef.current) return;
+		const target = event.target;
+		if (!(target instanceof HTMLElement)) return;
+		debounceRef.current = true;
+		focusElement(target);
+		window.setTimeout(() => {
+			debounceRef.current = false;
+		}, 300);
+	};
 
 	return { formRef, focusFirstInvalid, onInvalidCapture };
 }

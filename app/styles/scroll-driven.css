@@ -211,6 +211,13 @@
 			scale: 1;
 		}
 
+		/* Signature name: fade-in scroll-driven off — garder visible */
+		.signature-reveal .signature-name {
+			animation: none;
+			opacity: 1;
+			scale: 1;
+		}
+
 		/* Confession glow: gradient statique */
 		.confession-glow {
 			animation: none;

@@ -1,12 +1,12 @@
 import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { Button } from "@/shared/components/ui/button";
 import { SectionTitle } from "@/shared/components/section-title";
-import { SECTION_SPACING } from "@/shared/constants/spacing";
+import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { CursorGlow } from "@/modules/products/components/cursor-glow";
 import { ProductCard } from "@/modules/products/components/product-card";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
-import Link from "next/link";
+import { LatestCreationsHapticBridge } from "./latest-creations-haptic-bridge";
+import { SectionCtaLink } from "./section-cta-link";
 
 export async function LatestCreations({
 	productsPromise,
@@ -26,7 +26,7 @@ export async function LatestCreations({
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
 		>
-			<div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+			<div className={`relative ${CONTAINER_CLASS}`}>
 				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
@@ -44,15 +44,17 @@ export async function LatestCreations({
 						Tout juste sorties de l'atelier et réalisées avec amour !
 					</p>
 				</header>
-				<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
-					{products.map((product, index) => (
-						<CursorGlow key={product.id}>
-							<div className="scroll-reveal-card">
-								<ProductCard product={product} index={index} sectionId="latest" />
+				<LatestCreationsHapticBridge>
+					<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
+						{products.map((product, index) => (
+							<div key={product.id} data-latest-haptic="card" className="contents">
+								<CursorGlow>
+									<ProductCard product={product} index={index} sectionId="latest" />
+								</CursorGlow>
 							</div>
-						</CursorGlow>
-					))}
-				</div>
+						))}
+					</div>
+				</LatestCreationsHapticBridge>
 				<Fade
 					y={MOTION_CONFIG.section.cta.y}
 					delay={MOTION_CONFIG.section.cta.delay}
@@ -61,15 +63,13 @@ export async function LatestCreations({
 					once
 					className="text-center"
 				>
-					<Button
-						asChild
-						size="lg"
-						variant="outline"
-						className="transition-all duration-300 ease-out hover:scale-[1.02] hover:shadow-md active:scale-[0.98]"
+					<SectionCtaLink
+						href="/produits?sortBy=created-descending"
+						hapticPattern="selection"
 						aria-describedby="latest-creations-cta-description"
 					>
-						<Link href="/produits?sortBy=created-descending">Voir tous les nouveaux bijoux</Link>
-					</Button>
+						Voir tous les nouveaux bijoux
+					</SectionCtaLink>
 					<span id="latest-creations-cta-description" className="sr-only">
 						Découvrir tous les bijoux récemment créés dans la boutique Synclune
 					</span>

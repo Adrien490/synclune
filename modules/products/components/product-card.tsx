@@ -5,10 +5,10 @@ import Link from "next/link";
 import {
 	IMAGE_SIZES,
 	PRODUCT_TEXTS,
-	MAX_COLOR_SWATCHES,
 	ABOVE_FOLD_THRESHOLD,
 } from "@/modules/products/constants/product-texts.constants";
 import { ProductPrice } from "./product-price";
+import { ProductCardColorSwatches } from "./product-card-color-swatches";
 import { Badge } from "@/shared/components/ui/badge";
 import { WishlistButton } from "@/modules/wishlist/components/wishlist-button";
 import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-button";
@@ -16,7 +16,7 @@ import { StarIcon } from "@/shared/components/icons/star-icon";
 import type { Product } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
 import type { ComponentProps, ReactNode } from "react";
-import type { ColorSwatch, SkuFromList } from "@/modules/products/types/product-list.types";
+import type { SkuFromList } from "@/modules/products/types/product-list.types";
 
 function buildSkuUrl(baseUrl: string, sku: SkuFromList): string {
 	const params = new URLSearchParams();
@@ -63,62 +63,6 @@ function CardBadge({
 		>
 			{children}
 		</Badge>
-	);
-}
-
-/**
- * Liste de pastilles couleur avec liens vers la page produit filtree par couleur.
- */
-function ColorSwatchList({
-	colors,
-	productUrl,
-	title,
-}: {
-	colors: ColorSwatch[];
-	productUrl: string;
-	title: string;
-}) {
-	return (
-		<ul
-			className="relative z-30 m-0 flex list-none items-center gap-1.5 p-0"
-			aria-label={`${colors.length} couleurs disponibles pour ${title}`}
-		>
-			{colors.slice(0, MAX_COLOR_SWATCHES).map((color) => (
-				<li key={color.slug}>
-					<Link
-						href={`${productUrl}?color=${color.slug}`}
-						className={cn(
-							"focus-ring border-foreground/15 relative block size-7 shrink-0 rounded-full border sm:size-8",
-							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 transition-transform duration-150",
-							"after:absolute after:-inset-2 after:rounded-full after:content-['']",
-							!color.inStock && "opacity-50",
-						)}
-						style={{ backgroundColor: color.hex }}
-						aria-label={`${title} en ${color.name}${!color.inStock ? " - indisponible" : ""}`}
-					>
-						{!color.inStock && (
-							<span
-								aria-hidden="true"
-								className="absolute inset-0 flex items-center justify-center"
-							>
-								<span className="bg-foreground block h-[3px] w-[130%] rotate-[-45deg] rounded-full shadow-[0_0_0_1.5px_white]" />
-							</span>
-						)}
-					</Link>
-				</li>
-			))}
-			{colors.length > MAX_COLOR_SWATCHES && (
-				<li>
-					<Link
-						href={productUrl}
-						className="text-muted-foreground relative z-30 flex min-h-11 min-w-11 items-center justify-center text-xs"
-						aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
-					>
-						+{colors.length - MAX_COLOR_SWATCHES}
-					</Link>
-				</li>
-			)}
-		</ul>
 	);
 }
 
@@ -385,7 +329,7 @@ export function ProductCard({
 
 				{/* Color swatches — individual links to product page with ?color= */}
 				{colors.length > 1 && (
-					<ColorSwatchList colors={colors} productUrl={productUrl} title={title} />
+					<ProductCardColorSwatches colors={colors} productUrl={productUrl} title={title} />
 				)}
 
 				{/* Add to cart button - Mobile full-width (client island) */}

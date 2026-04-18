@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useUrlParam } from "./use-url-param";
 
 interface UseSelectFilterOptions {
 	/** Si true, utilise filterKey directement sans préfixe "filter_" */
@@ -9,65 +8,11 @@ interface UseSelectFilterOptions {
 }
 
 /**
- * Hook pour gérer l'état du filtrage avec un select simple
- * Gère un seul filtre avec une seule valeur
+ * Hook pour gérer l'état du filtrage avec un select simple.
+ * Gère un seul filtre avec une seule valeur (URL-backed, optimiste).
  */
 export function useSelectFilter(filterKey: string, options?: UseSelectFilterOptions) {
-	const router = useRouter();
-	const searchParams = useSearchParams();
-	const [isPending, startTransition] = useTransition();
-
-	// Préfixe pour les filtres dans l'URL (sauf si noPrefix)
 	const paramKey = options?.noPrefix ? filterKey : `filter_${filterKey}`;
-
-	// Récupérer la valeur actuelle du filtre (première valeur uniquement)
-	const currentValue = searchParams.get(paramKey) ?? "";
-
-	// État optimiste pour une meilleure UX
-	const [optimisticValue, setOptimisticValue] = useOptimistic<string>(currentValue);
-
-	// Mise à jour de l'URL avec les nouveaux paramètres
-	const updateUrlWithParams = (params: URLSearchParams, newValue: string) => {
-		startTransition(() => {
-			setOptimisticValue(newValue);
-			router.push(`?${params.toString()}`, { scroll: false });
-		});
-	};
-
-	// Définir une nouvelle valeur de filtre
-	const setFilter = (value: string) => {
-		const params = new URLSearchParams(searchParams);
-
-		// Supprimer d'abord le paramètre existant
-		params.delete(paramKey);
-
-		// Ajouter la nouvelle valeur si elle existe
-		if (value) {
-			params.set(paramKey, value);
-		}
-
-		// IMPORTANT: Réinitialiser la pagination à la page 1 quand un filtre change
-		// Cela permet d'éviter des pages vides quand le nombre de résultats diminue
-		params.set("page", "1");
-
-		updateUrlWithParams(params, value);
-	};
-
-	// Effacer le filtre
-	const clearFilter = () => {
-		const params = new URLSearchParams(searchParams);
-		params.delete(paramKey);
-
-		// Réinitialiser également la pagination à la page 1 quand on efface un filtre
-		params.set("page", "1");
-
-		updateUrlWithParams(params, "");
-	};
-
-	return {
-		value: optimisticValue,
-		setFilter,
-		clearFilter,
-		isPending,
-	};
+	const { value, update, clear, isPending } = useUrlParam(paramKey);
+	return { value, setFilter: update, clearFilter: clear, isPending };
 }

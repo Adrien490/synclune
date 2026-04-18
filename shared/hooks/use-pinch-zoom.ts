@@ -123,7 +123,9 @@ export function usePinchZoom({
 
 	const isZoomed = scale > config.minScale;
 
-	// Reset au changement de slide/désactivation (render-time state adjustment)
+	// Reset au changement de slide/désactivation — pattern officiel "storing
+	// information from previous renders" (react.dev/reference/react/useState)
+	// pour éviter le re-render supplémentaire d'un useEffect.
 	const [prevIsActive, setPrevIsActive] = useState(isActive);
 	if (prevIsActive !== isActive) {
 		setPrevIsActive(isActive);

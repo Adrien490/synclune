@@ -33,9 +33,13 @@ interface CollectionsSelectionToolbarProps {
 		status: CollectionStatus;
 		productsCount: number;
 	}>;
+	pageItemIds?: string[];
 }
 
-export function CollectionsSelectionToolbar({ collections }: CollectionsSelectionToolbarProps) {
+export function CollectionsSelectionToolbar({
+	collections,
+	pageItemIds,
+}: CollectionsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_COLLECTIONS_DIALOG_ID);
 	const bulkArchiveDialog = useAlertDialog(BULK_ARCHIVE_COLLECTIONS_DIALOG_ID);
@@ -171,7 +175,7 @@ export function CollectionsSelectionToolbar({ collections }: CollectionsSelectio
 	const label = `${selectedItems.length} collection${selectedItems.length > 1 ? "s" : ""} sélectionnée${selectedItems.length > 1 ? "s" : ""}`;
 
 	return (
-		<SelectionToolbar>
+		<SelectionToolbar pageItemIds={pageItemIds}>
 			<span className="text-muted-foreground text-sm">{label}</span>
 			<ResponsiveActionMenu>
 				<ResponsiveActionMenuTrigger asChild>

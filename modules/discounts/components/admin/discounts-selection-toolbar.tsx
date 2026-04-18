@@ -26,7 +26,10 @@ interface DiscountsSelectionToolbarProps {
 	}>;
 }
 
-export function DiscountsSelectionToolbar({ discounts }: DiscountsSelectionToolbarProps) {
+export function DiscountsSelectionToolbar({
+	discountIds,
+	discounts,
+}: DiscountsSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const bulkDeleteDialog = useAlertDialog(BULK_DELETE_DISCOUNTS_DIALOG_ID);
 
@@ -91,7 +94,7 @@ export function DiscountsSelectionToolbar({ discounts }: DiscountsSelectionToolb
 	const label = `${selectedItems.length} code${selectedItems.length > 1 ? "s" : ""} promo sélectionné${selectedItems.length > 1 ? "s" : ""}`;
 
 	return (
-		<SelectionToolbar>
+		<SelectionToolbar pageItemIds={discountIds}>
 			<span className="text-muted-foreground text-sm">{label}</span>
 			<ResponsiveActionMenu>
 				<ResponsiveActionMenuTrigger asChild>

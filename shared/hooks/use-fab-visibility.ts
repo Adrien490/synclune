@@ -59,8 +59,13 @@ export function useFabVisibility(options: UseFabVisibilityOptions) {
 	const toggle = () => {
 		const newHiddenState = !optimisticHidden;
 
-		// Fire onToggle immediately for instant SR announcements and focus management
-		onToggle?.(newHiddenState);
+		// Fire onToggle immediately for instant SR announcements and focus management.
+		// Guarded so a consumer throw cannot poison the transition / prevent rollback.
+		try {
+			onToggle?.(newHiddenState);
+		} catch {
+			// Consumer callback failure must not abort the optimistic update below.
+		}
 
 		startTransition(() => {
 			// Mise à jour optimiste immédiate (doit être dans la transition)

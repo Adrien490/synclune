@@ -9,6 +9,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { AUTH_ERROR_CODES } from "@/modules/auth/constants/error-messages";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { LoaderCircle } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +19,7 @@ import { useSignInEmail } from "@/modules/auth/hooks/use-sign-in-email";
 export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 	const { action, isPending, state } = useSignInEmail();
 	const errorRef = useRef<HTMLDivElement>(null);
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	const isActionError =
 		!!state?.message &&
@@ -46,11 +48,15 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
 			<form
+				ref={formRef}
 				action={action}
 				className="space-y-6"
-				onSubmit={() => {
+				onSubmit={async () => {
 					triggerHaptic("medium");
-					void form.handleSubmit();
+					await form.handleSubmit();
+					if (!form.state.isValid) {
+						focusFirstInvalid();
+					}
 				}}
 			>
 				{/* Indication des champs obligatoires */}

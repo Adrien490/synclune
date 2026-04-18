@@ -27,7 +27,13 @@ import { useBulkDeleteCustomizationRequests } from "../../hooks/use-bulk-delete-
 import { useBulkUpdateCustomizationStatus } from "../../hooks/use-bulk-update-customization-status";
 import type { CustomizationRequestStatus } from "../../types/customization.types";
 
-export function CustomizationSelectionToolbar() {
+interface CustomizationSelectionToolbarProps {
+	pageItemIds?: string[];
+}
+
+export function CustomizationSelectionToolbar({
+	pageItemIds,
+}: CustomizationSelectionToolbarProps = {}) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const statusDialog = useDialog<{ targetStatus: CustomizationRequestStatus }>(
 		"bulk-customization-status",
@@ -122,7 +128,7 @@ export function CustomizationSelectionToolbar() {
 
 	return (
 		<>
-			<SelectionToolbar>
+			<SelectionToolbar pageItemIds={pageItemIds}>
 				<span className="text-muted-foreground text-sm">{label}</span>
 				<ResponsiveActionMenu>
 					<ResponsiveActionMenuTrigger asChild>

@@ -7,6 +7,7 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { ActionStatus } from "@/shared/types/server-action";
 import { ErrorShake } from "@/shared/components/animations/error-shake";
 import { useFormErrorShake } from "@/modules/auth/hooks/use-form-error-shake";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { useSignUpEmail } from "@/modules/auth/hooks/use-sign-up-email";
@@ -21,6 +22,7 @@ export function SignUpEmailForm() {
 		},
 	});
 	const errorRef = useRef<HTMLDivElement>(null);
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	const isActionError =
 		!!state?.message &&
@@ -55,11 +57,15 @@ export function SignUpEmailForm() {
 	return (
 		<ErrorShake shake={shake} intensity={6} onShakeComplete={onShakeComplete}>
 			<form
+				ref={formRef}
 				action={action}
 				className="space-y-6"
-				onSubmit={() => {
+				onSubmit={async () => {
 					triggerHaptic("medium");
-					void form.handleSubmit();
+					await form.handleSubmit();
+					if (!form.state.isValid) {
+						focusFirstInvalid();
+					}
 				}}
 			>
 				<RequiredFieldsNote />
@@ -199,14 +205,16 @@ export function SignUpEmailForm() {
 
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
-						<Button disabled={!canSubmit || isPending} className="w-full" type="submit">
+						<Button
+							disabled={!canSubmit || isPending}
+							className="w-full"
+							type="submit"
+							aria-busy={isPending}
+						>
 							{isPending ? (
 								<>
-									<LoaderCircle
-										className="mr-2 h-4 w-4 motion-safe:animate-spin"
-										aria-hidden="true"
-									/>
-									Inscription en cours...
+									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									<span>Inscription en cours...</span>
 								</>
 							) : (
 								"S'inscrire"

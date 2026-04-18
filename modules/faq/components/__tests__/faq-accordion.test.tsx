@@ -1,12 +1,12 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockStagger: _mockStagger } = vi.hoisted(() => ({
-	mockStagger: vi.fn(),
+const { mockHaptic } = vi.hoisted(() => ({
+	mockHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -37,19 +37,42 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	},
 }));
 
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+}));
+
 vi.mock("@/shared/components/ui/accordion", () => ({
 	Accordion: ({
 		children,
 		type,
 		collapsible: _collapsible,
+		value,
+		onValueChange,
 		className,
 	}: {
 		children: React.ReactNode;
 		type?: string;
 		collapsible?: boolean;
+		value?: string;
+		onValueChange?: (value: string) => void;
 		className?: string;
 	}) => (
-		<div data-testid="accordion" data-type={type} className={className}>
+		<div
+			data-testid="accordion"
+			data-type={type}
+			data-value={value}
+			className={className}
+			role="presentation"
+			onClick={(e) => {
+				const target = e.target as HTMLElement;
+				const item = target.closest<HTMLElement>("[data-accordion-value]");
+				if (item && onValueChange) {
+					const clickedValue = item.dataset.accordionValue ?? "";
+					onValueChange(clickedValue === value ? "" : clickedValue);
+				}
+			}}
+			onKeyDown={() => {}}
+		>
 			{children}
 		</div>
 	),
@@ -62,7 +85,7 @@ vi.mock("@/shared/components/ui/accordion", () => ({
 		value: string;
 		className?: string;
 	}) => (
-		<div data-testid={`accordion-item-${value}`} className={className}>
+		<div data-testid={`accordion-item-${value}`} data-accordion-value={value} className={className}>
 			{children}
 		</div>
 	),
@@ -182,5 +205,45 @@ describe("FaqAccordion", () => {
 	it("uses question as the AccordionItem value/key", () => {
 		render(<FaqAccordion items={[{ question: "Unique question text", answer: "Answer" }]} />);
 		expect(screen.getByTestId("accordion-item-Unique question text")).toBeInTheDocument();
+	});
+
+	// ─── Haptic + a11y ────────────────────────────────────────────────────────
+
+	it("fires haptic selection on open", () => {
+		render(<FaqAccordion items={createFaqItems(2)} />);
+		const item = screen.getByTestId("accordion-item-Question 1");
+		fireEvent.click(item);
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("fires haptic on close (value back to empty)", () => {
+		render(<FaqAccordion items={createFaqItems(2)} />);
+		const item = screen.getByTestId("accordion-item-Question 2");
+		fireEvent.click(item);
+		fireEvent.click(item);
+		expect(mockHaptic).toHaveBeenCalledTimes(2);
+	});
+
+	it("renders a sr-only aria-live region for opened question", () => {
+		render(<FaqAccordion items={createFaqItems(2)} />);
+		const liveRegion = screen.getByRole("status");
+		expect(liveRegion).toHaveAttribute("aria-live", "polite");
+		expect(liveRegion).toHaveAttribute("aria-atomic", "true");
+		expect(liveRegion).toHaveClass("sr-only");
+	});
+
+	it("announces opened question text in live region", () => {
+		render(<FaqAccordion items={createFaqItems(2)} />);
+		const item = screen.getByTestId("accordion-item-Question 1");
+		fireEvent.click(item);
+		expect(screen.getByRole("status")).toHaveTextContent("Réponse affichée : Question 1");
+	});
+
+	it("clears the live region when the item is closed", () => {
+		render(<FaqAccordion items={createFaqItems(2)} />);
+		const item = screen.getByTestId("accordion-item-Question 1");
+		fireEvent.click(item);
+		fireEvent.click(item);
+		expect(screen.getByRole("status").textContent).toBe("");
 	});
 });

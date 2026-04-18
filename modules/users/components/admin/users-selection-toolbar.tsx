@@ -39,7 +39,7 @@ interface UsersSelectionToolbarProps {
 	userIds: string[];
 }
 
-export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
+export function UsersSelectionToolbar({ userIds }: UsersSelectionToolbarProps) {
 	const { selectedItems, clearSelection } = useSelectionContext();
 	const deleteDialog = useDialog("bulk-delete-users");
 	const suspendDialog = useDialog("bulk-suspend-users");
@@ -134,7 +134,7 @@ export function UsersSelectionToolbar({}: UsersSelectionToolbarProps) {
 
 	return (
 		<>
-			<SelectionToolbar>
+			<SelectionToolbar pageItemIds={userIds}>
 				<span className="text-muted-foreground text-sm">{label}</span>
 				<ResponsiveActionMenu>
 					<ResponsiveActionMenuTrigger asChild>

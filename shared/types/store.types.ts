@@ -10,10 +10,14 @@ import type { ReactNode } from "react";
 // =============================================================================
 
 /**
- * Identifiants des sheets disponibles
- * Extensible pour futurs sheets
+ * Identifiants des sheets coordonnés par le SheetStore (un seul ouvert à la fois).
+ *
+ * Ajouter un identifiant ici lorsqu'un sheet doit participer à la coordination
+ * globale (ex: fermer le panier quand on ouvre les filtres). Les sheets isolés
+ * qui n'ont pas besoin de cette coordination (menu nav, filter-sheet per-page)
+ * peuvent gérer leur propre état via Vaul directement.
  */
-export type SheetId = "cart";
+export type SheetId = "cart" | "menu" | "filters" | "search";
 
 export type SheetState = {
 	openSheet: SheetId | null;
@@ -66,7 +70,6 @@ export type DialogStore = DialogState & DialogActions;
 export type AlertDialogData = {
 	itemId?: string;
 	itemName?: string;
-	action?: () => void | Promise<void>;
 	[key: string]: unknown;
 };
 

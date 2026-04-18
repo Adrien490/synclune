@@ -124,4 +124,23 @@ describe("useWebShare", () => {
 		});
 		expect(writeText).toHaveBeenCalledWith("https://synclune.fr/p");
 	});
+
+	it("returns 'dismissed' without calling share/clipboard when URL is malformed", async () => {
+		const shareMock = vi.fn();
+		const writeText = vi.fn();
+		Object.defineProperty(navigator, "share", { value: shareMock, configurable: true });
+		Object.defineProperty(navigator, "clipboard", {
+			value: { writeText },
+			configurable: true,
+		});
+		const { result } = renderHook(() => useWebShare());
+
+		let outcome: string | undefined;
+		await act(async () => {
+			outcome = await result.current.share({ title: "T", url: "not-a-valid-url" });
+		});
+		expect(outcome).toBe("dismissed");
+		expect(shareMock).not.toHaveBeenCalled();
+		expect(writeText).not.toHaveBeenCalled();
+	});
 });

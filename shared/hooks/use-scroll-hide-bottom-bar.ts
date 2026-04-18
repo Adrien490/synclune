@@ -47,6 +47,14 @@ export function useScrollHideBottomBar({
 	useEffect(() => {
 		if (typeof window === "undefined") return;
 
+		// WCAG 2.3.3 — users who prefer reduced motion keep the bottom bar pinned.
+		if (
+			typeof window.matchMedia === "function" &&
+			window.matchMedia("(prefers-reduced-motion: reduce)").matches
+		) {
+			return;
+		}
+
 		const getScrollY = () => (target?.current ? target.current.scrollTop : window.scrollY);
 
 		lastYRef.current = getScrollY();

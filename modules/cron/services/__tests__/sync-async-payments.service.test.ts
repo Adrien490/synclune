@@ -8,6 +8,7 @@ const {
 	mockMarkOrderAsFailed,
 	mockExtractPaymentFailureDetails,
 	mockRestoreStockForOrder,
+	mockSendAdminCronFailedAlert,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		order: { findMany: vi.fn() },
@@ -20,6 +21,7 @@ const {
 	mockMarkOrderAsFailed: vi.fn(),
 	mockExtractPaymentFailureDetails: vi.fn(),
 	mockRestoreStockForOrder: vi.fn(),
+	mockSendAdminCronFailedAlert: vi.fn(),
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -42,6 +44,10 @@ vi.mock("@/modules/webhooks/services/payment-intent.service", () => ({
 	restoreStockForOrder: mockRestoreStockForOrder,
 }));
 
+vi.mock("@/modules/emails/services/admin-emails", () => ({
+	sendAdminCronFailedAlert: mockSendAdminCronFailedAlert,
+}));
+
 import { syncAsyncPayments } from "../sync-async-payments.service";
 import { THRESHOLDS } from "@/modules/cron/constants/limits";
 
@@ -52,6 +58,7 @@ describe("syncAsyncPayments", () => {
 		vi.setSystemTime(new Date("2026-02-09T12:00:00Z"));
 		mockGetStripeClient.mockReturnValue(mockStripe);
 		mockRestoreStockForOrder.mockResolvedValue({ restoredSkuIds: [] });
+		mockSendAdminCronFailedAlert.mockResolvedValue(undefined);
 	});
 
 	it("should return null when Stripe is not configured", async () => {
@@ -283,5 +290,47 @@ describe("syncAsyncPayments", () => {
 		expect(result!.updated).toBe(1);
 		expect(result!.errors).toBe(0);
 		expect(result!.hasMore).toBe(false);
+	});
+
+	it("should emit exactly one aggregated admin alert when multiple stock restores fail", async () => {
+		const orders = Array.from({ length: 3 }, (_, i) => ({
+			id: `order-stock-fail-${i}`,
+			orderNumber: `SYN-SF-${i}`,
+			stripePaymentIntentId: `pi_canceled_${i}`,
+			paymentStatus: "PENDING",
+		}));
+		mockPrisma.order.findMany.mockResolvedValue(orders);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ status: "canceled" });
+		mockExtractPaymentFailureDetails.mockReturnValue({ reason: "canceled" });
+		mockRestoreStockForOrder.mockRejectedValue(new Error("Stock DB locked"));
+
+		await syncAsyncPayments();
+
+		expect(mockSendAdminCronFailedAlert).toHaveBeenCalledTimes(1);
+		const alertPayload = mockSendAdminCronFailedAlert.mock.calls[0]![0];
+		expect(alertPayload.job).toBe("sync-async-payments");
+		expect(alertPayload.errors).toBe(3);
+		expect(alertPayload.details.issue).toBe("stock-restore-failed");
+		expect(alertPayload.details.failures).toHaveLength(3);
+		expect(alertPayload.details.failures[0]).toMatchObject({
+			orderId: "order-stock-fail-0",
+			orderNumber: "SYN-SF-0",
+			error: "Stock DB locked",
+		});
+	});
+
+	it("should not emit any admin alert when no stock restores fail", async () => {
+		const order = {
+			id: "order-ok",
+			orderNumber: "SYN-OK",
+			stripePaymentIntentId: "pi_ok",
+			paymentStatus: "PENDING",
+		};
+		mockPrisma.order.findMany.mockResolvedValue([order]);
+		mockStripe.paymentIntents.retrieve.mockResolvedValue({ status: "succeeded" });
+
+		await syncAsyncPayments();
+
+		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
 	});
 });

@@ -106,6 +106,12 @@ vi.mock("../../parallax-image", () => ({
 	ParallaxImage: ({ alt }: { alt: string }) => <img data-testid="parallax-image" alt={alt} />,
 }));
 
+vi.mock("../atelier-haptic-bridge", () => ({
+	AtelierHapticBridge: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="atelier-haptic-bridge">{children}</div>
+	),
+}));
+
 import { processSteps } from "../process-steps";
 
 afterEach(() => {
@@ -222,6 +228,27 @@ describe("AtelierSection structure", () => {
 		const ctaLink = screen.getByText("Créer votre bijou sur-mesure");
 		expect(ctaLink).toBeInTheDocument();
 		expect(ctaLink.closest("a")?.getAttribute("href")).toBe("/personnalisation");
+	});
+
+	it("wires CTA with data-atelier-haptic + viewTransitionName for native 2026 feedback", async () => {
+		await renderAtelierSection();
+
+		const ctaLink = screen.getByText("Créer votre bijou sur-mesure").closest("a");
+		expect(ctaLink).not.toBeNull();
+		expect(ctaLink!.getAttribute("data-atelier-haptic")).toBe("cta");
+		expect(ctaLink!.style.viewTransitionName).toBe("atelier-cta-personnalisation");
+	});
+
+	it("renders the new editorial subtitle", async () => {
+		await renderAtelierSection();
+
+		expect(screen.getByText(/chaque bijou prend vie, un geste à la fois/i)).toBeInTheDocument();
+	});
+
+	it("wraps content in the haptic bridge", async () => {
+		await renderAtelierSection();
+
+		expect(screen.getByTestId("atelier-haptic-bridge")).toBeInTheDocument();
 	});
 
 	it("renders the CTA anchor id", async () => {

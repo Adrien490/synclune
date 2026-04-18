@@ -25,7 +25,7 @@ export function AuthPageLayout({
 	return (
 		<div className="relative">
 			{/* Back link */}
-			<div className="absolute top-4 left-4 z-20 sm:top-6 sm:left-6">
+			<div className="absolute top-[max(1rem,env(safe-area-inset-top))] left-[max(1rem,env(safe-area-inset-left))] z-20 sm:top-[max(1.5rem,env(safe-area-inset-top))] sm:left-[max(1.5rem,env(safe-area-inset-left))]">
 				<Link
 					href={backHref}
 					className="text-muted-foreground hover:text-foreground group -ml-2 inline-flex min-h-11 min-w-11 items-center gap-2 pl-2 text-sm transition-colors duration-200"
@@ -40,13 +40,16 @@ export function AuthPageLayout({
 			</div>
 
 			{/* Logo */}
-			<div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
+			<div className="absolute top-[max(1rem,env(safe-area-inset-top))] right-[max(1rem,env(safe-area-inset-right))] z-20 sm:top-[max(1.5rem,env(safe-area-inset-top))] sm:right-[max(1.5rem,env(safe-area-inset-right))]">
 				<LogoAnimated size={44} preload href="/" />
 			</div>
 
 			{/* Main content */}
-			<div className="relative z-10 flex min-h-screen justify-center px-4 pt-16 pb-8 sm:pt-20 sm:pb-12">
-				<div className="my-auto w-full max-w-md space-y-8">
+			<div className="relative z-10 flex min-h-screen justify-center pt-[calc(4rem+env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] pb-[max(2rem,env(safe-area-inset-bottom))] pl-[max(1rem,env(safe-area-inset-left))] sm:pt-[calc(5rem+env(safe-area-inset-top))] sm:pb-[max(3rem,env(safe-area-inset-bottom))]">
+				<div
+					className="my-auto w-full max-w-md space-y-8"
+					style={{ viewTransitionName: "auth-card" }}
+				>
 					{/* Header */}
 					<AuthFadeIn>
 						<div className="space-y-7 text-center">
@@ -57,6 +60,7 @@ export function AuthPageLayout({
 										"text-foreground text-2xl font-normal sm:text-3xl lg:text-4xl",
 										"font-display",
 									)}
+									style={{ viewTransitionName: "auth-title" }}
 								>
 									{title}
 								</h1>

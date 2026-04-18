@@ -25,12 +25,14 @@ interface UseInstallPromptReturn {
 export function useInstallPrompt(initialState: InstallPromptState): UseInstallPromptReturn {
 	const [isTransitionPending, startTransition] = useTransition();
 
-	// Local session state: once dismissed in this session, stays hidden
-	const [dismissedThisSession, setDismissedThisSession] = useState(false);
-
 	// Compute initial banner visibility from server state
 	const initialBannerVisible =
 		initialState.visitCount >= INSTALL_PROMPT_MIN_VISITS && !initialState.permanentlyDismissed;
+
+	// Sticky session dismissal — survives `useOptimistic` automatic rollback
+	// (on server error), so dismiss/install stays dismissed even if the action
+	// fails. Intentionally separate from optimisticVisible; do NOT merge.
+	const [dismissedThisSession, setDismissedThisSession] = useState(false);
 
 	// Optimistic state for banner visibility
 	const [optimisticVisible, setOptimisticVisible] = useOptimistic(initialBannerVisible);

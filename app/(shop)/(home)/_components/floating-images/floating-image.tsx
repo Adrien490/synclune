@@ -1,9 +1,11 @@
 "use client";
 
-import { m, useTransform } from "motion/react";
+import { m, useInView, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { FLOAT_VARIANTS } from "./float-variants";
 import type { FloatingImageProps } from "./types";
 
@@ -13,8 +15,12 @@ export function FloatingImage({
 	scrollProgress,
 	parallaxOpacity,
 	shouldReduceMotion,
-	isInView,
+	isPriority,
 }: FloatingImageProps) {
+	const ref = useRef<HTMLDivElement>(null);
+	const isInView = useInView(ref, { margin: "50px" });
+	const triggerHaptic = useHaptic();
+
 	// Scroll-driven parallax: bidirectional for depth
 	const parallaxY = useTransform(
 		scrollProgress,
@@ -24,9 +30,23 @@ export function FloatingImage({
 
 	const mode = shouldReduceMotion ? "reduced" : "full";
 
+	function handlePointerMove(event: ReactPointerEvent<HTMLAnchorElement>) {
+		if (shouldReduceMotion) return;
+		const rect = event.currentTarget.getBoundingClientRect();
+		const x = ((event.clientX - rect.left) / rect.width) * 100;
+		const y = ((event.clientY - rect.top) / rect.height) * 100;
+		event.currentTarget.style.setProperty("--mx", `${x}%`);
+		event.currentTarget.style.setProperty("--my", `${y}%`);
+	}
+
+	function handleClick() {
+		triggerHaptic("light");
+	}
+
 	return (
 		// Layer 1: parallax scroll (y + opacity)
 		<m.div
+			ref={ref}
 			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.visibilityClass}`}
 			style={
 				shouldReduceMotion
@@ -82,13 +102,32 @@ export function FloatingImage({
 					<Link
 						href={`/creations/${image.slug}`}
 						tabIndex={-1}
+						prefetch
+						onPointerMove={handlePointerMove}
+						onClick={handleClick}
 						className="group focus-visible:ring-primary focus-visible:ring-offset-background relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm transition-shadow duration-300 hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-						style={{ "--img-glow": position.glowColor } as React.CSSProperties}
+						style={
+							{
+								"--img-glow": position.glowColor,
+								"--mx": "50%",
+								"--my": "50%",
+							} as React.CSSProperties
+						}
 					>
 						{/* Glow layer — visible on hover */}
 						<div
 							className="absolute -inset-3 rounded-3xl opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-60"
 							style={{ backgroundColor: position.glowColor }}
+						/>
+
+						{/* Pointer-tracking spotlight — native 2026 pattern (Apple/Linear/Vercel) */}
+						<div
+							aria-hidden="true"
+							className="pointer-events-none absolute inset-0 z-20 opacity-0 mix-blend-overlay group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-200 motion-reduce:hidden"
+							style={{
+								background:
+									"radial-gradient(160px circle at var(--mx) var(--my), rgb(255 255 255 / 0.22), transparent 65%)",
+							}}
 						/>
 
 						{/* Light reflection overlay */}
@@ -99,13 +138,25 @@ export function FloatingImage({
 							alt={image.alt}
 							width={position.width}
 							height={position.height}
-							loading="lazy"
+							loading={isPriority ? undefined : "lazy"}
+							priority={isPriority}
+							fetchPriority={isPriority ? "high" : "auto"}
 							className="relative aspect-4/5 w-full object-cover"
 							sizes={position.sizes}
 							quality={85}
 							placeholder={image.blurDataUrl ? "blur" : "empty"}
 							blurDataURL={image.blurDataUrl}
 						/>
+
+						{/* Preview pill — product title on hover */}
+						<div
+							className="pointer-events-none absolute right-2 bottom-2 left-2 z-30 flex justify-center opacity-0 group-hover:translate-y-0 group-hover:opacity-100 motion-safe:translate-y-1 motion-safe:transition-[opacity,transform] motion-safe:delay-150 motion-safe:duration-300"
+							aria-hidden="true"
+						>
+							<span className="bg-background/80 text-foreground max-w-full truncate rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm backdrop-blur-md">
+								{image.title}
+							</span>
+						</div>
 					</Link>
 				</m.div>
 			</div>

@@ -21,6 +21,7 @@ export function CustomizationsMobileList({
 	perPage,
 }: CustomizationsMobileListProps) {
 	const { items: requests, pagination } = use(requestsPromise);
+	const requestIds = requests.map((r) => r.id);
 
 	if (requests.length === 0) {
 		return (
@@ -41,7 +42,7 @@ export function CustomizationsMobileList({
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<CustomizationSelectionToolbar />
+			<CustomizationSelectionToolbar pageItemIds={requestIds} />
 
 			<ItemGroup aria-label="Demandes de personnalisation" className="gap-2">
 				{requests.map((request) => (
