@@ -31,9 +31,9 @@ export function ReopenStoreDialog({ previousFocusRef }: ReopenStoreDialogProps) 
 
 	const [, formAction, isPending] = useActionState(
 		withCallbacks(reopenStore, {
-			...createToastCallbacks({}),
+			...createToastCallbacks({ loadingMessage: "Réouverture de la boutique..." }),
 			onSuccess: (result) => {
-				createToastCallbacks({}).onSuccess(result);
+				createToastCallbacks({ loadingMessage: "Réouverture de la boutique..." }).onSuccess(result);
 				dialog.close();
 			},
 		}),

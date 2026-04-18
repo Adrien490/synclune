@@ -47,6 +47,7 @@ export function ColorFormDialog() {
 		withCallbacks(
 			createColor,
 			createToastCallbacks({
+				loadingMessage: "Création de la couleur...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -71,6 +72,7 @@ export function ColorFormDialog() {
 		withCallbacks(
 			updateColor,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour de la couleur...",
 				onSuccess: () => {
 					close();
 				},

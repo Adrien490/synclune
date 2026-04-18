@@ -15,6 +15,7 @@ export function useBulkMarkAsDelivered(options?: UseBulkMarkAsDeliveredOptions) 
 		withCallbacks(
 			bulkMarkAsDelivered,
 			createToastCallbacks({
+				loadingMessage: "Marquage comme livrées...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -21,7 +21,10 @@ export function EditClosureMessageForm({ currentMessage }: EditClosureMessageFor
 	});
 
 	const [, formAction, isPending] = useActionState(
-		withCallbacks(updateClosureMessage, createToastCallbacks({})),
+		withCallbacks(
+			updateClosureMessage,
+			createToastCallbacks({ loadingMessage: "Mise à jour du message..." }),
+		),
 		undefined,
 	);
 

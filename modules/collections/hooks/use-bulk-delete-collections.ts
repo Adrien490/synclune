@@ -19,6 +19,7 @@ export const useBulkDeleteCollections = (options?: UseBulkDeleteCollectionsOptio
 		withCallbacks(
 			bulkDeleteCollections,
 			createToastCallbacks({
+				loadingMessage: "Suppression des collections...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

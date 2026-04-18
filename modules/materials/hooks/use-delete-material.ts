@@ -19,6 +19,7 @@ export const useDeleteMaterial = (options?: UseDeleteMaterialOptions) => {
 		withCallbacks(
 			deleteMaterial,
 			createToastCallbacks({
+				loadingMessage: "Suppression du matériau...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

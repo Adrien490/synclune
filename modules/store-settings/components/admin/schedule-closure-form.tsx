@@ -18,9 +18,11 @@ export function ScheduleClosureForm() {
 
 	const [, formAction, isPending] = useActionState(
 		withCallbacks(scheduleClosure, {
-			...createToastCallbacks({}),
+			...createToastCallbacks({ loadingMessage: "Programmation de la fermeture..." }),
 			onSuccess: (result) => {
-				createToastCallbacks({}).onSuccess(result);
+				createToastCallbacks({ loadingMessage: "Programmation de la fermeture..." }).onSuccess(
+					result,
+				);
 				form.reset();
 			},
 		}),

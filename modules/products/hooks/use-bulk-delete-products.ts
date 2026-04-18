@@ -15,6 +15,7 @@ export const useBulkDeleteProducts = (options?: UseBulkDeleteProductsOptions) =>
 		withCallbacks(
 			bulkDeleteProducts,
 			createToastCallbacks({
+				loadingMessage: "Suppression des produits...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

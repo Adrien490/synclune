@@ -15,6 +15,7 @@ export const useBulkActivateProductTypes = (options?: UseBulkActivateProductType
 		withCallbacks(
 			bulkActivateProductTypes,
 			createToastCallbacks({
+				loadingMessage: "Activation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

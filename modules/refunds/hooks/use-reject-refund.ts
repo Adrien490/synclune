@@ -14,6 +14,7 @@ export function useRejectRefund(options?: UseRejectRefundOptions) {
 		withCallbacks(
 			rejectRefund,
 			createToastCallbacks({
+				loadingMessage: "Rejet du remboursement...",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

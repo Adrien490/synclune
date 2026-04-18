@@ -14,6 +14,7 @@ export const useDeleteUser = (options?: UseDeleteUserOptions) => {
 		withCallbacks(
 			deleteUser,
 			createToastCallbacks({
+				loadingMessage: "Suppression du compte...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

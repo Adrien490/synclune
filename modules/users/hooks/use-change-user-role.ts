@@ -15,6 +15,7 @@ export const useChangeUserRole = (options?: UseChangeUserRoleOptions) => {
 		withCallbacks(
 			changeUserRole,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du rôle...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

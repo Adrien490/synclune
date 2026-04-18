@@ -38,6 +38,7 @@ export const useDeleteReview = (options?: UseDeleteReviewOptions) => {
 		withCallbacks(
 			deleteReview,
 			createToastCallbacks({
+				loadingMessage: "Suppression de l'avis...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -20,6 +20,7 @@ export const useBulkArchiveCollections = (options?: UseBulkArchiveCollectionsOpt
 		withCallbacks(
 			bulkArchiveCollections,
 			createToastCallbacks({
+				loadingMessage: "Archivage des collections...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

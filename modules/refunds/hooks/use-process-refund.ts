@@ -14,6 +14,7 @@ export function useProcessRefund(options?: UseProcessRefundOptions) {
 		withCallbacks(
 			processRefund,
 			createToastCallbacks({
+				loadingMessage: "Traitement du remboursement...",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

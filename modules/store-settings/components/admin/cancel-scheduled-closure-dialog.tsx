@@ -34,9 +34,9 @@ export function CancelScheduledClosureDialog({
 
 	const [, formAction, isPending] = useActionState(
 		withCallbacks(cancelScheduledClosure, {
-			...createToastCallbacks({}),
+			...createToastCallbacks({ loadingMessage: "Annulation de la fermeture..." }),
 			onSuccess: (result) => {
-				createToastCallbacks({}).onSuccess(result);
+				createToastCallbacks({ loadingMessage: "Annulation de la fermeture..." }).onSuccess(result);
 				dialog.close();
 			},
 		}),

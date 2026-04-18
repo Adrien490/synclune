@@ -16,6 +16,7 @@ export const useDeleteFaqItem = (options?: UseDeleteFaqItemOptions) => {
 		withCallbacks(
 			deleteFaqItem,
 			createToastCallbacks({
+				loadingMessage: "Suppression de la question...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

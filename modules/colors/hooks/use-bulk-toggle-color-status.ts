@@ -14,6 +14,7 @@ export const useBulkToggleColorStatus = (options?: UseBulkToggleColorStatusOptio
 		withCallbacks(
 			bulkToggleColorStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des statuts...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

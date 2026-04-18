@@ -15,6 +15,7 @@ export const useToggleMaterialStatus = (options?: UseToggleMaterialStatusOptions
 		withCallbacks(
 			toggleMaterialStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

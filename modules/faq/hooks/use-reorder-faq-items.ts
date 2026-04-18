@@ -9,7 +9,10 @@ import { reorderFaqItems } from "../actions/reorder-faq-items";
 
 export const useReorderFaqItems = () => {
 	const [state, formAction, isFormPending] = useActionState(
-		withCallbacks(reorderFaqItems, createToastCallbacks()),
+		withCallbacks(
+			reorderFaqItems,
+			createToastCallbacks({ loadingMessage: "Réorganisation des questions..." }),
+		),
 		undefined,
 	);
 

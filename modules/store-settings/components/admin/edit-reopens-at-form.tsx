@@ -24,7 +24,10 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 	});
 
 	const [, formAction, isPending] = useActionState(
-		withCallbacks(updateReopensAt, createToastCallbacks({})),
+		withCallbacks(
+			updateReopensAt,
+			createToastCallbacks({ loadingMessage: "Mise à jour de la date..." }),
+		),
 		undefined,
 	);
 

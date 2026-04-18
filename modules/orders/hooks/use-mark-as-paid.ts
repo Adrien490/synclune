@@ -14,6 +14,7 @@ export function useMarkAsPaid(options?: UseMarkAsPaidOptions) {
 		withCallbacks(
 			markAsPaid,
 			createToastCallbacks({
+				loadingMessage: "Marquage comme payée...",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

@@ -14,6 +14,7 @@ export const useDuplicateCollection = (options?: UseDuplicateCollectionOptions) 
 		withCallbacks(
 			duplicateCollection,
 			createToastCallbacks({
+				loadingMessage: "Duplication de la collection...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

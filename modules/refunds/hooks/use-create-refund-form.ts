@@ -56,6 +56,7 @@ export const useCreateRefundForm = (options: UseCreateRefundFormOptions) => {
 		withCallbacks(
 			createRefund,
 			createToastCallbacks({
+				loadingMessage: "Création du remboursement...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

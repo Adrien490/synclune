@@ -15,6 +15,7 @@ export const useBulkDeactivateSkus = (options?: UseBulkDeactivateSkusOptions) =>
 		withCallbacks(
 			bulkDeactivateSkus,
 			createToastCallbacks({
+				loadingMessage: "Désactivation des variantes...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -48,6 +48,7 @@ export function MaterialFormDialog() {
 		withCallbacks(
 			createMaterial,
 			createToastCallbacks({
+				loadingMessage: "Création du matériau...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -73,6 +74,7 @@ export function MaterialFormDialog() {
 		withCallbacks(
 			updateMaterial,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du matériau...",
 				onSuccess: () => {
 					close();
 				},

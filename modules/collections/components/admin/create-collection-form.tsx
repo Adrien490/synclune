@@ -41,6 +41,7 @@ export function CreateCollectionForm({
 		withCallbacks(
 			createCollection,
 			createToastCallbacks({
+				loadingMessage: "Création de la collection...",
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					form.reset();

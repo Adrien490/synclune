@@ -14,6 +14,7 @@ export function useApproveRefund(options?: UseApproveRefundOptions) {
 		withCallbacks(
 			approveRefund,
 			createToastCallbacks({
+				loadingMessage: "Approbation du remboursement...",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

@@ -14,6 +14,7 @@ export const useBulkDeleteProductTypes = (options?: UseBulkDeleteProductTypesOpt
 		withCallbacks(
 			bulkDeleteProductTypes,
 			createToastCallbacks({
+				loadingMessage: "Suppression des types...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

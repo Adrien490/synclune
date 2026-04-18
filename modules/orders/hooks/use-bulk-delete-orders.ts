@@ -15,6 +15,7 @@ export function useBulkDeleteOrders(options?: UseBulkDeleteOrdersOptions) {
 		withCallbacks(
 			bulkDeleteOrders,
 			createToastCallbacks({
+				loadingMessage: "Suppression des commandes...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

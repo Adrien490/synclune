@@ -14,6 +14,7 @@ export function useUpdateMaterial(options?: UseUpdateMaterialOptions) {
 		withCallbacks(
 			updateMaterial,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du matériau...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

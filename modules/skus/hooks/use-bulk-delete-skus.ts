@@ -15,6 +15,7 @@ export const useBulkDeleteSkus = (options?: UseBulkDeleteSkusOptions) => {
 		withCallbacks(
 			bulkDeleteSkus,
 			createToastCallbacks({
+				loadingMessage: "Suppression des variantes...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

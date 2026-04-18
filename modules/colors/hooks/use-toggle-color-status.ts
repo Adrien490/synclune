@@ -15,6 +15,7 @@ export const useToggleColorStatus = (options?: UseToggleColorStatusOptions) => {
 		withCallbacks(
 			toggleColorStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

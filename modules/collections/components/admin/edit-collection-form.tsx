@@ -46,6 +46,7 @@ export function EditCollectionForm({
 		withCallbacks(
 			updateCollection,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour de la collection...",
 				onSuccess: (_result) => {
 					onSuccess?.();
 					if (redirectOnSuccess) {

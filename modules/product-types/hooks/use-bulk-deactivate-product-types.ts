@@ -15,6 +15,7 @@ export const useBulkDeactivateProductTypes = (options?: UseBulkDeactivateProduct
 		withCallbacks(
 			bulkDeactivateProductTypes,
 			createToastCallbacks({
+				loadingMessage: "Désactivation en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

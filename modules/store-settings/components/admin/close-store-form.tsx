@@ -24,9 +24,9 @@ export function CloseStoreForm() {
 
 	const [, formAction, isPending] = useActionState(
 		withCallbacks(closeStore, {
-			...createToastCallbacks({}),
+			...createToastCallbacks({ loadingMessage: "Fermeture de la boutique..." }),
 			onSuccess: (result) => {
-				createToastCallbacks({}).onSuccess(result);
+				createToastCallbacks({ loadingMessage: "Fermeture de la boutique..." }).onSuccess(result);
 				form.reset();
 				router.push("/admin/configuration/boutique");
 			},

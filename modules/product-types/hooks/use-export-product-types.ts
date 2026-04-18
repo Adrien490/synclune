@@ -36,6 +36,7 @@ export const useExportProductTypes = () => {
 		withCallbacks(
 			exportProductTypes,
 			createToastCallbacks({
+				loadingMessage: "Export en cours...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -16,6 +16,7 @@ export function ExportSingleOrderButton({ orderId }: ExportSingleOrderButtonProp
 		withCallbacks(
 			exportSingleOrder,
 			createToastCallbacks({
+				loadingMessage: "Export en cours...",
 				onSuccess: (state) => {
 					if (!state.csv || !state.filename) return;
 					const blob = new Blob([state.csv], { type: "text/csv;charset=utf-8" });

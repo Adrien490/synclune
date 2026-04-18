@@ -15,6 +15,7 @@ export const useBulkUpdatePrice = (options?: UseBulkUpdatePriceOptions) => {
 		withCallbacks(
 			bulkUpdatePrice,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des prix...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

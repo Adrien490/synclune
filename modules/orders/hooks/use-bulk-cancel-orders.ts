@@ -15,6 +15,7 @@ export function useBulkCancelOrders(options?: UseBulkCancelOrdersOptions) {
 		withCallbacks(
 			bulkCancelOrders,
 			createToastCallbacks({
+				loadingMessage: "Annulation des commandes...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

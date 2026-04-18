@@ -14,6 +14,7 @@ export function useMarkAsDelivered(options?: UseMarkAsDeliveredOptions) {
 		withCallbacks(
 			markAsDelivered,
 			createToastCallbacks({
+				loadingMessage: "Marquage comme livrée...",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

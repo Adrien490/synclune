@@ -15,6 +15,7 @@ export const useBulkChangeProductStatus = (options?: UseBulkChangeProductStatusO
 		withCallbacks(
 			bulkChangeProductStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des statuts...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

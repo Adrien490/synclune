@@ -32,6 +32,7 @@ export const useBulkArchiveProducts = (options?: UseBulkArchiveProductsOptions) 
 		withCallbacks(
 			bulkArchiveProducts,
 			createToastCallbacks({
+				loadingMessage: "Archivage des produits...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

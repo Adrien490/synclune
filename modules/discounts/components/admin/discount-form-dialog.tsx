@@ -68,6 +68,7 @@ export function DiscountFormDialog() {
 		withCallbacks(
 			createDiscount,
 			createToastCallbacks({
+				loadingMessage: "Création du code...",
 				onSuccess: () => {
 					haptic("success");
 					close();
@@ -86,6 +87,7 @@ export function DiscountFormDialog() {
 		withCallbacks(
 			updateDiscount,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du code...",
 				onSuccess: () => {
 					haptic("success");
 					close();

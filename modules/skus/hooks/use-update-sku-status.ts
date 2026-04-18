@@ -19,6 +19,7 @@ export const useUpdateProductSkuStatus = (options?: UseUpdateProductSkuStatusOpt
 		withCallbacks(
 			updateProductSkuStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

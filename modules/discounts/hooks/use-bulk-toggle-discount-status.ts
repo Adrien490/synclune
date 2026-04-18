@@ -31,6 +31,7 @@ export function useBulkToggleDiscountStatus(options?: UseBulkToggleDiscountStatu
 		withCallbacks(
 			bulkToggleDiscountStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des statuts...",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

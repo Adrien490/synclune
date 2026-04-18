@@ -15,6 +15,7 @@ export const useBulkChangeUserRole = (options?: UseBulkChangeUserRoleOptions) =>
 		withCallbacks(
 			bulkChangeUserRole,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des rôles...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

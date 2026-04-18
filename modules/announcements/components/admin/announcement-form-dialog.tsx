@@ -50,6 +50,7 @@ export function AnnouncementFormDialog() {
 		withCallbacks(
 			createAnnouncement,
 			createToastCallbacks({
+				loadingMessage: "Création de l'annonce...",
 				onSuccess: () => {
 					close();
 					form.reset();
@@ -63,6 +64,7 @@ export function AnnouncementFormDialog() {
 		withCallbacks(
 			updateAnnouncement,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour de l'annonce...",
 				onSuccess: () => {
 					close();
 				},

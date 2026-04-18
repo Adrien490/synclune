@@ -15,6 +15,7 @@ export const useBulkActivateSkus = (options?: UseBulkActivateSkusOptions) => {
 		withCallbacks(
 			bulkActivateSkus,
 			createToastCallbacks({
+				loadingMessage: "Activation des variantes...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

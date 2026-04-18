@@ -45,6 +45,7 @@ export function FaqFormDialog() {
 		withCallbacks(
 			createFaqItem,
 			createToastCallbacks({
+				loadingMessage: "Création de la question...",
 				onSuccess: () => {
 					close();
 					form.reset();
@@ -58,6 +59,7 @@ export function FaqFormDialog() {
 		withCallbacks(
 			updateFaqItem,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour de la question...",
 				onSuccess: () => {
 					close();
 				},

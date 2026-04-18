@@ -19,6 +19,7 @@ export const useBulkDeleteColors = (options?: UseBulkDeleteColorsOptions) => {
 		withCallbacks(
 			bulkDeleteColors,
 			createToastCallbacks({
+				loadingMessage: "Suppression des couleurs...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

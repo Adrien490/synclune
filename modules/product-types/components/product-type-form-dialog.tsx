@@ -46,6 +46,7 @@ export function ProductTypeFormDialog() {
 		withCallbacks(
 			createProductType,
 			createToastCallbacks({
+				loadingMessage: "Création du type...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -71,6 +72,7 @@ export function ProductTypeFormDialog() {
 		withCallbacks(
 			updateProductType,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du type...",
 				onSuccess: () => {
 					close();
 				},

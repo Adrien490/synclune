@@ -17,6 +17,7 @@ export const useToggleAnnouncementStatus = (options?: UseToggleAnnouncementStatu
 		withCallbacks(
 			toggleAnnouncementStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

@@ -14,6 +14,7 @@ export function useMarkAsProcessing(options?: UseMarkAsProcessingOptions) {
 		withCallbacks(
 			markAsProcessing,
 			createToastCallbacks({
+				loadingMessage: "Marquage en préparation...",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

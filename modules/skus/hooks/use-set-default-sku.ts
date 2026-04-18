@@ -15,6 +15,7 @@ export const useSetDefaultSku = (options?: UseSetDefaultSkuOptions) => {
 		withCallbacks(
 			setDefaultSku,
 			createToastCallbacks({
+				loadingMessage: "Définition de la variante par défaut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

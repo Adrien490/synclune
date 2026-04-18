@@ -28,6 +28,7 @@ export const useToggleProductStatus = (options?: UseToggleProductStatusOptions) 
 		withCallbacks(
 			toggleProductStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

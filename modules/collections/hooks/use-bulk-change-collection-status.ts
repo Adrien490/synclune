@@ -14,6 +14,7 @@ export const useBulkChangeCollectionStatus = (options?: UseBulkChangeCollectionS
 		withCallbacks(
 			bulkChangeCollectionStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des statuts...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

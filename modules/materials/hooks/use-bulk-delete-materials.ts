@@ -19,6 +19,7 @@ export const useBulkDeleteMaterials = (options?: UseBulkDeleteMaterialsOptions) 
 		withCallbacks(
 			bulkDeleteMaterials,
 			createToastCallbacks({
+				loadingMessage: "Suppression des matériaux...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

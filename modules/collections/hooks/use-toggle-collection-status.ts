@@ -15,6 +15,7 @@ export const useToggleCollectionStatus = (options?: UseToggleCollectionStatusOpt
 		withCallbacks(
 			toggleCollectionStatus,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour du statut...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

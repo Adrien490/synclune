@@ -14,6 +14,7 @@ export const useBulkRestoreUsers = (options?: UseBulkRestoreUsersOptions) => {
 		withCallbacks(
 			bulkRestoreUsers,
 			createToastCallbacks({
+				loadingMessage: "Restauration des comptes...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

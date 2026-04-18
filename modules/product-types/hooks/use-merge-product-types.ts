@@ -15,6 +15,7 @@ export const useMergeProductTypes = (options?: UseMergeProductTypesOptions) => {
 		withCallbacks(
 			mergeProductTypes,
 			createToastCallbacks({
+				loadingMessage: "Fusion des types...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

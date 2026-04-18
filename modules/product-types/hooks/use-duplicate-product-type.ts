@@ -15,6 +15,7 @@ export const useDuplicateProductType = (options?: UseDuplicateProductTypeOptions
 		withCallbacks(
 			duplicateProductType,
 			createToastCallbacks({
+				loadingMessage: "Duplication du type...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

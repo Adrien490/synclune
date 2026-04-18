@@ -15,6 +15,7 @@ export const useBulkDeleteAnnouncements = (options?: UseBulkDeleteAnnouncementsO
 		withCallbacks(
 			bulkDeleteAnnouncements,
 			createToastCallbacks({
+				loadingMessage: "Suppression des annonces...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

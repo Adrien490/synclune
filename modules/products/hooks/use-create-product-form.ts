@@ -22,6 +22,7 @@ export const useCreateProductForm = (options?: UseCreateProductFormOptions) => {
 		withCallbacks(
 			createProduct,
 			createToastCallbacks({
+				loadingMessage: "Création du produit...",
 				showSuccessToast: false,
 				showErrorToast: true,
 				onSuccess: (result: unknown) => {

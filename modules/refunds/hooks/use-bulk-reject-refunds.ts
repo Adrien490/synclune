@@ -15,6 +15,7 @@ export function useBulkRejectRefunds(options?: UseBulkRejectRefundsOptions) {
 		withCallbacks(
 			bulkRejectRefunds,
 			createToastCallbacks({
+				loadingMessage: "Rejet des remboursements...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

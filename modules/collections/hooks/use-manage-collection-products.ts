@@ -19,6 +19,7 @@ export const useManageCollectionProducts = (options?: UseManageCollectionProduct
 		withCallbacks(
 			addProductsToCollection,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des produits...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -38,6 +39,7 @@ export const useManageCollectionProducts = (options?: UseManageCollectionProduct
 		withCallbacks(
 			removeProductsFromCollection,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour des produits...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

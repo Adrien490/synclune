@@ -23,6 +23,7 @@ export const useUpdateProductSkuForm = ({ sku, onSuccess }: UseUpdateProductSkuF
 		withCallbacks(
 			updateProductSku,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour de la variante...",
 				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
 					// Call the custom success callback if provided

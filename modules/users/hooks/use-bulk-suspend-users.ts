@@ -14,6 +14,7 @@ export const useBulkSuspendUsers = (options?: UseBulkSuspendUsersOptions) => {
 		withCallbacks(
 			bulkSuspendUsers,
 			createToastCallbacks({
+				loadingMessage: "Suspension des utilisateurs...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

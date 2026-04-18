@@ -16,6 +16,7 @@ export const useDeleteAnnouncement = (options?: UseDeleteAnnouncementOptions) =>
 		withCallbacks(
 			deleteAnnouncement,
 			createToastCallbacks({
+				loadingMessage: "Suppression de l'annonce...",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

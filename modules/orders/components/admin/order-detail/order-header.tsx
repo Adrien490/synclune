@@ -63,6 +63,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 		withCallbacks(
 			exportSingleOrder,
 			createToastCallbacks({
+				loadingMessage: "Mise à jour de la commande...",
 				onSuccess: (state) => {
 					if (!state.csv || !state.filename) return;
 					const blob = new Blob([state.csv], { type: "text/csv;charset=utf-8" });
