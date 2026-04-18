@@ -1,11 +1,9 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
-import { checkArcjetProtection } from "@/modules/auth/utils/arcjet-protection";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { ActionState } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 import { resendVerificationEmailSchema } from "../schemas/auth.schemas";
 
 export const resendVerificationEmail = async (
@@ -13,11 +11,6 @@ export const resendVerificationEmail = async (
 	formData: FormData,
 ): Promise<ActionState> => {
 	try {
-		// Protection Arcjet (Shield + Bot Detection + Rate Limiting)
-		const headersList = await headers();
-		const arcjetBlocked = await checkArcjetProtection("/send-verification-email", headersList);
-		if (arcjetBlocked) return arcjetBlocked;
-
 		// Validation des données
 		const rawData = {
 			email: safeFormGet(formData, "email"),

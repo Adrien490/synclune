@@ -35,21 +35,12 @@ vi.mock("../dashboard-refresh-sheet", () => ({
 	},
 }));
 
-vi.mock("../export-dashboard-button", () => ({
-	ExportDashboardButton: ({ triggerSlot }: { triggerSlot?: React.ReactNode }) => (
-		<div data-testid="export-button-wrapper">{triggerSlot}</div>
-	),
-}));
-
 vi.mock("lucide-react", () => ({
 	CalendarRange: (props: { className?: string }) => (
 		<span data-testid="icon-period" className={props.className} />
 	),
 	RefreshCw: (props: { className?: string }) => (
 		<span data-testid="icon-refresh" className={props.className} />
-	),
-	Download: (props: { className?: string }) => (
-		<span data-testid="icon-export" className={props.className} />
 	),
 }));
 
@@ -72,11 +63,7 @@ describe("DashboardMobileActionBar", () => {
 		mockSearchParamsGet.mockReturnValue(null);
 	});
 
-	// -------------------------------------------------------------------------
-	// Structure
-	// -------------------------------------------------------------------------
-
-	it("renders a toolbar nav region with 3 buttons", () => {
+	it("renders a toolbar nav region with 2 buttons", () => {
 		render(<DashboardMobileActionBar />);
 
 		const toolbar = screen.getByRole("toolbar", { name: /actions du tableau de bord/i });
@@ -87,12 +74,9 @@ describe("DashboardMobileActionBar", () => {
 			screen.getByRole("button", { name: /ouvrir le sélecteur de période/i }),
 		).toBeInTheDocument();
 		expect(screen.getByRole("button", { name: /ouvrir la synchronisation/i })).toBeInTheDocument();
-		expect(
-			screen.getByRole("button", { name: /exporter le rapport du tableau de bord/i }),
-		).toBeInTheDocument();
 	});
 
-	it("does NOT render a 'Tableau de bord' h1 (avoids duplicate with AdminMobileHeader)", () => {
+	it("does NOT render a 'Tableau de bord' h1", () => {
 		render(<DashboardMobileActionBar />);
 
 		expect(screen.queryByRole("heading", { level: 1, name: /tableau de bord/i })).toBeNull();
@@ -111,7 +95,7 @@ describe("DashboardMobileActionBar", () => {
 		);
 	});
 
-	it("applies 44px touch target (h-11) to all 3 buttons", () => {
+	it("applies 44px touch target (h-11) to all buttons", () => {
 		render(<DashboardMobileActionBar />);
 
 		const buttons = screen.getAllByRole("button");
@@ -119,10 +103,6 @@ describe("DashboardMobileActionBar", () => {
 			expect(btn.className).toMatch(/h-11/);
 		}
 	});
-
-	// -------------------------------------------------------------------------
-	// Active state
-	// -------------------------------------------------------------------------
 
 	it("shows active dot on Période button when period differs from default", () => {
 		mockSearchParamsGet.mockImplementation((key: string) => (key === "period" ? "year" : null));
@@ -145,10 +125,6 @@ describe("DashboardMobileActionBar", () => {
 			screen.getByRole("button", { name: /ouvrir le sélecteur de période/i }),
 		).toBeInTheDocument();
 	});
-
-	// -------------------------------------------------------------------------
-	// Sheet opening
-	// -------------------------------------------------------------------------
 
 	it("opens the period sheet when Période is tapped + fires selection haptic", async () => {
 		const user = userEvent.setup();
@@ -174,39 +150,13 @@ describe("DashboardMobileActionBar", () => {
 		const user = userEvent.setup();
 		render(<DashboardMobileActionBar />);
 
-		// First open Refresh
 		await user.click(screen.getByRole("button", { name: /synchronisation/i }));
 		expect(await screen.findByTestId("refresh-sheet")).toBeInTheDocument();
 
-		// Then open Period — Refresh should have closed
 		await user.click(screen.getByRole("button", { name: /période/i }));
 		expect(await screen.findByTestId("period-sheet")).toBeInTheDocument();
 		expect(screen.queryByTestId("refresh-sheet")).toBeNull();
 	});
-
-	it("passes triggerSlot to ExportDashboardButton (reuses existing Drawer logic)", () => {
-		render(<DashboardMobileActionBar />);
-
-		const wrapper = screen.getByTestId("export-button-wrapper");
-		expect(wrapper).toBeInTheDocument();
-		// The toolbar-styled button is rendered inside the ExportDashboardButton wrapper
-		expect(
-			wrapper.querySelector('button[aria-label="Exporter le rapport du tableau de bord"]'),
-		).not.toBeNull();
-	});
-
-	it("fires selection haptic when the export toolbar button is tapped", async () => {
-		const user = userEvent.setup();
-		render(<DashboardMobileActionBar />);
-
-		await user.click(screen.getByRole("button", { name: /exporter/i }));
-
-		expect(mockHaptic).toHaveBeenCalledWith("selection");
-	});
-
-	// -------------------------------------------------------------------------
-	// Keyboard navigation (toolbar pattern)
-	// -------------------------------------------------------------------------
 
 	it("navigates between buttons with ArrowRight / ArrowLeft", async () => {
 		const user = userEvent.setup();
@@ -219,33 +169,26 @@ describe("DashboardMobileActionBar", () => {
 		expect(screen.getByRole("button", { name: /synchronisation/i })).toHaveFocus();
 
 		await user.keyboard("{ArrowRight}");
-		expect(screen.getByRole("button", { name: /exporter/i })).toHaveFocus();
-
-		await user.keyboard("{ArrowRight}");
 		// wraps around
 		expect(screen.getByRole("button", { name: /période/i })).toHaveFocus();
 
 		await user.keyboard("{ArrowLeft}");
-		expect(screen.getByRole("button", { name: /exporter/i })).toHaveFocus();
+		expect(screen.getByRole("button", { name: /synchronisation/i })).toHaveFocus();
 	});
 
 	it("jumps to first/last with Home/End", async () => {
 		const user = userEvent.setup();
 		render(<DashboardMobileActionBar />);
 
-		const refreshBtn = screen.getByRole("button", { name: /synchronisation/i });
-		refreshBtn.focus();
+		const periodBtn = screen.getByRole("button", { name: /période/i });
+		periodBtn.focus();
 
 		await user.keyboard("{End}");
-		expect(screen.getByRole("button", { name: /exporter/i })).toHaveFocus();
+		expect(screen.getByRole("button", { name: /synchronisation/i })).toHaveFocus();
 
 		await user.keyboard("{Home}");
 		expect(screen.getByRole("button", { name: /période/i })).toHaveFocus();
 	});
-
-	// -------------------------------------------------------------------------
-	// Live region
-	// -------------------------------------------------------------------------
 
 	it("exposes a sr-only live region for status announcements", () => {
 		render(<DashboardMobileActionBar />);

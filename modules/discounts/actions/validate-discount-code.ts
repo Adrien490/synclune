@@ -4,8 +4,6 @@ import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
-import { ajDiscountValidation } from "@/shared/lib/arcjet";
-import { getBaseUrl } from "@/shared/constants/urls";
 import { headers } from "next/headers";
 import { validateDiscountCodeSchema } from "../schemas/discount.schemas";
 import {
@@ -130,20 +128,8 @@ export async function validateDiscountCode(
 	customerEmail?: string,
 ): Promise<ValidateDiscountCodeReturn> {
 	try {
-		// Arcjet: distributed rate limiting + shield + bot detection
+		// In-memory rate limiting
 		const headersList = await headers();
-		const arcjetRequest = new Request(`${getBaseUrl()}/discount/validate`, {
-			method: "POST",
-			headers: headersList,
-		});
-		const arcjetDecision = await ajDiscountValidation.protect(arcjetRequest, {
-			requested: 1,
-		});
-		if (arcjetDecision.isDenied()) {
-			return { valid: false, error: "Trop de tentatives. Veuillez reessayer plus tard." };
-		}
-
-		// In-memory rate limiting (complementary, for burst protection)
 		const ip = (await getClientIp(headersList)) ?? "unknown";
 		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
 		if ("error" in rateCheck)

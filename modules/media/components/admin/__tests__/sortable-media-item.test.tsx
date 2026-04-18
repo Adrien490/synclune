@@ -6,12 +6,13 @@ import type { MediaItem } from "@/modules/media/types/hooks.types";
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
-const { mockUseSortable } = vi.hoisted(() => ({
+const { mockUseSortable, mockUseIsTouchDevice } = vi.hoisted(() => ({
 	mockUseSortable: vi.fn(() => ({
 		ref: vi.fn(),
 		handleRef: vi.fn(),
 		isDragSource: false,
 	})),
+	mockUseIsTouchDevice: vi.fn(() => false),
 }));
 
 // ---------------------------------------------------------------------------
@@ -19,6 +20,10 @@ const { mockUseSortable } = vi.hoisted(() => ({
 // ---------------------------------------------------------------------------
 vi.mock("@dnd-kit/react/sortable", () => ({
 	useSortable: mockUseSortable,
+}));
+
+vi.mock("@/shared/hooks/use-touch-device", () => ({
+	useIsTouchDevice: mockUseIsTouchDevice,
 }));
 
 vi.mock("next/image", () => ({
@@ -41,24 +46,17 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="dropdown-menu">{children}</div>
+vi.mock("@/shared/components/ui/drawer", () => ({
+	Drawer: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="drawer">{children}</div>
 	),
-	DropdownMenuContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="dropdown-content">{children}</div>
+	DrawerContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="drawer-content">{children}</div>
 	),
-	DropdownMenuItem: ({ children, onClick, ...props }: Record<string, unknown>) => (
-		<button
-			data-testid="dropdown-item"
-			onClick={onClick as () => void}
-			{...(props as Record<string, string>)}
-		>
-			{children as React.ReactNode}
-		</button>
-	),
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	DrawerHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	DrawerTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
+	DrawerTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	DrawerClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
@@ -127,6 +125,7 @@ describe("SortableMediaItem", () => {
 			handleRef: vi.fn(),
 			isDragSource: false,
 		});
+		mockUseIsTouchDevice.mockReturnValue(false);
 	});
 
 	afterEach(() => {
@@ -305,9 +304,13 @@ describe("SortableMediaItem", () => {
 	});
 
 	// -----------------------------------------------------------------------
-	// WCAG 2.5.7 drag alternatives
+	// WCAG 2.5.7 drag alternatives — reorder options live in the touch-device drawer
 	// -----------------------------------------------------------------------
 	describe("WCAG 2.5.7 drag alternatives", () => {
+		beforeEach(() => {
+			mockUseIsTouchDevice.mockReturnValue(true);
+		});
+
 		it("renders move up option when canMoveUp", () => {
 			renderItem({ index: 1, totalCount: 3 });
 
@@ -334,23 +337,31 @@ describe("SortableMediaItem", () => {
 	});
 
 	// -----------------------------------------------------------------------
-	// Mobile hint
+	// Mobile hint — overlay only renders on touch devices
 	// -----------------------------------------------------------------------
 	describe("long-press hint", () => {
+		beforeEach(() => {
+			mockUseIsTouchDevice.mockReturnValue(true);
+		});
+
 		it("shows mobile hint overlay when showLongPressHint is true", () => {
 			renderItem({ showLongPressHint: true });
 
 			const hints = screen.getAllByText("Maintenir pour déplacer");
-			// Both the tooltip text AND the mobile hint overlay should be present
-			expect(hints.length).toBeGreaterThanOrEqual(2);
+			expect(hints).toHaveLength(1);
 		});
 
-		it("does not show mobile hint overlay when showLongPressHint is false", () => {
+		it("does not render hint text when showLongPressHint is false", () => {
 			renderItem({ showLongPressHint: false });
 
-			// Only the tooltip text should remain (1 instance), the mobile hint overlay is gone
-			const hints = screen.getAllByText("Maintenir pour déplacer");
-			expect(hints).toHaveLength(1);
+			expect(screen.queryByText("Maintenir pour déplacer")).not.toBeInTheDocument();
+		});
+
+		it("does not render hint on non-touch device even when showLongPressHint is true", () => {
+			mockUseIsTouchDevice.mockReturnValue(false);
+			renderItem({ showLongPressHint: true });
+
+			expect(screen.queryByText("Maintenir pour déplacer")).not.toBeInTheDocument();
 		});
 	});
 

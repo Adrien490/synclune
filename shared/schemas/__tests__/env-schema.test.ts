@@ -222,49 +222,6 @@ describe("envSchema", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// superRefine: ARCJET_KEY required in production
-	// --------------------------------------------------------------------------
-
-	describe("superRefine — ARCJET_KEY in production", () => {
-		it("rejects production env without ARCJET_KEY", () => {
-			const env = { ...validEnv(), NODE_ENV: "production" };
-			delete (env as Record<string, unknown>).ARCJET_KEY;
-
-			const result = envSchema.safeParse(env);
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				const paths = result.error.issues.map((i) => i.path.join("."));
-				expect(paths).toContain("ARCJET_KEY");
-			}
-		});
-
-		it("accepts production env with ARCJET_KEY present", () => {
-			const result = envSchema.safeParse({
-				...validEnv(),
-				NODE_ENV: "production",
-				ARCJET_KEY: "ajkey_prod_abc123",
-			});
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts development env without ARCJET_KEY", () => {
-			const env = { ...validEnv(), NODE_ENV: "development" };
-			delete (env as Record<string, unknown>).ARCJET_KEY;
-
-			const result = envSchema.safeParse(env);
-			expect(result.success).toBe(true);
-		});
-
-		it("accepts test env without ARCJET_KEY", () => {
-			const env = { ...validEnv(), NODE_ENV: "test" };
-			delete (env as Record<string, unknown>).ARCJET_KEY;
-
-			const result = envSchema.safeParse(env);
-			expect(result.success).toBe(true);
-		});
-	});
-
-	// --------------------------------------------------------------------------
 	// Optional fields
 	// --------------------------------------------------------------------------
 
@@ -300,24 +257,6 @@ describe("envSchema", () => {
 
 			const result = envSchema.safeParse(env);
 			expect(result.success).toBe(true);
-		});
-
-		it("accepts env without ARCJET_MODE", () => {
-			const env = validEnv();
-			delete env.ARCJET_MODE;
-
-			const result = envSchema.safeParse(env);
-			expect(result.success).toBe(true);
-		});
-
-		it("validates ARCJET_MODE enum when provided", () => {
-			const liveResult = envSchema.safeParse({ ...validEnv(), ARCJET_MODE: "LIVE" });
-			const dryResult = envSchema.safeParse({ ...validEnv(), ARCJET_MODE: "DRY_RUN" });
-			const badResult = envSchema.safeParse({ ...validEnv(), ARCJET_MODE: "UNKNOWN" });
-
-			expect(liveResult.success).toBe(true);
-			expect(dryResult.success).toBe(true);
-			expect(badResult.success).toBe(false);
 		});
 
 		it("validates NEXT_PUBLIC_SITE_URL must be a valid URL when provided", () => {

@@ -10,17 +10,11 @@ import {
 	DrawerTitle,
 	DrawerTrigger,
 } from "@/shared/components/ui/drawer";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
+import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 import {
 	ArrowDown,
 	ArrowUp,
@@ -54,6 +48,9 @@ export interface SortableMediaItemProps {
 	totalCount?: number;
 }
 
+// Tap-vs-scroll threshold on the video element (px of movement between touchstart and touchend).
+const VIDEO_TAP_MOVE_TOLERANCE_PX = 10;
+
 export function SortableMediaItem({
 	media,
 	index,
@@ -72,8 +69,9 @@ export function SortableMediaItem({
 	const canMoveUp = Boolean(index > 0 && onMoveUp);
 	const canMoveDown = Boolean(index < totalCount - 1 && onMoveDown);
 	const haptic = useHaptic();
-	const isMobile = useIsMobile();
+	const isTouchDevice = useIsTouchDevice();
 	const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+	const [isPressing, setIsPressing] = useState(false);
 	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
 		index,
@@ -95,6 +93,40 @@ export function SortableMediaItem({
 			wasDragSourceRef.current = false;
 		}
 	}, [isDragSource, haptic]);
+
+	// Long-press visual feedback (touch only): scale down after LONG_PRESS_ACTIVATION_MS
+	// to confirm the hold is registering before the drag engages.
+	const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const clearPressTimer = () => {
+		if (pressTimerRef.current) {
+			clearTimeout(pressTimerRef.current);
+			pressTimerRef.current = null;
+		}
+	};
+	useEffect(() => () => clearPressTimer(), []);
+	// When @dnd-kit engages the drag (pointer capture), release events may not bubble back
+	// to React — reset the transient press flag defensively when drag starts.
+	useEffect(() => {
+		if (!isDragSource) return;
+		clearPressTimer();
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- sync a transient UI flag with @dnd-kit's external drag state
+		setIsPressing(false);
+	}, [isDragSource]);
+
+	const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+		if (event.pointerType !== "touch" || !isTouchDevice) return;
+		clearPressTimer();
+		pressTimerRef.current = setTimeout(() => {
+			setIsPressing(true);
+		}, UI_DELAYS.LONG_PRESS_ACTIVATION_MS);
+	};
+	const handlePointerEnd = () => {
+		clearPressTimer();
+		setIsPressing(false);
+	};
+
+	// Tap-vs-scroll tracking on the video element (native tap to open lightbox).
+	const videoTouchStartRef = useRef<{ x: number; y: number } | null>(null);
 
 	const closeMobileActions = () => setMobileActionsOpen(false);
 
@@ -125,11 +157,11 @@ export function SortableMediaItem({
 	};
 
 	const mobileActionItems = (
-		<div className="flex flex-col gap-1 pb-2">
+		<div className="flex flex-col gap-1 pb-2" data-vaul-no-drag>
 			<button
 				type="button"
 				onClick={handleOpenLightbox}
-				className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+				className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 			>
 				<Expand className="text-muted-foreground size-5" aria-hidden="true" />
 				<span className="text-sm font-medium">Agrandir</span>
@@ -138,7 +170,7 @@ export function SortableMediaItem({
 				<button
 					type="button"
 					onClick={handleMoveUp}
-					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
 					<ArrowUp className="text-muted-foreground size-5" aria-hidden="true" />
 					<span className="text-sm font-medium">Déplacer vers le haut</span>
@@ -148,7 +180,7 @@ export function SortableMediaItem({
 				<button
 					type="button"
 					onClick={handleMoveDown}
-					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
 					<ArrowDown className="text-muted-foreground size-5" aria-hidden="true" />
 					<span className="text-sm font-medium">Déplacer vers le bas</span>
@@ -157,7 +189,7 @@ export function SortableMediaItem({
 			<button
 				type="button"
 				onClick={handleOpenDeleteDialog}
-				className="hover:bg-destructive/10 active:bg-destructive/15 text-destructive flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors"
+				className="hover:bg-destructive/10 active:bg-destructive/15 text-destructive flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 			>
 				<Trash2 className="size-5" aria-hidden="true" />
 				<span className="text-sm font-semibold">Supprimer</span>
@@ -181,15 +213,31 @@ export function SortableMediaItem({
 			ref={ref}
 			// eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex -- sortable item needs keyboard interactions
 			tabIndex={0}
+			data-pressing={isPressing ? "" : undefined}
+			onPointerDown={handlePointerDown}
+			onPointerUp={handlePointerEnd}
+			onPointerCancel={handlePointerEnd}
+			onPointerLeave={handlePointerEnd}
 			onKeyDown={(e) => {
 				if (e.key === "Delete" || e.key === "Backspace") {
 					e.preventDefault();
 					onOpenDeleteDialog();
+					return;
+				}
+				if (e.key === "Enter") {
+					const target = e.target as HTMLElement | null;
+					if (target?.tagName === "BUTTON" || target?.closest("button")) return;
+					e.preventDefault();
+					onOpenLightbox(index);
 				}
 			}}
 			className={cn(
 				"group relative aspect-square shrink-0 overflow-hidden rounded-lg border-2",
-				shouldReduceMotion ? "" : "motion-safe:transition-all motion-safe:duration-200",
+				"select-none [-webkit-touch-callout:none]",
+				shouldReduceMotion
+					? ""
+					: "motion-safe:transition-[transform,border-color,opacity,box-shadow] motion-safe:duration-[var(--duration-normal)]",
+				"data-[pressing]:scale-[0.97]",
 				"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 				isDragSource && "opacity-30",
 				isPrimary
@@ -217,7 +265,7 @@ export function SortableMediaItem({
 									"object-cover",
 									shouldReduceMotion
 										? ""
-										: "motion-safe:transition-opacity motion-safe:duration-300",
+										: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-slow)]",
 									isImageLoaded ? "opacity-100" : "opacity-0",
 								)}
 								sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -235,13 +283,29 @@ export function SortableMediaItem({
 								loop
 								muted
 								playsInline
-								preload="auto"
+								preload="metadata"
+								poster={media.blurDataUrl}
+								onTouchStart={(e) => {
+									const t = e.touches[0];
+									videoTouchStartRef.current = t ? { x: t.clientX, y: t.clientY } : null;
+								}}
 								onTouchEnd={(e) => {
+									const start = videoTouchStartRef.current;
+									videoTouchStartRef.current = null;
 									if (isDraggingAny) return;
+									if (start) {
+										const t = e.changedTouches[0];
+										if (t) {
+											const dx = t.clientX - start.x;
+											const dy = t.clientY - start.y;
+											if (Math.hypot(dx, dy) > VIDEO_TAP_MOVE_TOLERANCE_PX) return;
+										}
+									}
 									e.stopPropagation();
 									handleOpenLightbox();
 								}}
 								onMouseEnter={(e) => {
+									if (shouldReduceMotion) return;
 									if (e.currentTarget.readyState === 0) {
 										e.currentTarget.load();
 									}
@@ -270,7 +334,7 @@ export function SortableMediaItem({
 							className={cn(
 								"absolute inset-0 flex cursor-pointer items-center justify-center",
 								"opacity-100 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100",
-								"motion-safe:transition-opacity",
+								"motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)]",
 							)}
 							aria-label={`Lire la vidéo ${index + 1}`}
 						>
@@ -286,7 +350,9 @@ export function SortableMediaItem({
 						fill
 						className={cn(
 							"object-cover",
-							shouldReduceMotion ? "" : "motion-safe:transition-opacity",
+							shouldReduceMotion
+								? ""
+								: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)]",
 							isImageLoaded ? "opacity-100" : "opacity-0",
 						)}
 						sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -311,39 +377,34 @@ export function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Drag handle — 44px WCAG 2.5.5 */}
-			<Tooltip>
-				<TooltipTrigger asChild>
-					<button
-						type="button"
-						ref={handleRef}
-						aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
-						aria-describedby="drag-instructions"
-						className={cn(
-							"absolute z-20 cursor-grab active:cursor-grabbing",
-							"top-2 left-2 sm:top-2 sm:right-2 sm:left-auto",
-							"flex",
-							"opacity-100 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100",
-							"focus-visible:ring-primary rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-							shouldReduceMotion ? "" : "motion-safe:transition-opacity",
-						)}
-					>
-						<div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
-							<GripVertical className="h-5 w-5 text-white" aria-hidden="true" />
-						</div>
-					</button>
-				</TooltipTrigger>
-				<TooltipContent side="bottom" className="sm:hidden">
-					Maintenir pour déplacer
-				</TooltipContent>
-			</Tooltip>
+			{/* Drag handle — non-touch devices only, hover-reveal top-right (WCAG 2.5.5) */}
+			{!isTouchDevice && (
+				<button
+					type="button"
+					ref={handleRef}
+					aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
+					aria-describedby="drag-instructions"
+					className={cn(
+						"absolute top-2 right-2 z-20 flex cursor-grab active:cursor-grabbing",
+						"opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
+						"focus-visible:ring-primary rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+						shouldReduceMotion
+							? ""
+							: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
+					)}
+				>
+					<div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
+						<GripVertical className="h-5 w-5 text-white" aria-hidden="true" />
+					</div>
+				</button>
+			)}
 
-			{/* Long-press hint mobile */}
-			{showLongPressHint && (
+			{/* Long-press hint — touch devices only */}
+			{isTouchDevice && showLongPressHint && (
 				<div
 					className={cn(
-						"absolute top-16 left-2 z-30 sm:hidden",
-						"animate-in fade-in-0 slide-in-from-top-2 duration-300",
+						"absolute top-2 left-2 z-30",
+						"animate-in fade-in-0 slide-in-from-top-2 duration-[var(--duration-slow)]",
 					)}
 					aria-hidden="true"
 				>
@@ -353,58 +414,61 @@ export function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Desktop actions */}
-			<div
-				className={cn(
-					"absolute right-2 bottom-2 z-20 flex items-center gap-1.5",
-					"motion-safe:transition-opacity",
-					"hidden sm:flex",
-					"opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
-				)}
-			>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							type="button"
-							variant="secondary"
-							size="icon"
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleOpenLightbox();
-							}}
-							className="h-9 w-9 rounded-full border-0 bg-black/70 hover:bg-black/90"
-							aria-label={`Agrandir le média ${index + 1}`}
-						>
-							<Expand className="h-4 w-4 text-white" aria-hidden="true" />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent>Agrandir</TooltipContent>
-				</Tooltip>
-				<Tooltip>
-					<TooltipTrigger asChild>
-						<Button
-							type="button"
-							variant="secondary"
-							size="icon"
-							onClick={(e) => {
-								e.preventDefault();
-								e.stopPropagation();
-								handleOpenDeleteDialog();
-							}}
-							className="hover:bg-destructive h-9 w-9 rounded-full border-0 bg-black/70"
-							aria-label={`Supprimer le média ${index + 1}`}
-						>
-							<Trash2 className="h-4 w-4 text-white" aria-hidden="true" />
-						</Button>
-					</TooltipTrigger>
-					<TooltipContent>Supprimer</TooltipContent>
-				</Tooltip>
-			</div>
+			{/* Desktop actions — hover-reveal, non-touch only */}
+			{!isTouchDevice && (
+				<div
+					className={cn(
+						"absolute right-2 bottom-2 z-20 flex items-center gap-1.5",
+						"opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
+						shouldReduceMotion
+							? ""
+							: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
+					)}
+				>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleOpenLightbox();
+								}}
+								className="h-9 w-9 rounded-full border-0 bg-black/70 hover:bg-black/90"
+								aria-label={`Agrandir le média ${index + 1}`}
+							>
+								<Expand className="h-4 w-4 text-white" aria-hidden="true" />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Agrandir</TooltipContent>
+					</Tooltip>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								type="button"
+								variant="secondary"
+								size="icon"
+								onClick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleOpenDeleteDialog();
+								}}
+								className="hover:bg-destructive h-9 w-9 rounded-full border-0 bg-black/70"
+								aria-label={`Supprimer le média ${index + 1}`}
+							>
+								<Trash2 className="h-4 w-4 text-white" aria-hidden="true" />
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>Supprimer</TooltipContent>
+					</Tooltip>
+				</div>
+			)}
 
-			{/* Mobile actions — Drawer Vaul bottom-sheet (was DropdownMenu) */}
-			<div className="absolute top-2 right-2 z-20 sm:hidden">
-				{isMobile ? (
+			{/* Mobile actions — Drawer Vaul bottom-sheet, touch devices only */}
+			{isTouchDevice && (
+				<div className="absolute top-2 right-2 z-20">
 					<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
 						<DrawerTrigger asChild>
 							<Button
@@ -427,50 +491,8 @@ export function SortableMediaItem({
 							{mobileActionItems}
 						</DrawerContent>
 					</Drawer>
-				) : (
-					<DropdownMenu>
-						<DropdownMenuTrigger asChild>
-							<Button
-								type="button"
-								variant="secondary"
-								size="icon"
-								className="h-11 w-11 rounded-full border-0 bg-black/70 hover:bg-black/90"
-								aria-label={`Actions pour le média ${index + 1}`}
-							>
-								<EllipsisVertical className="h-5 w-5 text-white" />
-							</Button>
-						</DropdownMenuTrigger>
-						<DropdownMenuContent align="end" className="min-w-40">
-							<DropdownMenuItem onClick={handleOpenLightbox} className="min-h-11 gap-2 py-3">
-								<Expand className="h-4 w-4" />
-								Agrandir
-							</DropdownMenuItem>
-							{(canMoveUp || canMoveDown) && <DropdownMenuSeparator />}
-							{canMoveUp && (
-								<DropdownMenuItem onClick={handleMoveUp} className="min-h-11 gap-2 py-3">
-									<ArrowUp className="h-4 w-4" />
-									Déplacer vers le haut
-								</DropdownMenuItem>
-							)}
-							{canMoveDown && (
-								<DropdownMenuItem onClick={handleMoveDown} className="min-h-11 gap-2 py-3">
-									<ArrowDown className="h-4 w-4" />
-									Déplacer vers le bas
-								</DropdownMenuItem>
-							)}
-							<DropdownMenuSeparator />
-							<DropdownMenuItem
-								variant="destructive"
-								onClick={handleOpenDeleteDialog}
-								className="min-h-11 gap-2 py-3"
-							>
-								<Trash2 className="h-4 w-4" />
-								Supprimer
-							</DropdownMenuItem>
-						</DropdownMenuContent>
-					</DropdownMenu>
-				)}
-			</div>
+				</div>
+			)}
 		</div>
 	);
 }

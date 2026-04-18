@@ -9,7 +9,6 @@ import { createMockFormData } from "@/test/factories";
 const {
 	mockAuth,
 	mockHeaders,
-	mockCheckArcjet,
 	mockValidateInput,
 	mockSuccess,
 	mockError,
@@ -23,7 +22,6 @@ const {
 		},
 	},
 	mockHeaders: vi.fn(),
-	mockCheckArcjet: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
@@ -33,7 +31,6 @@ const {
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -79,7 +76,6 @@ describe("signUpEmail", () => {
 		vi.resetAllMocks();
 
 		mockHeaders.mockResolvedValue(new Headers());
-		mockCheckArcjet.mockResolvedValue(null);
 		mockAuth.api.getSession.mockResolvedValue(null);
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.signUpEmail.mockResolvedValue({ user: { id: "user-1" } });
@@ -94,13 +90,6 @@ describe("signUpEmail", () => {
 			message: msg,
 		}));
 		mockPrismaUserUpdate.mockResolvedValue({});
-	});
-
-	it("should block when Arcjet protection triggers", async () => {
-		const arcjetError = { status: ActionStatus.ERROR, message: "Blocked" };
-		mockCheckArcjet.mockResolvedValue(arcjetError);
-		const result = await signUpEmail(undefined, validFormData);
-		expect(result).toEqual(arcjetError);
 	});
 
 	it("should return unauthorized when already logged in", async () => {

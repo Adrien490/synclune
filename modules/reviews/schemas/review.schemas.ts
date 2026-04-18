@@ -239,30 +239,3 @@ export const bulkRestoreReviewsSchema = z.object({
 		.min(1, "Sélectionnez au moins un avis")
 		.max(100, "Maximum 100 avis par opération"),
 });
-
-// ============================================================================
-// EXPORT SCHEMA (Admin)
-// ============================================================================
-
-export const EXPORT_REVIEWS_FORMATS = ["csv", "json"] as const;
-export type ExportReviewsFormat = (typeof EXPORT_REVIEWS_FORMATS)[number];
-
-export const EXPORT_REVIEWS_PERIODS = ["7d", "30d", "90d", "year", "all"] as const;
-export type ExportReviewsPeriod = (typeof EXPORT_REVIEWS_PERIODS)[number];
-
-/**
- * Schema pour l'export CSV/JSON des avis (admin)
- *
- * - `period` restreint la fenetre temporelle (createdAt)
- * - `format` choisit entre CSV (RFC 4180) et JSON
- * - `includeHidden` inclut les avis en statut HIDDEN (masques)
- * - `includeDeleted` inclut les avis soft-deleted (RGPD)
- */
-export const exportReviewsSchema = z.object({
-	period: z.enum(EXPORT_REVIEWS_PERIODS, { message: "Période invalide" }).default("30d"),
-	format: z.enum(EXPORT_REVIEWS_FORMATS, { message: "Format invalide" }),
-	includeHidden: z.coerce.boolean().default(false),
-	includeDeleted: z.coerce.boolean().default(false),
-});
-
-export type ExportReviewsInput = z.infer<typeof exportReviewsSchema>;

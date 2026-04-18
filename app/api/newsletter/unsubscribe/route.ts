@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
 import { logger } from "@/shared/lib/logger";
 import { unsubscribeTokenSchema } from "@/modules/newsletter/schemas/newsletter.schemas";
 import { unsubscribeByToken } from "@/modules/newsletter/services/unsubscribe-by-token";
@@ -13,16 +12,6 @@ import { unsubscribeByToken } from "@/modules/newsletter/services/unsubscribe-by
  */
 export async function POST(request: Request) {
 	try {
-		// Arcjet protection
-		const decision = await ajNewsletterUnsubscribe.protect(request, {
-			requested: 1,
-		});
-
-		if (decision.isDenied()) {
-			// RFC 8058: return 200 even on denial to avoid retries
-			return new NextResponse(null, { status: 200 });
-		}
-
 		// Read token from query params
 		const { searchParams } = new URL(request.url);
 		const token = searchParams.get("token");

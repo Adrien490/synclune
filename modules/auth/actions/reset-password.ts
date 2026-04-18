@@ -3,9 +3,7 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { headers } from "next/headers";
 import { resetPasswordSchema } from "../schemas/auth.schemas";
-import { checkArcjetProtection } from "../utils/arcjet-protection";
 import { checkPasswordBreached } from "../services/hibp.service";
 
 export const resetPassword = async (
@@ -13,12 +11,6 @@ export const resetPassword = async (
 	formData: FormData,
 ): Promise<ActionState> => {
 	try {
-		const headersList = await headers();
-
-		// Protection Arcjet : Shield + Bot Detection + Rate Limiting
-		const arcjetBlocked = await checkArcjetProtection("/auth/reset-password", headersList);
-		if (arcjetBlocked) return arcjetBlocked;
-
 		// Validation des données
 		const rawData = {
 			password: safeFormGet(formData, "password"),

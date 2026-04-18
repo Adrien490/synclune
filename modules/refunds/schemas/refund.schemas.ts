@@ -141,25 +141,6 @@ export const retryFailedRefundSchema = z.object({
 });
 
 // ============================================================================
-// EXPORT REFUNDS SCHEMA
-// ============================================================================
-
-export const EXPORT_REFUNDS_FORMATS = ["csv", "json"] as const;
-export type ExportRefundsFormat = (typeof EXPORT_REFUNDS_FORMATS)[number];
-
-export const EXPORT_REFUNDS_PERIODS = ["7d", "30d", "month", "quarter", "year", "all"] as const;
-export type ExportRefundsPeriod = (typeof EXPORT_REFUNDS_PERIODS)[number];
-
-export const exportRefundsSchema = z.object({
-	period: z.enum(EXPORT_REFUNDS_PERIODS, { message: "Période invalide" }),
-	format: z.enum(EXPORT_REFUNDS_FORMATS, { message: "Format invalide" }),
-	status: z.enum(RefundStatus).optional(),
-	reason: z.enum(RefundReason).optional(),
-});
-
-export type ExportRefundsInput = z.infer<typeof exportRefundsSchema>;
-
-// ============================================================================
 // BULK APPROVE REFUNDS SCHEMA
 // ============================================================================
 

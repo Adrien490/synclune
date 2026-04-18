@@ -9,7 +9,6 @@ import { createMockFormData } from "@/test/factories";
 const {
 	mockAuth,
 	mockHeaders,
-	mockCheckArcjet,
 	mockValidateInput,
 	mockError,
 	mockUnauthorized,
@@ -23,7 +22,6 @@ const {
 		},
 	},
 	mockHeaders: vi.fn(),
-	mockCheckArcjet: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
@@ -37,7 +35,6 @@ vi.mock("next/navigation", () => ({ redirect: mockRedirect }));
 vi.mock("next/dist/client/components/redirect-error", () => ({
 	isRedirectError: mockIsRedirectError,
 }));
-vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -74,7 +71,6 @@ describe("signInSocial", () => {
 		vi.resetAllMocks();
 
 		mockHeaders.mockResolvedValue(new Headers());
-		mockCheckArcjet.mockResolvedValue(null);
 		mockAuth.api.getSession.mockResolvedValue(null);
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.signInSocial.mockResolvedValue({ url: "https://accounts.google.com/oauth" });
@@ -85,16 +81,6 @@ describe("signInSocial", () => {
 			status: ActionStatus.UNAUTHORIZED,
 			message: msg,
 		}));
-	});
-
-	it("should block when Arcjet protection triggers", async () => {
-		const arcjetError = { status: ActionStatus.ERROR, message: "Trop de tentatives" };
-		mockCheckArcjet.mockResolvedValue(arcjetError);
-
-		const result = await signInSocial(undefined, validFormData);
-
-		expect(result).toEqual(arcjetError);
-		expect(mockAuth.api.getSession).not.toHaveBeenCalled();
 	});
 
 	it("should return unauthorized when user is already logged in", async () => {

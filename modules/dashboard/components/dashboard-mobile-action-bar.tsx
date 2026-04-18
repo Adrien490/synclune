@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { CalendarRange, Download, RefreshCw } from "lucide-react";
+import { CalendarRange, RefreshCw } from "lucide-react";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { DashboardPeriodSheet } from "./dashboard-period-sheet";
 import { DashboardRefreshSheet } from "./dashboard-refresh-sheet";
-import { ExportDashboardButton } from "./export-dashboard-button";
 import {
 	COMPARISON_MODE_SEARCH_PARAM,
 	DASHBOARD_PERIODS_SHORT,
@@ -22,20 +21,6 @@ interface DashboardMobileActionBarProps {
 	className?: string;
 }
 
-/**
- * Mobile sub-header for the admin dashboard.
- *
- * Pattern inspired by `ProductSortBar` (storefront) — 3 compact toolbar buttons
- * (Période / Rafraîchir / Télécharger), each opening its own bottom-sheet.
- * Sticky directly below the `AdminMobileHeader` (which owns the h1 title), so
- * no heading is rendered here (avoids duplicate "Tableau de bord" h1s).
- *
- * Accessibility :
- * - `role="toolbar"` + `aria-orientation="horizontal"` + arrow-key navigation
- * - Live region announces active period / comparison changes
- * - 44px touch targets (WCAG 2.5.5)
- * - Haptic `selection` on tap
- */
 export function DashboardMobileActionBar({ className }: DashboardMobileActionBarProps) {
 	const searchParams = useSearchParams();
 	const period = (searchParams.get(PERIOD_SEARCH_PARAM) ?? DEFAULT_PERIOD) as DashboardPeriod;
@@ -50,8 +35,7 @@ export function DashboardMobileActionBar({ className }: DashboardMobileActionBar
 	const [focusedIndex, setFocusedIndex] = useState(0);
 	const periodButtonRef = useRef<HTMLButtonElement>(null);
 	const refreshButtonRef = useRef<HTMLButtonElement>(null);
-	const exportButtonRef = useRef<HTMLButtonElement>(null);
-	const buttonRefs = [periodButtonRef, refreshButtonRef, exportButtonRef];
+	const buttonRefs = [periodButtonRef, refreshButtonRef];
 
 	const announcementRef = useRef<HTMLSpanElement>(null);
 	const prevStateRef = useRef({ period, comparisonMode });
@@ -77,7 +61,7 @@ export function DashboardMobileActionBar({ className }: DashboardMobileActionBar
 	}, [period, comparisonMode]);
 
 	const handleToolbarKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-		const buttonCount = 3;
+		const buttonCount = 2;
 		let nextIndex: number | null = null;
 
 		switch (e.key) {
@@ -148,7 +132,6 @@ export function DashboardMobileActionBar({ className }: DashboardMobileActionBar
 					aria-label="Actions du tableau de bord"
 					className="divide-border/30 flex items-stretch divide-x"
 				>
-					{/* Période */}
 					<button
 						ref={periodButtonRef}
 						type="button"
@@ -172,7 +155,6 @@ export function DashboardMobileActionBar({ className }: DashboardMobileActionBar
 						)}
 					</button>
 
-					{/* Rafraîchir */}
 					<button
 						ref={refreshButtonRef}
 						type="button"
@@ -188,27 +170,6 @@ export function DashboardMobileActionBar({ className }: DashboardMobileActionBar
 						<RefreshCw className="size-4" aria-hidden="true" />
 						<span className="truncate">Rafraîchir</span>
 					</button>
-
-					{/* Télécharger — réutilise ExportDashboardButton (Drawer mobile / Dropdown desktop)
-					    via la prop triggerSlot pour matcher le style toolbar. */}
-					<ExportDashboardButton
-						triggerSlot={
-							<button
-								ref={exportButtonRef}
-								type="button"
-								onKeyDown={(e) => handleToolbarKeyDown(e, 2)}
-								onFocus={() => setFocusedIndex(2)}
-								onClick={() => triggerHaptic("selection")}
-								tabIndex={focusedIndex === 2 ? 0 : -1}
-								className={buttonBase}
-								aria-label="Exporter le rapport du tableau de bord"
-								aria-haspopup="dialog"
-							>
-								<Download className="size-4" aria-hidden="true" />
-								<span className="truncate">Télécharger</span>
-							</button>
-						}
-					/>
 				</div>
 
 				<span

@@ -139,9 +139,3 @@ export const mergeProductTypesSchema = z
 		message: "Les types source et cible doivent être différents",
 		path: ["targetId"],
 	});
-
-export const exportProductTypesSchema = z.object({
-	format: z.enum(["csv", "json"], { message: "Format invalide" }),
-});
-
-export type ExportProductTypesFormat = z.infer<typeof exportProductTypesSchema>["format"];

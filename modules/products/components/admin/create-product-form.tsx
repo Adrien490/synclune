@@ -235,32 +235,9 @@ export function CreateProductForm({
 					<span className="sr-only" role="status" aria-live="polite">
 						{isPending ? "Envoi du formulaire en cours..." : ""}
 					</span>
-					<form.Subscribe
-						selector={(state) => [state.canSubmit, state.values.status, state.isDirty] as const}
-					>
-						{([canSubmit, status, isDirty]) => (
-							<div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-								<Button
-									type="button"
-									variant="outline"
-									size="input"
-									disabled={isPending}
-									onClick={() => {
-										haptic("light");
-										if (
-											isDirty &&
-											!window.confirm(
-												"Les modifications non enregistrées seront perdues. Continuer ?",
-											)
-										) {
-											return;
-										}
-										navigateWithTransition(router, PRODUCTS_LIST_PATH);
-									}}
-									className="w-full sm:w-auto sm:min-w-32"
-								>
-									Annuler
-								</Button>
+					<form.Subscribe selector={(state) => [state.canSubmit, state.values.status] as const}>
+						{([canSubmit, status]) => (
+							<div className="flex justify-end">
 								<Button
 									type="submit"
 									size="input"

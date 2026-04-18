@@ -12,8 +12,6 @@ import { calculateShipping } from "@/modules/orders/services/shipping.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
-import { ajPayment } from "@/shared/lib/arcjet";
-import { getBaseUrl } from "@/shared/constants/urls";
 import { headers } from "next/headers";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
@@ -46,21 +44,8 @@ export async function initializePayment(
 			const userId = session?.user.id ?? null;
 			const userEmail = session?.user.email ?? null;
 
-			// Arcjet: distributed rate limiting + shield + bot detection
+			// In-memory rate limiting
 			const headersList = await headers();
-			const arcjetRequest = new Request(`${getBaseUrl()}/payment/initialize`, {
-				method: "POST",
-				headers: headersList,
-			});
-			const arcjetDecision = await ajPayment.protect(arcjetRequest, { requested: 1 });
-			if (arcjetDecision.isDenied()) {
-				return {
-					success: false,
-					error: "Trop de tentatives. Veuillez réessayer plus tard.",
-				};
-			}
-
-			// In-memory rate limiting (complementary, for burst protection)
 			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
 			const rateLimitId = userId

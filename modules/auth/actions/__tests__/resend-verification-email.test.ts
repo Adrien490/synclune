@@ -6,22 +6,12 @@ import { createMockFormData } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockAuth,
-	mockHeaders,
-	mockCheckArcjet,
-	mockValidateInput,
-	mockSuccess,
-	mockError,
-	mockBuildUrl,
-} = vi.hoisted(() => ({
+const { mockAuth, mockValidateInput, mockSuccess, mockError, mockBuildUrl } = vi.hoisted(() => ({
 	mockAuth: {
 		api: {
 			sendVerificationEmail: vi.fn(),
 		},
 	},
-	mockHeaders: vi.fn(),
-	mockCheckArcjet: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
@@ -29,8 +19,6 @@ const {
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
-vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -66,8 +54,6 @@ describe("resendVerificationEmail", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockHeaders.mockResolvedValue(new Headers());
-		mockCheckArcjet.mockResolvedValue(null);
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.sendVerificationEmail.mockResolvedValue(undefined);
 		mockBuildUrl.mockReturnValue("https://synclune.fr/verifier-email");
@@ -77,16 +63,6 @@ describe("resendVerificationEmail", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-	});
-
-	it("should block when Arcjet protection triggers", async () => {
-		const arcjetError = { status: ActionStatus.ERROR, message: "Trop de tentatives" };
-		mockCheckArcjet.mockResolvedValue(arcjetError);
-
-		const result = await resendVerificationEmail(undefined, validFormData);
-
-		expect(result).toEqual(arcjetError);
-		expect(mockAuth.api.sendVerificationEmail).not.toHaveBeenCalled();
 	});
 
 	it("should return validation error for invalid email", async () => {
@@ -133,23 +109,5 @@ describe("resendVerificationEmail", () => {
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toBe(EXPECTED_SUCCESS_MESSAGE);
-	});
-
-	it("should return generic error when Arcjet check itself throws unexpectedly", async () => {
-		mockCheckArcjet.mockRejectedValue(new Error("Arcjet service unavailable"));
-
-		const result = await resendVerificationEmail(undefined, validFormData);
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith("Une erreur inattendue est survenue");
-	});
-
-	it("should return generic error when headers() throws", async () => {
-		mockHeaders.mockRejectedValue(new Error("Headers not available"));
-
-		const result = await resendVerificationEmail(undefined, validFormData);
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith("Une erreur inattendue est survenue");
 	});
 });

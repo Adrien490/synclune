@@ -1,6 +1,5 @@
 import { Clock, Euro, Mail, Package, Receipt, ShoppingBag, Star, Target } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
-import type { KpiSparklines } from "@/modules/dashboard/data/get-kpi-sparklines";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { KpiCard } from "./kpi-card";
@@ -15,7 +14,6 @@ function formatFulfillmentTime(hours: number): string {
 
 interface DashboardKpisProps {
 	kpis: GetKpisReturn;
-	sparklines?: KpiSparklines;
 	comparisonLabel?: string;
 }
 
@@ -24,11 +22,7 @@ interface DashboardKpisProps {
  * Row 1: CA net, Commandes, Panier moyen, À expédier (horizontal scroll on mobile)
  * Row 2: Taux de conversion, Note moyenne, Newsletter, Délai d'expédition (2-col on mobile)
  */
-export function DashboardKpis({
-	kpis,
-	sparklines,
-	comparisonLabel = "vs mois dernier",
-}: DashboardKpisProps) {
+export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
 	const hasDiscounts = kpis.discountImpact.amount > 0;
 
@@ -68,7 +62,6 @@ export function DashboardKpis({
 									href="/admin/ventes/commandes?paymentStatus=PAID"
 									tooltip="Chiffre d'affaires net (après remboursements) des commandes payées ce mois"
 									subtitle={revenueSubtitle}
-									sparklinePath={sparklines?.revenuePath}
 									badge={
 										hasRefunds
 											? {
@@ -94,7 +87,6 @@ export function DashboardKpis({
 									priority="critical"
 									href="/admin/ventes/commandes"
 									tooltip="Nombre de commandes payées ce mois"
-									sparklinePath={sparklines?.ordersPath}
 								/>
 							</div>
 						</KpiCardAnimated>
@@ -112,7 +104,6 @@ export function DashboardKpis({
 									size="featured"
 									priority="operational"
 									tooltip="Valeur moyenne des commandes ce mois"
-									sparklinePath={sparklines?.aovPath}
 								/>
 							</div>
 						</KpiCardAnimated>
@@ -175,7 +166,6 @@ export function DashboardKpis({
 						flatOnMobile
 						href="/admin/marketing/avis"
 						tooltip="Note moyenne des avis clients publiés"
-						sparklinePath={sparklines?.reviewsPath}
 						subtitle={
 							kpis.reviewHealth.totalReviews > 0
 								? `${kpis.reviewHealth.totalReviews} avis`
@@ -197,7 +187,6 @@ export function DashboardKpis({
 						flatOnMobile
 						href="/admin/marketing/newsletter"
 						tooltip="Nombre d'abonnés newsletter confirmés"
-						sparklinePath={sparklines?.newsletterPath}
 						subtitle={
 							kpis.newsletterGrowth.newThisMonth > 0
 								? `+${kpis.newsletterGrowth.newThisMonth} ce mois`

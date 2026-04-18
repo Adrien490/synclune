@@ -1,6 +1,6 @@
 "use client";
 
-import { CircleCheck, CircleX, Download, EllipsisVertical, Trash2 } from "lucide-react";
+import { CircleCheck, CircleX, EllipsisVertical, Trash2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
 
 import {
@@ -15,7 +15,6 @@ import { useSelectionContext } from "@/shared/contexts/selection-context";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useBulkActivateProductTypes } from "@/modules/product-types/hooks/use-bulk-activate-product-types";
 import { useBulkDeactivateProductTypes } from "@/modules/product-types/hooks/use-bulk-deactivate-product-types";
-import { useExportProductTypes } from "@/modules/product-types/hooks/use-export-product-types";
 
 import { BULK_DELETE_PRODUCT_TYPES_DIALOG_ID } from "./bulk-delete-product-types-alert-dialog";
 
@@ -36,8 +35,6 @@ export function ProductTypesSelectionToolbar({
 	const { deactivateProductTypes, isPending: isDeactivating } = useBulkDeactivateProductTypes({
 		onSuccess: () => clearSelection(),
 	});
-
-	const { exportProductTypes, isPending: isExporting } = useExportProductTypes();
 
 	const requireSelection = (action: () => void) => () => {
 		if (selectedItems.length === 0) {
@@ -66,26 +63,6 @@ export function ProductTypesSelectionToolbar({
 					icon: CircleX,
 					disabled: isDeactivating,
 					onSelect: requireSelection(() => deactivateProductTypes(selectedItems)),
-				},
-			],
-		},
-		{
-			key: "export",
-			label: "Exporter tout",
-			items: [
-				{
-					key: "csv",
-					label: "Exporter en CSV",
-					icon: Download,
-					disabled: isExporting,
-					onSelect: () => exportProductTypes("csv"),
-				},
-				{
-					key: "json",
-					label: "Exporter en JSON",
-					icon: Download,
-					disabled: isExporting,
-					onSelect: () => exportProductTypes("json"),
 				},
 			],
 		},

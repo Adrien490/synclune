@@ -2,8 +2,6 @@ import { AuthPageLayout } from "@/modules/auth/components/auth-page-layout";
 import { ResendVerificationEmailForm } from "@/modules/auth/components/resend-verification-email-form";
 import { Button } from "@/shared/components/ui/button";
 import { auth } from "@/modules/auth/lib/auth";
-import { ajAuth } from "@/shared/lib/arcjet";
-import { getBaseUrl } from "@/shared/constants/urls";
 import { cn } from "@/shared/utils/cn";
 import { CircleAlert, CircleCheck, Sparkles } from "lucide-react";
 import { headers } from "next/headers";
@@ -31,20 +29,7 @@ interface VerifyEmailPageProps {
 
 async function verifyEmailToken(token: string) {
 	try {
-		// Protection Arcjet contre le brute-force de tokens
 		const headersList = await headers();
-		const request = new Request(`${getBaseUrl()}/verifier-email`, {
-			method: "GET",
-			headers: headersList,
-		});
-
-		const decision = await ajAuth.protect(request, { requested: 1 });
-
-		// Bloquer si rate limit atteint ou bot détecté
-		if (decision.isDenied()) {
-			return { success: false, rateLimited: true };
-		}
-
 		await auth.api.verifyEmail({
 			query: {
 				token,
@@ -82,8 +67,6 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 		const result = await verifyEmailToken(token);
 		if (result.success) {
 			isSuccess = true;
-		} else if ("rateLimited" in result && result.rateLimited) {
-			errorMessage = "Trop de tentatives. Veuillez réessayer dans quelques minutes.";
 		} else {
 			errorMessage = "Le lien de vérification est invalide ou a expiré.";
 		}

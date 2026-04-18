@@ -9,7 +9,6 @@ import { createMockFormData, VALID_USER_ID } from "@/test/factories";
 const {
 	mockAuth,
 	mockHeaders,
-	mockCheckArcjet,
 	mockRequireAuth,
 	mockPrisma,
 	mockValidateInput,
@@ -19,7 +18,6 @@ const {
 } = vi.hoisted(() => ({
 	mockAuth: { api: { changePassword: vi.fn() } },
 	mockHeaders: vi.fn(),
-	mockCheckArcjet: vi.fn(),
 	mockRequireAuth: vi.fn(),
 	mockPrisma: { user: { findUnique: vi.fn() } },
 	mockValidateInput: vi.fn(),
@@ -30,7 +28,6 @@ const {
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/modules/auth/lib/require-auth", () => ({ requireAuth: mockRequireAuth }));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("@/shared/lib/actions", () => ({
@@ -80,7 +77,6 @@ describe("changePassword", () => {
 		vi.resetAllMocks();
 
 		mockHeaders.mockResolvedValue(new Headers());
-		mockCheckArcjet.mockResolvedValue(null);
 		mockRequireAuth.mockResolvedValue({
 			user: { id: VALID_USER_ID, email: "user@example.com", name: "User" },
 		});
@@ -97,12 +93,6 @@ describe("changePassword", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-	});
-
-	it("should block when Arcjet protection triggers", async () => {
-		mockCheckArcjet.mockResolvedValue({ status: ActionStatus.ERROR, message: "Blocked" });
-		const result = await changePassword(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
 	it("should return auth error when not authenticated", async () => {

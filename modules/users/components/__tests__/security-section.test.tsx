@@ -197,13 +197,6 @@ describe("SecuritySection", () => {
 		expect(screen.getByText("Google")).toBeInTheDocument();
 	});
 
-	it("shows GitHub badge when github provider is present", () => {
-		render(
-			<SecuritySection emailVerified={true} providers={["github"]} email="user@example.com" />,
-		);
-		expect(screen.getByText("GitHub")).toBeInTheDocument();
-	});
-
 	it("does not show 'Comptes connectés' section when no oauth providers", () => {
 		render(
 			<SecuritySection emailVerified={true} providers={["credential"]} email="user@example.com" />,

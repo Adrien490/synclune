@@ -19,7 +19,6 @@ const {
 	mockSentryStartSpan,
 	mockSentryCaptureException,
 	mockAssertStoreOpen,
-	mockAjPaymentProtect,
 	MockCircuitBreakerError,
 } = vi.hoisted(() => {
 	class MockCircuitBreakerError extends Error {
@@ -48,7 +47,6 @@ const {
 		mockSentryStartSpan: vi.fn(),
 		mockSentryCaptureException: vi.fn(),
 		mockAssertStoreOpen: vi.fn(),
-		mockAjPaymentProtect: vi.fn(),
 		MockCircuitBreakerError,
 	};
 });
@@ -107,14 +105,6 @@ vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 	assertStoreOpen: mockAssertStoreOpen,
 }));
 
-vi.mock("@/shared/lib/arcjet", () => ({
-	ajPayment: { protect: mockAjPaymentProtect },
-}));
-
-vi.mock("@/shared/constants/urls", () => ({
-	getBaseUrl: () => "http://localhost:3000",
-}));
-
 vi.mock("@/shared/lib/logger", () => ({
 	logger: {
 		error: vi.fn(),
@@ -166,9 +156,6 @@ function setupDefaults() {
 
 	// Guest session (not used when authenticated)
 	mockGetOrCreateCartSessionId.mockResolvedValue("session-guest-abc");
-
-	// Arcjet: allow by default
-	mockAjPaymentProtect.mockResolvedValue({ isDenied: () => false });
 
 	// Store closure guard: store is open
 	mockAssertStoreOpen.mockResolvedValue(null);

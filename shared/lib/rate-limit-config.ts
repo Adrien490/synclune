@@ -878,19 +878,6 @@ export const ADMIN_USER_ANONYMIZE_NOW_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour l'export CSV/JSON de la liste des utilisateurs (admin)
- *
- * STRICT : Requete lourde, donnees sensibles exportees
- */
-export const ADMIN_USER_EXPORT_LIST_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: minutes(5),
-};
-
-/**
- * Toutes les limites admin utilisateurs
- */
-/**
  * Limite pour le rafraichissement du cache utilisateurs (admin)
  */
 export const ADMIN_USER_REFRESH_LIMIT: RateLimitConfig = {
@@ -908,7 +895,6 @@ export const ADMIN_USER_LIMITS = {
 	INVALIDATE_SESSIONS: ADMIN_USER_INVALIDATE_SESSIONS_LIMIT,
 	REFRESH: ADMIN_USER_REFRESH_LIMIT,
 	ANONYMIZE_NOW: ADMIN_USER_ANONYMIZE_NOW_LIMIT,
-	EXPORT_LIST: ADMIN_USER_EXPORT_LIST_LIMIT,
 } as const;
 
 // ========================================
@@ -1228,11 +1214,6 @@ export const ADMIN_PRODUCT_TYPE_MERGE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
-export const ADMIN_PRODUCT_TYPE_EXPORT_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: minutes(1),
-};
-
 export const ADMIN_PRODUCT_TYPE_LIMITS = {
 	CREATE: ADMIN_PRODUCT_TYPE_CREATE_LIMIT,
 	UPDATE: ADMIN_PRODUCT_TYPE_UPDATE_LIMIT,
@@ -1242,7 +1223,6 @@ export const ADMIN_PRODUCT_TYPE_LIMITS = {
 	REFRESH: ADMIN_PRODUCT_TYPE_REFRESH_LIMIT,
 	DUPLICATE: ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT,
 	MERGE: ADMIN_PRODUCT_TYPE_MERGE_LIMIT,
-	EXPORT: ADMIN_PRODUCT_TYPE_EXPORT_LIMIT,
 } as const;
 
 // ========================================
@@ -1414,21 +1394,12 @@ export const REFUND_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
-/**
- * Limite pour l'export de remboursements (CSV/JSON) par l'admin
- */
-export const ADMIN_REFUND_EXPORT_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: minutes(5),
-};
-
 export const REFUND_LIMITS = {
 	CREATE: REFUND_CREATE_LIMIT,
 	PROCESS: REFUND_PROCESS_LIMIT,
 	SINGLE_OPERATION: REFUND_SINGLE_OPERATION_LIMIT,
 	BULK_OPERATION: REFUND_BULK_OPERATION_LIMIT,
 	REFRESH: REFUND_REFRESH_LIMIT,
-	EXPORT: ADMIN_REFUND_EXPORT_LIMIT,
 } as const;
 
 // ========================================
@@ -1528,16 +1499,6 @@ export const ADMIN_DISCOUNT_RESET_COUNTER_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour l'export CSV des utilisations d'un code promo (admin)
- *
- * Modeste car action lourde (lecture multi-table)
- */
-export const ADMIN_DISCOUNT_EXPORT_USAGES_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
  * Toutes les limites admin codes promo
  */
 export const ADMIN_DISCOUNT_LIMITS = {
@@ -1552,7 +1513,6 @@ export const ADMIN_DISCOUNT_LIMITS = {
 	BULK_GENERATE: ADMIN_DISCOUNT_BULK_GENERATE_LIMIT,
 	EXTEND_VALIDITY: ADMIN_DISCOUNT_EXTEND_VALIDITY_LIMIT,
 	RESET_COUNTER: ADMIN_DISCOUNT_RESET_COUNTER_LIMIT,
-	EXPORT_USAGES: ADMIN_DISCOUNT_EXPORT_USAGES_LIMIT,
 } as const;
 
 // ========================================
@@ -1636,23 +1596,12 @@ export const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
-/**
- * Limite pour l'export CSV/JSON des avis (admin)
- *
- * Stricte car agrege potentiellement des milliers de lignes
- */
-export const ADMIN_REVIEW_EXPORT_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: minutes(5),
-};
-
 export const ADMIN_REVIEW_LIMITS = {
 	SEND_EMAIL: ADMIN_REVIEW_SEND_EMAIL_LIMIT,
 	BULK_OPERATIONS: ADMIN_REVIEW_BULK_OPERATIONS_LIMIT,
 	RESPONSE: ADMIN_REVIEW_RESPONSE_LIMIT,
 	MODERATE: ADMIN_REVIEW_MODERATE_LIMIT,
 	RESTORE: ADMIN_REVIEW_RESTORE_LIMIT,
-	EXPORT: ADMIN_REVIEW_EXPORT_LIMIT,
 } as const;
 
 // ========================================
@@ -1961,18 +1910,6 @@ const ADMIN_DASHBOARD_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
-/**
- * Limite pour l'export du rapport dashboard (admin)
- *
- * Plus strict que REFRESH car genere un fichier complet en agregant 4 fetchers.
- * Protege contre les abus (generation massive de fichiers volumineux).
- */
-const ADMIN_DASHBOARD_EXPORT_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: minutes(1),
-};
-
 export const ADMIN_DASHBOARD_LIMITS = {
 	REFRESH: ADMIN_DASHBOARD_REFRESH_LIMIT,
-	EXPORT: ADMIN_DASHBOARD_EXPORT_LIMIT,
 } as const;

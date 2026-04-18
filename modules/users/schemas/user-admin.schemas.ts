@@ -90,16 +90,6 @@ export const unlinkOAuthAccountSchema = z.object({
 });
 
 // ============================================================================
-// EXPORT USERS LIST SCHEMA (Admin CSV/JSON)
-// ============================================================================
-
-export const exportUsersListSchema = z.object({
-	format: z.enum(["csv", "json"]),
-	role: z.enum([Role.USER, Role.ADMIN]).optional(),
-	accountStatus: z.enum(["ACTIVE", "INACTIVE", "PENDING_DELETION", "ANONYMIZED"]).optional(),
-});
-
-// ============================================================================
 // DIRECT PARAM SCHEMAS (Admin)
 // ============================================================================
 

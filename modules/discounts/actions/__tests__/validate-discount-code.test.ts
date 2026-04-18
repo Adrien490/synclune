@@ -15,7 +15,6 @@ const {
 	mockCalculateDiscountWithExclusion,
 	mockGetDiscountUsageCounts,
 	mockGetCart,
-	mockAjDiscountValidation,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		discount: {
@@ -30,9 +29,6 @@ const {
 	mockCalculateDiscountWithExclusion: vi.fn(),
 	mockGetDiscountUsageCounts: vi.fn(),
 	mockGetCart: vi.fn(),
-	mockAjDiscountValidation: {
-		protect: vi.fn(),
-	},
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -54,10 +50,6 @@ vi.mock("@/shared/lib/actions/rate-limit", () => ({
 
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	PAYMENT_LIMITS: { VALIDATE_DISCOUNT: "validate-discount" },
-}));
-
-vi.mock("@/shared/lib/arcjet", () => ({
-	ajDiscountValidation: mockAjDiscountValidation,
 }));
 
 vi.mock("@/modules/auth/lib/get-current-session", () => ({
@@ -161,11 +153,6 @@ describe("validateDiscountCode", () => {
 		// Default: IP resolved
 		mockGetClientIp.mockResolvedValue("192.168.1.1");
 
-		// Default: Arcjet allows
-		mockAjDiscountValidation.protect.mockResolvedValue({
-			isDenied: () => false,
-		});
-
 		// Default: rate limit passes
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 
@@ -194,17 +181,6 @@ describe("validateDiscountCode", () => {
 	// ──────────────────────────────────────────────────────────────
 	// Rate limiting
 	// ──────────────────────────────────────────────────────────────
-
-	it("should return error when Arcjet denies", async () => {
-		mockAjDiscountValidation.protect.mockResolvedValue({
-			isDenied: () => true,
-		});
-
-		const result = await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
-
-		expect(result.valid).toBe(false);
-		expect(result.error).toContain("Trop de tentatives");
-	});
 
 	it("should return error when in-memory rate limited", async () => {
 		mockEnforceRateLimit.mockResolvedValue({

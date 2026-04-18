@@ -24,10 +24,6 @@ vi.mock("@vercel/analytics/next", () => ({
 	Analytics: () => <div data-testid="vercel-analytics" />,
 }));
 
-vi.mock("@vercel/speed-insights/next", () => ({
-	SpeedInsights: () => <div data-testid="vercel-speed-insights" />,
-}));
-
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================
@@ -94,13 +90,12 @@ describe("ConditionalAnalytics", () => {
 
 	// ─── Renders analytics ────────────────────────────────────────────────
 
-	it("renders Analytics and SpeedInsights when all conditions are met", () => {
+	it("renders Analytics when all conditions are met", () => {
 		mockState._hasHydrated = true;
 		mockState.accepted = true;
 		process.env.NEXT_PUBLIC_VERCEL_ENV = "production";
 
 		const { getByTestId } = render(<ConditionalAnalytics />);
 		expect(getByTestId("vercel-analytics")).toBeInTheDocument();
-		expect(getByTestId("vercel-speed-insights")).toBeInTheDocument();
 	});
 });

@@ -1,10 +1,7 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import { ajNewsletterUnsubscribe } from "@/shared/lib/arcjet";
-import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { validateInput } from "@/shared/lib/actions";
-import { headers } from "next/headers";
 import { updateTag } from "next/cache";
 import { after } from "next/server";
 import { getNewsletterInvalidationTags } from "../constants/cache";
@@ -22,40 +19,6 @@ interface UnsubscribeResult {
  */
 export async function unsubscribeNewsletter(token: string | undefined): Promise<UnsubscribeResult> {
 	try {
-		// Arcjet protection: Shield + Rate Limiting against brute-force
-		const headersList = await headers();
-		const request = new Request(`${getBaseUrl()}${ROUTES.NEWSLETTER.UNSUBSCRIBE}`, {
-			method: "POST",
-			headers: headersList,
-		});
-
-		const decision = await ajNewsletterUnsubscribe.protect(request, {
-			requested: 1,
-		});
-
-		if (decision.isDenied()) {
-			if (decision.reason.isRateLimit()) {
-				return {
-					success: false,
-					message:
-						"Trop de tentatives de désinscription. Veuillez réessayer dans quelques minutes.",
-				};
-			}
-
-			if (decision.reason.isShield()) {
-				logger.warn("Shield blocked suspicious request", { service: "unsubscribe-newsletter" });
-				return {
-					success: false,
-					message: "Votre requête a été bloquée pour des raisons de sécurité.",
-				};
-			}
-
-			return {
-				success: false,
-				message: "Votre requête n'a pas pu être traitée. Veuillez réessayer.",
-			};
-		}
-
 		// Validate token with Zod
 		const validated = validateInput(unsubscribeTokenSchema, { token });
 		if ("error" in validated) {

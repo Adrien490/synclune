@@ -16,7 +16,6 @@ interface SecuritySectionProps {
 
 const PROVIDER_LABELS: Record<string, string> = {
 	google: "Google",
-	github: "GitHub",
 };
 
 export function SecuritySection({ emailVerified, providers, email }: SecuritySectionProps) {

@@ -5,7 +5,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // ============================================================================
 
 const {
-	mockAjNewsletterConfirm,
 	mockHeaders,
 	mockGetClientIp,
 	mockPrisma,
@@ -14,7 +13,6 @@ const {
 	mockSendNewsletterWelcomeEmail,
 	mockGetNewsletterInvalidationTags,
 } = vi.hoisted(() => ({
-	mockAjNewsletterConfirm: { protect: vi.fn() },
 	mockHeaders: vi.fn(),
 	mockGetClientIp: vi.fn(),
 	mockPrisma: {
@@ -29,7 +27,6 @@ const {
 	mockGetNewsletterInvalidationTags: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/arcjet", () => ({ ajNewsletterConfirm: mockAjNewsletterConfirm }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({ getClientIp: mockGetClientIp }));
 vi.mock("@/shared/lib/prisma", () => ({
@@ -85,27 +82,6 @@ const VALID_TOKEN = "550e8400-e29b-41d4-a716-446655440000";
 const VALID_SUBSCRIBER_ID = "sub_cm1234567890abcde";
 const VALID_USER_ID = "user_cm1234567890abcde";
 
-function buildDecision(overrides: Record<string, unknown> = {}) {
-	return {
-		isDenied: () => false,
-		reason: {
-			isRateLimit: () => false,
-			isShield: () => false,
-		},
-		...overrides,
-	};
-}
-
-function buildDeniedDecision(type: "rateLimit" | "shield" | "other") {
-	return {
-		isDenied: () => true,
-		reason: {
-			isRateLimit: () => type === "rateLimit",
-			isShield: () => type === "shield",
-		},
-	};
-}
-
 function createSubscriber(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_SUBSCRIBER_ID,
@@ -128,7 +104,6 @@ describe("confirmNewsletterSubscription", () => {
 
 		mockHeaders.mockResolvedValue(new Headers({ "x-forwarded-for": "127.0.0.1" }));
 		mockGetClientIp.mockResolvedValue("127.0.0.1");
-		mockAjNewsletterConfirm.protect.mockResolvedValue(buildDecision());
 		mockValidateInput.mockReturnValue({ data: { token: VALID_TOKEN } });
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(createSubscriber());
 		mockPrisma.newsletterSubscriber.update.mockResolvedValue({});
@@ -138,45 +113,6 @@ describe("confirmNewsletterSubscription", () => {
 			`newsletter-user-${VALID_USER_ID}`,
 		]);
 		mockSendNewsletterWelcomeEmail.mockResolvedValue(undefined);
-	});
-
-	// -------------------------------------------------------------------------
-	// Arcjet rate limit
-	// -------------------------------------------------------------------------
-
-	it("should return error when Arcjet rate limit is denied", async () => {
-		mockAjNewsletterConfirm.protect.mockResolvedValue(buildDeniedDecision("rateLimit"));
-
-		const result = await confirmNewsletterSubscription(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("Trop de tentatives");
-	});
-
-	// -------------------------------------------------------------------------
-	// Arcjet shield
-	// -------------------------------------------------------------------------
-
-	it("should return error when Arcjet shield blocks the request", async () => {
-		mockAjNewsletterConfirm.protect.mockResolvedValue(buildDeniedDecision("shield"));
-
-		const result = await confirmNewsletterSubscription(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("bloquée");
-	});
-
-	// -------------------------------------------------------------------------
-	// Arcjet generic denial
-	// -------------------------------------------------------------------------
-
-	it("should return generic error for other Arcjet denials", async () => {
-		mockAjNewsletterConfirm.protect.mockResolvedValue(buildDeniedDecision("other"));
-
-		const result = await confirmNewsletterSubscription(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("traitée");
 	});
 
 	// -------------------------------------------------------------------------
@@ -382,15 +318,6 @@ describe("confirmNewsletterSubscription", () => {
 
 	it("should return generic error on unexpected exception", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockRejectedValue(new Error("DB crash"));
-
-		const result = await confirmNewsletterSubscription(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("erreur");
-	});
-
-	it("should return generic error when Arcjet protect throws", async () => {
-		mockAjNewsletterConfirm.protect.mockRejectedValue(new Error("Arcjet network failure"));
 
 		const result = await confirmNewsletterSubscription(VALID_TOKEN);
 

@@ -6,23 +6,18 @@ import { createMockFormData } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAuth, mockHeaders, mockCheckArcjet, mockValidateInput, mockSuccess, mockError } =
-	vi.hoisted(() => ({
-		mockAuth: {
-			api: {
-				resetPassword: vi.fn(),
-			},
+const { mockAuth, mockValidateInput, mockSuccess, mockError } = vi.hoisted(() => ({
+	mockAuth: {
+		api: {
+			resetPassword: vi.fn(),
 		},
-		mockHeaders: vi.fn(),
-		mockCheckArcjet: vi.fn(),
-		mockValidateInput: vi.fn(),
-		mockSuccess: vi.fn(),
-		mockError: vi.fn(),
-	}));
+	},
+	mockValidateInput: vi.fn(),
+	mockSuccess: vi.fn(),
+	mockError: vi.fn(),
+}));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
-vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("../../utils/arcjet-protection", () => ({ checkArcjetProtection: mockCheckArcjet }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -62,8 +57,6 @@ describe("resetPassword", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockHeaders.mockResolvedValue(new Headers());
-		mockCheckArcjet.mockResolvedValue(null);
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.resetPassword.mockResolvedValue({});
 
@@ -72,13 +65,6 @@ describe("resetPassword", () => {
 			message: msg,
 		}));
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
-	});
-
-	it("should block when Arcjet protection triggers", async () => {
-		const arcjetError = { status: ActionStatus.ERROR, message: "Blocked" };
-		mockCheckArcjet.mockResolvedValue(arcjetError);
-		const result = await resetPassword(undefined, validFormData);
-		expect(result).toEqual(arcjetError);
 	});
 
 	it("should return validation error for invalid data", async () => {
@@ -120,11 +106,5 @@ describe("resetPassword", () => {
 		const result = await resetPassword(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("réinitialisation");
-	});
-
-	it("should return generic error when headers call fails", async () => {
-		mockHeaders.mockRejectedValue(new Error("Headers unavailable"));
-		const result = await resetPassword(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

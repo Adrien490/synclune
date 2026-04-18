@@ -293,11 +293,3 @@ export const extendDiscountValiditySchema = z.object({
 export const resetDiscountCounterSchema = z.object({
 	id: z.cuid2("ID invalide"),
 });
-
-// ============================================================================
-// EXPORT USAGES SCHEMA
-// ============================================================================
-
-export const exportDiscountUsagesSchema = z.object({
-	id: z.cuid2("ID invalide"),
-});

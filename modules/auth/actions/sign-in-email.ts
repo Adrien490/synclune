@@ -8,7 +8,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AUTH_ERROR_CODES } from "../constants/error-messages";
 import { signInEmailSchema } from "../schemas/auth.schemas";
-import { checkArcjetProtection } from "../utils/arcjet-protection";
 
 export const signInEmail = async (
 	_: ActionState | undefined,
@@ -16,10 +15,6 @@ export const signInEmail = async (
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
-
-		// Protection Arcjet : Shield + Bot Detection + Rate Limiting
-		const arcjetBlocked = await checkArcjetProtection("/auth/signin", headersList);
-		if (arcjetBlocked) return arcjetBlocked;
 
 		// Vérifier si l'utilisateur est déjà connecté
 		const session = await auth.api.getSession({ headers: headersList });

@@ -1,6 +1,4 @@
 import { NewsletterStatus } from "@/app/generated/prisma/client";
-import { ajNewsletterConfirm } from "@/shared/lib/arcjet";
-import { getBaseUrl } from "@/shared/constants/urls";
 import { sendNewsletterWelcomeEmail } from "@/modules/emails/services/newsletter-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -29,40 +27,7 @@ export async function confirmNewsletterSubscription(
 	token: string | undefined,
 ): Promise<ConfirmResult> {
 	try {
-		// Arcjet protection: Shield + Rate Limiting against brute-force
 		const headersList = await headers();
-		const request = new Request(`${getBaseUrl()}${ROUTES.NEWSLETTER.CONFIRM}`, {
-			method: "POST",
-			headers: headersList,
-		});
-
-		const decision = await ajNewsletterConfirm.protect(request, {
-			requested: 1,
-		});
-
-		if (decision.isDenied()) {
-			if (decision.reason.isRateLimit()) {
-				return {
-					success: false,
-					message: "Trop de tentatives de confirmation. Veuillez réessayer dans quelques minutes.",
-				};
-			}
-
-			if (decision.reason.isShield()) {
-				logger.warn("Shield blocked suspicious request", {
-					service: "confirm-newsletter-subscription",
-				});
-				return {
-					success: false,
-					message: "Votre requête a été bloquée pour des raisons de sécurité.",
-				};
-			}
-
-			return {
-				success: false,
-				message: "Votre requête n'a pas pu être traitée. Veuillez réessayer.",
-			};
-		}
 
 		// Validate token with Zod
 		const validated = validateInput(confirmationTokenSchema, { token });

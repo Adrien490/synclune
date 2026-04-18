@@ -195,7 +195,6 @@ export default async function PrivacyPolicyPage() {
 										<li>Neon (base de données PostgreSQL)</li>
 										<li>Resend (envoi d'emails transactionnels et newsletters)</li>
 										<li>UploadThing (stockage des fichiers et images)</li>
-										<li>Arcjet (protection contre les abus et limitation de requêtes)</li>
 										<li>Google (authentification OAuth)</li>
 										<li>Sentry (monitoring d'erreurs et performance)</li>
 										<li>PostHog (analyse comportementale anonymisée, avec consentement)</li>
@@ -240,11 +239,6 @@ export default async function PrivacyPolicyPage() {
 									<strong>UploadThing (États-Unis) :</strong> stockage des fichiers et images -
 									UploadThing applique des <strong>Clauses Contractuelles Types (CCT)</strong> et
 									s'engage à protéger les données conformément au RGPD.
-								</li>
-								<li>
-									<strong>Arcjet (États-Unis) :</strong> protection contre les abus (WAF, limitation
-									de requêtes) - Arcjet traite des adresses IP et applique des{" "}
-									<strong>Clauses Contractuelles Types (CCT)</strong> conformément au RGPD.
 								</li>
 								<li>
 									<strong>Google (États-Unis) :</strong> authentification OAuth - Google participe

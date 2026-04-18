@@ -4,29 +4,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockAjNewsletterUnsubscribe,
-	mockHeaders,
-	mockPrisma,
-	mockValidateInput,
-	mockUpdateTag,
-	mockGetNewsletterInvalidationTags,
-} = vi.hoisted(() => ({
-	mockAjNewsletterUnsubscribe: { protect: vi.fn() },
-	mockHeaders: vi.fn(),
-	mockPrisma: {
-		newsletterSubscriber: {
-			findFirst: vi.fn(),
-			update: vi.fn(),
+const { mockPrisma, mockValidateInput, mockUpdateTag, mockGetNewsletterInvalidationTags } =
+	vi.hoisted(() => ({
+		mockPrisma: {
+			newsletterSubscriber: {
+				findFirst: vi.fn(),
+				update: vi.fn(),
+			},
 		},
-	},
-	mockValidateInput: vi.fn(),
-	mockUpdateTag: vi.fn(),
-	mockGetNewsletterInvalidationTags: vi.fn(),
-}));
-
-vi.mock("@/shared/lib/arcjet", () => ({ ajNewsletterUnsubscribe: mockAjNewsletterUnsubscribe }));
-vi.mock("next/headers", () => ({ headers: mockHeaders }));
+		mockValidateInput: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockGetNewsletterInvalidationTags: vi.fn(),
+	}));
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
@@ -74,27 +63,6 @@ const VALID_TOKEN = "550e8400-e29b-41d4-a716-446655440002";
 const VALID_SUBSCRIBER_ID = "sub_cm9876543210fghij";
 const VALID_USER_ID = "user_cm9876543210fghij";
 
-function buildDecision(overrides: Record<string, unknown> = {}) {
-	return {
-		isDenied: () => false,
-		reason: {
-			isRateLimit: () => false,
-			isShield: () => false,
-		},
-		...overrides,
-	};
-}
-
-function buildDeniedDecision(type: "rateLimit" | "shield" | "other") {
-	return {
-		isDenied: () => true,
-		reason: {
-			isRateLimit: () => type === "rateLimit",
-			isShield: () => type === "shield",
-		},
-	};
-}
-
 function createSubscriber(overrides: Record<string, unknown> = {}) {
 	return {
 		id: VALID_SUBSCRIBER_ID,
@@ -112,8 +80,6 @@ describe("unsubscribeNewsletter", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
-		mockHeaders.mockResolvedValue(new Headers({ "x-forwarded-for": "127.0.0.1" }));
-		mockAjNewsletterUnsubscribe.protect.mockResolvedValue(buildDecision());
 		mockValidateInput.mockReturnValue({ data: { token: VALID_TOKEN } });
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(createSubscriber());
 		mockPrisma.newsletterSubscriber.update.mockResolvedValue({});
@@ -122,48 +88,6 @@ describe("unsubscribeNewsletter", () => {
 			"admin-badges",
 			`newsletter-user-${VALID_USER_ID}`,
 		]);
-	});
-
-	// -------------------------------------------------------------------------
-	// Arcjet rate limit
-	// -------------------------------------------------------------------------
-
-	it("should return error when Arcjet rate limit is denied", async () => {
-		mockAjNewsletterUnsubscribe.protect.mockResolvedValue(buildDeniedDecision("rateLimit"));
-
-		const result = await unsubscribeNewsletter(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("Trop de tentatives");
-		expect(mockPrisma.newsletterSubscriber.findFirst).not.toHaveBeenCalled();
-	});
-
-	// -------------------------------------------------------------------------
-	// Arcjet shield
-	// -------------------------------------------------------------------------
-
-	it("should return error when Arcjet shield blocks the request", async () => {
-		mockAjNewsletterUnsubscribe.protect.mockResolvedValue(buildDeniedDecision("shield"));
-
-		const result = await unsubscribeNewsletter(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("bloquée");
-		expect(mockPrisma.newsletterSubscriber.findFirst).not.toHaveBeenCalled();
-	});
-
-	// -------------------------------------------------------------------------
-	// Arcjet generic denial
-	// -------------------------------------------------------------------------
-
-	it("should return generic error for other Arcjet denials", async () => {
-		mockAjNewsletterUnsubscribe.protect.mockResolvedValue(buildDeniedDecision("other"));
-
-		const result = await unsubscribeNewsletter(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("traitée");
-		expect(mockPrisma.newsletterSubscriber.findFirst).not.toHaveBeenCalled();
 	});
 
 	// -------------------------------------------------------------------------
@@ -274,15 +198,6 @@ describe("unsubscribeNewsletter", () => {
 
 	it("should return generic error on unexpected exception", async () => {
 		mockPrisma.newsletterSubscriber.findFirst.mockRejectedValue(new Error("DB crash"));
-
-		const result = await unsubscribeNewsletter(VALID_TOKEN);
-
-		expect(result.success).toBe(false);
-		expect(result.message).toContain("erreur");
-	});
-
-	it("should return generic error when Arcjet protect throws", async () => {
-		mockAjNewsletterUnsubscribe.protect.mockRejectedValue(new Error("Arcjet network failure"));
 
 		const result = await unsubscribeNewsletter(VALID_TOKEN);
 

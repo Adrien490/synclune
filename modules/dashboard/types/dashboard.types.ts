@@ -251,30 +251,3 @@ export type GetCartAbandonmentReturn = {
 		evolution: number;
 	};
 };
-
-// ============================================================================
-// TYPES - SALES HEATMAP (DAY x HOUR)
-// ============================================================================
-
-/** Cell representing aggregated sales for a (dayOfWeek, hour) bucket */
-export type HeatmapCell = {
-	dayOfWeek: number; // 0 = Sunday, 6 = Saturday (Postgres DOW)
-	hour: number; // 0-23
-	count: number;
-	revenue: number;
-};
-
-export type HeatmapRawRow = {
-	dow: number;
-	hour: number;
-	count: bigint | number;
-	revenue: bigint | number;
-};
-
-export type GetSalesHeatmapReturn = {
-	cells: HeatmapCell[]; // 7 * 24 = 168 cells, all buckets filled (0 if no orders)
-	maxCount: number;
-	totalOrders: number;
-	totalRevenue: number;
-	periodLabel: string;
-};

@@ -7,7 +7,6 @@ import { createMockFormData } from "@/test/factories";
 // ============================================================================
 
 const {
-	mockAjNewsletter,
 	mockHeaders,
 	mockGetClientIp,
 	mockValidateInput,
@@ -17,7 +16,6 @@ const {
 	mockConflict,
 	mockSubscribeToNewsletterInternal,
 } = vi.hoisted(() => ({
-	mockAjNewsletter: { protect: vi.fn() },
 	mockHeaders: vi.fn(),
 	mockGetClientIp: vi.fn(),
 	mockValidateInput: vi.fn(),
@@ -28,7 +26,6 @@ const {
 	mockSubscribeToNewsletterInternal: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/arcjet", () => ({ ajNewsletter: mockAjNewsletter }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("@/shared/lib/rate-limit", () => ({ getClientIp: mockGetClientIp }));
 vi.mock("@/shared/lib/actions", () => ({
@@ -56,33 +53,6 @@ vi.mock("../../services/subscribe-to-newsletter-internal", () => ({
 import { subscribeToNewsletter } from "../subscribe-to-newsletter";
 
 // ============================================================================
-// HELPERS
-// ============================================================================
-
-function buildDecision(overrides: Record<string, unknown> = {}) {
-	return {
-		isDenied: () => false,
-		reason: {
-			isRateLimit: () => false,
-			isBot: () => false,
-			isShield: () => false,
-		},
-		...overrides,
-	};
-}
-
-function buildDeniedDecision(type: "rateLimit" | "bot" | "shield" | "other") {
-	return {
-		isDenied: () => true,
-		reason: {
-			isRateLimit: () => type === "rateLimit",
-			isBot: () => type === "bot",
-			isShield: () => type === "shield",
-		},
-	};
-}
-
-// ============================================================================
 // TESTS
 // ============================================================================
 
@@ -92,7 +62,6 @@ describe("subscribeToNewsletter", () => {
 
 		mockHeaders.mockResolvedValue(new Headers({ "user-agent": "Mozilla/5.0" }));
 		mockGetClientIp.mockResolvedValue("127.0.0.1");
-		mockAjNewsletter.protect.mockResolvedValue(buildDecision());
 		mockValidateInput.mockReturnValue({ data: { email: "user@example.com", consent: true } });
 		mockSubscribeToNewsletterInternal.mockResolvedValue({
 			success: true,
@@ -111,62 +80,6 @@ describe("subscribeToNewsletter", () => {
 			status: ActionStatus.ERROR,
 			message: msg,
 		}));
-	});
-
-	it("should return error when Arcjet rate limit is denied", async () => {
-		mockAjNewsletter.protect.mockResolvedValue(buildDeniedDecision("rateLimit"));
-
-		const result = await subscribeToNewsletter(
-			undefined,
-			createMockFormData({ email: "user@example.com", consent: "true" }),
-		);
-
-		expect(mockError).toHaveBeenCalledWith(
-			"Trop de tentatives d'inscription. Veuillez réessayer dans quelques minutes.",
-		);
-		expect(result.status).toBe(ActionStatus.ERROR);
-	});
-
-	it("should return error when Arcjet bot detection is triggered", async () => {
-		mockAjNewsletter.protect.mockResolvedValue(buildDeniedDecision("bot"));
-
-		const result = await subscribeToNewsletter(
-			undefined,
-			createMockFormData({ email: "user@example.com", consent: "true" }),
-		);
-
-		expect(mockError).toHaveBeenCalledWith(
-			"Votre requête semble provenir d'un bot. Veuillez réessayer depuis un navigateur normal.",
-		);
-		expect(result.status).toBe(ActionStatus.ERROR);
-	});
-
-	it("should return error when Arcjet shield blocks the request", async () => {
-		mockAjNewsletter.protect.mockResolvedValue(buildDeniedDecision("shield"));
-
-		const result = await subscribeToNewsletter(
-			undefined,
-			createMockFormData({ email: "user@example.com", consent: "true" }),
-		);
-
-		expect(mockError).toHaveBeenCalledWith(
-			"Votre requête a été bloquée pour des raisons de sécurité.",
-		);
-		expect(result.status).toBe(ActionStatus.ERROR);
-	});
-
-	it("should return generic error for other Arcjet denials", async () => {
-		mockAjNewsletter.protect.mockResolvedValue(buildDeniedDecision("other"));
-
-		const result = await subscribeToNewsletter(
-			undefined,
-			createMockFormData({ email: "user@example.com", consent: "true" }),
-		);
-
-		expect(mockError).toHaveBeenCalledWith(
-			"Votre requête n'a pas pu être traitée. Veuillez réessayer.",
-		);
-		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
 	it("should return validation error when input is invalid", async () => {
@@ -249,17 +162,5 @@ describe("subscribeToNewsletter", () => {
 				consentSource: "newsletter_form",
 			}),
 		);
-	});
-
-	it("should call handleActionError when an unexpected exception is thrown", async () => {
-		mockAjNewsletter.protect.mockRejectedValue(new Error("Unexpected network error"));
-
-		const result = await subscribeToNewsletter(
-			undefined,
-			createMockFormData({ email: "user@example.com", consent: "true" }),
-		);
-
-		expect(mockHandleActionError).toHaveBeenCalled();
-		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 });

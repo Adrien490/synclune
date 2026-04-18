@@ -10,7 +10,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 import { headers } from "next/headers";
 import { changePasswordSchema } from "../schemas/auth.schemas";
-import { checkArcjetProtection } from "../utils/arcjet-protection";
 import { checkPasswordBreached } from "../services/hibp.service";
 
 export const changePassword = async (
@@ -19,10 +18,6 @@ export const changePassword = async (
 ): Promise<ActionState> => {
 	try {
 		const headersList = await headers();
-
-		// Protection Arcjet : Rate Limiting against brute-force on current password
-		const arcjetBlocked = await checkArcjetProtection("/auth/change-password", headersList);
-		if (arcjetBlocked) return arcjetBlocked;
 
 		// Verify authenticated user exists in DB (checks deletedAt: null)
 		const authResult = await requireAuth();

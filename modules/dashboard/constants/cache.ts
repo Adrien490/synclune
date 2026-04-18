@@ -20,6 +20,4 @@ export const DASHBOARD_CACHE_TAGS = {
 	TOP_PRODUCTS: "dashboard-top-products",
 	ACTIVE_DISCOUNTS: "dashboard-active-discounts",
 	CUSTOMER_KPIS: "dashboard-customer-kpis",
-	CART_ABANDONMENT: "dashboard-cart-abandonment",
-	SALES_HEATMAP: "dashboard-sales-heatmap",
 } as const;

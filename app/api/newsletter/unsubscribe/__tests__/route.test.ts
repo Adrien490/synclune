@@ -4,15 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockAjNewsletterUnsubscribe,
-	mockPrisma,
-	mockUpdateTag,
-	mockGetNewsletterInvalidationTags,
-} = vi.hoisted(() => ({
-	mockAjNewsletterUnsubscribe: {
-		protect: vi.fn(),
-	},
+const { mockPrisma, mockUpdateTag, mockGetNewsletterInvalidationTags } = vi.hoisted(() => ({
 	mockPrisma: {
 		newsletterSubscriber: {
 			findFirst: vi.fn(),
@@ -21,10 +13,6 @@ const {
 	},
 	mockUpdateTag: vi.fn(),
 	mockGetNewsletterInvalidationTags: vi.fn(),
-}));
-
-vi.mock("@/shared/lib/arcjet", () => ({
-	ajNewsletterUnsubscribe: mockAjNewsletterUnsubscribe,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -73,18 +61,6 @@ function makeSubscriber(status = "CONFIRMED") {
 	};
 }
 
-function allowRequest() {
-	mockAjNewsletterUnsubscribe.protect.mockResolvedValue({
-		isDenied: () => false,
-	});
-}
-
-function denyRequest() {
-	mockAjNewsletterUnsubscribe.protect.mockResolvedValue({
-		isDenied: () => true,
-	});
-}
-
 // ============================================================================
 // Tests: POST /api/newsletter/unsubscribe
 // ============================================================================
@@ -92,7 +68,6 @@ function denyRequest() {
 describe("POST /api/newsletter/unsubscribe", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		allowRequest();
 		mockGetNewsletterInvalidationTags.mockReturnValue(["newsletter-subscribers-list"]);
 		mockPrisma.newsletterSubscriber.findFirst.mockResolvedValue(makeSubscriber());
 		mockPrisma.newsletterSubscriber.update.mockResolvedValue({});
@@ -104,14 +79,6 @@ describe("POST /api/newsletter/unsubscribe", () => {
 
 	describe("RFC 8058 compliance", () => {
 		it("returns 200 for valid unsubscribe request", async () => {
-			const response = await POST(makeRequest(VALID_TOKEN));
-
-			expect(response.status).toBe(200);
-		});
-
-		it("returns 200 when rate limited (denied by Arcjet)", async () => {
-			denyRequest();
-
 			const response = await POST(makeRequest(VALID_TOKEN));
 
 			expect(response.status).toBe(200);
@@ -143,20 +110,6 @@ describe("POST /api/newsletter/unsubscribe", () => {
 			const response = await POST(makeRequest(VALID_TOKEN));
 
 			expect(response.status).toBe(200);
-		});
-	});
-
-	// ========================================================================
-	// Rate limiting
-	// ========================================================================
-
-	describe("rate limiting", () => {
-		it("does not query database when rate limited", async () => {
-			denyRequest();
-
-			await POST(makeRequest(VALID_TOKEN));
-
-			expect(mockPrisma.newsletterSubscriber.findFirst).not.toHaveBeenCalled();
 		});
 	});
 

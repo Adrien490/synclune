@@ -12,7 +12,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useLightbox } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
@@ -52,7 +52,7 @@ export function MediaUploadGrid({
 }: MediaUploadGridProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
-	const isMobile = useIsMobile();
+	const isTouchDevice = useIsTouchDevice();
 
 	// Image loading state
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -78,7 +78,7 @@ export function MediaUploadGrid({
 		if (typeof window === "undefined") return;
 		// Desktop drag-and-drop is discoverable via the alternative Up/Down buttons;
 		// the hint targets mobile users who need to discover the long-press gesture.
-		if (!isMobile) return;
+		if (!isTouchDevice) return;
 		try {
 			const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
 			if (hasSeenHint) return;
@@ -103,7 +103,7 @@ export function MediaUploadGrid({
 			}, UI_DELAYS.HINT_DISAPPEAR_MS);
 			return () => clearTimeout(timer);
 		}
-	}, [hasMultipleMedia, isMobile]);
+	}, [hasMultipleMedia, isTouchDevice]);
 
 	// Prepare slides for the lightbox
 	const slides: Slide[] = media.map((m) => {
@@ -235,11 +235,18 @@ export function MediaUploadGrid({
 			<DragDropProvider
 				sensors={[
 					PointerSensor.configure({
-						activationConstraints: [
-							new PointerActivationConstraints.Distance({
-								value: UI_DELAYS.DRAG_ACTIVATION_DISTANCE_PX,
-							}),
-						],
+						activationConstraints: isTouchDevice
+							? [
+									new PointerActivationConstraints.Delay({
+										value: UI_DELAYS.LONG_PRESS_ACTIVATION_MS,
+										tolerance: UI_DELAYS.LONG_PRESS_TOLERANCE_PX,
+									}),
+								]
+							: [
+									new PointerActivationConstraints.Distance({
+										value: UI_DELAYS.DRAG_ACTIVATION_DISTANCE_PX,
+									}),
+								],
 					}),
 					KeyboardSensor,
 				]}
