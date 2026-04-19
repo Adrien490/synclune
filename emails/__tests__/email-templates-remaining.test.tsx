@@ -9,21 +9,11 @@ import { ReturnConfirmationEmail } from "../return-confirmation-email";
 import { TrackingUpdateEmail } from "../tracking-update-email";
 import { PasswordChangedEmail } from "../password-changed-email";
 import { AccountDeletionEmail } from "../account-deletion-email";
-import { ReviewRequestEmail } from "../review-request-email";
-import { ReviewResponseEmail } from "../review-response-email";
 import { RevertShippingNotificationEmail } from "../revert-shipping-notification-email";
-import { CustomizationConfirmationEmail } from "../customization-confirmation-email";
-import { CustomizationRequestEmail } from "../customization-request-email";
-import { CustomizationStatusEmail } from "../customization-status-email";
 import { NewsletterConfirmationEmail } from "../newsletter-confirmation-email";
 import { NewsletterWelcomeEmail } from "../newsletter-welcome-email";
 import { AdminNewOrderEmail } from "../admin-new-order-email";
-import { AdminRefundFailedEmail } from "../admin-refund-failed-email";
-import { AdminWebhookFailedEmail } from "../admin-webhook-failed-email";
-import { AdminInvoiceFailedEmail } from "../admin-invoice-failed-email";
-import { AdminDisputeAlertEmail } from "../admin-dispute-alert-email";
-import { AdminCheckoutFailedEmail } from "../admin-checkout-failed-email";
-import { AdminCronFailedEmail } from "../admin-cron-failed-email";
+import { AdminAlertEmail } from "../admin-alert-email";
 import { WelcomeEmail } from "../welcome-email";
 import type { OrderItem, AdminShippingAddress } from "@/modules/emails/types/email.types";
 
@@ -432,91 +422,6 @@ describe("AccountDeletionEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// ReviewRequestEmail
-// ---------------------------------------------------------------------------
-
-describe("ReviewRequestEmail", () => {
-	const baseProps = {
-		customerName: "Marie",
-		orderNumber: "CMD-1730000000-ABCD",
-		products: [
-			{
-				title: "Collier Luna en Or Rose",
-				slug: "collier-luna-or-rose",
-				imageUrl: "https://synclune.fr/images/products/collier-luna.jpg",
-				skuVariants: "Or Rose · 45cm",
-			},
-			{
-				title: "Boucles d'oreilles Étoile",
-				slug: "boucles-oreilles-etoile",
-				imageUrl: "https://synclune.fr/images/products/boucles-etoile.jpg",
-				skuVariants: "Argent 925",
-			},
-		],
-		reviewUrl: "https://synclune.fr/commandes",
-		unsubscribeUrl: "https://synclune.fr/notifications/desinscription",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<ReviewRequestEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<ReviewRequestEmail {...baseProps} />);
-		expect(html).toContain("avis comptent");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<ReviewRequestEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("Collier Luna en Or Rose");
-		expect(html).toContain("Donner mon avis");
-	});
-
-	it("uses singular heading for a single product", async () => {
-		const html = await render(
-			<ReviewRequestEmail {...baseProps} products={[baseProps.products[0]!]} />,
-		);
-		expect(html).toContain("Votre avis compte !");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// ReviewResponseEmail
-// ---------------------------------------------------------------------------
-
-describe("ReviewResponseEmail", () => {
-	const baseProps = {
-		customerName: "Marie",
-		productTitle: "Collier Luna en Or Rose",
-		reviewContent: "J'adore ce collier ! La qualité est exceptionnelle.",
-		responseContent: "Merci beaucoup pour votre retour Marie !",
-		responseAuthorName: "Équipe Synclune",
-		productUrl: "https://synclune.fr/creations/collier-luna-or-rose",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<ReviewResponseEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<ReviewResponseEmail {...baseProps} />);
-		expect(html).toContain("répondu à votre avis");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<ReviewResponseEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("Collier Luna en Or Rose");
-		expect(html).toContain("Équipe Synclune");
-	});
-});
-
-// ---------------------------------------------------------------------------
 // RevertShippingNotificationEmail
 // ---------------------------------------------------------------------------
 
@@ -545,131 +450,6 @@ describe("RevertShippingNotificationEmail", () => {
 		expect(html).toContain("Marie");
 		expect(html).toContain("Erreur d");
 		expect(html).toContain("tiquetage du transporteur");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// CustomizationConfirmationEmail
-// ---------------------------------------------------------------------------
-
-describe("CustomizationConfirmationEmail", () => {
-	const baseProps = {
-		firstName: "Marie",
-		productTypeLabel: "Collier",
-		details: "Je souhaiterais un collier personnalisé avec les initiales 'ML'.",
-		inspirationProducts: [{ title: "Collier Lune Céleste" }],
-		shopUrl: "https://synclune.fr/creations",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<CustomizationConfirmationEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<CustomizationConfirmationEmail {...baseProps} />);
-		expect(html).toContain("Demande reçue");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<CustomizationConfirmationEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("Collier");
-		expect(html).toContain("Collier Lune Céleste");
-	});
-
-	it("does not show inspirations section when no inspiration products are provided", async () => {
-		const html = await render(
-			<CustomizationConfirmationEmail {...baseProps} inspirationProducts={undefined} />,
-		);
-		expect(html).not.toContain("Inspirations");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// CustomizationRequestEmail
-// ---------------------------------------------------------------------------
-
-describe("CustomizationRequestEmail", () => {
-	const baseProps = {
-		firstName: "Marie",
-		email: "marie.dupont@example.com",
-		phone: "+33612345678",
-		productTypeLabel: "Collier",
-		details: "Bonjour,\n\nJe souhaiterais un collier personnalisé.",
-		inspirationProducts: [{ title: "Collier Lune Céleste" }, { title: "Pendentif Étoile Filante" }],
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<CustomizationRequestEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<CustomizationRequestEmail {...baseProps} />);
-		expect(html).toContain("Nouvelle demande");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<CustomizationRequestEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("marie.dupont@example.com");
-		expect(html).toContain("Collier");
-	});
-
-	it("shows phone number when provided", async () => {
-		const html = await render(<CustomizationRequestEmail {...baseProps} />);
-		expect(html).toContain("+33612345678");
-	});
-
-	it("does not show phone row when phone is not provided", async () => {
-		const { phone: _, ...propsWithoutPhone } = baseProps;
-		const html = await render(<CustomizationRequestEmail {...propsWithoutPhone} />);
-		expect(html).not.toContain("+33612345678");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// CustomizationStatusEmail
-// ---------------------------------------------------------------------------
-
-describe("CustomizationStatusEmail", () => {
-	const baseProps = {
-		firstName: "Marie",
-		productTypeLabel: "Collier",
-		status: "IN_PROGRESS" as const,
-		adminNotes: "Nous avons sélectionné une magnifique pierre de lune.",
-		details: "Collier en or rose avec pierre de lune.",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<CustomizationStatusEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading for IN_PROGRESS status", async () => {
-		const html = await render(<CustomizationStatusEmail {...baseProps} />);
-		expect(html).toContain("Personnalisation en cours");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<CustomizationStatusEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("Collier");
-		expect(html).toContain("Nous avons sélectionné");
-	});
-
-	it("contains COMPLETED heading when status is COMPLETED", async () => {
-		const html = await render(<CustomizationStatusEmail {...baseProps} status="COMPLETED" />);
-		expect(html).toContain("Personnalisation terminée");
-	});
-
-	it("contains CANCELLED heading when status is CANCELLED", async () => {
-		const html = await render(<CustomizationStatusEmail {...baseProps} status="CANCELLED" />);
-		expect(html).toContain("annulée");
 	});
 });
 
@@ -778,198 +558,97 @@ describe("AdminNewOrderEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// AdminRefundFailedEmail
+// AdminAlertEmail (merged template, 7 variants)
 // ---------------------------------------------------------------------------
 
-describe("AdminRefundFailedEmail", () => {
+describe("AdminAlertEmail", () => {
 	const baseProps = {
-		orderNumber: "CMD-1730000000-ABCD",
-		customerEmail: "marie.dupont@example.com",
-		amount: 18390,
-		reason: "payment_failed" as const,
-		errorMessage: "Error: This PaymentIntent cannot be refunded.",
-		stripePaymentIntentId: "pi_1234567890abcdefghij",
-		dashboardUrl: "https://synclune.fr/dashboard/orders/clxxx12345",
-		stripeDashboardUrl: "https://dashboard.stripe.com/payments/pi_1234567890abcdefghij",
-	};
+		context: "Commande : CMD-1730000000-ABCD\nClient   : marie@example.com",
+		summary: "Résumé de l'alerte pour l'admin.",
+		ctaUrl: "https://synclune.fr/admin",
+		ctaLabel: "Voir le dashboard",
+	} as const;
 
 	it("renders without error", async () => {
-		const html = await render(<AdminRefundFailedEmail {...baseProps} />);
+		const html = await render(<AdminAlertEmail {...baseProps} type="refund" />);
 		expect(html).toContain("<!DOCTYPE");
 		expect(html.length).toBeGreaterThan(100);
 	});
 
-	it("contains expected heading", async () => {
-		const html = await render(<AdminRefundFailedEmail {...baseProps} />);
-		expect(html).toContain("Échec du remboursement");
+	it("uses header specific to type=checkout", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="checkout" />);
+		expect(html).toContain("Échec checkout Stripe");
 	});
 
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminRefundFailedEmail {...baseProps} />);
-		expect(html).toContain("CMD-1730000000-ABCD");
-		expect(html).toContain("marie.dupont@example.com");
-		expect(html).toContain("pi_1234567890abcdefghij");
-		expect(html).toContain("Error: This PaymentIntent cannot be refunded.");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// AdminWebhookFailedEmail
-// ---------------------------------------------------------------------------
-
-describe("AdminWebhookFailedEmail", () => {
-	const baseProps = {
-		eventId: "evt_1234567890abcdefghij",
-		eventType: "checkout.session.completed",
-		attempts: 3,
-		error: "Error: Order not found: clxxx12345",
-		stripeDashboardUrl: "https://dashboard.stripe.com/webhooks",
-		adminDashboardUrl: "https://synclune.fr/admin",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AdminWebhookFailedEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
+	it("uses header specific to type=cron", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="cron" />);
+		expect(html).toContain("Échec cron job");
 	});
 
-	it("contains expected heading", async () => {
-		const html = await render(<AdminWebhookFailedEmail {...baseProps} />);
-		expect(html).toContain("Webhook Stripe en échec");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminWebhookFailedEmail {...baseProps} />);
-		expect(html).toContain("evt_1234567890abcdefghij");
-		expect(html).toContain("checkout.session.completed");
-		expect(html).toContain("Error: Order not found: clxxx12345");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// AdminInvoiceFailedEmail
-// ---------------------------------------------------------------------------
-
-describe("AdminInvoiceFailedEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-1730000000-ABCD",
-		customerEmail: "marie.dupont@example.com",
-		customerCompanyName: "Dupont SARL",
-		customerSiret: "12345678901234",
-		amount: 18390,
-		errorMessage: "Error: Failed to generate PDF invoice",
-		stripePaymentIntentId: "pi_1234567890abcdefghij",
-		dashboardUrl: "https://synclune.fr/admin/ventes/commandes/clxxx12345",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AdminInvoiceFailedEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<AdminInvoiceFailedEmail {...baseProps} />);
-		expect(html).toContain("génération facture");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminInvoiceFailedEmail {...baseProps} />);
-		expect(html).toContain("CMD-1730000000-ABCD");
-		expect(html).toContain("marie.dupont@example.com");
-		expect(html).toContain("Dupont SARL");
-		expect(html).toContain("12345678901234");
-	});
-
-	it("shows company and SIRET when provided", async () => {
-		const html = await render(<AdminInvoiceFailedEmail {...baseProps} />);
-		expect(html).toContain("Entreprise");
-		expect(html).toContain("SIRET");
-	});
-
-	it("does not show company or SIRET when not provided", async () => {
-		const { customerCompanyName: _, customerSiret: __, ...propsWithoutCompany } = baseProps;
-		const html = await render(<AdminInvoiceFailedEmail {...propsWithoutCompany} />);
-		expect(html).not.toContain("Entreprise");
-		expect(html).not.toContain("SIRET");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// AdminDisputeAlertEmail
-// ---------------------------------------------------------------------------
-
-describe("AdminDisputeAlertEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-1730000000-ABCD",
-		customerEmail: "marie.dupont@example.com",
-		amount: 18390,
-		reason: "Produit non reçu",
-		disputeId: "dp_1234567890abcdefghij",
-		deadline: "15/03/2026",
-		dashboardUrl: "https://synclune.fr/admin/commandes/clxxx12345",
-		stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_1234567890abcdefghij",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AdminDisputeAlertEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<AdminDisputeAlertEmail {...baseProps} />);
+	it("uses header specific to type=dispute", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="dispute" />);
 		expect(html).toContain("Litige Stripe");
 	});
 
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminDisputeAlertEmail {...baseProps} />);
+	it("uses header specific to type=invoice", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="invoice" />);
+		expect(html).toContain("Échec génération facture");
+	});
+
+	it("uses header specific to type=order-processing with URGENT label", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="order-processing" />);
+		expect(html).toContain("Échec traitement commande");
+		expect(html).toContain("URGENT");
+	});
+
+	it("uses header specific to type=refund", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="refund" />);
+		expect(html).toContain("Échec du remboursement");
+	});
+
+	it("uses header specific to type=webhook", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="webhook" />);
+		expect(html).toContain("Webhook Stripe en échec");
+	});
+
+	it("includes context and summary in body", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="refund" />);
 		expect(html).toContain("CMD-1730000000-ABCD");
-		expect(html).toContain("marie.dupont@example.com");
-		expect(html).toContain("dp_1234567890abcdefghij");
-		expect(html).toContain("Produit non reçu");
+		expect(html).toContain("marie@example.com");
+		expect(html).toContain("Résumé de l");
+		expect(html).toContain("alerte");
 	});
 
-	it("shows deadline when provided", async () => {
-		const html = await render(<AdminDisputeAlertEmail {...baseProps} />);
-		expect(html).toContain("15/03/2026");
+	it("renders stackTrace block when provided", async () => {
+		const html = await render(
+			<AdminAlertEmail {...baseProps} type="refund" stackTrace="Error: boom at foo.ts:42" />,
+		);
+		expect(html).toContain("Détails techniques");
+		expect(html).toContain("Error: boom at foo.ts:42");
 	});
 
-	it("does not show deadline row when deadline is null", async () => {
-		const html = await render(<AdminDisputeAlertEmail {...baseProps} deadline={null} />);
-		expect(html).not.toContain("15/03/2026");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// AdminCheckoutFailedEmail
-// ---------------------------------------------------------------------------
-
-describe("AdminCheckoutFailedEmail", () => {
-	const baseProps = {
-		orderNumber: "SYN-20260220-A1B2",
-		customerEmail: "client@example.com",
-		total: 8900,
-		errorMessage: "StripeConnectionError: Could not connect to Stripe API after 2 retries",
-		dashboardUrl: "https://synclune.fr/admin",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AdminCheckoutFailedEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
+	it("does not render stackTrace block when omitted", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="dispute" />);
+		expect(html).not.toContain("Détails techniques");
 	});
 
-	it("contains expected heading", async () => {
-		const html = await render(<AdminCheckoutFailedEmail {...baseProps} />);
-		expect(html).toContain("checkout Stripe");
+	it("renders Stripe CTA when stripeCtaUrl is provided", async () => {
+		const html = await render(
+			<AdminAlertEmail
+				{...baseProps}
+				type="dispute"
+				stripeCtaUrl="https://dashboard.stripe.com/disputes/dp_test"
+				stripeCtaLabel="Répondre au litige"
+			/>,
+		);
+		expect(html).toContain("Répondre au litige");
+		expect(html).toContain("https://dashboard.stripe.com/disputes/dp_test");
 	});
 
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminCheckoutFailedEmail {...baseProps} />);
-		expect(html).toContain("SYN-20260220-A1B2");
-		expect(html).toContain("client@example.com");
-		expect(html).toContain("StripeConnectionError");
+	it("always renders the primary admin CTA", async () => {
+		const html = await render(<AdminAlertEmail {...baseProps} type="cron" />);
+		expect(html).toContain("Voir le dashboard");
+		expect(html).toContain("https://synclune.fr/admin");
 	});
 });
 
@@ -1001,39 +680,5 @@ describe("WelcomeEmail", () => {
 		expect(html).toContain("Marie");
 		expect(html).toContain("https://synclune.fr/produits");
 		expect(html).toContain("France");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// AdminCronFailedEmail
-// ---------------------------------------------------------------------------
-
-describe("AdminCronFailedEmail", () => {
-	const baseProps = {
-		job: "cleanup-carts",
-		errors: 3,
-		details: {
-			processed: 12,
-			failed: 3,
-			lastError: "Connection timeout after 30s",
-		},
-		dashboardUrl: "https://synclune.fr/admin",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<AdminCronFailedEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<AdminCronFailedEmail {...baseProps} />);
-		expect(html).toContain("cron job");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<AdminCronFailedEmail {...baseProps} />);
-		expect(html).toContain("cleanup-carts");
-		expect(html).toContain("Connection timeout after 30s");
 	});
 });

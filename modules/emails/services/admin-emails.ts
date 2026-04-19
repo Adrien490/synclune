@@ -1,15 +1,16 @@
 import { AdminNewOrderEmail } from "@/emails/admin-new-order-email";
-import { AdminRefundFailedEmail } from "@/emails/admin-refund-failed-email";
-import { AdminWebhookFailedEmail } from "@/emails/admin-webhook-failed-email";
-import { AdminInvoiceFailedEmail } from "@/emails/admin-invoice-failed-email";
-import { AdminCronFailedEmail } from "@/emails/admin-cron-failed-email";
-import { AdminCheckoutFailedEmail } from "@/emails/admin-checkout-failed-email";
-import { AdminOrderProcessingFailedEmail } from "@/emails/admin-order-processing-failed-email";
-import { AdminDisputeAlertEmail } from "@/emails/admin-dispute-alert-email";
+import { AdminAlertEmail } from "@/emails/admin-alert-email";
+import { formatEuro } from "@/shared/utils/format-euro";
 import { EMAIL_ADMIN } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls";
 import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types";
+
+const REFUND_REASON_LABELS: Record<"payment_failed" | "payment_canceled" | "other", string> = {
+	payment_failed: "Échec du paiement",
+	payment_canceled: "Paiement annulé",
+	other: "Autre raison",
+};
 
 /**
  * Envoie un email de notification admin pour une nouvelle commande
@@ -79,16 +80,23 @@ export async function sendAdminRefundFailedAlert({
 	dashboardUrl: string;
 }): Promise<EmailResult> {
 	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`;
+	const context = [
+		`Commande   : ${orderNumber}`,
+		`Client     : ${customerEmail}`,
+		`Montant    : ${formatEuro(amount)}`,
+		`Raison     : ${REFUND_REASON_LABELS[reason]}`,
+		`Payment ID : ${stripePaymentIntentId}`,
+	].join("\n");
 	return renderAndSend(
-		AdminRefundFailedEmail({
-			orderNumber,
-			customerEmail,
-			amount,
-			reason,
-			errorMessage,
-			stripePaymentIntentId,
-			dashboardUrl,
-			stripeDashboardUrl,
+		AdminAlertEmail({
+			type: "refund",
+			context,
+			summary: `Le remboursement automatique a échoué. Raison: ${REFUND_REASON_LABELS[reason]}. Une intervention manuelle est requise pour rembourser le client ${customerEmail}.`,
+			stackTrace: errorMessage,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+			stripeCtaUrl: stripeDashboardUrl,
+			stripeCtaLabel: "Ouvrir Stripe",
 		}),
 		{
 			to: EMAIL_ADMIN,
@@ -114,14 +122,21 @@ export async function sendWebhookFailedAlertEmail({
 }): Promise<EmailResult> {
 	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.WEBHOOKS;
 	const adminDashboardUrl = `${getBaseUrl()}/admin`;
+	const context = [
+		`Event ID   : ${eventId}`,
+		`Type       : ${eventType}`,
+		`Tentatives : ${attempts}`,
+	].join("\n");
 	return renderAndSend(
-		AdminWebhookFailedEmail({
-			eventId,
-			eventType,
-			attempts,
-			error,
-			stripeDashboardUrl,
-			adminDashboardUrl,
+		AdminAlertEmail({
+			type: "webhook",
+			context,
+			summary: `Le webhook ${eventType} a échoué ${attempts} fois. Vérifiez le dashboard Stripe pour plus de détails et rejouer si nécessaire.`,
+			stackTrace: error,
+			ctaUrl: adminDashboardUrl,
+			ctaLabel: "Dashboard Admin",
+			stripeCtaUrl: stripeDashboardUrl,
+			stripeCtaLabel: "Voir dans Stripe",
 		}),
 		{
 			to: EMAIL_ADMIN,
@@ -144,11 +159,25 @@ export async function sendAdminCronFailedAlert({
 	details: Record<string, unknown>;
 }): Promise<EmailResult> {
 	const dashboardUrl = `${getBaseUrl()}/admin`;
-	return renderAndSend(AdminCronFailedEmail({ job, errors, details, dashboardUrl }), {
-		to: EMAIL_ADMIN,
-		subject: `[Admin] Cron ${job} — ${errors} erreur(s)`,
-		tags: [{ name: "category", value: "admin" }],
-	});
+	const context = [`Cron job : ${job}`, `Erreurs  : ${errors}`].join("\n");
+	const detailLines = Object.entries(details)
+		.map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
+		.join("\n");
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "cron",
+			context,
+			summary: `Le cron ${job} a rencontré ${errors} erreur(s). Vérifiez les logs Vercel pour les détails complets.`,
+			stackTrace: detailLines || undefined,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir le dashboard",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] Cron ${job} — ${errors} erreur(s)`,
+			tags: [{ name: "category", value: "admin" }],
+		},
+	);
 }
 
 /**
@@ -168,13 +197,19 @@ export async function sendAdminCheckoutFailedAlert({
 	errorMessage: string;
 }): Promise<EmailResult> {
 	const dashboardUrl = `${getBaseUrl()}/admin`;
+	const context = [
+		`Commande : ${orderNumber}`,
+		`Client   : ${customerEmail}`,
+		`Total    : ${formatEuro(total)}`,
+	].join("\n");
 	return renderAndSend(
-		AdminCheckoutFailedEmail({
-			orderNumber,
-			customerEmail,
-			total,
-			errorMessage,
-			dashboardUrl,
+		AdminAlertEmail({
+			type: "checkout",
+			context,
+			summary: `La création de la session Stripe Checkout a échoué pour la commande ${orderNumber}. La commande orpheline sera nettoyée automatiquement. Vérifiez l'état Stripe et la configuration.`,
+			stackTrace: errorMessage,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir le dashboard",
 		}),
 		{
 			to: EMAIL_ADMIN,
@@ -204,15 +239,22 @@ export async function sendAdminOrderProcessingFailedAlert({
 }): Promise<EmailResult> {
 	const dashboardUrl = `${getBaseUrl()}/admin`;
 	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${paymentIntentId}`;
+	const context = [
+		`Commande   : ${orderNumber}`,
+		`Client     : ${customerEmail}`,
+		`Total      : ${formatEuro(total)}`,
+		`Payment ID : ${paymentIntentId}`,
+	].join("\n");
 	return renderAndSend(
-		AdminOrderProcessingFailedEmail({
-			orderNumber,
-			customerEmail,
-			total,
-			errorMessage,
-			paymentIntentId,
-			dashboardUrl,
-			stripeDashboardUrl,
+		AdminAlertEmail({
+			type: "order-processing",
+			context,
+			summary: `Le paiement a été reçu sur Stripe mais le traitement de la commande ${orderNumber} a échoué. Une intervention manuelle est requise : créer la commande manuellement ou rembourser le client.`,
+			stackTrace: errorMessage,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir le dashboard",
+			stripeCtaUrl: stripeDashboardUrl,
+			stripeCtaLabel: "Voir dans Stripe",
 		}),
 		{
 			to: EMAIL_ADMIN,
@@ -244,16 +286,25 @@ export async function sendAdminDisputeAlert({
 	dashboardUrl: string;
 	stripeDashboardUrl: string;
 }): Promise<EmailResult> {
+	const contextLines = [
+		`Commande        : ${orderNumber}`,
+		`Client          : ${customerEmail}`,
+		`Montant contesté: ${formatEuro(amount)}`,
+		`Raison          : ${reason}`,
+		`Dispute ID      : ${disputeId}`,
+	];
+	if (deadline) {
+		contextLines.push(`Deadline        : ${deadline}`);
+	}
 	return renderAndSend(
-		AdminDisputeAlertEmail({
-			orderNumber,
-			customerEmail,
-			amount,
-			reason,
-			disputeId,
-			deadline,
-			dashboardUrl,
-			stripeDashboardUrl,
+		AdminAlertEmail({
+			type: "dispute",
+			context: contextLines.join("\n"),
+			summary: `Un client a ouvert un litige (chargeback) sur la commande ${orderNumber}${deadline ? ` — deadline de réponse : ${deadline}` : ""}. Préparez les preuves et répondez via le dashboard Stripe.`,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+			stripeCtaUrl: stripeDashboardUrl,
+			stripeCtaLabel: "Répondre au litige",
 		}),
 		{
 			to: EMAIL_ADMIN,
@@ -288,16 +339,27 @@ export async function sendAdminInvoiceFailedAlert({
 	stripePaymentIntentId?: string;
 	dashboardUrl: string;
 }): Promise<EmailResult> {
+	const contextLines = [
+		`Commande : ${orderNumber}`,
+		`Client   : ${customerEmail}`,
+		`Montant  : ${formatEuro(amount)}`,
+	];
+	if (customerCompanyName) contextLines.push(`Entreprise: ${customerCompanyName}`);
+	if (customerSiret) contextLines.push(`SIRET    : ${customerSiret}`);
+	if (stripePaymentIntentId) contextLines.push(`Payment ID: ${stripePaymentIntentId}`);
+	const stripeCtaUrl = stripePaymentIntentId
+		? `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`
+		: undefined;
 	return renderAndSend(
-		AdminInvoiceFailedEmail({
-			orderNumber,
-			customerEmail,
-			customerCompanyName,
-			customerSiret,
-			amount,
-			errorMessage,
-			stripePaymentIntentId,
-			dashboardUrl,
+		AdminAlertEmail({
+			type: "invoice",
+			context: contextLines.join("\n"),
+			summary: `La génération automatique de la facture pour la commande ${orderNumber} a échoué. Conformité légale : générer la facture manuellement et l'envoyer au client.`,
+			stackTrace: errorMessage,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir la commande",
+			stripeCtaUrl,
+			stripeCtaLabel: "Voir dans Stripe",
 		}),
 		{
 			to: EMAIL_ADMIN,

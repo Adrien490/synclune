@@ -12,28 +12,8 @@ vi.mock("@/emails/admin-new-order-email", () => ({
 	AdminNewOrderEmail: vi.fn((props) => ({ type: "AdminNewOrderEmail", props })),
 }));
 
-vi.mock("@/emails/admin-refund-failed-email", () => ({
-	AdminRefundFailedEmail: vi.fn((props) => ({ type: "AdminRefundFailedEmail", props })),
-}));
-
-vi.mock("@/emails/admin-webhook-failed-email", () => ({
-	AdminWebhookFailedEmail: vi.fn((props) => ({ type: "AdminWebhookFailedEmail", props })),
-}));
-
-vi.mock("@/emails/admin-invoice-failed-email", () => ({
-	AdminInvoiceFailedEmail: vi.fn((props) => ({ type: "AdminInvoiceFailedEmail", props })),
-}));
-
-vi.mock("@/emails/admin-cron-failed-email", () => ({
-	AdminCronFailedEmail: vi.fn((props) => ({ type: "AdminCronFailedEmail", props })),
-}));
-
-vi.mock("@/emails/admin-checkout-failed-email", () => ({
-	AdminCheckoutFailedEmail: vi.fn((props) => ({ type: "AdminCheckoutFailedEmail", props })),
-}));
-
-vi.mock("@/emails/admin-dispute-alert-email", () => ({
-	AdminDisputeAlertEmail: vi.fn((props) => ({ type: "AdminDisputeAlertEmail", props })),
+vi.mock("@/emails/admin-alert-email", () => ({
+	AdminAlertEmail: vi.fn((props) => ({ type: "AdminAlertEmail", props })),
 }));
 
 vi.mock("../../constants/email.constants", () => ({
@@ -57,6 +37,7 @@ import {
 	sendAdminCheckoutFailedAlert,
 	sendAdminDisputeAlert,
 	sendAdminInvoiceFailedAlert,
+	sendAdminOrderProcessingFailedAlert,
 } from "../admin-emails";
 
 const mockShippingAddress = {
@@ -166,7 +147,7 @@ describe("sendAdminRefundFailedAlert", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-2" } });
 	});
 
-	it("should call renderAndSend with EMAIL_ADMIN as recipient and constructed stripeDashboardUrl", async () => {
+	it("should render AdminAlertEmail with type=refund and include context+summary+stripeCtaUrl", async () => {
 		await sendAdminRefundFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -177,29 +158,26 @@ describe("sendAdminRefundFailedAlert", () => {
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminRefundFailedEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerEmail: "customer@test.com",
-					amount: 5000,
-					reason: "payment_failed",
-					errorMessage: "Insufficient funds",
-					stripePaymentIntentId: "pi_test123",
-					dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-					stripeDashboardUrl: "https://dashboard.stripe.com/payments/pi_test123",
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "[Admin] Échec remboursement — CMD-001",
-				tags: [{ name: "category", value: "admin" }],
-			}),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.type).toBe("AdminAlertEmail");
+		expect(emailArg.props.type).toBe("refund");
+		expect(emailArg.props.context).toContain("CMD-001");
+		expect(emailArg.props.context).toContain("customer@test.com");
+		expect(emailArg.props.context).toContain("pi_test123");
+		expect(emailArg.props.summary).toContain("Échec du paiement");
+		expect(emailArg.props.stackTrace).toBe("Insufficient funds");
+		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin/commandes/CMD-001");
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/payments/pi_test123");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[Admin] Échec remboursement — CMD-001",
+			tags: [{ name: "category", value: "admin" }],
+		});
 	});
 
-	it("should construct stripeDashboardUrl from stripePaymentIntentId", async () => {
+	it("should construct stripeCtaUrl from stripePaymentIntentId", async () => {
 		await sendAdminRefundFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -210,14 +188,8 @@ describe("sendAdminRefundFailedAlert", () => {
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				props: expect.objectContaining({
-					stripeDashboardUrl: "https://dashboard.stripe.com/payments/pi_unique456",
-				}),
-			}),
-			expect.anything(),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/payments/pi_unique456");
 	});
 
 	it("should return the result from renderAndSend", async () => {
@@ -241,7 +213,7 @@ describe("sendWebhookFailedAlertEmail", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-3" } });
 	});
 
-	it("should call renderAndSend with EMAIL_ADMIN as recipient and constructed URLs", async () => {
+	it("should render AdminAlertEmail with type=webhook and include eventId+eventType+attempts", async () => {
 		await sendWebhookFailedAlertEmail({
 			eventId: "evt_test123",
 			eventType: "payment_intent.succeeded",
@@ -249,27 +221,24 @@ describe("sendWebhookFailedAlertEmail", () => {
 			error: "Connection timeout",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminWebhookFailedEmail",
-				props: expect.objectContaining({
-					eventId: "evt_test123",
-					eventType: "payment_intent.succeeded",
-					attempts: 3,
-					error: "Connection timeout",
-					stripeDashboardUrl: "https://dashboard.stripe.com/webhooks",
-					adminDashboardUrl: "https://test.com/admin",
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "[Admin] Webhook payment_intent.succeeded échoué (3 tentatives)",
-				tags: [{ name: "category", value: "admin" }],
-			}),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.type).toBe("webhook");
+		expect(emailArg.props.context).toContain("evt_test123");
+		expect(emailArg.props.context).toContain("payment_intent.succeeded");
+		expect(emailArg.props.context).toContain("3");
+		expect(emailArg.props.stackTrace).toBe("Connection timeout");
+		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin");
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/webhooks");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[Admin] Webhook payment_intent.succeeded échoué (3 tentatives)",
+			tags: [{ name: "category", value: "admin" }],
+		});
 	});
 
-	it("should use EXTERNAL_URLS.STRIPE.WEBHOOKS for stripeDashboardUrl", async () => {
+	it("should use EXTERNAL_URLS.STRIPE.WEBHOOKS for stripeCtaUrl", async () => {
 		await sendWebhookFailedAlertEmail({
 			eventId: "evt_test123",
 			eventType: "checkout.session.completed",
@@ -277,17 +246,11 @@ describe("sendWebhookFailedAlertEmail", () => {
 			error: "Database error",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				props: expect.objectContaining({
-					stripeDashboardUrl: "https://dashboard.stripe.com/webhooks",
-				}),
-			}),
-			expect.anything(),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/webhooks");
 	});
 
-	it("should use getBaseUrl() to build adminDashboardUrl", async () => {
+	it("should use getBaseUrl() to build ctaUrl", async () => {
 		const { getBaseUrl } = await import("@/shared/constants/urls");
 
 		await sendWebhookFailedAlertEmail({
@@ -318,28 +281,27 @@ describe("sendAdminCronFailedAlert", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-4" } });
 	});
 
-	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
+	it("should render AdminAlertEmail with type=cron and include job+errors+details", async () => {
 		await sendAdminCronFailedAlert({
 			job: "cleanup-carts",
 			errors: 5,
 			details: { failedIds: ["abc", "def"] },
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminCronFailedEmail",
-				props: expect.objectContaining({
-					job: "cleanup-carts",
-					errors: 5,
-					details: { failedIds: ["abc", "def"] },
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "[Admin] Cron cleanup-carts — 5 erreur(s)",
-				tags: [{ name: "category", value: "admin" }],
-			}),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.type).toBe("cron");
+		expect(emailArg.props.context).toContain("cleanup-carts");
+		expect(emailArg.props.context).toContain("5");
+		expect(emailArg.props.summary).toContain("cleanup-carts");
+		expect(emailArg.props.stackTrace).toContain("failedIds");
+		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[Admin] Cron cleanup-carts — 5 erreur(s)",
+			tags: [{ name: "category", value: "admin" }],
+		});
 	});
 
 	it("should include error count in subject", async () => {
@@ -370,7 +332,7 @@ describe("sendAdminCheckoutFailedAlert", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-5" } });
 	});
 
-	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
+	it("should render AdminAlertEmail with type=checkout", async () => {
 		await sendAdminCheckoutFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -378,22 +340,19 @@ describe("sendAdminCheckoutFailedAlert", () => {
 			errorMessage: "stripe.checkout.sessions.create failed",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminCheckoutFailedEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerEmail: "customer@test.com",
-					total: 12500,
-					errorMessage: "stripe.checkout.sessions.create failed",
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "[Admin] Échec checkout Stripe — CMD-001",
-				tags: [{ name: "category", value: "admin" }],
-			}),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.type).toBe("checkout");
+		expect(emailArg.props.context).toContain("CMD-001");
+		expect(emailArg.props.context).toContain("customer@test.com");
+		expect(emailArg.props.stackTrace).toBe("stripe.checkout.sessions.create failed");
+		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[Admin] Échec checkout Stripe — CMD-001",
+			tags: [{ name: "category", value: "admin" }],
+		});
 	});
 
 	it("should return the result from renderAndSend", async () => {
@@ -414,7 +373,7 @@ describe("sendAdminDisputeAlert", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-6" } });
 	});
 
-	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
+	it("should render AdminAlertEmail with type=dispute and include disputeId", async () => {
 		await sendAdminDisputeAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -426,29 +385,23 @@ describe("sendAdminDisputeAlert", () => {
 			stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test123",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminDisputeAlertEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerEmail: "customer@test.com",
-					amount: 12500,
-					reason: "fraudulent",
-					disputeId: "dp_test123",
-					deadline: "2026-03-10",
-					dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-					stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test123",
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "[Admin] Litige commande CMD-001 — Action requise",
-				tags: [{ name: "category", value: "admin" }],
-			}),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.type).toBe("dispute");
+		expect(emailArg.props.context).toContain("CMD-001");
+		expect(emailArg.props.context).toContain("dp_test123");
+		expect(emailArg.props.context).toContain("2026-03-10");
+		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin/commandes/CMD-001");
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/disputes/dp_test123");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[Admin] Litige commande CMD-001 — Action requise",
+			tags: [{ name: "category", value: "admin" }],
+		});
 	});
 
-	it("should accept null deadline", async () => {
+	it("should accept null deadline and omit deadline line from context", async () => {
 		await sendAdminDisputeAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -460,12 +413,8 @@ describe("sendAdminDisputeAlert", () => {
 			stripeDashboardUrl: "https://dashboard.stripe.com/disputes/dp_test123",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				props: expect.objectContaining({ deadline: null }),
-			}),
-			expect.anything(),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.context).not.toContain("Deadline");
 	});
 
 	it("should return the result from renderAndSend", async () => {
@@ -490,7 +439,7 @@ describe("sendAdminInvoiceFailedAlert", () => {
 		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-7" } });
 	});
 
-	it("should call renderAndSend with EMAIL_ADMIN as recipient", async () => {
+	it("should render AdminAlertEmail with type=invoice and include B2B fields", async () => {
 		await sendAdminInvoiceFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -502,29 +451,21 @@ describe("sendAdminInvoiceFailedAlert", () => {
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				type: "AdminInvoiceFailedEmail",
-				props: expect.objectContaining({
-					orderNumber: "CMD-001",
-					customerEmail: "customer@test.com",
-					customerCompanyName: "SARL Dupont",
-					customerSiret: "12345678901234",
-					amount: 12500,
-					errorMessage: "PDF generation failed",
-					stripePaymentIntentId: "pi_test123",
-					dashboardUrl: "https://test.com/admin/commandes/CMD-001",
-				}),
-			}),
-			expect.objectContaining({
-				to: "admin@test.com",
-				subject: "[Admin] Échec génération facture — CMD-001",
-				tags: [{ name: "category", value: "admin" }],
-			}),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.type).toBe("invoice");
+		expect(emailArg.props.context).toContain("SARL Dupont");
+		expect(emailArg.props.context).toContain("12345678901234");
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/payments/pi_test123");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[Admin] Échec génération facture — CMD-001",
+			tags: [{ name: "category", value: "admin" }],
+		});
 	});
 
-	it("should accept undefined optional fields", async () => {
+	it("should omit optional B2B fields from context when not provided and omit stripeCtaUrl", async () => {
 		await sendAdminInvoiceFailedAlert({
 			orderNumber: "CMD-001",
 			customerEmail: "customer@test.com",
@@ -533,16 +474,10 @@ describe("sendAdminInvoiceFailedAlert", () => {
 			dashboardUrl: "https://test.com/admin/commandes/CMD-001",
 		});
 
-		expect(mockRenderAndSend).toHaveBeenCalledWith(
-			expect.objectContaining({
-				props: expect.objectContaining({
-					customerCompanyName: undefined,
-					customerSiret: undefined,
-					stripePaymentIntentId: undefined,
-				}),
-			}),
-			expect.anything(),
-		);
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.context).not.toContain("Entreprise");
+		expect(emailArg.props.context).not.toContain("SIRET");
+		expect(emailArg.props.stripeCtaUrl).toBeUndefined();
 	});
 
 	it("should return the result from renderAndSend", async () => {
@@ -555,5 +490,49 @@ describe("sendAdminInvoiceFailedAlert", () => {
 		});
 
 		expect(result).toEqual({ success: true, data: { id: "email-7" } });
+	});
+});
+
+describe("sendAdminOrderProcessingFailedAlert", () => {
+	beforeEach(() => {
+		vi.resetAllMocks();
+		mockRenderAndSend.mockResolvedValue({ success: true, data: { id: "email-8" } });
+	});
+
+	it("should render AdminAlertEmail with type=order-processing and include paymentIntentId", async () => {
+		await sendAdminOrderProcessingFailedAlert({
+			orderNumber: "CMD-001",
+			customerEmail: "customer@test.com",
+			total: 12500,
+			errorMessage: "processOrderTransaction failed",
+			paymentIntentId: "pi_test123",
+		});
+
+		const emailArg = mockRenderAndSend.mock.calls[0]![0];
+		expect(emailArg.props.type).toBe("order-processing");
+		expect(emailArg.props.context).toContain("CMD-001");
+		expect(emailArg.props.context).toContain("pi_test123");
+		expect(emailArg.props.stackTrace).toBe("processOrderTransaction failed");
+		expect(emailArg.props.ctaUrl).toBe("https://test.com/admin");
+		expect(emailArg.props.stripeCtaUrl).toBe("https://dashboard.stripe.com/payments/pi_test123");
+
+		const sendOpts = mockRenderAndSend.mock.calls[0]![1];
+		expect(sendOpts).toMatchObject({
+			to: "admin@test.com",
+			subject: "[URGENT] Paiement recu — Echec traitement commande CMD-001",
+			tags: [{ name: "category", value: "admin" }],
+		});
+	});
+
+	it("should return the result from renderAndSend", async () => {
+		const result = await sendAdminOrderProcessingFailedAlert({
+			orderNumber: "CMD-001",
+			customerEmail: "customer@test.com",
+			total: 12500,
+			errorMessage: "Error",
+			paymentIntentId: "pi_test123",
+		});
+
+		expect(result).toEqual({ success: true, data: { id: "email-8" } });
 	});
 });
