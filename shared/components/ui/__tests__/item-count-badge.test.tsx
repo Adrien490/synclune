@@ -1,14 +1,6 @@
 import type React from "react";
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
-
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockShouldPulse } = vi.hoisted(() => ({
-	mockShouldPulse: { value: false },
-}));
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { render, screen, cleanup, act } from "@testing-library/react";
 
 // ============================================================================
 // MODULE MOCKS
@@ -20,10 +12,6 @@ vi.mock("@/shared/components/ui/badge", () => ({
 			{children}
 		</span>
 	),
-}));
-
-vi.mock("@/shared/hooks", () => ({
-	usePulseOnChange: () => mockShouldPulse.value,
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -43,10 +31,6 @@ const defaultProps = {
 };
 
 describe("ItemCountBadge", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockShouldPulse.value = false;
-	});
 	afterEach(cleanup);
 
 	// ============================================================================
@@ -105,10 +89,28 @@ describe("ItemCountBadge", () => {
 	// PULSE ANIMATION
 	// ============================================================================
 
-	it("applies pulse class when shouldPulse is true", () => {
-		mockShouldPulse.value = true;
-		render(<ItemCountBadge {...defaultProps} />);
+	it("does not pulse on initial render", () => {
+		render(<ItemCountBadge {...defaultProps} count={3} />);
+		const badge = screen.getByTestId("badge");
+		expect(badge.className).not.toContain("animate-badge-pulse");
+	});
+
+	it("applies pulse class when count changes", () => {
+		const { rerender } = render(<ItemCountBadge {...defaultProps} count={3} />);
+		rerender(<ItemCountBadge {...defaultProps} count={4} />);
 		const badge = screen.getByTestId("badge");
 		expect(badge.className).toContain("animate-badge-pulse");
+	});
+
+	it("removes pulse class after duration elapses", () => {
+		vi.useFakeTimers();
+		const { rerender } = render(<ItemCountBadge {...defaultProps} count={3} />);
+		rerender(<ItemCountBadge {...defaultProps} count={4} />);
+		act(() => {
+			vi.advanceTimersByTime(700);
+		});
+		const badge = screen.getByTestId("badge");
+		expect(badge.className).not.toContain("animate-badge-pulse");
+		vi.useRealTimers();
 	});
 });

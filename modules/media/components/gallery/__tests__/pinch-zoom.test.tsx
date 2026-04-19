@@ -1,18 +1,11 @@
-import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPinchZoom, mockHaptic } = vi.hoisted(() => ({
-	mockPinchZoom: {
-		scale: 1,
-		position: { x: 0, y: 0 },
-		isZoomed: false,
-		isInteracting: false,
-		handleKeyDown: vi.fn(),
-	},
+const { mockHaptic } = vi.hoisted(() => ({
 	mockHaptic: vi.fn(),
 }));
 
@@ -25,10 +18,6 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
 vi.mock("motion/react", () => ({
 	useReducedMotion: () => false,
-}));
-
-vi.mock("@/shared/hooks", () => ({
-	usePinchZoom: () => mockPinchZoom,
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -55,6 +44,13 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
+vi.mock("@/shared/utils/touch-geometry", () => ({
+	getDistance: () => 100,
+	getCenter: () => ({ x: 0, y: 0 }),
+	clampPosition: (p: { x: number; y: number }) => p,
+	getZoomToPointPosition: () => ({ x: 0, y: 0 }),
+}));
+
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================
@@ -76,10 +72,9 @@ describe("GalleryPinchZoom", () => {
 
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockPinchZoom.scale = 1;
-		mockPinchZoom.isZoomed = false;
-		mockPinchZoom.isInteracting = false;
 	});
+
+	// ─── Initial render ──────────────────────────────────────────────────────
 
 	it("renders a container with role=application", () => {
 		render(<GalleryPinchZoom {...defaultProps} />);
@@ -93,7 +88,6 @@ describe("GalleryPinchZoom", () => {
 	});
 
 	it("includes zoom instructions in aria-label when not zoomed", () => {
-		mockPinchZoom.isZoomed = false;
 		render(<GalleryPinchZoom {...defaultProps} />);
 		expect(screen.getByRole("application")).toHaveAttribute(
 			"aria-label",
@@ -101,37 +95,9 @@ describe("GalleryPinchZoom", () => {
 		);
 	});
 
-	it("includes zoom percentage in aria-label when zoomed", () => {
-		mockPinchZoom.isZoomed = true;
-		mockPinchZoom.scale = 2;
-		render(<GalleryPinchZoom {...defaultProps} />);
-		expect(screen.getByRole("application")).toHaveAttribute(
-			"aria-label",
-			expect.stringContaining("200%"),
-		);
-	});
-
-	it("shows zoom percentage indicator when zoomed", () => {
-		mockPinchZoom.isZoomed = true;
-		mockPinchZoom.scale = 2;
-		render(<GalleryPinchZoom {...defaultProps} />);
-		expect(screen.getByText("200%")).toBeInTheDocument();
-	});
-
 	it("hides zoom percentage indicator when not zoomed", () => {
-		mockPinchZoom.isZoomed = false;
 		render(<GalleryPinchZoom {...defaultProps} />);
 		expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
-	});
-
-	it("shows sr-only status announcement when zoomed", () => {
-		mockPinchZoom.isZoomed = true;
-		mockPinchZoom.scale = 1.5;
-		render(<GalleryPinchZoom {...defaultProps} />);
-		// sr-only status region
-		const status = screen.getByRole("status");
-		expect(status).toBeInTheDocument();
-		expect(status).toHaveTextContent(/150/);
 	});
 
 	it("renders the image with correct src", () => {
@@ -140,15 +106,50 @@ describe("GalleryPinchZoom", () => {
 		expect(img).toHaveAttribute("src", "https://example.com/photo.jpg");
 	});
 
+	// ─── Keyboard zoom interactions ──────────────────────────────────────────
+
+	it("zooms in when pressing + key and shows percentage indicator", () => {
+		render(<GalleryPinchZoom {...defaultProps} />);
+		const container = screen.getByRole("application");
+		fireEvent.keyDown(container, { key: "+" });
+		// scale 1 + 0.5 step = 1.5 → 150%
+		expect(screen.getByText("150%")).toBeInTheDocument();
+	});
+
+	it("includes zoom percentage in aria-label when zoomed", () => {
+		render(<GalleryPinchZoom {...defaultProps} />);
+		const container = screen.getByRole("application");
+		fireEvent.keyDown(container, { key: "+" });
+		fireEvent.keyDown(container, { key: "+" });
+		// scale 2 → 200%
+		expect(container).toHaveAttribute("aria-label", expect.stringContaining("200%"));
+	});
+
+	it("shows sr-only status announcement when zoomed", () => {
+		render(<GalleryPinchZoom {...defaultProps} />);
+		const container = screen.getByRole("application");
+		fireEvent.keyDown(container, { key: "+" });
+		const status = screen.getByRole("status");
+		expect(status).toBeInTheDocument();
+		expect(status).toHaveTextContent(/150/);
+	});
+
+	it("resets zoom on Escape key", () => {
+		render(<GalleryPinchZoom {...defaultProps} />);
+		const container = screen.getByRole("application");
+		fireEvent.keyDown(container, { key: "+" });
+		expect(screen.getByText("150%")).toBeInTheDocument();
+		fireEvent.keyDown(container, { key: "Escape" });
+		expect(screen.queryByText(/\d+%/)).not.toBeInTheDocument();
+	});
+
 	// ─── Zoom entry announcement (P1.4) ──────────────────────────────────────
 
 	it("announces assertive zoom entry hint on transition to zoomed", async () => {
-		const { rerender } = render(<GalleryPinchZoom {...defaultProps} />);
-		// Transition: not zoomed → zoomed
+		render(<GalleryPinchZoom {...defaultProps} />);
+		const container = screen.getByRole("application");
 		await act(async () => {
-			mockPinchZoom.isZoomed = true;
-			mockPinchZoom.scale = 2;
-			rerender(<GalleryPinchZoom {...defaultProps} />);
+			fireEvent.keyDown(container, { key: "+" });
 		});
 		await waitFor(() => {
 			const alert = screen.getByRole("alert");
@@ -157,21 +158,12 @@ describe("GalleryPinchZoom", () => {
 		});
 	});
 
-	it("does not render zoom entry hint on initial render when already zoomed", () => {
-		mockPinchZoom.isZoomed = true;
-		mockPinchZoom.scale = 2;
-		render(<GalleryPinchZoom {...defaultProps} />);
-		// previousZoomedRef captures initial value, so no transition fires on mount
-		expect(screen.queryByRole("alert")).not.toBeInTheDocument();
-	});
-
 	it("fires haptic selection on zoom transition", async () => {
-		const { rerender } = render(<GalleryPinchZoom {...defaultProps} />);
+		render(<GalleryPinchZoom {...defaultProps} />);
+		const container = screen.getByRole("application");
 		mockHaptic.mockClear();
 		await act(async () => {
-			mockPinchZoom.isZoomed = true;
-			mockPinchZoom.scale = 2;
-			rerender(<GalleryPinchZoom {...defaultProps} />);
+			fireEvent.keyDown(container, { key: "+" });
 		});
 		expect(mockHaptic).toHaveBeenCalledWith("selection");
 	});

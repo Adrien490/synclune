@@ -175,7 +175,6 @@ interface BottomBarProps {
  * - For iOS/Android-native feel, call `triggerHaptic("selection")` from
  *   `@/shared/hooks/use-haptic` on tab click.
  * - Use {@link bottomBarBadgeClass} for count badges on icon items.
- * - Pair with `useScrollHideBottomBar` (opt-in) to auto-hide on fast down-scroll.
  */
 export function BottomBar({
 	children,

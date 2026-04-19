@@ -73,7 +73,6 @@ Avant d'implementer, utiliser les primitives existantes du projet.
 | `useIsMobile()`      | `shared/hooks/use-mobile.ts`                    | Breakpoint 768px, SSR-safe (`useSyncExternalStore`)                                                                  |
 | `useIsTouchDevice()` | `shared/hooks/use-touch-device.ts`              | Detecte `(hover: none) and (pointer: coarse)` — SSR-safe (`useSyncExternalStore`)                                    |
 | `useEdgeSwipe()`     | `shared/hooks/use-edge-swipe.ts`                | Swipe from left edge (20px), seuil 50px, passive listeners — utilise `useEffectEvent` pour handlers stables          |
-| `usePinchZoom()`     | `shared/hooks/use-pinch-zoom.ts`                | Pinch-to-zoom, double-tap, pan, keyboard support — utilise `useEffectEvent` pour handlers stables                    |
 | `useTransition()`    | React 19 built-in                               | **137+ fichiers** — transitions non-urgentes avec `isPending` pour feedback loading. Pattern principal des mutations |
 | `useSwipeToRemove()` | `modules/wishlist/hooks/use-swipe-to-remove.ts` | Swipe gauche pour supprimer — seuil 80px, cancel si scroll vertical, passive listeners, snap-back                    |
 | `useEffectEvent()`   | React 19 built-in                               | **27+ fichiers** — event handlers stables sans re-render. A utiliser dans les hooks de gestes et listeners           |

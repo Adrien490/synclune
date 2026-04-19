@@ -1,10 +1,26 @@
 "use client";
 
 import { Badge } from "@/shared/components/ui/badge";
-import { usePulseOnChange } from "@/shared/hooks";
 import { cn } from "@/shared/utils/cn";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
+import { useEffect, useState, useSyncExternalStore } from "react";
+
+function subscribePrefersReducedMotion(callback: () => void) {
+	const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+	mql.addEventListener("change", callback);
+	return () => mql.removeEventListener("change", callback);
+}
+
+function getReducedMotionSnapshot() {
+	return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function getReducedMotionServerSnapshot() {
+	return false;
+}
+
+const PULSE_DURATION_MS = 600;
 
 const itemCountBadgeVariants = cva(
 	"flex items-center justify-center p-0 font-bold bg-primary text-primary-foreground shadow-lg animate-in zoom-in-50 duration-300 border-2 border-background",
@@ -48,7 +64,28 @@ export function ItemCountBadge({
 	className,
 	positionClassName = "absolute -top-1 -right-1",
 }: ItemCountBadgeProps) {
-	const shouldPulse = usePulseOnChange(count);
+	const [shouldPulse, setShouldPulse] = useState(false);
+	const [pulseKey, setPulseKey] = useState(0);
+	const prefersReducedMotion = useSyncExternalStore(
+		subscribePrefersReducedMotion,
+		getReducedMotionSnapshot,
+		getReducedMotionServerSnapshot,
+	);
+
+	const [prevCount, setPrevCount] = useState(count);
+	if (prevCount !== count) {
+		setPrevCount(count);
+		if (!prefersReducedMotion) {
+			setShouldPulse(true);
+			setPulseKey(pulseKey + 1);
+		}
+	}
+
+	useEffect(() => {
+		if (!shouldPulse) return;
+		const timeout = setTimeout(() => setShouldPulse(false), PULSE_DURATION_MS);
+		return () => clearTimeout(timeout);
+	}, [shouldPulse, pulseKey]);
 
 	// Don't render if count is 0 or negative
 	if (!count || count <= 0) {
