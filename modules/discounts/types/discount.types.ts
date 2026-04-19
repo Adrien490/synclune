@@ -118,15 +118,6 @@ export type EligibilityCheckResult = {
 // ============================================================================
 
 /**
- * Paramètres pour calculer le montant de réduction
- */
-export type CalculateDiscountParams = {
-	type: DiscountType;
-	value: number;
-	subtotal: number; // En centimes (hors frais de port)
-};
-
-/**
  * Item du panier pour le calcul de réduction avec exclusion articles soldés
  */
 export type CartItemForDiscount = {

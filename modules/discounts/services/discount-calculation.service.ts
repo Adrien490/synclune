@@ -1,52 +1,10 @@
 import { DiscountType } from "@/app/generated/prisma/client";
 import type {
-	CalculateDiscountParams,
 	CalculateDiscountWithExclusionParams,
 	CartItemForDiscount,
 } from "../types/discount.types";
 
 export type { CartItemForDiscount } from "../types/discount.types";
-
-/**
- * Calcule le montant de la réduction en centimes
- *
- * @param type - Type de réduction (PERCENTAGE ou FIXED_AMOUNT)
- * @param value - Valeur (pourcentage 0-100 ou montant en centimes)
- * @param subtotal - Sous-total du panier en centimes (hors frais de port)
- * @returns Montant de la réduction en centimes
- *
- * @example
- * // Réduction de 20% sur 5000 centimes (50€)
- * calculateDiscountAmount({ type: "PERCENTAGE", value: 20, subtotal: 5000 })
- * // => 1000 (10€)
- *
- * @example
- * // Réduction fixe de 10€ (1000 centimes)
- * calculateDiscountAmount({ type: "FIXED_AMOUNT", value: 1000, subtotal: 5000 })
- * // => 1000 (10€)
- *
- * @example
- * // Réduction fixe supérieure au panier (plafonnée)
- * calculateDiscountAmount({ type: "FIXED_AMOUNT", value: 10000, subtotal: 5000 })
- * // => 5000 (50€) - Ne peut pas dépasser le subtotal
- */
-export function calculateDiscountAmount({
-	type,
-	value,
-	subtotal,
-}: CalculateDiscountParams): number {
-	if (subtotal <= 0) return 0;
-
-	if (type === DiscountType.PERCENTAGE) {
-		// Ex: 20% sur 5000 centimes = 1000 centimes
-		// Arrondi au centime inférieur pour ne pas sur-réduire
-		return Math.floor((subtotal * value) / 100);
-	}
-
-	// FIXED_AMOUNT: La valeur est déjà en centimes
-	// Ne peut pas être supérieur au subtotal du panier
-	return Math.min(value, subtotal);
-}
 
 /**
  * Calcule le sous-total éligible à la réduction

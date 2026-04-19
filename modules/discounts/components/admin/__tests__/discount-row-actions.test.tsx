@@ -38,9 +38,6 @@ vi.mock("@/modules/discounts/components/admin/delete-discount-alert-dialog", () 
 vi.mock("@/modules/discounts/components/admin/toggle-discount-status-alert-dialog", () => ({
 	TOGGLE_DISCOUNT_STATUS_DIALOG_ID: "toggle-discount-status",
 }));
-vi.mock("@/modules/discounts/components/admin/discount-usages-dialog", () => ({
-	DISCOUNT_USAGES_DIALOG_ID: "discount-usages",
-}));
 
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
@@ -68,7 +65,6 @@ vi.mock("@/shared/components/responsive-action-menu", async () => {
 
 vi.mock("lucide-react", () => ({
 	Copy: () => <svg data-testid="icon-copy" />,
-	Eye: () => <svg data-testid="icon-eye" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
 	Pencil: () => <svg data-testid="icon-pencil" />,
 	Trash2: () => <svg data-testid="icon-trash" />,
@@ -133,11 +129,6 @@ describe("DiscountRowActions", () => {
 	it("shows 'Dupliquer' menu item", () => {
 		render(<DiscountRowActions discount={createDiscount()} />);
 		expect(screen.getByText("Dupliquer")).toBeInTheDocument();
-	});
-
-	it("shows 'Voir les utilisations' menu item", () => {
-		render(<DiscountRowActions discount={createDiscount()} />);
-		expect(screen.getByText("Voir les utilisations")).toBeInTheDocument();
 	});
 
 	// ─── Toggle item ──────────────────────────────────────────────────────────

@@ -37,16 +37,6 @@ const ToggleDiscountStatusAlertDialog = dynamic(() =>
 		(mod) => mod.ToggleDiscountStatusAlertDialog,
 	),
 );
-const BulkDeleteDiscountsAlertDialog = dynamic(() =>
-	import("@/modules/discounts/components/admin/bulk-delete-discounts-alert-dialog").then(
-		(mod) => mod.BulkDeleteDiscountsAlertDialog,
-	),
-);
-const DiscountUsagesDialog = dynamic(() =>
-	import("@/modules/discounts/components/admin/discount-usages-dialog").then(
-		(mod) => mod.DiscountUsagesDialog,
-	),
-);
 const DiscountsBottomBar = dynamic(() =>
 	import("@/modules/discounts/components/admin/discounts-bottom-bar").then(
 		(mod) => mod.DiscountsBottomBar,
@@ -166,8 +156,6 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 			<DiscountFormDialog />
 			<DeleteDiscountAlertDialog />
 			<ToggleDiscountStatusAlertDialog />
-			<BulkDeleteDiscountsAlertDialog />
-			<DiscountUsagesDialog />
 		</>
 	);
 }

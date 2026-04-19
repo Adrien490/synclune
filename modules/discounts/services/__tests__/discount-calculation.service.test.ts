@@ -5,7 +5,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 }));
 
 import {
-	calculateDiscountAmount,
 	calculateEligibleSubtotal,
 	calculateDiscountWithExclusion,
 } from "../discount-calculation.service";
@@ -18,116 +17,6 @@ import { DiscountType } from "@/app/generated/prisma/client";
 function makeItem(priceInclTax: number, quantity: number, compareAtPrice: number | null = null) {
 	return { priceInclTax, quantity, compareAtPrice };
 }
-
-// ---------------------------------------------------------------------------
-// calculateDiscountAmount
-// ---------------------------------------------------------------------------
-
-describe("calculateDiscountAmount", () => {
-	describe("PERCENTAGE type", () => {
-		it("should return 20% of 5000 cents (50€) as 1000", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.PERCENTAGE,
-				value: 20,
-				subtotal: 5000,
-			});
-			expect(result).toBe(1000);
-		});
-
-		it("should floor the result when percentage produces a fraction", () => {
-			// 10% of 333 = 33.3 → floored to 33
-			const result = calculateDiscountAmount({
-				type: DiscountType.PERCENTAGE,
-				value: 10,
-				subtotal: 333,
-			});
-			expect(result).toBe(33);
-		});
-
-		it("should return full subtotal for 100% discount", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.PERCENTAGE,
-				value: 100,
-				subtotal: 4200,
-			});
-			expect(result).toBe(4200);
-		});
-
-		it("should return 0 for 0% discount", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.PERCENTAGE,
-				value: 0,
-				subtotal: 5000,
-			});
-			expect(result).toBe(0);
-		});
-
-		it("should return 0 when subtotal is 0", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.PERCENTAGE,
-				value: 20,
-				subtotal: 0,
-			});
-			expect(result).toBe(0);
-		});
-
-		it("should return 0 when subtotal is negative", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.PERCENTAGE,
-				value: 20,
-				subtotal: -100,
-			});
-			expect(result).toBe(0);
-		});
-	});
-
-	describe("FIXED_AMOUNT type", () => {
-		it("should return the fixed amount when it is below the subtotal", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.FIXED_AMOUNT,
-				value: 1000,
-				subtotal: 5000,
-			});
-			expect(result).toBe(1000);
-		});
-
-		it("should cap the discount at the subtotal when fixed amount exceeds it", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.FIXED_AMOUNT,
-				value: 10000,
-				subtotal: 5000,
-			});
-			expect(result).toBe(5000);
-		});
-
-		it("should return exact subtotal when fixed amount equals the subtotal", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.FIXED_AMOUNT,
-				value: 3000,
-				subtotal: 3000,
-			});
-			expect(result).toBe(3000);
-		});
-
-		it("should return 0 when subtotal is 0", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.FIXED_AMOUNT,
-				value: 500,
-				subtotal: 0,
-			});
-			expect(result).toBe(0);
-		});
-
-		it("should return 0 when subtotal is negative", () => {
-			const result = calculateDiscountAmount({
-				type: DiscountType.FIXED_AMOUNT,
-				value: 500,
-				subtotal: -1,
-			});
-			expect(result).toBe(0);
-		});
-	});
-});
 
 // ---------------------------------------------------------------------------
 // calculateEligibleSubtotal

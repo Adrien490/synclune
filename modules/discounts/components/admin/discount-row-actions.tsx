@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, EllipsisVertical, Eye, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import { Copy, EllipsisVertical, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 
 import {
 	ResponsiveActionMenu,
@@ -17,7 +17,6 @@ import type { Discount } from "@/modules/discounts/types/discount.types";
 
 import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
 import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
-import { DISCOUNT_USAGES_DIALOG_ID } from "./discount-usages-dialog";
 import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
 
 interface DiscountRowActionsProps {
@@ -28,7 +27,6 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 	const { open: openEditDialog } = useDialog(DISCOUNT_DIALOG_ID);
 	const { open: openDeleteDialog } = useAlertDialog(DELETE_DISCOUNT_DIALOG_ID);
 	const { open: openToggleDialog } = useAlertDialog(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
-	const { open: openUsagesDialog } = useDialog(DISCOUNT_USAGES_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateDiscount();
 	const haptic = useHaptic();
 
@@ -64,13 +62,6 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 					icon: Copy,
 					disabled: isDuplicating,
 					onSelect: () => duplicate(discount.id),
-				},
-				{
-					key: "usages",
-					label: "Voir les utilisations",
-					icon: Eye,
-					onSelect: () =>
-						openUsagesDialog({ discountId: discount.id, discountCode: discount.code }),
 				},
 				{
 					key: "toggle",

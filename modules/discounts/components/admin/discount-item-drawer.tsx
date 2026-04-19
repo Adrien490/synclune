@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, Eye, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import { Copy, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
 
 import { DiscountType } from "@/app/generated/prisma/enums";
 
@@ -24,7 +24,6 @@ import {
 import type { Discount } from "@/modules/discounts/types/discount.types";
 
 import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
-import { DISCOUNT_USAGES_DIALOG_ID } from "./discount-usages-dialog";
 import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
 import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
 
@@ -55,7 +54,6 @@ const formatUsage = (usageCount: number, maxUsageCount: number | null) =>
 export function DiscountItemDrawer() {
 	const drawer = useDialog<DiscountItemDrawerData>(DISCOUNT_ITEM_DRAWER_ID);
 	const formDialog = useDialog(DISCOUNT_DIALOG_ID);
-	const usagesDialog = useDialog(DISCOUNT_USAGES_DIALOG_ID);
 	const deleteAlert = useAlertDialog(DELETE_DISCOUNT_DIALOG_ID);
 	const toggleAlert = useAlertDialog(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateDiscount();
@@ -97,12 +95,6 @@ export function DiscountItemDrawer() {
 		haptic("selection");
 		duplicate(discount.id);
 		drawer.close();
-	};
-
-	const handleViewUsages = () => {
-		haptic("selection");
-		drawer.close();
-		usagesDialog.open({ discountId: discount.id, discountCode: discount.code });
 	};
 
 	const handleToggle = () => {
@@ -189,15 +181,6 @@ export function DiscountItemDrawer() {
 				>
 					<Copy className="size-4" aria-hidden="true" />
 					Dupliquer
-				</Button>
-				<Button
-					variant="outline"
-					size="lg"
-					className="h-12 justify-start gap-3"
-					onClick={handleViewUsages}
-				>
-					<Eye className="size-4" aria-hidden="true" />
-					Voir les utilisations
 				</Button>
 				<Button
 					variant="outline"
