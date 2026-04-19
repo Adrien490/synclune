@@ -8,7 +8,7 @@ import { SplitTextCSS } from "@/shared/components/animations";
 import { Heart } from "lucide-react";
 import { Suspense } from "react";
 import { HeroCtaButtons } from "./hero-cta-buttons";
-import { ParticleBackground, ScrollIndicator } from "./hero-decorations";
+import { ParticleBackground } from "./hero-decorations";
 
 async function HeroFloatingImagesAsync({
 	productsPromise,
@@ -109,13 +109,6 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 					</div>
 				</div>
 			</div>
-
-			{/* Scroll indicator - dynamically imported (decorative, hidden on mobile) */}
-			<ScrollIndicator
-				targetIds={["latest-creations", "collections", "atelier-section"]}
-				ariaLabel="Voir la suite"
-				className="hidden sm:block"
-			/>
 		</section>
 	);
 }

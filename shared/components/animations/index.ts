@@ -31,9 +31,6 @@ export { ErrorShake, type ErrorShakeProps } from "./error-shake";
 // Number animations
 export { AnimatedNumber, NumberTicker, type AnimatedNumberProps } from "./animated-number";
 
-// Scroll UX
-export { ScrollIndicator, type ScrollIndicatorProps } from "./scroll-indicator";
-
 // Text animations
 export { SplitText, type SplitTextProps } from "./split-text";
 export { SplitTextCSS, type SplitTextCSSProps } from "./split-text-css";

@@ -78,9 +78,6 @@ vi.mock("lucide-react", () => ({
 // Mock hero-decorations (dynamically imported, SSR:false)
 vi.mock("../hero-decorations", () => ({
 	ParticleBackground: () => <div data-testid="particle-background" />,
-	ScrollIndicator: ({ ariaLabel }: { ariaLabel: string; [key: string]: unknown }) => (
-		<button data-testid="scroll-indicator" aria-label={ariaLabel} />
-	),
 }));
 
 // Mock floating-images
@@ -155,14 +152,11 @@ describe("HeroSection", () => {
 		expect(subtitle?.tagName).toBe("P");
 	});
 
-	it("renders two CTA buttons with correct links", () => {
+	it("renders the primary CTA with correct link", () => {
 		render(<HeroSection productsPromise={mockProductsPromise} />);
 
 		const boutiqueLink = screen.getByText("Découvrir la boutique");
 		expect(boutiqueLink.closest("a")).toHaveAttribute("href", "/produits");
-
-		const personLink = screen.getByText("Créer mon bijou");
-		expect(personLink.closest("a")).toHaveAttribute("href", "/personnalisation");
 	});
 
 	it("renders the RotatingWord component", () => {
@@ -178,14 +172,6 @@ describe("HeroSection", () => {
 		// Parent div should be aria-hidden
 		const decorativeContainer = particleBg.closest("[aria-hidden]");
 		expect(decorativeContainer?.getAttribute("aria-hidden")).toBe("true");
-	});
-
-	it("renders the ScrollIndicator", () => {
-		render(<HeroSection productsPromise={mockProductsPromise} />);
-
-		const indicator = screen.getByTestId("scroll-indicator");
-		expect(indicator).toBeInTheDocument();
-		expect(indicator.getAttribute("aria-label")).toBe("Voir la suite");
 	});
 
 	it("renders Suspense boundary for floating images", () => {
