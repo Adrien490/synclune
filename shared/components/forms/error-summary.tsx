@@ -61,7 +61,10 @@ export function ErrorSummary({
 			const el =
 				scope?.querySelector<HTMLElement>(`#${CSS.escape(name)}`) ?? document.getElementById(name);
 			if (!el) return;
-			el.scrollIntoView({ behavior: "smooth", block: "center" });
+			const reduced =
+				typeof window !== "undefined" &&
+				window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+			el.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
 			if (typeof el.focus === "function") el.focus({ preventScroll: true });
 		},
 		[formId],

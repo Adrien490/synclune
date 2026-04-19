@@ -28,7 +28,7 @@ export function CreateProductSidebarCards({
 	materials,
 }: CreateProductSidebarCardsProps) {
 	return (
-		<div className="space-y-6 [scrollbar-gutter:stable] lg:sticky lg:top-[calc(var(--admin-header-height,3.5rem)+1rem)] lg:max-h-[calc(100dvh-var(--admin-header-height,3.5rem)-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
+		<div className="space-y-6">
 			<VariantCard form={form} colors={colors} materials={materials} />
 			<PricingCard form={form} />
 			<StockCard form={form} />
@@ -227,6 +227,21 @@ function VariantCard({
 	);
 }
 
+const COMPARE_AT_PRICE_ERROR = "Le prix comparé doit être supérieur ou égal au prix de vente";
+
+type CompareAtValidatorArgs = {
+	value: number | undefined;
+	fieldApi: {
+		form: { getFieldValue: (name: "initialSku.priceInclTaxEuros") => number | null | undefined };
+	};
+};
+
+function validateCompareAtPrice({ value, fieldApi }: CompareAtValidatorArgs) {
+	if (!value) return undefined;
+	const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
+	return price && value < price ? COMPARE_AT_PRICE_ERROR : undefined;
+}
+
 // Pricing card with price and compare-at-price fields
 function PricingCard({ form }: { form: CreateProductFormInstance }) {
 	return (
@@ -265,20 +280,8 @@ function PricingCard({ form }: { form: CreateProductFormInstance }) {
 					name="initialSku.compareAtPriceEuros"
 					validators={{
 						onChangeListenTo: ["initialSku.priceInclTaxEuros"],
-						onChange: ({ value, fieldApi }) => {
-							if (!value) return undefined;
-							const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
-							return price && value < price
-								? "Le prix comparé doit être supérieur ou égal au prix de vente"
-								: undefined;
-						},
-						onBlur: ({ value, fieldApi }) => {
-							if (!value) return undefined;
-							const price = fieldApi.form.getFieldValue("initialSku.priceInclTaxEuros");
-							return price && value < price
-								? "Le prix comparé doit être supérieur ou égal au prix de vente"
-								: undefined;
-						},
+						onChange: validateCompareAtPrice,
+						onBlur: validateCompareAtPrice,
 					}}
 				>
 					{(field) => (

@@ -430,7 +430,7 @@ function InlineUploadZone({
 		<div className="flex h-full w-full flex-col">
 			{isMediaUploading && (
 				<div className="bg-primary/5 flex items-center justify-center gap-2 rounded-t-lg px-2 py-1.5">
-					<div className="border-primary/20 border-t-primary h-4 w-4 animate-spin rounded-full border-2" />
+					<div className="border-primary/20 border-t-primary h-4 w-4 rounded-full border-2 motion-safe:animate-spin" />
 					<p className="text-muted-foreground text-xs">
 						{uploadProgress?.completed ?? 0}/{uploadProgress?.total ?? 0}
 						{uploadProgress && uploadProgress.queued > 0 && (

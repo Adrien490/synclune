@@ -9,7 +9,8 @@ import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useEffect, useState } from "react";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
@@ -64,10 +65,12 @@ export function CreateProductForm({
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+	const allowNavigationRef = useRef<(() => void) | null>(null);
 
 	const { form, action, isPending } = useCreateProductForm({
 		onSuccess: (message) => {
 			haptic("success");
+			allowNavigationRef.current?.();
 			toast.success(message || "Bijou créé avec succès", {
 				action: {
 					label: "Voir les bijoux",
@@ -80,15 +83,11 @@ export function CreateProductForm({
 		},
 	});
 
-	// Warn before leaving if the form is dirty (prevent accidental refresh / navigation loss)
+	// Guard against accidental navigation loss: beforeunload + popstate + Link clicks (via NavigationGuardProvider)
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 	useEffect(() => {
-		const handler = (event: BeforeUnloadEvent) => {
-			if (!form.state.isDirty || isPending) return;
-			event.preventDefault();
-		};
-		window.addEventListener("beforeunload", handler);
-		return () => window.removeEventListener("beforeunload", handler);
-	}, [form.state.isDirty, isPending]);
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
 
 	// Desktop keyboard shortcut: Cmd+S / Ctrl+S submits with the currently selected status
 	useEffect(() => {
@@ -126,11 +125,12 @@ export function CreateProductForm({
 			}
 			event.preventDefault();
 			haptic("light");
+			allowNavigation();
 			navigateWithTransition(router, PRODUCTS_LIST_PATH);
 		};
 		window.addEventListener("keydown", handler);
 		return () => window.removeEventListener("keydown", handler);
-	}, [isMobile, isPending, form, haptic, router]);
+	}, [isMobile, isPending, form, haptic, router, allowNavigation]);
 
 	const { handleUpload } = useMediaFieldUpload({
 		uploadMedia,
@@ -152,20 +152,22 @@ export function CreateProductForm({
 			}}
 			onInvalidCapture={onInvalidCapture}
 		>
-			{/* Hidden fields */}
-			<form.Subscribe selector={(state) => [state.values.initialSku.media]}>
-				{([media]) =>
-					media?.length ? (
-						<input type="hidden" name="initialSku.media" value={JSON.stringify(media)} />
-					) : null
-				}
-			</form.Subscribe>
-			<form.Subscribe selector={(state) => [state.values.status]}>
-				{([status]) => <input type="hidden" name="status" value={status} />}
-			</form.Subscribe>
-			<form.Subscribe selector={(state) => [state.values.collectionIds]}>
-				{([collectionIds]) => (
-					<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
+			{/* Hidden fields — grouped in one Subscribe to avoid multiple store subscriptions */}
+			<form.Subscribe
+				selector={(state) => ({
+					media: state.values.initialSku.media,
+					status: state.values.status,
+					collectionIds: state.values.collectionIds,
+				})}
+			>
+				{({ media, status, collectionIds }) => (
+					<>
+						{media.length > 0 ? (
+							<input type="hidden" name="initialSku.media" value={JSON.stringify(media)} />
+						) : null}
+						<input type="hidden" name="status" value={status} />
+						<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
+					</>
 				)}
 			</form.Subscribe>
 			{deletedImageUrls.length > 0 && (
@@ -196,10 +198,7 @@ export function CreateProductForm({
 				}}
 			</form.Subscribe>
 
-			<fieldset
-				disabled={isPending}
-				className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
-			>
+			<fieldset disabled={isPending} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
 				{/* Main column */}
 				<div className="space-y-6 lg:col-span-2">
 					<CreateProductMediaCard
@@ -246,7 +245,7 @@ export function CreateProductForm({
 									className="w-full sm:w-auto sm:min-w-56"
 								>
 									{(isPending || isMediaUploading) && (
-										<Loader2 className="size-4 animate-spin" aria-hidden="true" />
+										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
 									)}
 									<span>
 										{isPending

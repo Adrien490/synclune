@@ -20,8 +20,6 @@ interface MultiSelectFieldProps {
 	maxCount?: number;
 	/** Masquer l'option "Tout sélectionner" */
 	hideSelectAll?: boolean;
-	/** Activer la recherche (défaut: true) */
-	searchable?: boolean;
 }
 
 /**
@@ -52,7 +50,6 @@ export const MultiSelectField = ({
 	options,
 	maxCount = 3,
 	hideSelectAll,
-	searchable = true,
 }: MultiSelectFieldProps) => {
 	const field = useFieldContext<string[]>();
 
@@ -74,7 +71,6 @@ export const MultiSelectField = ({
 				disabled={disabled}
 				maxCount={maxCount}
 				hideSelectAll={hideSelectAll}
-				searchable={searchable}
 				aria-invalid={hasError}
 				aria-describedby={hasError ? `${field.name}-error` : undefined}
 				aria-required={required}

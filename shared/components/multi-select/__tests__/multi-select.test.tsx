@@ -1,16 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup, act } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockIsMobile, mockMounted, mockHaptic, mockReducedMotion } = vi.hoisted(() => ({
+const { mockIsMobile, mockMounted, mockHaptic } = vi.hoisted(() => ({
 	mockIsMobile: { value: false },
 	mockMounted: { value: true },
 	mockHaptic: { fn: vi.fn(() => true) },
-	mockReducedMotion: { value: false },
 }));
 
 // ============================================================================
@@ -29,10 +28,6 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockHaptic.fn,
 }));
 
-vi.mock("motion/react", () => ({
-	useReducedMotion: () => mockReducedMotion.value,
-}));
-
 vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: <T,>(cb: () => T): T => cb(),
 }));
@@ -46,17 +41,13 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
-	ArrowLeftIcon: () => <svg data-testid="icon-arrow-left" />,
-	CheckIcon: () => <svg data-testid="icon-check" />,
 	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
-	CircleX: () => <svg data-testid="icon-circle-x" />,
-	SearchX: () => <svg data-testid="icon-search-x" />,
-	XIcon: () => <svg data-testid="icon-x" />,
+	X: () => <svg data-testid="icon-x" />,
 }));
 
 vi.mock("@/shared/components/ui/badge", () => ({
-	Badge: ({ children, className, style }: any) => (
-		<span className={className} style={style} data-testid="badge">
+	Badge: ({ children, className }: any) => (
+		<span className={className} data-testid="badge">
 			{children}
 		</span>
 	),
@@ -65,9 +56,13 @@ vi.mock("@/shared/components/ui/badge", () => ({
 vi.mock("@/shared/components/ui/button", () => ({
 	// eslint-disable-next-line react/display-name
 	Button: React.forwardRef(
-		({ children, onClick, disabled, role, className, ...props }: any, ref: any) => (
+		(
+			{ children, onClick, disabled, role, className, type = "button", ...props }: any,
+			ref: any,
+		) => (
 			<button
 				ref={ref}
+				type={type}
 				onClick={onClick}
 				disabled={disabled}
 				role={role}
@@ -80,65 +75,79 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/command", () => ({
-	Command: ({ children, className }: any) => (
-		<div data-testid="command" className={className}>
-			{children}
-		</div>
-	),
-	CommandEmpty: ({ children }: any) => <div data-testid="command-empty">{children}</div>,
-	CommandGroup: ({ children, heading }: any) => (
-		<div data-testid="command-group" data-heading={heading}>
-			{children}
-		</div>
-	),
-	CommandInput: ({ onValueChange, value, placeholder, ...props }: any) => (
+vi.mock("@/shared/components/ui/checkbox", () => ({
+	Checkbox: ({ checked, onCheckedChange, disabled, "aria-label": ariaLabel, className }: any) => (
 		<input
-			data-testid="command-input"
-			value={value ?? ""}
-			placeholder={placeholder}
-			onChange={(e) => onValueChange?.(e.target.value)}
-			{...props}
+			type="checkbox"
+			checked={checked === true}
+			data-indeterminate={checked === "indeterminate"}
+			disabled={disabled}
+			aria-label={ariaLabel}
+			className={className}
+			onChange={(e) => onCheckedChange?.(e.target.checked)}
+			data-testid="checkbox"
 		/>
 	),
-	CommandItem: ({
-		children,
-		onSelect,
-		role,
-		"aria-selected": ariaSelected,
-		"aria-label": ariaLabel,
-		disabled,
-	}: any) => (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+}));
+
+vi.mock("@/shared/components/ui/drawer", () => ({
+	Drawer: ({ children, open, snapPoints }: any) => (
 		<div
-			role={role ?? "option"}
-			aria-selected={ariaSelected}
-			aria-label={ariaLabel}
-			data-testid="command-item"
-			onClick={() => !disabled && onSelect?.()}
+			data-testid="drawer"
+			data-open={String(open)}
+			data-snap-points={snapPoints ? JSON.stringify(snapPoints) : undefined}
 		>
 			{children}
 		</div>
 	),
-	CommandList: ({ children, className }: any) => (
-		<div data-testid="command-list" className={className}>
+	DrawerContent: ({
+		children,
+		className,
+		onOverlayClick,
+		"data-pending": dataPending,
+		"aria-busy": ariaBusy,
+	}: any) => (
+		<div
+			data-testid="drawer-content"
+			className={className}
+			data-pending={dataPending}
+			aria-busy={ariaBusy}
+		>
+			<button
+				type="button"
+				data-testid="drawer-overlay"
+				onClick={onOverlayClick}
+				aria-hidden="true"
+			/>
 			{children}
 		</div>
 	),
-	CommandSeparator: () => <hr data-testid="command-separator" />,
-}));
-
-vi.mock("@/shared/components/ui/drawer", () => ({
-	Drawer: ({ children, open, onOpenChange: _onOpenChange }: any) => (
-		<div data-testid="drawer" data-open={String(open)}>
+	DrawerHeader: ({ children, className }: any) => (
+		<div data-testid="drawer-header" className={className}>
 			{children}
 		</div>
 	),
-	DrawerClose: ({ children, asChild: _asChild }: any) => (
-		<div data-testid="drawer-close">{children}</div>
+	DrawerBody: ({
+		children,
+		className,
+		id,
+		role,
+		"aria-multiselectable": am,
+		"aria-label": al,
+	}: any) => (
+		<div
+			data-testid="drawer-body"
+			id={id}
+			role={role}
+			aria-multiselectable={am}
+			aria-label={al}
+			className={className}
+		>
+			{children}
+		</div>
 	),
-	DrawerContent: ({ children, className }: any) => (
-		<div data-testid="drawer-content" className={className}>
+	DrawerFooter: ({ children, className }: any) => (
+		<div data-testid="drawer-footer" className={className}>
 			{children}
 		</div>
 	),
@@ -147,10 +156,13 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 			{children}
 		</div>
 	),
+	DrawerClose: ({ children, asChild: _asChild }: any) => (
+		<div data-testid="drawer-close">{children}</div>
+	),
 }));
 
 vi.mock("@/shared/components/ui/popover", () => ({
-	Popover: ({ children, open, onOpenChange: _onOpenChange }: any) => (
+	Popover: ({ children, open }: any) => (
 		<div data-testid="popover" data-open={String(open)}>
 			{children}
 		</div>
@@ -169,10 +181,6 @@ vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: ({ orientation, className }: any) => (
 		<hr data-testid="separator" data-orientation={orientation} className={className} />
 	),
-}));
-
-vi.mock("@/shared/components/ui/spinner", () => ({
-	Spinner: ({ className }: any) => <svg data-testid="spinner" className={className} />,
 }));
 
 vi.mock("@/shared/components/ui/tooltip", () => ({
@@ -210,7 +218,6 @@ beforeEach(() => {
 	vi.clearAllMocks();
 	mockIsMobile.value = false;
 	mockMounted.value = true;
-	mockReducedMotion.value = false;
 	mockHaptic.fn = vi.fn(() => true);
 });
 
@@ -221,97 +228,94 @@ afterEach(cleanup);
 // ============================================================================
 
 describe("MultiSelect", () => {
-	// ============================================================================
-	// RENDERING
-	// ============================================================================
-
-	describe("rendering", () => {
+	describe("rendering (desktop)", () => {
 		it("renders trigger with placeholder when no selection", () => {
 			render(
 				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} placeholder="Choisir une couleur" />,
 			);
-
-			expect(screen.getByText("Choisir une couleur")).toBeInTheDocument();
+			expect(screen.getByText("Choisir une couleur")).toBeTruthy();
 		});
 
-		it("trigger has role combobox and aria-haspopup listbox", () => {
+		it("uses default placeholder if none provided", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			expect(screen.getByText("Sélectionner")).toBeTruthy();
+		});
 
+		it("renders trigger with combobox role", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
 			const trigger = screen.getByRole("combobox");
-			expect(trigger).toBeInTheDocument();
-			expect(trigger).toHaveAttribute("aria-haspopup", "listbox");
+			expect(trigger.getAttribute("aria-haspopup")).toBe("listbox");
+			expect(trigger.getAttribute("aria-expanded")).toBe("false");
 		});
 
 		it("renders badges for selected values", () => {
 			render(
 				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge", "bleu"]} />,
 			);
-
 			const badges = screen.getAllByTestId("badge");
-			const badgeTexts = badges.map((b) => b.textContent);
-			expect(badgeTexts.some((t) => t!.includes("Rouge"))).toBe(true);
-			expect(badgeTexts.some((t) => t!.includes("Bleu"))).toBe(true);
+			expect(badges.length).toBe(2);
+			expect(badges[0]!.textContent).toContain("Rouge");
+			expect(badges[1]!.textContent).toContain("Bleu");
 		});
 
-		it("shows +N de plus badge when selections exceed maxCount", () => {
+		it("shows +N badge when selection exceeds maxCount", () => {
 			render(
 				<MultiSelect
 					options={OPTIONS}
 					onValueChange={vi.fn()}
 					defaultValue={["rouge", "bleu", "vert", "jaune"]}
-					maxCount={3}
+					maxCount={2}
 				/>,
 			);
-
-			expect(screen.getByText("+ 1 de plus")).toBeInTheDocument();
+			expect(screen.getByText("+ 2")).toBeTruthy();
 		});
 
-		it("shows loading spinner when isLoading is true", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} isLoading={true} />);
+		it("renders Popover (not Drawer) on desktop", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			expect(screen.getByTestId("popover")).toBeTruthy();
+			expect(screen.queryByTestId("drawer")).toBeNull();
+		});
 
-			// Open popover to reveal content
-			fireEvent.click(screen.getByRole("combobox"));
-			expect(screen.getByTestId("spinner")).toBeInTheDocument();
+		it("renders option rows with checkboxes", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			// Options = 5 + "Tout sélectionner" = 6 checkboxes
+			expect(screen.getAllByTestId("checkbox").length).toBe(6);
+		});
+
+		it("hides Select All row when hideSelectAll=true", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} hideSelectAll />);
+			// Only options = 5 checkboxes
+			expect(screen.getAllByTestId("checkbox").length).toBe(5);
+			expect(screen.queryByText("Tout sélectionner")).toBeNull();
+		});
+
+		it("shows empty state when no options", () => {
+			render(<MultiSelect options={[]} onValueChange={vi.fn()} />);
+			expect(screen.getByText("Aucune option disponible")).toBeTruthy();
 		});
 	});
 
-	// ============================================================================
-	// SELECTION
-	// ============================================================================
-
 	describe("selection", () => {
-		it("calls onValueChange when an option is toggled", () => {
+		it("calls onValueChange when toggling an option", () => {
 			const onValueChange = vi.fn();
 			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} />);
-
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const rougeOption = screen.getByRole("option", { name: /rouge, non sélectionné/i });
-			fireEvent.click(rougeOption);
-
+			const checkboxes = screen.getAllByTestId("checkbox");
+			// index 0 = "Tout sélectionner", index 1 = first option (Rouge)
+			fireEvent.click(checkboxes[1]!);
 			expect(onValueChange).toHaveBeenCalledWith(["rouge"]);
 		});
 
-		it("selecting an option adds it to the selection", () => {
+		it("adds value to existing selection", () => {
 			const onValueChange = vi.fn();
 			render(
-				<MultiSelect
-					options={OPTIONS}
-					onValueChange={onValueChange}
-					defaultValue={["bleu"]}
-					closeOnSelect={false}
-				/>,
+				<MultiSelect options={OPTIONS} onValueChange={onValueChange} defaultValue={["rouge"]} />,
 			);
-
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const vertOption = screen.getByRole("option", { name: /vert, non sélectionné/i });
-			fireEvent.click(vertOption);
-
-			expect(onValueChange).toHaveBeenCalledWith(["bleu", "vert"]);
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[2]!); // Bleu
+			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu"]);
 		});
 
-		it("deselecting via badge remove button calls onValueChange without that value", () => {
+		it("removes value from selection when toggled off", () => {
 			const onValueChange = vi.fn();
 			render(
 				<MultiSelect
@@ -320,339 +324,367 @@ describe("MultiSelect", () => {
 					defaultValue={["rouge", "bleu"]}
 				/>,
 			);
-
-			const removeButton = screen.getByRole("button", {
-				name: "Retirer Rouge de la sélection",
-			});
-			fireEvent.click(removeButton);
-
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[1]!); // Rouge
 			expect(onValueChange).toHaveBeenCalledWith(["bleu"]);
 		});
-	});
 
-	// ============================================================================
-	// SELECT ALL
-	// ============================================================================
-
-	describe("select all", () => {
-		it("renders Tout sélectionner option when hideSelectAll is false", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} hideSelectAll={false} />);
-
-			fireEvent.click(screen.getByRole("combobox"));
-
-			expect(screen.getByText("(Tout sélectionner)")).toBeInTheDocument();
-		});
-
-		it("hides Tout sélectionner when hideSelectAll is true", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} hideSelectAll={true} />);
-
-			fireEvent.click(screen.getByRole("combobox"));
-
-			expect(screen.queryByText("(Tout sélectionner)")).not.toBeInTheDocument();
-		});
-	});
-
-	// ============================================================================
-	// DISABLED STATE
-	// ============================================================================
-
-	describe("disabled state", () => {
-		it("trigger is disabled when disabled prop is true", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} disabled={true} />);
-
-			expect(screen.getByRole("combobox")).toBeDisabled();
-		});
-	});
-
-	// ============================================================================
-	// REF METHODS
-	// ============================================================================
-
-	describe("ref methods", () => {
-		it("ref.clear() clears all selections and calls onValueChange with empty array", () => {
+		it("removes a badge when clicking its X button", () => {
 			const onValueChange = vi.fn();
-			const ref = React.createRef<MultiSelectRef>();
-
 			render(
 				<MultiSelect
-					ref={ref}
 					options={OPTIONS}
 					onValueChange={onValueChange}
 					defaultValue={["rouge", "bleu"]}
 				/>,
 			);
+			const removeBtn = screen.getByLabelText("Retirer Rouge");
+			fireEvent.click(removeBtn);
+			expect(onValueChange).toHaveBeenCalledWith(["bleu"]);
+		});
 
-			act(() => {
-				ref.current?.clear();
-			});
+		it("does not toggle disabled options", () => {
+			const onValueChange = vi.fn();
+			const opts = [
+				{ value: "a", label: "A" },
+				{ value: "b", label: "B", disabled: true },
+			];
+			render(<MultiSelect options={opts} onValueChange={onValueChange} />);
+			const checkboxes = screen.getAllByTestId("checkbox");
+			// index 0 = select-all, 1 = A, 2 = B (disabled)
+			fireEvent.click(checkboxes[2]!);
+			expect(onValueChange).not.toHaveBeenCalled();
+		});
+	});
 
+	describe("select all", () => {
+		it("selects all enabled options when toggling Select All", () => {
+			const onValueChange = vi.fn();
+			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} />);
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[0]!); // Tout sélectionner
+			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu", "vert", "jaune", "violet"]);
+		});
+
+		it("clears selection when toggling Select All while all selected", () => {
+			const onValueChange = vi.fn();
+			render(
+				<MultiSelect
+					options={OPTIONS}
+					onValueChange={onValueChange}
+					defaultValue={["rouge", "bleu", "vert", "jaune", "violet"]}
+				/>,
+			);
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[0]!);
 			expect(onValueChange).toHaveBeenCalledWith([]);
 		});
 
-		it("ref.getSelectedValues() returns the current selected values", () => {
-			const ref = React.createRef<MultiSelectRef>();
+		it("excludes disabled options from select all", () => {
+			const onValueChange = vi.fn();
+			const opts = [
+				{ value: "a", label: "A" },
+				{ value: "b", label: "B", disabled: true },
+				{ value: "c", label: "C" },
+			];
+			render(<MultiSelect options={opts} onValueChange={onValueChange} />);
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[0]!);
+			expect(onValueChange).toHaveBeenCalledWith(["a", "c"]);
+		});
+	});
 
+	describe("clear actions", () => {
+		it("clears all selection via trigger X button", () => {
+			const onValueChange = vi.fn();
+			render(
+				<MultiSelect
+					options={OPTIONS}
+					onValueChange={onValueChange}
+					defaultValue={["rouge", "bleu"]}
+				/>,
+			);
+			const clearBtn = screen.getByLabelText("Effacer les 2 options sélectionnées");
+			fireEvent.click(clearBtn);
+			expect(onValueChange).toHaveBeenCalledWith([]);
+		});
+
+		it("clears extra options beyond maxCount when clicking +N X", () => {
+			const onValueChange = vi.fn();
+			render(
+				<MultiSelect
+					options={OPTIONS}
+					onValueChange={onValueChange}
+					defaultValue={["rouge", "bleu", "vert", "jaune"]}
+					maxCount={2}
+				/>,
+			);
+			const extraClearBtn = screen.getByLabelText("Retirer les 2 options supplémentaires");
+			fireEvent.click(extraClearBtn);
+			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu"]);
+		});
+	});
+
+	describe("disabled state", () => {
+		it("disables trigger button", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} disabled />);
+			const trigger = screen.getByRole("combobox");
+			expect((trigger as HTMLButtonElement).disabled).toBe(true);
+		});
+
+		it("does not toggle options when disabled", () => {
+			const onValueChange = vi.fn();
+			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} disabled />);
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[1]!);
+			expect(onValueChange).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("ref API", () => {
+		it("exposes clear() to wipe selection", () => {
+			const onValueChange = vi.fn();
+			const ref = React.createRef<MultiSelectRef>();
 			render(
 				<MultiSelect
 					ref={ref}
 					options={OPTIONS}
-					onValueChange={vi.fn()}
-					defaultValue={["rouge", "vert"]}
+					onValueChange={onValueChange}
+					defaultValue={["rouge"]}
 				/>,
 			);
-
-			const values = ref.current?.getSelectedValues();
-			expect(values).toEqual(["rouge", "vert"]);
+			ref.current!.clear();
+			expect(onValueChange).toHaveBeenCalledWith([]);
 		});
-	});
 
-	// ============================================================================
-	// LIVE REGIONS
-	// ============================================================================
-
-	describe("live regions", () => {
-		it("selected count live region shows count when values are selected", () => {
+		it("exposes reset() to restore defaultValue", () => {
+			const onValueChange = vi.fn();
+			const ref = React.createRef<MultiSelectRef>();
 			render(
-				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge", "bleu"]} />,
+				<MultiSelect
+					ref={ref}
+					options={OPTIONS}
+					onValueChange={onValueChange}
+					defaultValue={["rouge"]}
+				/>,
 			);
-
-			// The sr-only live region announces the count
-			const countRegion = screen.getByText(/2 options sélectionnées/i);
-			expect(countRegion).toBeInTheDocument();
+			ref.current!.setValues(["bleu"]);
+			ref.current!.reset();
+			expect(onValueChange).toHaveBeenLastCalledWith(["rouge"]);
 		});
 
-		it("selected count live region shows Aucune option sélectionnée when empty", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={[]} />);
+		it("exposes getValues() returning current selection", () => {
+			const ref = React.createRef<MultiSelectRef>();
+			render(
+				<MultiSelect ref={ref} options={OPTIONS} onValueChange={vi.fn()} defaultValue={["vert"]} />,
+			);
+			expect(ref.current!.getValues()).toEqual(["vert"]);
+		});
 
-			expect(screen.getByText("Aucune option sélectionnée")).toBeInTheDocument();
+		it("exposes setValues() updating selection", () => {
+			const onValueChange = vi.fn();
+			const ref = React.createRef<MultiSelectRef>();
+			render(<MultiSelect ref={ref} options={OPTIONS} onValueChange={onValueChange} />);
+			ref.current!.setValues(["jaune", "violet"]);
+			expect(onValueChange).toHaveBeenCalledWith(["jaune", "violet"]);
+		});
+
+		it("exposes focus() on the trigger", () => {
+			const ref = React.createRef<MultiSelectRef>();
+			render(<MultiSelect ref={ref} options={OPTIONS} onValueChange={vi.fn()} />);
+			ref.current!.focus();
+			const trigger = screen.getByRole("combobox");
+			expect(document.activeElement).toBe(trigger);
 		});
 	});
-
-	// ============================================================================
-	// HAPTIC FEEDBACK (2026 natif)
-	// ============================================================================
 
 	describe("haptic feedback", () => {
-		it("fires selection haptic when opening the popover (desktop)", () => {
+		it("triggers 'selection' haptic when toggling an option", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-			fireEvent.click(screen.getByRole("combobox"));
+			const checkboxes = screen.getAllByTestId("checkbox");
+			fireEvent.click(checkboxes[1]!);
 			expect(mockHaptic.fn).toHaveBeenCalledWith("selection");
 		});
 
-		it("fires selection haptic when toggling an option", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} closeOnSelect={false} />);
-			fireEvent.click(screen.getByRole("combobox"));
-			mockHaptic.fn.mockClear();
-
-			const rougeOption = screen.getByRole("option", { name: /rouge, non sélectionné/i });
-			fireEvent.click(rougeOption);
-
-			expect(mockHaptic.fn).toHaveBeenCalledWith("selection");
-		});
-
-		it("fires light haptic on clear (top-right X)", () => {
-			render(
-				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge", "bleu"]} />,
-			);
-			mockHaptic.fn.mockClear();
-
-			fireEvent.click(screen.getByRole("button", { name: "Effacer les 2 options sélectionnées" }));
+		it("triggers 'light' haptic when clearing", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge"]} />);
+			const clearBtn = screen.getByLabelText(/Effacer les 1 options sélectionnées/);
+			fireEvent.click(clearBtn);
 			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
 		});
 
-		it("fires light haptic when select-all toggled on", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} closeOnSelect={false} />);
-			fireEvent.click(screen.getByRole("combobox"));
-			mockHaptic.fn.mockClear();
-
-			fireEvent.click(screen.getByText("(Tout sélectionner)"));
-			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
-		});
-
-		it("fires medium haptic on mobile Terminer button", () => {
-			mockIsMobile.value = true;
+		it("triggers 'selection' haptic when opening trigger", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-
 			fireEvent.click(screen.getByRole("combobox"));
-			mockHaptic.fn.mockClear();
-
-			fireEvent.click(screen.getByRole("button", { name: "Terminer la sélection" }));
-			expect(mockHaptic.fn).toHaveBeenCalledWith("medium");
+			expect(mockHaptic.fn).toHaveBeenCalledWith("selection");
 		});
 	});
 
-	// ============================================================================
-	// MOBILE INPUT ATTRIBUTES (iOS/Android natif)
-	// ============================================================================
+	describe("live regions", () => {
+		it("renders aria-live polite region", () => {
+			const { container } = render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			const live = container.querySelector("[aria-live='polite'][role='status']");
+			expect(live).toBeTruthy();
+		});
 
-	describe("mobile search input attrs", () => {
+		it("announces no-selection on initial empty", () => {
+			const { container } = render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			const region = container.querySelector("[aria-live='polite']:not([role='status'])");
+			expect(region?.textContent).toContain("Aucune option sélectionnée");
+		});
+
+		it("lists selected labels in the count region", () => {
+			const { container } = render(
+				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge", "bleu"]} />,
+			);
+			const region = container.querySelector("[aria-live='polite']:not([role='status'])");
+			expect(region?.textContent).toContain("Rouge");
+			expect(region?.textContent).toContain("Bleu");
+		});
+	});
+
+	describe("accessibility props propagation", () => {
+		it("propagates aria-describedby to trigger", () => {
+			render(
+				<MultiSelect options={OPTIONS} onValueChange={vi.fn()} aria-describedby="external-desc" />,
+			);
+			const trigger = screen.getByRole("combobox");
+			expect(trigger.getAttribute("aria-describedby")).toContain("external-desc");
+		});
+
+		it("propagates aria-invalid to trigger", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} aria-invalid />);
+			const trigger = screen.getByRole("combobox");
+			expect(trigger.getAttribute("aria-invalid")).toBeDefined();
+		});
+
+		it("sets aria-label on combobox with count info", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge"]} />);
+			const trigger = screen.getByRole("combobox");
+			expect(trigger.getAttribute("aria-label")).toContain("1 sur 5");
+		});
+	});
+
+	describe("mobile rendering", () => {
 		beforeEach(() => {
 			mockIsMobile.value = true;
 		});
 
-		it("has inputMode=search and enterKeyHint=search", () => {
+		it("renders Drawer (not Popover) on mobile", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			expect(input).toHaveAttribute("inputMode", "search");
-			expect(input).toHaveAttribute("enterKeyHint", "search");
-			expect(input).toHaveAttribute("autoCapitalize", "off");
-			expect(input).toHaveAttribute("autoCorrect", "off");
-			expect(input).toHaveAttribute("spellCheck", "false");
+			expect(screen.getByTestId("drawer")).toBeTruthy();
+			expect(screen.queryByTestId("popover")).toBeNull();
 		});
 
-		it("does NOT have autoFocus on mobile drawer input", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			expect(input).not.toHaveAttribute("autoFocus");
-			expect(input).not.toHaveAttribute("autofocus");
+		it("renders Drawer with placeholder as title", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} placeholder="Collections" />);
+			expect(screen.getByTestId("drawer-title").textContent).toBe("Collections");
 		});
 
-		it("has data-vaul-no-drag to prevent drawer drag from input", () => {
+		it("opens the drawer when clicking trigger", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
 			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			expect(input).toHaveAttribute("data-vaul-no-drag");
+			expect(screen.getByTestId("drawer").getAttribute("data-open")).toBe("true");
 		});
-	});
 
-	describe("desktop search input attrs", () => {
-		it("has inputMode=search + enterKeyHint=search + autoFocus", () => {
+		it("shows 'Terminer' action in footer", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			expect(input).toHaveAttribute("inputMode", "search");
-			expect(input).toHaveAttribute("enterKeyHint", "search");
-			expect(input).toHaveAttribute("autoCapitalize", "off");
+			expect(screen.getByText("Terminer")).toBeTruthy();
 		});
-	});
 
-	// ============================================================================
-	// KEYBOARD SHORTCUTS — Desktop power-user (P1 2026)
-	// ============================================================================
+		it("shows 'Effacer' action in footer only when there is a selection", () => {
+			const { rerender } = render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			expect(screen.queryByText("Effacer")).toBeNull();
+			rerender(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge"]} />);
+			expect(screen.getByText("Effacer")).toBeTruthy();
+		});
 
-	describe("keyboard shortcuts", () => {
-		it("Escape with non-empty search clears the search (no close)", () => {
+		it("triggers 'medium' haptic on Terminer click", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			// open drawer
 			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			fireEvent.change(input, { target: { value: "rou" } });
-			expect(input).toHaveValue("rou");
-
 			mockHaptic.fn.mockClear();
-			fireEvent.keyDown(input, { key: "Escape" });
+			fireEvent.click(screen.getByText("Terminer"));
+			expect(mockHaptic.fn).toHaveBeenCalledWith("medium");
+		});
 
-			expect(input).toHaveValue("");
+		it("triggers 'light' haptic when overlay is dismissed", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			fireEvent.click(screen.getByRole("combobox"));
+			mockHaptic.fn.mockClear();
+			fireEvent.click(screen.getByTestId("drawer-overlay"));
 			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
 		});
 
-		it("Escape with empty search does NOT fire haptic (Radix handles close)", () => {
+		it("applies overscroll-contain on DrawerBody", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			expect(screen.getByTestId("drawer-body").className).toContain("overscroll-contain");
+		});
+
+		it("makes DrawerHeader and DrawerFooter sticky with bg isolation", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge"]} />);
+			const header = screen.getByTestId("drawer-header").className;
+			const footer = screen.getByTestId("drawer-footer").className;
+			expect(header).toContain("sticky");
+			expect(header).toContain("top-0");
+			expect(header).toContain("backdrop-blur-sm");
+			expect(footer).toContain("sticky");
+			expect(footer).toContain("bottom-0");
+			expect(footer).toContain("backdrop-blur-sm");
+		});
+
+		it("extends badge X hit area to 44px via after: pseudo on mobile", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge"]} />);
+			const removeBtn = screen.getByLabelText("Retirer Rouge");
+			expect(removeBtn.className).toContain("after:-inset-2");
+			expect(removeBtn.className).toContain("relative");
+		});
+
+		it("triggers 'selection' haptic on toggleAll (not 'light')", () => {
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
 			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
 			mockHaptic.fn.mockClear();
-			fireEvent.keyDown(input, { key: "Escape" });
-
+			// index 0 = "Tout sélectionner"
+			fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
+			expect(mockHaptic.fn).toHaveBeenCalledWith("selection");
 			expect(mockHaptic.fn).not.toHaveBeenCalledWith("light");
 		});
 
-		it("Cmd+A toggles all options (select all when none selected)", () => {
-			const onValueChange = vi.fn();
-			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} closeOnSelect={false} />);
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			onValueChange.mockClear();
-			fireEvent.keyDown(input, { key: "a", metaKey: true });
-
-			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu", "vert", "jaune", "violet"]);
+		it("forwards snapPoints [0.5, 0.92] to Vaul Drawer", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			expect(screen.getByTestId("drawer").getAttribute("data-snap-points")).toBe("[0.5,0.92]");
 		});
 
-		it("Ctrl+A toggles all options (Windows/Linux shortcut)", () => {
-			const onValueChange = vi.fn();
-			render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} closeOnSelect={false} />);
+		it("exposes aria-busy and data-pending while announcing", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			// open drawer triggers ariaListOpen announcement
 			fireEvent.click(screen.getByRole("combobox"));
+			const content = screen.getByTestId("drawer-content");
+			expect(content.getAttribute("data-pending")).toBe("true");
+			expect(content.getAttribute("aria-busy")).toBe("true");
+		});
 
-			const input = screen.getByTestId("command-input");
-			onValueChange.mockClear();
-			fireEvent.keyDown(input, { key: "a", ctrlKey: true });
+		it("renders explicit close button with ariaCloseDrawer label", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+			expect(screen.getAllByLabelText("Fermer").length).toBeGreaterThan(0);
+		});
 
-			expect(onValueChange).toHaveBeenCalledWith(["rouge", "bleu", "vert", "jaune", "violet"]);
+		it("uses min-h-14 on footer CTAs (Apple HIG 56px)", () => {
+			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["rouge"]} />);
+			const finish = screen.getByText("Terminer").closest("button");
+			const clear = screen.getByText("Effacer").closest("button");
+			expect(finish?.className).toContain("min-h-14");
+			expect(clear?.className).toContain("min-h-14");
 		});
 	});
 
-	// ============================================================================
-	// EMPTY STATE — Enhanced 2026 UX
-	// ============================================================================
-
-	describe("empty state", () => {
-		it("shows SearchX icon + clear-search button when search yields no results", () => {
+	describe("SSR guard", () => {
+		it("treats unmounted as desktop (popover) even if isMobile=true", () => {
+			mockMounted.value = false;
+			mockIsMobile.value = true;
 			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			fireEvent.change(input, { target: { value: "zzzzz-no-match" } });
-
-			expect(screen.getByTestId("icon-search-x")).toBeInTheDocument();
-			expect(screen.getByRole("button", { name: "Effacer la recherche" })).toBeInTheDocument();
-		});
-
-		it("clicking 'Effacer la recherche' resets search and fires light haptic", () => {
-			render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
-			fireEvent.click(screen.getByRole("combobox"));
-
-			const input = screen.getByTestId("command-input");
-			fireEvent.change(input, { target: { value: "nomatch" } });
-
-			mockHaptic.fn.mockClear();
-			fireEvent.click(screen.getByRole("button", { name: "Effacer la recherche" }));
-
-			expect(input).toHaveValue("");
-			expect(mockHaptic.fn).toHaveBeenCalledWith("light");
-		});
-	});
-
-	// ============================================================================
-	// REDUCED MOTION GUARDS
-	// ============================================================================
-
-	describe("prefers-reduced-motion", () => {
-		it("zeroes animationDuration on selected badge when reduced-motion is on", () => {
-			mockReducedMotion.value = true;
-			render(
-				<MultiSelect
-					options={OPTIONS}
-					onValueChange={vi.fn()}
-					defaultValue={["rouge"]}
-					animation={0.5}
-					animationConfig={{ badgeAnimation: "bounce", duration: 0.5 }}
-				/>,
-			);
-
-			const badge = screen.getAllByTestId("badge")[0]!;
-			expect(badge.getAttribute("style")).toMatch(/animation-duration:\s*0s/i);
-		});
-
-		it("keeps animationDuration when reduced-motion is off", () => {
-			mockReducedMotion.value = false;
-			render(
-				<MultiSelect
-					options={OPTIONS}
-					onValueChange={vi.fn()}
-					defaultValue={["rouge"]}
-					animationConfig={{ badgeAnimation: "bounce", duration: 0.7 }}
-				/>,
-			);
-
-			const badge = screen.getAllByTestId("badge")[0]!;
-			expect(badge.getAttribute("style")).toMatch(/animation-duration:\s*0\.7s/i);
+			expect(screen.getByTestId("popover")).toBeTruthy();
+			expect(screen.queryByTestId("drawer")).toBeNull();
 		});
 	});
 });

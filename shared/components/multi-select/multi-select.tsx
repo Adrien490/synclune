@@ -2,700 +2,336 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
+import { Checkbox } from "@/shared/components/ui/checkbox";
 import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandInput,
-	CommandItem,
-	CommandList,
-} from "@/shared/components/ui/command";
-import { Drawer, DrawerClose, DrawerContent, DrawerTitle } from "@/shared/components/ui/drawer";
+	Drawer,
+	DrawerBody,
+	DrawerClose,
+	DrawerContent,
+	DrawerFooter,
+	DrawerHeader,
+	DrawerTitle,
+} from "@/shared/components/ui/drawer";
 import { Popover, PopoverContent, PopoverTrigger } from "@/shared/components/ui/popover";
 import { Separator } from "@/shared/components/ui/separator";
-import { Spinner } from "@/shared/components/ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { cn } from "@/shared/utils/cn";
 import { withViewTransition } from "@/shared/utils/view-transition";
-import { ArrowLeftIcon, CheckIcon, ChevronDown, CircleX, SearchX, XIcon } from "lucide-react";
-import { useReducedMotion } from "motion/react";
+import { ChevronDown, X } from "lucide-react";
 import * as React from "react";
-import { ARIA_CLEAR_DELAY, FOCUS_RING_DURATION, multiSelectVariants } from "./constants";
-import type { MultiSelectOption, MultiSelectProps, MultiSelectRef, ScreenSize } from "./types";
-import {
-	arraysEqual,
-	filterOptions,
-	flattenOptions,
-	getBadgeAnimationClass,
-	getPopoverAnimationClass,
-	getResponsiveSettings,
-	getWidthConstraints,
-	isGroupedOptions,
-} from "./utils";
+import { MULTI_SELECT_LABELS as L, multiSelectVariants } from "./constants";
+import type { MultiSelectOption, MultiSelectProps, MultiSelectRef } from "./types";
+
+function arraysEqual(a: string[], b: string[]): boolean {
+	if (a.length !== b.length) return false;
+	const sortedA = [...a].sort();
+	const sortedB = [...b].sort();
+	return sortedA.every((val, index) => val === sortedB[index]);
+}
 
 export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 	(
 		{
 			options,
 			onValueChange,
-			variant,
 			defaultValue = [],
-			placeholder = "Sélectionner",
-			animation = 0,
-			animationConfig,
+			placeholder = L.placeholder,
 			maxCount = 3,
-			modalPopover = false,
-			className,
 			hideSelectAll = false,
-			searchable = true,
-			emptyIndicator,
-			autoSize = false,
-			singleLine = false,
-			popoverClassName,
 			disabled = false,
-			responsive,
-			minWidth,
-			maxWidth,
-			deduplicateOptions = false,
-			resetOnDefaultValueChange = true,
-			closeOnSelect = true,
-			isLoading = false,
+			variant,
+			className,
 			"aria-describedby": externalAriaDescribedBy,
 			...props
 		},
 		ref,
 	) => {
 		const [selectedValues, setSelectedValues] = React.useState<string[]>(defaultValue);
-		const [isPopoverOpen, setIsPopoverOpen] = React.useState(false);
-		const [searchValue, setSearchValue] = React.useState("");
-
+		const [isOpen, setIsOpen] = React.useState(false);
 		const [politeMessage, setPoliteMessage] = React.useState("");
-		const [assertiveMessage, setAssertiveMessage] = React.useState("");
-		const prevSelectedCount = React.useRef(selectedValues.length);
-		const prevIsOpen = React.useRef(isPopoverOpen);
-		const prevSearchValue = React.useRef(searchValue);
-
-		// Ref pour cleanup du timeout focus (P0 - Memory leak fix)
-		const focusTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
 		const isMobileDetected = useIsMobile();
 		const mounted = useMounted();
 		const isMobile = mounted && isMobileDetected;
 
 		const haptic = useHaptic();
-		const prefersReducedMotion = useReducedMotion();
 
-		// Focus restoration : snapshot activeElement à l'ouverture, restore au close
+		const triggerRef = React.useRef<HTMLButtonElement>(null);
 		const previousFocusRef = React.useRef<HTMLElement | null>(null);
+		const prevDefaultValueRef = React.useRef<string[]>(defaultValue);
 
-		// Announce function - messages nettoyés via useEffect
-		const announce = (message: string, priority: "polite" | "assertive" = "polite") => {
-			if (priority === "assertive") {
-				setAssertiveMessage(message);
-			} else {
-				setPoliteMessage(message);
-			}
-		};
+		const enabledOptions = options.filter((o) => !o.disabled);
+		const enabledCount = enabledOptions.length;
+		const totalCount = options.length;
+		const isAllSelected = selectedValues.length > 0 && selectedValues.length === enabledCount;
 
-		// P0 Fix: Cleanup des messages ARIA avec useEffect (évite memory leak)
+		const uid = React.useId();
+		const listboxId = `${uid}-listbox`;
+		const countId = `${uid}-count`;
+		const describedById = `${uid}-desc`;
+
+		const getOptionByValue = (value: string): MultiSelectOption | undefined =>
+			options.find((o) => o.value === value);
+
+		const announce = (message: string) => setPoliteMessage(message);
+
 		React.useEffect(() => {
 			if (!politeMessage) return;
-			const timeoutId = setTimeout(() => setPoliteMessage(""), ARIA_CLEAR_DELAY);
-			return () => clearTimeout(timeoutId);
+			const id = setTimeout(() => setPoliteMessage(""), 1200);
+			return () => clearTimeout(id);
 		}, [politeMessage]);
 
 		React.useEffect(() => {
-			if (!assertiveMessage) return;
-			const timeoutId = setTimeout(() => setAssertiveMessage(""), ARIA_CLEAR_DELAY);
-			return () => clearTimeout(timeoutId);
-		}, [assertiveMessage]);
+			const prev = prevDefaultValueRef.current;
+			if (arraysEqual(prev, defaultValue)) return;
+			prevDefaultValueRef.current = [...defaultValue];
+			if (!arraysEqual(selectedValues, defaultValue)) {
+				setSelectedValues(defaultValue);
+			}
+		}, [defaultValue, selectedValues]);
 
-		// P0 Fix: Cleanup focusTimeout on unmount
 		React.useEffect(() => {
-			return () => {
-				if (focusTimeoutRef.current) {
-					clearTimeout(focusTimeoutRef.current);
-				}
-			};
-		}, []);
-
-		const multiSelectId = React.useId();
-		const listboxId = `${multiSelectId}-listbox`;
-		const triggerDescriptionId = `${multiSelectId}-description`;
-		const selectedCountId = `${multiSelectId}-count`;
-
-		const prevDefaultValueRef = React.useRef<string[]>(defaultValue);
-
-		// Flat list of all options
-		const allOptions = flattenOptions(options, deduplicateOptions);
-
-		// P1 Fix: Compute enabled options once for performance
-		const enabledOptions = allOptions.filter((option) => !option.disabled);
-		const enabledCount = enabledOptions.length;
-		const isAllSelected = selectedValues.length === enabledCount;
-
-		const buttonRef = React.useRef<HTMLButtonElement>(null);
+			if (isOpen) {
+				previousFocusRef.current =
+					typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
+				announce(L.ariaListOpen(enabledCount));
+				return;
+			}
+			announce(L.ariaListClosed);
+			const previous = previousFocusRef.current;
+			if (!previous) return;
+			previousFocusRef.current = null;
+			const id = requestAnimationFrame(() => previous.focus({ preventScroll: true }));
+			return () => cancelAnimationFrame(id);
+		}, [isOpen, enabledCount]);
 
 		React.useImperativeHandle(
 			ref,
 			() => ({
 				reset: () => {
 					setSelectedValues(defaultValue);
-					setIsPopoverOpen(false);
-					setSearchValue("");
+					setIsOpen(false);
 					onValueChange(defaultValue);
-				},
-				getSelectedValues: () => selectedValues,
-				setSelectedValues: (values: string[]) => {
-					setSelectedValues(values);
-					onValueChange(values);
 				},
 				clear: () => {
 					setSelectedValues([]);
 					onValueChange([]);
 				},
-				focus: () => {
-					if (buttonRef.current) {
-						buttonRef.current.focus();
-						const originalOutline = buttonRef.current.style.outline;
-						const originalOutlineOffset = buttonRef.current.style.outlineOffset;
-						buttonRef.current.style.outline = "2px solid oklch(var(--ring))";
-						buttonRef.current.style.outlineOffset = "2px";
-
-						// P0 Fix: Clear previous timeout to prevent memory leak
-						if (focusTimeoutRef.current) {
-							clearTimeout(focusTimeoutRef.current);
-						}
-						focusTimeoutRef.current = setTimeout(() => {
-							if (buttonRef.current) {
-								buttonRef.current.style.outline = originalOutline;
-								buttonRef.current.style.outlineOffset = originalOutlineOffset;
-							}
-							focusTimeoutRef.current = null;
-						}, FOCUS_RING_DURATION);
-					}
+				focus: () => triggerRef.current?.focus(),
+				getValues: () => selectedValues,
+				setValues: (values) => {
+					setSelectedValues(values);
+					onValueChange(values);
 				},
 			}),
 			[defaultValue, selectedValues, onValueChange],
 		);
 
-		// Pour tablet/desktop responsive settings uniquement
-		const screenSize: ScreenSize = isMobile ? "mobile" : "desktop";
-
-		const responsiveSettings = getResponsiveSettings(responsive, screenSize, maxCount);
-		const badgeAnimationClass = prefersReducedMotion ? "" : getBadgeAnimationClass(animationConfig);
-		const popoverAnimationClass = prefersReducedMotion
-			? ""
-			: getPopoverAnimationClass(animationConfig);
-		const animDuration = prefersReducedMotion ? 0 : (animationConfig?.duration ?? animation);
-		const animDelay = prefersReducedMotion ? 0 : (animationConfig?.delay ?? 0);
-
-		const getOptionByValue = (value: string): MultiSelectOption | undefined => {
-			return allOptions.find((option) => option.value === value);
+		const commit = (values: string[]) => {
+			setSelectedValues(values);
+			onValueChange(values);
 		};
 
-		const filteredOptions = filterOptions(options, searchValue, searchable);
-
-		const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-			if (event.key === "Enter") {
-				setIsPopoverOpen(true);
-			} else if (event.key === "Backspace" && !event.currentTarget.value) {
-				const newSelectedValues = [...selectedValues];
-				newSelectedValues.pop();
-				setSelectedValues(newSelectedValues);
-				onValueChange(newSelectedValues);
-			} else if (event.key === "Escape" && event.currentTarget.value) {
-				// Escape progressif : clear search d'abord, ferme popover au 2e press
-				event.preventDefault();
-				event.stopPropagation();
-				setSearchValue("");
-				haptic("light");
-			} else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "a") {
-				// ⌘A / Ctrl+A : toggle all (desktop power-user shortcut)
-				event.preventDefault();
-				event.stopPropagation();
-				toggleAll();
-			}
-		};
-
-		const toggleOption = (optionValue: string) => {
+		const toggleOption = (value: string) => {
 			if (disabled) return;
-			const option = getOptionByValue(optionValue);
+			const option = getOptionByValue(value);
 			if (option?.disabled) return;
-			const newSelectedValues = selectedValues.includes(optionValue)
-				? selectedValues.filter((value) => value !== optionValue)
-				: [...selectedValues, optionValue];
-			setSelectedValues(newSelectedValues);
-			onValueChange(newSelectedValues);
+			const next = selectedValues.includes(value)
+				? selectedValues.filter((v) => v !== value)
+				: [...selectedValues, value];
+			commit(next);
 			haptic("selection");
-			// Close only on explicit closeOnSelect prop (mobile uses batch mode with "Terminer" button)
-			if (closeOnSelect) {
-				setIsPopoverOpen(false);
+			if (option) {
+				if (next.includes(value)) {
+					announce(L.ariaSelected(option.label, next.length, enabledCount));
+				} else {
+					announce(L.ariaRemoved(next.length, enabledCount));
+				}
 			}
 		};
 
 		const handleClear = () => {
-			if (disabled) return;
-			setSelectedValues([]);
-			onValueChange([]);
-			haptic("light");
-		};
-
-		const handleTogglePopover = () => {
-			if (disabled) return;
-			haptic("selection");
-			withViewTransition(() => setIsPopoverOpen((prev) => !prev));
-		};
-
-		const clearExtraOptions = () => {
-			if (disabled) return;
-			const newSelectedValues = selectedValues.slice(0, responsiveSettings.maxCount);
-			setSelectedValues(newSelectedValues);
-			onValueChange(newSelectedValues);
+			if (disabled || selectedValues.length === 0) return;
+			commit([]);
 			haptic("light");
 		};
 
 		const toggleAll = () => {
 			if (disabled) return;
-			// P1 Fix: Use pre-computed isAllSelected and enabledOptions
 			if (isAllSelected) {
-				handleClear();
+				commit([]);
 			} else {
-				const allValues = enabledOptions.map((option) => option.value);
-				setSelectedValues(allValues);
-				onValueChange(allValues);
-				haptic("light");
+				commit(enabledOptions.map((o) => o.value));
 			}
-
-			if (closeOnSelect) {
-				setIsPopoverOpen(false);
-			}
+			haptic("selection");
 		};
 
-		React.useEffect(() => {
-			if (!resetOnDefaultValueChange) return;
-			const prevDefaultValue = prevDefaultValueRef.current;
-			if (!arraysEqual(prevDefaultValue, defaultValue)) {
-				if (!arraysEqual(selectedValues, defaultValue)) {
-					setSelectedValues(defaultValue);
-				}
-				prevDefaultValueRef.current = [...defaultValue];
-			}
-		}, [defaultValue, selectedValues, resetOnDefaultValueChange]);
+		const handleToggleOpen = () => {
+			if (disabled) return;
+			haptic("selection");
+			withViewTransition(() => setIsOpen((prev) => !prev));
+		};
 
-		const widthConstraints = getWidthConstraints(screenSize, minWidth, maxWidth, autoSize);
+		const handleOpen = () => {
+			if (disabled) return;
+			haptic("selection");
+			withViewTransition(() => setIsOpen(true));
+		};
 
-		React.useEffect(() => {
-			if (!isPopoverOpen) {
-				setSearchValue("");
-			}
-		}, [isPopoverOpen]);
+		const handleFinish = () => {
+			haptic("medium");
+			setIsOpen(false);
+		};
 
-		// Focus restoration : snapshot activeElement à l'ouverture, restore au close via rAF + preventScroll
-		React.useEffect(() => {
-			if (isPopoverOpen) {
-				previousFocusRef.current =
-					typeof document !== "undefined" ? (document.activeElement as HTMLElement | null) : null;
-				return;
-			}
-			const previous = previousFocusRef.current;
-			if (!previous) return;
-			previousFocusRef.current = null;
-			const id = requestAnimationFrame(() => {
-				previous.focus({ preventScroll: true });
-			});
-			return () => cancelAnimationFrame(id);
-		}, [isPopoverOpen]);
+		const handleOverlayDismiss = () => {
+			haptic("light");
+		};
 
-		// Effect 1: Annonces de selection
-		React.useEffect(() => {
-			const selectedCount = selectedValues.length;
-			const totalOptions = enabledCount;
+		const clearExtraOptions = () => {
+			if (disabled) return;
+			commit(selectedValues.slice(0, maxCount));
+			haptic("light");
+		};
 
-			if (selectedCount !== prevSelectedCount.current) {
-				const diff = selectedCount - prevSelectedCount.current;
-				if (diff > 0) {
-					const addedItems = selectedValues.slice(-diff);
-					const addedLabels = addedItems
-						.map((value) => allOptions.find((opt) => opt.value === value)?.label)
-						.filter(Boolean);
+		// =========================================================================
+		// Trigger (shared)
+		// =========================================================================
+		const triggerCommonProps = {
+			ref: triggerRef,
+			disabled,
+			role: "combobox" as const,
+			"aria-expanded": isOpen,
+			"aria-haspopup": "listbox" as const,
+			"aria-controls": isOpen ? listboxId : undefined,
+			"aria-describedby":
+				[describedById, countId, externalAriaDescribedBy].filter(Boolean).join(" ") || undefined,
+			"aria-label": L.ariaComboboxLabel(selectedValues.length, totalCount, placeholder),
+			className: cn(
+				"flex h-auto min-h-11 w-full touch-manipulation items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit",
+				"[&_svg]:pointer-events-auto",
+				disabled && "cursor-not-allowed opacity-50",
+				className,
+			),
+			...props,
+		};
 
-					if (addedLabels.length === 1) {
-						announce(
-							`${addedLabels[0]} sélectionné. ${selectedCount} sur ${totalOptions} options.`,
-						);
-					} else {
-						announce(
-							`${addedLabels.length} options ajoutées. ${selectedCount} sur ${totalOptions}.`,
-						);
-					}
-				} else if (diff < 0) {
-					announce(`Option retirée. ${selectedCount} sur ${totalOptions} options.`);
-				}
-				prevSelectedCount.current = selectedCount;
-			}
-		}, [selectedValues, allOptions, enabledCount]);
-
-		// Effect 2: Annonces d'ouverture/fermeture
-		React.useEffect(() => {
-			if (isPopoverOpen !== prevIsOpen.current) {
-				const totalOptions = enabledCount;
-				if (isPopoverOpen) {
-					announce(`Liste ouverte. ${totalOptions} options. Flèches pour naviguer.`);
-				} else {
-					announce("Liste fermée.");
-				}
-				prevIsOpen.current = isPopoverOpen;
-			}
-		}, [isPopoverOpen, allOptions, enabledCount]);
-
-		// Effect 3: Annonces de recherche
-		// P1 Fix: Use pre-computed filteredOptions instead of re-filtering
-		React.useEffect(() => {
-			if (searchValue !== prevSearchValue.current && searchValue && isPopoverOpen) {
-				// Calculate count from already filtered options
-				const filteredCount = isGroupedOptions(filteredOptions)
-					? filteredOptions.reduce((acc, group) => acc + group.options.length, 0)
-					: filteredOptions.length;
-				announce(
-					`${filteredCount} résultat${filteredCount === 1 ? "" : "s"} pour "${searchValue}"`,
-				);
-			}
-			prevSearchValue.current = searchValue;
-		}, [searchValue, isPopoverOpen, filteredOptions]);
-
-		// Composant de rendu des options (réutilisé mobile/desktop)
-		const renderCommandContent = () => (
-			<>
-				{searchable && (
-					<div id={`${multiSelectId}-search-help`} className="sr-only">
-						Tapez pour filtrer. Flèches pour naviguer.
-					</div>
-				)}
-				<CommandList
-					className={cn(
-						"multiselect-scrollbar max-h-none flex-1 overflow-y-auto",
-						"overscroll-behavior-y-contain",
-					)}
-				>
-					{isLoading ? (
-						<div
-							className="flex items-center justify-center py-6"
-							role="status"
-							aria-busy="true"
-							aria-label="Chargement des options"
-						>
-							<Spinner className="h-4 w-4" />
-							<span className="text-muted-foreground ml-2 text-sm">Chargement...</span>
-						</div>
-					) : (
-						<CommandEmpty className="py-8 text-center">
-							{emptyIndicator ?? (
-								<div className="flex flex-col items-center gap-2">
-									<SearchX className="text-muted-foreground h-5 w-5" aria-hidden="true" />
-									<p className="text-muted-foreground text-sm">
-										{searchValue
-											? `Aucun résultat pour "${searchValue}"`
-											: "Aucune option disponible"}
-									</p>
-									{searchValue && (
-										<Button
-											variant="ghost"
-											size="sm"
-											onClick={() => {
-												setSearchValue("");
-												haptic("light");
-											}}
-											className="text-xs"
-										>
-											Effacer la recherche
-										</Button>
-									)}
-								</div>
-							)}
-						</CommandEmpty>
-					)}
-					{!isLoading && !hideSelectAll && !searchValue && (
-						<CommandGroup>
-							<CommandItem
-								key="all"
-								onSelect={toggleAll}
-								role="option"
-								aria-selected={isAllSelected}
-								aria-label={`Sélectionner les ${allOptions.length} options`}
-								className="cursor-pointer py-3"
-							>
-								<div
-									className={cn(
-										"border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-										isAllSelected
-											? "bg-primary text-primary-foreground"
-											: "opacity-50 [&_svg]:invisible",
-									)}
-									aria-hidden="true"
-								>
-									<CheckIcon className="h-4 w-4" />
-								</div>
-								<span>
-									(Tout sélectionner
-									{allOptions.length > 20 ? ` - ${allOptions.length} éléments` : ""})
-								</span>
-							</CommandItem>
-						</CommandGroup>
-					)}
-					{!isLoading &&
-						(isGroupedOptions(filteredOptions) ? (
-							filteredOptions.map((group) => (
-								<CommandGroup key={group.heading} heading={group.heading}>
-									{group.options.map((option) => {
-										const isSelected = selectedValues.includes(option.value);
-										return (
-											<CommandItem
-												key={option.value}
-												onSelect={() => toggleOption(option.value)}
-												role="option"
-												aria-selected={isSelected}
-												aria-disabled={option.disabled}
-												aria-label={`${option.label}${
-													isSelected ? ", sélectionné" : ", non sélectionné"
-												}${option.disabled ? ", désactivé" : ""}`}
-												className={cn(
-													"cursor-pointer py-3",
-													option.disabled && "cursor-not-allowed opacity-50",
-												)}
-												disabled={option.disabled}
-											>
-												<div
-													className={cn(
-														"border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-														isSelected
-															? "bg-primary text-primary-foreground"
-															: "opacity-50 [&_svg]:invisible",
-													)}
-													aria-hidden="true"
-												>
-													<CheckIcon className="h-4 w-4" />
-												</div>
-												{option.icon && (
-													<option.icon
-														className="text-muted-foreground mr-2 h-4 w-4"
-														aria-hidden="true"
-													/>
-												)}
-												<span>{option.label}</span>
-											</CommandItem>
-										);
-									})}
-								</CommandGroup>
-							))
-						) : (
-							<CommandGroup>
-								{filteredOptions.map((option) => {
-									const isSelected = selectedValues.includes(option.value);
-									return (
-										<CommandItem
-											key={option.value}
-											onSelect={() => toggleOption(option.value)}
-											role="option"
-											aria-selected={isSelected}
-											aria-disabled={option.disabled}
-											aria-label={`${option.label}${
-												isSelected ? ", sélectionné" : ", non sélectionné"
-											}${option.disabled ? ", désactivé" : ""}`}
-											className={cn(
-												"cursor-pointer py-3",
-												option.disabled && "cursor-not-allowed opacity-50",
-											)}
-											disabled={option.disabled}
-										>
-											<div
-												className={cn(
-													"border-primary mr-2 flex h-4 w-4 items-center justify-center rounded-sm border",
-													isSelected
-														? "bg-primary text-primary-foreground"
-														: "opacity-50 [&_svg]:invisible",
-												)}
-												aria-hidden="true"
-											>
-												<CheckIcon className="h-4 w-4" />
-											</div>
-											{option.icon && (
-												<option.icon
-													className="text-muted-foreground mr-2 h-4 w-4"
-													aria-hidden="true"
-												/>
-											)}
-											<span>{option.label}</span>
-										</CommandItem>
-									);
-								})}
-							</CommandGroup>
-						))}
-				</CommandList>
-			</>
-		);
-
-		// Composant pour afficher les badges sélectionnés dans le trigger
-		const renderTriggerContent = () => {
-			if (selectedValues.length === 0) {
-				return (
-					<div className="mx-auto flex w-full items-center justify-between">
-						<span className="text-muted-foreground mx-3 text-sm">{placeholder}</span>
-						<ChevronDown
-							className={cn(
-								"text-muted-foreground mx-2 h-4 cursor-pointer motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]",
-								isPopoverOpen && "rotate-180",
-							)}
-						/>
-					</div>
-				);
-			}
-
-			return (
+		const triggerContent =
+			selectedValues.length === 0 ? (
 				<div className="flex w-full items-center justify-between">
+					<span className="text-muted-foreground mx-3 text-sm">{placeholder}</span>
+					<ChevronDown
+						className={cn(
+							"text-muted-foreground mx-2 size-4 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]",
+							isOpen && "rotate-180",
+						)}
+						aria-hidden="true"
+					/>
+				</div>
+			) : (
+				<div className="flex w-full items-center justify-between gap-1">
 					<div
 						className={cn(
-							"flex items-center gap-1",
-							singleLine ? "multiselect-singleline-scroll overflow-x-auto" : "flex-wrap",
-							responsiveSettings.compactMode && "gap-0.5",
+							"flex flex-1 items-center gap-1",
+							isMobile ? "multiselect-singleline-scroll overflow-x-auto" : "flex-wrap",
 						)}
-						style={singleLine ? { paddingBottom: "4px" } : {}}
 					>
 						{selectedValues
-							.slice(0, responsiveSettings.maxCount)
+							.slice(0, maxCount)
 							.map((value) => {
 								const option = getOptionByValue(value);
-								const IconComponent = option?.icon;
-								const customStyle = option?.style;
 								if (!option) return null;
-
-								const badgeStyle: React.CSSProperties = {
-									animationDuration: `${animDuration}s`,
-									...(customStyle?.badgeColor && {
-										backgroundColor: customStyle.badgeColor,
-									}),
-									...(customStyle?.gradient && {
-										background: customStyle.gradient,
-										color: "white",
-									}),
-								};
-
+								const Icon = option.icon;
 								return (
 									<Badge
 										key={value}
 										className={cn(
-											badgeAnimationClass,
 											multiSelectVariants({ variant }),
-											customStyle?.gradient && "border-transparent text-white",
-											responsiveSettings.compactMode && "px-1.5 py-0.5 text-xs",
-											isMobile && "max-w-30 truncate",
-											singleLine && "shrink-0 whitespace-nowrap",
-											"[&>svg]:pointer-events-auto",
+											"shrink-0 whitespace-nowrap [&>svg]:pointer-events-auto",
+											isMobile && "max-w-32 truncate",
 										)}
-										style={{
-											...badgeStyle,
-											animationDuration: `${animDuration}s`,
-											animationDelay: `${animDelay}s`,
-										}}
 									>
-										{IconComponent && !responsiveSettings.hideIcons && (
-											<IconComponent
-												className={cn(
-													"mr-2 h-4 w-4",
-													responsiveSettings.compactMode && "mr-1 h-3 w-3",
-													customStyle?.iconColor && "text-current",
-												)}
-												{...(customStyle?.iconColor && {
-													style: { color: customStyle.iconColor },
-												})}
-											/>
+										{Icon && (
+											<Icon className="text-muted-foreground mr-1 size-3.5" aria-hidden="true" />
 										)}
-										<span className={cn(isMobile && "truncate")}>{option.label}</span>
+										<span className={cn("truncate")}>{option.label}</span>
 										<div
 											role="button"
-											tabIndex={0}
-											onClick={(event) => {
-												event.stopPropagation();
+											tabIndex={disabled ? -1 : 0}
+											onClick={(e) => {
+												e.stopPropagation();
 												toggleOption(value);
 											}}
-											onKeyDown={(event) => {
-												if (event.key === "Enter" || event.key === " ") {
-													event.preventDefault();
-													event.stopPropagation();
+											onKeyDown={(e) => {
+												if (e.key === "Enter" || e.key === " ") {
+													e.preventDefault();
+													e.stopPropagation();
 													toggleOption(value);
 												}
 											}}
-											aria-label={`Retirer ${option.label} de la sélection`}
+											aria-label={L.removeItem(option.label)}
 											className={cn(
-												"hover:bg-foreground/20 focus-visible:ring-foreground/50 -mr-1 ml-1 flex cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden",
-												isMobile ? "h-10 w-10" : "h-8 w-8",
+												"hover:bg-foreground/20 focus-visible:ring-foreground/50 ml-1 flex cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden",
+												isMobile
+													? "relative -mr-1 size-8 touch-manipulation after:absolute after:-inset-2 after:content-['']"
+													: "-mr-1 size-6",
 											)}
 										>
-											<CircleX
-												className={cn("h-3 w-3", responsiveSettings.compactMode && "h-2.5 w-2.5")}
-											/>
+											<X className="size-3" aria-hidden="true" />
 										</div>
 									</Badge>
 								);
 							})
 							.filter(Boolean)}
-						{selectedValues.length > responsiveSettings.maxCount && (
+
+						{selectedValues.length > maxCount && (
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<Badge
 										className={cn(
-											"text-foreground border-foreground/1 bg-transparent hover:bg-transparent",
-											badgeAnimationClass,
 											multiSelectVariants({ variant }),
-											responsiveSettings.compactMode && "px-1.5 py-0.5 text-xs",
-											singleLine && "shrink-0 whitespace-nowrap",
-											"[&>svg]:pointer-events-auto",
+											"text-foreground border-foreground/10 shrink-0 bg-transparent whitespace-nowrap hover:bg-transparent [&>svg]:pointer-events-auto",
 										)}
-										style={{
-											animationDuration: `${animDuration}s`,
-											animationDelay: `${animDelay}s`,
-										}}
 									>
-										{`+ ${selectedValues.length - responsiveSettings.maxCount} de plus`}
+										{L.moreItems(selectedValues.length - maxCount)}
 										<div
 											role="button"
-											tabIndex={0}
-											onClick={(event) => {
-												event.stopPropagation();
+											tabIndex={disabled ? -1 : 0}
+											onClick={(e) => {
+												e.stopPropagation();
 												clearExtraOptions();
 											}}
-											onKeyDown={(event) => {
-												if (event.key === "Enter" || event.key === " ") {
-													event.preventDefault();
-													event.stopPropagation();
+											onKeyDown={(e) => {
+												if (e.key === "Enter" || e.key === " ") {
+													e.preventDefault();
+													e.stopPropagation();
 													clearExtraOptions();
 												}
 											}}
-											aria-label={`Retirer les ${selectedValues.length - responsiveSettings.maxCount} options supplémentaires`}
+											aria-label={L.removeExtra(selectedValues.length - maxCount)}
 											className={cn(
-												"hover:bg-foreground/20 focus-visible:ring-foreground/50 flex cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden",
-												isMobile ? "ml-2 h-10 w-10" : "ml-2 h-8 w-8",
+												"hover:bg-foreground/20 focus-visible:ring-foreground/50 ml-1 flex cursor-pointer items-center justify-center rounded-sm focus-visible:ring-1 focus-visible:outline-hidden",
+												isMobile
+													? "relative -mr-1 size-8 touch-manipulation after:absolute after:-inset-2 after:content-['']"
+													: "-mr-1 size-6",
 											)}
 										>
-											<CircleX
-												className={cn("h-4 w-4", responsiveSettings.compactMode && "h-3 w-3")}
-											/>
+											<X className="size-3" aria-hidden="true" />
 										</div>
 									</Badge>
 								</TooltipTrigger>
 								<TooltipContent
 									side="bottom"
-									className="max-w-50"
+									className="max-w-60"
 									collisionPadding={8}
 									avoidCollisions
 								>
 									<ul className="space-y-0.5 text-xs">
 										{selectedValues
-											.slice(responsiveSettings.maxCount)
-											.map((value) => allOptions.find((o) => o.value === value))
+											.slice(maxCount)
+											.map((v) => getOptionByValue(v))
 											.filter(Boolean)
 											.map((opt) => (
 												<li key={opt!.value}>{opt!.label}</li>
@@ -705,312 +341,267 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
 							</Tooltip>
 						)}
 					</div>
-					<div className="flex items-center justify-between">
+					<div className="flex shrink-0 items-center">
 						<div
 							role="button"
-							tabIndex={0}
-							onClick={(event) => {
-								event.stopPropagation();
+							tabIndex={disabled ? -1 : 0}
+							onClick={(e) => {
+								e.stopPropagation();
 								handleClear();
 							}}
-							onKeyDown={(event) => {
-								if (event.key === "Enter" || event.key === " ") {
-									event.preventDefault();
-									event.stopPropagation();
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									e.stopPropagation();
 									handleClear();
 								}
 							}}
-							aria-label={`Effacer les ${selectedValues.length} options sélectionnées`}
+							aria-label={L.clearSelection(selectedValues.length)}
 							className={cn(
-								"text-muted-foreground hover:text-foreground focus:ring-ring mx-2 flex cursor-pointer items-center justify-center rounded-sm focus:ring-2 focus:ring-offset-1 focus:outline-hidden",
-								isMobile ? "h-10 w-10" : "h-8 w-8",
+								"text-muted-foreground hover:text-foreground focus:ring-ring mx-1 flex cursor-pointer items-center justify-center rounded-sm focus:ring-2 focus:ring-offset-1 focus:outline-hidden",
+								isMobile ? "size-10" : "size-8",
 							)}
 						>
-							<XIcon className="h-4 w-4" />
+							<X className="size-4" aria-hidden="true" />
 						</div>
-						<Separator orientation="vertical" className="flex h-full min-h-6" />
+						<Separator orientation="vertical" className="h-6" />
 						<ChevronDown
 							className={cn(
-								"text-muted-foreground mx-2 h-4 cursor-pointer motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]",
-								isPopoverOpen && "rotate-180",
+								"text-muted-foreground mx-2 size-4 motion-safe:transition-transform motion-safe:duration-[var(--duration-normal)]",
+								isOpen && "rotate-180",
 							)}
 							aria-hidden="true"
 						/>
 					</div>
 				</div>
 			);
+
+		// =========================================================================
+		// Option list (shared markup, wrapped by Popover or Drawer)
+		// =========================================================================
+		const renderOptionRow = (option: MultiSelectOption, sizeClass: string) => {
+			const isSelected = selectedValues.includes(option.value);
+			const Icon = option.icon;
+			return (
+				<label
+					key={option.value}
+					className={cn(
+						"group relative flex cursor-pointer touch-manipulation items-center gap-3 rounded-md px-3",
+						"motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]",
+						"hover:bg-accent focus-within:bg-accent",
+						isSelected && "bg-accent/60",
+						option.disabled && "cursor-not-allowed opacity-50",
+						sizeClass,
+					)}
+				>
+					<Checkbox
+						checked={isSelected}
+						disabled={option.disabled}
+						onCheckedChange={() => toggleOption(option.value)}
+						aria-label={option.label}
+						className="pointer-events-none"
+					/>
+					{Icon && <Icon className="text-muted-foreground size-4 shrink-0" aria-hidden="true" />}
+					<span className="flex-1 truncate text-sm">{option.label}</span>
+				</label>
+			);
 		};
 
-		// ========================================
-		// VERSION MOBILE - Drawer fullscreen
-		// ========================================
+		const selectAllRow = !hideSelectAll && enabledCount > 0 && (
+			<label
+				className={cn(
+					"group relative flex cursor-pointer touch-manipulation items-center gap-3 rounded-md border-b px-3",
+					"motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]",
+					"hover:bg-accent focus-within:bg-accent",
+					isMobile ? "min-h-14" : "min-h-11",
+				)}
+			>
+				<Checkbox
+					checked={isAllSelected ? true : selectedValues.length > 0 ? "indeterminate" : false}
+					onCheckedChange={toggleAll}
+					aria-label={L.ariaSelectAllOptions(enabledCount)}
+					className="pointer-events-none"
+				/>
+				<span className="flex-1 text-sm font-medium">{L.selectAll}</span>
+				<span className="text-muted-foreground text-xs tabular-nums">
+					{selectedValues.length}/{enabledCount}
+				</span>
+			</label>
+		);
+
+		const emptyState = (
+			<div className="flex items-center justify-center py-8">
+				<p className="text-muted-foreground text-sm">{L.noOptions}</p>
+			</div>
+		);
+
+		// =========================================================================
+		// Live regions + hidden descriptions (shared)
+		// =========================================================================
+		const a11yRegion = (
+			<>
+				<div className="sr-only" aria-live="polite" aria-atomic="true" role="status">
+					{politeMessage}
+				</div>
+				<div id={describedById} className="sr-only">
+					Sélection multiple. Sélectionnez une ou plusieurs options, puis fermez la liste.
+				</div>
+				<div id={countId} className="sr-only" aria-live="polite">
+					{selectedValues.length === 0
+						? L.ariaNoSelection
+						: `${L.selectionCount(selectedValues.length)} : ${selectedValues
+								.map((v) => getOptionByValue(v)?.label)
+								.filter(Boolean)
+								.join(", ")}`}
+				</div>
+			</>
+		);
+
+		// =========================================================================
+		// MOBILE — Drawer bottom
+		// =========================================================================
 		if (isMobile) {
+			const hasPendingAnnouncement = isOpen && politeMessage.length > 0;
 			return (
 				<>
-					{/* Live regions pour accessibilité */}
-					<div className="sr-only">
-						<div aria-live="polite" aria-atomic="true" role="status">
-							{politeMessage}
-						</div>
-						<div aria-live="assertive" aria-atomic="true" role="alert">
-							{assertiveMessage}
-						</div>
-					</div>
-
-					<div id={triggerDescriptionId} className="sr-only">
-						Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour sélectionner, Échap
-						pour fermer.
-					</div>
-					<div id={selectedCountId} className="sr-only" aria-live="polite">
-						{selectedValues.length === 0
-							? "Aucune option sélectionnée"
-							: `${selectedValues.length} option${
-									selectedValues.length === 1 ? "" : "s"
-								} sélectionnée${selectedValues.length === 1 ? "" : "s"} : ${selectedValues
-									.map((value) => getOptionByValue(value)?.label)
-									.filter(Boolean)
-									.join(", ")}`}
-					</div>
-
-					{/* Trigger button */}
-					<Button
-						ref={buttonRef}
-						{...props}
-						onClick={() => {
-							if (disabled) return;
-							haptic("selection");
-							withViewTransition(() => setIsPopoverOpen(true));
-						}}
-						disabled={disabled}
-						role="combobox"
-						aria-expanded={isPopoverOpen}
-						aria-haspopup="listbox"
-						aria-controls={isPopoverOpen ? listboxId : undefined}
-						aria-describedby={[triggerDescriptionId, selectedCountId, externalAriaDescribedBy]
-							.filter(Boolean)
-							.join(" ")}
-						aria-label={`Sélection multiple : ${selectedValues.length} sur ${allOptions.length} options sélectionnées. ${placeholder}`}
-						className={cn(
-							"flex h-auto min-h-11 touch-manipulation items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit [&_svg]:pointer-events-auto",
-							autoSize ? "w-auto" : "w-full",
-							disabled && "cursor-not-allowed opacity-50",
-							className,
-						)}
-						style={{
-							...widthConstraints,
-							maxWidth: `min(${widthConstraints.maxWidth}, 100%)`,
-						}}
-					>
-						{renderTriggerContent()}
+					{a11yRegion}
+					<Button {...triggerCommonProps} onClick={handleOpen}>
+						{triggerContent}
 					</Button>
 
-					{/* Drawer bottom — primitive gère rounded-t-xl, safe-area-bottom, DrawerHandle auto */}
-					<Drawer open={isPopoverOpen} onOpenChange={setIsPopoverOpen} direction="bottom">
-						<DrawerContent className="flex max-h-[95dvh] min-h-[70dvh] flex-col">
-							<DrawerTitle className="sr-only">Sélection</DrawerTitle>
-
-							{/* Header sticky avec retour + recherche */}
-							<div className="bg-background sticky top-0 flex items-center gap-2 border-b px-3 py-3">
+					<Drawer
+						open={isOpen}
+						onOpenChange={setIsOpen}
+						direction="bottom"
+						snapPoints={[0.5, 0.92]}
+					>
+						<DrawerContent
+							className="max-h-[92dvh]"
+							onOverlayClick={handleOverlayDismiss}
+							data-pending={hasPendingAnnouncement ? "true" : undefined}
+							aria-busy={hasPendingAnnouncement || undefined}
+						>
+							<DrawerHeader className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-10 shrink-0 border-b pr-12 backdrop-blur-sm">
+								<DrawerTitle>{placeholder}</DrawerTitle>
+								<p className="text-muted-foreground text-sm">
+									{selectedValues.length === 0
+										? L.ariaNoSelection
+										: L.selectionCount(selectedValues.length)}
+								</p>
 								<DrawerClose asChild>
-									<button
+									<Button
 										type="button"
-										className="hover:bg-muted text-muted-foreground hover:text-foreground -ml-1 grid min-h-11 min-w-11 shrink-0 place-items-center rounded-full transition-colors"
-										aria-label="Fermer"
+										variant="ghost"
+										size="icon"
+										aria-label={L.ariaCloseDrawer}
+										className="absolute top-2 right-2 size-11 rounded-full"
 									>
-										<ArrowLeftIcon className="size-5" />
-									</button>
+										<X className="size-5" aria-hidden="true" />
+									</Button>
 								</DrawerClose>
-								{searchable && (
-									<div className="flex-1">
-										<Command className="rounded-none border-none">
-											<CommandInput
-												placeholder="Rechercher..."
-												onKeyDown={handleInputKeyDown}
-												value={searchValue}
-												onValueChange={setSearchValue}
-												aria-label="Rechercher parmi les options"
-												aria-describedby={`${multiSelectId}-search-help`}
-												inputMode="search"
-												enterKeyHint="search"
-												autoCapitalize="off"
-												autoCorrect="off"
-												spellCheck={false}
-												data-vaul-no-drag
-												className="h-10"
-											/>
-										</Command>
-									</div>
+							</DrawerHeader>
+
+							<DrawerBody
+								id={listboxId}
+								role="listbox"
+								aria-multiselectable="true"
+								aria-label={L.ariaOptionsLabel}
+								className="flex flex-col gap-1 overscroll-contain py-2"
+							>
+								{options.length === 0 ? (
+									emptyState
+								) : (
+									<>
+										{selectAllRow}
+										{options.map((option) => renderOptionRow(option, "min-h-14"))}
+									</>
 								)}
-							</div>
+							</DrawerBody>
 
-							{/* Liste scrollable */}
-							<Command className="flex flex-1 flex-col overflow-hidden">
-								{renderCommandContent()}
-							</Command>
-
-							{/* Footer sticky avec actions — safe-area bottom géré par DrawerContent primitive */}
-							<div className="bg-background sticky bottom-0 flex gap-2 border-t p-3">
+							<DrawerFooter className="bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky bottom-0 shrink-0 flex-row gap-2 border-t py-3 backdrop-blur-sm">
 								{selectedValues.length > 0 && (
-									<Button variant="outline" onClick={handleClear} className="min-h-11 flex-1">
-										Effacer
+									<Button
+										type="button"
+										variant="outline"
+										onClick={handleClear}
+										className="min-h-14 flex-1"
+									>
+										{L.clearAll}
 									</Button>
 								)}
-								<Button
-									onClick={() => {
-										haptic("medium");
-										setIsPopoverOpen(false);
-									}}
-									className="min-h-11 flex-1"
-								>
-									Terminer la sélection
+								<Button type="button" onClick={handleFinish} className="min-h-14 flex-1">
+									{L.finish}
 								</Button>
-							</div>
+							</DrawerFooter>
 						</DrawerContent>
 					</Drawer>
 				</>
 			);
 		}
 
-		// ========================================
-		// VERSION DESKTOP - Popover classique
-		// ========================================
+		// =========================================================================
+		// DESKTOP — Popover
+		// =========================================================================
 		return (
 			<>
-				<div className="sr-only">
-					<div aria-live="polite" aria-atomic="true" role="status">
-						{politeMessage}
-					</div>
-					<div aria-live="assertive" aria-atomic="true" role="alert">
-						{assertiveMessage}
-					</div>
-				</div>
-
-				<Popover
-					data-slot="multi-select"
-					open={isPopoverOpen}
-					onOpenChange={setIsPopoverOpen}
-					modal={modalPopover}
-				>
-					<div id={triggerDescriptionId} className="sr-only">
-						Sélection multiple. Utilisez les flèches pour naviguer, Entrée pour sélectionner, Échap
-						pour fermer.
-					</div>
-					<div id={selectedCountId} className="sr-only" aria-live="polite">
-						{selectedValues.length === 0
-							? "Aucune option sélectionnée"
-							: `${selectedValues.length} option${
-									selectedValues.length === 1 ? "" : "s"
-								} sélectionnée${selectedValues.length === 1 ? "" : "s"} : ${selectedValues
-									.map((value) => getOptionByValue(value)?.label)
-									.filter(Boolean)
-									.join(", ")}`}
-					</div>
-
+				{a11yRegion}
+				<Popover open={isOpen} onOpenChange={setIsOpen}>
 					<PopoverTrigger asChild>
-						<Button
-							ref={buttonRef}
-							{...props}
-							onClick={handleTogglePopover}
-							disabled={disabled}
-							role="combobox"
-							aria-expanded={isPopoverOpen}
-							aria-haspopup="listbox"
-							aria-controls={isPopoverOpen ? listboxId : undefined}
-							aria-describedby={[triggerDescriptionId, selectedCountId, externalAriaDescribedBy]
-								.filter(Boolean)
-								.join(" ")}
-							aria-label={`Sélection multiple : ${selectedValues.length} sur ${allOptions.length} options sélectionnées. ${placeholder}`}
-							className={cn(
-								"flex h-auto min-h-11 touch-manipulation items-center justify-between rounded-md border bg-inherit p-1 hover:bg-inherit [&_svg]:pointer-events-auto",
-								autoSize ? "w-auto" : "w-full",
-								responsiveSettings.compactMode && "min-h-9 text-sm",
-								disabled && "cursor-not-allowed opacity-50",
-								className,
-							)}
-							style={{
-								...widthConstraints,
-								maxWidth: `min(${widthConstraints.maxWidth}, 100%)`,
-							}}
-						>
-							{renderTriggerContent()}
+						<Button {...triggerCommonProps} onClick={handleToggleOpen}>
+							{triggerContent}
 						</Button>
 					</PopoverTrigger>
 					<PopoverContent
 						id={listboxId}
 						role="listbox"
 						aria-multiselectable="true"
-						aria-label="Options disponibles"
-						className={cn("flex min-w-75 flex-col p-0", popoverAnimationClass, popoverClassName)}
-						style={{
-							animationDuration: `${animDuration}s`,
-							animationDelay: `${animDelay}s`,
-							maxWidth: `min(${widthConstraints.maxWidth}, 85vw)`,
-							maxHeight: "60vh",
-						}}
+						aria-label={L.ariaOptionsLabel}
+						className="w-(--radix-popover-trigger-width) min-w-64 p-0"
 						align="start"
 						sideOffset={4}
 						collisionPadding={8}
 						avoidCollisions
-						onEscapeKeyDown={(event) => {
-							// Escape progressif : si search rempli, clear d'abord (géré dans handleInputKeyDown) ;
-							// sinon, fermeture native du popover via Radix.
-							if (searchValue) {
-								event.preventDefault();
-								setSearchValue("");
-								haptic("light");
-								return;
-							}
-							setIsPopoverOpen(false);
-						}}
 					>
-						<Command className="flex flex-1 flex-col overflow-hidden">
-							{searchable && (
-								<CommandInput
-									placeholder="Rechercher..."
-									onKeyDown={handleInputKeyDown}
-									value={searchValue}
-									onValueChange={setSearchValue}
-									aria-label="Rechercher parmi les options"
-									aria-describedby={`${multiSelectId}-search-help`}
-									inputMode="search"
-									enterKeyHint="search"
-									autoCapitalize="off"
-									autoCorrect="off"
-									spellCheck={false}
-									// eslint-disable-next-line jsx-a11y/no-autofocus
-									autoFocus
-								/>
-							)}
-							{renderCommandContent()}
+						<div className="flex max-h-[min(60vh,24rem)] flex-col">
+							<div className="flex-1 overflow-y-auto p-1">
+								{options.length === 0 ? (
+									emptyState
+								) : (
+									<>
+										{selectAllRow}
+										<div className="flex flex-col gap-0.5 pt-1">
+											{options.map((option) => renderOptionRow(option, "min-h-10"))}
+										</div>
+									</>
+								)}
+							</div>
 							{selectedValues.length > 0 && (
-								<div className="bg-popover sticky bottom-0 flex gap-1 border-t p-1">
+								<div className="flex shrink-0 gap-1 border-t p-1">
 									<Button
+										type="button"
 										variant="ghost"
 										size="sm"
-										onClick={() => {
-											handleClear();
-										}}
+										onClick={handleClear}
 										className="flex-1"
-										aria-label="Effacer toutes les options sélectionnées"
 									>
-										Effacer
+										{L.clearAll}
 									</Button>
 									<Separator orientation="vertical" className="h-auto" />
 									<Button
+										type="button"
 										variant="ghost"
 										size="sm"
 										onClick={() => {
 											haptic("selection");
-											setIsPopoverOpen(false);
+											setIsOpen(false);
 										}}
 										className="flex-1"
-										aria-label="Fermer la liste d'options"
 									>
-										Fermer
+										{L.close}
 									</Button>
 								</div>
 							)}
-						</Command>
+						</div>
 					</PopoverContent>
 				</Popover>
 			</>
