@@ -14,7 +14,6 @@ import { updateTag } from "next/cache";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { requestReturnSchema } from "../schemas/refund.schemas";
 
 /** 14-day withdrawal period in milliseconds (directive 2011/83/EU) */
@@ -181,9 +180,6 @@ export async function requestReturn(
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 		updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(result.userId!));
-		updateTag(DASHBOARD_CACHE_TAGS.KPIS);
-		updateTag(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
-		updateTag(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 
 		return success(
 			"Votre demande de retour a été enregistrée. Nous la traiterons dans les plus brefs délais.",

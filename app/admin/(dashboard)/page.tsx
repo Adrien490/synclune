@@ -4,11 +4,8 @@ import { type Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
 
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
-import { ComparisonModeSelector } from "@/modules/dashboard/components/comparison-mode-selector";
-import { DashboardMobileActionBar } from "@/modules/dashboard/components/dashboard-mobile-action-bar";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
-import { FulfillmentPipelineCard } from "@/modules/dashboard/components/fulfillment-pipeline";
 import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
@@ -18,14 +15,12 @@ import {
 	KpisSkeleton,
 	ChartSkeleton,
 	ListSkeleton,
-	FulfillmentSkeleton,
 } from "@/modules/dashboard/components/skeletons";
 
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
-import { fetchFulfillmentPipeline } from "@/modules/dashboard/data/get-fulfillment-pipeline";
 
 import {
 	getComparisonLabel,
@@ -53,7 +48,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
 	return (
 		<section aria-label="Tableau de bord">
-			<DashboardMobileActionBar className="mb-6 md:hidden" />
 			<PageHeader
 				variant="compact"
 				title="Tableau de bord"
@@ -61,7 +55,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				actions={
 					<div className="flex items-center gap-2">
 						<PeriodSelector />
-						<ComparisonModeSelector />
 						<RefreshDashboardButton />
 					</div>
 				}
@@ -80,13 +73,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						}
 					>
 						<KpisWrapper period={period} comparisonMode={comparisonMode} />
-					</Suspense>
-				</section>
-
-				<section aria-labelledby="dashboard-section-operations" className="space-y-4">
-					<SectionHeading id="dashboard-section-operations" label="Insights opérationnels" />
-					<Suspense fallback={<FulfillmentSkeleton />}>
-						<FulfillmentWrapper />
 					</Suspense>
 				</section>
 
@@ -158,17 +144,6 @@ async function AlertsWrapper() {
 		return null;
 	}
 	return <DashboardAlerts alerts={alerts} />;
-}
-
-async function FulfillmentWrapper() {
-	let pipeline;
-	try {
-		pipeline = await fetchFulfillmentPipeline();
-	} catch (error) {
-		Sentry.captureException(error);
-		return null;
-	}
-	return <FulfillmentPipelineCard pipeline={pipeline} />;
 }
 
 async function RevenueChartWrapper({ period }: { period: DashboardPeriod }) {

@@ -17,15 +17,10 @@ import {
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
-import { ComparisonModeSelector } from "./comparison-mode-selector";
 import { PeriodSelector } from "./period-selector";
 import {
-	COMPARISON_MODE_SEARCH_PARAM,
-	DEFAULT_COMPARISON_MODE,
 	DEFAULT_PERIOD,
 	PERIOD_SEARCH_PARAM,
-	getComparisonLabel,
-	type ComparisonMode,
 	type DashboardPeriod,
 } from "@/modules/dashboard/constants/period.constants";
 
@@ -48,8 +43,6 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 	const isMobile = useIsMobile();
 	const searchParams = useSearchParams();
 	const period = (searchParams.get(PERIOD_SEARCH_PARAM) ?? DEFAULT_PERIOD) as DashboardPeriod;
-	const comparisonMode = (searchParams.get(COMPARISON_MODE_SEARCH_PARAM) ??
-		DEFAULT_COMPARISON_MODE) as ComparisonMode;
 
 	// Focus restoration : snapshot the previously focused element before opening,
 	// restore it after closing (pattern used across Synclune sheets).
@@ -130,22 +123,6 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 						<PeriodSelector variant="segmented" />
 					</section>
 
-					<section className="space-y-3" aria-labelledby="period-section-comparison">
-						<h3
-							id="period-section-comparison"
-							className="text-muted-foreground text-xs font-semibold tracking-[0.08em] uppercase"
-						>
-							Comparaison
-						</h3>
-						<ComparisonModeSelector variant="segmented" />
-						<p
-							className="text-muted-foreground text-xs leading-tight"
-							aria-live="polite"
-							aria-atomic="true"
-						>
-							{getComparisonLabel(period, comparisonMode)}
-						</p>
-					</section>
 				</div>
 
 				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">

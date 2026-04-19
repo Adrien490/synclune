@@ -22,7 +22,6 @@ import { updateTag } from "next/cache";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { createRefundSchema } from "../schemas/refund.schemas";
 
 /** Active refund statuses that count toward refunded amounts/quantities */
@@ -257,8 +256,6 @@ export async function createRefund(
 		updateTag(REFUNDS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
-		updateTag(DASHBOARD_CACHE_TAGS.KPIS);
-		updateTag(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
 
 		return success(
 			`Demande de remboursement créée pour ${(result.totalAmount / 100).toFixed(2)} €`,

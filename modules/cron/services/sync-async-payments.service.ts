@@ -12,7 +12,6 @@ import {
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import {
 	BATCH_DEADLINE_MS,
 	BATCH_SIZE_MEDIUM,
@@ -158,9 +157,6 @@ export async function syncAsyncPayments(): Promise<{
 		tagsToInvalidate.add(ORDERS_CACHE_TAGS.LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 		tagsToInvalidate.add(SHARED_CACHE_TAGS.ADMIN_BADGES);
-		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.KPIS);
-		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
-		tagsToInvalidate.add(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
 		for (const tag of tagsToInvalidate) {
 			updateTag(tag);
 		}

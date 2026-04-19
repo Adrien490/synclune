@@ -13,7 +13,6 @@ import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/a
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult } from "../types/webhook.types";
@@ -155,9 +154,6 @@ export async function handlePaymentFailure(
 			ORDERS_CACHE_TAGS.LIST,
 			SHARED_CACHE_TAGS.ADMIN_BADGES,
 			SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-			DASHBOARD_CACHE_TAGS.KPIS,
-			DASHBOARD_CACHE_TAGS.REVENUE_CHART,
-			DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
 		];
 		for (const skuId of restoredSkuIds) {
 			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
@@ -230,9 +226,6 @@ export async function handlePaymentCanceled(
 			ORDERS_CACHE_TAGS.LIST,
 			SHARED_CACHE_TAGS.ADMIN_BADGES,
 			SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-			DASHBOARD_CACHE_TAGS.KPIS,
-			DASHBOARD_CACHE_TAGS.REVENUE_CHART,
-			DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
 		];
 		for (const skuId of restoredSkuIds) {
 			cacheTags.push(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
@@ -315,9 +308,6 @@ export async function handleInvoicePaymentFailed(
 					ORDERS_CACHE_TAGS.LIST,
 					SHARED_CACHE_TAGS.ADMIN_BADGES,
 					SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-					DASHBOARD_CACHE_TAGS.KPIS,
-					DASHBOARD_CACHE_TAGS.REVENUE_CHART,
-					DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
 				],
 			},
 		],

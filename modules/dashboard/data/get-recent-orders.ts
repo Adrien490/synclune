@@ -1,7 +1,9 @@
+import { cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { transformRecentOrders } from "../services/recent-orders-transformer.service";
 
 import {
@@ -24,6 +26,7 @@ export async function fetchDashboardRecentOrders(): Promise<GetRecentOrdersRetur
 	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.RECENT_ORDERS);
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
 
 	// Exclure les commandes non payées (Stripe checkout abandonnés) et supprimées
 	const orders = await prisma.order.findMany({

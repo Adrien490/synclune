@@ -12,7 +12,6 @@ import { prisma } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 
 /**
@@ -157,9 +156,6 @@ export async function handleCheckoutSessionExpired(
 						ORDERS_CACHE_TAGS.LIST,
 						SHARED_CACHE_TAGS.ADMIN_BADGES,
 						SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-						DASHBOARD_CACHE_TAGS.KPIS,
-						DASHBOARD_CACHE_TAGS.REVENUE_CHART,
-						DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
 						DISCOUNT_CACHE_TAGS.LIST,
 					],
 				},

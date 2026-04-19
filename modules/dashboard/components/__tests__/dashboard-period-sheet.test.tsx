@@ -77,12 +77,6 @@ vi.mock("../period-selector", () => ({
 	),
 }));
 
-vi.mock("../comparison-mode-selector", () => ({
-	ComparisonModeSelector: ({ variant }: { variant?: string }) => (
-		<div data-testid="comparison-selector" data-variant={variant} />
-	),
-}));
-
 import { DashboardPeriodSheet } from "../dashboard-period-sheet";
 
 afterEach(() => {
@@ -116,25 +110,6 @@ describe("DashboardPeriodSheet", () => {
 		render(<DashboardPeriodSheet open onOpenChange={() => {}} />);
 		const periodSelector = screen.getByTestId("period-selector");
 		expect(periodSelector).toHaveAttribute("data-variant", "segmented");
-	});
-
-	it("renders ComparisonModeSelector in segmented variant", () => {
-		render(<DashboardPeriodSheet open onOpenChange={() => {}} />);
-		const comparisonSelector = screen.getByTestId("comparison-selector");
-		expect(comparisonSelector).toHaveAttribute("data-variant", "segmented");
-	});
-
-	it("shows comparison label (defaults : 'vs mois dernier' for default period)", () => {
-		render(<DashboardPeriodSheet open onOpenChange={() => {}} />);
-		expect(screen.getByText(/vs mois dernier/i)).toBeInTheDocument();
-	});
-
-	it("updates comparison label when URL params change", () => {
-		mockSearchParamsGet.mockImplementation((key: string) =>
-			key === "period" ? "year" : key === "comparison" ? "yoy" : null,
-		);
-		render(<DashboardPeriodSheet open onOpenChange={() => {}} />);
-		expect(screen.getByText(/vs année n-1/i)).toBeInTheDocument();
 	});
 
 	it("renders a close button in header and a footer close button", () => {

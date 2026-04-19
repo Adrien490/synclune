@@ -4,7 +4,6 @@
 
 import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
-import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
 
 // ============================================
 // CACHE TAGS
@@ -68,9 +67,6 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 		ORDERS_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 		SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-		DASHBOARD_CACHE_TAGS.KPIS,
-		DASHBOARD_CACHE_TAGS.REVENUE_CHART,
-		DASHBOARD_CACHE_TAGS.RECENT_ORDERS,
 	];
 
 	if (userId) {

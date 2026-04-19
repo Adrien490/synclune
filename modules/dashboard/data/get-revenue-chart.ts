@@ -3,6 +3,7 @@ import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import type { DashboardPeriod } from "@/modules/dashboard/constants/period.constants";
 import { DASHBOARD_PERIODS, DEFAULT_PERIOD } from "@/modules/dashboard/constants/period.constants";
 import { getChartConfig } from "@/modules/dashboard/services/period-boundaries.service";
@@ -36,6 +37,7 @@ export async function fetchDashboardRevenueChart(
 	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.REVENUE_CHART);
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
 
 	const chartConfig = getChartConfig(period);
 	cacheTag(`${DASHBOARD_CACHE_TAGS.REVENUE_CHART}-${chartConfig.granularity}`);

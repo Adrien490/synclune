@@ -4,9 +4,11 @@ import {
 	PaymentStatus,
 	RefundStatus,
 } from "@/app/generated/prisma/client";
+import { cacheTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import type {
 	ComparisonMode,
 	DashboardPeriod,
@@ -49,6 +51,7 @@ export async function fetchDashboardKpis(
 	"use cache";
 
 	cacheDashboard(DASHBOARD_CACHE_TAGS.KPIS);
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
 
 	const boundaries = getPeriodBoundaries(period);
 	const currentStart = boundaries.currentStart;
