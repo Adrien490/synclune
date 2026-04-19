@@ -15,7 +15,6 @@ const {
 	mockSendOrderConfirmationEmail,
 	mockSendShippingConfirmationEmail,
 	mockSendDeliveryConfirmationEmail,
-	mockSendReviewRequestEmailInternal,
 	mockGetCarrierLabel,
 	mockBuildUrl,
 } = vi.hoisted(() => ({
@@ -28,7 +27,6 @@ const {
 	mockSendOrderConfirmationEmail: vi.fn(),
 	mockSendShippingConfirmationEmail: vi.fn(),
 	mockSendDeliveryConfirmationEmail: vi.fn(),
-	mockSendReviewRequestEmailInternal: vi.fn(),
 	mockGetCarrierLabel: vi.fn(),
 	mockBuildUrl: vi.fn(),
 }));
@@ -72,10 +70,6 @@ vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendOrderConfirmationEmail: mockSendOrderConfirmationEmail,
 	sendShippingConfirmationEmail: mockSendShippingConfirmationEmail,
 	sendDeliveryConfirmationEmail: mockSendDeliveryConfirmationEmail,
-}));
-
-vi.mock("@/modules/reviews/services/send-review-request-email.service", () => ({
-	sendReviewRequestEmailInternal: mockSendReviewRequestEmailInternal,
 }));
 
 vi.mock("@/modules/orders/utils/carrier.utils", () => ({
@@ -148,10 +142,6 @@ describe("resendOrderEmail", () => {
 		mockSendOrderConfirmationEmail.mockResolvedValue({ success: true });
 		mockSendShippingConfirmationEmail.mockResolvedValue({ success: true });
 		mockSendDeliveryConfirmationEmail.mockResolvedValue({ success: true });
-		mockSendReviewRequestEmailInternal.mockResolvedValue({
-			status: ActionStatus.SUCCESS,
-			message: "Email envoye",
-		});
 		mockGetCarrierLabel.mockReturnValue("Colissimo");
 		mockBuildUrl.mockReturnValue("https://synclune.fr/compte/commandes/SYN-2026-0001");
 		mockPrisma.order.findUnique.mockResolvedValue(createDeliveredOrder());
@@ -321,40 +311,6 @@ describe("resendOrderEmail", () => {
 
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("livraison");
-	});
-
-	// -----------------------------------------------------------------------
-	// Review request email
-	// -----------------------------------------------------------------------
-
-	it("should successfully resend review request email for DELIVERED order", async () => {
-		const result = await resendOrderEmail(VALID_CUID, "review-request");
-
-		expect(mockSendReviewRequestEmailInternal).toHaveBeenCalledWith(VALID_CUID);
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("avis");
-	});
-
-	it("should return error for review request when order is not DELIVERED", async () => {
-		mockPrisma.order.findUnique.mockResolvedValue(
-			createMockOrder({ status: "SHIPPED", fulfillmentStatus: "SHIPPED" }),
-		);
-
-		const result = await resendOrderEmail(VALID_CUID, "review-request");
-
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("livrée");
-	});
-
-	it("should return error when review request email service fails", async () => {
-		mockSendReviewRequestEmailInternal.mockResolvedValue({
-			status: ActionStatus.ERROR,
-			message: "Service indisponible",
-		});
-
-		const result = await resendOrderEmail(VALID_CUID, "review-request");
-
-		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
 	// handleActionError on unexpected exception

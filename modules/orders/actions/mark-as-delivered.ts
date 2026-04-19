@@ -4,7 +4,6 @@ import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/p
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { sendDeliveryConfirmationEmail } from "@/modules/emails/services/order-emails";
-import { scheduleReviewRequestEmail } from "@/modules/reviews/services/review-request.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
@@ -166,13 +165,6 @@ export async function markAsDelivered(
 				logger.error("Échec envoi email livraison", emailError, { action: "mark-as-delivered" });
 			}
 		}
-
-		// Planifier l'envoi de l'email de demande d'avis (fire-and-forget)
-		void scheduleReviewRequestEmail(id).catch((reviewEmailError) => {
-			logger.error("Échec planification email avis", reviewEmailError, {
-				action: "mark-as-delivered",
-			});
-		});
 
 		void logAudit({
 			adminId: adminUser.id,

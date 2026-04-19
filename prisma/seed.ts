@@ -3,7 +3,6 @@ import { fakerFR } from "@faker-js/faker";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import {
 	CollectionStatus,
-	CustomizationRequestStatus,
 	DiscountType,
 	FulfillmentStatus,
 	MediaType,
@@ -144,7 +143,6 @@ async function cleanup(): Promise<void> {
 	await prisma.auditLog.deleteMany();
 	await prisma.dispute.deleteMany();
 	await prisma.failedEmail.deleteMany();
-	await prisma.customizationMedia.deleteMany();
 
 	await prisma.reviewMedia.deleteMany();
 	await prisma.reviewResponse.deleteMany();
@@ -165,7 +163,6 @@ async function cleanup(): Promise<void> {
 	await prisma.wishlist.deleteMany();
 
 	await prisma.webhookEvent.deleteMany();
-	await prisma.customizationRequest.deleteMany();
 	await prisma.newsletterSubscriber.deleteMany();
 	await prisma.discount.deleteMany();
 
@@ -3218,75 +3215,6 @@ async function main(): Promise<void> {
 	console.log(`✅ ${reviewMediaData.length} photos d'avis créées`);
 
 	// ============================================
-	// DEMANDES DE PERSONNALISATION (batch)
-	// ============================================
-	const productTypesForCustomization = await prisma.productType.findMany({
-		select: { id: true, label: true },
-		take: 4,
-	});
-
-	const customizationDetails = [
-		"Je souhaite un collier personnalisé avec le prénom de ma fille gravé sur le pendentif. Couleur or rose de préférence.",
-		"Bracelet de mariage pour ma fiancée, avec nos initiales entrelacées. Budget autour de 150€.",
-		"Je recherche une bague unique pour mes 30 ans, avec une pierre de naissance (saphir). Style moderne et épuré.",
-		"Chaîne de corps bohème pour festival, longueur ajustable. Inspirée du modèle 'Bohème' mais en argent.",
-	];
-
-	const customizationStatuses: CustomizationRequestStatus[] = [
-		CustomizationRequestStatus.PENDING,
-		CustomizationRequestStatus.IN_PROGRESS,
-		CustomizationRequestStatus.COMPLETED,
-		CustomizationRequestStatus.PENDING,
-	];
-
-	// Use individual creates to support inspirationProducts connect (M12)
-	const inspirationProductIds = allProducts.slice(0, 6).map((p) => p.id);
-
-	let customizationsCreated = 0;
-	for (let i = 0; i < customizationDetails.length; i++) {
-		const details = customizationDetails[i]!;
-		const productType = productTypesForCustomization[i % productTypesForCustomization.length]!;
-		const cStatus = customizationStatuses[i]!;
-
-		// First 2 requests linked to existing users (M12)
-		const linkedUser = i < 2 ? verifiedUsers[i] : null;
-
-		await prisma.customizationRequest.create({
-			data: {
-				firstName: linkedUser?.name.split(" ")[0] ?? faker.person.firstName(),
-				email: linkedUser?.email ?? faker.internet.email().toLowerCase(),
-				phone: sampleBoolean(0.6)
-					? faker.helpers.replaceSymbols(
-							`+33 ${faker.helpers.arrayElement(["6", "7"])} ## ## ## ##`,
-						)
-					: null,
-				userId: linkedUser?.id ?? null,
-				productTypeId: productType.id,
-				productTypeLabel: productType.label,
-				details,
-				status: cStatus,
-				consentGivenAt: new Date(),
-				adminNotes:
-					cStatus === CustomizationRequestStatus.IN_PROGRESS
-						? "Devis envoyé, en attente de validation client"
-						: null,
-				respondedAt:
-					cStatus !== CustomizationRequestStatus.PENDING ? faker.date.recent({ days: 14 }) : null,
-				// Connect 1-2 inspiration products for linked users (M12)
-				inspirationProducts: linkedUser
-					? {
-							connect: faker.helpers
-								.arrayElements(inspirationProductIds, { min: 1, max: 2 })
-								.map((id) => ({ id })),
-						}
-					: undefined,
-			},
-		});
-		customizationsCreated++;
-	}
-	console.log(`✅ ${customizationsCreated} demandes de personnalisation créées`);
-
-	// ============================================
 	// DISPUTES (M4)
 	// ============================================
 	const ordersForDisputes = await prisma.order.findMany({
@@ -3413,42 +3341,9 @@ async function main(): Promise<void> {
 			lastError: "Connection timeout to Resend API",
 			nextRetryAt: new Date(Date.now() + 30 * 60 * 1000),
 		},
-		{
-			taskType: "REVIEW_REQUEST_EMAIL",
-			payload: {
-				orderId: ordersForFailedEmails[2]?.id ?? "unknown",
-				email: ordersForFailedEmails[2]?.customerEmail ?? "test3@example.com",
-			},
-			attempts: 5,
-			lastError: "Max attempts reached",
-			nextRetryAt: new Date(),
-			resolvedAt: new Date(),
-		},
 	];
 	await prisma.failedEmail.createMany({ data: failedEmailData });
 	console.log(`✅ ${failedEmailData.length} failed emails créés`);
-
-	// ============================================
-	// CUSTOMIZATION MEDIA (missing model)
-	// ============================================
-	const customizationRequests = await prisma.customizationRequest.findMany({
-		select: { id: true },
-		take: 2,
-	});
-
-	const customizationMediaData: Prisma.CustomizationMediaCreateManyInput[] = [];
-	for (const req of customizationRequests) {
-		customizationMediaData.push({
-			customizationRequestId: req.id,
-			url: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=400&fit=crop",
-			altText: "Photo inspiration client",
-			position: 0,
-		});
-	}
-	if (customizationMediaData.length > 0) {
-		await prisma.customizationMedia.createMany({ data: customizationMediaData });
-		console.log(`✅ ${customizationMediaData.length} médias de personnalisation créés`);
-	}
 
 	// ============================================
 	// VERIFICATION TOKENS (missing model)
@@ -3641,20 +3536,6 @@ async function main(): Promise<void> {
 				"Évitez le contact avec l'eau, les parfums et les crèmes. Rangez-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
 			links: undefined,
 			position: 3,
-		},
-		{
-			question: "Vous faites des bijoux sur-mesure ?",
-			answer:
-				"Oui, j'adore ! Créer une pièce unique pour un cadeau spécial ou une envie particulière, c'est ce que je préfère. Écrivez-moi via la {{link0}} et on discute de votre projet ensemble.",
-			links: [{ text: "page Personnalisation", href: "/personnalisation" }],
-			position: 4,
-		},
-		{
-			question: "C'est quoi le délai pour une création personnalisée ?",
-			answer:
-				"Comptez environ 2-3 semaines pour une commande sur-mesure. Ce temps me permet de bien comprendre ce que vous souhaitez, de créer des esquisses qu'on validera ensemble, et de réaliser votre bijou avec tout le soin qu'il mérite.",
-			links: undefined,
-			position: 5,
 		},
 	];
 

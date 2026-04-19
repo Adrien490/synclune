@@ -30,11 +30,7 @@ import {
 	updateReviewSchema,
 	deleteReviewSchema,
 	moderateReviewSchema,
-	bulkHideReviewsSchema,
-	bulkPublishReviewsSchema,
-	bulkDeleteReviewsSchema,
 	createReviewResponseSchema,
-	sendReviewRequestEmailSchema,
 } from "../review.schemas";
 
 const VALID_CUID = "clh1234567890abcdefghijklm";
@@ -392,92 +388,6 @@ describe("moderateReviewSchema", () => {
 });
 
 // ============================================================================
-// bulkHideReviewsSchema
-// ============================================================================
-
-describe("bulkHideReviewsSchema", () => {
-	it("should accept array of valid ids", () => {
-		const result = bulkHideReviewsSchema.safeParse({ ids: [VALID_CUID] });
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept multiple valid ids", () => {
-		const result = bulkHideReviewsSchema.safeParse({
-			ids: [VALID_CUID, VALID_CUID, VALID_CUID],
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty array", () => {
-		const result = bulkHideReviewsSchema.safeParse({ ids: [] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject non-cuid2 ids", () => {
-		const result = bulkHideReviewsSchema.safeParse({ ids: ["not-a-cuid2"] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject missing ids field", () => {
-		const result = bulkHideReviewsSchema.safeParse({});
-
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
-// bulkPublishReviewsSchema
-// ============================================================================
-
-describe("bulkPublishReviewsSchema", () => {
-	it("should accept array of valid ids", () => {
-		const result = bulkPublishReviewsSchema.safeParse({ ids: [VALID_CUID] });
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty array", () => {
-		const result = bulkPublishReviewsSchema.safeParse({ ids: [] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject non-cuid2 ids", () => {
-		const result = bulkPublishReviewsSchema.safeParse({ ids: ["not-a-cuid2"] });
-
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
-// bulkDeleteReviewsSchema
-// ============================================================================
-
-describe("bulkDeleteReviewsSchema", () => {
-	it("should accept array of valid ids", () => {
-		const result = bulkDeleteReviewsSchema.safeParse({ ids: [VALID_CUID] });
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty array", () => {
-		const result = bulkDeleteReviewsSchema.safeParse({ ids: [] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject non-cuid2 ids", () => {
-		const result = bulkDeleteReviewsSchema.safeParse({ ids: ["not-a-cuid2"] });
-
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
 // createReviewResponseSchema
 // ============================================================================
 
@@ -541,30 +451,6 @@ describe("createReviewResponseSchema", () => {
 			...validData,
 			reviewId: "not-a-cuid2",
 		});
-
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
-// sendReviewRequestEmailSchema
-// ============================================================================
-
-describe("sendReviewRequestEmailSchema", () => {
-	it("should accept valid orderId", () => {
-		const result = sendReviewRequestEmailSchema.safeParse({ orderId: VALID_CUID });
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject invalid orderId", () => {
-		const result = sendReviewRequestEmailSchema.safeParse({ orderId: "not-a-cuid2" });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject missing orderId", () => {
-		const result = sendReviewRequestEmailSchema.safeParse({});
 
 		expect(result.success).toBe(false);
 	});

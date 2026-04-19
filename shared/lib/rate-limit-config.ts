@@ -226,32 +226,6 @@ export const NEWSLETTER_SUBSCRIBE_LIMIT: RateLimitConfig = {
 };
 
 // ========================================
-// 🎨 PERSONNALISATION (CUSTOMIZATION)
-// ========================================
-
-/**
- * Limite pour les demandes de devis personnalisé
- *
- * Modérément strict (action légitime mais coûteuse en traitement)
- */
-export const CUSTOMIZATION_QUOTE_REQUEST_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 demandes maximum
-	windowMs: hours(1), // par heure
-};
-
-/**
- * Limite pour l'upload d'images (personnalisation)
- *
- * Protège contre :
- * - Spam d'uploads
- * - Saturation du stockage
- */
-export const CUSTOMIZATION_IMAGE_UPLOAD_LIMIT: RateLimitConfig = {
-	limit: 10, // 10 uploads maximum
-	windowMs: minutes(5), // par 5 minutes
-};
-
-// ========================================
 // 📦 COMMANDES (ORDERS)
 // ========================================
 
@@ -455,14 +429,6 @@ export const PAYMENT_LIMITS = {
 export const COMMUNICATION_LIMITS = {
 	CONTACT: CONTACT_SEND_MESSAGE_LIMIT,
 	NEWSLETTER: NEWSLETTER_SUBSCRIBE_LIMIT,
-} as const;
-
-/**
- * Toutes les limites de personnalisation
- */
-export const CUSTOMIZATION_LIMITS = {
-	QUOTE_REQUEST: CUSTOMIZATION_QUOTE_REQUEST_LIMIT,
-	IMAGE_UPLOAD: CUSTOMIZATION_IMAGE_UPLOAD_LIMIT,
 } as const;
 
 /**
@@ -1552,24 +1518,6 @@ export const ADDRESS_LIMITS = {
 // ========================================
 
 /**
- * Limite pour l'envoi d'emails de demande d'avis (admin)
- *
- * Protege contre le spam d'emails clients en cas de compte admin compromis
- */
-export const ADMIN_REVIEW_SEND_EMAIL_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour les operations bulk sur les avis (admin)
- */
-export const ADMIN_REVIEW_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
  * Limite pour la creation de reponses admin aux avis (admin)
  */
 export const ADMIN_REVIEW_RESPONSE_LIMIT: RateLimitConfig = {
@@ -1577,9 +1525,6 @@ export const ADMIN_REVIEW_RESPONSE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
-/**
- * Toutes les limites admin avis
- */
 /**
  * Limite pour la moderation d'avis (admin)
  */
@@ -1597,8 +1542,6 @@ export const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
 };
 
 export const ADMIN_REVIEW_LIMITS = {
-	SEND_EMAIL: ADMIN_REVIEW_SEND_EMAIL_LIMIT,
-	BULK_OPERATIONS: ADMIN_REVIEW_BULK_OPERATIONS_LIMIT,
 	RESPONSE: ADMIN_REVIEW_RESPONSE_LIMIT,
 	MODERATE: ADMIN_REVIEW_MODERATE_LIMIT,
 	RESTORE: ADMIN_REVIEW_RESTORE_LIMIT,
@@ -1707,68 +1650,6 @@ export const ADMIN_NEWSLETTER_LIMITS = {
 } as const;
 
 // ========================================
-// 🎨 ADMIN CUSTOMIZATION OPERATIONS
-// ========================================
-
-/**
- * Limite pour la mise a jour de personnalisations (admin)
- */
-export const ADMIN_CUSTOMIZATION_UPDATE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour les operations bulk sur personnalisations (admin)
- */
-export const ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression d'une personnalisation (admin)
- */
-export const ADMIN_CUSTOMIZATION_DELETE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression en masse de personnalisations (admin)
- */
-export const ADMIN_CUSTOMIZATION_BULK_DELETE_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la mise a jour des produits inspirants d'une personnalisation (admin)
- */
-export const ADMIN_CUSTOMIZATION_UPDATE_INSPIRATIONS_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_CUSTOMIZATION_LIMITS = {
-	UPDATE: ADMIN_CUSTOMIZATION_UPDATE_LIMIT,
-	BULK_UPDATE: ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT,
-	DELETE: ADMIN_CUSTOMIZATION_DELETE_LIMIT,
-	BULK_DELETE: ADMIN_CUSTOMIZATION_BULK_DELETE_LIMIT,
-	UPDATE_INSPIRATIONS: ADMIN_CUSTOMIZATION_UPDATE_INSPIRATIONS_LIMIT,
-} as const;
-
-/**
- * Limite pour l'annulation d'une demande de personnalisation par le client
- *
- * Stricte car action sensible (3 par heure par utilisateur)
- */
-export const CUSTOMIZATION_CUSTOMER_CANCEL_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: hours(1),
-};
-
-// ========================================
 // 📢 ADMIN ANNOUNCEMENT OPERATIONS
 // ========================================
 
@@ -1817,61 +1698,6 @@ export const PUBLIC_ANNOUNCEMENT_DISMISS_LIMIT: RateLimitConfig = {
 };
 
 // ========================================
-// 📝 ADMIN FAQ OPERATIONS
-// ========================================
-
-export const ADMIN_FAQ_CREATE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_UPDATE_LIMIT: RateLimitConfig = {
-	limit: 30,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_DELETE_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_REORDER_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_DUPLICATE_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_BULK_DELETE_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_BULK_OPERATIONS_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-export const ADMIN_FAQ_LIMITS = {
-	CREATE: ADMIN_FAQ_CREATE_LIMIT,
-	UPDATE: ADMIN_FAQ_UPDATE_LIMIT,
-	DELETE: ADMIN_FAQ_DELETE_LIMIT,
-	REORDER: ADMIN_FAQ_REORDER_LIMIT,
-	TOGGLE_STATUS: ADMIN_FAQ_TOGGLE_STATUS_LIMIT,
-	DUPLICATE: ADMIN_FAQ_DUPLICATE_LIMIT,
-	BULK_DELETE: ADMIN_FAQ_BULK_DELETE_LIMIT,
-	BULK_OPERATIONS: ADMIN_FAQ_BULK_OPERATIONS_LIMIT,
-} as const;
-
-// ========================================
 // 🏪 ADMIN STORE SETTINGS
 // ========================================
 
@@ -1895,11 +1721,17 @@ export const ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
+export const ADMIN_STORE_SETTINGS_UPDATE_ANNOUNCEMENT_LIMIT: RateLimitConfig = {
+	limit: 20,
+	windowMs: minutes(5),
+};
+
 export const ADMIN_STORE_SETTINGS_LIMITS = {
 	CLOSE_STORE: ADMIN_STORE_SETTINGS_CLOSE_STORE_LIMIT,
 	REOPEN_STORE: ADMIN_STORE_SETTINGS_REOPEN_STORE_LIMIT,
 	UPDATE_CLOSURE_MESSAGE: ADMIN_STORE_SETTINGS_UPDATE_CLOSURE_MESSAGE_LIMIT,
 	UPDATE_REOPENS_AT: ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT,
+	UPDATE_ANNOUNCEMENT: ADMIN_STORE_SETTINGS_UPDATE_ANNOUNCEMENT_LIMIT,
 } as const;
 
 /**

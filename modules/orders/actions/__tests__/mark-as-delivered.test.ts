@@ -14,7 +14,6 @@ const {
 	mockHandleActionError,
 	mockValidateInput,
 	mockSendDeliveryEmail,
-	mockScheduleReviewEmail,
 	mockCreateOrderAuditTx,
 	mockBuildUrl,
 	mockGetOrderInvalidationTags,
@@ -30,7 +29,6 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockValidateInput: vi.fn(),
 	mockSendDeliveryEmail: vi.fn(),
-	mockScheduleReviewEmail: vi.fn(),
 	mockCreateOrderAuditTx: vi.fn(),
 	mockBuildUrl: vi.fn(),
 	mockGetOrderInvalidationTags: vi.fn(),
@@ -57,9 +55,6 @@ vi.mock("@/shared/lib/actions", () => ({
 }));
 vi.mock("@/modules/emails/services/order-emails", () => ({
 	sendDeliveryConfirmationEmail: mockSendDeliveryEmail,
-}));
-vi.mock("@/modules/reviews/services/review-request.service", () => ({
-	scheduleReviewRequestEmail: mockScheduleReviewEmail,
 }));
 vi.mock("../../utils/order-audit", () => ({ createOrderAuditTx: mockCreateOrderAuditTx }));
 vi.mock("@/shared/constants/urls", () => ({
@@ -113,7 +108,6 @@ describe("markAsDelivered", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockCreateOrderAuditTx.mockResolvedValue(undefined);
 		mockSendDeliveryEmail.mockResolvedValue(undefined);
-		mockScheduleReviewEmail.mockResolvedValue(undefined);
 		mockBuildUrl.mockReturnValue("https://synclune.fr/order");
 		mockGetOrderInvalidationTags.mockReturnValue(["orders-list"]);
 
@@ -179,11 +173,6 @@ describe("markAsDelivered", () => {
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockSendDeliveryEmail).toHaveBeenCalled();
 		expect(result.message).toContain("Email");
-	});
-
-	it("should schedule review request email", async () => {
-		await markAsDelivered(undefined, validFormData);
-		expect(mockScheduleReviewEmail).toHaveBeenCalled();
 	});
 
 	it("should invalidate reviewable cache for user", async () => {

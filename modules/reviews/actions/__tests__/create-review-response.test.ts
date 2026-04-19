@@ -18,8 +18,6 @@ const {
 	mockHandleActionError,
 	mockGetReviewModerationTags,
 	mockSanitizeText,
-	mockSendReviewResponseEmail,
-	mockBuildUrl,
 	mockSafeParse,
 } = vi.hoisted(() => ({
 	mockPrisma: {
@@ -37,8 +35,6 @@ const {
 	mockHandleActionError: vi.fn(),
 	mockGetReviewModerationTags: vi.fn(),
 	mockSanitizeText: vi.fn(),
-	mockSendReviewResponseEmail: vi.fn(),
-	mockBuildUrl: vi.fn(),
 	mockSafeParse: vi.fn(),
 }));
 
@@ -73,17 +69,6 @@ vi.mock("@/shared/lib/actions", () => ({
 }));
 vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: mockSanitizeText,
-}));
-vi.mock("@/modules/emails/services/review-emails", () => ({
-	sendReviewResponseEmail: mockSendReviewResponseEmail,
-}));
-vi.mock("@/shared/constants/urls", () => ({
-	buildUrl: mockBuildUrl,
-	ROUTES: {
-		SHOP: {
-			PRODUCT: (slug: string) => `/boutique/${slug}`,
-		},
-	},
 }));
 vi.mock("../../constants/cache", () => ({
 	getReviewModerationTags: mockGetReviewModerationTags,
@@ -165,8 +150,6 @@ describe("createReviewResponse", () => {
 		mockPrisma.productReview.findFirst.mockResolvedValue(makeReview());
 		mockPrisma.reviewResponse.create.mockResolvedValue({ id: "response-1" });
 		mockGetReviewModerationTags.mockReturnValue(["mod-tag-1", "mod-tag-2"]);
-		mockBuildUrl.mockReturnValue("https://synclune.fr/boutique/bracelet-lune");
-		mockSendReviewResponseEmail.mockResolvedValue(undefined);
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -246,18 +229,7 @@ describe("createReviewResponse", () => {
 		);
 		const result = await createReviewResponse(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith(
-			"Impossible de répondre à cet avis (produit ou utilisateur supprimé)",
-		);
-	});
-
-	it("should return error when review is an orphan (no user)", async () => {
-		mockPrisma.productReview.findFirst.mockResolvedValue(makeReview({ user: null }));
-		const result = await createReviewResponse(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith(
-			"Impossible de répondre à cet avis (produit ou utilisateur supprimé)",
-		);
+		expect(mockError).toHaveBeenCalledWith("Impossible de répondre à cet avis (produit supprimé)");
 	});
 
 	it("should return error when review already has a response", async () => {
@@ -318,52 +290,6 @@ describe("createReviewResponse", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("mod-tag-1");
 		expect(mockUpdateTag).toHaveBeenCalledWith("mod-tag-2");
 		expect(mockUpdateTag).toHaveBeenCalledWith("reviews-admin-list");
-	});
-
-	it("should send notification email to customer as fire-and-forget", async () => {
-		await createReviewResponse(undefined, validFormData);
-		expect(mockSendReviewResponseEmail).toHaveBeenCalledWith(
-			expect.objectContaining({
-				to: "client@example.com",
-				customerName: "Marie",
-				productTitle: "Bracelet Lune",
-			}),
-		);
-	});
-
-	it("should use first name only when sending email", async () => {
-		mockPrisma.productReview.findFirst.mockResolvedValue(
-			makeReview({ user: { email: "client@example.com", name: "Marie Dupont" } }),
-		);
-		await createReviewResponse(undefined, validFormData);
-		expect(mockSendReviewResponseEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ customerName: "Marie" }),
-		);
-	});
-
-	it("should use Cliente as customerName fallback when user has no name", async () => {
-		mockPrisma.productReview.findFirst.mockResolvedValue(
-			makeReview({ user: { email: "client@example.com", name: null } }),
-		);
-		await createReviewResponse(undefined, validFormData);
-		expect(mockSendReviewResponseEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ customerName: "Cliente" }),
-		);
-	});
-
-	it("should skip email when customer has no email", async () => {
-		mockPrisma.productReview.findFirst.mockResolvedValue(
-			makeReview({ user: { email: null, name: "Marie Dupont" } }),
-		);
-		const result = await createReviewResponse(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSendReviewResponseEmail).not.toHaveBeenCalled();
-	});
-
-	it("should return success even when email sending fails (fire-and-forget)", async () => {
-		mockSendReviewResponseEmail.mockRejectedValue(new Error("Email error"));
-		const result = await createReviewResponse(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
 	it("should return success with response id in data", async () => {

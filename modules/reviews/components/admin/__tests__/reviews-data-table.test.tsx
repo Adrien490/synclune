@@ -38,23 +38,6 @@ vi.mock("@/shared/components/table-scroll-container", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/table-selection-cell", () => ({
-	TableSelectionCell: ({
-		type,
-		itemId,
-		itemIds,
-	}: {
-		type: "header" | "row";
-		itemId?: string;
-		itemIds?: string[];
-	}) => (
-		<div
-			data-testid={type === "header" ? "selection-cell-header" : `selection-cell-${itemId}`}
-			data-item-ids={itemIds?.join(",")}
-		/>
-	),
-}));
-
 vi.mock("@/shared/components/ui/card", () => ({
 	Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<div data-testid="card" className={className}>
@@ -187,10 +170,6 @@ vi.mock("@/modules/reviews/components/admin/review-row-actions", () => ({
 	ReviewRowActions: ({ review }: { review: { id: string } }) => (
 		<div data-testid={`review-row-actions-${review.id}`} />
 	),
-}));
-
-vi.mock("@/modules/reviews/components/admin/reviews-selection-toolbar", () => ({
-	ReviewsSelectionToolbar: () => <div data-testid="reviews-selection-toolbar" />,
 }));
 
 import { ReviewsDataTable } from "../reviews-data-table";
@@ -476,21 +455,6 @@ describe("ReviewsDataTable", () => {
 		});
 		render(Component);
 		expect(screen.queryByTestId("cursor-pagination")).not.toBeInTheDocument();
-	});
-
-	// ─── Selection toolbar ────────────────────────────────────────────────────
-
-	it("renders selection toolbar", async () => {
-		const reviews = [createReview()];
-		const Component = await ReviewsDataTable({
-			reviewsPromise: Promise.resolve({
-				reviews,
-				pagination: createPagination(),
-				totalCount: reviews.length,
-			}),
-		});
-		render(Component);
-		expect(screen.getByTestId("reviews-selection-toolbar")).toBeInTheDocument();
 	});
 
 	// ─── Table structure ──────────────────────────────────────────────────────

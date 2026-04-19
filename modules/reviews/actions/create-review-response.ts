@@ -1,12 +1,10 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { success, notFound, error, validationError, handleActionError } from "@/shared/lib/actions";
-import { sendReviewResponseEmail } from "@/modules/emails/services/review-emails";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_REVIEW_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -15,7 +13,6 @@ import type { ActionState } from "@/shared/types/server-action";
 import { REVIEWS_CACHE_TAGS, getReviewModerationTags } from "../constants/cache";
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
 import { createReviewResponseSchema } from "../schemas/review.schemas";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Crée une réponse admin à un avis
@@ -68,21 +65,8 @@ export async function createReviewResponse(
 			select: {
 				id: true,
 				productId: true,
-				content: true,
 				response: {
 					select: { id: true },
-				},
-				user: {
-					select: {
-						email: true,
-						name: true,
-					},
-				},
-				product: {
-					select: {
-						title: true,
-						slug: true,
-					},
 				},
 			},
 		});
@@ -91,9 +75,9 @@ export async function createReviewResponse(
 			return notFound("Avis");
 		}
 
-		// Vérifier que l'avis n'est pas orphelin (produit/user supprimé)
-		if (!review.productId || !review.user || !review.product) {
-			return error("Impossible de répondre à cet avis (produit ou utilisateur supprimé)");
+		// Vérifier que l'avis n'est pas orphelin (produit supprimé)
+		if (!review.productId) {
+			return error("Impossible de répondre à cet avis (produit supprimé)");
 		}
 
 		if (review.response) {
@@ -126,23 +110,6 @@ export async function createReviewResponse(
 		const tags = getReviewModerationTags(review.productId, reviewId);
 		tags.forEach((tag) => updateTag(tag));
 		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
-
-		// 6. Envoyer l'email de notification au client (fire-and-forget)
-		if (review.user.email) {
-			sendReviewResponseEmail({
-				to: review.user.email,
-				customerName: review.user.name?.trim().split(" ")[0] ?? "Cliente",
-				productTitle: review.product.title,
-				reviewContent: review.content,
-				responseContent: sanitizedContent,
-				responseAuthorName: user.name ?? "Synclune",
-				productUrl: buildUrl(ROUTES.SHOP.PRODUCT(review.product.slug)),
-			}).catch((emailError) => {
-				logger.error("Failed to send review response notification email", emailError, {
-					action: "createReviewResponse",
-				});
-			});
-		}
 
 		return success("Réponse publiée avec succès", { id: response.id });
 	} catch (e) {

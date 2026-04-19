@@ -8,11 +8,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockDeleteOrder,
 	mockRefreshOrders,
-	mockBulkCancelOrders,
-	mockBulkDeleteOrders,
-	mockBulkMarkAsDelivered,
-	mockBulkMarkAsProcessing,
-	mockBulkMarkAsShipped,
 	mockCancelOrder,
 	mockMarkAsDelivered,
 	mockMarkAsPaid,
@@ -28,11 +23,6 @@ const {
 } = vi.hoisted(() => ({
 	mockDeleteOrder: vi.fn(),
 	mockRefreshOrders: vi.fn(),
-	mockBulkCancelOrders: vi.fn(),
-	mockBulkDeleteOrders: vi.fn(),
-	mockBulkMarkAsDelivered: vi.fn(),
-	mockBulkMarkAsProcessing: vi.fn(),
-	mockBulkMarkAsShipped: vi.fn(),
 	mockCancelOrder: vi.fn(),
 	mockMarkAsDelivered: vi.fn(),
 	mockMarkAsPaid: vi.fn(),
@@ -52,21 +42,6 @@ vi.mock("@/modules/orders/actions/delete-order", () => ({
 }));
 vi.mock("@/modules/orders/actions/refresh-orders", () => ({
 	refreshOrders: mockRefreshOrders,
-}));
-vi.mock("@/modules/orders/actions/bulk-cancel-orders", () => ({
-	bulkCancelOrders: mockBulkCancelOrders,
-}));
-vi.mock("@/modules/orders/actions/bulk-delete-orders", () => ({
-	bulkDeleteOrders: mockBulkDeleteOrders,
-}));
-vi.mock("@/modules/orders/actions/bulk-mark-as-delivered", () => ({
-	bulkMarkAsDelivered: mockBulkMarkAsDelivered,
-}));
-vi.mock("@/modules/orders/actions/bulk-mark-as-processing", () => ({
-	bulkMarkAsProcessing: mockBulkMarkAsProcessing,
-}));
-vi.mock("@/modules/orders/actions/bulk-mark-as-shipped", () => ({
-	bulkMarkAsShipped: mockBulkMarkAsShipped,
 }));
 vi.mock("@/modules/orders/actions/cancel-order", () => ({
 	cancelOrder: mockCancelOrder,
@@ -131,11 +106,6 @@ vi.mock("sonner", () => ({
 
 import { useDeleteOrder } from "../use-delete-order";
 import { useRefreshOrders } from "../use-refresh-orders";
-import { useBulkCancelOrders } from "../use-bulk-cancel-orders";
-import { useBulkDeleteOrders } from "../use-bulk-delete-orders";
-import { useBulkMarkAsDelivered } from "../use-bulk-mark-as-delivered";
-import { useBulkMarkAsProcessing } from "../use-bulk-mark-as-processing";
-import { useBulkMarkAsShipped } from "../use-bulk-mark-as-shipped";
 import { useCancelOrder } from "../use-cancel-order";
 import { useMarkAsDelivered } from "../use-mark-as-delivered";
 import { useMarkAsPaid } from "../use-mark-as-paid";
@@ -295,236 +265,6 @@ describe("useRefreshOrders", () => {
 		});
 
 		expect(mockRefreshOrders).toHaveBeenCalledTimes(1);
-	});
-});
-
-// ============================================================================
-// useBulkCancelOrders
-// ============================================================================
-
-describe("useBulkCancelOrders", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkCancelOrders.mockResolvedValue({ ...SUCCESS, message: "3 commandes annulées" });
-	});
-
-	it("returns state, action, isPending, and cancelOrders", () => {
-		const { result } = renderHook(() => useBulkCancelOrders());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.cancelOrders).toBe("function");
-	});
-
-	it("isPending is false initially", () => {
-		const { result } = renderHook(() => useBulkCancelOrders());
-		expect(result.current.isPending).toBe(false);
-	});
-
-	it("cancelOrders sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkCancelOrders());
-
-		await act(async () => {
-			result.current.cancelOrders(["order-1", "order-2"]);
-		});
-
-		const formData = mockBulkCancelOrders.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["order-1", "order-2"]));
-	});
-
-	it("cancelOrders appends reason to FormData when provided", async () => {
-		const { result } = renderHook(() => useBulkCancelOrders());
-
-		await act(async () => {
-			result.current.cancelOrders(["order-1"], "Stock épuisé");
-		});
-
-		const formData = mockBulkCancelOrders.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("reason")).toBe("Stock épuisé");
-	});
-
-	it("cancelOrders does not append reason when not provided", async () => {
-		const { result } = renderHook(() => useBulkCancelOrders());
-
-		await act(async () => {
-			result.current.cancelOrders(["order-1"]);
-		});
-
-		const formData = mockBulkCancelOrders.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("reason")).toBeNull();
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkCancelOrders({ onSuccess }));
-
-		await act(async () => {
-			result.current.cancelOrders(["order-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("3 commandes annulées");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkCancelOrders.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkCancelOrders({ onSuccess }));
-
-		await act(async () => {
-			result.current.cancelOrders(["order-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("handles an empty ids array without crashing", async () => {
-		const { result } = renderHook(() => useBulkCancelOrders());
-
-		await act(async () => {
-			result.current.cancelOrders([]);
-		});
-
-		const formData = mockBulkCancelOrders.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify([]));
-	});
-});
-
-// ============================================================================
-// useBulkDeleteOrders
-// ============================================================================
-
-describe("useBulkDeleteOrders", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteOrders.mockResolvedValue({ ...SUCCESS, message: "2 commandes supprimées" });
-	});
-
-	it("returns state, action, isPending, and deleteOrders", () => {
-		const { result } = renderHook(() => useBulkDeleteOrders());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.deleteOrders).toBe("function");
-	});
-
-	it("isPending is false initially", () => {
-		const { result } = renderHook(() => useBulkDeleteOrders());
-		expect(result.current.isPending).toBe(false);
-	});
-
-	it("deleteOrders sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteOrders());
-
-		await act(async () => {
-			result.current.deleteOrders(["order-1", "order-2"]);
-		});
-
-		const formData = mockBulkDeleteOrders.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["order-1", "order-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteOrders({ onSuccess }));
-
-		await act(async () => {
-			result.current.deleteOrders(["order-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 commandes supprimées");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteOrders.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteOrders({ onSuccess }));
-
-		await act(async () => {
-			result.current.deleteOrders(["order-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("handles a single id correctly", async () => {
-		const { result } = renderHook(() => useBulkDeleteOrders());
-
-		await act(async () => {
-			result.current.deleteOrders(["only-order"]);
-		});
-
-		const formData = mockBulkDeleteOrders.mock.calls[0]?.[1] as FormData;
-		expect(JSON.parse(formData.get("ids") as string)).toEqual(["only-order"]);
-	});
-});
-
-// ============================================================================
-// useBulkMarkAsDelivered
-// ============================================================================
-
-describe("useBulkMarkAsDelivered", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkMarkAsDelivered.mockResolvedValue({ ...SUCCESS, message: "4 commandes livrées" });
-	});
-
-	it("returns state, action, isPending, and markAsDelivered", () => {
-		const { result } = renderHook(() => useBulkMarkAsDelivered());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.markAsDelivered).toBe("function");
-	});
-
-	it("isPending is false initially", () => {
-		const { result } = renderHook(() => useBulkMarkAsDelivered());
-		expect(result.current.isPending).toBe(false);
-	});
-
-	it("markAsDelivered sends ids as JSON and sendEmail=false in FormData", async () => {
-		const { result } = renderHook(() => useBulkMarkAsDelivered());
-
-		await act(async () => {
-			result.current.markAsDelivered(["order-1", "order-2"]);
-		});
-
-		const formData = mockBulkMarkAsDelivered.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["order-1", "order-2"]));
-		expect(formData.get("sendEmail")).toBe("false");
-	});
-
-	it("always sets sendEmail to false regardless of input", async () => {
-		const { result } = renderHook(() => useBulkMarkAsDelivered());
-
-		await act(async () => {
-			result.current.markAsDelivered(["order-1"]);
-		});
-
-		const formData = mockBulkMarkAsDelivered.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("sendEmail")).toBe("false");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkMarkAsDelivered({ onSuccess }));
-
-		await act(async () => {
-			result.current.markAsDelivered(["order-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("4 commandes livrées");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkMarkAsDelivered.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkMarkAsDelivered({ onSuccess }));
-
-		await act(async () => {
-			result.current.markAsDelivered(["order-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
 	});
 });
 
@@ -1014,7 +754,7 @@ describe("useResendOrderEmail", () => {
 	});
 
 	it("resend works with all supported email types", async () => {
-		const emailTypes = ["confirmation", "shipping", "delivery", "review-request"] as const;
+		const emailTypes = ["confirmation", "shipping", "delivery"] as const;
 
 		for (const emailType of emailTypes) {
 			vi.clearAllMocks();
@@ -1410,159 +1150,5 @@ describe("useOrderNotes", () => {
 		});
 
 		expect(mockDeleteOrderNote).toHaveBeenCalledTimes(1);
-	});
-});
-
-// ============================================================================
-// useBulkMarkAsProcessing
-// ============================================================================
-
-describe("useBulkMarkAsProcessing", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkMarkAsProcessing.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useBulkMarkAsProcessing());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("isPending is false initially", () => {
-		const { result } = renderHook(() => useBulkMarkAsProcessing());
-		expect(result.current.isPending).toBe(false);
-	});
-
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkMarkAsProcessing({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalled();
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkMarkAsProcessing.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkMarkAsProcessing({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("works without options", async () => {
-		const { result } = renderHook(() => useBulkMarkAsProcessing());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockBulkMarkAsProcessing).toHaveBeenCalledTimes(1);
-	});
-
-	it("state reflects the success result", async () => {
-		const { result } = renderHook(() => useBulkMarkAsProcessing());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(result.current.state?.status).toBe("success");
-	});
-
-	it("state reflects the error result on failure", async () => {
-		mockBulkMarkAsProcessing.mockResolvedValue(ERROR);
-		const { result } = renderHook(() => useBulkMarkAsProcessing());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(result.current.state).toEqual(ERROR);
-	});
-});
-
-// ============================================================================
-// useBulkMarkAsShipped
-// ============================================================================
-
-describe("useBulkMarkAsShipped", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkMarkAsShipped.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useBulkMarkAsShipped());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("isPending is false initially", () => {
-		const { result } = renderHook(() => useBulkMarkAsShipped());
-		expect(result.current.isPending).toBe(false);
-	});
-
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkMarkAsShipped({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalled();
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkMarkAsShipped.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkMarkAsShipped({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("works without options", async () => {
-		const { result } = renderHook(() => useBulkMarkAsShipped());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockBulkMarkAsShipped).toHaveBeenCalledTimes(1);
-	});
-
-	it("state reflects the success result", async () => {
-		const { result } = renderHook(() => useBulkMarkAsShipped());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(result.current.state?.status).toBe("success");
-	});
-
-	it("state reflects the error result on failure", async () => {
-		mockBulkMarkAsShipped.mockResolvedValue(ERROR);
-		const { result } = renderHook(() => useBulkMarkAsShipped());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(result.current.state).toEqual(ERROR);
 	});
 });

@@ -1,7 +1,6 @@
 import { ReviewStatus } from "@/app/generated/prisma/client";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { Badge } from "@/shared/components/ui/badge";
@@ -22,7 +21,6 @@ import { RatingStars } from "@/shared/components/rating-stars";
 import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types";
 import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
 import { ReviewRowActions } from "./review-row-actions";
-import { ReviewsSelectionToolbar } from "./reviews-selection-toolbar";
 
 interface ReviewsDataTableProps {
 	reviewsPromise: Promise<GetReviewsReturn>;
@@ -32,7 +30,6 @@ interface ReviewsDataTableProps {
 export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: ReviewsDataTableProps) {
 	const { reviews, pagination } = await reviewsPromise;
 	const adminReviews = reviews as ReviewAdmin[];
-	const reviewIds = adminReviews.map((review) => review.id);
 
 	if (reviews.length === 0) {
 		return (
@@ -48,7 +45,6 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<ReviewsSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						aria-label="Liste des avis produits"
@@ -58,16 +54,13 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={reviewIds} />
-								</TableHead>
-								<TableHead className="w-[20%]">Produit</TableHead>
+								<TableHead className="w-[22%]">Produit</TableHead>
 								<TableHead className="w-[18%]">Client</TableHead>
 								<TableHead className="w-[10%]">Note</TableHead>
 								<TableHead className="w-[12%]">Statut</TableHead>
 								<TableHead className="w-[12%]">Date</TableHead>
-								<TableHead className="w-[8%]">Réponse</TableHead>
-								<TableHead className="w-[8%] text-right" aria-label="Actions">
+								<TableHead className="w-[10%]">Réponse</TableHead>
+								<TableHead className="w-[10%] text-right" aria-label="Actions">
 									Actions
 								</TableHead>
 							</TableRow>
@@ -75,9 +68,6 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 						<TableBody>
 							{adminReviews.map((review) => (
 								<TableRow key={review.id}>
-									<TableCell>
-										<TableSelectionCell type="row" itemId={review.id} />
-									</TableCell>
 									{/* Produit */}
 									<TableCell>
 										<Link

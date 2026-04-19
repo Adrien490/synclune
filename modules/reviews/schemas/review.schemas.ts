@@ -133,36 +133,6 @@ export const moderateReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
 });
 
-/**
- * Schéma pour masquer plusieurs avis en masse
- */
-export const bulkHideReviewsSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID d'avis invalide"))
-		.min(1, "Sélectionnez au moins un avis")
-		.max(100, "Maximum 100 avis par opération"),
-});
-
-/**
- * Schéma pour publier plusieurs avis en masse
- */
-export const bulkPublishReviewsSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID d'avis invalide"))
-		.min(1, "Sélectionnez au moins un avis")
-		.max(100, "Maximum 100 avis par opération"),
-});
-
-/**
- * Schéma pour supprimer plusieurs avis en masse (soft delete admin)
- */
-export const bulkDeleteReviewsSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID d'avis invalide"))
-		.min(1, "Sélectionnez au moins un avis")
-		.max(100, "Maximum 100 avis par opération"),
-});
-
 // ============================================================================
 // REVIEW RESPONSE SCHEMAS (Admin)
 // ============================================================================
@@ -212,13 +182,6 @@ export const deleteReviewResponseSchema = z.object({
 	id: z.cuid2("ID de réponse invalide"),
 });
 
-/**
- * Schema de validation pour l'envoi d'email de demande d'avis
- */
-export const sendReviewRequestEmailSchema = z.object({
-	orderId: z.cuid2("ID de commande invalide"),
-});
-
 // ============================================================================
 // RESTORE SCHEMAS (Admin)
 // ============================================================================
@@ -228,14 +191,4 @@ export const sendReviewRequestEmailSchema = z.object({
  */
 export const restoreReviewSchema = z.object({
 	id: z.cuid2("ID d'avis invalide"),
-});
-
-/**
- * Schema pour restaurer plusieurs avis soft-deleted en masse (admin)
- */
-export const bulkRestoreReviewsSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID d'avis invalide"))
-		.min(1, "Sélectionnez au moins un avis")
-		.max(100, "Maximum 100 avis par opération"),
 });

@@ -9,7 +9,6 @@ import {
 	sendShippingConfirmationEmail,
 	sendDeliveryConfirmationEmail,
 } from "@/modules/emails/services/order-emails";
-import { sendReviewRequestEmailInternal } from "@/modules/reviews/services/send-review-request-email.service";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, success, error } from "@/shared/lib/actions";
@@ -47,7 +46,7 @@ export async function resendOrderEmail(
 		const validated = validateInput(
 			z.object({
 				orderId: z.cuid2(),
-				emailType: z.enum(["confirmation", "shipping", "delivery", "review-request"]),
+				emailType: z.enum(["confirmation", "shipping", "delivery"]),
 			}),
 			{ orderId, emailType },
 		);
@@ -195,24 +194,6 @@ export async function resendOrderEmail(
 				actionResult = result.success
 					? success("Email de livraison renvoyé")
 					: error("Erreur lors de l'envoi de l'email de livraison");
-				break;
-			}
-
-			case "review-request": {
-				// Verifier que la commande a été livrée
-				if (
-					order.status !== OrderStatus.DELIVERED &&
-					order.fulfillmentStatus !== FulfillmentStatus.DELIVERED
-				) {
-					return error("La commande n'a pas encore été livrée");
-				}
-
-				const reviewResult = await sendReviewRequestEmailInternal(orderId);
-
-				actionResult =
-					reviewResult.status === ActionStatus.SUCCESS
-						? success("Email de demande d'avis renvoyé")
-						: error(reviewResult.message || "Erreur lors de l'envoi de l'email de demande d'avis");
 				break;
 			}
 

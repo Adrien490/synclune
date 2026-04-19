@@ -1,11 +1,9 @@
 import { use } from "react";
 import { ReviewStatus } from "@/app/generated/prisma/client";
 import { MessageSquare, CircleCheck, EyeOff } from "lucide-react";
+import Link from "next/link";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
-import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
-import { StopPropagationLink } from "@/shared/components/stop-propagation-link";
 import {
 	Item,
 	ItemActions,
@@ -47,54 +45,55 @@ export function ReviewsMobileList({ reviewsPromise, perPage }: ReviewsMobileList
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
 			<ItemGroup aria-label="Avis clients" className="gap-2">
 				{adminReviews.map((review) => (
-					<div key={review.id} role="listitem">
-						<SelectableMobileCard itemId={review.id} ariaLabel={`Avis sur ${review.product.title}`}>
-							<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte avis">
-								<ItemContent className="min-w-0">
-									<ItemTitle>
-										<StopPropagationLink
-											href={`/creations/${review.product.slug}`}
-											target="_blank"
-											className="hover:text-primary truncate font-semibold transition-colors"
-										>
-											{review.product.title}
-										</StopPropagationLink>
-										{review.status === ReviewStatus.PUBLISHED ? (
-											<Badge variant="default" className="gap-1">
-												<CircleCheck className="size-3" aria-hidden="true" />
-												{REVIEW_STATUS_LABELS.PUBLISHED}
-											</Badge>
-										) : (
-											<Badge variant="secondary" className="gap-1">
-												<EyeOff className="size-3" aria-hidden="true" />
-												{REVIEW_STATUS_LABELS.HIDDEN}
-											</Badge>
-										)}
-									</ItemTitle>
-									<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-										<span>{review.user.name ?? "Anonyme"}</span>
+					<Item
+						key={review.id}
+						variant="outline"
+						size="sm"
+						className="gap-3"
+						aria-roledescription="carte avis"
+						role="listitem"
+					>
+						<ItemContent className="min-w-0">
+							<ItemTitle>
+								<Link
+									href={`/creations/${review.product.slug}`}
+									target="_blank"
+									className="hover:text-primary truncate font-semibold transition-colors"
+								>
+									{review.product.title}
+								</Link>
+								{review.status === ReviewStatus.PUBLISHED ? (
+									<Badge variant="default" className="gap-1">
+										<CircleCheck className="size-3" aria-hidden="true" />
+										{REVIEW_STATUS_LABELS.PUBLISHED}
+									</Badge>
+								) : (
+									<Badge variant="secondary" className="gap-1">
+										<EyeOff className="size-3" aria-hidden="true" />
+										{REVIEW_STATUS_LABELS.HIDDEN}
+									</Badge>
+								)}
+							</ItemTitle>
+							<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+								<span>{review.user.name ?? "Anonyme"}</span>
+								<span aria-hidden="true">·</span>
+								<RatingStars rating={review.rating} size="sm" />
+								{review.response && (
+									<>
 										<span aria-hidden="true">·</span>
-										<RatingStars rating={review.rating} size="sm" />
-										{review.response && (
-											<>
-												<span aria-hidden="true">·</span>
-												<Badge variant="outline" className="text-xs">
-													Repondu
-												</Badge>
-											</>
-										)}
-										<span aria-hidden="true">·</span>
-										<span>{formatDateShort(review.createdAt)}</span>
-									</ItemDescription>
-								</ItemContent>
-								<ItemActions>
-									<StopEventPropagation>
-										<ReviewRowActions review={review} />
-									</StopEventPropagation>
-								</ItemActions>
-							</Item>
-						</SelectableMobileCard>
-					</div>
+										<Badge variant="outline" className="text-xs">
+											Repondu
+										</Badge>
+									</>
+								)}
+								<span aria-hidden="true">·</span>
+								<span>{formatDateShort(review.createdAt)}</span>
+							</ItemDescription>
+						</ItemContent>
+						<ItemActions>
+							<ReviewRowActions review={review} />
+						</ItemActions>
+					</Item>
 				))}
 			</ItemGroup>
 

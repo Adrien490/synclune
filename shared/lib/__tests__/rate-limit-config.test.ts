@@ -26,10 +26,6 @@ import {
 	CONTACT_SEND_MESSAGE_LIMIT,
 	NEWSLETTER_SUBSCRIBE_LIMIT,
 	COMMUNICATION_LIMITS,
-	// Customization (client)
-	CUSTOMIZATION_QUOTE_REQUEST_LIMIT,
-	CUSTOMIZATION_IMAGE_UPLOAD_LIMIT,
-	CUSTOMIZATION_LIMITS,
 	// Orders (client)
 	ORDER_CREATE_LIMIT,
 	ORDER_CANCEL_LIMIT,
@@ -153,30 +149,18 @@ import {
 	ADMIN_DISCOUNT_REFRESH_LIMIT,
 	ADMIN_DISCOUNT_LIMITS,
 	// Admin - reviews
-	ADMIN_REVIEW_SEND_EMAIL_LIMIT,
-	ADMIN_REVIEW_BULK_OPERATIONS_LIMIT,
 	ADMIN_REVIEW_RESPONSE_LIMIT,
 	ADMIN_REVIEW_MODERATE_LIMIT,
 	ADMIN_REVIEW_LIMITS,
 	// Admin - newsletter
 	ADMIN_NEWSLETTER_REFRESH_LIMIT,
 	ADMIN_NEWSLETTER_LIMITS,
-	// Admin - customization
-	ADMIN_CUSTOMIZATION_UPDATE_LIMIT,
-	ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT,
-	ADMIN_CUSTOMIZATION_LIMITS,
 	// Admin - announcements
 	ADMIN_ANNOUNCEMENT_CREATE_LIMIT,
 	ADMIN_ANNOUNCEMENT_UPDATE_LIMIT,
 	ADMIN_ANNOUNCEMENT_DELETE_LIMIT,
 	ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT,
 	ADMIN_ANNOUNCEMENT_LIMITS,
-	// Admin - FAQ
-	ADMIN_FAQ_CREATE_LIMIT,
-	ADMIN_FAQ_UPDATE_LIMIT,
-	ADMIN_FAQ_DELETE_LIMIT,
-	ADMIN_FAQ_REORDER_LIMIT,
-	ADMIN_FAQ_LIMITS,
 	// Admin - store settings
 	ADMIN_STORE_SETTINGS_LIMITS,
 } from "@/shared/lib/rate-limit-config";
@@ -221,9 +205,6 @@ describe("individual rate limit configs - valid shape", () => {
 		// Communication
 		["CONTACT_SEND_MESSAGE_LIMIT", CONTACT_SEND_MESSAGE_LIMIT],
 		["NEWSLETTER_SUBSCRIBE_LIMIT", NEWSLETTER_SUBSCRIBE_LIMIT],
-		// Customization
-		["CUSTOMIZATION_QUOTE_REQUEST_LIMIT", CUSTOMIZATION_QUOTE_REQUEST_LIMIT],
-		["CUSTOMIZATION_IMAGE_UPLOAD_LIMIT", CUSTOMIZATION_IMAGE_UPLOAD_LIMIT],
 		// Orders
 		["ORDER_CREATE_LIMIT", ORDER_CREATE_LIMIT],
 		["ORDER_CANCEL_LIMIT", ORDER_CANCEL_LIMIT],
@@ -331,25 +312,15 @@ describe("individual rate limit configs - valid shape", () => {
 		["ADMIN_DISCOUNT_BULK_OPERATIONS_LIMIT", ADMIN_DISCOUNT_BULK_OPERATIONS_LIMIT],
 		["ADMIN_DISCOUNT_REFRESH_LIMIT", ADMIN_DISCOUNT_REFRESH_LIMIT],
 		// Admin - reviews
-		["ADMIN_REVIEW_SEND_EMAIL_LIMIT", ADMIN_REVIEW_SEND_EMAIL_LIMIT],
-		["ADMIN_REVIEW_BULK_OPERATIONS_LIMIT", ADMIN_REVIEW_BULK_OPERATIONS_LIMIT],
 		["ADMIN_REVIEW_RESPONSE_LIMIT", ADMIN_REVIEW_RESPONSE_LIMIT],
 		["ADMIN_REVIEW_MODERATE_LIMIT", ADMIN_REVIEW_MODERATE_LIMIT],
 		// Admin - newsletter
 		["ADMIN_NEWSLETTER_REFRESH_LIMIT", ADMIN_NEWSLETTER_REFRESH_LIMIT],
-		// Admin - customization
-		["ADMIN_CUSTOMIZATION_UPDATE_LIMIT", ADMIN_CUSTOMIZATION_UPDATE_LIMIT],
-		["ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT", ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT],
 		// Admin - announcements
 		["ADMIN_ANNOUNCEMENT_CREATE_LIMIT", ADMIN_ANNOUNCEMENT_CREATE_LIMIT],
 		["ADMIN_ANNOUNCEMENT_UPDATE_LIMIT", ADMIN_ANNOUNCEMENT_UPDATE_LIMIT],
 		["ADMIN_ANNOUNCEMENT_DELETE_LIMIT", ADMIN_ANNOUNCEMENT_DELETE_LIMIT],
 		["ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT", ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT],
-		// Admin - FAQ
-		["ADMIN_FAQ_CREATE_LIMIT", ADMIN_FAQ_CREATE_LIMIT],
-		["ADMIN_FAQ_UPDATE_LIMIT", ADMIN_FAQ_UPDATE_LIMIT],
-		["ADMIN_FAQ_DELETE_LIMIT", ADMIN_FAQ_DELETE_LIMIT],
-		["ADMIN_FAQ_REORDER_LIMIT", ADMIN_FAQ_REORDER_LIMIT],
 	];
 
 	it.each(configs)("%s has limit > 0 and windowMs > 0", (_name, config) => {
@@ -454,28 +425,6 @@ describe("COMMUNICATION_LIMITS", () => {
 
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(COMMUNICATION_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// CUSTOMIZATION_LIMITS
-// ============================================================================
-
-describe("CUSTOMIZATION_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(CUSTOMIZATION_LIMITS).toHaveProperty("QUOTE_REQUEST");
-		expect(CUSTOMIZATION_LIMITS).toHaveProperty("IMAGE_UPLOAD");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(CUSTOMIZATION_LIMITS.QUOTE_REQUEST).toBe(CUSTOMIZATION_QUOTE_REQUEST_LIMIT);
-		expect(CUSTOMIZATION_LIMITS.IMAGE_UPLOAD).toBe(CUSTOMIZATION_IMAGE_UPLOAD_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(CUSTOMIZATION_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
 		}
 	});
@@ -958,15 +907,11 @@ describe("ADMIN_DISCOUNT_LIMITS", () => {
 
 describe("ADMIN_REVIEW_LIMITS", () => {
 	it("contains expected keys", () => {
-		expect(ADMIN_REVIEW_LIMITS).toHaveProperty("SEND_EMAIL");
-		expect(ADMIN_REVIEW_LIMITS).toHaveProperty("BULK_OPERATIONS");
 		expect(ADMIN_REVIEW_LIMITS).toHaveProperty("RESPONSE");
 		expect(ADMIN_REVIEW_LIMITS).toHaveProperty("MODERATE");
 	});
 
 	it("references the correct individual configs", () => {
-		expect(ADMIN_REVIEW_LIMITS.SEND_EMAIL).toBe(ADMIN_REVIEW_SEND_EMAIL_LIMIT);
-		expect(ADMIN_REVIEW_LIMITS.BULK_OPERATIONS).toBe(ADMIN_REVIEW_BULK_OPERATIONS_LIMIT);
 		expect(ADMIN_REVIEW_LIMITS.RESPONSE).toBe(ADMIN_REVIEW_RESPONSE_LIMIT);
 		expect(ADMIN_REVIEW_LIMITS.MODERATE).toBe(ADMIN_REVIEW_MODERATE_LIMIT);
 	});
@@ -999,28 +944,6 @@ describe("ADMIN_NEWSLETTER_LIMITS", () => {
 });
 
 // ============================================================================
-// ADMIN_CUSTOMIZATION_LIMITS
-// ============================================================================
-
-describe("ADMIN_CUSTOMIZATION_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_CUSTOMIZATION_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_CUSTOMIZATION_LIMITS).toHaveProperty("BULK_UPDATE");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_CUSTOMIZATION_LIMITS.UPDATE).toBe(ADMIN_CUSTOMIZATION_UPDATE_LIMIT);
-		expect(ADMIN_CUSTOMIZATION_LIMITS.BULK_UPDATE).toBe(ADMIN_CUSTOMIZATION_BULK_UPDATE_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_CUSTOMIZATION_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
 // ADMIN_ANNOUNCEMENT_LIMITS
 // ============================================================================
 
@@ -1041,32 +964,6 @@ describe("ADMIN_ANNOUNCEMENT_LIMITS", () => {
 
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(ADMIN_ANNOUNCEMENT_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_FAQ_LIMITS
-// ============================================================================
-
-describe("ADMIN_FAQ_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_FAQ_LIMITS).toHaveProperty("CREATE");
-		expect(ADMIN_FAQ_LIMITS).toHaveProperty("UPDATE");
-		expect(ADMIN_FAQ_LIMITS).toHaveProperty("DELETE");
-		expect(ADMIN_FAQ_LIMITS).toHaveProperty("REORDER");
-	});
-
-	it("references the correct individual configs", () => {
-		expect(ADMIN_FAQ_LIMITS.CREATE).toBe(ADMIN_FAQ_CREATE_LIMIT);
-		expect(ADMIN_FAQ_LIMITS.UPDATE).toBe(ADMIN_FAQ_UPDATE_LIMIT);
-		expect(ADMIN_FAQ_LIMITS.DELETE).toBe(ADMIN_FAQ_DELETE_LIMIT);
-		expect(ADMIN_FAQ_LIMITS.REORDER).toBe(ADMIN_FAQ_REORDER_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_FAQ_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
 		}
 	});
