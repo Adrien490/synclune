@@ -5,13 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockUseAppBadge, mockUseBadgeCountsStore } = vi.hoisted(() => ({
-	mockUseAppBadge: vi.fn(),
+const { mockUseBadgeCountsStore } = vi.hoisted(() => ({
 	mockUseBadgeCountsStore: vi.fn(),
-}));
-
-vi.mock("@/shared/hooks/use-app-badge", () => ({
-	useAppBadge: mockUseAppBadge,
 }));
 
 vi.mock("@/shared/stores/badge-counts-store", () => ({
@@ -21,7 +16,37 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 // Import AFTER mocks
 import { AppBadgeSync } from "../app-badge-sync";
 
-afterEach(cleanup);
+// ============================================================================
+// navigator.setAppBadge / clearAppBadge mocks
+// ============================================================================
+
+const mockSetAppBadge = vi.fn().mockResolvedValue(undefined);
+const mockClearAppBadge = vi.fn().mockResolvedValue(undefined);
+
+function installBadgingApi() {
+	Object.defineProperty(navigator, "setAppBadge", {
+		value: mockSetAppBadge,
+		configurable: true,
+		writable: true,
+	});
+	Object.defineProperty(navigator, "clearAppBadge", {
+		value: mockClearAppBadge,
+		configurable: true,
+		writable: true,
+	});
+}
+
+function uninstallBadgingApi() {
+	// @ts-expect-error removing optional property
+	delete (navigator as Navigator & { setAppBadge?: unknown }).setAppBadge;
+	// @ts-expect-error removing optional property
+	delete (navigator as Navigator & { clearAppBadge?: unknown }).clearAppBadge;
+}
+
+afterEach(() => {
+	cleanup();
+	uninstallBadgingApi();
+});
 
 // ============================================================================
 // TESTS
@@ -30,6 +55,7 @@ afterEach(cleanup);
 describe("AppBadgeSync", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		installBadgingApi();
 		mockUseBadgeCountsStore.mockImplementation(
 			(selector: (state: { cartCount: number }) => number) => selector({ cartCount: 0 }),
 		);
@@ -40,27 +66,26 @@ describe("AppBadgeSync", () => {
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("calls useAppBadge with the cart count from the store", () => {
+	it("calls setAppBadge with the cart count when > 0", () => {
 		mockUseBadgeCountsStore.mockImplementation(
 			(selector: (state: { cartCount: number }) => number) => selector({ cartCount: 3 }),
 		);
 		render(<AppBadgeSync />);
-		expect(mockUseAppBadge).toHaveBeenCalledWith(3);
+		expect(mockSetAppBadge).toHaveBeenCalledWith(3);
+		expect(mockClearAppBadge).not.toHaveBeenCalled();
 	});
 
-	it("passes zero cart count to useAppBadge", () => {
-		mockUseBadgeCountsStore.mockImplementation(
-			(selector: (state: { cartCount: number }) => number) => selector({ cartCount: 0 }),
-		);
+	it("calls clearAppBadge when cart count is 0", () => {
 		render(<AppBadgeSync />);
-		expect(mockUseAppBadge).toHaveBeenCalledWith(0);
+		expect(mockClearAppBadge).toHaveBeenCalled();
+		expect(mockSetAppBadge).not.toHaveBeenCalled();
 	});
 
-	it("updates useAppBadge when cart count changes", () => {
+	it("no-ops on unsupported browsers (Badging API absent)", () => {
+		uninstallBadgingApi();
 		mockUseBadgeCountsStore.mockImplementation(
-			(selector: (state: { cartCount: number }) => number) => selector({ cartCount: 10 }),
+			(selector: (state: { cartCount: number }) => number) => selector({ cartCount: 5 }),
 		);
-		render(<AppBadgeSync />);
-		expect(mockUseAppBadge).toHaveBeenCalledWith(10);
+		expect(() => render(<AppBadgeSync />)).not.toThrow();
 	});
 });

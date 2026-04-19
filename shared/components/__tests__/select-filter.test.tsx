@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Mocks ──────────────────────────────────────────────────────────
@@ -71,7 +71,6 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-import { useSelectFilter } from "@/shared/hooks/use-select-filter";
 import { SelectFilter } from "../select-filter";
 import type { FilterOption } from "@/shared/types/component.types";
 
@@ -86,186 +85,6 @@ const mockOptions: FilterOption[] = [
 	{ value: "DRAFT", label: "Brouillon" },
 	{ value: "ARCHIVED", label: "Archivé" },
 ];
-
-// ─── Hook Tests ─────────────────────────────────────────────────────
-
-describe("useSelectFilter", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockSearchParams = new URLSearchParams();
-	});
-
-	afterEach(() => {
-		cleanup();
-		vi.restoreAllMocks();
-	});
-
-	// ─── Return values ─────────────────────────────────────────────
-
-	describe("return values", () => {
-		it("returns empty string as initial value when no param", () => {
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			expect(result.current.value).toBe("");
-			expect(result.current.isPending).toBe(false);
-		});
-
-		it("reads filter_ prefixed param from search params", () => {
-			setSearchParams({ filter_status: "ACTIVE" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			expect(result.current.value).toBe("ACTIVE");
-		});
-
-		it("reads unprefixed param when noPrefix is true", () => {
-			setSearchParams({ status: "DRAFT" });
-			const { result } = renderHook(() => useSelectFilter("status", { noPrefix: true }));
-
-			expect(result.current.value).toBe("DRAFT");
-		});
-
-		it("does not read prefixed param when noPrefix is true", () => {
-			setSearchParams({ filter_status: "ACTIVE" });
-			const { result } = renderHook(() => useSelectFilter("status", { noPrefix: true }));
-
-			expect(result.current.value).toBe("");
-		});
-
-		it("reads value with other params present", () => {
-			setSearchParams({ filter_status: "ACTIVE", page: "2", sortBy: "name_asc" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			expect(result.current.value).toBe("ACTIVE");
-		});
-	});
-
-	// ─── setFilter ──────────────────────────────────────────────────
-
-	describe("setFilter", () => {
-		it("pushes URL with filter_ prefixed param and resets page to 1", () => {
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.setFilter("ACTIVE");
-			});
-
-			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.get("filter_status")).toBe("ACTIVE");
-			expect(params.get("page")).toBe("1");
-		});
-
-		it("pushes URL without prefix when noPrefix is true", () => {
-			const { result } = renderHook(() => useSelectFilter("status", { noPrefix: true }));
-
-			act(() => {
-				result.current.setFilter("DRAFT");
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.get("status")).toBe("DRAFT");
-			expect(params.has("filter_status")).toBe(false);
-		});
-
-		it("preserves other existing search params", () => {
-			setSearchParams({ sortBy: "name_asc", search: "test", page: "3" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.setFilter("ACTIVE");
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.get("filter_status")).toBe("ACTIVE");
-			expect(params.get("sortBy")).toBe("name_asc");
-			expect(params.get("search")).toBe("test");
-			expect(params.get("page")).toBe("1"); // Reset
-		});
-
-		it("with empty string removes the filter param", () => {
-			setSearchParams({ filter_status: "ACTIVE", page: "2" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.setFilter("");
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.has("filter_status")).toBe(false);
-			expect(params.get("page")).toBe("1");
-		});
-
-		it("uses scroll: false on router.push", () => {
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.setFilter("ACTIVE");
-			});
-
-			expect(mockPush).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.objectContaining({ scroll: false }),
-			);
-		});
-	});
-
-	// ─── clearFilter ────────────────────────────────────────────────
-
-	describe("clearFilter", () => {
-		it("removes filter param and resets page to 1", () => {
-			setSearchParams({ filter_status: "ACTIVE", page: "3" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.clearFilter();
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.has("filter_status")).toBe(false);
-			expect(params.get("page")).toBe("1");
-		});
-
-		it("preserves other search params", () => {
-			setSearchParams({ filter_status: "ACTIVE", sortBy: "name_asc", search: "query" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.clearFilter();
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.has("filter_status")).toBe(false);
-			expect(params.get("sortBy")).toBe("name_asc");
-			expect(params.get("search")).toBe("query");
-		});
-
-		it("uses scroll: false on router.push", () => {
-			setSearchParams({ filter_status: "ACTIVE" });
-			const { result } = renderHook(() => useSelectFilter("status"));
-
-			act(() => {
-				result.current.clearFilter();
-			});
-
-			expect(mockPush).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.objectContaining({ scroll: false }),
-			);
-		});
-	});
-});
 
 // ─── Component Tests ────────────────────────────────────────────────
 
@@ -427,7 +246,6 @@ describe("SelectFilter", () => {
 			const parentClick = vi.fn();
 
 			render(
-				// biome-ignore lint/a11y/useKeyWithClickEvents: test helper
 				// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- test wrapper
 				<div onClick={parentClick}>
 					<SelectFilter filterKey="status" label="Statut" options={mockOptions} />
@@ -437,9 +255,6 @@ describe("SelectFilter", () => {
 			const clearButton = screen.getByTestId("clear-button");
 			fireEvent.click(clearButton);
 
-			// stopPropagation should prevent parent from receiving the click
-			// Note: since we mock the Button, the onClick handler runs handleClear
-			// which calls e.stopPropagation() - but the mock passes onClick directly
 			expect(mockPush).toHaveBeenCalled();
 		});
 	});
@@ -450,7 +265,6 @@ describe("SelectFilter", () => {
 		it("calls setFilter on value change", () => {
 			render(<SelectFilter filterKey="status" label="Statut" options={mockOptions} />);
 
-			// The mock Select triggers onValueChange("ACTIVE") on click
 			const changeButton = screen.getByTestId("select-change");
 			fireEvent.click(changeButton);
 

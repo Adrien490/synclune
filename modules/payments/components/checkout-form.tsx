@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
@@ -13,7 +13,6 @@ import type {
 } from "@/modules/discounts/types/discount.types";
 import { CircleAlert, WifiOff } from "lucide-react";
 import type { ShippingCountry } from "@/shared/constants/countries";
-import { useOnlineStatus } from "@/shared/hooks/use-online-status";
 import { useCheckoutForm } from "../hooks/use-checkout-form";
 import { usePaymentIntent } from "../hooks/use-payment-intent";
 
@@ -39,6 +38,23 @@ const CheckoutStripeSection = dynamic(
 		loading: () => <PaymentSectionSkeleton />,
 	},
 );
+
+function subscribeOnlineStatus(callback: () => void) {
+	window.addEventListener("online", callback);
+	window.addEventListener("offline", callback);
+	return () => {
+		window.removeEventListener("online", callback);
+		window.removeEventListener("offline", callback);
+	};
+}
+
+function getOnlineStatusSnapshot() {
+	return navigator.onLine;
+}
+
+function getOnlineStatusServerSnapshot() {
+	return true;
+}
 
 interface CheckoutFormProps {
 	cart: NonNullable<GetCartReturn>;
@@ -66,7 +82,11 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 
 	const subtotal = cart.items.reduce((sum, item) => sum + item.priceAtAdd * item.quantity, 0);
 
-	const isOnline = useOnlineStatus();
+	const isOnline = useSyncExternalStore(
+		subscribeOnlineStatus,
+		getOnlineStatusSnapshot,
+		getOnlineStatusServerSnapshot,
+	);
 
 	// Initialize Payment Intent
 	const pi = usePaymentIntent({

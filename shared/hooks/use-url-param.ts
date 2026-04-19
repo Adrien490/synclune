@@ -15,8 +15,7 @@ interface UseUrlParamOptions {
  * Shared base hook for single-value URL-param state (sort, select filter, etc.).
  *
  * Wraps the `useSearchParams → URLSearchParams → router.push` pattern with
- * an optimistic value and a pending state. Consumers should not import this
- * directly in components — use `useSelectFilter` or `useSortSelect` instead.
+ * an optimistic value and a pending state.
  */
 export function useUrlParam(paramKey: string, options?: UseUrlParamOptions) {
 	const router = useRouter();

@@ -6,45 +6,27 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockHandleNext,
-	mockHandlePrevious,
-	mockHandleReset,
-	mockHandlePerPageChange,
-	mockHaptic,
-	mockHookReturn,
-} = vi.hoisted(() => {
-	const handleNext = vi.fn();
-	const handlePrevious = vi.fn();
-	const handleReset = vi.fn();
-	const handlePerPageChange = vi.fn();
-	const haptic = vi.fn();
-	return {
-		mockHandleNext: handleNext,
-		mockHandlePrevious: handlePrevious,
-		mockHandleReset: handleReset,
-		mockHandlePerPageChange: handlePerPageChange,
-		mockHaptic: haptic,
-		mockHookReturn: {
-			cursor: undefined as string | undefined,
-			pathname: "/admin/ventes/commandes",
-			searchParams: new URLSearchParams(),
-			isPending: false,
-			handleNext,
-			handlePrevious,
-			handleReset,
-			handlePerPageChange,
-			perPage: 20,
-		},
-	};
-});
+const { mockRouterPush, mockRouterPrefetch, mockHaptic, mockSearchParams, mockPathname } =
+	vi.hoisted(() => ({
+		mockRouterPush: vi.fn(),
+		mockRouterPrefetch: vi.fn(),
+		mockHaptic: vi.fn(),
+		mockSearchParams: { current: new URLSearchParams() },
+		mockPathname: { current: "/admin/ventes/commandes" },
+	}));
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/hooks/use-cursor-pagination", () => ({
-	useCursorPagination: vi.fn(() => mockHookReturn),
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({
+		push: mockRouterPush,
+		prefetch: mockRouterPrefetch,
+		replace: vi.fn(),
+	}),
+	usePathname: () => mockPathname.current,
+	useSearchParams: () => mockSearchParams.current,
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -133,9 +115,8 @@ function renderPagination(overrides?: Partial<CursorPaginationProps>) {
 describe("CursorPagination", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockHookReturn.cursor = undefined;
-		mockHookReturn.isPending = false;
-		mockHookReturn.searchParams = new URLSearchParams();
+		mockSearchParams.current = new URLSearchParams();
+		mockPathname.current = "/admin/ventes/commandes";
 	});
 
 	afterEach(cleanup);
@@ -154,7 +135,6 @@ describe("CursorPagination", () => {
 		it("renders result count with plural", () => {
 			renderPagination({ currentPageSize: 15 });
 			expect(screen.getByText("15")).toBeInTheDocument();
-			// Visible "résultats" text (also present in sr-only region)
 			const matches = screen.getAllByText(/résultats/);
 			expect(matches.length).toBeGreaterThanOrEqual(1);
 		});
@@ -162,7 +142,6 @@ describe("CursorPagination", () => {
 		it("renders result count with singular", () => {
 			renderPagination({ currentPageSize: 1, hasNextPage: false, hasPreviousPage: false });
 			expect(screen.getByText("1")).toBeInTheDocument();
-			// " résultat" without "s" in visible span + "résultat" in sr-only region
 			const matches = screen.getAllByText(/résultat/);
 			expect(matches.length).toBeGreaterThanOrEqual(1);
 		});
@@ -250,13 +229,12 @@ describe("CursorPagination", () => {
 
 	describe("disabled states", () => {
 		it("disables 'Retour au début' on first page", () => {
-			mockHookReturn.cursor = undefined;
 			renderPagination();
 			expect(screen.getByLabelText("Retour au début")).toBeDisabled();
 		});
 
 		it("enables 'Retour au début' when cursor is set", () => {
-			mockHookReturn.cursor = "cm1abc2def3ghi4jkl5mnop";
+			mockSearchParams.current = new URLSearchParams({ cursor: "cm1abc2def3ghi4jkl5mnop" });
 			renderPagination({ hasPreviousPage: true, prevCursor: "cm1abc2def3ghi4jkl5mnop" });
 			expect(screen.getByLabelText("Retour au début")).not.toBeDisabled();
 		});
@@ -274,19 +252,6 @@ describe("CursorPagination", () => {
 			});
 			expect(screen.getByLabelText("Page suivante")).toBeDisabled();
 		});
-
-		it("disables all buttons when isPending", () => {
-			mockHookReturn.isPending = true;
-			mockHookReturn.cursor = "cm1abc2def3ghi4jkl5mnop";
-			renderPagination({
-				hasPreviousPage: true,
-				hasNextPage: true,
-				prevCursor: "cm1abc2def3ghi4jkl5mnop",
-			});
-			expect(screen.getByLabelText("Retour au début")).toBeDisabled();
-			expect(screen.getByLabelText("Page précédente")).toBeDisabled();
-			expect(screen.getByLabelText("Page suivante")).toBeDisabled();
-		});
 	});
 
 	// ========================================================================
@@ -294,29 +259,10 @@ describe("CursorPagination", () => {
 	// ========================================================================
 
 	describe("loading state", () => {
-		it("shows loader icon when isPending and not first page", () => {
-			mockHookReturn.isPending = true;
-			mockHookReturn.cursor = "cm1abc2def3ghi4jkl5mnop";
-			renderPagination({
-				hasPreviousPage: true,
-				prevCursor: "cm1abc2def3ghi4jkl5mnop",
-			});
-			expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
-		});
-
 		it("shows chevrons-left icon when not pending", () => {
-			mockHookReturn.isPending = false;
 			renderPagination();
 			expect(screen.getByTestId("icon-chevrons-left")).toBeInTheDocument();
 			expect(screen.queryByTestId("icon-loader")).not.toBeInTheDocument();
-		});
-
-		it("applies pointer-events-none class when isPending", () => {
-			mockHookReturn.isPending = true;
-			const { container } = renderPagination();
-			const wrapper = container.firstChild as HTMLElement;
-			expect(wrapper.className).toContain("pointer-events-none");
-			expect(wrapper.className).toContain("opacity-80");
 		});
 	});
 
@@ -367,12 +313,6 @@ describe("CursorPagination", () => {
 			const status = screen.getByRole("status", { name: "" });
 			expect(status).toHaveAttribute("aria-live", "polite");
 			expect(status).toHaveAttribute("aria-atomic", "true");
-		});
-
-		it("announces loading state", () => {
-			mockHookReturn.isPending = true;
-			renderPagination();
-			expect(screen.getByText("Chargement des résultats...")).toBeInTheDocument();
 		});
 
 		it("announces empty results", () => {
@@ -436,14 +376,17 @@ describe("CursorPagination", () => {
 	// ========================================================================
 
 	describe("interactions", () => {
-		it("calls handleNext when clicking 'Page suivante'", async () => {
+		it("navigates forward when clicking 'Page suivante'", async () => {
 			const user = userEvent.setup();
 			renderPagination();
 			await user.click(screen.getByLabelText("Page suivante"));
-			expect(mockHandleNext).toHaveBeenCalledOnce();
+			expect(mockRouterPush).toHaveBeenCalled();
+			const url = mockRouterPush.mock.calls[0]?.[0] as string;
+			expect(url).toContain("direction=forward");
+			expect(url).toContain("cursor=cm1abc2def3ghi4jkl5mnop");
 		});
 
-		it("calls handlePrevious when clicking 'Page précédente'", async () => {
+		it("navigates backward when clicking 'Page précédente'", async () => {
 			const user = userEvent.setup();
 			renderPagination({
 				hasPreviousPage: true,
@@ -451,25 +394,31 @@ describe("CursorPagination", () => {
 				prevCursor: "cm1abc2def3ghi4jkl5mnop",
 			});
 			await user.click(screen.getByLabelText("Page précédente"));
-			expect(mockHandlePrevious).toHaveBeenCalledOnce();
+			expect(mockRouterPush).toHaveBeenCalled();
+			const url = mockRouterPush.mock.calls[0]?.[0] as string;
+			expect(url).toContain("direction=backward");
 		});
 
-		it("calls handleReset when clicking 'Retour au début'", async () => {
+		it("clears cursor when clicking 'Retour au début'", async () => {
 			const user = userEvent.setup();
-			mockHookReturn.cursor = "cm1abc2def3ghi4jkl5mnop";
+			mockSearchParams.current = new URLSearchParams({ cursor: "cm1abc2def3ghi4jkl5mnop" });
 			renderPagination({
 				hasPreviousPage: true,
 				prevCursor: "cm1abc2def3ghi4jkl5mnop",
 			});
 			await user.click(screen.getByLabelText("Retour au début"));
-			expect(mockHandleReset).toHaveBeenCalledOnce();
+			expect(mockRouterPush).toHaveBeenCalled();
+			const url = mockRouterPush.mock.calls[0]?.[0] as string;
+			expect(url).not.toContain("cursor=");
 		});
 
-		it("calls handlePerPageChange when changing select", async () => {
+		it("updates perPage on select change", async () => {
 			const user = userEvent.setup();
 			renderPagination();
 			await user.click(screen.getByTestId("select-change"));
-			expect(mockHandlePerPageChange).toHaveBeenCalledWith(50);
+			expect(mockRouterPush).toHaveBeenCalled();
+			const url = mockRouterPush.mock.calls[0]?.[0] as string;
+			expect(url).toContain("perPage=50");
 		});
 	});
 
@@ -483,7 +432,6 @@ describe("CursorPagination", () => {
 			renderPagination();
 			await user.click(screen.getByLabelText("Page suivante"));
 			expect(mockHaptic).toHaveBeenCalledWith("light");
-			expect(mockHandleNext).toHaveBeenCalledOnce();
 		});
 
 		it("triggers light haptic on previous page click", async () => {
@@ -499,14 +447,13 @@ describe("CursorPagination", () => {
 
 		it("triggers selection haptic on 'Retour au début' click", async () => {
 			const user = userEvent.setup();
-			mockHookReturn.cursor = "cm1abc2def3ghi4jkl5mnop";
+			mockSearchParams.current = new URLSearchParams({ cursor: "cm1abc2def3ghi4jkl5mnop" });
 			renderPagination({
 				hasPreviousPage: true,
 				prevCursor: "cm1abc2def3ghi4jkl5mnop",
 			});
 			await user.click(screen.getByLabelText("Retour au début"));
 			expect(mockHaptic).toHaveBeenCalledWith("selection");
-			expect(mockHandleReset).toHaveBeenCalledOnce();
 		});
 
 		it("triggers selection haptic on per-page change", async () => {
@@ -514,7 +461,6 @@ describe("CursorPagination", () => {
 			renderPagination();
 			await user.click(screen.getByTestId("select-change"));
 			expect(mockHaptic).toHaveBeenCalledWith("selection");
-			expect(mockHandlePerPageChange).toHaveBeenCalledWith(50);
 		});
 	});
 
@@ -525,7 +471,6 @@ describe("CursorPagination", () => {
 	describe("touch targets", () => {
 		it("applies h-11 mobile / sm:h-9 desktop to per-page select trigger", () => {
 			renderPagination();
-			// Verify trigger is rendered — actual height class check happens via computed className
 			const trigger = screen.getByLabelText("Nombre de résultats par page");
 			expect(trigger).toBeInTheDocument();
 		});

@@ -5,12 +5,23 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
-import { useRef, useState, useEffect, useEffectEvent, type ReactNode } from "react";
+import {
+	useActionState,
+	useEffect,
+	useEffectEvent,
+	useOptimistic,
+	useRef,
+	useState,
+	useTransition,
+	type ReactNode,
+} from "react";
 import { MOTION_CONFIG, maybeReduceMotion } from "@/shared/components/animations/motion.config";
-import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
+import { setFabVisibility } from "@/shared/actions/set-fab-visibility";
 import type { FabProps } from "@/shared/types/fab.types";
+import { toast } from "@/shared/utils/toast";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 // Shared classes for the main FAB button (used by both href and onClick variants)
 const mainButtonClassName = cn(
@@ -128,35 +139,64 @@ export function Fab({
 	// Haptic feedback (no-op on iOS Safari, respects prefers-reduced-motion)
 	const haptic = useHaptic();
 
-	// Hook pour toggle la visibilité
-	const { isHidden, toggle, isPending } = useFabVisibility({
-		key: fabKey,
-		initialHidden,
-		onToggle: (newHiddenState) => {
-			// Annonce pour les lecteurs d'écran avec contexte (via ref, pas de re-render)
-			if (statusRef.current) {
-				statusRef.current.textContent = newHiddenState
-					? `${tooltip.title} masqué`
-					: `${tooltip.title} affiché`;
-				// Nettoyer le timeout précédent si existant
-				if (statusTimeoutRef.current) {
-					clearTimeout(statusTimeoutRef.current);
-				}
-				// Nettoyer après l'annonce
-				statusTimeoutRef.current = setTimeout(() => {
-					if (statusRef.current) statusRef.current.textContent = "";
-				}, 1000);
-			}
+	// Visibility toggle with optimistic UI + server action rollback
+	const [isTransitionPending, startTransition] = useTransition();
+	const [optimisticHidden, setOptimisticHidden] = useOptimistic(initialHidden);
+	const [, formAction, isActionPending] = useActionState(
+		withCallbacks(setFabVisibility, {
+			onError: () => {
+				setOptimisticHidden(initialHidden);
+				toast.error("Erreur lors de la modification");
+			},
+		}),
+		undefined,
+	);
 
-			requestAnimationFrame(() => {
-				if (newHiddenState) {
-					toggleButtonRef.current?.focus();
-				} else {
-					mainButtonRef.current?.focus();
-				}
-			});
-		},
-	});
+	const isHidden = optimisticHidden;
+	const isPending = isTransitionPending || isActionPending;
+
+	function onToggle(newHiddenState: boolean) {
+		// SR announcement via ref (no re-render)
+		if (statusRef.current) {
+			statusRef.current.textContent = newHiddenState
+				? `${tooltip.title} masqué`
+				: `${tooltip.title} affiché`;
+			if (statusTimeoutRef.current) {
+				clearTimeout(statusTimeoutRef.current);
+			}
+			statusTimeoutRef.current = setTimeout(() => {
+				if (statusRef.current) statusRef.current.textContent = "";
+			}, 1000);
+		}
+
+		requestAnimationFrame(() => {
+			if (newHiddenState) {
+				toggleButtonRef.current?.focus();
+			} else {
+				mainButtonRef.current?.focus();
+			}
+		});
+	}
+
+	function toggle() {
+		const newHiddenState = !optimisticHidden;
+
+		// Fire onToggle immediately for instant SR announcements and focus management.
+		// Guarded so a consumer throw cannot poison the transition / prevent rollback.
+		try {
+			onToggle(newHiddenState);
+		} catch {
+			// Callback failure must not abort the optimistic update below.
+		}
+
+		startTransition(() => {
+			setOptimisticHidden(newHiddenState);
+			const formData = new FormData();
+			formData.append("key", fabKey);
+			formData.append("isHidden", newHiddenState.toString());
+			formAction(formData);
+		});
+	}
 
 	// Effect Event: reads isPending and toggle without re-attaching the listener
 	const onEscapeKey = useEffectEvent((e: KeyboardEvent) => {

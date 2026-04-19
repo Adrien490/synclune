@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, Mail, Share2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
 	DropdownMenu,
@@ -11,8 +11,25 @@ import {
 } from "@/shared/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useWebShare } from "@/shared/hooks/use-web-share";
 import { cn } from "@/shared/utils/cn";
+
+interface ShareData {
+	title: string;
+	text?: string;
+	url: string;
+}
+
+function subscribeNoop(_callback: () => void) {
+	return () => {};
+}
+
+function getCanShareSnapshot() {
+	return "share" in navigator;
+}
+
+function getCanShareServerSnapshot() {
+	return false;
+}
 
 interface ShareButtonProps {
 	title: string;
@@ -44,7 +61,41 @@ function buildAbsoluteUrl(url: string): string {
  * - If unavailable (desktop Safari, desktop Firefox): opens a dropdown with Pinterest, email, and copy link.
  */
 export function ShareButton({ title, text, url, size = "lg", className, media }: ShareButtonProps) {
-	const { canShare, share } = useWebShare();
+	const canShare = useSyncExternalStore(
+		subscribeNoop,
+		getCanShareSnapshot,
+		getCanShareServerSnapshot,
+	);
+
+	async function share(data: ShareData): Promise<"shared" | "copied" | "dismissed"> {
+		// Validate URL early — navigator.share() rejects silently on malformed URLs,
+		// which then falls back to clipboard and writes garbage data.
+		try {
+			new URL(data.url);
+		} catch {
+			return "dismissed";
+		}
+
+		if (canShare) {
+			try {
+				await navigator.share(data);
+				return "shared";
+			} catch (err) {
+				if (err instanceof Error && err.name === "AbortError") {
+					return "dismissed";
+				}
+				// Fallback to clipboard on other errors
+			}
+		}
+
+		try {
+			await navigator.clipboard.writeText(data.url);
+			return "copied";
+		} catch {
+			return "dismissed";
+		}
+	}
+
 	const [feedback, setFeedback] = useState<"shared" | "copied" | null>(null);
 
 	const iconSize = size === "sm" ? 16 : 20;

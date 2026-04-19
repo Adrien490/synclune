@@ -10,11 +10,11 @@ import {
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, ChevronRight, ChevronsLeft, LoaderCircle } from "lucide-react";
-import { useId } from "react";
+import { useEffect, useEffectEvent, useId, useRef, useTransition } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
-import { PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
-import { useCursorPagination } from "@/shared/hooks/use-cursor-pagination";
+import { DEFAULT_PER_PAGE, PER_PAGE_OPTIONS } from "@/shared/lib/pagination";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import type { CursorPaginationProps } from "@/shared/types/component.types";
 
@@ -29,7 +29,7 @@ const PAGINATION_BUTTON_CLASSES = [
 ] as const;
 
 export function CursorPagination({
-	perPage,
+	perPage: _perPageProp,
 	hasNextPage,
 	hasPreviousPage,
 	currentPageSize,
@@ -40,16 +40,123 @@ export function CursorPagination({
 }: CursorPaginationProps) {
 	const perPageId = useId();
 	const haptic = useHaptic();
-	const {
-		cursor,
-		pathname,
-		searchParams,
-		isPending,
-		handleNext,
-		handlePrevious,
-		handleReset,
-		handlePerPageChange,
-	} = useCursorPagination({ nextCursor, prevCursor, focusTargetRef });
+	const router = useRouter();
+	const pathname = usePathname();
+	const searchParams = useSearchParams();
+	const [isPending, startTransition] = useTransition();
+	// Sentinel to distinguish "not yet initialized" from "cursor is undefined"
+	// Avoids spurious scroll-to-top on first render when cursor is also undefined
+	const UNINITIALIZED = useRef(Symbol("uninitialized")).current;
+	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
+
+	const perPage = Number(searchParams.get("perPage")) || DEFAULT_PER_PAGE;
+	const cursor = searchParams.get("cursor") ?? undefined;
+
+	const onCursorChange = useEffectEvent(() => {
+		// Default behavior: scroll to top, respecting prefers-reduced-motion
+		const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+		window.scrollTo({
+			top: 0,
+			behavior: prefersReducedMotion ? "instant" : "smooth",
+		});
+
+		if (focusTargetRef?.current) {
+			requestAnimationFrame(() => {
+				focusTargetRef.current?.focus({ preventScroll: true });
+			});
+		}
+	});
+
+	useEffect(() => {
+		if (previousCursorRef.current !== cursor) {
+			previousCursorRef.current = cursor;
+			onCursorChange();
+		}
+	}, [cursor]);
+
+	function preserveParams() {
+		return new URLSearchParams(searchParams.toString());
+	}
+
+	function navigateNext(nc: string | null) {
+		if (!nc) return;
+		const params = preserveParams();
+		params.set("cursor", nc);
+		params.set("direction", "forward");
+		startTransition(() => {
+			router.push("?" + params.toString(), { scroll: false });
+		});
+	}
+
+	function navigatePrevious(pc: string | null) {
+		if (!pc) return;
+		const params = preserveParams();
+		params.set("cursor", pc);
+		params.set("direction", "backward");
+		startTransition(() => {
+			router.push("?" + params.toString(), { scroll: false });
+		});
+	}
+
+	const onKeyDown = useEffectEvent((e: KeyboardEvent) => {
+		const target = e.target as HTMLElement;
+		if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+			return;
+		}
+
+		if (e.altKey && e.key === "ArrowLeft" && prevCursor) {
+			e.preventDefault();
+			navigatePrevious(prevCursor);
+		}
+
+		if (e.altKey && e.key === "ArrowRight" && nextCursor) {
+			e.preventDefault();
+			navigateNext(nextCursor);
+		}
+	});
+
+	useEffect(() => {
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, []);
+
+	const onPrefetch = useEffectEvent((pCursor: string | null, direction: string) => {
+		if (!pCursor) return;
+		const params = new URLSearchParams(searchParams.toString());
+		params.set("cursor", pCursor);
+		params.set("direction", direction);
+		router.prefetch("?" + params.toString());
+	});
+
+	useEffect(() => {
+		onPrefetch(nextCursor, "forward");
+		onPrefetch(prevCursor, "backward");
+	}, [nextCursor, prevCursor]);
+
+	function handleNext() {
+		navigateNext(nextCursor);
+	}
+	function handlePrevious() {
+		navigatePrevious(prevCursor);
+	}
+	function handleReset() {
+		const params = preserveParams();
+		params.delete("cursor");
+		params.delete("direction");
+		startTransition(() => {
+			router.push("?" + params.toString(), { scroll: false });
+		});
+	}
+	function handlePerPageChange(newPerPage: number) {
+		if (newPerPage === perPage) return;
+		const params = preserveParams();
+		params.set("perPage", String(newPerPage));
+		params.delete("cursor");
+		params.delete("direction");
+		startTransition(() => {
+			router.push("?" + params.toString(), { scroll: false });
+		});
+	}
 
 	const onPrevious = () => {
 		haptic("light");

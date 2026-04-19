@@ -6,9 +6,8 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockToggle, mockIsHidden, mockHaptic, mockIsDesktop } = vi.hoisted(() => ({
-	mockToggle: vi.fn(),
-	mockIsHidden: { value: false },
+const { mockSetFabVisibility, mockHaptic, mockIsDesktop } = vi.hoisted(() => ({
+	mockSetFabVisibility: vi.fn().mockResolvedValue({ status: "success" }),
 	mockHaptic: vi.fn(),
 	mockIsDesktop: { value: true },
 }));
@@ -50,15 +49,16 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	maybeReduceMotion: (config: unknown) => config,
 }));
 
-vi.mock("@/shared/hooks/use-fab-visibility", () => ({
-	useFabVisibility: vi.fn(({ initialHidden: _initialHidden }: { initialHidden?: boolean }) => ({
-		isHidden: mockIsHidden.value,
-		toggle: mockToggle,
-		isPending: false,
-		state: undefined,
-		isSuccess: false,
-		isError: false,
-	})),
+vi.mock("@/shared/actions/set-fab-visibility", () => ({
+	setFabVisibility: mockSetFabVisibility,
+}));
+
+vi.mock("@/shared/utils/with-callbacks", () => ({
+	withCallbacks: (action: (...args: unknown[]) => unknown) => action,
+}));
+
+vi.mock("@/shared/utils/toast", () => ({
+	toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -128,7 +128,6 @@ vi.mock("@/shared/utils/cn", () => ({
 
 // Import AFTER all mocks
 import { Fab } from "../fab";
-import { useFabVisibility } from "@/shared/hooks/use-fab-visibility";
 import { useMediaQuery } from "@/shared/hooks/use-media-query";
 import { useReducedMotion } from "motion/react";
 
@@ -146,16 +145,9 @@ const DEFAULT_PROPS = {
 	hideTooltip: "Masquer",
 };
 
-function setHidden(value: boolean) {
-	mockIsHidden.value = value;
-	vi.mocked(useFabVisibility).mockImplementation(() => ({
-		isHidden: value,
-		toggle: mockToggle,
-		isPending: false,
-		state: undefined,
-		isSuccess: false,
-		isError: false,
-	}));
+// State is now driven via `initialHidden` prop (no-op kept for call-site clarity).
+function setHidden(_value: boolean) {
+	// intentionally empty — callers still pass `initialHidden` prop
 }
 
 // ============================================================================
@@ -164,16 +156,7 @@ function setHidden(value: boolean) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
-	mockIsHidden.value = false;
 	mockIsDesktop.value = true;
-	vi.mocked(useFabVisibility).mockImplementation(({ initialHidden: _initialHidden }) => ({
-		isHidden: mockIsHidden.value,
-		toggle: mockToggle,
-		isPending: false,
-		state: undefined,
-		isSuccess: false,
-		isError: false,
-	}));
 	vi.mocked(useReducedMotion).mockReturnValue(false);
 	vi.mocked(useMediaQuery).mockImplementation(() => mockIsDesktop.value);
 });
@@ -452,7 +435,7 @@ describe("Fab", () => {
 			const innerElement = container!.querySelector("[data-testid='button']");
 			expect(innerElement).not.toBeNull();
 			fireEvent.keyDown(innerElement!, { key: "Escape" });
-			expect(mockToggle).toHaveBeenCalledOnce();
+			expect(mockSetFabVisibility).toHaveBeenCalled();
 		});
 
 		it("does not call toggle when ESC is pressed outside the container", () => {
@@ -460,7 +443,7 @@ describe("Fab", () => {
 
 			// Dispatch on document.body which is outside the FAB container
 			fireEvent.keyDown(document.body, { key: "Escape" });
-			expect(mockToggle).not.toHaveBeenCalled();
+			expect(mockSetFabVisibility).not.toHaveBeenCalled();
 		});
 
 		it("does not attach ESC listener when isHidden is true", () => {
@@ -468,7 +451,7 @@ describe("Fab", () => {
 			render(<Fab {...DEFAULT_PROPS} initialHidden />);
 
 			fireEvent.keyDown(document.body, { key: "Escape" });
-			expect(mockToggle).not.toHaveBeenCalled();
+			expect(mockSetFabVisibility).not.toHaveBeenCalled();
 		});
 	});
 
@@ -672,7 +655,7 @@ describe("Fab", () => {
 				.find((el) => el.getAttribute("aria-label") === "Masquer");
 			expect(closeButton).toBeDefined();
 			fireEvent.click(closeButton!);
-			expect(mockToggle).toHaveBeenCalledOnce();
+			expect(mockSetFabVisibility).toHaveBeenCalled();
 		});
 
 		it("calls toggle when the show button is clicked (hidden state)", () => {
@@ -684,7 +667,7 @@ describe("Fab", () => {
 				.find((el) => el.getAttribute("aria-label") === "Afficher");
 			expect(toggleButton).toBeDefined();
 			fireEvent.click(toggleButton!);
-			expect(mockToggle).toHaveBeenCalledOnce();
+			expect(mockSetFabVisibility).toHaveBeenCalled();
 		});
 	});
 
@@ -697,15 +680,6 @@ describe("Fab", () => {
 		});
 
 		it("builds hidden container ID from fabKey", () => {
-			setHidden(true);
-			vi.mocked(useFabVisibility).mockImplementation(() => ({
-				isHidden: true,
-				toggle: mockToggle,
-				isPending: false,
-				state: undefined,
-				isSuccess: false,
-				isError: false,
-			}));
 			render(<Fab {...DEFAULT_PROPS} fabKey="admin-dashboard" initialHidden />);
 
 			const hiddenContainer = document.getElementById("fab-hidden-admin-dashboard");

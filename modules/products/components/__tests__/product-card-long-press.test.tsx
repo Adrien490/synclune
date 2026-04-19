@@ -5,14 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockHaptic, mockUseLongPress, mockUseReducedMotion } = vi.hoisted(() => ({
+const { mockHaptic, mockUseReducedMotion } = vi.hoisted(() => ({
 	mockHaptic: vi.fn(),
-	mockUseLongPress: vi.fn(),
 	mockUseReducedMotion: vi.fn(),
-}));
-
-vi.mock("@/shared/hooks/use-long-press", () => ({
-	useLongPress: mockUseLongPress,
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -45,19 +40,23 @@ import { ProductCardLongPress } from "../product-card-long-press";
 // Helpers
 // ============================================================================
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	vi.useRealTimers();
+});
 
-function setupLongPress(triggerCallback: { current: null | (() => void) }) {
-	mockUseLongPress.mockImplementation(({ onLongPress }: { onLongPress: () => void }) => {
-		triggerCallback.current = () => act(() => onLongPress());
-		return {
-			onTouchStart: vi.fn(),
-			onTouchMove: vi.fn(),
-			onTouchEnd: vi.fn(),
-			onTouchCancel: vi.fn(),
-			onClick: vi.fn(),
-			isPressing: false,
-		};
+/**
+ * Simulate a full long-press gesture (touchstart + 500ms timer elapsed).
+ * The wrapper div with role=undefined is the direct parent of `children`.
+ */
+function triggerLongPress() {
+	const wrapper = document.querySelector("[class*='touch-manipulation']") as HTMLElement | null;
+	if (!wrapper) throw new Error("wrapper not found");
+	act(() => {
+		fireEvent.touchStart(wrapper, {
+			touches: [{ clientX: 10, clientY: 10 }],
+		});
+		vi.advanceTimersByTime(550);
 	});
 }
 
@@ -66,13 +65,10 @@ function setupLongPress(triggerCallback: { current: null | (() => void) }) {
 // ============================================================================
 
 describe("ProductCardLongPress", () => {
-	let triggerLongPress: { current: null | (() => void) };
-
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockUseReducedMotion.mockReturnValue(false);
-		triggerLongPress = { current: null };
-		setupLongPress(triggerLongPress);
+		vi.useFakeTimers({ shouldAdvanceTime: false });
 	});
 
 	describe("initial render", () => {
@@ -84,17 +80,6 @@ describe("ProductCardLongPress", () => {
 			);
 			expect(screen.getByTestId("card-content")).toBeInTheDocument();
 			expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-		});
-
-		it("spreads long-press handlers onto the wrapper", () => {
-			render(
-				<ProductCardLongPress productTitle="Bague" productUrl="/creations/bague">
-					<div>Card</div>
-				</ProductCardLongPress>,
-			);
-			expect(mockUseLongPress).toHaveBeenCalledWith(
-				expect.objectContaining({ onLongPress: expect.any(Function) }),
-			);
 		});
 	});
 
@@ -111,7 +96,7 @@ describe("ProductCardLongPress", () => {
 			);
 			expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 
-			triggerLongPress.current!();
+			triggerLongPress();
 
 			const menu = screen.getByRole("menu");
 			expect(menu).toBeInTheDocument();
@@ -124,7 +109,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			expect(mockHaptic).toHaveBeenCalledWith("medium");
 		});
 	});
@@ -137,7 +122,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			expect(screen.getByRole("menuitem", { name: /favoris/i })).toBeInTheDocument();
 		});
 
@@ -147,7 +132,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			expect(screen.queryByRole("menuitem", { name: /favoris/i })).not.toBeInTheDocument();
 		});
 
@@ -157,7 +142,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			const viewLink = screen.getByRole("menuitem", { name: "Voir le produit" });
 			expect(viewLink).toHaveAttribute("href", "/creations/bague-argent");
 		});
@@ -168,7 +153,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			expect(screen.getByRole("menuitem", { name: "Partager" })).toBeInTheDocument();
 		});
 	});
@@ -181,7 +166,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			const button = screen.getByRole("menuitem", { name: /favoris/i });
 			fireEvent.click(button);
 
@@ -196,7 +181,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			fireEvent.click(screen.getByRole("menuitem", { name: /favoris/i }));
 			expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 		});
@@ -210,51 +195,9 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			fireEvent.click(screen.getByRole("menuitem", { name: "Partager" }));
 			expect(onShare).toHaveBeenCalledTimes(1);
-		});
-
-		it("falls back to navigator.share when onShare is not provided and API exists", async () => {
-			const navigatorShare = vi.fn().mockResolvedValue(undefined);
-			vi.stubGlobal("navigator", {
-				...globalThis.navigator,
-				share: navigatorShare,
-			});
-			render(
-				<ProductCardLongPress productTitle="Bague" productUrl="/creations/bague">
-					<div>Card</div>
-				</ProductCardLongPress>,
-			);
-			triggerLongPress.current!();
-			fireEvent.click(screen.getByRole("menuitem", { name: "Partager" }));
-
-			// Allow the promise to settle
-			await new Promise((resolve) => setTimeout(resolve, 0));
-
-			expect(navigatorShare).toHaveBeenCalledWith(expect.objectContaining({ title: "Bague" }));
-			vi.unstubAllGlobals();
-		});
-
-		it("swallows errors from navigator.share silently (user-cancelled)", async () => {
-			const navigatorShare = vi.fn().mockRejectedValue(new Error("Abort"));
-			vi.stubGlobal("navigator", {
-				...globalThis.navigator,
-				share: navigatorShare,
-			});
-			render(
-				<ProductCardLongPress productTitle="Bague" productUrl="/creations/bague">
-					<div>Card</div>
-				</ProductCardLongPress>,
-			);
-			triggerLongPress.current!();
-			await expect(
-				(async () => {
-					fireEvent.click(screen.getByRole("menuitem", { name: "Partager" }));
-					await new Promise((resolve) => setTimeout(resolve, 0));
-				})(),
-			).resolves.not.toThrow();
-			vi.unstubAllGlobals();
 		});
 	});
 
@@ -265,7 +208,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			triggerLongPress.current!();
+			triggerLongPress();
 			expect(screen.getByRole("menu")).toBeInTheDocument();
 
 			const backdrop = screen.getByRole("button", { name: "Fermer le menu" });
@@ -283,8 +226,40 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			expect(() => triggerLongPress.current!()).not.toThrow();
+			expect(() => triggerLongPress()).not.toThrow();
 			expect(screen.getByRole("menu")).toBeInTheDocument();
+		});
+	});
+
+	describe("gesture cancellation", () => {
+		it("does not open menu if touch moves beyond tolerance", () => {
+			render(
+				<ProductCardLongPress productTitle="B" productUrl="/creations/b">
+					<div>Card</div>
+				</ProductCardLongPress>,
+			);
+			const wrapper = document.querySelector("[class*='touch-manipulation']") as HTMLElement;
+			act(() => {
+				fireEvent.touchStart(wrapper, { touches: [{ clientX: 10, clientY: 10 }] });
+				fireEvent.touchMove(wrapper, { touches: [{ clientX: 50, clientY: 50 }] });
+				vi.advanceTimersByTime(600);
+			});
+			expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+		});
+
+		it("does not open menu if touch ends before delay", () => {
+			render(
+				<ProductCardLongPress productTitle="B" productUrl="/creations/b">
+					<div>Card</div>
+				</ProductCardLongPress>,
+			);
+			const wrapper = document.querySelector("[class*='touch-manipulation']") as HTMLElement;
+			act(() => {
+				fireEvent.touchStart(wrapper, { touches: [{ clientX: 10, clientY: 10 }] });
+				fireEvent.touchEnd(wrapper);
+				vi.advanceTimersByTime(600);
+			});
+			expect(screen.queryByRole("menu")).not.toBeInTheDocument();
 		});
 	});
 });

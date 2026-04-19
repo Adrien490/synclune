@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Heart, Share2, Eye } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 
-import { useLongPress } from "@/shared/hooks/use-long-press";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
+
+const LONG_PRESS_DELAY = 500;
+const LONG_PRESS_MOVE_TOLERANCE = 10;
 
 interface ProductCardLongPressProps {
 	productTitle: string;
@@ -35,12 +37,65 @@ export function ProductCardLongPress({
 	const haptic = useHaptic();
 	const prefersReducedMotion = useReducedMotion();
 
-	const longPress = useLongPress({
-		onLongPress: () => {
-			haptic("medium");
-			setIsOpen(true);
-		},
-	});
+	const [isPressing, setIsPressing] = useState(false);
+	const timerRef = useRef<ReturnType<typeof setTimeout>>(null);
+	const startPosRef = useRef<{ x: number; y: number } | null>(null);
+	const didLongPressRef = useRef(false);
+	const onLongPressRef = useRef<() => void>(() => {});
+
+	// Keep ref in sync with the latest callback without triggering re-renders
+	// eslint-disable-next-line react-hooks/refs -- intentional ref write during render to keep callback in sync (standard React pattern)
+	onLongPressRef.current = () => {
+		haptic("medium");
+		setIsOpen(true);
+	};
+
+	function clearLongPress() {
+		if (timerRef.current) clearTimeout(timerRef.current);
+		timerRef.current = null;
+		setIsPressing(false);
+	}
+
+	function handleTouchStart(e: React.TouchEvent) {
+		const touch = e.touches[0];
+		if (!touch) return;
+
+		startPosRef.current = { x: touch.clientX, y: touch.clientY };
+		didLongPressRef.current = false;
+		setIsPressing(true);
+
+		timerRef.current = setTimeout(() => {
+			didLongPressRef.current = true;
+			setIsPressing(false);
+			onLongPressRef.current();
+		}, LONG_PRESS_DELAY);
+	}
+
+	function handleTouchMove(e: React.TouchEvent) {
+		if (!startPosRef.current || !timerRef.current) return;
+
+		const touch = e.touches[0];
+		if (!touch) return;
+
+		const dx = Math.abs(touch.clientX - startPosRef.current.x);
+		const dy = Math.abs(touch.clientY - startPosRef.current.y);
+
+		if (dx > LONG_PRESS_MOVE_TOLERANCE || dy > LONG_PRESS_MOVE_TOLERANCE) {
+			clearLongPress();
+		}
+	}
+
+	function handleTouchEnd() {
+		clearLongPress();
+	}
+
+	function handleLongPressClick(e: React.MouseEvent) {
+		if (didLongPressRef.current) {
+			e.preventDefault();
+			e.stopPropagation();
+			didLongPressRef.current = false;
+		}
+	}
 
 	const handleShare = async () => {
 		setIsOpen(false);
@@ -70,11 +125,16 @@ export function ProductCardLongPress({
 	};
 
 	return (
+		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- wrapper captures long-press gestures; keyboard-accessible action buttons are rendered inside
 		<div
-			{...longPress}
+			onTouchStart={handleTouchStart}
+			onTouchMove={handleTouchMove}
+			onTouchEnd={handleTouchEnd}
+			onTouchCancel={handleTouchEnd}
+			onClick={handleLongPressClick}
 			className={cn(
 				"relative touch-manipulation",
-				longPress.isPressing && "motion-safe:scale-[0.98]",
+				isPressing && "motion-safe:scale-[0.98]",
 				"transition-transform duration-150",
 			)}
 		>

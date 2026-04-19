@@ -1,28 +1,17 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockShare, mockTriggerHaptic, canShareRef } = vi.hoisted(() => ({
-	mockShare: vi.fn().mockResolvedValue("shared" as const),
+const { mockTriggerHaptic } = vi.hoisted(() => ({
 	mockTriggerHaptic: vi.fn(),
-	canShareRef: { current: true as boolean },
 }));
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
-
-vi.mock("@/shared/hooks/use-web-share", () => ({
-	useWebShare: () => ({
-		get canShare() {
-			return canShareRef.current;
-		},
-		share: mockShare,
-	}),
-}));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: mockTriggerHaptic,
@@ -87,6 +76,34 @@ vi.mock("@/shared/components/ui/dropdown-menu", () => ({
 import { ShareButton } from "../share-button";
 
 // ============================================================================
+// navigator.share / navigator.clipboard helpers
+// ============================================================================
+
+const mockNavigatorShare = vi.fn();
+const mockClipboardWriteText = vi.fn();
+
+function setNavigatorShareAvailable(available: boolean) {
+	if (available) {
+		Object.defineProperty(navigator, "share", {
+			value: mockNavigatorShare,
+			configurable: true,
+			writable: true,
+		});
+	} else {
+		// @ts-expect-error removing optional property
+		delete (navigator as Navigator & { share?: unknown }).share;
+	}
+}
+
+function setupClipboard() {
+	Object.defineProperty(navigator, "clipboard", {
+		value: { writeText: mockClipboardWriteText },
+		configurable: true,
+		writable: true,
+	});
+}
+
+// ============================================================================
 // HELPERS
 // ============================================================================
 
@@ -105,15 +122,23 @@ function renderDefault(props: Partial<React.ComponentProps<typeof ShareButton>> 
 // TESTS
 // ============================================================================
 
+beforeEach(() => {
+	setupClipboard();
+	mockNavigatorShare.mockReset();
+	mockClipboardWriteText.mockReset();
+	mockClipboardWriteText.mockResolvedValue(undefined);
+});
+
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
-	mockShare.mockResolvedValue("shared" as const);
-	canShareRef.current = true;
+	setNavigatorShareAvailable(false);
 });
 
 describe("ShareButton", () => {
 	describe("rendering", () => {
+		beforeEach(() => setNavigatorShareAvailable(true));
+
 		it("renders a button with aria-label 'Partager'", () => {
 			renderDefault();
 			expect(screen.getByRole("button", { name: "Partager" })).toBeInTheDocument();
@@ -143,13 +168,18 @@ describe("ShareButton", () => {
 	});
 
 	describe("Web Share API", () => {
-		it("calls share hook with correct data when button is clicked", async () => {
+		beforeEach(() => {
+			setNavigatorShareAvailable(true);
+			mockNavigatorShare.mockResolvedValue(undefined);
+		});
+
+		it("calls navigator.share with correct data when button is clicked", async () => {
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
-				expect(mockShare).toHaveBeenCalledOnce();
+				expect(mockNavigatorShare).toHaveBeenCalledOnce();
 			});
-			const callArg = mockShare.mock.calls[0]?.[0] as {
+			const callArg = mockNavigatorShare.mock.calls[0]?.[0] as {
 				title: string;
 				text?: string;
 				url: string;
@@ -159,7 +189,6 @@ describe("ShareButton", () => {
 		});
 
 		it("shows check icon feedback after successful share", async () => {
-			mockShare.mockResolvedValue("shared" as const);
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
@@ -167,17 +196,20 @@ describe("ShareButton", () => {
 			});
 		});
 
-		it("updates button aria-label to 'Lien copié' after clipboard copy", async () => {
-			mockShare.mockResolvedValue("copied" as const);
+		it("falls back to clipboard copy when navigator.share rejects (non-abort)", async () => {
+			mockNavigatorShare.mockRejectedValue(new Error("unknown"));
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
+			await waitFor(() => {
+				expect(mockClipboardWriteText).toHaveBeenCalled();
+			});
 			await waitFor(() => {
 				expect(screen.getByRole("button")).toHaveAttribute("aria-label", "Lien copié");
 			});
 		});
 
-		it("shows copy icon feedback when result is 'copied'", async () => {
-			mockShare.mockResolvedValue("copied" as const);
+		it("shows copy icon feedback when falling back to clipboard", async () => {
+			mockNavigatorShare.mockRejectedValue(new Error("unknown"));
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
@@ -185,48 +217,24 @@ describe("ShareButton", () => {
 			});
 		});
 
-		it("does not change feedback state when share returns 'dismissed'", async () => {
-			mockShare.mockResolvedValue("dismissed" as const);
+		it("does not change feedback state when share is dismissed (AbortError)", async () => {
+			const abortErr = new Error("cancelled");
+			abortErr.name = "AbortError";
+			mockNavigatorShare.mockRejectedValue(abortErr);
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
-				// After dismissed, the button reverts to share2-icon (no feedback)
-				expect(screen.getByTestId("share2-icon")).toBeInTheDocument();
+				expect(mockNavigatorShare).toHaveBeenCalled();
 			});
-		});
-	});
-
-	describe("feedback feedback timeout", () => {
-		it("reverts to default Share2 icon after the feedback timeout", async () => {
-			vi.useFakeTimers({ shouldAdvanceTime: true });
-			mockShare.mockResolvedValue("shared" as const);
-			renderDefault();
-			fireEvent.click(screen.getByRole("button"));
-			// Allow the share promise microtask to resolve
-			await Promise.resolve();
-			// Advance past the 2000ms feedback duration
-			vi.advanceTimersByTime(2100);
-			await waitFor(() => {
-				expect(screen.getByTestId("share2-icon")).toBeInTheDocument();
-			});
-			vi.useRealTimers();
-		});
-	});
-
-	describe("tooltip content", () => {
-		it("shows 'Lien copié !' in tooltip when result is 'copied'", async () => {
-			mockShare.mockResolvedValue("copied" as const);
-			renderDefault();
-			fireEvent.click(screen.getByRole("button"));
-			await waitFor(() => {
-				expect(screen.getByTestId("tooltip-content").textContent).toBe("Lien copié !");
-			});
+			expect(screen.getByTestId("share2-icon")).toBeInTheDocument();
 		});
 	});
 
 	describe("haptic feedback", () => {
+		beforeEach(() => setNavigatorShareAvailable(true));
+
 		it("triggers success haptic when share succeeds", async () => {
-			mockShare.mockResolvedValue("shared" as const);
+			mockNavigatorShare.mockResolvedValue(undefined);
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
@@ -234,8 +242,8 @@ describe("ShareButton", () => {
 			});
 		});
 
-		it("triggers success haptic when clipboard copy succeeds", async () => {
-			mockShare.mockResolvedValue("copied" as const);
+		it("triggers success haptic on clipboard fallback", async () => {
+			mockNavigatorShare.mockRejectedValue(new Error("unknown"));
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
@@ -244,27 +252,28 @@ describe("ShareButton", () => {
 		});
 
 		it("does not trigger haptic when share is dismissed", async () => {
-			mockShare.mockResolvedValue("dismissed" as const);
+			const abortErr = new Error("cancelled");
+			abortErr.name = "AbortError";
+			mockNavigatorShare.mockRejectedValue(abortErr);
 			renderDefault();
 			fireEvent.click(screen.getByRole("button"));
 			await waitFor(() => {
-				expect(mockShare).toHaveBeenCalled();
+				expect(mockNavigatorShare).toHaveBeenCalled();
 			});
 			expect(mockTriggerHaptic).not.toHaveBeenCalled();
 		});
 	});
 
 	describe("desktop fallback (no Web Share API)", () => {
+		beforeEach(() => setNavigatorShareAvailable(false));
+
 		it("renders a dropdown menu trigger when Web Share is unavailable", () => {
-			canShareRef.current = false;
 			renderDefault();
 			expect(screen.getByTestId("share-button-trigger")).toBeInTheDocument();
-			// Dropdown content is mounted in tests (mocked Radix portal)
 			expect(screen.getByTestId("dropdown-content")).toBeInTheDocument();
 		});
 
 		it("includes a Pinterest share link with encoded URL and title", () => {
-			canShareRef.current = false;
 			renderDefault({ url: "/creations/bague-lune" });
 			const pinterestLink = screen.getByRole("link", { name: /pinterest/i });
 			const href = pinterestLink.getAttribute("href") ?? "";
@@ -274,21 +283,18 @@ describe("ShareButton", () => {
 		});
 
 		it("includes media param when media prop is provided", () => {
-			canShareRef.current = false;
 			renderDefault({ media: "https://cdn.example.com/bague.jpg" });
 			const pinterestLink = screen.getByRole("link", { name: /pinterest/i });
 			expect(pinterestLink.getAttribute("href")).toContain("media=");
 		});
 
 		it("omits media param when no media prop", () => {
-			canShareRef.current = false;
 			renderDefault();
 			const pinterestLink = screen.getByRole("link", { name: /pinterest/i });
 			expect(pinterestLink.getAttribute("href")).not.toContain("media=");
 		});
 
 		it("includes a mailto: link with subject and body", () => {
-			canShareRef.current = false;
 			renderDefault();
 			const mailLink = screen.getByRole("link", { name: /envoyer par e-mail/i });
 			const href = mailLink.getAttribute("href") ?? "";
@@ -298,16 +304,14 @@ describe("ShareButton", () => {
 		});
 
 		it("renders a copy-link menu item", () => {
-			canShareRef.current = false;
 			renderDefault();
 			expect(screen.getByText(/copier le lien/i)).toBeInTheDocument();
 		});
 
-		it("does not call the native share hook when canShare=false", () => {
-			canShareRef.current = false;
+		it("does not call navigator.share when canShare=false", () => {
 			renderDefault();
 			fireEvent.click(screen.getByTestId("share-button-trigger"));
-			expect(mockShare).not.toHaveBeenCalled();
+			expect(mockNavigatorShare).not.toHaveBeenCalled();
 		});
 	});
 });

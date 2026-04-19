@@ -9,7 +9,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/shared/components/ui/select";
-import { useSortSelect } from "@/shared/hooks/use-sort-select";
+import { useUrlParam } from "@/shared/hooks/use-url-param";
 import { cn } from "@/shared/utils/cn";
 import { X } from "lucide-react";
 import { useRef } from "react";
@@ -22,7 +22,7 @@ export function SortSelect({
 	className,
 	maxHeight = 300,
 }: SortSelectProps) {
-	const { value, setSort, clearSort, isPending } = useSortSelect();
+	const { value, update: setSort, clear: clearSort, isPending } = useUrlParam("sortBy");
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
 	const handleClear = (e: React.MouseEvent) => {

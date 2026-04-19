@@ -12,7 +12,7 @@ import {
 import { cn } from "@/shared/utils/cn";
 import { ArrowUpDown, X } from "lucide-react";
 import { useRef } from "react";
-import { useSelectFilter } from "@/shared/hooks/use-select-filter";
+import { useUrlParam } from "@/shared/hooks/use-url-param";
 import type { SelectFilterProps } from "@/shared/types/component.types";
 
 export function SelectFilter({
@@ -24,7 +24,8 @@ export function SelectFilter({
 	maxHeight = 400,
 	noPrefix = false,
 }: SelectFilterProps) {
-	const { value, setFilter, clearFilter, isPending } = useSelectFilter(filterKey, { noPrefix });
+	const paramKey = noPrefix ? filterKey : `filter_${filterKey}`;
+	const { value, update: setFilter, clear: clearFilter, isPending } = useUrlParam(paramKey);
 	const triggerRef = useRef<HTMLButtonElement>(null);
 
 	// Filter out empty-value options (required by Radix SelectItem)

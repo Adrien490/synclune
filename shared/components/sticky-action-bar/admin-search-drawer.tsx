@@ -3,6 +3,7 @@
 import { Clock, Loader2, Search, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition, type FormEvent } from "react";
+import { z } from "zod";
 
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -12,10 +13,42 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/shared/components/ui/drawer";
-import { useAdminRecentSearches } from "@/shared/hooks/use-admin-recent-searches";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { toast } from "@/shared/utils/toast";
+
+const RECENT_SEARCHES_MAX_ITEMS = 5;
+const RECENT_SEARCHES_MAX_TERM_LENGTH = 100;
+const RECENT_SEARCHES_STORAGE_PREFIX = "synclune:admin-recent-searches:";
+
+const recentSearchTermSchema = z.string().trim().min(1).max(RECENT_SEARCHES_MAX_TERM_LENGTH);
+const recentSearchesStorageSchema = z.array(recentSearchTermSchema).max(RECENT_SEARCHES_MAX_ITEMS);
+
+function recentSearchesStorageKey(scope: string): string {
+	return `${RECENT_SEARCHES_STORAGE_PREFIX}${scope}`;
+}
+
+function readRecentSearches(scope: string): string[] {
+	if (typeof window === "undefined") return [];
+	try {
+		const raw = window.localStorage.getItem(recentSearchesStorageKey(scope));
+		if (!raw) return [];
+		const parsed = JSON.parse(raw) as unknown;
+		const result = recentSearchesStorageSchema.safeParse(parsed);
+		return result.success ? result.data : [];
+	} catch {
+		return [];
+	}
+}
+
+function writeRecentSearches(scope: string, searches: string[]): void {
+	if (typeof window === "undefined") return;
+	try {
+		window.localStorage.setItem(recentSearchesStorageKey(scope), JSON.stringify(searches));
+	} catch {
+		// QuotaExceededError, private mode, etc. — silent no-op
+	}
+}
 
 interface AdminSearchDrawerProps {
 	open: boolean;
@@ -56,7 +89,48 @@ export function AdminSearchDrawer({
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const haptic = useHaptic();
-	const { searches, add, remove, clear, restore } = useAdminRecentSearches(scope);
+
+	const [searches, setSearches] = useState<string[]>([]);
+
+	useEffect(() => {
+		setSearches(readRecentSearches(scope));
+	}, [scope]);
+
+	function persistRecents(next: string[]) {
+		setSearches(next);
+		writeRecentSearches(scope, next);
+	}
+
+	function add(term: string) {
+		const parsed = recentSearchTermSchema.safeParse(term.toLowerCase());
+		if (!parsed.success) return;
+		const normalized = parsed.data;
+		setSearches((prev) => {
+			const without = prev.filter((t) => t !== normalized);
+			const next = [normalized, ...without].slice(0, RECENT_SEARCHES_MAX_ITEMS);
+			writeRecentSearches(scope, next);
+			return next;
+		});
+	}
+
+	function remove(term: string) {
+		const normalized = term.trim().toLowerCase();
+		setSearches((prev) => {
+			const next = prev.filter((t) => t !== normalized);
+			writeRecentSearches(scope, next);
+			return next;
+		});
+	}
+
+	function clear() {
+		persistRecents([]);
+	}
+
+	function restore(snapshot: string[]) {
+		const valid = recentSearchesStorageSchema.safeParse(snapshot);
+		if (!valid.success) return;
+		persistRecents(valid.data);
+	}
 
 	const urlSearchValue = searchParams.get("search") ?? "";
 	const [value, setValue] = useState(urlSearchValue);

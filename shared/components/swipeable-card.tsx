@@ -1,11 +1,25 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { cn } from "@/shared/utils/cn";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useSwipeAction, SWIPE_ACTION_THRESHOLD } from "@/shared/hooks/use-swipe-action";
+import { triggerHaptic, useHaptic } from "@/shared/hooks/use-haptic";
+
+/** Default swipe distance (px) to trigger an action */
+const SWIPE_ACTION_THRESHOLD = 80;
+
+/** Ratio of card width used as alternative threshold (whichever is lower) */
+const SWIPE_WIDTH_RATIO = 0.3;
+
+/** Ratio of card width beyond which overswipe auto-triggers the action */
+const OVERSWIPE_RATIO = 0.75;
+
+/** Maximum vertical movement (px) before horizontal tracking is cancelled */
+const SWIPE_VERTICAL_CANCEL_THRESHOLD = 30;
+
+/** Minimum horizontal movement (px) before locking swipe direction */
+const SWIPE_DIRECTION_LOCK_DISTANCE = 5;
 
 interface SwipeActionSlot {
 	/** Icon or label rendered inside the action zone */
@@ -74,6 +88,15 @@ export function applyRubberBand(offset: number, width: number, threshold: number
 }
 
 /**
+ * Computes the effective threshold: min(configuredPx, containerWidth * 30%).
+ * Falls back to the px threshold if the container width is unavailable.
+ */
+function getEffectiveThreshold(pxThreshold: number, containerWidth: number): number {
+	if (containerWidth <= 0) return pxThreshold;
+	return Math.min(pxThreshold, containerWidth * SWIPE_WIDTH_RATIO);
+}
+
+/**
  * Generic swipeable card wrapper for mobile list items.
  *
  * Reveals action zones behind the card on horizontal swipe:
@@ -95,29 +118,6 @@ export function applyRubberBand(offset: number, width: number, threshold: number
  * **Accessibility**: Each swipe action must also have a visible keyboard-accessible
  * equivalent (button) somewhere in the card content — swipe alone is not sufficient
  * per WCAG 2.2 Level AA Success Criterion 2.5.7 (Dragging Movements).
- *
- * **Label text** (iOS Mail style): pass a `<span>` alongside the icon via `children`
- * if a visible label under the icon is desired — `children` accepts any `ReactNode`.
- *
- * @example
- * ```tsx
- * <SwipeableCard
- *   leftAction={{
- *     children: <Trash2 className="size-5 text-destructive-foreground" />,
- *     label: `Supprimer ${item.name}`,
- *     className: "bg-destructive",
- *     onAction: handleDelete,
- *   }}
- * >
- *   <div className="flex items-center justify-between">
- *     <div>Card content</div>
- *     {/* Keyboard-accessible equivalent (required for a11y) *​/}
- *     <button aria-label={`Supprimer ${item.name}`} onClick={handleDelete}>
- *       <Trash2 className="size-4" />
- *     </button>
- *   </div>
- * </SwipeableCard>
- * ```
  */
 export function SwipeableCard({
 	children,
@@ -134,9 +134,8 @@ export function SwipeableCard({
 	const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [announcement, setAnnouncement] = useState("");
 
-	// Hook is the sole source of truth for action haptics (medium/heavy).
-	// This wrapper only handles the confirm guard and the screen-reader announcement.
-	const wrapOnAction = (onAction: () => void, label: string) => () => {
+	// Hook-side effective callbacks (wrap each action with confirm guard + SR announcement).
+	function fireAction(onAction: () => void, label: string) {
 		if (!confirmFiredRef.current) {
 			confirmFiredRef.current = true;
 		}
@@ -149,32 +148,180 @@ export function SwipeableCard({
 			announcementTimerRef.current = null;
 		}, ANNOUNCEMENT_DURATION_MS);
 		onAction();
-	};
+	}
 
-	const {
-		swipeOffset,
-		isSwiping,
-		leftProgress,
-		rightProgress,
-		containerWidth,
-		effectiveLeftThreshold,
-		effectiveRightThreshold,
-	} = useSwipeAction({
-		elementRef: containerRef,
-		enabled,
-		leftAction: leftAction
-			? {
-					onAction: wrapOnAction(leftAction.onAction, leftAction.label),
-					threshold: leftAction.threshold ?? SWIPE_ACTION_THRESHOLD,
-				}
-			: undefined,
-		rightAction: rightAction
-			? {
-					onAction: wrapOnAction(rightAction.onAction, rightAction.label),
-					threshold: rightAction.threshold ?? SWIPE_ACTION_THRESHOLD,
-				}
-			: undefined,
+	// Inlined swipe-action state
+	const [swipeOffset, setSwipeOffset] = useState(0);
+	const [isSwiping, setIsSwiping] = useState(false);
+	const [containerWidth, setContainerWidth] = useState(0);
+
+	const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+	const isTrackingRef = useRef(false);
+	const lockedDirectionRef = useRef<"left" | "right" | null>(null);
+	const swipeOffsetRef = useRef(0);
+	const overswipeFiredRef = useRef(false);
+	const rafIdRef = useRef(0);
+	const containerWidthRef = useRef(0);
+
+	const hasLeft = !!leftAction;
+	const hasRight = !!rightAction;
+	const leftThresholdPx = leftAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
+	const rightThresholdPx = rightAction?.threshold ?? SWIPE_ACTION_THRESHOLD;
+
+	// Stable event callbacks — tier controls which haptic pattern fires.
+	// Source of truth for action haptics (no duplication from callers).
+	const onLeftAction = useEffectEvent((tier: "confirm" | "overswipe" = "confirm") => {
+		triggerHaptic(tier === "overswipe" ? "heavy" : "medium");
+		if (leftAction) fireAction(leftAction.onAction, leftAction.label);
 	});
+	const onRightAction = useEffectEvent((tier: "confirm" | "overswipe" = "confirm") => {
+		triggerHaptic(tier === "overswipe" ? "heavy" : "medium");
+		if (rightAction) fireAction(rightAction.onAction, rightAction.label);
+	});
+
+	// Track container width via ResizeObserver — no per-move getBoundingClientRect.
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el || !enabled || (!hasLeft && !hasRight)) return;
+
+		const initialWidth = el.getBoundingClientRect().width;
+		containerWidthRef.current = initialWidth;
+		setContainerWidth(initialWidth);
+
+		if (typeof ResizeObserver === "undefined") return;
+
+		const ro = new ResizeObserver((entries) => {
+			const entry = entries[0];
+			if (!entry) return;
+			const width = entry.contentRect.width;
+			if (width !== containerWidthRef.current) {
+				containerWidthRef.current = width;
+				setContainerWidth(width);
+			}
+		});
+		ro.observe(el);
+
+		return () => {
+			ro.disconnect();
+		};
+	}, [enabled, hasLeft, hasRight]);
+
+	useEffect(() => {
+		const el = containerRef.current;
+		if (!el || !enabled || (!hasLeft && !hasRight)) return;
+
+		function onTouchStart(e: TouchEvent) {
+			const touch = e.touches[0];
+			if (!touch) return;
+			touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+			isTrackingRef.current = true;
+			lockedDirectionRef.current = null;
+			overswipeFiredRef.current = false;
+			setIsSwiping(true);
+		}
+
+		function onTouchMove(e: TouchEvent) {
+			const touch = e.touches[0];
+			if (!touchStartRef.current || !touch || !isTrackingRef.current) return;
+
+			const deltaX = touch.clientX - touchStartRef.current.x;
+			const deltaY = Math.abs(touch.clientY - touchStartRef.current.y);
+
+			if (deltaY > SWIPE_VERTICAL_CANCEL_THRESHOLD) {
+				isTrackingRef.current = false;
+				lockedDirectionRef.current = null;
+				cancelAnimationFrame(rafIdRef.current);
+				setSwipeOffset(0);
+				return;
+			}
+
+			if (lockedDirectionRef.current === null && Math.abs(deltaX) > SWIPE_DIRECTION_LOCK_DISTANCE) {
+				if (deltaX < 0 && hasLeft) {
+					lockedDirectionRef.current = "left";
+				} else if (deltaX > 0 && hasRight) {
+					lockedDirectionRef.current = "right";
+				} else {
+					isTrackingRef.current = false;
+					return;
+				}
+			}
+
+			let newOffset = 0;
+			if (lockedDirectionRef.current === "left") {
+				newOffset = Math.min(0, deltaX);
+			} else if (lockedDirectionRef.current === "right") {
+				newOffset = Math.max(0, deltaX);
+			}
+
+			const measuredWidth = containerWidthRef.current;
+
+			cancelAnimationFrame(rafIdRef.current);
+			rafIdRef.current = requestAnimationFrame(() => {
+				swipeOffsetRef.current = newOffset;
+				setSwipeOffset(newOffset);
+			});
+
+			if (!overswipeFiredRef.current) {
+				if (measuredWidth > 0 && Math.abs(newOffset) > measuredWidth * OVERSWIPE_RATIO) {
+					overswipeFiredRef.current = true;
+					if (lockedDirectionRef.current === "left") {
+						onLeftAction("overswipe");
+					} else if (lockedDirectionRef.current === "right") {
+						onRightAction("overswipe");
+					}
+				}
+			}
+		}
+
+		function onTouchEnd() {
+			if (!touchStartRef.current) return;
+			touchStartRef.current = null;
+			setIsSwiping(false);
+			cancelAnimationFrame(rafIdRef.current);
+
+			if (isTrackingRef.current && !overswipeFiredRef.current) {
+				const offset = swipeOffsetRef.current;
+				const dir = lockedDirectionRef.current;
+				const width = containerWidthRef.current;
+
+				if (dir === "left") {
+					const threshold = getEffectiveThreshold(leftThresholdPx, width);
+					if (Math.abs(offset) >= threshold) {
+						onLeftAction("confirm");
+					}
+				} else if (dir === "right") {
+					const threshold = getEffectiveThreshold(rightThresholdPx, width);
+					if (offset >= threshold) {
+						onRightAction("confirm");
+					}
+				}
+			}
+
+			isTrackingRef.current = false;
+			lockedDirectionRef.current = null;
+			overswipeFiredRef.current = false;
+			setSwipeOffset(0);
+		}
+
+		el.addEventListener("touchstart", onTouchStart, { passive: true });
+		el.addEventListener("touchmove", onTouchMove, { passive: true });
+		el.addEventListener("touchend", onTouchEnd, { passive: true });
+		el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+		return () => {
+			cancelAnimationFrame(rafIdRef.current);
+			el.removeEventListener("touchstart", onTouchStart);
+			el.removeEventListener("touchmove", onTouchMove);
+			el.removeEventListener("touchend", onTouchEnd);
+			el.removeEventListener("touchcancel", onTouchEnd);
+		};
+	}, [enabled, hasLeft, hasRight, leftThresholdPx, rightThresholdPx]);
+
+	const effectiveLeftThreshold = getEffectiveThreshold(leftThresholdPx, containerWidth);
+	const effectiveRightThreshold = getEffectiveThreshold(rightThresholdPx, containerWidth);
+	const leftProgress =
+		swipeOffset < 0 ? Math.min(1, Math.abs(swipeOffset) / effectiveLeftThreshold) : 0;
+	const rightProgress = swipeOffset > 0 ? Math.min(1, swipeOffset / effectiveRightThreshold) : 0;
 
 	useEffect(() => {
 		const progress = Math.max(leftProgress, rightProgress);
@@ -226,9 +373,7 @@ export function SwipeableCard({
 					aria-label={rightAction.label}
 					style={{
 						opacity: rightProgress,
-						// Progressive saturation: 0.7 → 1.2 synchronized with swipe progress
 						filter: `saturate(${0.7 + rightProgress * 0.5})`,
-						// Exposed as CSS var for the icon wrapper scale/rotate transform
 						["--swipe-progress" as string]: rightProgress,
 					}}
 				>

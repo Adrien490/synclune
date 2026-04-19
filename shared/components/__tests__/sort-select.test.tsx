@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Mocks ──────────────────────────────────────────────────────────
@@ -63,7 +63,6 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-import { useSortSelect } from "@/shared/hooks/use-sort-select";
 import { SortSelect } from "../sort-select";
 import type { SortOption } from "@/shared/types/sort.types";
 
@@ -79,185 +78,6 @@ const mockOptions: SortOption[] = [
 	{ value: "price_asc", label: "Prix croissant" },
 	{ value: "price_desc", label: "Prix décroissant" },
 ];
-
-// ─── Hook Tests ─────────────────────────────────────────────────────
-
-describe("useSortSelect", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockSearchParams = new URLSearchParams();
-	});
-
-	afterEach(() => {
-		cleanup();
-		vi.restoreAllMocks();
-	});
-
-	// ─── Return values ─────────────────────────────────────────────
-
-	describe("return values", () => {
-		it("returns empty string as initial value when no sortBy param", () => {
-			const { result } = renderHook(() => useSortSelect());
-
-			expect(result.current.value).toBe("");
-			expect(result.current.isPending).toBe(false);
-		});
-
-		it("reads sortBy from search params", () => {
-			setSearchParams({ sortBy: "created_at_desc" });
-			const { result } = renderHook(() => useSortSelect());
-
-			expect(result.current.value).toBe("created_at_desc");
-		});
-
-		it("reads sortBy with other params present", () => {
-			setSearchParams({ sortBy: "price_asc", page: "2", filter_status: "active" });
-			const { result } = renderHook(() => useSortSelect());
-
-			expect(result.current.value).toBe("price_asc");
-		});
-	});
-
-	// ─── setSort ───────────────────────────────────────────────────
-
-	describe("setSort", () => {
-		it("pushes URL with sortBy and resets page to 1", () => {
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.setSort("created_at_desc");
-			});
-
-			expect(mockPush).toHaveBeenCalledTimes(1);
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.get("sortBy")).toBe("created_at_desc");
-			expect(params.get("page")).toBe("1");
-		});
-
-		it("preserves other existing search params", () => {
-			setSearchParams({ filter_status: "active", search: "test", page: "3" });
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.setSort("price_asc");
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.get("sortBy")).toBe("price_asc");
-			expect(params.get("filter_status")).toBe("active");
-			expect(params.get("search")).toBe("test");
-			expect(params.get("page")).toBe("1"); // Reset
-		});
-
-		it("with empty string removes sortBy param", () => {
-			setSearchParams({ sortBy: "created_at_desc", page: "2" });
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.setSort("");
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.has("sortBy")).toBe(false);
-			expect(params.get("page")).toBe("1");
-		});
-
-		it("uses scroll: false on router.push", () => {
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.setSort("price_desc");
-			});
-
-			expect(mockPush).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.objectContaining({ scroll: false }),
-			);
-		});
-
-		it("updates optimistic value immediately", () => {
-			const { result } = renderHook(() => useSortSelect());
-
-			expect(result.current.value).toBe("");
-
-			act(() => {
-				result.current.setSort("created_at_desc");
-			});
-
-			// Optimistic value should be updated (in real scenario)
-			// Note: Testing optimistic UI fully requires more complex setup
-			expect(mockPush).toHaveBeenCalled();
-		});
-	});
-
-	// ─── clearSort ─────────────────────────────────────────────────
-
-	describe("clearSort", () => {
-		it("removes sortBy and resets page to 1", () => {
-			setSearchParams({ sortBy: "price_asc", page: "3" });
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.clearSort();
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.has("sortBy")).toBe(false);
-			expect(params.get("page")).toBe("1");
-		});
-
-		it("preserves other search params", () => {
-			setSearchParams({ sortBy: "created_at_desc", filter_status: "active", search: "query" });
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.clearSort();
-			});
-
-			const pushedUrl = mockPush.mock.calls[0]![0] as string;
-			const params = new URLSearchParams(pushedUrl.replace("?", ""));
-
-			expect(params.has("sortBy")).toBe(false);
-			expect(params.get("filter_status")).toBe("active");
-			expect(params.get("search")).toBe("query");
-		});
-
-		it("uses scroll: false on router.push", () => {
-			setSearchParams({ sortBy: "price_desc" });
-			const { result } = renderHook(() => useSortSelect());
-
-			act(() => {
-				result.current.clearSort();
-			});
-
-			expect(mockPush).toHaveBeenCalledWith(
-				expect.any(String),
-				expect.objectContaining({ scroll: false }),
-			);
-		});
-
-		it("sets optimistic value to empty string", () => {
-			setSearchParams({ sortBy: "created_at_desc" });
-			const { result } = renderHook(() => useSortSelect());
-
-			expect(result.current.value).toBe("created_at_desc");
-
-			act(() => {
-				result.current.clearSort();
-			});
-
-			expect(mockPush).toHaveBeenCalled();
-		});
-	});
-});
 
 // ─── Component Tests ────────────────────────────────────────────────
 
@@ -324,7 +144,6 @@ describe("SortSelect", () => {
 		});
 
 		it("has aria-busy attribute on wrapper when pending", () => {
-			// Simulate pending state by triggering a sort change
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
 			const wrapper = screen.getByTestId("select").parentElement;
@@ -332,8 +151,6 @@ describe("SortSelect", () => {
 		});
 
 		it("has data-pending attribute when isPending is true", () => {
-			// Note: Testing pending state fully requires triggering actual transitions
-			// This is a structural test for the attribute presence
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
 			const wrapper = screen.getByTestId("select").parentElement;
@@ -353,7 +170,6 @@ describe("SortSelect", () => {
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
 			const liveRegion = screen.getByRole("status");
-			// When not pending, should be empty
 			expect(liveRegion).toHaveTextContent("");
 		});
 	});
@@ -410,7 +226,6 @@ describe("SortSelect", () => {
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
 			const clearButton = screen.getByTestId("clear-button");
-			// Initial state: isPending is false, so button is not disabled
 			expect(clearButton).not.toHaveAttribute("disabled");
 		});
 	});
@@ -422,7 +237,6 @@ describe("SortSelect", () => {
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
 			const select = screen.getByTestId("select");
-			// Initial state should be enabled (disabled="false" or no attribute)
 			expect(select).toHaveAttribute("data-disabled", "false");
 		});
 
@@ -430,7 +244,6 @@ describe("SortSelect", () => {
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
 			const wrapper = screen.getByTestId("select").parentElement;
-			// Should not have pending styles initially
 			expect(wrapper).not.toHaveClass("opacity-60", "pointer-events-none");
 		});
 	});
@@ -443,7 +256,6 @@ describe("SortSelect", () => {
 
 			const scrollArea = screen.getByTestId("scroll-area");
 			expect(scrollArea).toBeInTheDocument();
-			// Note: Style testing requires checking inline styles, which our mock doesn't preserve
 		});
 
 		it("uses default maxHeight of 300 when not provided", () => {
