@@ -14,15 +14,30 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-vi.mock("motion/react", () => ({
-	useReducedMotion: useReducedMotionMock,
-	useScroll: vi.fn(() => ({ scrollYProgress: 0 })),
-	useTransform: vi.fn(() => 0),
-	useInView: vi.fn(() => true),
-	motion: { div: "div" },
-	m: { div: "div", a: "a" },
-	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-}));
+vi.mock("motion/react", () => {
+	function makeMotionValue(initial = 0) {
+		let value = initial;
+		return {
+			get: () => value,
+			set: (v: number) => {
+				value = v;
+			},
+			on: () => () => {},
+			destroy: () => {},
+		};
+	}
+	return {
+		useReducedMotion: useReducedMotionMock,
+		useScroll: vi.fn(() => ({ scrollYProgress: makeMotionValue(0) })),
+		useTransform: vi.fn(() => makeMotionValue(0)),
+		useMotionValue: vi.fn((initial: number) => makeMotionValue(initial)),
+		useSpring: vi.fn((source: unknown) => source),
+		useInView: vi.fn(() => true),
+		motion: { div: "div" },
+		m: { div: "div", a: "a" },
+		AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	};
+});
 
 vi.mock("next/image", () => ({
 	default: ({
@@ -234,5 +249,61 @@ describe("HeroFloatingImagesInner", () => {
 		// Initial inline default value stays (50%) — handler is skipped under reduced motion
 		expect(firstLink!.style.getPropertyValue("--mx")).toBe("50%");
 		expect(firstLink!.style.getPropertyValue("--my")).toBe("50%");
+	});
+
+	it("attaches a window pointermove listener only when desktop + motion enabled", () => {
+		const addSpy = vi.spyOn(window, "addEventListener");
+		const matchMediaSpy = vi.spyOn(window, "matchMedia").mockImplementation(
+			(query: string) =>
+				({
+					matches: true,
+					media: query,
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					addListener: vi.fn(),
+					removeListener: vi.fn(),
+					onchange: null,
+					dispatchEvent: vi.fn(),
+				}) as unknown as MediaQueryList,
+		);
+
+		const { unmount } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const pointerMoveCalls = addSpy.mock.calls.filter(
+			(call) => (call[0] as string) === "pointermove",
+		);
+		expect(pointerMoveCalls.length).toBe(1);
+
+		unmount();
+		matchMediaSpy.mockRestore();
+		addSpy.mockRestore();
+	});
+
+	it("does not attach window pointermove listener when reduced motion is enabled", () => {
+		useReducedMotionMock.mockReturnValue(true);
+		const addSpy = vi.spyOn(window, "addEventListener");
+
+		render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const pointerMoveCalls = addSpy.mock.calls.filter(
+			(call) => (call[0] as string) === "pointermove",
+		);
+		expect(pointerMoveCalls.length).toBe(0);
+
+		addSpy.mockRestore();
+	});
+
+	it("does not attach window pointermove listener on narrow viewports (matchMedia false)", () => {
+		// Default test setup returns matches: false for all queries — desktop listener stays off
+		const addSpy = vi.spyOn(window, "addEventListener");
+
+		render(<HeroFloatingImagesInner images={makeImages(4)} />);
+
+		const pointerMoveCalls = addSpy.mock.calls.filter(
+			(call) => (call[0] as string) === "pointermove",
+		);
+		expect(pointerMoveCalls.length).toBe(0);
+
+		addSpy.mockRestore();
 	});
 });

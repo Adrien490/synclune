@@ -1,6 +1,6 @@
 "use client";
 
-import { m, useInView, useTransform } from "motion/react";
+import { m, useInView, useSpring, useTransform } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
@@ -9,11 +9,21 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { FLOAT_VARIANTS } from "./float-variants";
 import type { FloatingImageProps } from "./types";
 
+// Pointer-reactive depth: images with higher parallaxSpeed (perceived closer)
+// react more to cursor. Bounded ±4px to ±8px for subtle "floating" feel.
+const POINTER_DEPTH_MIN_PX = 4;
+const POINTER_DEPTH_MAX_PX = 8;
+const POINTER_SPEED_MIN = 45;
+const POINTER_SPEED_MAX = 105;
+const POINTER_SPRING = { stiffness: 120, damping: 20, mass: 0.4 } as const;
+
 export function FloatingImage({
 	image,
 	position,
 	scrollProgress,
 	parallaxOpacity,
+	pointerX,
+	pointerY,
 	shouldReduceMotion,
 	isPriority,
 }: FloatingImageProps) {
@@ -26,6 +36,20 @@ export function FloatingImage({
 		scrollProgress,
 		[0, 1],
 		[0, position.parallaxSpeed * position.parallaxDirection],
+	);
+
+	const depth =
+		POINTER_DEPTH_MIN_PX +
+		((position.parallaxSpeed - POINTER_SPEED_MIN) / (POINTER_SPEED_MAX - POINTER_SPEED_MIN)) *
+			(POINTER_DEPTH_MAX_PX - POINTER_DEPTH_MIN_PX);
+
+	const pointerXOffset = useTransform(pointerX, (v) => v * depth);
+	const pointerYOffset = useTransform(pointerY, (v) => v * depth);
+	const pointerXSpring = useSpring(pointerXOffset, POINTER_SPRING);
+	const pointerYSpring = useSpring(pointerYOffset, POINTER_SPRING);
+	const combinedY = useTransform(
+		[parallaxY, pointerYSpring],
+		(values: number[]) => (values[0] ?? 0) + (values[1] ?? 0),
 	);
 
 	const mode = shouldReduceMotion ? "reduced" : "full";
@@ -52,7 +76,8 @@ export function FloatingImage({
 				shouldReduceMotion
 					? undefined
 					: {
-							y: parallaxY,
+							x: pointerXSpring,
+							y: combinedY,
 							opacity: parallaxOpacity,
 							willChange: isInView ? "transform" : "auto",
 						}

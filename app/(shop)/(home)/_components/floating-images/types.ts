@@ -11,6 +11,8 @@ export interface FloatingImageProps {
 	position: (typeof IMAGE_POSITIONS)[number];
 	scrollProgress: MotionValue<number>;
 	parallaxOpacity: MotionValue<number>;
+	pointerX: MotionValue<number>;
+	pointerY: MotionValue<number>;
 	shouldReduceMotion: boolean | null;
 	isPriority: boolean;
 }
