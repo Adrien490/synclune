@@ -343,9 +343,6 @@ export async function processRefund(
 				});
 
 				if (customerInfo?.email) {
-					const isPartialRefund =
-						refundData.totalRefundedBefore + refundData.refund.amount <
-						refundData.refund.order_total;
 					const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(refundData.refund.order_id));
 
 					sendRefundConfirmationEmail({
@@ -353,9 +350,7 @@ export async function processRefund(
 						orderNumber: refundData.refund.order_number,
 						customerName: customerInfo.name ?? "Client",
 						refundAmount: refundData.refund.amount,
-						originalOrderTotal: refundData.refund.order_total,
 						reason: refundData.refund.reason,
-						isPartialRefund,
 						orderDetailsUrl,
 					}).catch((emailError) => {
 						prisma.orderNote

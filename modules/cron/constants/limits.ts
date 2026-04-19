@@ -20,7 +20,7 @@ export const BATCH_SIZE_SMALL = 10;
 
 /**
  * Medium batch size for mixed operations
- * Used by: sync-async-payments, reconcile-refunds, process-account-deletions
+ * Used by: sync-async-payments, process-account-deletions
  */
 export const BATCH_SIZE_MEDIUM = 25;
 

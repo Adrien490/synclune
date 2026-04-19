@@ -9,7 +9,6 @@ import { AdminMobileBottomBar } from "./_components/admin-mobile-bottom-bar";
 import { AdminMobileHeader } from "./_components/admin-mobile-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminSidebarSkeleton } from "./_components/admin-sidebar-skeleton";
-import { CommandPalette } from "./_components/command-palette";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { Skeleton } from "@/shared/components/ui/skeleton";
@@ -66,7 +65,6 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 				</main>
 				<AdminMobileBottomBar />
 			</SidebarInset>
-			<CommandPalette />
 			<AdminMenuSheet user={user} />
 		</SidebarProvider>
 	);

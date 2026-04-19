@@ -3,7 +3,6 @@
 import { FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { sendReturnConfirmationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
@@ -11,16 +10,13 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
-import { logger } from "@/shared/lib/logger";
 
 import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { markAsReturnedSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
-import { extractCustomerFirstName } from "../utils/customer-name";
 import { canMarkAsReturned } from "../services/order-status-validation.service";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Marque une commande livrée comme retournée
@@ -122,31 +118,6 @@ export async function markAsReturned(
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
-		// Envoyer l'email de confirmation de retour au client
-		let emailSent = false;
-		if (order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(
-				order.customerName,
-				order.shippingFirstName,
-			);
-
-			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
-
-			try {
-				await sendReturnConfirmationEmail({
-					to: order.customerEmail,
-					orderNumber: order.orderNumber,
-					customerName: customerFirstName,
-					orderTotal: order.total,
-					reason: validated.data.reason,
-					orderDetailsUrl,
-				});
-				emailSent = true;
-			} catch (emailError) {
-				logger.error("Échec envoi email", emailError, { action: "mark-as-returned" });
-			}
-		}
-
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -160,15 +131,9 @@ export async function markAsReturned(
 			},
 		});
 
-		const emailMessage = emailSent
-			? " Email envoyé au client."
-			: order.customerEmail
-				? " (Échec envoi email)"
-				: "";
-
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Commande ${order.orderNumber} marquée comme retournée.${emailMessage} Vous pouvez créer un remboursement si nécessaire.`,
+			message: `Commande ${order.orderNumber} marquée comme retournée. Vous pouvez créer un remboursement si nécessaire.`,
 		};
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.MARK_AS_RETURNED_FAILED);

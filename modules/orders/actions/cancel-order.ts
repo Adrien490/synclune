@@ -154,8 +154,8 @@ export async function cancelOrder(
 				await tx.discountUsage.deleteMany({ where: { orderId: id } });
 			}
 
-			// 4. Auto-refund: créer un Refund (status APPROVED) qui sera traité par
-			// le cron reconcile-refunds (appel Stripe asynchrone hors transaction)
+			// 4. Auto-refund: créer un Refund (status APPROVED) à traiter manuellement
+			// par l'admin via processRefund (appel Stripe synchrone hors transaction)
 			let createdRefundId: string | null = null;
 			const wasPaid = found.paymentStatus === PaymentStatus.PAID;
 			if (autoRefund && wasPaid) {
@@ -273,7 +273,7 @@ export async function cancelOrder(
 		}
 
 		const refundMessage = order._autoRefundId
-			? ` Remboursement Stripe planifié (${(order.total / 100).toFixed(2)} €), sera traité par le cron reconcile-refunds.`
+			? ` Remboursement Stripe en attente (${(order.total / 100).toFixed(2)} €), à traiter via la fiche remboursement.`
 			: order._newPaymentStatus === PaymentStatus.REFUNDED
 				? " Statut passé à REFUNDED. Un remboursement Stripe doit être effectué séparément si nécessaire."
 				: "";

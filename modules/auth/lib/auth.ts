@@ -1,9 +1,7 @@
 import {
-	sendPasswordChangedEmail,
 	sendPasswordResetEmail,
 	sendVerificationEmail,
 	sendWelcomeEmail,
-	sendEmailChangeConfirmationEmail,
 } from "@/modules/emails/services/auth-emails";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -53,25 +51,6 @@ export const auth = betterAuth({
 		},
 		changeEmail: {
 			enabled: true,
-			sendChangeEmailConfirmation: async ({
-				user,
-				newEmail,
-				url,
-			}: {
-				user: { email: string };
-				newEmail: string;
-				url: string;
-			}) => {
-				try {
-					await sendEmailChangeConfirmationEmail({
-						to: newEmail,
-						url,
-						currentEmail: user.email,
-					});
-				} catch (error) {
-					logger.error("Failed to send email change confirmation", error, { service: "auth" });
-				}
-			},
 		},
 	},
 	rateLimit: {
@@ -99,22 +78,6 @@ export const auth = betterAuth({
 				});
 			} catch (error) {
 				logger.error("Failed to send password reset email", error, { service: "auth" });
-			}
-		},
-		onPasswordReset: async ({ user }) => {
-			try {
-				const changeDate = new Intl.DateTimeFormat("fr-FR", {
-					dateStyle: "long",
-					timeStyle: "short",
-				}).format(new Date());
-
-				await sendPasswordChangedEmail({
-					to: user.email,
-					userName: user.name,
-					changeDate,
-				});
-			} catch {
-				// Don't block reset if email sending fails
 			}
 		},
 		resetPasswordTokenExpiresIn: AUTH_PASSWORD_CONFIG.resetTokenExpiresIn,

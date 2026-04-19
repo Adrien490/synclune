@@ -14,8 +14,6 @@ const {
 	mockPrisma,
 	mockUpdateTag,
 	mockSanitizeText,
-	mockSendRefundRejectedEmail,
-	mockBuildUrl,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -34,8 +32,6 @@ const {
 	},
 	mockUpdateTag: vi.fn(),
 	mockSanitizeText: vi.fn(),
-	mockSendRefundRejectedEmail: vi.fn(),
-	mockBuildUrl: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -72,19 +68,6 @@ vi.mock("@/shared/lib/sanitize", () => ({
 
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
-}));
-
-vi.mock("@/modules/emails/services/refund-emails", () => ({
-	sendRefundRejectedEmail: mockSendRefundRejectedEmail,
-}));
-
-vi.mock("@/shared/constants/urls", () => ({
-	buildUrl: mockBuildUrl,
-	ROUTES: {
-		ACCOUNT: {
-			ORDER_DETAIL: (id: string) => `/compte/commandes/${id}`,
-		},
-	},
 }));
 
 vi.mock("../../constants/refund.constants", () => ({
@@ -200,9 +183,7 @@ describe("rejectRefund", () => {
 			message: msg,
 		}));
 		mockSanitizeText.mockImplementation((text: string) => text);
-		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
 		mockPrisma.orderNote.create.mockResolvedValue({});
-		mockSendRefundRejectedEmail.mockResolvedValue(undefined);
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -379,89 +360,6 @@ describe("rejectRefund", () => {
 			(tag as string).startsWith("orders-user-"),
 		);
 		expect(userTagCalls).toHaveLength(0);
-	});
-
-	it("should send rejection email to customer with correct data", async () => {
-		mockValidateInput.mockReturnValue({
-			success: true,
-			data: { id: "refund-1", reason: "Délai dépassé" },
-		});
-		mockSanitizeText.mockReturnValue("Délai dépassé");
-		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
-		mockBuildUrl.mockReturnValue("https://synclune.fr/compte/commandes/order-1");
-
-		await rejectRefund(undefined, makeFormData({ reason: "Délai dépassé" }));
-
-		expect(mockSendRefundRejectedEmail).toHaveBeenCalledWith(
-			expect.objectContaining({
-				to: "client@example.com",
-				orderNumber: "SYN-001",
-				customerName: "Marie Dupont",
-				refundAmount: 5000,
-				reason: "Délai dépassé",
-				orderDetailsUrl: "https://synclune.fr/compte/commandes/order-1",
-			}),
-		);
-	});
-
-	it("should use fallback customer name when user has no name", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(
-			makeRefund({
-				order: {
-					id: "order-1",
-					orderNumber: "SYN-001",
-					user: { id: "user-1", email: "client@example.com", name: null },
-				},
-			}),
-		);
-		mockPrisma.refund.update.mockResolvedValue({});
-
-		await rejectRefund(undefined, makeFormData());
-
-		expect(mockSendRefundRejectedEmail).toHaveBeenCalledWith(
-			expect.objectContaining({
-				customerName: "Client",
-			}),
-		);
-	});
-
-	it("should still succeed when email sending fails", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
-		mockSendRefundRejectedEmail.mockRejectedValue(new Error("SMTP error"));
-
-		await rejectRefund(undefined, makeFormData());
-
-		expect(mockSuccess).toHaveBeenCalled();
-	});
-
-	it("should not send email when order user has no email", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(
-			makeRefund({
-				order: {
-					id: "order-1",
-					orderNumber: "SYN-001",
-					user: { id: "user-1", email: null, name: "Marie Dupont" },
-				},
-			}),
-		);
-		mockPrisma.refund.update.mockResolvedValue({});
-
-		await rejectRefund(undefined, makeFormData());
-
-		expect(mockSendRefundRejectedEmail).not.toHaveBeenCalled();
-	});
-
-	it("should not send email when order has no user", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(
-			makeRefund({ order: { id: "order-1", orderNumber: "SYN-001", user: null } }),
-		);
-		mockPrisma.refund.update.mockResolvedValue({});
-
-		await rejectRefund(undefined, makeFormData());
-
-		expect(mockSendRefundRejectedEmail).not.toHaveBeenCalled();
 	});
 
 	it("should return formatted success message with amount and order number", async () => {

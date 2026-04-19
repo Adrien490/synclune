@@ -13,8 +13,6 @@ const {
 	mockError,
 	mockPrisma,
 	mockUpdateTag,
-	mockSendRefundApprovedEmail,
-	mockBuildUrl,
 } = vi.hoisted(() => ({
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -32,8 +30,6 @@ const {
 		},
 	},
 	mockUpdateTag: vi.fn(),
-	mockSendRefundApprovedEmail: vi.fn(),
-	mockBuildUrl: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/require-auth", () => ({
@@ -66,19 +62,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("next/cache", () => ({
 	updateTag: mockUpdateTag,
-}));
-
-vi.mock("@/modules/emails/services/refund-emails", () => ({
-	sendRefundApprovedEmail: mockSendRefundApprovedEmail,
-}));
-
-vi.mock("@/shared/constants/urls", () => ({
-	buildUrl: mockBuildUrl,
-	ROUTES: {
-		ACCOUNT: {
-			ORDER_DETAIL: (id: string) => `/commandes/${id}`,
-		},
-	},
 }));
 
 vi.mock("../../constants/refund.constants", () => ({
@@ -191,7 +174,6 @@ describe("approveRefund", () => {
 			status: "error",
 			message: msg,
 		}));
-		mockBuildUrl.mockImplementation((path: string) => `https://synclune.fr${path}`);
 		mockPrisma.orderNote.create.mockResolvedValue({});
 	});
 
@@ -249,7 +231,6 @@ describe("approveRefund", () => {
 	it("should update PENDING to APPROVED with atomic WHERE", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.update.mockResolvedValue({});
-		mockSendRefundApprovedEmail.mockResolvedValue(undefined);
 
 		await approveRefund(undefined, makeFormData());
 
@@ -262,7 +243,6 @@ describe("approveRefund", () => {
 	it("should invalidate cache tags including userId when present", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.update.mockResolvedValue({});
-		mockSendRefundApprovedEmail.mockResolvedValue(undefined);
 
 		await approveRefund(undefined, makeFormData());
 
@@ -286,59 +266,9 @@ describe("approveRefund", () => {
 		expect(userTagCalls).toHaveLength(0);
 	});
 
-	it("should send refund approved email with correct data", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
-		mockSendRefundApprovedEmail.mockResolvedValue(undefined);
-
-		await approveRefund(undefined, makeFormData());
-
-		expect(mockSendRefundApprovedEmail).toHaveBeenCalledWith(
-			expect.objectContaining({
-				to: "client@example.com",
-				orderNumber: "SYN-001",
-				customerName: "Marie Dupont",
-				refundAmount: 5000,
-				originalOrderTotal: 10000,
-				isPartialRefund: true,
-				reason: "CUSTOMER_REQUEST",
-			}),
-		);
-	});
-
-	it("should still succeed when email fails", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
-		mockPrisma.refund.update.mockResolvedValue({});
-		mockSendRefundApprovedEmail.mockRejectedValue(new Error("SMTP error"));
-
-		await approveRefund(undefined, makeFormData());
-
-		// Action should still succeed
-		expect(mockSuccess).toHaveBeenCalled();
-	});
-
-	it("should not send email when user has no email", async () => {
-		mockPrisma.refund.findUnique.mockResolvedValue(
-			makeRefund({
-				order: {
-					id: "order-1",
-					orderNumber: "SYN-001",
-					total: 10000,
-					user: { id: "user-1", email: null, name: "Client" },
-				},
-			}),
-		);
-		mockPrisma.refund.update.mockResolvedValue({});
-
-		await approveRefund(undefined, makeFormData());
-
-		expect(mockSendRefundApprovedEmail).not.toHaveBeenCalled();
-	});
-
 	it("should include formatted amount in success message", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund({ amount: 7500 }));
 		mockPrisma.refund.update.mockResolvedValue({});
-		mockSendRefundApprovedEmail.mockResolvedValue(undefined);
 
 		await approveRefund(undefined, makeFormData());
 

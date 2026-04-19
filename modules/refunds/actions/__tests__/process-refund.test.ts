@@ -601,21 +601,8 @@ describe("processRefund", () => {
 				orderNumber: "SYN-001",
 				customerName: "Marie Dupont",
 				refundAmount: 5000,
-				originalOrderTotal: 10000,
-				isPartialRefund: true,
 				reason: "CUSTOMER_REQUEST",
 			}),
-		);
-	});
-
-	it("should flag full refund as isPartialRefund=false", async () => {
-		setupSuccessfulRefundFlow(makeRefundRow({ amount: 10000, order_total: 10000 }));
-
-		await processRefund(undefined, makeFormData());
-		await new Promise((r) => setImmediate(r));
-
-		expect(mockSendRefundConfirmationEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ isPartialRefund: false }),
 		);
 	});
 

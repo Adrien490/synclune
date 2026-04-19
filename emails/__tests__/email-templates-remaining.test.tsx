@@ -3,13 +3,9 @@ import { render } from "@react-email/render";
 import { CancelOrderConfirmationEmail } from "../cancel-order-confirmation-email";
 import { DeliveryConfirmationEmail } from "../delivery-confirmation-email";
 import { PaymentFailedEmail } from "../payment-failed-email";
-import { RefundStatusEmail } from "../refund-status-email";
-import { RefundRejectedEmail } from "../refund-rejected-email";
-import { ReturnConfirmationEmail } from "../return-confirmation-email";
+import { RefundConfirmedEmail } from "../refund-confirmed-email";
 import { TrackingUpdateEmail } from "../tracking-update-email";
-import { PasswordChangedEmail } from "../password-changed-email";
 import { AccountDeletionEmail } from "../account-deletion-email";
-import { RevertShippingNotificationEmail } from "../revert-shipping-notification-email";
 import { NewsletterConfirmationEmail } from "../newsletter-confirmation-email";
 import { NewsletterWelcomeEmail } from "../newsletter-welcome-email";
 import { AdminNewOrderEmail } from "../admin-new-order-email";
@@ -155,156 +151,33 @@ describe("PaymentFailedEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// RefundStatusEmail — approved
+// RefundConfirmedEmail
 // ---------------------------------------------------------------------------
 
-describe("RefundStatusEmail (approved)", () => {
+describe("RefundConfirmedEmail", () => {
 	const baseProps = {
-		status: "approved" as const,
 		orderNumber: "CMD-2024-ABCD1234",
 		customerName: "Marie",
 		refundAmount: 8990,
-		originalOrderTotal: 8990,
 		reason: "CUSTOMER_REQUEST",
-		isPartialRefund: false,
 		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
 	};
 
 	it("renders without error", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
+		const html = await render(<RefundConfirmedEmail {...baseProps} />);
 		expect(html).toContain("<!DOCTYPE");
 		expect(html.length).toBeGreaterThan(100);
 	});
 
 	it("contains expected heading", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
-		expect(html).toContain("Remboursement accepté");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
-		expect(html).toContain("CMD-2024-ABCD1234");
-		expect(html).toContain("Marie");
-	});
-
-	it("shows original order total when isPartialRefund is true", async () => {
-		const html = await render(
-			<RefundStatusEmail {...baseProps} refundAmount={4500} isPartialRefund={true} />,
-		);
-		expect(html).toContain("Montant initial");
-	});
-
-	it("does not show original order total when isPartialRefund is false", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
-		expect(html).not.toContain("Montant initial");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// RefundStatusEmail — confirmed
-// ---------------------------------------------------------------------------
-
-describe("RefundStatusEmail (confirmed)", () => {
-	const baseProps = {
-		status: "confirmed" as const,
-		orderNumber: "CMD-2024-ABCD1234",
-		customerName: "Marie",
-		refundAmount: 8990,
-		originalOrderTotal: 8990,
-		reason: "CUSTOMER_REQUEST",
-		isPartialRefund: false,
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
+		const html = await render(<RefundConfirmedEmail {...baseProps} />);
 		expect(html).toContain("Remboursement effectué");
 	});
 
 	it("contains dynamic data", async () => {
-		const html = await render(<RefundStatusEmail {...baseProps} />);
+		const html = await render(<RefundConfirmedEmail {...baseProps} />);
 		expect(html).toContain("CMD-2024-ABCD1234");
 		expect(html).toContain("Marie");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// RefundRejectedEmail
-// ---------------------------------------------------------------------------
-
-describe("RefundRejectedEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-2024-ABCD1234",
-		customerName: "Marie",
-		refundAmount: 8990,
-		reason: "CUSTOMER_REQUEST",
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<RefundRejectedEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<RefundRejectedEmail {...baseProps} />);
-		expect(html).toContain("remboursement refusée");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<RefundRejectedEmail {...baseProps} />);
-		expect(html).toContain("CMD-2024-ABCD1234");
-		expect(html).toContain("Marie");
-	});
-
-	it("shows reason label when reason is provided", async () => {
-		const html = await render(<RefundRejectedEmail {...baseProps} />);
-		expect(html).toContain("Motif");
-	});
-
-	it("does not show reason section when reason is undefined", async () => {
-		const { reason: _, ...propsWithoutReason } = baseProps;
-		const html = await render(<RefundRejectedEmail {...propsWithoutReason} />);
-		expect(html).not.toContain("Motif");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// ReturnConfirmationEmail
-// ---------------------------------------------------------------------------
-
-describe("ReturnConfirmationEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-2024-ABCD1234",
-		customerName: "Marie",
-		orderTotal: 8990,
-		reason: "Colis retourné par le client",
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<ReturnConfirmationEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<ReturnConfirmationEmail {...baseProps} />);
-		expect(html).toContain("Retour enregistré");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<ReturnConfirmationEmail {...baseProps} />);
-		expect(html).toContain("CMD-2024-ABCD1234");
-		expect(html).toContain("Marie");
-		expect(html).toContain("Colis retourné par le client");
 	});
 });
 
@@ -353,42 +226,6 @@ describe("TrackingUpdateEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// PasswordChangedEmail
-// ---------------------------------------------------------------------------
-
-describe("PasswordChangedEmail", () => {
-	const baseProps = {
-		userName: "Marie",
-		changeDate: "15 janvier 2025 à 14:30",
-		resetUrl: "https://synclune.fr/mot-de-passe-oublie",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<PasswordChangedEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<PasswordChangedEmail {...baseProps} />);
-		expect(html).toContain("Mot de passe modifié");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<PasswordChangedEmail {...baseProps} />);
-		expect(html).toContain("Marie");
-		expect(html).toContain("15 janvier 2025 à 14:30");
-		expect(html).toContain("https://synclune.fr/mot-de-passe-oublie");
-	});
-
-	it("contains the security warning", async () => {
-		const html = await render(<PasswordChangedEmail {...baseProps} />);
-		expect(html).toContain("Ce n");
-		expect(html).toContain("était pas vous");
-	});
-});
-
-// ---------------------------------------------------------------------------
 // AccountDeletionEmail
 // ---------------------------------------------------------------------------
 
@@ -418,38 +255,6 @@ describe("AccountDeletionEmail", () => {
 	it("contains legal retention information", async () => {
 		const html = await render(<AccountDeletionEmail {...baseProps} />);
 		expect(html).toContain("Conservation légale");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// RevertShippingNotificationEmail
-// ---------------------------------------------------------------------------
-
-describe("RevertShippingNotificationEmail", () => {
-	const baseProps = {
-		orderNumber: "CMD-2024-ABCD1234",
-		customerName: "Marie",
-		reason: "Erreur d'étiquetage du transporteur",
-		orderDetailsUrl: "https://synclune.fr/compte/commandes/CMD-2024-ABCD1234",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<RevertShippingNotificationEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<RevertShippingNotificationEmail {...baseProps} />);
-		expect(html).toContain("Expédition mise à jour");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<RevertShippingNotificationEmail {...baseProps} />);
-		expect(html).toContain("CMD-2024-ABCD1234");
-		expect(html).toContain("Marie");
-		expect(html).toContain("Erreur d");
-		expect(html).toContain("tiquetage du transporteur");
 	});
 });
 

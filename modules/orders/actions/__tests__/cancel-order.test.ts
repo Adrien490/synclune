@@ -489,7 +489,7 @@ describe("cancelOrder", () => {
 
 			const result = await cancelOrder(undefined, fd);
 
-			expect(result.message).toContain("Remboursement Stripe planifié");
+			expect(result.message).toContain("Remboursement Stripe en attente");
 		});
 	});
 });

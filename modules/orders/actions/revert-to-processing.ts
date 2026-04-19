@@ -3,7 +3,6 @@
 import { OrderStatus, FulfillmentStatus, HistorySource } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { sendRevertShippingNotificationEmail } from "@/modules/emails/services/status-emails";
 import type { ActionState } from "@/shared/types/server-action";
 import { ActionStatus } from "@/shared/types/server-action";
 import { validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
@@ -11,16 +10,13 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { updateTag } from "next/cache";
-import { logger } from "@/shared/lib/logger";
 
 import { logAudit } from "@/shared/lib/audit-log";
 import { ORDER_ERROR_MESSAGES } from "../constants/order.constants";
 import { getOrderInvalidationTags } from "../constants/cache";
 import { revertToProcessingSchema } from "../schemas/order.schemas";
 import { createOrderAuditTx } from "../utils/order-audit";
-import { extractCustomerFirstName } from "../utils/customer-name";
 import { canRevertToProcessing } from "../services/order-status-validation.service";
-import { buildUrl, ROUTES } from "@/shared/constants/urls";
 
 /**
  * Annule l'expédition et remet la commande en préparation
@@ -131,30 +127,6 @@ export async function revertToProcessing(
 		// Invalider les caches (orders list admin + commandes user)
 		getOrderInvalidationTags(order.userId ?? undefined, order.id).forEach((tag) => updateTag(tag));
 
-		// Envoyer l'email de notification au client
-		let emailSent = false;
-		if (order.customerEmail) {
-			const customerFirstName = extractCustomerFirstName(
-				order.customerName,
-				order.shippingFirstName,
-			);
-
-			const orderDetailsUrl = buildUrl(ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber));
-
-			try {
-				await sendRevertShippingNotificationEmail({
-					to: order.customerEmail,
-					orderNumber: order.orderNumber,
-					customerName: customerFirstName,
-					reason: validated.data.reason,
-					orderDetailsUrl,
-				});
-				emailSent = true;
-			} catch (emailError) {
-				logger.error("Échec envoi email", emailError, { action: "revert-to-processing" });
-			}
-		}
-
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -171,15 +143,9 @@ export async function revertToProcessing(
 
 		const trackingInfo = order.trackingNumber ? ` (ancien suivi: ${order.trackingNumber})` : "";
 
-		const emailMessage = emailSent
-			? " Email envoyé au client."
-			: order.customerEmail
-				? " (Échec envoi email)"
-				: "";
-
 		return {
 			status: ActionStatus.SUCCESS,
-			message: `Expédition de la commande ${order.orderNumber} annulée.${trackingInfo}${emailMessage} La commande est de nouveau en préparation.`,
+			message: `Expédition de la commande ${order.orderNumber} annulée.${trackingInfo} La commande est de nouveau en préparation.`,
 		};
 	} catch (e) {
 		return handleActionError(e, ORDER_ERROR_MESSAGES.REVERT_TO_PROCESSING_FAILED);

@@ -17,7 +17,7 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Package, Menu, Search } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, Menu } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 
 interface AdminMobileBottomBarProps {
@@ -28,7 +28,6 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const mounted = useMounted();
 	const pathname = usePathname();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
-	const { open: openCommandPalette } = useDialog("command-palette");
 
 	const isHidden = isMenuOpen;
 
@@ -92,21 +91,6 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 		<BottomBar as="nav" aria-label="Navigation principale administration" isHidden={isHidden}>
 			<div className={bottomBarContainerClass}>
 				{leftTabs.map(renderTab)}
-
-				{/* Onglet Recherche — ouvre la command palette (recherche + actions rapides) */}
-				<button
-					type="button"
-					onClick={() => {
-						triggerHaptic("medium");
-						openCommandPalette();
-					}}
-					aria-label="Ouvrir la recherche"
-					aria-haspopup="dialog"
-					className={bottomBarItemClass}
-				>
-					<Search className={bottomBarIconClass} aria-hidden="true" />
-					<span className={bottomBarLabelClass}>Recherche</span>
-				</button>
 
 				{rightTabs.map(renderTab)}
 

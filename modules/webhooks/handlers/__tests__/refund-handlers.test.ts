@@ -258,7 +258,6 @@ describe("handleChargeRefunded", () => {
 		if (emailTask?.type === "REFUND_CONFIRMATION_EMAIL") {
 			expect(emailTask.data.to).toBe("client@example.com");
 			expect(emailTask.data.orderNumber).toBe("SYN-001");
-			expect(emailTask.data.isPartialRefund).toBe(true);
 		}
 	});
 
@@ -272,20 +271,6 @@ describe("handleChargeRefunded", () => {
 
 		const emailTask = result.tasks?.find((t) => t.type === "REFUND_CONFIRMATION_EMAIL");
 		expect(emailTask).toBeUndefined();
-	});
-
-	it("should determine isPartialRefund correctly (full refund)", async () => {
-		const order = makeOrder();
-		mockPrisma.order.findFirst.mockResolvedValue(order);
-		mockSyncStripeRefunds.mockResolvedValue(undefined);
-		mockUpdateOrderPaymentStatus.mockResolvedValue({ isFullyRefunded: true });
-
-		const result = await handleChargeRefunded(makeCharge({ amount_refunded: 10000 }));
-
-		const emailTask = result.tasks?.find((t) => t.type === "REFUND_CONFIRMATION_EMAIL");
-		if (emailTask?.type === "REFUND_CONFIRMATION_EMAIL") {
-			expect(emailTask.data.isPartialRefund).toBe(false);
-		}
 	});
 });
 

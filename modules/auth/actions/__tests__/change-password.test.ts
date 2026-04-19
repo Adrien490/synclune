@@ -14,7 +14,6 @@ const {
 	mockValidateInput,
 	mockSuccess,
 	mockError,
-	mockSendPasswordChangedEmail,
 } = vi.hoisted(() => ({
 	mockAuth: { api: { changePassword: vi.fn() } },
 	mockHeaders: vi.fn(),
@@ -23,7 +22,6 @@ const {
 	mockValidateInput: vi.fn(),
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
-	mockSendPasswordChangedEmail: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
@@ -38,9 +36,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	success: mockSuccess,
 	error: mockError,
-}));
-vi.mock("@/modules/emails/services/auth-emails", () => ({
-	sendPasswordChangedEmail: mockSendPasswordChangedEmail,
 }));
 vi.mock("../schemas/auth.schemas", () => ({ changePasswordSchema: {} }));
 vi.mock("../../services/hibp.service", () => ({
@@ -86,7 +81,6 @@ describe("changePassword", () => {
 		});
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.changePassword.mockResolvedValue({});
-		mockSendPasswordChangedEmail.mockResolvedValue(undefined);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -142,13 +136,6 @@ describe("changePassword", () => {
 		const result = await changePassword(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockAuth.api.changePassword).toHaveBeenCalled();
-	});
-
-	it("should send password changed email notification", async () => {
-		await changePassword(undefined, validFormData);
-		expect(mockSendPasswordChangedEmail).toHaveBeenCalledWith(
-			expect.objectContaining({ to: "user@example.com" }),
-		);
 	});
 
 	it("should return error for incorrect current password", async () => {

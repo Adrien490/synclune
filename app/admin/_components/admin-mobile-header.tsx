@@ -2,9 +2,8 @@
 
 import { useIsScrolled } from "@/shared/hooks/use-is-scrolled";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { ChevronLeft, Search } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { generateBreadcrumbs } from "./dashboard-breadcrumb";
 
@@ -41,7 +40,6 @@ export function AdminMobileHeader() {
 	const isScrolled = useIsScrolled(20);
 	const breadcrumbs = generateBreadcrumbs(pathname);
 	const pageTitle = breadcrumbs[breadcrumbs.length - 1]?.label ?? "Administration";
-	const { open: openCommandPalette } = useDialog("command-palette");
 
 	const showBack = isDetailRoute(pathname);
 	const parentLabel = breadcrumbs.length >= 2 ? breadcrumbs[breadcrumbs.length - 2]?.label : null;
@@ -99,24 +97,6 @@ export function AdminMobileHeader() {
 				<span role="status" aria-live="polite" aria-atomic="true" className="sr-only">
 					Page actuelle : {pageTitle}
 				</span>
-
-				<button
-					type="button"
-					onClick={() => {
-						triggerHaptic("light");
-						openCommandPalette();
-					}}
-					aria-label="Rechercher"
-					aria-haspopup="dialog"
-					className={cn(
-						"-mr-2.5 flex size-11 shrink-0 items-center justify-center rounded-full",
-						"text-muted-foreground hover:text-foreground active:bg-accent",
-						"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
-						"transition-colors",
-					)}
-				>
-					<Search className="size-5" aria-hidden="true" />
-				</button>
 			</div>
 		</header>
 	);

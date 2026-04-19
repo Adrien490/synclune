@@ -14,9 +14,7 @@ import {
 	createDiscountSchema,
 	updateDiscountSchema,
 	deleteDiscountSchema,
-	bulkDeleteDiscountsSchema,
 	toggleDiscountStatusSchema,
-	bulkToggleDiscountStatusSchema,
 } from "../discount.schemas";
 
 // ============================================================================
@@ -421,44 +419,6 @@ describe("deleteDiscountSchema", () => {
 });
 
 // ============================================================================
-// bulkDeleteDiscountsSchema
-// ============================================================================
-
-describe("bulkDeleteDiscountsSchema", () => {
-	it("should accept an array with at least one valid cuid2", () => {
-		const result = bulkDeleteDiscountsSchema.safeParse({ ids: [VALID_CUID] });
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject an empty ids array", () => {
-		const result = bulkDeleteDiscountsSchema.safeParse({ ids: [] });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject an ids array with more than 100 items", () => {
-		const ids = Array.from({ length: 101 }, () => VALID_CUID);
-		const result = bulkDeleteDiscountsSchema.safeParse({ ids });
-		expect(result.success).toBe(false);
-	});
-
-	it("should accept an ids array of exactly 100 items", () => {
-		const ids = Array.from({ length: 100 }, () => VALID_CUID);
-		const result = bulkDeleteDiscountsSchema.safeParse({ ids });
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject when ids contains an invalid cuid2", () => {
-		const result = bulkDeleteDiscountsSchema.safeParse({ ids: ["not-a-cuid"] });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when ids is missing", () => {
-		const result = bulkDeleteDiscountsSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
 // toggleDiscountStatusSchema
 // ============================================================================
 
@@ -475,52 +435,6 @@ describe("toggleDiscountStatusSchema", () => {
 
 	it("should reject when id is missing", () => {
 		const result = toggleDiscountStatusSchema.safeParse({});
-		expect(result.success).toBe(false);
-	});
-});
-
-// ============================================================================
-// bulkToggleDiscountStatusSchema
-// ============================================================================
-
-describe("bulkToggleDiscountStatusSchema", () => {
-	it("should accept valid ids and isActive true", () => {
-		const result = bulkToggleDiscountStatusSchema.safeParse({
-			ids: [VALID_CUID],
-			isActive: true,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should accept valid ids and isActive false", () => {
-		const result = bulkToggleDiscountStatusSchema.safeParse({
-			ids: [VALID_CUID],
-			isActive: false,
-		});
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject an empty ids array", () => {
-		const result = bulkToggleDiscountStatusSchema.safeParse({
-			ids: [],
-			isActive: true,
-		});
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject ids array exceeding 100 items", () => {
-		const ids = Array.from({ length: 101 }, () => VALID_CUID);
-		const result = bulkToggleDiscountStatusSchema.safeParse({ ids, isActive: true });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when isActive is missing", () => {
-		const result = bulkToggleDiscountStatusSchema.safeParse({ ids: [VALID_CUID] });
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject when ids is missing", () => {
-		const result = bulkToggleDiscountStatusSchema.safeParse({ isActive: true });
 		expect(result.success).toBe(false);
 	});
 });

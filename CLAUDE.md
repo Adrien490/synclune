@@ -298,7 +298,6 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `cleanup-sessions`          | Daily 3:00         |
 | `process-account-deletions` | Daily 5:00         |
 | `sync-async-payments`       | Every 4h           |
-| `reconcile-refunds`         | Daily midnight UTC |
 | `cleanup-newsletter`        | Weekly Sunday 6:00 |
 | `cleanup-webhook-events`    | Monthly 1st 7:00   |
 | `hard-delete-retention`     | Monthly 1st 8:00   |

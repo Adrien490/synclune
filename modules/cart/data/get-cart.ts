@@ -1,4 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 import { getCartSessionId } from "@/modules/cart/lib/cart-session";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { prisma } from "@/shared/lib/prisma";
@@ -32,6 +33,7 @@ export async function getCart(): Promise<GetCartReturn> {
 
 		return await fetchCart(userId, sessionId ?? undefined);
 	} catch (error) {
+		unstable_rethrow(error);
 		logger.error("[getCart] Failed to fetch cart:", error);
 		return null;
 	}

@@ -958,7 +958,7 @@ model Discount {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  @@index([isActive, deletedAt, startsAt, endsAt]) // Cron: process-scheduled-discounts
+  @@index([isActive, deletedAt, startsAt, endsAt]) // Admin list + checkout active check
 }
 
 model DiscountUsage {

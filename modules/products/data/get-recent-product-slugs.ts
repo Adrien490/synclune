@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import { logger } from "@/shared/lib/logger";
 import {
 	RECENT_PRODUCTS_COOKIE_NAME,
@@ -19,6 +20,7 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 	try {
 		cookieStore = await cookies();
 	} catch (error) {
+		unstable_rethrow(error);
 		logger.error("Failed to read cookies for recent product slugs", error, {
 			service: "getRecentProductSlugs",
 		});

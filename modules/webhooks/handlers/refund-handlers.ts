@@ -107,9 +107,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					orderNumber: order.orderNumber,
 					customerName: order.customerName || "Client",
 					refundAmount: totalRefundedOnStripe,
-					originalOrderTotal: order.total,
 					reason: reason.toUpperCase(),
-					isPartialRefund: !isFullyRefunded,
 					orderDetailsUrl,
 				},
 			});
