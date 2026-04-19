@@ -11,11 +11,7 @@
 		},
 		{
 			"path": "/api/cron/reconcile-refunds",
-			"schedule": "0 */6 * * *"
-		},
-		{
-			"path": "/api/cron/process-scheduled-discounts",
-			"schedule": "0 */4 * * *"
+			"schedule": "0 0 * * *"
 		},
 		{
 			"path": "/api/cron/process-account-deletions",

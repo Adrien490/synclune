@@ -21,7 +21,13 @@ import {
 } from "@/modules/cron/constants/limits";
 
 /**
- * Reconciles pending refunds by polling Stripe.
+ * Reconciles pending refunds by polling Stripe (daily safety net).
+ *
+ * Primary path is webhook-driven (charge.refunded + refund.updated handlers).
+ * This cron covers Stripe edge cases NOT registered in webhooks:
+ *  - `charge.dispute.funds_withdrawn` (dispute-initiated refund, no handler)
+ *  - webhook loss during Stripe incidents
+ *  - SAGA failures where Stripe succeeded but local DB update didn't
  *
  * Phase 1: APPROVED refunds with a stripeRefundId - poll Stripe for final status.
  * Phase 2: Stale PENDING/APPROVED refunds without stripeRefundId - alert admin.
