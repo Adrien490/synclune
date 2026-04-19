@@ -296,17 +296,15 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-18 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+15 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
 
 | Job                           | Schedule           |
 | ----------------------------- | ------------------ |
-| `cleanup-pending-orders`      | Every 15min        |
-| `retry-webhooks`              | Every 30min        |
+| `cleanup-pending-orders`      | Every 30min        |
+| `retry-webhooks`              | Hourly             |
 | `retry-failed-emails`         | Hourly             |
-| `auto-reopen-store`           | Hourly             |
 | `cleanup-carts`               | Daily 2:00         |
 | `cleanup-wishlists`           | Daily 2:30         |
-| `abandoned-cart-emails`       | Every 2h           |
 | `cleanup-sessions`            | Daily 3:00         |
 | `process-account-deletions`   | Daily 5:00         |
 | `sync-async-payments`         | Every 4h           |
@@ -314,7 +312,6 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `reconcile-refunds`           | Every 6h           |
 | `cleanup-newsletter`          | Weekly Sunday 6:00 |
 | `review-request-emails`       | Daily 10:00        |
-| `cross-sell-emails`           | Daily 11:00        |
 | `cleanup-webhook-events`      | Monthly 1st 7:00   |
 | `hard-delete-retention`       | Monthly 1st 8:00   |
 | `cleanup-orphan-media`        | Monthly 1st 9:00   |
@@ -369,6 +366,36 @@ const form = useAppForm<MyInput>({
 - **Webhooks**: Stripe signature verification + idempotency + 5-minute anti-replay window
 - **Security headers** (next.config.ts): CSP, HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
 - **Uploads**: UploadThing (server-validated)
+
+## Testing Strategy
+
+### Hiérarchie
+
+| Scope               | Déclencheur                             | Commande                 | Durée cible |
+| ------------------- | --------------------------------------- | ------------------------ | ----------- |
+| **Critical path**   | Pre-commit (si modules touchés) + CI PR | `pnpm test:critical`     | < 10s       |
+| **Full unit suite** | CI PR + push main                       | `pnpm test:coverage`     | ~2 min      |
+| **E2E smoke**       | CI PR + push main                       | `pnpm e2e --grep @smoke` | ~3 min      |
+| **E2E complet**     | CI PR + push main (sharded ×4)          | `pnpm e2e`               | ~15 min     |
+
+### Critical path (5 modules)
+
+Les modules `cart`, `orders`, `payments`, `webhooks`, `auth` sont les flows transactionnels revenus/sécurité. Leurs tests s'exécutent :
+
+- **Pre-commit local** (hook husky) : uniquement si `git diff --cached` contient un fichier sous ces modules — commit instantané sinon.
+- **CI** : job `tests-critical` dédié en parallèle de `quality` pour feedback rapide.
+
+### Ajouter une suite au critical path
+
+1. Étendre le glob du script `test:critical` dans `package.json`.
+2. Étendre le regex du hook `.husky/pre-commit`.
+3. Mettre à jour cette section.
+
+### Conventions de tests
+
+- Fichiers : `<nom>.test.ts(x)` à côté du code ou dans `__tests__/`.
+- Tags E2E : `@smoke` (flow minimal), `@critical` (paiement/auth).
+- Mocks DB : **interdit** sur les tests d'intégration orders/payments (incident historique — divergence mock/prod).
 
 ## Conventions
 
