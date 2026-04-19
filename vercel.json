@@ -22,22 +22,6 @@
 			"schedule": "0 8 1 * *"
 		},
 		{
-			"path": "/api/cron/cleanup-pending-orders",
-			"schedule": "*/30 * * * *"
-		},
-		{
-			"path": "/api/cron/retry-webhooks",
-			"schedule": "0 * * * *"
-		},
-		{
-			"path": "/api/cron/retry-failed-emails",
-			"schedule": "0 * * * *"
-		},
-		{
-			"path": "/api/cron/cleanup-carts",
-			"schedule": "0 2 * * *"
-		},
-		{
 			"path": "/api/cron/cleanup-wishlists",
 			"schedule": "30 2 * * *"
 		},

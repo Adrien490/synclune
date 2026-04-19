@@ -89,9 +89,9 @@ test.describe("API Routes - Endpoints proteges (avec auth admin)", { tag: ["@reg
 test.describe("API Routes - Validation des entrees", { tag: ["@regression"] }, () => {
 	test("les routes cron sans CRON_SECRET retournent 401", async ({ page }) => {
 		const cronRoutes = [
-			"/api/cron/cleanup-carts",
 			"/api/cron/cleanup-sessions",
-			"/api/cron/retry-failed-emails",
+			"/api/cron/cleanup-wishlists",
+			"/api/cron/cleanup-newsletter",
 		];
 
 		for (const route of cronRoutes) {
