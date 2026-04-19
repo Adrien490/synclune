@@ -9,7 +9,6 @@ import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 
 import { SkuMobileItem } from "./sku-mobile-item";
-import { ProductVariantsSelectionToolbar } from "./skus-selection-toolbar";
 
 interface SkusMobileListProps {
 	skusPromise: Promise<GetProductSkusReturn>;
@@ -25,7 +24,6 @@ export function SkusMobileList({
 	hasActiveFilters,
 }: SkusMobileListProps) {
 	const { productSkus, pagination } = use(skusPromise);
-	const skuIds = productSkus.map((sku) => sku.id);
 
 	if (productSkus.length === 0) {
 		return (
@@ -53,8 +51,6 @@ export function SkusMobileList({
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<ProductVariantsSelectionToolbar pageItemIds={skuIds} />
-
 			<ItemGroup aria-label="Variantes" className="gap-2">
 				{productSkus.map((sku) => (
 					<div key={sku.id} role="listitem">

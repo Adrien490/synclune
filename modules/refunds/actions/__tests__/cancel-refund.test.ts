@@ -321,7 +321,7 @@ describe("cancelRefund", () => {
 		);
 	});
 
-	it("should invalidate all 9 cache tags when order has a user", async () => {
+	it("should invalidate all 6 cache tags when order has a user", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.update.mockResolvedValue({});
 
@@ -332,11 +332,8 @@ describe("cancelRefund", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("refund-refund-1");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-refunds-order-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-revenue-chart");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-recent-orders");
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(9);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(6);
 	});
 
 	it("should invalidate user-specific cache tag when order has a user", async () => {

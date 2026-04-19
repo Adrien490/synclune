@@ -34,7 +34,6 @@ function buildUser(overrides: Record<string, unknown> = {}) {
 		newsletterSubscription: null,
 		reviews: [],
 		sessions: [],
-		customizationRequests: [],
 		...overrides,
 	};
 }
@@ -359,37 +358,6 @@ describe("buildUserDataExport", () => {
 			userAgent: "Mozilla/5.0",
 			createdAt: BASE_DATE.toISOString(),
 			expiresAt: LATER_DATE.toISOString(),
-		});
-	});
-
-	// -------------------------------------------------------------------------
-	// Customization requests mapping
-	// -------------------------------------------------------------------------
-
-	it("should map customization requests correctly", async () => {
-		const customizationRequests = [
-			{
-				firstName: "Alice",
-				email: "alice@example.com",
-				phone: "+33612345678",
-				productTypeLabel: "Bague",
-				details: "Gravure initiales A.D.",
-				status: "PENDING",
-				createdAt: BASE_DATE,
-			},
-		];
-		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ customizationRequests }));
-
-		const result = await buildUserDataExport("user_1");
-
-		expect(result!.customizationRequests[0]).toEqual({
-			firstName: "Alice",
-			email: "alice@example.com",
-			phone: "+33612345678",
-			productTypeLabel: "Bague",
-			details: "Gravure initiales A.D.",
-			status: "PENDING",
-			createdAt: BASE_DATE.toISOString(),
 		});
 	});
 

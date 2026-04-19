@@ -149,7 +149,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="/personnalisation">M'écrire</Link>
+									<Link href="mailto:contact@synclune.fr">M'écrire</Link>
 								</Button>
 							</div>
 						</CardContent>

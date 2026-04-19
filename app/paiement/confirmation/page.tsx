@@ -362,7 +362,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 					<div className="mt-8 space-y-2 text-center">
 						<p className="text-muted-foreground text-sm">Une question sur votre commande ?</p>
 						<Button asChild variant="link">
-							<Link href="/personnalisation">Écrivez-moi</Link>
+							<Link href="mailto:contact@synclune.fr">Écrivez-moi</Link>
 						</Button>
 					</div>
 				</div>

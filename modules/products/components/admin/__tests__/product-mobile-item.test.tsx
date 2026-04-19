@@ -5,9 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenDrawer, mockHaptic } = vi.hoisted(() => ({
+const { mockOpenDrawer } = vi.hoisted(() => ({
 	mockOpenDrawer: vi.fn(),
-	mockHaptic: vi.fn(),
 }));
 
 // ============================================================================
@@ -18,35 +17,8 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDrawer }),
 }));
 
-vi.mock("@/shared/hooks/use-haptic", () => ({
-	useHaptic: () => mockHaptic,
-}));
-
 vi.mock("../product-item-drawer", () => ({
 	PRODUCT_ITEM_DRAWER_ID: "product-item-drawer",
-}));
-
-vi.mock("@/shared/components/selectable-mobile-card", () => ({
-	SelectableMobileCard: ({
-		children,
-		ariaLabel,
-		onOpen,
-	}: {
-		children: React.ReactNode;
-		ariaLabel: string;
-		onOpen?: () => void;
-	}) => (
-		<button
-			type="button"
-			onClick={() => {
-				mockHaptic("selection");
-				onOpen?.();
-			}}
-			aria-label={ariaLabel}
-		>
-			{children}
-		</button>
-	),
 }));
 
 vi.mock("next/image", () => ({
@@ -102,7 +74,6 @@ const baseProduct = {
 describe("ProductMobileItem", () => {
 	beforeEach(() => {
 		mockOpenDrawer.mockReset();
-		mockHaptic.mockReset();
 	});
 
 	afterEach(cleanup);
@@ -137,11 +108,10 @@ describe("ProductMobileItem", () => {
 		expect(screen.queryByTestId("product-image")).not.toBeInTheDocument();
 	});
 
-	it("ouvre le drawer avec le bon payload au tap (haptic selection)", () => {
+	it("ouvre le drawer avec le bon payload au tap", () => {
 		render(<ProductMobileItem product={baseProduct} />);
 		fireEvent.click(screen.getByLabelText("Produit Anneau doré"));
 
-		expect(mockHaptic).toHaveBeenCalledWith("selection");
 		expect(mockOpenDrawer).toHaveBeenCalledWith({
 			product: {
 				id: "p-1",

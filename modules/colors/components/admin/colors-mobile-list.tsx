@@ -6,7 +6,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetColorsReturn } from "@/modules/colors/types/color.types";
-import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import { ColorMobileItem } from "./color-mobile-item";
 
@@ -33,8 +32,6 @@ export function ColorsMobileList({ colorsPromise, perPage }: ColorsMobileListPro
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<ColorsSelectionToolbar />
-
 			<ItemGroup aria-label="Couleurs" className="gap-2">
 				{colors.map((color) => (
 					<div key={color.id} role="listitem">

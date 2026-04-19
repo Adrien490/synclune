@@ -12,7 +12,7 @@ import {
 	bottomBarLabelClass,
 } from "@/shared/components/bottom-bar";
 import { ROUTES } from "@/shared/constants/urls";
-import { MapPin, Package, Settings, Sparkles } from "lucide-react";
+import { MapPin, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -21,11 +21,6 @@ const navItems = [
 		href: ROUTES.ACCOUNT.ORDERS,
 		label: "Commandes",
 		icon: Package,
-	},
-	{
-		href: ROUTES.ACCOUNT.CUSTOMIZATIONS,
-		label: "Personnalisations",
-		icon: Sparkles,
 	},
 	{
 		href: ROUTES.ACCOUNT.ADDRESSES,

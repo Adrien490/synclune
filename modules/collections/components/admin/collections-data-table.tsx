@@ -17,8 +17,6 @@ import type { GetCollectionsReturn } from "@/modules/collections/data/get-collec
 import { TriangleAlert, FolderOpen, Star } from "lucide-react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
-import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 import { CreateCollectionButton } from "./create-collection-button";
 
 // Labels et styles pour les badges de statut
@@ -41,13 +39,6 @@ export async function CollectionsDataTable({
 	perPage,
 }: CollectionsDataTableProps) {
 	const { collections, pagination } = await collectionsPromise;
-	const collectionIds = collections.map((collection) => collection.id);
-	const collectionsData = collections.map((collection) => ({
-		id: collection.id,
-		name: collection.name,
-		status: collection.status,
-		productsCount: collection._count.products,
-	}));
 
 	// Helper pour tronquer la description
 	const truncateDescription = (description: string | null, maxLength = 100) => {
@@ -70,7 +61,6 @@ export async function CollectionsDataTable({
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<CollectionsSelectionToolbar collections={collectionsData} />
 				<TableScrollContainer>
 					<Table
 						role="table"
@@ -80,9 +70,6 @@ export async function CollectionsDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={collectionIds} />
-								</TableHead>
 								<TableHead key="name" scope="col" role="columnheader" className="w-[25%]">
 									Nom
 								</TableHead>
@@ -120,9 +107,6 @@ export async function CollectionsDataTable({
 
 								return (
 									<TableRow key={collection.id}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={collection.id} />
-										</TableCell>
 										<TableCell>
 											<div className="flex items-center gap-2 overflow-hidden">
 												<Link

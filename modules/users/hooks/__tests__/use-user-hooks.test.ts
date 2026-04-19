@@ -7,9 +7,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockDeleteUser,
-	mockBulkDeleteUsers,
-	mockBulkRestoreUsers,
-	mockBulkSuspendUsers,
 	mockCancelAccountDeletion,
 	mockExportUserData,
 	mockExportUserDataAdmin,
@@ -18,7 +15,6 @@ const {
 	mockSendPasswordResetAdmin,
 	mockSuspendUser,
 	mockUpdateProfile,
-	mockBulkChangeUserRole,
 	mockChangeUserRole,
 	mockRequestEmailChange,
 	mockDeleteAccount,
@@ -28,9 +24,6 @@ const {
 	mockRouterRefresh,
 } = vi.hoisted(() => ({
 	mockDeleteUser: vi.fn(),
-	mockBulkDeleteUsers: vi.fn(),
-	mockBulkRestoreUsers: vi.fn(),
-	mockBulkSuspendUsers: vi.fn(),
 	mockCancelAccountDeletion: vi.fn(),
 	mockExportUserData: vi.fn(),
 	mockExportUserDataAdmin: vi.fn(),
@@ -39,7 +32,6 @@ const {
 	mockSendPasswordResetAdmin: vi.fn(),
 	mockSuspendUser: vi.fn(),
 	mockUpdateProfile: vi.fn(),
-	mockBulkChangeUserRole: vi.fn(),
 	mockChangeUserRole: vi.fn(),
 	mockRequestEmailChange: vi.fn(),
 	mockDeleteAccount: vi.fn(),
@@ -51,15 +43,6 @@ const {
 
 vi.mock("@/modules/users/actions/admin/delete-user", () => ({
 	deleteUser: mockDeleteUser,
-}));
-vi.mock("@/modules/users/actions/admin/bulk-delete-users", () => ({
-	bulkDeleteUsers: mockBulkDeleteUsers,
-}));
-vi.mock("@/modules/users/actions/admin/bulk-restore-users", () => ({
-	bulkRestoreUsers: mockBulkRestoreUsers,
-}));
-vi.mock("@/modules/users/actions/admin/bulk-suspend-users", () => ({
-	bulkSuspendUsers: mockBulkSuspendUsers,
 }));
 vi.mock("@/modules/users/actions/cancel-account-deletion", () => ({
 	cancelAccountDeletion: mockCancelAccountDeletion,
@@ -84,9 +67,6 @@ vi.mock("@/modules/users/actions/admin/suspend-user", () => ({
 }));
 vi.mock("@/modules/users/actions/update-profile", () => ({
 	updateProfile: mockUpdateProfile,
-}));
-vi.mock("@/modules/users/actions/admin/bulk-change-user-role", () => ({
-	bulkChangeUserRole: mockBulkChangeUserRole,
 }));
 vi.mock("@/modules/users/actions/admin/change-user-role", () => ({
 	changeUserRole: mockChangeUserRole,
@@ -127,9 +107,6 @@ vi.mock("sonner", () => ({
 // ============================================================================
 
 import { useDeleteUser } from "../use-delete-user";
-import { useBulkDeleteUsers } from "../use-bulk-delete-users";
-import { useBulkRestoreUsers } from "../use-bulk-restore-users";
-import { useBulkSuspendUsers } from "../use-bulk-suspend-users";
 import { useCancelAccountDeletion } from "../use-cancel-account-deletion";
 import { useExportUserData } from "../use-export-user-data";
 import { useExportUserDataAdmin } from "../use-export-user-data-admin";
@@ -138,7 +115,6 @@ import { useRestoreUser } from "../use-restore-user";
 import { useSendPasswordResetAdmin } from "../use-send-password-reset-admin";
 import { useSuspendUser } from "../use-suspend-user";
 import { useUpdateProfile } from "../use-update-profile";
-import { useBulkChangeUserRole } from "../use-bulk-change-user-role";
 import { useChangeUserRole } from "../use-change-user-role";
 import { useRequestEmailChange } from "../use-request-email-change";
 import { useDeleteAccount } from "../use-delete-account";
@@ -198,165 +174,6 @@ describe("useDeleteUser", () => {
 
 		await act(async () => {
 			result.current.handle("user-123");
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeleteUsers
-// ============================================================================
-
-describe("useBulkDeleteUsers", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteUsers.mockResolvedValue({ ...SUCCESS, message: "3 utilisateurs supprimés" });
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkDeleteUsers());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteUsers());
-
-		await act(async () => {
-			result.current.handle(["id-1", "id-2"]);
-		});
-
-		const formData = mockBulkDeleteUsers.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["id-1", "id-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteUsers({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("3 utilisateurs supprimés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteUsers.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteUsers({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkRestoreUsers
-// ============================================================================
-
-describe("useBulkRestoreUsers", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkRestoreUsers.mockResolvedValue({ ...SUCCESS, message: "2 utilisateurs restaurés" });
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkRestoreUsers());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkRestoreUsers());
-
-		await act(async () => {
-			result.current.handle(["id-1", "id-2"]);
-		});
-
-		const formData = mockBulkRestoreUsers.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["id-1", "id-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkRestoreUsers({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 utilisateurs restaurés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkRestoreUsers.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkRestoreUsers({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkSuspendUsers
-// ============================================================================
-
-describe("useBulkSuspendUsers", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkSuspendUsers.mockResolvedValue({ ...SUCCESS, message: "2 utilisateurs suspendus" });
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkSuspendUsers());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkSuspendUsers());
-
-		await act(async () => {
-			result.current.handle(["id-1", "id-2"]);
-		});
-
-		const formData = mockBulkSuspendUsers.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["id-1", "id-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkSuspendUsers({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 utilisateurs suspendus");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkSuspendUsers.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkSuspendUsers({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();
@@ -798,60 +615,6 @@ describe("useUpdateProfile", () => {
 
 		await act(async () => {
 			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkChangeUserRole
-// ============================================================================
-
-describe("useBulkChangeUserRole", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkChangeUserRole.mockResolvedValue({ ...SUCCESS, message: "Rôles mis à jour" });
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkChangeUserRole());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON and role to FormData", async () => {
-		const { result } = renderHook(() => useBulkChangeUserRole());
-
-		await act(async () => {
-			result.current.handle(["id-1", "id-2"], "ADMIN");
-		});
-
-		const formData = mockBulkChangeUserRole.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["id-1", "id-2"]));
-		expect(formData.get("role")).toBe("ADMIN");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkChangeUserRole({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"], "USER");
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("Rôles mis à jour");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkChangeUserRole.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkChangeUserRole({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"], "USER");
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

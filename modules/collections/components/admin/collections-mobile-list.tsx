@@ -6,7 +6,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { CollectionsSelectionToolbar } from "./collections-selection-toolbar";
 import { CreateCollectionButton } from "./create-collection-button";
 import { CollectionMobileItem } from "./collection-mobile-item";
 
@@ -17,13 +16,6 @@ interface CollectionsMobileListProps {
 
 export function CollectionsMobileList({ collectionsPromise, perPage }: CollectionsMobileListProps) {
 	const { collections, pagination } = use(collectionsPromise);
-	const collectionsData = collections.map((collection) => ({
-		id: collection.id,
-		name: collection.name,
-		status: collection.status,
-		productsCount: collection._count.products,
-	}));
-	const collectionIds = collections.map((c) => c.id);
 
 	if (collections.length === 0) {
 		return (
@@ -40,8 +32,6 @@ export function CollectionsMobileList({ collectionsPromise, perPage }: Collectio
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<CollectionsSelectionToolbar collections={collectionsData} pageItemIds={collectionIds} />
-
 			<ItemGroup aria-label="Collections" className="gap-2">
 				{collections.map((collection) => (
 					<div key={collection.id} role="listitem">

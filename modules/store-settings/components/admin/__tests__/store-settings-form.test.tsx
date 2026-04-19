@@ -41,6 +41,11 @@ function makeSettings(overrides: Partial<StoreSettingsAdmin> = {}): StoreSetting
 		closedAt: null,
 		closedBy: null,
 		updatedAt: new Date("2026-04-18T00:00:00Z"),
+		announcementMessage: null,
+		announcementLink: null,
+		announcementStartsAt: null,
+		announcementEndsAt: null,
+		announcementIsActive: false,
 		...overrides,
 	};
 }

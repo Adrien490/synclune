@@ -87,11 +87,6 @@ export function useActiveNavbarItem() {
 			return { label: "Les collections", href: ROUTES.SHOP.COLLECTIONS };
 		}
 
-		// Page personnalisation
-		if (pathname === ROUTES.SHOP.CUSTOMIZATION) {
-			return { label: "Personnalisation", href: ROUTES.SHOP.CUSTOMIZATION };
-		}
-
 		// Pages espace client
 		if (
 			pathname.startsWith(ROUTES.ACCOUNT.ORDERS) ||

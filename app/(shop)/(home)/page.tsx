@@ -12,8 +12,6 @@ import { type GlobalReviewStats, SITE_URL } from "@/shared/constants/seo-config"
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
-import { FaqSection } from "@/modules/faq/components/faq-section";
-import { FaqSectionSkeleton } from "@/modules/faq/components/faq-section-skeleton";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
@@ -109,10 +107,6 @@ export default async function Page() {
 				<AtelierSection />
 			</Suspense>
 
-			{/* 6. FAQ - Frequently asked questions with JSON-LD */}
-			<Suspense fallback={<FaqSectionSkeleton />}>
-				<FaqSection />
-			</Suspense>
 			<ScrollToTop />
 		</>
 	);

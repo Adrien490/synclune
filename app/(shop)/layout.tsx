@@ -1,13 +1,13 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
-import { AnnouncementBarWrapper } from "@/modules/announcements/components/announcement-bar-wrapper";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { StoreClosurePage } from "@/modules/store-settings/components/store-closure-page";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AdminDashboardFab } from "@/shared/components/admin-dashboard-fab";
+import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";

@@ -1,17 +1,9 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { AtelierSectionSkeleton } from "./_components/atelier-section";
-import { FaqSectionSkeleton } from "@/modules/faq/components/faq-section-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
-/**
- * Loading state for home page
- * Reproduit EXACTEMENT la structure de la page réelle pour éviter le CLS
- *
- * Structure : Hero → LatestCreations → Collections → Reviews
- *           → AtelierSection → FAQ
- */
 export default function HomeLoading() {
 	return (
 		<div
@@ -22,23 +14,11 @@ export default function HomeLoading() {
 		>
 			<span className="sr-only">Chargement en cours...</span>
 
-			{/* 1. Hero */}
 			<HeroSectionSkeleton />
-
-			{/* 2. Latest Creations */}
 			<LatestCreationsSkeleton productsCount={4} />
-
-			{/* 3. Collections */}
 			<CollectionsSectionSkeleton collectionsCount={6} />
-
-			{/* 4. Reviews */}
 			<ReviewsSectionSkeleton />
-
-			{/* 5. L'Atelier */}
 			<AtelierSectionSkeleton />
-
-			{/* 6. FAQ */}
-			<FaqSectionSkeleton />
 		</div>
 	);
 }

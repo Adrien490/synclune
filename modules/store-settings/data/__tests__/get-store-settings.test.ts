@@ -64,6 +64,11 @@ describe("getStoreSettings", () => {
 				closedAt: true,
 				closedBy: true,
 				updatedAt: true,
+				announcementMessage: true,
+				announcementLink: true,
+				announcementStartsAt: true,
+				announcementEndsAt: true,
+				announcementIsActive: true,
 			},
 		});
 	});

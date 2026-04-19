@@ -9,13 +9,11 @@ import {
 	Palette,
 	Gem,
 	Settings,
-	Sparkles,
 	Mail,
 	MessageSquare,
 	Ticket,
 	FileText,
 	Megaphone,
-	CircleHelp,
 	Store,
 	Users,
 } from "lucide-react";
@@ -127,7 +125,7 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// MARKETING - Newsletter, avis et personnalisations
+		// MARKETING - Newsletter et avis
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Marketing",
@@ -149,13 +147,6 @@ export const navigationData: NavigationData = {
 					icon: MessageSquare,
 				},
 				{
-					id: "customizations",
-					title: "Personnalisations",
-					shortTitle: "Persos",
-					url: "/admin/marketing/personnalisations",
-					icon: Sparkles,
-				},
-				{
 					id: "newsletter",
 					title: "Newsletter",
 					url: "/admin/marketing/newsletter",
@@ -175,12 +166,6 @@ export const navigationData: NavigationData = {
 					title: "Annonces",
 					url: "/admin/contenu/annonces",
 					icon: Megaphone,
-				},
-				{
-					id: "faq",
-					title: "FAQ",
-					url: "/admin/contenu/faq",
-					icon: CircleHelp,
 				},
 			],
 		},

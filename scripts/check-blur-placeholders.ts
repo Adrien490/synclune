@@ -88,9 +88,7 @@ function detectBlurFormat(
 /**
  * Analyse une table de médias
  */
-async function analyzeTable(
-	tableName: "SkuMedia" | "ReviewMedia" | "CustomizationMedia",
-): Promise<TableReport> {
+async function analyzeTable(tableName: "SkuMedia" | "ReviewMedia"): Promise<TableReport> {
 	const stats: BlurStats = {
 		total: 0,
 		withBlur: 0,
@@ -126,30 +124,8 @@ async function analyzeTable(
 				}
 			}
 		}
-	} else if (tableName === "ReviewMedia") {
-		const images = await prisma.reviewMedia.findMany({
-			select: { id: true, url: true, blurDataUrl: true },
-		});
-
-		stats.total = images.length;
-
-		for (const img of images) {
-			if (img.blurDataUrl) {
-				stats.withBlur++;
-				const format = detectBlurFormat(img.blurDataUrl);
-				if (format === "thumbhash") stats.thumbhashCount++;
-				else if (format === "plaiceholder") stats.plaiceholderCount++;
-				else if (format === "color-svg") stats.colorPlaceholderCount++;
-				else stats.unknownFormatCount++;
-			} else {
-				stats.withoutBlur++;
-				if (samplesWithoutBlur.length < 5) {
-					samplesWithoutBlur.push({ id: img.id, url: img.url });
-				}
-			}
-		}
 	} else {
-		const images = await prisma.customizationMedia.findMany({
+		const images = await prisma.reviewMedia.findMany({
 			select: { id: true, url: true, blurDataUrl: true },
 		});
 
@@ -261,9 +237,8 @@ function printReport(reports: TableReport[]): void {
 async function main() {
 	const skuMediaReport = await analyzeTable("SkuMedia");
 	const reviewMediaReport = await analyzeTable("ReviewMedia");
-	const customizationMediaReport = await analyzeTable("CustomizationMedia");
 
-	printReport([skuMediaReport, reviewMediaReport, customizationMediaReport]);
+	printReport([skuMediaReport, reviewMediaReport]);
 }
 
 main()

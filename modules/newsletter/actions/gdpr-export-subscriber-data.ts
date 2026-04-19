@@ -51,22 +51,13 @@ export async function gdprExportSubscriberData(
 			return notFound("Aucun abonné trouvé pour cette adresse email");
 		}
 
-		const auditLogs = await prisma.auditLog.findMany({
-			where: {
-				targetType: "newsletter_subscriber",
-				targetId: subscriber.id,
-			},
-			orderBy: { createdAt: "desc" },
-			take: 1000,
-		});
-
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
 			action: "newsletter.gdprExport",
 			targetType: "newsletter_subscriber",
 			targetId: subscriber.id,
-			metadata: { email: subscriber.email, auditLogsCount: auditLogs.length },
+			metadata: { email: subscriber.email },
 		});
 
 		const exportPayload = {
@@ -90,14 +81,6 @@ export async function gdprExportSubscriberData(
 				updatedAt: subscriber.updatedAt.toISOString(),
 				deletedAt: subscriber.deletedAt?.toISOString() ?? null,
 			},
-			auditLogs: auditLogs.map((log) => ({
-				id: log.id,
-				action: log.action,
-				adminId: log.adminId,
-				adminName: log.adminName,
-				metadata: log.metadata,
-				createdAt: log.createdAt.toISOString(),
-			})),
 		};
 
 		return success(`Export RGPD généré pour ${subscriber.email}`, exportPayload);

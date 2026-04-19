@@ -17,4 +17,18 @@ export interface StoreSettingsAdmin extends StoreStatus {
 	closedAt: Date | null;
 	closedBy: string | null;
 	updatedAt: Date;
+
+	announcementMessage: string | null;
+	announcementLink: string | null;
+	announcementStartsAt: Date | null;
+	announcementEndsAt: Date | null;
+	announcementIsActive: boolean;
+}
+
+/** Public announcement payload for storefront bar */
+export interface PublicAnnouncement {
+	message: string;
+	link: string | null;
+	endsAt: Date | null;
+	hash: string;
 }

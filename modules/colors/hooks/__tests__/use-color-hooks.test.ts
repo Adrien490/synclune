@@ -5,33 +5,19 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockDeleteColor,
-	mockToggleColorStatus,
-	mockBulkDeleteColors,
-	mockBulkToggleColorStatus,
-	mockDuplicateColor,
-	mockRefreshColors,
-} = vi.hoisted(() => ({
-	mockDeleteColor: vi.fn(),
-	mockToggleColorStatus: vi.fn(),
-	mockBulkDeleteColors: vi.fn(),
-	mockBulkToggleColorStatus: vi.fn(),
-	mockDuplicateColor: vi.fn(),
-	mockRefreshColors: vi.fn(),
-}));
+const { mockDeleteColor, mockToggleColorStatus, mockDuplicateColor, mockRefreshColors } =
+	vi.hoisted(() => ({
+		mockDeleteColor: vi.fn(),
+		mockToggleColorStatus: vi.fn(),
+		mockDuplicateColor: vi.fn(),
+		mockRefreshColors: vi.fn(),
+	}));
 
 vi.mock("@/modules/colors/actions/delete-color", () => ({
 	deleteColor: mockDeleteColor,
 }));
 vi.mock("@/modules/colors/actions/toggle-color-status", () => ({
 	toggleColorStatus: mockToggleColorStatus,
-}));
-vi.mock("@/modules/colors/actions/bulk-delete-colors", () => ({
-	bulkDeleteColors: mockBulkDeleteColors,
-}));
-vi.mock("@/modules/colors/actions/bulk-toggle-color-status", () => ({
-	bulkToggleColorStatus: mockBulkToggleColorStatus,
 }));
 vi.mock("@/modules/colors/actions/duplicate-color", () => ({
 	duplicateColor: mockDuplicateColor,
@@ -56,8 +42,6 @@ vi.mock("sonner", () => ({
 
 import { useDeleteColor } from "../use-delete-color";
 import { useToggleColorStatus } from "../use-toggle-color-status";
-import { useBulkDeleteColors } from "../use-bulk-delete-colors";
-import { useBulkToggleColorStatus } from "../use-bulk-toggle-color-status";
 import { useDuplicateColor } from "../use-duplicate-color";
 import { useRefreshColors } from "../use-refresh-colors";
 
@@ -179,124 +163,6 @@ describe("useToggleColorStatus", () => {
 
 		await act(async () => {
 			result.current.toggleStatus("color-123", true);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeleteColors
-// ============================================================================
-
-describe("useBulkDeleteColors", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteColors.mockResolvedValue({ ...SUCCESS, message: "2 couleurs supprimées" });
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkDeleteColors());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteColors());
-
-		await act(async () => {
-			result.current.handle(["id-1", "id-2"]);
-		});
-
-		const formData = mockBulkDeleteColors.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["id-1", "id-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteColors({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 couleurs supprimées");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteColors.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteColors({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkToggleColorStatus
-// ============================================================================
-
-describe("useBulkToggleColorStatus", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkToggleColorStatus.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkToggleColorStatus());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON and isActive=true to FormData", async () => {
-		const { result } = renderHook(() => useBulkToggleColorStatus());
-
-		await act(async () => {
-			result.current.handle(["id-1", "id-2"], true);
-		});
-
-		const formData = mockBulkToggleColorStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["id-1", "id-2"]));
-		expect(formData.get("isActive")).toBe("true");
-	});
-
-	it("handle sends isActive=false when deactivating", async () => {
-		const { result } = renderHook(() => useBulkToggleColorStatus());
-
-		await act(async () => {
-			result.current.handle(["id-1"], false);
-		});
-
-		const formData = mockBulkToggleColorStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("isActive")).toBe("false");
-	});
-
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkToggleColorStatus({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"], true);
-		});
-
-		expect(onSuccess).toHaveBeenCalled();
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkToggleColorStatus.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkToggleColorStatus({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["id-1"], true);
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

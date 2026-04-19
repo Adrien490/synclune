@@ -24,6 +24,11 @@ async function fetchStoreSettings(): Promise<StoreSettingsAdmin | null> {
 				closedAt: true,
 				closedBy: true,
 				updatedAt: true,
+				announcementMessage: true,
+				announcementLink: true,
+				announcementStartsAt: true,
+				announcementEndsAt: true,
+				announcementIsActive: true,
 			},
 		});
 	} catch (err) {

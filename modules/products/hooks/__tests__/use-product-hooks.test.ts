@@ -9,9 +9,6 @@ const {
 	mockDeleteProduct,
 	mockRefreshProducts,
 	mockToggleProductStatus,
-	mockBulkArchiveProducts,
-	mockBulkChangeProductStatus,
-	mockBulkDeleteProducts,
 	mockClearRecentSearches,
 	mockDuplicateProduct,
 	mockUpdateProductCollections,
@@ -21,9 +18,6 @@ const {
 	mockDeleteProduct: vi.fn(),
 	mockRefreshProducts: vi.fn(),
 	mockToggleProductStatus: vi.fn(),
-	mockBulkArchiveProducts: vi.fn(),
-	mockBulkChangeProductStatus: vi.fn(),
-	mockBulkDeleteProducts: vi.fn(),
 	mockClearRecentSearches: vi.fn(),
 	mockDuplicateProduct: vi.fn(),
 	mockUpdateProductCollections: vi.fn(),
@@ -39,15 +33,6 @@ vi.mock("@/modules/products/actions/refresh-products", () => ({
 }));
 vi.mock("@/modules/products/actions/toggle-product-status", () => ({
 	toggleProductStatus: mockToggleProductStatus,
-}));
-vi.mock("@/modules/products/actions/bulk-archive-products", () => ({
-	bulkArchiveProducts: mockBulkArchiveProducts,
-}));
-vi.mock("@/modules/products/actions/bulk-change-product-status", () => ({
-	bulkChangeProductStatus: mockBulkChangeProductStatus,
-}));
-vi.mock("@/modules/products/actions/bulk-delete-products", () => ({
-	bulkDeleteProducts: mockBulkDeleteProducts,
 }));
 vi.mock("@/modules/products/actions/clear-recent-searches", () => ({
 	clearRecentSearches: mockClearRecentSearches,
@@ -93,9 +78,6 @@ vi.mock("@/shared/providers/cookie-consent-store-provider", () => ({
 import { useDeleteProduct } from "../use-delete-product";
 import { useRefreshProducts } from "../use-refresh-products";
 import { useToggleProductStatus } from "../use-toggle-product-status";
-import { useBulkArchiveProducts } from "../use-bulk-archive-products";
-import { useBulkChangeProductStatus } from "../use-bulk-change-product-status";
-import { useBulkDeleteProducts } from "../use-bulk-delete-products";
 import { useClearRecentSearches } from "../use-clear-recent-search";
 import { useDuplicateProduct } from "../use-duplicate-product";
 import { useUpdateProductCollections } from "../use-update-product-collections";
@@ -283,178 +265,6 @@ describe("useToggleProductStatus", () => {
 
 		await act(async () => {
 			result.current.toggleStatus("product-123", "DRAFT");
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkArchiveProducts
-// ============================================================================
-
-describe("useBulkArchiveProducts", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkArchiveProducts.mockResolvedValue({ ...SUCCESS, message: "3 produits archivés" });
-	});
-
-	it("returns state, action, isPending, and archiveProducts", () => {
-		const { result } = renderHook(() => useBulkArchiveProducts());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.archiveProducts).toBe("function");
-	});
-
-	it("archiveProducts sends productIds and targetStatus=ARCHIVED by default", async () => {
-		const { result } = renderHook(() => useBulkArchiveProducts());
-
-		await act(async () => {
-			result.current.archiveProducts(["id-1", "id-2"]);
-		});
-
-		const formData = mockBulkArchiveProducts.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("productIds")).toBe(JSON.stringify(["id-1", "id-2"]));
-		expect(formData.get("targetStatus")).toBe("ARCHIVED");
-	});
-
-	it("archiveProducts sends targetStatus=PUBLIC when specified", async () => {
-		const { result } = renderHook(() => useBulkArchiveProducts());
-
-		await act(async () => {
-			result.current.archiveProducts(["id-1"], "PUBLIC");
-		});
-
-		const formData = mockBulkArchiveProducts.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("targetStatus")).toBe("PUBLIC");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkArchiveProducts({ onSuccess }));
-
-		await act(async () => {
-			result.current.archiveProducts(["id-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("3 produits archivés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkArchiveProducts.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkArchiveProducts({ onSuccess }));
-
-		await act(async () => {
-			result.current.archiveProducts(["id-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkChangeProductStatus
-// ============================================================================
-
-describe("useBulkChangeProductStatus", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkChangeProductStatus.mockResolvedValue({ ...SUCCESS, message: "2 produits mis à jour" });
-	});
-
-	it("returns state, action, isPending, and changeProductStatus", () => {
-		const { result } = renderHook(() => useBulkChangeProductStatus());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.changeProductStatus).toBe("function");
-	});
-
-	it("changeProductStatus sends productIds and targetStatus to FormData", async () => {
-		const { result } = renderHook(() => useBulkChangeProductStatus());
-
-		await act(async () => {
-			result.current.changeProductStatus(["id-1", "id-2"], "PUBLIC");
-		});
-
-		const formData = mockBulkChangeProductStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("productIds")).toBe(JSON.stringify(["id-1", "id-2"]));
-		expect(formData.get("targetStatus")).toBe("PUBLIC");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkChangeProductStatus({ onSuccess }));
-
-		await act(async () => {
-			result.current.changeProductStatus(["id-1"], "DRAFT");
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 produits mis à jour");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkChangeProductStatus.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkChangeProductStatus({ onSuccess }));
-
-		await act(async () => {
-			result.current.changeProductStatus(["id-1"], "PUBLIC");
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeleteProducts
-// ============================================================================
-
-describe("useBulkDeleteProducts", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteProducts.mockResolvedValue({ ...SUCCESS, message: "2 produits supprimés" });
-	});
-
-	it("returns state, action, isPending, and deleteProducts", () => {
-		const { result } = renderHook(() => useBulkDeleteProducts());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.deleteProducts).toBe("function");
-	});
-
-	it("deleteProducts sends productIds as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteProducts());
-
-		await act(async () => {
-			result.current.deleteProducts(["id-1", "id-2"]);
-		});
-
-		const formData = mockBulkDeleteProducts.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("productIds")).toBe(JSON.stringify(["id-1", "id-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteProducts({ onSuccess }));
-
-		await act(async () => {
-			result.current.deleteProducts(["id-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 produits supprimés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteProducts.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteProducts({ onSuccess }));
-
-		await act(async () => {
-			result.current.deleteProducts(["id-1"]);
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

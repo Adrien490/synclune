@@ -14,11 +14,9 @@ const DETAIL_ROUTE_PATTERNS = [
 	/^\/admin\/catalogue\/produits\/[^/]+$/,
 	/^\/admin\/catalogue\/collections\/[^/]+$/,
 	/^\/admin\/clients\/[^/]+$/,
-	/^\/admin\/marketing\/personnalisations\/[^/]+$/,
 	/^\/admin\/marketing\/discounts\/[^/]+$/,
 	/^\/admin\/marketing\/avis\/[^/]+$/,
 	/^\/admin\/contenu\/annonces\/[^/]+$/,
-	/^\/admin\/contenu\/faq\/[^/]+$/,
 	/^\/admin\/configuration\/boutique\/fermer$/,
 ];
 

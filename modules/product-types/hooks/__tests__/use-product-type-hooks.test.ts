@@ -5,21 +5,13 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const {
-	mockRefreshProductTypes,
-	mockDeleteProductType,
-	mockToggleProductTypeStatus,
-	mockBulkActivateProductTypes,
-	mockBulkDeactivateProductTypes,
-	mockBulkDeleteProductTypes,
-} = vi.hoisted(() => ({
-	mockRefreshProductTypes: vi.fn(),
-	mockDeleteProductType: vi.fn(),
-	mockToggleProductTypeStatus: vi.fn(),
-	mockBulkActivateProductTypes: vi.fn(),
-	mockBulkDeactivateProductTypes: vi.fn(),
-	mockBulkDeleteProductTypes: vi.fn(),
-}));
+const { mockRefreshProductTypes, mockDeleteProductType, mockToggleProductTypeStatus } = vi.hoisted(
+	() => ({
+		mockRefreshProductTypes: vi.fn(),
+		mockDeleteProductType: vi.fn(),
+		mockToggleProductTypeStatus: vi.fn(),
+	}),
+);
 
 vi.mock("@/modules/product-types/actions/refresh-product-types", () => ({
 	refreshProductTypes: mockRefreshProductTypes,
@@ -29,15 +21,6 @@ vi.mock("@/modules/product-types/actions/delete-product-type", () => ({
 }));
 vi.mock("@/modules/product-types/actions/toggle-product-type-status", () => ({
 	toggleProductTypeStatus: mockToggleProductTypeStatus,
-}));
-vi.mock("@/modules/product-types/actions/bulk-activate-product-types", () => ({
-	bulkActivateProductTypes: mockBulkActivateProductTypes,
-}));
-vi.mock("@/modules/product-types/actions/bulk-deactivate-product-types", () => ({
-	bulkDeactivateProductTypes: mockBulkDeactivateProductTypes,
-}));
-vi.mock("@/modules/product-types/actions/bulk-delete-product-types", () => ({
-	bulkDeleteProductTypes: mockBulkDeleteProductTypes,
 }));
 
 vi.mock("sonner", () => ({
@@ -57,9 +40,6 @@ vi.mock("sonner", () => ({
 import { useRefreshProductTypes } from "../use-refresh-product-types";
 import { useDeleteProductType } from "../use-delete-product-type";
 import { useToggleProductTypeStatus } from "../use-toggle-product-type-status";
-import { useBulkActivateProductTypes } from "../use-bulk-activate-product-types";
-import { useBulkDeactivateProductTypes } from "../use-bulk-deactivate-product-types";
-import { useBulkDeleteProductTypes } from "../use-bulk-delete-product-types";
 
 // ============================================================================
 // Helpers
@@ -233,162 +213,6 @@ describe("useToggleProductTypeStatus", () => {
 
 		await act(async () => {
 			result.current.toggleStatus("pt-123", true);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkActivateProductTypes
-// ============================================================================
-
-describe("useBulkActivateProductTypes", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkActivateProductTypes.mockResolvedValue({
-			...SUCCESS,
-			message: "2 types de produit activés",
-		});
-	});
-
-	it("returns state, action, isPending, and activateProductTypes", () => {
-		const { result } = renderHook(() => useBulkActivateProductTypes());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.activateProductTypes).toBe("function");
-	});
-
-	it("activateProductTypes sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkActivateProductTypes());
-
-		await act(async () => {
-			result.current.activateProductTypes(["pt-1", "pt-2"]);
-		});
-
-		const formData = mockBulkActivateProductTypes.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["pt-1", "pt-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkActivateProductTypes({ onSuccess }));
-
-		await act(async () => {
-			result.current.activateProductTypes(["pt-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 types de produit activés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkActivateProductTypes.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkActivateProductTypes({ onSuccess }));
-
-		await act(async () => {
-			result.current.activateProductTypes(["pt-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeactivateProductTypes
-// ============================================================================
-
-describe("useBulkDeactivateProductTypes", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeactivateProductTypes.mockResolvedValue({
-			...SUCCESS,
-			message: "2 types de produit désactivés",
-		});
-	});
-
-	it("returns state, action, isPending, and deactivateProductTypes", () => {
-		const { result } = renderHook(() => useBulkDeactivateProductTypes());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.deactivateProductTypes).toBe("function");
-	});
-
-	it("deactivateProductTypes sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeactivateProductTypes());
-
-		await act(async () => {
-			result.current.deactivateProductTypes(["pt-1", "pt-2"]);
-		});
-
-		const formData = mockBulkDeactivateProductTypes.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["pt-1", "pt-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeactivateProductTypes({ onSuccess }));
-
-		await act(async () => {
-			result.current.deactivateProductTypes(["pt-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 types de produit désactivés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeactivateProductTypes.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeactivateProductTypes({ onSuccess }));
-
-		await act(async () => {
-			result.current.deactivateProductTypes(["pt-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeleteProductTypes
-// ============================================================================
-
-describe("useBulkDeleteProductTypes", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteProductTypes.mockResolvedValue({
-			...SUCCESS,
-			message: "2 types de produit supprimés",
-		});
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useBulkDeleteProductTypes());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteProductTypes({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 types de produit supprimés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteProductTypes.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteProductTypes({ onSuccess }));
-
-		await act(async () => {
-			result.current.action(new FormData());
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

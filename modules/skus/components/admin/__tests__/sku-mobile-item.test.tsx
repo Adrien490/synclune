@@ -68,34 +68,6 @@ vi.mock("../sku-item-drawer", () => ({
 	SKU_ITEM_DRAWER_ID: "sku-item-drawer",
 }));
 
-vi.mock("@/shared/components/selectable-mobile-card", () => ({
-	SelectableMobileCard: ({
-		itemId,
-		ariaLabel,
-		onOpen,
-		children,
-	}: {
-		itemId: string;
-		ariaLabel: string;
-		onOpen?: () => void;
-		children: React.ReactNode;
-	}) => (
-		<div
-			role="button"
-			tabIndex={0}
-			aria-label={ariaLabel}
-			data-testid="selectable-mobile-card"
-			data-item-id={itemId}
-			onClick={onOpen}
-			onKeyDown={(e) => {
-				if ((e.key === "Enter" || e.key === " ") && onOpen) onOpen();
-			}}
-		>
-			{children}
-		</div>
-	),
-}));
-
 import { SkuMobileItem } from "../sku-mobile-item";
 
 type Sku = Parameters<typeof SkuMobileItem>[0]["sku"];
@@ -212,10 +184,10 @@ describe("SkuMobileItem", () => {
 		expect(screen.getByTestId("sku-image")).toHaveAttribute("src", "https://example.com/img.jpg");
 	});
 
-	it("opens drawer on tap via SelectableMobileCard onOpen", async () => {
+	it("opens drawer on tap", async () => {
 		const user = userEvent.setup();
 		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" />);
-		await user.click(screen.getByTestId("selectable-mobile-card"));
+		await user.click(screen.getByRole("button", { name: /Variante/i }));
 		expect(mockOpen).toHaveBeenCalledTimes(1);
 	});
 
@@ -227,7 +199,7 @@ describe("SkuMobileItem", () => {
 				productSlug="produit-x"
 			/>,
 		);
-		await user.click(screen.getByTestId("selectable-mobile-card"));
+		await user.click(screen.getByRole("button", { name: /Variante REF-42/i }));
 		const payload = mockOpen.mock.calls[0]?.[0];
 		expect(payload).toMatchObject({
 			sku: {
@@ -239,12 +211,10 @@ describe("SkuMobileItem", () => {
 		});
 	});
 
-	it("wraps content in SelectableMobileCard with correct itemId and aria-label", () => {
+	it("exposes accessible aria-label on the button", () => {
 		render(
 			<SkuMobileItem sku={createSku({ id: "sku-99", sku: "REF-99" })} productSlug="bague-lune" />,
 		);
-		const card = screen.getByTestId("selectable-mobile-card");
-		expect(card).toHaveAttribute("data-item-id", "sku-99");
-		expect(card).toHaveAttribute("aria-label", "Variante REF-99");
+		expect(screen.getByRole("button", { name: "Variante REF-99" })).toBeInTheDocument();
 	});
 });

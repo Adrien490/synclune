@@ -6,7 +6,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetProductTypesReturn } from "@/modules/product-types/types/product-type.types";
-import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";
 import { CreateProductTypeButton } from "./create-product-type-button";
 import { ProductTypeMobileItem } from "./product-type-mobile-item";
 
@@ -20,7 +19,6 @@ export function ProductTypesMobileList({
 	perPage,
 }: ProductTypesMobileListProps) {
 	const { productTypes, pagination } = use(productTypesPromise);
-	const productTypeIds = productTypes.map((pt) => pt.id);
 
 	if (productTypes.length === 0) {
 		return (
@@ -37,8 +35,6 @@ export function ProductTypesMobileList({
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<ProductTypesSelectionToolbar pageItemIds={productTypeIds} />
-
 			<ItemGroup aria-label="Types de bijoux" className="gap-2">
 				{productTypes.map((productType) => (
 					<div key={productType.id} role="listitem">

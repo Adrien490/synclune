@@ -42,16 +42,6 @@ async function globalTeardown() {
 			console.log(`[teardown] Deleted ${deletedSubs.count} test newsletter subscription(s)`);
 		}
 
-		// 3. Delete test customization requests
-		const deletedCustom = await prisma.customizationRequest.deleteMany({
-			where: {
-				AND: [{ email: { startsWith: "e2e-" } }, { email: { endsWith: "@synclune-test.com" } }],
-			},
-		});
-		if (deletedCustom.count > 0) {
-			console.log(`[teardown] Deleted ${deletedCustom.count} test customization request(s)`);
-		}
-
 		// 4. Delete test-created addresses (identified by the test name pattern)
 		const testUser = await prisma.user.findFirst({
 			where: { email: process.env.E2E_USER_EMAIL ?? "user2@synclune.fr" },

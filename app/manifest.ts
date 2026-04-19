@@ -113,13 +113,6 @@ export default function manifest(): MetadataRoute.Manifest {
 				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
 			},
 			{
-				name: "Personnalisation",
-				short_name: "Sur mesure",
-				description: "Créer votre bijou sur mesure",
-				url: "/personnalisation",
-				icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
-			},
-			{
 				name: "Mes Commandes",
 				short_name: "Commandes",
 				description: "Accéder à mes commandes",

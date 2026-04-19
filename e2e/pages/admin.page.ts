@@ -10,7 +10,6 @@ export class AdminPage {
 	readonly discountsLink: Locator;
 	readonly reviewsLink: Locator;
 	readonly newsletterLink: Locator;
-	readonly customizationsLink: Locator;
 	readonly refundsLink: Locator;
 	readonly searchInput: Locator;
 	readonly viewSiteLink: Locator;
@@ -25,7 +24,6 @@ export class AdminPage {
 		this.discountsLink = page.getByRole("link", { name: /Codes promo/i }).first();
 		this.reviewsLink = page.getByRole("link", { name: /Avis clients/i }).first();
 		this.newsletterLink = page.getByRole("link", { name: /Newsletter/i }).first();
-		this.customizationsLink = page.getByRole("link", { name: /Personnalisations/i }).first();
 		this.refundsLink = page.getByRole("link", { name: /Remboursements/i }).first();
 		this.searchInput = page.getByPlaceholder(/Rechercher/i);
 		this.viewSiteLink = page.getByRole("link", { name: /Voir le site/i });
@@ -73,11 +71,6 @@ export class AdminPage {
 
 	async gotoNewsletter() {
 		await this.page.goto("/admin/marketing/newsletter");
-		await this.page.waitForLoadState("domcontentloaded");
-	}
-
-	async gotoCustomizations() {
-		await this.page.goto("/admin/marketing/personnalisations");
 		await this.page.waitForLoadState("domcontentloaded");
 	}
 

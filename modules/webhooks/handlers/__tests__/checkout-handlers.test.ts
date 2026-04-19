@@ -289,7 +289,6 @@ describe("handleCheckoutSessionExpired", () => {
 		if (cacheTask?.type === "INVALIDATE_CACHE") {
 			expect(cacheTask.tags).toContain("orders-list");
 			expect(cacheTask.tags).toContain("admin-badges");
-			expect(cacheTask.tags).toContain("dashboard-kpis");
 			expect(cacheTask.tags).toContain("discounts-list");
 		}
 	});

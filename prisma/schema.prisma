@@ -67,9 +67,6 @@ model User {
   // Avis produits
   reviews ProductReview[]
 
-  // Demandes de personnalisation
-  customizationRequests CustomizationRequest[]
-
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
 }
 
@@ -198,8 +195,7 @@ model ProductType {
   isActive    Boolean @default(true)
   isSystem    Boolean @default(false) // Types systeme non modifiables/supprimables
 
-  products              Product[]
-  customizationRequests CustomizationRequest[]
+  products Product[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -295,8 +291,6 @@ model Product {
 
   skus       ProductSku[]
   orderItems OrderItem[]
-
-  customizationInspirations CustomizationRequest[] @relation("CustomizationInspirations")
 
   // Avis produits
   reviews     ProductReview[]
@@ -1192,176 +1186,6 @@ model WebhookEvent {
 }
 
 // ============================================================================
-// AUDIT LOG (Admin mutations tracking - OWASP A09)
-// ============================================================================
-
-/// Audit trail for admin mutations
-/// Tracks who did what, when, and on which resource
-/// Essential for incident response and accountability
-model AuditLog {
-  id String @id @default(cuid())
-
-  // Admin who performed the action
-  adminId   String @db.VarChar(30)
-  adminName String @db.VarChar(100) // Denormalized for persistence if admin deleted
-
-  // Action performed
-  action     String @db.VarChar(50) // e.g. "product.create", "order.cancel", "refund.process"
-  targetType String @db.VarChar(30) // e.g. "product", "order", "refund", "sku", "discount"
-  targetId   String @db.VarChar(36) // ID of the affected resource (UUIDs = 36 chars)
-
-  // Additional context
-  metadata Json? // Flexible JSON for action-specific data (e.g. previous values, reason)
-
-  createdAt DateTime @default(now())
-
-  @@index([adminId, createdAt(sort: Desc)])
-  @@index([targetType, targetId])
-  @@index([action, createdAt(sort: Desc)])
-  @@index([createdAt(sort: Desc)])
-}
-
-// ============================================================================
-// DEMANDES DE PERSONNALISATION
-// ============================================================================
-
-enum CustomizationRequestStatus {
-  PENDING // Nouvelle demande
-  IN_PROGRESS // En cours de traitement
-  COMPLETED // Realise
-  CANCELLED // Annule
-}
-
-/// Demande de personnalisation de bijou
-/// Stocke les demandes clients pour creations sur mesure
-model CustomizationRequest {
-  id        String    @id @default(cuid())
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete (RGPD - Art. L123-22 Code de Commerce : 10 ans)
-
-  // === UTILISATEUR CONNECTE (optionnel) ===
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // === INFORMATIONS CONTACT ===
-  firstName String  @db.VarChar(50)
-  email     String  @db.VarChar(255)
-  phone     String? @db.VarChar(20)
-
-  // === TYPE DE PRODUIT ===
-  productTypeLabel String       @db.VarChar(100) // Label du type selectionne (snapshot)
-  productType      ProductType? @relation(fields: [productTypeId], references: [id], onDelete: SetNull)
-  productTypeId    String?
-
-  // === INSPIRATIONS (produits existants comme reference) ===
-  inspirationProducts Product[] @relation("CustomizationInspirations")
-
-  // === DESCRIPTION ===
-  details String @db.Text // Description detaillee de la demande
-
-  // === IMAGES D'INSPIRATION ===
-  inspirationMedias CustomizationMedia[]
-
-  // === CONSENTEMENT RGPD ===
-  consentGivenAt DateTime? // Timestamp du consentement RGPD
-
-  // === STATUT ET SUIVI ===
-  status      CustomizationRequestStatus @default(PENDING)
-  adminNotes  String?                    @db.Text // Notes internes admin
-  respondedAt DateTime? // Date de premiere reponse
-
-  @@index([status, createdAt(sort: Desc)])
-  @@index([email])
-  @@index([createdAt(sort: Desc)])
-  @@index([deletedAt, status])
-  @@index([userId, status]) // Page "Mes demandes" : demandes par statut
-}
-
-model CustomizationMedia {
-  id                     String               @id @default(cuid())
-  customizationRequestId String
-  customizationRequest   CustomizationRequest @relation(fields: [customizationRequestId], references: [id], onDelete: Cascade)
-
-  // === MEDIA (Pattern ReviewMedia) ===
-  url         String  @db.VarChar(2048) // URL UploadThing
-  blurDataUrl String? @db.Text // Base64 blur placeholder
-  altText     String? @db.VarChar(255) // Alt text pour accessibilite
-
-  // Position pour ordre d'affichage (0, 1, 2, ...)
-  position Int @default(0)
-
-  // === TIMESTAMPS ===
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // === INDEXES ===
-  @@index([customizationRequestId, position])
-}
-
-// ============================================================================
-// DEAD-LETTER EMAILS
-// ============================================================================
-
-/// Email task qui a echoue lors du traitement post-webhook
-/// Persiste pour retry automatique via cron retry-failed-emails (toutes les heures)
-model FailedEmail {
-  id          String    @id @default(cuid())
-  taskType    String    @db.VarChar(100) // ex: ORDER_CONFIRMATION_EMAIL
-  payload     Json // Donnees necessaires pour relancer l'email
-  attempts    Int       @default(1)
-  lastError   String    @db.Text
-  nextRetryAt DateTime  @default(now())
-  resolvedAt  DateTime? // null = toujours en erreur, set = resolu ou abandonne apres MAX_ATTEMPTS
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([resolvedAt, nextRetryAt]) // retry cron: resolvedAt IS NULL AND nextRetryAt <= now()
-}
-
-
-// ============================================================================
-// CONTENU EDITABLE (CMS)
-// ============================================================================
-
-/// Barre d'annonce promotionnelle affichee au-dessus du navbar
-/// Contenu ephemere sans obligation legale de retention (hard delete)
-/// Contrainte "1 seule active" enforced via partial unique index DB
-/// (cf. migration 20260417_announcement_only_one_active) + transaction applicative
-model AnnouncementBar {
-  id                   String    @id @default(cuid())
-  message              String    @db.VarChar(200)
-  link                 String?   @db.VarChar(2048)
-  linkText             String?   @db.VarChar(50)
-  startsAt             DateTime  @default(now())
-  endsAt               DateTime?
-  isActive             Boolean   @default(false)
-  dismissDurationHours Int       @default(24)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-
-  @@index([isActive, startsAt, endsAt])
-  @@index([createdAt(sort: Desc)])
-}
-
-/// Question/reponse FAQ affichee sur la homepage
-/// Contenu ephemere sans obligation legale de retention (hard delete)
-/// Position pour tri drag-and-drop dans l'admin
-model FaqItem {
-  id        String   @id @default(cuid())
-  question  String   @db.VarChar(300)
-  answer    String   @db.Text
-  links     Json? // [{text: string, href: string}]
-  position  Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([isActive, position])
-}
-
-// ============================================================================
 // PARAMETRES BOUTIQUE
 // ============================================================================
 
@@ -1377,6 +1201,14 @@ model StoreSettings {
   reopensAt        DateTime?
   closedBy         String?   @db.VarChar(255)
   scheduledCloseAt DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+
+  // === ANNOUNCEMENT BAR (replaces dedicated AnnouncementBar table) ===
+  announcementMessage  String?   @db.VarChar(200)
+  announcementLink     String?   @db.VarChar(2048)
+  announcementStartsAt DateTime?
+  announcementEndsAt   DateTime?
+  announcementIsActive Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

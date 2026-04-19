@@ -203,7 +203,6 @@ export type DashboardAlerts = {
 	pendingRefunds: number;
 	activeDisputes: number;
 	lowStockSkus: number;
-	pendingCustomizations: number;
 };
 
 // ============================================================================

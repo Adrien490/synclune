@@ -109,18 +109,7 @@ export async function anonymizeUserInTransaction(
 		},
 	});
 
-	// 10. Anonymize PII in customization requests
-	await tx.customizationRequest.updateMany({
-		where: { userId },
-		data: {
-			firstName: "Anonyme",
-			email: anonymizedEmail,
-			phone: null,
-			details: "Contenu supprimé",
-		},
-	});
-
-	// 11. Anonymize PII denormalized in orders
+	// 10. Anonymize PII denormalized in orders
 	// Legal retention 10 years (Art. L123-22 Code de Commerce):
 	// keep amounts and accounting IDs, anonymize personal data
 	await tx.order.updateMany({

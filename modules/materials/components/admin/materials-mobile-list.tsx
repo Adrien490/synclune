@@ -6,7 +6,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetMaterialsReturn } from "@/modules/materials/types/materials.types";
-import { MaterialsSelectionToolbar } from "@/modules/materials/components/materials-selection-toolbar";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import { MaterialMobileItem } from "./material-mobile-item";
 
@@ -33,8 +32,6 @@ export function MaterialsMobileList({ materialsPromise, perPage }: MaterialsMobi
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<MaterialsSelectionToolbar />
-
 			<ItemGroup aria-label="Materiaux" className="gap-2">
 				{materials.map((material) => (
 					<div key={material.id} role="listitem">

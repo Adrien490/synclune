@@ -8,7 +8,6 @@ import { Button } from "@/shared/components/ui/button";
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import { type GetSubscribersReturn } from "@/modules/newsletter/data/get-subscribers";
-import { NewsletterSelectionToolbar } from "./newsletter-selection-toolbar";
 import { SubscriberMobileItem } from "./subscriber-mobile-item";
 
 interface NewsletterMobileListProps {
@@ -18,7 +17,6 @@ interface NewsletterMobileListProps {
 
 export function NewsletterMobileList({ subscribersPromise, perPage }: NewsletterMobileListProps) {
 	const { subscribers, pagination } = use(subscribersPromise);
-	const subscriberIds = subscribers.map((s) => s.id);
 
 	if (subscribers.length === 0) {
 		return (
@@ -39,8 +37,6 @@ export function NewsletterMobileList({ subscribersPromise, perPage }: Newsletter
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<NewsletterSelectionToolbar pageItemIds={subscriberIds} />
-
 			<ItemGroup aria-label="Abonnes newsletter" className="gap-2">
 				{subscribers.map((subscriber) => (
 					<div key={subscriber.id} role="listitem">

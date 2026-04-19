@@ -25,16 +25,6 @@ const ArchiveProductAlertDialog = dynamic(() =>
 		(mod) => mod.ArchiveProductAlertDialog,
 	),
 );
-const BulkArchiveProductsAlertDialog = dynamic(() =>
-	import("@/modules/products/components/admin/bulk-archive-products-alert-dialog").then(
-		(mod) => mod.BulkArchiveProductsAlertDialog,
-	),
-);
-const BulkDeleteProductsAlertDialog = dynamic(() =>
-	import("@/modules/products/components/admin/bulk-delete-products-alert-dialog").then(
-		(mod) => mod.BulkDeleteProductsAlertDialog,
-	),
-);
 const ChangeProductStatusAlertDialog = dynamic(() =>
 	import("@/modules/products/components/admin/change-product-status-alert-dialog").then(
 		(mod) => mod.ChangeProductStatusAlertDialog,
@@ -132,8 +122,6 @@ export default function ProductsAdminPage({ searchParams }: ProductsAdminPagePro
 
 			{/* Alert Dialogs globaux */}
 			<ArchiveProductAlertDialog />
-			<BulkArchiveProductsAlertDialog />
-			<BulkDeleteProductsAlertDialog />
 			<ChangeProductStatusAlertDialog />
 			<DeleteProductAlertDialog />
 			<DuplicateProductAlertDialog />

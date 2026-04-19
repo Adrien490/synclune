@@ -5,7 +5,6 @@ import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -90,10 +89,11 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	};
 
 	return (
-		<SelectableMobileCard
-			itemId={product.id}
-			ariaLabel={`Produit ${product.title}`}
-			onOpen={handleOpen}
+		<button
+			type="button"
+			aria-label={`Produit ${product.title}`}
+			onClick={handleOpen}
+			className="focus-visible:ring-primary w-full rounded-lg text-left focus-visible:ring-2 focus-visible:outline-none"
 		>
 			<Item
 				variant="outline"
@@ -140,6 +140,6 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</SelectableMobileCard>
+		</button>
 	);
 }

@@ -44,10 +44,9 @@ export function NavbarSkeleton() {
 							<div className="bg-muted/60 size-11 rounded-lg motion-safe:animate-pulse lg:hidden" />
 
 							{/* Navigation desktop skeleton (cachée sur mobile) */}
-							{/* 3 items: Les créations, Les collections, Personnalisation (synchronisé avec getDesktopNavItems) */}
+							{/* 2 items: Les créations, Les collections (synchronisé avec getDesktopNavItems) */}
 							<div className="hidden items-center gap-1 lg:flex">
 								<div className="bg-muted/60 h-9 w-24 rounded-lg motion-safe:animate-pulse" />
-								<div className="bg-muted/60 h-9 w-28 rounded-lg motion-safe:animate-pulse" />
 								<div className="bg-muted/60 h-9 w-28 rounded-lg motion-safe:animate-pulse" />
 							</div>
 						</div>

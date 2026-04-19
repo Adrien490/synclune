@@ -22,7 +22,6 @@ const publicRoutes = [
 	"/produits",
 	"/creations",
 	"/collections",
-	"/personnalisation",
 	"/mentions-legales",
 	"/newsletter",
 	// Pages légales

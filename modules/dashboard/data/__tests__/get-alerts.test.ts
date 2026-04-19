@@ -4,26 +4,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const {
-	mockRefundCount,
-	mockDisputeCount,
-	mockProductSkuCount,
-	mockCustomizationRequestCount,
-	mockCacheDefault,
-} = vi.hoisted(() => ({
-	mockRefundCount: vi.fn(),
-	mockDisputeCount: vi.fn(),
-	mockProductSkuCount: vi.fn(),
-	mockCustomizationRequestCount: vi.fn(),
-	mockCacheDefault: vi.fn(),
-}));
+const { mockRefundCount, mockDisputeCount, mockProductSkuCount, mockCacheDefault } = vi.hoisted(
+	() => ({
+		mockRefundCount: vi.fn(),
+		mockDisputeCount: vi.fn(),
+		mockProductSkuCount: vi.fn(),
+		mockCacheDefault: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		refund: { count: mockRefundCount },
 		dispute: { count: mockDisputeCount },
 		productSku: { count: mockProductSkuCount },
-		customizationRequest: { count: mockCustomizationRequestCount },
 	},
 }));
 
@@ -56,12 +50,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		COMPLETED: "COMPLETED",
 		REJECTED: "REJECTED",
 	},
-	CustomizationRequestStatus: {
-		PENDING: "PENDING",
-		IN_PROGRESS: "IN_PROGRESS",
-		COMPLETED: "COMPLETED",
-		REJECTED: "REJECTED",
-	},
 }));
 
 import { fetchDashboardAlerts } from "../get-alerts";
@@ -76,14 +64,12 @@ describe("fetchDashboardAlerts", () => {
 		mockRefundCount.mockResolvedValue(0);
 		mockDisputeCount.mockResolvedValue(0);
 		mockProductSkuCount.mockResolvedValue(0);
-		mockCustomizationRequestCount.mockResolvedValue(0);
 	});
 
 	it("should return all alert counts", async () => {
 		mockRefundCount.mockResolvedValue(3);
 		mockDisputeCount.mockResolvedValue(1);
 		mockProductSkuCount.mockResolvedValue(5);
-		mockCustomizationRequestCount.mockResolvedValue(2);
 
 		const result = await fetchDashboardAlerts();
 
@@ -91,7 +77,6 @@ describe("fetchDashboardAlerts", () => {
 			pendingRefunds: 3,
 			activeDisputes: 1,
 			lowStockSkus: 5,
-			pendingCustomizations: 2,
 		});
 	});
 
@@ -102,7 +87,6 @@ describe("fetchDashboardAlerts", () => {
 			pendingRefunds: 0,
 			activeDisputes: 0,
 			lowStockSkus: 0,
-			pendingCustomizations: 0,
 		});
 	});
 
@@ -146,6 +130,5 @@ describe("fetchDashboardAlerts", () => {
 		expect(mockRefundCount).toHaveBeenCalledTimes(1);
 		expect(mockDisputeCount).toHaveBeenCalledTimes(1);
 		expect(mockProductSkuCount).toHaveBeenCalledTimes(1);
-		expect(mockCustomizationRequestCount).toHaveBeenCalledTimes(1);
 	});
 });

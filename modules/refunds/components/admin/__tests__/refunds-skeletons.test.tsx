@@ -5,10 +5,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockRefresh, mockIsPending, mockSelectedItems } = vi.hoisted(() => ({
+const { mockRefresh, mockIsPending } = vi.hoisted(() => ({
 	mockRefresh: vi.fn(),
 	mockIsPending: { value: false },
-	mockSelectedItems: { value: [] as string[] },
 }));
 
 vi.mock("@/shared/components/data-table", () => ({
@@ -73,29 +72,11 @@ vi.mock("@/shared/components/refresh-button", () => ({
 	),
 }));
 
-vi.mock("@/shared/contexts/selection-context", () => ({
-	useSelectionContext: () => ({
-		selectedItems: mockSelectedItems.value,
-	}),
-}));
-
-vi.mock("@/shared/components/selection-toolbar", () => ({
-	SelectionToolbar: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="selection-toolbar">{children}</div>
-	),
-}));
-
-vi.mock("../refund-selection-actions", () => ({
-	RefundSelectionActions: () => <div data-testid="refund-selection-actions" />,
-}));
-
 import { RefundsDataTableSkeleton } from "../refunds-data-table-skeleton";
 import { RefreshRefundsButton } from "../refresh-refunds-button";
-import { RefundsSelectionToolbar } from "../refunds-selection-toolbar";
 
 afterEach(() => {
 	cleanup();
-	mockSelectedItems.value = [];
 	mockIsPending.value = false;
 	mockRefresh.mockReset();
 });
@@ -165,47 +146,5 @@ describe("RefreshRefundsButton", () => {
 	it("forwards the className prop to the button", () => {
 		render(<RefreshRefundsButton className="my-custom-class" />);
 		expect(screen.getByTestId("refresh-button")).toHaveClass("my-custom-class");
-	});
-});
-
-// ============================================================================
-// RefundsSelectionToolbar
-// ============================================================================
-
-describe("RefundsSelectionToolbar", () => {
-	it("returns null when no items are selected", () => {
-		mockSelectedItems.value = [];
-		const { container } = render(<RefundsSelectionToolbar />);
-		expect(container.firstChild).toBeNull();
-	});
-
-	it("renders the selection toolbar when items are selected", () => {
-		mockSelectedItems.value = ["refund-1"];
-		render(<RefundsSelectionToolbar />);
-		expect(screen.getByTestId("selection-toolbar")).toBeInTheDocument();
-	});
-
-	it("renders RefundSelectionActions inside the toolbar", () => {
-		mockSelectedItems.value = ["refund-1"];
-		render(<RefundsSelectionToolbar />);
-		expect(screen.getByTestId("refund-selection-actions")).toBeInTheDocument();
-	});
-
-	it("shows singular text for 1 selected item", () => {
-		mockSelectedItems.value = ["refund-1"];
-		render(<RefundsSelectionToolbar />);
-		expect(screen.getByText("1 remboursement sélectionné")).toBeInTheDocument();
-	});
-
-	it("shows plural text for 3 selected items", () => {
-		mockSelectedItems.value = ["refund-1", "refund-2", "refund-3"];
-		render(<RefundsSelectionToolbar />);
-		expect(screen.getByText("3 remboursements sélectionnés")).toBeInTheDocument();
-	});
-
-	it("shows plural text for 2 selected items", () => {
-		mockSelectedItems.value = ["refund-1", "refund-2"];
-		render(<RefundsSelectionToolbar />);
-		expect(screen.getByText("2 remboursements sélectionnés")).toBeInTheDocument();
 	});
 });

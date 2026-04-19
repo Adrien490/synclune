@@ -18,22 +18,6 @@ vi.mock("./subscriber-item-drawer", () => ({
 	SUBSCRIBER_ITEM_DRAWER_ID: "subscriber-item-drawer",
 }));
 
-vi.mock("@/shared/components/selectable-mobile-card", () => ({
-	SelectableMobileCard: ({
-		ariaLabel,
-		onOpen,
-		children,
-	}: {
-		ariaLabel: string;
-		onOpen: () => void;
-		children: React.ReactNode;
-	}) => (
-		<button type="button" aria-label={ariaLabel} onClick={onOpen}>
-			{children}
-		</button>
-	),
-}));
-
 vi.mock("@/shared/components/ui/item", () => ({
 	Item: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ItemContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

@@ -8,8 +8,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockRefreshMaterials,
 	mockToggleMaterialStatus,
-	mockBulkDeleteMaterials,
-	mockBulkToggleMaterialStatus,
 	mockCreateMaterial,
 	mockDuplicateMaterial,
 	mockUpdateMaterial,
@@ -17,8 +15,6 @@ const {
 } = vi.hoisted(() => ({
 	mockRefreshMaterials: vi.fn(),
 	mockToggleMaterialStatus: vi.fn(),
-	mockBulkDeleteMaterials: vi.fn(),
-	mockBulkToggleMaterialStatus: vi.fn(),
 	mockCreateMaterial: vi.fn(),
 	mockDuplicateMaterial: vi.fn(),
 	mockUpdateMaterial: vi.fn(),
@@ -30,12 +26,6 @@ vi.mock("@/modules/materials/actions/refresh-materials", () => ({
 }));
 vi.mock("@/modules/materials/actions/toggle-material-status", () => ({
 	toggleMaterialStatus: mockToggleMaterialStatus,
-}));
-vi.mock("@/modules/materials/actions/bulk-delete-materials", () => ({
-	bulkDeleteMaterials: mockBulkDeleteMaterials,
-}));
-vi.mock("@/modules/materials/actions/bulk-toggle-material-status", () => ({
-	bulkToggleMaterialStatus: mockBulkToggleMaterialStatus,
 }));
 vi.mock("@/modules/materials/actions/create-material", () => ({
 	createMaterial: mockCreateMaterial,
@@ -66,8 +56,6 @@ vi.mock("sonner", () => ({
 
 import { useRefreshMaterials } from "../use-refresh-materials";
 import { useToggleMaterialStatus } from "../use-toggle-material-status";
-import { useBulkDeleteMaterials } from "../use-bulk-delete-materials";
-import { useBulkToggleMaterialStatus } from "../use-bulk-toggle-material-status";
 import { useCreateMaterial } from "../use-create-material";
 import { useDuplicateMaterial } from "../use-duplicate-material";
 import { useUpdateMaterial } from "../use-update-material";
@@ -202,128 +190,6 @@ describe("useToggleMaterialStatus", () => {
 
 		await act(async () => {
 			result.current.toggleStatus("mat-123", true);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeleteMaterials
-// ============================================================================
-
-describe("useBulkDeleteMaterials", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteMaterials.mockResolvedValue({ ...SUCCESS, message: "2 matériaux supprimés" });
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkDeleteMaterials());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteMaterials());
-
-		await act(async () => {
-			result.current.handle(["mat-1", "mat-2"]);
-		});
-
-		const formData = mockBulkDeleteMaterials.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["mat-1", "mat-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteMaterials({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["mat-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 matériaux supprimés");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteMaterials.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteMaterials({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["mat-1"]);
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkToggleMaterialStatus
-// ============================================================================
-
-describe("useBulkToggleMaterialStatus", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkToggleMaterialStatus.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkToggleMaterialStatus());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON and isActive=true to FormData", async () => {
-		const { result } = renderHook(() => useBulkToggleMaterialStatus());
-
-		await act(async () => {
-			result.current.handle(["mat-1", "mat-2"], true);
-		});
-
-		const formData = mockBulkToggleMaterialStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["mat-1", "mat-2"]));
-		expect(formData.get("isActive")).toBe("true");
-	});
-
-	it("handle sends isActive=false when deactivating", async () => {
-		const { result } = renderHook(() => useBulkToggleMaterialStatus());
-
-		await act(async () => {
-			result.current.handle(["mat-1"], false);
-		});
-
-		const formData = mockBulkToggleMaterialStatus.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("isActive")).toBe("false");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		mockBulkToggleMaterialStatus.mockResolvedValue({
-			...SUCCESS,
-			message: "2 matériaux mis à jour",
-		});
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkToggleMaterialStatus({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["mat-1"], true);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 matériaux mis à jour");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkToggleMaterialStatus.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkToggleMaterialStatus({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["mat-1"], true);
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

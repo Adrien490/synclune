@@ -530,8 +530,6 @@ describe("createRefund", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith(`order-refunds-${VALID_CUID}`);
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-revenue-chart");
 	});
 
 	it("returns success with formatted amount and refundId", async () => {

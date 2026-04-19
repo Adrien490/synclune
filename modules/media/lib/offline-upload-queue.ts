@@ -11,7 +11,7 @@
  *     file: Blob
  *     fileName: string
  *     mediaType: "IMAGE" | "VIDEO"
- *     endpoint: "catalogMedia" | "customizationMedia" | "reviewMedia"
+ *     endpoint: "catalogMedia" | "reviewMedia"
  *     queuedAt: number (epoch ms)
  *     contextKey?: string (caller-supplied routing key to replay in the right surface)
  *   }
@@ -26,7 +26,7 @@ const STORE_NAME = "pending";
 
 export const OFFLINE_QUEUE_MAX_BYTES = 50 * 1024 * 1024; // 50 MB
 
-export type OfflineUploadEndpoint = "catalogMedia" | "customizationMedia" | "reviewMedia";
+export type OfflineUploadEndpoint = "catalogMedia" | "reviewMedia";
 
 export interface OfflineUploadEntry {
 	id: string;

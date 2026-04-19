@@ -86,7 +86,6 @@ const baseNavItems = [
 		icon: "folder-open" as const,
 		hasDropdown: true,
 	},
-	{ href: "/personnalisation", label: "Personnalisation", icon: "sparkles" as const },
 	{ href: "/commandes", label: "Mon compte", icon: "user" as const },
 	{ href: "/favoris", label: "Mes favoris", icon: "heart" as const },
 ];

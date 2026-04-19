@@ -18,8 +18,6 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
 import { ProductSkuRowActions } from "./sku-row-actions";
-import { ProductVariantsSelectionToolbar } from "./skus-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ProductVariantsDataTableProps {
 	skusPromise: Promise<GetProductSkusReturn>;
@@ -33,7 +31,6 @@ export async function ProductVariantsDataTable({
 	perPage,
 }: ProductVariantsDataTableProps) {
 	const { productSkus, pagination } = await skusPromise;
-	const variantIds = productSkus.map((sku) => sku.id);
 
 	// Helper pour obtenir l'image primaire
 	const getPrimaryImage = (sku: (typeof productSkus)[0]) => {
@@ -67,7 +64,6 @@ export async function ProductVariantsDataTable({
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<ProductVariantsSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						role="table"
@@ -77,15 +73,6 @@ export async function ProductVariantsDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead
-									key="select"
-									scope="col"
-									role="columnheader"
-									className="w-[4%]"
-									aria-label="Sélection de variantes"
-								>
-									<TableSelectionCell type="header" itemIds={variantIds} />
-								</TableHead>
 								<TableHead key="image" scope="col" role="columnheader" className="w-[8%]">
 									Image
 								</TableHead>
@@ -130,9 +117,6 @@ export async function ProductVariantsDataTable({
 
 								return (
 									<TableRow key={sku.id}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={sku.id} />
-										</TableCell>
 										<TableCell className="py-3">
 											<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
 												{primaryImage ? (

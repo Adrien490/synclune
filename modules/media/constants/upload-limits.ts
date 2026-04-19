@@ -66,16 +66,6 @@ const DELETE_MEDIA_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1), // per minute
 };
 
-/**
- * Rate limit for customization inspiration images
- *
- * STRICT: Public endpoint, similar to contact attachments
- */
-const UPLOAD_CUSTOMIZATION_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 uploads maximum
-	windowMs: minutes(10), // per 10 minutes
-};
-
 // ========================================
 // GROUPED EXPORT
 // ========================================
@@ -86,8 +76,6 @@ const UPLOAD_CUSTOMIZATION_LIMIT: RateLimitConfig = {
 export const UPLOAD_LIMITS = {
 	// Admin
 	CATALOG: UPLOAD_CATALOG_LIMIT,
-	// Public
-	CUSTOMIZATION: UPLOAD_CUSTOMIZATION_LIMIT,
 	// Users
 	REVIEW_MEDIA: UPLOAD_REVIEW_MEDIA_LIMIT,
 } as const;

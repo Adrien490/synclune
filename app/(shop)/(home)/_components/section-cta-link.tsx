@@ -18,7 +18,6 @@ interface SectionCtaLinkProps {
 
 /**
  * Bouton CTA de section d'accueil avec haptic feedback natif mobile 2026.
- * Utilisé par LatestCreations, CollectionsSection, ReviewsSection, FaqSection.
  */
 export function SectionCtaLink({
 	href,

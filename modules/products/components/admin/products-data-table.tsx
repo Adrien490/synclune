@@ -29,8 +29,6 @@ import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 // Local components
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
-import { ProductsSelectionToolbar } from "./products-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 // =============================================================================
 // Constants
@@ -108,7 +106,6 @@ export async function ProductsDataTable({
 	hasActiveFilters,
 }: ProductsDataTableProps) {
 	const { products, pagination } = await productsPromise;
-	const productIds = products.map((product) => product.id);
 
 	if (products.length === 0) {
 		return (
@@ -129,14 +126,10 @@ export async function ProductsDataTable({
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<ProductsSelectionToolbar products={products} />
 				<TableScrollContainer>
 					<Table aria-label="Liste des bijoux" striped noRegion className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[4%]" aria-label="Sélection de produits">
-									<TableSelectionCell type="header" itemIds={productIds} />
-								</TableHead>
 								<TableHead className="w-[8%]">Image</TableHead>
 								<TableHead className="w-[22%]">Titre</TableHead>
 								<TableHead className="w-[10%]">Statut</TableHead>
@@ -156,13 +149,6 @@ export async function ProductsDataTable({
 
 								return (
 									<TableRow key={product.id}>
-										<TableCell>
-											<TableSelectionCell
-												type="row"
-												itemId={product.id}
-												ariaLabel={`Sélectionner ${product.title}`}
-											/>
-										</TableCell>
 										<TableCell className="py-3">
 											<ProductImageCell
 												images={product.skus[0]?.images ?? []}

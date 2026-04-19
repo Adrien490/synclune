@@ -51,6 +51,63 @@ export const updateReopensAtSchema = z
 		},
 	);
 
+export const updateAnnouncementSchema = z
+	.object({
+		message: z
+			.string()
+			.trim()
+			.max(200, "Le message ne peut pas dépasser 200 caractères")
+			.optional()
+			.default("")
+			.transform((val) => (val === "" ? null : val)),
+		link: z
+			.string()
+			.trim()
+			.max(2048, "Le lien ne peut pas dépasser 2048 caractères")
+			.optional()
+			.default("")
+			.refine((val) => val === "" || val.startsWith("/") || val.startsWith("https://"), {
+				message: "Le lien doit commencer par / ou https://",
+			})
+			.transform((val) => (val === "" ? null : val)),
+		startsAt: z
+			.string()
+			.optional()
+			.default("")
+			.transform((val) => (val === "" ? null : new Date(val))),
+		endsAt: z
+			.string()
+			.optional()
+			.default("")
+			.transform((val) => (val === "" ? null : new Date(val))),
+		isActive: z
+			.union([z.boolean(), z.string()])
+			.optional()
+			.default(false)
+			.transform((val) => val === true || val === "true" || val === "on"),
+	})
+	.refine(
+		(data) => {
+			if (!data.startsAt || !data.endsAt) return true;
+			return data.endsAt.getTime() > data.startsAt.getTime();
+		},
+		{
+			message: "La date de fin doit être postérieure à la date de début",
+			path: ["endsAt"],
+		},
+	)
+	.refine(
+		(data) => {
+			if (data.isActive && (!data.message || data.message.length === 0)) return false;
+			return true;
+		},
+		{
+			message: "Un message est requis pour activer le bandeau",
+			path: ["message"],
+		},
+	);
+
 export type CloseStoreInput = z.infer<typeof closeStoreSchema>;
 export type UpdateClosureMessageInput = z.infer<typeof updateClosureMessageSchema>;
 export type UpdateReopensAtInput = z.infer<typeof updateReopensAtSchema>;
+export type UpdateAnnouncementInput = z.infer<typeof updateAnnouncementSchema>;

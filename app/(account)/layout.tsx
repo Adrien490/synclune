@@ -1,8 +1,8 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
-import { AnnouncementBarWrapper } from "@/modules/announcements/components/announcement-bar-wrapper";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
+import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
 import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";

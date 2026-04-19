@@ -3,7 +3,6 @@
 import { Package } from "lucide-react";
 import Image from "next/image";
 
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -64,7 +63,12 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	};
 
 	return (
-		<SelectableMobileCard itemId={sku.id} ariaLabel={`Variante ${sku.sku}`} onOpen={handleOpen}>
+		<button
+			type="button"
+			aria-label={`Variante ${sku.sku}`}
+			onClick={handleOpen}
+			className="focus-visible:ring-primary w-full rounded-lg text-left focus-visible:ring-2 focus-visible:outline-none"
+		>
 			<Item
 				variant="outline"
 				size="sm"
@@ -140,6 +144,6 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</SelectableMobileCard>
+		</button>
 	);
 }

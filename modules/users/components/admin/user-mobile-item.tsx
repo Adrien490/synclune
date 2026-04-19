@@ -2,7 +2,6 @@
 
 import { CircleCheck } from "lucide-react";
 
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatDateShort } from "@/shared/utils/dates";
@@ -45,7 +44,12 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 	};
 
 	return (
-		<SelectableMobileCard itemId={user.id} ariaLabel={`Client ${displayName}`} onOpen={handleOpen}>
+		<button
+			type="button"
+			aria-label={`Client ${displayName}`}
+			onClick={handleOpen}
+			className="focus-visible:ring-primary w-full rounded-lg text-left focus-visible:ring-2 focus-visible:outline-none"
+		>
 			<Item
 				variant="outline"
 				size="sm"
@@ -71,6 +75,6 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</SelectableMobileCard>
+		</button>
 	);
 }

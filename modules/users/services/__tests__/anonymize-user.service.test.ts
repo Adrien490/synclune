@@ -36,7 +36,6 @@ function createMockTx() {
 		reviewMedia: { deleteMany: vi.fn() },
 		productReview: { updateMany: vi.fn() },
 		newsletterSubscriber: { updateMany: vi.fn() },
-		customizationRequest: { updateMany: vi.fn() },
 		order: { updateMany: vi.fn() },
 	};
 }
@@ -167,22 +166,6 @@ describe("anonymizeUserInTransaction", () => {
 		});
 	});
 
-	it("should anonymize customization requests", async () => {
-		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
-
-		await anonymizeUserInTransaction(mockTx as never, "user_abc");
-
-		expect(mockTx.customizationRequest.updateMany).toHaveBeenCalledWith({
-			where: { userId: "user_abc" },
-			data: {
-				firstName: "Anonyme",
-				email: "anonymized-user_abc@deleted.synclune.local",
-				phone: null,
-				details: "Contenu supprimé",
-			},
-		});
-	});
-
 	it("should anonymize order PII while preserving financial data", async () => {
 		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
 
@@ -206,7 +189,7 @@ describe("anonymizeUserInTransaction", () => {
 		});
 	});
 
-	it("should perform all 11 operations in order", async () => {
+	it("should perform all anonymization operations", async () => {
 		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
 
 		await anonymizeUserInTransaction(mockTx as never, "user_abc");
@@ -221,7 +204,6 @@ describe("anonymizeUserInTransaction", () => {
 		expect(mockTx.reviewMedia.deleteMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.productReview.updateMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.newsletterSubscriber.updateMany).toHaveBeenCalledTimes(1);
-		expect(mockTx.customizationRequest.updateMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.order.updateMany).toHaveBeenCalledTimes(1);
 	});
 

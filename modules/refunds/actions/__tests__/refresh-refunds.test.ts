@@ -105,9 +105,7 @@ describe("refreshRefunds", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("refunds-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-recent-orders");
-		expect(mockUpdateTag).toHaveBeenCalledTimes(5);
+		expect(mockUpdateTag).toHaveBeenCalledTimes(3);
 	});
 
 	it("should return success after cache invalidation", async () => {

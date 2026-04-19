@@ -1,6 +1,5 @@
 import { SidebarInset, SidebarProvider } from "@/shared/components/ui/sidebar";
 import { SkipLink } from "@/shared/components/skip-link";
-import { SelectionProvider } from "@/shared/contexts/selection-context";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -63,9 +62,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 					style={{ "--admin-main-x": "1.5rem" } as React.CSSProperties}
 					className="space-y-6 px-[var(--admin-main-x)] pt-[calc(var(--admin-header-height,3.5rem)+env(safe-area-inset-top,0px)+1rem)] pb-[calc(var(--bottom-bar-height,56px)+1rem)] focus:outline-none md:pt-6 md:pb-6"
 				>
-					<Suspense fallback={<AdminContentSkeleton />}>
-						<SelectionProvider selectionKey="selected">{children}</SelectionProvider>
-					</Suspense>
+					<Suspense fallback={<AdminContentSkeleton />}>{children}</Suspense>
 				</main>
 				<AdminMobileBottomBar />
 			</SidebarInset>

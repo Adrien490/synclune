@@ -18,7 +18,7 @@ import { mergeProductTypesSchema } from "../schemas/product-type.schemas";
 /**
  * Server Action pour fusionner deux ProductType.
  *
- * Reassigne tous les Products et CustomizationRequests de `sourceId` vers `targetId`,
+ * Reassigne tous les Products de `sourceId` vers `targetId`,
  * puis supprime le type source. Execute atomiquement dans une transaction Prisma.
  *
  * Protections:
@@ -65,16 +65,10 @@ export async function mergeProductTypes(
 				return { kind: "source-system" as const, sourceLabel: source.label };
 			}
 
-			const [reassignedProducts, reassignedCustomizations] = await Promise.all([
-				tx.product.updateMany({
-					where: { typeId: sourceId },
-					data: { typeId: targetId },
-				}),
-				tx.customizationRequest.updateMany({
-					where: { productTypeId: sourceId },
-					data: { productTypeId: targetId },
-				}),
-			]);
+			const reassignedProducts = await tx.product.updateMany({
+				where: { typeId: sourceId },
+				data: { typeId: targetId },
+			});
 
 			await tx.productType.delete({ where: { id: sourceId } });
 
@@ -83,7 +77,6 @@ export async function mergeProductTypes(
 				source,
 				target,
 				reassignedProducts: reassignedProducts.count,
-				reassignedCustomizations: reassignedCustomizations.count,
 			};
 		});
 
@@ -95,7 +88,7 @@ export async function mergeProductTypes(
 			);
 		}
 
-		const total = merged.reassignedProducts + merged.reassignedCustomizations;
+		const total = merged.reassignedProducts;
 
 		void logAudit({
 			adminId: adminUser.id,
@@ -109,7 +102,6 @@ export async function mergeProductTypes(
 				targetId: merged.target.id,
 				targetLabel: merged.target.label,
 				reassignedProducts: merged.reassignedProducts,
-				reassignedCustomizations: merged.reassignedCustomizations,
 			},
 		});
 
@@ -125,7 +117,6 @@ export async function mergeProductTypes(
 		return success(message, {
 			targetId: merged.target.id,
 			reassignedProducts: merged.reassignedProducts,
-			reassignedCustomizations: merged.reassignedCustomizations,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de fusionner les types de produit");

@@ -140,9 +140,7 @@ async function cleanup(): Promise<void> {
 
 	console.log("🧹 Nettoyage de la base de données...");
 
-	await prisma.auditLog.deleteMany();
 	await prisma.dispute.deleteMany();
-	await prisma.failedEmail.deleteMany();
 
 	await prisma.reviewMedia.deleteMany();
 	await prisma.reviewResponse.deleteMany();
@@ -3273,79 +3271,6 @@ async function main(): Promise<void> {
 	console.log(`✅ ${Math.min(ordersForDisputes.length, disputeStatuses.length)} disputes créées`);
 
 	// ============================================
-	// AUDIT LOG (M5)
-	// ============================================
-	const auditActions = [
-		{ action: "product.create", targetType: "product", note: "Created product" },
-		{ action: "product.update", targetType: "product", note: "Updated price" },
-		{ action: "product.archive", targetType: "product", note: "Archived product" },
-		{ action: "order.cancel", targetType: "order", note: "Cancelled by admin" },
-		{ action: "order.update_status", targetType: "order", note: "Updated to shipped" },
-		{ action: "refund.process", targetType: "refund", note: "Processed refund" },
-		{ action: "refund.reject", targetType: "refund", note: "Rejected refund request" },
-		{ action: "discount.create", targetType: "discount", note: "Created BIENVENUE10" },
-		{ action: "discount.deactivate", targetType: "discount", note: "Deactivated expired code" },
-		{ action: "sku.update_stock", targetType: "sku", note: "Stock adjustment +10" },
-		{ action: "user.ban", targetType: "user", note: "Suspended account" },
-		{ action: "collection.update", targetType: "collection", note: "Updated featured" },
-		{ action: "dispute.respond", targetType: "dispute", note: "Submitted evidence" },
-		{ action: "product_type.create", targetType: "product_type", note: "Created new type" },
-		{ action: "review.hide", targetType: "review", note: "Hidden inappropriate review" },
-	];
-
-	const auditLogData: Prisma.AuditLogCreateManyInput[] = auditActions.map((entry, i) => {
-		const admin = faker.helpers.arrayElement(adminUsers);
-		const logDate = new Date();
-		logDate.setDate(logDate.getDate() - faker.number.int({ min: 1, max: 45 }));
-
-		return {
-			adminId: admin.id,
-			adminName: admin.name,
-			action: entry.action,
-			targetType: entry.targetType,
-			targetId: faker.string.alphanumeric(25),
-			metadata: { note: entry.note, index: i },
-			createdAt: logDate,
-		};
-	});
-
-	await prisma.auditLog.createMany({ data: auditLogData });
-	console.log(`✅ ${auditLogData.length} entrées d'audit log créées`);
-
-	// ============================================
-	// FAILED EMAILS (for retry-failed-emails cron)
-	// ============================================
-	const ordersForFailedEmails = await prisma.order.findMany({
-		select: { id: true, customerEmail: true, trackingNumber: true },
-		take: 3,
-	});
-	const failedEmailData: Prisma.FailedEmailCreateManyInput[] = [
-		{
-			taskType: "ORDER_CONFIRMATION_EMAIL",
-			payload: {
-				orderId: ordersForFailedEmails[0]?.id ?? "unknown",
-				email: ordersForFailedEmails[0]?.customerEmail ?? "test@example.com",
-			},
-			attempts: 2,
-			lastError: "Resend API rate limit exceeded",
-			nextRetryAt: new Date(),
-		},
-		{
-			taskType: "SHIPPING_NOTIFICATION_EMAIL",
-			payload: {
-				orderId: ordersForFailedEmails[1]?.id ?? "unknown",
-				email: ordersForFailedEmails[1]?.customerEmail ?? "test2@example.com",
-				trackingNumber: ordersForFailedEmails[1]?.trackingNumber ?? "ABC123",
-			},
-			attempts: 1,
-			lastError: "Connection timeout to Resend API",
-			nextRetryAt: new Date(Date.now() + 30 * 60 * 1000),
-		},
-	];
-	await prisma.failedEmail.createMany({ data: failedEmailData });
-	console.log(`✅ ${failedEmailData.length} failed emails créés`);
-
-	// ============================================
 	// VERIFICATION TOKENS (missing model)
 	// ============================================
 	const verificationData: Prisma.VerificationCreateManyInput[] = [
@@ -3501,57 +3426,6 @@ async function main(): Promise<void> {
 	console.log(
 		`✅ Records soft-deleted: ${productsToSoftDelete.length} produits, ${reviewsToSoftDelete.length} avis, ${ordersToSoftDelete.length} commandes`,
 	);
-
-	// FAQ ITEMS
-	// ============================================
-	console.log("\n📝 Seeding FAQ items...");
-
-	await prisma.faqItem.deleteMany();
-
-	const faqItems = [
-		{
-			question: "Combien de temps pour recevoir ma commande ?",
-			answer:
-				"Je prépare chaque commande avec soin sous 2-3 jours ouvrés. Ensuite, Colissimo vous livre en 2-4 jours en France métropolitaine. Je vous envoie le numéro de suivi par email dès que votre colis part de mon atelier ! Tous les détails sont dans mes {{link0}}.",
-			links: [{ text: "conditions de vente", href: "/cgv" }],
-			position: 0,
-		},
-		{
-			question: "Je peux retourner un bijou si je change d'avis ?",
-			answer:
-				"Bien sûr ! Vous avez 14 jours après réception pour changer d'avis. Renvoyez-moi le bijou dans son état d'origine, non porté, et je vous rembourse. Écrivez-moi par email pour qu'on organise ça ensemble. Plus d'infos sur les retours dans mes {{link0}}.",
-			links: [{ text: "conditions de vente", href: "/cgv" }],
-			position: 1,
-		},
-		{
-			question: "En quoi sont faits vos bijoux ?",
-			answer:
-				"Je crée mes bijoux à partir de plastique fou (polystyrène) que je dessine et peins entièrement à la main. Ensuite, je les vernis pour protéger les couleurs. Pour les crochets et fermoirs, j'utilise de l'acier inoxydable hypoallergénique, parfait pour les peaux sensibles ! Découvrez toutes mes {{link0}}.",
-			links: [{ text: "collections", href: "/collections" }],
-			position: 2,
-		},
-		{
-			question: "Comment je prends soin de mes bijoux ?",
-			answer:
-				"Évitez le contact avec l'eau, les parfums et les crèmes. Rangez-les à plat dans leur jolie pochette pour éviter les rayures. Avec ces petites attentions, ils resteront beaux pendant longtemps !",
-			links: undefined,
-			position: 3,
-		},
-	];
-
-	for (const item of faqItems) {
-		await prisma.faqItem.create({
-			data: {
-				question: item.question,
-				answer: item.answer,
-				links: item.links ?? undefined,
-				position: item.position,
-				isActive: true,
-			},
-		});
-	}
-
-	console.log(`✅ ${faqItems.length} FAQ items created`);
 
 	// ============================================
 	// STORE SETTINGS (SINGLETON)

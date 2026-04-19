@@ -13,7 +13,6 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		newsletterSubscriber: { findUnique: vi.fn() },
-		auditLog: { findMany: vi.fn() },
 	},
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -118,14 +117,13 @@ describe("gdprExportSubscriberData", () => {
 			updatedAt: new Date("2025-06-01"),
 			deletedAt: new Date("2025-07-01"),
 		});
-		mockPrisma.auditLog.findMany.mockResolvedValue([]);
 		await gdprExportSubscriberData(undefined, fd("buyer@test.fr"));
 		expect(mockPrisma.newsletterSubscriber.findUnique).toHaveBeenCalledWith({
 			where: { email: "buyer@test.fr" },
 		});
 	});
 
-	it("returns full subscriber payload + audit logs in success data", async () => {
+	it("returns full subscriber payload in success data", async () => {
 		mockPrisma.newsletterSubscriber.findUnique.mockResolvedValue({
 			id: "sub_1",
 			email: "buyer@test.fr",
@@ -143,26 +141,15 @@ describe("gdprExportSubscriberData", () => {
 			updatedAt: new Date("2025-01-02"),
 			deletedAt: null,
 		});
-		mockPrisma.auditLog.findMany.mockResolvedValue([
-			{
-				id: "log_1",
-				action: "newsletter.adminUnsubscribe",
-				adminId: "admin_2",
-				adminName: "Admin Other",
-				metadata: { email: "buyer@test.fr" },
-				createdAt: new Date("2025-03-01"),
-			},
-		]);
 		const result = await gdprExportSubscriberData(undefined, fd("buyer@test.fr"));
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.data).toMatchObject({
 			gdprArticle: expect.stringContaining("Article 15"),
 			subscriber: { email: "buyer@test.fr", status: "CONFIRMED" },
-			auditLogs: expect.arrayContaining([expect.objectContaining({ id: "log_1" })]),
 		});
 	});
 
-	it("logs audit with auditLogsCount metadata", async () => {
+	it("logs audit on export", async () => {
 		mockPrisma.newsletterSubscriber.findUnique.mockResolvedValue({
 			id: "sub_1",
 			email: "buyer@test.fr",
@@ -180,12 +167,11 @@ describe("gdprExportSubscriberData", () => {
 			updatedAt: new Date(),
 			deletedAt: null,
 		});
-		mockPrisma.auditLog.findMany.mockResolvedValue([{ id: "log_1" }, { id: "log_2" }]);
 		await gdprExportSubscriberData(undefined, fd("buyer@test.fr"));
 		expect(mockLogAudit).toHaveBeenCalledWith(
 			expect.objectContaining({
 				action: "newsletter.gdprExport",
-				metadata: { email: "buyer@test.fr", auditLogsCount: 2 },
+				metadata: { email: "buyer@test.fr" },
 			}),
 		);
 	});

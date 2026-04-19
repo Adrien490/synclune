@@ -4,7 +4,6 @@ const { mockPrisma, mockListFiles, mockDeleteFiles, mockExtractFileKey } = vi.ho
 	mockPrisma: {
 		skuMedia: { findMany: vi.fn() },
 		reviewMedia: { findMany: vi.fn() },
-		customizationMedia: { findMany: vi.fn() },
 		user: { findMany: vi.fn() },
 	},
 	mockListFiles: vi.fn(),
@@ -42,7 +41,6 @@ describe("cleanupOrphanMedia", () => {
 
 		mockPrisma.skuMedia.findMany.mockResolvedValue([]);
 		mockPrisma.reviewMedia.findMany.mockResolvedValue([]);
-		mockPrisma.customizationMedia.findMany.mockResolvedValue([]);
 		mockPrisma.user.findMany.mockResolvedValue([]);
 
 		mockListFiles.mockResolvedValue({ files: [] });

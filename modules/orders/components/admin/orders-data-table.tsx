@@ -27,8 +27,6 @@ import { Button } from "@/shared/components/ui/button";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
 import { OrderRowActions } from "./order-row-actions";
-import { OrdersSelectionToolbar } from "./orders-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;
@@ -37,7 +35,6 @@ interface OrdersDataTableProps {
 
 export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTableProps) {
 	const { orders, pagination } = await ordersPromise;
-	const orderIds = orders.map((order) => order.id);
 
 	if (orders.length === 0) {
 		return (
@@ -57,14 +54,10 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<OrdersSelectionToolbar />
 				<TableScrollContainer>
 					<Table caption="Liste des commandes" striped className="min-w-full table-fixed">
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={orderIds} />
-								</TableHead>
 								<TableHead className="w-[13%]">Commande</TableHead>
 								<TableHead className="w-[20%]">Client</TableHead>
 								<TableHead className="w-[12%]">Date</TableHead>
@@ -84,9 +77,6 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 
 								return (
 									<TableRow key={order.id}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={order.id} />
-										</TableCell>
 										<TableCell>
 											<Link
 												href={`/admin/ventes/commandes/${order.id}`}

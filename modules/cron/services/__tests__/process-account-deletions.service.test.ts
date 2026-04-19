@@ -116,7 +116,6 @@ describe("processAccountDeletions", () => {
 			reviewMedia: { deleteMany: vi.fn() },
 			productReview: { updateMany: vi.fn() },
 			newsletterSubscriber: { updateMany: vi.fn() },
-			customizationRequest: { updateMany: vi.fn() },
 			order: { updateMany: vi.fn() },
 		};
 
@@ -178,21 +177,10 @@ describe("processAccountDeletions", () => {
 			reviewMedia: { deleteMany: vi.fn() },
 			productReview: { updateMany: vi.fn() },
 			newsletterSubscriber: { updateMany: vi.fn() },
-			customizationRequest: { updateMany: vi.fn() },
 			order: { updateMany: vi.fn() },
 		};
 
 		await transactionFn(mockTx);
-
-		expect(mockTx.customizationRequest.updateMany).toHaveBeenCalledWith({
-			where: { userId: "user-order" },
-			data: {
-				firstName: "Anonyme",
-				email: "anonymized-user-order@deleted.synclune.local",
-				phone: null,
-				details: "Contenu supprimé",
-			},
-		});
 
 		expect(mockTx.order.updateMany).toHaveBeenCalledWith({
 			where: { userId: "user-order" },

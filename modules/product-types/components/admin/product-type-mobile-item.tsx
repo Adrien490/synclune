@@ -1,6 +1,5 @@
 "use client";
 
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -42,11 +41,11 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 	};
 
 	return (
-		<SelectableMobileCard
-			itemId={productType.id}
-			ariaLabel={`Type de bijou ${productType.label}`}
-			onOpen={handleOpen}
-			disableSelection={productType.isSystem}
+		<button
+			type="button"
+			aria-label={`Type de bijou ${productType.label}`}
+			onClick={handleOpen}
+			className="focus-visible:ring-primary w-full rounded-lg text-left focus-visible:ring-2 focus-visible:outline-none"
 		>
 			<Item
 				variant="outline"
@@ -70,6 +69,6 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</SelectableMobileCard>
+		</button>
 	);
 }

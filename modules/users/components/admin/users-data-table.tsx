@@ -16,8 +16,6 @@ import { use } from "react";
 import Link from "next/link";
 import { formatDateShort } from "@/shared/utils/dates";
 import { UsersRowActions } from "./users-row-actions";
-import { UsersSelectionToolbar } from "./users-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface UsersDataTableProps {
 	usersPromise: Promise<GetUsersReturn>;
@@ -28,7 +26,6 @@ interface UsersDataTableProps {
 
 export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTableProps) {
 	const { users, pagination } = use(usersPromise);
-	const userIds = users.map((user) => user.id);
 
 	if (users.length === 0) {
 		return (
@@ -44,7 +41,6 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<UsersSelectionToolbar userIds={userIds} />
 				<TableScrollContainer>
 					<Table
 						aria-label="Liste des clients"
@@ -54,9 +50,6 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={userIds} />
-								</TableHead>
 								<TableHead className="w-[22%]">Nom</TableHead>
 								<TableHead className="w-[28%]">Email</TableHead>
 								<TableHead className="w-[10%]">Commandes</TableHead>
@@ -76,9 +69,6 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 
 								return (
 									<TableRow key={user.id} className={user.deletedAt ? "opacity-50" : undefined}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={user.id} />
-										</TableCell>
 										<TableCell>
 											<div className="overflow-hidden">
 												<span className="block truncate font-bold" title={displayName}>

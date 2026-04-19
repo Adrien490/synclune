@@ -59,24 +59,6 @@ export function createTestNewsletterEmail(): string {
 	return `${nextId()}@${TEST_EMAIL_DOMAIN}`;
 }
 
-export interface TestCustomizationRequest {
-	name: string;
-	email: string;
-	description: string;
-}
-
-export function createTestCustomizationRequest(
-	overrides: Partial<TestCustomizationRequest> = {},
-): TestCustomizationRequest {
-	const id = nextId();
-	return {
-		name: `TestUser-${id}`,
-		email: `${id}@${TEST_EMAIL_DOMAIN}`,
-		description: "Test customization request for E2E testing.",
-		...overrides,
-	};
-}
-
 /** Stripe test card numbers */
 export const STRIPE_CARDS = {
 	/** Always succeeds */

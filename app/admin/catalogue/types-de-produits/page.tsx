@@ -17,11 +17,6 @@ const DeleteProductTypeAlertDialog = dynamic(() =>
 		(mod) => mod.DeleteProductTypeAlertDialog,
 	),
 );
-const BulkDeleteProductTypesAlertDialog = dynamic(() =>
-	import("@/modules/product-types/components/admin/bulk-delete-product-types-alert-dialog").then(
-		(mod) => mod.BulkDeleteProductTypesAlertDialog,
-	),
-);
 const ProductTypeItemDrawer = dynamic(() =>
 	import("@/modules/product-types/components/admin/product-type-item-drawer").then(
 		(mod) => mod.ProductTypeItemDrawer,
@@ -97,7 +92,6 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 		<>
 			<ProductTypeFormDialog />
 			<DeleteProductTypeAlertDialog />
-			<BulkDeleteProductTypesAlertDialog />
 			<ProductTypeItemDrawer />
 			<PageHeader
 				variant="compact"

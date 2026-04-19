@@ -6,7 +6,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetUsersReturn } from "@/modules/users/types/user.types";
-import { UsersSelectionToolbar } from "./users-selection-toolbar";
 import { UserMobileItem } from "./user-mobile-item";
 
 interface UsersMobileListProps {
@@ -16,7 +15,6 @@ interface UsersMobileListProps {
 
 export function UsersMobileList({ usersPromise, perPage }: UsersMobileListProps) {
 	const { users, pagination } = use(usersPromise);
-	const userIds = users.map((user) => user.id);
 
 	if (users.length === 0) {
 		return (
@@ -32,8 +30,6 @@ export function UsersMobileList({ usersPromise, perPage }: UsersMobileListProps)
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<UsersSelectionToolbar userIds={userIds} />
-
 			<ItemGroup aria-label="Clients" className="gap-2">
 				{users.map((user) => (
 					<div key={user.id} role="listitem">

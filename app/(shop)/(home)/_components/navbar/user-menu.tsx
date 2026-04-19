@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, LayoutDashboard, LogOut, Package, Settings, Sparkles, User } from "lucide-react";
+import { Heart, LayoutDashboard, LogOut, Package, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { LogoutAlertDialog } from "@/modules/auth/components/logout-alert-dialog";
@@ -109,12 +109,6 @@ export function UserMenu({ isLoggedIn, isAdmin, userName, userEmail }: UserMenuP
 						<Link href={ROUTES.ACCOUNT.FAVORITES} className="cursor-pointer">
 							<Heart aria-hidden="true" />
 							<span>Mes favoris</span>
-						</Link>
-					</DropdownMenuItem>
-					<DropdownMenuItem asChild>
-						<Link href={ROUTES.ACCOUNT.CUSTOMIZATIONS} className="cursor-pointer">
-							<Sparkles aria-hidden="true" />
-							<span>Mes personnalisations</span>
 						</Link>
 					</DropdownMenuItem>
 					<DropdownMenuItem asChild>

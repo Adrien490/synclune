@@ -182,12 +182,10 @@ export function DiscoverSection({
 
 interface CreationsSectionProps extends SectionProps {
 	productTypes?: Array<{ slug: string; label: string }>;
-	personalizationItem?: { href: string; label: string };
 }
 
 export function CreationsSection({
 	productTypes,
-	personalizationItem,
 	isMenuItemActive,
 	itemVariants,
 	delay,
@@ -219,16 +217,6 @@ export function CreationsSection({
 						{type.label}
 					</NavLink>
 				))}
-				{personalizationItem && (
-					<NavLink
-						href={personalizationItem.href}
-						isMenuItemActive={isMenuItemActive}
-						itemVariants={itemVariants}
-						customDelay={delay(90, productTypes.length + 1)}
-					>
-						{personalizationItem.label}
-					</NavLink>
-				)}
 			</ul>
 		</section>
 	);

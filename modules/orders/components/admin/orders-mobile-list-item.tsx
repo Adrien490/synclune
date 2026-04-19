@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { StickyNote } from "lucide-react";
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
 import { SwipeableCard } from "@/shared/components/swipeable-card";
 import {
@@ -54,65 +53,60 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 	};
 
 	return (
-		<SelectableMobileCard itemId={order.id} ariaLabel={`Commande ${order.orderNumber}`}>
-			<SwipeableCard
-				className="rounded-lg"
-				rightAction={{
-					children: <StickyNote className="text-secondary-foreground size-5" aria-hidden="true" />,
-					label: `Ouvrir les notes de ${order.orderNumber}`,
-					className: "bg-secondary",
-					onAction: openNotes,
-				}}
-			>
-				<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte commande">
-					<ItemContent className="min-w-0">
-						<ItemTitle>
-							<Link
-								href={`/admin/ventes/commandes/${order.id}`}
-								onClick={(e) => e.stopPropagation()}
-								onPointerDown={(e) => e.stopPropagation()}
-								onKeyDown={(e) => e.stopPropagation()}
-								className="truncate font-semibold hover:underline"
-							>
-								{order.orderNumber}
-							</Link>
-							<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
-								{ORDER_STATUS_LABELS[order.status]}
-							</Badge>
-							<Badge variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}>
-								{PAYMENT_STATUS_LABELS[order.paymentStatus]}
-							</Badge>
-						</ItemTitle>
-						<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-							<span>{order.customerName ?? order.customerEmail}</span>
-							<span aria-hidden="true">·</span>
-							<span className="font-medium">{formatEuro(order.total)}</span>
-							<span aria-hidden="true">·</span>
-							<span>{formatDateShort(order.createdAt)}</span>
-							<span aria-hidden="true">·</span>
-							<span>
-								{order._count.items} article{order._count.items > 1 ? "s" : ""}
-							</span>
-						</ItemDescription>
-					</ItemContent>
-					<ItemActions>
-						<StopEventPropagation>
-							<OrderRowActions
-								order={{
-									id: order.id,
-									orderNumber: order.orderNumber,
-									status: order.status as never,
-									paymentStatus: order.paymentStatus as never,
-									fulfillmentStatus: order.fulfillmentStatus as never,
-									trackingNumber: order.trackingNumber,
-									trackingUrl: order.trackingUrl,
-									invoiceNumber: order.invoiceNumber,
-								}}
-							/>
-						</StopEventPropagation>
-					</ItemActions>
-				</Item>
-			</SwipeableCard>
-		</SelectableMobileCard>
+		<SwipeableCard
+			className="rounded-lg"
+			rightAction={{
+				children: <StickyNote className="text-secondary-foreground size-5" aria-hidden="true" />,
+				label: `Ouvrir les notes de ${order.orderNumber}`,
+				className: "bg-secondary",
+				onAction: openNotes,
+			}}
+		>
+			<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte commande">
+				<ItemContent className="min-w-0">
+					<ItemTitle>
+						<Link
+							href={`/admin/ventes/commandes/${order.id}`}
+							className="truncate font-semibold hover:underline"
+						>
+							{order.orderNumber}
+						</Link>
+						<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
+							{ORDER_STATUS_LABELS[order.status]}
+						</Badge>
+						<Badge variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}>
+							{PAYMENT_STATUS_LABELS[order.paymentStatus]}
+						</Badge>
+					</ItemTitle>
+					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+						<span>{order.customerName ?? order.customerEmail}</span>
+						<span aria-hidden="true">·</span>
+						<span className="font-medium">{formatEuro(order.total)}</span>
+						<span aria-hidden="true">·</span>
+						<span>{formatDateShort(order.createdAt)}</span>
+						<span aria-hidden="true">·</span>
+						<span>
+							{order._count.items} article{order._count.items > 1 ? "s" : ""}
+						</span>
+					</ItemDescription>
+				</ItemContent>
+				<ItemActions>
+					<StopEventPropagation>
+						<OrderRowActions
+							order={{
+								id: order.id,
+								orderNumber: order.orderNumber,
+								status: order.status as never,
+								paymentStatus: order.paymentStatus as never,
+								fulfillmentStatus: order.fulfillmentStatus as never,
+								trackingNumber: order.trackingNumber,
+								trackingUrl: order.trackingUrl,
+								invoiceNumber: order.invoiceNumber,
+							}}
+						/>
+					</StopEventPropagation>
+				</ItemActions>
+			</Item>
+		</SwipeableCard>
 	);
 }

@@ -8,15 +8,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockRefreshNewsletter,
 	mockSubscribeToNewsletter,
-	mockAdminBulkDeleteNewsletterSubscribers,
-	mockAdminBulkUnsubscribeNewsletter,
 	mockAdminDeleteNewsletterSubscriber,
 	mockAdminUnsubscribeNewsletter,
 } = vi.hoisted(() => ({
 	mockRefreshNewsletter: vi.fn(),
 	mockSubscribeToNewsletter: vi.fn(),
-	mockAdminBulkDeleteNewsletterSubscribers: vi.fn(),
-	mockAdminBulkUnsubscribeNewsletter: vi.fn(),
 	mockAdminDeleteNewsletterSubscriber: vi.fn(),
 	mockAdminUnsubscribeNewsletter: vi.fn(),
 }));
@@ -26,12 +22,6 @@ vi.mock("@/modules/newsletter/actions/refresh-newsletter", () => ({
 }));
 vi.mock("@/modules/newsletter/actions/subscribe-to-newsletter", () => ({
 	subscribeToNewsletter: mockSubscribeToNewsletter,
-}));
-vi.mock("@/modules/newsletter/actions/admin-bulk-delete-newsletter-subscribers", () => ({
-	adminBulkDeleteNewsletterSubscribers: mockAdminBulkDeleteNewsletterSubscribers,
-}));
-vi.mock("@/modules/newsletter/actions/admin-bulk-unsubscribe-newsletter", () => ({
-	adminBulkUnsubscribeNewsletter: mockAdminBulkUnsubscribeNewsletter,
 }));
 vi.mock("@/modules/newsletter/actions/admin-delete-newsletter-subscriber", () => ({
 	adminDeleteNewsletterSubscriber: mockAdminDeleteNewsletterSubscriber,
@@ -56,8 +46,6 @@ vi.mock("sonner", () => ({
 
 import { useRefreshNewsletter } from "../use-refresh-newsletter";
 import { useSubscribeToNewsletter } from "../use-subscribe-to-newsletter";
-import { useAdminBulkDeleteNewsletterSubscribers } from "../use-admin-bulk-delete-newsletter-subscribers";
-import { useAdminBulkUnsubscribeNewsletter } from "../use-admin-bulk-unsubscribe-newsletter";
 import { useAdminDeleteNewsletterSubscriber } from "../use-admin-delete-newsletter-subscriber";
 import { useAdminUnsubscribeNewsletter } from "../use-admin-unsubscribe-newsletter";
 
@@ -169,96 +157,6 @@ describe("useSubscribeToNewsletter", () => {
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useAdminBulkDeleteNewsletterSubscribers
-// ============================================================================
-
-describe("useAdminBulkDeleteNewsletterSubscribers", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockAdminBulkDeleteNewsletterSubscribers.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useAdminBulkDeleteNewsletterSubscribers());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useAdminBulkDeleteNewsletterSubscribers({ onSuccess }));
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		expect(onSuccess).toHaveBeenCalled();
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockAdminBulkDeleteNewsletterSubscribers.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useAdminBulkDeleteNewsletterSubscribers({ onSuccess }));
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("works without options", async () => {
-		const { result } = renderHook(() => useAdminBulkDeleteNewsletterSubscribers());
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		expect(mockAdminBulkDeleteNewsletterSubscribers).toHaveBeenCalledTimes(1);
-	});
-});
-
-// ============================================================================
-// useAdminBulkUnsubscribeNewsletter
-// ============================================================================
-
-describe("useAdminBulkUnsubscribeNewsletter", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockAdminBulkUnsubscribeNewsletter.mockResolvedValue(SUCCESS);
-	});
-
-	it("returns state, action, and isPending", () => {
-		const { result } = renderHook(() => useAdminBulkUnsubscribeNewsletter());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-	});
-
-	it("calls onSuccess when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useAdminBulkUnsubscribeNewsletter({ onSuccess }));
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		expect(onSuccess).toHaveBeenCalled();
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockAdminBulkUnsubscribeNewsletter.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useAdminBulkUnsubscribeNewsletter({ onSuccess }));
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("works without options", async () => {
-		const { result } = renderHook(() => useAdminBulkUnsubscribeNewsletter());
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-		expect(mockAdminBulkUnsubscribeNewsletter).toHaveBeenCalledTimes(1);
 	});
 });
 

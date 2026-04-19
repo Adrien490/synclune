@@ -320,13 +320,12 @@ describe("CommandPalette", () => {
 			expect(screen.getByText("Actions rapides")).toBeInTheDocument();
 		});
 
-		it("renders 5 quick actions", () => {
+		it("renders 4 quick actions", () => {
 			render(<CommandPalette />);
 			expect(screen.getByText("Nouveau produit")).toBeInTheDocument();
 			expect(screen.getByText("Nouvelle collection")).toBeInTheDocument();
 			expect(screen.getByText("Nouveau code promo")).toBeInTheDocument();
 			expect(screen.getByText("Nouvelle annonce")).toBeInTheDocument();
-			expect(screen.getByText("Nouvelle question FAQ")).toBeInTheDocument();
 		});
 
 		it("renders navigation groups", () => {

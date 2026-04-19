@@ -15,7 +15,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { LayoutDashboard, ShoppingBag, Package, Menu, Search } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
@@ -27,14 +27,10 @@ interface AdminMobileBottomBarProps {
 export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const mounted = useMounted();
 	const pathname = usePathname();
-	const searchParams = useSearchParams();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const { open: openCommandPalette } = useDialog("command-palette");
 
-	// Masquer la nav globale quand une bulk-selection admin est active : le
-	// SelectionBottomSheet prend le relais en bas d'écran.
-	const hasSelection = searchParams.getAll("selected").length > 0;
-	const isHidden = isMenuOpen || hasSelection;
+	const isHidden = isMenuOpen;
 
 	const leftTabs = [
 		{

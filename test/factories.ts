@@ -329,29 +329,6 @@ function createMockNewsletterSubscriber(overrides: Record<string, unknown> = {})
 }
 
 // ============================================================================
-// CUSTOMIZATION REQUESTS
-// ============================================================================
-
-function createMockCustomizationRequest(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "cr_cm1234567890abcde",
-		userId: VALID_USER_ID,
-		firstName: "Marie",
-		email: "marie@example.com",
-		phone: "+33612345678",
-		productTypeLabel: "Bague",
-		productTypeId: "type_123",
-		details: "Bague personnalisee avec gravure initiales",
-		inspirationMedias: [],
-		status: "PENDING",
-		createdAt: new Date("2026-01-15"),
-		updatedAt: new Date("2026-01-15"),
-		deletedAt: null,
-		...overrides,
-	};
-}
-
-// ============================================================================
 // DISPUTES
 // ============================================================================
 

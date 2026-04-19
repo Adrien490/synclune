@@ -14,9 +14,7 @@ import type { GetProductTypesReturn } from "@/modules/product-types/data/get-pro
 import { Tags } from "lucide-react";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
-import { ProductTypesSelectionToolbar } from "./product-types-selection-toolbar";
 import { CreateProductTypeButton } from "./create-product-type-button";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ProductTypesDataTableProps {
 	productTypesPromise: Promise<GetProductTypesReturn>;
@@ -28,7 +26,6 @@ export async function ProductTypesDataTable({
 	perPage,
 }: ProductTypesDataTableProps) {
 	const { productTypes, pagination } = await productTypesPromise;
-	const productTypeIds = productTypes.map((type) => type.id);
 
 	if (productTypes.length === 0) {
 		return (
@@ -44,7 +41,6 @@ export async function ProductTypesDataTable({
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<ProductTypesSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						role="table"
@@ -54,9 +50,6 @@ export async function ProductTypesDataTable({
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={productTypeIds} />
-								</TableHead>
 								<TableHead key="label" scope="col" role="columnheader" className="w-[22%]">
 									Label
 								</TableHead>
@@ -96,9 +89,6 @@ export async function ProductTypesDataTable({
 
 								return (
 									<TableRow key={productType.id}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={productType.id} />
-										</TableCell>
 										<TableCell>
 											<div className="overflow-hidden">
 												<span

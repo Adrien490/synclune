@@ -1,13 +1,11 @@
 import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
-import { Button } from "@/shared/components/ui/button";
 import { IMAGES } from "@/shared/constants/images";
 import { ParallaxImage } from "../parallax-image";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
-import Link from "next/link";
 import { AtelierHapticBridge } from "./atelier-haptic-bridge";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
 import { PolaroidGallery } from "./polaroid-gallery";
@@ -166,36 +164,6 @@ export async function AtelierSection() {
 
 					{/* Polaroid gallery */}
 					<PolaroidGallery />
-
-					{/* CTA */}
-					<div id="atelier-cta" className="mt-12 sm:mt-16">
-						<Fade
-							y={MOTION_CONFIG.section.cta.y}
-							delay={MOTION_CONFIG.section.cta.delay}
-							duration={MOTION_CONFIG.section.cta.duration}
-							inView
-							once
-							className="text-center"
-						>
-							<p className="text-muted-foreground mb-4 text-base sm:text-lg">
-								Envie d'un bijou qui vous ressemble vraiment ?
-							</p>
-							<Button
-								asChild
-								size="lg"
-								variant="secondary"
-								className="ease-out hover:shadow-md motion-safe:transition-[scale,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]"
-							>
-								<Link
-									href="/personnalisation"
-									data-atelier-haptic="cta"
-									style={{ viewTransitionName: "atelier-cta-personnalisation" }}
-								>
-									Créer votre bijou sur-mesure
-								</Link>
-							</Button>
-						</Fade>
-					</div>
 				</div>
 			</AtelierHapticBridge>
 		</section>

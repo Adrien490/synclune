@@ -355,7 +355,7 @@ describe("rejectRefund", () => {
 		);
 	});
 
-	it("should invalidate all 7 cache tags when order has a user", async () => {
+	it("should invalidate cache tags when order has a user", async () => {
 		mockPrisma.refund.findUnique.mockResolvedValue(makeRefund());
 		mockPrisma.refund.update.mockResolvedValue({});
 
@@ -364,9 +364,6 @@ describe("rejectRefund", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("admin-badges");
 		expect(mockUpdateTag).toHaveBeenCalledWith("order-refunds-order-1");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-kpis");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-revenue-chart");
-		expect(mockUpdateTag).toHaveBeenCalledWith("dashboard-recent-orders");
 		expect(mockUpdateTag).toHaveBeenCalledWith("orders-user-user-1");
 	});
 

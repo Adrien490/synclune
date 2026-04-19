@@ -15,9 +15,7 @@ import { MaterialActiveToggle } from "@/modules/materials/components/admin/mater
 import { Gem } from "lucide-react";
 import { use } from "react";
 import { MaterialsRowActions } from "@/modules/materials/components/materials-row-actions";
-import { MaterialsSelectionToolbar } from "@/modules/materials/components/materials-selection-toolbar";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface MaterialsDataTableProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
@@ -26,7 +24,6 @@ interface MaterialsDataTableProps {
 
 export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataTableProps) {
 	const { materials, pagination } = use(materialsPromise);
-	const materialIds = materials.map((material) => material.id);
 
 	if (materials.length === 0) {
 		return (
@@ -42,7 +39,6 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<MaterialsSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						role="table"
@@ -52,9 +48,6 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={materialIds} />
-								</TableHead>
 								<TableHead key="name" scope="col" role="columnheader" className="w-[25%]">
 									Nom
 								</TableHead>
@@ -94,9 +87,6 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 
 								return (
 									<TableRow key={material.id}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={material.id} />
-										</TableCell>
 										<TableCell>
 											<div className="overflow-hidden">
 												<span

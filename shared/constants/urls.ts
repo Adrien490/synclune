@@ -48,7 +48,6 @@ export const ROUTES = {
 		FAVORITES: "/favoris",
 		ADDRESSES: "/adresses",
 		SETTINGS: "/parametres",
-		CUSTOMIZATIONS: "/personnalisations",
 	},
 
 	// Shop
@@ -64,7 +63,6 @@ export const ROUTES = {
 		CART: "/panier",
 		CHECKOUT: "/paiement",
 		CHECKOUT_RETURN: "/paiement/retour",
-		CUSTOMIZATION: "/personnalisation",
 		ABOUT: "/a-propos",
 	},
 
@@ -100,10 +98,6 @@ export const ROUTES = {
 		PRODUCTS: "/admin/catalogue/produits",
 		CUSTOMERS: "/admin/clients",
 		CUSTOMER_DETAIL: (userId: string) => `/admin/clients/${userId}`,
-		DISPUTES: "/admin/systeme/litiges",
-		AUDIT: "/admin/systeme/audit",
-		WEBHOOKS: "/admin/systeme/webhooks",
-		FAILED_EMAILS: "/admin/systeme/emails",
 	},
 } as const;
 

@@ -16,6 +16,8 @@ const STORE_SETTINGS_CACHE_TAGS = {
 	STATUS: "store-status",
 	/** Admin settings view */
 	SETTINGS: "store-settings",
+	/** Public announcement bar */
+	ANNOUNCEMENT: "store-announcement",
 } as const;
 
 // ============================================================================
@@ -34,11 +36,21 @@ export function cacheStoreSettings() {
 	cacheTag(STORE_SETTINGS_CACHE_TAGS.SETTINGS);
 }
 
+/** Cache for public announcement bar - reference profile */
+export function cacheStoreAnnouncement() {
+	cacheLife("reference");
+	cacheTag(STORE_SETTINGS_CACHE_TAGS.ANNOUNCEMENT);
+}
+
 // ============================================================================
 // INVALIDATION
 // ============================================================================
 
 /** Get all tags to invalidate when store settings change */
 export function getStoreSettingsInvalidationTags(): string[] {
-	return [STORE_SETTINGS_CACHE_TAGS.STATUS, STORE_SETTINGS_CACHE_TAGS.SETTINGS];
+	return [
+		STORE_SETTINGS_CACHE_TAGS.STATUS,
+		STORE_SETTINGS_CACHE_TAGS.SETTINGS,
+		STORE_SETTINGS_CACHE_TAGS.ANNOUNCEMENT,
+	];
 }

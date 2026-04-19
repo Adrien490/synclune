@@ -4,7 +4,6 @@ import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
 import { StopPropagationLink } from "@/shared/components/stop-propagation-link";
 import {
@@ -26,7 +25,6 @@ import {
 	REFUND_REASON_LABELS,
 } from "@/modules/refunds/constants/refund.constants";
 import { RefundRowActions } from "./refund-row-actions";
-import { RefundsSelectionToolbar } from "./refunds-selection-toolbar";
 
 interface RefundsMobileListProps {
 	refundsPromise: Promise<GetRefundsReturn>;
@@ -35,7 +33,6 @@ interface RefundsMobileListProps {
 
 export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileListProps) {
 	const { refunds, pagination } = use(refundsPromise);
-	const refundIds = refunds.map((r) => r.id);
 
 	if (refunds.length === 0) {
 		return (
@@ -56,58 +53,52 @@ export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileList
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<RefundsSelectionToolbar pageItemIds={refundIds} />
-
 			<ItemGroup aria-label="Remboursements" className="gap-2">
 				{refunds.map((refund) => (
 					<div key={refund.id} role="listitem">
-						<SelectableMobileCard
-							itemId={refund.id}
-							ariaLabel={`Remboursement ${refund.order.orderNumber}`}
+						<Item
+							variant="outline"
+							size="sm"
+							className="gap-3"
+							aria-roledescription="carte remboursement"
+							aria-label={`Remboursement ${refund.order.orderNumber}`}
 						>
-							<Item
-								variant="outline"
-								size="sm"
-								className="gap-3"
-								aria-roledescription="carte remboursement"
-							>
-								<ItemContent className="min-w-0">
-									<ItemTitle>
-										<StopPropagationLink
-											href={`/admin/ventes/commandes/${refund.order.id}`}
-											className="truncate font-semibold hover:underline"
-										>
-											{refund.order.orderNumber}
-										</StopPropagationLink>
-										<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
-											{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
-										</Badge>
-									</ItemTitle>
-									<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-										<span>{refund.order.customerName || refund.order.customerEmail}</span>
-										<span aria-hidden="true">·</span>
-										<span>{REFUND_REASON_LABELS[refund.reason as RefundReason]}</span>
-										<span aria-hidden="true">·</span>
-										<span className="font-medium">{formatEuro(refund.amount)}</span>
-										<span aria-hidden="true">·</span>
-										<span>{formatDateShort(refund.createdAt)}</span>
-									</ItemDescription>
-								</ItemContent>
-								<ItemActions>
-									<StopEventPropagation>
-										<RefundRowActions
-											refund={{
-												id: refund.id,
-												status: refund.status as RefundStatus,
-												amount: refund.amount,
-												orderId: refund.order.id,
-												orderNumber: refund.order.orderNumber,
-											}}
-										/>
-									</StopEventPropagation>
-								</ItemActions>
-							</Item>
-						</SelectableMobileCard>
+							<ItemContent className="min-w-0">
+								<ItemTitle>
+									<StopPropagationLink
+										href={`/admin/ventes/commandes/${refund.order.id}`}
+										className="truncate font-semibold hover:underline"
+									>
+										{refund.order.orderNumber}
+									</StopPropagationLink>
+									<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
+										{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
+									</Badge>
+								</ItemTitle>
+								<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+									<span>{refund.order.customerName || refund.order.customerEmail}</span>
+									<span aria-hidden="true">·</span>
+									<span>{REFUND_REASON_LABELS[refund.reason as RefundReason]}</span>
+									<span aria-hidden="true">·</span>
+									<span className="font-medium">{formatEuro(refund.amount)}</span>
+									<span aria-hidden="true">·</span>
+									<span>{formatDateShort(refund.createdAt)}</span>
+								</ItemDescription>
+							</ItemContent>
+							<ItemActions>
+								<StopEventPropagation>
+									<RefundRowActions
+										refund={{
+											id: refund.id,
+											status: refund.status as RefundStatus,
+											amount: refund.amount,
+											orderId: refund.order.id,
+											orderNumber: refund.order.orderNumber,
+										}}
+									/>
+								</StopEventPropagation>
+							</ItemActions>
+						</Item>
 					</div>
 				))}
 			</ItemGroup>

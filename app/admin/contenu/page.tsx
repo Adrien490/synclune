@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { CircleHelp, Megaphone } from "lucide-react";
+import { Megaphone } from "lucide-react";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -19,12 +19,6 @@ export default async function ContentPage() {
 					description: "Gérer les annonces promotionnelles affichées sur la boutique",
 					href: "/admin/contenu/annonces",
 					icon: Megaphone,
-				},
-				{
-					title: "FAQ",
-					description: "Gérer les questions fréquentes affichées sur la homepage",
-					href: "/admin/contenu/faq",
-					icon: CircleHelp,
 				},
 			]}
 		/>

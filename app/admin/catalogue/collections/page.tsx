@@ -37,19 +37,9 @@ const DeleteCollectionAlertDialog = dynamic(() =>
 		(mod) => mod.DeleteCollectionAlertDialog,
 	),
 );
-const BulkDeleteCollectionsAlertDialog = dynamic(() =>
-	import("@/modules/collections/components/admin/bulk-delete-collections-alert-dialog").then(
-		(mod) => mod.BulkDeleteCollectionsAlertDialog,
-	),
-);
 const ArchiveCollectionAlertDialog = dynamic(() =>
 	import("@/modules/collections/components/admin/archive-collection-alert-dialog").then(
 		(mod) => mod.ArchiveCollectionAlertDialog,
-	),
-);
-const BulkArchiveCollectionsAlertDialog = dynamic(() =>
-	import("@/modules/collections/components/admin/bulk-archive-collections-alert-dialog").then(
-		(mod) => mod.BulkArchiveCollectionsAlertDialog,
 	),
 );
 const ChangeCollectionStatusAlertDialog = dynamic(() =>
@@ -119,9 +109,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 		<>
 			<CollectionFormDialog />
 			<DeleteCollectionAlertDialog />
-			<BulkDeleteCollectionsAlertDialog />
 			<ArchiveCollectionAlertDialog />
-			<BulkArchiveCollectionsAlertDialog />
 			<ChangeCollectionStatusAlertDialog />
 			<CollectionItemDrawer />
 

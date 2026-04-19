@@ -29,7 +29,6 @@ test.describe("Resilience aux erreurs", { tag: ["@critical"] }, () => {
 			"/connexion",
 			"/inscription",
 			"/mot-de-passe-oublie",
-			"/personnalisation",
 		];
 
 		for (const route of criticalPages) {

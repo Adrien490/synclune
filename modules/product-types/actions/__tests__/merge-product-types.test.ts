@@ -28,9 +28,6 @@ const {
 		product: {
 			updateMany: vi.fn(),
 		},
-		customizationRequest: {
-			updateMany: vi.fn(),
-		},
 	};
 	type TxMock = typeof tx;
 	return {
@@ -118,7 +115,6 @@ describe("mergeProductTypes", () => {
 			return null;
 		});
 		mockTx.product.updateMany.mockResolvedValue({ count: 3 });
-		mockTx.customizationRequest.updateMany.mockResolvedValue({ count: 1 });
 		mockTx.productType.delete.mockResolvedValue({ id: "src-1" });
 
 		mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => unknown) =>
@@ -212,15 +208,11 @@ describe("mergeProductTypes", () => {
 		expect(mockTx.productType.delete).toHaveBeenCalledWith({ where: { id: "src-1" } });
 	});
 
-	it("should reassign products and customizationRequests from source to target", async () => {
+	it("should reassign products from source to target", async () => {
 		await mergeProductTypes(undefined, validFormData);
 		expect(mockTx.product.updateMany).toHaveBeenCalledWith({
 			where: { typeId: "src-1" },
 			data: { typeId: "tgt-1" },
-		});
-		expect(mockTx.customizationRequest.updateMany).toHaveBeenCalledWith({
-			where: { productTypeId: "src-1" },
-			data: { productTypeId: "tgt-1" },
 		});
 	});
 
@@ -242,7 +234,6 @@ describe("mergeProductTypes", () => {
 					targetId: "tgt-1",
 					targetLabel: "Bague",
 					reassignedProducts: 3,
-					reassignedCustomizations: 1,
 				}),
 			}),
 		);
@@ -257,11 +248,10 @@ describe("mergeProductTypes", () => {
 	it("should return success with total count in message", async () => {
 		const result = await mergeProductTypes(undefined, validFormData);
 		expect(mockSuccess).toHaveBeenCalledWith(
-			expect.stringContaining("4 élément(s) fusionné(s) dans « Bague »"),
+			expect.stringContaining("3 élément(s) fusionné(s) dans « Bague »"),
 			expect.objectContaining({
 				targetId: "tgt-1",
 				reassignedProducts: 3,
-				reassignedCustomizations: 1,
 			}),
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
@@ -269,7 +259,6 @@ describe("mergeProductTypes", () => {
 
 	it("should return fallback message when 0 elements are reassigned", async () => {
 		mockTx.product.updateMany.mockResolvedValue({ count: 0 });
-		mockTx.customizationRequest.updateMany.mockResolvedValue({ count: 0 });
 		const result = await mergeProductTypes(undefined, validFormData);
 		expect(mockSuccess).toHaveBeenCalledWith(
 			expect.stringContaining("supprimé et fusionné"),

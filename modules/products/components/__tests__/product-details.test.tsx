@@ -61,12 +61,6 @@ vi.mock("../delivery-estimator", () => ({
 	DeliveryEstimator: () => <div data-testid="delivery-estimator" />,
 }));
 
-vi.mock("../product-customization-link", () => ({
-	ProductCustomizationLink: ({ product }: { product: { slug: string } }) => (
-		<div data-testid="product-customization-link" data-slug={product.slug} />
-	),
-}));
-
 vi.mock("../product-highlights", () => ({
 	ProductHighlights: ({ product: _product }: { product: unknown }) => (
 		<div data-testid="product-highlights" />

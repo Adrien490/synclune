@@ -222,23 +222,6 @@ describe("AtelierSection structure", () => {
 		expect(screen.getByText("Mon atelier")).toBeInTheDocument();
 	});
 
-	it("renders the CTA with correct link", async () => {
-		await renderAtelierSection();
-
-		const ctaLink = screen.getByText("Créer votre bijou sur-mesure");
-		expect(ctaLink).toBeInTheDocument();
-		expect(ctaLink.closest("a")?.getAttribute("href")).toBe("/personnalisation");
-	});
-
-	it("wires CTA with data-atelier-haptic + viewTransitionName for native 2026 feedback", async () => {
-		await renderAtelierSection();
-
-		const ctaLink = screen.getByText("Créer votre bijou sur-mesure").closest("a");
-		expect(ctaLink).not.toBeNull();
-		expect(ctaLink!.getAttribute("data-atelier-haptic")).toBe("cta");
-		expect(ctaLink!.style.viewTransitionName).toBe("atelier-cta-personnalisation");
-	});
-
 	it("renders the new editorial subtitle", async () => {
 		await renderAtelierSection();
 
@@ -249,12 +232,6 @@ describe("AtelierSection structure", () => {
 		await renderAtelierSection();
 
 		expect(screen.getByTestId("atelier-haptic-bridge")).toBeInTheDocument();
-	});
-
-	it("renders the CTA anchor id", async () => {
-		await renderAtelierSection();
-
-		expect(document.querySelector("#atelier-cta")).not.toBeNull();
 	});
 
 	it("renders timeline and polaroid gallery", async () => {

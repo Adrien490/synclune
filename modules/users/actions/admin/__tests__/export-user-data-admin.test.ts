@@ -77,7 +77,6 @@ const MOCK_EXPORT_DATA = {
 	newsletter: null,
 	reviews: [],
 	sessions: [],
-	customizationRequests: [],
 };
 
 // ============================================================================

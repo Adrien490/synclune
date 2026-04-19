@@ -101,9 +101,6 @@ export function getMobileNavItems(
 		bijouxItem,
 		collectionsItem,
 
-		// ✨ PERSONNALISER - Service différenciateur
-		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
-
 		// 🏡 L'ATELIER - Page à propos
 		{ href: ROUTES.SHOP.ABOUT, label: "L'atelier", icon: "info" },
 
@@ -198,11 +195,7 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 				: undefined,
 	};
 
-	const items: NavItemWithChildren[] = [
-		creationsItem,
-		collectionsItem,
-		{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation", icon: "sparkles" },
-	];
+	const items: NavItemWithChildren[] = [creationsItem, collectionsItem];
 
 	return items;
 }
@@ -211,7 +204,6 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 export const footerNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations" },
 	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections" },
-	{ href: ROUTES.SHOP.CUSTOMIZATION, label: "Personnalisation" },
 	{ href: ROUTES.ACCOUNT.ROOT, label: "Mon compte" },
 ] as const;
 

@@ -5,7 +5,6 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
-import { CUSTOMIZATION_CACHE_TAGS } from "@/modules/customizations/constants/cache";
 import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
@@ -21,13 +20,11 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * - Product (and ProductSku, SkuMedia, etc. via cascade)
  * - ProductReview, ReviewResponse, ReviewMedia (via cascade)
  * - NewsletterSubscriber
- * - CustomizationRequest
  */
 export async function hardDeleteExpiredRecords(): Promise<{
 	productsDeleted: number;
 	reviewsDeleted: number;
 	newsletterDeleted: number;
-	customizationRequestsDeleted: number;
 	hasMore: boolean;
 }> {
 	logger.info("Starting 10-year retention cleanup", { cronJob: "hard-delete-retention" });
@@ -45,18 +42,13 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	const retentionWhere = { deletedAt: { lt: retentionDate } };
 
 	// 1. Find IDs to delete (batched to prevent timeout)
-	const [reviewIds, newsletterIds, customizationIds, productIds] = await Promise.all([
+	const [reviewIds, newsletterIds, productIds] = await Promise.all([
 		prisma.productReview.findMany({
 			where: retentionWhere,
 			select: { id: true },
 			take: BATCH_SIZE_LARGE,
 		}),
 		prisma.newsletterSubscriber.findMany({
-			where: retentionWhere,
-			select: { id: true },
-			take: BATCH_SIZE_LARGE,
-		}),
-		prisma.customizationRequest.findMany({
 			where: retentionWhere,
 			select: { id: true },
 			take: BATCH_SIZE_LARGE,
@@ -72,7 +64,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	const hasMore =
 		reviewIds.length === BATCH_SIZE_LARGE ||
 		newsletterIds.length === BATCH_SIZE_LARGE ||
-		customizationIds.length === BATCH_SIZE_LARGE ||
 		productIds.length === BATCH_SIZE_LARGE;
 
 	if (hasMore) {
@@ -100,36 +91,23 @@ export async function hardDeleteExpiredRecords(): Promise<{
 				})
 			: [];
 
-	const customizationMediaUrls =
-		customizationIds.length > 0
-			? await prisma.customizationMedia.findMany({
-					where: { customizationRequestId: { in: customizationIds.map((c) => c.id) } },
-					select: { url: true },
-				})
-			: [];
-
 	// 3. Run all DB deletes in a single transaction
-	const [reviewsResult, newsletterResult, customizationRequestsResult, productsResult] =
-		await prisma.$transaction([
-			prisma.productReview.deleteMany({
-				where: { id: { in: reviewIds.map((r) => r.id) } },
-			}),
-			prisma.newsletterSubscriber.deleteMany({
-				where: { id: { in: newsletterIds.map((n) => n.id) } },
-			}),
-			prisma.customizationRequest.deleteMany({
-				where: { id: { in: customizationIds.map((c) => c.id) } },
-			}),
-			prisma.product.deleteMany({
-				where: { id: { in: productIds.map((p) => p.id) } },
-			}),
-		]);
+	const [reviewsResult, newsletterResult, productsResult] = await prisma.$transaction([
+		prisma.productReview.deleteMany({
+			where: { id: { in: reviewIds.map((r) => r.id) } },
+		}),
+		prisma.newsletterSubscriber.deleteMany({
+			where: { id: { in: newsletterIds.map((n) => n.id) } },
+		}),
+		prisma.product.deleteMany({
+			where: { id: { in: productIds.map((p) => p.id) } },
+		}),
+	]);
 
 	logger.info("DB transaction completed", {
 		cronJob: "hard-delete-retention",
 		reviewsDeleted: reviewsResult.count,
 		newsletterDeleted: newsletterResult.count,
-		customizationRequestsDeleted: customizationRequestsResult.count,
 		productsDeleted: productsResult.count,
 	});
 
@@ -144,11 +122,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	if (reviewsResult.count > 0) {
 		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
 		updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
-	}
-	if (customizationRequestsResult.count > 0) {
-		updateTag(CUSTOMIZATION_CACHE_TAGS.LIST);
-		updateTag(CUSTOMIZATION_CACHE_TAGS.STATS);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 	}
 	if (newsletterResult.count > 0) {
 		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
@@ -166,7 +139,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			productsDeleted: productsResult.count,
 			reviewsDeleted: reviewsResult.count,
 			newsletterDeleted: newsletterResult.count,
-			customizationRequestsDeleted: customizationRequestsResult.count,
 			hasMore,
 		};
 	}
@@ -203,28 +175,12 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		}
 	}
 
-	if (customizationMediaUrls.length > 0) {
-		try {
-			const urls = customizationMediaUrls.map((m) => m.url);
-			const result = await deleteUploadThingFilesFromUrls(urls);
-			logger.info("Deleted customization media files from UploadThing", {
-				cronJob: "hard-delete-retention",
-				count: result.deleted,
-			});
-		} catch (_error) {
-			logger.warn("Failed to delete customization media from UploadThing", {
-				cronJob: "hard-delete-retention",
-			});
-		}
-	}
-
 	logger.info("Retention cleanup completed", { cronJob: "hard-delete-retention" });
 
 	return {
 		productsDeleted: productsResult.count,
 		reviewsDeleted: reviewsResult.count,
 		newsletterDeleted: newsletterResult.count,
-		customizationRequestsDeleted: customizationRequestsResult.count,
 		hasMore,
 	};
 }

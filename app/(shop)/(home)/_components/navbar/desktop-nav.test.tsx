@@ -116,9 +116,9 @@ const navItems = [
 		],
 	},
 	{
-		href: "/personnalisation",
-		label: "Personnalisation",
-		icon: "sparkles" as const,
+		href: "/a-propos",
+		label: "L'atelier",
+		icon: "info" as const,
 	},
 ];
 
@@ -128,14 +128,14 @@ describe("DesktopNav", () => {
 
 		expect(screen.getByText("Les créations")).toBeInTheDocument();
 		expect(screen.getByText("Les collections")).toBeInTheDocument();
-		expect(screen.getByText("Personnalisation")).toBeInTheDocument();
+		expect(screen.getByText("L'atelier")).toBeInTheDocument();
 	});
 
 	it("renders simple items as links", () => {
 		render(<DesktopNav navItems={navItems} />);
 
-		const link = screen.getByRole("link", { name: "Personnalisation" });
-		expect(link.getAttribute("href")).toBe("/personnalisation");
+		const link = screen.getByRole("link", { name: "L'atelier" });
+		expect(link.getAttribute("href")).toBe("/a-propos");
 	});
 
 	it("renders dropdown items as buttons (triggers)", () => {
@@ -155,7 +155,7 @@ describe("DesktopNav", () => {
 	it("does not mark inactive items with aria-current", () => {
 		render(<DesktopNav navItems={navItems} />);
 
-		const link = screen.getByRole("link", { name: "Personnalisation" });
+		const link = screen.getByRole("link", { name: "L'atelier" });
 		expect(link.getAttribute("aria-current")).toBeNull();
 	});
 
@@ -221,7 +221,7 @@ describe("DesktopNav", () => {
 		it("applies tracking-[0.02em] premium letter-spacing on triggers and links", () => {
 			render(<DesktopNav navItems={navItems} />);
 
-			const link = screen.getByRole("link", { name: "Personnalisation" });
+			const link = screen.getByRole("link", { name: "L'atelier" });
 			expect(link.className).toContain("tracking-[0.02em]");
 			const trigger = screen.getByRole("button", { name: "Les créations" });
 			expect(trigger.className).toContain("tracking-[0.02em]");
@@ -229,13 +229,13 @@ describe("DesktopNav", () => {
 
 		it("renders subtle primary-tinted hover background (gold/rose accent)", () => {
 			render(<DesktopNav navItems={navItems} />);
-			const link = screen.getByRole("link", { name: "Personnalisation" });
+			const link = screen.getByRole("link", { name: "L'atelier" });
 			expect(link.className).toContain("hover:bg-primary/5");
 		});
 
 		it("binds the underline transition to --ease-spring token", () => {
 			render(<DesktopNav navItems={navItems} />);
-			const link = screen.getByRole("link", { name: "Personnalisation" });
+			const link = screen.getByRole("link", { name: "L'atelier" });
 			expect(link.className).toContain("var(--ease-spring)");
 		});
 	});

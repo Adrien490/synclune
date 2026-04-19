@@ -17,7 +17,7 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { navigationData } from "./navigation-config";
-import { Plus, Layers, Ticket, CircleHelp, Megaphone } from "lucide-react";
+import { Plus, Layers, Ticket, Megaphone } from "lucide-react";
 
 const QUICK_ACTIONS = [
 	{
@@ -43,12 +43,6 @@ const QUICK_ACTIONS = [
 		title: "Nouvelle annonce",
 		url: "/admin/contenu/annonces",
 		icon: Megaphone,
-	},
-	{
-		id: "new-faq",
-		title: "Nouvelle question FAQ",
-		url: "/admin/contenu/faq",
-		icon: CircleHelp,
 	},
 ] as const;
 

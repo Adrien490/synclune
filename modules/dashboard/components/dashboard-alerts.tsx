@@ -1,4 +1,4 @@
-import { AlertTriangle, PackageX, RotateCcw, Sparkles } from "lucide-react";
+import { AlertTriangle, PackageX, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/shared/components/ui/badge";
 import type { DashboardAlerts } from "@/modules/dashboard/data/get-alerts";
@@ -12,10 +12,9 @@ interface DashboardAlertsProps {
  * Only renders when there are items requiring attention
  */
 export function DashboardAlerts({ alerts }: DashboardAlertsProps) {
-	const { pendingRefunds, activeDisputes, lowStockSkus, pendingCustomizations } = alerts;
+	const { pendingRefunds, activeDisputes, lowStockSkus } = alerts;
 
-	const hasAlerts =
-		pendingRefunds > 0 || activeDisputes > 0 || lowStockSkus > 0 || pendingCustomizations > 0;
+	const hasAlerts = pendingRefunds > 0 || activeDisputes > 0 || lowStockSkus > 0;
 
 	if (!hasAlerts) return null;
 
@@ -48,19 +47,6 @@ export function DashboardAlerts({ alerts }: DashboardAlertsProps) {
 					<RotateCcw className="text-warning h-4 w-4" aria-hidden="true" />
 					<span className="font-medium">
 						{pendingRefunds} remboursement{pendingRefunds > 1 ? "s" : ""} en attente
-					</span>
-				</Link>
-			)}
-
-			{pendingCustomizations > 0 && (
-				<Link
-					href="/admin/marketing/personnalisations?filter_status=PENDING"
-					className="focus-visible:ring-ring border-primary/30 bg-primary/5 hover:bg-primary/10 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
-				>
-					<Sparkles className="text-primary h-4 w-4" aria-hidden="true" />
-					<span className="font-medium">
-						{pendingCustomizations} personnalisation{pendingCustomizations > 1 ? "s" : ""} en
-						attente
 					</span>
 				</Link>
 			)}

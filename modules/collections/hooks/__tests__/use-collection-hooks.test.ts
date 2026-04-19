@@ -8,16 +8,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockDeleteCollection,
 	mockRefreshCollections,
-	mockBulkArchiveCollections,
-	mockBulkDeleteCollections,
 	mockSetFeaturedProduct,
 	mockRemoveFeaturedProduct,
 	mockUpdateCollectionStatus,
 } = vi.hoisted(() => ({
 	mockDeleteCollection: vi.fn(),
 	mockRefreshCollections: vi.fn(),
-	mockBulkArchiveCollections: vi.fn(),
-	mockBulkDeleteCollections: vi.fn(),
 	mockSetFeaturedProduct: vi.fn(),
 	mockRemoveFeaturedProduct: vi.fn(),
 	mockUpdateCollectionStatus: vi.fn(),
@@ -28,12 +24,6 @@ vi.mock("@/modules/collections/actions/delete-collection", () => ({
 }));
 vi.mock("@/modules/collections/actions/refresh-collections", () => ({
 	refreshCollections: mockRefreshCollections,
-}));
-vi.mock("@/modules/collections/actions/bulk-archive-collections", () => ({
-	bulkArchiveCollections: mockBulkArchiveCollections,
-}));
-vi.mock("@/modules/collections/actions/bulk-delete-collections", () => ({
-	bulkDeleteCollections: mockBulkDeleteCollections,
 }));
 vi.mock("@/modules/collections/actions/set-featured-product", () => ({
 	setFeaturedProduct: mockSetFeaturedProduct,
@@ -59,8 +49,6 @@ vi.mock("sonner", () => ({
 
 import { useDeleteCollection } from "../use-delete-collection";
 import { useRefreshCollections } from "../use-refresh-collections";
-import { useBulkArchiveCollections } from "../use-bulk-archive-collections";
-import { useBulkDeleteCollections } from "../use-bulk-delete-collections";
 import { useSetFeaturedProduct } from "../use-set-featured-product";
 import { useUpdateCollectionStatus } from "../use-update-collection-status";
 
@@ -156,119 +144,6 @@ describe("useRefreshCollections", () => {
 
 		await act(async () => {
 			result.current.refresh();
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkArchiveCollections
-// ============================================================================
-
-describe("useBulkArchiveCollections", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkArchiveCollections.mockResolvedValue({
-			...SUCCESS,
-			message: "2 collections archivées",
-		});
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkArchiveCollections());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends collectionIds as JSON and targetStatus to FormData", async () => {
-		const { result } = renderHook(() => useBulkArchiveCollections());
-
-		await act(async () => {
-			result.current.handle(["col-1", "col-2"], "ARCHIVED");
-		});
-
-		const formData = mockBulkArchiveCollections.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("collectionIds")).toBe(JSON.stringify(["col-1", "col-2"]));
-		expect(formData.get("targetStatus")).toBe("ARCHIVED");
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkArchiveCollections({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["col-1"], "ARCHIVED");
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 collections archivées");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkArchiveCollections.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkArchiveCollections({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["col-1"], "ARCHIVED");
-		});
-
-		expect(onSuccess).not.toHaveBeenCalled();
-	});
-});
-
-// ============================================================================
-// useBulkDeleteCollections
-// ============================================================================
-
-describe("useBulkDeleteCollections", () => {
-	beforeEach(() => {
-		vi.clearAllMocks();
-		mockBulkDeleteCollections.mockResolvedValue({
-			...SUCCESS,
-			message: "2 collections supprimées",
-		});
-	});
-
-	it("returns state, action, isPending, and handle", () => {
-		const { result } = renderHook(() => useBulkDeleteCollections());
-		expect(result.current.state).toBeUndefined();
-		expect(typeof result.current.action).toBe("function");
-		expect(typeof result.current.isPending).toBe("boolean");
-		expect(typeof result.current.handle).toBe("function");
-	});
-
-	it("handle sends ids as JSON in FormData", async () => {
-		const { result } = renderHook(() => useBulkDeleteCollections());
-
-		await act(async () => {
-			result.current.handle(["col-1", "col-2"]);
-		});
-
-		const formData = mockBulkDeleteCollections.mock.calls[0]?.[1] as FormData;
-		expect(formData.get("ids")).toBe(JSON.stringify(["col-1", "col-2"]));
-	});
-
-	it("calls onSuccess with message when action succeeds", async () => {
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteCollections({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["col-1"]);
-		});
-
-		expect(onSuccess).toHaveBeenCalledWith("2 collections supprimées");
-	});
-
-	it("does not call onSuccess when action fails", async () => {
-		mockBulkDeleteCollections.mockResolvedValue(ERROR);
-		const onSuccess = vi.fn();
-		const { result } = renderHook(() => useBulkDeleteCollections({ onSuccess }));
-
-		await act(async () => {
-			result.current.handle(["col-1"]);
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();

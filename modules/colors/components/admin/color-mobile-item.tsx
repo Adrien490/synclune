@@ -1,6 +1,5 @@
 "use client";
 
-import { SelectableMobileCard } from "@/shared/components/selectable-mobile-card";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -43,7 +42,12 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	};
 
 	return (
-		<SelectableMobileCard itemId={color.id} ariaLabel={`Couleur ${color.name}`} onOpen={handleOpen}>
+		<button
+			type="button"
+			aria-label={`Couleur ${color.name}`}
+			onClick={handleOpen}
+			className="focus-visible:ring-primary w-full rounded-lg text-left focus-visible:ring-2 focus-visible:outline-none"
+		>
 			<Item
 				variant="outline"
 				size="sm"
@@ -69,6 +73,6 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</SelectableMobileCard>
+		</button>
 	);
 }

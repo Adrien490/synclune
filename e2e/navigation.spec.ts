@@ -33,10 +33,6 @@ test.describe("Navigation principale", { tag: ["@critical"] }, () => {
 		// Les collections
 		const collectionsLink = page.getByRole("link", { name: /Les collections/i }).first();
 		await expect(collectionsLink).toBeVisible();
-
-		// Personnalisation
-		const personnalisationLink = page.getByRole("link", { name: /Personnalisation/i }).first();
-		await expect(personnalisationLink).toBeVisible();
 	});
 
 	test("la navbar contient les icônes d'action (favoris, panier)", async ({ page, cartPage }) => {

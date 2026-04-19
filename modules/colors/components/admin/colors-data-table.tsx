@@ -15,9 +15,7 @@ import { Palette } from "lucide-react";
 import { use } from "react";
 import { ColorActiveToggle } from "@/modules/colors/components/admin/color-active-toggle";
 import { ColorsRowActions } from "@/modules/colors/components/colors-row-actions";
-import { ColorsSelectionToolbar } from "@/modules/colors/components/colors-selection-toolbar";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface ColorsDataTableProps {
 	colorsPromise: Promise<GetColorsReturn>;
@@ -26,7 +24,6 @@ interface ColorsDataTableProps {
 
 export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps) {
 	const { colors, pagination } = use(colorsPromise);
-	const colorIds = colors.map((color) => color.id);
 
 	if (colors.length === 0) {
 		return (
@@ -42,7 +39,6 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<ColorsSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						role="table"
@@ -52,9 +48,6 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={colorIds} />
-								</TableHead>
 								<TableHead key="preview" scope="col" role="columnheader" className="w-[8%]">
 									Aperçu
 								</TableHead>
@@ -94,9 +87,6 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 
 								return (
 									<TableRow key={color.id}>
-										<TableCell>
-											<TableSelectionCell type="row" itemId={color.id} />
-										</TableCell>
 										<TableCell>
 											<div
 												className="border-border inline-flex h-[30px] w-[30px] rounded-full border"

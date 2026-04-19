@@ -340,7 +340,6 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		{ path: "/collections", name: "Collections" },
 		{ path: "/favoris", name: "Favoris" },
 		{ path: "/mot-de-passe-oublie", name: "Mot de passe oublié" },
-		{ path: "/personnalisation", name: "Personnalisation" },
 		{ path: "/paiement/annulation", name: "Checkout annulation" },
 		{ path: "/paiement/retour", name: "Checkout retour" },
 		{ path: "/~offline", name: "Page offline" },

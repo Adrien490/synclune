@@ -166,47 +166,6 @@ export const ourFileRouter = {
 			};
 		}),
 
-	// Route pour les images d'inspiration de personnalisation (public, rate limited)
-	customizationMedia: f({
-		image: { maxFileSize: "4MB", maxFileCount: 5 },
-	})
-		.middleware(async ({ files }) => {
-			// 1. Authentification optionnelle
-			const session = await getSession();
-
-			// 2. Rate limiting STRICT pour endpoint public
-			const headersList = await headers();
-			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session?.user.id ?? null, null, clientIp);
-			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CUSTOMIZATION, clientIp);
-
-			if (!rateLimit.success) {
-				throw new UploadThingError(
-					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez réessayer plus tard.",
-				);
-			}
-
-			// 3. Validation MIME et taille côté serveur
-			for (const file of files) {
-				validateMimeType(file, ALLOWED_IMAGE_TYPES);
-				validateFileSize(file, 4 * 1024 * 1024); // 4MB
-			}
-
-			return {
-				userId: session?.user.id ?? null,
-				userName: session?.user.name ?? "Anonymous",
-			};
-		})
-		.onUploadComplete(async ({ metadata, file }) => {
-			const blurDataUrl = await generateBlurSafe(file.ufsUrl);
-
-			return {
-				url: file.ufsUrl,
-				blurDataUrl,
-				uploadedBy: metadata.userId,
-			};
-		}),
-
 	// Route pour les photos d'avis clients
 	// Accessible aux utilisateurs connectés (acheteurs vérifiés)
 	reviewMedia: f({

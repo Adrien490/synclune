@@ -31,11 +31,6 @@ const DeleteOrderAlertDialog = dynamic(() =>
 		(mod) => mod.DeleteOrderAlertDialog,
 	),
 );
-const BulkDeleteOrdersAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/bulk-delete-orders-alert-dialog").then(
-		(mod) => mod.BulkDeleteOrdersAlertDialog,
-	),
-);
 const MarkAsPaidAlertDialog = dynamic(() =>
 	import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then(
 		(mod) => mod.MarkAsPaidAlertDialog,
@@ -182,7 +177,6 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 			{/* Alert Dialogs globaux */}
 			<CancelOrderAlertDialog />
 			<DeleteOrderAlertDialog />
-			<BulkDeleteOrdersAlertDialog />
 			<MarkAsPaidAlertDialog />
 			<MarkAsShippedDialog />
 			<MarkAsDeliveredAlertDialog />

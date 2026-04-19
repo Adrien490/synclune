@@ -50,16 +50,6 @@ const UpdatePriceDialog = dynamic(() =>
 		(mod) => mod.UpdatePriceDialog,
 	),
 );
-const BulkAdjustStockDialog = dynamic(() =>
-	import("@/modules/skus/components/admin/bulk-adjust-stock-dialog").then(
-		(mod) => mod.BulkAdjustStockDialog,
-	),
-);
-const BulkUpdatePriceDialog = dynamic(() =>
-	import("@/modules/skus/components/admin/bulk-update-price-dialog").then(
-		(mod) => mod.BulkUpdatePriceDialog,
-	),
-);
 const SkuItemDrawer = dynamic(() =>
 	import("@/modules/skus/components/admin/sku-item-drawer").then((mod) => mod.SkuItemDrawer),
 );
@@ -176,8 +166,6 @@ export default async function ProductVariantsPage({
 			<DeleteProductSkuAlertDialog />
 			<AdjustStockDialog />
 			<UpdatePriceDialog />
-			<BulkAdjustStockDialog />
-			<BulkUpdatePriceDialog />
 			<SkuItemDrawer />
 
 			{/* Breadcrumb personnalise avec titre du produit */}

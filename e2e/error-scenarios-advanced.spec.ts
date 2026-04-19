@@ -68,49 +68,4 @@ test.describe("Scenarios d'erreur avances", { tag: ["@regression"] }, () => {
 		// Clean up
 		await page.unroute("**/api/**");
 	});
-
-	test("upload de fichier avec un MIME type invalide", async ({ page }) => {
-		// Navigate to customization page which may have file upload
-		await page.goto("/personnalisation");
-		await page.waitForLoadState("domcontentloaded");
-
-		const fileInput = page.locator('input[type="file"]');
-		const hasFileInput = (await fileInput.count()) > 0;
-		test.skip(!hasFileInput, "No file upload on customization page");
-
-		// Try to upload a file with wrong MIME type
-		await fileInput.first().setInputFiles({
-			name: "test.exe",
-			mimeType: "application/x-executable",
-			buffer: Buffer.from("fake content"),
-		});
-
-		// Should show an error about invalid file type
-		const errorMessage = page
-			.getByText(/type.*fichier|format.*invalide|accepté/i)
-			.or(page.locator('[role="alert"]'));
-		await expect(errorMessage.first()).toBeVisible({ timeout: 5000 });
-	});
-
-	test("soumission de formulaire avec champs XSS ne cause pas de probleme", async ({ page }) => {
-		await page.goto("/personnalisation");
-		await page.waitForLoadState("domcontentloaded");
-
-		const nameInput = page.getByLabel(/Prénom/i);
-		test.skip((await nameInput.count()) === 0, "No form on page");
-
-		// Fill with XSS payload
-		await nameInput.fill('<script>alert("xss")</script>');
-
-		const emailInput = page.getByLabel(/Adresse email/i).or(page.getByLabel(/Email/i));
-		if ((await emailInput.count()) > 0) {
-			await emailInput.first().fill("test@example.com");
-		}
-
-		// Page should not execute the script
-		const dialogPromise = page.waitForEvent("dialog", { timeout: 2000 }).catch(() => null);
-		const dialog = await dialogPromise;
-
-		expect(dialog, "XSS script should not execute").toBeNull();
-	});
 });

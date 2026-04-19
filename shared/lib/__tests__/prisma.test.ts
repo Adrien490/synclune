@@ -22,7 +22,6 @@ vi.mock("@/app/generated/prisma/client", () => {
 		this.reviewResponse = { update: mockPrismaUpdate };
 		this.product = { update: mockPrismaUpdate };
 		this.productSku = { update: mockPrismaUpdate };
-		this.customizationRequest = { update: mockPrismaUpdate };
 		this.discount = { update: mockPrismaUpdate };
 		this.$queryRaw = mockPrismaQueryRaw;
 	}
@@ -222,17 +221,6 @@ describe("softDelete", () => {
 		});
 	});
 
-	describe("softDelete.customizationRequest", () => {
-		it("calls prisma.customizationRequest.update with the correct id and deletedAt", async () => {
-			await softDelete.customizationRequest("req-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "req-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-	});
-
 	describe("softDelete.discount", () => {
 		it("calls prisma.discount.update with the correct id and deletedAt", async () => {
 			await softDelete.discount("discount-1");
@@ -254,7 +242,6 @@ describe("softDelete", () => {
 			["reviewResponse", "response-id"],
 			["product", "product-id"],
 			["productSku", "sku-id"],
-			["customizationRequest", "req-id"],
 			["discount", "discount-id"],
 		];
 

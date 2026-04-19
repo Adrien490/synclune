@@ -20,7 +20,6 @@ export const SECTION_SPACING = {
 
 	/**
 	 * Espacement réduit pour pages informatives
-	 * Usage : /personnalisation
 	 */
 	compact: SECTION_PADDING.sm,
 

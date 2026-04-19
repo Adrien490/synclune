@@ -61,7 +61,6 @@ export function MenuSheetNav({
 
 	// Separate items into zones
 	const homeItem = navItems.find((item) => item.href === ROUTES.SHOP.HOME);
-	const personalizationItem = navItems.find((item) => item.href === ROUTES.SHOP.CUSTOMIZATION);
 	const accountItem = navItems.find(
 		(item) => item.href === ROUTES.ACCOUNT.ROOT || item.href === ROUTES.AUTH.SIGN_IN,
 	);
@@ -138,11 +137,7 @@ export function MenuSheetNav({
 
 			<DiscoverSection homeItem={homeItem} {...sectionProps} />
 
-			<CreationsSection
-				productTypes={productTypes}
-				personalizationItem={personalizationItem}
-				{...sectionProps}
-			/>
+			<CreationsSection productTypes={productTypes} {...sectionProps} />
 
 			<CollectionsSection collections={collections} {...sectionProps} />
 

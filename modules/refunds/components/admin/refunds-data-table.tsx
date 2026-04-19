@@ -24,8 +24,6 @@ import { Button } from "@/shared/components/ui/button";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
 import { RefundRowActions } from "./refund-row-actions";
-import { RefundsSelectionToolbar } from "./refunds-selection-toolbar";
-import { TableSelectionCell } from "@/shared/components/table-selection-cell";
 
 interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
@@ -34,7 +32,6 @@ interface RefundsDataTableProps {
 
 export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataTableProps) {
 	const { refunds, pagination } = await refundsPromise;
-	const refundIds = refunds.map((refund) => refund.id);
 
 	if (refunds.length === 0) {
 		return (
@@ -54,7 +51,6 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<RefundsSelectionToolbar />
 				<TableScrollContainer>
 					<Table
 						aria-label="Liste des remboursements"
@@ -64,9 +60,6 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 					>
 						<TableHeader>
 							<TableRow>
-								<TableHead className="w-[4%]">
-									<TableSelectionCell type="header" itemIds={refundIds} />
-								</TableHead>
 								<TableHead className="w-[12%]">Commande</TableHead>
 								<TableHead className="w-[12%]">Date</TableHead>
 								<TableHead className="w-[22%]">Client</TableHead>
@@ -84,9 +77,6 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 						<TableBody>
 							{refunds.map((refund) => (
 								<TableRow key={refund.id}>
-									<TableCell>
-										<TableSelectionCell type="row" itemId={refund.id} />
-									</TableCell>
 									<TableCell>
 										<Link
 											href={`/admin/ventes/commandes/${refund.order.id}`}

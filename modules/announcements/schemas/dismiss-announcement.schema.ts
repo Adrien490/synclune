@@ -1,6 +1,0 @@
-import { z } from "zod";
-
-export const dismissAnnouncementSchema = z.object({
-	announcementId: z.string().min(1),
-	dismissDurationHours: z.preprocess(Number, z.number().int().positive().max(720)),
-});

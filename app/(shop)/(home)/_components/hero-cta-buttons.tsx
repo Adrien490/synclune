@@ -28,11 +28,11 @@ export function HeroCtaButtons() {
 				className="w-full font-medium ease-out hover:shadow-md motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98] sm:w-auto"
 			>
 				<Link
-					href="/personnalisation"
+					href="/collections"
 					onClick={() => triggerHaptic("light")}
 					className="flex items-center justify-center"
 				>
-					Créer mon bijou
+					Voir les collections
 				</Link>
 			</Button>
 		</div>

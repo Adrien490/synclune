@@ -1,7 +1,5 @@
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
-import { prisma } from "@/shared/lib/prisma";
-import { type Prisma } from "@/app/generated/prisma/client";
 import { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import {
 	sendAdminNewOrderEmail,
@@ -90,9 +88,6 @@ export async function executePostWebhookTasks(
 		}),
 	);
 
-	// Collect dead-letter persists to run after stats are gathered
-	const deadLetterPersists: Promise<void>[] = [];
-
 	for (let i = 0; i < taskResults.length; i++) {
 		const taskResult = taskResults[i];
 		const task = tasks[i];
@@ -108,37 +103,7 @@ export async function executePostWebhookTasks(
 			logger.error(`[WEBHOOK-AFTER] Failed to execute task ${task.type}:`, rejected.reason, {
 				service: "webhook",
 			});
-
-			// Persist email task failures to dead-letter table for automatic retry
-			if (task.type !== "INVALIDATE_CACHE") {
-				const emailTask = task as EmailTask;
-				deadLetterPersists.push(
-					prisma.failedEmail
-						.create({
-							data: {
-								taskType: task.type,
-								payload: emailTask.data as unknown as Prisma.InputJsonValue,
-								attempts: 1,
-								lastError: errorMessage,
-								nextRetryAt: new Date(),
-							},
-						})
-						.then(() => undefined)
-						.catch((dbErr: unknown) => {
-							logger.error(
-								`[WEBHOOK-AFTER] Failed to persist dead-letter email ${task.type}:`,
-								dbErr,
-								{ service: "webhook" },
-							);
-						}),
-				);
-			}
 		}
-	}
-
-	// Persist dead-letter records (fire-and-forget, non-blocking on failures)
-	if (deadLetterPersists.length > 0) {
-		await Promise.allSettled(deadLetterPersists);
 	}
 
 	// Log résumé si des erreurs

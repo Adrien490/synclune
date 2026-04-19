@@ -6,7 +6,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetProductsReturn } from "@/modules/products/types/product.types";
 import { ProductMobileItem } from "./product-mobile-item";
-import { ProductsSelectionToolbar } from "./products-selection-toolbar";
 
 interface ProductsMobileListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -45,17 +44,8 @@ export function ProductsMobileList({
 		);
 	}
 
-	const productsForSelection = products.map((p) => ({
-		id: p.id,
-		status: p.status,
-		title: p.title,
-	}));
-	const productIds = products.map((p) => p.id);
-
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<ProductsSelectionToolbar products={productsForSelection} pageItemIds={productIds} />
-
 			<ItemGroup aria-label="Produits" className="gap-2">
 				{products.map((product) => (
 					<div key={product.id} role="listitem">

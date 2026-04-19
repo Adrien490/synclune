@@ -23,15 +23,6 @@ export const PRODUCT_TEXTS = {
 		ON_DEMAND: "Sur commande",
 	},
 
-	// Messages de personnalisation
-	CUSTOMIZATION: {
-		AVAILABLE: "Personnalisation disponible",
-		ENGRAVING: "Gravure possible",
-		CUSTOM_ORDER: "Création sur mesure",
-		CONTACT_FOR_CUSTOM: "Contactez-nous pour une création personnalisée",
-		ENGRAVING_DELAY: "Délai supplémentaire de 2-3 jours pour la gravure",
-	},
-
 	// Prix et promotions
 	PRICING: {
 		FROM: "À partir de",

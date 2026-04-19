@@ -5,7 +5,6 @@ import { TableEmptyState } from "@/shared/components/data-table/table-empty-stat
 import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { OrdersMobileListItem } from "./orders-mobile-list-item";
-import { OrdersSelectionToolbar } from "./orders-selection-toolbar";
 
 interface OrdersMobileListProps {
 	ordersPromise: Promise<GetOrdersReturn>;
@@ -14,7 +13,6 @@ interface OrdersMobileListProps {
 
 export function OrdersMobileList({ ordersPromise, perPage }: OrdersMobileListProps) {
 	const { orders, pagination } = use(ordersPromise);
-	const orderIds = orders.map((o) => o.id);
 
 	if (orders.length === 0) {
 		return (
@@ -30,8 +28,6 @@ export function OrdersMobileList({ ordersPromise, perPage }: OrdersMobileListPro
 
 	return (
 		<div className="space-y-4 pb-20 md:hidden md:pb-0">
-			<OrdersSelectionToolbar pageItemIds={orderIds} />
-
 			<ItemGroup aria-label="Commandes" className="gap-2">
 				{orders.map((order) => (
 					<div key={order.id} role="listitem">

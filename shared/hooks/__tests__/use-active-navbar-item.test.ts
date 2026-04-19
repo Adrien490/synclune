@@ -196,12 +196,6 @@ describe("useActiveNavbarItem", () => {
 				const { result } = renderHook(() => useActiveNavbarItem());
 				expect(result.current.isMenuItemActive("/produits")).toBe(false);
 			});
-
-			it("returns false when href is /personnalisation and pathname is /produits", () => {
-				setPath("/produits");
-				const { result } = renderHook(() => useActiveNavbarItem());
-				expect(result.current.isMenuItemActive("/personnalisation")).toBe(false);
-			});
 		});
 	});
 
@@ -253,22 +247,6 @@ describe("useActiveNavbarItem", () => {
 			const { result } = renderHook(() => useActiveNavbarItem());
 			const scope = result.current.getCurrentScope();
 			expect(scope?.label).toBe("Les collections");
-		});
-
-		it("returns 'Personnalisation' scope for /personnalisation", () => {
-			setPath("/personnalisation");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			const scope = result.current.getCurrentScope();
-			expect(scope?.label).toBe("Personnalisation");
-			expect(scope?.href).toBe("/personnalisation");
-		});
-
-		it("returns null for a /personnalisation subpath (exact match only)", () => {
-			setPath("/personnalisation/details");
-			const { result } = renderHook(() => useActiveNavbarItem());
-			// /personnalisation check is pathname === "/personnalisation" (exact)
-			const scope = result.current.getCurrentScope();
-			expect(scope).toBeNull();
 		});
 
 		it("returns 'Mon compte' scope for /commandes", () => {
