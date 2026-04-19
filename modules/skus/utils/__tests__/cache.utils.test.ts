@@ -40,7 +40,7 @@ describe("cacheProductSkus", () => {
 	it("sets productDetail cache life and tags", () => {
 		cacheProductSkus("product-123");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("productDetail");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 		expect(mockCacheTag).toHaveBeenCalledWith("product-product-123-skus", "skus-list");
 	});
 });
@@ -53,7 +53,7 @@ describe("cacheSkuDetailById", () => {
 	it("sets productDetail cache life and tags", () => {
 		cacheSkuDetailById("sku-456");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("productDetail");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 		expect(mockCacheTag).toHaveBeenCalledWith("sku-id-sku-456", "skus-list");
 	});
 });

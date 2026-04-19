@@ -142,7 +142,7 @@ describe("getOrderHistory", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getOrderHistory(VALID_ORDER_ID);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with HISTORY tag for the given orderId", async () => {

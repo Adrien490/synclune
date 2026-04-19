@@ -128,7 +128,7 @@ describe("getUserProviders", () => {
 
 		await getUserProviders();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("session");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("calls cacheTag with user-specific provider tag", async () => {

@@ -26,7 +26,7 @@ import { cacheLife, cacheTag } from "next/cache";
  * ```
  */
 export function cacheDashboard(tag?: string): void {
-	cacheLife("dashboard");
+	cacheLife("user");
 	if (tag) {
 		cacheTag(tag);
 	}

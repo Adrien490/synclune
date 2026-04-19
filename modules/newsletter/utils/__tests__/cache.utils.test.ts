@@ -27,7 +27,7 @@ describe("cacheNewsletterSubscribers", () => {
 
 	it("sets dashboard cache profile", () => {
 		cacheNewsletterSubscribers();
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("sets newsletter subscribers list cache tag", () => {

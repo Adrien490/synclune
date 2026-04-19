@@ -18,7 +18,7 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
  * - Durée : 15min fraîche, 5min revalidation, 6h expiration
  */
 export function cacheProducts() {
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 }
 
@@ -28,7 +28,7 @@ export function cacheProducts() {
  * - Durée : 15min fraîche, 5min revalidation, 6h expiration
  */
 export function cacheProductDetail(slug: string) {
-	cacheLife("productDetail");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.DETAIL(slug), PRODUCTS_CACHE_TAGS.LIST);
 }
 
@@ -36,7 +36,7 @@ export function cacheProductDetail(slug: string) {
  * Configure le cache pour les SKUs d'un produit
  */
 export function cacheProductSkus(productId: string) {
-	cacheLife("productDetail");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKUS(productId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
 }
 
@@ -44,7 +44,7 @@ export function cacheProductSkus(productId: string) {
  * Configure le cache pour un SKU spécifique
  */
 export function cacheSkuDetail(sku: string) {
-	cacheLife("productDetail");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL(sku), PRODUCTS_CACHE_TAGS.SKUS_LIST);
 }
 

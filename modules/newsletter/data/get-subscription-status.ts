@@ -48,7 +48,7 @@ export async function fetchSubscriptionStatus(
 	userId: string,
 ): Promise<{ status: string } | null> {
 	"use cache: private";
-	cacheLife("session");
+	cacheLife("checkout");
 	cacheTag(NEWSLETTER_CACHE_TAGS.USER_STATUS(userId));
 
 	try {

@@ -93,7 +93,7 @@ vi.mock("../../constants/order.constants", () => ({
 
 vi.mock("../../constants/cache", () => ({
 	cacheOrdersDashboard: vi.fn((tag?: string) => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		if (tag) mockCacheTag(tag);
 	}),
 }));
@@ -290,7 +290,7 @@ describe("getOrders", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getOrders(makeValidParams());
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with admin-orders-list tag", async () => {

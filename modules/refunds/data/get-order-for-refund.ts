@@ -41,7 +41,7 @@ export async function getOrderForRefund(
  */
 async function fetchOrderForRefund(orderId: string): Promise<OrderForRefund | null> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 	try {

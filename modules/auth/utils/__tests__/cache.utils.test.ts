@@ -46,7 +46,7 @@ describe("cacheAuthSessions", () => {
 	it("calls cacheLife with 'dashboard'", () => {
 		cacheAuthSessions();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("tags with SESSIONS_USER when userId is provided", () => {
@@ -87,7 +87,7 @@ describe("cacheAuthSession", () => {
 	it("calls cacheLife with 'dashboard'", () => {
 		cacheAuthSession("session-99");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("tags with SESSION(sessionId)", () => {
@@ -115,7 +115,7 @@ describe("cacheAuthVerifications", () => {
 	it("calls cacheLife with 'dashboard'", () => {
 		cacheAuthVerifications();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("tags with VERIFICATIONS_LIST", () => {

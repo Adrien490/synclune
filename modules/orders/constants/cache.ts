@@ -46,7 +46,7 @@ export const ORDERS_CACHE_TAGS = {
  * @param tag - Tag de cache optionnel (utiliser ORDERS_CACHE_TAGS ou SHARED_CACHE_TAGS)
  */
 export function cacheOrdersDashboard(tag?: string) {
-	cacheLife("dashboard");
+	cacheLife("user");
 	if (tag) {
 		cacheTag(tag);
 	}

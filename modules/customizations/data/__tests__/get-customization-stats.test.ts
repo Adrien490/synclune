@@ -39,7 +39,7 @@ vi.mock("@/shared/lib/logger", () => ({
 
 vi.mock("../constants/cache", () => ({
 	cacheCustomizationStats: () => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag("customization-requests-stats");
 	},
 	CUSTOMIZATION_CACHE_TAGS: {
@@ -262,7 +262,7 @@ describe("getCustomizationStats", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getCustomizationStats();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with stats tag", async () => {

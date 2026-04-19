@@ -24,7 +24,7 @@ export async function getOrderHistory(orderId: string): Promise<OrderHistoryEntr
 
 async function fetchOrderHistory(orderId: string) {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(ORDERS_CACHE_TAGS.HISTORY(orderId));
 
 	return prisma.orderHistory.findMany({

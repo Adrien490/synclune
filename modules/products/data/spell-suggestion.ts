@@ -79,7 +79,7 @@ export async function getSpellSuggestion(
 	options: SuggestionOptions = {},
 ): Promise<SpellSuggestion | null> {
 	"use cache";
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	const { status } = options;

@@ -16,7 +16,7 @@ import { prisma } from "@/shared/lib/prisma";
  */
 export async function fetchSkuForValidation(skuId: string) {
 	"use cache";
-	cacheLife("realtime");
+	cacheLife("checkout");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId), PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
 
 	return prisma.productSku.findUnique({
@@ -78,7 +78,7 @@ export async function fetchSkuForValidation(skuId: string) {
  */
 export async function fetchSkusForBatchValidation(skuIds: string[]) {
 	"use cache";
-	cacheLife("realtime");
+	cacheLife("checkout");
 	for (const skuId of skuIds) {
 		cacheTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId), PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
 	}

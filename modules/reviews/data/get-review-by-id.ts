@@ -14,7 +14,7 @@ import { stripDeletedResponse } from "../utils/strip-deleted-response";
  */
 export async function getReviewById(reviewId: string): Promise<ReviewPublic | null> {
 	"use cache";
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(REVIEWS_CACHE_TAGS.DETAIL(reviewId));
 
 	const review = await prisma.productReview.findFirst({
@@ -40,7 +40,7 @@ export async function getReviewById(reviewId: string): Promise<ReviewPublic | nu
  */
 export async function getReviewByIdAdmin(reviewId: string): Promise<ReviewAdmin | null> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(REVIEWS_CACHE_TAGS.ADMIN_DETAIL(reviewId));
 
 	const review = await prisma.productReview.findFirst({

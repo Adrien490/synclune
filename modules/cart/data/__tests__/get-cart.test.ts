@@ -239,7 +239,7 @@ describe("fetchCart", () => {
 
 		await fetchCart("user-1", undefined);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("calls cacheTag with user-specific tag when userId provided", async () => {

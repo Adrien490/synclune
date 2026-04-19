@@ -21,7 +21,7 @@ import { WISHLIST_CACHE_TAGS } from "../constants/cache";
  * Si les besoins divergent, créer un profile "wishlist" dans next.config.ts.
  */
 export function cacheWishlist(userId?: string, sessionId?: string) {
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(WISHLIST_CACHE_TAGS.WISHLIST(userId, sessionId));
 }
 
@@ -32,7 +32,7 @@ export function cacheWishlist(userId?: string, sessionId?: string) {
  * Note: Même profile "cart" que cacheWishlist() - voir documentation ci-dessus.
  */
 export function cacheWishlistCount(userId?: string, sessionId?: string) {
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(WISHLIST_CACHE_TAGS.COUNT(userId, sessionId));
 }
 
@@ -43,7 +43,7 @@ export function cacheWishlistCount(userId?: string, sessionId?: string) {
  * Note: Même profile "cart" que cacheWishlist() - voir documentation ci-dessus.
  */
 export function cacheWishlistProductIds(userId?: string, sessionId?: string) {
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(WISHLIST_CACHE_TAGS.PRODUCT_IDS(userId, sessionId));
 }
 

@@ -18,7 +18,7 @@ import { USERS_CACHE_TAGS } from "../constants/cache";
  * - Profil "session" : 1min stale, 30s revalidation, 5min expiration (sémantique user)
  */
 export function cacheCurrentUser(userId: string) {
-	cacheLife("session");
+	cacheLife("checkout");
 	cacheTag(USERS_CACHE_TAGS.CURRENT_USER(userId));
 }
 
@@ -28,7 +28,7 @@ export function cacheCurrentUser(userId: string) {
  * - Durée : 1min fraîche, 30s revalidation, 5min expiration
  */
 export function cacheUserAccounts(userId: string) {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(USERS_CACHE_TAGS.ACCOUNTS(userId));
 }
 

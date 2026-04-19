@@ -37,7 +37,7 @@ describe("cacheCollections", () => {
 	it("sets collections cache life and LIST tag", () => {
 		cacheCollections();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("collections");
+		expect(mockCacheLife).toHaveBeenCalledWith("reference");
 		expect(mockCacheTag).toHaveBeenCalledWith("collections-list");
 	});
 });
@@ -50,7 +50,7 @@ describe("cacheCollectionDetail", () => {
 	it("sets collections cache life and DETAIL + PRODUCTS + LIST tags", () => {
 		cacheCollectionDetail("ete-2024");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("collections");
+		expect(mockCacheLife).toHaveBeenCalledWith("reference");
 		expect(mockCacheTag).toHaveBeenCalledWith(
 			"collection-ete-2024",
 			"collection-ete-2024-products",

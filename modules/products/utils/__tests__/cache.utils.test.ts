@@ -41,7 +41,7 @@ describe("cacheProducts", () => {
 	it("sets products cache life and LIST tag", () => {
 		cacheProducts();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("products");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 		expect(mockCacheTag).toHaveBeenCalledWith("products-list");
 	});
 });
@@ -54,7 +54,7 @@ describe("cacheProductDetail", () => {
 	it("sets productDetail cache life and DETAIL + LIST tags", () => {
 		cacheProductDetail("bague-or");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("productDetail");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 		expect(mockCacheTag).toHaveBeenCalledWith("product-bague-or", "products-list");
 	});
 
@@ -73,7 +73,7 @@ describe("cacheProductSkus", () => {
 	it("sets productDetail cache life and SKUS + SKUS_LIST tags", () => {
 		cacheProductSkus("prod-123");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("productDetail");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 		expect(mockCacheTag).toHaveBeenCalledWith("product-prod-123-skus", "skus-list");
 	});
 });
@@ -86,7 +86,7 @@ describe("cacheSkuDetail", () => {
 	it("sets productDetail cache life and SKU_DETAIL + SKUS_LIST tags", () => {
 		cacheSkuDetail("SKU-001");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("productDetail");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 		expect(mockCacheTag).toHaveBeenCalledWith("sku-SKU-001", "skus-list");
 	});
 });

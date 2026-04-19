@@ -50,7 +50,7 @@ vi.mock("../constants/session.constants", () => ({
 
 vi.mock("../utils/cache.utils", () => ({
 	cacheAuthSession: (sessionId: string) => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag(`auth-session-${sessionId}`);
 	},
 }));
@@ -235,7 +235,7 @@ describe("fetchSession", () => {
 
 		await fetchSession({ id: "session-1" }, { admin: true });
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with session-specific tag", async () => {

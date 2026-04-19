@@ -30,7 +30,7 @@ export function cacheStoreStatus() {
 
 /** Cache for admin settings - 1m stale / 30s revalidate */
 export function cacheStoreSettings() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(STORE_SETTINGS_CACHE_TAGS.SETTINGS);
 }
 

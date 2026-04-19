@@ -142,7 +142,7 @@ describe("getDiscountUsageCounts", () => {
 			userId: "user-001",
 		});
 
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("calls cacheTag with usage tag for the given discountId", async () => {

@@ -35,7 +35,7 @@ export async function getProductCountsByStatus(): Promise<GetProductCountsByStat
  */
 async function fetchProductCountsByStatus(): Promise<ProductCountsByStatus> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(PRODUCTS_CACHE_TAGS.COUNTS);
 
 	try {

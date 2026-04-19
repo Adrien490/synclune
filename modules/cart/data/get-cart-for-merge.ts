@@ -37,7 +37,7 @@ export async function getUserCartForMerge(userId: string): Promise<UserCartForMe
 
 async function fetchGuestCartForMerge(sessionId: string) {
 	"use cache: private";
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheCart(undefined, sessionId);
 
 	return prisma.cart.findFirst({
@@ -78,7 +78,7 @@ async function fetchGuestCartForMerge(sessionId: string) {
 
 async function fetchUserCartForMerge(userId: string) {
 	"use cache: private";
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheCart(userId, undefined);
 
 	return prisma.cart.findUnique({

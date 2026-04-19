@@ -16,7 +16,7 @@ import { AUTH_CACHE_TAGS } from "../constants/cache";
  * Uses user-specific tag for non-admin to prevent cross-user cache pollution
  */
 export function cacheAuthSessions(userId?: string) {
-	cacheLife("dashboard");
+	cacheLife("user");
 	if (userId) {
 		cacheTag(AUTH_CACHE_TAGS.SESSIONS_USER(userId));
 	} else {
@@ -28,7 +28,7 @@ export function cacheAuthSessions(userId?: string) {
  * Applique le cache pour une session spécifique
  */
 export function cacheAuthSession(sessionId: string) {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(AUTH_CACHE_TAGS.SESSION(sessionId));
 }
 
@@ -36,7 +36,7 @@ export function cacheAuthSession(sessionId: string) {
  * Applique le cache pour les vérifications admin
  */
 export function cacheAuthVerifications() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(AUTH_CACHE_TAGS.VERIFICATIONS_LIST);
 }
 

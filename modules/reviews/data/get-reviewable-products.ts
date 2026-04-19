@@ -28,7 +28,7 @@ export async function getReviewableProducts(): Promise<ReviewableProduct[]> {
  */
 async function fetchReviewableProducts(userId: string): Promise<ReviewableProduct[]> {
 	"use cache: private";
-	cacheLife("userOrders");
+	cacheLife("user");
 	cacheTag(REVIEWS_CACHE_TAGS.REVIEWABLE(userId));
 
 	// Trouver les OrderItems livres sans avis

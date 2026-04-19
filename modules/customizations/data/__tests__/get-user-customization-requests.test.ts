@@ -187,7 +187,7 @@ describe("getUserCustomizationRequests", () => {
 
 		await getUserCustomizationRequests();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("userOrders");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with user-specific requests tag", async () => {

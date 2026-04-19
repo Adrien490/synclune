@@ -26,7 +26,7 @@ export const CUSTOMIZATION_CACHE_TAGS = {
  * Applique le cache pour la liste des demandes (admin)
  */
 export function cacheCustomizationList() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(CUSTOMIZATION_CACHE_TAGS.LIST);
 }
 
@@ -34,7 +34,7 @@ export function cacheCustomizationList() {
  * Applique le cache pour les stats des demandes (admin)
  */
 export function cacheCustomizationStats() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(CUSTOMIZATION_CACHE_TAGS.STATS);
 }
 
@@ -42,7 +42,7 @@ export function cacheCustomizationStats() {
  * Applique le cache pour le détail d'une demande
  */
 export function cacheCustomizationDetail(id: string) {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(CUSTOMIZATION_CACHE_TAGS.DETAIL(id));
 }
 

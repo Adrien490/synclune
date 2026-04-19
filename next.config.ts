@@ -34,17 +34,7 @@ const nextConfig: NextConfig = {
 				},
 			],
 			afterFiles: [],
-			fallback: [
-				// PostHog reverse proxy to avoid ad blockers
-				{
-					source: "/ingest/static/:path*",
-					destination: "https://eu-assets.i.posthog.com/static/:path*",
-				},
-				{
-					source: "/ingest/:path*",
-					destination: "https://eu.i.posthog.com/:path*",
-				},
-			],
+			fallback: [],
 		};
 	},
 
@@ -118,16 +108,10 @@ const nextConfig: NextConfig = {
 	},
 
 	cacheLife: {
-		products: { stale: 900, revalidate: 300, expire: 21600 },
-		collections: { stale: 3600, revalidate: 900, expire: 86400 },
+		catalog: { stale: 900, revalidate: 300, expire: 21600 },
+		checkout: { stale: 60, revalidate: 30, expire: 300 },
 		reference: { stale: 604800, revalidate: 86400, expire: 2592000 },
-		productDetail: { stale: 900, revalidate: 300, expire: 21600 },
-		dashboard: { stale: 60, revalidate: 30, expire: 300 },
-		cart: { stale: 300, revalidate: 60, expire: 1800 },
-		session: { stale: 60, revalidate: 30, expire: 300 },
-		userOrders: { stale: 120, revalidate: 60, expire: 600 },
-		relatedProducts: { stale: 1800, revalidate: 600, expire: 10800 },
-		realtime: { stale: 30, revalidate: 15, expire: 60 },
+		user: { stale: 120, revalidate: 60, expire: 600 },
 	},
 };
 

@@ -45,7 +45,7 @@ export async function getOrderNotes(
  */
 async function fetchOrderNotes(orderId: string): Promise<OrderNoteItem[]> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(ORDERS_CACHE_TAGS.NOTES(orderId));
 
 	return prisma.orderNote.findMany({

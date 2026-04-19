@@ -99,7 +99,7 @@ describe("getPublicProductSlugs", () => {
 	it("calls cacheLife with products profile", async () => {
 		await getPublicProductSlugs();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("products");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 	});
 
 	it("calls cacheTag with products-list tag", async () => {

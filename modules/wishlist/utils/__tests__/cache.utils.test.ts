@@ -32,7 +32,7 @@ describe("cacheWishlist", () => {
 
 	it("sets cart cache profile", () => {
 		cacheWishlist();
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("sets anonymous wishlist tag when no userId or sessionId", () => {
@@ -58,7 +58,7 @@ describe("cacheWishlistCount", () => {
 
 	it("sets cart cache profile", () => {
 		cacheWishlistCount();
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("sets anonymous count tag when no userId or sessionId", () => {
@@ -79,7 +79,7 @@ describe("cacheWishlistProductIds", () => {
 
 	it("sets cart cache profile", () => {
 		cacheWishlistProductIds();
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("sets anonymous product-ids tag when no userId or sessionId", () => {

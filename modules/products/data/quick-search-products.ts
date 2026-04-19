@@ -53,7 +53,7 @@ const QUICK_SEARCH_LIMIT = 6;
  */
 export async function quickSearchProducts(searchTerm: string): Promise<QuickSearchResult> {
 	"use cache";
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	const term = searchTerm.trim();

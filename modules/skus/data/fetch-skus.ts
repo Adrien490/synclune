@@ -23,7 +23,7 @@ export async function fetchProductSkus(
 	"use cache";
 
 	// Cache configuration for inventory list (used in admin dashboard)
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST, PRODUCTS_CACHE_TAGS.SKUS_LIST);
 
 	try {

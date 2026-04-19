@@ -25,7 +25,7 @@ export async function getUserProviders(): Promise<string[]> {
  */
 async function fetchUserProviders(userId: string): Promise<string[]> {
 	"use cache: private";
-	cacheLife("session");
+	cacheLife("checkout");
 	cacheTag(AUTH_CACHE_TAGS.USER_PROVIDERS(userId));
 
 	const accounts = await prisma.account.findMany({

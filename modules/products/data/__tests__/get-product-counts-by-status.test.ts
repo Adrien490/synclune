@@ -118,7 +118,7 @@ describe("getProductCountsByStatus", () => {
 
 		await getProductCountsByStatus();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with product-counts tag", async () => {

@@ -77,7 +77,7 @@ async function fetchUsers(
 	fuzzyIds?: string[] | null,
 ): Promise<GetUsersReturn> {
 	"use cache: private";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 
 	const sortOrder = params.sortOrder as Prisma.SortOrder;

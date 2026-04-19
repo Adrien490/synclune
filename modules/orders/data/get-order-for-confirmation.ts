@@ -60,7 +60,7 @@ export async function getOrderForConfirmation(orderId: string, orderNumber: stri
  */
 async function fetchOrderForConfirmation(orderId: string, orderNumber: string) {
 	"use cache";
-	cacheLife("realtime");
+	cacheLife("checkout");
 	cacheTag(ORDERS_CACHE_TAGS.CONFIRMATION(orderId));
 
 	try {

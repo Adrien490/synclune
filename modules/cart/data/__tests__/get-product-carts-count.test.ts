@@ -105,7 +105,7 @@ describe("getProductCartsCount", () => {
 	it("uses realtime cache life profile for real-time accuracy", async () => {
 		await getProductCartsCount(VALID_PRODUCT_ID);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("realtime");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("uses PRODUCT_CARTS cache tag with the productId", async () => {

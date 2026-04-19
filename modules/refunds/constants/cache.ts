@@ -34,7 +34,7 @@ export const REFUNDS_CACHE_TAGS = {
  * - Profil "dashboard" : 1min stale, 30s revalidate
  */
 export function cacheRefunds() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(REFUNDS_CACHE_TAGS.LIST);
 }
 
@@ -44,7 +44,7 @@ export function cacheRefunds() {
  * - Profil "dashboard"
  */
 export function cacheRefundDetail(refundId: string, orderId?: string) {
-	cacheLife("dashboard");
+	cacheLife("user");
 	if (orderId) {
 		cacheTag(
 			REFUNDS_CACHE_TAGS.DETAIL(refundId),

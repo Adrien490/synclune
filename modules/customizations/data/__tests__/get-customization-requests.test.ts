@@ -41,7 +41,7 @@ vi.mock("next/cache", () => ({
 
 vi.mock("../constants/cache", () => ({
 	cacheCustomizationList: () => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag("customization-requests-list");
 	},
 }));
@@ -139,7 +139,7 @@ describe("getCustomizationRequests", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getCustomizationRequests();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with list tag", async () => {

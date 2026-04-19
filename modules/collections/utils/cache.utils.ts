@@ -18,7 +18,7 @@ import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
  * - Durée : 1h fraîche, 15min revalidation, 24h expiration
  */
 export function cacheCollections() {
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 }
 
@@ -28,7 +28,7 @@ export function cacheCollections() {
  * - Durée : 1h fraîche, 15min revalidation, 24h expiration
  */
 export function cacheCollectionDetail(slug: string) {
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(
 		COLLECTIONS_CACHE_TAGS.DETAIL(slug),
 		COLLECTIONS_CACHE_TAGS.PRODUCTS(slug),

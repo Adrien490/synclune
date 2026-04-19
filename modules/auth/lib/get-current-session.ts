@@ -20,7 +20,7 @@ import { headers } from "next/headers";
  * // Fonction cachée (reçoit userId en argument)
  * async function fetchData(userId?: string) {
  *   "use cache: private";
- *   cacheLife("session");
+ *   cacheLife("checkout");
  *   // ...
  * }
  * ```

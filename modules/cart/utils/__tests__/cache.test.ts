@@ -27,7 +27,7 @@ describe("cacheCart", () => {
 
 	it("sets cart cache profile", () => {
 		cacheCart();
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("sets anonymous cart tag when no userId or sessionId", () => {
@@ -58,7 +58,7 @@ describe("cacheCartSummary", () => {
 
 	it("sets cart cache profile", () => {
 		cacheCartSummary();
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("sets anonymous summary tag when no userId or sessionId", () => {

@@ -24,7 +24,7 @@ export async function getDiscountUsageCounts(
 ): Promise<DiscountUsageCountsResult> {
 	"use cache: private";
 
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(DISCOUNT_CACHE_TAGS.USAGE(params.discountId));
 
 	const { discountId, userId, customerEmail } = params;

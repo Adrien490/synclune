@@ -148,7 +148,7 @@ describe("getOrderNotes", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getOrderNotes(VALID_ORDER_ID);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with NOTES tag for the given orderId", async () => {

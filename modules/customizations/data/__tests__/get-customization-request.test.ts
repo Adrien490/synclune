@@ -30,7 +30,7 @@ vi.mock("next/cache", () => ({
 
 vi.mock("../constants/cache", () => ({
 	cacheCustomizationDetail: (id: string) => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag(`customization-request-${id}`);
 	},
 }));
@@ -101,7 +101,7 @@ describe("getCustomizationRequest", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getCustomizationRequest("req-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with detail tag including the request ID", async () => {

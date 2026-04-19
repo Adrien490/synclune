@@ -204,7 +204,7 @@ describe("fetchUserAddresses", () => {
 	it("calls cacheLife with cart profile", async () => {
 		await fetchUserAddresses("user-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("calls cacheTag with user-specific addresses tag", async () => {

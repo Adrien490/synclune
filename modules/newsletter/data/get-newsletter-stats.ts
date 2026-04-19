@@ -13,7 +13,7 @@ import type { NewsletterStats } from "../types/subscriber.types";
  */
 export async function getNewsletterStats(): Promise<NewsletterStats> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(NEWSLETTER_CACHE_TAGS.LIST);
 
 	try {

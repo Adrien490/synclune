@@ -42,7 +42,7 @@ export async function getCart(): Promise<GetCartReturn> {
  */
 export async function fetchCart(userId?: string, sessionId?: string): Promise<GetCartReturn> {
 	"use cache: private";
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(CART_CACHE_TAGS.CART(userId, sessionId));
 
 	if (!userId && !sessionId) {

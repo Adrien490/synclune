@@ -38,7 +38,7 @@ vi.mock("../../constants/order-item.constants", () => ({
 
 vi.mock("../../constants/cache", () => ({
 	cacheOrdersDashboard: vi.fn((tag?: string) => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		if (tag) mockCacheTag(tag);
 	}),
 	ORDERS_CACHE_TAGS: {
@@ -177,7 +177,7 @@ describe("getOrderItem", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getOrderItem({ id: "item-id-1" });
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("admin with session does not scope by userId", async () => {

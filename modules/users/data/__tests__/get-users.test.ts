@@ -180,7 +180,7 @@ describe("getUsers", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getUsers(makeValidParams());
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with admin-customers-list tag", async () => {

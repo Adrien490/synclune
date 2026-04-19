@@ -41,7 +41,7 @@ describe("cacheCurrentUser", () => {
 	it("sets session cache life and CURRENT_USER tag", () => {
 		cacheCurrentUser("user-123");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("session");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 		expect(mockCacheTag).toHaveBeenCalledWith("user-user-123");
 	});
 
@@ -60,7 +60,7 @@ describe("cacheUserAccounts", () => {
 	it("sets dashboard cache life and ACCOUNTS tag", () => {
 		cacheUserAccounts("user-123");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 		expect(mockCacheTag).toHaveBeenCalledWith("accounts-user-user-123");
 	});
 

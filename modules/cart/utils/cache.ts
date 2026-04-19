@@ -16,7 +16,7 @@ import { CART_CACHE_TAGS } from "../constants/cache";
  * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCart(userId?: string, sessionId?: string) {
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(CART_CACHE_TAGS.CART(userId, sessionId));
 }
 
@@ -25,7 +25,7 @@ export function cacheCart(userId?: string, sessionId?: string) {
  * - Durée : 5 minutes (stale: 300s) pour réduire la charge serveur
  */
 export function cacheCartSummary(userId?: string, sessionId?: string) {
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(CART_CACHE_TAGS.SUMMARY(userId, sessionId));
 }
 

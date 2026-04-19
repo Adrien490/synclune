@@ -39,7 +39,7 @@ export async function getCollectionCountsByStatus(): Promise<GetCollectionCounts
  */
 async function fetchCollectionCountsByStatus(): Promise<CollectionCountsByStatus> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(COLLECTIONS_CACHE_TAGS.COUNTS);
 
 	try {

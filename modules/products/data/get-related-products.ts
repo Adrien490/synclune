@@ -53,7 +53,7 @@ export async function getRelatedProducts(options?: {
  */
 async function fetchPublicRelatedProducts(limit: number): Promise<ProductCarouselItem[]> {
 	"use cache";
-	cacheLife("relatedProducts");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_PUBLIC);
 
 	try {
@@ -91,7 +91,7 @@ async function fetchPersonalizedRelatedProducts(
 	limit: number,
 ): Promise<ProductCarouselItem[]> {
 	"use cache";
-	cacheLife("relatedProducts");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
 
 	try {
@@ -188,7 +188,7 @@ async function fetchContextualRelatedProducts(
 	limit: number,
 ): Promise<ProductCarouselItem[]> {
 	"use cache";
-	cacheLife("relatedProducts");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_CONTEXTUAL(currentProductSlug));
 
 	try {

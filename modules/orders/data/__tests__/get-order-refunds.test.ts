@@ -151,7 +151,7 @@ describe("getOrderRefunds", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getOrderRefunds(VALID_ORDER_ID);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with REFUNDS tag for the given orderId", async () => {

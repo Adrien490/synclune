@@ -147,7 +147,7 @@ export async function createSomething(
 // Public data
 export async function getProducts() {
 	"use cache";
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag("products-list");
 	return prisma.product.findMany();
 }
@@ -160,26 +160,20 @@ export async function getCart() {
 
 async function fetchCart(userId?: string) {
 	"use cache: private";
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(`cart-${userId}`);
 	return prisma.cart.findFirst({ where: { userId } });
 }
 ```
 
-**10 cache profiles** (next.config.ts):
+**4 cache profiles** (next.config.ts):
 
-| Profile           | Stale | Revalidate | Usage                                |
-| ----------------- | ----- | ---------- | ------------------------------------ |
-| `realtime`        | 30s   | 15s        | Real-time data (cart counts, stock)  |
-| `dashboard`       | 1m    | 30s        | Admin data                           |
-| `session`         | 1m    | 30s        | User session                         |
-| `userOrders`      | 2m    | 1m         | Order history                        |
-| `cart`            | 5m    | 1m         | Cart, wishlist, newsletter status    |
-| `products`        | 15m   | 5m         | Product listings, search             |
-| `productDetail`   | 15m   | 5m         | Single product, media, SKUs          |
-| `relatedProducts` | 30m   | 10m        | Related/suggested products           |
-| `collections`     | 1h    | 15m        | Collections                          |
-| `reference`       | 7d    | 24h        | Legal pages, materials, colors, FAQs |
+| Profile     | Stale | Revalidate | Usage                                                       |
+| ----------- | ----- | ---------- | ----------------------------------------------------------- |
+| `checkout`  | 1m    | 30s        | Cart, session, stock validation, order confirmation         |
+| `user`      | 2m    | 1m         | Admin dashboard, user orders, user-scoped data              |
+| `catalog`   | 15m   | 5m         | Products, SKUs, related products                            |
+| `reference` | 7d    | 24h        | Legal, collections, materials, colors, FAQs, store settings |
 
 ## Module Layers Pattern
 
@@ -197,7 +191,7 @@ export async function getOrders(params: GetOrdersParams) {
 
 async function fetchOrders(params: GetOrdersParams, userId?: string) {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag("orders-list");
 
 	const where = buildOrderWhereClause(params); // Appel service
@@ -296,25 +290,19 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-15 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+9 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
 
-| Job                           | Schedule           |
-| ----------------------------- | ------------------ |
-| `cleanup-pending-orders`      | Every 30min        |
-| `retry-webhooks`              | Hourly             |
-| `retry-failed-emails`         | Hourly             |
-| `cleanup-carts`               | Daily 2:00         |
-| `cleanup-wishlists`           | Daily 2:30         |
-| `cleanup-sessions`            | Daily 3:00         |
-| `process-account-deletions`   | Daily 5:00         |
-| `sync-async-payments`         | Every 4h           |
-| `process-scheduled-discounts` | Every 4h           |
-| `reconcile-refunds`           | Every 6h           |
-| `cleanup-newsletter`          | Weekly Sunday 6:00 |
-| `review-request-emails`       | Daily 10:00        |
-| `cleanup-webhook-events`      | Monthly 1st 7:00   |
-| `hard-delete-retention`       | Monthly 1st 8:00   |
-| `cleanup-orphan-media`        | Monthly 1st 9:00   |
+| Job                         | Schedule           |
+| --------------------------- | ------------------ |
+| `cleanup-wishlists`         | Daily 2:30         |
+| `cleanup-sessions`          | Daily 3:00         |
+| `process-account-deletions` | Daily 5:00         |
+| `sync-async-payments`       | Every 4h           |
+| `reconcile-refunds`         | Daily midnight UTC |
+| `cleanup-newsletter`        | Weekly Sunday 6:00 |
+| `cleanup-webhook-events`    | Monthly 1st 7:00   |
+| `hard-delete-retention`     | Monthly 1st 8:00   |
+| `cleanup-orphan-media`      | Monthly 1st 9:00   |
 
 ### Other API Routes
 

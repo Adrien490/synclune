@@ -66,11 +66,11 @@ vi.mock("../../constants/cache", () => ({
 		DETAIL: (id: string) => `refund-${id}`,
 	},
 	cacheRefunds: () => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag("refunds-list");
 	},
 	cacheRefundDetail: (id: string) => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag(`refund-${id}`, "refunds-list");
 	},
 }));
@@ -224,7 +224,7 @@ describe("getRefunds", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getRefunds(makeValidParams() as never);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with refunds-list tag (dedicated refunds scope)", async () => {

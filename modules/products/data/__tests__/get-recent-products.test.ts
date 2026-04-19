@@ -195,7 +195,7 @@ describe("getRecentProducts", () => {
 
 		await getRecentProducts();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("relatedProducts");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 	});
 
 	it("calls cacheTag with recent-products-list tag", async () => {

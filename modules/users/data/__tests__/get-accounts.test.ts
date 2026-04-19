@@ -198,7 +198,7 @@ describe("getAccounts", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getAccounts(makeValidParams());
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with accounts-list tag", async () => {

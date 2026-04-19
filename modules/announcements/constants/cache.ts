@@ -17,13 +17,13 @@ const ANNOUNCEMENT_CACHE_TAGS = {
 
 /** Cache for active announcement (public storefront) - 1h stale / 15m revalidate */
 export function cacheActiveAnnouncement() {
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(ANNOUNCEMENT_CACHE_TAGS.ACTIVE);
 }
 
 /** Cache for admin announcements list - 1m stale / 30s revalidate */
 export function cacheAnnouncementsList() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(ANNOUNCEMENT_CACHE_TAGS.LIST);
 }
 

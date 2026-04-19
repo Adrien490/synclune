@@ -168,7 +168,7 @@ describe("fetchCartItemCount", () => {
 		await fetchCartItemCount("user-1", undefined);
 
 		// Assert
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 	});
 
 	it("uses COUNT cache tag with user-specific tag when userId provided", async () => {

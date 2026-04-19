@@ -172,7 +172,7 @@ describe("getCollectionCountsByStatus", () => {
 
 			await getCollectionCountsByStatus();
 
-			expect(cacheLife).toHaveBeenCalledWith("dashboard");
+			expect(cacheLife).toHaveBeenCalledWith("user");
 			expect(cacheTag).toHaveBeenCalledWith("collection-counts");
 		});
 	});

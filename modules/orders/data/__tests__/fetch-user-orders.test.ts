@@ -104,7 +104,7 @@ describe("fetchUserOrders", () => {
 	it("calls cacheLife with userOrders profile", async () => {
 		await fetchUserOrders("user-1", defaultParams);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("userOrders");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with USER_ORDERS tag for the given userId", async () => {

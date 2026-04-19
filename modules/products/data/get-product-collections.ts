@@ -23,7 +23,7 @@ export async function getAllCollections(): Promise<{ id: string; name: string }[
 
 async function fetchProductCollections(productId: string): Promise<{ id: string; name: string }[]> {
 	"use cache";
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
 	try {
@@ -50,7 +50,7 @@ async function fetchProductCollections(productId: string): Promise<{ id: string;
 
 async function fetchAllCollections(): Promise<{ id: string; name: string }[]> {
 	"use cache";
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
 	try {

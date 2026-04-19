@@ -11,7 +11,7 @@ import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 export async function getPublicProductSlugs(): Promise<{ slug: string }[]> {
 	"use cache";
 
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	try {

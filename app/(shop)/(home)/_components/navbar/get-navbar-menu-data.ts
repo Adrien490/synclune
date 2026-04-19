@@ -26,7 +26,7 @@ export function extractCollectionImages(products: Collection["products"]) {
  */
 export async function getNavbarMenuData() {
 	"use cache";
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
 	const [collectionsData, productTypesData] = await Promise.allSettled([

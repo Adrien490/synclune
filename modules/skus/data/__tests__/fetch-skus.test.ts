@@ -114,7 +114,7 @@ describe("fetchProductSkus – cache directives", () => {
 	it("calls cacheLife with 'dashboard' profile", async () => {
 		await fetchProductSkus(makeParams());
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with admin inventory list tag", async () => {

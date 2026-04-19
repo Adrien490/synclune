@@ -42,11 +42,11 @@ vi.mock("../../constants/cache", () => ({
 		DETAIL: (id: string) => `refund-${id}`,
 	},
 	cacheRefunds: () => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		mockCacheTag("refunds-list");
 	},
 	cacheRefundDetail: (id: string, orderId?: string) => {
-		mockCacheLife("dashboard");
+		mockCacheLife("user");
 		if (orderId) {
 			mockCacheTag(`refund-${id}`, "refunds-list", `order-refunds-${orderId}`);
 		} else {
@@ -199,7 +199,7 @@ describe("getRefundById", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await getRefundById({ id: "refund-cuid-001" });
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with dedicated refund detail and list tags", async () => {

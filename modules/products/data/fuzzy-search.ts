@@ -137,7 +137,7 @@ export async function fuzzySearchProductIds(
 	options: FuzzySearchOptions = {},
 ): Promise<FuzzySearchReturn> {
 	"use cache";
-	cacheLife("products");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.LIST);
 
 	const { threshold = FUZZY_SIMILARITY_THRESHOLD, limit = FUZZY_MAX_RESULTS, status } = options;

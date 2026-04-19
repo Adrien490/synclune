@@ -162,7 +162,7 @@ describe("fetchWishlistItemCount", () => {
 	it("should configure cache with cart profile and COUNT tag", async () => {
 		await fetchWishlistItemCount(VALID_USER_ID, undefined);
 
-		expect(mockCacheLife).toHaveBeenCalledWith("cart");
+		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
 		expect(mockCacheTag).toHaveBeenCalledWith(`wishlist-count-user-${VALID_USER_ID}`);
 	});
 

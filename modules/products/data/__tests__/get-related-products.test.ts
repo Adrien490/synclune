@@ -156,7 +156,7 @@ describe("getRelatedProducts", () => {
 
 			await getRelatedProducts();
 
-			expect(mockCacheLife).toHaveBeenCalledWith("relatedProducts");
+			expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 			expect(mockCacheTag).toHaveBeenCalledWith("related-products-public");
 		});
 

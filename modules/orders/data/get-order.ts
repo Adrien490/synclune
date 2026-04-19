@@ -38,7 +38,7 @@ export async function fetchOrder(
 	context: FetchOrderContext,
 ): Promise<GetOrderReturn | null> {
 	"use cache: private";
-	cacheLife("dashboard");
+	cacheLife("user");
 	// Use user-specific tag for non-admin to prevent cross-user cache poisoning
 	if (context.admin) {
 		cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);

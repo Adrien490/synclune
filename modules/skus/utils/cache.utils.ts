@@ -17,7 +17,7 @@ import type { SkuDataForInvalidation } from "../types/sku.types";
  * Configure le cache pour les SKUs d'un produit
  */
 export function cacheProductSkus(productId: string) {
-	cacheLife("productDetail");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKUS(productId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
 }
 
@@ -26,7 +26,7 @@ export function cacheProductSkus(productId: string) {
  * Utilisé pour les lookups d'édition admin où seul l'ID est disponible
  */
 export function cacheSkuDetailById(skuId: string) {
-	cacheLife("productDetail");
+	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
 }
 

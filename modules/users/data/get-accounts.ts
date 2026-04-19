@@ -54,7 +54,7 @@ export async function getAccounts(params: GetAccountsParams): Promise<GetAccount
  */
 async function fetchAccounts(params: GetAccountsParams): Promise<GetAccountsReturn> {
 	"use cache: private";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(USERS_CACHE_TAGS.ACCOUNTS_LIST);
 
 	const sortOrder = params.sortOrder as Prisma.SortOrder;

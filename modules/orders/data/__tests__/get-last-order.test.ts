@@ -136,7 +136,7 @@ describe("fetchLastOrder", () => {
 	it("calls cacheLife with userOrders profile", async () => {
 		await fetchLastOrder("user-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("userOrders");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with LAST_ORDER tag for the given userId", async () => {

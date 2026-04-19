@@ -22,7 +22,7 @@ export type SitemapProduct = {
  */
 export async function getSitemapProducts(): Promise<SitemapProduct[]> {
 	"use cache";
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(SHARED_CACHE_TAGS.SITEMAP_IMAGES);
 
 	try {

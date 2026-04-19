@@ -12,7 +12,7 @@ import { COLLECTIONS_CACHE_TAGS } from "../constants/cache";
 export async function getPublicCollectionSlugs(): Promise<{ slug: string }[]> {
 	"use cache";
 
-	cacheLife("collections");
+	cacheLife("reference");
 	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
 
 	try {

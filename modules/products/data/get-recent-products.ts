@@ -67,7 +67,7 @@ export async function getRecentProducts(
  */
 async function fetchProductsBySlugs(slugs: string[]): Promise<ProductCarouselItem[]> {
 	"use cache: private";
-	cacheLife("relatedProducts"); // 30m stale, 10m revalidate, 3h expire
+	cacheLife("catalog"); // 30m stale, 10m revalidate, 3h expire
 	cacheTag(RECENT_PRODUCTS_CACHE_TAGS.LIST);
 
 	try {

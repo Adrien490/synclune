@@ -30,7 +30,7 @@ export const DISCOUNT_CACHE_TAGS = {
  * - Profil "dashboard" : 1min stale, 30s revalidation (cohérence admin)
  */
 export function cacheDiscounts() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(DISCOUNT_CACHE_TAGS.LIST);
 }
 
@@ -40,7 +40,7 @@ export function cacheDiscounts() {
  * - Profil "cart" : 5min stale, 1min revalidation, 30min expiration
  */
 export function cacheDiscountDetail(idOrCode: string) {
-	cacheLife("cart");
+	cacheLife("checkout");
 	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode), DISCOUNT_CACHE_TAGS.LIST);
 }
 

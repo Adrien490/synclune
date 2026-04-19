@@ -18,7 +18,7 @@ import { NEWSLETTER_CACHE_TAGS } from "../constants/cache";
  * - Durée : 1min fraîche, 30s revalidation, 5min expiration
  */
 export function cacheNewsletterSubscribers() {
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(NEWSLETTER_CACHE_TAGS.LIST);
 }
 

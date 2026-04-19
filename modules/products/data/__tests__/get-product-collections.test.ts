@@ -80,7 +80,7 @@ describe("getProductCollections", () => {
 
 		await getProductCollections("prod-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("products");
+		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
 	});
 
 	it("calls cacheTag with collections-list tag", async () => {
@@ -135,7 +135,7 @@ describe("getAllCollections", () => {
 
 		await getAllCollections();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("collections");
+		expect(mockCacheLife).toHaveBeenCalledWith("reference");
 	});
 
 	it("calls cacheTag with collections-list tag", async () => {

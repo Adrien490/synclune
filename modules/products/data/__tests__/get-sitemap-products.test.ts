@@ -164,7 +164,7 @@ describe("getSitemapProducts", () => {
 	it("calls cacheLife with collections profile", async () => {
 		await getSitemapProducts();
 
-		expect(mockCacheLife).toHaveBeenCalledWith("collections");
+		expect(mockCacheLife).toHaveBeenCalledWith("reference");
 	});
 
 	it("calls cacheTag with sitemap-images tag", async () => {

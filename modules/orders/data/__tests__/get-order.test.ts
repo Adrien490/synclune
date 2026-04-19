@@ -240,7 +240,7 @@ describe("fetchOrder", () => {
 	it("calls cacheLife with dashboard profile", async () => {
 		await fetchOrder({ orderNumber: "ORD-001" }, { admin: true, userId: "user-1" });
 
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("uses GET_ORDER_SELECT for the DB query", async () => {

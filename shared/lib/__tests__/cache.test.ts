@@ -31,7 +31,7 @@ describe("cacheDashboard", () => {
 		cacheDashboard();
 
 		expect(mockCacheLife).toHaveBeenCalledOnce();
-		expect(mockCacheLife).toHaveBeenCalledWith("dashboard");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("does not call cacheTag when no tag is provided", () => {

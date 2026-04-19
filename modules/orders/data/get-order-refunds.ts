@@ -46,7 +46,7 @@ export async function getOrderRefunds(
  */
 async function fetchOrderRefunds(orderId: string): Promise<OrderRefundItem[]> {
 	"use cache";
-	cacheLife("dashboard");
+	cacheLife("user");
 	cacheTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
 
 	return prisma.refund.findMany({
