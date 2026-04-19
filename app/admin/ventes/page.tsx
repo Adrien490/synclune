@@ -1,30 +1,24 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { CreditCard, RefreshCcw, ShoppingCart } from "lucide-react";
+import { RefreshCcw, ShoppingCart } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Ventes - Administration",
-	description: "Gérer les ventes, commandes et paiements",
+	description: "Gérer les ventes et remboursements",
 };
 
 export default function VentesPage() {
 	return (
 		<SectionNavigation
 			title="Ventes"
-			description="Gérez vos commandes, paiements et remboursements"
-			columns={3}
+			description="Gérez vos commandes et remboursements"
+			columns={2}
 			links={[
 				{
 					title: "Commandes",
 					description: "Suivre et gérer les commandes clients",
 					href: "/admin/ventes/commandes",
 					icon: ShoppingCart,
-				},
-				{
-					title: "Paiements",
-					description: "Consulter les paiements Stripe",
-					href: "/admin/ventes/paiements",
-					icon: CreditCard,
 				},
 				{
 					title: "Remboursements",

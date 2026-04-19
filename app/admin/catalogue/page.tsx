@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Layers, Package, Palette, Tag } from "lucide-react";
+import { Gem, Layers, Package, Palette, Tag } from "lucide-react";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -38,6 +38,12 @@ export default async function CatalogPage() {
 						description: "Gérer les couleurs disponibles",
 						href: "/admin/catalogue/couleurs",
 						icon: Palette,
+					},
+					{
+						title: "Matériaux",
+						description: "Gérer les matériaux (or, argent, plastique…)",
+						href: "/admin/catalogue/materiaux",
+						icon: Gem,
 					},
 				]}
 			/>
