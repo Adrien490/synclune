@@ -197,7 +197,6 @@ export default async function PrivacyPolicyPage() {
 										<li>UploadThing (stockage des fichiers et images)</li>
 										<li>Google (authentification OAuth)</li>
 										<li>Sentry (monitoring d'erreurs et performance)</li>
-										<li>PostHog (analyse comportementale anonymisée, avec consentement)</li>
 									</ul>
 								</li>
 								<li>
@@ -250,12 +249,6 @@ export default async function PrivacyPolicyPage() {
 									Functional Software Inc., San Francisco. Sentry applique des{" "}
 									<strong>Clauses Contractuelles Types (CCT)</strong> et s'engage à protéger les
 									données conformément au RGPD.
-								</li>
-								<li>
-									<strong>PostHog (Union Européenne) :</strong> analyse comportementale anonymisée
-									(avec consentement) - PostHog Inc., hébergé à Francfort (Allemagne). Les données
-									restent dans l'UE. PostHog est conforme au RGPD et ne transfère pas de données
-									hors de l'Union Européenne.
 								</li>
 							</ul>
 							<p className="mt-2">
@@ -469,10 +462,6 @@ export default async function PrivacyPolicyPage() {
 								<li>
 									<strong>Vercel Speed Insights :</strong> mesures de performance (temps de
 									chargement, Web Vitals) pour optimiser la rapidité du site
-								</li>
-								<li>
-									<strong>PostHog :</strong> analyse comportementale anonymisée pour améliorer
-									l'expérience utilisateur (hébergé en UE)
 								</li>
 							</ul>
 

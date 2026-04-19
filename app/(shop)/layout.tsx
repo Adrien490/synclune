@@ -13,7 +13,6 @@ import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
-import { WebVitalsReporter } from "@/shared/components/web-vitals-reporter";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { QuickSearchDialogAsync } from "@/modules/products/components/quick-search-dialog/quick-search-dialog-async";
@@ -77,7 +76,6 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<VisualViewportBridge />
 			<CookieBanner />
 			<ConditionalAnalytics />
-			<WebVitalsReporter />
 		</>
 	);
 }

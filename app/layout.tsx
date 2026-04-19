@@ -2,7 +2,6 @@ import { FlyToCartOverlay } from "@/modules/cart/components/fly-to-cart-overlay"
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
 import { UnsavedChangesDialog } from "@/shared/components/navigation";
-import { PostHogIdentifyAsync } from "@/shared/components/posthog-identify-async";
 import { SkipLink } from "@/shared/components/skip-link";
 import { AppToaster } from "@/shared/components/ui/toaster";
 import { rootMetadata, rootViewport } from "@/shared/constants/root-metadata";
@@ -12,7 +11,6 @@ import { AlertDialogStoreProvider } from "@/shared/providers/alert-dialog-store-
 import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-store-provider";
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { MotionProvider } from "@/shared/providers/motion-provider";
-import { PostHogProvider } from "@/shared/providers/posthog-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
 import { fraunces, figtree, caveat } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
@@ -43,22 +41,17 @@ export default function RootLayout({
 					</Suspense>
 					<MotionProvider>
 						<CookieConsentStoreProvider>
-							<PostHogProvider>
-								<NavigationGuardProvider>
-									<DialogStoreProvider>
-										<SheetStoreProvider>
-											<AlertDialogStoreProvider>
-												<Suspense fallback={null}>
-													<PostHogIdentifyAsync />
-												</Suspense>
-												{children}
-												<FlyToCartOverlay />
-												<UnsavedChangesDialog />
-											</AlertDialogStoreProvider>
-										</SheetStoreProvider>
-									</DialogStoreProvider>
-								</NavigationGuardProvider>
-							</PostHogProvider>
+							<NavigationGuardProvider>
+								<DialogStoreProvider>
+									<SheetStoreProvider>
+										<AlertDialogStoreProvider>
+											{children}
+											<FlyToCartOverlay />
+											<UnsavedChangesDialog />
+										</AlertDialogStoreProvider>
+									</SheetStoreProvider>
+								</DialogStoreProvider>
+							</NavigationGuardProvider>
 						</CookieConsentStoreProvider>
 						<AppToaster />
 					</MotionProvider>

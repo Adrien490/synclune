@@ -109,10 +109,6 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => vi.fn(),
 }));
 
-vi.mock("../../utils/track-payment-event", () => ({
-	trackPaymentError: vi.fn(),
-}));
-
 // ============================================================================
 // IMPORT AFTER MOCKS
 // ============================================================================

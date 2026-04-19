@@ -181,13 +181,6 @@ export default async function CookiesPage() {
 									métriques Web Vitals (temps de chargement, interactivité) pour optimiser la
 									rapidité du site. Ces données sont anonymes.
 								</li>
-								<li>
-									<strong>PostHog</strong> : Analyse comportementale anonymisée - Collecte des
-									données d'utilisation (pages vues, interactions) pour améliorer l'expérience
-									utilisateur. PostHog est hébergé en Union Européenne (Francfort, Allemagne) et est
-									conforme au RGPD. Données conservées via localStorage et cookies (préfixe{" "}
-									<code>ph_</code>).
-								</li>
 							</ul>
 
 							<h3 className="mt-6 text-lg font-medium sm:text-xl">

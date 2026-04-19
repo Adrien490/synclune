@@ -8,7 +8,6 @@ import { LoaderCircle, Lock, ShieldCheck } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { confirmCheckout } from "../actions/confirm-checkout";
-import { trackPaymentError } from "../utils/track-payment-event";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 
 interface PayButtonProps {
@@ -69,12 +68,6 @@ export function PayButton({
 			const { error: submitError } = await elements.submit();
 			if (submitError) {
 				showError(submitError.message ?? "Erreur de validation du paiement.");
-				trackPaymentError({
-					type: submitError.type,
-					code: submitError.code,
-					message: submitError.message,
-					phase: "elements-submit",
-				});
 				setPhase("idle");
 				return;
 			}
@@ -85,11 +78,6 @@ export function PayButton({
 			const result = await confirmCheckout(formData);
 			if (!result.success) {
 				showError(result.error);
-				trackPaymentError({
-					type: "server_action",
-					message: result.error,
-					phase: "confirm-checkout",
-				});
 				setPhase("idle");
 				return;
 			}
@@ -117,15 +105,8 @@ export function PayButton({
 					? (confirmError.message ?? "Erreur de paiement.")
 					: "Une erreur est survenue lors du paiement.";
 			showError(userMessage);
-			trackPaymentError({
-				type: confirmError.type,
-				code: confirmError.code,
-				message: confirmError.message,
-				phase: "confirm-payment",
-			});
 		} catch {
 			showError("Une erreur inattendue est survenue. Veuillez réessayer.");
-			trackPaymentError({ type: "unknown", phase: "exception" });
 		} finally {
 			setPhase((prev) => (prev === "awaiting-3ds" || prev === "creating-order" ? "idle" : prev));
 		}

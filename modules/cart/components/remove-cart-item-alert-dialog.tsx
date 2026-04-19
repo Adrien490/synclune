@@ -84,12 +84,6 @@ export function RemoveCartItemAlertDialog() {
 				toast.success("Article retiré du panier");
 			}
 		},
-		trackingData: removeDialog.data
-			? {
-					productId: removeDialog.data.cartItemId,
-					productName: removeDialog.data.itemName,
-				}
-			: undefined,
 	});
 	// Note : Les erreurs sont déjà gérées par createToastCallbacks dans le hook
 

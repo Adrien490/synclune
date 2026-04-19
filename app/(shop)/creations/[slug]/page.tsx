@@ -159,13 +159,7 @@ export default async function ProductPage({
 	return (
 		<div className="relative min-h-screen">
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
-			<RecordProductView
-				slug={product.slug}
-				productId={product.id}
-				productName={product.title}
-				price={selectedSku.priceInclTax}
-				collection={product.type?.label}
-			/>
+			<RecordProductView slug={product.slug} />
 
 			{/* Structured Data JSON-LD pour SEO */}
 			<script

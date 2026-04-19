@@ -2,7 +2,6 @@
 
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { getPostHog } from "@/shared/lib/posthog";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useActionState, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -23,8 +22,6 @@ export function useLogout(options?: UseLogoutOptions) {
 			createToastCallbacks({
 				showSuccessToast: false,
 				onSuccess: () => {
-					// Reset PostHog identity to prevent session bleeding
-					getPostHog()?.reset();
 					// Reset badge counts (wishlist/cart) to prevent leak across users on shared devices
 					// Also clears the PWA app badge via AppBadgeSync subscription
 					useBadgeCountsStore.getState().reset();

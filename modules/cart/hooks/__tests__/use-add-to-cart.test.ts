@@ -5,11 +5,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockAddToCart, mockAdjustCart, mockOpenSheet, mockAddedToCart } = vi.hoisted(() => ({
+const { mockAddToCart, mockAdjustCart, mockOpenSheet } = vi.hoisted(() => ({
 	mockAddToCart: vi.fn(),
 	mockAdjustCart: vi.fn(),
 	mockOpenSheet: vi.fn(),
-	mockAddedToCart: vi.fn(),
 }));
 
 // Mock server action
@@ -27,13 +26,6 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 vi.mock("@/shared/providers/sheet-store-provider", () => ({
 	useSheetStore: (selector: (state: { open: typeof mockOpenSheet }) => unknown) =>
 		selector({ open: mockOpenSheet }),
-}));
-
-// Mock PostHog events
-vi.mock("@/shared/lib/posthog-events", () => ({
-	posthogEvents: {
-		addedToCart: mockAddedToCart,
-	},
 }));
 
 // Mock sonner to prevent toast side effects
@@ -351,72 +343,6 @@ describe("useAddToCart", () => {
 					result.current.action(makeFormData({ quantity: "1" }));
 				}),
 			).resolves.not.toThrow();
-		});
-	});
-
-	// --------------------------------------------------------------------------
-	// PostHog tracking
-	// --------------------------------------------------------------------------
-
-	describe("PostHog tracking", () => {
-		it("calls posthogEvents.addedToCart with trackingData on success", async () => {
-			const trackingData = { productId: "prod-1", productName: "Collier argent", price: 49.99 };
-			const { result } = renderHook(() => useAddToCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData({ quantity: "2" }));
-			});
-
-			expect(mockAddedToCart).toHaveBeenCalledWith({
-				id: "prod-1",
-				name: "Collier argent",
-				price: 49.99,
-				quantity: 2,
-			});
-		});
-
-		it("passes the correct quantity to posthogEvents.addedToCart", async () => {
-			const trackingData = { productId: "prod-2", productName: "Bague or", price: 120 };
-			const { result } = renderHook(() => useAddToCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData({ quantity: "3" }));
-			});
-
-			expect(mockAddedToCart).toHaveBeenCalledWith(expect.objectContaining({ quantity: 3 }));
-		});
-
-		it("uses quantity 1 in posthog tracking when formData has no quantity", async () => {
-			const trackingData = { productId: "prod-3", productName: "Bracelet", price: 29 };
-			const { result } = renderHook(() => useAddToCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData());
-			});
-
-			expect(mockAddedToCart).toHaveBeenCalledWith(expect.objectContaining({ quantity: 1 }));
-		});
-
-		it("does not call posthogEvents.addedToCart when trackingData is not provided", async () => {
-			const { result } = renderHook(() => useAddToCart());
-
-			await act(async () => {
-				result.current.action(makeFormData({ quantity: "1" }));
-			});
-
-			expect(mockAddedToCart).not.toHaveBeenCalled();
-		});
-
-		it("does not call posthogEvents.addedToCart on error", async () => {
-			mockAddToCart.mockResolvedValue(ERROR_RESULT);
-			const trackingData = { productId: "prod-1", productName: "Collier", price: 50 };
-			const { result } = renderHook(() => useAddToCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData({ quantity: "1" }));
-			});
-
-			expect(mockAddedToCart).not.toHaveBeenCalled();
 		});
 	});
 

@@ -5,14 +5,11 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockRemoveFromCart, mockAdjustCart, mockRouterRefresh, mockRemovedFromCart } = vi.hoisted(
-	() => ({
-		mockRemoveFromCart: vi.fn(),
-		mockAdjustCart: vi.fn(),
-		mockRouterRefresh: vi.fn(),
-		mockRemovedFromCart: vi.fn(),
-	}),
-);
+const { mockRemoveFromCart, mockAdjustCart, mockRouterRefresh } = vi.hoisted(() => ({
+	mockRemoveFromCart: vi.fn(),
+	mockAdjustCart: vi.fn(),
+	mockRouterRefresh: vi.fn(),
+}));
 
 // Mock server action
 vi.mock("@/modules/cart/actions/remove-from-cart", () => ({
@@ -28,13 +25,6 @@ vi.mock("@/shared/stores/badge-counts-store", () => ({
 // Mock next/navigation
 vi.mock("next/navigation", () => ({
 	useRouter: () => ({ refresh: mockRouterRefresh }),
-}));
-
-// Mock PostHog events
-vi.mock("@/shared/lib/posthog-events", () => ({
-	posthogEvents: {
-		removedFromCart: mockRemovedFromCart,
-	},
 }));
 
 // Mock sonner to prevent toast side effects
@@ -318,61 +308,6 @@ describe("useRemoveFromCart", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// PostHog tracking
-	// --------------------------------------------------------------------------
-
-	describe("PostHog tracking", () => {
-		it("calls posthogEvents.removedFromCart with trackingData on success", async () => {
-			const trackingData = { productId: "prod-1", productName: "Collier argent" };
-			const { result } = renderHook(() => useRemoveFromCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData());
-			});
-
-			expect(mockRemovedFromCart).toHaveBeenCalledWith({
-				id: "prod-1",
-				name: "Collier argent",
-			});
-		});
-
-		it("does not call posthogEvents.removedFromCart when trackingData is not provided", async () => {
-			const { result } = renderHook(() => useRemoveFromCart());
-
-			await act(async () => {
-				result.current.action(makeFormData());
-			});
-
-			expect(mockRemovedFromCart).not.toHaveBeenCalled();
-		});
-
-		it("does not call posthogEvents.removedFromCart on error", async () => {
-			mockRemoveFromCart.mockResolvedValue(ERROR_RESULT);
-			const trackingData = { productId: "prod-1", productName: "Bague or" };
-			const { result } = renderHook(() => useRemoveFromCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData());
-			});
-
-			expect(mockRemovedFromCart).not.toHaveBeenCalled();
-		});
-
-		it("tracks the correct product id and name from trackingData", async () => {
-			const trackingData = { productId: "prod-xyz", productName: "Bracelet plaqué or" };
-			const { result } = renderHook(() => useRemoveFromCart({ trackingData }));
-
-			await act(async () => {
-				result.current.action(makeFormData());
-			});
-
-			expect(mockRemovedFromCart).toHaveBeenCalledWith(
-				expect.objectContaining({ id: "prod-xyz", name: "Bracelet plaqué or" }),
-			);
-		});
-	});
-
-	// --------------------------------------------------------------------------
 	// Action state
 	// --------------------------------------------------------------------------
 
@@ -426,30 +361,23 @@ describe("useRemoveFromCart", () => {
 	// --------------------------------------------------------------------------
 
 	describe("combined behaviors on success", () => {
-		it("calls adjustCart, posthog, and onSuccess on a single success", async () => {
+		it("calls adjustCart and onSuccess on a single success", async () => {
 			const onSuccess = vi.fn();
-			const trackingData = { productId: "prod-1", productName: "Collier" };
-			const { result } = renderHook(() =>
-				useRemoveFromCart({ quantity: 2, onSuccess, trackingData }),
-			);
+			const { result } = renderHook(() => useRemoveFromCart({ quantity: 2, onSuccess }));
 
 			await act(async () => {
 				result.current.action(makeFormData());
 			});
 
 			expect(mockAdjustCart).toHaveBeenCalledWith(-2);
-			expect(mockRemovedFromCart).toHaveBeenCalledWith({ id: "prod-1", name: "Collier" });
 			expect(onSuccess).toHaveBeenCalledWith("Article retiré du panier");
 			expect(mockRouterRefresh).not.toHaveBeenCalled();
 		});
 
-		it("on error: rolls back badge, calls router.refresh, does not call onSuccess or posthog", async () => {
+		it("on error: rolls back badge, calls router.refresh, does not call onSuccess", async () => {
 			mockRemoveFromCart.mockResolvedValue(ERROR_RESULT);
 			const onSuccess = vi.fn();
-			const trackingData = { productId: "prod-1", productName: "Collier" };
-			const { result } = renderHook(() =>
-				useRemoveFromCart({ quantity: 3, onSuccess, trackingData }),
-			);
+			const { result } = renderHook(() => useRemoveFromCart({ quantity: 3, onSuccess }));
 
 			await act(async () => {
 				result.current.action(makeFormData());
@@ -460,7 +388,6 @@ describe("useRemoveFromCart", () => {
 			expect(mockAdjustCart).toHaveBeenCalledWith(3);
 			expect(mockRouterRefresh).toHaveBeenCalled();
 			expect(onSuccess).not.toHaveBeenCalled();
-			expect(mockRemovedFromCart).not.toHaveBeenCalled();
 		});
 	});
 });

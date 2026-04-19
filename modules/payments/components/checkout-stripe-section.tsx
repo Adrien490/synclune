@@ -13,10 +13,8 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { getStripe } from "@/shared/lib/stripe-client";
-import { getPostHog } from "@/shared/lib/posthog";
 import { stripeAppearance } from "../constants/stripe-appearance";
 import { confirmCheckout } from "../actions/confirm-checkout";
-import { trackPaymentError } from "../utils/track-payment-event";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { PayButton } from "./pay-button";
 import { StripeWordmark } from "./stripe-wordmark";
@@ -150,56 +148,23 @@ function ExpressCheckoutSection({ getFormData }: ExpressCheckoutSectionProps) {
 	const elements = useElements();
 	const [hasExpress, setHasExpress] = useState(false);
 
-	async function handleConfirm(event: StripeExpressCheckoutElementConfirmEvent) {
+	async function handleConfirm(_event: StripeExpressCheckoutElementConfirmEvent) {
 		if (!stripe || !elements) return;
 
-		getPostHog()?.capture("payment_started", {
-			method: event.expressPaymentType,
-		});
-
 		const formData = await getFormData();
-		if (!formData) {
-			trackPaymentError({
-				type: "form_invalid",
-				phase: "elements-submit",
-			});
-			return;
-		}
+		if (!formData) return;
 
 		const { error: submitError } = await elements.submit();
-		if (submitError) {
-			trackPaymentError({
-				type: submitError.type,
-				code: submitError.code,
-				message: submitError.message,
-				phase: "elements-submit",
-			});
-			return;
-		}
+		if (submitError) return;
 
 		const result = await confirmCheckout(formData);
-		if (!result.success) {
-			trackPaymentError({
-				type: "server_action",
-				message: result.error,
-				phase: "confirm-checkout",
-			});
-			return;
-		}
+		if (!result.success) return;
 
-		// confirmPayment only resolves on error (success redirects to return_url)
-		const { error: confirmError } = await stripe.confirmPayment({
+		await stripe.confirmPayment({
 			elements,
 			confirmParams: {
 				return_url: `${window.location.origin}/paiement/retour?order_id=${result.orderId}`,
 			},
-		});
-
-		trackPaymentError({
-			type: confirmError.type,
-			code: confirmError.code,
-			message: confirmError.message,
-			phase: "confirm-payment",
 		});
 	}
 

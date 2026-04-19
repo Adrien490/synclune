@@ -15,7 +15,6 @@ const {
 	mockLogout,
 	mockRouterPush,
 	mockRouterRefresh,
-	mockGetPostHog,
 } = vi.hoisted(() => ({
 	mockChangePassword: vi.fn(),
 	mockRequestPasswordReset: vi.fn(),
@@ -26,7 +25,6 @@ const {
 	mockLogout: vi.fn(),
 	mockRouterPush: vi.fn(),
 	mockRouterRefresh: vi.fn(),
-	mockGetPostHog: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/actions/change-password", () => ({
@@ -56,10 +54,6 @@ vi.mock("next/navigation", () => ({
 		push: mockRouterPush,
 		refresh: mockRouterRefresh,
 	})),
-}));
-
-vi.mock("@/shared/lib/posthog", () => ({
-	getPostHog: mockGetPostHog,
 }));
 
 vi.mock("sonner", () => ({
@@ -489,7 +483,6 @@ describe("useLogout", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockLogout.mockResolvedValue(SUCCESS);
-		mockGetPostHog.mockReturnValue({ reset: vi.fn() });
 	});
 
 	it("returns state, action, isPending, and isLoggedOut", () => {
@@ -515,21 +508,6 @@ describe("useLogout", () => {
 		});
 
 		expect(onSuccess).toHaveBeenCalledTimes(1);
-		vi.useRealTimers();
-	});
-
-	it("resets PostHog identity on success", async () => {
-		vi.useFakeTimers();
-		const mockReset = vi.fn();
-		mockGetPostHog.mockReturnValue({ reset: mockReset });
-
-		const { result } = renderHook(() => useLogout());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockReset).toHaveBeenCalledTimes(1);
 		vi.useRealTimers();
 	});
 

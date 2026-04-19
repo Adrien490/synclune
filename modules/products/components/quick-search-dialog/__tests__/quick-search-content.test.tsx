@@ -62,13 +62,6 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => vi.fn(),
 }));
 
-vi.mock("@/shared/lib/posthog-events", () => ({
-	posthogEvents: {
-		searchPerformed: vi.fn(),
-		searchSuggestionAccepted: vi.fn(),
-	},
-}));
-
 vi.mock("@/modules/products/constants/search-synonyms", () => ({
 	SEARCH_SYNONYMS: new Map(),
 }));

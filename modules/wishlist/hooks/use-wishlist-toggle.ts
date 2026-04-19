@@ -5,7 +5,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { toggleWishlistItem } from "@/modules/wishlist/actions/toggle-wishlist-item";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { posthogEvents } from "@/shared/lib/posthog-events";
 import { ActionStatus } from "@/shared/types/server-action";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
@@ -14,8 +13,6 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
 	onSuccess?: (action: "added" | "removed") => void;
-	/** Product data for PostHog tracking */
-	trackingData?: { productId: string; productName: string };
 }
 
 /**
@@ -65,15 +62,6 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						"action" in result.data
 					) {
 						const actionType = result.data.action as "added" | "removed";
-						if (options?.trackingData) {
-							posthogEvents.wishlistToggled(
-								{
-									id: options.trackingData.productId,
-									name: options.trackingData.productName,
-								},
-								actionType === "added",
-							);
-						}
 						onSuccess?.(actionType);
 					}
 				},

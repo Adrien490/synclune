@@ -8,7 +8,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockRefreshNewsletter,
 	mockSubscribeToNewsletter,
-	mockPosthogEvents,
 	mockAdminBulkDeleteNewsletterSubscribers,
 	mockAdminBulkUnsubscribeNewsletter,
 	mockAdminDeleteNewsletterSubscriber,
@@ -16,9 +15,6 @@ const {
 } = vi.hoisted(() => ({
 	mockRefreshNewsletter: vi.fn(),
 	mockSubscribeToNewsletter: vi.fn(),
-	mockPosthogEvents: {
-		newsletterSubscribed: vi.fn(),
-	},
 	mockAdminBulkDeleteNewsletterSubscribers: vi.fn(),
 	mockAdminBulkUnsubscribeNewsletter: vi.fn(),
 	mockAdminDeleteNewsletterSubscriber: vi.fn(),
@@ -30,9 +26,6 @@ vi.mock("@/modules/newsletter/actions/refresh-newsletter", () => ({
 }));
 vi.mock("@/modules/newsletter/actions/subscribe-to-newsletter", () => ({
 	subscribeToNewsletter: mockSubscribeToNewsletter,
-}));
-vi.mock("@/shared/lib/posthog-events", () => ({
-	posthogEvents: mockPosthogEvents,
 }));
 vi.mock("@/modules/newsletter/actions/admin-bulk-delete-newsletter-subscribers", () => ({
 	adminBulkDeleteNewsletterSubscribers: mockAdminBulkDeleteNewsletterSubscribers,
@@ -154,16 +147,6 @@ describe("useSubscribeToNewsletter", () => {
 		expect(onSuccess).toHaveBeenCalledWith("Inscription confirmée");
 	});
 
-	it("calls posthogEvents.newsletterSubscribed when action succeeds", async () => {
-		const { result } = renderHook(() => useSubscribeToNewsletter());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockPosthogEvents.newsletterSubscribed).toHaveBeenCalledTimes(1);
-	});
-
 	it("calls onError when action fails", async () => {
 		mockSubscribeToNewsletter.mockResolvedValue(ERROR);
 		const onError = vi.fn();
@@ -186,17 +169,6 @@ describe("useSubscribeToNewsletter", () => {
 		});
 
 		expect(onSuccess).not.toHaveBeenCalled();
-	});
-
-	it("does not call posthogEvents.newsletterSubscribed when action fails", async () => {
-		mockSubscribeToNewsletter.mockResolvedValue(ERROR);
-		const { result } = renderHook(() => useSubscribeToNewsletter());
-
-		await act(async () => {
-			result.current.action(new FormData());
-		});
-
-		expect(mockPosthogEvents.newsletterSubscribed).not.toHaveBeenCalled();
 	});
 });
 

@@ -13,7 +13,6 @@ const {
 	mockIncrementWishlist,
 	mockDecrementWishlist,
 	mockOnItemRemoved,
-	mockPosthogWishlistToggled,
 } = vi.hoisted(() => ({
 	mockToggleWishlistItem: vi.fn(),
 	mockRemoveFromWishlist: vi.fn(),
@@ -22,7 +21,6 @@ const {
 	mockIncrementWishlist: vi.fn(),
 	mockDecrementWishlist: vi.fn(),
 	mockOnItemRemoved: vi.fn(),
-	mockPosthogWishlistToggled: vi.fn(),
 }));
 
 vi.mock("@/modules/wishlist/actions/toggle-wishlist-item", () => ({
@@ -53,12 +51,6 @@ vi.mock("@/modules/wishlist/contexts/wishlist-list-optimistic-context", () => ({
 	useWishlistListOptimistic: () => ({
 		onItemRemoved: mockOnItemRemoved,
 	}),
-}));
-
-vi.mock("@/shared/lib/posthog-events", () => ({
-	posthogEvents: {
-		wishlistToggled: mockPosthogWishlistToggled,
-	},
 }));
 
 vi.mock("sonner", () => ({
@@ -171,36 +163,6 @@ describe("useWishlistToggle", () => {
 		});
 
 		expect(onSuccess).toHaveBeenCalledWith("removed");
-	});
-
-	it("tracks PostHog event when trackingData is provided and action succeeds", async () => {
-		const trackingData = { productId: "prod-1", productName: "Bague Or" };
-		const { result } = renderHook(() => useWishlistToggle({ trackingData }));
-
-		const formData = new FormData();
-		formData.append("productId", "prod-1");
-
-		await act(async () => {
-			result.current.action(formData);
-		});
-
-		expect(mockPosthogWishlistToggled).toHaveBeenCalledWith(
-			{ id: "prod-1", name: "Bague Or" },
-			true,
-		);
-	});
-
-	it("does not track PostHog when no trackingData provided", async () => {
-		const { result } = renderHook(() => useWishlistToggle());
-
-		const formData = new FormData();
-		formData.append("productId", "prod-1");
-
-		await act(async () => {
-			result.current.action(formData);
-		});
-
-		expect(mockPosthogWishlistToggled).not.toHaveBeenCalled();
 	});
 
 	it("calls router.refresh() on error", async () => {

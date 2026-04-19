@@ -1,8 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { ChevronRight, Search } from "lucide-react";
-import { posthogEvents } from "@/shared/lib/posthog-events";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 import { Button } from "@/shared/components/ui/button";
@@ -52,15 +50,6 @@ export function QuickSearchContent({
 	const suggestion = results.kind === "success" ? results.suggestion : null;
 	const totalCount = results.kind === "success" ? results.totalCount : 0;
 
-	// Track search in PostHog (once per query)
-	const lastTrackedQuery = useRef("");
-	useEffect(() => {
-		if (results.kind === "success" && query && query !== lastTrackedQuery.current) {
-			lastTrackedQuery.current = query;
-			posthogEvents.searchPerformed(query, totalCount);
-		}
-	}, [results.kind, query, totalCount]);
-
 	// Client-side filtering of collections/categories (word-start match)
 	const lowerQuery = query.toLowerCase();
 	const matchedCollections = collections
@@ -96,7 +85,6 @@ export function QuickSearchContent({
 									aria-label={`Rechercher ${suggestion}`}
 									onClick={() => {
 										triggerHaptic("selection");
-										posthogEvents.searchSuggestionAccepted(query, suggestion);
 										onSearch(suggestion);
 									}}
 									className="text-foreground decoration-primary/40 hover:decoration-primary focus-visible:ring-ring rounded-sm font-medium underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"

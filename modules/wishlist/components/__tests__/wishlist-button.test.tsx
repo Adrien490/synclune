@@ -205,26 +205,6 @@ describe("WishlistButton", () => {
 		expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "false");
 	});
 
-	// ─── Hook integration ─────────────────────────────────────────────────────
-
-	it("passes productId and productTitle as trackingData to useWishlistToggle", () => {
-		renderButton({ productId: "prod-99", productTitle: "Collier Étoile" });
-		expect(useWishlistToggle).toHaveBeenCalledWith(
-			expect.objectContaining({
-				trackingData: { productId: "prod-99", productName: "Collier Étoile" },
-			}),
-		);
-	});
-
-	it("uses 'Produit' as fallback productName when productTitle is not provided", () => {
-		renderButton({ productId: "prod-1" });
-		expect(useWishlistToggle).toHaveBeenCalledWith(
-			expect.objectContaining({
-				trackingData: { productId: "prod-1", productName: "Produit" },
-			}),
-		);
-	});
-
 	// ─── Click behaviour ──────────────────────────────────────────────────────
 
 	it("button click does not throw and completes normally", () => {

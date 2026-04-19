@@ -1,33 +1,4 @@
 import * as Sentry from "@sentry/nextjs";
-import { setPostHogInstance } from "@/shared/lib/posthog";
-
-// Defer PostHog loading — it starts with opt_out_capturing_by_default: true,
-// so nothing is captured until the user accepts cookies anyway.
-if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-	const initPostHog = () =>
-		import("posthog-js").then(({ default: posthog }) => {
-			posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
-				api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "/ingest",
-				ui_host: "https://eu.posthog.com",
-				person_profiles: "identified_only",
-				capture_pageview: false,
-				capture_pageleave: true,
-				persistence: "localStorage+cookie",
-				opt_out_capturing_by_default: true,
-				session_recording: {
-					maskAllInputs: true,
-					maskTextSelector: "*",
-				},
-			});
-			setPostHogInstance(posthog);
-		});
-
-	if ("requestIdleCallback" in window) {
-		requestIdleCallback(() => void initPostHog());
-	} else {
-		setTimeout(() => void initPostHog(), 1000);
-	}
-}
 
 // Defer Sentry init to after hydration — errors before init are caught by
 // the window.addEventListener("error") fallback below.
