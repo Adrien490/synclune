@@ -2,23 +2,25 @@
 
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { extractServerErrors } from "@/shared/utils/extract-server-errors";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateProduct } from "@/modules/products/actions/update-product";
 import { editProductFormOpts } from "@/modules/products/constants/update-product-form-options";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 interface UseUpdateProductFormOptions {
 	product: GetProductReturn;
 	onSuccess?: (message: string) => void;
+	onError?: (message: string) => void;
+	onValidationError?: (message: string) => void;
 }
 
-/**
- * Hook pour le formulaire d'édition de produit
- * Utilise TanStack Form avec Next.js App Router
- * Pré-remplit le formulaire avec les données du produit
- */
+const getMessage = (result: ActionState): string | undefined =>
+	"message" in result && typeof result.message === "string" ? result.message : undefined;
+
 export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 	const { product } = options;
 
@@ -41,18 +43,22 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateProduct,
-			createToastCallbacks({
+			createToastCallbacks<ActionState>({
 				loadingMessage: "Mise à jour du produit...",
-				onSuccess: (result: unknown) => {
-					// Call the custom success callback if provided
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						options.onSuccess?.(result.message);
+				showSuccessToast: false,
+				showErrorToast: true,
+				onSuccess: (result) => {
+					const message = getMessage(result);
+					if (message) options.onSuccess?.(message);
+				},
+				onError: (result) => {
+					const message = getMessage(result);
+					if (!message) return;
+					if ("status" in result && result.status === ActionStatus.VALIDATION_ERROR) {
+						options.onValidationError?.(message);
+						return;
 					}
+					options.onError?.(message);
 				},
 			}),
 		),
@@ -82,12 +88,15 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				media: allMedia,
 			},
 		},
-		// Merge server state with form state for validation errors
-		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
+		transform: useTransform(
+			(baseForm) => mergeForm(baseForm, (state ?? {}) as Parameters<typeof mergeForm>[1]),
+			[state],
+		),
 	});
 
-	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors);
+	const tanstackErrors = useStore(form.store, (formState) => formState.errors);
+	const serverErrors = extractServerErrors(state);
+	const formErrors = Array.from(new Set([...tanstackErrors, ...serverErrors]));
 
 	return {
 		form,

@@ -320,7 +320,6 @@ function setupDefaults() {
 	// Stripe PI update
 	mockStripe.paymentIntents.update.mockResolvedValue({ ...MOCK_PAYMENT_INTENT, amount: 5090 });
 
-	// Newsletter (fire-and-forget)
 	// Cart cache
 	mockGetCartInvalidationTags.mockReturnValue(["cart-user-user-123"]);
 

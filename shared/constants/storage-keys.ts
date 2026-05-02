@@ -20,12 +20,6 @@ export const STORAGE_KEYS = {
 	 * Used in: modules/users/components/resend-verification-button.tsx
 	 */
 	RESEND_VERIFICATION_COOLDOWN_PREFIX: "resend-cooldown-",
-
-	/**
-	 * Stores up to 8 recently used hex colors (LRU ordering) from the admin color picker.
-	 * Used in: modules/colors/hooks/use-recent-colors.ts
-	 */
-	RECENT_COLORS: "recent-colors",
 } as const;
 
 /**

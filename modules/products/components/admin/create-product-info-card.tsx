@@ -80,7 +80,7 @@ export function CreateProductInfoCard({
 						<field.TextareaField
 							label="Description"
 							optional
-							rows={3}
+							rows={5}
 							maxLength={500}
 							showCounter
 							enterKeyHint="done"
@@ -146,8 +146,6 @@ export function CreateProductInfoCard({
 									field.handleChange(values);
 								}}
 								placeholder="Sélectionner des collections"
-								maxCount={2}
-								hideSelectAll
 								aria-describedby="collections-hint"
 							/>
 							<p id="collections-hint" className="text-muted-foreground text-xs">

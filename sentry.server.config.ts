@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { BusinessError } from "@/shared/lib/actions/errors";
+import { BusinessError } from "@/shared/lib/actions/business-error";
 
 Sentry.init({
 	dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,

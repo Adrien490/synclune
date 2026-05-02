@@ -8,29 +8,11 @@
 import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 import { ZodError } from "zod";
 import { isRedirectError } from "next/dist/client/components/redirect-error";
+import { Prisma } from "@/app/generated/prisma/client";
 import { logger, type LogContext } from "@/shared/lib/logger";
+import { BusinessError } from "./business-error";
 
-/**
- * Erreur metier affichable a l'utilisateur
- *
- * Utiliser cette classe pour les erreurs dont le message
- * peut etre affiche directement a l'utilisateur (ex: stock insuffisant,
- * produit indisponible, code promo invalide).
- *
- * Les erreurs techniques (Prisma, Stripe, etc.) ne doivent PAS
- * utiliser cette classe pour eviter l'exposition de details sensibles.
- *
- * @example
- * ```ts
- * throw new BusinessError("Stock insuffisant pour ce produit");
- * ```
- */
-export class BusinessError extends Error {
-	constructor(message: string) {
-		super(message);
-		this.name = "BusinessError";
-	}
-}
+export { BusinessError };
 
 /**
  * Convertit une erreur en ActionState
@@ -77,6 +59,30 @@ export function handleActionError(
 			status: ActionStatus.ERROR,
 			message: error.message,
 		};
+	}
+
+	// Erreurs Prisma connues — messages contextualisés sans fuite de schéma
+	if (error instanceof Prisma.PrismaClientKnownRequestError) {
+		logger.error(`[handleActionError] Prisma ${error.code}: ${error.message}`, error, context);
+
+		if (error.code === "P2002") {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Cette valeur existe déjà.",
+			};
+		}
+		if (error.code === "P2025") {
+			return {
+				status: ActionStatus.NOT_FOUND,
+				message: "Ressource introuvable.",
+			};
+		}
+		if (error.code === "P2034") {
+			return {
+				status: ActionStatus.ERROR,
+				message: "Conflit détecté, veuillez réessayer.",
+			};
+		}
 	}
 
 	// Erreurs techniques (message masque pour securite)

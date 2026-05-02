@@ -56,7 +56,6 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 		pendingShipment: { count: 3 },
 		discountImpact: { amount: 150, evolution: 10.0 },
 		reviewHealth: { averageRating: 4.5, totalReviews: 10 },
-		newsletterGrowth: { totalActive: 100, newThisMonth: 5, evolution: 5.0 },
 		avgFulfillmentTime: { hours: 24, evolution: 0 },
 		...overrides,
 	};
@@ -67,10 +66,10 @@ function makeKpis(overrides: Partial<GetKpisReturn> = {}): GetKpisReturn {
 // ============================================================================
 
 describe("DashboardKpis", () => {
-	it("renders 8 KPI cards (4 featured + 4 compact)", () => {
+	it("renders 7 KPI cards (4 featured + 3 compact)", () => {
 		render(<DashboardKpis kpis={makeKpis()} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
 	});
 
 	it("renders CA net du mois KPI with correct props", () => {
@@ -283,12 +282,11 @@ describe("DashboardKpis", () => {
 		);
 	});
 
-	it("renders featured KPIs in a 4-column grid on lg+", () => {
+	it("renders compact KPIs in a 3-column grid on lg+", () => {
 		const { container } = render(<DashboardKpis kpis={makeKpis()} />);
 
 		const grids = container.querySelectorAll(".grid");
-		// First grid: 4 featured KPIs
-		expect(grids[0]).toHaveClass("lg:grid-cols-4");
+		expect(grids[0]).toHaveClass("lg:grid-cols-3");
 	});
 
 	it("passes tooltip to each KPI card", () => {
@@ -317,12 +315,11 @@ describe("DashboardKpis", () => {
 			pendingShipment: { count: 0 },
 			discountImpact: { amount: 0, evolution: 0 },
 			reviewHealth: { averageRating: 0, totalReviews: 0 },
-			newsletterGrowth: { totalActive: 0, newThisMonth: 0, evolution: 0 },
 			avgFulfillmentTime: { hours: 0, evolution: 0 },
 		};
 
 		render(<DashboardKpis kpis={kpis} />);
 
-		expect(screen.getAllByTestId("kpi-card")).toHaveLength(8);
+		expect(screen.getAllByTestId("kpi-card")).toHaveLength(7);
 	});
 });

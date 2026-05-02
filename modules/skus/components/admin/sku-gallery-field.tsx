@@ -4,6 +4,7 @@ import { MediaCounterBadge } from "@/shared/components/media-upload/media-counte
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
 import { Label } from "@/shared/components/ui/label";
 import { cn } from "@/shared/utils/cn";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { getCatalogDropzoneAppearance } from "@/modules/media/utils/upload-dropzone-appearance";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { AnimatePresence, m } from "motion/react";
@@ -63,8 +64,11 @@ export function SkuGalleryField({
 								thumbnailUrl: m.thumbnailUrl ?? undefined,
 								blurDataUrl: m.blurDataUrl ?? undefined,
 							}))}
-							onChange={(newMedia) => setValue(newMedia)}
-							skipUtapiDelete={true}
+							onChange={(newMedia) => {
+								if (newMedia.length !== value.length) triggerHaptic("light");
+								setValue(newMedia);
+							}}
+							skipUtapiDelete
 						/>
 					</m.div>
 				)}
@@ -85,9 +89,13 @@ export function SkuGalleryField({
 			{!isAtLimit && (
 				<div className="space-y-2">
 					{isMediaUploading && (
-						<div className="bg-primary/5 flex items-center justify-center gap-2 rounded-lg px-3 py-2">
-							<div className="border-primary/20 border-t-primary h-4 w-4 animate-spin rounded-full border-2" />
-							<p className="text-muted-foreground text-xs">Upload en cours...</p>
+						<div
+							className="bg-primary/5 flex items-center justify-center gap-2 rounded-lg px-3 py-2"
+							role="status"
+							aria-live="polite"
+						>
+							<div className="border-primary/20 border-t-primary h-4 w-4 rounded-full border-2 motion-safe:animate-spin" />
+							<p className="text-muted-foreground text-xs">Téléversement…</p>
 						</div>
 					)}
 					<UploadDropzone
@@ -95,6 +103,7 @@ export function SkuGalleryField({
 						onBeforeUploadBegin={(files) => {
 							const remaining = MAX_GALLERY_COUNT - value.length;
 							if (files.length > remaining) {
+								triggerHaptic("error");
 								toast.warning(
 									`Seulement ${remaining} média${remaining > 1 ? "s" : ""} seront ajouté${remaining > 1 ? "s" : ""}`,
 								);
@@ -103,19 +112,24 @@ export function SkuGalleryField({
 							return files;
 						}}
 						onChange={async (files) => {
-							// onBeforeUploadBegin already enforces the limit, so no need to re-check here
 							if (files.length === 0) return;
-
-							const results = await uploadMedia(files);
-							results.forEach((result) => {
-								pushValue({
-									url: result.url,
-									blurDataUrl: result.blurDataUrl,
-									thumbnailUrl: result.thumbnailUrl,
-									altText: productName,
-									mediaType: result.mediaType,
+							triggerHaptic("medium");
+							try {
+								const results = await uploadMedia(files);
+								results.forEach((result) => {
+									pushValue({
+										url: result.url,
+										blurDataUrl: result.blurDataUrl,
+										thumbnailUrl: result.thumbnailUrl,
+										altText: productName,
+										mediaType: result.mediaType,
+									});
 								});
-							});
+								if (results.length > 0) triggerHaptic("success");
+							} catch (err) {
+								triggerHaptic("error");
+								throw err;
+							}
 						}}
 						onUploadError={(error) => {
 							toast.error(`Erreur: ${error.message}`);

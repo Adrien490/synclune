@@ -21,7 +21,13 @@ export async function POST(request: Request) {
 		});
 
 		if (!rateLimit.success) {
-			return NextResponse.json({ status: "rate_limited" }, { status: 429 });
+			return NextResponse.json(
+				{ status: "rate_limited" },
+				{
+					status: 429,
+					headers: { "Retry-After": String(rateLimit.retryAfter ?? 60) },
+				},
+			);
 		}
 
 		const body = (await request.json()) as Record<string, unknown>;

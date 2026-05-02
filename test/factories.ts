@@ -311,24 +311,6 @@ function createMockCollection(overrides: Record<string, unknown> = {}) {
 }
 
 // ============================================================================
-// NEWSLETTER
-// ============================================================================
-
-function createMockNewsletterSubscriber(overrides: Record<string, unknown> = {}) {
-	return {
-		id: "ns_cm1234567890abcde",
-		email: "subscriber@example.com",
-		isConfirmed: true,
-		confirmationToken: null,
-		confirmedAt: new Date("2026-01-05"),
-		createdAt: new Date("2026-01-01"),
-		updatedAt: new Date("2026-01-01"),
-		deletedAt: null,
-		...overrides,
-	};
-}
-
-// ============================================================================
 // DISPUTES
 // ============================================================================
 

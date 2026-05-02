@@ -68,12 +68,6 @@ export const RETENTION = {
 
 	/** Years for legal data retention (French Commercial Code Art. L123-22) */
 	LEGAL_RETENTION_YEARS: 10,
-
-	/** Days to wait for newsletter confirmation before cleanup */
-	NEWSLETTER_CONFIRMATION_DAYS: 7,
-
-	/** Years of inactivity before unsubscribing confirmed newsletter subscribers */
-	NEWSLETTER_INACTIVITY_YEARS: 3,
 } as const;
 
 /**

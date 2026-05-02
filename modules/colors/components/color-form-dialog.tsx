@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/shared/components/ui/button";
-import { SimpleColorPicker } from "@/modules/colors/components/color-picker";
+import { ColorPalette } from "@/modules/colors/components/color-palette";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -146,7 +146,7 @@ export function ColorFormDialog() {
 										Couleur
 										<span className="text-destructive ml-1">*</span>
 									</Label>
-									<SimpleColorPicker
+									<ColorPalette
 										value={field.state.value}
 										onChange={(hex) => field.handleChange(hex)}
 										disabled={isPending}

@@ -125,7 +125,7 @@ export const navigationData: NavigationData = {
 			],
 		},
 		// ─────────────────────────────────────────────────────────────────────────
-		// MARKETING - Newsletter et avis
+		// MARKETING - Codes promo et avis
 		// ─────────────────────────────────────────────────────────────────────────
 		{
 			label: "Marketing",
@@ -145,12 +145,6 @@ export const navigationData: NavigationData = {
 					shortTitle: "Avis",
 					url: "/admin/marketing/avis",
 					icon: MessageSquare,
-				},
-				{
-					id: "newsletter",
-					title: "Newsletter",
-					url: "/admin/marketing/newsletter",
-					icon: Mail,
 				},
 			],
 		},

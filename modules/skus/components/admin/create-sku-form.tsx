@@ -1,34 +1,40 @@
 "use client";
 
-import { FieldLabel } from "@/shared/components/forms";
+import { ErrorSummary } from "@/shared/components/forms/error-summary";
 import { Button } from "@/shared/components/ui/button";
-import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
+import { Kbd } from "@/shared/components/ui/kbd";
 import { useCreateProductSkuForm } from "@/modules/skus/hooks/use-create-sku-form";
 import { useUploadThing } from "@/modules/media/utils/uploadthing";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import { Euro, Package } from "lucide-react";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
-import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
-import { SkuPrimaryImageField } from "./sku-primary-image-field";
-import { SkuGalleryField } from "./sku-gallery-field";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
+import type { SkuFormSharedProps } from "./sku-form-types";
+import { SkuInfoCard } from "./sku-info-card";
+import { SkuMediaCard } from "./sku-media-card";
+import { SkuSidebarCards } from "./sku-sidebar-cards";
 
-interface CreateProductVariantFormProps {
-	colors: Array<{
-		id: string;
-		name: string;
-		hex: string;
-	}>;
-	materials: Array<{
-		id: string;
-		name: string;
-	}>;
-	product: {
-		id: string;
-		title: string;
-	};
-	productSlug: string;
+const FIELD_LABELS: Record<string, string> = {
+	colorId: "Couleur",
+	materialId: "Matériau",
+	size: "Taille",
+	isActive: "Disponibilité",
+	isDefault: "Variante par défaut",
+	priceInclTaxEuros: "Prix de vente",
+	compareAtPriceEuros: "Prix comparé",
+	inventory: "Stock",
+	primaryImage: "Image principale",
+	galleryMedia: "Galerie",
+};
+
+function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
+	withViewTransition(() => router.push(path));
 }
 
 export function CreateProductVariantForm({
@@ -36,25 +42,29 @@ export function CreateProductVariantForm({
 	materials,
 	product,
 	productSlug,
-}: CreateProductVariantFormProps) {
+}: SkuFormSharedProps) {
 	const router = useRouter();
+	const haptic = useHaptic();
+	const isMobile = useIsMobile();
+	const variantsListPath = `/admin/catalogue/produits/${productSlug}/variantes`;
 
-	const { startUpload: startPrimaryImageUpload, isUploading: isPrimaryImageUploading } =
-		useUploadThing("catalogMedia");
+	const primaryUpload = useUploadThing("catalogMedia");
+	const galleryUpload = useMediaUpload();
 
-	const { upload: uploadGalleryMedia, isUploading: isGalleryUploading } = useMediaUpload();
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const { form, action } = useCreateProductSkuForm({
+	const { form, action, isPending } = useCreateProductSkuForm({
 		onSuccess: (message) => {
+			haptic("success");
+			allowNavigationRef.current?.();
 			toast.success(message || "Variante créée avec succès", {
 				action: {
 					label: "Voir les variantes",
-					onClick: () => router.push(`/admin/catalogue/produits/${productSlug}/variantes`),
+					onClick: () => navigateWithTransition(router, variantsListPath),
 				},
 			});
-			setTimeout(() => {
-				router.push(`/admin/catalogue/produits/${productSlug}/variantes`);
-			}, FORM_SUCCESS_REDIRECT_DELAY_MS);
+			navigateWithTransition(router, variantsListPath);
 		},
 	});
 
@@ -62,294 +72,170 @@ export function CreateProductVariantForm({
 		form.setFieldValue("productId", product.id);
 	}, [product.id, form]);
 
+	const isMediaUploading = primaryUpload.isUploading || galleryUpload.isUploading;
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+	useEffect(() => {
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
+
+	useEffect(() => {
+		if (isMobile) return;
+		const handler = (event: KeyboardEvent) => {
+			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
+			if (!isSaveShortcut) return;
+			event.preventDefault();
+			if (isPending || isMediaUploading || !form.state.canSubmit) return;
+			haptic("medium");
+			formRef.current?.requestSubmit();
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [isMobile, isPending, isMediaUploading, form, formRef, haptic]);
+
+	useEffect(() => {
+		if (isMobile) return;
+		const handler = (event: KeyboardEvent) => {
+			if (event.key !== "Escape" || isPending) return;
+			const target = event.target as HTMLElement | null;
+			if (
+				target?.closest(
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+				)
+			) {
+				return;
+			}
+			if (
+				form.state.isDirty &&
+				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
+			) {
+				return;
+			}
+			event.preventDefault();
+			haptic("light");
+			allowNavigation();
+			navigateWithTransition(router, variantsListPath);
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [isMobile, isPending, form, haptic, router, allowNavigation, variantsListPath]);
+
 	return (
-		<>
-			<fieldset
-				disabled={isPrimaryImageUploading || isGalleryUploading || form.state.isSubmitting}
-				className="space-y-6"
+		<form
+			ref={formRef}
+			action={action}
+			aria-label="Formulaire de création de variante"
+			className="space-y-6"
+			onSubmit={() => {
+				void form.handleSubmit();
+				if (!form.state.canSubmit) {
+					focusFirstInvalid();
+				}
+			}}
+			onInvalidCapture={onInvalidCapture}
+		>
+			<input type="hidden" name="productId" value={product.id} />
+
+			<form.Subscribe
+				selector={(state) => ({
+					primaryImage: state.values.primaryImage,
+					galleryMedia: state.values.galleryMedia,
+					isActive: state.values.isActive,
+					isDefault: state.values.isDefault,
+				})}
 			>
-				<form
-					action={action}
-					className="space-y-6 pb-24 sm:pb-28 lg:pb-24"
-					onSubmit={() => {
-						void form.handleSubmit();
-					}}
-				>
-					<input type="hidden" name="productId" value={product.id} />
+				{({ primaryImage, galleryMedia, isActive, isDefault }) => (
+					<>
+						{primaryImage ? (
+							<input type="hidden" name="primaryImage" value={JSON.stringify(primaryImage)} />
+						) : null}
+						{galleryMedia.length > 0 ? (
+							<input type="hidden" name="galleryMedia" value={JSON.stringify(galleryMedia)} />
+						) : null}
+						<input type="hidden" name="isActive" value={String(isActive)} />
+						<input type="hidden" name="isDefault" value={String(isDefault)} />
+					</>
+				)}
+			</form.Subscribe>
 
-					<form.Subscribe selector={(state) => [state.values.primaryImage]}>
-						{([primaryImage]) =>
-							primaryImage ? (
-								<input type="hidden" name="primaryImage" value={JSON.stringify(primaryImage)} />
-							) : null
-						}
-					</form.Subscribe>
+			<form.Subscribe
+				selector={(state) => ({
+					submissionAttempts: state.submissionAttempts,
+					fieldMeta: state.fieldMeta,
+				})}
+			>
+				{({ submissionAttempts, fieldMeta }) => {
+					if (!submissionAttempts) return null;
+					const fieldErrors = Object.entries(
+						fieldMeta as Record<string, { errors?: Array<string | undefined> }>,
+					)
+						.map(([name, meta]) => {
+							const first = meta.errors?.find((e): e is string => Boolean(e));
+							return first ? { name, label: FIELD_LABELS[name] ?? name, message: first } : null;
+						})
+						.filter(
+							(item): item is { name: string; label: string; message: string } => item !== null,
+						);
+					if (fieldErrors.length < 2) return null;
+					return <ErrorSummary fieldErrors={fieldErrors} />;
+				}}
+			</form.Subscribe>
 
-					<form.Subscribe selector={(state) => [state.values.galleryMedia]}>
-						{([galleryMedia]) =>
-							galleryMedia && galleryMedia.length > 0 ? (
-								<input type="hidden" name="galleryMedia" value={JSON.stringify(galleryMedia)} />
-							) : null
-						}
-					</form.Subscribe>
+			<fieldset
+				disabled={isPending}
+				className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
+			>
+				<div className="space-y-6 lg:col-span-2">
+					<SkuMediaCard
+						form={form}
+						productTitle={product.title}
+						primaryUpload={primaryUpload}
+						galleryUpload={galleryUpload}
+					/>
+					<SkuInfoCard form={form} colors={colors} materials={materials} />
+				</div>
 
-					{/* La variante */}
-					<div className="space-y-6">
-						{/* Caractéristiques */}
-						<div className="space-y-4">
-							{/* Couleur */}
-							<form.AppField name="colorId">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel htmlFor={field.name} optional>
-											Couleur
-										</FieldLabel>
-										<field.SelectField
-											label=""
-											options={colors.map((color) => ({
-												value: color.id,
-												label: color.name,
-											}))}
-											renderOption={(option) => {
-												const color = colors.find((c) => c.id === option.value);
-												return (
-													<div className="flex items-center gap-2">
-														{color && (
-															<div
-																className="border-border h-4 w-4 rounded-full border"
-																style={{ backgroundColor: color.hex }}
-															/>
-														)}
-														<span>{option.label}</span>
-													</div>
-												);
-											}}
-											renderValue={(value) => {
-												const color = colors.find((c) => c.id === value);
-												return color ? (
-													<div className="flex items-center gap-2">
-														<div
-															className="border-border h-4 w-4 rounded-full border"
-															style={{ backgroundColor: color.hex }}
-														/>
-														<span>{color.name}</span>
-													</div>
-												) : (
-													<span className="text-muted-foreground">Sélectionner une couleur</span>
-												);
-											}}
-											placeholder="Sélectionner une couleur"
-											clearable
-										/>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Matériau + Taille */}
-							<div className="space-y-4">
-								<form.AppField name="materialId">
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel htmlFor={field.name} optional>
-												Matériau
-											</FieldLabel>
-											<field.SelectField
-												label=""
-												options={materials.map((material) => ({
-													value: material.id,
-													label: material.name,
-												}))}
-												placeholder="Sélectionner un matériau"
-												clearable
-											/>
-										</div>
-									)}
-								</form.AppField>
-
-								<form.AppField name="size">
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel optional>Taille</FieldLabel>
-											<field.InputGroupField placeholder="Ex: 52, Ajustable..." />
-										</div>
-									)}
-								</form.AppField>
-							</div>
-
-							{/* Statut + Par défaut */}
-							<div className="space-y-4">
-								<form.AppField name="isActive">
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel htmlFor={field.name} required>
-												Statut
-											</FieldLabel>
-											<field.RadioGroupField
-												label=""
-												options={[
-													{ value: "true", label: "Actif" },
-													{ value: "false", label: "Inactif" },
-												]}
-											/>
-										</div>
-									)}
-								</form.AppField>
-
-								<form.AppField name="isDefault">
-									{(field) => (
-										<div className="space-y-2">
-											<FieldLabel optional>Par défaut</FieldLabel>
-											<field.CheckboxField label="Variante par défaut" />
-											<p className="text-muted-foreground text-xs">Affichée en premier</p>
-										</div>
-									)}
-								</form.AppField>
-							</div>
-						</div>
-
-						{/* Prix et stock */}
-						<div className="space-y-4 border-t pt-6">
-							{/* Prix final */}
-							<form.AppField
-								name="priceInclTaxEuros"
-								validators={{
-									onChange: ({ value }: { value: number | null }) => {
-										if (!value || value <= 0) {
-											return "Le prix doit être supérieur à 0";
-										}
-									},
-								}}
-							>
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel required>Prix final</FieldLabel>
-										<field.InputGroupField type="number" step="0.01" required placeholder="0.00">
-											<InputGroupAddon>
-												<Euro className="h-4 w-4" />
-											</InputGroupAddon>
-										</field.InputGroupField>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Prix comparé */}
-							<form.AppField
-								name="compareAtPriceEuros"
-								validators={{
-									onChangeListenTo: ["priceInclTaxEuros"],
-									onChange: ({ value, fieldApi }) => {
-										if (!value) return undefined;
-										const price = fieldApi.form.getFieldValue("priceInclTaxEuros");
-										if (price && value < price) {
-											return "Le prix comparé doit être supérieur au prix de vente";
-										}
-									},
-									onBlur: ({ value, fieldApi }) => {
-										if (!value) return undefined;
-										const price = fieldApi.form.getFieldValue("priceInclTaxEuros");
-										if (price && value < price) {
-											return "Le prix comparé doit être supérieur au prix de vente";
-										}
-									},
-								}}
-							>
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Prix avant réduction</FieldLabel>
-										<field.InputGroupField type="number" step="0.01" placeholder="0.00">
-											<InputGroupAddon>
-												<Euro className="h-4 w-4" />
-											</InputGroupAddon>
-										</field.InputGroupField>
-									</div>
-								)}
-							</form.AppField>
-
-							{/* Stock */}
-							<form.AppField name="inventory">
-								{(field) => (
-									<div className="space-y-2">
-										<FieldLabel optional>Quantité en stock</FieldLabel>
-										<field.InputGroupField type="number" min={0} placeholder="0">
-											<InputGroupAddon align="inline-end">
-												<Package className="text-muted-foreground h-4 w-4" />
-												<InputGroupText className="text-muted-foreground text-xs">
-													unités
-												</InputGroupText>
-											</InputGroupAddon>
-										</field.InputGroupField>
-									</div>
-								)}
-							</form.AppField>
-						</div>
-					</div>
-
-					{/* Visuels */}
-					<div className="space-y-6">
-						{/* Image principale */}
-						<form.Field name="primaryImage">
-							{(field) => (
-								<SkuPrimaryImageField
-									value={field.state.value}
-									onChange={(value) => field.handleChange(value)}
-									productName={product.title}
-									startUpload={startPrimaryImageUpload}
-									isUploading={isPrimaryImageUploading}
-								/>
-							)}
-						</form.Field>
-
-						{/* Galerie */}
-						<form.Field name="galleryMedia" mode="array">
-							{(field) => (
-								<SkuGalleryField
-									value={field.state.value}
-									setValue={(value) => field.setValue(value)}
-									pushValue={(value) => field.pushValue(value)}
-									productName={product.title}
-									uploadMedia={uploadGalleryMedia}
-									isUploading={isGalleryUploading}
-								/>
-							)}
-						</form.Field>
-					</div>
-
-					{/* Footer */}
-					<form.AppForm>
-						<div className="mt-6">
-							<div className="flex items-center justify-between gap-4">
-								<Button
-									type="button"
-									variant="outline"
-									onClick={() => router.push(`/admin/catalogue/produits/${productSlug}/variantes`)}
-								>
-									Annuler
-								</Button>
-								<form.Subscribe selector={(state) => [state.canSubmit]}>
-									{([canSubmit]) => (
-										<Button
-											type="submit"
-											disabled={
-												!canSubmit ||
-												form.state.isSubmitting ||
-												isPrimaryImageUploading ||
-												isGalleryUploading
-											}
-											className="min-w-40"
-										>
-											{form.state.isSubmitting
-												? "Création..."
-												: isPrimaryImageUploading || isGalleryUploading
-													? "Upload..."
-													: "Créer la variante"}
-										</Button>
-									)}
-								</form.Subscribe>
-							</div>
-						</div>
-					</form.AppForm>
-				</form>
+				<SkuSidebarCards form={form} />
 			</fieldset>
-		</>
+
+			<form.AppForm>
+				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-4 border-t px-4 py-3 backdrop-blur-md motion-safe:transition-[backdrop-filter] md:bottom-0 md:-mx-6 md:px-6">
+					<span className="sr-only" role="status" aria-live="polite">
+						{isPending ? "Envoi du formulaire en cours..." : ""}
+					</span>
+					<form.Subscribe selector={(state) => [state.canSubmit] as const}>
+						{([canSubmit]) => (
+							<div className="flex justify-end">
+								<Button
+									type="submit"
+									size="input"
+									disabled={!canSubmit || isPending || isMediaUploading}
+									onClick={() => haptic("medium")}
+									className="w-full sm:w-auto sm:min-w-56"
+								>
+									{(isPending || isMediaUploading) && (
+										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									)}
+									<span>
+										{isPending
+											? "Création…"
+											: isMediaUploading
+												? "Téléversement…"
+												: "Créer la variante"}
+									</span>
+									{!isPending && !isMediaUploading && (
+										<Kbd
+											aria-hidden="true"
+											className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
+										>
+											⌘S
+										</Kbd>
+									)}
+								</Button>
+							</div>
+						)}
+					</form.Subscribe>
+				</div>
+			</form.AppForm>
+		</form>
 	);
 }

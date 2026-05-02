@@ -1,119 +1,65 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAction } = vi.hoisted(() => ({
-	mockAction: vi.fn(),
-}));
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
-
-const mockForm = {
-	Field: ({
-		children,
-	}: {
-		name: string;
-		mode?: string;
-		children: (field: {
-			state: { value: unknown; meta: { errors: string[] } };
-			handleChange: ReturnType<typeof vi.fn>;
-			handleBlur: ReturnType<typeof vi.fn>;
-			setValue: ReturnType<typeof vi.fn>;
-			pushValue: ReturnType<typeof vi.fn>;
-		}) => React.ReactNode;
-	}) =>
-		children({
-			state: { value: undefined, meta: { errors: [] } },
-			handleChange: vi.fn(),
-			handleBlur: vi.fn(),
-			setValue: vi.fn(),
-			pushValue: vi.fn(),
-		}),
-	AppField: ({
-		children,
-	}: {
-		name: string;
-		validators?: unknown;
-		children: (field: {
-			name: string;
-			state: { value: unknown; meta: { errors: string[] } };
-			handleChange: ReturnType<typeof vi.fn>;
-			handleBlur: ReturnType<typeof vi.fn>;
-			SelectField: () => null;
-			RadioGroupField: () => null;
-			CheckboxField: () => null;
-			InputGroupField: () => null;
-		}) => React.ReactNode;
-	}) =>
-		children({
-			name: "field",
-			state: { value: "", meta: { errors: [] } },
-			handleChange: vi.fn(),
-			handleBlur: vi.fn(),
-			SelectField: () => null,
-			RadioGroupField: () => null,
-			CheckboxField: () => null,
-			InputGroupField: () => null,
-		}),
-	AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-	Subscribe: ({
-		children,
-	}: {
-		selector?: (state: unknown) => unknown;
-		children: (state: unknown) => React.ReactNode;
-	}) => children([true]),
-	reset: vi.fn(),
-	setFieldValue: vi.fn(),
-	handleSubmit: vi.fn(),
-	state: { isSubmitting: false, values: { primaryImage: undefined, galleryMedia: [] } },
-	store: { subscribe: vi.fn(), getState: vi.fn(() => ({ values: {} })) },
-};
+const { mockUseUpdateProductSkuForm, mockUseUploadThing, mockUseMediaUpload, mockUseRouter } =
+	vi.hoisted(() => ({
+		mockUseUpdateProductSkuForm: vi.fn(),
+		mockUseUploadThing: vi.fn(),
+		mockUseMediaUpload: vi.fn(),
+		mockUseRouter: vi.fn(),
+	}));
 
 vi.mock("@/modules/skus/hooks/use-update-sku-form", () => ({
-	useUpdateProductSkuForm: () => ({
-		form: mockForm,
-		action: mockAction,
-	}),
+	useUpdateProductSkuForm: mockUseUpdateProductSkuForm,
 }));
 
 vi.mock("@/modules/media/utils/uploadthing", () => ({
-	useUploadThing: () => ({
-		startUpload: vi.fn().mockResolvedValue([]),
-		isUploading: false,
-	}),
+	useUploadThing: mockUseUploadThing,
 	UploadDropzone: () => <div data-testid="upload-dropzone" />,
 }));
 
 vi.mock("@/modules/media/hooks/use-media-upload", () => ({
-	useMediaUpload: () => ({
-		upload: vi.fn().mockResolvedValue([]),
-		isUploading: false,
-	}),
+	useMediaUpload: mockUseMediaUpload,
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: vi.fn() }),
+	useRouter: mockUseRouter,
 }));
 
 vi.mock("sonner", () => ({
-	toast: { success: vi.fn(), error: vi.fn() },
+	toast: { success: vi.fn(), warning: vi.fn(), error: vi.fn() },
 }));
 
-vi.mock("@/modules/skus/components/admin/sku-primary-image-field", () => ({
-	SkuPrimaryImageField: () => <div data-testid="sku-primary-image-field" />,
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({ open: vi.fn(), close: vi.fn(), isOpen: false }),
 }));
 
-vi.mock("@/modules/skus/components/admin/sku-gallery-field", () => ({
-	SkuGalleryField: () => <div data-testid="sku-gallery-field" />,
+vi.mock("@/modules/colors/components/color-form-dialog", () => ({
+	COLOR_DIALOG_ID: "color-form",
 }));
 
-vi.mock("@/shared/components/forms", () => ({
-	FieldLabel: ({ children }: { children: React.ReactNode }) => <label>{children}</label>,
+vi.mock("@/modules/materials/components/material-form-dialog", () => ({
+	MATERIAL_DIALOG_ID: "material-form",
+}));
+
+vi.mock("../sku-info-card", () => ({
+	SkuInfoCard: () => <div data-testid="sku-info-card" />,
+}));
+
+vi.mock("../sku-sidebar-cards", () => ({
+	SkuSidebarCards: () => <div data-testid="sku-sidebar-cards" />,
+}));
+
+vi.mock("../sku-media-card", () => ({
+	SkuMediaCard: () => <div data-testid="sku-media-card" />,
+}));
+
+vi.mock("@/shared/components/forms/error-summary", () => ({
+	ErrorSummary: () => <div data-testid="error-summary" />,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -127,8 +73,6 @@ vi.mock("@/shared/components/ui/button", () => ({
 		disabled?: boolean;
 		type?: string;
 		onClick?: () => void;
-		variant?: string;
-		className?: string;
 	}) => (
 		<button disabled={disabled} type={type as "button" | "submit" | undefined} onClick={onClick}>
 			{children}
@@ -136,18 +80,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/input-group", () => ({
-	InputGroupAddon: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
-	InputGroupText: ({ children }: { children?: React.ReactNode }) => <span>{children}</span>,
-}));
-
-vi.mock("lucide-react", () => ({
-	Euro: () => <span data-testid="icon-euro" />,
-	Package: () => <span data-testid="icon-package" />,
-}));
-
-vi.mock("@/shared/constants/ui-delays", () => ({
-	FORM_SUCCESS_REDIRECT_DELAY_MS: 0,
+vi.mock("@/shared/components/ui/kbd", () => ({
+	Kbd: ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>,
 }));
 
 // ============================================================================
@@ -161,21 +95,19 @@ import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 // FIXTURES
 // ============================================================================
 
-const mockSku: SkuWithImages = {
+const mockSku = {
 	id: "sku-1",
 	sku: "SKU-001",
-	price: 5000,
+	priceInclTax: 5000,
 	compareAtPrice: null,
 	inventory: 10,
 	isDefault: false,
 	isActive: true,
-	colorId: null,
+	color: null,
+	material: null,
 	materialId: null,
 	size: null,
 	productId: "prod-1",
-	deletedAt: null,
-	createdAt: new Date(),
-	updatedAt: new Date(),
 	images: [],
 } as unknown as SkuWithImages;
 
@@ -187,59 +119,159 @@ const defaultProps = {
 	sku: mockSku,
 };
 
+interface FormStateOverrides {
+	canSubmit?: boolean;
+	isDirty?: boolean;
+}
+
+function createMockForm(overrides: FormStateOverrides = {}) {
+	const formState = {
+		values: {
+			skuId: "sku-1",
+			primaryImage: undefined,
+			galleryMedia: [],
+			isActive: true,
+			isDefault: false,
+			colorId: "",
+			materialId: "",
+			size: "",
+			priceInclTaxEuros: 50,
+			compareAtPriceEuros: undefined,
+			inventory: 10,
+		},
+		canSubmit: overrides.canSubmit ?? true,
+		isDirty: overrides.isDirty ?? false,
+		submissionAttempts: 0,
+		fieldMeta: {},
+	};
+
+	return {
+		state: formState,
+		store: { subscribe: vi.fn(() => () => undefined), getState: () => ({ errors: [] }) },
+		handleSubmit: vi.fn(),
+		setFieldValue: vi.fn(),
+		Subscribe: ({
+			children,
+			selector,
+		}: {
+			children: (vals: unknown) => React.ReactNode;
+			selector: (state: typeof formState) => unknown;
+		}) => <>{children(selector(formState))}</>,
+		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	};
+}
+
 // ============================================================================
 // TESTS
 // ============================================================================
 
+afterEach(cleanup);
+
 describe("EditProductVariantForm", () => {
+	function setup(
+		formOverrides: FormStateOverrides = {},
+		hookOverrides: Record<string, unknown> = {},
+	) {
+		const form = createMockForm(formOverrides);
+
+		mockUseUpdateProductSkuForm.mockReturnValue({
+			form,
+			action: vi.fn(),
+			isPending: false,
+			formErrors: [],
+			...hookOverrides,
+		});
+
+		mockUseUploadThing.mockReturnValue({
+			startUpload: vi.fn().mockResolvedValue([]),
+			isUploading: false,
+		});
+
+		mockUseMediaUpload.mockReturnValue({
+			upload: vi.fn().mockResolvedValue([]),
+			isUploading: false,
+		});
+
+		mockUseRouter.mockReturnValue({ push: vi.fn(), refresh: vi.fn() });
+
+		return { form };
+	}
+
 	beforeEach(() => {
-		cleanup();
 		vi.clearAllMocks();
 	});
 
-	// ─── Smoke: render ────────────────────────────────────────────────────────
+	it("renders the form with accessible label", () => {
+		setup();
+		render(<EditProductVariantForm {...defaultProps} />);
 
-	it("renders without crash", () => {
-		const { container } = render(<EditProductVariantForm {...defaultProps} />);
-
-		expect(container.querySelector("form")).toBeInTheDocument();
-	});
-
-	it("renders a form element", () => {
-		const { container } = render(<EditProductVariantForm {...defaultProps} />);
-
-		expect(container.querySelector("form")).toBeInTheDocument();
+		expect(screen.getByRole("form")).toHaveAttribute(
+			"aria-label",
+			"Formulaire d'édition de variante",
+		);
 	});
 
 	it("renders submit button", () => {
+		setup();
 		render(<EditProductVariantForm {...defaultProps} />);
 
-		expect(screen.getByText("Mettre à jour")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /mettre à jour la variante/i })).toBeInTheDocument();
 	});
 
-	it("renders cancel button", () => {
+	it("does not render a cancel button", () => {
+		setup();
 		render(<EditProductVariantForm {...defaultProps} />);
 
-		expect(screen.getByText("Annuler")).toBeInTheDocument();
+		expect(screen.queryByRole("button", { name: "Annuler" })).not.toBeInTheDocument();
 	});
 
-	it("renders primary image field", () => {
+	it("renders all card sections via mocks", () => {
+		setup();
 		render(<EditProductVariantForm {...defaultProps} />);
 
-		expect(screen.getByTestId("sku-primary-image-field")).toBeInTheDocument();
-	});
-
-	it("renders gallery field", () => {
-		render(<EditProductVariantForm {...defaultProps} />);
-
-		expect(screen.getByTestId("sku-gallery-field")).toBeInTheDocument();
+		expect(screen.getByTestId("sku-info-card")).toBeInTheDocument();
+		expect(screen.getByTestId("sku-sidebar-cards")).toBeInTheDocument();
+		expect(screen.getByTestId("sku-media-card")).toBeInTheDocument();
 	});
 
 	it("renders hidden skuId input", () => {
+		setup();
 		const { container } = render(<EditProductVariantForm {...defaultProps} />);
 
 		const hiddenInput = container.querySelector('input[name="skuId"]');
 		expect(hiddenInput).toBeInTheDocument();
 		expect((hiddenInput as HTMLInputElement).value).toBe("sku-1");
+	});
+
+	it("disables submit when canSubmit is false", () => {
+		setup({ canSubmit: false });
+		render(<EditProductVariantForm {...defaultProps} />);
+
+		expect(screen.getByRole("button", { name: /mettre à jour la variante/i })).toBeDisabled();
+	});
+
+	it("disables submit and shows pending text when isPending", () => {
+		setup({}, { isPending: true });
+		render(<EditProductVariantForm {...defaultProps} />);
+
+		expect(screen.getByRole("button", { name: /mise à jour/i })).toBeDisabled();
+	});
+
+	it("disables submit when media is uploading", () => {
+		setup();
+		mockUseMediaUpload.mockReturnValue({
+			upload: vi.fn(),
+			isUploading: true,
+		});
+		render(<EditProductVariantForm {...defaultProps} />);
+
+		expect(screen.getByRole("button", { name: /téléversement/i })).toBeDisabled();
+	});
+
+	it("renders sr-only status announcement", () => {
+		setup();
+		render(<EditProductVariantForm {...defaultProps} />);
+
+		expect(screen.getByRole("status")).toBeInTheDocument();
 	});
 });

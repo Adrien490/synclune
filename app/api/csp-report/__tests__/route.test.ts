@@ -61,6 +61,23 @@ describe("POST /api/csp-report", () => {
 			expect(body.status).toBe("rate_limited");
 		});
 
+		it("sets Retry-After header when rate limited", async () => {
+			mockCheckRateLimit.mockResolvedValue({ success: false, remaining: 0, retryAfter: 42 });
+
+			const response = await POST(makeRequest({ "csp-report": {} }));
+
+			expect(response.status).toBe(429);
+			expect(response.headers.get("Retry-After")).toBe("42");
+		});
+
+		it("falls back to Retry-After: 60 when retryAfter not provided", async () => {
+			mockCheckRateLimit.mockResolvedValue({ success: false, remaining: 0 });
+
+			const response = await POST(makeRequest({ "csp-report": {} }));
+
+			expect(response.headers.get("Retry-After")).toBe("60");
+		});
+
 		it("uses ip:<ip> as the rate-limit key", async () => {
 			await POST(makeRequest({ "csp-report": {} }));
 

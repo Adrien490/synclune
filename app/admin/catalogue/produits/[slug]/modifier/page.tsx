@@ -6,6 +6,7 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
+import { PageHeader } from "@/shared/components/page-header";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -19,6 +20,19 @@ import {
 const DeleteGalleryMediaAlertDialog = dynamic(() =>
 	import("@/modules/media/components/admin/delete-gallery-media-alert-dialog").then(
 		(mod) => mod.DeleteGalleryMediaAlertDialog,
+	),
+);
+const ProductTypeFormDialog = dynamic(() =>
+	import("@/modules/product-types/components/product-type-form-dialog").then(
+		(mod) => mod.ProductTypeFormDialog,
+	),
+);
+const ColorFormDialog = dynamic(() =>
+	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
+);
+const MaterialFormDialog = dynamic(() =>
+	import("@/modules/materials/components/material-form-dialog").then(
+		(mod) => mod.MaterialFormDialog,
 	),
 );
 
@@ -46,8 +60,7 @@ export default async function EditProductPage({ params }: { params: EditProductP
 	]);
 
 	return (
-		<div className="space-y-6">
-			{/* Breadcrumb personnalise avec titre du produit */}
+		<>
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>
@@ -64,6 +77,8 @@ export default async function EditProductPage({ params }: { params: EditProductP
 				</BreadcrumbList>
 			</Breadcrumb>
 
+			<PageHeader title={product.title} variant="compact" className="hidden md:block" />
+
 			<EditProductForm
 				product={product}
 				productTypes={productTypes}
@@ -73,6 +88,9 @@ export default async function EditProductPage({ params }: { params: EditProductP
 			/>
 
 			<DeleteGalleryMediaAlertDialog />
-		</div>
+			<ProductTypeFormDialog />
+			<ColorFormDialog />
+			<MaterialFormDialog />
+		</>
 	);
 }

@@ -21,13 +21,6 @@ function formatUserFilter(filter: FilterDefinition) {
 		};
 	}
 
-	if (filterKey === "marketingOptIn") {
-		return {
-			label: "Marketing",
-			displayValue: value === "true" ? "Accepté" : "Refusé",
-		};
-	}
-
 	if (filterKey === "preferredLanguage") {
 		return {
 			label: "Langue",

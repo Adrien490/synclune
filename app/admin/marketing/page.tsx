@@ -1,5 +1,5 @@
 import { SectionNavigation } from "@/app/admin/_components/section-navigation";
-import { Mail, MessageSquare, Ticket } from "lucide-react";
+import { MessageSquare, Ticket } from "lucide-react";
 import { type Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export default function MarketingPage() {
 	return (
 		<SectionNavigation
 			title="Marketing"
-			description="Gérez vos codes promo, avis clients et newsletter"
+			description="Gérez vos codes promo et avis clients"
 			columns={2}
 			links={[
 				{
@@ -25,12 +25,6 @@ export default function MarketingPage() {
 					description: "Gérer les avis et témoignages",
 					href: "/admin/marketing/avis",
 					icon: MessageSquare,
-				},
-				{
-					title: "Newsletter",
-					description: "Gérer les abonnés et campagnes",
-					href: "/admin/marketing/newsletter",
-					icon: Mail,
 				},
 			]}
 		/>

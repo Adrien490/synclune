@@ -348,9 +348,6 @@ test.describe("Accessibilité - Audit axe-core WCAG AA", { tag: ["@slow"] }, () 
 		{ path: "/renvoyer-verification", name: "Renvoyer vérification" },
 		{ path: "/verifier-email", name: "Vérifier email" },
 		{ path: "/error", name: "Page erreur auth" },
-		// Newsletter pages
-		{ path: "/newsletter/confirmer", name: "Newsletter confirmation" },
-		{ path: "/newsletter/desinscription", name: "Newsletter désabonnement" },
 	];
 
 	for (const { path, name } of pagesToAudit) {

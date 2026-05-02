@@ -40,7 +40,6 @@ type UsersSearchParams = {
 	search?: string;
 	filter_role?: string;
 	filter_emailVerified?: string;
-	filter_marketingOptIn?: string;
 	filter_hasOrders?: string;
 	filter_includeDeleted?: string;
 };
@@ -75,7 +74,6 @@ function parseFilters(params: UsersSearchParams) {
 	const filters: {
 		role?: Role[];
 		emailVerified?: boolean;
-		marketingOptIn?: boolean;
 		hasOrders?: boolean;
 		includeDeleted?: boolean;
 	} = {};
@@ -85,8 +83,6 @@ function parseFilters(params: UsersSearchParams) {
 	}
 	if (params.filter_emailVerified === "true") filters.emailVerified = true;
 	else if (params.filter_emailVerified === "false") filters.emailVerified = false;
-	if (params.filter_marketingOptIn === "true") filters.marketingOptIn = true;
-	else if (params.filter_marketingOptIn === "false") filters.marketingOptIn = false;
 	if (params.filter_hasOrders === "true") filters.hasOrders = true;
 	else if (params.filter_hasOrders === "false") filters.hasOrders = false;
 	if (params.filter_includeDeleted === "true") filters.includeDeleted = true;

@@ -182,8 +182,8 @@ vi.mock("@/shared/components/forms", () => ({
 	})),
 }));
 
-vi.mock("@/modules/colors/components/color-picker", () => ({
-	SimpleColorPicker: ({
+vi.mock("@/modules/colors/components/color-palette", () => ({
+	ColorPalette: ({
 		value,
 		onChange,
 		disabled,
@@ -195,12 +195,12 @@ vi.mock("@/modules/colors/components/color-picker", () => ({
 		mockColorPickerOnChange.current = onChange ? (rgba) => onChange("#FF0000") : null;
 		return (
 			<div
-				data-testid="color-picker"
+				data-testid="color-palette"
 				data-value={value}
 				data-disabled={disabled ? "true" : "false"}
 			>
 				<button
-					data-testid="color-picker-trigger"
+					data-testid="color-palette-trigger"
 					type="button"
 					onClick={() => onChange?.("#FF0000")}
 				>
@@ -389,7 +389,7 @@ describe("ColorFormDialog", () => {
 
 	it("renders the color picker", () => {
 		render(<ColorFormDialog />);
-		expect(screen.getByTestId("color-picker")).toBeInTheDocument();
+		expect(screen.getByTestId("color-palette")).toBeInTheDocument();
 	});
 
 	it("renders the required fields note", () => {
@@ -498,14 +498,14 @@ describe("ColorFormDialog", () => {
 
 	it("calls field.handleChange with the hex when color picker onChange fires", () => {
 		render(<ColorFormDialog />);
-		const trigger = screen.getByTestId("color-picker-trigger");
+		const trigger = screen.getByTestId("color-palette-trigger");
 		fireEvent.click(trigger);
 		expect(mockFieldHandleChange).toHaveBeenCalledWith("#FF0000");
 	});
 
 	it("exposes the current hex value to the color picker via data-value", () => {
 		render(<ColorFormDialog />);
-		const picker = screen.getByTestId("color-picker");
+		const picker = screen.getByTestId("color-palette");
 		// defaultValues.hex is "#000000"
 		expect(picker).toHaveAttribute("data-value", "#000000");
 	});
@@ -515,7 +515,7 @@ describe("ColorFormDialog", () => {
 			color: { id: "col-1", name: "Vert", slug: "vert", hex: "#00FF00" },
 		};
 		render(<ColorFormDialog />);
-		const picker = screen.getByTestId("color-picker");
+		const picker = screen.getByTestId("color-palette");
 		// The mock useAppForm receives defaultValues from the initial render;
 		// in update mode the useEffect would reset the form, but since useEffect
 		// is mocked, we verify the picker still renders with the initial default.

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 
 import { PageHeader } from "@/shared/components/page-header";
 import {
@@ -17,6 +18,15 @@ import { getSkuById } from "@/modules/skus/data/get-sku";
 import { EditProductVariantForm } from "@/modules/skus/components/admin/edit-sku-form";
 import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
+
+const ColorFormDialog = dynamic(() =>
+	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
+);
+const MaterialFormDialog = dynamic(() =>
+	import("@/modules/materials/components/material-form-dialog").then(
+		(mod) => mod.MaterialFormDialog,
+	),
+);
 
 type EditSkuPageParams = Promise<{ slug: string; skuId: string }>;
 
@@ -115,6 +125,8 @@ export default async function EditSkuPage({ params }: { params: EditSkuPageParam
 
 			<DeletePrimaryImageAlertDialog />
 			<DeleteGalleryMediaAlertDialog />
+			<ColorFormDialog />
+			<MaterialFormDialog />
 		</div>
 	);
 }

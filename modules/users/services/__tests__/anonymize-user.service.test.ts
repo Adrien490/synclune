@@ -1,19 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockAccountStatus, mockNewsletterStatus } = vi.hoisted(() => ({
+const { mockAccountStatus } = vi.hoisted(() => ({
 	mockAccountStatus: {
 		PENDING_DELETION: "PENDING_DELETION",
 		ANONYMIZED: "ANONYMIZED",
 		ACTIVE: "ACTIVE",
 	},
-	mockNewsletterStatus: {
-		UNSUBSCRIBED: "UNSUBSCRIBED",
-	},
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	AccountStatus: mockAccountStatus,
-	NewsletterStatus: mockNewsletterStatus,
 }));
 
 vi.mock("../../utils/anonymization.utils", () => ({
@@ -35,7 +31,6 @@ function createMockTx() {
 		wishlist: { deleteMany: vi.fn() },
 		reviewMedia: { deleteMany: vi.fn() },
 		productReview: { updateMany: vi.fn() },
-		newsletterSubscriber: { updateMany: vi.fn() },
 		order: { updateMany: vi.fn() },
 	};
 }
@@ -149,23 +144,6 @@ describe("anonymizeUserInTransaction", () => {
 		});
 	});
 
-	it("should unsubscribe and anonymize newsletter with RGPD fields nulled", async () => {
-		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
-
-		await anonymizeUserInTransaction(mockTx as never, "user_abc");
-
-		expect(mockTx.newsletterSubscriber.updateMany).toHaveBeenCalledWith({
-			where: { userId: "user_abc" },
-			data: expect.objectContaining({
-				status: "UNSUBSCRIBED",
-				email: "anonymized-user_abc@deleted.synclune.local",
-				ipAddress: null,
-				confirmationIpAddress: null,
-				userAgent: null,
-			}),
-		});
-	});
-
 	it("should anonymize order PII while preserving financial data", async () => {
 		mockTx.user.findUnique.mockResolvedValue({ accountStatus: "PENDING_DELETION" });
 
@@ -203,7 +181,6 @@ describe("anonymizeUserInTransaction", () => {
 		expect(mockTx.wishlist.deleteMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.reviewMedia.deleteMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.productReview.updateMany).toHaveBeenCalledTimes(1);
-		expect(mockTx.newsletterSubscriber.updateMany).toHaveBeenCalledTimes(1);
 		expect(mockTx.order.updateMany).toHaveBeenCalledTimes(1);
 	});
 

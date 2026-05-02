@@ -15,7 +15,6 @@ const MODULE_SCOPES = [
 	"faq",
 	"materials",
 	"media",
-	"newsletter",
 	"orders",
 	"payments",
 	"product-types",

@@ -31,7 +31,6 @@ function buildUser(overrides: Record<string, unknown> = {}) {
 		orders: [],
 		wishlist: null,
 		discountUsages: [],
-		newsletterSubscription: null,
 		reviews: [],
 		sessions: [],
 		...overrides,
@@ -247,64 +246,6 @@ describe("buildUserDataExport", () => {
 
 		expect(result!.wishlist).toHaveLength(1);
 		expect(result!.wishlist[0]!.productTitle).toBe("Bague solitaire");
-	});
-
-	// -------------------------------------------------------------------------
-	// Newsletter null dates handling
-	// -------------------------------------------------------------------------
-
-	it("should return null for newsletter when no subscription exists", async () => {
-		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ newsletterSubscription: null }));
-
-		const result = await buildUserDataExport("user_1");
-
-		expect(result!.newsletter).toBeNull();
-	});
-
-	it("should map newsletter with null optional dates", async () => {
-		const newsletterSubscription = {
-			email: "alice@example.com",
-			status: "SUBSCRIBED",
-			subscribedAt: BASE_DATE,
-			confirmedAt: null,
-			unsubscribedAt: null,
-			consentSource: "checkout",
-			consentTimestamp: BASE_DATE,
-			ipAddress: null,
-		};
-		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ newsletterSubscription }));
-
-		const result = await buildUserDataExport("user_1");
-
-		expect(result!.newsletter).toEqual({
-			email: "alice@example.com",
-			status: "SUBSCRIBED",
-			subscribedAt: BASE_DATE.toISOString(),
-			confirmedAt: null,
-			unsubscribedAt: null,
-			consentSource: "checkout",
-			consentTimestamp: BASE_DATE.toISOString(),
-			ipAddress: null,
-		});
-	});
-
-	it("should convert newsletter date fields to ISO strings when present", async () => {
-		const newsletterSubscription = {
-			email: "alice@example.com",
-			status: "SUBSCRIBED",
-			subscribedAt: BASE_DATE,
-			confirmedAt: LATER_DATE,
-			unsubscribedAt: LATER_DATE,
-			consentSource: "footer",
-			consentTimestamp: BASE_DATE,
-			ipAddress: "127.0.0.1",
-		};
-		mockPrisma.user.findUnique.mockResolvedValue(buildUser({ newsletterSubscription }));
-
-		const result = await buildUserDataExport("user_1");
-
-		expect(result!.newsletter!.confirmedAt).toBe(LATER_DATE.toISOString());
-		expect(result!.newsletter!.unsubscribedAt).toBe(LATER_DATE.toISOString());
 	});
 
 	// -------------------------------------------------------------------------

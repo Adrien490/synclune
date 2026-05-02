@@ -12,6 +12,7 @@ import { ConditionalAnalytics } from "@/shared/components/conditional-analytics"
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
+import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
 import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
@@ -74,6 +75,7 @@ async function ShopLayoutContent({ children }: ShopLayoutProps) {
 			<ShopMobileBottomNav isAuthenticated={isAuthenticated} />
 			<PullToRefresh />
 			<VisualViewportBridge />
+			<SentryUserBridge userId={session?.user.id} role={session?.user.role} />
 			<CookieBanner />
 			<ConditionalAnalytics />
 		</>

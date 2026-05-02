@@ -198,7 +198,10 @@ export function CreateProductForm({
 				}}
 			</form.Subscribe>
 
-			<fieldset disabled={isPending} className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+			<fieldset
+				disabled={isPending}
+				className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start"
+			>
 				{/* Main column */}
 				<div className="space-y-6 lg:col-span-2">
 					<CreateProductMediaCard
@@ -253,7 +256,7 @@ export function CreateProductForm({
 												? "Publication..."
 												: "Enregistrement..."
 											: isMediaUploading
-												? "Upload en cours..."
+												? "Téléversement…"
 												: status === "PUBLIC"
 													? "Publier le bijou"
 													: "Enregistrer le brouillon"}

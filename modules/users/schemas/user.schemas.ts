@@ -50,7 +50,6 @@ export const userFiltersSchema = z
 		updatedBefore: z.coerce.date().min(DATE_LIMITS.FILTERS_MIN, "Date too old").optional(),
 		hasOrders: z.boolean().optional(),
 		hasSessions: z.boolean().optional(),
-		marketingOptIn: z.boolean().optional(),
 		minOrderCount: z.number().int().nonnegative().max(10000).optional(),
 		includeDeleted: z.boolean().optional(),
 	})
@@ -209,18 +208,6 @@ export const exportUserDataResponseSchema = z.object({
 			usedAt: z.string().datetime(),
 		}),
 	),
-	newsletter: z
-		.object({
-			email: z.string(),
-			status: z.string(),
-			subscribedAt: z.string().datetime(),
-			confirmedAt: z.string().datetime().nullable(),
-			unsubscribedAt: z.string().datetime().nullable(),
-			consentSource: z.string().nullable(),
-			consentTimestamp: z.string().datetime(),
-			ipAddress: z.string().nullable(),
-		})
-		.nullable(),
 	reviews: z.array(
 		z.object({
 			productTitle: z.string().nullable(),

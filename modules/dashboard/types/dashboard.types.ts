@@ -61,11 +61,6 @@ export type GetKpisReturn = {
 		averageRating: number;
 		totalReviews: number;
 	};
-	newsletterGrowth: {
-		totalActive: number;
-		newThisMonth: number;
-		evolution: number;
-	};
 	avgFulfillmentTime: {
 		hours: number;
 		evolution: number;

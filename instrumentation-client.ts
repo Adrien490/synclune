@@ -1,7 +1,15 @@
 import * as Sentry from "@sentry/nextjs";
+import { BusinessError } from "@/shared/lib/actions/business-error";
 
-// Defer Sentry init to after hydration — errors before init are caught by
-// the window.addEventListener("error") fallback below.
+const SHARED_IGNORE_ERRORS = [
+	"NEXT_REDIRECT",
+	"NEXT_NOT_FOUND",
+	"CircuitBreakerError",
+	"DYNAMIC_SERVER_USAGE",
+	"ResizeObserver loop",
+	"ChunkLoadError",
+];
+
 const initSentry = () => {
 	Sentry.init({
 		dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -14,18 +22,16 @@ const initSentry = () => {
 
 		sendDefaultPii: false,
 
-		ignoreErrors: [
-			"NEXT_REDIRECT",
-			"NEXT_NOT_FOUND",
-			"ResizeObserver loop",
-			"ChunkLoadError",
-			"DYNAMIC_SERVER_USAGE",
-		],
+		beforeSend(event, hint) {
+			const error = hint.originalException;
+			if (error instanceof BusinessError) return null;
+			return event;
+		},
+
+		ignoreErrors: SHARED_IGNORE_ERRORS,
 	});
 };
 
-// Defer replay integration — heavy (~50-70 KiB) and not needed on first paint.
-// Errors are still captured by base Sentry init above.
 const initReplay = () => {
 	Sentry.addIntegration(
 		Sentry.replayIntegration({
@@ -46,13 +52,15 @@ if ("requestIdleCallback" in window) {
 
 performance.mark("app-init");
 
-// Fallback console logging for environments where Sentry may not load
 window.addEventListener("error", (event) => {
-	console.error("[CLIENT_ERROR]", event.error);
+	if (event.error instanceof Error) {
+		Sentry.captureException(event.error);
+	}
 });
 
 window.addEventListener("unhandledrejection", (event) => {
-	console.error("[UNHANDLED_REJECTION]", event.reason);
+	const reason = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+	Sentry.captureException(reason);
 });
 
 export function onRouterTransitionStart(
@@ -60,4 +68,9 @@ export function onRouterTransitionStart(
 	navigationType: "push" | "replace" | "traverse",
 ) {
 	performance.mark(`nav-${navigationType}-${url}`);
+	Sentry.addBreadcrumb({
+		category: "navigation",
+		level: "info",
+		message: `${navigationType} ${url}`,
+	});
 }

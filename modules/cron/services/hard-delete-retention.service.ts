@@ -5,7 +5,6 @@ import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
-import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 /**
@@ -19,12 +18,10 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * Tables handled:
  * - Product (and ProductSku, SkuMedia, etc. via cascade)
  * - ProductReview, ReviewResponse, ReviewMedia (via cascade)
- * - NewsletterSubscriber
  */
 export async function hardDeleteExpiredRecords(): Promise<{
 	productsDeleted: number;
 	reviewsDeleted: number;
-	newsletterDeleted: number;
 	hasMore: boolean;
 }> {
 	logger.info("Starting 10-year retention cleanup", { cronJob: "hard-delete-retention" });
@@ -42,13 +39,8 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	const retentionWhere = { deletedAt: { lt: retentionDate } };
 
 	// 1. Find IDs to delete (batched to prevent timeout)
-	const [reviewIds, newsletterIds, productIds] = await Promise.all([
+	const [reviewIds, productIds] = await Promise.all([
 		prisma.productReview.findMany({
-			where: retentionWhere,
-			select: { id: true },
-			take: BATCH_SIZE_LARGE,
-		}),
-		prisma.newsletterSubscriber.findMany({
 			where: retentionWhere,
 			select: { id: true },
 			take: BATCH_SIZE_LARGE,
@@ -61,10 +53,7 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	]);
 
 	// Check if any model hit the batch limit (more records may remain)
-	const hasMore =
-		reviewIds.length === BATCH_SIZE_LARGE ||
-		newsletterIds.length === BATCH_SIZE_LARGE ||
-		productIds.length === BATCH_SIZE_LARGE;
+	const hasMore = reviewIds.length === BATCH_SIZE_LARGE || productIds.length === BATCH_SIZE_LARGE;
 
 	if (hasMore) {
 		logger.info("Batch limit reached, more records may remain for next run", {
@@ -92,12 +81,9 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			: [];
 
 	// 3. Run all DB deletes in a single transaction
-	const [reviewsResult, newsletterResult, productsResult] = await prisma.$transaction([
+	const [reviewsResult, productsResult] = await prisma.$transaction([
 		prisma.productReview.deleteMany({
 			where: { id: { in: reviewIds.map((r) => r.id) } },
-		}),
-		prisma.newsletterSubscriber.deleteMany({
-			where: { id: { in: newsletterIds.map((n) => n.id) } },
 		}),
 		prisma.product.deleteMany({
 			where: { id: { in: productIds.map((p) => p.id) } },
@@ -107,7 +93,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	logger.info("DB transaction completed", {
 		cronJob: "hard-delete-retention",
 		reviewsDeleted: reviewsResult.count,
-		newsletterDeleted: newsletterResult.count,
 		productsDeleted: productsResult.count,
 	});
 
@@ -123,10 +108,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		updateTag(REVIEWS_CACHE_TAGS.ADMIN_LIST);
 		updateTag(REVIEWS_CACHE_TAGS.GLOBAL_STATS);
 	}
-	if (newsletterResult.count > 0) {
-		updateTag(NEWSLETTER_CACHE_TAGS.LIST);
-		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-	}
 
 	// 5. Delete UploadThing files after DB transaction succeeds
 	// Non-blocking: if UploadThing fails, orphaned files will be cleaned by cleanup-orphan-media
@@ -138,7 +119,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 		return {
 			productsDeleted: productsResult.count,
 			reviewsDeleted: reviewsResult.count,
-			newsletterDeleted: newsletterResult.count,
 			hasMore,
 		};
 	}
@@ -180,7 +160,6 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	return {
 		productsDeleted: productsResult.count,
 		reviewsDeleted: reviewsResult.count,
-		newsletterDeleted: newsletterResult.count,
 		hasMore,
 	};
 }

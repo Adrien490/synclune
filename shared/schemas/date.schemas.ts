@@ -8,7 +8,7 @@ import { z } from "zod";
  * Transforme une string ISO ou Date en Date valide
  * Retourne undefined si la valeur est invalide
  *
- * Utilise dans les filtres de date (orders, refunds, newsletter, reviews)
+ * Utilise dans les filtres de date (orders, refunds, reviews)
  */
 export const stringOrDateSchema = z
 	.union([z.string(), z.date()])

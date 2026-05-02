@@ -11,6 +11,7 @@ import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminSidebarSkeleton } from "./_components/admin-sidebar-skeleton";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
+import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { SwipeBackProvider } from "@/shared/components/swipe-back-provider";
 import { VisualViewportBridge } from "@/shared/components/visual-viewport-bridge";
@@ -49,6 +50,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 			<PullToRefresh />
 			<SwipeBackProvider />
 			<VisualViewportBridge />
+			<SentryUserBridge userId={result.user.id} role={result.user.role} />
 			<Suspense fallback={<AdminSidebarSkeleton />}>
 				<AdminSidebar user={user} />
 			</Suspense>

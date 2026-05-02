@@ -80,13 +80,4 @@ test.describe("Parametres du compte", { tag: ["@regression"] }, () => {
 		const sessionsSection = page.getByText(/Sessions actives|Appareils connectés/i);
 		await expect(sessionsSection.first()).toBeVisible();
 	});
-
-	test("les parametres newsletter sont accessibles", async ({ page }) => {
-		await page.goto("/parametres");
-		await page.waitForLoadState("domcontentloaded");
-
-		const newsletterSection = page.getByText(/Newsletter/i);
-		const newsletterCount = await newsletterSection.count();
-		expect(newsletterCount).toBeGreaterThan(0);
-	});
 });

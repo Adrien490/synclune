@@ -58,11 +58,6 @@ async function SecuritySectionWrapper({
 	return <SecuritySection emailVerified={emailVerified} providers={providers} email={email} />;
 }
 
-// async function NewsletterWrapper() {
-// 	const status = await getSubscriptionStatus();
-// 	return <NewsletterSettingsCard isSubscribed={status.isSubscribed} />;
-// }
-
 function SecuritySkeleton() {
 	return (
 		<SkeletonGroup label="Chargement des paramètres de sécurité">
@@ -79,20 +74,6 @@ function SecuritySkeleton() {
 		</SkeletonGroup>
 	);
 }
-
-// function NewsletterSkeleton() {
-// 	return (
-// 		<SkeletonGroup label="Chargement des paramètres newsletter">
-// 			<section className="space-y-4">
-// 				<Skeleton className="h-5 w-32" />
-// 				<div className="border-border/60 space-y-3 border-t pt-4">
-// 					<Skeleton className="h-4 w-full" />
-// 					<Skeleton className="h-9 w-full" />
-// 				</div>
-// 			</section>
-// 		</SkeletonGroup>
-// 	);
-// }
 
 function computeDaysRemaining(deletionRequestedAt: Date | null): number {
 	if (!deletionRequestedAt) return 0;

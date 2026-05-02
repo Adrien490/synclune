@@ -235,11 +235,6 @@ describe("UsersFilterSheet", () => {
 		expect(screen.getAllByText("Non").length).toBeGreaterThanOrEqual(1);
 	});
 
-	it("renders marketing opt-in section with radio options", () => {
-		render(<UsersFilterSheet />);
-		expect(document.body.textContent).toContain("Marketing opt-in");
-	});
-
 	it("renders 'A des commandes' section with radio options", () => {
 		render(<UsersFilterSheet />);
 		expect(document.body.textContent).toContain("A des commandes");
@@ -254,7 +249,7 @@ describe("UsersFilterSheet", () => {
 	it("renders separators between filter sections", () => {
 		render(<UsersFilterSheet />);
 		const separators = screen.getAllByTestId("separator");
-		expect(separators.length).toBeGreaterThanOrEqual(4);
+		expect(separators.length).toBeGreaterThanOrEqual(3);
 	});
 
 	// ─── Active Filter Count ─────────────────────────────────────────────────
@@ -282,12 +277,6 @@ describe("UsersFilterSheet", () => {
 		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-active-filters", "1");
 	});
 
-	it("counts filter_marketingOptIn as one active filter", () => {
-		mockSearchParams.value = makeSearchParams([["filter_marketingOptIn", "false"]]);
-		render(<UsersFilterSheet />);
-		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-active-filters", "1");
-	});
-
 	it("counts filter_hasOrders as one active filter", () => {
 		mockSearchParams.value = makeSearchParams([["filter_hasOrders", "true"]]);
 		render(<UsersFilterSheet />);
@@ -310,12 +299,11 @@ describe("UsersFilterSheet", () => {
 		mockSearchParams.value = makeSearchParams([
 			["filter_role", "ADMIN"],
 			["filter_emailVerified", "true"],
-			["filter_marketingOptIn", "false"],
 			["filter_hasOrders", "true"],
 			["filter_includeDeleted", "true"],
 		]);
 		render(<UsersFilterSheet />);
-		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-active-filters", "5");
+		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-active-filters", "4");
 		expect(screen.getByTestId("filter-sheet-wrapper")).toHaveAttribute("data-has-active", "true");
 	});
 
@@ -375,20 +363,6 @@ describe("UsersFilterSheet", () => {
 	it("initializes emailVerified=undefined (Tous) radio when no filter_emailVerified param", () => {
 		render(<UsersFilterSheet />);
 		const radio = document.getElementById("emailVerified-Tous") as HTMLInputElement;
-		expect(radio.checked).toBe(true);
-	});
-
-	it("initializes marketingOptIn=true radio when filter_marketingOptIn=true in params", () => {
-		mockSearchParams.value = makeSearchParams([["filter_marketingOptIn", "true"]]);
-		render(<UsersFilterSheet />);
-		const radio = document.getElementById("marketingOptIn-Oui") as HTMLInputElement;
-		expect(radio.checked).toBe(true);
-	});
-
-	it("initializes marketingOptIn=false radio when filter_marketingOptIn=false in params", () => {
-		mockSearchParams.value = makeSearchParams([["filter_marketingOptIn", "false"]]);
-		render(<UsersFilterSheet />);
-		const radio = document.getElementById("marketingOptIn-Non") as HTMLInputElement;
 		expect(radio.checked).toBe(true);
 	});
 
@@ -465,20 +439,6 @@ describe("UsersFilterSheet", () => {
 	it("selects emailVerified=false radio on click", () => {
 		render(<UsersFilterSheet />);
 		const radio = document.getElementById("emailVerified-Non") as HTMLInputElement;
-		fireEvent.click(radio);
-		expect(radio.checked).toBe(true);
-	});
-
-	it("selects marketingOptIn=true radio on click", () => {
-		render(<UsersFilterSheet />);
-		const radio = document.getElementById("marketingOptIn-Oui") as HTMLInputElement;
-		fireEvent.click(radio);
-		expect(radio.checked).toBe(true);
-	});
-
-	it("selects marketingOptIn=false radio on click", () => {
-		render(<UsersFilterSheet />);
-		const radio = document.getElementById("marketingOptIn-Non") as HTMLInputElement;
 		fireEvent.click(radio);
 		expect(radio.checked).toBe(true);
 	});
@@ -616,7 +576,6 @@ describe("UsersFilterSheet", () => {
 		mockSearchParams.value = makeSearchParams([
 			["filter_role", "ADMIN"],
 			["filter_emailVerified", "true"],
-			["filter_marketingOptIn", "false"],
 			["filter_hasOrders", "true"],
 			["filter_includeDeleted", "true"],
 		]);
@@ -625,7 +584,6 @@ describe("UsersFilterSheet", () => {
 		const pushedUrl = mockPush.mock.calls[0]?.[0] as string;
 		expect(pushedUrl).not.toContain("filter_role");
 		expect(pushedUrl).not.toContain("filter_emailVerified");
-		expect(pushedUrl).not.toContain("filter_marketingOptIn");
 		expect(pushedUrl).not.toContain("filter_hasOrders");
 		expect(pushedUrl).not.toContain("filter_includeDeleted");
 	});
@@ -700,15 +658,6 @@ describe("UsersFilterSheet", () => {
 		fireEvent.click(screen.getByTestId("apply-btn"));
 		const pushedUrl = mockPush.mock.calls[0]?.[0] as string;
 		expect(pushedUrl).toContain("filter_emailVerified=false");
-	});
-
-	it("includes filter_marketingOptIn=true in URL when marketingOptIn-Oui radio is clicked and applied", () => {
-		render(<UsersFilterSheet />);
-		const radio = document.getElementById("marketingOptIn-Oui") as HTMLInputElement;
-		fireEvent.click(radio);
-		fireEvent.click(screen.getByTestId("apply-btn"));
-		const pushedUrl = mockPush.mock.calls[0]?.[0] as string;
-		expect(pushedUrl).toContain("filter_marketingOptIn=true");
 	});
 
 	it("includes filter_hasOrders=true in URL when hasOrders-Oui radio is clicked and applied", () => {

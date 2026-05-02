@@ -6,7 +6,6 @@ import {
 	DiscountType,
 	FulfillmentStatus,
 	MediaType,
-	NewsletterStatus,
 	OrderAction,
 	OrderStatus,
 	PaymentStatus,
@@ -161,7 +160,6 @@ async function cleanup(): Promise<void> {
 	await prisma.wishlist.deleteMany();
 
 	await prisma.webhookEvent.deleteMany();
-	await prisma.newsletterSubscriber.deleteMany();
 	await prisma.discount.deleteMany();
 
 	await prisma.address.deleteMany();
@@ -3026,72 +3024,6 @@ async function main(): Promise<void> {
 		wishlistsCreated++;
 	}
 	console.log(`✅ ${wishlistsCreated} wishlists créées`);
-
-	// ============================================
-	// NEWSLETTER SUBSCRIBERS (batch)
-	// ============================================
-	const newsletterEmails = [
-		"marie.dupont@gmail.com",
-		"sophie.martin@outlook.fr",
-		"julie.bernard@yahoo.fr",
-		"emma.petit@gmail.com",
-		"lea.robert@hotmail.fr",
-		"camille.richard@gmail.com",
-		"chloe.durand@outlook.com",
-		"manon.leroy@gmail.com",
-		"ines.moreau@yahoo.fr",
-		"sarah.simon@gmail.com",
-		"laura.michel@hotmail.fr",
-		"clara.garcia@outlook.fr",
-	];
-
-	// Link first 3 confirmed subscribers to existing users (M13)
-	const usersForNewsletter = verifiedUsers.slice(0, 3);
-
-	const newsletterData: Prisma.NewsletterSubscriberCreateManyInput[] = newsletterEmails.map(
-		(email, i) => {
-			let status: NewsletterStatus;
-			let confirmedAt: Date | null = null;
-			let unsubscribedAt: Date | null = null;
-			let confirmationSentAt: Date | null = null;
-			const confirmationToken = i < 4 ? faker.string.alphanumeric(32) : null;
-
-			if (i < 6) {
-				status = NewsletterStatus.CONFIRMED;
-				confirmationSentAt = faker.date.past({ years: 0.6 });
-				confirmedAt = faker.date.past({ years: 0.5 });
-			} else if (i < 10) {
-				status = NewsletterStatus.PENDING;
-				confirmationSentAt = faker.date.recent({ days: 7 });
-			} else {
-				status = NewsletterStatus.UNSUBSCRIBED;
-				confirmationSentAt = faker.date.past({ years: 1.1 });
-				confirmedAt = faker.date.past({ years: 1 });
-				unsubscribedAt = faker.date.recent({ days: 30 });
-			}
-
-			// Link to user accounts (M13)
-			const linkedUser = i < usersForNewsletter.length ? usersForNewsletter[i] : null;
-
-			return {
-				email: linkedUser?.email ?? email,
-				userId: linkedUser?.id ?? null,
-				unsubscribeToken: faker.string.uuid(),
-				status,
-				confirmationToken,
-				confirmationSentAt,
-				confirmedAt,
-				unsubscribedAt,
-				ipAddress: faker.internet.ipv4(),
-				confirmationIpAddress: confirmedAt ? faker.internet.ipv4() : null,
-				userAgent: faker.internet.userAgent(),
-				consentSource: "newsletter_form",
-			};
-		},
-	);
-
-	await prisma.newsletterSubscriber.createMany({ data: newsletterData });
-	console.log(`✅ ${newsletterData.length} abonnés newsletter créés`);
 
 	// ============================================
 	// WEBHOOK EVENTS (enriched with order data)

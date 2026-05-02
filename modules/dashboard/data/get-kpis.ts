@@ -1,9 +1,4 @@
-import {
-	FulfillmentStatus,
-	NewsletterStatus,
-	PaymentStatus,
-	RefundStatus,
-} from "@/app/generated/prisma/client";
+import { FulfillmentStatus, PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { cacheTag } from "next/cache";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
@@ -69,9 +64,6 @@ export async function fetchDashboardKpis(
 		currentRefunds,
 		lastRefunds,
 		reviewStats,
-		newsletterActive,
-		newsletterCurrentMonth,
-		newsletterLastMonth,
 		currentFulfillmentTime,
 		lastFulfillmentTime,
 	] = await Promise.all([
@@ -138,26 +130,6 @@ export async function fetchDashboardKpis(
 		prisma.productReviewStats.aggregate({
 			_avg: { averageRating: true },
 			_sum: { totalCount: true },
-		}),
-		// Newsletter: total active subscribers
-		prisma.newsletterSubscriber.count({
-			where: { status: NewsletterStatus.CONFIRMED, deletedAt: null },
-		}),
-		// Newsletter: new confirmed this period
-		prisma.newsletterSubscriber.count({
-			where: {
-				status: NewsletterStatus.CONFIRMED,
-				confirmedAt: { gte: currentStart },
-				deletedAt: null,
-			},
-		}),
-		// Newsletter: new confirmed previous period
-		prisma.newsletterSubscriber.count({
-			where: {
-				status: NewsletterStatus.CONFIRMED,
-				confirmedAt: { gte: previousStart, lte: previousEnd },
-				deletedAt: null,
-			},
 		}),
 		// Average fulfillment time (current period) - hours from paidAt to shippedAt
 		prisma.$queryRaw<[{ avg_hours: number | null }]>`
@@ -245,11 +217,6 @@ export async function fetchDashboardKpis(
 		reviewHealth: {
 			averageRating: avgRating,
 			totalReviews: totalReviews,
-		},
-		newsletterGrowth: {
-			totalActive: newsletterActive,
-			newThisMonth: newsletterCurrentMonth,
-			evolution: computeEvolution(newsletterCurrentMonth, newsletterLastMonth),
 		},
 		avgFulfillmentTime: {
 			hours: currentHours,

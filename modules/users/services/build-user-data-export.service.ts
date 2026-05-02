@@ -40,7 +40,6 @@ const USER_DATA_EXPORT_INCLUDE = {
 		},
 		orderBy: { createdAt: "desc" as const },
 	},
-	newsletterSubscription: true,
 	reviews: {
 		take: 200,
 		include: {
@@ -124,18 +123,6 @@ export async function buildUserDataExport(userId: string): Promise<UserDataExpor
 			amountApplied: usage.amountApplied / 100,
 			usedAt: usage.createdAt.toISOString(),
 		})),
-		newsletter: user.newsletterSubscription
-			? {
-					email: user.newsletterSubscription.email,
-					status: user.newsletterSubscription.status,
-					subscribedAt: user.newsletterSubscription.subscribedAt.toISOString(),
-					confirmedAt: user.newsletterSubscription.confirmedAt?.toISOString() ?? null,
-					unsubscribedAt: user.newsletterSubscription.unsubscribedAt?.toISOString() ?? null,
-					consentSource: user.newsletterSubscription.consentSource,
-					consentTimestamp: user.newsletterSubscription.consentTimestamp.toISOString(),
-					ipAddress: user.newsletterSubscription.ipAddress,
-				}
-			: null,
 		reviews: user.reviews.map((review) => ({
 			productTitle: review.product?.title ?? null,
 			rating: review.rating,

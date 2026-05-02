@@ -120,7 +120,11 @@ describe("GET /api/cron/sync-async-payments", () => {
 
 			await GET();
 
-			expect(mockCronError).toHaveBeenCalledWith("STRIPE_SECRET_KEY not configured");
+			expect(mockCronError).toHaveBeenCalledWith(
+				expect.stringContaining("misconfigured"),
+				500,
+				"sync-async-payments",
+			);
 		});
 
 		it("does not call cronSuccess when service returns null", async () => {

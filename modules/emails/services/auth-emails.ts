@@ -54,8 +54,7 @@ export async function sendWelcomeEmail({
 	userName: string;
 }): Promise<EmailResult> {
 	const shopUrl = buildUrl(ROUTES.SHOP.PRODUCTS);
-	const newsletterUrl = buildUrl("/#newsletter");
-	return renderAndSend(WelcomeEmail({ userName, shopUrl, newsletterUrl }), {
+	return renderAndSend(WelcomeEmail({ userName, shopUrl }), {
 		to,
 		subject: EMAIL_SUBJECTS.WELCOME,
 		replyTo: EMAIL_CONTACT,

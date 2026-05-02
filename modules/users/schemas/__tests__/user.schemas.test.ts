@@ -165,16 +165,6 @@ describe("userFiltersSchema", () => {
 		expect(result.success).toBe(true);
 	});
 
-	it("accepts marketingOptIn as true", () => {
-		const result = userFiltersSchema.safeParse({ marketingOptIn: true });
-		expect(result.success).toBe(true);
-	});
-
-	it("accepts marketingOptIn as false", () => {
-		const result = userFiltersSchema.safeParse({ marketingOptIn: false });
-		expect(result.success).toBe(true);
-	});
-
 	it("accepts valid minOrderCount", () => {
 		const result = userFiltersSchema.safeParse({ minOrderCount: 5 });
 		expect(result.success).toBe(true);
@@ -275,7 +265,6 @@ describe("userFiltersSchema", () => {
 			hasImage: true,
 			hasOrders: true,
 			hasSessions: false,
-			marketingOptIn: true,
 			minOrderCount: 2,
 			includeDeleted: false,
 			createdAfter: "2022-01-01",

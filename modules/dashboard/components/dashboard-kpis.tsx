@@ -1,4 +1,4 @@
-import { Clock, Euro, Mail, Package, Receipt, ShoppingBag, Star, Target } from "lucide-react";
+import { Clock, Euro, Package, Receipt, ShoppingBag, Star, Target } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -20,7 +20,7 @@ interface DashboardKpisProps {
 /**
  * Dashboard KPIs grid - 4 featured + 4 compact
  * Row 1: CA net, Commandes, Panier moyen, À expédier (horizontal scroll on mobile)
- * Row 2: Taux de conversion, Note moyenne, Newsletter, Délai d'expédition (2-col on mobile)
+ * Row 2: Taux de conversion, Note moyenne, Délai d'expédition (2-col on mobile)
  */
 export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
@@ -127,8 +127,8 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 				</ScrollFade>
 			</div>
 
-			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), 4-col at lg+ (full card) */}
-			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-4">
+			{/* Row 2: Compact operational KPIs — 2-col on mobile (flat), 3-col at lg+ (full card) */}
+			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-3">
 				<KpiCardAnimated index={4}>
 					<KpiCard
 						title="Taux de conversion"
@@ -175,27 +175,6 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 				</KpiCardAnimated>
 
 				<KpiCardAnimated index={6}>
-					<KpiCard
-						title="Abonnés newsletter"
-						value={kpis.newsletterGrowth.totalActive.toString()}
-						numericValue={kpis.newsletterGrowth.totalActive}
-						evolution={kpis.newsletterGrowth.evolution}
-						comparisonLabel={comparisonLabel}
-						icon={<Mail className="h-4 w-4" />}
-						size="compact"
-						priority="info"
-						flatOnMobile
-						href="/admin/marketing/newsletter"
-						tooltip="Nombre d'abonnés newsletter confirmés"
-						subtitle={
-							kpis.newsletterGrowth.newThisMonth > 0
-								? `+${kpis.newsletterGrowth.newThisMonth} ce mois`
-								: undefined
-						}
-					/>
-				</KpiCardAnimated>
-
-				<KpiCardAnimated index={7}>
 					<KpiCard
 						title="Délai d'expédition"
 						value={formatFulfillmentTime(kpis.avgFulfillmentTime.hours)}

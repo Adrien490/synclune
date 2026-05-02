@@ -215,16 +215,6 @@ export const CONTACT_SEND_MESSAGE_LIMIT: RateLimitConfig = {
 	windowMs: hours(1), // par heure
 };
 
-/**
- * Limite pour l'inscription à la newsletter
- *
- * Protège contre inscriptions en masse
- */
-export const NEWSLETTER_SUBSCRIBE_LIMIT: RateLimitConfig = {
-	limit: 5, // 5 inscriptions maximum
-	windowMs: hours(1), // par heure
-};
-
 // ========================================
 // 📦 COMMANDES (ORDERS)
 // ========================================
@@ -428,7 +418,6 @@ export const PAYMENT_LIMITS = {
  */
 export const COMMUNICATION_LIMITS = {
 	CONTACT: CONTACT_SEND_MESSAGE_LIMIT,
-	NEWSLETTER: NEWSLETTER_SUBSCRIBE_LIMIT,
 } as const;
 
 /**
@@ -1560,94 +1549,6 @@ export const RETURN_REQUEST_LIMIT: RateLimitConfig = {
 	limit: 3,
 	windowMs: hours(24),
 };
-
-// ========================================
-// 📧 ADMIN NEWSLETTER OPERATIONS
-// ========================================
-
-/**
- * Limite pour le rafraichissement du cache newsletter (admin)
- */
-export const ADMIN_NEWSLETTER_REFRESH_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: minutes(1),
-};
-
-/**
- * Limite pour le désabonnement admin d'un subscriber
- */
-export const ADMIN_NEWSLETTER_UNSUBSCRIBE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression admin d'un subscriber (RGPD)
- */
-export const ADMIN_NEWSLETTER_DELETE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour la suppression en masse de subscribers (RGPD)
- */
-export const ADMIN_NEWSLETTER_BULK_DELETE_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour le renvoi d'email de confirmation a un subscriber PENDING
- */
-export const ADMIN_NEWSLETTER_RESEND_CONFIRMATION_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: hours(1),
-};
-
-/**
- * Limite pour le renvoi en masse d'email de confirmation
- */
-export const ADMIN_NEWSLETTER_BULK_RESEND_LIMIT: RateLimitConfig = {
-	limit: 3,
-	windowMs: hours(1),
-};
-
-/**
- * Limite pour la reactivation d'un subscriber UNSUBSCRIBED (re-consent RGPD)
- */
-export const ADMIN_NEWSLETTER_REACTIVATE_LIMIT: RateLimitConfig = {
-	limit: 10,
-	windowMs: hours(1),
-};
-
-/**
- * Limite pour la restauration d'un subscriber soft-deleted
- */
-export const ADMIN_NEWSLETTER_RESTORE_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
- * Limite pour l'export RGPD (article 15 - droit d'acces) des donnees subscriber
- */
-export const ADMIN_NEWSLETTER_GDPR_EXPORT_LIMIT: RateLimitConfig = {
-	limit: 5,
-	windowMs: hours(1),
-};
-
-export const ADMIN_NEWSLETTER_LIMITS = {
-	REFRESH: ADMIN_NEWSLETTER_REFRESH_LIMIT,
-	UNSUBSCRIBE: ADMIN_NEWSLETTER_UNSUBSCRIBE_LIMIT,
-	DELETE: ADMIN_NEWSLETTER_DELETE_LIMIT,
-	BULK_DELETE: ADMIN_NEWSLETTER_BULK_DELETE_LIMIT,
-	RESEND_CONFIRMATION: ADMIN_NEWSLETTER_RESEND_CONFIRMATION_LIMIT,
-	BULK_RESEND: ADMIN_NEWSLETTER_BULK_RESEND_LIMIT,
-	REACTIVATE: ADMIN_NEWSLETTER_REACTIVATE_LIMIT,
-	RESTORE: ADMIN_NEWSLETTER_RESTORE_LIMIT,
-	GDPR_EXPORT: ADMIN_NEWSLETTER_GDPR_EXPORT_LIMIT,
-} as const;
 
 // ========================================
 // 📢 ADMIN ANNOUNCEMENT OPERATIONS

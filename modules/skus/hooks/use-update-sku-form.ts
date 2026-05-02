@@ -2,43 +2,53 @@
 
 import { useAppForm } from "@/shared/components/forms";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
+import { extractServerErrors } from "@/shared/utils/extract-server-errors";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { mergeForm, useStore, useTransform } from "@tanstack/react-form-nextjs";
 import { useActionState } from "react";
 import { updateProductSku } from "@/modules/skus/actions/update-sku";
 import type { SkuWithImages } from "@/modules/skus/data/get-sku";
 import { getUpdateProductSkuFormOpts } from "@/modules/skus/utils/form-options";
+import { ActionStatus, type ActionState } from "@/shared/types/server-action";
 
 interface UseUpdateProductSkuFormOptions {
 	sku: SkuWithImages;
 	onSuccess?: (message: string, data?: { productSlug?: string }) => void;
+	onError?: (message: string) => void;
+	onValidationError?: (message: string) => void;
 }
 
-/**
- * Hook pour le formulaire d'édition de variante de produit (Product SKU)
- * Utilise TanStack Form avec Next.js App Router
- */
-export const useUpdateProductSkuForm = ({ sku, onSuccess }: UseUpdateProductSkuFormOptions) => {
+const getMessage = (result: ActionState): string | undefined =>
+	"message" in result && typeof result.message === "string" ? result.message : undefined;
+
+const getData = (result: ActionState): { productSlug?: string } | undefined =>
+	"data" in result && result.data ? (result.data as { productSlug?: string }) : undefined;
+
+export const useUpdateProductSkuForm = ({
+	sku,
+	onSuccess,
+	onError,
+	onValidationError,
+}: UseUpdateProductSkuFormOptions) => {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			updateProductSku,
-			createToastCallbacks({
+			createToastCallbacks<ActionState>({
 				loadingMessage: "Mise à jour de la variante...",
 				showSuccessToast: false,
-				onSuccess: (result: unknown) => {
-					// Call the custom success callback if provided
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string"
-					) {
-						const data =
-							"data" in result && result.data
-								? (result.data as { productSlug?: string })
-								: undefined;
-						onSuccess?.(result.message, data);
+				showErrorToast: true,
+				onSuccess: (result) => {
+					const message = getMessage(result);
+					if (message) onSuccess?.(message, getData(result));
+				},
+				onError: (result) => {
+					const message = getMessage(result);
+					if (!message) return;
+					if ("status" in result && result.status === ActionStatus.VALIDATION_ERROR) {
+						onValidationError?.(message);
+						return;
 					}
+					onError?.(message);
 				},
 			}),
 		),
@@ -49,12 +59,15 @@ export const useUpdateProductSkuForm = ({ sku, onSuccess }: UseUpdateProductSkuF
 
 	const form = useAppForm({
 		...formOpts,
-		// Merge server state with form state for validation errors
-		transform: useTransform((baseForm) => mergeForm(baseForm, (state as unknown) ?? {}), [state]),
+		transform: useTransform(
+			(baseForm) => mergeForm(baseForm, (state ?? {}) as Parameters<typeof mergeForm>[1]),
+			[state],
+		),
 	});
 
-	// Subscribe to form errors for display
-	const formErrors = useStore(form.store, (formState) => formState.errors);
+	const tanstackErrors = useStore(form.store, (formState) => formState.errors);
+	const serverErrors = extractServerErrors(state);
+	const formErrors = Array.from(new Set([...tanstackErrors, ...serverErrors]));
 
 	return {
 		form,

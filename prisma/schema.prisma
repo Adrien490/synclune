@@ -52,14 +52,13 @@ model User {
   anonymizedAt        DateTime? // Date d'anonymisation effective
   deletionRequestedAt DateTime? // Demande de suppression enregistree
 
-  sessions               Session[]
-  accounts               Account[]
-  orders                 Order[]
-  cart                   Cart?
-  addresses              Address[]
-  wishlist               Wishlist?
-  discountUsages         DiscountUsage[]
-  newsletterSubscription NewsletterSubscriber?
+  sessions       Session[]
+  accounts       Account[]
+  orders         Order[]
+  cart           Cart?
+  addresses      Address[]
+  wishlist       Wishlist?
+  discountUsages DiscountUsage[]
 
   // Relations avec les remboursements (audit)
   refundsCreated Refund[] @relation("RefundCreator")
@@ -643,9 +642,6 @@ model Order {
   billingCountry        String? @db.VarChar(2)
   billingPhone          String? @db.VarChar(20)
 
-  // === CONSENTEMENT (RGPD) ===
-  newsletterOptIn Boolean @default(false)
-
   // === SOFT DELETE (Conformite legale - Conservation 10 ans) ===
   // Ne JAMAIS supprimer physiquement une commande (Art. L123-22 Code de Commerce)
   deletedAt DateTime?
@@ -987,48 +983,6 @@ model DiscountUsage {
   @@index([orderId])
   @@index([discountId, userId]) // Pour verifier usage par utilisateur, couvre aussi discountId seul
   @@index([userId]) // Lookup usage par utilisateur (verification limite promo/user)
-}
-
-// ============================================================================
-// NEWSLETTER
-// ============================================================================
-
-enum NewsletterStatus {
-  PENDING // En attente de confirmation (double opt-in)
-  CONFIRMED // Email confirme, abonnement actif
-  UNSUBSCRIBED // Desabonne
-}
-
-model NewsletterSubscriber {
-  id               String @id @default(cuid())
-  email            String @unique @db.VarChar(255)
-  unsubscribeToken String @unique
-
-  // === STATUT NEWSLETTER ===
-  status NewsletterStatus @default(PENDING)
-
-  // Lien optionnel avec un compte utilisateur
-  userId String? @unique
-  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  // Double opt-in : Confirmation email obligatoire
-  confirmationToken  String?   @unique // Token unique pour confirmer l'inscription
-  confirmationSentAt DateTime? // Date d'envoi de l'email de confirmation
-  confirmedAt        DateTime? // Date de confirmation par l'utilisateur
-
-  // Champs de tracabilite RGPD
-  ipAddress             String?  @db.VarChar(45) // IP inscription
-  confirmationIpAddress String?  @db.VarChar(45) // IP confirmation (preuve RGPD)
-  userAgent             String?  @db.VarChar(500)
-  consentSource         String?  @default("newsletter_form")
-  consentTimestamp      DateTime @default(now())
-
-  subscribedAt   DateTime  @default(now())
-  unsubscribedAt DateTime?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime? // Soft delete pour RGPD
 }
 
 // ============================================================================

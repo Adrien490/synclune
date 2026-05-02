@@ -1,40 +1,9 @@
-import {
-	verifyCronRequest,
-	cronTimer,
-	cronSuccess,
-	cronError,
-} from "@/modules/cron/lib/verify-cron";
+import { withCronGuard } from "@/modules/cron/lib/with-cron-guard";
 import { cleanupExpiredWishlists } from "@/modules/cron/services/cleanup-wishlists.service";
-import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
-import { logger } from "@/shared/lib/logger";
 
 export const maxDuration = 30;
 
-export async function GET() {
-	const unauthorized = await verifyCronRequest();
-	if (unauthorized) return unauthorized;
-
-	const startTime = cronTimer();
-	try {
-		const result = await cleanupExpiredWishlists();
-		return cronSuccess(
-			{
-				job: "cleanup-wishlists",
-				...result,
-			},
-			startTime,
-		);
-	} catch (error) {
-		sendAdminCronFailedAlert({
-			job: "cleanup-wishlists",
-			errors: 1,
-			details: { error: error instanceof Error ? error.message : String(error) },
-		}).catch((e) =>
-			logger.error("Cron cleanup-wishlists failed to send admin alert", e, {
-				cronJob: "cleanup-wishlists",
-			}),
-		);
-
-		return cronError(error instanceof Error ? error.message : "Failed to cleanup wishlists");
-	}
-}
+export const GET = withCronGuard(
+	{ jobName: "cleanup-wishlists", defaultErrorMessage: "Failed to cleanup wishlists" },
+	() => cleanupExpiredWishlists(),
+);

@@ -9,7 +9,6 @@ const {
 	mockPrismaOrderCount,
 	mockPrismaRefundAggregate,
 	mockPrismaReviewStatsAggregate,
-	mockPrismaNewsletterCount,
 	mockPrismaQueryRaw,
 	mockCacheDefault,
 } = vi.hoisted(() => ({
@@ -17,7 +16,6 @@ const {
 	mockPrismaOrderCount: vi.fn(),
 	mockPrismaRefundAggregate: vi.fn(),
 	mockPrismaReviewStatsAggregate: vi.fn(),
-	mockPrismaNewsletterCount: vi.fn(),
 	mockPrismaQueryRaw: vi.fn(),
 	mockCacheDefault: vi.fn(),
 }));
@@ -33,9 +31,6 @@ vi.mock("@/shared/lib/prisma", () => ({
 		},
 		productReviewStats: {
 			aggregate: mockPrismaReviewStatsAggregate,
-		},
-		newsletterSubscriber: {
-			count: mockPrismaNewsletterCount,
 		},
 		$queryRaw: mockPrismaQueryRaw,
 	},
@@ -83,11 +78,6 @@ vi.mock("@/app/generated/prisma/client", () => ({
 		FAILED: "FAILED",
 		CANCELLED: "CANCELLED",
 	},
-	NewsletterStatus: {
-		PENDING: "PENDING",
-		CONFIRMED: "CONFIRMED",
-		UNSUBSCRIBED: "UNSUBSCRIBED",
-	},
 }));
 
 import { fetchDashboardKpis } from "../get-kpis";
@@ -114,11 +104,8 @@ function makeRefundAggregateResult(amount: number | null, count = 0) {
  * 6. refund.aggregate (current month)
  * 7. refund.aggregate (last month)
  * 8. productReviewStats.aggregate
- * 9. newsletterSubscriber.count (total active)
- * 10. newsletterSubscriber.count (current month)
- * 11. newsletterSubscriber.count (last month)
- * 12. $queryRaw (current month fulfillment time)
- * 13. $queryRaw (last month fulfillment time)
+ * 9. $queryRaw (current month fulfillment time)
+ * 10. $queryRaw (last month fulfillment time)
  */
 function setupDefaultMocks({
 	currentTotal = 10000,
@@ -172,12 +159,11 @@ describe("fetchDashboardKpis", () => {
 		vi.resetAllMocks();
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-02-15T12:00:00Z"));
-		// Default mocks for review stats, newsletter, and fulfillment time (always needed)
+		// Default mocks for review stats and fulfillment time (always needed)
 		mockPrismaReviewStatsAggregate.mockResolvedValue({
 			_avg: { averageRating: null },
 			_sum: { totalCount: 0 },
 		});
-		mockPrismaNewsletterCount.mockResolvedValue(0);
 		mockPrismaQueryRaw.mockResolvedValue([{ avg_hours: null }]);
 	});
 
@@ -604,7 +590,7 @@ describe("fetchDashboardKpis", () => {
 			expect(result.monthlyRevenue.evolution).toBeCloseTo(100);
 		});
 
-		it("propagates yoy boundaries to refund and newsletter queries too", async () => {
+		it("propagates yoy boundaries to refund queries too", async () => {
 			setupDefaultMocks();
 
 			await fetchDashboardKpis("month", "yoy");

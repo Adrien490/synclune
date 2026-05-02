@@ -13,6 +13,7 @@ import { logger } from "./logger";
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 	apiVersion: "2026-03-25.dahlia",
 	maxNetworkRetries: 2,
+	timeout: 10_000,
 });
 
 export { CircuitBreakerError };
@@ -59,6 +60,7 @@ export function getStripeClient(): Stripe | null {
 	_stripeClient = new Stripe(secretKey, {
 		apiVersion: "2026-03-25.dahlia",
 		maxNetworkRetries: 2,
+		timeout: 10_000,
 	});
 	return _stripeClient;
 }

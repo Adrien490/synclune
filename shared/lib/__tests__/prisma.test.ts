@@ -17,7 +17,6 @@ vi.mock("@/app/generated/prisma/client", () => {
 		this.user = { update: mockPrismaUpdate };
 		this.refund = { update: mockPrismaUpdate };
 		this.orderNote = { update: mockPrismaUpdate };
-		this.newsletterSubscriber = { update: mockPrismaUpdate };
 		this.productReview = { update: mockPrismaUpdate };
 		this.reviewResponse = { update: mockPrismaUpdate };
 		this.product = { update: mockPrismaUpdate };
@@ -166,17 +165,6 @@ describe("softDelete", () => {
 		});
 	});
 
-	describe("softDelete.newsletterSubscriber", () => {
-		it("calls prisma.newsletterSubscriber.update with the correct id and deletedAt", async () => {
-			await softDelete.newsletterSubscriber("sub-1");
-
-			expect(mockPrismaUpdate).toHaveBeenCalledWith({
-				where: { id: "sub-1" },
-				data: expect.objectContaining({ deletedAt: expect.any(Date) }),
-			});
-		});
-	});
-
 	describe("softDelete.productReview", () => {
 		it("calls prisma.productReview.update with the correct id and deletedAt", async () => {
 			await softDelete.productReview("review-1");
@@ -237,7 +225,6 @@ describe("softDelete", () => {
 			["order", "order-id"],
 			["refund", "refund-id"],
 			["orderNote", "note-id"],
-			["newsletterSubscriber", "sub-id"],
 			["productReview", "review-id"],
 			["reviewResponse", "response-id"],
 			["product", "product-id"],

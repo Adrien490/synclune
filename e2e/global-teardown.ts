@@ -32,17 +32,7 @@ async function globalTeardown() {
 			console.log(`[teardown] Deleted ${deletedUsers.count} test user(s)`);
 		}
 
-		// 2. Delete test newsletter subscriptions
-		const deletedSubs = await prisma.newsletterSubscriber.deleteMany({
-			where: {
-				AND: [{ email: { startsWith: "e2e-" } }, { email: { endsWith: "@synclune-test.com" } }],
-			},
-		});
-		if (deletedSubs.count > 0) {
-			console.log(`[teardown] Deleted ${deletedSubs.count} test newsletter subscription(s)`);
-		}
-
-		// 4. Delete test-created addresses (identified by the test name pattern)
+		// 2. Delete test-created addresses (identified by the test name pattern)
 		const testUser = await prisma.user.findFirst({
 			where: { email: process.env.E2E_USER_EMAIL ?? "user2@synclune.fr" },
 			select: { id: true },

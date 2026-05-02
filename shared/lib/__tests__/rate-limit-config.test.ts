@@ -24,7 +24,6 @@ import {
 	SESSION_REVOKE_LIMIT,
 	// Communication
 	CONTACT_SEND_MESSAGE_LIMIT,
-	NEWSLETTER_SUBSCRIBE_LIMIT,
 	COMMUNICATION_LIMITS,
 	// Orders (client)
 	ORDER_CREATE_LIMIT,
@@ -152,9 +151,6 @@ import {
 	ADMIN_REVIEW_RESPONSE_LIMIT,
 	ADMIN_REVIEW_MODERATE_LIMIT,
 	ADMIN_REVIEW_LIMITS,
-	// Admin - newsletter
-	ADMIN_NEWSLETTER_REFRESH_LIMIT,
-	ADMIN_NEWSLETTER_LIMITS,
 	// Admin - announcements
 	ADMIN_ANNOUNCEMENT_CREATE_LIMIT,
 	ADMIN_ANNOUNCEMENT_UPDATE_LIMIT,
@@ -204,7 +200,6 @@ describe("individual rate limit configs - valid shape", () => {
 		["SESSION_REVOKE_LIMIT", SESSION_REVOKE_LIMIT],
 		// Communication
 		["CONTACT_SEND_MESSAGE_LIMIT", CONTACT_SEND_MESSAGE_LIMIT],
-		["NEWSLETTER_SUBSCRIBE_LIMIT", NEWSLETTER_SUBSCRIBE_LIMIT],
 		// Orders
 		["ORDER_CREATE_LIMIT", ORDER_CREATE_LIMIT],
 		["ORDER_CANCEL_LIMIT", ORDER_CANCEL_LIMIT],
@@ -314,8 +309,6 @@ describe("individual rate limit configs - valid shape", () => {
 		// Admin - reviews
 		["ADMIN_REVIEW_RESPONSE_LIMIT", ADMIN_REVIEW_RESPONSE_LIMIT],
 		["ADMIN_REVIEW_MODERATE_LIMIT", ADMIN_REVIEW_MODERATE_LIMIT],
-		// Admin - newsletter
-		["ADMIN_NEWSLETTER_REFRESH_LIMIT", ADMIN_NEWSLETTER_REFRESH_LIMIT],
 		// Admin - announcements
 		["ADMIN_ANNOUNCEMENT_CREATE_LIMIT", ADMIN_ANNOUNCEMENT_CREATE_LIMIT],
 		["ADMIN_ANNOUNCEMENT_UPDATE_LIMIT", ADMIN_ANNOUNCEMENT_UPDATE_LIMIT],
@@ -415,12 +408,10 @@ describe("PAYMENT_LIMITS", () => {
 describe("COMMUNICATION_LIMITS", () => {
 	it("contains expected keys", () => {
 		expect(COMMUNICATION_LIMITS).toHaveProperty("CONTACT");
-		expect(COMMUNICATION_LIMITS).toHaveProperty("NEWSLETTER");
 	});
 
 	it("references the correct individual configs", () => {
 		expect(COMMUNICATION_LIMITS.CONTACT).toBe(CONTACT_SEND_MESSAGE_LIMIT);
-		expect(COMMUNICATION_LIMITS.NEWSLETTER).toBe(NEWSLETTER_SUBSCRIBE_LIMIT);
 	});
 
 	it("all entries have valid config shape", () => {
@@ -918,26 +909,6 @@ describe("ADMIN_REVIEW_LIMITS", () => {
 
 	it("all entries have valid config shape", () => {
 		for (const config of Object.values(ADMIN_REVIEW_LIMITS)) {
-			expect(isValidConfig(config)).toBe(true);
-		}
-	});
-});
-
-// ============================================================================
-// ADMIN_NEWSLETTER_LIMITS
-// ============================================================================
-
-describe("ADMIN_NEWSLETTER_LIMITS", () => {
-	it("contains expected keys", () => {
-		expect(ADMIN_NEWSLETTER_LIMITS).toHaveProperty("REFRESH");
-	});
-
-	it("references the correct individual config", () => {
-		expect(ADMIN_NEWSLETTER_LIMITS.REFRESH).toBe(ADMIN_NEWSLETTER_REFRESH_LIMIT);
-	});
-
-	it("all entries have valid config shape", () => {
-		for (const config of Object.values(ADMIN_NEWSLETTER_LIMITS)) {
 			expect(isValidConfig(config)).toBe(true);
 		}
 	});

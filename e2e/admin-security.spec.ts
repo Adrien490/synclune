@@ -10,7 +10,6 @@ test.describe("Securite admin - Protection inter-roles", { tag: ["@critical"] },
 		"/admin/ventes/remboursements",
 		"/admin/marketing/discounts",
 		"/admin/marketing/avis",
-		"/admin/marketing/newsletter",
 	];
 
 	for (const route of adminRoutes) {

@@ -17,5 +17,3 @@ export const JEWELRY_PALETTE: readonly JewelryPaletteColor[] = [
 	{ name: "Rubis", hex: "#9B111E" },
 	{ name: "Saphir", hex: "#0F52BA" },
 ] as const;
-
-export const RECENT_COLORS_MAX = 8;

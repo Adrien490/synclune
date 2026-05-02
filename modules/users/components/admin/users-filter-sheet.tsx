@@ -15,7 +15,6 @@ import { Switch } from "@/shared/components/ui/switch";
 type FilterValues = {
 	role: Role[];
 	emailVerified: boolean | undefined;
-	marketingOptIn: boolean | undefined;
 	hasOrders: boolean | undefined;
 	includeDeleted: boolean;
 };
@@ -40,7 +39,6 @@ export function UsersFilterSheet({
 		let count = 0;
 		if (searchParams.get("filter_role")) count++;
 		if (searchParams.get("filter_emailVerified")) count++;
-		if (searchParams.get("filter_marketingOptIn")) count++;
 		if (searchParams.get("filter_hasOrders")) count++;
 		if (searchParams.get("filter_includeDeleted") === "true") count++;
 		return count;
@@ -64,12 +62,6 @@ export function UsersFilterSheet({
 				searchParams.get("filter_emailVerified") === "true"
 					? true
 					: searchParams.get("filter_emailVerified") === "false"
-						? false
-						: undefined,
-			marketingOptIn:
-				searchParams.get("filter_marketingOptIn") === "true"
-					? true
-					: searchParams.get("filter_marketingOptIn") === "false"
 						? false
 						: undefined,
 			hasOrders:
@@ -106,10 +98,6 @@ export function UsersFilterSheet({
 
 		if (values.emailVerified !== undefined) {
 			params.set("filter_emailVerified", String(values.emailVerified));
-		}
-
-		if (values.marketingOptIn !== undefined) {
-			params.set("filter_marketingOptIn", String(values.marketingOptIn));
 		}
 
 		if (values.hasOrders !== undefined) {
@@ -228,37 +216,6 @@ export function UsersFilterSheet({
 										key={String(value)}
 										id={`emailVerified-${label}`}
 										name="emailVerified"
-										value={String(value)}
-										checked={field.state.value === value}
-										onCheckedChange={(checked) => {
-											if (checked) {
-												field.handleChange(value);
-											}
-										}}
-									>
-										{label}
-									</RadioFilterItem>
-								))}
-							</fieldset>
-						)}
-					</form.Field>
-
-					<Separator />
-
-					{/* Marketing opt-in - Single-select */}
-					<form.Field name="marketingOptIn">
-						{(field) => (
-							<fieldset className="space-y-1">
-								<legend className="mb-2 text-sm font-medium">Marketing opt-in</legend>
-								{[
-									{ value: undefined, label: "Tous" },
-									{ value: true, label: "Oui" },
-									{ value: false, label: "Non" },
-								].map(({ value, label }) => (
-									<RadioFilterItem
-										key={String(value)}
-										id={`marketingOptIn-${label}`}
-										name="marketingOptIn"
 										value={String(value)}
 										checked={field.state.value === value}
 										onCheckedChange={(checked) => {

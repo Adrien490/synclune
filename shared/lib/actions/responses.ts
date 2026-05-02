@@ -117,7 +117,7 @@ export function forbidden(
  *
  * @example
  * ```ts
- * return conflict("Cet email est déjà inscrit à la newsletter");
+ * return conflict("Cet email est déjà utilisé");
  * ```
  */
 export function conflict(message: string): ActionState & { status: ActionStatus.CONFLICT } {

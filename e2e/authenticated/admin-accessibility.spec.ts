@@ -13,7 +13,6 @@ test.describe("Accessibilité - Pages admin", { tag: ["@slow"] }, () => {
 		{ path: "/admin/ventes/remboursements", name: "Remboursements" },
 		{ path: "/admin/marketing/avis", name: "Avis" },
 		{ path: "/admin/marketing/discounts", name: "Discounts" },
-		{ path: "/admin/marketing/newsletter", name: "Newsletter" },
 		{ path: "/admin/catalogue/types-de-produits", name: "Types de produits" },
 	];
 

@@ -69,7 +69,7 @@ shared/                      # Cross-cutting concerns
 ├── constants/               # Cache tags, countries, currency, brand, SEO, navigation, limits
 ├── contexts/                # React Context definitions
 ├── data/                    # Shared data fetching with cache
-├── hooks/                   # ~20 hooks (pagination, scroll, filter, media queries, touch)
+├── hooks/                   # ~20 hooks (pagination, , filter, media queries, touch)
 ├── lib/                     # Core: prisma, stripe, email-config, cache, rate-limit, actions/
 ├── providers/               # Root providers, dialog/sheet/store providers
 ├── schemas/                 # Shared Zod schemas (address, email, pagination, media, phone)

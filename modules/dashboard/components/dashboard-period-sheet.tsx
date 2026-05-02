@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -18,11 +17,6 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { PeriodSelector } from "./period-selector";
-import {
-	DEFAULT_PERIOD,
-	PERIOD_SEARCH_PARAM,
-	type DashboardPeriod,
-} from "@/modules/dashboard/constants/period.constants";
 
 interface DashboardPeriodSheetProps {
 	open: boolean;
@@ -41,8 +35,6 @@ const MOBILE_SNAP_POINTS: (number | string)[] = [0.5, 0.92];
 export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodSheetProps) {
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
-	const searchParams = useSearchParams();
-	const period = (searchParams.get(PERIOD_SEARCH_PARAM) ?? DEFAULT_PERIOD) as DashboardPeriod;
 
 	// Focus restoration : snapshot the previously focused element before opening,
 	// restore it after closing (pattern used across Synclune sheets).
@@ -122,7 +114,6 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 						</h3>
 						<PeriodSelector variant="segmented" />
 					</section>
-
 				</div>
 
 				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">

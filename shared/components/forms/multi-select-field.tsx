@@ -6,50 +6,19 @@ import { MultiSelect, type MultiSelectOption } from "@/shared/components/multi-s
 import { useFieldContext } from "@/shared/lib/form-context";
 
 interface MultiSelectFieldProps {
-	/** Label affiché au-dessus du champ */
 	label?: string;
-	/** Placeholder quand aucune sélection */
 	placeholder?: string;
-	/** Champ requis */
 	required?: boolean;
-	/** Désactiver le champ */
 	disabled?: boolean;
-	/** Options disponibles pour la sélection */
 	options: MultiSelectOption[];
-	/** Nombre maximum de badges affichés (défaut: 3) */
-	maxCount?: number;
-	/** Masquer l'option "Tout sélectionner" */
-	hideSelectAll?: boolean;
 }
 
-/**
- * Champ de sélection multiple pour formulaires TanStack Form.
- *
- * Wrapper autour du composant MultiSelect avec intégration Field/Error.
- *
- * @example
- * ```tsx
- * <form.AppField name="collections">
- *   {(field) => (
- *     <field.MultiSelectField
- *       label="Collections"
- *       placeholder="Sélectionner des collections"
- *       options={collections.map((c) => ({ value: c.id, label: c.name }))}
- *       maxCount={2}
- *       hideSelectAll
- *     />
- *   )}
- * </form.AppField>
- * ```
- */
 export const MultiSelectField = ({
 	label,
 	placeholder = "Sélectionner",
 	required,
 	disabled,
 	options,
-	maxCount = 3,
-	hideSelectAll,
 }: MultiSelectFieldProps) => {
 	const field = useFieldContext<string[]>();
 
@@ -69,8 +38,6 @@ export const MultiSelectField = ({
 				onValueChange={(values) => field.handleChange(values)}
 				placeholder={placeholder}
 				disabled={disabled}
-				maxCount={maxCount}
-				hideSelectAll={hideSelectAll}
 				aria-invalid={hasError}
 				aria-describedby={hasError ? `${field.name}-error` : undefined}
 				aria-required={required}

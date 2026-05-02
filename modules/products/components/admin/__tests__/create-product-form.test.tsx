@@ -406,7 +406,7 @@ describe("CreateProductForm", () => {
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByRole("button", { name: /upload en cours/i })).toBeDisabled();
+			expect(screen.getByRole("button", { name: /téléversement/i })).toBeDisabled();
 		});
 	});
 

@@ -25,7 +25,7 @@ export const SHARED_CACHE_TAGS = {
 	 * Badges de la sidebar admin (compteurs de notifications)
 	 *
 	 * Utilisé par : orders, products, skus, discounts, collections,
-	 * newsletter, refunds, materials, colors, product-types
+	 * refunds, materials, colors, product-types
 	 */
 	ADMIN_BADGES: "admin-badges",
 

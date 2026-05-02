@@ -77,12 +77,6 @@ export const ROUTES = {
 		COOKIES: "/cookies",
 	},
 
-	// Newsletter
-	NEWSLETTER: {
-		CONFIRM: "/newsletter/confirmer",
-		UNSUBSCRIBE: "/newsletter/desinscription",
-	},
-
 	// Notifications
 	NOTIFICATIONS: {
 		UNSUBSCRIBE: "/notifications/desinscription",

@@ -86,18 +86,6 @@ describe("UsersFilterBadges", () => {
 		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Email vérifié: Non");
 	});
 
-	it("formats marketingOptIn=true as 'Marketing: Accepté'", () => {
-		mockFilters.value = [{ key: "filter_marketingOptIn", value: "true" }];
-		render(<UsersFilterBadges />);
-		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Marketing: Accepté");
-	});
-
-	it("formats marketingOptIn=false as 'Marketing: Refusé'", () => {
-		mockFilters.value = [{ key: "filter_marketingOptIn", value: "false" }];
-		render(<UsersFilterBadges />);
-		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Marketing: Refusé");
-	});
-
 	it("formats hasOrders=true as 'Commandes: Avec commandes'", () => {
 		mockFilters.value = [{ key: "filter_hasOrders", value: "true" }];
 		render(<UsersFilterBadges />);

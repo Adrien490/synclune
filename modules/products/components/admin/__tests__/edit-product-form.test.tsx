@@ -22,6 +22,12 @@ vi.mock("@/modules/media/hooks/use-media-upload", () => ({
 	useMediaUpload: mockUseMediaUpload,
 }));
 
+vi.mock("@/modules/media/utils/uploadthing", () => ({
+	UploadDropzone: (props: Record<string, unknown>) => (
+		<div data-testid="upload-dropzone" data-endpoint={props.endpoint} />
+	),
+}));
+
 vi.mock("next/navigation", () => ({
 	useRouter: mockUseRouter,
 }));
@@ -30,10 +36,45 @@ vi.mock("sonner", () => ({
 	toast: mockToast,
 }));
 
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({
+		open: vi.fn(),
+		close: vi.fn(),
+		isOpen: false,
+	}),
+}));
+
+vi.mock("@/modules/product-types/components/product-type-form-dialog", () => ({
+	PRODUCT_TYPE_DIALOG_ID: "product-type-form",
+	ProductTypeFormDialog: () => null,
+}));
+
+vi.mock("@/modules/colors/components/color-form-dialog", () => ({
+	COLOR_DIALOG_ID: "color-form",
+	ColorFormDialog: () => null,
+}));
+
+vi.mock("@/modules/materials/components/material-form-dialog", () => ({
+	MATERIAL_DIALOG_ID: "material-form",
+	MaterialFormDialog: () => null,
+}));
+
 vi.mock("@/shared/components/forms", () => ({
 	FieldLabel: ({ children, ...props }: { children: React.ReactNode }) => (
 		<label {...props}>{children}</label>
 	),
+}));
+
+vi.mock("@/shared/components/media-upload/media-counter-badge", () => ({
+	MediaCounterBadge: ({ count, max }: { count: number; max: number }) => (
+		<span data-testid="media-counter">
+			{count}/{max}
+		</span>
+	),
+}));
+
+vi.mock("@/shared/components/media-upload/media-upload-grid", () => ({
+	MediaUploadGrid: () => <div data-testid="media-upload-grid" />,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -49,14 +90,26 @@ vi.mock("@/shared/components/ui/button", () => ({
 
 vi.mock("@/shared/components/ui/input-group", () => ({
 	InputGroupAddon: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+	InputGroupText: ({ children }: { children: React.ReactNode }) => <span>{children}</span>,
+}));
+
+vi.mock("@/shared/components/ui/tooltip", () => ({
+	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	TooltipTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock("@/shared/components/multi-select", () => ({
 	MultiSelect: () => <div data-testid="multi-select" />,
 }));
 
-vi.mock("../edit-product-media-section", () => ({
-	EditProductMediaSection: () => <div data-testid="edit-media-section" />,
+vi.mock("@/shared/components/ui/alert", () => ({
+	Alert: ({ children, ...props }: { children: React.ReactNode }) => (
+		<div data-testid="form-alert" {...props}>
+			{children}
+		</div>
+	),
+	AlertDescription: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 // ============================================================================
@@ -113,7 +166,13 @@ const defaultProps = {
 	materials: [{ id: "mat-1", name: "Argent 925" }],
 };
 
-function createMockForm(overrides: Record<string, unknown> = {}) {
+interface FormOverrides {
+	canSubmit?: boolean;
+	status?: string;
+	isActive?: string;
+}
+
+function createMockForm(overrides: FormOverrides = {}) {
 	const fieldStub = {
 		name: "test",
 		state: { value: "", meta: { errors: [] } },
@@ -138,35 +197,40 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 			description: "Une bague artisanale",
 			typeId: "type-1",
 			collectionIds: ["col-1"],
-			status: "PUBLIC",
+			status: overrides.status ?? "PUBLIC",
 			defaultSku: {
 				skuId: "sku-1",
-				media: [{ url: "https://example.com/img1.jpg", mediaType: "IMAGE" }],
+				media: [{ url: "https://example.com/img1.jpg", mediaType: "IMAGE" as const }],
 				colorId: "color-1",
 				materialId: "mat-1",
 				size: "52",
 				priceInclTaxEuros: 49,
 				compareAtPriceEuros: 59,
-				isActive: "true",
+				inventory: 10,
+				isActive: overrides.isActive ?? "true",
 			},
 		},
-		canSubmit: true,
-		...overrides,
+		canSubmit: overrides.canSubmit ?? true,
+		isDirty: false,
+		submissionAttempts: 0,
+		fieldMeta: {},
 	};
 
 	return {
 		state: formState,
+		store: {
+			subscribe: vi.fn(() => () => undefined),
+			getState: () => ({ errors: [] }),
+		},
 		handleSubmit: vi.fn(),
-		reset: vi.fn(),
 		setFieldValue: vi.fn(),
 		Subscribe: ({
 			children,
 			selector,
 		}: {
-			children: (values: unknown[]) => React.ReactNode;
-			selector: (state: unknown) => unknown[];
+			children: (values: unknown) => React.ReactNode;
+			selector: (state: typeof formState) => unknown;
 		}) => {
-			// Return first value for simplicity
 			const vals = selector(formState);
 			return <>{children(vals)}</>;
 		},
@@ -177,6 +241,8 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 						...fieldStub,
 						name: "defaultSku.media",
 						state: { value: formState.values.defaultSku.media, meta: { errors: [] } },
+						pushValue: vi.fn(),
+						removeValue: vi.fn(),
 					} as unknown as typeof fieldStub)}
 				</>
 			);
@@ -195,23 +261,27 @@ function createMockForm(overrides: Record<string, unknown> = {}) {
 afterEach(cleanup);
 
 describe("EditProductForm", () => {
-	function setup(
-		productOverrides: Record<string, unknown> = {},
-		hookOverrides: Record<string, unknown> = {},
-	) {
-		const product = createProduct(productOverrides);
-		const mockForm = createMockForm();
+	function setup(formOverrides: FormOverrides = {}, hookOverrides: Record<string, unknown> = {}) {
+		const product = createProduct();
+		const mockForm = createMockForm(formOverrides);
 
 		mockUseUpdateProductForm.mockReturnValue({
 			form: mockForm,
 			action: vi.fn(),
 			isPending: false,
+			formErrors: [],
 			...hookOverrides,
 		});
 
 		mockUseMediaUpload.mockReturnValue({
 			upload: vi.fn(),
 			isUploading: false,
+			progress: null,
+			failedFiles: [],
+			cancel: vi.fn(),
+			retryFailed: vi.fn(),
+			retrySingle: vi.fn(),
+			clearFailed: vi.fn(),
 		});
 
 		mockUseRouter.mockReturnValue({
@@ -227,11 +297,14 @@ describe("EditProductForm", () => {
 	// --------------------------------------------------------------------------
 
 	describe("rendering", () => {
-		it("renders product title as h1", () => {
+		it("renders the form with accessible label", () => {
 			const { product } = setup();
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Bague Lune Enchantée");
+			expect(screen.getByRole("form")).toHaveAttribute(
+				"aria-label",
+				"Formulaire d'édition de bijou",
+			);
 		});
 
 		it("renders slug SEO warning", () => {
@@ -239,11 +312,11 @@ describe("EditProductForm", () => {
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
 			expect(
-				screen.getByText(/slug restera inchangé pour préserver les liens SEO/),
+				screen.getByText(/slug d'URL restera inchangé pour préserver les liens SEO/),
 			).toBeInTheDocument();
 		});
 
-		it("renders status radio group with archive warning", () => {
+		it("renders archive warning under status", () => {
 			const { product } = setup();
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
@@ -252,11 +325,24 @@ describe("EditProductForm", () => {
 			).toBeInTheDocument();
 		});
 
-		it("renders media section component", () => {
+		it("renders SKU active warning", () => {
 			const { product } = setup();
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByTestId("edit-media-section")).toBeInTheDocument();
+			expect(screen.getByText(/Une variante inactive n'est plus achetable/)).toBeInTheDocument();
+		});
+
+		it("renders all card sections", () => {
+			const { product } = setup();
+			render(<EditProductForm product={product as never} {...defaultProps} />);
+
+			expect(screen.getByText("Informations")).toBeInTheDocument();
+			expect(screen.getByText("Médias")).toBeInTheDocument();
+			expect(screen.getByText("Variante")).toBeInTheDocument();
+			expect(screen.getByText("Tarification")).toBeInTheDocument();
+			expect(screen.getByText("Stock")).toBeInTheDocument();
+			expect(screen.getByText("Statut")).toBeInTheDocument();
+			expect(screen.getByText("Statut du SKU")).toBeInTheDocument();
 		});
 
 		it("renders title field label", () => {
@@ -271,19 +357,33 @@ describe("EditProductForm", () => {
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
 			expect(screen.getByText("Prix de vente final")).toBeInTheDocument();
-			expect(screen.getByText("Prix comparé (avant réduction)")).toBeInTheDocument();
+			expect(screen.getByText("Ancien prix (affiché barré)")).toBeInTheDocument();
 		});
 
-		it("renders SKU status field", () => {
+		it("renders stock field", () => {
 			const { product } = setup();
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByText("Statut du SKU")).toBeInTheDocument();
+			expect(screen.getByText("Quantité en stock")).toBeInTheDocument();
+		});
+
+		it("renders sr-only status for screen readers", () => {
+			const { product } = setup();
+			render(<EditProductForm product={product as never} {...defaultProps} />);
+
+			expect(screen.getByRole("status")).toBeInTheDocument();
+		});
+
+		it("renders media counter badge", () => {
+			const { product } = setup();
+			render(<EditProductForm product={product as never} {...defaultProps} />);
+
+			expect(screen.getByTestId("media-counter")).toBeInTheDocument();
 		});
 	});
 
 	// --------------------------------------------------------------------------
-	// Submit button
+	// Submit / cancel buttons
 	// --------------------------------------------------------------------------
 
 	describe("submit button", () => {
@@ -291,58 +391,54 @@ describe("EditProductForm", () => {
 			const { product } = setup();
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByText("Enregistrer les modifications")).toBeInTheDocument();
+			expect(
+				screen.getByRole("button", { name: "Enregistrer les modifications" }),
+			).toBeInTheDocument();
 		});
 
-		it("disables button when form cannot submit", () => {
+		it("does not render a cancel button", () => {
 			const { product } = setup();
-			mockUseUpdateProductForm.mockReturnValue({
-				form: createMockForm({ canSubmit: false }),
-				action: vi.fn(),
-				isPending: false,
-			});
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByText("Enregistrer les modifications").closest("button")).toBeDisabled();
+			expect(screen.queryByRole("button", { name: "Annuler" })).not.toBeInTheDocument();
 		});
 
-		it("shows loading text when pending", () => {
+		it("disables submit when form cannot submit", () => {
+			const { product } = setup({ canSubmit: false });
+			render(<EditProductForm product={product as never} {...defaultProps} />);
+
+			expect(screen.getByRole("button", { name: "Enregistrer les modifications" })).toBeDisabled();
+		});
+
+		it("disables submit and shows pending text when isPending", () => {
 			const { product } = setup({}, { isPending: true });
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByText("Enregistrement...")).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: /enregistrement/i })).toBeDisabled();
 		});
 
-		it("shows upload text when media is uploading", () => {
+		it("shows pending state announcement for screen readers", () => {
+			const { product } = setup({}, { isPending: true });
+			render(<EditProductForm product={product as never} {...defaultProps} />);
+
+			expect(screen.getByRole("status")).toHaveTextContent("Envoi du formulaire en cours...");
+		});
+
+		it("disables submit when media is uploading", () => {
 			const { product } = setup();
 			mockUseMediaUpload.mockReturnValue({
 				upload: vi.fn(),
 				isUploading: true,
+				progress: { phase: "uploading", completed: 0, total: 1, current: "file.jpg" },
+				failedFiles: [],
+				cancel: vi.fn(),
+				retryFailed: vi.fn(),
+				retrySingle: vi.fn(),
+				clearFailed: vi.fn(),
 			});
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByText("Upload en cours...")).toBeInTheDocument();
-		});
-
-		it("disables button when pending", () => {
-			const { product } = setup({}, { isPending: true });
-			render(<EditProductForm product={product as never} {...defaultProps} />);
-
-			expect(screen.getByText("Enregistrement...").closest("button")).toBeDisabled();
-		});
-	});
-
-	// --------------------------------------------------------------------------
-	// Product title from props
-	// --------------------------------------------------------------------------
-
-	describe("product title rendering", () => {
-		it("displays custom product title", () => {
-			const { product } = setup({ title: "Collier Étoile Filante" });
-			product.title = "Collier Étoile Filante";
-			render(<EditProductForm product={product as never} {...defaultProps} />);
-
-			expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Collier Étoile Filante");
+			expect(screen.getByRole("button", { name: /téléversement/i })).toBeDisabled();
 		});
 	});
 });

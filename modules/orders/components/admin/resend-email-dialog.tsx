@@ -86,8 +86,7 @@ export function ResendEmailDialog() {
 	const availableOptions = EMAIL_OPTIONS.filter((option) => {
 		if (option.value === "confirmation") return true;
 		if (option.value === "shipping") return canSendShipping;
-		if (option.value === "delivery") return canSendDelivery;
-		return false;
+		return canSendDelivery;
 	});
 
 	return (

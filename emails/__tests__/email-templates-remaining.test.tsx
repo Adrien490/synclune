@@ -6,8 +6,6 @@ import { PaymentFailedEmail } from "../payment-failed-email";
 import { RefundConfirmedEmail } from "../refund-confirmed-email";
 import { TrackingUpdateEmail } from "../tracking-update-email";
 import { AccountDeletionEmail } from "../account-deletion-email";
-import { NewsletterConfirmationEmail } from "../newsletter-confirmation-email";
-import { NewsletterWelcomeEmail } from "../newsletter-welcome-email";
 import { AdminNewOrderEmail } from "../admin-new-order-email";
 import { AdminAlertEmail } from "../admin-alert-email";
 import { WelcomeEmail } from "../welcome-email";
@@ -259,62 +257,6 @@ describe("AccountDeletionEmail", () => {
 });
 
 // ---------------------------------------------------------------------------
-// NewsletterConfirmationEmail
-// ---------------------------------------------------------------------------
-
-describe("NewsletterConfirmationEmail", () => {
-	const baseProps = {
-		confirmationUrl: "https://synclune.fr/newsletter/confirmer?token=example123",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<NewsletterConfirmationEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<NewsletterConfirmationEmail {...baseProps} />);
-		expect(html).toContain("Confirmation");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<NewsletterConfirmationEmail {...baseProps} />);
-		expect(html).toContain("https://synclune.fr/newsletter/confirmer?token=example123");
-		expect(html).toContain("7 jours");
-	});
-});
-
-// ---------------------------------------------------------------------------
-// NewsletterWelcomeEmail
-// ---------------------------------------------------------------------------
-
-describe("NewsletterWelcomeEmail", () => {
-	const baseProps = {
-		email: "example@email.com",
-		unsubscribeUrl: "https://synclune.fr/newsletter/desinscription?token=abc123",
-		shopUrl: "https://synclune.fr/produits",
-	};
-
-	it("renders without error", async () => {
-		const html = await render(<NewsletterWelcomeEmail {...baseProps} />);
-		expect(html).toContain("<!DOCTYPE");
-		expect(html.length).toBeGreaterThan(100);
-	});
-
-	it("contains expected heading", async () => {
-		const html = await render(<NewsletterWelcomeEmail {...baseProps} />);
-		expect(html).toContain("Bienvenue");
-	});
-
-	it("contains dynamic data", async () => {
-		const html = await render(<NewsletterWelcomeEmail {...baseProps} />);
-		expect(html).toContain("example@email.com");
-		expect(html).toContain("https://synclune.fr/newsletter/desinscription?token=abc123");
-	});
-});
-
-// ---------------------------------------------------------------------------
 // AdminNewOrderEmail
 // ---------------------------------------------------------------------------
 
@@ -465,7 +407,6 @@ describe("WelcomeEmail", () => {
 	const baseProps = {
 		userName: "Marie",
 		shopUrl: "https://synclune.fr/produits",
-		newsletterUrl: "https://synclune.fr/#newsletter",
 	};
 
 	it("renders without error", async () => {

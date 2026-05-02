@@ -48,8 +48,6 @@ export const EMAIL_SUBJECTS = {
 	REFUND_REJECTED: "Votre demande de remboursement a été refusée - Synclune",
 	REFUND_CANCELLED: "Votre demande de remboursement a été annulée - Synclune",
 	PAYMENT_FAILED: "Échec de votre paiement - Synclune",
-	NEWSLETTER_CONFIRMATION: "Confirmez votre inscription à la newsletter Synclune",
-	NEWSLETTER_WELCOME: "Bienvenue chez Synclune !",
 	ACCOUNT_DELETED: "Votre compte a été supprimé - Synclune",
 	WELCOME: "Bienvenue chez Synclune !",
 	BACK_IN_STOCK: "Bonne nouvelle ! Un article de votre liste est de retour - Synclune",

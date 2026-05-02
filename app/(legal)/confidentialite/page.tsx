@@ -117,26 +117,6 @@ export default async function PrivacyPolicyPage() {
 								est entièrement géré par notre prestataire <strong>Stripe</strong>, certifié PCI-DSS
 								niveau 1.
 							</p>
-
-							<h3 className="text-lg font-medium sm:text-xl">3.5 Newsletter</h3>
-							<p>
-								Lors de votre inscription à notre newsletter avec validation par double opt-in, nous
-								collectons :
-							</p>
-							<ul className="ml-4 list-inside list-disc space-y-2">
-								<li>Adresse email</li>
-								<li>Adresse IP (traçabilité du consentement RGPD)</li>
-								<li>User-Agent du navigateur (traçabilité du consentement RGPD)</li>
-								<li>Date et heure d'inscription</li>
-								<li>Date et heure de confirmation de l'email</li>
-								<li>Source du consentement (formulaire d'inscription)</li>
-							</ul>
-							<p className="mt-2">
-								<strong>
-									Ces données sont nécessaires pour prouver votre consentement explicite
-								</strong>{" "}
-								conformément au RGPD et pour vous envoyer nos communications marketing.
-							</p>
 						</section>
 
 						<section className="space-y-4">
@@ -153,13 +133,6 @@ export default async function PrivacyPolicyPage() {
 									<strong>Amélioration du service :</strong> analyse statistique anonymisée
 								</li>
 								<li>
-									<strong>Newsletter :</strong> envoi d'actualités, nouvelles créations et offres
-									exclusives sur la base de votre{" "}
-									<strong>consentement explicite avec double opt-in</strong> (validation par email).
-									Vous pouvez retirer ce consentement à tout moment en cliquant sur le lien de
-									désinscription présent dans chaque email.
-								</li>
-								<li>
 									<strong>Obligations légales :</strong> facturation, comptabilité (10 ans)
 								</li>
 							</ul>
@@ -172,7 +145,7 @@ export default async function PrivacyPolicyPage() {
 									<strong>Exécution du contrat :</strong> traitement des commandes
 								</li>
 								<li>
-									<strong>Consentement :</strong> newsletter, cookies non essentiels
+									<strong>Consentement :</strong> cookies non essentiels
 								</li>
 								<li>
 									<strong>Obligation légale :</strong> facturation, archivage comptable
@@ -193,7 +166,7 @@ export default async function PrivacyPolicyPage() {
 										<li>Stripe (paiement sécurisé)</li>
 										<li>Vercel (hébergement du site)</li>
 										<li>Neon (base de données PostgreSQL)</li>
-										<li>Resend (envoi d'emails transactionnels et newsletters)</li>
+										<li>Resend (envoi d'emails transactionnels)</li>
 										<li>UploadThing (stockage des fichiers et images)</li>
 										<li>Google (authentification OAuth)</li>
 										<li>Sentry (monitoring d'erreurs et performance)</li>
@@ -224,10 +197,9 @@ export default async function PrivacyPolicyPage() {
 									protection équivalent au RGPD.
 								</li>
 								<li>
-									<strong>Resend (États-Unis) :</strong> envoi d'emails transactionnels et
-									newsletters - Resend applique des{" "}
-									<strong>Clauses Contractuelles Types (CCT)</strong> et s'engage à protéger les
-									données conformément au RGPD.
+									<strong>Resend (États-Unis) :</strong> envoi d'emails transactionnels - Resend
+									applique des <strong>Clauses Contractuelles Types (CCT)</strong> et s'engage à
+									protéger les données conformément au RGPD.
 								</li>
 								<li>
 									<strong>Neon (États-Unis) :</strong> hébergement de la base de données PostgreSQL
@@ -295,18 +267,6 @@ export default async function PrivacyPolicyPage() {
 											<td className="border border-gray-300 p-3">Cookies techniques</td>
 											<td className="border border-gray-300 p-3">
 												7 jours (cart_session), 30 jours (wishlist_session)
-											</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-3">Newsletter (non confirmée)</td>
-											<td className="border border-gray-300 p-3">
-												30 jours après inscription (suppression automatique si email non validé)
-											</td>
-										</tr>
-										<tr>
-											<td className="border border-gray-300 p-3">Newsletter (confirmée)</td>
-											<td className="border border-gray-300 p-3">
-												Jusqu'à désinscription ou 3 ans d'inactivité (aucun email ouvert)
 											</td>
 										</tr>
 									</tbody>

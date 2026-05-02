@@ -20,7 +20,7 @@ interface UploadDropzoneAppearanceOptions {
 
 /**
  * Shared UploadDropzone appearance factory for catalog media upload zones.
- * Used by EditProductMediaSection and SkuGalleryField.
+ * Used by SkuGalleryField.
  */
 export function getCatalogDropzoneAppearance(options: UploadDropzoneAppearanceOptions = {}) {
 	const {

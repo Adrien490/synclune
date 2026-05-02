@@ -51,14 +51,6 @@ export function createTestAddress(overrides: Partial<TestAddress> = {}): TestAdd
 	};
 }
 
-export interface TestNewsletterSubscription {
-	email: string;
-}
-
-export function createTestNewsletterEmail(): string {
-	return `${nextId()}@${TEST_EMAIL_DOMAIN}`;
-}
-
 /** Stripe test card numbers */
 export const STRIPE_CARDS = {
 	/** Always succeeds */

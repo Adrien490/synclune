@@ -7,7 +7,6 @@ import {
 	deleteUploadThingFilesFromUrls,
 } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
-import { NEWSLETTER_CACHE_TAGS } from "@/modules/newsletter/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -112,7 +111,6 @@ export async function processAccountDeletions(): Promise<{
 			updateTag(SESSION_CACHE_TAGS.SESSIONS(user.id));
 			updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 			updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
-			updateTag(NEWSLETTER_CACHE_TAGS.LIST);
 			updateTag(REVIEWS_CACHE_TAGS.USER(user.id));
 			updateTag(REVIEWS_CACHE_TAGS.REVIEWABLE(user.id));
 

@@ -4,6 +4,7 @@ import { Label } from "@/shared/components/ui/label";
 import { PrimaryImageUpload } from "@/modules/media/components/admin/primary-image-upload";
 import { UploadProgress } from "@/shared/components/media-upload/upload-progress";
 import { cn } from "@/shared/utils/cn";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import { Upload } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
@@ -37,8 +38,11 @@ export function SkuPrimaryImageField({
 			<PrimaryImageUpload
 				imageUrl={value?.url}
 				mediaType={value?.mediaType}
-				onRemove={() => onChange(undefined)}
-				skipUtapiDelete={true}
+				onRemove={() => {
+					triggerHaptic("light");
+					onChange(undefined);
+				}}
+				skipUtapiDelete
 				productName={productName}
 				renderUploadZone={() => (
 					<div className="relative">
@@ -46,6 +50,7 @@ export function SkuPrimaryImageField({
 							endpoint="catalogMedia"
 							onChange={async (files) => {
 								if (files.length > 1) {
+									triggerHaptic("error");
 									toast.error("Vous ne pouvez uploader qu'une seule image principale");
 									return;
 								}
@@ -55,26 +60,31 @@ export function SkuPrimaryImageField({
 								const isVideo = file.type.startsWith("video/");
 
 								if (isVideo) {
+									triggerHaptic("error");
 									toast.error("Les vidéos ne peuvent pas être utilisées comme média principal");
 									return;
 								}
 
 								const maxSize = 16 * 1024 * 1024;
 								if (file.size > maxSize) {
+									triggerHaptic("error");
 									toast.error("L'image dépasse la limite de 16MB");
 									return;
 								}
 
+								triggerHaptic("medium");
 								let res: Awaited<ReturnType<typeof startUpload>>;
 								try {
 									res = await startUpload(files);
 								} catch {
+									triggerHaptic("error");
 									toast.error("Échec de l'upload");
 									return;
 								}
 
 								const serverData = res?.[0]?.serverData;
 								if (serverData?.url) {
+									triggerHaptic("success");
 									onChange({
 										url: serverData.url,
 										thumbnailUrl: undefined,

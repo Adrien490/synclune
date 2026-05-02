@@ -23,7 +23,6 @@ const publicRoutes = [
 	"/creations",
 	"/collections",
 	"/mentions-legales",
-	"/newsletter",
 	// Pages légales
 	"/cgv",
 	"/confidentialite",
@@ -72,7 +71,6 @@ const apiRoutes = [
 	"/api/cron",
 	"/api/health",
 	"/api/csp-report",
-	"/api/newsletter",
 	"/api/orders",
 	"/api/admin",
 	"/api/search",

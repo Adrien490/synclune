@@ -1,47 +1,9 @@
-import {
-	verifyCronRequest,
-	cronTimer,
-	cronSuccess,
-	cronError,
-} from "@/modules/cron/lib/verify-cron";
+import { withCronGuard } from "@/modules/cron/lib/with-cron-guard";
 import { syncAsyncPayments } from "@/modules/cron/services/sync-async-payments.service";
-import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
-import { logger } from "@/shared/lib/logger";
 
-export const maxDuration = 60; // 1 minute max
+export const maxDuration = 60;
 
-export async function GET() {
-	const unauthorized = await verifyCronRequest();
-	if (unauthorized) return unauthorized;
-
-	const startTime = cronTimer();
-	try {
-		const result = await syncAsyncPayments();
-		if (!result) {
-			return cronError("STRIPE_SECRET_KEY not configured");
-		}
-
-		// Alert admin on errors (payment sync failures can cause stuck orders)
-		if (result.errors > 0) {
-			sendAdminCronFailedAlert({
-				job: "sync-async-payments",
-				errors: result.errors,
-				details: { checked: result.checked, updated: result.updated },
-			}).catch((e) =>
-				logger.error("Cron sync-async-payments failed to send admin alert", e, {
-					cronJob: "sync-async-payments",
-				}),
-			);
-		}
-
-		return cronSuccess(
-			{
-				job: "sync-async-payments",
-				...result,
-			},
-			startTime,
-		);
-	} catch (error) {
-		return cronError(error instanceof Error ? error.message : "Failed to sync async payments");
-	}
-}
+export const GET = withCronGuard(
+	{ jobName: "sync-async-payments", defaultErrorMessage: "Failed to sync async payments" },
+	() => syncAsyncPayments(),
+);

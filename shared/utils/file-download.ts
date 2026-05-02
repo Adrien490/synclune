@@ -2,7 +2,7 @@
  * Utility functions for downloading files (CSV, JSON, Blob)
  *
  * Centralizes download logic to avoid duplication
- * across export hooks (newsletter, RGPD, etc.)
+ * across export hooks (RGPD, etc.)
  */
 
 /**

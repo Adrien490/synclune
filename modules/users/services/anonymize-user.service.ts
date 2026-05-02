@@ -1,4 +1,4 @@
-import { AccountStatus, NewsletterStatus, type Prisma } from "@/app/generated/prisma/client";
+import { AccountStatus, type Prisma } from "@/app/generated/prisma/client";
 import { generateAnonymizedEmail } from "../utils/anonymization.utils";
 
 /**
@@ -95,21 +95,7 @@ export async function anonymizeUserInTransaction(
 		},
 	});
 
-	// 9. Unsubscribe and anonymize newsletter (including IP addresses - RGPD PII)
-	await tx.newsletterSubscriber.updateMany({
-		where: { userId },
-		data: {
-			status: NewsletterStatus.UNSUBSCRIBED,
-			email: anonymizedEmail,
-			unsubscribedAt: now,
-			deletedAt: now,
-			ipAddress: null,
-			confirmationIpAddress: null,
-			userAgent: null,
-		},
-	});
-
-	// 10. Anonymize PII denormalized in orders
+	// 9. Anonymize PII denormalized in orders
 	// Legal retention 10 years (Art. L123-22 Code de Commerce):
 	// keep amounts and accounting IDs, anonymize personal data
 	await tx.order.updateMany({
