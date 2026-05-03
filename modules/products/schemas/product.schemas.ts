@@ -163,10 +163,23 @@ const baseSkuFields = {
 	// Boolean fields: normalized in server action before validation
 	isActive: z.coerce.boolean().default(true),
 
-	// Optional fields
-	colorId: z.string().optional().or(z.literal("")),
-	materialId: z.string().optional().or(z.literal("")),
-	size: z.string().max(TEXT_LIMITS.SKU_SIZE.max).optional().or(z.literal("")),
+	// Optional fields (IDs/size vides seront traites comme undefined)
+	colorId: z
+		.string()
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
+	materialId: z
+		.string()
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
+	size: z
+		.string()
+		.max(TEXT_LIMITS.SKU_SIZE.max)
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
 
 	// Medias (images et videos) - premier = principal
 	media: z

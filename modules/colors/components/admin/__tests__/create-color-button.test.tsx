@@ -6,12 +6,22 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpen } = vi.hoisted(() => ({
+const { mockOpen, mockPush, mockIsMobile } = vi.hoisted(() => ({
 	mockOpen: vi.fn(),
+	mockPush: vi.fn(),
+	mockIsMobile: { current: false },
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpen }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.current,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock("@/modules/colors/components/color-form-dialog", () => ({
@@ -44,6 +54,7 @@ afterEach(cleanup);
 describe("CreateColorButton", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockIsMobile.current = false;
 	});
 
 	// ─── Rendering ────────────────────────────────────────────────────────────
@@ -58,19 +69,25 @@ describe("CreateColorButton", () => {
 		expect(screen.getByText("Créer une couleur")).toBeInTheDocument();
 	});
 
-	// ─── Interaction ──────────────────────────────────────────────────────────
+	// ─── Desktop (default) ────────────────────────────────────────────────────
 
-	it("calls dialog open when clicked", async () => {
+	it("opens the dialog on desktop", async () => {
 		const user = userEvent.setup();
 		render(<CreateColorButton />);
 		await user.click(screen.getByTestId("create-color-button"));
 		expect(mockOpen).toHaveBeenCalledTimes(1);
+		expect(mockOpen).toHaveBeenCalledWith();
+		expect(mockPush).not.toHaveBeenCalled();
 	});
 
-	it("calls dialog open with no arguments", async () => {
+	// ─── Mobile ───────────────────────────────────────────────────────────────
+
+	it("navigates to the dedicated page on mobile instead of opening the dialog", async () => {
+		mockIsMobile.current = true;
 		const user = userEvent.setup();
 		render(<CreateColorButton />);
 		await user.click(screen.getByTestId("create-color-button"));
-		expect(mockOpen).toHaveBeenCalledWith();
+		expect(mockPush).toHaveBeenCalledWith("/admin/catalogue/couleurs/nouveau");
+		expect(mockOpen).not.toHaveBeenCalled();
 	});
 });

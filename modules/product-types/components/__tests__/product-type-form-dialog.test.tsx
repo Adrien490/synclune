@@ -5,142 +5,73 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-let mockDialogState = {
-	isOpen: true,
-	close: vi.fn(),
-	data: null as Record<string, unknown> | null,
-};
+interface DialogState {
+	isOpen: boolean;
+	close: ReturnType<typeof vi.fn>;
+	data:
+		| {
+				productType?: {
+					id: string;
+					label: string;
+					slug: string;
+					description: string | null;
+				};
+				onCreated?: (id: string) => void;
+		  }
+		| undefined;
+}
+
+const { mockDialog, mockCreateProductTypeForm, mockEditProductTypeForm } = vi.hoisted(() => ({
+	mockDialog: { current: null as DialogState | null },
+	mockCreateProductTypeForm: vi.fn(),
+	mockEditProductTypeForm: vi.fn(),
+}));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: () => mockDialogState,
+	useDialog: () => mockDialog.current,
 }));
-
-vi.mock("@/modules/product-types/actions/create-product-type", () => ({
-	createProductType: vi.fn(),
-}));
-
-vi.mock("@/modules/product-types/actions/update-product-type", () => ({
-	updateProductType: vi.fn(),
-}));
-
-vi.mock("@/shared/utils/with-callbacks", () => ({
-	withCallbacks: (action: unknown) => action,
-}));
-
-vi.mock("@/shared/utils/create-toast-callbacks", () => ({
-	createToastCallbacks: () => ({}),
-}));
-
-vi.mock("react", async () => {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-	const actual = await vi.importActual<typeof import("react")>("react");
-	return {
-		...actual,
-		useActionState: (_action: unknown, _initial: unknown) => [undefined, vi.fn(), false],
-	};
-});
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
 	ResponsiveDialog: ({
-		children,
 		open,
-	}: {
-		children: React.ReactNode;
-		open: boolean;
-		onOpenChange?: (open: boolean) => void;
-	}) => (open ? <div data-testid="responsive-dialog">{children}</div> : null),
-	ResponsiveDialogContent: ({
+		onOpenChange,
 		children,
-		className,
 	}: {
+		open: boolean;
+		onOpenChange: (open: boolean) => void;
 		children: React.ReactNode;
-		className?: string;
-	}) => <div className={className}>{children}</div>,
+	}) =>
+		open ? (
+			<div data-testid="responsive-dialog">
+				<button data-testid="trigger-close" onClick={() => onOpenChange(false)}>
+					close
+				</button>
+				{children}
+			</div>
+		) : null,
+	ResponsiveDialogContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="responsive-dialog-content">{children}</div>
+	),
 	ResponsiveDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ResponsiveDialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-	ResponsiveDialogDescription: ({ children }: { children: React.ReactNode }) => (
-		<div>{children}</div>
-	),
+	ResponsiveDialogDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 }));
 
-vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		disabled,
-		type,
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-		type?: string;
-	}) => (
-		<button
-			data-testid="submit-button"
-			disabled={disabled}
-			type={type as "button" | "submit" | undefined}
-		>
-			{children}
-		</button>
-	),
+vi.mock("@/modules/product-types/components/admin/create-product-type-form", () => ({
+	CreateProductTypeForm: (props: unknown) => {
+		mockCreateProductTypeForm(props);
+		return <div data-testid="create-product-type-form" />;
+	},
 }));
 
-vi.mock("@/shared/components/required-fields-note", () => ({
-	RequiredFieldsNote: () => <p data-testid="required-fields-note">* Champs obligatoires</p>,
+vi.mock("@/modules/product-types/components/admin/edit-product-type-form", () => ({
+	EditProductTypeForm: (props: unknown) => {
+		mockEditProductTypeForm(props);
+		return <div data-testid="edit-product-type-form" />;
+	},
 }));
 
-vi.mock("@/shared/components/forms", () => ({
-	useAppForm: () => ({
-		AppField: ({
-			children,
-			name,
-		}: {
-			children: (field: {
-				name: string;
-				state: { value: unknown };
-				InputField: (props: Record<string, unknown>) => React.ReactNode;
-				TextareaField: (props: Record<string, unknown>) => React.ReactNode;
-			}) => React.ReactNode;
-			name: string;
-			validators?: unknown;
-		}) =>
-			children({
-				name,
-				state: { value: "" },
-				InputField: ({
-					label,
-					type,
-					placeholder,
-				}: {
-					label?: string;
-					type?: string;
-					placeholder?: string;
-				}) => (
-					<input
-						data-testid={`field-${name}`}
-						aria-label={label as string | undefined}
-						type={type}
-						placeholder={placeholder as string | undefined}
-					/>
-				),
-				TextareaField: ({ label }: { label?: string; placeholder?: string; rows?: number }) => (
-					<textarea data-testid={`field-${name}`} aria-label={label as string | undefined} />
-				),
-			}),
-		Subscribe: ({
-			children,
-			selector,
-		}: {
-			children: (values: unknown) => React.ReactNode;
-			selector: (state: Record<string, unknown>) => unknown;
-		}) => {
-			const mockState = { canSubmit: true };
-			const selected = selector(mockState as Record<string, unknown>);
-			return <>{children(selected)}</>;
-		},
-		reset: vi.fn(),
-	}),
-}));
-
-import { ProductTypeFormDialog, PRODUCT_TYPE_DIALOG_ID } from "../product-type-form-dialog";
+import { ProductTypeFormDialog } from "../product-type-form-dialog";
 
 afterEach(cleanup);
 
@@ -151,143 +82,78 @@ afterEach(cleanup);
 describe("ProductTypeFormDialog", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockDialogState = {
-			isOpen: true,
-			close: vi.fn(),
-			data: null,
-		};
+		mockDialog.current = { isOpen: false, close: vi.fn(), data: undefined };
 	});
 
-	// ─── Dialog ID export ──────────────────────────────────────────────────────
-
-	it("exports PRODUCT_TYPE_DIALOG_ID", () => {
-		expect(PRODUCT_TYPE_DIALOG_ID).toBe("product-type-form");
-	});
-
-	// ─── Visibility ───────────────────────────────────────────────────────────
-
-	it("renders nothing when dialog is closed", () => {
-		mockDialogState = { ...mockDialogState, isOpen: false };
+	it("does not render when dialog is closed", () => {
+		mockDialog.current = { isOpen: false, close: vi.fn(), data: undefined };
 		render(<ProductTypeFormDialog />);
 		expect(screen.queryByTestId("responsive-dialog")).not.toBeInTheDocument();
 	});
 
-	it("renders dialog when open", () => {
+	it("renders CreateProductTypeForm in create mode", () => {
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: undefined };
 		render(<ProductTypeFormDialog />);
-		expect(screen.getByTestId("responsive-dialog")).toBeInTheDocument();
-	});
-
-	// ─── Create mode ──────────────────────────────────────────────────────────
-
-	it("shows 'Créer un type de produit' title in create mode", () => {
-		render(<ProductTypeFormDialog />);
+		expect(screen.getByTestId("create-product-type-form")).toBeInTheDocument();
+		expect(screen.queryByTestId("edit-product-type-form")).not.toBeInTheDocument();
 		expect(screen.getByText("Créer un type de produit")).toBeInTheDocument();
 	});
 
-	it("shows create mode description", () => {
+	it("forwards onCreated, onSuccess and redirectOnSuccess=false to CreateProductTypeForm", () => {
+		const close = vi.fn();
+		const onCreated = vi.fn();
+		mockDialog.current = { isOpen: true, close, data: { onCreated } };
 		render(<ProductTypeFormDialog />);
-		expect(
-			screen.getByText("Ajoutez un nouveau type pour catégoriser vos produits."),
-		).toBeInTheDocument();
-	});
-
-	it("shows 'Créer' on submit button in create mode", () => {
-		render(<ProductTypeFormDialog />);
-		expect(screen.getByTestId("submit-button")).toHaveTextContent("Créer");
-	});
-
-	it("does not show hidden id input in create mode", () => {
-		const { container } = render(<ProductTypeFormDialog />);
-		const hiddenInput = container.querySelector('input[name="id"]');
-		expect(hiddenInput).toBeNull();
-	});
-
-	// ─── Update mode ──────────────────────────────────────────────────────────
-
-	it("shows 'Modifier le type de produit' title in update mode", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: {
-				productType: {
-					id: "pt-1",
-					label: "Colliers",
-					description: "Types de colliers",
-					slug: "colliers",
-				},
-			},
+		const props = mockCreateProductTypeForm.mock.calls[0]![0] as {
+			onSuccess: () => void;
+			onCreated: (id: string) => void;
+			redirectOnSuccess: boolean;
 		};
+		expect(props.onSuccess).toBe(close);
+		expect(props.onCreated).toBe(onCreated);
+		expect(props.redirectOnSuccess).toBe(false);
+	});
+
+	it("renders EditProductTypeForm in update mode", () => {
+		const productType = {
+			id: "pt-1",
+			label: "Colliers",
+			slug: "colliers",
+			description: "Types de colliers",
+		};
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: { productType } };
 		render(<ProductTypeFormDialog />);
+		expect(screen.getByTestId("edit-product-type-form")).toBeInTheDocument();
+		expect(screen.queryByTestId("create-product-type-form")).not.toBeInTheDocument();
 		expect(screen.getByText("Modifier le type de produit")).toBeInTheDocument();
 	});
 
-	it("shows update mode description", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: {
-				productType: {
-					id: "pt-1",
-					label: "Colliers",
-					description: "Types de colliers",
-					slug: "colliers",
-				},
-			},
+	it("forwards productType, onSuccess and redirectOnSuccess=false to EditProductTypeForm", () => {
+		const close = vi.fn();
+		const productType = {
+			id: "pt-1",
+			label: "Colliers",
+			slug: "colliers",
+			description: null,
 		};
+		mockDialog.current = { isOpen: true, close, data: { productType } };
 		render(<ProductTypeFormDialog />);
-		expect(
-			screen.getByText(
-				"Modifiez les informations du type. Les changements seront appliqués à tous les produits utilisant ce type.",
-			),
-		).toBeInTheDocument();
-	});
-
-	it("shows 'Enregistrer' on submit button in update mode", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: {
-				productType: {
-					id: "pt-1",
-					label: "Colliers",
-					description: "Types de colliers",
-					slug: "colliers",
-				},
-			},
+		const props = mockEditProductTypeForm.mock.calls[0]![0] as {
+			productType: typeof productType;
+			onSuccess: () => void;
+			redirectOnSuccess: boolean;
 		};
-		render(<ProductTypeFormDialog />);
-		expect(screen.getByTestId("submit-button")).toHaveTextContent("Enregistrer");
+		expect(props.productType).toEqual(productType);
+		expect(props.onSuccess).toBe(close);
+		expect(props.redirectOnSuccess).toBe(false);
 	});
 
-	it("shows hidden id input in update mode", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: {
-				productType: {
-					id: "pt-42",
-					label: "Colliers",
-					description: null,
-					slug: "colliers",
-				},
-			},
-		};
-		const { container } = render(<ProductTypeFormDialog />);
-		const hiddenInput = container.querySelector('input[name="id"]') as HTMLInputElement | null;
-		expect(hiddenInput).not.toBeNull();
-		expect(hiddenInput?.value).toBe("pt-42");
-	});
-
-	// ─── Form fields ──────────────────────────────────────────────────────────
-
-	it("shows required fields note", () => {
+	it("calls close when ResponsiveDialog onOpenChange fires with false", async () => {
+		const user = (await import("@testing-library/user-event")).default.setup();
+		const close = vi.fn();
+		mockDialog.current = { isOpen: true, close, data: undefined };
 		render(<ProductTypeFormDialog />);
-		expect(screen.getByTestId("required-fields-note")).toBeInTheDocument();
-	});
-
-	it("renders label field", () => {
-		render(<ProductTypeFormDialog />);
-		expect(screen.getByTestId("field-label")).toBeInTheDocument();
-	});
-
-	it("renders description field", () => {
-		render(<ProductTypeFormDialog />);
-		expect(screen.getByTestId("field-description")).toBeInTheDocument();
+		await user.click(screen.getByTestId("trigger-close"));
+		expect(close).toHaveBeenCalledTimes(1);
 	});
 });

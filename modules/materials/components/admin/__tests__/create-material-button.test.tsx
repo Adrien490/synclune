@@ -6,12 +6,22 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpen } = vi.hoisted(() => ({
+const { mockOpen, mockPush, mockIsMobile } = vi.hoisted(() => ({
 	mockOpen: vi.fn(),
+	mockPush: vi.fn(),
+	mockIsMobile: { current: false },
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpen }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.current,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock("@/modules/materials/components/material-form-dialog", () => ({
@@ -37,6 +47,7 @@ afterEach(cleanup);
 describe("CreateMaterialButton", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockIsMobile.current = false;
 	});
 
 	it("renders the button", () => {
@@ -49,10 +60,20 @@ describe("CreateMaterialButton", () => {
 		expect(screen.getByText("Créer un matériau")).toBeInTheDocument();
 	});
 
-	it("calls dialog open when clicked", async () => {
+	it("opens the dialog on desktop", async () => {
 		const user = userEvent.setup();
 		render(<CreateMaterialButton />);
 		await user.click(screen.getByTestId("create-material-button"));
 		expect(mockOpen).toHaveBeenCalledTimes(1);
+		expect(mockPush).not.toHaveBeenCalled();
+	});
+
+	it("navigates to the dedicated page on mobile", async () => {
+		mockIsMobile.current = true;
+		const user = userEvent.setup();
+		render(<CreateMaterialButton />);
+		await user.click(screen.getByTestId("create-material-button"));
+		expect(mockPush).toHaveBeenCalledWith("/admin/catalogue/materiaux/nouveau");
+		expect(mockOpen).not.toHaveBeenCalled();
 	});
 });

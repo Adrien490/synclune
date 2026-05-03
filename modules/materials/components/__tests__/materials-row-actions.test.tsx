@@ -5,15 +5,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenDialog, mockOpenAlertDialog, mockDuplicate, mockToggleStatus } = vi.hoisted(() => ({
+const {
+	mockOpenDialog,
+	mockOpenAlertDialog,
+	mockDuplicate,
+	mockToggleStatus,
+	mockPush,
+	mockIsMobile,
+} = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlertDialog: vi.fn(),
 	mockDuplicate: vi.fn(),
 	mockToggleStatus: vi.fn(),
+	mockPush: vi.fn(),
+	mockIsMobile: { current: false },
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDialog }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.current,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
@@ -110,6 +127,7 @@ afterEach(cleanup);
 describe("MaterialsRowActions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockIsMobile.current = false;
 	});
 
 	// ─── Rendering ────────────────────────────────────────────────────────────

@@ -5,309 +5,158 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockClose, mockReset } = vi.hoisted(() => ({
-	mockClose: vi.fn(),
-	mockReset: vi.fn(),
-}));
-
-let mockDialogState: {
+interface DialogState {
 	isOpen: boolean;
-	close: typeof mockClose;
-	data: {
-		material?: {
-			id: string;
-			name: string;
-			slug: string;
-			description: string | null;
-			isActive: boolean;
-		};
-	} | null;
-} = {
-	isOpen: true,
-	close: mockClose,
-	data: null,
-};
+	close: ReturnType<typeof vi.fn>;
+	data:
+		| {
+				material?: {
+					id: string;
+					name: string;
+					slug: string;
+					description: string | null;
+					isActive: boolean;
+				};
+				onCreated?: (id: string) => void;
+		  }
+		| undefined;
+}
 
-let mockCreatePending = false;
-let mockUpdatePending = false;
-
-// ============================================================================
-// MODULE MOCKS
-// ============================================================================
-
-vi.mock("react", async () => {
-	const actual = await vi.importActual("react");
-	return {
-		...actual,
-		useActionState: (_action: unknown, _initial: unknown) => {
-			const isPending = mockCreatePending || mockUpdatePending;
-			return [undefined, vi.fn(), isPending];
-		},
-	};
-});
+const { mockDialog, mockCreateMaterialForm, mockEditMaterialForm } = vi.hoisted(() => ({
+	mockDialog: { current: null as DialogState | null },
+	mockCreateMaterialForm: vi.fn(),
+	mockEditMaterialForm: vi.fn(),
+}));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: () => mockDialogState,
-}));
-
-vi.mock("@/shared/components/forms", () => ({
-	useAppForm: () => ({
-		reset: mockReset,
-		handleSubmit: vi.fn(),
-		AppField: ({
-			children,
-			name,
-		}: {
-			children: (field: Record<string, unknown>) => React.ReactNode;
-			name: string;
-		}) => (
-			<div data-testid={`field-${name}`}>
-				{children({
-					InputField: ({
-						label,
-						placeholder,
-						disabled,
-						required,
-					}: {
-						label?: string;
-						placeholder?: string;
-						disabled?: boolean;
-						required?: boolean;
-					}) => (
-						<div>
-							{label && <label>{label}</label>}
-							<input
-								data-testid={`input-${name}`}
-								placeholder={placeholder}
-								disabled={disabled}
-								required={required}
-							/>
-						</div>
-					),
-					TextareaField: ({
-						label,
-						placeholder,
-						disabled,
-					}: {
-						label?: string;
-						placeholder?: string;
-						disabled?: boolean;
-						rows?: number;
-					}) => (
-						<div>
-							{label && <label>{label}</label>}
-							<textarea
-								data-testid={`textarea-${name}`}
-								placeholder={placeholder}
-								disabled={disabled}
-							/>
-						</div>
-					),
-				})}
-			</div>
-		),
-		Subscribe: ({
-			children,
-		}: {
-			children: (values: unknown[]) => React.ReactNode;
-			selector: (state: Record<string, unknown>) => unknown[];
-		}) => <>{children([true])}</>,
-	}),
-}));
-
-vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		disabled,
-		type,
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-		type?: string;
-	}) => (
-		<button disabled={disabled} type={type as "submit" | "button" | undefined}>
-			{children}
-		</button>
-	),
-}));
-
-vi.mock("@/shared/components/required-fields-note", () => ({
-	RequiredFieldsNote: () => <div data-testid="required-fields-note" />,
+	useDialog: () => mockDialog.current,
 }));
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
 	ResponsiveDialog: ({
-		children,
 		open,
+		onOpenChange,
+		children,
 	}: {
-		children: React.ReactNode;
 		open: boolean;
-		onOpenChange?: (open: boolean) => void;
-	}) => (open ? <div data-testid="dialog">{children}</div> : null),
-	ResponsiveDialogContent: ({ children }: { children: React.ReactNode; className?: string }) => (
-		<div>{children}</div>
+		onOpenChange: (open: boolean) => void;
+		children: React.ReactNode;
+	}) =>
+		open ? (
+			<div data-testid="responsive-dialog">
+				<button data-testid="trigger-close" onClick={() => onOpenChange(false)}>
+					close
+				</button>
+				{children}
+			</div>
+		) : null,
+	ResponsiveDialogContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="responsive-dialog-content">{children}</div>
 	),
-	ResponsiveDialogHeader: ({ children }: { children: React.ReactNode; className?: string }) => (
-		<div>{children}</div>
-	),
+	ResponsiveDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 	ResponsiveDialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
 	ResponsiveDialogDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 }));
 
-vi.mock("@/shared/utils/with-callbacks", () => ({
-	withCallbacks: (action: unknown) => action,
+vi.mock("@/modules/materials/components/admin/create-material-form", () => ({
+	CreateMaterialForm: (props: unknown) => {
+		mockCreateMaterialForm(props);
+		return <div data-testid="create-material-form" />;
+	},
 }));
 
-vi.mock("@/shared/utils/create-toast-callbacks", () => ({
-	createToastCallbacks: () => ({}),
+vi.mock("@/modules/materials/components/admin/edit-material-form", () => ({
+	EditMaterialForm: (props: unknown) => {
+		mockEditMaterialForm(props);
+		return <div data-testid="edit-material-form" />;
+	},
 }));
-
-vi.mock("@/modules/materials/actions/create-material", () => ({
-	createMaterial: vi.fn(),
-}));
-
-vi.mock("@/modules/materials/actions/update-material", () => ({
-	updateMaterial: vi.fn(),
-}));
-
-// ============================================================================
-// IMPORT AFTER MOCKS
-// ============================================================================
 
 import { MaterialFormDialog } from "../material-form-dialog";
 
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-function createMaterial(overrides = {}) {
-	return {
-		id: "mat-1",
-		name: "Argent 925",
-		slug: "argent-925",
-		description: "Argent sterling",
-		isActive: true,
-		...overrides,
-	};
-}
-
-beforeEach(() => {
-	mockCreatePending = false;
-	mockUpdatePending = false;
-	mockDialogState = { isOpen: true, close: mockClose, data: null };
-});
-
-afterEach(() => {
-	cleanup();
-	vi.clearAllMocks();
-});
+afterEach(cleanup);
 
 // ============================================================================
 // TESTS
 // ============================================================================
 
 describe("MaterialFormDialog", () => {
-	// ─── Dialog rendering ──────────────────────────────────────────────────────
-
-	it("renders the dialog when open", () => {
-		render(<MaterialFormDialog />);
-		expect(screen.getByTestId("dialog")).toBeInTheDocument();
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockDialog.current = { isOpen: false, close: vi.fn(), data: undefined };
 	});
 
 	it("does not render when dialog is closed", () => {
-		mockDialogState = { ...mockDialogState, isOpen: false };
+		mockDialog.current = { isOpen: false, close: vi.fn(), data: undefined };
 		render(<MaterialFormDialog />);
-		expect(screen.queryByTestId("dialog")).not.toBeInTheDocument();
+		expect(screen.queryByTestId("responsive-dialog")).not.toBeInTheDocument();
 	});
 
-	// ─── Create mode ──────────────────────────────────────────────────────────
-
-	it("shows 'Créer un matériau' title in create mode", () => {
+	it("renders CreateMaterialForm in create mode", () => {
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: undefined };
 		render(<MaterialFormDialog />);
+		expect(screen.getByTestId("create-material-form")).toBeInTheDocument();
+		expect(screen.queryByTestId("edit-material-form")).not.toBeInTheDocument();
 		expect(screen.getByText("Créer un matériau")).toBeInTheDocument();
 	});
 
-	it("shows 'Créer' button text in create mode", () => {
+	it("forwards onCreated, onSuccess and redirectOnSuccess=false to CreateMaterialForm", () => {
+		const close = vi.fn();
+		const onCreated = vi.fn();
+		mockDialog.current = { isOpen: true, close, data: { onCreated } };
 		render(<MaterialFormDialog />);
-		expect(screen.getByRole("button", { name: "Créer" })).toBeInTheDocument();
+		const props = mockCreateMaterialForm.mock.calls[0]![0] as {
+			onSuccess: () => void;
+			onCreated: (id: string) => void;
+			redirectOnSuccess: boolean;
+		};
+		expect(props.onSuccess).toBe(close);
+		expect(props.onCreated).toBe(onCreated);
+		expect(props.redirectOnSuccess).toBe(false);
 	});
 
-	it("does not render hidden id input in create mode", () => {
-		const { container } = render(<MaterialFormDialog />);
-		expect(container.querySelector('input[name="id"]')).toBeNull();
-	});
-
-	// ─── Update mode ──────────────────────────────────────────────────────────
-
-	it("shows 'Modifier le matériau' title in update mode", () => {
-		mockDialogState = { ...mockDialogState, data: { material: createMaterial() } };
+	it("renders EditMaterialForm in update mode", () => {
+		const material = {
+			id: "m-1",
+			name: "Argent 925",
+			slug: "argent-925",
+			description: null,
+			isActive: true,
+		};
+		mockDialog.current = { isOpen: true, close: vi.fn(), data: { material } };
 		render(<MaterialFormDialog />);
+		expect(screen.getByTestId("edit-material-form")).toBeInTheDocument();
+		expect(screen.queryByTestId("create-material-form")).not.toBeInTheDocument();
 		expect(screen.getByText("Modifier le matériau")).toBeInTheDocument();
 	});
 
-	it("shows 'Enregistrer' button text in update mode", () => {
-		mockDialogState = { ...mockDialogState, data: { material: createMaterial() } };
-		render(<MaterialFormDialog />);
-		expect(screen.getByRole("button", { name: "Enregistrer" })).toBeInTheDocument();
-	});
-
-	it("renders a hidden id input with the material id in update mode", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: { material: createMaterial({ id: "mat-42" }) },
+	it("forwards material, onSuccess and redirectOnSuccess=false to EditMaterialForm", () => {
+		const close = vi.fn();
+		const material = {
+			id: "m-1",
+			name: "Argent 925",
+			slug: "argent-925",
+			description: "Argent massif",
+			isActive: true,
 		};
+		mockDialog.current = { isOpen: true, close, data: { material } };
 		render(<MaterialFormDialog />);
-		const hiddenInput = document.querySelector('input[name="id"]') as HTMLInputElement;
-		expect(hiddenInput).not.toBeNull();
-		expect(hiddenInput.value).toBe("mat-42");
-	});
-
-	it("renders a hidden isActive input in update mode", () => {
-		mockDialogState = {
-			...mockDialogState,
-			data: { material: createMaterial({ isActive: true }) },
+		const props = mockEditMaterialForm.mock.calls[0]![0] as {
+			material: typeof material;
+			onSuccess: () => void;
+			redirectOnSuccess: boolean;
 		};
-		render(<MaterialFormDialog />);
-		const hiddenInput = document.querySelector('input[name="isActive"]') as HTMLInputElement;
-		expect(hiddenInput).not.toBeNull();
-		expect(hiddenInput.value).toBe("true");
+		expect(props.material).toEqual(material);
+		expect(props.onSuccess).toBe(close);
+		expect(props.redirectOnSuccess).toBe(false);
 	});
 
-	// ─── Form fields ──────────────────────────────────────────────────────────
-
-	it("renders the name form field", () => {
+	it("calls close when ResponsiveDialog onOpenChange fires with false", async () => {
+		const user = (await import("@testing-library/user-event")).default.setup();
+		const close = vi.fn();
+		mockDialog.current = { isOpen: true, close, data: undefined };
 		render(<MaterialFormDialog />);
-		expect(screen.getByTestId("field-name")).toBeInTheDocument();
-	});
-
-	it("renders the description form field", () => {
-		render(<MaterialFormDialog />);
-		expect(screen.getByTestId("field-description")).toBeInTheDocument();
-	});
-
-	it("renders the required fields note", () => {
-		render(<MaterialFormDialog />);
-		expect(screen.getByTestId("required-fields-note")).toBeInTheDocument();
-	});
-
-	// ─── Loading state ────────────────────────────────────────────────────────
-
-	it("shows 'Enregistrement...' when create is pending", () => {
-		mockCreatePending = true;
-		render(<MaterialFormDialog />);
-		expect(screen.getByRole("button")).toHaveTextContent("Enregistrement...");
-	});
-
-	it("shows 'Enregistrement...' when update is pending", () => {
-		mockUpdatePending = true;
-		mockDialogState = { ...mockDialogState, data: { material: createMaterial() } };
-		render(<MaterialFormDialog />);
-		expect(screen.getByRole("button")).toHaveTextContent("Enregistrement...");
-	});
-
-	it("disables the submit button when pending", () => {
-		mockCreatePending = true;
-		render(<MaterialFormDialog />);
-		expect(screen.getByRole("button")).toBeDisabled();
+		await user.click(screen.getByTestId("trigger-close"));
+		expect(close).toHaveBeenCalledTimes(1);
 	});
 });

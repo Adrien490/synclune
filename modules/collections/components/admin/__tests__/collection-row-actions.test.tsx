@@ -5,9 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpenDialog, mockOpenAlertDialog } = vi.hoisted(() => ({
+const { mockOpenDialog, mockOpenAlertDialog, mockPush, mockIsMobile } = vi.hoisted(() => ({
 	mockOpenDialog: vi.fn(),
 	mockOpenAlertDialog: vi.fn(),
+	mockPush: vi.fn(),
+	mockIsMobile: { current: false },
 }));
 
 vi.mock("@/app/generated/prisma/enums", () => ({
@@ -16,6 +18,14 @@ vi.mock("@/app/generated/prisma/enums", () => ({
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDialog }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.current,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
@@ -119,6 +129,7 @@ afterEach(cleanup);
 describe("CollectionRowActions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockIsMobile.current = false;
 	});
 
 	// ─── aria-label ───────────────────────────────────────────────────────────

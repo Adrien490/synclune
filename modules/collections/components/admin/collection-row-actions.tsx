@@ -10,6 +10,7 @@ import {
 	Trash2,
 	Upload,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import {
@@ -19,6 +20,7 @@ import {
 	type ActionMenuSection,
 } from "@/shared/components/responsive-action-menu";
 import { Button } from "@/shared/components/ui/button";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -54,6 +56,8 @@ export function CollectionRowActions({
 	const { open: openDeleteDialog } = useAlertDialog(DELETE_COLLECTION_DIALOG_ID);
 	const { open: openArchiveDialog } = useAlertDialog(ARCHIVE_COLLECTION_DIALOG_ID);
 	const { open: openChangeStatusDialog } = useAlertDialog(CHANGE_COLLECTION_STATUS_DIALOG_ID);
+	const isMobile = useIsMobile();
+	const router = useRouter();
 
 	const isArchived = collectionStatus === CollectionStatus.ARCHIVED;
 	const isDraft = collectionStatus === CollectionStatus.DRAFT;
@@ -74,16 +78,21 @@ export function CollectionRowActions({
 					key: "edit",
 					label: "Modifier",
 					icon: Pencil,
-					onSelect: () =>
-						openEditDialog({
-							collection: {
-								id: collectionId,
-								name: collectionName,
-								slug: collectionSlug,
-								description: collectionDescription,
-								status: collectionStatus,
-							},
-						}),
+					onSelect: () => {
+						if (isMobile) {
+							router.push(`/admin/catalogue/collections/${collectionSlug}/modifier`);
+						} else {
+							openEditDialog({
+								collection: {
+									id: collectionId,
+									name: collectionName,
+									slug: collectionSlug,
+									description: collectionDescription,
+									status: collectionStatus,
+								},
+							});
+						}
+					},
 				},
 				{
 					key: "manage",

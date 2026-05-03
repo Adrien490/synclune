@@ -82,10 +82,23 @@ const baseSkuFieldsSchema = z.object({
 	isActive: z.coerce.boolean().default(true),
 	isDefault: z.coerce.boolean().default(false),
 
-	// Optional fields
-	colorId: z.string().optional().or(z.literal("")),
-	materialId: z.string().optional().or(z.literal("")),
-	size: z.string().max(TEXT_LIMITS.SKU_SIZE.max).optional().or(z.literal("")),
+	// Optional fields (IDs/size vides seront traites comme undefined)
+	colorId: z
+		.string()
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
+	materialId: z
+		.string()
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
+	size: z
+		.string()
+		.max(TEXT_LIMITS.SKU_SIZE.max)
+		.optional()
+		.or(z.literal(""))
+		.transform((val) => (val === "" ? undefined : val)),
 
 	// Medias (images et videos)
 	primaryImage: imageSchema.optional(),

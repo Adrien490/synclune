@@ -1,6 +1,7 @@
 "use client";
 
 import { Copy, EllipsisVertical, ExternalLink, SquarePen, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import {
 	ResponsiveActionMenu,
@@ -10,6 +11,7 @@ import {
 } from "@/shared/components/responsive-action-menu";
 import { DELETE_COLOR_DIALOG_ID } from "@/modules/colors/components/admin/delete-color-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useDuplicateColor } from "@/modules/colors/hooks/use-duplicate-color";
@@ -38,6 +40,8 @@ export function ColorsRowActions({
 	const { open: openDialog } = useDialog(COLOR_DIALOG_ID);
 	const { open: openAlert } = useAlertDialog(DELETE_COLOR_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateColor();
+	const isMobile = useIsMobile();
+	const router = useRouter();
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -47,10 +51,15 @@ export function ColorsRowActions({
 					key: "edit",
 					label: "Éditer",
 					icon: SquarePen,
-					onSelect: () =>
-						openDialog({
-							color: { id: colorId, name: colorName, hex: colorHex, slug: colorSlug },
-						}),
+					onSelect: () => {
+						if (isMobile) {
+							router.push(`/admin/catalogue/couleurs/${colorSlug}/modifier`);
+						} else {
+							openDialog({
+								color: { id: colorId, name: colorName, hex: colorHex, slug: colorSlug },
+							});
+						}
+					},
 				},
 				{
 					key: "duplicate",

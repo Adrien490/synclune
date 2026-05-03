@@ -9,6 +9,7 @@ import {
 	SquarePen,
 	Trash2,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
 import { useDuplicateMaterial } from "@/modules/materials/hooks/use-duplicate-material";
@@ -20,6 +21,7 @@ import {
 	type ActionMenuSection,
 } from "@/shared/components/responsive-action-menu";
 import { Button } from "@/shared/components/ui/button";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -50,6 +52,8 @@ export function MaterialsRowActions({
 	const { open: openAlert } = useAlertDialog(DELETE_MATERIAL_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateMaterial();
 	const { toggleStatus, isPending: isToggling } = useToggleMaterialStatus();
+	const isMobile = useIsMobile();
+	const router = useRouter();
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -59,16 +63,21 @@ export function MaterialsRowActions({
 					key: "edit",
 					label: "Éditer",
 					icon: SquarePen,
-					onSelect: () =>
-						openDialog({
-							material: {
-								id: materialId,
-								name: materialName,
-								slug: materialSlug,
-								description: materialDescription,
-								isActive: materialIsActive,
-							},
-						}),
+					onSelect: () => {
+						if (isMobile) {
+							router.push(`/admin/catalogue/materiaux/${materialSlug}/modifier`);
+						} else {
+							openDialog({
+								material: {
+									id: materialId,
+									name: materialName,
+									slug: materialSlug,
+									description: materialDescription,
+									isActive: materialIsActive,
+								},
+							});
+						}
+					},
 				},
 				{
 					key: "duplicate",

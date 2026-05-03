@@ -6,12 +6,22 @@ import userEvent from "@testing-library/user-event";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockOpen } = vi.hoisted(() => ({
+const { mockOpen, mockPush, mockIsMobile } = vi.hoisted(() => ({
 	mockOpen: vi.fn(),
+	mockPush: vi.fn(),
+	mockIsMobile: { current: false },
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpen }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.current,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
 }));
 
 vi.mock("@/modules/product-types/components/product-type-form-dialog", () => ({
@@ -37,6 +47,7 @@ afterEach(cleanup);
 describe("CreateProductTypeButton", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		mockIsMobile.current = false;
 	});
 
 	it("renders the button", () => {
@@ -49,17 +60,21 @@ describe("CreateProductTypeButton", () => {
 		expect(screen.getByText("Créer un type")).toBeInTheDocument();
 	});
 
-	it("calls dialog open when clicked", async () => {
+	it("opens the dialog on desktop", async () => {
 		const user = userEvent.setup();
 		render(<CreateProductTypeButton />);
 		await user.click(screen.getByTestId("create-product-type-button"));
 		expect(mockOpen).toHaveBeenCalledTimes(1);
+		expect(mockOpen).toHaveBeenCalledWith();
+		expect(mockPush).not.toHaveBeenCalled();
 	});
 
-	it("calls open with no arguments", async () => {
+	it("navigates to the dedicated page on mobile", async () => {
+		mockIsMobile.current = true;
 		const user = userEvent.setup();
 		render(<CreateProductTypeButton />);
 		await user.click(screen.getByTestId("create-product-type-button"));
-		expect(mockOpen).toHaveBeenCalledWith();
+		expect(mockPush).toHaveBeenCalledWith("/admin/catalogue/types-de-produits/nouveau");
+		expect(mockOpen).not.toHaveBeenCalled();
 	});
 });

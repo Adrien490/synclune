@@ -1,6 +1,7 @@
 "use client";
 
 import { Copy, EllipsisVertical, ExternalLink, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDuplicateProductType } from "@/modules/product-types/hooks/use-duplicate-product-type";
@@ -11,6 +12,7 @@ import {
 	type ActionMenuSection,
 } from "@/shared/components/responsive-action-menu";
 import { Button } from "@/shared/components/ui/button";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -42,6 +44,8 @@ export function ProductTypeRowActions({
 	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
 	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType();
+	const isMobile = useIsMobile();
+	const router = useRouter();
 
 	const sections: ActionMenuSection[] = [
 		{
@@ -53,8 +57,15 @@ export function ProductTypeRowActions({
 					label: isSystem ? "Voir (lecture seule)" : "Éditer",
 					icon: Pencil,
 					disabled: isSystem,
-					onSelect: () =>
-						openFormDialog({ productType: { id: productTypeId, label, description, slug } }),
+					onSelect: () => {
+						if (isMobile) {
+							router.push(`/admin/catalogue/types-de-produits/${slug}/modifier`);
+						} else {
+							openFormDialog({
+								productType: { id: productTypeId, label, description: description ?? null, slug },
+							});
+						}
+					},
 				},
 				{
 					key: "products",
