@@ -49,9 +49,12 @@ interface UsersRowActionsProps {
 		deletedAt: Date | null;
 		suspendedAt?: Date | null;
 	};
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
-export function UsersRowActions({ user }: UsersRowActionsProps) {
+export function UsersRowActions({ user, open, onOpenChange, hideTrigger }: UsersRowActionsProps) {
 	const deleteDialog = useDialog(`delete-user-${user.id}`);
 	const suspendDialog = useDialog(`suspend-user-${user.id}`);
 	const restoreDialog = useDialog(`restore-user-${user.id}`);
@@ -197,16 +200,18 @@ export function UsersRowActions({ user }: UsersRowActionsProps) {
 
 	return (
 		<>
-			<ResponsiveActionMenu>
-				<ResponsiveActionMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						className="h-11 w-11 p-0 transition-transform active:scale-95"
-						aria-label="Actions"
-					>
-						<EllipsisVertical className="h-4 w-4" />
-					</Button>
-				</ResponsiveActionMenuTrigger>
+			<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
+				{!hideTrigger && (
+					<ResponsiveActionMenuTrigger asChild>
+						<Button
+							variant="ghost"
+							className="h-11 w-11 p-0 transition-transform active:scale-95"
+							aria-label="Actions"
+						>
+							<EllipsisVertical className="h-4 w-4" />
+						</Button>
+					</ResponsiveActionMenuTrigger>
+				)}
 				<ResponsiveActionMenuContent
 					title="Actions utilisateur"
 					description={displayName}

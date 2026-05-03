@@ -34,6 +34,11 @@ interface ProductRowActionsProps {
 	productSlug: string;
 	productTitle: string;
 	productStatus: "DRAFT" | "PUBLIC" | "ARCHIVED";
+	/** Optional controlled open state — used by mobile long-press wiring. */
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	/** Hide the EllipsisVertical trigger button (when controlled externally). */
+	hideTrigger?: boolean;
 }
 
 export function ProductRowActions({
@@ -41,6 +46,9 @@ export function ProductRowActions({
 	productSlug,
 	productTitle,
 	productStatus,
+	open,
+	onOpenChange,
+	hideTrigger,
 }: ProductRowActionsProps) {
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_DIALOG_ID);
 	const changeStatusDialog = useAlertDialog(CHANGE_PRODUCT_STATUS_DIALOG_ID);
@@ -160,17 +168,19 @@ export function ProductRowActions({
 	];
 
 	return (
-		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label={`Actions pour ${productTitle}`}
-				>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</ResponsiveActionMenuTrigger>
+		<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
+			{!hideTrigger && (
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0 transition-transform active:scale-95"
+						aria-label={`Actions pour ${productTitle}`}
+					>
+						<EllipsisVertical className="h-4 w-4" />
+					</Button>
+				</ResponsiveActionMenuTrigger>
+			)}
 			<ResponsiveActionMenuContent title="Actions" description={productTitle} sections={sections} />
 		</ResponsiveActionMenu>
 	);

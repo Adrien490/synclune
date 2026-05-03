@@ -62,10 +62,12 @@ export async function initializePayment(
 				};
 			}
 
-			// Block payment if store is closed
-			const storeCheck = await assertStoreOpen();
-			if (storeCheck) {
-				return { success: false, error: storeCheck.message };
+			// Block payment if store is closed (admin bypass for live checkout testing)
+			if (session?.user.role !== "ADMIN") {
+				const storeCheck = await assertStoreOpen();
+				if (storeCheck) {
+					return { success: false, error: storeCheck.message };
+				}
 			}
 
 			// Validate cart items

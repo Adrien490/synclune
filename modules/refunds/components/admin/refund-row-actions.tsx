@@ -25,9 +25,17 @@ interface RefundRowActionsProps {
 		orderId: string;
 		orderNumber: string;
 	};
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
-export function RefundRowActions({ refund }: RefundRowActionsProps) {
+export function RefundRowActions({
+	refund,
+	open,
+	onOpenChange,
+	hideTrigger,
+}: RefundRowActionsProps) {
 	const approveDialog = useAlertDialog(APPROVE_REFUND_DIALOG_ID);
 	const processDialog = useAlertDialog(PROCESS_REFUND_DIALOG_ID);
 	const rejectDialog = useAlertDialog(REJECT_REFUND_DIALOG_ID);
@@ -100,17 +108,19 @@ export function RefundRowActions({ refund }: RefundRowActionsProps) {
 	];
 
 	return (
-		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions"
-				>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</ResponsiveActionMenuTrigger>
+		<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
+			{!hideTrigger && (
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0 transition-transform active:scale-95"
+						aria-label="Actions"
+					>
+						<EllipsisVertical className="h-4 w-4" />
+					</Button>
+				</ResponsiveActionMenuTrigger>
+			)}
 			<ResponsiveActionMenuContent
 				title="Actions remboursement"
 				description={refund.orderNumber}

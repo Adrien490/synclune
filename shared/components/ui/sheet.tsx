@@ -7,6 +7,7 @@ import { Drawer as SheetPrimitive } from "vaul";
 import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
+import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 
 type SheetDirection = "top" | "right" | "bottom" | "left";
 
@@ -134,6 +135,7 @@ function SheetContent({
 	onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
 }) {
 	const { direction } = React.useContext(SheetContext);
+	useRegisterOverlay();
 
 	return (
 		<SheetPortal>

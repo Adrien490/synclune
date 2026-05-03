@@ -50,7 +50,7 @@ export function SkusMobileList({
 	}
 
 	return (
-		<div className="space-y-4 pb-20 md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<ItemGroup aria-label="Variantes" className="gap-2">
 				{productSkus.map((sku) => (
 					<div key={sku.id} role="listitem">

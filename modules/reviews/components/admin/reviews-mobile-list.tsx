@@ -42,7 +42,7 @@ export function ReviewsMobileList({ reviewsPromise, perPage }: ReviewsMobileList
 	}
 
 	return (
-		<div className="space-y-4 pb-20 md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<ItemGroup aria-label="Avis clients" className="gap-2">
 				{adminReviews.map((review) => (
 					<Item

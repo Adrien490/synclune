@@ -2,16 +2,21 @@
 
 import { Package } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
+import { useLongPress } from "@/shared/hooks";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { cn } from "@/shared/utils/cn";
 
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 
 import { SKU_ITEM_DRAWER_ID, type SkuItemDrawerData } from "./sku-item-drawer";
+import { ProductSkuRowActions } from "./sku-row-actions";
 
 type Sku = GetProductSkusReturn["productSkus"][number];
 
@@ -41,10 +46,14 @@ const getStockAriaLabel = (inventory: number) => {
 
 export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	const { open } = useDialog<SkuItemDrawerData>(SKU_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
 	const stockVariant = getStockVariant(sku.inventory);
 
+	const [menuOpen, setMenuOpen] = useState(false);
+
 	const handleOpen = () => {
+		haptic("selection");
 		open({
 			sku: {
 				id: sku.id,
@@ -70,88 +79,108 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 		});
 	};
 
+	const { bind } = useLongPress(() => setMenuOpen(true), { onClick: handleOpen });
+
 	return (
-		<button
-			type="button"
-			aria-label={`Variante ${sku.sku}`}
-			onClick={handleOpen}
-			className="focus-visible:ring-primary w-full rounded-lg text-left focus-visible:ring-2 focus-visible:outline-none"
-		>
-			<Item
-				variant="outline"
-				size="sm"
-				className="w-full gap-3"
-				aria-roledescription="carte variante"
-			>
-				{primaryImage ? (
-					primaryImage.mediaType === "VIDEO" ? (
-						<video
-							className="size-12 shrink-0 rounded-md border object-cover"
-							muted
-							loop
-							playsInline
-							preload="none"
-							aria-label={primaryImage.altText ?? `Vidéo variante ${sku.sku}`}
-						>
-							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
-						</video>
-					) : (
-						<Image
-							src={primaryImage.url}
-							alt=""
-							width={48}
-							height={48}
-							sizes="48px"
-							className="size-12 shrink-0 rounded-md border object-cover"
-							{...(primaryImage.blurDataUrl
-								? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
-								: {})}
-						/>
-					)
-				) : (
-					<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-						<Package className="text-muted-foreground size-5" aria-hidden="true" />
-					</div>
+		<>
+			<button
+				type="button"
+				aria-label={`Variante ${sku.sku}`}
+				{...bind}
+				className={cn(
+					"focus-visible:ring-primary w-full rounded-lg text-left",
+					"focus-visible:ring-2 focus-visible:outline-none",
 				)}
-				<ItemContent className="min-w-0">
-					<ItemTitle className="w-full min-w-0 flex-wrap">
-						<span className="truncate font-semibold">{sku.sku}</span>
-						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
-						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
-						<Badge variant={stockVariant} aria-label={getStockAriaLabel(sku.inventory)}>
-							{sku.inventory}
-						</Badge>
-					</ItemTitle>
-					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-						<span className="font-medium">{formatPrice(sku.priceInclTax)}</span>
-						{sku.color ? (
-							<>
-								<span aria-hidden="true">·</span>
-								<span className="inline-flex items-center gap-1">
-									<span
-										className="border-border size-3 rounded-full border"
-										style={{ backgroundColor: sku.color.hex }}
-										aria-hidden="true"
-									/>
-									{sku.color.name}
-								</span>
-							</>
-						) : null}
-						{sku.material ? (
-							<>
-								<span aria-hidden="true">·</span>
-								<span>{sku.material.name}</span>
-							</>
-						) : null}
-						{sku.size ? (
-							<>
-								<span aria-hidden="true">·</span>
-								<span>{sku.size}</span>
-							</>
-						) : null}
-					</ItemDescription>
-				</ItemContent>
-			</Item>
-		</button>
+			>
+				<Item
+					variant="outline"
+					size="sm"
+					className="w-full gap-3"
+					aria-roledescription="carte variante"
+				>
+					{primaryImage ? (
+						primaryImage.mediaType === "VIDEO" ? (
+							<video
+								className="size-12 shrink-0 rounded-md border object-cover"
+								muted
+								loop
+								playsInline
+								preload="none"
+								aria-label={primaryImage.altText ?? `Vidéo variante ${sku.sku}`}
+							>
+								<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />
+							</video>
+						) : (
+							<Image
+								src={primaryImage.url}
+								alt=""
+								width={48}
+								height={48}
+								sizes="48px"
+								className="size-12 shrink-0 rounded-md border object-cover"
+								{...(primaryImage.blurDataUrl
+									? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
+									: {})}
+							/>
+						)
+					) : (
+						<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
+							<Package className="text-muted-foreground size-5" aria-hidden="true" />
+						</div>
+					)}
+					<ItemContent className="min-w-0">
+						<ItemTitle className="w-full min-w-0 flex-wrap">
+							<span className="truncate font-semibold">{sku.sku}</span>
+							{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
+							{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
+							<Badge variant={stockVariant} aria-label={getStockAriaLabel(sku.inventory)}>
+								{sku.inventory}
+							</Badge>
+						</ItemTitle>
+						<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+							<span className="font-medium">{formatPrice(sku.priceInclTax)}</span>
+							{sku.color ? (
+								<>
+									<span aria-hidden="true">·</span>
+									<span className="inline-flex items-center gap-1">
+										<span
+											className="border-border size-3 rounded-full border"
+											style={{ backgroundColor: sku.color.hex }}
+											aria-hidden="true"
+										/>
+										{sku.color.name}
+									</span>
+								</>
+							) : null}
+							{sku.material ? (
+								<>
+									<span aria-hidden="true">·</span>
+									<span>{sku.material.name}</span>
+								</>
+							) : null}
+							{sku.size ? (
+								<>
+									<span aria-hidden="true">·</span>
+									<span>{sku.size}</span>
+								</>
+							) : null}
+						</ItemDescription>
+					</ItemContent>
+				</Item>
+			</button>
+			<ProductSkuRowActions
+				skuId={sku.id}
+				skuName={sku.sku}
+				productSlug={productSlug}
+				isDefault={sku.isDefault}
+				isActive={sku.isActive}
+				inventory={sku.inventory}
+				priceInclTax={sku.priceInclTax}
+				compareAtPrice={sku.compareAtPrice}
+				open={menuOpen}
+				onOpenChange={setMenuOpen}
+				hideTrigger
+			/>
+		</>
 	);
 }

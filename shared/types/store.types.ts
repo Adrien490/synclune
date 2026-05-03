@@ -148,6 +148,21 @@ export interface BadgeCountsActions {
 export type BadgeCountsStore = BadgeCountsState & BadgeCountsActions;
 
 // =============================================================================
+// OVERLAY STACK STORE TYPES
+// =============================================================================
+
+export interface OverlayStackState {
+	count: number;
+}
+
+export interface OverlayStackActions {
+	push: () => void;
+	pop: () => void;
+}
+
+export type OverlayStackStore = OverlayStackState & OverlayStackActions;
+
+// =============================================================================
 // PROVIDER TYPES
 // =============================================================================
 

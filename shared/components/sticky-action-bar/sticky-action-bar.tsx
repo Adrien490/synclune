@@ -72,8 +72,8 @@ const baseItemClasses = cn(
 	"flex flex-1 items-center justify-center gap-1.5 h-11 min-w-0 px-2",
 	"text-xs font-medium text-muted-foreground",
 	"hover:text-foreground",
-	"active:bg-primary/5 active:scale-[0.98]",
-	"transition-[color,background-color,transform] duration-150",
+	"active:bg-primary/5 motion-safe:active:scale-[0.98]",
+	"motion-safe:transition-[color,background-color,transform] motion-safe:duration-[var(--duration-fast)]",
 	"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset",
 	"disabled:opacity-50 disabled:pointer-events-none",
 );

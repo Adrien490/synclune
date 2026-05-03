@@ -68,6 +68,10 @@ vi.mock("../sku-item-drawer", () => ({
 	SKU_ITEM_DRAWER_ID: "sku-item-drawer",
 }));
 
+vi.mock("../sku-row-actions", () => ({
+	ProductSkuRowActions: () => null,
+}));
+
 import { SkuMobileItem } from "../sku-mobile-item";
 
 type Sku = Parameters<typeof SkuMobileItem>[0]["sku"];

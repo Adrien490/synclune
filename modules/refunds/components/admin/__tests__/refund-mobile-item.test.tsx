@@ -18,6 +18,9 @@ vi.mock("@/shared/hooks/use-haptic", () => ({ useHaptic: mockUseHaptic }));
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 vi.mock("@/shared/lib/stripe", () => ({ stripe: {} }));
+vi.mock("../refund-row-actions", () => ({
+	RefundRowActions: () => null,
+}));
 vi.mock("./refund-item-drawer", () => ({
 	REFUND_ITEM_DRAWER_ID: "refund-item-drawer",
 }));

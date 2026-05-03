@@ -38,6 +38,9 @@ interface ProductSkuRowActionsProps {
 	inventory?: number;
 	priceInclTax?: number;
 	compareAtPrice?: number | null;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
 export function ProductSkuRowActions({
@@ -49,6 +52,9 @@ export function ProductSkuRowActions({
 	inventory = 0,
 	priceInclTax = 0,
 	compareAtPrice = null,
+	open,
+	onOpenChange,
+	hideTrigger,
 }: ProductSkuRowActionsProps) {
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_SKU_DIALOG_ID);
 	const adjustStockDialog = useDialog(ADJUST_STOCK_DIALOG_ID);
@@ -139,18 +145,20 @@ export function ProductSkuRowActions({
 	];
 
 	return (
-		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label="Actions pour cette variante"
-				>
-					<EllipsisVertical className="h-4 w-4" />
-					<span className="sr-only">Ouvrir le menu d&apos;actions</span>
-				</Button>
-			</ResponsiveActionMenuTrigger>
+		<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
+			{!hideTrigger && (
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0 transition-transform active:scale-95"
+						aria-label="Actions pour cette variante"
+					>
+						<EllipsisVertical className="h-4 w-4" />
+						<span className="sr-only">Ouvrir le menu d&apos;actions</span>
+					</Button>
+				</ResponsiveActionMenuTrigger>
+			)}
 			<ResponsiveActionMenuContent
 				title="Actions variante"
 				description={skuName}

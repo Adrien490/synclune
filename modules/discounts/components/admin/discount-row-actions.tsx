@@ -21,9 +21,17 @@ import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert
 
 interface DiscountRowActionsProps {
 	discount: Discount;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
-export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
+export function DiscountRowActions({
+	discount,
+	open,
+	onOpenChange,
+	hideTrigger,
+}: DiscountRowActionsProps) {
 	const { open: openEditDialog } = useDialog(DISCOUNT_DIALOG_ID);
 	const { open: openDeleteDialog } = useAlertDialog(DELETE_DISCOUNT_DIALOG_ID);
 	const { open: openToggleDialog } = useAlertDialog(TOGGLE_DISCOUNT_STATUS_DIALOG_ID);
@@ -98,18 +106,20 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 	];
 
 	return (
-		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
-					aria-label={`Actions pour ${discount.code}`}
-					onPointerDown={() => haptic("selection")}
-				>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</ResponsiveActionMenuTrigger>
+		<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
+			{!hideTrigger && (
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+						aria-label={`Actions pour ${discount.code}`}
+						onPointerDown={() => haptic("selection")}
+					>
+						<EllipsisVertical className="h-4 w-4" />
+					</Button>
+				</ResponsiveActionMenuTrigger>
+			)}
 			<ResponsiveActionMenuContent
 				title="Actions"
 				description={discount.code}

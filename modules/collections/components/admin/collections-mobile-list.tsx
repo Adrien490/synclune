@@ -31,7 +31,7 @@ export function CollectionsMobileList({ collectionsPromise, perPage }: Collectio
 	}
 
 	return (
-		<div className="space-y-4 pb-20 md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<ItemGroup aria-label="Collections" className="gap-2">
 				{collections.map((collection) => (
 					<div key={collection.id} role="listitem">

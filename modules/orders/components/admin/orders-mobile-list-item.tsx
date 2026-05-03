@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { StickyNote } from "lucide-react";
+import { useState } from "react";
 import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
 import { SwipeableCard } from "@/shared/components/swipeable-card";
 import {
@@ -12,6 +13,7 @@ import {
 	ItemTitle,
 } from "@/shared/components/ui/item";
 import { Badge } from "@/shared/components/ui/badge";
+import { useLongPress } from "@/shared/hooks";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
@@ -47,6 +49,8 @@ type Order = {
  */
 export function OrdersMobileListItem({ order }: { order: Order }) {
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
+	const [menuOpen, setMenuOpen] = useState(false);
+	const { bind } = useLongPress(() => setMenuOpen(true));
 
 	const openNotes = () => {
 		notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber });
@@ -62,7 +66,13 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 				onAction: openNotes,
 			}}
 		>
-			<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte commande">
+			<Item
+				variant="outline"
+				size="sm"
+				className="gap-3"
+				aria-roledescription="carte commande"
+				{...bind}
+			>
 				<ItemContent className="min-w-0">
 					<ItemTitle>
 						<Link
@@ -103,6 +113,8 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 								trackingUrl: order.trackingUrl,
 								invoiceNumber: order.invoiceNumber,
 							}}
+							open={menuOpen}
+							onOpenChange={setMenuOpen}
 						/>
 					</StopEventPropagation>
 				</ItemActions>

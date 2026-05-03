@@ -733,4 +733,54 @@ describe("initializePayment", () => {
 			);
 		});
 	});
+
+	describe("store closure", () => {
+		it("should reject non-admin user when store is closed", async () => {
+			mockAssertStoreOpen.mockResolvedValue({
+				closed: true,
+				message: "La boutique est temporairement fermée.",
+			});
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result.success).toBe(false);
+			if (result.success) return;
+			expect(result.error).toBe("La boutique est temporairement fermée.");
+			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
+		});
+
+		it("should reject guest when store is closed", async () => {
+			mockGetSession.mockResolvedValue(null);
+			mockAssertStoreOpen.mockResolvedValue({
+				closed: true,
+				message: "Fermée.",
+			});
+
+			const result = await initializePayment({
+				cartItems: VALID_CART_ITEMS,
+				email: "guest@example.com",
+			});
+
+			expect(result.success).toBe(false);
+			if (result.success) return;
+			expect(result.error).toBe("Fermée.");
+			expect(mockStripe.paymentIntents.create).not.toHaveBeenCalled();
+		});
+
+		it("should bypass closure check for ADMIN role", async () => {
+			mockGetSession.mockResolvedValue({
+				user: { id: "admin-1", email: "admin@example.com", role: "ADMIN" },
+			});
+			mockAssertStoreOpen.mockResolvedValue({
+				closed: true,
+				message: "La boutique est temporairement fermée.",
+			});
+
+			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
+
+			expect(result.success).toBe(true);
+			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
+			expect(mockStripe.paymentIntents.create).toHaveBeenCalled();
+		});
+	});
 });

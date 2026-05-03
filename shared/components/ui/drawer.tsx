@@ -3,6 +3,7 @@
 import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
+import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
@@ -105,6 +106,8 @@ function DrawerContent({
 	 */
 	onOverlayClick?: React.MouseEventHandler<HTMLDivElement>;
 }) {
+	useRegisterOverlay();
+
 	return (
 		<DrawerPortal data-slot="drawer-portal">
 			<DrawerOverlay onClick={onOverlayClick} />

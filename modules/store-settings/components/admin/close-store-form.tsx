@@ -1,7 +1,6 @@
 "use client";
 
 import { LoaderCircle, Lock } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 
@@ -90,22 +89,7 @@ export function CloseStoreForm() {
 
 			<form.Subscribe selector={(state) => state.values.closureMessage}>
 				{(closureMessage) => (
-					<div className="flex flex-col-reverse gap-2 border-t pt-6 md:flex-row md:justify-end">
-						<Button
-							type="button"
-							variant="outline"
-							asChild
-							disabled={isPending}
-							className="min-h-11"
-						>
-							<Link
-								href="/admin/configuration/boutique"
-								onClick={() => triggerHaptic("light")}
-								aria-disabled={isPending}
-							>
-								Annuler
-							</Link>
-						</Button>
+					<div className="flex border-t pt-6 md:justify-end">
 						<Button
 							type="submit"
 							variant="destructive"

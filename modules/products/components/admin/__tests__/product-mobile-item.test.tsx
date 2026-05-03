@@ -21,6 +21,10 @@ vi.mock("../product-item-drawer", () => ({
 	PRODUCT_ITEM_DRAWER_ID: "product-item-drawer",
 }));
 
+vi.mock("../product-row-actions", () => ({
+	ProductRowActions: () => null,
+}));
+
 vi.mock("next/image", () => ({
 	default: ({ src, alt, ...rest }: { src: string; alt: string; [key: string]: unknown }) => (
 		// eslint-disable-next-line @next/next/no-img-element

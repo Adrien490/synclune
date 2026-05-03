@@ -34,14 +34,6 @@ vi.mock("next/navigation", () => ({
 	useRouter: () => ({ push: mockRouterPush }),
 }));
 
-vi.mock("next/link", () => ({
-	default: ({ children, href, onClick, ...props }: any) => (
-		<a href={href} onClick={onClick} {...props}>
-			{children}
-		</a>
-	),
-}));
-
 vi.mock("react", async (importOriginal) => {
 	const actual = await importOriginal<typeof React>();
 	return {
@@ -144,12 +136,6 @@ describe("CloseStoreForm", () => {
 		expect(screen.getByTestId("field-reopensAt")).toBeInTheDocument();
 	});
 
-	it("renders a Cancel link to /admin/configuration/boutique", () => {
-		render(<CloseStoreForm />);
-		const cancel = screen.getByRole("link", { name: /Annuler/i });
-		expect(cancel).toHaveAttribute("href", "/admin/configuration/boutique");
-	});
-
 	it("renders a submit button with destructive variant and View Transition name", () => {
 		render(<CloseStoreForm />);
 		const submit = screen.getByRole("button", { name: /Fermer la boutique/i });
@@ -180,12 +166,6 @@ describe("CloseStoreForm", () => {
 		render(<CloseStoreForm />);
 		fireEvent.click(screen.getByRole("button", { name: /Fermer la boutique/i }));
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
-	});
-
-	it("triggers 'light' haptic on cancel click", () => {
-		render(<CloseStoreForm />);
-		fireEvent.click(screen.getByRole("link", { name: /Annuler/i }));
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
 	});
 
 	it("sets aria-busy on form while pending", () => {

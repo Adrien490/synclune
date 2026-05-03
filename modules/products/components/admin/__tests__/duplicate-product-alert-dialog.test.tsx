@@ -336,7 +336,7 @@ describe("DuplicateProductAlertDialog", () => {
 	// --------------------------------------------------------------------------
 
 	describe("onSuccess", () => {
-		it("closes the dialog and redirects to the edit page of the duplicated product", () => {
+		it("closes the dialog without redirecting", () => {
 			renderDialog();
 
 			const onSuccess = mockUseDuplicateProduct.mock.calls[0]?.[0]?.onSuccess as
@@ -351,9 +351,7 @@ describe("DuplicateProductAlertDialog", () => {
 			});
 
 			expect(mockDialog.close).toHaveBeenCalledTimes(1);
-			expect(mockRouterPush).toHaveBeenCalledWith(
-				"/admin/catalogue/produits/copie-de-bague-lune/modifier",
-			);
+			expect(mockRouterPush).not.toHaveBeenCalled();
 		});
 	});
 

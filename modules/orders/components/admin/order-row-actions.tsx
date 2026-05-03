@@ -53,9 +53,17 @@ interface OrderRowActionsProps {
 		trackingUrl?: string | null;
 		invoiceNumber?: string | null;
 	};
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
-export function OrderRowActions({ order }: OrderRowActionsProps) {
+export function OrderRowActions({
+	order,
+	open: menuOpen,
+	onOpenChange,
+	hideTrigger,
+}: OrderRowActionsProps) {
 	const cancelDialog = useAlertDialog(CANCEL_ORDER_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_ORDER_DIALOG_ID);
 	const markAsPaidDialog = useAlertDialog(MARK_AS_PAID_DIALOG_ID);
@@ -236,17 +244,19 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 	];
 
 	return (
-		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
-					aria-label={`Actions pour la commande ${order.orderNumber}`}
-				>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</ResponsiveActionMenuTrigger>
+		<ResponsiveActionMenu open={menuOpen} onOpenChange={onOpenChange}>
+			{!hideTrigger && (
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0 transition-transform active:scale-95"
+						aria-label={`Actions pour la commande ${order.orderNumber}`}
+					>
+						<EllipsisVertical className="h-4 w-4" />
+					</Button>
+				</ResponsiveActionMenuTrigger>
+			)}
 			<ResponsiveActionMenuContent
 				title="Actions"
 				description={`Commande ${order.orderNumber}`}

@@ -57,7 +57,7 @@ export async function fetchDashboardRevenueChart(
 		WHERE "paidAt" >= ${chartConfig.startDate}
 			AND "paymentStatus"::text = ${PaymentStatus.PAID}
 			AND "deletedAt" IS NULL
-		GROUP BY TO_CHAR("paidAt" AT TIME ZONE 'UTC', ${chartConfig.sqlDateFormat})
+		GROUP BY date
 		ORDER BY date ASC
 	`;
 

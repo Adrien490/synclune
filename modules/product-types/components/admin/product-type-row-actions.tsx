@@ -23,6 +23,9 @@ interface ProductTypeRowActionsProps {
 	description?: string | null;
 	slug: string;
 	productsCount?: number;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
 export function ProductTypeRowActions({
@@ -32,8 +35,11 @@ export function ProductTypeRowActions({
 	description,
 	slug,
 	productsCount = 0,
+	open: menuOpen,
+	onOpenChange,
+	hideTrigger,
 }: ProductTypeRowActionsProps) {
-	const { open } = useDialog(PRODUCT_TYPE_DIALOG_ID);
+	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
 	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType();
 
@@ -47,7 +53,8 @@ export function ProductTypeRowActions({
 					label: isSystem ? "Voir (lecture seule)" : "Éditer",
 					icon: Pencil,
 					disabled: isSystem,
-					onSelect: () => open({ productType: { id: productTypeId, label, description, slug } }),
+					onSelect: () =>
+						openFormDialog({ productType: { id: productTypeId, label, description, slug } }),
 				},
 				{
 					key: "products",
@@ -80,17 +87,19 @@ export function ProductTypeRowActions({
 	];
 
 	return (
-		<ResponsiveActionMenu>
-			<ResponsiveActionMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
-					aria-label="Actions"
-				>
-					<EllipsisVertical className="h-4 w-4" />
-				</Button>
-			</ResponsiveActionMenuTrigger>
+		<ResponsiveActionMenu open={menuOpen} onOpenChange={onOpenChange}>
+			{!hideTrigger && (
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						size="sm"
+						className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+						aria-label="Actions"
+					>
+						<EllipsisVertical className="h-4 w-4" />
+					</Button>
+				</ResponsiveActionMenuTrigger>
+			)}
 			<ResponsiveActionMenuContent title="Actions" description={label} sections={sections} />
 		</ResponsiveActionMenu>
 	);

@@ -57,7 +57,6 @@ import { ProductsBottomBar } from "@/modules/products/components/admin/products-
 import { ProductsMobileList } from "@/modules/products/components/admin/products-mobile-list";
 import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
 import { ProductsFilterSheet } from "@/modules/products/components/admin/products-filter-sheet";
-import { ProductsQuickFilters } from "@/modules/products/components/admin/products-quick-filters";
 import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
 import { parseFilters } from "./_utils/params";
 
@@ -220,7 +219,6 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					noPrefix
 				/>
 				<ButtonGroup aria-label="Filtres et actions">
-					<ProductsQuickFilters />
 					<ProductsFilterSheet
 						productTypes={productTypes}
 						collections={collections}

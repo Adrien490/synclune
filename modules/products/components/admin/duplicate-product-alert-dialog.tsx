@@ -13,7 +13,6 @@ import {
 import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { LoaderCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
 
@@ -24,13 +23,11 @@ interface DuplicateProductData {
 }
 
 export function DuplicateProductAlertDialog() {
-	const router = useRouter();
 	const duplicateDialog = useAlertDialog<DuplicateProductData>(DUPLICATE_PRODUCT_DIALOG_ID);
 
 	const { action, isPending } = useDuplicateProduct({
-		onSuccess: (_message, data) => {
+		onSuccess: () => {
 			duplicateDialog.close();
-			router.push(`/admin/catalogue/produits/${data.slug}/modifier`);
 		},
 	});
 

@@ -31,7 +31,7 @@ export function MaterialsMobileList({ materialsPromise, perPage }: MaterialsMobi
 	}
 
 	return (
-		<div className="space-y-4 pb-20 md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<ItemGroup aria-label="Materiaux" className="gap-2">
 				{materials.map((material) => (
 					<div key={material.id} role="listitem">

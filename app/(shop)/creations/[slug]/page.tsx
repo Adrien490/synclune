@@ -220,19 +220,21 @@ export default async function ProductPage({
 							{/* Sticky add-to-cart desktop (apparaît quand le CTA principal sort du viewport) */}
 							<StickyCartCTADesktop product={product} defaultSku={selectedSku} />
 
-							{/* Separator avant avis clients */}
-							<Separator className="bg-border" />
-
-							{/* 7. Avis clients (avant related/recently viewed - 72% lisent les avis avant d'acheter) */}
-							<Suspense fallback={<ProductReviewsSectionSkeleton />}>
-								<ProductReviewsSection
-									productId={product.id}
-									productSlug={product.slug}
-									ratingFilter={ratingFilter}
-									sortBy={sortBy}
-									reviewStats={reviewStats}
-								/>
-							</Suspense>
+							{/* 7. Avis clients (masqué si aucun avis - 72% lisent les avis avant d'acheter) */}
+							{reviewStats.totalCount > 0 && (
+								<>
+									<Separator className="bg-border" />
+									<Suspense fallback={<ProductReviewsSectionSkeleton />}>
+										<ProductReviewsSection
+											productId={product.id}
+											productSlug={product.slug}
+											ratingFilter={ratingFilter}
+											sortBy={sortBy}
+											reviewStats={reviewStats}
+										/>
+									</Suspense>
+								</>
+							)}
 
 							{/* Separator avant produits recemment vus */}
 							<Separator className="bg-border" />

@@ -8,6 +8,7 @@ import { buttonVariants } from "@/shared/components/ui/button";
 import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 import { cn } from "@/shared/utils/cn";
 
 /**
@@ -165,6 +166,7 @@ function AlertDialogContent({
 	...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Content>) {
 	const { isMobile } = useAlertDialogCtx();
+	useRegisterOverlay();
 
 	if (isMobile) {
 		return (

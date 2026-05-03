@@ -15,6 +15,7 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
+import { useHasOverlay } from "@/shared/stores/use-overlay-stack-store";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Menu } from "lucide-react";
@@ -29,8 +30,9 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const mounted = useMounted();
 	const pathname = usePathname();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
+	const hasOverlay = useHasOverlay();
 
-	const isHidden = isMenuOpen;
+	const isHidden = isMenuOpen || hasOverlay;
 	const tabs = getQuickAccessItems();
 
 	function renderTab(tab: NavItem) {

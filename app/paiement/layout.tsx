@@ -1,3 +1,4 @@
+import { isAdmin } from "@/modules/auth/utils/guards";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { Logo } from "@/shared/components/logo";
@@ -18,7 +19,10 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 	const storeStatus = await getStoreStatus();
 
 	if (storeStatus.isClosed) {
-		redirect("/");
+		const admin = await isAdmin();
+		if (!admin) {
+			redirect("/");
+		}
 	}
 
 	return (

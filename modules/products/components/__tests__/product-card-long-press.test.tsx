@@ -50,7 +50,8 @@ afterEach(() => {
  * The wrapper div with role=undefined is the direct parent of `children`.
  */
 function triggerLongPress() {
-	const wrapper = document.querySelector("[class*='touch-manipulation']") as HTMLElement | null;
+	// Wrapper exposes touch-action: manipulation via the useLongPress hook.
+	const wrapper = document.querySelector("[style*='touch-action']") as HTMLElement | null;
 	if (!wrapper) throw new Error("wrapper not found");
 	act(() => {
 		fireEvent.touchStart(wrapper, {
@@ -238,7 +239,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			const wrapper = document.querySelector("[class*='touch-manipulation']") as HTMLElement;
+			const wrapper = document.querySelector("[style*='touch-action']") as HTMLElement;
 			act(() => {
 				fireEvent.touchStart(wrapper, { touches: [{ clientX: 10, clientY: 10 }] });
 				fireEvent.touchMove(wrapper, { touches: [{ clientX: 50, clientY: 50 }] });
@@ -253,7 +254,7 @@ describe("ProductCardLongPress", () => {
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
-			const wrapper = document.querySelector("[class*='touch-manipulation']") as HTMLElement;
+			const wrapper = document.querySelector("[style*='touch-action']") as HTMLElement;
 			act(() => {
 				fireEvent.touchStart(wrapper, { touches: [{ clientX: 10, clientY: 10 }] });
 				fireEvent.touchEnd(wrapper);

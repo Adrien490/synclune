@@ -34,7 +34,7 @@ export function ProductTypesMobileList({
 	}
 
 	return (
-		<div className="space-y-4 pb-20 md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<ItemGroup aria-label="Types de bijoux" className="gap-2">
 				{productTypes.map((productType) => (
 					<div key={productType.id} role="listitem">
