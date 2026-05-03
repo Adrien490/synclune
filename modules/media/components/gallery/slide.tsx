@@ -79,7 +79,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 					type="button"
 					onClick={(e) => {
 						e.stopPropagation();
-						haptic("medium");
+						haptic("light");
 						onRetry();
 					}}
 					className="bg-primary text-primary-foreground hover:bg-primary/90 flex min-h-11 touch-manipulation items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
@@ -131,6 +131,7 @@ export function GallerySlide({
 	// Reset state si l'URL change
 	useEffect(() => {
 		if (media.mediaType === "VIDEO") {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setVideoState("loading");
 		}
 	}, [media.url, media.mediaType]);

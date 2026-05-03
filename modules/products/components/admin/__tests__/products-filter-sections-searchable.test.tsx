@@ -227,6 +227,23 @@ describe("ColorsSection", () => {
 			expect(screen.getByTestId("accordion-item-colors")).toBeInTheDocument();
 		});
 
+		it("wraps color items in a scrollable container (max-h + overflow-y-auto)", () => {
+			const form = createColorForm();
+			render(
+				<ColorsSection
+					form={form as never}
+					sortedColors={mockColors}
+					filteredColors={mockColors}
+					colorSearch=""
+					setColorSearch={vi.fn()}
+				/>,
+			);
+			const item = screen.getByTestId("accordion-item-colors");
+			const container = item.querySelector(".max-h-64");
+			expect(container).not.toBeNull();
+			expect(container).toHaveClass("overflow-y-auto");
+		});
+
 		it("renders section header with Couleurs label", () => {
 			const form = createColorForm();
 			render(
@@ -462,6 +479,23 @@ describe("MaterialsSection", () => {
 				/>,
 			);
 			expect(screen.getByTestId("accordion-item-materials")).toBeInTheDocument();
+		});
+
+		it("wraps material items in a scrollable container (max-h + overflow-y-auto)", () => {
+			const form = createMaterialForm();
+			render(
+				<MaterialsSection
+					form={form as never}
+					sortedMaterials={mockMaterials}
+					filteredMaterials={mockMaterials}
+					materialSearch=""
+					setMaterialSearch={vi.fn()}
+				/>,
+			);
+			const item = screen.getByTestId("accordion-item-materials");
+			const container = item.querySelector(".max-h-64");
+			expect(container).not.toBeNull();
+			expect(container).toHaveClass("overflow-y-auto");
 		});
 
 		it("renders section header with Matériaux label", () => {

@@ -5,7 +5,7 @@ import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
-	AdminSearchDrawer,
+	AdminQuickSearchDialog,
 	StickyActionBar,
 	type StickyActionBarItem,
 } from "@/shared/components/sticky-action-bar";
@@ -15,6 +15,7 @@ import {
 	ADMIN_PRODUCTS_SORT_LABELS,
 	GET_PRODUCTS_SORT_FIELDS,
 } from "../../constants/product.constants";
+import { productsAdminQuickSearchAdapter } from "./products-quick-search-adapter";
 import { ProductsFilterSheet } from "./products-filter-sheet";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
@@ -130,12 +131,10 @@ export function ProductsBottomBar({
 				showResetOption
 			/>
 
-			<AdminSearchDrawer
+			<AdminQuickSearchDialog
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Rechercher par titre, type..."
-				ariaLabel="Rechercher un produit par titre ou type"
-				scope="products"
+				adapter={productsAdminQuickSearchAdapter}
 			/>
 		</>
 	);

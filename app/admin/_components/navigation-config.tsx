@@ -19,6 +19,16 @@ import {
 } from "lucide-react";
 
 // ============================================================================
+// SHOP STATUS FLAG
+// ============================================================================
+
+// TODO: passer à true au lancement de la boutique (réactive Ventes, Clients,
+// Marketing et Contenu, et restaure l'onglet "Commandes" du bottom bar).
+// Cast `as boolean` pour défaire le narrowing TypeScript du littéral `false`,
+// sinon ESLint flag `SHOP_LIVE ? ... : []` comme always-falsy.
+const SHOP_LIVE = false as boolean;
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -42,146 +52,138 @@ interface NavigationData {
 }
 
 // ============================================================================
+// NAVIGATION GROUPS
+// ============================================================================
+
+const VENTES_GROUP: NavGroup = {
+	label: "Ventes",
+	icon: ShoppingBag,
+	items: [
+		{
+			id: "orders",
+			title: "Commandes",
+			url: "/admin/ventes/commandes",
+			icon: ShoppingBag,
+		},
+		{
+			id: "refunds",
+			title: "Remboursements",
+			url: "/admin/ventes/remboursements",
+			icon: ReceiptText,
+		},
+	],
+};
+
+const CLIENTS_GROUP: NavGroup = {
+	label: "Clients",
+	icon: Users,
+	items: [
+		{
+			id: "customers",
+			title: "Clients",
+			url: "/admin/clients",
+			icon: Users,
+		},
+	],
+};
+
+const CATALOGUE_GROUP: NavGroup = {
+	label: "Catalogue",
+	icon: Package,
+	collapsible: true,
+	items: [
+		{
+			id: "products",
+			title: "Produits",
+			url: "/admin/catalogue/produits",
+			icon: Package,
+		},
+		{
+			id: "collections",
+			title: "Collections",
+			url: "/admin/catalogue/collections",
+			icon: Layers,
+		},
+		{
+			id: "product-types",
+			title: "Types de produits",
+			shortTitle: "Types",
+			url: "/admin/catalogue/types-de-produits",
+			icon: Tag,
+		},
+		{
+			id: "colors",
+			title: "Couleurs",
+			url: "/admin/catalogue/couleurs",
+			icon: Palette,
+		},
+		{
+			id: "materials",
+			title: "Matériaux",
+			url: "/admin/catalogue/materiaux",
+			icon: Gem,
+		},
+	],
+};
+
+const MARKETING_GROUP: NavGroup = {
+	label: "Marketing",
+	icon: Mail,
+	collapsible: true,
+	items: [
+		{
+			id: "discounts",
+			title: "Codes promo",
+			shortTitle: "Promos",
+			url: "/admin/marketing/discounts",
+			icon: Ticket,
+		},
+		{
+			id: "reviews",
+			title: "Avis clients",
+			shortTitle: "Avis",
+			url: "/admin/marketing/avis",
+			icon: MessageSquare,
+		},
+	],
+};
+
+const CONTENU_GROUP: NavGroup = {
+	label: "Contenu",
+	icon: FileText,
+	items: [
+		{
+			id: "announcements",
+			title: "Annonces",
+			url: "/admin/contenu/annonces",
+			icon: Megaphone,
+		},
+	],
+};
+
+const CONFIG_GROUP: NavGroup = {
+	label: "Configuration",
+	icon: Settings,
+	items: [
+		{
+			id: "store-settings",
+			title: "Boutique",
+			url: "/admin/configuration/boutique",
+			icon: Store,
+		},
+	],
+};
+
+// ============================================================================
 // NAVIGATION DATA
 // ============================================================================
 
 export const navigationData: NavigationData = {
 	navGroups: [
-		// ─────────────────────────────────────────────────────────────────────────
-		// VENTES - Commandes et remboursements
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Ventes",
-			icon: ShoppingBag,
-			items: [
-				{
-					id: "orders",
-					title: "Commandes",
-					url: "/admin/ventes/commandes",
-					icon: ShoppingBag,
-				},
-				{
-					id: "refunds",
-					title: "Remboursements",
-					url: "/admin/ventes/remboursements",
-					icon: ReceiptText,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// CLIENTS - Gestion des utilisateurs
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Clients",
-			icon: Users,
-			items: [
-				{
-					id: "customers",
-					title: "Clients",
-					url: "/admin/clients",
-					icon: Users,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// CATALOGUE - Produits, Collections, Types, Couleurs, Matériaux
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Catalogue",
-			icon: Package,
-			collapsible: true,
-			items: [
-				{
-					id: "products",
-					title: "Produits",
-					url: "/admin/catalogue/produits",
-					icon: Package,
-				},
-				{
-					id: "collections",
-					title: "Collections",
-					url: "/admin/catalogue/collections",
-					icon: Layers,
-				},
-				{
-					id: "product-types",
-					title: "Types de produits",
-					shortTitle: "Types",
-					url: "/admin/catalogue/types-de-produits",
-					icon: Tag,
-				},
-				{
-					id: "colors",
-					title: "Couleurs",
-					url: "/admin/catalogue/couleurs",
-					icon: Palette,
-				},
-				{
-					id: "materials",
-					title: "Matériaux",
-					url: "/admin/catalogue/materiaux",
-					icon: Gem,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// MARKETING - Codes promo et avis
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Marketing",
-			icon: Mail,
-			collapsible: true,
-			items: [
-				{
-					id: "discounts",
-					title: "Codes promo",
-					shortTitle: "Promos",
-					url: "/admin/marketing/discounts",
-					icon: Ticket,
-				},
-				{
-					id: "reviews",
-					title: "Avis clients",
-					shortTitle: "Avis",
-					url: "/admin/marketing/avis",
-					icon: MessageSquare,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// CONTENU - Contenu éditable du site
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Contenu",
-			icon: FileText,
-			items: [
-				{
-					id: "announcements",
-					title: "Annonces",
-					url: "/admin/contenu/annonces",
-					icon: Megaphone,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// CONFIGURATION - Paramètres boutique
-		// ─────────────────────────────────────────────────────────────────────────
-		{
-			label: "Configuration",
-			icon: Settings,
-			items: [
-				{
-					id: "store-settings",
-					title: "Boutique",
-					url: "/admin/configuration/boutique",
-					icon: Store,
-				},
-			],
-		},
-		// ─────────────────────────────────────────────────────────────────────────
-		// SYSTEME - Planned for future implementation
-		// Pages: Litiges, Journal d'audit, Webhooks, Emails échoués
-		// ─────────────────────────────────────────────────────────────────────────
+		...(SHOP_LIVE ? [VENTES_GROUP, CLIENTS_GROUP] : []),
+		CATALOGUE_GROUP,
+		...(SHOP_LIVE ? [MARKETING_GROUP, CONTENU_GROUP] : []),
+		CONFIG_GROUP,
 	],
 };
 
@@ -205,8 +207,11 @@ const DASHBOARD_ITEM: NavItem = {
 /**
  * IDs des items affichés dans la section "Accès rapide" du menu mobile.
  * Filtrés depuis getAllNavItems() pour rester en sync avec navigationData.
+ * Mode boutique fermée : remplace "orders" par "store-settings".
  */
-const QUICK_ACCESS_ITEM_IDS = ["dashboard", "orders", "products"] as const;
+const QUICK_ACCESS_ITEM_IDS = SHOP_LIVE
+	? (["dashboard", "orders", "products"] as const)
+	: (["dashboard", "store-settings", "products"] as const);
 
 /**
  * Récupère tous les items de navigation (flat list), including standalone items.

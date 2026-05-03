@@ -78,7 +78,7 @@ export function DeleteDiscountAlertDialog() {
 							type="submit"
 							disabled={isPending || usageCount > 0}
 							aria-busy={isPending}
-							onPointerDown={() => haptic("heavy")}
+							onClick={() => haptic("heavy")}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression..." : "Supprimer"}

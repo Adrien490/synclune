@@ -11,8 +11,16 @@ import {
 // ============================================================================
 
 describe("navigationData", () => {
-	it("has 6 navigation groups", () => {
-		expect(navigationData.navGroups).toHaveLength(6);
+	// Mode "boutique fermée" (SHOP_LIVE=false) : seuls Catalogue + Configuration.
+	// Au passage SHOP_LIVE=true, restaurer ces assertions à 6 groupes
+	// (Ventes, Clients, Catalogue, Marketing, Contenu, Configuration).
+	it("has 2 navigation groups in shop-closed mode", () => {
+		expect(navigationData.navGroups).toHaveLength(2);
+	});
+
+	it("only includes Catalogue and Configuration groups in shop-closed mode", () => {
+		const labels = navigationData.navGroups.map((g) => g.label);
+		expect(labels).toEqual(["Catalogue", "Configuration"]);
 	});
 
 	it("has unique group labels", () => {
@@ -47,13 +55,12 @@ describe("navigationData", () => {
 		}
 	});
 
-	it("marks Catalogue and Marketing as collapsible", () => {
+	it("marks Catalogue as collapsible in shop-closed mode", () => {
 		const collapsibleLabels = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
 		expect(collapsibleLabels).toContain("Catalogue");
-		expect(collapsibleLabels).toContain("Marketing");
-		expect(collapsibleLabels).toHaveLength(2);
+		expect(collapsibleLabels).toHaveLength(1);
 	});
 
 	it("has shortTitle on items that need it", () => {
@@ -96,9 +103,9 @@ describe("getQuickAccessItems", () => {
 		expect(items).toHaveLength(3);
 	});
 
-	it("returns dashboard, orders, and products in order", () => {
+	it("returns dashboard, store-settings, and products in order (shop-closed mode)", () => {
 		const items = getQuickAccessItems();
-		expect(items.map((i) => i.id)).toEqual(["dashboard", "orders", "products"]);
+		expect(items.map((i) => i.id)).toEqual(["dashboard", "store-settings", "products"]);
 	});
 
 	it("returns valid NavItem objects", () => {

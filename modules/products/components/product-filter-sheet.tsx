@@ -153,6 +153,7 @@ export function ProductFilterSheet({
 
 	useEffect(() => {
 		if (isOpen) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			onSheetSync();
 		}
 	}, [isOpen, searchParams]);

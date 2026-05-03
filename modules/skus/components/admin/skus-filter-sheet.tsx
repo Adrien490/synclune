@@ -8,13 +8,17 @@ import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import type { ColorOption } from "@/modules/colors/data/get-color-options";
 import type { MaterialOption } from "@/modules/materials/data/get-material-options";
 import { useAppForm } from "@/shared/components/forms";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 
 interface SkusFilterSheetProps {
 	className?: string;
 	colorOptions: ColorOption[];
 	materialOptions: MaterialOption[];
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
 interface FilterFormData {
@@ -109,10 +113,29 @@ export function SkusFilterSheet({
 	className,
 	colorOptions,
 	materialOptions,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
 }: SkusFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isOpen = controlledOpen ?? internalOpen;
+
+	// Focus restoration WCAG 2.4.3 — capture activeElement à l'ouverture,
+	// restaure via rAF + preventScroll à la fermeture (évite jump iOS).
+	const previousFocusRef = useRef<HTMLElement | null>(null);
+
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (nextOpen) {
+			previousFocusRef.current = document.activeElement as HTMLElement | null;
+		}
+		(controlledOnOpenChange ?? setInternalOpen)(nextOpen);
+		if (!nextOpen) {
+			requestAnimationFrame(() => previousFocusRef.current?.focus({ preventScroll: true }));
+		}
+	};
 
 	// Initialiser les valeurs depuis l'URL
 	const initialValues = ((): FilterFormData => {
@@ -170,7 +193,7 @@ export function SkusFilterSheet({
 		else if (formData.isActive === "inactive") params.set("filter_isActive", "false");
 
 		startTransition(() => {
-			router.push(`?${params.toString()}`, { scroll: false });
+			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
 		});
 	};
 
@@ -189,7 +212,7 @@ export function SkusFilterSheet({
 		params.delete("direction");
 
 		startTransition(() => {
-			router.push(`?${params.toString()}`, { scroll: false });
+			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
 		});
 	};
 
@@ -203,6 +226,9 @@ export function SkusFilterSheet({
 
 	return (
 		<FilterSheetWrapper
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

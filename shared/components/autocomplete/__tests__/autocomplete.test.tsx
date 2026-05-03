@@ -926,12 +926,12 @@ describe("Autocomplete", () => {
 			expect(mockHaptic).toHaveBeenCalledWith("light");
 		});
 
-		it("triggers 'medium' haptic when retry button is clicked", () => {
+		it("triggers 'light' haptic when retry button is clicked", () => {
 			const onRetry = vi.fn();
 			renderAutocomplete({ value: "ba", items: [], error: "Erreur", onRetry });
 			fireEvent.focus(getInput());
 			fireEvent.click(screen.getByRole("button", { name: /Réessayer/i }));
-			expect(mockHaptic).toHaveBeenCalledWith("medium");
+			expect(mockHaptic).toHaveBeenCalledWith("light");
 			expect(onRetry).toHaveBeenCalledTimes(1);
 		});
 

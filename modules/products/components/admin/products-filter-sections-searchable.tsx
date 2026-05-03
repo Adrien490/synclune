@@ -56,7 +56,7 @@ export function ColorsSection({
 								placeholder="Rechercher une couleur..."
 							/>
 						)}
-						<div className="space-y-1">
+						<div className="max-h-64 space-y-1 overflow-y-auto">
 							{filteredColors.length === 0 ? (
 								<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
 							) : (
@@ -149,7 +149,7 @@ export function MaterialsSection({
 								placeholder="Rechercher un matériau..."
 							/>
 						)}
-						<div className="space-y-1">
+						<div className="max-h-64 space-y-1 overflow-y-auto">
 							{filteredMaterials.length === 0 ? (
 								<p className="text-muted-foreground py-2 text-center text-xs">Aucun résultat</p>
 							) : (

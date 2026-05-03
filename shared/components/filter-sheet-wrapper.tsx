@@ -80,7 +80,7 @@ export function FilterSheetWrapper({
 		: undefined;
 
 	const handleApply = () => {
-		haptic("medium");
+		haptic("success");
 		onApply?.();
 		controlledOnOpenChange?.(false);
 	};
@@ -99,18 +99,6 @@ export function FilterSheetWrapper({
 		haptic("light");
 		onClearAll?.();
 		setConfirmClearOpen(false);
-	};
-
-	const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-		if (onOverlayClick) {
-			onOverlayClick(event);
-			return;
-		}
-		haptic("selection");
-	};
-
-	const handleCloseClick = () => {
-		haptic("selection");
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -176,7 +164,7 @@ export function FilterSheetWrapper({
 				onKeyDown={handleKeyDown}
 				title={title}
 				showCloseButton={false}
-				onOverlayClick={handleOverlayClick}
+				onOverlayClick={onOverlayClick}
 				data-pending={isPending ? "" : undefined}
 				aria-busy={isPending}
 			>
@@ -219,7 +207,6 @@ export function FilterSheetWrapper({
 								<Button
 									variant="ghost"
 									size="icon"
-									onClick={handleCloseClick}
 									className="text-muted-foreground hover:text-foreground size-11 shrink-0"
 									aria-label="Fermer"
 								>
@@ -280,7 +267,7 @@ export function FilterSheetWrapper({
 							{/* Desktop: groupe de boutons */}
 							<ButtonGroup className="hidden w-full sm:flex" aria-label="Actions de filtrage">
 								<SheetClose asChild className="flex-1">
-									<Button variant="secondary" onClick={handleCloseClick} disabled={isPending}>
+									<Button variant="secondary" disabled={isPending}>
 										{cancelButtonText}
 									</Button>
 								</SheetClose>

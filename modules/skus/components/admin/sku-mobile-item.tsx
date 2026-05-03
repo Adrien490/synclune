@@ -58,6 +58,14 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 				colorName: sku.color?.name ?? null,
 				materialName: sku.material?.name ?? null,
 				size: sku.size,
+				primaryImage: primaryImage
+					? {
+							url: primaryImage.url,
+							blurDataUrl: primaryImage.blurDataUrl,
+							mediaType: primaryImage.mediaType,
+							altText: primaryImage.altText,
+						}
+					: null,
 			},
 		});
 	};

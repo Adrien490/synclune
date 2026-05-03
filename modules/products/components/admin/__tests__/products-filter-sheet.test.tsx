@@ -36,6 +36,40 @@ vi.mock("react", async (importOriginal) => {
 	};
 });
 
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
+
+vi.mock("@/shared/utils/view-transition", () => ({
+	withViewTransition: <T,>(cb: () => T): T => cb(),
+}));
+
+vi.mock("../admin-filter-active-chips", () => ({
+	AdminFilterActiveChips: ({
+		formData,
+		onRemove,
+	}: {
+		formData: { statuses: string[]; colorSlugs: string[] };
+		onRemove: (chip: { kind: string; value?: string; slug?: string }) => void;
+	}) => {
+		const chipCount = formData.statuses.length + formData.colorSlugs.length;
+		if (chipCount === 0) return null;
+		const firstStatus = formData.statuses[0];
+		return (
+			<div data-testid="admin-filter-active-chips" data-count={chipCount}>
+				{firstStatus && (
+					<button
+						data-testid="chip-remove-status"
+						onClick={() => onRemove({ kind: "status", value: firstStatus })}
+					>
+						Remove status
+					</button>
+				)}
+			</div>
+		);
+	},
+}));
+
 vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 	FilterSheetWrapper: ({
 		children,
@@ -1061,15 +1095,35 @@ describe("ProductsFilterSheet", () => {
 	// ─── Default open accordion sections ─────────────────────────────────────
 
 	describe("default open accordion sections", () => {
-		it("includes 'status', 'types', and 'price' in defaultValue by default", () => {
+		it("includes 'types' and 'price' in defaultValue by default (status only if active)", () => {
+			renderDefault();
+			const accordion = screen.getByTestId("accordion");
+			const defaultValue = JSON.parse(
+				accordion.getAttribute("data-default-value") ?? "[]",
+			) as string[];
+			expect(defaultValue).toContain("types");
+			expect(defaultValue).toContain("price");
+			expect(defaultValue).not.toContain("status");
+		});
+
+		it("includes 'status' in defaultValue when status filter is active in URL", () => {
+			mockSearchParams.value = new URLSearchParams("filter_status=PUBLIC");
 			renderDefault();
 			const accordion = screen.getByTestId("accordion");
 			const defaultValue = JSON.parse(
 				accordion.getAttribute("data-default-value") ?? "[]",
 			) as string[];
 			expect(defaultValue).toContain("status");
-			expect(defaultValue).toContain("types");
-			expect(defaultValue).toContain("price");
+		});
+
+		it("includes 'collections' in defaultValue when collection filter is active in URL", () => {
+			mockSearchParams.value = new URLSearchParams("filter_collectionId=col-ete");
+			renderDefault();
+			const accordion = screen.getByTestId("accordion");
+			const defaultValue = JSON.parse(
+				accordion.getAttribute("data-default-value") ?? "[]",
+			) as string[];
+			expect(defaultValue).toContain("collections");
 		});
 
 		it("includes 'colors' in defaultValue when color filter is active in URL", () => {
@@ -1130,6 +1184,42 @@ describe("ProductsFilterSheet", () => {
 			const badges = screen.queryAllByTestId("badge");
 			const priceBadge = badges.find((b) => b.textContent!.includes("€ -"));
 			expect(priceBadge).toBeUndefined();
+		});
+	});
+
+	// ─── Active chips integration ────────────────────────────────────────────
+
+	describe("active filter chips integration", () => {
+		it("does not render the chips region when no filters are active", () => {
+			renderDefault();
+			expect(screen.queryByTestId("admin-filter-active-chips")).not.toBeInTheDocument();
+		});
+
+		it("renders the chips region when filters are active in URL", () => {
+			mockSearchParams.value = new URLSearchParams("filter_status=PUBLIC");
+			renderDefault();
+			expect(screen.getByTestId("admin-filter-active-chips")).toBeInTheDocument();
+		});
+
+		it("invokes the chip onRemove handler without throwing when clicked", () => {
+			mockSearchParams.value = new URLSearchParams("filter_status=PUBLIC");
+			renderDefault();
+			expect(() => fireEvent.click(screen.getByTestId("chip-remove-status"))).not.toThrow();
+		});
+	});
+
+	// ─── Aria live region for pending filter count ───────────────────────────
+
+	describe("aria-live region", () => {
+		it("announces 'Aucun filtre sélectionné' when no filters are pending", () => {
+			renderDefault();
+			expect(screen.getByText("Aucun filtre sélectionné")).toBeInTheDocument();
+		});
+
+		it("announces filter count when filters are pending from URL", () => {
+			mockSearchParams.value = new URLSearchParams("filter_status=PUBLIC&filter_status=DRAFT");
+			renderDefault();
+			expect(screen.getByText(/2 filtres sélectionnés/)).toBeInTheDocument();
 		});
 	});
 

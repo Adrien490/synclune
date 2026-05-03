@@ -607,6 +607,7 @@ function SidebarMenuSkeleton({
 
 	React.useEffect(() => {
 		// Set random width only on client after mount
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setWidth(`${Math.floor(Math.random() * 40) + 50}%`);
 	}, []);
 

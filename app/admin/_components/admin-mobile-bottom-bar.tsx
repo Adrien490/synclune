@@ -17,8 +17,9 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { LayoutDashboard, ShoppingBag, Package, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
+import { getQuickAccessItems, type NavItem } from "./navigation-config";
 
 interface AdminMobileBottomBarProps {
 	badges?: Record<string, number>;
@@ -30,47 +31,24 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 
 	const isHidden = isMenuOpen;
+	const tabs = getQuickAccessItems();
 
-	const leftTabs = [
-		{
-			id: "dashboard",
-			label: "Accueil",
-			href: "/admin",
-			icon: LayoutDashboard,
-			isActive: isRouteActive(pathname, "/admin"),
-		},
-		{
-			id: "orders",
-			label: "Commandes",
-			href: "/admin/ventes/commandes",
-			icon: ShoppingBag,
-			isActive: isRouteActive(pathname, "/admin/ventes/commandes"),
-		},
-	] as const;
-
-	const rightTabs = [
-		{
-			id: "products",
-			label: "Produits",
-			href: "/admin/catalogue/produits",
-			icon: Package,
-			isActive: isRouteActive(pathname, "/admin/catalogue/produits"),
-		},
-	] as const;
-
-	function renderTab(tab: (typeof leftTabs)[number] | (typeof rightTabs)[number]) {
+	function renderTab(tab: NavItem) {
+		const isActive = isRouteActive(pathname, tab.url);
 		const badgeCount = tab.id === "orders" ? badges?.["orders"] : undefined;
+		const Icon = tab.icon;
+		const label = tab.shortTitle ?? tab.title;
 		return (
 			<Link
 				key={tab.id}
-				href={tab.href}
-				onClick={() => !tab.isActive && triggerHaptic("light")}
-				className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
-				aria-current={tab.isActive ? "page" : undefined}
+				href={tab.url}
+				onClick={() => !isActive && triggerHaptic("light")}
+				className={cn(bottomBarItemClass, isActive && bottomBarActiveItemClass)}
+				aria-current={isActive ? "page" : undefined}
 			>
-				{tab.isActive && <ActiveDot />}
+				{isActive && <ActiveDot />}
 				<span className="relative">
-					<tab.icon className={bottomBarIconClass} aria-hidden="true" />
+					<Icon className={bottomBarIconClass} aria-hidden="true" />
 					{badgeCount != null && badgeCount > 0 && (
 						<span
 							className={bottomBarBadgeClass}
@@ -80,7 +58,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 						</span>
 					)}
 				</span>
-				<span className={bottomBarLabelClass}>{tab.label}</span>
+				<span className={bottomBarLabelClass}>{label}</span>
 			</Link>
 		);
 	}
@@ -90,9 +68,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	return createPortal(
 		<BottomBar as="nav" aria-label="Navigation principale administration" isHidden={isHidden}>
 			<div className={bottomBarContainerClass}>
-				{leftTabs.map(renderTab)}
-
-				{rightTabs.map(renderTab)}
+				{tabs.map(renderTab)}
 
 				{/* Onglet Menu — ouvre le bottom sheet de navigation */}
 				<button

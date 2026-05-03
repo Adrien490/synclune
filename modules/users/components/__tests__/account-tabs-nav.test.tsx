@@ -6,17 +6,19 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPathname, mockPush, mockStartTransition, mockIsPending } = vi.hoisted(() => {
-	const mockStartTransition = vi.fn((cb: () => void) => cb());
-	const mockIsPending = { value: false };
+const { mockPathname, mockPush, mockStartTransition, mockIsPending, mockTriggerHaptic } =
+	vi.hoisted(() => {
+		const mockStartTransition = vi.fn((cb: () => void) => cb());
+		const mockIsPending = { value: false };
 
-	return {
-		mockPathname: { value: "/commandes" },
-		mockPush: vi.fn(),
-		mockStartTransition,
-		mockIsPending,
-	};
-});
+		return {
+			mockPathname: { value: "/commandes" },
+			mockPush: vi.fn(),
+			mockStartTransition,
+			mockIsPending,
+			mockTriggerHaptic: vi.fn(),
+		};
+	});
 
 // ============================================================================
 // MODULE MOCKS
@@ -35,27 +37,8 @@ vi.mock("react", async (importOriginal) => {
 	};
 });
 
-vi.mock("@/shared/components/bottom-bar", () => ({
-	BottomBar: ({
-		children,
-		breakpointClass,
-		"aria-label": ariaLabel,
-	}: {
-		children: React.ReactNode;
-		breakpointClass?: string;
-		as?: string;
-		"aria-label"?: string;
-	}) => (
-		<div data-testid="bottom-bar" data-breakpoint-class={breakpointClass} aria-label={ariaLabel}>
-			{children}
-		</div>
-	),
-	ActiveDot: () => <span data-testid="active-dot" />,
-	bottomBarContainerClass: "bottom-bar-container",
-	bottomBarItemClass: "bottom-bar-item",
-	bottomBarActiveItemClass: "bottom-bar-active-item",
-	bottomBarIconClass: "bottom-bar-icon",
-	bottomBarLabelClass: "bottom-bar-label",
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
 }));
 
 vi.mock("@/shared/constants/urls", () => ({
@@ -109,6 +92,12 @@ afterEach(() => {
 	mockIsPending.value = false;
 });
 
+const getMobileNav = (container: HTMLElement) =>
+	container.querySelector("nav.lg\\:hidden") as HTMLElement | null;
+
+const getDesktopNav = (container: HTMLElement) =>
+	container.querySelector("nav.hidden.lg\\:block") as HTMLElement | null;
+
 // ============================================================================
 // TESTS
 // ============================================================================
@@ -125,16 +114,13 @@ describe("AccountTabsNav", () => {
 
 		it("renders the desktop nav with hidden class and lg:block", () => {
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			expect(desktopNav).not.toBeNull();
+			expect(getDesktopNav(container)).not.toBeNull();
 		});
 
 		it("renders 3 desktop tab links: Commandes, Adresses, Parametres", () => {
 			render(<AccountTabsNav />);
-			// getAllByRole('link') includes both desktop + mobile links
 			const allLinks = screen.getAllByRole("link");
 			const labels = allLinks.map((l) => l.textContent);
-			// Expect at least 3 links with those labels (desktop tabs)
 			expect(labels.filter((l) => l.includes("Commandes")).length).toBeGreaterThanOrEqual(1);
 			expect(labels.filter((l) => l.includes("Adresses")).length).toBeGreaterThanOrEqual(1);
 			expect(labels.filter((l) => l.includes("Paramètres")).length).toBeGreaterThanOrEqual(1);
@@ -142,8 +128,8 @@ describe("AccountTabsNav", () => {
 
 		it("desktop links point to the correct hrefs", () => {
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const hrefs = Array.from(links).map((l) => l.getAttribute("href"));
 			expect(hrefs).toContain("/commandes");
 			expect(hrefs).toContain("/adresses");
@@ -151,45 +137,85 @@ describe("AccountTabsNav", () => {
 		});
 	});
 
-	describe("Mobile bottom bar rendering", () => {
-		it("renders the BottomBar with breakpointClass='lg:hidden'", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			expect(bottomBar).toHaveAttribute("data-breakpoint-class", "lg:hidden");
+	describe("Mobile sticky top nav rendering", () => {
+		it("renders a mobile nav with lg:hidden class", () => {
+			const { container } = render(<AccountTabsNav />);
+			expect(getMobileNav(container)).not.toBeNull();
 		});
 
-		it("renders the BottomBar with the account navigation aria-label", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			expect(bottomBar).toHaveAttribute("aria-label", "Navigation espace client");
+		it("applies sticky top positioning classes", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			expect(mobileNav.className).toContain("sticky");
+			expect(mobileNav.className).toContain("top-[calc(");
+			expect(mobileNav.className).toContain("z-30");
 		});
 
-		it("renders 3 links inside the BottomBar", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+		it("uses backdrop-blur and border-b for the sticky strip", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			expect(mobileNav.className).toContain("backdrop-blur-md");
+			expect(mobileNav.className).toContain("border-b");
+		});
+
+		it("extends full-bleed via -mx-4 sm:-mx-6", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			expect(mobileNav.className).toContain("-mx-4");
+			expect(mobileNav.className).toContain("sm:-mx-6");
+		});
+
+		it("renders an inner toolbar with role='toolbar'", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const toolbar = mobileNav.querySelector("[role='toolbar']");
+			expect(toolbar).not.toBeNull();
+			expect(toolbar?.getAttribute("aria-orientation")).toBe("horizontal");
+		});
+
+		it("renders 3 links inside the mobile nav", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			expect(links).toHaveLength(3);
 		});
 
 		it("mobile links point to correct hrefs", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			const hrefs = Array.from(links).map((l) => l.getAttribute("href"));
 			expect(hrefs).toContain("/commandes");
 			expect(hrefs).toContain("/adresses");
 			expect(hrefs).toContain("/parametres");
 		});
 
-		it("renders label spans with bottomBarLabelClass on mobile links", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const spans = bottomBar.querySelectorAll("span.bottom-bar-label");
-			expect(spans).toHaveLength(3);
-			const labels = Array.from(spans).map((s) => s.textContent);
+		it("renders mobile labels Commandes/Adresses/Paramètres", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const labels = Array.from(mobileNav.querySelectorAll("a span")).map((s) => s.textContent);
 			expect(labels).toContain("Commandes");
 			expect(labels).toContain("Adresses");
 			expect(labels).toContain("Paramètres");
+		});
+
+		it("renders an icon (svg) per mobile link with aria-hidden", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const svgs = mobileNav.querySelectorAll("svg");
+			expect(svgs).toHaveLength(3);
+			svgs.forEach((svg) => {
+				expect(svg.getAttribute("aria-hidden")).toBe("true");
+			});
+		});
+
+		it("applies min-h-11 for WCAG 2.5.5 touch targets", () => {
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
+			links.forEach((link) => {
+				expect(link.className).toContain("min-h-11");
+			});
 		});
 	});
 
@@ -197,17 +223,17 @@ describe("AccountTabsNav", () => {
 		it("sets aria-current='page' on the active desktop link when on /commandes", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const activeLink = Array.from(links).find((l) => l.getAttribute("href") === "/commandes");
 			expect(activeLink?.getAttribute("aria-current")).toBe("page");
 		});
 
 		it("sets aria-current='page' on the active mobile link when on /adresses", () => {
 			mockPathname.value = "/adresses";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			const activeLink = Array.from(links).find((l) => l.getAttribute("href") === "/adresses");
 			expect(activeLink?.getAttribute("aria-current")).toBe("page");
 		});
@@ -215,8 +241,8 @@ describe("AccountTabsNav", () => {
 		it("matches via startsWith — pathname /commandes/123 activates ORDERS link", () => {
 			mockPathname.value = "/commandes/123";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const ordersLink = Array.from(links).find((l) => l.getAttribute("href") === "/commandes");
 			expect(ordersLink?.getAttribute("aria-current")).toBe("page");
 		});
@@ -224,8 +250,8 @@ describe("AccountTabsNav", () => {
 		it("does not set aria-current on inactive desktop links", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const inactiveLinks = Array.from(links).filter(
 				(l) => l.getAttribute("href") !== "/commandes",
 			);
@@ -233,61 +259,44 @@ describe("AccountTabsNav", () => {
 				expect(link.getAttribute("aria-current")).toBeNull();
 			});
 		});
-
-		it("does not set aria-current on inactive mobile links", () => {
-			mockPathname.value = "/adresses";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
-			const inactiveLinks = Array.from(links).filter((l) => l.getAttribute("href") !== "/adresses");
-			inactiveLinks.forEach((link) => {
-				expect(link.getAttribute("aria-current")).toBeNull();
-			});
-		});
 	});
 
 	describe("Active state styling", () => {
-		it("applies bottomBarActiveItemClass to the active mobile link", () => {
+		it("applies text-foreground to the active mobile link", () => {
 			mockPathname.value = "/adresses";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			const activeLink = Array.from(links).find((l) => l.getAttribute("href") === "/adresses");
-			expect(activeLink?.className).toContain("bottom-bar-active-item");
+			expect(activeLink?.className).toContain("text-foreground");
 		});
 
-		it("does not apply bottomBarActiveItemClass to inactive mobile links", () => {
-			mockPathname.value = "/adresses";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
-			const inactiveLinks = Array.from(links).filter((l) => l.getAttribute("href") !== "/adresses");
-			inactiveLinks.forEach((link) => {
-				expect(link.className).not.toContain("bottom-bar-active-item");
-			});
-		});
-
-		it("renders ActiveDot only for the active mobile link", () => {
+		it("renders the active dot only on the active mobile link", () => {
 			mockPathname.value = "/parametres";
-			render(<AccountTabsNav />);
-			const activeDots = screen.getAllByTestId("active-dot");
-			expect(activeDots).toHaveLength(1);
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const dots = mobileNav.querySelectorAll("span.bg-primary.rounded-full");
+			expect(dots).toHaveLength(1);
+			const activeLink = Array.from(mobileNav.querySelectorAll("a")).find(
+				(l) => l.getAttribute("href") === "/parametres",
+			);
+			expect(activeLink?.querySelector("span.bg-primary.rounded-full")).not.toBeNull();
 		});
 
-		it("renders no ActiveDot when no link is active", () => {
+		it("renders no dot when no mobile link is active", () => {
 			mockPathname.value = "/autre-page";
-			render(<AccountTabsNav />);
-			const activeDots = screen.queryAllByTestId("active-dot");
-			expect(activeDots).toHaveLength(0);
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const dots = mobileNav.querySelectorAll("span.bg-primary.rounded-full");
+			expect(dots).toHaveLength(0);
 		});
 
 		it("applies active border class to the active desktop link", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const activeLink = Array.from(links).find((l) => l.getAttribute("href") === "/commandes");
-			// Active link gets text-foreground and border-primary
 			expect(activeLink?.className).toContain("text-foreground");
 			expect(activeLink?.className).toContain("border-primary");
 		});
@@ -295,8 +304,8 @@ describe("AccountTabsNav", () => {
 		it("applies muted class to inactive desktop links", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const inactiveLinks = Array.from(links).filter(
 				(l) => l.getAttribute("href") !== "/commandes",
 			);
@@ -310,8 +319,8 @@ describe("AccountTabsNav", () => {
 		it("applies pointer-events-none and opacity-70 to desktop links when isPending=true", () => {
 			mockIsPending.value = true;
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			links.forEach((link) => {
 				expect(link.className).toContain("pointer-events-none");
 				expect(link.className).toContain("opacity-70");
@@ -320,9 +329,9 @@ describe("AccountTabsNav", () => {
 
 		it("applies pointer-events-none and opacity-70 to mobile links when isPending=true", () => {
 			mockIsPending.value = true;
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			links.forEach((link) => {
 				expect(link.className).toContain("pointer-events-none");
 				expect(link.className).toContain("opacity-70");
@@ -332,8 +341,8 @@ describe("AccountTabsNav", () => {
 		it("does not apply pending classes when isPending=false", () => {
 			mockIsPending.value = false;
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			links.forEach((link) => {
 				expect(link.className).not.toContain("pointer-events-none");
 				expect(link.className).not.toContain("opacity-70");
@@ -345,40 +354,34 @@ describe("AccountTabsNav", () => {
 		it("calls e.preventDefault() and router.push in startTransition when clicking an inactive link", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const adressesLink = Array.from(links).find((l) => l.getAttribute("href") === "/adresses")!;
 
-			const event = { preventDefault: vi.fn() };
-			fireEvent.click(adressesLink, event);
+			fireEvent.click(adressesLink);
 
 			expect(mockPush).toHaveBeenCalledWith("/adresses");
 			expect(mockStartTransition).toHaveBeenCalledTimes(1);
 		});
 
-		it("wraps router.push inside startTransition", () => {
+		it("triggers haptic feedback when navigating to an inactive link", () => {
 			mockPathname.value = "/commandes";
-			// Make startTransition NOT auto-execute the callback so we can verify it was passed
-			mockStartTransition.mockImplementationOnce((cb: () => void) => {
-				// call it to ensure push is tested, but we track the call
-				cb();
-			});
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			const adressesLink = Array.from(links).find((l) => l.getAttribute("href") === "/adresses")!;
 
 			fireEvent.click(adressesLink);
 
-			expect(mockStartTransition).toHaveBeenCalledTimes(1);
-			expect(mockPush).toHaveBeenCalledWith("/adresses");
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+			expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
 		});
 
 		it("does NOT call router.push when clicking the already-active link", () => {
 			mockPathname.value = "/commandes";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const commandesLink = Array.from(links).find((l) => l.getAttribute("href") === "/commandes")!;
 
 			fireEvent.click(commandesLink);
@@ -387,11 +390,23 @@ describe("AccountTabsNav", () => {
 			expect(mockStartTransition).not.toHaveBeenCalled();
 		});
 
+		it("does NOT trigger haptic when clicking the already-active link", () => {
+			mockPathname.value = "/adresses";
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
+			const adressesLink = Array.from(links).find((l) => l.getAttribute("href") === "/adresses")!;
+
+			fireEvent.click(adressesLink);
+
+			expect(mockTriggerHaptic).not.toHaveBeenCalled();
+		});
+
 		it("does NOT call router.push when clicking active link on a sub-path", () => {
 			mockPathname.value = "/commandes/abc-123";
 			const { container } = render(<AccountTabsNav />);
-			const desktopNav = container.querySelector("nav.hidden.lg\\:block");
-			const links = desktopNav!.querySelectorAll("a");
+			const desktopNav = getDesktopNav(container)!;
+			const links = desktopNav.querySelectorAll("a");
 			const commandesLink = Array.from(links).find((l) => l.getAttribute("href") === "/commandes")!;
 
 			fireEvent.click(commandesLink);
@@ -399,11 +414,11 @@ describe("AccountTabsNav", () => {
 			expect(mockPush).not.toHaveBeenCalled();
 		});
 
-		it("navigates to /parametres from mobile bottom bar when inactive", () => {
+		it("navigates to /parametres from mobile sticky nav when inactive", () => {
 			mockPathname.value = "/commandes";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			const parametresLink = Array.from(links).find(
 				(l) => l.getAttribute("href") === "/parametres",
 			)!;
@@ -415,49 +430,14 @@ describe("AccountTabsNav", () => {
 
 		it("does not navigate when clicking active mobile link", () => {
 			mockPathname.value = "/adresses";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
+			const { container } = render(<AccountTabsNav />);
+			const mobileNav = getMobileNav(container)!;
+			const links = mobileNav.querySelectorAll("a");
 			const adressesLink = Array.from(links).find((l) => l.getAttribute("href") === "/adresses")!;
 
 			fireEvent.click(adressesLink);
 
 			expect(mockPush).not.toHaveBeenCalled();
-		});
-	});
-
-	describe("Icons", () => {
-		it("renders icons with aria-hidden='true' in the mobile bottom bar", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			// Lucide icons render as SVG elements
-			const svgs = bottomBar.querySelectorAll("svg");
-			expect(svgs).toHaveLength(3);
-			svgs.forEach((svg) => {
-				expect(svg.getAttribute("aria-hidden")).toBe("true");
-			});
-		});
-
-		it("applies bottomBarIconClass to each icon", () => {
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const svgs = bottomBar.querySelectorAll("svg");
-			svgs.forEach((svg) => {
-				// SVGAnimatedString — use getAttribute for class checks
-				expect(svg.getAttribute("class")).toContain("bottom-bar-icon");
-			});
-		});
-	});
-
-	describe("bottomBarItemClass applied to all mobile links", () => {
-		it("applies bottomBarItemClass to every mobile link", () => {
-			mockPathname.value = "/commandes";
-			render(<AccountTabsNav />);
-			const bottomBar = screen.getByTestId("bottom-bar");
-			const links = bottomBar.querySelectorAll("a");
-			links.forEach((link) => {
-				expect(link.className).toContain("bottom-bar-item");
-			});
 		});
 	});
 });

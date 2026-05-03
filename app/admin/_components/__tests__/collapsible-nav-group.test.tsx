@@ -173,23 +173,24 @@ describe("CollapsibleNavGroup", () => {
 			expect(items.length).toBe(5); // Produits, Collections, Types, Couleurs, Matériaux
 		});
 
-		it("renders all items in the Ventes group", () => {
-			render(<CollapsibleNavGroup groupLabel="Ventes" groupId="ventes-group" />);
-			const items = screen.getAllByTestId("nav-main-client");
-			expect(items.length).toBe(2); // Commandes, Remboursements
+		it("returns null when group is hidden (shop-closed mode)", () => {
+			const { container } = render(
+				<CollapsibleNavGroup groupLabel="Ventes" groupId="ventes-group" />,
+			);
+			expect(container.innerHTML).toBe("");
 		});
 
 		it("passes correct url and tooltip to NavMainClient", () => {
-			render(<CollapsibleNavGroup groupLabel="Ventes" groupId="ventes-group" />);
+			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
 			const items = screen.getAllByTestId("nav-main-client");
-			expect(items[0]).toHaveAttribute("data-url", "/admin/ventes/commandes");
-			expect(items[0]).toHaveAttribute("data-tooltip", "Commandes");
+			expect(items[0]).toHaveAttribute("data-url", "/admin/catalogue/produits");
+			expect(items[0]).toHaveAttribute("data-tooltip", "Produits");
 		});
 
 		it("renders item titles as text", () => {
-			render(<CollapsibleNavGroup groupLabel="Ventes" groupId="ventes-group" />);
-			expect(screen.getByText("Commandes")).toBeInTheDocument();
-			expect(screen.getByText("Remboursements")).toBeInTheDocument();
+			render(<CollapsibleNavGroup groupLabel="Catalogue" groupId="catalogue-group" />);
+			expect(screen.getByText("Produits")).toBeInTheDocument();
+			expect(screen.getByText("Collections")).toBeInTheDocument();
 		});
 
 		it("sets aria-label on SidebarMenu", () => {

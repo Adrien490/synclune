@@ -4,8 +4,9 @@
  * Reduces upload bandwidth on mobile (iPhone photos = 5-12MB → ~600KB-1.5MB)
  * and avoids 90° rotated photos via `createImageBitmap({ imageOrientation: "from-image" })`.
  *
- * HEIC handling: Safari can decode HEIC in createImageBitmap, Chrome/Firefox cannot.
- * We attempt decoding then surface a clear error if it fails.
+ * HEIC handling: Safari + Chrome macOS decode HEIC natively via createImageBitmap.
+ * Chrome/Firefox/Edge on other platforms fall back to libheif WASM (heic-to/csp,
+ * lazy-loaded only when a HEIC file is encountered).
  */
 
 const HEIC_MIME_TYPES = ["image/heic", "image/heif", "image/heic-sequence", "image/heif-sequence"];
@@ -122,14 +123,28 @@ async function decodeBitmap(file: File): Promise<ImageBitmap> {
 }
 
 /**
+ * Decode a HEIC/HEIF blob via libheif WASM (heic-to/csp).
+ * Lazy-loaded so non-HEIC uploads pay zero bundle cost.
+ */
+async function decodeHeicBitmap(file: File): Promise<ImageBitmap> {
+	const { heicTo } = await import("heic-to/csp");
+	return heicTo({
+		blob: file,
+		type: "bitmap",
+		options: supportsImageBitmapOrientation() ? { imageOrientation: "from-image" } : undefined,
+	});
+}
+
+/**
  * Compress an image client-side with EXIF orientation respect.
  *
  * Skips compression if:
  * - File is already small (< 1MB)
  * - Browser lacks createImageBitmap (very old browsers)
  *
- * For HEIC files, attempts decode (Safari only). Throws a typed error on failure
- * so callers can surface a clear "Switch your iPhone to Most Compatible" toast.
+ * For HEIC files, attempts native decode first (Safari, Chrome macOS) then
+ * falls back to libheif WASM via lazy-loaded `heic-to/csp`. Only throws
+ * `HeicDecodeError` if both paths fail (corrupt file or libheif crash).
  */
 export async function compressImage(
 	file: File,
@@ -152,9 +167,14 @@ export async function compressImage(
 		bitmap = await decodeBitmap(file);
 	} catch (err) {
 		if (heic) {
-			throw new HeicDecodeError(file.name);
+			try {
+				bitmap = await decodeHeicBitmap(file);
+			} catch {
+				throw new HeicDecodeError(file.name);
+			}
+		} else {
+			throw err;
 		}
-		throw err;
 	}
 
 	const reducedData = prefersReducedData();
@@ -196,15 +216,16 @@ export async function compressImage(
 }
 
 /**
- * Thrown when a HEIC file cannot be decoded by the current browser.
- * Caller should surface UX guidance (iPhone Settings → Camera → Formats → Most Compatible).
+ * Thrown when a HEIC file cannot be decoded by either the native browser path
+ * or the libheif WASM fallback (corrupt file, multi-image container without
+ * primary frame, or unsupported codec variant).
  */
 export class HeicDecodeError extends Error {
 	readonly fileName: string;
 	constructor(fileName: string) {
 		super(
-			`Le format HEIC de "${fileName}" n'est pas supporté sur ce navigateur. ` +
-				"Sur iPhone : Réglages > Appareil photo > Formats > Le plus compatible.",
+			`Le fichier HEIC "${fileName}" n'a pas pu être décodé. ` +
+				"Le fichier semble corrompu ou utilise un encodage non supporté.",
 		);
 		this.name = "HeicDecodeError";
 		this.fileName = fileName;

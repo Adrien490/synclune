@@ -194,7 +194,7 @@ function AutocompleteErrorState({ error, onRetry }: { error: string; onRetry?: (
 							variant="ghost"
 							size="sm"
 							onClick={() => {
-								haptic("medium");
+								haptic("light");
 								onRetry();
 							}}
 							className="min-h-11"

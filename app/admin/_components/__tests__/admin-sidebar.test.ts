@@ -69,11 +69,13 @@ describe("navigation config integrity", () => {
 		}
 	});
 
-	it("collapsible groups are Catalogue and Marketing", () => {
+	it("collapsible groups are Catalogue (shop-closed mode)", () => {
+		// Marketing is hidden when SHOP_LIVE=false. Restore Marketing to this list
+		// when SHOP_LIVE flips to true.
 		const collapsibleGroups = navigationData.navGroups
 			.filter((g) => g.collapsible)
 			.map((g) => g.label);
-		expect(collapsibleGroups).toEqual(["Catalogue", "Marketing"]);
+		expect(collapsibleGroups).toEqual(["Catalogue"]);
 	});
 });
 

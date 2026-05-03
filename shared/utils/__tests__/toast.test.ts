@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 const { mockSonner, mockHaptic } = vi.hoisted(() => ({
 	mockSonner: {
@@ -252,6 +252,74 @@ describe("toast wrapper", () => {
 
 		it("returns sonner toast id for error", () => {
 			expect(toast.error("fail")).toBe("toast-id-2");
+		});
+	});
+
+	describe("mobile viewport — skip loading toasts", () => {
+		const stubMatchMedia = (matches: boolean) => {
+			vi.stubGlobal(
+				"matchMedia",
+				vi.fn().mockReturnValue({
+					matches,
+					media: "(max-width: 767px)",
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+				}),
+			);
+			window.matchMedia = globalThis.matchMedia;
+		};
+
+		afterEach(() => {
+			vi.unstubAllGlobals();
+		});
+
+		it("loading() returns undefined and does not call sonner on mobile", () => {
+			stubMatchMedia(true);
+			expect(toast.loading("Chargement…")).toBeUndefined();
+			expect(mockSonner.loading).not.toHaveBeenCalled();
+		});
+
+		it("loading() forwards to sonner on desktop", () => {
+			stubMatchMedia(false);
+			toast.loading("Chargement…");
+			expect(mockSonner.loading).toHaveBeenCalledWith("Chargement…");
+		});
+
+		it("promise() resolves manually with toast.success on mobile (no sonner.promise)", async () => {
+			stubMatchMedia(true);
+			const p = Promise.resolve("data");
+			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
+			await p;
+			await Promise.resolve();
+			expect(mockSonner.promise).not.toHaveBeenCalled();
+			expect(mockSonner.success).toHaveBeenCalledWith(
+				"Réussi",
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
+		});
+
+		it("promise() rejects manually with toast.error on mobile (function error msg)", async () => {
+			stubMatchMedia(true);
+			const p = Promise.reject(new Error("boom"));
+			toast.promise(p, {
+				loading: "Chargement…",
+				success: "OK",
+				error: (e: unknown) => (e instanceof Error ? e.message : "fail"),
+			});
+			await p.catch(() => {});
+			await Promise.resolve();
+			expect(mockSonner.promise).not.toHaveBeenCalled();
+			expect(mockSonner.error).toHaveBeenCalledWith(
+				"boom",
+				expect.objectContaining({ duration: expect.any(Number) }),
+			);
+		});
+
+		it("promise() forwards to sonner on desktop", () => {
+			stubMatchMedia(false);
+			const p = Promise.resolve("data");
+			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
+			expect(mockSonner.promise).toHaveBeenCalled();
 		});
 	});
 });

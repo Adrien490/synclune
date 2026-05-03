@@ -2,16 +2,8 @@
 
 import { useTransition } from "react";
 import { cn } from "@/shared/utils/cn";
-import {
-	BottomBar,
-	ActiveDot,
-	bottomBarContainerClass,
-	bottomBarItemClass,
-	bottomBarActiveItemClass,
-	bottomBarIconClass,
-	bottomBarLabelClass,
-} from "@/shared/components/bottom-bar";
 import { ROUTES } from "@/shared/constants/urls";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { MapPin, Package, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -44,6 +36,7 @@ export function AccountTabsNav() {
 	const handleNavigation = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
 		if (isActive(href)) return;
 		e.preventDefault();
+		triggerHaptic("selection");
 		startTransition(() => {
 			router.push(href);
 		});
@@ -81,9 +74,23 @@ export function AccountTabsNav() {
 				</div>
 			</nav>
 
-			{/* Mobile bottom bar */}
-			<BottomBar as="nav" breakpointClass="lg:hidden" aria-label="Navigation espace client">
-				<div className={bottomBarContainerClass}>
+			{/* Mobile sticky top nav */}
+			<nav
+				aria-label="Navigation espace client"
+				className={cn(
+					"lg:hidden",
+					"sticky top-[calc(var(--announcement-bar-height,0px)+var(--navbar-height))] z-30",
+					"bg-background/80 backdrop-blur-md",
+					"border-border/50 border-b",
+					"-mx-4 mb-4 sm:-mx-6",
+				)}
+			>
+				<div
+					role="toolbar"
+					aria-orientation="horizontal"
+					aria-label="Navigation espace client"
+					className="divide-border/30 flex items-stretch divide-x"
+				>
 					{navItems.map((item) => {
 						const active = isActive(item.href);
 						const Icon = item.icon;
@@ -95,19 +102,23 @@ export function AccountTabsNav() {
 								onClick={(e) => handleNavigation(e, item.href)}
 								aria-current={active ? "page" : undefined}
 								className={cn(
-									bottomBarItemClass,
-									active && bottomBarActiveItemClass,
+									"text-muted-foreground inline-flex min-h-11 flex-1 items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors",
+									"active:scale-[0.98]",
+									"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
+									active && "text-foreground",
 									isPending && "pointer-events-none opacity-70",
 								)}
 							>
-								{active && <ActiveDot />}
-								<Icon className={bottomBarIconClass} aria-hidden="true" />
-								<span className={bottomBarLabelClass}>{item.label}</span>
+								<Icon className="size-4" aria-hidden="true" />
+								<span className="truncate">{item.label}</span>
+								{active && (
+									<span className="bg-primary size-1.5 shrink-0 rounded-full" aria-hidden="true" />
+								)}
 							</Link>
 						);
 					})}
 				</div>
-			</BottomBar>
+			</nav>
 		</>
 	);
 }

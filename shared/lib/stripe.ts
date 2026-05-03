@@ -11,7 +11,7 @@ import { logger } from "./logger";
  * Pour les contextes où la clé pourrait manquer (cron jobs), utiliser getStripeClient().
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-	apiVersion: "2026-03-25.dahlia",
+	apiVersion: "2026-04-22.dahlia",
 	maxNetworkRetries: 2,
 	timeout: 10_000,
 });
@@ -58,7 +58,7 @@ export function getStripeClient(): Stripe | null {
 		return null;
 	}
 	_stripeClient = new Stripe(secretKey, {
-		apiVersion: "2026-03-25.dahlia",
+		apiVersion: "2026-04-22.dahlia",
 		maxNetworkRetries: 2,
 		timeout: 10_000,
 	});

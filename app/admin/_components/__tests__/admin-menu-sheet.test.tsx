@@ -196,11 +196,13 @@ describe("AdminMenuSheet", () => {
 			expect(screen.getByText("Tableau de bord")).toBeInTheDocument();
 		});
 
-		it("renders navigation groups", () => {
+		it("renders navigation groups (shop-closed mode)", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("Ventes")).toBeInTheDocument();
 			expect(screen.getByText("Catalogue")).toBeInTheDocument();
-			expect(screen.getByText("Marketing")).toBeInTheDocument();
+			expect(screen.getByText("Configuration")).toBeInTheDocument();
+			// Hidden in shop-closed mode (SHOP_LIVE=false)
+			expect(screen.queryByText("Ventes")).not.toBeInTheDocument();
+			expect(screen.queryByText("Marketing")).not.toBeInTheDocument();
 		});
 
 		it('sets aria-label="Navigation administration" on nav', () => {
@@ -209,16 +211,18 @@ describe("AdminMenuSheet", () => {
 			expect(nav).toBeInTheDocument();
 		});
 
-		it("renders navigation items", () => {
+		it("renders navigation items (shop-closed mode)", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("Commandes")).toBeInTheDocument();
 			expect(screen.getByText("Produits")).toBeInTheDocument();
+			expect(screen.getByText("Boutique")).toBeInTheDocument();
+			// Hidden in shop-closed mode
+			expect(screen.queryByText("Commandes")).not.toBeInTheDocument();
 		});
 
 		it("marks active route with aria-current", () => {
-			mockUsePathname.mockReturnValue("/admin/ventes/commandes");
+			mockUsePathname.mockReturnValue("/admin/catalogue/produits");
 			render(<AdminMenuSheet user={defaultUser} />);
-			const activeLink = screen.getByRole("link", { name: /Commandes/i });
+			const activeLink = screen.getByRole("link", { name: /Produits/i });
 			expect(activeLink).toHaveAttribute("aria-current", "page");
 		});
 
@@ -231,21 +235,23 @@ describe("AdminMenuSheet", () => {
 	});
 
 	describe("badges", () => {
+		// Badges are keyed by item.id. In shop-closed mode "orders" is hidden, so
+		// these tests use "products" (always visible) to exercise the rendering logic.
 		it("displays badge count on items", () => {
 			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 5 }} />);
+			render(<AdminMenuSheet user={defaultUser} badges={{ products: 5 }} />);
 			expect(screen.getByText("5")).toBeInTheDocument();
 		});
 
 		it("caps badge at 99+", () => {
 			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 150 }} />);
+			render(<AdminMenuSheet user={defaultUser} badges={{ products: 150 }} />);
 			expect(screen.getByText("99+")).toBeInTheDocument();
 		});
 
 		it("does not show badge when count is 0", () => {
 			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} badges={{ orders: 0 }} />);
+			render(<AdminMenuSheet user={defaultUser} badges={{ products: 0 }} />);
 			expect(screen.queryByText("0")).not.toBeInTheDocument();
 		});
 	});

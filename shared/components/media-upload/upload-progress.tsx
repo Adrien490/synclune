@@ -66,7 +66,7 @@ export function UploadProgress({
 	const isServerProcessing = (progress >= 100 && isProcessing) || isThumbnailing || isCompressing;
 
 	const handleCancel = () => {
-		haptic("medium");
+		haptic("light");
 		onCancel?.();
 	};
 
@@ -332,7 +332,7 @@ export function UploadErrorBanner({
 	if (failedFiles.length === 0) return null;
 
 	const handleRetry = () => {
-		haptic("medium");
+		haptic("light");
 		onRetry();
 	};
 
@@ -342,7 +342,7 @@ export function UploadErrorBanner({
 	};
 
 	const handleRetryOne = (file: File) => {
-		haptic("medium");
+		haptic("light");
 		onRetryOne?.(file);
 	};
 

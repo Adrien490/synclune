@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-import { useHaptic, triggerHaptic } from "../use-haptic";
+import { useHaptic, triggerHaptic, __resetHapticCooldown } from "../use-haptic";
 
 function setMatchMedia(reduced: boolean) {
 	vi.stubGlobal(
@@ -33,6 +33,7 @@ function removeVibrate() {
 beforeEach(() => {
 	setMatchMedia(false);
 	installVibrateStub(() => true);
+	__resetHapticCooldown();
 });
 
 afterEach(() => {
@@ -127,6 +128,44 @@ describe("useHaptic / triggerHaptic", () => {
 			});
 
 			expect(triggerHaptic("heavy")).toBe(false);
+		});
+	});
+
+	describe("cooldown anti-cascade", () => {
+		it("blocks a second trigger fired within 80ms of the first", () => {
+			const vibrateSpy = vi.fn(() => true);
+			installVibrateStub(vibrateSpy);
+
+			expect(triggerHaptic("medium")).toBe(true);
+			expect(triggerHaptic("light")).toBe(false);
+			expect(vibrateSpy).toHaveBeenCalledTimes(1);
+		});
+
+		it("allows a second trigger after 80ms", () => {
+			const vibrateSpy = vi.fn(() => true);
+			installVibrateStub(vibrateSpy);
+			vi.useFakeTimers();
+			vi.setSystemTime(new Date(2026, 0, 1, 12, 0, 0));
+
+			expect(triggerHaptic("medium")).toBe(true);
+
+			vi.advanceTimersByTime(81);
+			expect(triggerHaptic("light")).toBe(true);
+			expect(vibrateSpy).toHaveBeenCalledTimes(2);
+
+			vi.useRealTimers();
+		});
+
+		it("does not advance cooldown when vibrate returns false", () => {
+			let returnValue = false;
+			const vibrateSpy = vi.fn(() => returnValue);
+			installVibrateStub(vibrateSpy);
+
+			expect(triggerHaptic("medium")).toBe(false);
+
+			returnValue = true;
+			expect(triggerHaptic("medium")).toBe(true);
+			expect(vibrateSpy).toHaveBeenCalledTimes(2);
 		});
 	});
 });

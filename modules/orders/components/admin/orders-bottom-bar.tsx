@@ -5,7 +5,7 @@ import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
-	AdminSearchDrawer,
+	AdminQuickSearchDialog,
 	StickyActionBar,
 	type StickyActionBarItem,
 } from "@/shared/components/sticky-action-bar";
@@ -13,6 +13,7 @@ import { useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/order.constants";
 import { OrdersFilterDrawer } from "./orders-filter-drawer";
+import { ordersAdminQuickSearchAdapter } from "./orders-quick-search-adapter";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -86,12 +87,10 @@ export function OrdersBottomBar() {
 				showResetOption
 			/>
 
-			<AdminSearchDrawer
+			<AdminQuickSearchDialog
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Rechercher par numéro, email, client..."
-				ariaLabel="Rechercher une commande"
-				scope="orders"
+				adapter={ordersAdminQuickSearchAdapter}
 			/>
 
 			<OrdersFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

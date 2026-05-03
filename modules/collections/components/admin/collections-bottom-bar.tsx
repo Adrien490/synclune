@@ -5,13 +5,14 @@ import { ArrowUpDown, Search } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
-	AdminSearchDrawer,
+	AdminQuickSearchDialog,
 	StickyActionBar,
 	type StickyActionBarItem,
 } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { COLLECTIONS_SORT_LABELS } from "../../constants/collection.constants";
+import { collectionsAdminQuickSearchAdapter } from "./collections-quick-search-adapter";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(COLLECTIONS_SORT_LABELS).map(
 	([value, label]) => ({
@@ -69,12 +70,10 @@ export function CollectionsBottomBar() {
 				showResetOption
 			/>
 
-			<AdminSearchDrawer
+			<AdminQuickSearchDialog
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Nom, slug, description..."
-				ariaLabel="Rechercher une collection"
-				scope="collections"
+				adapter={collectionsAdminQuickSearchAdapter}
 			/>
 		</>
 	);

@@ -51,6 +51,7 @@ export function ProductCarouselUI({ products }: ProductCarouselUIProps) {
 		}),
 	);
 
+	// eslint-disable-next-line react-hooks/refs
 	const plugins = prefersReducedMotion ? [] : [autoplayPlugin.current];
 
 	// Tracking du slide actif

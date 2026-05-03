@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -76,19 +76,14 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 		children,
 		disabled,
 		"aria-busy": ariaBusy,
-		onPointerDown,
+		onClick,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		"aria-busy"?: boolean;
-		onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
+		onClick?: React.MouseEventHandler<HTMLButtonElement>;
 	}) => (
-		<button
-			data-testid="submit-button"
-			disabled={disabled}
-			aria-busy={ariaBusy}
-			onPointerDown={onPointerDown}
-		>
+		<button data-testid="submit-button" disabled={disabled} aria-busy={ariaBusy} onClick={onClick}>
 			{children}
 		</button>
 	),
@@ -190,10 +185,10 @@ describe("DeleteDiscountAlertDialog", () => {
 		expect(screen.getByTestId("cancel-button")).toBeDisabled();
 	});
 
-	it("triggers heavy haptic on submit pointerdown (destructive)", () => {
+	it("triggers heavy haptic on submit click (destructive)", () => {
 		render(<DeleteDiscountAlertDialog />);
 		const submit = screen.getByTestId("submit-button");
-		submit.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		fireEvent.click(submit);
 		expect(mockHaptic).toHaveBeenCalledWith("heavy");
 	});
 });

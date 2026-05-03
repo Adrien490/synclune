@@ -5,17 +5,21 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockDialog, mockDuplicateProduct } = vi.hoisted(() => ({
-	mockDialog: {
-		isOpen: true,
-		data: null as Record<string, unknown> | null,
-		close: vi.fn(),
-	},
-	mockDuplicateProduct: {
-		action: vi.fn(),
-		isPending: false,
-	},
-}));
+const { mockDialog, mockDuplicateProduct, mockRouterPush, mockUseDuplicateProduct } = vi.hoisted(
+	() => ({
+		mockDialog: {
+			isOpen: true,
+			data: null as Record<string, unknown> | null,
+			close: vi.fn(),
+		},
+		mockDuplicateProduct: {
+			action: vi.fn(),
+			isPending: false,
+		},
+		mockRouterPush: vi.fn(),
+		mockUseDuplicateProduct: vi.fn(),
+	}),
+);
 
 // ============================================================================
 // MODULE MOCKS
@@ -25,8 +29,12 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => mockDialog,
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockRouterPush }),
+}));
+
 vi.mock("@/modules/products/hooks/use-duplicate-product", () => ({
-	useDuplicateProduct: () => mockDuplicateProduct,
+	useDuplicateProduct: (...args: unknown[]) => mockUseDuplicateProduct(...args),
 }));
 
 vi.mock("@/shared/components/ui/alert-dialog", () => {
@@ -123,6 +131,8 @@ beforeEach(() => {
 	mockDialog.close = vi.fn();
 	mockDuplicateProduct.action = vi.fn();
 	mockDuplicateProduct.isPending = false;
+	mockRouterPush.mockReset();
+	mockUseDuplicateProduct.mockImplementation(() => mockDuplicateProduct);
 });
 
 afterEach(cleanup);
@@ -318,6 +328,32 @@ describe("DuplicateProductAlertDialog", () => {
 			renderDialog();
 
 			expect(screen.getByTestId("alert-dialog-cancel")).not.toBeDisabled();
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// onSuccess behavior (close dialog + redirect to edit page)
+	// --------------------------------------------------------------------------
+
+	describe("onSuccess", () => {
+		it("closes the dialog and redirects to the edit page of the duplicated product", () => {
+			renderDialog();
+
+			const onSuccess = mockUseDuplicateProduct.mock.calls[0]?.[0]?.onSuccess as
+				| ((message: string, data: { productId: string; title: string; slug: string }) => void)
+				| undefined;
+
+			expect(onSuccess).toBeDefined();
+			onSuccess?.("Produit dupliqué", {
+				productId: "new-prod-1",
+				title: "Copie de Bague Lune",
+				slug: "copie-de-bague-lune",
+			});
+
+			expect(mockDialog.close).toHaveBeenCalledTimes(1);
+			expect(mockRouterPush).toHaveBeenCalledWith(
+				"/admin/catalogue/produits/copie-de-bague-lune/modifier",
+			);
 		});
 	});
 

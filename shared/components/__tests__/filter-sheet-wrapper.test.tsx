@@ -521,7 +521,7 @@ describe("FilterSheetWrapper", () => {
 	// ============================================================================
 
 	describe("haptic feedback", () => {
-		it("fires haptic('medium') on Apply click", () => {
+		it("fires haptic('success') on Apply click (positive outcome — Apple HIG)", () => {
 			render(
 				<FilterSheetWrapper open onOpenChange={vi.fn()} onApply={vi.fn()}>
 					content
@@ -530,7 +530,7 @@ describe("FilterSheetWrapper", () => {
 			// Multiple Apply buttons rendered (mobile + desktop branches) — pick first.
 			const applyButtons = screen.getAllByText("Appliquer");
 			fireEvent.click(applyButtons[0]!);
-			expect(mockHaptic).toHaveBeenCalledWith("medium");
+			expect(mockHaptic).toHaveBeenCalledWith("success");
 		});
 
 		it("fires haptic('light') on Clear all click when below confirm threshold", () => {
@@ -596,14 +596,14 @@ describe("FilterSheetWrapper", () => {
 			expect(onClearAll).toHaveBeenCalledTimes(1);
 		});
 
-		it("fires haptic('selection') when close button clicked", () => {
+		it("fires NO haptic on close button click (silence > parasitic buzz — Material 3)", () => {
 			render(
 				<FilterSheetWrapper open onOpenChange={vi.fn()}>
 					content
 				</FilterSheetWrapper>,
 			);
 			fireEvent.click(screen.getByRole("button", { name: "Fermer" }));
-			expect(mockHaptic).toHaveBeenCalledWith("selection");
+			expect(mockHaptic).not.toHaveBeenCalled();
 		});
 	});
 

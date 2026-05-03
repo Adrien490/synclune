@@ -211,6 +211,43 @@ describe("SkuMobileItem", () => {
 		});
 	});
 
+	it("passes primaryImage in drawer payload when SKU has a primary image", async () => {
+		const user = userEvent.setup();
+		render(
+			<SkuMobileItem
+				sku={createSku({
+					images: [
+						{
+							id: "img-1",
+							url: "https://example.com/img.jpg",
+							blurDataUrl: "blur",
+							altText: "Alt text",
+							isPrimary: true,
+							mediaType: "IMAGE",
+						},
+					],
+				})}
+				productSlug="bague-lune"
+			/>,
+		);
+		await user.click(screen.getByRole("button", { name: /Variante/i }));
+		const payload = mockOpen.mock.calls[0]?.[0];
+		expect(payload.sku.primaryImage).toEqual({
+			url: "https://example.com/img.jpg",
+			blurDataUrl: "blur",
+			mediaType: "IMAGE",
+			altText: "Alt text",
+		});
+	});
+
+	it("passes primaryImage=null in drawer payload when SKU has no images", async () => {
+		const user = userEvent.setup();
+		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" />);
+		await user.click(screen.getByRole("button", { name: /Variante/i }));
+		const payload = mockOpen.mock.calls[0]?.[0];
+		expect(payload.sku.primaryImage).toBeNull();
+	});
+
 	it("exposes accessible aria-label on the button", () => {
 		render(
 			<SkuMobileItem sku={createSku({ id: "sku-99", sku: "REF-99" })} productSlug="bague-lune" />,

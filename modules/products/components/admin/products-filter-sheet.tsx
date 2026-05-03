@@ -2,17 +2,22 @@
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { Accordion } from "@/shared/components/ui/accordion";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+	useDeferredValue,
 	useEffect,
 	useEffectEvent,
-	useLayoutEffect,
-	useDeferredValue,
 	useRef,
 	useState,
 	useTransition,
 } from "react";
 import { useAppForm } from "@/shared/components/forms";
+import {
+	AdminFilterActiveChips,
+	type AdminFilterChipDescriptor,
+} from "./admin-filter-active-chips";
 import { ProductsFilterSections } from "./products-filter-sections";
 import {
 	ALL_FILTER_KEYS,
@@ -23,6 +28,21 @@ import {
 } from "./products-filter-sheet.types";
 
 import type { ProductsFilterSheetProps, AdminFilterFormData } from "./products-filter-sheet.types";
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Sections possibles de l'Accordion (sert au focus management desktop). */
+type SectionValue =
+	| "status"
+	| "types"
+	| "price"
+	| "colors"
+	| "materials"
+	| "collections"
+	| "availability"
+	| "dates";
 
 // ============================================================================
 // MAIN COMPONENT
@@ -45,18 +65,19 @@ export function ProductsFilterSheet({
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+	const isMobile = useIsMobile();
 
 	// Controlled/uncontrolled open state
 	const [internalOpen, setInternalOpen] = useState(false);
 	const isOpen = controlledOpen ?? internalOpen;
 
-	// P1.2: Focus restoration (WCAG 2.4.3)
-	const triggerRef = useRef<HTMLElement | null>(null);
-	useLayoutEffect(() => {
-		if (isOpen) {
-			triggerRef.current = document.activeElement as HTMLElement | null;
-		}
-	}, [isOpen]);
+	// Focus restoration (WCAG 2.4.3) — capture activeElement avant que le sheet
+	// ne vole le focus, restaure sur close via rAF + preventScroll (évite jump iOS).
+	const previousFocusRef = useRef<HTMLElement | null>(null);
+
+	// Ref sur la racine Accordion pour focus le 1er input d'une section
+	// dépliée manuellement (desktop uniquement).
+	const accordionRef = useRef<HTMLDivElement>(null);
 
 	// Search state for long lists
 	const [colorSearch, setColorSearch] = useState("");
@@ -126,7 +147,6 @@ export function ProductsFilterSheet({
 		},
 	});
 
-	// P1.1: Sync form values from URL when sheet opens or URL changes
 	const onSheetSync = useEffectEvent(() => {
 		const values = getValuesFromURL();
 		form.reset(values);
@@ -136,9 +156,20 @@ export function ProductsFilterSheet({
 
 	useEffect(() => {
 		if (isOpen) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			onSheetSync();
 		}
 	}, [isOpen, searchParams]);
+
+	const handleOpenChange = (nextOpen: boolean) => {
+		if (nextOpen) {
+			previousFocusRef.current = document.activeElement as HTMLElement | null;
+		}
+		(controlledOnOpenChange ?? setInternalOpen)(nextOpen);
+		if (!nextOpen) {
+			requestAnimationFrame(() => previousFocusRef.current?.focus({ preventScroll: true }));
+		}
+	};
 
 	const applyFilters = (formData: AdminFilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
@@ -146,22 +177,12 @@ export function ProductsFilterSheet({
 		ALL_FILTER_KEYS.forEach((key) => params.delete(key));
 		params.set("page", "1");
 
-		// Statuses
 		formData.statuses.forEach((s) => params.append("filter_status", s));
-
-		// Types (slug-based)
 		formData.typeSlugs.forEach((slug) => params.append("filter_typeId", slug));
-
-		// Collections
 		formData.collectionIds.forEach((id) => params.append("filter_collectionId", id));
-
-		// Colors
 		formData.colorSlugs.forEach((slug) => params.append("filter_color", slug));
-
-		// Materials
 		formData.materialSlugs.forEach((slug) => params.append("filter_material", slug));
 
-		// Price (convert euros to cents)
 		if (
 			formData.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
 			formData.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
@@ -170,24 +191,21 @@ export function ProductsFilterSheet({
 			params.set("filter_priceMax", (formData.priceRange[1] * 100).toString());
 		}
 
-		// Stock status
 		if (formData.stockStatus) {
 			params.set("filter_stockStatus", formData.stockStatus);
 		}
 
-		// On sale
 		if (formData.onSale) {
 			params.set("filter_onSale", "true");
 		}
 
-		// Date filters
 		if (formData.createdAfter) params.set("filter_createdAfter", formData.createdAfter);
 		if (formData.createdBefore) params.set("filter_createdBefore", formData.createdBefore);
 		if (formData.updatedAfter) params.set("filter_updatedAfter", formData.updatedAfter);
 		if (formData.updatedBefore) params.set("filter_updatedBefore", formData.updatedBefore);
 
 		startTransition(() => {
-			router.push(`?${params.toString()}`, { scroll: false });
+			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
 		});
 	};
 
@@ -212,7 +230,7 @@ export function ProductsFilterSheet({
 		params.set("page", "1");
 
 		startTransition(() => {
-			router.push(`?${params.toString()}`, { scroll: false });
+			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
 		});
 	};
 
@@ -221,20 +239,17 @@ export function ProductsFilterSheet({
 		searchParams.forEach((_, key) => {
 			if (ALL_FILTER_KEYS.includes(key)) count += 1;
 		});
-		// Group priceMin/priceMax as 1
 		const hasPriceMin = searchParams.has("filter_priceMin");
 		const hasPriceMax = searchParams.has("filter_priceMax");
 		if (hasPriceMin && hasPriceMax) count -= 1;
 		return { hasActiveFilters: count > 0, activeFiltersCount: count };
 	})();
 
-	// Sort colors and materials by count (descending)
 	const sortedColors = [...colors].sort((a, b) => b._count.skus - a._count.skus);
 	const sortedMaterials = [...materials].sort(
 		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
 	);
 
-	// Filter lists by deferred search term
 	const filteredColors = deferredColorSearch
 		? sortedColors.filter((c) => c.name.toLowerCase().includes(deferredColorSearch.toLowerCase()))
 		: sortedColors;
@@ -244,11 +259,14 @@ export function ProductsFilterSheet({
 			)
 		: sortedMaterials;
 
-	// Default open sections: types + price + any section with active filters
-	const defaultOpenSections = (() => {
-		const sections = ["status", "types", "price"];
+	// Lazy-init stable defaultOpenSections — types + price toujours, autres si actifs.
+	// Status retiré du toujours-ouvert : 3 sections initiales saturent l'écran mobile.
+	const [defaultOpenSections] = useState<string[]>(() => {
+		const sections = ["types", "price"];
+		if (initialValues.statuses.length > 0) sections.push("status");
 		if (initialValues.colorSlugs.length > 0) sections.push("colors");
 		if (initialValues.materialSlugs.length > 0) sections.push("materials");
+		if (initialValues.collectionIds.length > 0) sections.push("collections");
 		if (initialValues.stockStatus || initialValues.onSale) sections.push("availability");
 		if (
 			initialValues.createdAfter ||
@@ -258,17 +276,136 @@ export function ProductsFilterSheet({
 		)
 			sections.push("dates");
 		return sections;
-	})();
+	});
+	const previousOpenSectionsRef = useRef<string[]>(defaultOpenSections);
+
+	// Liste effective des sections rendues (filtre les sections conditionnelles
+	// absentes : types/colors/materials/collections renvoient null si vide).
+	// Permet de retrouver le bon AccordionItem via son index DOM.
+	const renderedSections: SectionValue[] = [
+		"status",
+		...(productTypes.length > 0 ? (["types"] as const) : []),
+		"price",
+		...(sortedColors.length > 0 ? (["colors"] as const) : []),
+		...(sortedMaterials.length > 0 ? (["materials"] as const) : []),
+		...(collections.length > 0 ? (["collections"] as const) : []),
+		"availability",
+		"dates",
+	];
+
+	// Quand une section Accordion est dépliée manuellement (desktop), focus le
+	// 1er input. Skip mobile pour ne pas ouvrir le clavier soft.
+	const handleAccordionValueChange = (values: string[]) => {
+		const prev = previousOpenSectionsRef.current;
+		previousOpenSectionsRef.current = values;
+		if (isMobile) return;
+		const newlyOpened = values.find(
+			(v) => !prev.includes(v) && renderedSections.includes(v as SectionValue),
+		) as SectionValue | undefined;
+		if (!newlyOpened) return;
+		const index = renderedSections.indexOf(newlyOpened);
+		if (index < 0 || !accordionRef.current) return;
+		requestAnimationFrame(() => {
+			const item = accordionRef.current?.children[index] as HTMLElement | undefined;
+			if (!item) return;
+			const focusable = item.querySelector<HTMLElement>(
+				'input:not([type="hidden"]):not([disabled]), [role="slider"]:not([disabled])',
+			);
+			focusable?.focus({ preventScroll: true });
+		});
+	};
+
+	// Compte des filtres actifs dans le formulaire (pas l'URL) pour annoncer
+	// les toggles avant Apply, mis à jour à chaque ajout/retrait via chip ou section.
+	const formValues = form.state.values;
+	const pendingFilterCount =
+		formValues.statuses.length +
+		formValues.typeSlugs.length +
+		formValues.collectionIds.length +
+		formValues.colorSlugs.length +
+		formValues.materialSlugs.length +
+		(formValues.priceRange[0] !== DEFAULT_PRICE_RANGE[0] ||
+		formValues.priceRange[1] !== DEFAULT_PRICE_RANGE[1]
+			? 1
+			: 0) +
+		(formValues.stockStatus ? 1 : 0) +
+		(formValues.onSale ? 1 : 0) +
+		(formValues.createdAfter ? 1 : 0) +
+		(formValues.createdBefore ? 1 : 0) +
+		(formValues.updatedAfter ? 1 : 0) +
+		(formValues.updatedBefore ? 1 : 0);
+
+	// Supprime un filtre individuel via une chip (sans fermer la sheet).
+	const handleRemoveChip = (chip: AdminFilterChipDescriptor) => {
+		switch (chip.kind) {
+			case "status": {
+				const current = form.state.values.statuses;
+				form.setFieldValue(
+					"statuses",
+					current.filter((s) => s !== chip.value),
+				);
+				return;
+			}
+			case "type": {
+				const current = form.state.values.typeSlugs;
+				form.setFieldValue(
+					"typeSlugs",
+					current.filter((s) => s !== chip.slug),
+				);
+				return;
+			}
+			case "collection": {
+				const current = form.state.values.collectionIds;
+				form.setFieldValue(
+					"collectionIds",
+					current.filter((id) => id !== chip.id),
+				);
+				return;
+			}
+			case "color": {
+				const current = form.state.values.colorSlugs;
+				form.setFieldValue(
+					"colorSlugs",
+					current.filter((s) => s !== chip.slug),
+				);
+				return;
+			}
+			case "material": {
+				const current = form.state.values.materialSlugs;
+				form.setFieldValue(
+					"materialSlugs",
+					current.filter((s) => s !== chip.slug),
+				);
+				return;
+			}
+			case "price":
+				form.setFieldValue("priceRange", DEFAULT_PRICE_RANGE);
+				return;
+			case "stockStatus":
+				form.setFieldValue("stockStatus", null);
+				return;
+			case "onSale":
+				form.setFieldValue("onSale", false);
+				return;
+			case "createdAfter":
+				form.setFieldValue("createdAfter", "");
+				return;
+			case "createdBefore":
+				form.setFieldValue("createdBefore", "");
+				return;
+			case "updatedAfter":
+				form.setFieldValue("updatedAfter", "");
+				return;
+			case "updatedBefore":
+				form.setFieldValue("updatedBefore", "");
+				return;
+		}
+	};
 
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
-			onOpenChange={(newOpen) => {
-				(controlledOnOpenChange ?? setInternalOpen)(newOpen);
-				if (!newOpen) {
-					triggerRef.current?.focus();
-				}
-			}}
+			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
@@ -286,9 +423,21 @@ export function ProductsFilterSheet({
 					void form.handleSubmit();
 				}}
 			>
+				<AdminFilterActiveChips
+					formData={form.state.values}
+					productTypes={productTypes}
+					collections={collections}
+					colors={sortedColors}
+					materials={sortedMaterials}
+					defaultPriceRange={DEFAULT_PRICE_RANGE}
+					onRemove={handleRemoveChip}
+				/>
+
 				<Accordion
+					ref={accordionRef}
 					type="multiple"
 					defaultValue={defaultOpenSections}
+					onValueChange={handleAccordionValueChange}
 					className="w-full"
 					aria-label="Filtres de recherche"
 				>
@@ -308,6 +457,12 @@ export function ProductsFilterSheet({
 						maxPriceInEuros={maxPriceInEuros}
 					/>
 				</Accordion>
+
+				<div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+					{pendingFilterCount === 0
+						? "Aucun filtre sélectionné"
+						: `${pendingFilterCount} filtre${pendingFilterCount > 1 ? "s" : ""} sélectionné${pendingFilterCount > 1 ? "s" : ""}`}
+				</div>
 			</form>
 		</FilterSheetWrapper>
 	);

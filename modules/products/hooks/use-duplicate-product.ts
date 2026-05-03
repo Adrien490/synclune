@@ -5,9 +5,25 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { useActionState, useTransition } from "react";
 import { duplicateProduct } from "@/modules/products/actions/duplicate-product";
 
-interface UseDuplicateProductOptions {
-	onSuccess?: (message: string) => void;
+export interface DuplicateProductSuccessData {
+	productId: string;
+	title: string;
+	slug: string;
 }
+
+interface UseDuplicateProductOptions {
+	onSuccess?: (message: string, data: DuplicateProductSuccessData) => void;
+}
+
+const isDuplicateProductSuccessData = (value: unknown): value is DuplicateProductSuccessData => {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		typeof (value as DuplicateProductSuccessData).productId === "string" &&
+		typeof (value as DuplicateProductSuccessData).title === "string" &&
+		typeof (value as DuplicateProductSuccessData).slug === "string"
+	);
+};
 
 export const useDuplicateProduct = (options?: UseDuplicateProductOptions) => {
 	const [isTransitionPending, startTransition] = useTransition();
@@ -21,9 +37,11 @@ export const useDuplicateProduct = (options?: UseDuplicateProductOptions) => {
 						result &&
 						typeof result === "object" &&
 						"message" in result &&
-						typeof result.message === "string"
+						typeof result.message === "string" &&
+						"data" in result &&
+						isDuplicateProductSuccessData(result.data)
 					) {
-						options?.onSuccess?.(result.message);
+						options?.onSuccess?.(result.message, result.data);
 					}
 				},
 			}),

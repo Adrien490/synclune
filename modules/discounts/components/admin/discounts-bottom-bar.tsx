@@ -5,13 +5,14 @@ import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
-	AdminSearchDrawer,
+	AdminQuickSearchDialog,
 	StickyActionBar,
 	type StickyActionBarItem,
 } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { DISCOUNTS_SORT_LABELS } from "../../constants/discount.constants";
+import { discountsAdminQuickSearchAdapter } from "./discounts-quick-search-adapter";
 import { DiscountsFilterDrawer } from "./discounts-filter-drawer";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(DISCOUNTS_SORT_LABELS).map(([value, label]) => ({
@@ -82,12 +83,10 @@ export function DiscountsBottomBar() {
 				showResetOption
 			/>
 
-			<AdminSearchDrawer
+			<AdminQuickSearchDialog
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Rechercher un code promo..."
-				ariaLabel="Rechercher un code promo"
-				scope="discounts"
+				adapter={discountsAdminQuickSearchAdapter}
 			/>
 
 			<DiscountsFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

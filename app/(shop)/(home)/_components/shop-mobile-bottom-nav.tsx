@@ -83,6 +83,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			);
 		}
 		if (messages.length > 0) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			announce(messages.join(", "));
 		}
 		prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };

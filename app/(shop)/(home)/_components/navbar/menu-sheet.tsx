@@ -76,7 +76,7 @@ export function MenuSheet({
 	}, [isOpen]);
 
 	function handleLogoutClick() {
-		haptic("medium");
+		haptic("light");
 		wantsLogoutRef.current = true;
 		closeMenu();
 	}

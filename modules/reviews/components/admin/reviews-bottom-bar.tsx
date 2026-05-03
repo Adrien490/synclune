@@ -5,11 +5,13 @@ import { ArrowUpDown, Search } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
-	AdminSearchDrawer,
+	AdminQuickSearchDialog,
 	StickyActionBar,
 	type StickyActionBarItem,
 } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
+
+import { reviewsAdminQuickSearchAdapter } from "./reviews-quick-search-adapter";
 
 const SORT_OPTIONS: SortOption[] = [
 	{ value: "createdAt-desc", label: "Plus recents" },
@@ -67,12 +69,10 @@ export function ReviewsBottomBar() {
 				showResetOption
 			/>
 
-			<AdminSearchDrawer
+			<AdminQuickSearchDialog
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Client, produit..."
-				ariaLabel="Rechercher un avis"
-				scope="reviews"
+				adapter={reviewsAdminQuickSearchAdapter}
 			/>
 		</>
 	);

@@ -67,10 +67,13 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	const cumulativeCompletedRef = useRef(0);
 	const doneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const onProgressRef = useRef(onProgress);
+	// eslint-disable-next-line react-hooks/refs
 	onProgressRef.current = onProgress;
 	const onSuccessRef = useRef(onSuccess);
+	// eslint-disable-next-line react-hooks/refs
 	onSuccessRef.current = onSuccess;
 	const onErrorRef = useRef(onError);
+	// eslint-disable-next-line react-hooks/refs
 	onErrorRef.current = onError;
 
 	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing(endpoint);
@@ -176,11 +179,11 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				}
 			} catch (err) {
 				if (err instanceof HeicDecodeError) {
-					toast.error("Format HEIC non supporté", {
+					toast.error("Fichier HEIC illisible", {
 						description: err.message,
 						duration: 8000,
 					});
-					pushFailed(file, "Format HEIC non décodable sur ce navigateur");
+					pushFailed(file, "Fichier HEIC corrompu ou non supporté");
 					continue;
 				}
 				if (isHeicFile(file)) {

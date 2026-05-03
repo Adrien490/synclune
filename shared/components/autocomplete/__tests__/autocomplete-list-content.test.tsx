@@ -343,11 +343,11 @@ describe("AutocompleteListContent", () => {
 		});
 	});
 
-	it("retry button triggers 'medium' haptic before onRetry", () => {
+	it("retry button triggers 'light' haptic before onRetry", () => {
 		const onRetry = vi.fn();
 		render(<AutocompleteListContent {...defaultProps} error="Erreur" onRetry={onRetry} />);
 		fireEvent.click(screen.getByTestId("retry-button"));
-		expect(mockHaptic).toHaveBeenCalledWith("medium");
+		expect(mockHaptic).toHaveBeenCalledWith("light");
 		expect(onRetry).toHaveBeenCalledTimes(1);
 	});
 

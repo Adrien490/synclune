@@ -90,6 +90,18 @@ function announceToScreenReader(message: unknown, level: "polite" | "assertive")
 }
 
 /**
+ * Détecte un viewport mobile (≤ 767px) — aligné sur `MOBILE_BREAKPOINT` du hook
+ * `useIsMobile`. Sur mobile, l'état pending des boutons (spinner + label) suffit ;
+ * un toast loading consommerait l'unique slot visible (`visibleToasts: 1`) et
+ * masquerait du contenu.
+ */
+function isMobileViewport(): boolean {
+	if (typeof window === "undefined") return false;
+	if (typeof window.matchMedia !== "function") return false;
+	return window.matchMedia("(max-width: 767px)").matches;
+}
+
+/**
  * Priority lane : si un toast `error` arrive et qu'un toast success/info/warning
  * est visible, on dismiss le précédent pour laisser place à l'erreur critique.
  * Sans ça, avec `visibleToasts={1}` (mobile portrait), l'error attend en queue.
@@ -143,18 +155,46 @@ export const toast = {
 	}) as SonnerToast["info"],
 	message: ((...args: Parameters<SonnerToast["message"]>) =>
 		sonnerToast.message(...args)) as SonnerToast["message"],
-	loading: ((...args: Parameters<SonnerToast["loading"]>) =>
-		sonnerToast.loading(...args)) as SonnerToast["loading"],
+	loading: ((...args: Parameters<SonnerToast["loading"]>) => {
+		// Mobile : pas de toast loading, l'état pending du bouton suffit.
+		if (isMobileViewport()) return undefined as never;
+		return sonnerToast.loading(...args);
+	}) as SonnerToast["loading"],
 	dismiss: ((...args: Parameters<SonnerToast["dismiss"]>) =>
 		sonnerToast.dismiss(...args)) as SonnerToast["dismiss"],
 	/**
 	 * `toast.promise(promise, { loading, success, error })` morph le toast
 	 * loading → success/error sans unmount/mount (pattern Dynamic Island iOS 18).
 	 * Le wrapper ajoute : haptic success/error, sanitize error, sr-only announce.
+	 *
+	 * Mobile : on bypass Sonner, on déclenche success/error manuellement après
+	 * résolution. Le bouton appelant porte déjà l'état pending visible.
 	 */
 	promise: ((promise: Promise<unknown> | (() => Promise<unknown>), opts) => {
 		const origSuccess = opts?.success;
 		const origError = opts?.error;
+
+		if (isMobileViewport()) {
+			const p = (typeof promise === "function" ? promise() : promise) as Promise<unknown>;
+			p.then(
+				(data) => {
+					const msg =
+						typeof origSuccess === "function"
+							? (origSuccess as (d: unknown) => unknown)(data)
+							: origSuccess;
+					if (typeof msg === "string") toast.success(msg);
+				},
+				(err) => {
+					const msg =
+						typeof origError === "function"
+							? (origError as (e: unknown) => unknown)(err)
+							: origError;
+					if (typeof msg === "string") toast.error(msg);
+				},
+			);
+			return p as never;
+		}
+
 		const wrappedOpts = {
 			...opts,
 			success: (data: unknown) => {

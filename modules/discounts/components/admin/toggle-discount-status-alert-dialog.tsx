@@ -78,7 +78,7 @@ export function ToggleDiscountStatusAlertDialog() {
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
-							onPointerDown={() => haptic("medium")}
+							onClick={() => haptic("medium")}
 							className={cn(
 								"text-white",
 								isActive ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700",

@@ -132,6 +132,7 @@ function Carousel({
 
 	React.useEffect(() => {
 		if (!api) return;
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		onSelect(api);
 		setScrollSnaps(api.scrollSnapList());
 		api.on("reInit", () => onReInit(api));
@@ -264,6 +265,7 @@ function CarouselItem({ className, index, ...props }: CarouselItemProps) {
 	React.useEffect(() => {
 		if (index === undefined || !api) return;
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		updateVisibility();
 		api.on("select", updateVisibility);
 		api.on("reInit", updateVisibility);
@@ -409,6 +411,7 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 	React.useEffect(() => {
 		if (!api) return;
 
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		onSelectDot();
 		api.on("select", onSelectDot);
 		api.on("reInit", onSelectDot);

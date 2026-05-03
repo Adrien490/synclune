@@ -31,6 +31,7 @@ import { SkusMobileList } from "@/modules/skus/components/admin/skus-mobile-list
 import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mobile-list-skeleton";
 import { RefreshSkusButton } from "@/modules/skus/components/admin/refresh-skus-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
+import { SkusBottomBar } from "@/modules/skus/components/admin/skus-bottom-bar";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 
@@ -168,6 +169,12 @@ export default async function ProductVariantsPage({
 			<UpdatePriceDialog />
 			<SkuItemDrawer />
 
+			<SkusBottomBar
+				productSlug={slug}
+				colorOptions={colorOptions}
+				materialOptions={materialOptions}
+			/>
+
 			{/* Breadcrumb personnalise avec titre du produit */}
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
@@ -216,6 +223,7 @@ export default async function ProductVariantsPage({
 			<div className="space-y-6">
 				<Suspense fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} />}>
 					<Toolbar
+						className="hidden md:flex"
 						ariaLabel="Barre d'outils de gestion des variantes"
 						search={
 							<SearchInput
@@ -245,7 +253,9 @@ export default async function ProductVariantsPage({
 						</ButtonGroup>
 					</Toolbar>
 
-					<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
+					<div className="hidden md:block">
+						<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
+					</div>
 				</Suspense>
 
 				<Suspense fallback={<SkusDataTableSkeleton />}>

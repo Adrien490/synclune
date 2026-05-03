@@ -61,6 +61,7 @@ export function useOfflineUploadQueue(
 	};
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		void refresh();
 		// refresh periodically while mounted (cheap — IDB count)
 		const interval = setInterval(() => {

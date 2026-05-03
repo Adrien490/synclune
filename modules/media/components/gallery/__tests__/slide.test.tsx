@@ -227,7 +227,7 @@ describe("GallerySlide", () => {
 		expect(retryBtn.className).toMatch(/touch-manipulation/);
 	});
 
-	it("fires haptic medium when retry button clicked", () => {
+	it("fires haptic light when retry button clicked", () => {
 		const { container } = render(
 			<GallerySlide {...defaultImageProps} media={createVideoMedia()} />,
 		);
@@ -235,6 +235,6 @@ describe("GallerySlide", () => {
 		fireEvent.error(video);
 		mockHaptic.mockClear();
 		screen.getByRole("button", { name: /Réessayer/i }).click();
-		expect(mockHaptic).toHaveBeenCalledWith("medium");
+		expect(mockHaptic).toHaveBeenCalledWith("light");
 	});
 });

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
@@ -84,20 +84,20 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 		disabled,
 		className,
 		"aria-busy": ariaBusy,
-		onPointerDown,
+		onClick,
 	}: {
 		children: React.ReactNode;
 		disabled?: boolean;
 		className?: string;
 		"aria-busy"?: boolean;
-		onPointerDown?: React.PointerEventHandler<HTMLButtonElement>;
+		onClick?: React.MouseEventHandler<HTMLButtonElement>;
 	}) => (
 		<button
 			data-testid="submit-button"
 			disabled={disabled}
 			className={className}
 			aria-busy={ariaBusy}
-			onPointerDown={onPointerDown}
+			onClick={onClick}
 		>
 			{children}
 		</button>
@@ -205,10 +205,10 @@ describe("ToggleDiscountStatusAlertDialog", () => {
 		expect(screen.getByTestId("cancel-button")).toBeDisabled();
 	});
 
-	it("triggers medium haptic on toggle submit pointerdown", () => {
+	it("triggers medium haptic on toggle submit click", () => {
 		render(<ToggleDiscountStatusAlertDialog />);
 		const submit = screen.getByTestId("submit-button");
-		submit.dispatchEvent(new Event("pointerdown", { bubbles: true }));
+		fireEvent.click(submit);
 		expect(mockHaptic).toHaveBeenCalledWith("medium");
 	});
 });

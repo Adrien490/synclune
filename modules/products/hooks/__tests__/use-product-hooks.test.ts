@@ -339,9 +339,19 @@ describe("useClearRecentSearches", () => {
 // ============================================================================
 
 describe("useDuplicateProduct", () => {
+	const DUPLICATE_DATA = {
+		productId: "new-prod-1",
+		title: "Copie de Bague Lune",
+		slug: "copie-de-bague-lune",
+	};
+
 	beforeEach(() => {
 		vi.clearAllMocks();
-		mockDuplicateProduct.mockResolvedValue({ ...SUCCESS, message: "Produit dupliqué" });
+		mockDuplicateProduct.mockResolvedValue({
+			...SUCCESS,
+			message: "Produit dupliqué",
+			data: DUPLICATE_DATA,
+		});
 	});
 
 	it("returns state, action, isPending, and doDuplicate", () => {
@@ -363,7 +373,7 @@ describe("useDuplicateProduct", () => {
 		expect(formData.get("productId")).toBe("product-123");
 	});
 
-	it("calls onSuccess with message when action succeeds", async () => {
+	it("calls onSuccess with message and duplicated product data when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateProduct({ onSuccess }));
 
@@ -371,7 +381,19 @@ describe("useDuplicateProduct", () => {
 			result.current.doDuplicate("product-123");
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith("Produit dupliqué");
+		expect(onSuccess).toHaveBeenCalledWith("Produit dupliqué", DUPLICATE_DATA);
+	});
+
+	it("does not call onSuccess when data payload is missing or malformed", async () => {
+		mockDuplicateProduct.mockResolvedValue({ ...SUCCESS, message: "Produit dupliqué" });
+		const onSuccess = vi.fn();
+		const { result } = renderHook(() => useDuplicateProduct({ onSuccess }));
+
+		await act(async () => {
+			result.current.doDuplicate("product-123");
+		});
+
+		expect(onSuccess).not.toHaveBeenCalled();
 	});
 
 	it("does not call onSuccess when action fails", async () => {

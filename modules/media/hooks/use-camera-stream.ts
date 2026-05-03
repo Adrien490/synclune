@@ -155,6 +155,7 @@ export function useCameraStream(options: UseCameraStreamOptions = {}): UseCamera
 	// Start whenever facing changes and autoStart is enabled, or when explicitly started
 	useEffect(() => {
 		if (autoStart) {
+			// eslint-disable-next-line react-hooks/set-state-in-effect
 			void start();
 		}
 		return () => {

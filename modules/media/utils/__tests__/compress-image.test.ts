@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { compressImage, HeicDecodeError, isHeicFile, prefersReducedData } from "../compress-image";
 
+vi.mock("heic-to/csp", () => ({
+	heicTo: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -83,8 +87,44 @@ describe("compressImage", () => {
 		expect(result.file).toBe(file);
 	});
 
-	it("throws HeicDecodeError when HEIC decoding fails", async () => {
+	it("falls back to libheif WASM when native HEIC decode fails", async () => {
 		const file = createFile("photo.heic", 2 * 1024 * 1024, "image/heic");
+		const fakeBitmap = { width: 100, height: 100, close: vi.fn() } as unknown as ImageBitmap;
+		const heicToModule = await import("heic-to/csp");
+		(
+			vi.mocked(heicToModule.heicTo) as unknown as { mockResolvedValueOnce: (v: unknown) => void }
+		).mockResolvedValueOnce(fakeBitmap);
+		vi.stubGlobal(
+			"createImageBitmap",
+			vi.fn(() => Promise.reject(new DOMException("Decode failed"))),
+		);
+		vi.stubGlobal(
+			"OffscreenCanvas",
+			class {
+				getContext() {
+					return {
+						drawImage: vi.fn(),
+					};
+				}
+				convertToBlob() {
+					return Promise.resolve(new Blob(["x"], { type: "image/webp" }));
+				}
+			},
+		);
+		const result = await compressImage(file);
+		expect(heicToModule.heicTo).toHaveBeenCalledWith(
+			expect.objectContaining({ blob: file, type: "bitmap" }),
+		);
+		expect(result.compressed).toBe(true);
+		expect(["image/webp", "image/jpeg"]).toContain(result.file.type);
+		expect(result.file.name).not.toMatch(/\.heic$/i);
+		vi.unstubAllGlobals();
+	});
+
+	it("throws HeicDecodeError when both native and libheif paths fail", async () => {
+		const file = createFile("photo.heic", 2 * 1024 * 1024, "image/heic");
+		const heicToModule = await import("heic-to/csp");
+		vi.mocked(heicToModule.heicTo).mockRejectedValueOnce(new Error("libheif crash"));
 		vi.stubGlobal(
 			"createImageBitmap",
 			vi.fn(() => Promise.reject(new DOMException("Decode failed"))),
@@ -108,11 +148,11 @@ describe("compressImage", () => {
 });
 
 describe("HeicDecodeError", () => {
-	it("carries the file name", () => {
+	it("carries the file name and signals corruption rather than browser support", () => {
 		const err = new HeicDecodeError("IMG_1234.heic");
 		expect(err.fileName).toBe("IMG_1234.heic");
 		expect(err.name).toBe("HeicDecodeError");
 		expect(err.message).toContain("IMG_1234.heic");
-		expect(err.message).toContain("Le plus compatible");
+		expect(err.message).toContain("corrompu");
 	});
 });

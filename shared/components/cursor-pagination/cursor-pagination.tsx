@@ -46,6 +46,7 @@ export function CursorPagination({
 	const [isPending, startTransition] = useTransition();
 	// Sentinel to distinguish "not yet initialized" from "cursor is undefined"
 	// Avoids spurious scroll-to-top on first render when cursor is also undefined
+	// eslint-disable-next-line react-hooks/refs
 	const UNINITIALIZED = useRef(Symbol("uninitialized")).current;
 	const previousCursorRef = useRef<string | symbol | undefined>(UNINITIALIZED);
 

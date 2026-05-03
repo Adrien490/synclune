@@ -1,5 +1,7 @@
 import { Footer, FooterSkeleton } from "@/app/(shop)/(home)/_components/footer";
 import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
+import { ShopMobileBottomNav } from "@/app/(shop)/(home)/_components/shop-mobile-bottom-nav";
+import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
@@ -25,6 +27,11 @@ export const metadata: Metadata = {
  * Auth enforcement is handled by the proxy (protectedRoutes).
  * No store closure gate. Shows MaintenanceBanner if store is closed.
  */
+async function MobileBottomNavWithAuth() {
+	const session = await getSession().catch(() => null);
+	return <ShopMobileBottomNav isAuthenticated={Boolean(session?.user)} />;
+}
+
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
 	const storeStatus = await getStoreStatus();
 
@@ -47,6 +54,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
 				<Footer />
 			</Suspense>
 			<CartAndSkuWrapper />
+			<Suspense fallback={null}>
+				<MobileBottomNavWithAuth />
+			</Suspense>
 			<CookieBanner />
 			<ConditionalAnalytics />
 		</>

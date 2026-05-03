@@ -5,13 +5,14 @@ import { ArrowUpDown, Search } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
-	AdminSearchDrawer,
+	AdminQuickSearchDialog,
 	StickyActionBar,
 	type StickyActionBarItem,
 } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { MATERIALS_SORT_LABELS } from "../../constants/materials.constants";
+import { materialsAdminQuickSearchAdapter } from "./materials-quick-search-adapter";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(MATERIALS_SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -67,12 +68,10 @@ export function MaterialsBottomBar() {
 				showResetOption
 			/>
 
-			<AdminSearchDrawer
+			<AdminQuickSearchDialog
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Nom, slug, description..."
-				ariaLabel="Rechercher un materiau"
-				scope="materials"
+				adapter={materialsAdminQuickSearchAdapter}
 			/>
 		</>
 	);
