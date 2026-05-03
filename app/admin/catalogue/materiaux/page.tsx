@@ -16,15 +16,10 @@ import { MaterialsFilterSheet } from "@/modules/materials/components/admin/mater
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import dynamic from "next/dynamic";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
+// Lazy loading - form dialog page-level (CreateMaterialButton) + drawer (delete imbrique)
 const MaterialFormDialog = dynamic(() =>
 	import("@/modules/materials/components/material-form-dialog").then(
 		(mod) => mod.MaterialFormDialog,
-	),
-);
-const DeleteMaterialAlertDialog = dynamic(() =>
-	import("@/modules/materials/components/admin/delete-material-alert-dialog").then(
-		(mod) => mod.DeleteMaterialAlertDialog,
 	),
 );
 const MaterialItemDrawer = dynamic(() =>
@@ -138,7 +133,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			</div>
 
 			<MaterialFormDialog />
-			<DeleteMaterialAlertDialog />
+			{/* ItemDrawer mobile + delete imbrique */}
 			<MaterialItemDrawer />
 		</>
 	);

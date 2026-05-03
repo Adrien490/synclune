@@ -28,11 +28,22 @@ import { useDuplicateSku } from "@/modules/skus/hooks/use-duplicate-sku";
 import { useSetDefaultSku } from "@/modules/skus/hooks/use-set-default-sku";
 import { useUpdateProductSkuStatus } from "@/modules/skus/hooks/use-update-sku-status";
 
-import { ADJUST_STOCK_DIALOG_ID } from "./adjust-stock-dialog";
-import { DELETE_PRODUCT_SKU_DIALOG_ID } from "./delete-sku-alert-dialog";
-import { UPDATE_PRICE_DIALOG_ID } from "./update-price-dialog";
+import { AdjustStockDialog, ADJUST_STOCK_DIALOG_ID } from "./adjust-stock-dialog";
+import {
+	DeleteProductSkuAlertDialog,
+	DELETE_PRODUCT_SKU_DIALOG_ID,
+} from "./delete-sku-alert-dialog";
+import { UpdatePriceDialog, UPDATE_PRICE_DIALOG_ID } from "./update-price-dialog";
 
 export const SKU_ITEM_DRAWER_ID = "sku-item-drawer";
+
+const SKU_DIALOGS = (
+	<>
+		<DeleteProductSkuAlertDialog />
+		<AdjustStockDialog />
+		<UpdatePriceDialog />
+	</>
+);
 
 export interface SkuItemDrawerData {
 	sku: {
@@ -96,7 +107,12 @@ export function SkuItemDrawer() {
 
 	if (!sku) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={SKU_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -120,16 +136,15 @@ export function SkuItemDrawer() {
 	const stockVariant = getStockVariant(inventory);
 	const stockLabel = getStockLabel(inventory);
 
-	const closeAndRun = (tier: HapticPattern, fn: () => void) => () => {
+	const withHaptic = (tier: HapticPattern, fn: () => void) => () => {
 		haptic(tier);
-		drawer.close();
 		fn();
 	};
 
-	const handleAdjustStock = closeAndRun("light", () =>
+	const handleAdjustStock = withHaptic("light", () =>
 		adjustStockDialog.open({ skuId: id, skuName: skuCode, currentStock: inventory }),
 	);
-	const handleUpdatePrice = closeAndRun("light", () =>
+	const handleUpdatePrice = withHaptic("light", () =>
 		updatePriceDialog.open({
 			skuId: id,
 			skuName: skuCode,
@@ -137,10 +152,19 @@ export function SkuItemDrawer() {
 			currentCompareAtPrice: compareAtPrice,
 		}),
 	);
-	const handleDuplicate = closeAndRun("light", () => duplicate(id, skuCode));
-	const handleToggleStatus = closeAndRun("medium", () => toggleStatus(id, !isActive));
-	const handleSetDefault = closeAndRun("medium", () => setAsDefault(id));
-	const handleDelete = closeAndRun("heavy", () =>
+	const handleDuplicate = withHaptic("light", () => {
+		drawer.close();
+		duplicate(id, skuCode);
+	});
+	const handleToggleStatus = withHaptic("medium", () => {
+		drawer.close();
+		toggleStatus(id, !isActive);
+	});
+	const handleSetDefault = withHaptic("medium", () => {
+		drawer.close();
+		setAsDefault(id);
+	});
+	const handleDelete = withHaptic("heavy", () =>
 		deleteAlert.open({ skuId: id, skuName: skuCode, isDefault }),
 	);
 	const handleNavigate = () => {
@@ -154,6 +178,7 @@ export function SkuItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={skuCode}
 			description={`${formatPrice(priceInclTax)} · ${inventory} en stock`}
+			dialogs={SKU_DIALOGS}
 		>
 			{/* Hero header : image + prix + badges */}
 			<div className="flex items-start gap-4">

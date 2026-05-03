@@ -28,6 +28,7 @@ import {
 	DISCARD_ADDRESS_CHANGES_DIALOG_ID,
 } from "../constants/dialog.constants";
 import { addressFormSchema, addressFormDefaultValues } from "../schemas/address-form.schema";
+import { DiscardAddressChangesAlertDialog } from "./discard-address-changes-alert-dialog";
 
 interface AddressDialogData extends Record<string, unknown> {
 	address?: UserAddress;
@@ -71,6 +72,10 @@ export function AddressFormDialog({
 					isDirtyRef={isDirtyRef}
 				/>
 			</ResponsiveDialogContent>
+			{/* Stacked confirm: dismiss form with unsaved changes — must be inside
+			    ResponsiveDialog tree on mobile so Vaul stacks via NestedRoot
+			    (otherwise opening would close the parent form drawer). */}
+			<DiscardAddressChangesAlertDialog />
 		</ResponsiveDialog>
 	);
 }

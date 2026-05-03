@@ -55,18 +55,23 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 
 vi.mock("../archive-product-alert-dialog", () => ({
 	ARCHIVE_PRODUCT_DIALOG_ID: "archive-product",
+	ArchiveProductAlertDialog: () => null,
 }));
 vi.mock("../change-product-status-alert-dialog", () => ({
 	CHANGE_PRODUCT_STATUS_DIALOG_ID: "change-product-status",
+	ChangeProductStatusAlertDialog: () => null,
 }));
 vi.mock("../delete-product-alert-dialog", () => ({
 	DELETE_PRODUCT_DIALOG_ID: "delete-product",
+	DeleteProductAlertDialog: () => null,
 }));
 vi.mock("../duplicate-product-alert-dialog", () => ({
 	DUPLICATE_PRODUCT_DIALOG_ID: "duplicate-product",
+	DuplicateProductAlertDialog: () => null,
 }));
 vi.mock("../manage-collections-dialog", () => ({
 	MANAGE_COLLECTIONS_DIALOG_ID: "manage-product-collections",
+	ManageCollectionsDialog: () => null,
 }));
 
 vi.mock("@/shared/components/admin-item-drawer", () => ({

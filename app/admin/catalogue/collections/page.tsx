@@ -32,21 +32,6 @@ const CollectionFormDialog = dynamic(() =>
 		(mod) => mod.CollectionFormDialog,
 	),
 );
-const DeleteCollectionAlertDialog = dynamic(() =>
-	import("@/modules/collections/components/admin/delete-collection-alert-dialog").then(
-		(mod) => mod.DeleteCollectionAlertDialog,
-	),
-);
-const ArchiveCollectionAlertDialog = dynamic(() =>
-	import("@/modules/collections/components/admin/archive-collection-alert-dialog").then(
-		(mod) => mod.ArchiveCollectionAlertDialog,
-	),
-);
-const ChangeCollectionStatusAlertDialog = dynamic(() =>
-	import("@/modules/collections/components/admin/change-collection-status-alert-dialog").then(
-		(mod) => mod.ChangeCollectionStatusAlertDialog,
-	),
-);
 const CollectionItemDrawer = dynamic(() =>
 	import("@/modules/collections/components/admin/collection-item-drawer").then(
 		(mod) => mod.CollectionItemDrawer,
@@ -108,9 +93,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 	return (
 		<>
 			<CollectionFormDialog />
-			<DeleteCollectionAlertDialog />
-			<ArchiveCollectionAlertDialog />
-			<ChangeCollectionStatusAlertDialog />
+			{/* ItemDrawer mobile + dialogs imbriques (delete/archive/change-status) */}
 			<CollectionItemDrawer />
 
 			<PageHeader

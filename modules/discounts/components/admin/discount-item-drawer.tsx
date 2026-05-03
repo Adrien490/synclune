@@ -23,11 +23,25 @@ import {
 } from "@/modules/discounts/services/discount-validation.service";
 import type { Discount } from "@/modules/discounts/types/discount.types";
 
-import { DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
-import { DELETE_DISCOUNT_DIALOG_ID } from "./delete-discount-alert-dialog";
-import { TOGGLE_DISCOUNT_STATUS_DIALOG_ID } from "./toggle-discount-status-alert-dialog";
+import { DiscountFormDialog, DISCOUNT_DIALOG_ID } from "./discount-form-dialog";
+import {
+	DeleteDiscountAlertDialog,
+	DELETE_DISCOUNT_DIALOG_ID,
+} from "./delete-discount-alert-dialog";
+import {
+	ToggleDiscountStatusAlertDialog,
+	TOGGLE_DISCOUNT_STATUS_DIALOG_ID,
+} from "./toggle-discount-status-alert-dialog";
 
 export const DISCOUNT_ITEM_DRAWER_ID = "discount-item-drawer";
+
+const DISCOUNT_DIALOGS = (
+	<>
+		<DiscountFormDialog />
+		<DeleteDiscountAlertDialog />
+		<ToggleDiscountStatusAlertDialog />
+	</>
+);
 
 export interface DiscountItemDrawerData {
 	discount: Discount;
@@ -63,7 +77,12 @@ export function DiscountItemDrawer() {
 
 	if (!discount) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={DISCOUNT_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -99,7 +118,6 @@ export function DiscountItemDrawer() {
 
 	const handleToggle = () => {
 		haptic("medium");
-		drawer.close();
 		toggleAlert.open({
 			discountId: discount.id,
 			discountCode: discount.code,
@@ -109,7 +127,6 @@ export function DiscountItemDrawer() {
 
 	const handleDelete = () => {
 		haptic("heavy");
-		drawer.close();
 		deleteAlert.open({
 			discountId: discount.id,
 			discountCode: discount.code,
@@ -123,6 +140,7 @@ export function DiscountItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={discount.code}
 			description={`${DISCOUNT_TYPE_LABELS[discount.type]} · ${formatValue(discount.type, discount.value)}`}
+			dialogs={DISCOUNT_DIALOGS}
 		>
 			<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
 				<dt className="text-muted-foreground">Code</dt>

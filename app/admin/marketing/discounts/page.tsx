@@ -21,20 +21,10 @@ import dynamic from "next/dynamic";
 import type { DiscountType } from "@/app/generated/prisma/client";
 import { type Metadata } from "next";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
-const DiscountFormDialog = dynamic(() =>
-	import("@/modules/discounts/components/admin/discount-form-dialog").then(
-		(mod) => mod.DiscountFormDialog,
-	),
-);
-const DeleteDiscountAlertDialog = dynamic(() =>
-	import("@/modules/discounts/components/admin/delete-discount-alert-dialog").then(
-		(mod) => mod.DeleteDiscountAlertDialog,
-	),
-);
-const ToggleDiscountStatusAlertDialog = dynamic(() =>
-	import("@/modules/discounts/components/admin/toggle-discount-status-alert-dialog").then(
-		(mod) => mod.ToggleDiscountStatusAlertDialog,
+// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
+const DiscountItemDrawer = dynamic(() =>
+	import("@/modules/discounts/components/admin/discount-item-drawer").then(
+		(mod) => mod.DiscountItemDrawer,
 	),
 );
 const DiscountsBottomBar = dynamic(() =>
@@ -153,9 +143,8 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 				</Suspense>
 			</div>
 
-			<DiscountFormDialog />
-			<DeleteDiscountAlertDialog />
-			<ToggleDiscountStatusAlertDialog />
+			{/* ItemDrawer mobile + dialogs imbriques (form/delete/toggle) */}
+			<DiscountItemDrawer />
 		</>
 	);
 }

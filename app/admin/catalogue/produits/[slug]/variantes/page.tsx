@@ -35,22 +35,7 @@ import { SkusBottomBar } from "@/modules/skus/components/admin/skus-bottom-bar";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
-const DeleteProductSkuAlertDialog = dynamic(() =>
-	import("@/modules/skus/components/admin/delete-sku-alert-dialog").then(
-		(mod) => mod.DeleteProductSkuAlertDialog,
-	),
-);
-const AdjustStockDialog = dynamic(() =>
-	import("@/modules/skus/components/admin/adjust-stock-dialog").then(
-		(mod) => mod.AdjustStockDialog,
-	),
-);
-const UpdatePriceDialog = dynamic(() =>
-	import("@/modules/skus/components/admin/update-price-dialog").then(
-		(mod) => mod.UpdatePriceDialog,
-	),
-);
+// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
 const SkuItemDrawer = dynamic(() =>
 	import("@/modules/skus/components/admin/sku-item-drawer").then((mod) => mod.SkuItemDrawer),
 );
@@ -164,9 +149,7 @@ export default async function ProductVariantsPage({
 
 	return (
 		<div className="space-y-6">
-			<DeleteProductSkuAlertDialog />
-			<AdjustStockDialog />
-			<UpdatePriceDialog />
+			{/* ItemDrawer mobile + dialogs imbriques (delete/adjust-stock/update-price) */}
 			<SkuItemDrawer />
 
 			<SkusBottomBar

@@ -16,14 +16,9 @@ import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filt
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import dynamic from "next/dynamic";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
+// Lazy loading - form dialog page-level (CreateColorButton) + drawer (delete imbrique)
 const ColorFormDialog = dynamic(() =>
 	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
-);
-const DeleteColorAlertDialog = dynamic(() =>
-	import("@/modules/colors/components/admin/delete-color-alert-dialog").then(
-		(mod) => mod.DeleteColorAlertDialog,
-	),
 );
 const ColorItemDrawer = dynamic(() =>
 	import("@/modules/colors/components/admin/color-item-drawer").then((mod) => mod.ColorItemDrawer),
@@ -135,7 +130,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			</div>
 
 			<ColorFormDialog />
-			<DeleteColorAlertDialog />
+			{/* ItemDrawer mobile + delete imbrique */}
 			<ColorItemDrawer />
 		</>
 	);

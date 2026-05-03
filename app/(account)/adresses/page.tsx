@@ -5,7 +5,6 @@ import { AddressFormDialog } from "@/modules/addresses/components/address-form-d
 import { AddressList } from "@/modules/addresses/components/address-list";
 import { AddressListSkeleton } from "@/modules/addresses/components/address-list-skeleton";
 import { DeleteAddressAlertDialog } from "@/modules/addresses/components/delete-address-alert-dialog";
-import { DiscardAddressChangesAlertDialog } from "@/modules/addresses/components/discard-address-changes-alert-dialog";
 import { getUserAddresses } from "@/modules/addresses/data/get-user-addresses";
 
 export const metadata: Metadata = {
@@ -25,7 +24,6 @@ export default function AddressesPage() {
 				<AddressFormDialog />
 			</Suspense>
 			<DeleteAddressAlertDialog />
-			<DiscardAddressChangesAlertDialog />
 		</>
 	);
 }

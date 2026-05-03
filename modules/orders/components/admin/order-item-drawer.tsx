@@ -36,17 +36,43 @@ import { useResendOrderEmail } from "@/modules/orders/hooks/use-resend-order-ema
 import { getOrderPermissions } from "@/modules/orders/services/order-status-validation.service";
 import type { OrderStateInput } from "@/modules/orders/types/order.types";
 
-import { CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
-import { DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";
-import { MARK_AS_DELIVERED_DIALOG_ID } from "./mark-as-delivered-alert-dialog";
-import { MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
-import { MARK_AS_PROCESSING_DIALOG_ID } from "./mark-as-processing-alert-dialog";
-import { MARK_AS_RETURNED_DIALOG_ID } from "./mark-as-returned-alert-dialog";
-import { MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
-import { ORDER_NOTES_DIALOG_ID } from "./order-notes-dialog";
-import { REVERT_TO_PROCESSING_DIALOG_ID } from "./revert-to-processing-dialog";
+import { CancelOrderAlertDialog, CANCEL_ORDER_DIALOG_ID } from "./cancel-order-alert-dialog";
+import { DeleteOrderAlertDialog, DELETE_ORDER_DIALOG_ID } from "./delete-order-alert-dialog";
+import {
+	MarkAsDeliveredAlertDialog,
+	MARK_AS_DELIVERED_DIALOG_ID,
+} from "./mark-as-delivered-alert-dialog";
+import { MarkAsPaidAlertDialog, MARK_AS_PAID_DIALOG_ID } from "./mark-as-paid-alert-dialog";
+import {
+	MarkAsProcessingAlertDialog,
+	MARK_AS_PROCESSING_DIALOG_ID,
+} from "./mark-as-processing-alert-dialog";
+import {
+	MarkAsReturnedAlertDialog,
+	MARK_AS_RETURNED_DIALOG_ID,
+} from "./mark-as-returned-alert-dialog";
+import { MarkAsShippedDialog, MARK_AS_SHIPPED_DIALOG_ID } from "./mark-as-shipped-dialog";
+import { OrderNotesDialog, ORDER_NOTES_DIALOG_ID } from "./order-notes-dialog";
+import {
+	RevertToProcessingDialog,
+	REVERT_TO_PROCESSING_DIALOG_ID,
+} from "./revert-to-processing-dialog";
 
 export const ORDER_ITEM_DRAWER_ID = "order-item-drawer";
+
+const ORDER_DIALOGS = (
+	<>
+		<CancelOrderAlertDialog />
+		<DeleteOrderAlertDialog />
+		<MarkAsPaidAlertDialog />
+		<MarkAsShippedDialog />
+		<MarkAsDeliveredAlertDialog />
+		<MarkAsProcessingAlertDialog />
+		<RevertToProcessingDialog />
+		<MarkAsReturnedAlertDialog />
+		<OrderNotesDialog />
+	</>
+);
 
 export interface OrderItemDrawerData {
 	order: {
@@ -84,7 +110,12 @@ export function OrderItemDrawer() {
 
 	if (!order) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={ORDER_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -142,6 +173,7 @@ export function OrderItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={order.orderNumber}
 			description={`${order.customerName ?? order.customerEmail}`}
+			dialogs={ORDER_DIALOGS}
 		>
 			<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
 				<dt className="text-muted-foreground">Client</dt>

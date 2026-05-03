@@ -6,15 +6,10 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import dynamic from "next/dynamic";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
+// Lazy loading - form dialog page-level (CreateProductTypeButton) + drawer (delete imbrique)
 const ProductTypeFormDialog = dynamic(() =>
 	import("@/modules/product-types/components/product-type-form-dialog").then(
 		(mod) => mod.ProductTypeFormDialog,
-	),
-);
-const DeleteProductTypeAlertDialog = dynamic(() =>
-	import("@/modules/product-types/components/admin/delete-product-type-alert-dialog").then(
-		(mod) => mod.DeleteProductTypeAlertDialog,
 	),
 );
 const ProductTypeItemDrawer = dynamic(() =>
@@ -91,7 +86,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 	return (
 		<>
 			<ProductTypeFormDialog />
-			<DeleteProductTypeAlertDialog />
+			{/* ItemDrawer mobile + delete imbrique */}
 			<ProductTypeItemDrawer />
 			<PageHeader
 				variant="compact"

@@ -21,6 +21,11 @@ const ReviewsBottomBar = dynamic(() =>
 		(mod) => mod.ReviewsBottomBar,
 	),
 );
+const ReviewItemDrawer = dynamic(() =>
+	import("@/modules/reviews/components/admin/review-item-drawer").then(
+		(mod) => mod.ReviewItemDrawer,
+	),
+);
 import { RatingStars } from "@/shared/components/rating-stars";
 import { formatRating } from "@/shared/utils/rating-utils";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -216,6 +221,9 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			<Suspense fallback={<ReviewsDataTableSkeleton />}>
 				<ReviewsDataTable reviewsPromise={reviewsPromise} perPage={perPage} />
 			</Suspense>
+
+			{/* ItemDrawer mobile + dialogs imbriques (detail/moderate) */}
+			<ReviewItemDrawer />
 		</>
 	);
 }

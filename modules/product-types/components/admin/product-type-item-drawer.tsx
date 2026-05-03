@@ -9,11 +9,19 @@ import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
-import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDuplicateProductType } from "@/modules/product-types/hooks/use-duplicate-product-type";
-import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialog";
+import {
+	DeleteProductTypeAlertDialog,
+	DELETE_PRODUCT_TYPE_DIALOG_ID,
+} from "./delete-product-type-alert-dialog";
 
 export const PRODUCT_TYPE_ITEM_DRAWER_ID = "product-type-item-drawer";
+
+const PRODUCT_TYPE_DIALOGS = (
+	<>
+		<DeleteProductTypeAlertDialog />
+	</>
+);
 
 export interface ProductTypeItemDrawerData {
 	productType: {
@@ -30,7 +38,6 @@ export interface ProductTypeItemDrawerData {
 
 export function ProductTypeItemDrawer() {
 	const drawer = useDialog<ProductTypeItemDrawerData>(PRODUCT_TYPE_ITEM_DRAWER_ID);
-	const formDialog = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteAlert = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
 	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType({
 		onSuccess: () => drawer.close(),
@@ -40,7 +47,12 @@ export function ProductTypeItemDrawer() {
 
 	if (!productType) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={PRODUCT_TYPE_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -50,14 +62,7 @@ export function ProductTypeItemDrawer() {
 	const productsLabel = `${productsCount} produit${productsCount !== 1 ? "s" : ""}`;
 	const statusLabel = isActive ? "Actif" : "Inactif";
 
-	const handleEdit = () => {
-		if (isSystem) return;
-		drawer.close();
-		formDialog.open({ productType: { id, label, description, slug } });
-	};
-
 	const handleDelete = () => {
-		drawer.close();
 		deleteAlert.open({ productTypeId: id, label, productsCount });
 	};
 
@@ -67,6 +72,7 @@ export function ProductTypeItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={label}
 			description={`${productsLabel} · ${statusLabel}`}
+			dialogs={PRODUCT_TYPE_DIALOGS}
 		>
 			{isSystem ? (
 				<p className="bg-muted text-muted-foreground flex items-center gap-2 rounded-md px-3 py-2 text-xs">
@@ -93,16 +99,22 @@ export function ProductTypeItemDrawer() {
 			</dl>
 
 			<div role="group" aria-label="Actions" className="flex flex-col gap-2">
-				<Button
-					variant="outline"
-					size="lg"
-					className="h-12 justify-start gap-3"
-					onClick={handleEdit}
-					disabled={isSystem}
-				>
-					<Pencil className="size-4" aria-hidden="true" />
-					{isSystem ? "Voir (lecture seule)" : "Éditer"}
-				</Button>
+				{isSystem ? (
+					<Button variant="outline" size="lg" className="h-12 justify-start gap-3" disabled>
+						<Pencil className="size-4" aria-hidden="true" />
+						Voir (lecture seule)
+					</Button>
+				) : (
+					<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
+						<Link
+							href={`/admin/catalogue/types-de-produits/${slug}/modifier`}
+							onClick={() => drawer.close()}
+						>
+							<Pencil className="size-4" aria-hidden="true" />
+							Éditer
+						</Link>
+					</Button>
+				)}
 				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
 					<Link
 						href={`/admin/catalogue/produits?productTypeId=${id}`}

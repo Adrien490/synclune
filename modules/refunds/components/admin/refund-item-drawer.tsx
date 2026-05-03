@@ -18,12 +18,21 @@ import {
 	REFUND_STATUS_VARIANTS,
 } from "@/modules/refunds/constants/refund.constants";
 
-import { APPROVE_REFUND_DIALOG_ID } from "./approve-refund-alert-dialog";
-import { CANCEL_REFUND_DIALOG_ID } from "./cancel-refund-alert-dialog";
-import { PROCESS_REFUND_DIALOG_ID } from "./process-refund-alert-dialog";
-import { REJECT_REFUND_DIALOG_ID } from "./reject-refund-alert-dialog";
+import { ApproveRefundAlertDialog, APPROVE_REFUND_DIALOG_ID } from "./approve-refund-alert-dialog";
+import { CancelRefundAlertDialog, CANCEL_REFUND_DIALOG_ID } from "./cancel-refund-alert-dialog";
+import { ProcessRefundAlertDialog, PROCESS_REFUND_DIALOG_ID } from "./process-refund-alert-dialog";
+import { RejectRefundAlertDialog, REJECT_REFUND_DIALOG_ID } from "./reject-refund-alert-dialog";
 
 export const REFUND_ITEM_DRAWER_ID = "refund-item-drawer";
+
+const REFUND_DIALOGS = (
+	<>
+		<ApproveRefundAlertDialog />
+		<ProcessRefundAlertDialog />
+		<RejectRefundAlertDialog />
+		<CancelRefundAlertDialog />
+	</>
+);
 
 export interface RefundItemDrawerData {
 	refund: {
@@ -53,7 +62,12 @@ export function RefundItemDrawer() {
 
 	if (!refund) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={REFUND_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -66,7 +80,6 @@ export function RefundItemDrawer() {
 		refund.status === RefundStatus.PENDING || refund.status === RefundStatus.APPROVED;
 
 	const openAlert = (alert: ReturnType<typeof useAlertDialog> | typeof approveAlert) => () => {
-		drawer.close();
 		alert.open({
 			refundId: refund.id,
 			amount: refund.amount,
@@ -80,6 +93,7 @@ export function RefundItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={`Remboursement ${refund.order.orderNumber}`}
 			description={`${formatEuro(refund.amount)} · ${REFUND_STATUS_LABELS[refund.status]}`}
+			dialogs={REFUND_DIALOGS}
 		>
 			<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
 				<dt className="text-muted-foreground">Commande</dt>

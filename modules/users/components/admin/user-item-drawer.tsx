@@ -87,165 +87,17 @@ export function UserItemDrawer() {
 		isResetPending;
 
 	const user = drawer.data?.user;
-
-	if (!user) {
-		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
-				{null}
-			</AdminItemDrawer>
-		);
-	}
-
-	const displayName = user.name || user.email;
-	const isDeleted = !!user.deletedAt;
-	const isSuspended = !!user.suspendedAt;
-	const isAdmin = user.role === "ADMIN";
+	const displayName = user ? user.name || user.email : "";
+	const isDeleted = !!user?.deletedAt;
+	const isSuspended = !!user?.suspendedAt;
+	const isAdmin = user?.role === "ADMIN";
 
 	const openAlert = (kind: Exclude<AlertKind, null>) => () => {
-		drawer.close();
 		setAlertKind(kind);
 	};
 
-	return (
+	const dialogs = user ? (
 		<>
-			<AdminItemDrawer
-				open={drawer.isOpen}
-				onOpenChange={(o) => !o && drawer.close()}
-				title={displayName}
-				description={user.email}
-			>
-				<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
-					<dt className="text-muted-foreground">Email</dt>
-					<dd className="flex items-center gap-1.5 truncate">
-						<span className="truncate">{user.email}</span>
-						{user.emailVerified ? (
-							<CircleCheck className="size-4 shrink-0 text-green-600" aria-label="Email vérifié" />
-						) : null}
-					</dd>
-					<dt className="text-muted-foreground">Rôle</dt>
-					<dd>
-						<Badge variant={isAdmin ? "default" : "secondary"}>
-							{isAdmin ? "Administrateur" : "Utilisateur"}
-						</Badge>
-					</dd>
-					<dt className="text-muted-foreground">Statut</dt>
-					<dd className="flex flex-wrap gap-1.5">
-						{isDeleted ? (
-							<Badge variant="outline">Supprimé</Badge>
-						) : isSuspended ? (
-							<Badge variant="outline">Suspendu</Badge>
-						) : (
-							<Badge variant="default">Actif</Badge>
-						)}
-					</dd>
-					<dt className="text-muted-foreground">Commandes</dt>
-					<dd>{user.orderCount}</dd>
-					<dt className="text-muted-foreground">Inscription</dt>
-					<dd>{formatDateShort(user.createdAt)}</dd>
-				</dl>
-
-				<div role="group" aria-label="Actions" className="flex flex-col gap-2">
-					<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
-						<Link href={`/admin/ventes/commandes?userId=${user.id}`} onClick={() => drawer.close()}>
-							<Eye className="size-4" aria-hidden="true" />
-							Voir commandes
-						</Link>
-					</Button>
-					<Button
-						variant="outline"
-						size="lg"
-						className="h-12 justify-start gap-3"
-						onClick={() => exportData(user.id, displayName)}
-						disabled={isExportPending}
-					>
-						<Download className="size-4" aria-hidden="true" />
-						Exporter données (RGPD)
-					</Button>
-					<Button
-						variant="outline"
-						size="lg"
-						className="h-12 justify-start gap-3"
-						onClick={() => invalidateSessions(user.id, displayName)}
-						disabled={isInvalidatePending}
-					>
-						<LogOut className="size-4" aria-hidden="true" />
-						Forcer la déconnexion
-					</Button>
-					<Button
-						variant="outline"
-						size="lg"
-						className="h-12 justify-start gap-3"
-						onClick={() => sendReset(user.id, displayName)}
-						disabled={isResetPending}
-					>
-						<KeyRound className="size-4" aria-hidden="true" />
-						Envoyer reset mot de passe
-					</Button>
-					{!isDeleted ? (
-						<>
-							<Button
-								variant="outline"
-								size="lg"
-								className="h-12 justify-start gap-3"
-								onClick={openAlert(isAdmin ? "demote" : "promote")}
-							>
-								{isAdmin ? (
-									<>
-										<CircleX className="size-4" aria-hidden="true" />
-										Rétrograder utilisateur
-									</>
-								) : (
-									<>
-										<CircleCheck className="size-4" aria-hidden="true" />
-										Promouvoir admin
-									</>
-								)}
-							</Button>
-							{isSuspended ? (
-								<Button
-									variant="outline"
-									size="lg"
-									className="h-12 justify-start gap-3"
-									onClick={openAlert("restore")}
-								>
-									<RotateCcw className="size-4" aria-hidden="true" />
-									Lever la suspension
-								</Button>
-							) : (
-								<Button
-									variant="outline"
-									size="lg"
-									className="h-12 justify-start gap-3"
-									onClick={openAlert("suspend")}
-								>
-									<CircleX className="size-4" aria-hidden="true" />
-									Suspendre
-								</Button>
-							)}
-							<Button
-								variant="outline"
-								size="lg"
-								className="text-destructive hover:text-destructive h-12 justify-start gap-3"
-								onClick={openAlert("delete")}
-							>
-								<Trash2 className="size-4" aria-hidden="true" />
-								Supprimer
-							</Button>
-						</>
-					) : (
-						<Button
-							variant="outline"
-							size="lg"
-							className="h-12 justify-start gap-3"
-							onClick={openAlert("restore")}
-						>
-							<RotateCcw className="size-4" aria-hidden="true" />
-							Restaurer
-						</Button>
-					)}
-				</div>
-			</AdminItemDrawer>
-
 			<AlertDialog
 				open={alertKind === "delete"}
 				onOpenChange={(o) => (!o ? setAlertKind(null) : null)}
@@ -432,5 +284,159 @@ export function UserItemDrawer() {
 				</AlertDialogContent>
 			</AlertDialog>
 		</>
+	) : null;
+
+	if (!user) {
+		return (
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={dialogs}
+			>
+				{null}
+			</AdminItemDrawer>
+		);
+	}
+
+	return (
+		<AdminItemDrawer
+			open={drawer.isOpen}
+			onOpenChange={(o) => !o && drawer.close()}
+			title={displayName}
+			description={user.email}
+			dialogs={dialogs}
+		>
+			<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
+				<dt className="text-muted-foreground">Email</dt>
+				<dd className="flex items-center gap-1.5 truncate">
+					<span className="truncate">{user.email}</span>
+					{user.emailVerified ? (
+						<CircleCheck className="size-4 shrink-0 text-green-600" aria-label="Email vérifié" />
+					) : null}
+				</dd>
+				<dt className="text-muted-foreground">Rôle</dt>
+				<dd>
+					<Badge variant={isAdmin ? "default" : "secondary"}>
+						{isAdmin ? "Administrateur" : "Utilisateur"}
+					</Badge>
+				</dd>
+				<dt className="text-muted-foreground">Statut</dt>
+				<dd className="flex flex-wrap gap-1.5">
+					{isDeleted ? (
+						<Badge variant="outline">Supprimé</Badge>
+					) : isSuspended ? (
+						<Badge variant="outline">Suspendu</Badge>
+					) : (
+						<Badge variant="default">Actif</Badge>
+					)}
+				</dd>
+				<dt className="text-muted-foreground">Commandes</dt>
+				<dd>{user.orderCount}</dd>
+				<dt className="text-muted-foreground">Inscription</dt>
+				<dd>{formatDateShort(user.createdAt)}</dd>
+			</dl>
+
+			<div role="group" aria-label="Actions" className="flex flex-col gap-2">
+				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
+					<Link href={`/admin/ventes/commandes?userId=${user.id}`} onClick={() => drawer.close()}>
+						<Eye className="size-4" aria-hidden="true" />
+						Voir commandes
+					</Link>
+				</Button>
+				<Button
+					variant="outline"
+					size="lg"
+					className="h-12 justify-start gap-3"
+					onClick={() => exportData(user.id, displayName)}
+					disabled={isExportPending}
+				>
+					<Download className="size-4" aria-hidden="true" />
+					Exporter données (RGPD)
+				</Button>
+				<Button
+					variant="outline"
+					size="lg"
+					className="h-12 justify-start gap-3"
+					onClick={() => invalidateSessions(user.id, displayName)}
+					disabled={isInvalidatePending}
+				>
+					<LogOut className="size-4" aria-hidden="true" />
+					Forcer la déconnexion
+				</Button>
+				<Button
+					variant="outline"
+					size="lg"
+					className="h-12 justify-start gap-3"
+					onClick={() => sendReset(user.id, displayName)}
+					disabled={isResetPending}
+				>
+					<KeyRound className="size-4" aria-hidden="true" />
+					Envoyer reset mot de passe
+				</Button>
+				{!isDeleted ? (
+					<>
+						<Button
+							variant="outline"
+							size="lg"
+							className="h-12 justify-start gap-3"
+							onClick={openAlert(isAdmin ? "demote" : "promote")}
+						>
+							{isAdmin ? (
+								<>
+									<CircleX className="size-4" aria-hidden="true" />
+									Rétrograder utilisateur
+								</>
+							) : (
+								<>
+									<CircleCheck className="size-4" aria-hidden="true" />
+									Promouvoir admin
+								</>
+							)}
+						</Button>
+						{isSuspended ? (
+							<Button
+								variant="outline"
+								size="lg"
+								className="h-12 justify-start gap-3"
+								onClick={openAlert("restore")}
+							>
+								<RotateCcw className="size-4" aria-hidden="true" />
+								Lever la suspension
+							</Button>
+						) : (
+							<Button
+								variant="outline"
+								size="lg"
+								className="h-12 justify-start gap-3"
+								onClick={openAlert("suspend")}
+							>
+								<CircleX className="size-4" aria-hidden="true" />
+								Suspendre
+							</Button>
+						)}
+						<Button
+							variant="outline"
+							size="lg"
+							className="text-destructive hover:text-destructive h-12 justify-start gap-3"
+							onClick={openAlert("delete")}
+						>
+							<Trash2 className="size-4" aria-hidden="true" />
+							Supprimer
+						</Button>
+					</>
+				) : (
+					<Button
+						variant="outline"
+						size="lg"
+						className="h-12 justify-start gap-3"
+						onClick={openAlert("restore")}
+					>
+						<RotateCcw className="size-4" aria-hidden="true" />
+						Restaurer
+					</Button>
+				)}
+			</div>
+		</AdminItemDrawer>
 	);
 }

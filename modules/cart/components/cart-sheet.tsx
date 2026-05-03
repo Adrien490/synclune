@@ -309,6 +309,8 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 						</DrawerHeader>
 						<CartSheetBody {...bodyProps} />
 					</DrawerContent>
+					<RemoveCartItemAlertDialog />
+					<ClearCartAlertDialog />
 				</Drawer>
 			) : (
 				<Sheet direction="right" open={isOpen} onOpenChange={handleOpenChange}>
@@ -342,11 +344,10 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 						</SheetHeader>
 						<CartSheetBody {...bodyProps} />
 					</SheetContent>
+					<RemoveCartItemAlertDialog />
+					<ClearCartAlertDialog />
 				</Sheet>
 			)}
-
-			<RemoveCartItemAlertDialog />
-			<ClearCartAlertDialog />
 		</CartOptimisticContext.Provider>
 	);
 }

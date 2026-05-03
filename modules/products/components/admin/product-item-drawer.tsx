@@ -25,11 +25,20 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 
-import { ARCHIVE_PRODUCT_DIALOG_ID } from "./archive-product-alert-dialog";
-import { CHANGE_PRODUCT_STATUS_DIALOG_ID } from "./change-product-status-alert-dialog";
-import { DELETE_PRODUCT_DIALOG_ID } from "./delete-product-alert-dialog";
-import { DUPLICATE_PRODUCT_DIALOG_ID } from "./duplicate-product-alert-dialog";
-import { MANAGE_COLLECTIONS_DIALOG_ID } from "./manage-collections-dialog";
+import {
+	ArchiveProductAlertDialog,
+	ARCHIVE_PRODUCT_DIALOG_ID,
+} from "./archive-product-alert-dialog";
+import {
+	ChangeProductStatusAlertDialog,
+	CHANGE_PRODUCT_STATUS_DIALOG_ID,
+} from "./change-product-status-alert-dialog";
+import { DeleteProductAlertDialog, DELETE_PRODUCT_DIALOG_ID } from "./delete-product-alert-dialog";
+import {
+	DuplicateProductAlertDialog,
+	DUPLICATE_PRODUCT_DIALOG_ID,
+} from "./duplicate-product-alert-dialog";
+import { ManageCollectionsDialog, MANAGE_COLLECTIONS_DIALOG_ID } from "./manage-collections-dialog";
 
 export const PRODUCT_ITEM_DRAWER_ID = "product-item-drawer";
 
@@ -81,6 +90,16 @@ const SectionHeading = ({ children }: { children: React.ReactNode }) => (
 	</h3>
 );
 
+const PRODUCT_DIALOGS = (
+	<>
+		<DeleteProductAlertDialog />
+		<ArchiveProductAlertDialog />
+		<ChangeProductStatusAlertDialog />
+		<DuplicateProductAlertDialog />
+		<ManageCollectionsDialog />
+	</>
+);
+
 export function ProductItemDrawer() {
 	const drawer = useDialog<ProductItemDrawerData>(PRODUCT_ITEM_DRAWER_ID);
 	const deleteAlert = useAlertDialog(DELETE_PRODUCT_DIALOG_ID);
@@ -94,7 +113,12 @@ export function ProductItemDrawer() {
 
 	if (!product) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={PRODUCT_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -146,6 +170,7 @@ export function ProductItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={title}
 			description={`${priceDisplay} · ${stock} en stock`}
+			dialogs={PRODUCT_DIALOGS}
 		>
 			{/* Hero header : image + status + chips */}
 			<div className="flex items-start gap-4">

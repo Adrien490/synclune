@@ -47,129 +47,19 @@ export function ReviewItemDrawer() {
 
 	const review = drawer.data?.review;
 
-	if (!review) {
-		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
-				{null}
-			</AdminItemDrawer>
-		);
-	}
-
-	const isPublished = review.status === "PUBLISHED";
-	const authorName = review.user.name ?? "Anonyme";
+	const isPublished = review?.status === "PUBLISHED";
+	const authorName = review?.user.name ?? "Anonyme";
 
 	const handleOpenDetail = () => {
-		drawer.close();
 		setDetailOpen(true);
 	};
 
 	const handleOpenModerate = () => {
-		drawer.close();
 		setModerateOpen(true);
 	};
 
-	return (
+	const dialogs = review ? (
 		<>
-			<AdminItemDrawer
-				open={drawer.isOpen}
-				onOpenChange={(o) => !o && drawer.close()}
-				title={review.product.title}
-				description={`${authorName} · ${isPublished ? REVIEW_STATUS_LABELS.PUBLISHED : REVIEW_STATUS_LABELS.HIDDEN}`}
-			>
-				<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
-					<dt className="text-muted-foreground">Auteur</dt>
-					<dd>{authorName}</dd>
-					<dt className="text-muted-foreground">Note</dt>
-					<dd>
-						<RatingStars rating={review.rating} size="sm" />
-					</dd>
-					<dt className="text-muted-foreground">Statut</dt>
-					<dd>
-						{isPublished ? (
-							<Badge variant="default" className="gap-1">
-								<CircleCheck className="size-3" aria-hidden="true" />
-								{REVIEW_STATUS_LABELS.PUBLISHED}
-							</Badge>
-						) : (
-							<Badge variant="secondary" className="gap-1">
-								<EyeOff className="size-3" aria-hidden="true" />
-								{REVIEW_STATUS_LABELS.HIDDEN}
-							</Badge>
-						)}
-					</dd>
-					{review.title ? (
-						<>
-							<dt className="text-muted-foreground">Titre</dt>
-							<dd className="font-medium">{review.title}</dd>
-						</>
-					) : null}
-					<dt className="text-muted-foreground">Contenu</dt>
-					<dd className="text-pretty whitespace-pre-wrap">{review.content}</dd>
-					<dt className="text-muted-foreground">Réponse</dt>
-					<dd>
-						{review.response ? (
-							<Badge variant="outline">Répondu</Badge>
-						) : (
-							<span className="text-muted-foreground">Aucune</span>
-						)}
-					</dd>
-					<dt className="text-muted-foreground">Date</dt>
-					<dd>{formatDateShort(review.createdAt)}</dd>
-				</dl>
-
-				<div role="group" aria-label="Actions" className="flex flex-col gap-2">
-					<Button
-						variant="outline"
-						size="lg"
-						className="h-12 justify-start gap-3"
-						onClick={handleOpenDetail}
-					>
-						<Eye className="size-4" aria-hidden="true" />
-						Voir le détail
-					</Button>
-					{!review.response ? (
-						<Button
-							variant="outline"
-							size="lg"
-							className="h-12 justify-start gap-3"
-							onClick={handleOpenDetail}
-						>
-							<MessageSquare className="size-4" aria-hidden="true" />
-							Répondre
-						</Button>
-					) : null}
-					<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
-						<Link
-							href={`/creations/${review.product.slug}`}
-							target="_blank"
-							rel="noopener noreferrer"
-							onClick={() => drawer.close()}
-						>
-							<ExternalLink className="size-4" aria-hidden="true" />
-							Voir le produit
-						</Link>
-					</Button>
-					<Button
-						variant="outline"
-						size="lg"
-						className="h-12 justify-start gap-3"
-						onClick={handleOpenModerate}
-					>
-						{isPublished ? (
-							<>
-								<EyeOff className="size-4" aria-hidden="true" />
-								Masquer
-							</>
-						) : (
-							<>
-								<Eye className="size-4" aria-hidden="true" />
-								Publier
-							</>
-						)}
-					</Button>
-				</div>
-			</AdminItemDrawer>
-
 			{detailOpen ? (
 				<ReviewDetailDialog review={review} open={detailOpen} onOpenChange={setDetailOpen} />
 			) : null}
@@ -222,5 +112,121 @@ export function ReviewItemDrawer() {
 				</AlertDialogContent>
 			</AlertDialog>
 		</>
+	) : null;
+
+	if (!review) {
+		return (
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={dialogs}
+			>
+				{null}
+			</AdminItemDrawer>
+		);
+	}
+
+	return (
+		<AdminItemDrawer
+			open={drawer.isOpen}
+			onOpenChange={(o) => !o && drawer.close()}
+			title={review.product.title}
+			description={`${authorName} · ${isPublished ? REVIEW_STATUS_LABELS.PUBLISHED : REVIEW_STATUS_LABELS.HIDDEN}`}
+			dialogs={dialogs}
+		>
+			<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
+				<dt className="text-muted-foreground">Auteur</dt>
+				<dd>{authorName}</dd>
+				<dt className="text-muted-foreground">Note</dt>
+				<dd>
+					<RatingStars rating={review.rating} size="sm" />
+				</dd>
+				<dt className="text-muted-foreground">Statut</dt>
+				<dd>
+					{isPublished ? (
+						<Badge variant="default" className="gap-1">
+							<CircleCheck className="size-3" aria-hidden="true" />
+							{REVIEW_STATUS_LABELS.PUBLISHED}
+						</Badge>
+					) : (
+						<Badge variant="secondary" className="gap-1">
+							<EyeOff className="size-3" aria-hidden="true" />
+							{REVIEW_STATUS_LABELS.HIDDEN}
+						</Badge>
+					)}
+				</dd>
+				{review.title ? (
+					<>
+						<dt className="text-muted-foreground">Titre</dt>
+						<dd className="font-medium">{review.title}</dd>
+					</>
+				) : null}
+				<dt className="text-muted-foreground">Contenu</dt>
+				<dd className="text-pretty whitespace-pre-wrap">{review.content}</dd>
+				<dt className="text-muted-foreground">Réponse</dt>
+				<dd>
+					{review.response ? (
+						<Badge variant="outline">Répondu</Badge>
+					) : (
+						<span className="text-muted-foreground">Aucune</span>
+					)}
+				</dd>
+				<dt className="text-muted-foreground">Date</dt>
+				<dd>{formatDateShort(review.createdAt)}</dd>
+			</dl>
+
+			<div role="group" aria-label="Actions" className="flex flex-col gap-2">
+				<Button
+					variant="outline"
+					size="lg"
+					className="h-12 justify-start gap-3"
+					onClick={handleOpenDetail}
+				>
+					<Eye className="size-4" aria-hidden="true" />
+					Voir le détail
+				</Button>
+				{!review.response ? (
+					<Button
+						variant="outline"
+						size="lg"
+						className="h-12 justify-start gap-3"
+						onClick={handleOpenDetail}
+					>
+						<MessageSquare className="size-4" aria-hidden="true" />
+						Répondre
+					</Button>
+				) : null}
+				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
+					<Link
+						href={`/creations/${review.product.slug}`}
+						target="_blank"
+						rel="noopener noreferrer"
+						onClick={() => drawer.close()}
+					>
+						<ExternalLink className="size-4" aria-hidden="true" />
+						Voir le produit
+					</Link>
+				</Button>
+				<Button
+					variant="outline"
+					size="lg"
+					className="h-12 justify-start gap-3"
+					onClick={handleOpenModerate}
+				>
+					{isPublished ? (
+						<>
+							<EyeOff className="size-4" aria-hidden="true" />
+							Masquer
+						</>
+					) : (
+						<>
+							<Eye className="size-4" aria-hidden="true" />
+							Publier
+						</>
+					)}
+				</Button>
+			</div>
+		</AdminItemDrawer>
 	);
 }

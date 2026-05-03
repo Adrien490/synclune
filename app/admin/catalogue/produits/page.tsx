@@ -19,32 +19,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
-const ArchiveProductAlertDialog = dynamic(() =>
-	import("@/modules/products/components/admin/archive-product-alert-dialog").then(
-		(mod) => mod.ArchiveProductAlertDialog,
-	),
-);
-const ChangeProductStatusAlertDialog = dynamic(() =>
-	import("@/modules/products/components/admin/change-product-status-alert-dialog").then(
-		(mod) => mod.ChangeProductStatusAlertDialog,
-	),
-);
-const DeleteProductAlertDialog = dynamic(() =>
-	import("@/modules/products/components/admin/delete-product-alert-dialog").then(
-		(mod) => mod.DeleteProductAlertDialog,
-	),
-);
-const DuplicateProductAlertDialog = dynamic(() =>
-	import("@/modules/products/components/admin/duplicate-product-alert-dialog").then(
-		(mod) => mod.DuplicateProductAlertDialog,
-	),
-);
-const ManageCollectionsDialog = dynamic(() =>
-	import("@/modules/products/components/admin/manage-collections-dialog").then(
-		(mod) => mod.ManageCollectionsDialog,
-	),
-);
+// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
 const ProductItemDrawer = dynamic(() =>
 	import("@/modules/products/components/admin/product-item-drawer").then(
 		(mod) => mod.ProductItemDrawer,
@@ -119,12 +94,7 @@ export default function ProductsAdminPage({ searchParams }: ProductsAdminPagePro
 				<ProductsContent searchParams={searchParams} />
 			</Suspense>
 
-			{/* Alert Dialogs globaux */}
-			<ArchiveProductAlertDialog />
-			<ChangeProductStatusAlertDialog />
-			<DeleteProductAlertDialog />
-			<DuplicateProductAlertDialog />
-			<ManageCollectionsDialog />
+			{/* ItemDrawer mobile + dialogs imbriques (delete/archive/status/duplicate/collections) */}
 			<ProductItemDrawer />
 		</>
 	);

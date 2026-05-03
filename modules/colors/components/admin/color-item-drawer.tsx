@@ -10,10 +10,18 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { useDuplicateColor } from "@/modules/colors/hooks/use-duplicate-color";
-import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
-import { DELETE_COLOR_DIALOG_ID } from "@/modules/colors/components/admin/delete-color-alert-dialog";
+import {
+	DeleteColorAlertDialog,
+	DELETE_COLOR_DIALOG_ID,
+} from "@/modules/colors/components/admin/delete-color-alert-dialog";
 
 export const COLOR_ITEM_DRAWER_ID = "color-item-drawer";
+
+const COLOR_DIALOGS = (
+	<>
+		<DeleteColorAlertDialog />
+	</>
+);
 
 export interface ColorItemDrawerData {
 	color: {
@@ -29,7 +37,6 @@ export interface ColorItemDrawerData {
 
 export function ColorItemDrawer() {
 	const drawer = useDialog<ColorItemDrawerData>(COLOR_ITEM_DRAWER_ID);
-	const colorFormDialog = useDialog(COLOR_DIALOG_ID);
 	const deleteAlert = useAlertDialog(DELETE_COLOR_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateColor();
 
@@ -37,7 +44,12 @@ export function ColorItemDrawer() {
 
 	if (!color) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={COLOR_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -47,18 +59,12 @@ export function ColorItemDrawer() {
 	const skuLabel = `${skuCount} variante${skuCount !== 1 ? "s" : ""}`;
 	const statusLabel = isActive ? "Actif" : "Inactif";
 
-	const handleEdit = () => {
-		drawer.close();
-		colorFormDialog.open({ color: { id, name, hex, slug } });
-	};
-
 	const handleDuplicate = () => {
 		duplicate(id);
 		drawer.close();
 	};
 
 	const handleDelete = () => {
-		drawer.close();
 		deleteAlert.open({ colorId: id, colorName: name });
 	};
 
@@ -68,6 +74,7 @@ export function ColorItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={name}
 			description={`${skuLabel} · ${statusLabel}`}
+			dialogs={COLOR_DIALOGS}
 		>
 			<dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-sm">
 				<dt className="text-muted-foreground">Aperçu</dt>
@@ -90,14 +97,11 @@ export function ColorItemDrawer() {
 			</dl>
 
 			<div role="group" aria-label="Actions" className="flex flex-col gap-2">
-				<Button
-					variant="outline"
-					size="lg"
-					className="h-12 justify-start gap-3"
-					onClick={handleEdit}
-				>
-					<SquarePen className="size-4" aria-hidden="true" />
-					Éditer
+				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
+					<Link href={`/admin/catalogue/couleurs/${slug}/modifier`} onClick={() => drawer.close()}>
+						<SquarePen className="size-4" aria-hidden="true" />
+						Éditer
+					</Link>
 				</Button>
 				<Button
 					variant="outline"

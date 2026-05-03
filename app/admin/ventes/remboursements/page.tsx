@@ -21,25 +21,10 @@ const RefundsBottomBar = dynamic(() =>
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import type { Metadata } from "next";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
-const ApproveRefundAlertDialog = dynamic(() =>
-	import("@/modules/refunds/components/admin/approve-refund-alert-dialog").then(
-		(mod) => mod.ApproveRefundAlertDialog,
-	),
-);
-const ProcessRefundAlertDialog = dynamic(() =>
-	import("@/modules/refunds/components/admin/process-refund-alert-dialog").then(
-		(mod) => mod.ProcessRefundAlertDialog,
-	),
-);
-const RejectRefundAlertDialog = dynamic(() =>
-	import("@/modules/refunds/components/admin/reject-refund-alert-dialog").then(
-		(mod) => mod.RejectRefundAlertDialog,
-	),
-);
-const CancelRefundAlertDialog = dynamic(() =>
-	import("@/modules/refunds/components/admin/cancel-refund-alert-dialog").then(
-		(mod) => mod.CancelRefundAlertDialog,
+// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
+const RefundItemDrawer = dynamic(() =>
+	import("@/modules/refunds/components/admin/refund-item-drawer").then(
+		(mod) => mod.RefundItemDrawer,
 	),
 );
 
@@ -133,11 +118,8 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 				</Suspense>
 			</div>
 
-			{/* Alert Dialogs globaux */}
-			<ApproveRefundAlertDialog />
-			<ProcessRefundAlertDialog />
-			<RejectRefundAlertDialog />
-			<CancelRefundAlertDialog />
+			{/* ItemDrawer mobile + dialogs imbriques (approve/process/reject/cancel) */}
+			<RefundItemDrawer />
 		</>
 	);
 }

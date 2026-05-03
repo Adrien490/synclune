@@ -16,12 +16,28 @@ import { cn } from "@/shared/utils/cn";
 
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 
-import { ARCHIVE_COLLECTION_DIALOG_ID } from "./archive-collection-alert-dialog";
-import { CHANGE_COLLECTION_STATUS_DIALOG_ID } from "./change-collection-status-alert-dialog";
-import { COLLECTION_DIALOG_ID } from "./collection-form-dialog";
-import { DELETE_COLLECTION_DIALOG_ID } from "./delete-collection-alert-dialog";
+import {
+	ArchiveCollectionAlertDialog,
+	ARCHIVE_COLLECTION_DIALOG_ID,
+} from "./archive-collection-alert-dialog";
+import {
+	ChangeCollectionStatusAlertDialog,
+	CHANGE_COLLECTION_STATUS_DIALOG_ID,
+} from "./change-collection-status-alert-dialog";
+import {
+	DeleteCollectionAlertDialog,
+	DELETE_COLLECTION_DIALOG_ID,
+} from "./delete-collection-alert-dialog";
 
 export const COLLECTION_ITEM_DRAWER_ID = "collection-item-drawer";
+
+const COLLECTION_DIALOGS = (
+	<>
+		<DeleteCollectionAlertDialog />
+		<ArchiveCollectionAlertDialog />
+		<ChangeCollectionStatusAlertDialog />
+	</>
+);
 
 export interface CollectionItemDrawerData {
 	collection: {
@@ -52,7 +68,6 @@ const SectionHeading = ({ children }: { children: React.ReactNode }) => (
 
 export function CollectionItemDrawer() {
 	const drawer = useDialog<CollectionItemDrawerData>(COLLECTION_ITEM_DRAWER_ID);
-	const formDialog = useDialog(COLLECTION_DIALOG_ID);
 	const deleteAlert = useAlertDialog(DELETE_COLLECTION_DIALOG_ID);
 	const archiveAlert = useAlertDialog(ARCHIVE_COLLECTION_DIALOG_ID);
 	const changeStatusAlert = useAlertDialog(CHANGE_COLLECTION_STATUS_DIALOG_ID);
@@ -62,7 +77,12 @@ export function CollectionItemDrawer() {
 
 	if (!collection) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={COLLECTION_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -78,16 +98,8 @@ export function CollectionItemDrawer() {
 		fn();
 	};
 
-	const handleEdit = withHaptic("light", () => {
-		drawer.close();
-		formDialog.open({
-			collection: { id, name, slug, description, status },
-		});
-	});
-
 	const handleChangeStatus = (targetStatus: CollectionStatus) =>
 		withHaptic("light", () => {
-			drawer.close();
 			changeStatusAlert.open({
 				collectionId: id,
 				collectionName: name,
@@ -97,12 +109,10 @@ export function CollectionItemDrawer() {
 		});
 
 	const handleArchive = withHaptic("medium", () => {
-		drawer.close();
 		archiveAlert.open({ collectionId: id, collectionName: name, collectionStatus: status });
 	});
 
 	const handleDelete = withHaptic("heavy", () => {
-		drawer.close();
 		deleteAlert.open({ collectionId: id, collectionName: name, productsCount });
 	});
 
@@ -117,6 +127,7 @@ export function CollectionItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={name}
 			description={`${productsCount} produit${productsCount !== 1 ? "s" : ""} · ${statusLabel}`}
+			dialogs={COLLECTION_DIALOGS}
 		>
 			{/* Hero header : icône + compteur produits + badge statut */}
 			<div className="flex items-start gap-4">
@@ -174,14 +185,17 @@ export function CollectionItemDrawer() {
 						/>
 					</Link>
 				</Button>
-				<Button
-					variant="outline"
-					size="lg"
-					className="h-12 justify-start gap-3"
-					onClick={handleEdit}
-				>
-					<Pencil className="size-4 shrink-0" aria-hidden="true" />
-					<span>Modifier</span>
+				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
+					<Link
+						href={`/admin/catalogue/collections/${slug}/modifier`}
+						onClick={() => {
+							haptic("light");
+							drawer.close();
+						}}
+					>
+						<Pencil className="size-4 shrink-0" aria-hidden="true" />
+						<span>Modifier</span>
+					</Link>
 				</Button>
 				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
 					<Link href={`/admin/catalogue/collections/${slug}`} onClick={handleNavigate}>

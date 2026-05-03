@@ -11,10 +11,18 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { useDuplicateMaterial } from "@/modules/materials/hooks/use-duplicate-material";
 import { useToggleMaterialStatus } from "@/modules/materials/hooks/use-toggle-material-status";
-import { MATERIAL_DIALOG_ID } from "@/modules/materials/components/material-form-dialog";
-import { DELETE_MATERIAL_DIALOG_ID } from "@/modules/materials/components/admin/delete-material-alert-dialog";
+import {
+	DeleteMaterialAlertDialog,
+	DELETE_MATERIAL_DIALOG_ID,
+} from "@/modules/materials/components/admin/delete-material-alert-dialog";
 
 export const MATERIAL_ITEM_DRAWER_ID = "material-item-drawer";
+
+const MATERIAL_DIALOGS = (
+	<>
+		<DeleteMaterialAlertDialog />
+	</>
+);
 
 export interface MaterialItemDrawerData {
 	material: {
@@ -30,7 +38,6 @@ export interface MaterialItemDrawerData {
 
 export function MaterialItemDrawer() {
 	const drawer = useDialog<MaterialItemDrawerData>(MATERIAL_ITEM_DRAWER_ID);
-	const formDialog = useDialog(MATERIAL_DIALOG_ID);
 	const deleteAlert = useAlertDialog(DELETE_MATERIAL_DIALOG_ID);
 	const { duplicate, isPending: isDuplicating } = useDuplicateMaterial();
 	const { toggleStatus, isPending: isToggling } = useToggleMaterialStatus();
@@ -39,7 +46,12 @@ export function MaterialItemDrawer() {
 
 	if (!material) {
 		return (
-			<AdminItemDrawer open={drawer.isOpen} onOpenChange={(o) => !o && drawer.close()} title="">
+			<AdminItemDrawer
+				open={drawer.isOpen}
+				onOpenChange={(o) => !o && drawer.close()}
+				title=""
+				dialogs={MATERIAL_DIALOGS}
+			>
 				{null}
 			</AdminItemDrawer>
 		);
@@ -48,11 +60,6 @@ export function MaterialItemDrawer() {
 	const { id, name, slug, description, isActive, skuCount } = material;
 	const skuLabel = `${skuCount} variante${skuCount !== 1 ? "s" : ""}`;
 	const statusLabel = isActive ? "Actif" : "Inactif";
-
-	const handleEdit = () => {
-		drawer.close();
-		formDialog.open({ material: { id, name, slug, description, isActive } });
-	};
 
 	const handleDuplicate = () => {
 		duplicate(id);
@@ -65,7 +72,6 @@ export function MaterialItemDrawer() {
 	};
 
 	const handleDelete = () => {
-		drawer.close();
 		deleteAlert.open({ materialId: id, materialName: name });
 	};
 
@@ -75,6 +81,7 @@ export function MaterialItemDrawer() {
 			onOpenChange={(o) => !o && drawer.close()}
 			title={name}
 			description={`${skuLabel} · ${statusLabel}`}
+			dialogs={MATERIAL_DIALOGS}
 		>
 			<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
 				<dt className="text-muted-foreground">Slug</dt>
@@ -94,14 +101,11 @@ export function MaterialItemDrawer() {
 			</dl>
 
 			<div role="group" aria-label="Actions" className="flex flex-col gap-2">
-				<Button
-					variant="outline"
-					size="lg"
-					className="h-12 justify-start gap-3"
-					onClick={handleEdit}
-				>
-					<SquarePen className="size-4" aria-hidden="true" />
-					Éditer
+				<Button asChild variant="outline" size="lg" className="h-12 justify-start gap-3">
+					<Link href={`/admin/catalogue/materiaux/${slug}/modifier`} onClick={() => drawer.close()}>
+						<SquarePen className="size-4" aria-hidden="true" />
+						Éditer
+					</Link>
 				</Button>
 				<Button
 					variant="outline"

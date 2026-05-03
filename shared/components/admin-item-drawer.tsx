@@ -29,6 +29,12 @@ interface AdminItemDrawerProps {
 	description?: ReactNode;
 	children: ReactNode;
 	footer?: ReactNode;
+	/**
+	 * Overlays imbriqués (AlertDialog, ResponsiveDialog) montés comme siblings
+	 * de DrawerContent/SheetContent. Toujours montés (Drawer.Root est non-rendering)
+	 * → utilisent NestedRoot via useIsInsideVaul() quand déclenchés depuis ce drawer.
+	 */
+	dialogs?: ReactNode;
 }
 
 /**
@@ -46,6 +52,7 @@ export function AdminItemDrawer({
 	description,
 	children,
 	footer,
+	dialogs,
 }: AdminItemDrawerProps) {
 	const isMobile = useIsMobile();
 	const triggerHaptic = useHaptic();
@@ -68,6 +75,7 @@ export function AdminItemDrawer({
 					<DrawerBody className="space-y-5">{children}</DrawerBody>
 					{footer ? <DrawerFooter>{footer}</DrawerFooter> : null}
 				</DrawerContent>
+				{dialogs}
 			</Drawer>
 		);
 	}
@@ -91,6 +99,7 @@ export function AdminItemDrawer({
 					</SheetFooter>
 				) : null}
 			</SheetContent>
+			{dialogs}
 		</Sheet>
 	);
 }

@@ -20,51 +20,9 @@ import { parseFilters } from "./_utils/params";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
-const CancelOrderAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/cancel-order-alert-dialog").then(
-		(mod) => mod.CancelOrderAlertDialog,
-	),
-);
-const DeleteOrderAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/delete-order-alert-dialog").then(
-		(mod) => mod.DeleteOrderAlertDialog,
-	),
-);
-const MarkAsPaidAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/mark-as-paid-alert-dialog").then(
-		(mod) => mod.MarkAsPaidAlertDialog,
-	),
-);
-const MarkAsShippedDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/mark-as-shipped-dialog").then(
-		(mod) => mod.MarkAsShippedDialog,
-	),
-);
-const MarkAsDeliveredAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/mark-as-delivered-alert-dialog").then(
-		(mod) => mod.MarkAsDeliveredAlertDialog,
-	),
-);
-const MarkAsProcessingAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/mark-as-processing-alert-dialog").then(
-		(mod) => mod.MarkAsProcessingAlertDialog,
-	),
-);
-const RevertToProcessingDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/revert-to-processing-dialog").then(
-		(mod) => mod.RevertToProcessingDialog,
-	),
-);
-const MarkAsReturnedAlertDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/mark-as-returned-alert-dialog").then(
-		(mod) => mod.MarkAsReturnedAlertDialog,
-	),
-);
-const OrderNotesDialog = dynamic(() =>
-	import("@/modules/orders/components/admin/order-notes-dialog").then(
-		(mod) => mod.OrderNotesDialog,
-	),
+// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
+const OrderItemDrawer = dynamic(() =>
+	import("@/modules/orders/components/admin/order-item-drawer").then((mod) => mod.OrderItemDrawer),
 );
 const OrdersBottomBar = dynamic(() =>
 	import("@/modules/orders/components/admin/orders-bottom-bar").then((mod) => mod.OrdersBottomBar),
@@ -174,16 +132,8 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 				</Suspense>
 			</div>
 
-			{/* Alert Dialogs globaux */}
-			<CancelOrderAlertDialog />
-			<DeleteOrderAlertDialog />
-			<MarkAsPaidAlertDialog />
-			<MarkAsShippedDialog />
-			<MarkAsDeliveredAlertDialog />
-			<MarkAsProcessingAlertDialog />
-			<RevertToProcessingDialog />
-			<MarkAsReturnedAlertDialog />
-			<OrderNotesDialog />
+			{/* ItemDrawer mobile + dialogs imbriques (cancel, delete, mark-as-*, notes) */}
+			<OrderItemDrawer />
 		</>
 	);
 }
