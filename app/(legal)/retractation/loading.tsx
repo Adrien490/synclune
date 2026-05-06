@@ -46,18 +46,19 @@ export default function RetractationLoading() {
 									<Skeleton className="bg-muted/30 h-5 w-5/6" />
 								</div>
 
-								{/* Formulaire skeleton (section 2-3) */}
+								{/* Formulaire skeleton (section 2-3) — réserve la hauteur du formulaire réel (~14 champs) pour éviter le CLS */}
 								{i === 2 && (
-									<div className="bg-muted/20 space-y-4 rounded-lg border p-6">
+									<div className="bg-muted/20 min-h-[600px] space-y-4 rounded-lg border p-6">
 										<Skeleton className="bg-muted/50 h-6 w-64" />
 										<div className="space-y-3">
-											{Array.from({ length: 6 }).map((_, j) => (
+											{Array.from({ length: 12 }).map((_, j) => (
 												<div key={j} className="space-y-2">
 													<Skeleton className="bg-muted/40 h-4 w-32" />
 													<Skeleton className="bg-muted/30 h-10 w-full rounded-md" />
 												</div>
 											))}
 										</div>
+										<Skeleton className="bg-primary/20 h-12 w-full rounded-md" />
 									</div>
 								)}
 

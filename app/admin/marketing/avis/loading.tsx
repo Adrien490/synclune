@@ -1,24 +1,28 @@
-import { MessageSquare, CircleCheck, EyeOff } from "lucide-react";
+import { MessageSquare, CircleCheck, EyeOff, Star } from "lucide-react";
 
+import { ReviewsMobileListSkeleton } from "@/modules/reviews/components/admin/reviews-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
-import { Toolbar } from "@/shared/components/toolbar";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
- * Loading skeleton pour la page admin des avis
+ * Loading skeleton pour la page admin des avis.
+ * Aligned with page.tsx: PageHeader + 4 stat cards + Toolbar + MobileList + DataTable.
  */
 export default function ReviewsAdminLoading() {
 	return (
-		<>
+		<div role="status" aria-busy="true" aria-label="Chargement des avis">
+			<span className="sr-only">Chargement des avis...</span>
+
 			<PageHeader variant="compact" title="Avis clients" className="hidden md:block" />
 
-			{/* Statistiques */}
-			<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+			{/* Statistiques (4 cards : Total / Publiés / Masqués / Note moyenne) */}
+			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
 				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
 							<p className="text-muted-foreground text-sm font-medium">Total avis</p>
-							<Skeleton className="mt-1 h-8 w-16" />
+							<Skeleton className="mt-1 h-8 w-16 motion-safe:animate-pulse" />
 						</div>
 						<MessageSquare className="text-muted-foreground h-8 w-8" />
 					</div>
@@ -27,8 +31,8 @@ export default function ReviewsAdminLoading() {
 				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-muted-foreground text-sm font-medium">Publies</p>
-							<Skeleton className="mt-1 h-8 w-12" />
+							<p className="text-muted-foreground text-sm font-medium">Publiés</p>
+							<Skeleton className="mt-1 h-8 w-12 motion-safe:animate-pulse" />
 						</div>
 						<CircleCheck className="text-secondary-foreground h-8 w-8" />
 					</div>
@@ -37,26 +41,32 @@ export default function ReviewsAdminLoading() {
 				<div className="bg-card rounded-lg border p-6">
 					<div className="flex items-center justify-between">
 						<div>
-							<p className="text-muted-foreground text-sm font-medium">Masques</p>
-							<Skeleton className="mt-1 h-8 w-12" />
+							<p className="text-muted-foreground text-sm font-medium">Masqués</p>
+							<Skeleton className="mt-1 h-8 w-12 motion-safe:animate-pulse" />
 						</div>
 						<EyeOff className="text-muted-foreground h-8 w-8" />
+					</div>
+				</div>
+
+				<div className="bg-card rounded-lg border p-6">
+					<div className="flex items-center justify-between">
+						<div>
+							<p className="text-muted-foreground text-sm font-medium">Note moyenne</p>
+							<Skeleton className="mt-1 h-8 w-16 motion-safe:animate-pulse" />
+						</div>
+						<Star className="text-muted-foreground h-8 w-8" />
 					</div>
 				</div>
 			</div>
 
 			{/* Toolbar */}
-			<Toolbar ariaLabel="Barre d'outils de gestion des avis">
-				<div className="flex flex-1 flex-wrap items-center gap-2">
-					<Skeleton className="h-10 w-full sm:max-w-md" />
-					<Skeleton className="h-10 w-[150px]" />
-					<Skeleton className="h-10 w-[150px]" />
-					<Skeleton className="h-10 w-45" />
-				</div>
-			</Toolbar>
+			<ToolbarSkeleton selectCount={3} buttonCount={1} className="my-6" />
 
-			{/* DataTable skeleton */}
-			<div className="rounded-md border">
+			{/* Mobile list */}
+			<ReviewsMobileListSkeleton />
+
+			{/* DataTable skeleton (desktop) */}
+			<div className="hidden rounded-md border md:block">
 				{/* Table Header */}
 				<div className="bg-muted/50 border-b p-4">
 					<div className="flex items-center gap-4">
@@ -115,14 +125,14 @@ export default function ReviewsAdminLoading() {
 				{/* Pagination */}
 				<div className="border-t p-4">
 					<div className="flex items-center justify-between">
-						<Skeleton className="h-4 w-40" />
+						<Skeleton className="h-4 w-40 motion-safe:animate-pulse" />
 						<div className="flex items-center gap-2">
-							<Skeleton className="h-9 w-24" />
-							<Skeleton className="h-9 w-24" />
+							<Skeleton className="h-9 w-24 motion-safe:animate-pulse" />
+							<Skeleton className="h-9 w-24 motion-safe:animate-pulse" />
 						</div>
 					</div>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }

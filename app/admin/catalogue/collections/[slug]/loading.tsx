@@ -15,7 +15,13 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  */
 export default function CollectionDetailLoading() {
 	return (
-		<div className="space-y-6">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement du détail de la collection"
+			className="space-y-6"
+		>
+			<span className="sr-only">Chargement...</span>
 			{/* Breadcrumb */}
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>

@@ -1,10 +1,11 @@
+import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
 import { Button } from "@/shared/components/ui/button";
 import { Toolbar } from "@/shared/components/toolbar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 /**
  * Loading skeleton pour la page de liste des produits
- * Structure: Header + Status Navigation + Toolbar + Filters + Data Table
+ * Structure: Header + Status Navigation + Toolbar + Filters + MobileList + Data Table
  */
 export default function ProductsListLoading() {
 	return (
@@ -45,8 +46,11 @@ export default function ProductsListLoading() {
 				<Skeleton className="h-7 w-32 rounded-full" />
 			</div>
 
-			{/* Data Table */}
-			<div className="rounded-md border">
+			{/* Mobile list */}
+			<ProductsMobileListSkeleton />
+
+			{/* Data Table (desktop) */}
+			<div className="hidden rounded-md border md:block">
 				{/* Table Header */}
 				<div className="bg-muted/50 border-b p-4">
 					<div className="flex items-center gap-4">

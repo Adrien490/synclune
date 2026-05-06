@@ -7,7 +7,19 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  */
 export default function EditVariantLoading() {
 	return (
-		<>
+		<div role="status" aria-busy="true" aria-label="Chargement de l'édition de variante">
+			<span className="sr-only">Chargement...</span>
+
+			{/* Breadcrumb (6 items, desktop only) */}
+			<div className="mb-4 hidden md:flex md:items-center md:gap-2">
+				{Array.from({ length: 6 }).map((_, i) => (
+					<div key={i} className="flex items-center gap-2">
+						<Skeleton className="bg-muted/40 h-4 w-20 motion-safe:animate-pulse" />
+						{i < 5 && <span className="text-muted-foreground">/</span>}
+					</div>
+				))}
+			</div>
+
 			{/* Page Header Skeleton */}
 			<PageHeaderSkeleton variant="compact" className="hidden md:block" />
 
@@ -102,6 +114,6 @@ export default function EditVariantLoading() {
 					</div>
 				</div>
 			</div>
-		</>
+		</div>
 	);
 }

@@ -1,16 +1,36 @@
+import { PageHeaderSkeleton } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
- * Loading skeleton pour la page de création de variante
- * Structure: Custom Header + Champs en flux continu + Footer
+ * Loading skeleton pour la page de création de variante.
+ * Aligned with page.tsx: Breadcrumb (6 items) + PageHeader + form sections + footer.
  */
 export default function CreateVariantLoading() {
 	return (
-		<div className="space-y-6">
-			{/* Custom Header */}
-			<div className="space-y-2">
-				<Skeleton className="h-8 w-48" />
-				<Skeleton className="h-5 w-96" />
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement de la création de variante"
+			className="space-y-6"
+		>
+			<span className="sr-only">Chargement...</span>
+
+			{/* Breadcrumb (6 items, desktop only) */}
+			<div className="hidden md:flex md:items-center md:gap-2">
+				{Array.from({ length: 6 }).map((_, i) => (
+					<div key={i} className="flex items-center gap-2">
+						<Skeleton className="bg-muted/40 h-4 w-20 motion-safe:animate-pulse" />
+						{i < 5 && <span className="text-muted-foreground">/</span>}
+					</div>
+				))}
+			</div>
+
+			<PageHeaderSkeleton variant="compact" hasDescription className="hidden md:block" />
+
+			{/* Mobile title (no PageHeader on mobile in real page) */}
+			<div className="space-y-2 md:hidden">
+				<Skeleton className="h-8 w-48 motion-safe:animate-pulse" />
+				<Skeleton className="h-5 w-96 max-w-full motion-safe:animate-pulse" />
 			</div>
 
 			{/* La variante */}

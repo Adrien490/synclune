@@ -1,38 +1,36 @@
+import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/colors-data-table-skeleton";
+import { ColorsMobileListSkeleton } from "@/modules/colors/components/admin/colors-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { ColorsDataTableSkeleton } from "@/modules/colors/components/admin/colors-data-table-skeleton";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 
 /**
- * Loading state for colors management page
- * Structure alignee avec la vraie page:
- * - PageHeader avec bouton create
- * - Toolbar
- * - ColorsDataTable
+ * Loading state for colors management page.
+ * Aligned with page.tsx: PageHeader + Toolbar + FilterBadges + MobileList + DataTable.
  */
 export default function ColorsLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des couleurs">
 			<span className="sr-only">Chargement des couleurs...</span>
 
-			{/* Page Header */}
 			<PageHeader
 				variant="compact"
 				title="Couleurs"
-				actions={<Skeleton className="h-10 w-36" />}
+				actions={<Skeleton className="h-10 w-36 motion-safe:animate-pulse" />}
 				className="hidden md:block"
 			/>
 
 			<div className="space-y-6">
-				{/* Toolbar skeleton */}
-				<div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:gap-4">
-					<Skeleton className="h-10 flex-1 sm:max-w-md" />
-					<Skeleton className="h-10 w-full sm:w-45" />
-					<Skeleton className="h-10 w-10" />
-					<Skeleton className="h-10 w-10" />
-				</div>
+				<ToolbarSkeleton selectCount={1} buttonCount={2} />
 
-				{/* Data Table */}
-				<ColorsDataTableSkeleton />
+				{/* Filter badges placeholder */}
+				<div className="min-h-[1px]" aria-hidden="true" />
+
+				<ColorsMobileListSkeleton />
+
+				<div className="hidden md:block">
+					<ColorsDataTableSkeleton />
+				</div>
 			</div>
 		</div>
 	);

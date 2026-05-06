@@ -1,6 +1,7 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { AtelierSectionSkeleton } from "./_components/atelier-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
+import { HomeFaqSkeleton } from "./_components/home-faq-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
@@ -19,6 +20,7 @@ export default function HomeLoading() {
 			<CollectionsSectionSkeleton collectionsCount={6} />
 			<ReviewsSectionSkeleton />
 			<AtelierSectionSkeleton />
+			<HomeFaqSkeleton />
 		</div>
 	);
 }

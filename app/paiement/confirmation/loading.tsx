@@ -7,7 +7,13 @@ import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
  */
 export default function CheckoutSuccessLoading() {
 	return (
-		<div className="relative min-h-screen">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement de la confirmation de commande"
+			className="relative min-h-screen"
+		>
+			<span className="sr-only">Chargement de la confirmation…</span>
 			{/* Decorative background (matches page) */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 

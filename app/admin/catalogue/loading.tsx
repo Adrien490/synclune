@@ -6,7 +6,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  * Loading state for catalog section navigation page
  * Structure alignee avec SectionNavigation:
  * - PageHeader
- * - Grid de cards navigation (4 liens en 3 colonnes)
+ * - Grid de cards navigation (5 liens en 3 colonnes)
  */
 export default function CatalogLoading() {
 	return (
@@ -23,7 +23,7 @@ export default function CatalogLoading() {
 
 			{/* Navigation Cards Grid - matches SectionNavigation structure */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{Array.from({ length: 4 }).map((_, i) => (
+				{Array.from({ length: 5 }).map((_, i) => (
 					<Card key={i} className="h-full">
 						<CardHeader>
 							<div className="flex items-start justify-between">
