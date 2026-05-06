@@ -3,6 +3,9 @@
 import { useRef, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
+import { Button } from "@/shared/components/ui/button";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import type { GetUserAddressesReturn } from "@/modules/addresses/data/get-user-addresses";
 import type { Session } from "@/modules/auth/lib/auth";
 import { calculateShipping, getShippingInfo } from "@/modules/orders/services/shipping.service";
@@ -71,8 +74,15 @@ interface CheckoutFormProps {
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
 	const headingRef = useRef<HTMLHeadingElement>(null);
+	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	const { form } = useCheckoutForm({ session, addresses });
+
+	// Warn on tab close / back button when the form has been touched.
+	// Disabled once the user reaches the Stripe redirect via `allowNavigation()`.
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, true, {
+		message: "Vos informations de commande seront perdues si vous quittez cette page.",
+	});
 
 	const cartItems = cart.items.map((item) => ({
 		skuId: item.sku.id,
@@ -108,12 +118,9 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 		await form.handleSubmit();
 
 		if (!form.state.canSubmit) {
-			// Scroll to error summary after render
+			// Focus + scroll to first invalid field (a11y WCAG 3.3.1) + error haptic
 			requestAnimationFrame(() => {
-				const errorAlert = document.querySelector('[role="alert"]');
-				if (errorAlert) {
-					errorAlert.scrollIntoView({ behavior: "smooth", block: "center" });
-				}
+				focusFirstInvalid();
 			});
 			return null;
 		}
@@ -177,7 +184,13 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				const shippingInfo = getShippingInfo(country, postalCode as string);
 
 				return (
-					<div className="grid gap-6 pb-32 lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0">
+					<form
+						ref={formRef}
+						onSubmit={(e) => e.preventDefault()}
+						noValidate
+						aria-label="Formulaire de paiement"
+						className="grid gap-6 pb-32 lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0"
+					>
 						<div className="space-y-8">
 							<h1 ref={headingRef} tabIndex={-1} className="sr-only">
 								Paiement sécurisé
@@ -197,7 +210,19 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 							{pi.error && (
 								<Alert variant="destructive" role="alert">
 									<CircleAlert className="size-4" />
-									<AlertDescription>{pi.error}</AlertDescription>
+									<AlertDescription className="flex flex-wrap items-center gap-3">
+										<span>{pi.error}</span>
+										<Button
+											type="button"
+											size="sm"
+											variant="outline"
+											onClick={() => void pi.retry()}
+											disabled={pi.isLoading}
+											aria-busy={pi.isLoading}
+										>
+											Réessayer
+										</Button>
+									</AlertDescription>
 								</Alert>
 							)}
 
@@ -247,6 +272,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 													}
 													billingName={(billingName as string) || undefined}
 													getFormData={getFormData}
+													allowNavigation={allowNavigation}
 												/>
 											)}
 										</form.Subscribe>
@@ -269,7 +295,7 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 								}
 							/>
 						</div>
-					</div>
+					</form>
 				);
 			}}
 		</form.Subscribe>

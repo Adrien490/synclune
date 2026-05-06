@@ -27,6 +27,8 @@ interface CheckoutStripeSectionProps {
 	email?: string;
 	billingName?: string;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
+	/** Called just before the Stripe redirect so beforeunload doesn't fire. */
+	allowNavigation?: () => void;
 }
 
 /**
@@ -44,6 +46,7 @@ export function CheckoutStripeSection({
 	email,
 	billingName,
 	getFormData,
+	allowNavigation,
 }: CheckoutStripeSectionProps) {
 	const [isPaymentReady, setIsPaymentReady] = useState(false);
 
@@ -62,7 +65,11 @@ export function CheckoutStripeSection({
 				</p>
 
 				{!isPaymentReady && (
-					<div className="min-h-[360px] animate-pulse space-y-4" aria-busy="true" role="status">
+					<div
+						className="min-h-[360px] space-y-4 motion-safe:animate-pulse"
+						aria-busy="true"
+						role="status"
+					>
 						<span className="sr-only">Chargement du formulaire de paiement…</span>
 						<div className="bg-muted h-4 w-40 rounded" />
 						<div className="bg-muted h-11 w-full rounded" />
@@ -74,7 +81,7 @@ export function CheckoutStripeSection({
 				)}
 
 				<div className={cn("space-y-6", !isPaymentReady && "hidden")}>
-					<ExpressCheckoutSection getFormData={getFormData} />
+					<ExpressCheckoutSection getFormData={getFormData} allowNavigation={allowNavigation} />
 
 					<div className="bg-card border-primary/10 overflow-hidden rounded-2xl border p-4 shadow-sm">
 						<PaymentElement onReady={() => setIsPaymentReady(true)} />
@@ -110,6 +117,7 @@ export function CheckoutStripeSection({
 							email={email}
 							billingName={billingName}
 							getFormData={getFormData}
+							allowNavigation={allowNavigation}
 						/>
 					</div>
 
@@ -136,6 +144,7 @@ export function CheckoutStripeSection({
 
 interface ExpressCheckoutSectionProps {
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
+	allowNavigation?: () => void;
 }
 
 /**
@@ -143,7 +152,7 @@ interface ExpressCheckoutSectionProps {
  * when available on the current device/browser. Hides itself (plus the divider)
  * when no wallet is detected so card-only users don't see an empty block.
  */
-function ExpressCheckoutSection({ getFormData }: ExpressCheckoutSectionProps) {
+function ExpressCheckoutSection({ getFormData, allowNavigation }: ExpressCheckoutSectionProps) {
 	const stripe = useStripe();
 	const elements = useElements();
 	const [hasExpress, setHasExpress] = useState(false);
@@ -159,6 +168,9 @@ function ExpressCheckoutSection({ getFormData }: ExpressCheckoutSectionProps) {
 
 		const result = await confirmCheckout(formData);
 		if (!result.success) return;
+
+		// Disable beforeunload guard before Stripe takes over the page.
+		allowNavigation?.();
 
 		await stripe.confirmPayment({
 			elements,

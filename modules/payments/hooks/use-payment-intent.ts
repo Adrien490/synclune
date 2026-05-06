@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { initializePayment } from "../actions/initialize-payment";
 import { updatePaymentAmount } from "../actions/update-payment-amount";
 import { cancelOrphanPaymentIntent } from "../actions/cancel-orphan-payment-intent";
@@ -41,6 +41,11 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const initCalledRef = useRef(false);
 	const hiddenAtRef = useRef<number | null>(null);
+	// Latest cart/email — read by retry() without re-creating the callback
+	const paramsRef = useRef(params);
+	useEffect(() => {
+		paramsRef.current = params;
+	});
 
 	// Clean up debounce timer on unmount to avoid orphan server action calls
 	useEffect(() => {
@@ -51,38 +56,38 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		};
 	}, []);
 
+	const initFromCurrentParams = useCallback(async () => {
+		setState((prev) => ({ ...prev, isLoading: true, error: null }));
+		const result = await initializePayment({
+			cartItems: paramsRef.current.cartItems,
+			email: paramsRef.current.email,
+		});
+
+		if (result.success) {
+			setState({
+				clientSecret: result.clientSecret,
+				paymentIntentId: result.paymentIntentId,
+				subtotal: result.subtotal,
+				shipping: result.shipping,
+				total: result.total,
+				isLoading: false,
+				error: null,
+			});
+		} else {
+			setState((prev) => ({
+				...prev,
+				isLoading: false,
+				error: result.error,
+			}));
+		}
+	}, []);
+
 	// Create PI on mount
 	useEffect(() => {
 		if (initCalledRef.current) return;
 		initCalledRef.current = true;
-
-		async function init() {
-			const result = await initializePayment({
-				cartItems: params.cartItems,
-				email: params.email,
-			});
-
-			if (result.success) {
-				setState({
-					clientSecret: result.clientSecret,
-					paymentIntentId: result.paymentIntentId,
-					subtotal: result.subtotal,
-					shipping: result.shipping,
-					total: result.total,
-					isLoading: false,
-					error: null,
-				});
-			} else {
-				setState((prev) => ({
-					...prev,
-					isLoading: false,
-					error: result.error,
-				}));
-			}
-		}
-
-		void init();
-	}, []); // eslint-disable-line react-hooks/exhaustive-deps
+		void initFromCurrentParams();
+	}, [initFromCurrentParams]);
 
 	// Re-validate payment intent when tab becomes visible after long inactivity
 	useEffect(() => {
@@ -168,5 +173,6 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 	return {
 		...state,
 		updateAmount,
+		retry: initFromCurrentParams,
 	};
 }

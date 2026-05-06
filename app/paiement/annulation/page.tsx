@@ -49,7 +49,10 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card className="border-primary/10 rounded-2xl shadow-md">
+					<Card
+						style={{ viewTransitionName: "checkout-pay-cta" }}
+						className="border-primary/10 rounded-2xl shadow-md"
+					>
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<div className="bg-muted/80 mx-auto flex h-18 w-18 items-center justify-center rounded-full">
 								<ErrorIcon className="text-muted-foreground h-10 w-10" />
@@ -86,7 +89,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 								{/* Conseils spécifiques selon le type d'erreur */}
 								{reason === "card_declined" && (
-									<p className="flex items-start gap-2">
+									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">
 											💡
 										</span>
@@ -94,11 +97,11 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 											<strong>Que faire ?</strong> Vérifiez que votre carte est activée pour les
 											paiements en ligne, ou contactez votre banque si le problème persiste.
 										</span>
-									</p>
+									</aside>
 								)}
 
 								{reason === "insufficient_funds" && (
-									<p className="flex items-start gap-2">
+									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">
 											💡
 										</span>
@@ -106,11 +109,11 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 											<strong>Que faire ?</strong> Vérifiez votre solde ou utilisez une autre carte
 											bancaire.
 										</span>
-									</p>
+									</aside>
 								)}
 
 								{reason === "authentication_failed" && (
-									<p className="flex items-start gap-2">
+									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">
 											💡
 										</span>
@@ -118,11 +121,11 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 											<strong>Que faire ?</strong> Assurez-vous d'avoir accès à votre application
 											bancaire ou SMS pour valider l'authentification 3D Secure.
 										</span>
-									</p>
+									</aside>
 								)}
 
 								{(!reason || reason === "canceled") && (
-									<p className="flex items-start gap-2">
+									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
 										<span className="mt-0.5" aria-hidden="true">
 											💡
 										</span>
@@ -130,7 +133,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 											Si vous avez rencontré un problème lors du paiement, n'hésite pas à me
 											contacter !
 										</span>
-									</p>
+									</aside>
 								)}
 							</div>
 

@@ -17,6 +17,8 @@ interface PayButtonProps {
 	email?: string;
 	billingName?: string;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
+	/** Called just before the Stripe redirect so beforeunload doesn't fire. */
+	allowNavigation?: () => void;
 }
 
 type Phase = "idle" | "validating" | "creating-order" | "awaiting-3ds";
@@ -34,6 +36,7 @@ export function PayButton({
 	email,
 	billingName,
 	getFormData,
+	allowNavigation,
 }: PayButtonProps) {
 	const stripe = useStripe();
 	const elements = useElements();
@@ -83,6 +86,9 @@ export function PayButton({
 			}
 
 			setPhase("awaiting-3ds");
+
+			// Disable beforeunload guard before Stripe takes over the page (3DS / redirect).
+			allowNavigation?.();
 
 			// 4. Confirm payment with Stripe (triggers 3DS if needed)
 			const { error: confirmError } = await stripe.confirmPayment({
@@ -149,10 +155,11 @@ export function PayButton({
 				disabled={disabled || !stripe || !elements || isProcessing || shippingUnavailable}
 				aria-busy={isProcessing}
 				onClick={handleClick}
+				style={{ viewTransitionName: "checkout-pay-cta" }}
 			>
 				{isProcessing ? (
 					<>
-						<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+						<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
 						<span>{phaseMessage || "Traitement..."}</span>
 					</>
 				) : (
@@ -165,7 +172,7 @@ export function PayButton({
 
 			{shippingUnavailable ? (
 				<p className="text-destructive text-center text-sm" role="alert">
-					Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
+					Cette zone n&apos;est pas livrable.
 				</p>
 			) : disabled && !isProcessing ? (
 				<p className="text-muted-foreground text-center text-xs md:text-sm">

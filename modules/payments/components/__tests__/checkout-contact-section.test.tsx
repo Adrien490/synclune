@@ -8,6 +8,17 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({ prisma: {} }));
 
+const mockPush = vi.fn();
+const mockRefresh = vi.fn();
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush, refresh: mockRefresh }),
+}));
+
+const mockLogout = vi.fn();
+vi.mock("@/modules/auth/actions/logout", () => ({
+	logout: () => mockLogout(),
+}));
+
 vi.mock("@/modules/payments/components/checkout-section", () => ({
 	CheckoutSection: ({ title, children }: { title: string; children: React.ReactNode }) => (
 		<section>

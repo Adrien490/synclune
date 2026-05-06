@@ -3,6 +3,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ─── Module mocks ─────────────────────────────────────────────────────────────
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
+vi.mock("@/modules/auth/actions/logout", () => ({
+	logout: vi.fn(),
+}));
+
+vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
+	useUnsavedChanges: () => ({ isBlocking: false, allowNavigation: vi.fn() }),
+}));
+
+vi.mock("@/shared/hooks/use-focus-first-error", () => ({
+	useFocusFirstError: () => ({
+		formRef: { current: null },
+		focusFirstInvalid: vi.fn(() => false),
+		onInvalidCapture: vi.fn(),
+	}),
+}));
+
 vi.mock("@/modules/orders/services/shipping.service", () => ({
 	calculateShipping: vi.fn().mockReturnValue(490),
 	getShippingInfo: vi.fn().mockReturnValue(null),

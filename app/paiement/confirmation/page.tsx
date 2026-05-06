@@ -107,7 +107,10 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
-					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
+					<Card
+						style={{ viewTransitionName: "checkout-pay-cta" }}
+						className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md"
+					>
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<SuccessIcon />
 							<Fade y={10} delay={0.15}>

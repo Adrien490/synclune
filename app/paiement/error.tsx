@@ -39,8 +39,15 @@ export default function CheckoutError({
 					}
 					actions={
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
-							<Button size="lg" onClick={reset}>
-								Reessayer le paiement
+							<Button
+								size="lg"
+								onClick={() => {
+									// Reset boundary then hard reload so a fresh PaymentIntent is created.
+									reset();
+									window.location.reload();
+								}}
+							>
+								Réessayer le paiement
 							</Button>
 							<Button asChild variant="secondary" size="lg">
 								<Link href="/paiement">Retour au panier</Link>

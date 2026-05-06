@@ -8,7 +8,7 @@
 export function PaymentSectionSkeleton() {
 	return (
 		<div
-			className="min-h-[360px] animate-pulse space-y-4 rounded-xl border p-6"
+			className="min-h-[360px] space-y-4 rounded-xl border p-6 motion-safe:animate-pulse"
 			aria-busy="true"
 			role="status"
 		>

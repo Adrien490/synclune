@@ -48,6 +48,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 									type="button"
 									onClick={() => {
 										const removedCode = appliedDiscount.code;
+										haptic("light");
 										form.setFieldValue("_appliedDiscount", null);
 										form.setFieldValue("discountCode", "");
 										setLiveMessage(`Code promo ${removedCode} retiré`);

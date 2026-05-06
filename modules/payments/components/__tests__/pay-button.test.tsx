@@ -180,7 +180,7 @@ describe("PayButton", () => {
 
 	it("shows shipping unavailable message when shipping not available", () => {
 		render(<PayButton {...defaultProps} shippingUnavailable={true} />);
-		expect(screen.getByRole("alert")).toHaveTextContent(/ne livrons pas/i);
+		expect(screen.getByRole("alert")).toHaveTextContent(/zone n'est pas livrable/i);
 	});
 
 	// ─── Incomplete form message ───────────────────────────────────────────────

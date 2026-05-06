@@ -11,6 +11,7 @@ import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { ChevronDown, Shield } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
@@ -46,6 +47,7 @@ export function CheckoutSummary({
 	appliedDiscount,
 }: CheckoutSummaryProps) {
 	const { open: openCart } = useSheet("cart");
+	const haptic = useHaptic();
 
 	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -109,7 +111,10 @@ export function CheckoutSummary({
 			<div className="text-center">
 				<button
 					type="button"
-					onClick={openCart}
+					onClick={() => {
+						haptic("light");
+						openCart();
+					}}
 					aria-label="Modifier mon panier"
 					className="text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
@@ -145,12 +150,7 @@ export function CheckoutSummary({
 						{shippingUnavailable ? "Indisponible" : formatEuro(shipping)}
 					</span>
 				</div>
-				{shippingUnavailable && (
-					<p className="text-destructive pl-5.5 text-xs">
-						Nous ne livrons pas encore dans cette zone. Contactez-nous pour trouver une solution.
-					</p>
-				)}
-				{shippingInfo && (
+				{shippingInfo && !shippingUnavailable && (
 					<p className="text-muted-foreground pl-5.5 text-xs">
 						Délai estimé : {shippingInfo.estimatedDays}
 					</p>
@@ -164,6 +164,7 @@ export function CheckoutSummary({
 				className="bg-primary/3 -mx-1 space-y-2 rounded-xl p-3"
 				aria-live="polite"
 				aria-atomic="true"
+				aria-label={`Total mis à jour : ${formatEuro(total)}`}
 			>
 				<div className="flex items-center justify-between text-lg/7 font-semibold tracking-tight antialiased sm:text-xl/7">
 					<span>Total</span>
@@ -207,11 +208,11 @@ export function CheckoutSummary({
 	return (
 		<>
 			{/* Mobile: collapsible summary (open by default so users see their cart) */}
-			<Collapsible className="md:hidden">
+			<Collapsible defaultOpen className="md:hidden">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<Card className="border-primary/10 rounded-2xl shadow-md">
-					<CollapsibleTrigger className="w-full text-left">
+					<CollapsibleTrigger onClick={() => haptic("selection")} className="w-full text-left">
 						<CardHeader className="pb-0">
 							<div className="flex items-center justify-between">
 								<CardTitle className="text-base">

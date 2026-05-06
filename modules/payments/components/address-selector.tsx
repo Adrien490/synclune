@@ -1,6 +1,7 @@
 "use client";
 
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { MapPin } from "lucide-react";
 
@@ -19,6 +20,8 @@ export function AddressSelector({
 	selectedAddressId,
 	onSelectAddress,
 }: AddressSelectorProps) {
+	const haptic = useHaptic();
+
 	if (addresses.length <= 1) return null;
 
 	return (
@@ -46,7 +49,10 @@ export function AddressSelector({
 								name="saved-address"
 								value={address.id}
 								checked={isSelected}
-								onChange={() => onSelectAddress(address)}
+								onChange={() => {
+									haptic("selection");
+									onSelectAddress(address);
+								}}
 								className="sr-only"
 							/>
 							<MapPin
