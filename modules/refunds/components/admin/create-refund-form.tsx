@@ -2,6 +2,7 @@
 
 import { type RefundReason } from "@/app/generated/prisma/browser";
 import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
+import { ErrorSummary, type ErrorSummaryField } from "@/shared/components/forms/error-summary";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
@@ -19,6 +20,7 @@ import {
 } from "@/shared/components/ui/select";
 import { Separator } from "@/shared/components/ui/separator";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useStore } from "@tanstack/react-form-nextjs";
 import { ArrowLeft, Package, RotateCcw } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -47,6 +49,7 @@ interface CreateRefundFormProps {
 
 export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	const router = useRouter();
+	const { formRef, onInvalidCapture } = useFocusFirstError();
 
 	// Calculer le montant déjà remboursé
 	const alreadyRefunded = order.refunds.reduce((sum, r) => sum + r.amount, 0);
@@ -66,6 +69,36 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 
 	// Watch note from store
 	const note = useStore(form.store, (s) => s.values.note);
+	const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts);
+	const fieldMeta = useStore(form.store, (s) => s.fieldMeta);
+
+	const fieldErrors: ErrorSummaryField[] = [];
+	if (submissionAttempts > 0) {
+		if (selectedItems.length === 0) {
+			fieldErrors.push({
+				name: "refund-items",
+				label: "Articles à rembourser",
+				message: "Sélectionnez au moins un article",
+			});
+		} else if (totalAmount > maxRefundable) {
+			fieldErrors.push({
+				name: "refund-items",
+				label: "Articles à rembourser",
+				message: "Le montant dépasse le maximum remboursable",
+			});
+		}
+		for (const [name, meta] of Object.entries(fieldMeta)) {
+			const errors = (meta as { errors?: unknown[] }).errors ?? [];
+			const message = errors[0];
+			if (typeof message === "string" && message.length > 0) {
+				fieldErrors.push({
+					name,
+					label: name === "reason" ? "Motif" : name === "note" ? "Note" : name,
+					message,
+				});
+			}
+		}
+	}
 
 	// Handler pour changer le motif (met à jour le restock par défaut, pas de useEffect)
 	const handleReasonChange = (value: RefundReason) => {
@@ -163,19 +196,21 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				</div>
 			</div>
 
-			<form action={action} className="space-y-6">
+			<form ref={formRef} action={action} onInvalidCapture={onInvalidCapture} className="space-y-6">
 				{/* Hidden fields */}
 				<input type="hidden" name="orderId" value={order.id} />
 				<input type="hidden" name="reason" value={reason} />
 				<input type="hidden" name="note" value={note} />
 				<input type="hidden" name="items" value={JSON.stringify(itemsForAction)} />
 
+				<ErrorSummary fieldErrors={fieldErrors} />
+
 				<div className="grid gap-6 lg:grid-cols-3">
 					{/* Left column - Items selection */}
 					<div className="space-y-6 lg:col-span-2">
 						<Card>
 							<CardHeader className="flex flex-row items-center justify-between space-y-0">
-								<div>
+								<div id="refund-items">
 									<CardTitle className="flex items-center gap-2">
 										<Package className="h-5 w-5" />
 										Articles à rembourser

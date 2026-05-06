@@ -151,7 +151,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 				</Stagger>
 
 				{/* CTA */}
-				<div id="reviews-cta">
+				<div id="reviews-cta" tabIndex={-1} className="focus:outline-none">
 					<Fade
 						y={MOTION_CONFIG.section.cta.y}
 						delay={MOTION_CONFIG.section.cta.delay}

@@ -153,7 +153,7 @@ export function DashboardBreadcrumb() {
 							<BreadcrumbItem className="shrink-0">
 								<DropdownMenu>
 									<DropdownMenuTrigger
-										className="hover:text-foreground text-muted-foreground flex items-center gap-1 transition-colors"
+										className="hover:text-foreground text-muted-foreground focus-visible:ring-primary inline-flex min-h-11 min-w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
 										aria-label="Afficher les niveaux parents"
 									>
 										<Ellipsis className="h-4 w-4" />
@@ -173,7 +173,7 @@ export function DashboardBreadcrumb() {
 									<BreadcrumbItem className="min-w-0 shrink">
 										<BreadcrumbLink
 											href={parentSegment.href}
-											className="max-w-28 truncate"
+											className="inline-flex min-h-11 max-w-28 items-center truncate"
 											title={parentSegment.label}
 										>
 											{parentSegment.label}
@@ -185,7 +185,10 @@ export function DashboardBreadcrumb() {
 						</>
 					)}
 					<BreadcrumbItem className="min-w-0">
-						<BreadcrumbPage className="max-w-40 truncate" title={currentSegment.label}>
+						<BreadcrumbPage
+							className="inline-flex min-h-11 max-w-40 items-center truncate"
+							title={currentSegment.label}
+						>
 							{currentSegment.label}
 						</BreadcrumbPage>
 					</BreadcrumbItem>

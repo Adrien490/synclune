@@ -186,14 +186,26 @@ describe("DesktopNav", () => {
 			expect(mockPush).not.toHaveBeenCalled();
 		});
 
-		it("does not navigate on mouse click (opens dropdown via Radix instead)", () => {
+		it("navigates on mouse click on dropdown trigger", () => {
 			mockPush.mockClear();
 			render(<DesktopNav navItems={navItems} />);
 
 			const trigger = screen.getByRole("button", { name: "Les créations" });
 			fireEvent.click(trigger);
 
-			expect(mockPush).not.toHaveBeenCalled();
+			expect(mockPush).toHaveBeenCalledWith("/produits");
+		});
+
+		it("calls preventDefault on click to skip Radix's onItemSelect toggle", () => {
+			mockPush.mockClear();
+			render(<DesktopNav navItems={navItems} />);
+
+			const trigger = screen.getByRole("button", { name: "Les créations" });
+			const event = new MouseEvent("click", { bubbles: true, cancelable: true });
+			trigger.dispatchEvent(event);
+
+			expect(event.defaultPrevented).toBe(true);
+			expect(mockPush).toHaveBeenCalledWith("/produits");
 		});
 
 		it("does not navigate on Escape key (Radix handles menu close)", () => {

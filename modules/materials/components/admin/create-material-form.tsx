@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { createMaterial } from "@/modules/materials/actions/create-material";
@@ -8,7 +8,9 @@ import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -28,6 +30,7 @@ export function CreateMaterialForm({
 }: CreateMaterialFormProps = {}) {
 	const router = useRouter();
 	const haptic = useHaptic();
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -36,9 +39,13 @@ export function CreateMaterialForm({
 		},
 	});
 
+	const isDirty = form.state.isDirty;
+	const allowNavigationRef = useRef<(() => void) | null>(null);
+
 	const [, action, isPending] = useActionState(
 		withCallbacks(
 			createMaterial,
+			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
 				loadingMessage: "Création du matériau...",
 				onSuccess: (result: unknown) => {
@@ -54,6 +61,7 @@ export function CreateMaterialForm({
 						onCreated?.(result.data.id);
 					}
 					haptic("success");
+					allowNavigationRef.current?.();
 					form.reset();
 					onSuccess?.();
 					if (redirectOnSuccess) {
@@ -68,11 +76,26 @@ export function CreateMaterialForm({
 		undefined,
 	);
 
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
+
+	useEffect(() => {
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
+
 	return (
 		<form
+			ref={formRef}
 			action={action}
 			className={cn("space-y-6", className)}
-			onSubmit={() => form.handleSubmit()}
+			onInvalidCapture={onInvalidCapture}
+			onSubmit={(event) => {
+				if (!form.state.canSubmit) {
+					event.preventDefault();
+					focusFirstInvalid();
+					return;
+				}
+				void form.handleSubmit();
+			}}
 		>
 			<RequiredFieldsNote />
 

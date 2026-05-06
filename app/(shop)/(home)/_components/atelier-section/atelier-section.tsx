@@ -74,14 +74,6 @@ export async function AtelierSection() {
 				}}
 			/>
 
-			{/* Skip link for accessibility */}
-			<a
-				href="#atelier-cta"
-				className="focus:bg-secondary focus:text-secondary-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:shadow-md"
-			>
-				Aller au bouton sur-mesure
-			</a>
-
 			<AtelierHapticBridge>
 				<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 					{/* Header */}

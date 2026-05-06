@@ -2,19 +2,16 @@
 
 import { Package } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useLongPress } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 
 import { PRODUCT_ITEM_DRAWER_ID, type ProductItemDrawerData } from "./product-item-drawer";
-import { ProductRowActions } from "./product-row-actions";
 
 const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 	style: "currency",
@@ -72,8 +69,6 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	const stock = getTotalStock(product.skus);
 	const primaryImage = product.skus.flatMap((sku) => sku.images).find((img) => img.isPrimary);
 
-	const [menuOpen, setMenuOpen] = useState(false);
-
 	const handleOpen = () => {
 		haptic("selection");
 		open({
@@ -97,74 +92,62 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 		});
 	};
 
-	const { bind } = useLongPress(() => setMenuOpen(true), { onClick: handleOpen });
-
 	return (
-		<>
-			<button
-				type="button"
-				aria-label={`Produit ${product.title}`}
-				{...bind}
-				className={cn(
-					"focus-visible:ring-primary w-full rounded-lg text-left",
-					"focus-visible:ring-2 focus-visible:outline-none",
-				)}
+		<button
+			type="button"
+			aria-label={`Produit ${product.title}`}
+			onClick={handleOpen}
+			className={cn(
+				"focus-visible:ring-primary w-full rounded-lg text-left",
+				"focus-visible:ring-2 focus-visible:outline-none",
+				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
+			)}
+		>
+			<Item
+				variant="outline"
+				size="sm"
+				className="w-full gap-3"
+				aria-roledescription="carte produit"
 			>
-				<Item
-					variant="outline"
-					size="sm"
-					className="w-full gap-3"
-					aria-roledescription="carte produit"
-				>
-					{primaryImage ? (
-						<Image
-							src={primaryImage.thumbnailUrl ?? primaryImage.url}
-							alt=""
-							width={48}
-							height={48}
-							sizes="48px"
-							className="size-12 shrink-0 rounded-md border object-cover"
-							{...(primaryImage.blurDataUrl
-								? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
-								: {})}
-						/>
-					) : (
-						<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
-							<Package className="text-muted-foreground size-5" aria-hidden="true" />
-						</div>
-					)}
-					<ItemContent className="min-w-0">
-						<ItemTitle className="w-full min-w-0">
-							<span className="truncate font-semibold">{product.title}</span>
-							<Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
-						</ItemTitle>
-						<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-							<span className="font-medium">{priceDisplay}</span>
-							<span aria-hidden="true">·</span>
-							<span>{stock} en stock</span>
-							<span aria-hidden="true">·</span>
-							<span>
-								{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
-							</span>
-							{product.type ? (
-								<>
-									<span aria-hidden="true">·</span>
-									<span>{product.type.label}</span>
-								</>
-							) : null}
-						</ItemDescription>
-					</ItemContent>
-				</Item>
-			</button>
-			<ProductRowActions
-				productId={product.id}
-				productSlug={product.slug}
-				productTitle={product.title}
-				productStatus={product.status}
-				open={menuOpen}
-				onOpenChange={setMenuOpen}
-				hideTrigger
-			/>
-		</>
+				{primaryImage ? (
+					<Image
+						src={primaryImage.thumbnailUrl ?? primaryImage.url}
+						alt=""
+						width={48}
+						height={48}
+						sizes="48px"
+						className="size-12 shrink-0 rounded-md border object-cover"
+						{...(primaryImage.blurDataUrl
+							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
+							: {})}
+					/>
+				) : (
+					<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
+						<Package className="text-muted-foreground size-5" aria-hidden="true" />
+					</div>
+				)}
+				<ItemContent className="min-w-0">
+					<ItemTitle className="w-full min-w-0">
+						<span className="truncate font-semibold">{product.title}</span>
+						<Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+					</ItemTitle>
+					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+						<span className="font-medium">{priceDisplay}</span>
+						<span aria-hidden="true">·</span>
+						<span>{stock} en stock</span>
+						<span aria-hidden="true">·</span>
+						<span>
+							{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
+						</span>
+						{product.type ? (
+							<>
+								<span aria-hidden="true">·</span>
+								<span>{product.type.label}</span>
+							</>
+						) : null}
+					</ItemDescription>
+				</ItemContent>
+			</Item>
+		</button>
 	);
 }

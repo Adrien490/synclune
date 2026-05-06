@@ -25,9 +25,6 @@ interface ProductTypeRowActionsProps {
 	description?: string | null;
 	slug: string;
 	productsCount?: number;
-	open?: boolean;
-	onOpenChange?: (open: boolean) => void;
-	hideTrigger?: boolean;
 }
 
 export function ProductTypeRowActions({
@@ -37,9 +34,6 @@ export function ProductTypeRowActions({
 	description,
 	slug,
 	productsCount = 0,
-	open: menuOpen,
-	onOpenChange,
-	hideTrigger,
 }: ProductTypeRowActionsProps) {
 	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
@@ -98,19 +92,17 @@ export function ProductTypeRowActions({
 	];
 
 	return (
-		<ResponsiveActionMenu open={menuOpen} onOpenChange={onOpenChange}>
-			{!hideTrigger && (
-				<ResponsiveActionMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						size="sm"
-						className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
-						aria-label="Actions"
-					>
-						<EllipsisVertical className="h-4 w-4" />
-					</Button>
-				</ResponsiveActionMenuTrigger>
-			)}
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+					aria-label="Actions"
+				>
+					<EllipsisVertical className="h-4 w-4" />
+				</Button>
+			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent title="Actions" description={label} sections={sections} />
 		</ResponsiveActionMenu>
 	);

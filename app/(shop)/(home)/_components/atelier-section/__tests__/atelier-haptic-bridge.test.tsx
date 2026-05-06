@@ -31,7 +31,7 @@ describe("AtelierHapticBridge", () => {
 		expect(triggerHaptic).toHaveBeenCalledExactlyOnceWith("light");
 	});
 
-	it("triggers 'selection' haptic on timeline step press", () => {
+	it("ignores 'step' targets (timeline is purely decorative — no haptic)", () => {
 		const { getByTestId } = render(
 			<AtelierHapticBridge>
 				<li data-testid="step" data-atelier-haptic="step" />
@@ -39,7 +39,7 @@ describe("AtelierHapticBridge", () => {
 		);
 
 		fireEvent.pointerDown(getByTestId("step"));
-		expect(triggerHaptic).toHaveBeenCalledExactlyOnceWith("selection");
+		expect(triggerHaptic).not.toHaveBeenCalled();
 	});
 
 	it("triggers 'light' haptic on polaroid press", () => {
@@ -56,14 +56,14 @@ describe("AtelierHapticBridge", () => {
 	it("bubbles up: child element of a tagged parent also triggers haptic", () => {
 		const { getByTestId } = render(
 			<AtelierHapticBridge>
-				<li data-atelier-haptic="step">
-					<span data-testid="inner">Étape 1</span>
-				</li>
+				<figure data-atelier-haptic="polaroid">
+					<span data-testid="inner">Polaroid caption</span>
+				</figure>
 			</AtelierHapticBridge>,
 		);
 
 		fireEvent.pointerDown(getByTestId("inner"));
-		expect(triggerHaptic).toHaveBeenCalledExactlyOnceWith("selection");
+		expect(triggerHaptic).toHaveBeenCalledExactlyOnceWith("light");
 	});
 
 	it("does nothing when pressing an element without data-atelier-haptic", () => {

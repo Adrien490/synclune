@@ -59,7 +59,7 @@ export function AdminMobileHeader() {
 					<button
 						type="button"
 						onClick={() => {
-							triggerHaptic("selection");
+							triggerHaptic("light");
 							router.back();
 						}}
 						aria-label="Retour"

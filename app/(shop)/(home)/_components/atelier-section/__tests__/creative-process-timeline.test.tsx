@@ -103,15 +103,27 @@ describe("CreativeProcessTimeline", () => {
 		}
 	});
 
-	it("each desktop step is tagged with data-atelier-haptic for event delegation", () => {
+	it("desktop steps are purely decorative (no haptic, no tabindex, no interactive role)", () => {
 		const { container } = render(<CreativeProcessTimeline />);
 
 		const desktopList = container.querySelector(".hidden.lg\\:block ol");
 		const items = desktopList!.querySelectorAll("li");
 
 		items.forEach((li) => {
-			expect(li.getAttribute("data-atelier-haptic")).toBe("step");
+			expect(li.getAttribute("data-atelier-haptic")).toBeNull();
 			expect(li.getAttribute("tabindex")).toBeNull();
+			expect(li.getAttribute("role")).toBeNull();
+		});
+	});
+
+	it("mobile steps are purely decorative (no haptic)", () => {
+		const { container } = render(<CreativeProcessTimeline />);
+
+		const mobileList = container.querySelector(".lg\\:hidden ol");
+		const items = mobileList!.querySelectorAll("li");
+
+		items.forEach((li) => {
+			expect(li.getAttribute("data-atelier-haptic")).toBeNull();
 		});
 	});
 

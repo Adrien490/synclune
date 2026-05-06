@@ -28,17 +28,25 @@ export function SectionHeader({
 				</Badge>
 			)}
 			{onReset && count !== undefined && count > 0 && (
-				<button
-					type="button"
+				<span
+					role="button"
+					tabIndex={0}
 					onClick={(e) => {
 						e.stopPropagation();
 						onReset();
+					}}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							e.stopPropagation();
+							onReset();
+						}
 					}}
 					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					aria-label={`Effacer le filtre ${label}`}
 				>
 					<X className="h-3 w-3" />
-				</button>
+				</span>
 			)}
 		</div>
 	);

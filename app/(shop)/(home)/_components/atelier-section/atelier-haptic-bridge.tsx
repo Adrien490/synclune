@@ -6,7 +6,6 @@ import type { PointerEvent, ReactNode } from "react";
 
 const PATTERN_BY_TARGET: Record<string, HapticPattern> = {
 	cta: "light",
-	step: "selection",
 	polaroid: "light",
 };
 

@@ -37,17 +37,9 @@ const ReviewDetailDialog = dynamic(() =>
 
 interface ReviewRowActionsProps {
 	review: ReviewAdmin;
-	open?: boolean;
-	onOpenChange?: (open: boolean) => void;
-	hideTrigger?: boolean;
 }
 
-export function ReviewRowActions({
-	review,
-	open,
-	onOpenChange,
-	hideTrigger,
-}: ReviewRowActionsProps) {
+export function ReviewRowActions({ review }: ReviewRowActionsProps) {
 	const [moderateDialogOpen, setModerateDialogOpen] = useState(false);
 	const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
@@ -99,18 +91,16 @@ export function ReviewRowActions({
 
 	return (
 		<>
-			<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
-				{!hideTrigger && (
-					<ResponsiveActionMenuTrigger asChild>
-						<Button
-							variant="ghost"
-							className="h-11 w-11 p-0 transition-transform active:scale-95"
-							aria-label="Actions"
-						>
-							<EllipsisVertical className="h-4 w-4" aria-hidden="true" />
-						</Button>
-					</ResponsiveActionMenuTrigger>
-				)}
+			<ResponsiveActionMenu>
+				<ResponsiveActionMenuTrigger asChild>
+					<Button
+						variant="ghost"
+						className="h-11 w-11 p-0 transition-transform active:scale-95"
+						aria-label="Actions"
+					>
+						<EllipsisVertical className="h-4 w-4" aria-hidden="true" />
+					</Button>
+				</ResponsiveActionMenuTrigger>
 				<ResponsiveActionMenuContent title="Actions avis" sections={sections} />
 			</ResponsiveActionMenu>
 

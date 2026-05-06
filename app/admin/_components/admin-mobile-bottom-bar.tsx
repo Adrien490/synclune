@@ -54,6 +54,8 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					{badgeCount != null && badgeCount > 0 && (
 						<span
 							className={bottomBarBadgeClass}
+							role="status"
+							aria-live="polite"
 							aria-label={`${badgeCount} commande${badgeCount > 1 ? "s" : ""} en attente`}
 						>
 							{badgeCount > 99 ? "99+" : badgeCount}

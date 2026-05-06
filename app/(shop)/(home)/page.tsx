@@ -2,7 +2,7 @@ import { CollectionsSection } from "@/app/(shop)/(home)/_components/collections-
 import { LatestCreations } from "@/app/(shop)/(home)/_components/latest-creations";
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 
-import { getProducts } from "@/modules/products/data/get-products";
+import { getProducts, type GetProductsReturn } from "@/modules/products/data/get-products";
 import { getFeaturedReviews } from "@/modules/reviews/data/get-featured-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
@@ -12,8 +12,11 @@ import { type GlobalReviewStats, SITE_URL } from "@/shared/constants/seo-config"
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AtelierSection, AtelierSectionSkeleton } from "./_components/atelier-section";
+import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
+import { HomeFaq } from "./_components/home-faq";
+import { InstagramTeaser } from "./_components/instagram-teaser";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
@@ -71,11 +74,12 @@ export default async function Page() {
 
 	return (
 		<>
-			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews */}
+			{/* JSON-LD schemas: LocalBusiness, Organization, WebSite, Founder, Article, Reviews, ItemList */}
 			<Suspense fallback={null}>
 				<HomepageStructuredData
 					reviewStatsPromise={reviewStatsPromise}
 					featuredReviewsPromise={featuredReviewsPromise}
+					productsPromise={productsPromise}
 				/>
 			</Suspense>
 
@@ -83,6 +87,9 @@ export default async function Page() {
 			<Suspense fallback={<HeroSectionSkeleton />}>
 				<HeroSection productsPromise={productsPromise} />
 			</Suspense>
+
+			{/* 1b. Reassurance banner - Baymard trust signals immediately under hero */}
+			<HeroReassuranceBanner />
 
 			{/* 2. Latest Creations - 4 most recent products */}
 			<Suspense fallback={<LatestCreationsSkeleton />}>
@@ -107,6 +114,12 @@ export default async function Page() {
 				<AtelierSection />
 			</Suspense>
 
+			{/* 6. Instagram - Social proof + main acquisition channel for an artisan creator */}
+			<InstagramTeaser />
+
+			{/* 7. FAQ - Long-tail SEO + last-mile reassurance */}
+			<HomeFaq />
+
 			<ScrollToTop />
 		</>
 	);
@@ -115,13 +128,16 @@ export default async function Page() {
 async function HomepageStructuredData({
 	reviewStatsPromise,
 	featuredReviewsPromise,
+	productsPromise,
 }: {
 	reviewStatsPromise: Promise<GlobalReviewStats>;
 	featuredReviewsPromise: Promise<ReviewHomepage[]>;
+	productsPromise: Promise<GetProductsReturn>;
 }) {
-	const [reviewStats, featuredReviews] = await Promise.all([
+	const [reviewStats, featuredReviews, productsResult] = await Promise.all([
 		reviewStatsPromise,
 		featuredReviewsPromise,
+		productsPromise,
 	]);
 
 	return (
@@ -129,6 +145,7 @@ async function HomepageStructuredData({
 			reviewStats={reviewStats}
 			includeHomepageSchemas
 			featuredReviews={featuredReviews}
+			featuredProducts={productsResult.products}
 		/>
 	);
 }

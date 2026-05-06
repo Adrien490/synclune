@@ -84,10 +84,14 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								className={linkClasses}
 								data-active={itemIsActive}
 								aria-current={itemIsActive ? "page" : undefined}
+								onClick={(e) => {
+									// Click navigates to the section page; hover (pointerMove) still
+									// opens the mega menu via Radix. preventDefault skips Radix's
+									// onItemSelect toggle through composeEventHandlers' defaultPrevented check.
+									e.preventDefault();
+									router.push(item.href);
+								}}
 								onKeyDown={(e) => {
-									// Enter navigates to the section page (explicit keyboard intent).
-									// Mouse click and Space key toggle the dropdown via Radix default.
-									// Mouse users navigate via the explicit "Toutes les..." CTA inside the panel.
 									if (e.key === "Enter") {
 										e.preventDefault();
 										router.push(item.href);

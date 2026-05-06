@@ -208,12 +208,14 @@ describe("AtelierSection structure", () => {
 		expect(section!.getAttribute("aria-labelledby")).toBe("atelier-section-title");
 	});
 
-	it("renders skip link", async () => {
+	it("does not render an orphan skip link (CTA absent — section is silent storytelling)", async () => {
 		await renderAtelierSection();
 
 		const skipLink = document.querySelector('a[href="#atelier-cta"]');
-		expect(skipLink).not.toBeNull();
-		expect(skipLink!.classList.contains("sr-only")).toBe(true);
+		expect(skipLink).toBeNull();
+
+		const ctaTarget = document.querySelector("#atelier-cta");
+		expect(ctaTarget).toBeNull();
 	});
 
 	it("renders the section title", async () => {

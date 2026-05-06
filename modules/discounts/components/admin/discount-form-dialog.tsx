@@ -384,7 +384,7 @@ export function DiscountFormDialog() {
 					{/* Fin du contenu scrollable */}
 
 					{/* Footer fixe */}
-					<div className="mt-4 flex shrink-0 justify-end border-t pt-4 pr-[max(0rem,env(safe-area-inset-right))] pb-[max(0rem,env(safe-area-inset-bottom))] pl-[max(0rem,env(safe-area-inset-left))]">
+					<div className="mt-4 flex shrink-0 justify-end border-t pt-4 pr-[max(0rem,env(safe-area-inset-right))] pb-[max(1rem,env(safe-area-inset-bottom))] pl-[max(0rem,env(safe-area-inset-left))]">
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">

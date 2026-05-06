@@ -106,7 +106,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		>
 			<SheetContent
 				className="bg-muted flex h-[92dvh] flex-col rounded-t-2xl border-t p-0!"
-				overlayClassName="bg-black/40"
+				overlayClassName="bg-black/50"
 				showCloseButton={false}
 				onOverlayClick={() => triggerHaptic("selection")}
 			>
@@ -141,7 +141,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 							aria-label="Filtrer les pages de navigation"
 							className={cn(
 								"bg-background/80 border-border/60 placeholder:text-muted-foreground/50",
-								"flex h-10 w-full rounded-xl border py-2 pr-3 pl-9 text-sm",
+								"flex h-11 w-full rounded-xl border py-2 pr-3 pl-9 text-sm",
 								"focus-visible:ring-primary/30 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:outline-none",
 								"motion-safe:transition-colors",
 							)}

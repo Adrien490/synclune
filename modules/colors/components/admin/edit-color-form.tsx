@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateColor } from "@/modules/colors/actions/update-color";
@@ -11,7 +11,9 @@ import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
 import { Label } from "@/shared/components/ui/label";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -38,6 +40,7 @@ export function EditColorForm({
 }: EditColorFormProps) {
 	const router = useRouter();
 	const haptic = useHaptic();
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -46,13 +49,18 @@ export function EditColorForm({
 		},
 	});
 
+	const isDirty = form.state.isDirty;
+	const allowNavigationRef = useRef<(() => void) | null>(null);
+
 	const [, action, isPending] = useActionState(
 		withCallbacks(
 			updateColor,
+			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
 				loadingMessage: "Mise à jour de la couleur...",
 				onSuccess: () => {
 					haptic("success");
+					allowNavigationRef.current?.();
 					onSuccess?.();
 					if (redirectOnSuccess) {
 						setTimeout(
@@ -66,11 +74,26 @@ export function EditColorForm({
 		undefined,
 	);
 
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
+
+	useEffect(() => {
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
+
 	return (
 		<form
+			ref={formRef}
 			action={action}
 			className={cn("space-y-6", className)}
-			onSubmit={() => form.handleSubmit()}
+			onInvalidCapture={onInvalidCapture}
+			onSubmit={(event) => {
+				if (!form.state.canSubmit) {
+					event.preventDefault();
+					focusFirstInvalid();
+					return;
+				}
+				void form.handleSubmit();
+			}}
 		>
 			<input type="hidden" name="id" value={color.id} />
 

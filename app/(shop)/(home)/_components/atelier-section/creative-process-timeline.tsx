@@ -32,12 +32,8 @@ export function CreativeProcessTimeline() {
 						<li
 							key={step.id}
 							id={`creative-step-${step.id}`}
-							className={cn(
-								"group timeline-step-scroll relative rounded-xl p-3 text-center",
-								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:-translate-y-0.5",
-							)}
+							className="group timeline-step-scroll relative rounded-xl p-3 text-center"
 							aria-describedby={`creative-step-${step.id}-desc`}
-							data-atelier-haptic="step"
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
@@ -62,7 +58,7 @@ export function CreativeProcessTimeline() {
 								{step.title}
 								{isLast(index) && (
 									<Sparkles
-										className="text-secondary ml-1.5 inline-block h-4 w-4 opacity-70 group-hover:opacity-100 motion-safe:transition-opacity"
+										className="text-secondary ml-1.5 inline-block h-4 w-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
 										aria-hidden="true"
 									/>
 								)}
@@ -94,12 +90,8 @@ export function CreativeProcessTimeline() {
 						<li
 							key={step.id}
 							id={`creative-step-${step.id}`}
-							className={cn(
-								"group relative -m-2 flex items-start gap-4 rounded-xl p-2",
-								"motion-safe:hover:bg-muted/30 active:bg-muted/40 active:scale-[0.99] motion-safe:transition-[background-color,translate,scale] motion-safe:duration-[var(--duration-slow)] motion-safe:hover:-translate-y-0.5",
-							)}
+							className="group relative -m-2 flex items-start gap-4 rounded-xl p-2"
 							aria-describedby={`creative-step-${step.id}-desc`}
-							data-atelier-haptic="step"
 						>
 							<span className="sr-only">Étape {index + 1} :</span>
 
@@ -144,7 +136,7 @@ export function CreativeProcessTimeline() {
 									{step.title}
 									{isLast(index) && (
 										<Sparkles
-											className="text-secondary ml-1.5 inline-block h-4 w-4 opacity-70 group-hover:opacity-100 motion-safe:transition-opacity"
+											className="text-secondary ml-1.5 inline-block h-4 w-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
 											aria-hidden="true"
 										/>
 									)}

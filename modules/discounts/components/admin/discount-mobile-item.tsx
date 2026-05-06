@@ -1,17 +1,10 @@
 "use client";
 
-import { useState } from "react";
-
 import { Badge } from "@/shared/components/ui/badge";
-import {
-	Item,
-	ItemActions,
-	ItemContent,
-	ItemDescription,
-	ItemTitle,
-} from "@/shared/components/ui/item";
-import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
-import { useLongPress } from "@/shared/hooks";
+import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 
 import { DiscountType } from "@/app/generated/prisma/enums";
@@ -25,7 +18,7 @@ import {
 } from "@/modules/discounts/services/discount-validation.service";
 import type { Discount } from "@/modules/discounts/types/discount.types";
 
-import { DiscountRowActions } from "./discount-row-actions";
+import { DISCOUNT_ITEM_DRAWER_ID, type DiscountItemDrawerData } from "./discount-item-drawer";
 
 const STATUS_BADGE_CONFIG: Record<
 	DiscountStatus,
@@ -53,41 +46,45 @@ interface DiscountMobileItemProps {
 }
 
 export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
+	const { open } = useDialog<DiscountItemDrawerData>(DISCOUNT_ITEM_DRAWER_ID);
+	const haptic = useHaptic();
 	const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
-	const [menuOpen, setMenuOpen] = useState(false);
-	const { bind } = useLongPress(() => setMenuOpen(true));
+
+	const handleOpen = () => {
+		haptic("selection");
+		open({ discount });
+	};
 
 	return (
-		<Item
-			variant="outline"
-			size="sm"
-			className="gap-3"
-			aria-roledescription="carte code promo"
+		<button
+			type="button"
 			aria-label={`Code promo ${discount.code}`}
-			{...bind}
+			onClick={handleOpen}
+			className={cn(
+				"focus-visible:ring-primary block w-full rounded-lg text-left",
+				"focus-visible:ring-2 focus-visible:outline-none",
+				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
+			)}
 		>
-			<ItemContent className="min-w-0">
-				<ItemTitle>
-					<code className="bg-muted truncate rounded px-1.5 py-0.5 text-sm font-semibold">
-						{discount.code}
-					</code>
-					<Badge variant={status.variant}>{status.label}</Badge>
-				</ItemTitle>
-				<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-					<span>
-						{DISCOUNT_TYPE_ICONS[discount.type]} {DISCOUNT_TYPE_LABELS[discount.type]}
-					</span>
-					<span aria-hidden="true">·</span>
-					<span className="font-medium">{formatValue(discount.type, discount.value)}</span>
-					<span aria-hidden="true">·</span>
-					<span>{formatUsage(discount.usageCount, discount.maxUsageCount)}</span>
-				</ItemDescription>
-			</ItemContent>
-			<ItemActions>
-				<StopEventPropagation>
-					<DiscountRowActions discount={discount} open={menuOpen} onOpenChange={setMenuOpen} />
-				</StopEventPropagation>
-			</ItemActions>
-		</Item>
+			<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte code promo">
+				<ItemContent className="min-w-0">
+					<ItemTitle>
+						<code className="bg-muted truncate rounded px-1.5 py-0.5 text-sm font-semibold">
+							{discount.code}
+						</code>
+						<Badge variant={status.variant}>{status.label}</Badge>
+					</ItemTitle>
+					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+						<span>
+							{DISCOUNT_TYPE_ICONS[discount.type]} {DISCOUNT_TYPE_LABELS[discount.type]}
+						</span>
+						<span aria-hidden="true">·</span>
+						<span className="font-medium">{formatValue(discount.type, discount.value)}</span>
+						<span aria-hidden="true">·</span>
+						<span>{formatUsage(discount.usageCount, discount.maxUsageCount)}</span>
+					</ItemDescription>
+				</ItemContent>
+			</Item>
+		</button>
 	);
 }

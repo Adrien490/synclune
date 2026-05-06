@@ -33,9 +33,6 @@ interface MaterialsRowActionsProps {
 	materialSlug: string;
 	materialDescription: string | null;
 	materialIsActive: boolean;
-	open?: boolean;
-	onOpenChange?: (open: boolean) => void;
-	hideTrigger?: boolean;
 }
 
 export function MaterialsRowActions({
@@ -44,9 +41,6 @@ export function MaterialsRowActions({
 	materialSlug,
 	materialDescription,
 	materialIsActive,
-	open,
-	onOpenChange,
-	hideTrigger,
 }: MaterialsRowActionsProps) {
 	const { open: openDialog } = useDialog(MATERIAL_DIALOG_ID);
 	const { open: openAlert } = useAlertDialog(DELETE_MATERIAL_DIALOG_ID);
@@ -116,19 +110,17 @@ export function MaterialsRowActions({
 	];
 
 	return (
-		<ResponsiveActionMenu open={open} onOpenChange={onOpenChange}>
-			{!hideTrigger && (
-				<ResponsiveActionMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						size="sm"
-						className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
-						aria-label={`Actions pour ${materialName}`}
-					>
-						<EllipsisVertical className="h-4 w-4" />
-					</Button>
-				</ResponsiveActionMenuTrigger>
-			)}
+		<ResponsiveActionMenu>
+			<ResponsiveActionMenuTrigger asChild>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+					aria-label={`Actions pour ${materialName}`}
+				>
+					<EllipsisVertical className="h-4 w-4" />
+				</Button>
+			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent title="Actions" description={materialName} sections={sections} />
 		</ResponsiveActionMenu>
 	);

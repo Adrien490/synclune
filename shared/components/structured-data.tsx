@@ -8,12 +8,14 @@ import {
 } from "@/shared/constants/seo-config";
 
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
+import type { Product } from "@/modules/products/types/product.types";
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 
 interface StructuredDataProps {
 	reviewStats: GlobalReviewStats;
 	includeHomepageSchemas?: boolean;
 	featuredReviews?: ReviewHomepage[];
+	featuredProducts?: Product[];
 }
 
 /**
@@ -24,6 +26,7 @@ export function StructuredData({
 	reviewStats,
 	includeHomepageSchemas,
 	featuredReviews,
+	featuredProducts,
 }: StructuredDataProps) {
 	const schemas = [
 		getOrganizationSchema(),
@@ -71,6 +74,23 @@ export function StructuredData({
 				description: "Bijoux artisanaux faits main en France",
 			},
 		});
+
+		// ItemList for the "Latest Creations" rail — enables Google product carousel rich result.
+		if (featuredProducts && featuredProducts.length > 0) {
+			graphSchemas.push({
+				"@type": "ItemList",
+				"@id": `${SITE_URL}/#latest-creations`,
+				name: "Nouvelles créations Synclune",
+				numberOfItems: featuredProducts.length,
+				itemListOrder: "https://schema.org/ItemListOrderDescending",
+				itemListElement: featuredProducts.map((product, index) => ({
+					"@type": "ListItem",
+					position: index + 1,
+					url: `${SITE_URL}/creations/${product.slug}`,
+					name: product.title,
+				})),
+			});
+		}
 
 		// Individual Review schemas for rich snippets
 		if (featuredReviews) {
