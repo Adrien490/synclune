@@ -186,7 +186,7 @@ function SortDrawerInner({
 						<X className="size-4" />
 					</Button>
 				</DrawerHeader>
-				<DrawerBody className="overflow-y-visible pb-20">
+				<DrawerBody>
 					<div
 						role="radiogroup"
 						aria-label={title}
