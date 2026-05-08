@@ -158,8 +158,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		if (needsCompression) {
 			updateProgress({ phase: "compressing" });
 		}
-		let originalBytes = 0;
-		let compressedBytes = 0;
 		for (const file of files) {
 			if (getMediaTypeFromFile(file) === "VIDEO") {
 				prepared.push(file);
@@ -170,13 +168,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				markFileState(file.name, "compressing");
 			}
 			try {
-				const originalSize = file.size;
 				const result = await compressImage(file);
 				prepared.push(result.file);
-				if (originalSize > 1024 * 1024 && result.file.size < originalSize) {
-					originalBytes += originalSize;
-					compressedBytes += result.file.size;
-				}
 			} catch (err) {
 				if (err instanceof HeicDecodeError) {
 					toast.error("Fichier HEIC illisible", {
@@ -192,18 +185,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					console.warn("[useMediaUpload] Compression échouée:", file.name, err);
 					prepared.push(file);
 				}
-			}
-		}
-
-		// Surface compression savings once per batch when meaningful (≥ 30% saved)
-		if (originalBytes > 0) {
-			const ratio = compressedBytes / originalBytes;
-			if (ratio < 0.7) {
-				const percent = Math.round((1 - ratio) * 100);
-				toast.info(`Photos optimisées -${percent}%`, {
-					description: "Économie de bande passante mobile",
-					duration: 4000,
-				});
 			}
 		}
 
