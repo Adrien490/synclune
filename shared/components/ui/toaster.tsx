@@ -151,7 +151,7 @@ export function AppToaster() {
 				gap={isMobile ? 8 : 12}
 				offset={
 					isMobile
-						? "max(1rem, env(safe-area-inset-bottom))"
+						? "calc(var(--bottom-bar-height, 0px) + max(1rem, env(safe-area-inset-bottom)))"
 						: "max(1rem, env(safe-area-inset-top))"
 				}
 			/>

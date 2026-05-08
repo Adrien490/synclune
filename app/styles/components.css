@@ -195,7 +195,9 @@
 
 @media (max-width: 767px) {
 	[data-sonner-toaster] {
-		padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+		padding-bottom: calc(
+			var(--bottom-bar-height, 0px) + max(1rem, env(safe-area-inset-bottom))
+		) !important;
 		padding-top: 0 !important;
 	}
 }
