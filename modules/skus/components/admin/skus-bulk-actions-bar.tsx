@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -26,9 +26,22 @@ interface SkusBulkActionsBarProps {
 	presentation?: "inline" | "bottom-bar";
 }
 
+interface LastSubmission {
+	ids: string[];
+	targetIsActive: boolean;
+}
+
+async function runBulkToggle(ids: string[], targetIsActive: boolean) {
+	const fd = new FormData();
+	fd.set("skuIds", JSON.stringify(ids));
+	fd.set("targetIsActive", targetIsActive ? "true" : "false");
+	return bulkToggleSkusStatus(undefined, fd);
+}
+
 export function SkusBulkActionsBar({ presentation = "inline" }: SkusBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
+	const lastSubmissionRef = useRef<LastSubmission | null>(null);
 	const [state, action, isPending] = useActionState(bulkToggleSkusStatus, undefined);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
@@ -37,7 +50,24 @@ export function SkusBulkActionsBar({ presentation = "inline" }: SkusBulkActionsB
 	useEffect(() => {
 		if (!state) return;
 		if (state.status === ActionStatus.SUCCESS) {
-			toast.success(state.message);
+			const last = lastSubmissionRef.current;
+			toast.success(state.message, {
+				duration: 6000,
+				action: last
+					? {
+							label: "Annuler",
+							onClick: async () => {
+								const result = await runBulkToggle(last.ids, !last.targetIsActive);
+								if (result.status === ActionStatus.SUCCESS) {
+									toast.success("Action annulée");
+								} else {
+									toast.error(result.message);
+								}
+							},
+						}
+					: undefined,
+			});
+			lastSubmissionRef.current = null;
 			clear();
 		} else if (state.message) {
 			toast.error(state.message);
@@ -45,9 +75,12 @@ export function SkusBulkActionsBar({ presentation = "inline" }: SkusBulkActionsB
 	}, [state, clear]);
 
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
+		const targetIsActive = target === "activate";
+		lastSubmissionRef.current = { ids, targetIsActive };
 		const fd = new FormData();
-		fd.set("skuIds", JSON.stringify(Array.from(selectedIds)));
-		fd.set("targetIsActive", target === "activate" ? "true" : "false");
+		fd.set("skuIds", JSON.stringify(ids));
+		fd.set("targetIsActive", targetIsActive ? "true" : "false");
 		action(fd);
 		setPendingAction(null);
 	}

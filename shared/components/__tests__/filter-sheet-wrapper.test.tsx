@@ -171,12 +171,6 @@ describe("FilterSheetWrapper", () => {
 			const applyButtons = screen.getAllByText("Rechercher");
 			expect(applyButtons.length).toBeGreaterThan(0);
 		});
-
-		it("renders custom cancel button text when provided", () => {
-			render(<FilterSheetWrapper cancelButtonText="Retour">content</FilterSheetWrapper>);
-
-			expect(screen.getByText("Retour")).toBeInTheDocument();
-		});
 	});
 
 	// ============================================================================
@@ -376,29 +370,17 @@ describe("FilterSheetWrapper", () => {
 			expect(onOpenChange).toHaveBeenCalledWith(false);
 		});
 
-		it("apply buttons are disabled when isPending is true", () => {
+		it("apply button is disabled when isPending is true", () => {
 			render(<FilterSheetWrapper isPending>content</FilterSheetWrapper>);
 
-			const applyButtons = screen
-				.getAllByText("Appliquer")
-				.map((el) => el.closest("button"))
-				.filter(Boolean) as HTMLButtonElement[];
-
-			expect(applyButtons.length).toBeGreaterThan(0);
-			applyButtons.forEach((btn) => {
-				expect(btn).toBeDisabled();
-			});
+			const applyButton = screen.getByText("Appliquer").closest("button");
+			expect(applyButton).toBeDisabled();
 		});
 
-		it("renders a single full-width apply button when showCancelButton is false", () => {
+		it("renders a single full-width apply button (no cancel sibling)", () => {
 			const onApply = vi.fn();
-			render(
-				<FilterSheetWrapper showCancelButton={false} onApply={onApply}>
-					content
-				</FilterSheetWrapper>,
-			);
+			render(<FilterSheetWrapper onApply={onApply}>content</FilterSheetWrapper>);
 
-			// Only one button with the apply text (no ButtonGroup / cancel sibling)
 			const applyButtons = screen.getAllByText("Appliquer");
 			expect(applyButtons).toHaveLength(1);
 		});

@@ -42,7 +42,6 @@ vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 		title: string;
 		description: string;
 		applyButtonText: string;
-		showCancelButton: boolean;
 	}) => {
 		mockOnClearAll.mockImplementation(onClearAll);
 		mockOnApply.mockImplementation(onApply);

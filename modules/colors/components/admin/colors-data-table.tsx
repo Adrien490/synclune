@@ -34,7 +34,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 	if (colors.length === 0) {
 		return (
 			<TableEmptyState
-				className="hidden md:block"
+				className="hidden md:flex"
 				icon={Palette}
 				title="Aucune couleur trouvée"
 				description="Aucune couleur ne correspond aux criteres de recherche."

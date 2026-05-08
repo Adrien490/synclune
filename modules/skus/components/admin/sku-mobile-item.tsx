@@ -64,6 +64,7 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 							loop
 							playsInline
 							preload="none"
+							poster={primaryImage.thumbnailUrl ?? undefined}
 							aria-label={primaryImage.altText ?? `Vidéo variante ${sku.sku}`}
 						>
 							<source src={primaryImage.url} type={getVideoMimeType(primaryImage.url)} />

@@ -65,7 +65,7 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 	if (discounts.length === 0) {
 		return (
 			<TableEmptyState
-				className="hidden md:block"
+				className="hidden md:flex"
 				icon={Ticket}
 				title="Aucun code promo trouvé"
 				description="Aucun code promo ne correspond aux criteres de recherche."

@@ -170,6 +170,7 @@ describe("SkuMobileItem", () => {
 						{
 							id: "img-1",
 							url: "https://example.com/img.jpg",
+							thumbnailUrl: null,
 							blurDataUrl: null,
 							altText: null,
 							isPrimary: true,

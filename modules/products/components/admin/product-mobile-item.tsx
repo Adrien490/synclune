@@ -121,7 +121,11 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{priceDisplay}</span>
 						<span aria-hidden="true">·</span>
-						<Badge variant={stockVariant} aria-label={stockAriaLabel}>
+						<Badge
+							variant={stockVariant}
+							aria-label={stockAriaLabel}
+							style={{ viewTransitionName: `product-stock-${product.id}` }}
+						>
 							{stock}
 						</Badge>
 						<span aria-hidden="true">·</span>

@@ -41,7 +41,7 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 	if (orders.length === 0) {
 		return (
 			<TableEmptyState
-				className="hidden md:block"
+				className="hidden md:flex"
 				icon={ShoppingBag}
 				title="Aucune commande trouvée"
 				description="Aucune commande ne correspond aux criteres de recherche."

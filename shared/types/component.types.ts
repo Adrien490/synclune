@@ -62,10 +62,6 @@ export interface FilterSheetWrapperProps {
 	description?: string;
 	/** Custom apply button text */
 	applyButtonText?: string;
-	/** Custom cancel button text */
-	cancelButtonText?: string;
-	/** Show cancel button */
-	showCancelButton?: boolean;
 	/** Controlled open state */
 	open?: boolean;
 	/** Callback when open state changes (for controlled mode) */

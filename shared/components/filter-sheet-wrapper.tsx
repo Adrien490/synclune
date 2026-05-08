@@ -2,7 +2,6 @@
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
-import { ButtonGroup } from "@/shared/components/ui/button-group";
 import { ScrollArea } from "@/shared/components/ui/scroll-area";
 import {
 	Sheet,
@@ -33,12 +32,6 @@ import { Filter, LoaderCircle, X } from "lucide-react";
 import { useState } from "react";
 import type { FilterSheetWrapperProps } from "@/shared/types/component.types";
 
-/** Snap point par défaut du bottom-sheet mobile : quasi-fullscreen 92%.
- *  Un seul snap → ouverture directe à 92%, drag vers le bas = dismiss.
- *  Les filtres ont beaucoup de contenu (types/prix/couleurs/matériaux/notes/dispo),
- *  un peek à 50% masquerait la majorité des sections. */
-const DEFAULT_MOBILE_SNAP_POINTS: (number | string)[] = [0.92];
-
 export function FilterSheetWrapper({
 	activeFiltersCount = 0,
 	hasActiveFilters = false,
@@ -50,8 +43,6 @@ export function FilterSheetWrapper({
 	title = "Filtres",
 	description,
 	applyButtonText = "Appliquer",
-	cancelButtonText = "Annuler",
-	showCancelButton = true,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	trigger,
@@ -75,9 +66,13 @@ export function FilterSheetWrapper({
 
 	// Mobile / tablette portrait → bottom-sheet, desktop → right-side sheet
 	const direction = useBottomSheet ? "bottom" : "right";
-	const effectiveSnapPoints = useBottomSheet
-		? (snapPoints ?? DEFAULT_MOBILE_SNAP_POINTS)
-		: undefined;
+	// Pas de snap point par défaut : `h-[92dvh]` ci-dessous donne déjà le rendu
+	// quasi-fullscreen attendu, et un snap unique à 0.92 sur un drawer `h-full`
+	// translate le drawer de 8vh vers le bas, ce qui masque le `SheetFooter`
+	// (et donc le bouton « Appliquer ») sous le viewport. Les consommateurs qui
+	// veulent un comportement peek (ex : [0.5, 0.92]) restent libres de passer
+	// `snapPoints` explicitement.
+	const effectiveSnapPoints = useBottomSheet ? snapPoints : undefined;
 
 	const handleApply = () => {
 		haptic("success");
@@ -158,8 +153,10 @@ export function FilterSheetWrapper({
 					"flex w-full flex-col overflow-hidden p-0",
 					// Desktop paysage (right-side sheet) : width constrained, full height
 					!useBottomSheet && "h-full sm:w-100 md:w-110",
-					// Mobile / tablette portrait (bottom-sheet) : rounded top, native iOS feel
-					useBottomSheet && "h-full rounded-t-2xl",
+					// Mobile / tablette portrait (bottom-sheet) : 92dvh aligne la
+					// hauteur du drawer sur l'espace utile dans le viewport et
+					// garde `SheetFooter` (Appliquer / Annuler) visible.
+					useBottomSheet && "h-[92dvh] rounded-t-2xl",
 				)}
 				onKeyDown={handleKeyDown}
 				title={title}
@@ -248,42 +245,18 @@ export function FilterSheetWrapper({
 				</ScrollArea>
 
 				<SheetFooter className="border-primary/10 bg-background shrink-0 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
-					{showCancelButton ? (
-						<>
-							{/* Mobile: bouton unique */}
-							<div className="sm:hidden">
-								<Button
-									type="button"
-									onClick={handleApply}
-									disabled={isPending}
-									className="h-11 w-full text-base"
-								>
-									{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
-									{applyButtonText}
-								</Button>
-							</div>
-							{/* Desktop: groupe de boutons */}
-							<ButtonGroup className="hidden w-full sm:flex" aria-label="Actions de filtrage">
-								<SheetClose asChild className="flex-1">
-									<Button variant="secondary" disabled={isPending}>
-										{cancelButtonText}
-									</Button>
-								</SheetClose>
-								<Button type="button" onClick={handleApply} disabled={isPending} className="flex-1">
-									{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
-									{applyButtonText}
-									<Kbd className="text-muted-foreground/60 ml-1.5 hidden text-[10px] font-normal lg:inline">
-										⌘↵
-									</Kbd>
-								</Button>
-							</ButtonGroup>
-						</>
-					) : (
-						<Button type="button" onClick={handleApply} disabled={isPending} className="w-full">
-							{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
-							{applyButtonText}
-						</Button>
-					)}
+					<Button
+						type="button"
+						onClick={handleApply}
+						disabled={isPending}
+						className="h-11 w-full text-base sm:h-10 sm:text-sm"
+					>
+						{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
+						{applyButtonText}
+						<Kbd className="text-muted-foreground/60 ml-1.5 hidden text-[10px] font-normal lg:inline">
+							⌘↵
+						</Kbd>
+					</Button>
 				</SheetFooter>
 
 				{/* Live region for screen readers */}

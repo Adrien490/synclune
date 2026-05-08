@@ -152,7 +152,6 @@ function UsersFilterSheetInner({
 			title="Filtres clients"
 			description="Filtrer les clients par critères"
 			applyButtonText="Appliquer les filtres"
-			showCancelButton={false}
 			open={controlledOpen}
 			onOpenChange={controlledOnOpenChange}
 			hideTrigger={hideTrigger}
