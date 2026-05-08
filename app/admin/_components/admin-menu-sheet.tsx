@@ -11,7 +11,6 @@ import {
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
@@ -20,11 +19,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getAllNavItems, navigationData } from "./navigation-config";
-
-/** Snap-points iOS-like : peek (50%) puis fullscreen (92%).
- * fadeFromIndex=1 → l'overlay ne fade-in qu'au passage en fullscreen,
- * cohérent avec le pattern Vaul Settings d'iOS. */
-const MOBILE_SNAP_POINTS: (number | string)[] = [0.5, 0.92];
 
 interface AdminMenuSheetProps {
 	user: {
@@ -40,7 +34,6 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const { isOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const [showLogout, setShowLogout] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
-	const isMobile = useIsMobile();
 	const pathname = usePathname();
 	const navRef = useRef<HTMLElement>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
@@ -108,18 +101,12 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 			)
 		: [];
 
-	// Vaul Root is a discriminated union: snapPoints requires fadeFromIndex
-	// (WithFadeFromProps), absence of both is also valid (WithoutFadeFromProps).
-	// Spread conditionally to satisfy the discriminated type.
-	const snapProps = isMobile ? { snapPoints: MOBILE_SNAP_POINTS, fadeFromIndex: 1 } : {};
-
 	return (
 		<Sheet
 			direction="bottom"
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			preventScrollRestoration
-			{...snapProps}
 		>
 			<SheetContent
 				className="bg-muted flex h-[92dvh] flex-col rounded-t-2xl border-t p-0!"

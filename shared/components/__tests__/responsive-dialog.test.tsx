@@ -13,6 +13,11 @@ vi.mock("@/shared/utils/cn", () => ({
 			.join(" "),
 }));
 
+const isMobileMock = vi.fn(() => false);
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => isMobileMock(),
+}));
+
 vi.mock("@/shared/components/ui/dialog", () => {
 	const { createElement } = require("react");
 	return {
@@ -43,6 +48,35 @@ vi.mock("@/shared/components/ui/dialog", () => {
 			createElement("div", { "data-testid": "dialog-close", ...props }, children),
 		DialogTrigger: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
 			createElement("div", { "data-testid": "dialog-trigger", ...props }, children),
+	};
+});
+
+vi.mock("@/shared/components/ui/drawer", () => {
+	const { createElement } = require("react");
+	return {
+		Drawer: ({
+			children,
+			open: _open,
+			onOpenChange: _onChange,
+		}: {
+			children: unknown;
+			open?: boolean;
+			onOpenChange?: (v: boolean) => void;
+		}) => createElement("div", { "data-testid": "drawer-root" }, children),
+		DrawerContent: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-content", ...props }, children),
+		DrawerHeader: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-header", ...props }, children),
+		DrawerFooter: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-footer", ...props }, children),
+		DrawerTitle: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-title", ...props }, children),
+		DrawerDescription: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-description", ...props }, children),
+		DrawerClose: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-close", ...props }, children),
+		DrawerTrigger: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
+			createElement("div", { "data-testid": "drawer-trigger", ...props }, children),
 	};
 });
 
@@ -85,6 +119,7 @@ function FullDialog({ className }: { className?: string }) {
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	isMobileMock.mockReturnValue(false);
 });
 
 afterEach(cleanup);
@@ -93,8 +128,8 @@ afterEach(cleanup);
 // TESTS
 // ============================================================================
 
-describe("ResponsiveDialog", () => {
-	it("renders Dialog components", () => {
+describe("ResponsiveDialog (desktop)", () => {
+	it("renders Dialog primitives", () => {
 		render(<FullDialog />);
 
 		expect(screen.getByTestId("dialog-root")).toBeInTheDocument();
@@ -105,6 +140,7 @@ describe("ResponsiveDialog", () => {
 		expect(screen.getByTestId("dialog-footer")).toBeInTheDocument();
 		expect(screen.getByTestId("dialog-close")).toBeInTheDocument();
 		expect(screen.getByTestId("dialog-trigger")).toBeInTheDocument();
+		expect(screen.queryByTestId("drawer-root")).not.toBeInTheDocument();
 	});
 
 	it("forwards className to DialogContent", () => {
@@ -126,5 +162,52 @@ describe("ResponsiveDialog", () => {
 		);
 
 		expect(screen.getByTestId("dialog-root")).toBeInTheDocument();
+	});
+});
+
+describe("ResponsiveDialog (mobile)", () => {
+	beforeEach(() => {
+		isMobileMock.mockReturnValue(true);
+	});
+
+	it("renders Drawer primitives instead of Dialog", () => {
+		render(<FullDialog />);
+
+		expect(screen.getByTestId("drawer-root")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-content")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-header")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-title")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-description")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-footer")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-close")).toBeInTheDocument();
+		expect(screen.getByTestId("drawer-trigger")).toBeInTheDocument();
+		expect(screen.queryByTestId("dialog-root")).not.toBeInTheDocument();
+	});
+
+	it("wraps DrawerContent children in a scrollable body to prevent truncation", () => {
+		render(<FullDialog />);
+
+		const content = screen.getByTestId("drawer-content");
+		const scrollWrap = content.firstElementChild as HTMLElement;
+		expect(scrollWrap).toBeTruthy();
+		expect(scrollWrap.className).toContain("overflow-y-auto");
+		expect(scrollWrap.className).toContain("flex-1");
+	});
+
+	it("overrides --bottom-bar-height and --admin-main-x on DrawerContent so AdminFormFooter sticks at the drawer edge", () => {
+		render(<FullDialog />);
+
+		const content = screen.getByTestId("drawer-content") as HTMLElement;
+		expect(content.style.getPropertyValue("--bottom-bar-height")).toBe(
+			"calc(env(safe-area-inset-bottom) * -1)",
+		);
+		expect(content.style.getPropertyValue("--admin-main-x")).toBe("1rem");
+	});
+
+	it("forwards className to DrawerContent", () => {
+		render(<FullDialog className="max-w-lg" />);
+
+		const content = screen.getByTestId("drawer-content");
+		expect(content.className).toContain("max-w-lg");
 	});
 });
