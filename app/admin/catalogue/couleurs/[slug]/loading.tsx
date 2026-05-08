@@ -28,11 +28,6 @@ export default function AdminColorDetailLoading() {
 		<div role="status" aria-busy="true" aria-label="Chargement de la couleur" className="space-y-6">
 			<span className="sr-only">Chargement de la couleur…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-36" />
-			</div>
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

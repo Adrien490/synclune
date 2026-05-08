@@ -67,6 +67,7 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 					label: "Approuver",
 					icon: Check,
 					hidden: !canApprove,
+					closesMenu: false,
 					onSelect: () => approveDialog.open(payload),
 				},
 				{
@@ -74,6 +75,7 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 					label: "Traiter le remboursement",
 					icon: CreditCard,
 					hidden: !canProcess,
+					closesMenu: false,
 					onSelect: () => processDialog.open(payload),
 				},
 			],
@@ -87,6 +89,7 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 					icon: CircleX,
 					variant: "destructive",
 					hidden: !canReject,
+					closesMenu: false,
 					onSelect: () => rejectDialog.open(payload),
 				},
 				{
@@ -95,6 +98,7 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 					icon: Trash2,
 					variant: "destructive",
 					hidden: !canCancel,
+					closesMenu: false,
 					onSelect: () => cancelDialog.open(payload),
 				},
 			],

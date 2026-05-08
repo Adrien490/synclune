@@ -8,16 +8,16 @@ import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-	AlertDialogTrigger,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+	ResponsiveAlertDialogTrigger,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { cn } from "@/shared/utils/cn";
 
 import { useReviewResponseForm } from "../../hooks/use-review-response-form";
@@ -126,8 +126,8 @@ export function ReviewResponseForm({
 				</Button>
 
 				{existingResponse && (
-					<AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-						<AlertDialogTrigger asChild>
+					<ResponsiveAlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+						<ResponsiveAlertDialogTrigger asChild>
 							<Button
 								type="button"
 								variant="outline"
@@ -138,18 +138,18 @@ export function ReviewResponseForm({
 							>
 								<Trash2 className="size-4" aria-hidden="true" />
 							</Button>
-						</AlertDialogTrigger>
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>Supprimer cette réponse ?</AlertDialogTitle>
-								<AlertDialogDescription>
+						</ResponsiveAlertDialogTrigger>
+						<ResponsiveAlertDialogContent>
+							<ResponsiveAlertDialogHeader>
+								<ResponsiveAlertDialogTitle>Supprimer cette réponse ?</ResponsiveAlertDialogTitle>
+								<ResponsiveAlertDialogDescription>
 									Cette action est irréversible. La réponse ne sera plus visible sur la page
 									produit.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
-							<AlertDialogFooter>
-								<AlertDialogCancel>Annuler</AlertDialogCancel>
-								<AlertDialogAction
+								</ResponsiveAlertDialogDescription>
+							</ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogFooter>
+								<ResponsiveAlertDialogCancel>Annuler</ResponsiveAlertDialogCancel>
+								<ResponsiveAlertDialogAction
 									onClick={handleDelete}
 									className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 								>
@@ -164,10 +164,10 @@ export function ReviewResponseForm({
 											Supprimer
 										</>
 									)}
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
+								</ResponsiveAlertDialogAction>
+							</ResponsiveAlertDialogFooter>
+						</ResponsiveAlertDialogContent>
+					</ResponsiveAlertDialog>
 				)}
 			</div>
 		</form>

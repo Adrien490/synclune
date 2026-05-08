@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { LoaderCircle, Star } from "lucide-react";
@@ -54,10 +54,10 @@ export function SetFeaturedProductAlertDialog() {
 	const isFeatured = dialog.data?.isFeatured ?? false;
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle className="flex items-center gap-2">
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
+				<ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogTitle className="flex items-center gap-2">
 						<Star
 							className={cn(
 								"size-5",
@@ -65,8 +65,8 @@ export function SetFeaturedProductAlertDialog() {
 							)}
 						/>
 						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
-					</AlertDialogTitle>
-					<AlertDialogDescription asChild>
+					</ResponsiveAlertDialogTitle>
+					<ResponsiveAlertDialogDescription asChild>
 						<div className="space-y-3">
 							{isFeatured ? (
 								<>
@@ -92,13 +92,11 @@ export function SetFeaturedProductAlertDialog() {
 								</>
 							)}
 						</div>
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button" disabled={isPending}>
-						Annuler
-					</AlertDialogCancel>
-					<AlertDialogAction
+					</ResponsiveAlertDialogDescription>
+				</ResponsiveAlertDialogHeader>
+				<ResponsiveAlertDialogFooter>
+					<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+					<ResponsiveAlertDialogAction
 						type="button"
 						onClick={handleConfirm}
 						disabled={isPending}
@@ -112,9 +110,9 @@ export function SetFeaturedProductAlertDialog() {
 							: isFeatured
 								? "Retirer"
 								: "Definir comme vedette"}
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
+					</ResponsiveAlertDialogAction>
+				</ResponsiveAlertDialogFooter>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

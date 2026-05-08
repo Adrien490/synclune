@@ -74,6 +74,7 @@ export function useProductActions({
 					key: "duplicate",
 					label: "Dupliquer",
 					icon: Copy,
+					closesMenu: false,
 					onSelect: () => duplicateDialog.open({ productId, productTitle }),
 				},
 				{
@@ -86,6 +87,7 @@ export function useProductActions({
 					key: "collections",
 					label: "Gérer collections",
 					icon: FolderPlus,
+					closesMenu: false,
 					onSelect: () => collectionsDialog.open({ productId, productTitle }),
 				},
 			],
@@ -100,6 +102,7 @@ export function useProductActions({
 					icon: Pencil,
 					disabled: isDraft,
 					hidden: isArchived,
+					closesMenu: false,
 					onSelect: () =>
 						changeStatusDialog.open({
 							productId,
@@ -115,6 +118,7 @@ export function useProductActions({
 					icon: Upload,
 					disabled: isPublic,
 					hidden: isArchived,
+					closesMenu: false,
 					onSelect: () =>
 						changeStatusDialog.open({
 							productId,
@@ -133,6 +137,7 @@ export function useProductActions({
 					label: "Archiver",
 					icon: Archive,
 					hidden: isArchived,
+					closesMenu: false,
 					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
 				},
 				{
@@ -140,6 +145,7 @@ export function useProductActions({
 					label: "Restaurer",
 					icon: ArchiveRestore,
 					hidden: !isArchived,
+					closesMenu: false,
 					onSelect: () => archiveDialog.open({ productId, productTitle, productStatus }),
 				},
 			],
@@ -154,6 +160,7 @@ export function useProductActions({
 					icon: Trash2,
 					variant: "destructive",
 					hidden: !isArchived,
+					closesMenu: false,
 					onSelect: () => deleteDialog.open({ productId, productTitle }),
 				},
 			],

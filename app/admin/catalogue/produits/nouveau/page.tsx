@@ -1,4 +1,3 @@
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { PageHeader } from "@/shared/components/page-header";
 import { CreateProductForm } from "@/modules/products/components/admin/create-product-form";
 import { getProductTypeOptions } from "@/modules/product-types/data/get-product-type-options";
@@ -49,8 +48,6 @@ export default async function NewProductPage() {
 
 	return (
 		<div className="space-y-4">
-			<AdminDetailBackLink href="/admin/catalogue/produits" label="Retour aux produits" />
-
 			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
 
 			<CreateProductForm

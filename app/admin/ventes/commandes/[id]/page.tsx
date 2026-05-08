@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CancelOrderAlertDialog = dynamic(() =>
@@ -97,8 +96,6 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink href="/admin/ventes/commandes" label="Retour aux commandes" />
-
 			{/* Breadcrumb (caché sur mobile) */}
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>

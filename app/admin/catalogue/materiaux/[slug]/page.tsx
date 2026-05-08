@@ -7,7 +7,6 @@ import {
 	getMaterialDetailBySlug,
 	getMaterialDistinctProductCount,
 } from "@/modules/materials/data/get-material";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -63,8 +62,6 @@ export default async function AdminMaterialDetailPage({
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink href="/admin/catalogue/materiaux" label="Retour aux matériaux" />
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

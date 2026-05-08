@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useApproveRefund } from "@/modules/refunds/hooks/use-approve-refund";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -42,14 +42,14 @@ export function ApproveRefundAlertDialog() {
 	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Approuver le remboursement</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Approuver le remboursement</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
 									Approuver le remboursement de <strong>{formattedAmount} €</strong> pour la
@@ -59,22 +59,20 @@ export function ApproveRefundAlertDialog() {
 									Après approbation, vous pourrez procéder au remboursement effectif via Stripe.
 								</p>
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
 					{state?.status && state.status !== ActionStatus.SUCCESS && (
 						<p className="text-destructive mb-4 text-sm">{state.message}</p>
 					)}
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 							{isPending ? "Approbation…" : "Approuver"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

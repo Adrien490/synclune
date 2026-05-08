@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-files";
 import { startTransition } from "react";
@@ -63,21 +63,19 @@ export function DeletePrimaryImageAlertDialog() {
 	};
 
 	return (
-		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>Confirmer la suppression</AlertDialogTitle>
-					<AlertDialogDescription>
+		<ResponsiveAlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
+				<ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogTitle>Confirmer la suppression</ResponsiveAlertDialogTitle>
+					<ResponsiveAlertDialogDescription>
 						{deleteDialog.data?.skipUtapiDelete
 							? "Êtes-vous sûr de vouloir supprimer ce média principal ? Les modifications seront effectives après validation du formulaire."
 							: "Êtes-vous sûr de vouloir supprimer ce média principal ? Cette action est irréversible."}
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel type="button" disabled={isPending}>
-						Annuler
-					</AlertDialogCancel>
-					<AlertDialogAction
+					</ResponsiveAlertDialogDescription>
+				</ResponsiveAlertDialogHeader>
+				<ResponsiveAlertDialogFooter>
+					<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+					<ResponsiveAlertDialogAction
 						type="button"
 						onClick={handleDelete}
 						disabled={isPending}
@@ -85,9 +83,9 @@ export function DeletePrimaryImageAlertDialog() {
 					>
 						{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
 						{isPending ? "Suppression…" : "Supprimer"}
-					</AlertDialogAction>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
+					</ResponsiveAlertDialogAction>
+				</ResponsiveAlertDialogFooter>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

@@ -63,6 +63,7 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 					key: "toggle",
 					label: discount.isActive ? "Désactiver" : "Activer",
 					icon: discount.isActive ? PowerOff : Power,
+					closesMenu: false,
 					onSelect: () =>
 						openToggleDialog({
 							discountId: discount.id,
@@ -82,6 +83,7 @@ export function useDiscountActions({ discount }: UseDiscountActionsParams): {
 					icon: Trash2,
 					variant: "destructive",
 					disabled: !canDelete,
+					closesMenu: false,
 					onSelect: () =>
 						openDeleteDialog({
 							discountId: discount.id,

@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { LoaderCircle } from "lucide-react";
@@ -42,8 +42,8 @@ export function ArchiveProductAlertDialog() {
 	const targetStatus: "ARCHIVED" | "PUBLIC" = isArchiving ? "ARCHIVED" : "PUBLIC";
 
 	return (
-		<AlertDialog open={archiveDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={archiveDialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="productId" value={archiveDialog.data?.productId ?? ""} />
 					<input
@@ -53,11 +53,11 @@ export function ArchiveProductAlertDialog() {
 					/>
 					<input type="hidden" name="targetStatus" value={targetStatus} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							{isArchiving ? "Archiver le bijou" : "Désarchiver le bijou"}
-						</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div className="space-y-3">
 								{isArchiving ? (
 									<>
@@ -86,13 +86,11 @@ export function ArchiveProductAlertDialog() {
 									</>
 								)}
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
@@ -106,10 +104,10 @@ export function ArchiveProductAlertDialog() {
 								: isArchiving
 									? "Archiver"
 									: "Désarchiver"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

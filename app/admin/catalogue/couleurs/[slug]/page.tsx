@@ -7,7 +7,6 @@ import {
 	getColorDetailBySlug,
 	getColorDistinctProductCount,
 } from "@/modules/colors/data/get-color";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -57,8 +56,6 @@ export default async function AdminColorDetailPage({ params }: { params: ColorDe
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink href="/admin/catalogue/couleurs" label="Retour aux couleurs" />
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

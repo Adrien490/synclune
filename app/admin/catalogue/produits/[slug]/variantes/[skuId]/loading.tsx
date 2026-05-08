@@ -135,11 +135,6 @@ export default function AdminSkuDetailLoading() {
 		>
 			<span className="sr-only">Chargement de la variante…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-36" />
-			</div>
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

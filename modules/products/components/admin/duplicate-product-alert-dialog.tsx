@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -55,14 +55,14 @@ export function DuplicateProductAlertDialog() {
 	};
 
 	return (
-		<AlertDialog open={duplicateDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={duplicateDialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="productId" value={duplicateDialog.data?.productId ?? ""} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Dupliquer ce bijou</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Dupliquer ce bijou</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
 									Êtes-vous sûr de vouloir dupliquer le bijou{" "}
@@ -78,19 +78,17 @@ export function DuplicateProductAlertDialog() {
 									Vous pourrez ensuite modifier le bijou dupliqué selon vos besoins.
 								</p>
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Duplication…" : "Dupliquer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

@@ -108,6 +108,7 @@ export function useMaterialActions({
 					label: "Supprimer",
 					icon: Trash2,
 					variant: "destructive",
+					closesMenu: false,
 					onSelect: () => openAlert({ materialId, materialName }),
 				},
 			],

@@ -3,14 +3,14 @@
 import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 
 import {
-	AlertDialog,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
@@ -36,13 +36,13 @@ export function ToggleReviewStatusAlertDialog() {
 	const isPublished = data?.isPublished ?? false;
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={(o) => !o && dialog.close()}>
-			<AlertDialogContent>
-				<AlertDialogHeader>
-					<AlertDialogTitle>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={(o) => !o && dialog.close()}>
+			<ResponsiveAlertDialogContent>
+				<ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogTitle>
 						{isPublished ? "Masquer cet avis ?" : "Publier cet avis ?"}
-					</AlertDialogTitle>
-					<AlertDialogDescription>
+					</ResponsiveAlertDialogTitle>
+					<ResponsiveAlertDialogDescription>
 						{data ? (
 							isPublished ? (
 								<>
@@ -56,10 +56,10 @@ export function ToggleReviewStatusAlertDialog() {
 								</>
 							)
 						) : null}
-					</AlertDialogDescription>
-				</AlertDialogHeader>
-				<AlertDialogFooter>
-					<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
+					</ResponsiveAlertDialogDescription>
+				</ResponsiveAlertDialogHeader>
+				<ResponsiveAlertDialogFooter>
+					<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
 					<Button
 						onClick={() => data && toggleStatus(data.reviewId)}
 						disabled={isPending || !data}
@@ -82,8 +82,8 @@ export function ToggleReviewStatusAlertDialog() {
 							</>
 						)}
 					</Button>
-				</AlertDialogFooter>
-			</AlertDialogContent>
-		</AlertDialog>
+				</ResponsiveAlertDialogFooter>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

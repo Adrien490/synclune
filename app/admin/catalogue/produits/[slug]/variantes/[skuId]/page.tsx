@@ -5,7 +5,6 @@ import { notFound } from "next/navigation";
 import { getProductBySlug } from "@/modules/products/data/get-product";
 import { SkuDetailPage } from "@/modules/skus/components/admin/sku-detail";
 import { getSkuDetailById } from "@/modules/skus/data/get-sku";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -57,11 +56,6 @@ export default async function AdminSkuDetailPage({ params }: { params: SkuDetail
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink
-				href={`/admin/catalogue/produits/${slug}/variantes`}
-				label="Retour aux variantes"
-			/>
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

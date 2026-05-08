@@ -104,6 +104,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					icon: Shield,
 					disabled: isAdmin,
 					hidden: isDeleted,
+					closesMenu: false,
 					onSelect: () => promoteDialog.open(),
 				},
 				{
@@ -112,6 +113,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					icon: UserMinus,
 					disabled: !isAdmin,
 					hidden: isDeleted,
+					closesMenu: false,
 					onSelect: () => demoteDialog.open(),
 				},
 			],
@@ -124,6 +126,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					label: "Suspendre",
 					icon: CircleX,
 					hidden: isDeleted || isSuspended,
+					closesMenu: false,
 					onSelect: () => suspendDialog.open(),
 				},
 				{
@@ -131,6 +134,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					label: "Lever la suspension",
 					icon: RotateCcw,
 					hidden: isDeleted || !isSuspended,
+					closesMenu: false,
 					onSelect: () => restoreDialog.open(),
 				},
 				{
@@ -138,6 +142,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					label: "Restaurer",
 					icon: RotateCcw,
 					hidden: !isDeleted,
+					closesMenu: false,
 					onSelect: () => restoreDialog.open(),
 				},
 			],
@@ -151,6 +156,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					icon: Trash2,
 					variant: "destructive",
 					hidden: isDeleted,
+					closesMenu: false,
 					onSelect: () => deleteDialog.open(),
 				},
 			],

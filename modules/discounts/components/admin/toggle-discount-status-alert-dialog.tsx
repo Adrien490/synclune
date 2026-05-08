@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
@@ -46,14 +46,16 @@ export function ToggleDiscountStatusAlertDialog() {
 	const targetState = isActive ? "désactiver" : "activer";
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.discountId ?? ""} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>{isActive ? "Désactiver" : "Activer"} le code promo</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
+							{isActive ? "Désactiver" : "Activer"} le code promo
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
 									Vous êtes sur le point de {targetState} le code promo{" "}
@@ -68,13 +70,11 @@ export function ToggleDiscountStatusAlertDialog() {
 									</div>
 								</div>
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
@@ -86,10 +86,10 @@ export function ToggleDiscountStatusAlertDialog() {
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "En cours…" : isActive ? "Désactiver" : "Activer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

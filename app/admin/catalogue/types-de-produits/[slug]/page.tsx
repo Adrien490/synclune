@@ -7,7 +7,6 @@ import {
 	getProductTypeDetailBySlug,
 	getProductTypeProductCounts,
 } from "@/modules/product-types/data/get-product-type";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -63,8 +62,6 @@ export default async function AdminProductTypeDetailPage({
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink href="/admin/catalogue/types-de-produits" label="Retour aux types" />
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

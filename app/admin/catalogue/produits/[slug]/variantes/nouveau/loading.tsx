@@ -69,11 +69,6 @@ export default function CreateVariantLoading() {
 		>
 			<span className="sr-only">Chargement…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-40" />
-			</div>
-
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>

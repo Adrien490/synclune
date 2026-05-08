@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { type Metadata } from "next";
 import { CreateRefundForm } from "@/modules/refunds/components/admin/create-refund-form";
 import { PaymentStatus } from "@/app/generated/prisma/client";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 export const metadata: Metadata = {
 	title: "Nouveau remboursement - Administration",
@@ -39,7 +38,6 @@ export default async function NewRefundPage({ searchParams }: NewRefundPageProps
 
 	return (
 		<div className="space-y-4">
-			<AdminDetailBackLink href="/admin/ventes/remboursements" label="Retour aux remboursements" />
 			<CreateRefundForm order={order} />
 		</div>
 	);

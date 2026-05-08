@@ -106,12 +106,14 @@ export function useSkuActions({
 					key: "adjust-stock",
 					label: "Ajuster le stock",
 					icon: Package,
+					closesMenu: false,
 					onSelect: () => adjustStockDialog.open({ skuId, skuName, currentStock: inventory }),
 				},
 				{
 					key: "update-price",
 					label: "Modifier le prix",
 					icon: DollarSign,
+					closesMenu: false,
 					onSelect: () =>
 						updatePriceDialog.open({
 							skuId,
@@ -159,6 +161,7 @@ export function useSkuActions({
 					icon: Trash2,
 					variant: "destructive",
 					hidden: isDefault,
+					closesMenu: false,
 					onSelect: () => deleteDialog.open({ skuId, skuName, isDefault }),
 				},
 			],

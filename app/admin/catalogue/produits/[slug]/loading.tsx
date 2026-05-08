@@ -147,11 +147,6 @@ export default function AdminProductDetailLoading() {
 		<div role="status" aria-busy="true" aria-label="Chargement du bijou" className="space-y-6">
 			<span className="sr-only">Chargement du bijou…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-32" />
-			</div>
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

@@ -103,6 +103,7 @@ export function useProductTypeActions({
 					icon: Trash2,
 					variant: "destructive",
 					hidden: isSystem,
+					closesMenu: false,
 					onSelect: () => deleteDialog.open({ productTypeId, label, productsCount }),
 				},
 			],

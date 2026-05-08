@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import { CreateProductVariantForm } from "@/modules/skus/components/admin/create-sku-form";
 import { DeletePrimaryImageAlertDialog } from "@/modules/media/components/admin/delete-primary-image-alert-dialog";
 import { DeleteGalleryMediaAlertDialog } from "@/modules/media/components/admin/delete-gallery-media-alert-dialog";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { PageHeader } from "@/shared/components/page-header";
 import {
 	Breadcrumb,
@@ -50,11 +49,6 @@ export default async function NewProductVariantPage({
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink
-				href={`/admin/catalogue/produits/${slug}`}
-				label="Retour aux variantes"
-			/>
-
 			{/* Breadcrumb personnalise */}
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>

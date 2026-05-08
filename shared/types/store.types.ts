@@ -163,6 +163,34 @@ interface OverlayStackActions {
 export type OverlayStackStore = OverlayStackState & OverlayStackActions;
 
 // =============================================================================
+// ADMIN LIST SELECTION STORE TYPES
+// =============================================================================
+
+/**
+ * Représente le control de mode sélection d'une liste admin actuellement montée.
+ * Auto-publié par `BulkSelectionProvider` pour permettre à `AdminMobileBottomBar`
+ * d'afficher un toggle thumb-friendly contextuel (cf. use-admin-list-selection-store).
+ */
+export interface AdminListSelectionControl {
+	selectionMode: boolean;
+	/** `pageItemIds.length > 0` — le toggle ne doit pas s'afficher sur listes vides. */
+	pageHasItems: boolean;
+	enter: () => void;
+	exit: () => void;
+}
+
+interface AdminListSelectionState {
+	control: AdminListSelectionControl | null;
+}
+
+interface AdminListSelectionActions {
+	register: (control: AdminListSelectionControl) => void;
+	unregister: () => void;
+}
+
+export type AdminListSelectionStore = AdminListSelectionState & AdminListSelectionActions;
+
+// =============================================================================
 // PROVIDER TYPES
 // =============================================================================
 

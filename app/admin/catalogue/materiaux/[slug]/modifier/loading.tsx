@@ -5,11 +5,6 @@ export default function EditMaterialLoading() {
 		<div role="status" aria-busy="true" aria-label="Chargement du formulaire" className="space-y-4">
 			<span className="sr-only">Chargement du formulaire…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-40" />
-			</div>
-
 			{/* Mirror page.tsx: h1 hidden md:block (material.name) */}
 			<div className="hidden md:block">
 				<Skeleton className="h-8 w-48" />

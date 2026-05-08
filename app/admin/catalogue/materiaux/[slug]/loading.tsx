@@ -28,11 +28,6 @@ export default function AdminMaterialDetailLoading() {
 		<div role="status" aria-busy="true" aria-label="Chargement du matériau" className="space-y-6">
 			<span className="sr-only">Chargement du matériau…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-40" />
-			</div>
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

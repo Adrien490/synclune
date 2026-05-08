@@ -189,13 +189,14 @@ function ResponsiveAlertDialogAction({
 	disabled,
 	children,
 	onClick,
+	type = "button",
 	...props
 }: ActionProps) {
 	const { isMobile } = useResponsiveAlert("ResponsiveAlertDialogAction");
 	if (isMobile) {
 		return (
 			<Button
-				type="button"
+				type={type}
 				disabled={disabled}
 				className={cn(buttonVariants(), className)}
 				onClick={(event) => {
@@ -211,6 +212,7 @@ function ResponsiveAlertDialogAction({
 		<AlertDialogAction
 			className={className}
 			disabled={disabled}
+			type={type}
 			onClick={(event) => {
 				triggerHaptic("medium");
 				onClick?.(event);

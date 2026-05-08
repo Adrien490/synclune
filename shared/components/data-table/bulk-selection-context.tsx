@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useAdminListSelectionStore } from "@/shared/stores/use-admin-list-selection-store";
 
 interface BulkSelectionContextValue {
 	selectedIds: ReadonlySet<string>;
@@ -116,6 +117,23 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 		exitSelectionMode,
 		selectAllVisible: togglePage,
 	};
+
+	// Bridge vers `AdminMobileBottomBar` (portalisée au niveau du shell admin) :
+	// publie le control courant pour permettre un toggle « Sélection » thumb-friendly
+	// dans la bottom-bar globale. Une seule liste est active à la fois sur mobile.
+	const pageHasItems = pageItemIds.length > 0;
+	useEffect(() => {
+		const { register, unregister } = useAdminListSelectionStore.getState();
+		register({
+			selectionMode,
+			pageHasItems,
+			enter: enterSelectionMode,
+			exit: exitSelectionMode,
+		});
+		return () => {
+			unregister();
+		};
+	}, [selectionMode, pageHasItems]);
 
 	return <BulkSelectionContext.Provider value={value}>{children}</BulkSelectionContext.Provider>;
 }

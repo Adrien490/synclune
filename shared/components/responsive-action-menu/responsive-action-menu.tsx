@@ -61,6 +61,15 @@ export type ActionMenuItem = {
 	 * Default: `"light"` — or `"medium"` for destructive variants.
 	 */
 	haptic?: HapticPattern;
+	/**
+	 * Mobile-only. When `false`, the parent drawer stays open after the
+	 * action is selected — use for actions that open a confirmation
+	 * `ResponsiveAlertDialog` or sub-sheet so the confirm stacks visibly
+	 * over the action menu (iOS pattern). Desktop unaffected: the
+	 * `DropdownMenu` always closes naturally on selection.
+	 * @default true
+	 */
+	closesMenu?: boolean;
 } & (
 	| { onSelect: () => void; href?: never; external?: never }
 	| { href: string; external?: boolean; onSelect?: never }
@@ -409,48 +418,49 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 	const focusClasses =
 		"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-inset focus-visible:outline-none";
 
-	if (item.href) {
-		return (
-			<DrawerClose asChild>
-				<Link
-					href={item.href}
-					target={item.external ? "_blank" : undefined}
-					rel={item.external ? "noopener noreferrer" : undefined}
-					tabIndex={isInert ? -1 : undefined}
-					aria-disabled={isInert ? true : undefined}
-					aria-busy={ariaBusy}
-					onClick={(e) => {
-						if (isInert) {
-							e.preventDefault();
-							return;
-						}
-						triggerHaptic(hapticPattern);
-					}}
-					className={cn("block w-full", focusClasses)}
-					role="menuitem"
-				>
-					{body}
-				</Link>
-			</DrawerClose>
-		);
-	}
+	const closesMenu = item.closesMenu !== false;
 
-	return (
-		<DrawerClose asChild>
-			<button
-				type="button"
-				role="menuitem"
-				disabled={isInert}
+	if (item.href) {
+		const link = (
+			<Link
+				href={item.href}
+				target={item.external ? "_blank" : undefined}
+				rel={item.external ? "noopener noreferrer" : undefined}
+				tabIndex={isInert ? -1 : undefined}
+				aria-disabled={isInert ? true : undefined}
 				aria-busy={ariaBusy}
-				onClick={() => {
-					if (isInert) return;
+				onClick={(e) => {
+					if (isInert) {
+						e.preventDefault();
+						return;
+					}
 					triggerHaptic(hapticPattern);
-					item.onSelect?.();
 				}}
-				className={cn("w-full", focusClasses)}
+				className={cn("block w-full", focusClasses)}
+				role="menuitem"
 			>
 				{body}
-			</button>
-		</DrawerClose>
+			</Link>
+		);
+		return closesMenu ? <DrawerClose asChild>{link}</DrawerClose> : link;
+	}
+
+	const button = (
+		<button
+			type="button"
+			role="menuitem"
+			disabled={isInert}
+			aria-busy={ariaBusy}
+			onClick={() => {
+				if (isInert) return;
+				triggerHaptic(hapticPattern);
+				item.onSelect?.();
+			}}
+			className={cn("w-full", focusClasses)}
+		>
+			{body}
+		</button>
 	);
+
+	return closesMenu ? <DrawerClose asChild>{button}</DrawerClose> : button;
 }

@@ -494,6 +494,89 @@ describe("ResponsiveActionMenu — mobile", () => {
 		expect(mockTriggerHaptic).not.toHaveBeenCalled();
 	});
 
+	it("closesMenu defaults to true: mobile button row is wrapped in DrawerClose (data-slot)", () => {
+		const sections: ActionMenuSection[] = [
+			{
+				key: "x",
+				items: [{ key: "edit", label: "Modifier", icon: Pencil, onSelect: vi.fn() }],
+			},
+		];
+
+		render(
+			<ResponsiveActionMenu open onOpenChange={() => {}}>
+				<ResponsiveActionMenuTrigger asChild>
+					<button type="button">Actions</button>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions" sections={sections} />
+			</ResponsiveActionMenu>,
+		);
+
+		const item = screen.getByRole("menuitem", { name: /Modifier/ });
+		expect(item).toHaveAttribute("data-slot", "drawer-close");
+	});
+
+	it("closesMenu=false: mobile button row is NOT wrapped in DrawerClose (parent drawer stays open)", () => {
+		const sections: ActionMenuSection[] = [
+			{
+				key: "x",
+				items: [
+					{
+						key: "delete",
+						label: "Supprimer",
+						icon: Trash2,
+						variant: "destructive",
+						closesMenu: false,
+						onSelect: vi.fn(),
+					},
+				],
+			},
+		];
+
+		render(
+			<ResponsiveActionMenu open onOpenChange={() => {}}>
+				<ResponsiveActionMenuTrigger asChild>
+					<button type="button">Actions</button>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions" sections={sections} />
+			</ResponsiveActionMenu>,
+		);
+
+		const item = screen.getByRole("menuitem", { name: /Supprimer/ });
+		expect(item).not.toHaveAttribute("data-slot", "drawer-close");
+	});
+
+	it("closesMenu=false still fires onSelect and haptic on tap", () => {
+		const onSelect = vi.fn();
+		const sections: ActionMenuSection[] = [
+			{
+				key: "x",
+				items: [
+					{
+						key: "delete",
+						label: "Supprimer",
+						icon: Trash2,
+						variant: "destructive",
+						closesMenu: false,
+						onSelect,
+					},
+				],
+			},
+		];
+
+		render(
+			<ResponsiveActionMenu open onOpenChange={() => {}}>
+				<ResponsiveActionMenuTrigger asChild>
+					<button type="button">Actions</button>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions" sections={sections} />
+			</ResponsiveActionMenu>,
+		);
+
+		fireEvent.click(screen.getByRole("menuitem", { name: /Supprimer/ }));
+		expect(onSelect).toHaveBeenCalledTimes(1);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+	});
+
 	it("guards disabled href items (preventDefault + tabIndex=-1)", () => {
 		const sections: ActionMenuSection[] = [
 			{

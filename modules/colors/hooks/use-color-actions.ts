@@ -91,6 +91,7 @@ export function useColorActions({
 					label: "Supprimer",
 					icon: Trash2,
 					variant: "destructive",
+					closesMenu: false,
 					onSelect: () => openAlert({ colorId, colorName }),
 				},
 			],

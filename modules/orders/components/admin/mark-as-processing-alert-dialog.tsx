@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useMarkAsProcessing } from "@/modules/orders/hooks/use-mark-as-processing";
 import { LoaderCircle } from "lucide-react";
@@ -38,14 +38,14 @@ export function MarkAsProcessingAlertDialog() {
 	};
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.orderId ?? ""} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Passer en préparation</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Passer en préparation</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
 									Êtes-vous sûr de vouloir passer la commande{" "}
@@ -56,19 +56,17 @@ export function MarkAsProcessingAlertDialog() {
 									l'expédier une fois le colis prêt.
 								</p>
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Passage…" : "Passer en préparation"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

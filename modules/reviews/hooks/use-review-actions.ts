@@ -46,6 +46,7 @@ export function useReviewActions({ review }: UseReviewActionsParams): {
 					label: isPublished ? "Masquer" : "Publier",
 					icon: isPublished ? EyeOff : Eye,
 					variant: isPublished ? "destructive" : "default",
+					closesMenu: false,
 					onSelect: () =>
 						toggleDialog.open({
 							reviewId: review.id,

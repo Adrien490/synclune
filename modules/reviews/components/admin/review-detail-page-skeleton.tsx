@@ -4,11 +4,6 @@ import { Separator } from "@/shared/components/ui/separator";
 export function ReviewDetailPageSkeleton() {
 	return (
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-32" />
-			</div>
-
 			<header className="space-y-2">
 				<Skeleton className="h-8 w-64" />
 				<Skeleton className="h-4 w-48" />

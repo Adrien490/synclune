@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
 import { cn } from "@/shared/utils/cn";
@@ -73,16 +73,18 @@ export function ChangeProductStatusAlertDialog() {
 		(currentStatus !== "PUBLIC" && targetStatus === "PUBLIC");
 
 	return (
-		<AlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="productId" value={dialog.data?.productId ?? ""} />
 					<input type="hidden" name="currentStatus" value={currentStatus} />
 					<input type="hidden" name="targetStatus" value={targetStatus} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Changer le statut en &quot;{config.label}&quot;</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
+							Changer le statut en &quot;{config.label}&quot;
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div className="space-y-4">
 								<div>
 									Vous êtes sur le point de changer le statut de{" "}
@@ -103,13 +105,11 @@ export function ChangeProductStatusAlertDialog() {
 									</div>
 								)}
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
@@ -117,10 +117,10 @@ export function ChangeProductStatusAlertDialog() {
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Changement en cours…" : `Changer en ${config.label}`}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

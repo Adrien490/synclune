@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 
 import { CollectionDetailPage } from "@/modules/collections/components/admin/collection-detail";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -58,8 +57,6 @@ export default async function AdminCollectionDetailPage({ params }: CollectionDe
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink href="/admin/catalogue/collections" label="Retour aux collections" />
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

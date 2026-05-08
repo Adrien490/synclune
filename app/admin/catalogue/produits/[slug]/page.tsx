@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 
 import { ProductDetailPage } from "@/modules/products/components/admin/product-detail";
 import { getProductBySlug } from "@/modules/products/data/get-product";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -54,8 +53,6 @@ export default async function AdminProductDetailPage({
 
 	return (
 		<div className="space-y-6">
-			<AdminDetailBackLink href="/admin/catalogue/produits" label="Retour aux produits" />
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

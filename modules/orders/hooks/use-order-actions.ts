@@ -101,6 +101,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					key: "notes",
 					label: "Notes internes",
 					icon: StickyNote,
+					closesMenu: false,
 					onSelect: () => notesDialog.open(open({})),
 				},
 			],
@@ -143,6 +144,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Marquer comme payée",
 					icon: CreditCard,
 					hidden: !canMarkAsPaid,
+					closesMenu: false,
 					onSelect: () => markAsPaidDialog.open(open({})),
 				},
 				{
@@ -150,6 +152,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Passer en préparation",
 					icon: Package,
 					hidden: !canMarkAsProcessing,
+					closesMenu: false,
 					onSelect: () => markAsProcessingDialog.open(open({})),
 				},
 				{
@@ -157,6 +160,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Marquer comme expédiée",
 					icon: Truck,
 					hidden: !canMarkAsShipped,
+					closesMenu: false,
 					onSelect: () => markAsShippedDialog.open(open({})),
 				},
 				{
@@ -172,6 +176,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Marquer comme livrée",
 					icon: CircleCheck,
 					hidden: !canMarkAsDelivered,
+					closesMenu: false,
 					onSelect: () => markAsDeliveredDialog.open(open({})),
 				},
 				{
@@ -179,6 +184,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Annuler l'expédition",
 					icon: Undo2,
 					hidden: !canRevertToProcessing,
+					closesMenu: false,
 					onSelect: () =>
 						revertToProcessingDialog.open(open({ trackingNumber: order.trackingNumber })),
 				},
@@ -187,6 +193,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Marquer comme retourné",
 					icon: PackageX,
 					hidden: !canMarkAsReturned,
+					closesMenu: false,
 					onSelect: () => markAsReturnedDialog.open(open({})),
 				},
 			],
@@ -212,6 +219,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					icon: CircleX,
 					variant: "destructive",
 					hidden: !canCancel,
+					closesMenu: false,
 					onSelect: () =>
 						cancelDialog.open({
 							orderId: order.id,
@@ -225,6 +233,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					icon: Trash2,
 					variant: "destructive",
 					hidden: !canDelete,
+					closesMenu: false,
 					onSelect: () => deleteDialog.open(open({})),
 				},
 			],

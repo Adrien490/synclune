@@ -3,14 +3,14 @@
 import { CircleCheck, CircleX, LoaderCircle, RotateCcw, Trash2 } from "lucide-react";
 
 import {
-	AlertDialog,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -61,25 +61,25 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 
 	return (
 		<>
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
 			>
-				<AlertDialogContent>
+				<ResponsiveAlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<AlertDialogHeader>
-							<AlertDialogTitle>Supprimer l&apos;utilisateur</AlertDialogTitle>
-							<AlertDialogDescription>
+						<ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogTitle>Supprimer l&apos;utilisateur</ResponsiveAlertDialogTitle>
+							<ResponsiveAlertDialogDescription>
 								Êtes-vous sûr de vouloir supprimer{" "}
 								<span className="font-semibold">{displayName}</span> ? Le compte sera désactivé mais
 								les données seront conservées.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel type="button" disabled={isPending}>
+							</ResponsiveAlertDialogDescription>
+						</ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogFooter>
+							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
-							</AlertDialogCancel>
+							</ResponsiveAlertDialogCancel>
 							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
@@ -93,30 +93,30 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 									</>
 								)}
 							</Button>
-						</AlertDialogFooter>
+						</ResponsiveAlertDialogFooter>
 					</form>
-				</AlertDialogContent>
-			</AlertDialog>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={suspendDialog.isOpen}
 				onOpenChange={(open) => (open ? suspendDialog.open() : suspendDialog.close())}
 			>
-				<AlertDialogContent>
+				<ResponsiveAlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<AlertDialogHeader>
-							<AlertDialogTitle>Suspendre l&apos;utilisateur</AlertDialogTitle>
-							<AlertDialogDescription>
+						<ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogTitle>Suspendre l&apos;utilisateur</ResponsiveAlertDialogTitle>
+							<ResponsiveAlertDialogDescription>
 								Êtes-vous sûr de vouloir suspendre{" "}
 								<span className="font-semibold">{displayName}</span> ? L&apos;utilisateur ne pourra
 								plus se connecter.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel type="button" disabled={isPending}>
+							</ResponsiveAlertDialogDescription>
+						</ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogFooter>
+							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
-							</AlertDialogCancel>
+							</ResponsiveAlertDialogCancel>
 							<Button type="submit" disabled={isPending}>
 								{isSuspendPending ? (
 									<>
@@ -130,29 +130,29 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 									</>
 								)}
 							</Button>
-						</AlertDialogFooter>
+						</ResponsiveAlertDialogFooter>
 					</form>
-				</AlertDialogContent>
-			</AlertDialog>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={restoreDialog.isOpen}
 				onOpenChange={(open) => (open ? restoreDialog.open() : restoreDialog.close())}
 			>
-				<AlertDialogContent>
+				<ResponsiveAlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="id" value={user.id} />
-						<AlertDialogHeader>
-							<AlertDialogTitle>Restaurer l&apos;utilisateur</AlertDialogTitle>
-							<AlertDialogDescription>
+						<ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogTitle>Restaurer l&apos;utilisateur</ResponsiveAlertDialogTitle>
+							<ResponsiveAlertDialogDescription>
 								Êtes-vous sûr de vouloir restaurer{" "}
 								<span className="font-semibold">{displayName}</span> ? Le compte sera réactivé.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel type="button" disabled={isPending}>
+							</ResponsiveAlertDialogDescription>
+						</ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogFooter>
+							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
-							</AlertDialogCancel>
+							</ResponsiveAlertDialogCancel>
 							<Button type="submit" disabled={isPending}>
 								{isRestorePending ? (
 									<>
@@ -166,31 +166,31 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 									</>
 								)}
 							</Button>
-						</AlertDialogFooter>
+						</ResponsiveAlertDialogFooter>
 					</form>
-				</AlertDialogContent>
-			</AlertDialog>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={promoteDialog.isOpen}
 				onOpenChange={(open) => (open ? promoteDialog.open() : promoteDialog.close())}
 			>
-				<AlertDialogContent>
+				<ResponsiveAlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="ADMIN" />
-						<AlertDialogHeader>
-							<AlertDialogTitle>Promouvoir en administrateur</AlertDialogTitle>
-							<AlertDialogDescription>
+						<ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogTitle>Promouvoir en administrateur</ResponsiveAlertDialogTitle>
+							<ResponsiveAlertDialogDescription>
 								Êtes-vous sûr de vouloir promouvoir{" "}
 								<span className="font-semibold">{displayName}</span> au rôle d&apos;administrateur ?
 								Les administrateurs ont accès à toutes les fonctionnalités du dashboard.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel type="button" disabled={isPending}>
+							</ResponsiveAlertDialogDescription>
+						</ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogFooter>
+							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
-							</AlertDialogCancel>
+							</ResponsiveAlertDialogCancel>
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
@@ -204,31 +204,31 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 									</>
 								)}
 							</Button>
-						</AlertDialogFooter>
+						</ResponsiveAlertDialogFooter>
 					</form>
-				</AlertDialogContent>
-			</AlertDialog>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={demoteDialog.isOpen}
 				onOpenChange={(open) => (open ? demoteDialog.open() : demoteDialog.close())}
 			>
-				<AlertDialogContent>
+				<ResponsiveAlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="USER" />
-						<AlertDialogHeader>
-							<AlertDialogTitle>Rétrograder en utilisateur</AlertDialogTitle>
-							<AlertDialogDescription>
+						<ResponsiveAlertDialogHeader>
+							<ResponsiveAlertDialogTitle>Rétrograder en utilisateur</ResponsiveAlertDialogTitle>
+							<ResponsiveAlertDialogDescription>
 								Êtes-vous sûr de vouloir rétrograder{" "}
 								<span className="font-semibold">{displayName}</span> au rôle d&apos;utilisateur
 								standard ? Il perdra l&apos;accès au dashboard administrateur.
-							</AlertDialogDescription>
-						</AlertDialogHeader>
-						<AlertDialogFooter>
-							<AlertDialogCancel type="button" disabled={isPending}>
+							</ResponsiveAlertDialogDescription>
+						</ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogFooter>
+							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
-							</AlertDialogCancel>
+							</ResponsiveAlertDialogCancel>
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
@@ -242,10 +242,10 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 									</>
 								)}
 							</Button>
-						</AlertDialogFooter>
+						</ResponsiveAlertDialogFooter>
 					</form>
-				</AlertDialogContent>
-			</AlertDialog>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

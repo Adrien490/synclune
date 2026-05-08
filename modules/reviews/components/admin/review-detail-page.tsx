@@ -2,7 +2,6 @@ import { CircleCheck, EyeOff, ExternalLink, MessageSquare } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { Badge } from "@/shared/components/ui/badge";
 import { Separator } from "@/shared/components/ui/separator";
@@ -22,7 +21,6 @@ export function ReviewDetailPage({ review }: ReviewDetailPageProps) {
 
 	return (
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-			<AdminDetailBackLink href="/admin/marketing/avis" label="Retour aux avis" />
 			{/* Header */}
 			<header className="space-y-1">
 				<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">

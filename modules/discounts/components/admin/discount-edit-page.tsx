@@ -1,4 +1,3 @@
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { Separator } from "@/shared/components/ui/separator";
 
 import type { GetDiscountReturn } from "../../types/discount.types";
@@ -12,7 +11,6 @@ interface DiscountEditPageProps {
 export function DiscountEditPage({ discount }: DiscountEditPageProps) {
 	return (
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-			<AdminDetailBackLink href="/admin/marketing/discounts" label="Retour aux codes promo" />
 			<header className="space-y-2">
 				<div className="space-y-1">
 					<h1 className="text-2xl font-semibold tracking-tight">

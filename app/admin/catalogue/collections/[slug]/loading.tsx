@@ -33,11 +33,6 @@ export default function CollectionDetailLoading() {
 		>
 			<span className="sr-only">Chargement…</span>
 
-			{/* Mobile back link (mirror AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-40" />
-			</div>
-
 			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>

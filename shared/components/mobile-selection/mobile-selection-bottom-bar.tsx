@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import { BottomBar } from "@/shared/components/bottom-bar";
 import { useBulkSelectionContext } from "@/shared/components/data-table";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
-import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 import { cn } from "@/shared/utils/cn";
 
 interface MobileSelectionBottomBarProps {
@@ -19,8 +18,11 @@ interface MobileSelectionBottomBarProps {
  * ET qu'il y a des items affichés (`pageItemIds.length > 0`).
  *
  * Garanties UX (pattern Mail iOS) :
- * - Appelle `useRegisterOverlay()` quand active → la `AdminMobileBottomBar` se cache
- *   automatiquement (cf. `useHasOverlay` dans le shell admin).
+ * - Empilée **au-dessus** de la `AdminMobileBottomBar` (offset
+ *   `bottom: calc(56px + safe-area-inset-bottom)`) afin que le toggle
+ *   « Sélection » de la nav globale reste accessible au pouce pour quitter le
+ *   mode. La hauteur reportée à `useBottomBarHeight` (112) couvre les deux
+ *   bars empilées pour les offsets de contenu (FAB, sticky CTAs).
  * - Hijack du back-button hardware Android / swipe-back iOS via `useBackButtonClose`
  *   → un retour quitte le mode sélection au lieu de la page.
  *
@@ -36,7 +38,6 @@ export function MobileSelectionBottomBar({
 
 	const isActive = selectionMode && pageItemIds.length > 0;
 
-	useRegisterOverlay(isActive);
 	useBackButtonClose({
 		isOpen: isActive,
 		onClose: exitSelectionMode,
@@ -50,9 +51,9 @@ export function MobileSelectionBottomBar({
 			as="div"
 			breakpointClass="md:hidden"
 			zIndex="z-(--z-bar)"
-			height={56}
+			height={112}
 			aria-label={ariaLabel}
-			className={cn("px-3 py-2", className)}
+			className={cn("bottom-[calc(56px+env(safe-area-inset-bottom))] px-3 py-2 pb-2", className)}
 		>
 			{children}
 		</BottomBar>

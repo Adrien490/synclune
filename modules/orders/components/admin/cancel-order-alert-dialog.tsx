@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
@@ -46,15 +46,15 @@ export function CancelOrderAlertDialog() {
 	const isPaid = cancelDialog.data?.isPaid ?? false;
 
 	return (
-		<AlertDialog open={cancelDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={cancelDialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={cancelDialog.data?.orderId ?? ""} />
 					<input type="hidden" name="autoRefund" value={isPaid && autoRefund ? "true" : "false"} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Confirmer l'annulation</AlertDialogTitle>
-						<AlertDialogDescription asChild>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Confirmer l'annulation</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription asChild>
 							<div>
 								<p>
 									Êtes-vous sûr de vouloir annuler la commande{" "}
@@ -92,19 +92,17 @@ export function CancelOrderAlertDialog() {
 									(numérotation des factures).
 								</p>
 							</div>
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Fermer
-						</AlertDialogCancel>
-						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Fermer</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Annulation…" : "Annuler la commande"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

@@ -99,6 +99,7 @@ export function useCollectionActions({
 					icon: Pencil,
 					disabled: isDraft,
 					hidden: isArchived,
+					closesMenu: false,
 					onSelect: () =>
 						openChangeStatusDialog({
 							collectionId,
@@ -113,6 +114,7 @@ export function useCollectionActions({
 					icon: Upload,
 					disabled: isPublic,
 					hidden: isArchived,
+					closesMenu: false,
 					onSelect: () =>
 						openChangeStatusDialog({
 							collectionId,
@@ -131,6 +133,7 @@ export function useCollectionActions({
 					label: "Archiver",
 					icon: Archive,
 					hidden: isArchived,
+					closesMenu: false,
 					onSelect: () => openArchiveDialog({ collectionId, collectionName, collectionStatus }),
 				},
 				{
@@ -138,6 +141,7 @@ export function useCollectionActions({
 					label: "Restaurer",
 					icon: ArchiveRestore,
 					hidden: !isArchived,
+					closesMenu: false,
 					onSelect: () => openArchiveDialog({ collectionId, collectionName, collectionStatus }),
 				},
 			],
@@ -152,6 +156,7 @@ export function useCollectionActions({
 					icon: Trash2,
 					variant: "destructive",
 					hidden: !isArchived,
+					closesMenu: false,
 					onSelect: () => openDeleteDialog({ collectionId, collectionName, productsCount }),
 				},
 			],

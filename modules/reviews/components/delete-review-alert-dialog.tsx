@@ -1,15 +1,15 @@
 "use client";
 
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteReview } from "../hooks/use-delete-review";
 import { DELETE_REVIEW_DIALOG_ID } from "../constants/review.constants";
@@ -37,24 +37,22 @@ export function DeleteReviewAlertDialog() {
 	};
 
 	return (
-		<AlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
-			<AlertDialogContent>
+		<ResponsiveAlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
+			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={deleteDialog.data?.reviewId ?? ""} />
 
-					<AlertDialogHeader>
-						<AlertDialogTitle>Supprimer cet avis ?</AlertDialogTitle>
-						<AlertDialogDescription>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>Supprimer cet avis ?</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							Cette action est irreversible. Votre avis sur{" "}
 							<strong>&quot;{deleteDialog.data?.productTitle}&quot;</strong> sera definitivement
 							supprime.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel type="button" disabled={isPending}>
-							Annuler
-						</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
@@ -62,10 +60,10 @@ export function DeleteReviewAlertDialog() {
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Suppression…" : "Supprimer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
 				</form>
-			</AlertDialogContent>
-		</AlertDialog>
+			</ResponsiveAlertDialogContent>
+		</ResponsiveAlertDialog>
 	);
 }

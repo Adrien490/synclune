@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { EditProductTypeForm } from "@/modules/product-types/components/admin/edit-product-type-form";
 import { getProductTypeBySlug } from "@/modules/product-types/data/get-product-type";
-import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 interface EditProductTypePageProps {
 	params: Promise<{ slug: string }>;
@@ -25,10 +24,6 @@ export default async function EditProductTypePage({ params }: EditProductTypePag
 
 	return (
 		<div className="space-y-4">
-			<AdminDetailBackLink
-				href={`/admin/catalogue/types-de-produits/${slug}`}
-				label="Retour au type"
-			/>
 			<h1 className="hidden text-2xl font-semibold md:block">{productType.label}</h1>
 			<EditProductTypeForm
 				productType={{

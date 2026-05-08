@@ -18,11 +18,6 @@ export default function CloseStoreLoading() {
 		>
 			<span className="sr-only">Chargement…</span>
 
-			{/* Back link mobile (matches AdminDetailBackLink) */}
-			<div className="md:hidden">
-				<Skeleton className="h-5 w-48" />
-			</div>
-
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>
