@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
@@ -27,7 +28,7 @@ const REVIEW_FILTER_KEYS = ["status", "rating", "hasResponse"] as const;
  * Sous-header sticky (mobile, admin) pour la liste avis.
  * 3 actions : Filtrer | Rechercher | Trier.
  */
-export function ReviewsBottomBar() {
+function ReviewsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -101,5 +102,13 @@ export function ReviewsBottomBar() {
 				adapter={reviewsAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function ReviewsBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<ReviewsBottomBarInner />
+		</Suspense>
 	);
 }

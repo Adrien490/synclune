@@ -141,14 +141,6 @@ export const toggleCollectionStatusSchema = z.object({
 	targetStatus: z.enum([CollectionStatus.DRAFT, CollectionStatus.PUBLIC]).optional(),
 });
 
-export const bulkChangeCollectionStatusSchema = z.object({
-	collectionIds: z
-		.array(z.cuid2({ message: "ID de collection invalide" }))
-		.min(1, "Au moins une collection doit être sélectionnée")
-		.max(GET_COLLECTIONS_MAX_RESULTS_PER_PAGE, "Trop de collections sélectionnées"),
-	targetStatus: z.enum([CollectionStatus.DRAFT, CollectionStatus.PUBLIC]),
-});
-
 export const addProductsToCollectionSchema = z.object({
 	collectionId: z.cuid2("ID de collection invalide"),
 	productIds: z

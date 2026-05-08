@@ -10,7 +10,7 @@ import type { MaterialOption } from "@/modules/materials/data/get-material-optio
 import { useAppForm } from "@/shared/components/forms";
 import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, Suspense, type ComponentProps } from "react";
 
 interface SkusFilterSheetProps {
 	className?: string;
@@ -109,7 +109,7 @@ function FilterCheckboxGroup({ legend, options, field, idPrefix }: FilterCheckbo
 // Main component
 // ============================================================================
 
-export function SkusFilterSheet({
+function SkusFilterSheetInner({
 	className,
 	colorOptions,
 	materialOptions,
@@ -346,5 +346,13 @@ export function SkusFilterSheet({
 				)}
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function SkusFilterSheet(props: ComponentProps<typeof SkusFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<SkusFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

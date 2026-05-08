@@ -10,7 +10,7 @@ type NavCategory = "discovery" | "transaction";
 /**
  * Types d'icônes disponibles (mapping côté client)
  */
-export type IconName =
+type IconName =
 	| "home"
 	| "gem"
 	| "sparkles"
@@ -23,7 +23,7 @@ export type IconName =
 	| "layout-dashboard";
 
 /** Image pour mega menu collections */
-export type NavItemImage = {
+type NavItemImage = {
 	url: string;
 	blurDataUrl: string | null;
 	alt: string | null;
@@ -62,7 +62,7 @@ export type NavItemChild = {
 /**
  * Type de dropdown pour mega menu desktop
  */
-export type DropdownType = "creations" | "collections";
+type DropdownType = "creations" | "collections";
 
 /**
  * Item de navigation avec enfants possibles

@@ -1,11 +1,9 @@
-import Image from "next/image";
-
 import { Fade, HandDrawnUnderline, Reveal } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SectionTitle } from "@/shared/components/section-title";
 import { BRAND } from "@/shared/constants/brand";
-import { IMAGES } from "@/shared/constants/images";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 
@@ -39,22 +37,15 @@ export function InstagramTeaser() {
 						once
 					>
 						<div className="relative mx-auto w-full max-w-md lg:max-w-none">
-							<div className="relative aspect-[4/5] overflow-hidden rounded-2xl shadow-md sm:aspect-[5/6]">
-								<Image
-									src={IMAGES.ATELIER}
-									alt="Aperçu de la galerie Instagram @synclune.bijoux : pièces colorées et détails d'atelier"
-									fill
-									sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 480px"
-									placeholder="blur"
-									blurDataURL={IMAGES.ATELIER_BLUR}
-									className="object-cover"
-									loading="lazy"
-									quality={85}
+							<div className="relative shadow-md">
+								<PlaceholderImage
+									className="aspect-[4/5] rounded-2xl sm:aspect-[5/6]"
+									label="Aperçu de la galerie Instagram @synclune.bijoux : pièces colorées et détails d'atelier"
 								/>
 								{/* Soft bottom gradient for handle badge readability */}
 								<div
 									aria-hidden="true"
-									className="from-foreground/40 via-foreground/10 absolute inset-x-0 bottom-0 h-1/3 bg-linear-to-t to-transparent"
+									className="from-foreground/40 via-foreground/10 absolute inset-x-0 bottom-0 h-1/3 rounded-b-2xl bg-linear-to-t to-transparent"
 								/>
 								<div
 									aria-hidden="true"

@@ -81,7 +81,7 @@ export function ColorSelector({
 			>
 				<div
 					className={cn(
-						"h-6 w-6 shrink-0 rounded-full shadow-sm sm:h-5 sm:w-5",
+						"size-6 shrink-0 rounded-full shadow-sm sm:size-5",
 						isLightColor(color.hex, 0.85) ? "border-border border-2" : "border-border/50 border",
 					)}
 					style={{ backgroundColor: color.hex }}
@@ -97,7 +97,7 @@ export function ColorSelector({
 							damping: 15,
 						}}
 					>
-						<Check className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
+						<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
 					</m.div>
 				)}
 				{!isAvailable && (
@@ -240,7 +240,7 @@ export function MaterialSelector({
 										damping: 15,
 									}}
 								>
-									<Check className="text-primary h-4 w-4 shrink-0" aria-hidden="true" />
+									<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
 								</m.div>
 							)}
 							{!isAvailable && (
@@ -355,7 +355,7 @@ export function SizeSelectorGroup({
 									}}
 									className="absolute top-1.5 right-1.5"
 								>
-									<Check className="text-primary h-3.5 w-3.5" aria-hidden="true" />
+									<Check className="text-primary size-3.5" aria-hidden="true" />
 								</m.div>
 							)}
 							{!isAvailable && (
@@ -407,7 +407,7 @@ export function QuantitySection({
 					disabled={isPending || quantity <= 1}
 					aria-label="Diminuer la quantité"
 				>
-					<Minus className="h-4 w-4" />
+					<Minus className="size-4" />
 				</Button>
 				<input
 					type="text"
@@ -436,7 +436,7 @@ export function QuantitySection({
 					disabled={isPending || quantity >= maxQuantity}
 					aria-label="Augmenter la quantité"
 				>
-					<Plus className="h-4 w-4" />
+					<Plus className="size-4" />
 				</Button>
 			</div>
 			{/* Subtotal when quantity > 1 */}

@@ -94,11 +94,11 @@ export function ManageCollectionsDialog() {
 					<div className="py-6">
 						{isLoadingData ? (
 							<div className="flex items-center justify-center py-8">
-								<LoaderCircle className="text-muted-foreground h-6 w-6 animate-spin" />
+								<LoaderCircle className="text-muted-foreground size-6 animate-spin" />
 							</div>
 						) : collections.length === 0 ? (
 							<div className="text-muted-foreground py-8 text-center">
-								<FolderOpen className="mx-auto mb-2 h-8 w-8" />
+								<FolderOpen className="mx-auto mb-2 size-8" />
 								<p>Aucune collection disponible</p>
 							</div>
 						) : (
@@ -107,7 +107,7 @@ export function ManageCollectionsDialog() {
 									<label
 										key={collection.id}
 										htmlFor={collection.id}
-										className="hover:bg-muted flex cursor-pointer items-center space-x-3 rounded-md p-2"
+										className="hover:bg-muted flex cursor-pointer items-center gap-x-3 rounded-md p-2"
 									>
 										<Checkbox
 											id={collection.id}
@@ -132,7 +132,7 @@ export function ManageCollectionsDialog() {
 							Annuler
 						</Button>
 						<Button type="submit" disabled={isPending || isLoadingData}>
-							{isPending ? "Enregistrement..." : "Enregistrer"}
+							{isPending ? "Enregistrement…" : "Enregistrer"}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>

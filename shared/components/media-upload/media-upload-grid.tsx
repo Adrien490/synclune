@@ -282,7 +282,7 @@ export function MediaUploadGrid({
 								isImageLoaded={isImageLoaded}
 								shouldReduceMotion={shouldReduceMotion}
 								isDraggingAny={isDraggingAny}
-								showLongPressHint={showLongPressHint && index === 1}
+								showLongPressHint={showLongPressHint && index >= 1}
 								onImageLoaded={handleImageLoaded}
 								onOpenLightbox={openLightbox}
 								onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
@@ -319,12 +319,12 @@ export function MediaUploadGrid({
 											/>
 										) : (
 											<div className="bg-muted flex h-full w-full items-center justify-center">
-												<Play className="text-muted-foreground h-8 w-8" />
+												<Play className="text-muted-foreground size-8" />
 											</div>
 										)}
 										<div className="absolute inset-0 flex items-center justify-center">
 											<div className="rounded-full bg-black/70 p-2">
-												<Play className="h-5 w-5 text-white" fill="white" />
+												<Play className="size-5 text-white" fill="white" />
 											</div>
 										</div>
 									</div>

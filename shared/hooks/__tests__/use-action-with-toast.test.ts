@@ -168,7 +168,7 @@ describe("useActionWithToast", () => {
 			const serverAction = vi.fn().mockResolvedValue(successState);
 			const { result } = renderHook(() =>
 				useActionWithToast(serverAction, {
-					toastOptions: { loadingMessage: "Chargement..." },
+					toastOptions: { loadingMessage: "Chargement…" },
 				}),
 			);
 
@@ -176,7 +176,7 @@ describe("useActionWithToast", () => {
 				await result.current.action(makeFormData());
 			});
 
-			expect(mockToastLoading).toHaveBeenCalledWith("Chargement...");
+			expect(mockToastLoading).toHaveBeenCalledWith("Chargement…");
 			expect(mockToastDismiss).toHaveBeenCalledWith("loading-toast-id");
 		});
 

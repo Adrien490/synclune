@@ -165,7 +165,7 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 						mode="live"
 						size="sm"
 						paramName="search"
-						placeholder="Rechercher par titre, type..."
+						placeholder="Rechercher par titre, type…"
 						ariaLabel="Rechercher un produit par titre ou type"
 						className="w-full"
 					/>

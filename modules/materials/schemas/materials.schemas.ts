@@ -12,7 +12,7 @@ import {
 // FILTERS SCHEMA
 // ============================================================================
 
-export const materialFiltersSchema = z.object({
+const materialFiltersSchema = z.object({
 	isActive: z.boolean().optional(),
 });
 

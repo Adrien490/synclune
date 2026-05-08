@@ -61,7 +61,7 @@ export function DeleteReviewAlertDialog() {
 							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Suppression..." : "Supprimer"}
+							{isPending ? "Suppression…" : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

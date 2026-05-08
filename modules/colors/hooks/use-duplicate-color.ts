@@ -36,7 +36,7 @@ export function useDuplicateColor(options?: UseDuplicateColorOptions) {
 		withCallbacks(
 			duplicateColor,
 			createToastCallbacks({
-				loadingMessage: "Duplication en cours...",
+				loadingMessage: "Duplication en cours…",
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					if (typeof result.message === "string" && isDuplicateColorSuccessData(result.data)) {

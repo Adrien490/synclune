@@ -21,7 +21,7 @@ export function useUpdateSkuPrice(options?: UseUpdateSkuPriceOptions) {
 		withCallbacks(
 			updateSkuPrice,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du prix...",
+				loadingMessage: "Mise à jour du prix…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

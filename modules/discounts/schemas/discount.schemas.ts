@@ -24,7 +24,7 @@ export const discountCodeSchema = z
 // FILTERS SCHEMA
 // ============================================================================
 
-export const discountFiltersSchema = z.object({
+const discountFiltersSchema = z.object({
 	type: z.enum(DiscountType).optional(),
 	isActive: z.boolean().optional(),
 	hasUsages: z.boolean().optional(),
@@ -168,6 +168,18 @@ export const deleteDiscountSchema = z.object({
 
 export const toggleDiscountStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
+});
+
+// ============================================================================
+// BULK TOGGLE STATUS SCHEMA
+// ============================================================================
+
+export const bulkToggleDiscountsStatusSchema = z.object({
+	discountIds: z
+		.array(z.cuid2("ID invalide"))
+		.min(1, "Au moins un code promo est requis")
+		.max(100, "Maximum 100 codes promo par opération"),
+	targetIsActive: z.boolean(),
 });
 
 // ============================================================================

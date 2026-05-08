@@ -19,9 +19,9 @@ export function MaintenanceBanner({ closureMessage }: MaintenanceBannerProps) {
 				<span>
 					<span className="md:hidden">Boutique fermée</span>
 					<span className="hidden md:inline">
-						Mode maintenance — La boutique est fermée pour les visiteurs
+						Mode maintenance : la boutique est fermée pour les visiteurs
 					</span>
-					{closureMessage && <span className="ml-1 hidden lg:inline">— {closureMessage}</span>}
+					{closureMessage && <span className="ml-1 hidden lg:inline">: {closureMessage}</span>}
 				</span>
 				<Link
 					href="/admin/configuration/boutique"

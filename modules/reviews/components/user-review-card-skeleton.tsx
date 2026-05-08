@@ -8,10 +8,10 @@ export function UserReviewCardSkeleton() {
 				<Skeleton className="aspect-[3/2] w-full shrink-0 sm:aspect-auto sm:h-auto sm:w-32" />
 
 				{/* Content */}
-				<div className="flex-1 space-y-3 p-4">
+				<div className="flex-1 gap-y-3 p-4">
 					{/* Header: title + badge */}
 					<div className="flex items-start justify-between gap-2">
-						<div className="min-w-0 flex-1 space-y-1.5">
+						<div className="min-w-0 flex-1 gap-y-1.5">
 							<Skeleton className="bg-muted/50 h-5 w-40" />
 							<div className="flex items-center gap-2">
 								<Skeleton className="bg-muted/40 h-4 w-20" />

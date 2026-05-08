@@ -14,7 +14,7 @@ export function useMarkAsReturned(options?: UseMarkAsReturnedOptions) {
 		withCallbacks(
 			markAsReturned,
 			createToastCallbacks({
-				loadingMessage: "Marquage comme retournée...",
+				loadingMessage: "Marquage comme retournée…",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

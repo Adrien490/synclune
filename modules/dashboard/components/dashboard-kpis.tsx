@@ -68,7 +68,7 @@ export function DashboardKpis({
 									evolution={kpis.monthlyRevenue.evolution}
 									previousVolume={kpis.monthlyRevenue.previousVolume}
 									comparisonLabel={comparisonLabel}
-									icon={<Euro className="h-4 w-4" />}
+									icon={<Euro className="size-4" />}
 									size="featured"
 									priority={revenuePriority}
 									href="/admin/ventes/commandes?paymentStatus=PAID"
@@ -95,7 +95,7 @@ export function DashboardKpis({
 									evolution={kpis.monthlyOrders.evolution}
 									previousVolume={kpis.monthlyOrders.previousVolume}
 									comparisonLabel={comparisonLabel}
-									icon={<ShoppingBag className="h-4 w-4" />}
+									icon={<ShoppingBag className="size-4" />}
 									size="featured"
 									priority="critical"
 									href="/admin/ventes/commandes"
@@ -114,7 +114,7 @@ export function DashboardKpis({
 									evolution={kpis.averageOrderValue.evolution}
 									previousVolume={kpis.averageOrderValue.previousVolume}
 									comparisonLabel={comparisonLabel}
-									icon={<Receipt className="h-4 w-4" />}
+									icon={<Receipt className="size-4" />}
 									size="featured"
 									priority="operational"
 									tooltip="Valeur moyenne des commandes ce mois"
@@ -128,7 +128,7 @@ export function DashboardKpis({
 									title="À expédier"
 									value={kpis.pendingShipment.count.toString()}
 									numericValue={kpis.pendingShipment.count}
-									icon={<Package className="h-4 w-4" />}
+									icon={<Package className="size-4" />}
 									size="featured"
 									priority={kpis.pendingShipment.count > 0 ? "alert" : "info"}
 									status={kpis.pendingShipment.count > 0 ? "warning" : "default"}
@@ -153,7 +153,7 @@ export function DashboardKpis({
 						evolution={kpis.conversionRate.evolution}
 						previousVolume={kpis.conversionRate.previousVolume}
 						comparisonLabel={comparisonLabel}
-						icon={<Target className="h-4 w-4" />}
+						icon={<Target className="size-4" />}
 						size="compact"
 						priority="operational"
 						flatOnMobile
@@ -173,7 +173,7 @@ export function DashboardKpis({
 							reviewHealth.totalReviews > 0 ? `${reviewHealth.averageRating.toFixed(1)} / 5` : "—"
 						}
 						numericValue={reviewHealth.averageRating}
-						icon={<Star className="h-4 w-4" />}
+						icon={<Star className="size-4" />}
 						size="compact"
 						priority="info"
 						flatOnMobile
@@ -196,7 +196,7 @@ export function DashboardKpis({
 						previousVolume={kpis.avgFulfillmentTime.previousVolume}
 						invertEvolutionColors
 						comparisonLabel={comparisonLabel}
-						icon={<Clock className="h-4 w-4" />}
+						icon={<Clock className="size-4" />}
 						size="compact"
 						priority="operational"
 						flatOnMobile

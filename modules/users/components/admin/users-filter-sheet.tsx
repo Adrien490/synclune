@@ -2,7 +2,7 @@
 
 import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, Suspense, type ComponentProps } from "react";
 
 import { Role } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
@@ -25,7 +25,7 @@ interface UsersFilterSheetProps {
 	hideTrigger?: boolean;
 }
 
-export function UsersFilterSheet({
+function UsersFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
@@ -282,5 +282,13 @@ export function UsersFilterSheet({
 				</div>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function UsersFilterSheet(props: ComponentProps<typeof UsersFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<UsersFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

@@ -36,7 +36,7 @@ export function RelatedProductsSkeleton({ limit = 8 }: { limit?: number }) {
 				{/* Dots skeleton - Mobile uniquement */}
 				<div className="mt-4 flex justify-center gap-2 md:hidden">
 					{Array.from({ length: Math.min(5, limit) }).map((_, i) => (
-						<div key={i} className="bg-muted h-2 w-2 rounded-full motion-safe:animate-pulse" />
+						<div key={i} className="bg-muted size-2 rounded-full motion-safe:animate-pulse" />
 					))}
 				</div>
 			</div>

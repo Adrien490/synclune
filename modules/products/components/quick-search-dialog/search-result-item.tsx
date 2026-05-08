@@ -162,7 +162,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
  */
 export function SearchResultsSkeleton() {
 	return (
-		<SkeletonGroup label="Chargement des resultats..." className="space-y-2 px-4">
+		<SkeletonGroup label="Chargement des resultats…" className="space-y-2 px-4">
 			{Array.from({ length: SKELETON_ROWS }).map((_, i) => (
 				<div key={i} className="flex items-center gap-3 py-2">
 					<Skeleton shape="rounded" className="size-12 shrink-0" />

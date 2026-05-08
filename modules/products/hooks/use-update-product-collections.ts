@@ -20,7 +20,7 @@ export function useUpdateProductCollections(options?: UseUpdateProductCollection
 		withCallbacks(
 			updateProductCollections,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour des collections...",
+				loadingMessage: "Mise à jour des collections…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

@@ -15,7 +15,7 @@ export function UsersDataTableSkeleton() {
 						render: () => (
 							<div className="flex items-center gap-2">
 								<Skeleton className="h-4 w-32" />
-								<Skeleton className="h-4 w-4 shrink-0 rounded-full" />
+								<Skeleton className="size-4 shrink-0 rounded-full" />
 							</div>
 						),
 					},

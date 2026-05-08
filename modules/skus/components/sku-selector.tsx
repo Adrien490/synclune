@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import {
 	Card,
 	CardContent,
@@ -33,7 +34,7 @@ interface VariantSelectorProps {
  *
  * Note : Chaque sélecteur enfant est autonome et gère sa propre navigation URL
  */
-export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
+function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 	const searchParams = useSearchParams();
 
 	// Lire l'état depuis l'URL pour la validation
@@ -143,5 +144,13 @@ export function VariantSelector({ product, defaultSku }: VariantSelectorProps) {
 				)}
 			</CardContent>
 		</Card>
+	);
+}
+
+export function VariantSelector(props: ComponentProps<typeof VariantSelectorInner>) {
+	return (
+		<Suspense fallback={null}>
+			<VariantSelectorInner {...props} />
+		</Suspense>
 	);
 }

@@ -65,7 +65,7 @@ export default async function PrivacyPolicyPage() {
 						<section className="space-y-4">
 							<h2 className="text-xl font-semibold sm:text-2xl">2. Responsable du traitement</h2>
 							<p>
-								<strong>Synclune</strong> — TADDEI LEANE
+								<strong>Synclune</strong> : TADDEI LEANE
 								<br />
 								77 Boulevard du Tertre, 44100 Nantes, France
 								<br />

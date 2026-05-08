@@ -49,7 +49,7 @@ export function CreateMaterialForm({
 			createMaterial,
 			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
-				loadingMessage: "Création du matériau...",
+				loadingMessage: "Création du matériau…",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -157,7 +157,7 @@ export function CreateMaterialForm({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement..." : "Créer"}
+								{isPending ? "Enregistrement…" : "Créer"}
 							</Button>
 						)}
 					</form.Subscribe>

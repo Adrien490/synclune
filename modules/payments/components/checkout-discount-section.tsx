@@ -36,7 +36,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 						return (
 							<div className="border-success/30 bg-success/10 flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5">
 								<div className="flex min-w-0 items-center gap-2">
-									<Check className="text-success h-4 w-4 shrink-0" aria-hidden="true" />
+									<Check className="text-success size-4 shrink-0" aria-hidden="true" />
 									<span className="text-success truncate text-sm font-medium">
 										{appliedDiscount.code}
 									</span>
@@ -56,7 +56,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 									className="text-muted-foreground hover:text-foreground focus-visible:ring-ring flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-sm p-2 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 									aria-label="Supprimer le code promo"
 								>
-									<X className="h-4 w-4" />
+									<X className="size-4" />
 								</button>
 							</div>
 						);
@@ -71,7 +71,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 								>
 									<CollapsibleTrigger className="text-muted-foreground hover:text-foreground -mx-3 inline-flex min-h-11 items-center gap-1 px-3 text-sm transition-colors">
 										<ChevronRight
-											className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90")}
+											className={cn("size-3.5 transition-transform", isOpen && "rotate-90")}
 										/>
 										J'ai un code promo
 									</CollapsibleTrigger>
@@ -131,7 +131,7 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 															{field.state.meta.isValidating ? (
 																<>
 																	<LoaderCircle
-																		className="h-4 w-4 motion-safe:animate-spin"
+																		className="size-4 motion-safe:animate-spin"
 																		aria-hidden="true"
 																	/>
 																	<span>Validation…</span>

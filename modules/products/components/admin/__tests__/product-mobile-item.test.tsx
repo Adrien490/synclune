@@ -86,15 +86,40 @@ describe("ProductMobileItem", () => {
 	it("rend le titre et le badge de statut", () => {
 		render(<ProductMobileItem product={baseProduct} />);
 		expect(screen.getByText("Anneau doré")).toBeInTheDocument();
-		expect(screen.getByText("Public")).toBeInTheDocument();
+		expect(screen.getByText(/Public/)).toBeInTheDocument();
 	});
 
 	it("affiche la fourchette de prix min-max et le stock total", () => {
 		render(<ProductMobileItem product={baseProduct} />);
 		expect(screen.getByText(/45,00\s*€\s*–\s*55,00\s*€/)).toBeInTheDocument();
-		expect(screen.getByText("15 en stock")).toBeInTheDocument();
+		expect(screen.getByLabelText("15 en stock")).toBeInTheDocument();
 		expect(screen.getByText("2 variantes")).toBeInTheDocument();
 		expect(screen.getByText("Bagues")).toBeInTheDocument();
+	});
+
+	it("affiche le badge stock en variant destructive si rupture", () => {
+		const outOfStock = {
+			...baseProduct,
+			skus: [{ priceInclTax: 4500, inventory: 0, images: [] }],
+		};
+		render(<ProductMobileItem product={outOfStock} />);
+		expect(screen.getByLabelText("Stock épuisé")).toBeInTheDocument();
+	});
+
+	it("affiche le badge stock en variant warning si stock faible (≤ 3)", () => {
+		const lowStock = {
+			...baseProduct,
+			skus: [{ priceInclTax: 4500, inventory: 2, images: [] }],
+		};
+		render(<ProductMobileItem product={lowStock} />);
+		expect(screen.getByLabelText("Stock faible : 2 disponible(s)")).toBeInTheDocument();
+	});
+
+	it("propage viewTransitionName card + status badge", () => {
+		render(<ProductMobileItem product={baseProduct} />);
+		// LongPressMenuLink mock ne propage pas la prop, donc on vérifie le badge
+		const badge = screen.getByText(/Public/);
+		expect(badge).toHaveStyle({ viewTransitionName: "product-status-p-1" });
 	});
 
 	it("rend l'image principale quand disponible", () => {
@@ -113,11 +138,11 @@ describe("ProductMobileItem", () => {
 		expect(screen.queryByTestId("product-image")).not.toBeInTheDocument();
 	});
 
-	it("navigue vers la page d'édition au tap (Link href)", () => {
+	it("navigue vers la fiche détails au tap (Link href)", () => {
 		render(<ProductMobileItem product={baseProduct} />);
 		const link = screen.getByLabelText("Produit Anneau doré");
 		expect(link.tagName).toBe("A");
-		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/anneau-doré/modifier");
+		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/anneau-doré");
 	});
 
 	it("affiche un seul prix si min == max", () => {
@@ -136,9 +161,9 @@ describe("ProductMobileItem", () => {
 		const { rerender } = render(
 			<ProductMobileItem product={{ ...baseProduct, status: ProductStatus.DRAFT }} />,
 		);
-		expect(screen.getByText("Brouillon")).toBeInTheDocument();
+		expect(screen.getByText(/Brouillon/)).toBeInTheDocument();
 
 		rerender(<ProductMobileItem product={{ ...baseProduct, status: ProductStatus.ARCHIVED }} />);
-		expect(screen.getByText("Archivé")).toBeInTheDocument();
+		expect(screen.getByText(/Archivé/)).toBeInTheDocument();
 	});
 });

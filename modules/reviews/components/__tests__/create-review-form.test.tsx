@@ -160,7 +160,7 @@ describe("CreateReviewForm", () => {
 		expect(screen.getByRole("button", { name: /Publier mon avis/ })).toBeInTheDocument();
 	});
 
-	it("renders 'Envoi en cours...' when pending", () => {
+	it("renders 'Envoi en cours…' when pending", () => {
 		setupMockForm({ isPending: true });
 		render(<CreateReviewForm productId="prod-1" orderItemId="item-1" />);
 		expect(screen.getByRole("button", { name: /Envoi en cours/ })).toBeInTheDocument();

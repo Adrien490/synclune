@@ -64,7 +64,7 @@ export default async function RetractationPage() {
 						<section className="space-y-8">
 							{/* Information préliminaire */}
 							<Alert>
-								<Info className="h-4 w-4" />
+								<Info className="size-4" />
 								<AlertTitle>Votre droit de rétractation</AlertTitle>
 								<AlertDescription className="mt-2 space-y-2">
 									<p>
@@ -102,7 +102,7 @@ export default async function RetractationPage() {
 										<p>44100 Nantes</p>
 										<p>France</p>
 										<div className="mt-2 flex items-center gap-2">
-											<Mail className="h-4 w-4" />
+											<Mail className="size-4" />
 											<a href={`mailto:${contactEmail}`} className="underline">
 												{contactEmail}
 											</a>
@@ -200,7 +200,7 @@ export default async function RetractationPage() {
 								</h2>
 
 								<Alert>
-									<Info className="h-4 w-4" />
+									<Info className="size-4" />
 									<AlertDescription>
 										<ol className="list-inside list-decimal space-y-2 text-sm">
 											<li>

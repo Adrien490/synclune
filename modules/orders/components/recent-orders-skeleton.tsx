@@ -46,7 +46,7 @@ export function RecentOrdersSkeleton() {
 									<Skeleton className="ml-auto h-5 w-16" />
 								</TableCell>
 								<TableCell>
-									<Skeleton className="h-4 w-4" />
+									<Skeleton className="size-4" />
 								</TableCell>
 							</TableRow>
 						))}

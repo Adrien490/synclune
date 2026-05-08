@@ -421,7 +421,7 @@ describe("EditProductForm", () => {
 			const { product } = setup({}, { isPending: true });
 			render(<EditProductForm product={product as never} {...defaultProps} />);
 
-			expect(screen.getByRole("status")).toHaveTextContent("Envoi du formulaire en cours...");
+			expect(screen.getByRole("status")).toHaveTextContent("Envoi du formulaire en cours…");
 		});
 
 		it("disables submit when media is uploading", () => {

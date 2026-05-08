@@ -31,7 +31,7 @@ export function RemoveUnavailableItemsButton({
 			variant="destructive"
 			className="h-9 w-full text-xs"
 		>
-			{isPending ? "Suppression en cours..." : `Retirer les articles indisponibles (${itemsCount})`}
+			{isPending ? "Suppression en cours…" : `Retirer les articles indisponibles (${itemsCount})`}
 		</Button>
 	);
 }

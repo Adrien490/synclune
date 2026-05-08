@@ -15,7 +15,7 @@ export function CreateAddressButton({ children, ...props }: CreateAddressButtonP
 		<Button onClick={() => dialog.open()} {...props}>
 			{children ?? (
 				<>
-					<Plus className="mr-2 h-4 w-4" />
+					<Plus className="mr-2 size-4" />
 					Ajouter une adresse
 				</>
 			)}

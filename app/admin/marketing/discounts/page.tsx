@@ -102,7 +102,7 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par code..."
+								placeholder="Rechercher par code…"
 								ariaLabel="Rechercher un code promo"
 								className="w-full"
 							/>

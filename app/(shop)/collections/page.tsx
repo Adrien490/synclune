@@ -89,7 +89,8 @@ export default async function CollectionsPage({ searchParams }: CollectionsPageP
 
 	return (
 		<div className="relative min-h-screen">
-			{/* JSON-LD Structured Data */}
+			{/* JSON-LD Structured Data — SAFE: serialized via safeJsonLd */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{

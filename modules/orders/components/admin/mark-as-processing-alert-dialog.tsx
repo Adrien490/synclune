@@ -64,7 +64,7 @@ export function MarkAsProcessingAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Passage..." : "Passer en préparation"}
+							{isPending ? "Passage…" : "Passer en préparation"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

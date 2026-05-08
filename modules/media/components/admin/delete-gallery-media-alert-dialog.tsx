@@ -88,7 +88,7 @@ export function DeleteGalleryMediaAlertDialog() {
 						className="w-full sm:w-auto"
 					>
 						{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
-						{isPending ? "Suppression..." : "Supprimer"}
+						{isPending ? "Suppression…" : "Supprimer"}
 					</AlertDialogAction>
 				</AlertDialogFooter>
 			</AlertDialogContent>

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { CloseStoreForm } from "@/modules/store-settings/components/admin/close-store-form";
 import { getStoreSettings } from "@/modules/store-settings/data/get-store-settings";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -27,6 +28,11 @@ export default async function CloseStorePage() {
 
 	return (
 		<div className="space-y-6">
+			<AdminDetailBackLink
+				href="/admin/configuration/boutique"
+				label="Retour aux paramètres boutique"
+			/>
+
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>
 					<BreadcrumbItem>

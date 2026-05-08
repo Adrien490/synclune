@@ -16,7 +16,7 @@ export function ExportSingleOrderButton({ orderId }: ExportSingleOrderButtonProp
 		withCallbacks(
 			exportSingleOrder,
 			createToastCallbacks({
-				loadingMessage: "Export en cours...",
+				loadingMessage: "Export en cours…",
 				onSuccess: (state) => {
 					if (!state.csv || !state.filename) return;
 					const blob = new Blob([state.csv], { type: "text/csv;charset=utf-8" });
@@ -37,11 +37,11 @@ export function ExportSingleOrderButton({ orderId }: ExportSingleOrderButtonProp
 			<input type="hidden" name="id" value={orderId} />
 			<Button type="submit" variant="outline" size="sm" disabled={isPending} aria-busy={isPending}>
 				{isPending ? (
-					<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+					<LoaderCircle className="mr-2 size-4 animate-spin" />
 				) : (
-					<Download className="mr-2 h-4 w-4" />
+					<Download className="mr-2 size-4" />
 				)}
-				{isPending ? "Export..." : "Exporter CSV"}
+				{isPending ? "Export…" : "Exporter CSV"}
 			</Button>
 		</form>
 	);

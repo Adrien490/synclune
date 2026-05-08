@@ -67,7 +67,7 @@ export function OrderTracking({ order }: OrderTrackingProps) {
 							rel="noopener noreferrer"
 							aria-label="Suivre mon colis (s'ouvre dans un nouvel onglet)"
 						>
-							<ExternalLink className="mr-2 h-4 w-4" />
+							<ExternalLink className="mr-2 size-4" />
 							Suivre mon colis
 						</a>
 					</Button>

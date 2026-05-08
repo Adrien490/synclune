@@ -104,7 +104,7 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 					</div>
 				</SheetHeader>
 
-				<div className="flex-1 space-y-6 overflow-y-auto px-6 py-6">
+				<div className="flex-1 gap-y-6 overflow-y-auto p-6">
 					<section className="space-y-3" aria-labelledby="period-section-period">
 						<h3
 							id="period-section-period"

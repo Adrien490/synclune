@@ -18,8 +18,8 @@ function SectionHeading({ width }: { width: string }) {
 function SummaryItemSkeleton() {
 	return (
 		<div className="flex gap-3">
-			<Skeleton className="h-16 w-16 shrink-0 rounded-xl" />
-			<div className="min-w-0 flex-1 space-y-1.5">
+			<Skeleton className="size-16 shrink-0 rounded-xl" />
+			<div className="min-w-0 flex-1 gap-y-1.5">
 				<Skeleton className="h-4 w-32" />
 				<Skeleton className="h-3 w-20" />
 				<Skeleton className="h-3 w-16" />
@@ -78,7 +78,7 @@ function SummaryContent() {
 					<Skeleton className="h-5 w-8" />
 				</div>
 				<div className="flex items-center justify-center gap-1.5">
-					<Skeleton className="h-3.5 w-3.5 rounded-full" />
+					<Skeleton className="size-3.5 rounded-full" />
 					<Skeleton className="h-3 w-32" />
 				</div>
 				<div className="flex items-center justify-center gap-3">
@@ -198,7 +198,7 @@ export default function CheckoutLoading() {
 										<Skeleton className="h-5 w-24" />
 										<div className="flex items-center gap-2">
 											<Skeleton className="h-6 w-16" />
-											<Skeleton className="h-4 w-4" />
+											<Skeleton className="size-4" />
 										</div>
 									</div>
 								</CardHeader>

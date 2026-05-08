@@ -54,8 +54,8 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 						className="border-primary/10 rounded-2xl shadow-md"
 					>
 						<CardHeader className="space-y-4 pb-6 text-center">
-							<div className="bg-muted/80 mx-auto flex h-18 w-18 items-center justify-center rounded-full">
-								<ErrorIcon className="text-muted-foreground h-10 w-10" />
+							<div className="bg-muted/80 mx-auto flex size-18 items-center justify-center rounded-full">
+								<ErrorIcon className="text-muted-foreground size-10" />
 							</div>
 							<CardTitle className="font-display text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
 							<CardDescription className="text-base">
@@ -66,14 +66,14 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 						<CardContent className="space-y-6">
 							{/* 🔴 CORRECTION : Message d'erreur spécifique */}
 							<Alert variant={reason && reason !== "canceled" ? "destructive" : "default"}>
-								<Info className="h-4 w-4" />
+								<Info className="size-4" />
 								<AlertDescription>{errorInfo.description}</AlertDescription>
 							</Alert>
 
 							{/* 🔴 CORRECTION : Afficher l'ID de commande si disponible */}
 							{orderId && (
 								<Alert>
-									<Info className="h-4 w-4" />
+									<Info className="size-4" />
 									<AlertDescription>
 										Référence de commande : <span className="tabular-nums">{orderId}</span>
 									</AlertDescription>
@@ -147,7 +147,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 								<Button asChild size="lg" className="flex-1">
 									<Link href="/paiement">
-										<ShoppingBag className="mr-2 h-4 w-4" />
+										<ShoppingBag className="mr-2 size-4" />
 										Reprendre ma commande
 									</Link>
 								</Button>

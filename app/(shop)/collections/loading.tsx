@@ -13,7 +13,7 @@ export default function CollectionsLoading() {
 			aria-busy="true"
 			aria-label="Chargement des collections"
 		>
-			<span className="sr-only">Chargement des collections...</span>
+			<span className="sr-only">Chargement des collections…</span>
 
 			{/* Particle system placeholder */}
 			<div

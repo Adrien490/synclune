@@ -19,7 +19,7 @@ export function useResendOrderEmail() {
 					formData.get("orderId") as string,
 					formData.get("emailType") as ResendEmailType,
 				),
-			createToastCallbacks({ loadingMessage: "Renvoi de l'email..." }),
+			createToastCallbacks({ loadingMessage: "Renvoi de l'email…" }),
 		),
 		undefined,
 	);

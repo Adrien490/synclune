@@ -354,11 +354,11 @@ describe("MarkAsShippedDialog", () => {
 		expect(screen.getByText("Valider l'expédition")).toBeInTheDocument();
 	});
 
-	it('shows "Expédition..." when isPending is true', () => {
+	it('shows "Expédition…" when isPending is true', () => {
 		mockFormHook.isPending = true;
 		openDialog();
 		render(<MarkAsShippedDialog />);
-		expect(screen.getByText("Expédition...")).toBeInTheDocument();
+		expect(screen.getByText("Expédition…")).toBeInTheDocument();
 		expect(screen.queryByText("Valider l'expédition")).toBeNull();
 	});
 
@@ -391,7 +391,7 @@ describe("MarkAsShippedDialog", () => {
 		mockFormStore.trackingNumber = "8N00234567890";
 		openDialog();
 		render(<MarkAsShippedDialog />);
-		const submitBtn = screen.getByText("Expédition...").closest("button");
+		const submitBtn = screen.getByText("Expédition…").closest("button");
 		expect(submitBtn).toBeDisabled();
 	});
 

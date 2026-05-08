@@ -9,6 +9,21 @@ vi.mock("lucide-react", () => ({
 	ExternalLink: (props: Record<string, unknown>) => (
 		<svg data-testid="external-link-icon" {...props} />
 	),
+	Keyboard: (props: Record<string, unknown>) => <svg data-testid="keyboard-icon" {...props} />,
+}));
+
+vi.mock("@/app/admin/_components/keyboard-shortcuts-dialog", () => ({
+	KEYBOARD_SHORTCUTS_DIALOG_ID: "admin-keyboard-shortcuts",
+}));
+
+vi.mock("@/shared/providers/dialog-store-provider", () => ({
+	useDialog: () => ({
+		isOpen: false,
+		open: vi.fn(),
+		close: vi.fn(),
+		toggle: vi.fn(),
+		clearData: vi.fn(),
+	}),
 }));
 
 vi.mock("next/link", () => ({

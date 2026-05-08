@@ -26,9 +26,9 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<CardTitle className="flex items-center gap-2">
-					<Truck className="h-5 w-5" aria-hidden="true" />
+					<Truck className="size-5" aria-hidden="true" />
 					Expédition
 				</CardTitle>
 				{canUpdateTracking && (
@@ -53,12 +53,12 @@ export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCar
 							<CopyButton
 								text={order.trackingNumber}
 								label="Numéro de suivi"
-								className="h-8 w-8 p-0"
+								className="size-8 p-0"
 							/>
 							{order.trackingUrl && (
 								<Button variant="outline" size="sm" asChild>
 									<a href={order.trackingUrl} target="_blank" rel="noopener noreferrer">
-										<ExternalLink className="h-4 w-4" aria-hidden="true" />
+										<ExternalLink className="size-4" aria-hidden="true" />
 										Suivre
 										<span className="sr-only"> (s'ouvre dans un nouvel onglet)</span>
 									</a>

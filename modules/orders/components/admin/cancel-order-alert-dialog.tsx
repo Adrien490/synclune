@@ -100,7 +100,7 @@ export function CancelOrderAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Annulation..." : "Annuler la commande"}
+							{isPending ? "Annulation…" : "Annuler la commande"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

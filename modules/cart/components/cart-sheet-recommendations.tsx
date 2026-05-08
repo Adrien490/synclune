@@ -29,7 +29,7 @@ export async function CartSheetRecommendations() {
 			>
 				Vous pourriez aimer
 			</h3>
-			<ScrollFade axis="horizontal" className="px-4" data-vaul-no-drag>
+			<ScrollFade axis="horizontal" className="px-4">
 				<div className="flex gap-3 pb-1">
 					{recommendations.map((product) => {
 						const primarySku = product.skus[0];

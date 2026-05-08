@@ -1,14 +1,14 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, Suspense } from "react";
 import { Button } from "@/shared/components/ui/button";
 
 /**
  * Button to clear the rating filter from search params
  * Used in the filtered empty state of ReviewsList
  */
-export function ReviewFilterResetButton() {
+function ReviewFilterResetButtonInner() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -31,5 +31,13 @@ export function ReviewFilterResetButton() {
 		<Button variant="outline" size="sm" onClick={handleReset} disabled={isPending}>
 			Voir tous les avis
 		</Button>
+	);
+}
+
+export function ReviewFilterResetButton() {
+	return (
+		<Suspense fallback={null}>
+			<ReviewFilterResetButtonInner />
+		</Suspense>
 	);
 }

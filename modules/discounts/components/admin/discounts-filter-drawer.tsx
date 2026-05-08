@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
 import {
@@ -49,7 +49,7 @@ function getCurrentFilter(searchParams: URLSearchParams): string {
 	return "all";
 }
 
-export function DiscountsFilterDrawer({ open, onOpenChange }: DiscountsFilterDrawerProps) {
+function DiscountsFilterDrawerInner({ open, onOpenChange }: DiscountsFilterDrawerProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -130,5 +130,13 @@ export function DiscountsFilterDrawer({ open, onOpenChange }: DiscountsFilterDra
 				</DrawerBody>
 			</DrawerContent>
 		</Drawer>
+	);
+}
+
+export function DiscountsFilterDrawer(props: ComponentProps<typeof DiscountsFilterDrawerInner>) {
+	return (
+		<Suspense fallback={null}>
+			<DiscountsFilterDrawerInner {...props} />
+		</Suspense>
 	);
 }

@@ -11,7 +11,7 @@ export function OrdersListSkeleton() {
 					{/* Header skeleton */}
 					<div className="border-border-soft mb-4 flex flex-col gap-4 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
 						<div className="flex items-center gap-3">
-							<Skeleton className="h-12 w-12 rounded-lg" />
+							<Skeleton className="size-12 rounded-lg" />
 							<div className="space-y-2">
 								<Skeleton className="h-5 w-40" />
 								<Skeleton className="h-4 w-32" />

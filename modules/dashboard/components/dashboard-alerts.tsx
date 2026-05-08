@@ -59,7 +59,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 					}`}
 				>
 					<Receipt
-						className={vatExceeded ? "text-destructive h-4 w-4" : "text-warning h-4 w-4"}
+						className={vatExceeded ? "text-destructive size-4" : "text-warning size-4"}
 						aria-hidden="true"
 					/>
 					<span className="font-medium">
@@ -80,7 +80,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 					rel="noopener noreferrer"
 					className="focus-visible:ring-ring border-info/30 bg-info/5 hover:bg-info/10 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
 				>
-					<CalendarClock className="text-info h-4 w-4" aria-hidden="true" />
+					<CalendarClock className="text-info size-4" aria-hidden="true" />
 					<span className="font-medium">
 						Déclaration URSSAF {urssafAlert.quarterLabel} dans {urssafAlert.daysUntil} jour
 						{urssafAlert.daysUntil > 1 ? "s" : ""}
@@ -93,7 +93,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 					href="/admin/ventes/litiges"
 					className="focus-visible:ring-ring border-destructive/30 bg-destructive/5 hover:bg-destructive/10 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
 				>
-					<AlertTriangle className="text-destructive h-4 w-4" aria-hidden="true" />
+					<AlertTriangle className="text-destructive size-4" aria-hidden="true" />
 					<span className="font-medium">
 						{activeDisputes} litige{activeDisputes > 1 ? "s" : ""} Stripe
 					</span>
@@ -108,7 +108,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 					href="/admin/ventes/remboursements?filter_status=PENDING"
 					className="focus-visible:ring-ring border-warning/30 bg-warning/5 hover:bg-warning/10 inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
 				>
-					<RotateCcw className="text-warning h-4 w-4" aria-hidden="true" />
+					<RotateCcw className="text-warning size-4" aria-hidden="true" />
 					<span className="font-medium">
 						{pendingRefunds} remboursement{pendingRefunds > 1 ? "s" : ""} en attente
 					</span>
@@ -120,7 +120,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 					href="/admin/catalogue/produits?filter_stock=low"
 					className="focus-visible:ring-ring text-muted-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
 				>
-					<PackageX className="h-4 w-4" aria-hidden="true" />
+					<PackageX className="size-4" aria-hidden="true" />
 					<span className="font-medium">
 						{lowStockSkus} SKU{lowStockSkus > 1 ? "s" : ""} stock bas
 					</span>

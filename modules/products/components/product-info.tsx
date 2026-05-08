@@ -26,7 +26,7 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 		<div className="space-y-4">
 			{/* Titre avec boutons share + wishlist */}
 			<div className="flex items-start justify-between gap-4">
-				<div className="flex-1 space-y-2">
+				<div className="flex-1 gap-y-2">
 					<p className="text-foreground text-3xl/10 font-medium tracking-normal" itemProp="name">
 						{product.title}
 					</p>

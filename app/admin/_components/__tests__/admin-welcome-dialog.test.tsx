@@ -136,6 +136,21 @@ vi.mock("@/shared/components/ui/button", () => {
 	};
 });
 
+vi.mock("next/image", () => {
+	const { createElement } = require("react");
+	return {
+		default: ({
+			src,
+			alt,
+			fill: _f,
+			sizes: _sz,
+			priority: _p,
+			...props
+		}: Record<string, unknown> & { src: string; alt: string }) =>
+			createElement("img", { src, alt, ...props }),
+	};
+});
+
 import { AdminWelcomeDialog } from "../admin-welcome-dialog";
 
 // ============================================================================
@@ -157,30 +172,28 @@ describe("AdminWelcomeDialog", () => {
 		cleanup();
 	});
 
-	it("renders the dialog with the user's first name in the heading", () => {
-		render(<AdminWelcomeDialog userName="Lélé Marie Dupont" />);
+	it("renders the personalized greeting in the heading", () => {
+		render(<AdminWelcomeDialog />);
 
 		const heading = screen.getByRole("heading", { level: 2 });
-		expect(heading.textContent).toContain("Lélé");
-		// Le reste du nom n'est pas affiché — uniquement le first name
-		expect(heading.textContent).not.toContain("Dupont");
+		expect(heading.textContent).toContain("Coucou Lélé");
 	});
 
-	it("falls back to 'Bienvenue' when userName is null", () => {
-		render(<AdminWelcomeDialog userName={null} />);
+	it("renders the photo with descriptive alt text", () => {
+		render(<AdminWelcomeDialog />);
 
-		const heading = screen.getByRole("heading", { level: 2 });
-		expect(heading.textContent).toContain("Bienvenue");
+		const photo = screen.getByRole("img", { name: /adri et lélé/i });
+		expect(photo.getAttribute("src")).toBe("/adri-lele.jpg");
 	});
 
 	it("triggers a 'success' haptic when the dialog mounts", () => {
-		render(<AdminWelcomeDialog userName="Lélé" />);
+		render(<AdminWelcomeDialog />);
 
 		expect(mockHaptic).toHaveBeenCalledWith("success");
 	});
 
-	it("calls markWelcomeShown and shows a success toast when the user clicks the dismiss button", async () => {
-		render(<AdminWelcomeDialog userName="Lélé" />);
+	it("calls markWelcomeShown when the user clicks the dismiss button", async () => {
+		render(<AdminWelcomeDialog />);
 
 		const button = screen.getByRole("button", { name: /merci adri/i });
 		await act(async () => {
@@ -189,7 +202,7 @@ describe("AdminWelcomeDialog", () => {
 
 		expect(mockMarkWelcomeShown).toHaveBeenCalledOnce();
 		await waitFor(() => {
-			expect(mockToast.success).toHaveBeenCalledOnce();
+			expect(mockHaptic).toHaveBeenCalledWith("success");
 		});
 		expect(mockToast.error).not.toHaveBeenCalled();
 	});
@@ -200,7 +213,7 @@ describe("AdminWelcomeDialog", () => {
 			message: "Échec serveur",
 		});
 
-		render(<AdminWelcomeDialog userName="Lélé" />);
+		render(<AdminWelcomeDialog />);
 
 		const button = screen.getByRole("button", { name: /merci adri/i });
 		await act(async () => {
@@ -224,7 +237,7 @@ describe("AdminWelcomeDialog", () => {
 				}),
 		);
 
-		render(<AdminWelcomeDialog userName="Lélé" />);
+		render(<AdminWelcomeDialog />);
 
 		const button = screen.getByRole("button", { name: /merci adri/i });
 		expect(button.getAttribute("aria-busy")).toBe("false");
@@ -246,13 +259,13 @@ describe("AdminWelcomeDialog", () => {
 
 	it("renders a visual handle on mobile viewports only", () => {
 		mockIsMobile.value = true;
-		const { container } = render(<AdminWelcomeDialog userName="Lélé" />);
+		const { container } = render(<AdminWelcomeDialog />);
 		expect(container.querySelector(".h-1\\.5.w-10")).toBeTruthy();
 	});
 
 	it("does not render the visual handle on desktop viewports", () => {
 		mockIsMobile.value = false;
-		const { container } = render(<AdminWelcomeDialog userName="Lélé" />);
+		const { container } = render(<AdminWelcomeDialog />);
 		expect(container.querySelector(".h-1\\.5.w-10")).toBeNull();
 	});
 
@@ -264,7 +277,7 @@ describe("AdminWelcomeDialog", () => {
 		trigger.focus();
 		expect(document.activeElement).toBe(trigger);
 
-		render(<AdminWelcomeDialog userName="Lélé" />);
+		render(<AdminWelcomeDialog />);
 
 		const dismiss = screen.getByRole("button", { name: /merci adri/i });
 		await act(async () => {
@@ -273,7 +286,7 @@ describe("AdminWelcomeDialog", () => {
 
 		// Wait for action + rAF to settle
 		await waitFor(() => {
-			expect(mockToast.success).toHaveBeenCalledOnce();
+			expect(mockMarkWelcomeShown).toHaveBeenCalledOnce();
 		});
 		await act(async () => {
 			await new Promise((r) => requestAnimationFrame(() => r(undefined)));

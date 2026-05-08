@@ -42,7 +42,7 @@ export function SectionHeader({ label, count, badgeContent, onReset }: SectionHe
 					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 ml-auto flex min-h-11 min-w-11 cursor-pointer items-center justify-center rounded-md transition-colors"
 					aria-label={`Effacer le filtre ${label}`}
 				>
-					<X className="h-3 w-3" />
+					<X className="size-3" />
 				</div>
 			)}
 		</div>
@@ -62,12 +62,12 @@ interface SectionSearchProps {
 export function SectionSearch({
 	value,
 	onChange,
-	placeholder = "Rechercher...",
+	placeholder = "Rechercher…",
 }: SectionSearchProps) {
 	return (
-		<div className="relative mb-2" data-vaul-no-drag>
+		<div className="relative mb-2">
 			<Search
-				className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2"
+				className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2"
 				aria-hidden="true"
 			/>
 			<Input

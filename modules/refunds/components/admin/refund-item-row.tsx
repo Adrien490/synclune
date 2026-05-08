@@ -47,7 +47,7 @@ export function RefundItemRow({
 			/>
 
 			{imageUrl && (
-				<div className="bg-muted relative h-16 w-16 shrink-0 overflow-hidden rounded-md">
+				<div className="bg-muted relative size-16 shrink-0 overflow-hidden rounded-md">
 					<Image
 						src={imageUrl}
 						alt={orderItem.productTitle}

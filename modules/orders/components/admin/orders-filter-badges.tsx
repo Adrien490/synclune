@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import {
 	ORDER_STATUS_LABELS,
@@ -90,7 +91,7 @@ function formatOrderFilter(
 	};
 }
 
-export function OrdersFilterBadges() {
+function OrdersFilterBadgesInner() {
 	const searchParams = useSearchParams();
 
 	return (
@@ -101,5 +102,13 @@ export function OrdersFilterBadges() {
 				})
 			}
 		/>
+	);
+}
+
+export function OrdersFilterBadges() {
+	return (
+		<Suspense fallback={null}>
+			<OrdersFilterBadgesInner />
+		</Suspense>
 	);
 }

@@ -17,7 +17,6 @@ import { LoaderCircle } from "lucide-react";
 import { startTransition } from "react";
 
 import { CLEAR_CART_DIALOG_ID } from "./clear-cart-dialog-id";
-export { CLEAR_CART_DIALOG_ID };
 
 /**
  * Dialog de confirmation pour vider intégralement le panier.
@@ -58,7 +57,7 @@ export function ClearCartAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Suppression..." : "Vider"}
+							{isPending ? "Suppression…" : "Vider"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

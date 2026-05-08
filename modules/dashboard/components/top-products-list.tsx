@@ -37,15 +37,15 @@ function ProductThumb({ product }: { product: TopProductItem }) {
 	if (!product.imageUrl) {
 		return (
 			<div
-				className="bg-muted text-muted-foreground flex h-10 w-10 shrink-0 items-center justify-center rounded-md"
+				className="bg-muted text-muted-foreground flex size-10 shrink-0 items-center justify-center rounded-md"
 				aria-hidden="true"
 			>
-				<Package className="h-4 w-4" />
+				<Package className="size-4" />
 			</div>
 		);
 	}
 	return (
-		<div className="bg-muted relative h-10 w-10 shrink-0 overflow-hidden rounded-md">
+		<div className="bg-muted relative size-10 shrink-0 overflow-hidden rounded-md">
 			<Image
 				src={product.imageUrl}
 				alt=""
@@ -60,7 +60,7 @@ function ProductThumb({ product }: { product: TopProductItem }) {
 
 function getRowHref(product: TopProductItem): string | null {
 	if (!product.productSlug) return null;
-	return `/admin/catalogue/produits/${product.productSlug}/modifier`;
+	return `/admin/catalogue/produits/${product.productSlug}`;
 }
 
 function getAriaLabel(product: TopProductItem, rank: number): string {
@@ -119,7 +119,7 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 										</span>
 										{href && (
 											<ChevronRight
-												className="text-muted-foreground/60 h-4 w-4"
+												className="text-muted-foreground/60 size-4"
 												aria-hidden="true"
 											/>
 										)}
@@ -180,7 +180,7 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 										#{rank}
 									</span>
 									<ProductThumb product={product} />
-									<div className="min-w-0 flex-1 space-y-0.5">
+									<div className="min-w-0 flex-1 gap-y-0.5">
 										<p className="line-clamp-1 text-sm font-medium">{product.title}</p>
 										<p className="text-muted-foreground text-xs">
 											{product.unitsSold} vendue{product.unitsSold > 1 ? "s" : ""}
@@ -221,7 +221,7 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 					<Button asChild variant="ghost" size="sm" className="gap-1.5">
 						<Link href="/admin/catalogue/produits">
 							Voir tous les produits
-							<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+							<ArrowRight className="size-3.5" aria-hidden="true" />
 						</Link>
 					</Button>
 				</CardFooter>

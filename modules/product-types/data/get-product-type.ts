@@ -60,3 +60,99 @@ async function fetchProductType(
 		return null;
 	}
 }
+
+// ============================================================================
+// DETAIL — page admin enrichie (5 derniers produits + counts par statut)
+// ============================================================================
+
+export type ProductTypeDetailReturn = NonNullable<
+	Awaited<ReturnType<typeof fetchProductTypeDetail>>
+>;
+
+export async function getProductTypeDetailBySlug(
+	params: Partial<GetProductTypeParams>,
+): Promise<ProductTypeDetailReturn | null> {
+	const validation = getProductTypeSchema.safeParse(params);
+
+	if (!validation.success) return null;
+
+	const admin = await isAdmin();
+	if (!admin) return null;
+
+	return fetchProductTypeDetail(validation.data.slug);
+}
+
+async function fetchProductTypeDetail(slug: string) {
+	"use cache";
+	cacheProductTypes();
+
+	try {
+		return await prisma.productType.findUnique({
+			where: { slug },
+			select: {
+				id: true,
+				slug: true,
+				label: true,
+				description: true,
+				isActive: true,
+				isSystem: true,
+				createdAt: true,
+				updatedAt: true,
+				products: {
+					take: 5,
+					orderBy: { updatedAt: "desc" },
+					select: {
+						id: true,
+						slug: true,
+						title: true,
+						status: true,
+						skus: {
+							where: { isDefault: true },
+							take: 1,
+							select: {
+								images: {
+									where: { isPrimary: true },
+									take: 1,
+									select: { url: true, blurDataUrl: true, altText: true },
+								},
+							},
+						},
+					},
+				},
+				_count: { select: { products: true } },
+			},
+		});
+	} catch (error) {
+		Sentry.captureException(error, {
+			tags: { module: "product-types", operation: "getProductTypeDetail" },
+			extra: { slug },
+		});
+		return null;
+	}
+}
+
+// ============================================================================
+// PRODUCT COUNTS BY STATUS — pour stats card
+// ============================================================================
+
+export async function getProductTypeProductCounts(productTypeId: string) {
+	const admin = await isAdmin();
+	if (!admin) return { public: 0, draft: 0, archived: 0 };
+
+	try {
+		const [pub, draft, archived] = await Promise.all([
+			prisma.product.count({ where: { typeId: productTypeId, status: "PUBLIC", deletedAt: null } }),
+			prisma.product.count({ where: { typeId: productTypeId, status: "DRAFT", deletedAt: null } }),
+			prisma.product.count({
+				where: { typeId: productTypeId, status: "ARCHIVED", deletedAt: null },
+			}),
+		]);
+		return { public: pub, draft, archived };
+	} catch (error) {
+		Sentry.captureException(error, {
+			tags: { module: "product-types", operation: "getProductTypeProductCounts" },
+			extra: { productTypeId },
+		});
+		return { public: 0, draft: 0, archived: 0 };
+	}
+}

@@ -66,11 +66,11 @@ export function DownloadInvoiceButton({ orderNumber }: DownloadInvoiceButtonProp
 					aria-busy={isDownloading}
 				>
 					{isDownloading ? (
-						<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+						<LoaderCircle className="mr-2 size-4 animate-spin" />
 					) : (
-						<Download className="mr-2 h-4 w-4" />
+						<Download className="mr-2 size-4" />
 					)}
-					{isDownloading ? "Téléchargement..." : "Télécharger la facture"}
+					{isDownloading ? "Téléchargement…" : "Télécharger la facture"}
 				</Button>
 			</div>
 		</section>

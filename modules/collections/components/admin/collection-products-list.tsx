@@ -100,7 +100,7 @@ export function CollectionProductsList({
 												<Button
 													variant="ghost"
 													size="icon"
-													className="h-8 w-8"
+													className="size-8"
 													onClick={() =>
 														handleSetFeatured(product.id, product.title, pc.isFeatured)
 													}
@@ -110,7 +110,7 @@ export function CollectionProductsList({
 												>
 													<Star
 														className={cn(
-															"h-5 w-5 transition-colors",
+															"size-5 transition-colors",
 															pc.isFeatured
 																? "fill-yellow-400 text-yellow-400"
 																: "text-muted-foreground hover:text-yellow-400",
@@ -129,7 +129,7 @@ export function CollectionProductsList({
 									{/* Image */}
 									<TableCell>
 										{primaryImage ? (
-											<div className="bg-muted relative h-12 w-12 overflow-hidden rounded-md">
+											<div className="bg-muted relative size-12 overflow-hidden rounded-md">
 												<Image
 													src={primaryImage.url}
 													alt={primaryImage.altText ?? product.title}
@@ -139,8 +139,8 @@ export function CollectionProductsList({
 												/>
 											</div>
 										) : (
-											<div className="bg-muted flex h-12 w-12 items-center justify-center rounded-md">
-												<Package className="text-muted-foreground h-5 w-5" />
+											<div className="bg-muted flex size-12 items-center justify-center rounded-md">
+												<Package className="text-muted-foreground size-5" />
 											</div>
 										)}
 									</TableCell>
@@ -149,7 +149,7 @@ export function CollectionProductsList({
 									<TableCell>
 										<div className="flex flex-col gap-1">
 											<Link
-												href={`/admin/catalogue/produits/${product.slug}/modifier`}
+												href={`/admin/catalogue/produits/${product.slug}`}
 												className="font-medium hover:underline"
 											>
 												{product.title}
@@ -171,7 +171,7 @@ export function CollectionProductsList({
 												<Tooltip>
 													<TooltipTrigger asChild>
 														<span className="text-amber-500">
-															<TriangleAlert className="h-4 w-4" />
+															<TriangleAlert className="size-4" />
 														</span>
 													</TooltipTrigger>
 													<TooltipContent>

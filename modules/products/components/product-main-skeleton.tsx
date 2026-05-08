@@ -24,7 +24,7 @@ export function ProductMainSkeleton() {
 					<div className="order-1 hidden max-h-[min(500px,60vh)] overflow-y-auto md:block">
 						<div className="flex flex-col gap-2">
 							{Array.from({ length: 4 }).map((_, i) => (
-								<Skeleton key={i} className="bg-muted/40 h-20 w-20 rounded-lg" />
+								<Skeleton key={i} className="bg-muted/40 size-20 rounded-lg" />
 							))}
 						</div>
 					</div>
@@ -33,7 +33,7 @@ export function ProductMainSkeleton() {
 					<div className="bg-muted/30 relative order-2 aspect-3/4 overflow-hidden rounded-2xl sm:aspect-4/5 sm:rounded-3xl">
 						<Skeleton className="from-muted/60 via-muted/40 absolute inset-0 to-transparent" />
 						<div className="absolute inset-0 flex items-center justify-center">
-							<div className="border-muted/60 border-t-primary/40 h-16 w-16 animate-spin rounded-full border-4" />
+							<div className="border-muted/60 border-t-primary/40 size-16 animate-spin rounded-full border-4" />
 						</div>
 						{/* GalleryCounter skeleton */}
 						<div className="absolute top-3 right-3">
@@ -45,7 +45,7 @@ export function ProductMainSkeleton() {
 					<div className="order-3 mt-3 md:hidden">
 						<div className="flex flex-wrap gap-2">
 							{Array.from({ length: 4 }).map((_, i) => (
-								<Skeleton key={i} className="bg-muted/40 h-14 w-14 shrink-0 rounded-lg" />
+								<Skeleton key={i} className="bg-muted/40 size-14 shrink-0 rounded-lg" />
 							))}
 						</div>
 					</div>
@@ -58,11 +58,11 @@ export function ProductMainSkeleton() {
 				<div className="space-y-4">
 					{/* Titre avec bouton wishlist - Mobile uniquement (sm:hidden) */}
 					<div className="flex items-start justify-between gap-4 sm:hidden">
-						<div className="flex-1 space-y-2">
+						<div className="flex-1 gap-y-2">
 							<Skeleton className="bg-muted/50 h-9 w-full" />
 							<Skeleton className="bg-muted/50 h-9 w-3/4" />
 						</div>
-						<Skeleton className="bg-muted/30 h-10 w-10 shrink-0 rounded-full" />
+						<Skeleton className="bg-muted/30 size-10 shrink-0 rounded-full" />
 					</div>
 
 					{/* ReviewRatingLink - Mobile (sm:hidden) */}
@@ -72,7 +72,7 @@ export function ProductMainSkeleton() {
 					<div className="flex flex-wrap items-center gap-2">
 						<Skeleton className="bg-muted/30 h-7 w-24 rounded-full" />
 						<Skeleton className="bg-muted/30 hidden h-5 w-28 sm:block" />
-						<Skeleton className="bg-muted/30 ml-auto hidden h-10 w-10 rounded-full sm:block" />
+						<Skeleton className="bg-muted/30 ml-auto hidden size-10 rounded-full sm:block" />
 					</div>
 				</div>
 
@@ -91,7 +91,7 @@ export function ProductMainSkeleton() {
 				<div className="border-primary/20 rounded-xl border-2 shadow-sm">
 					<div className="space-y-2 p-6 pb-0">
 						<div className="flex items-center gap-2">
-							<Skeleton className="bg-primary/30 h-4 w-4" />
+							<Skeleton className="bg-primary/30 size-4" />
 							<Skeleton className="bg-muted/40 h-5 w-44" />
 						</div>
 						<Skeleton className="bg-muted/30 h-4 w-64" />
@@ -101,10 +101,7 @@ export function ProductMainSkeleton() {
 							<Skeleton className="bg-muted/30 h-4 w-20" />
 							<div className="flex flex-wrap gap-3">
 								{Array.from({ length: 4 }).map((_, i) => (
-									<Skeleton
-										key={i}
-										className="bg-muted/40 h-13 w-13 rounded-full sm:h-11 sm:w-11"
-									/>
+									<Skeleton key={i} className="bg-muted/40 size-13 rounded-full sm:size-11" />
 								))}
 							</div>
 						</div>
@@ -140,7 +137,7 @@ export function ProductMainSkeleton() {
 				<ul className="space-y-1.5">
 					{Array.from({ length: 3 }).map((_, i) => (
 						<li key={i} className="flex items-center gap-2">
-							<Skeleton className="bg-muted/30 h-4 w-4 shrink-0 rounded" />
+							<Skeleton className="bg-muted/30 size-4 shrink-0 rounded" />
 							<Skeleton className="bg-muted/30 h-4 w-48" />
 						</li>
 					))}
@@ -187,13 +184,13 @@ export function ProductMainSkeleton() {
 				<div className="space-y-0">
 					<div className="border-b py-4">
 						<div className="flex items-center gap-2">
-							<Skeleton className="bg-primary/30 h-4 w-4" />
+							<Skeleton className="bg-primary/30 size-4" />
 							<Skeleton className="bg-muted/40 h-5 w-20" />
 						</div>
 					</div>
 					<div className="border-b py-4">
 						<div className="flex items-center gap-2">
-							<Skeleton className="bg-primary/30 h-4 w-4" />
+							<Skeleton className="bg-primary/30 size-4" />
 							<Skeleton className="bg-muted/40 h-5 w-20" />
 						</div>
 					</div>

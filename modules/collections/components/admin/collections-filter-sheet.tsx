@@ -4,7 +4,7 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense, type ComponentProps } from "react";
 
 interface CollectionsFilterSheetProps {
 	className?: string;
@@ -17,7 +17,7 @@ interface FilterFormData {
 	hasProducts: string;
 }
 
-export function CollectionsFilterSheet({
+function CollectionsFilterSheetInner({
 	className,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
@@ -145,5 +145,13 @@ export function CollectionsFilterSheet({
 				</form.Field>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function CollectionsFilterSheet(props: ComponentProps<typeof CollectionsFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<CollectionsFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

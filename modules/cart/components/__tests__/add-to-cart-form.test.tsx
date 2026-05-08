@@ -260,7 +260,7 @@ describe("AddToCartForm", () => {
 	});
 
 	describe("loading state", () => {
-		it("shows spinner and 'Ajout en cours...' text when isPending", () => {
+		it("shows spinner and 'Ajout en cours…' text when isPending", () => {
 			mockUseAddToCart.mockReturnValue({
 				action: vi.fn(),
 				isPending: true,
@@ -281,7 +281,7 @@ describe("AddToCartForm", () => {
 			render(<AddToCartForm product={product} selectedSku={selectedSku} />);
 
 			expect(screen.getByTestId("loader-icon")).toBeInTheDocument();
-			expect(screen.getByText("Ajout en cours...")).toBeInTheDocument();
+			expect(screen.getByText("Ajout en cours…")).toBeInTheDocument();
 		});
 
 		it("disables button when isPending", () => {

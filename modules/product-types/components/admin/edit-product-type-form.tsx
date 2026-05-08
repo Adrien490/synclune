@@ -56,7 +56,7 @@ export function EditProductTypeForm({
 			updateProductType,
 			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du type...",
+				loadingMessage: "Mise à jour du type…",
 				onSuccess: () => {
 					haptic("success");
 					allowNavigationRef.current?.();
@@ -141,7 +141,7 @@ export function EditProductTypeForm({
 					{(field) => (
 						<field.TextareaField
 							label="Description"
-							placeholder="Décrivez le type de produit..."
+							placeholder="Décrivez le type de produit…"
 							disabled={isPending}
 							rows={4}
 						/>
@@ -154,7 +154,7 @@ export function EditProductTypeForm({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement..." : "Enregistrer"}
+								{isPending ? "Enregistrement…" : "Enregistrer"}
 							</Button>
 						)}
 					</form.Subscribe>

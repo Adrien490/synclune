@@ -179,7 +179,7 @@ export async function CustomerOrdersTable({ ordersPromise, perPage }: CustomerOr
 												href={`/commandes/${order.orderNumber}`}
 												aria-label={`Voir la commande #${order.orderNumber}`}
 											>
-												<Eye className="h-4 w-4 sm:mr-2" aria-hidden="true" />
+												<Eye className="size-4 sm:mr-2" aria-hidden="true" />
 												<span className="hidden sm:inline">Voir</span>
 											</Link>
 										</Button>

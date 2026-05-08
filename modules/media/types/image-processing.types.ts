@@ -13,7 +13,7 @@
 // ============================================================================
 
 /** Log function for warnings */
-export type LogFn = (message: string, data?: Record<string, unknown>) => void;
+type LogFn = (message: string, data?: Record<string, unknown>) => void;
 
 // ============================================================================
 // IMAGE DOWNLOADER

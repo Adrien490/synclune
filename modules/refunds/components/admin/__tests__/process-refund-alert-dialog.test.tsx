@@ -222,7 +222,7 @@ describe("ProcessRefundAlertDialog", () => {
 
 		render(<ProcessRefundAlertDialog />);
 
-		expect(screen.getByText("Traitement...")).toBeInTheDocument();
+		expect(screen.getByText("Traitement…")).toBeInTheDocument();
 	});
 
 	it("shows loader icon when isPending is true", () => {
@@ -253,7 +253,7 @@ describe("ProcessRefundAlertDialog", () => {
 
 		render(<ProcessRefundAlertDialog />);
 
-		expect(screen.getByText("Traitement...")).toBeDisabled();
+		expect(screen.getByText("Traitement…")).toBeDisabled();
 	});
 
 	// ─── Constants ────────────────────────────────────────────────────────────

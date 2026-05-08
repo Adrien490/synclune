@@ -29,7 +29,7 @@ export function MediaErrorFallback({ type, size = "default", onRetry }: MediaErr
 					<>
 						{onRetry ? (
 							<Button variant="ghost" size="sm" onClick={onRetry} className="gap-1.5 text-xs">
-								<RotateCcw className="h-3 w-3" />
+								<RotateCcw className="size-3" />
 								Réessayer
 							</Button>
 						) : (

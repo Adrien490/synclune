@@ -16,7 +16,7 @@ export const useSetFeaturedProduct = (options?: UseSetFeaturedProductOptions) =>
 		withCallbacks(
 			setFeaturedProduct,
 			createToastCallbacks({
-				loadingMessage: "Définition du produit vedette...",
+				loadingMessage: "Définition du produit vedette…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},
@@ -29,7 +29,7 @@ export const useSetFeaturedProduct = (options?: UseSetFeaturedProductOptions) =>
 		withCallbacks(
 			removeFeaturedProduct,
 			createToastCallbacks({
-				loadingMessage: "Définition du produit vedette...",
+				loadingMessage: "Définition du produit vedette…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

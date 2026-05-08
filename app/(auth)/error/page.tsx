@@ -26,8 +26,8 @@ export default async function ErrorPage({ searchParams }: ErrorPageProps) {
 			title={errorInfo.title}
 			description={errorInfo.description}
 			icon={
-				<div className="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
-					<CircleAlert className="text-destructive h-8 w-8" aria-hidden="true" />
+				<div className="bg-destructive/10 flex size-16 items-center justify-center rounded-full">
+					<CircleAlert className="text-destructive size-8" aria-hidden="true" />
 				</div>
 			}
 		>

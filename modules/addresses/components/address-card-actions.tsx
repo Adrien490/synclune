@@ -31,9 +31,9 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 			<DropdownMenuTrigger asChild>
 				<Button variant="ghost" size="icon" disabled={isPending}>
 					{isPending ? (
-						<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+						<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
 					) : (
-						<EllipsisVertical className="h-4 w-4" aria-hidden="true" />
+						<EllipsisVertical className="size-4" aria-hidden="true" />
 					)}
 					<span className="sr-only">
 						Actions pour {address.firstName} {address.lastName}
@@ -49,7 +49,7 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 						}}
 						disabled={isPending}
 					>
-						<Star className="mr-2 h-4 w-4" aria-hidden="true" />
+						<Star className="mr-2 size-4" aria-hidden="true" />
 						Définir par défaut
 					</DropdownMenuItem>
 				)}
@@ -60,7 +60,7 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 					}}
 					disabled={isPending}
 				>
-					<Pencil className="mr-2 h-4 w-4" aria-hidden="true" />
+					<Pencil className="mr-2 size-4" aria-hidden="true" />
 					Modifier
 				</DropdownMenuItem>
 				<DropdownMenuItem
@@ -75,7 +75,7 @@ export function AddressCardActions({ address }: AddressCardActionsProps) {
 					disabled={isPending}
 					className="text-destructive"
 				>
-					<Trash2 className="mr-2 h-4 w-4" aria-hidden="true" />
+					<Trash2 className="mr-2 size-4" aria-hidden="true" />
 					Supprimer
 				</DropdownMenuItem>
 			</DropdownMenuContent>

@@ -5,7 +5,7 @@ import { useAppForm } from "@/shared/components/forms";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense, type ComponentProps } from "react";
 
 interface ColorsFilterSheetProps {
 	className?: string;
@@ -18,7 +18,7 @@ interface FilterFormData {
 	isActive: string;
 }
 
-export function ColorsFilterSheet({
+function ColorsFilterSheetInner({
 	className,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
@@ -126,5 +126,13 @@ export function ColorsFilterSheet({
 				</form.Field>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function ColorsFilterSheet(props: ComponentProps<typeof ColorsFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ColorsFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

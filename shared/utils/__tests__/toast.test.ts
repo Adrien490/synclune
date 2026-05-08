@@ -206,10 +206,10 @@ describe("toast wrapper", () => {
 
 	describe("pass-through methods (no haptic, no duration override)", () => {
 		it("loading() does not trigger haptic or duration", () => {
-			toast.loading("Chargement...");
+			toast.loading("Chargement…");
 
 			expect(mockHaptic).not.toHaveBeenCalled();
-			expect(mockSonner.loading).toHaveBeenCalledWith("Chargement...");
+			expect(mockSonner.loading).toHaveBeenCalledWith("Chargement…");
 		});
 
 		it("dismiss() forwards id", () => {

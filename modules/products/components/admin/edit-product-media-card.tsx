@@ -2,20 +2,18 @@
 
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
+import { UploadActionSheet } from "@/shared/components/media-upload/upload-action-sheet";
 import {
 	UploadErrorBanner,
 	UploadProgress as UploadProgressBar,
 	type UploadPhase,
 } from "@/shared/components/media-upload/upload-progress";
-import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
 import type { FailedUpload } from "@/modules/media/types/hooks.types";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
-import { Camera, ImagePlus, Info, Upload } from "lucide-react";
+import { ImagePlus, Info, Upload } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { toast } from "@/shared/utils/toast";
 import type { EditProductFormInstance } from "./edit-product-form-types";
@@ -100,14 +98,14 @@ export function EditProductMediaCard({
 							<div className="space-y-3">
 								<div className="flex items-center justify-between">
 									<p className="text-muted-foreground text-xs">
-										La première image sera l'image principale. Glissez pour réordonner.
+										La première image sera l'image principale. Maintenez pour réordonner.
 									</p>
 									<MediaCounterBadge count={currentCount} max={maxMediaCount} />
 								</div>
 
 								{isAtLimit && (
 									<div className="bg-secondary/10 border-secondary flex items-start gap-2 rounded-lg border p-3">
-										<Info className="text-secondary-foreground mt-0.5 h-4 w-4 shrink-0" />
+										<Info className="text-secondary-foreground mt-0.5 size-4 shrink-0" />
 										<p className="text-secondary-foreground text-xs">
 											Limite de {maxMediaCount} médias atteinte
 										</p>
@@ -213,62 +211,6 @@ function useDropzoneAccept(containerRef: React.RefObject<HTMLDivElement | null>)
 	}, [containerRef]);
 }
 
-function CameraCaptureButton({
-	field,
-	handleUpload,
-	disabled,
-	variant = "default",
-}: {
-	field: MediaField;
-	handleUpload: (files: File[], field: MediaField) => void;
-	disabled?: boolean;
-	variant?: "default" | "compact";
-}) {
-	const isMobile = useIsMobile();
-	const haptic = useHaptic();
-	const inputRef = useRef<HTMLInputElement>(null);
-
-	if (!isMobile) return null;
-
-	return (
-		<>
-			<input
-				ref={inputRef}
-				type="file"
-				accept="image/*"
-				capture="environment"
-				multiple
-				className="sr-only"
-				aria-hidden="true"
-				tabIndex={-1}
-				onChange={(e) => {
-					const files = Array.from(e.target.files ?? []);
-					if (files.length === 0) return;
-					handleUpload(files, field);
-					e.target.value = "";
-				}}
-			/>
-			<Button
-				type="button"
-				variant="outline"
-				size={variant === "compact" ? "sm" : "input"}
-				disabled={disabled}
-				onClick={() => {
-					haptic("light");
-					inputRef.current?.click();
-				}}
-				className={
-					variant === "compact" ? "h-11 w-full gap-2" : "h-12 w-full gap-2 text-sm font-medium"
-				}
-				aria-label="Prendre une photo avec l'appareil photo"
-			>
-				<Camera className="size-5" aria-hidden="true" />
-				Prendre une photo
-			</Button>
-		</>
-	);
-}
-
 function EmptyMediaState({
 	field,
 	isMediaUploading,
@@ -306,84 +248,91 @@ function EmptyMediaState({
 			{!isAtLimit && (
 				<div id="media-upload-zone" className="space-y-3">
 					{!isMediaUploading && (
-						<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed px-3 py-3">
-							<ImagePlus className="text-muted-foreground/50 h-5 w-5" />
+						<div className="bg-muted/20 border-border flex items-center gap-3 rounded-lg border border-dashed p-3">
+							<ImagePlus className="text-muted-foreground/50 size-5" />
 							<p className="text-muted-foreground text-sm">
 								Ajoutez jusqu'à {maxMediaCount} images et vidéos
 							</p>
 						</div>
 					)}
 
-					<CameraCaptureButton
-						field={field}
-						handleUpload={handleUpload}
+					<UploadActionSheet
+						accept="image/*,video/*"
+						multiple
 						disabled={isMediaUploading}
+						onFilesSelected={(files) => handleUpload(files, field)}
+						triggerLabel="Ajouter des médias"
+						triggerDescription={`Jusqu'à ${maxMediaCount} • Image (16 Mo) / Vidéo (512 Mo)`}
+						sheetTitle="Ajouter des médias"
+						sheetDescription="Choisissez les photos ou vidéos à ajouter au produit"
+						showCamera
+						desktopFallback={
+							<div ref={dropzoneRef}>
+								<UploadDropzone
+									endpoint="catalogMedia"
+									onChange={(files) => handleUpload(files, field)}
+									onUploadError={(error) => {
+										toast.error(`Erreur: ${error.message}`);
+									}}
+									config={{ mode: "auto", appendOnPaste: true }}
+									aria-label="Zone d'upload des médias du bijou"
+									className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
+									appearance={{
+										container: ({ isDragActive }) => ({
+											border: "2px dashed",
+											borderColor: isDragActive
+												? "var(--primary)"
+												: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
+											borderRadius: "0.75rem",
+											backgroundColor: isDragActive
+												? "color-mix(in oklch, var(--primary) 5%, transparent)"
+												: "color-mix(in oklch, var(--muted) 30%, transparent)",
+											padding: isMediaUploading ? "1rem" : "1.5rem",
+											minHeight: isMediaUploading ? "80px" : "160px",
+											maxHeight: isMediaUploading ? "120px" : "260px",
+											display: "flex",
+											flexDirection: "column",
+											alignItems: "center",
+											justifyContent: "center",
+											gap: "0.5rem",
+											cursor: "pointer",
+										}),
+										uploadIcon: () => ({ display: "none" }),
+										label: () => ({ display: "none" }),
+										allowedContent: () => ({
+											display: "none",
+										}),
+										button: () => ({ display: "none" }),
+									}}
+									content={{
+										uploadIcon: () => (
+											<Upload
+												className={
+													isMediaUploading ? "text-primary/50 size-8" : "text-primary/70 size-12"
+												}
+											/>
+										),
+										label: ({ isDragActive }) => (
+											<div className="space-y-1 text-center">
+												<p className={isMediaUploading ? "text-sm" : "font-medium"}>
+													{isDragActive
+														? "Relâchez"
+														: isMediaUploading
+															? "Ajouter d'autres médias"
+															: "Ajouter des médias"}
+												</p>
+												{!isMediaUploading && (
+													<p className="text-muted-foreground text-xs">
+														Images (max 16 Mo) et vidéos (max 512 Mo)
+													</p>
+												)}
+											</div>
+										),
+									}}
+								/>
+							</div>
+						}
 					/>
-
-					<div ref={dropzoneRef}>
-						<UploadDropzone
-							endpoint="catalogMedia"
-							onChange={(files) => handleUpload(files, field)}
-							onUploadError={(error) => {
-								toast.error(`Erreur: ${error.message}`);
-							}}
-							config={{ mode: "auto", appendOnPaste: true }}
-							aria-label="Zone d'upload des médias du bijou"
-							className="focus-within:ring-ring w-full rounded-xl focus-within:ring-2 focus-within:ring-offset-2"
-							appearance={{
-								container: ({ isDragActive }) => ({
-									border: "2px dashed",
-									borderColor: isDragActive
-										? "var(--primary)"
-										: "color-mix(in oklch, var(--muted-foreground) 25%, transparent)",
-									borderRadius: "0.75rem",
-									backgroundColor: isDragActive
-										? "color-mix(in oklch, var(--primary) 5%, transparent)"
-										: "color-mix(in oklch, var(--muted) 30%, transparent)",
-									padding: isMediaUploading ? "1rem" : "1.5rem",
-									minHeight: isMediaUploading ? "80px" : "160px",
-									maxHeight: isMediaUploading ? "120px" : "260px",
-									display: "flex",
-									flexDirection: "column",
-									alignItems: "center",
-									justifyContent: "center",
-									gap: "0.5rem",
-									cursor: "pointer",
-								}),
-								uploadIcon: () => ({ display: "none" }),
-								label: () => ({ display: "none" }),
-								allowedContent: () => ({
-									display: "none",
-								}),
-								button: () => ({ display: "none" }),
-							}}
-							content={{
-								uploadIcon: () => (
-									<Upload
-										className={
-											isMediaUploading ? "text-primary/50 h-8 w-8" : "text-primary/70 h-12 w-12"
-										}
-									/>
-								),
-								label: ({ isDragActive }) => (
-									<div className="space-y-1 text-center">
-										<p className={isMediaUploading ? "text-sm" : "font-medium"}>
-											{isDragActive
-												? "Relâchez"
-												: isMediaUploading
-													? "Ajouter d'autres médias"
-													: "Ajouter des médias"}
-										</p>
-										{!isMediaUploading && (
-											<p className="text-muted-foreground text-xs">
-												Images (max 16MB) et vidéos (max 512MB)
-											</p>
-										)}
-									</div>
-								),
-							}}
-						/>
-					</div>
 				</div>
 			)}
 			{field.state.meta.errors.length > 0 && (
@@ -415,7 +364,7 @@ function InlineUploadZone({
 		<div className="flex h-full w-full flex-col">
 			{isMediaUploading && (
 				<div className="bg-primary/5 flex items-center justify-center gap-2 rounded-t-lg px-2 py-1.5">
-					<div className="border-primary/20 border-t-primary h-4 w-4 rounded-full border-2 motion-safe:animate-spin" />
+					<div className="border-primary/20 border-t-primary size-4 rounded-full border-2 motion-safe:animate-spin" />
 					<p className="text-muted-foreground text-xs">
 						{uploadProgress?.completed ?? 0}/{uploadProgress?.total ?? 0}
 						{uploadProgress && uploadProgress.queued > 0 && (
@@ -424,52 +373,60 @@ function InlineUploadZone({
 					</p>
 				</div>
 			)}
-			<div ref={dropzoneRef} className="flex h-full min-h-0 w-full flex-1 flex-col gap-1">
-				<CameraCaptureButton
-					field={field}
-					handleUpload={handleUpload}
-					disabled={isMediaUploading}
-					variant="compact"
-				/>
-				<UploadDropzone
-					endpoint="catalogMedia"
-					onChange={(files) => handleUpload(files, field)}
-					onUploadError={(error) => {
-						toast.error(`Erreur: ${error.message}`);
-					}}
-					config={{ mode: "auto", appendOnPaste: true }}
-					className="h-full min-h-0 w-full flex-1"
-					appearance={{
-						container: ({ isDragActive }) => ({
-							height: "100%",
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-							justifyContent: "center",
-							cursor: "pointer",
-							backgroundColor: isDragActive
-								? "color-mix(in oklch, var(--primary) 5%, transparent)"
-								: "transparent",
-						}),
-						uploadIcon: () => ({
-							display: "none",
-						}),
-						label: () => ({
-							display: "none",
-						}),
-						allowedContent: () => ({
-							display: "none",
-						}),
-						button: () => ({
-							display: "none",
-						}),
-					}}
-					content={{
-						uploadIcon: () => <Upload className="text-muted-foreground/50 h-6 w-6" />,
-						label: () => <p className="text-muted-foreground mt-1 text-center text-xs">Ajouter</p>,
-					}}
-				/>
-			</div>
+			<UploadActionSheet
+				accept="image/*,video/*"
+				multiple
+				disabled={isMediaUploading}
+				onFilesSelected={(files) => handleUpload(files, field)}
+				triggerLabel="Ajouter"
+				triggerClassName="h-full min-h-0 w-full flex-1 border-dashed"
+				sheetTitle="Ajouter des médias"
+				showCamera
+				desktopFallback={
+					<div ref={dropzoneRef} className="flex h-full min-h-0 w-full flex-1 flex-col gap-1">
+						<UploadDropzone
+							endpoint="catalogMedia"
+							onChange={(files) => handleUpload(files, field)}
+							onUploadError={(error) => {
+								toast.error(`Erreur: ${error.message}`);
+							}}
+							config={{ mode: "auto", appendOnPaste: true }}
+							className="h-full min-h-0 w-full flex-1"
+							appearance={{
+								container: ({ isDragActive }) => ({
+									height: "100%",
+									display: "flex",
+									flexDirection: "column",
+									alignItems: "center",
+									justifyContent: "center",
+									cursor: "pointer",
+									backgroundColor: isDragActive
+										? "color-mix(in oklch, var(--primary) 5%, transparent)"
+										: "transparent",
+								}),
+								uploadIcon: () => ({
+									display: "none",
+								}),
+								label: () => ({
+									display: "none",
+								}),
+								allowedContent: () => ({
+									display: "none",
+								}),
+								button: () => ({
+									display: "none",
+								}),
+							}}
+							content={{
+								uploadIcon: () => <Upload className="text-muted-foreground/50 size-6" />,
+								label: () => (
+									<p className="text-muted-foreground mt-1 text-center text-xs">Ajouter</p>
+								),
+							}}
+						/>
+					</div>
+				}
+			/>
 		</div>
 	);
 }

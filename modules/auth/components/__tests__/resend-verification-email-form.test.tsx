@@ -140,10 +140,10 @@ describe("ResendVerificationEmailForm", () => {
 		expect(screen.getByRole("button", { name: /renvoyer l'email de vérification/i })).toBeDefined();
 	});
 
-	it("shows 'Envoi en cours...' when isPending", () => {
+	it("shows 'Envoi en cours…' when isPending", () => {
 		mockIsPending.value = true;
 		render(<ResendVerificationEmailForm />);
-		expect(screen.getByText("Envoi en cours...")).toBeDefined();
+		expect(screen.getByText("Envoi en cours…")).toBeDefined();
 	});
 
 	it("shows 'Email envoyé' button text on SUCCESS", () => {

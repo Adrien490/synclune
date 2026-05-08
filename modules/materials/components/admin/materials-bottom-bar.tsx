@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
@@ -24,7 +25,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(MATERIALS_SORT_LABELS).map(([v
  * Sous-header sticky (mobile, admin) pour la liste matériaux.
  * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
-export function MaterialsBottomBar() {
+function MaterialsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -108,5 +109,13 @@ export function MaterialsBottomBar() {
 				adapter={materialsAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function MaterialsBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<MaterialsBottomBarInner />
+		</Suspense>
 	);
 }

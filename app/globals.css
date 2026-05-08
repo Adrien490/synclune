@@ -25,6 +25,15 @@ html {
 	position: relative;
 }
 
+/* Admin layout : scroll-padding-top dérivé du header admin (mobile + safe-area).
+ * Évite que les anchor links / scrollIntoView placent l'élément cible
+ * derrière le AdminMobileHeader sticky (h-14 + notch). */
+html:has([data-admin-layout]) {
+	scroll-padding-top: calc(
+		var(--admin-header-height, 3.5rem) + env(safe-area-inset-top, 0px) + 1rem
+	);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	html {
 		scroll-behavior: auto;

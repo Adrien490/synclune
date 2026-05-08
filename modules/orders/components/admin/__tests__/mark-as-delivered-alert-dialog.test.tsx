@@ -157,12 +157,12 @@ describe("MarkAsDeliveredAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Mise à jour...' on submit button when isPending is true", () => {
+	it("shows 'Mise à jour…' on submit button when isPending is true", () => {
 		mockIsPending = true;
 
 		render(<MarkAsDeliveredAlertDialog />);
 
-		expect(screen.getByText("Mise à jour...")).toBeInTheDocument();
+		expect(screen.getByText("Mise à jour…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending is true", () => {

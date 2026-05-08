@@ -186,11 +186,11 @@ describe("RemoveWishlistItemAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Suppression...' when isPending is true", () => {
+	it("shows 'Suppression…' when isPending is true", () => {
 		mockRemoveDialog.isOpen = true;
 		mockIsPending.value = true;
 		render(<RemoveWishlistItemAlertDialog />);
-		expect(document.body.textContent).toContain("Suppression...");
+		expect(document.body.textContent).toContain("Suppression…");
 	});
 
 	it("shows loader icon when isPending is true", () => {

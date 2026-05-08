@@ -37,7 +37,7 @@ export const CHART_STYLES = {
 
 	touchTarget: {
 		button: "h-11 min-w-11",
-		iconButton: "h-11 w-11",
+		iconButton: "size-11",
 	},
 
 	spacing: {

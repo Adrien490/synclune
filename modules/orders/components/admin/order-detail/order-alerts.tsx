@@ -17,14 +17,14 @@ export function OrderAlerts({ status, paymentStatus, fulfillmentStatus }: OrderA
 		<div className="space-y-4">
 			{isCancelled && (
 				<Alert variant="destructive">
-					<CircleX className="h-4 w-4" />
+					<CircleX className="size-4" />
 					<AlertTitle>Commande annulée</AlertTitle>
 					<AlertDescription>Cette commande a été annulée.</AlertDescription>
 				</Alert>
 			)}
 			{isPaymentFailed && (
 				<Alert variant="destructive">
-					<TriangleAlert className="h-4 w-4" />
+					<TriangleAlert className="size-4" />
 					<AlertTitle>Paiement échoué</AlertTitle>
 					<AlertDescription>
 						Le paiement a échoué. Contactez le client pour résoudre le problème.
@@ -33,7 +33,7 @@ export function OrderAlerts({ status, paymentStatus, fulfillmentStatus }: OrderA
 			)}
 			{isPaymentExpired && (
 				<Alert>
-					<Clock className="h-4 w-4" />
+					<Clock className="size-4" />
 					<AlertTitle>Session de paiement expirée</AlertTitle>
 					<AlertDescription>
 						La session de paiement a expiré sans tentative de paiement.
@@ -42,7 +42,7 @@ export function OrderAlerts({ status, paymentStatus, fulfillmentStatus }: OrderA
 			)}
 			{isReturned && (
 				<Alert>
-					<RotateCcw className="h-4 w-4" />
+					<RotateCcw className="size-4" />
 					<AlertTitle>Commande retournée</AlertTitle>
 					<AlertDescription>
 						Cette commande a été retournée. Créez un remboursement si nécessaire.

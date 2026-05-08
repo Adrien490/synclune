@@ -17,7 +17,7 @@ export function OrderItemsCard({
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<Package className="h-5 w-5" aria-hidden="true" />
+					<Package className="size-5" aria-hidden="true" />
 					Articles ({items.length})
 				</CardTitle>
 			</CardHeader>
@@ -33,7 +33,7 @@ export function OrderItemsCard({
 						return (
 							<div key={item.id} className="flex items-start gap-4 border-b py-3 last:border-0">
 								{/* Image */}
-								<div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-md border">
+								<div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-md border">
 									{item.skuImageUrl || item.productImageUrl ? (
 										<Image
 											src={item.skuImageUrl ?? item.productImageUrl ?? ""}
@@ -45,7 +45,7 @@ export function OrderItemsCard({
 										/>
 									) : (
 										<div className="flex h-full w-full items-center justify-center">
-											<Package className="text-muted-foreground h-6 w-6" aria-hidden="true" />
+											<Package className="text-muted-foreground size-6" aria-hidden="true" />
 										</div>
 									)}
 								</div>

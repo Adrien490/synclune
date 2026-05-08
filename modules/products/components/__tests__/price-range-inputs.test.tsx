@@ -18,7 +18,6 @@ vi.mock("@/shared/components/ui/slider", () => ({
 	Slider: ({
 		value,
 		onValueChange,
-		"data-vaul-no-drag": _nodrg,
 		...props
 	}: {
 		value: [number, number];
@@ -107,12 +106,6 @@ describe("PriceRangeInputs – rendering", () => {
 	it("initialises max input with the provided value[1]", () => {
 		renderComponent([50, 200]);
 		expect(screen.getByLabelText("Prix maximum")).toHaveValue("200");
-	});
-
-	it("renders a data-vaul-no-drag wrapper around the slider", () => {
-		renderComponent();
-		const slider = screen.getByTestId("slider");
-		expect(slider.closest("[data-vaul-no-drag]")).not.toBeNull();
 	});
 });
 
@@ -372,14 +365,5 @@ describe("PriceRangeInputs – accessibility", () => {
 	it("max input has aria-description='en euros'", () => {
 		renderComponent();
 		expect(screen.getByLabelText("Prix maximum")).toHaveAttribute("aria-description", "en euros");
-	});
-
-	it("slider container has data-vaul-no-drag attribute", () => {
-		renderComponent();
-		const slider = screen.getByTestId("slider");
-		const wrapper = slider.closest("[data-vaul-no-drag]");
-		expect(wrapper).not.toBeNull();
-		// The attribute should be present (empty string is a valid truthy attribute)
-		expect(wrapper).toHaveAttribute("data-vaul-no-drag");
 	});
 });

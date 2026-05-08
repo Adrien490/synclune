@@ -34,7 +34,7 @@ export const useUpdateProductSkuForm = ({
 		withCallbacks(
 			updateProductSku,
 			createToastCallbacks<ActionState>({
-				loadingMessage: "Mise à jour de la variante...",
+				loadingMessage: "Mise à jour de la variante…",
 				showSuccessToast: false,
 				showErrorToast: true,
 				onSuccess: (result) => {

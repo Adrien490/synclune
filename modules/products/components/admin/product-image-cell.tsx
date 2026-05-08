@@ -40,7 +40,7 @@ export function ProductImageCell({ images, productTitle }: ProductImageCellProps
 
 	return (
 		<>
-			<div className="bg-muted relative h-20 w-20 shrink-0 rounded-md">
+			<div className="bg-muted relative size-20 shrink-0 rounded-md">
 				{hasImages ? (
 					<button
 						type="button"
@@ -68,7 +68,7 @@ export function ProductImageCell({ images, productTitle }: ProductImageCellProps
 						role="img"
 						aria-label="Aucune image disponible"
 					>
-						<Package className="text-muted-foreground h-8 w-8" aria-hidden="true" />
+						<Package className="text-muted-foreground size-8" aria-hidden="true" />
 					</div>
 				)}
 			</div>

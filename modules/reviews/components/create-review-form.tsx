@@ -92,7 +92,7 @@ export function CreateReviewForm({
 						<field.TextareaField
 							label="Votre avis"
 							required
-							placeholder="Partagez votre expérience avec ce produit..."
+							placeholder="Partagez votre expérience avec ce produit…"
 							rows={4}
 							maxLength={REVIEW_CONFIG.MAX_CONTENT_LENGTH}
 							showCounter
@@ -114,7 +114,7 @@ export function CreateReviewForm({
 				{/* Bouton de soumission */}
 				<Button type="submit" disabled={isPending} className="w-full">
 					{isPending ? (
-						"Envoi en cours..."
+						"Envoi en cours…"
 					) : (
 						<>
 							<Send className="mr-2 size-4" aria-hidden="true" />

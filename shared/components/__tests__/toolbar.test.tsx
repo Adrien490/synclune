@@ -83,17 +83,17 @@ describe("Toolbar", () => {
 
 	it("renders search component when search prop is provided", () => {
 		render(
-			<Toolbar search={<input placeholder="Rechercher..." />}>
+			<Toolbar search={<input placeholder="Rechercher…" />}>
 				<button>Filtrer</button>
 			</Toolbar>,
 		);
 
-		expect(screen.getByPlaceholderText("Rechercher...")).toBeInTheDocument();
+		expect(screen.getByPlaceholderText("Rechercher…")).toBeInTheDocument();
 	});
 
 	it("renders children in a separate container when search is provided", () => {
 		render(
-			<Toolbar search={<input placeholder="Rechercher..." />}>
+			<Toolbar search={<input placeholder="Rechercher…" />}>
 				<button>Filtrer</button>
 			</Toolbar>,
 		);

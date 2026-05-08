@@ -32,7 +32,7 @@ export const useDeleteProductSku = (options?: UseDeleteProductSkuOptions) => {
 		withCallbacks(
 			deleteProductSku,
 			createToastCallbacks({
-				loadingMessage: "Suppression de la variante...",
+				loadingMessage: "Suppression de la variante…",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

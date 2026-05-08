@@ -106,8 +106,3 @@ export const updateAnnouncementSchema = z
 			path: ["message"],
 		},
 	);
-
-export type CloseStoreInput = z.infer<typeof closeStoreSchema>;
-export type UpdateClosureMessageInput = z.infer<typeof updateClosureMessageSchema>;
-export type UpdateReopensAtInput = z.infer<typeof updateReopensAtSchema>;
-export type UpdateAnnouncementInput = z.infer<typeof updateAnnouncementSchema>;

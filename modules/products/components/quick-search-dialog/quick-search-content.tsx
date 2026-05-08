@@ -66,14 +66,14 @@ export function QuickSearchContent({
 
 	return (
 		<div className="flex h-full flex-col">
-			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours...") */}
+			{/* Screen reader announcement (replaces Suspense fallback "Recherche en cours…") */}
 			<div role="status" aria-live="polite" className="sr-only">
 				{totalCount} résultat{totalCount !== 1 ? "s" : ""} trouvé{totalCount !== 1 ? "s" : ""}.
 			</div>
 
 			<div className="min-h-0 flex-1">
 				<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
-					<div className="space-y-4 px-4 py-4">
+					<div className="space-y-4 p-4">
 						{/* Spell suggestion */}
 						{suggestion && (
 							<p role="status" aria-live="polite" className="text-muted-foreground text-sm">

@@ -102,7 +102,7 @@ export function AccountTabsNav() {
 								onClick={(e) => handleNavigation(e, item.href)}
 								aria-current={active ? "page" : undefined}
 								className={cn(
-									"text-muted-foreground inline-flex min-h-11 flex-1 items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors",
+									"text-muted-foreground inline-flex min-h-11 flex-1 items-center justify-center gap-2 p-3 text-sm font-medium transition-colors",
 									"active:scale-[0.98]",
 									"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
 									active && "text-foreground",

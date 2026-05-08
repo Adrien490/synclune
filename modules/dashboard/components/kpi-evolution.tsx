@@ -35,7 +35,7 @@ export function KpiEvolution({
 						className="text-muted-foreground gap-1 text-xs font-normal"
 						aria-label="Comparaison non significative — données insuffisantes"
 					>
-						<Info className="h-3 w-3" aria-hidden="true" />
+						<Info className="size-3" aria-hidden="true" />
 						Données limitées
 					</Badge>
 				</TooltipTrigger>
@@ -62,9 +62,9 @@ export function KpiEvolution({
 				aria-label={`${isPositive ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)} pourcent`}
 			>
 				{isPositive ? (
-					<ArrowUp className="mr-0.5 h-3 w-3" aria-hidden="true" />
+					<ArrowUp className="mr-0.5 size-3" aria-hidden="true" />
 				) : (
-					<ArrowDown className="mr-0.5 h-3 w-3" aria-hidden="true" />
+					<ArrowDown className="mr-0.5 size-3" aria-hidden="true" />
 				)}
 				<span className="font-semibold">{Math.abs(evolution).toFixed(1)}%</span>
 			</div>

@@ -69,7 +69,7 @@ export function ReviewableProductCard({ product, className }: ReviewableProductC
 				</div>
 
 				{/* Contenu */}
-				<div className="flex-1 space-y-3 p-4">
+				<div className="flex-1 gap-y-3 p-4">
 					{/* Titre produit */}
 					<div>
 						<Link

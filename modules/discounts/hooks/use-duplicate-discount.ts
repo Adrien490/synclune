@@ -34,7 +34,7 @@ export function useDuplicateDiscount(options?: UseDuplicateDiscountOptions) {
 		withCallbacks(
 			duplicateDiscount,
 			createToastCallbacks({
-				loadingMessage: "Duplication en cours...",
+				loadingMessage: "Duplication en cours…",
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					if (typeof result.message === "string" && isDuplicateDiscountSuccessData(result.data)) {

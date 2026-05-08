@@ -11,7 +11,7 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<CreditCard className="h-5 w-5" aria-hidden="true" />
+					<CreditCard className="size-5" aria-hidden="true" />
 					Paiement
 				</CardTitle>
 			</CardHeader>
@@ -40,17 +40,17 @@ export function OrderPaymentCard({ order }: OrderPaymentCardProps) {
 							<CopyButton
 								text={order.stripePaymentIntentId}
 								label="Payment Intent"
-								className="h-6 w-6 p-0"
+								className="size-6 p-0"
 								size="icon"
 							/>
-							<Button variant="ghost" size="sm" className="h-6 w-6 p-0" asChild>
+							<Button variant="ghost" size="sm" className="size-6 p-0" asChild>
 								<a
 									href={`https://dashboard.stripe.com/payments/${order.stripePaymentIntentId}`}
 									target="_blank"
 									rel="noopener noreferrer"
 									aria-label="Voir sur Stripe (s'ouvre dans un nouvel onglet)"
 								>
-									<ExternalLink className="h-3 w-3" aria-hidden="true" />
+									<ExternalLink className="size-3" aria-hidden="true" />
 								</a>
 							</Button>
 						</div>

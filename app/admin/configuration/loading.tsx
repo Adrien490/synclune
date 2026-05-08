@@ -5,7 +5,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function ConfigurationLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement de la configuration">
-			<span className="sr-only">Chargement de la configuration...</span>
+			<span className="sr-only">Chargement de la configuration…</span>
 
 			<PageHeader
 				variant="compact"
@@ -20,7 +20,7 @@ export default function ConfigurationLoading() {
 						<CardHeader>
 							<div className="flex items-start justify-between">
 								<div className="flex items-center gap-3">
-									<Skeleton className="h-10 w-10 rounded-lg" />
+									<Skeleton className="size-10 rounded-lg" />
 									<div className="space-y-2">
 										<Skeleton className="h-5 w-24" />
 										<Skeleton className="h-4 w-40" />

@@ -6,6 +6,8 @@ import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { Button } from "@/shared/components/ui/button";
 import { useAppForm } from "@/shared/components/forms";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
@@ -34,6 +36,7 @@ export function EditCollectionForm({
 	className,
 }: EditCollectionFormProps) {
 	const router = useRouter();
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -48,7 +51,7 @@ export function EditCollectionForm({
 		withCallbacks(
 			updateCollection,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour de la collection...",
+				loadingMessage: "Mise à jour de la collection…",
 				onSuccess: (_result) => {
 					onSuccess?.();
 					if (redirectOnSuccess) {
@@ -63,12 +66,19 @@ export function EditCollectionForm({
 		undefined,
 	);
 
+	useUnsavedChanges(form.state.isDirty, !isPending);
+
 	return (
 		<form
+			ref={formRef}
 			action={action}
 			className={cn("space-y-4", className)}
+			onInvalidCapture={onInvalidCapture}
 			onSubmit={() => {
 				void form.handleSubmit();
+				if (!form.state.canSubmit) {
+					focusFirstInvalid();
+				}
 			}}
 		>
 			{/* Hidden fields */}
@@ -120,7 +130,7 @@ export function EditCollectionForm({
 				{(field) => (
 					<field.TextareaField
 						label="Description"
-						placeholder="Décrivez cette collection..."
+						placeholder="Décrivez cette collection…"
 						disabled={isPending}
 						rows={4}
 					/>
@@ -146,7 +156,7 @@ export function EditCollectionForm({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
-								{isPending ? "Enregistrement..." : "Enregistrer"}
+								{isPending ? "Enregistrement…" : "Enregistrer"}
 							</Button>
 						)}
 					</form.Subscribe>

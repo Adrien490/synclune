@@ -92,7 +92,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 												{order.total.toFixed(2)} €
 											</span>
 											<ChevronRight
-												className="text-muted-foreground/60 h-4 w-4"
+												className="text-muted-foreground/60 size-4"
 												aria-hidden="true"
 											/>
 										</ItemActions>
@@ -112,7 +112,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 										<ItemContent>
 											<ItemTitle className="text-primary">Voir toutes les commandes</ItemTitle>
 										</ItemContent>
-										<ChevronRight className="text-primary h-4 w-4" aria-hidden="true" />
+										<ChevronRight className="text-primary size-4" aria-hidden="true" />
 									</Link>
 								</Item>
 							</>
@@ -141,7 +141,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 							className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
 							aria-label={`Commande #${order.orderNumber}, ${order.total.toFixed(2)} €, ${order.customerName}, ${ORDER_STATUS_LABELS[order.status]}`}
 						>
-							<div className="min-w-0 flex-1 space-y-1">
+							<div className="min-w-0 flex-1 gap-y-1">
 								<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
 									<p className="text-sm font-medium">#{order.orderNumber}</p>
 									<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
@@ -184,7 +184,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 					<Button asChild variant="ghost" size="sm" className="gap-1.5">
 						<Link href="/admin/ventes/commandes">
 							Voir toutes les commandes
-							<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+							<ArrowRight className="size-3.5" aria-hidden="true" />
 						</Link>
 					</Button>
 				</CardFooter>

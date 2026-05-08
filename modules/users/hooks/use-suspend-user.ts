@@ -14,7 +14,7 @@ export const useSuspendUser = (options?: UseSuspendUserOptions) => {
 		withCallbacks(
 			suspendUser,
 			createToastCallbacks({
-				loadingMessage: "Suspension du compte...",
+				loadingMessage: "Suspension du compte…",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

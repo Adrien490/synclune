@@ -4,6 +4,7 @@ import { LoaderCircle, Lock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
@@ -24,9 +25,9 @@ export function CloseStoreForm() {
 
 	const [, formAction, isPending] = useActionState(
 		withCallbacks(closeStore, {
-			...createToastCallbacks({ loadingMessage: "Fermeture de la boutique..." }),
+			...createToastCallbacks({ loadingMessage: "Fermeture de la boutique…" }),
 			onSuccess: (result) => {
-				createToastCallbacks({ loadingMessage: "Fermeture de la boutique..." }).onSuccess(result);
+				createToastCallbacks({ loadingMessage: "Fermeture de la boutique…" }).onSuccess(result);
 				form.reset();
 				allowNavigation();
 				router.push("/admin/configuration/boutique");
@@ -48,7 +49,8 @@ export function CloseStoreForm() {
 				});
 			}}
 			aria-busy={isPending}
-			className="space-y-6"
+			data-pending={isPending ? "true" : undefined}
+			className="space-y-4 sm:space-y-6"
 		>
 			<p className="text-muted-foreground text-sm">
 				Les clients ne pourront plus passer de commandes tant que la boutique sera fermée. Ils
@@ -59,7 +61,7 @@ export function CloseStoreForm() {
 				{(field) => (
 					<field.TextareaField
 						label="Message affiché aux clients"
-						placeholder="La boutique est temporairement fermée pour maintenance..."
+						placeholder="La boutique est temporairement fermée pour maintenance…"
 						maxLength={500}
 						showCounter
 						rows={4}
@@ -87,28 +89,30 @@ export function CloseStoreForm() {
 				</p>
 			</div>
 
-			<form.Subscribe selector={(state) => state.values.closureMessage}>
-				{(closureMessage) => (
-					<div className="flex border-t pt-6 md:justify-end">
-						<Button
-							type="submit"
-							variant="destructive"
-							disabled={isPending || !closureMessage.trim()}
-							aria-busy={isPending}
-							onClick={() => triggerHaptic("medium")}
-							className="min-h-11"
-							style={{ viewTransitionName: "store-status-action" }}
-						>
-							{isPending ? (
-								<LoaderCircle className="mr-2 size-4 animate-spin" />
-							) : (
-								<Lock className="mr-2 size-4" />
-							)}
-							{isPending ? "Fermeture..." : "Fermer la boutique"}
-						</Button>
-					</div>
-				)}
-			</form.Subscribe>
+			<AdminFormFooter pending={isPending} className="mt-2">
+				<form.Subscribe selector={(state) => state.values.closureMessage}>
+					{(closureMessage) => (
+						<div className="flex md:justify-end">
+							<Button
+								type="submit"
+								variant="destructive"
+								disabled={isPending || !closureMessage.trim()}
+								aria-busy={isPending}
+								onClick={() => triggerHaptic("medium")}
+								className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
+								style={{ viewTransitionName: "store-status-action" }}
+							>
+								{isPending ? (
+									<LoaderCircle className="mr-2 size-4 animate-spin" />
+								) : (
+									<Lock className="mr-2 size-4" />
+								)}
+								{isPending ? "Fermeture…" : "Fermer la boutique"}
+							</Button>
+						</div>
+					)}
+				</form.Subscribe>
+			</AdminFormFooter>
 		</form>
 	);
 }

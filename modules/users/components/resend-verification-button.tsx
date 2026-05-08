@@ -81,14 +81,14 @@ export function ResendVerificationButton({ email }: ResendVerificationButtonProp
 		>
 			{isPending ? (
 				<>
-					<LoaderCircle className="h-3 w-3 animate-spin" aria-hidden="true" />
-					Envoi...
+					<LoaderCircle className="size-3 animate-spin" aria-hidden="true" />
+					Envoi…
 				</>
 			) : cooldown > 0 ? (
 				<>Renvoyer dans {cooldown}s</>
 			) : (
 				<>
-					<Mail className="h-3 w-3" aria-hidden="true" />
+					<Mail className="size-3" aria-hidden="true" />
 					Renvoyer l&apos;email
 				</>
 			)}

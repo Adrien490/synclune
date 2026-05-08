@@ -10,7 +10,7 @@
 /**
  * Représentation minimale d'un utilisateur pour la navigation
  */
-export type MinimalUser = {
+type MinimalUser = {
 	id: string;
 	email: string;
 	name: string | null;

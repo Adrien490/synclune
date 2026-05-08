@@ -14,7 +14,7 @@ export function useApplyCartDiscount() {
 		withCallbacks(
 			applyCartDiscount,
 			createToastCallbacks({
-				loadingMessage: "Vérification du code...",
+				loadingMessage: "Vérification du code…",
 				showSuccessToast: true,
 				showErrorToast: true,
 			}),

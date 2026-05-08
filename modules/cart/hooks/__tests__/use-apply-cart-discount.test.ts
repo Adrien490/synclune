@@ -80,7 +80,7 @@ describe("useApplyCartDiscount", () => {
 				result.current.action(makeFormData({ code: "SUMMER10" }));
 			});
 
-			expect(mockToast.loading).toHaveBeenCalledWith("Vérification du code...");
+			expect(mockToast.loading).toHaveBeenCalledWith("Vérification du code…");
 		});
 
 		it("dismisses loading toast on completion", async () => {

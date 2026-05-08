@@ -16,9 +16,9 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<CardTitle className="flex items-center gap-2 text-base">
-					<MapPin className="h-5 w-5" aria-hidden="true" />
+					<MapPin className="size-5" aria-hidden="true" />
 					Adresse de livraison
 				</CardTitle>
 				<CopyButton text={shippingAddressText} label="Adresse" />
@@ -36,7 +36,7 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 					<p>{order.shippingCountry}</p>
 					{order.shippingPhone && (
 						<p className="text-muted-foreground mt-2 flex items-center gap-1">
-							<Phone className="h-3 w-3" aria-hidden="true" />
+							<Phone className="size-3" aria-hidden="true" />
 							{order.shippingPhone}
 						</p>
 					)}

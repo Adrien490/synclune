@@ -8,7 +8,7 @@ function StepIllustration({ stepId }: { stepId: string }) {
 	const Illustration = STEP_ILLUSTRATIONS[stepId];
 	if (!Illustration) return null;
 	return (
-		<Illustration className="h-7 w-7 motion-safe:transition-[color,filter,rotate,translate,scale,opacity] motion-safe:duration-[var(--duration-slow)]" />
+		<Illustration className="size-7 motion-safe:transition-[color,filter,rotate,translate,scale,opacity] motion-safe:duration-[var(--duration-slow)]" />
 	);
 }
 
@@ -40,7 +40,7 @@ export function CreativeProcessTimeline() {
 							{/* Icon circle with illustration overlay */}
 							<div
 								className={cn(
-									"relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)]",
+									"relative z-10 mx-auto flex size-12 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)]",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,
@@ -58,7 +58,7 @@ export function CreativeProcessTimeline() {
 								{step.title}
 								{isLast(index) && (
 									<Sparkles
-										className="text-secondary ml-1.5 inline-block h-4 w-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
+										className="text-secondary ml-1.5 inline-block size-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
 										aria-hidden="true"
 									/>
 								)}
@@ -98,7 +98,7 @@ export function CreativeProcessTimeline() {
 							{/* Desktop (sm-lg): icon circles */}
 							<div
 								className={cn(
-									"relative z-20 hidden h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)] sm:flex lg:hidden",
+									"relative z-20 hidden size-12 shrink-0 items-center justify-center rounded-full border-2 motion-safe:transition-[scale,rotate,box-shadow] motion-safe:duration-[var(--duration-slow)] sm:flex lg:hidden",
 									step.color,
 									"motion-safe:group-hover:scale-110 motion-safe:group-hover:-rotate-3",
 									step.iconHoverClass,
@@ -119,7 +119,7 @@ export function CreativeProcessTimeline() {
 							<div
 								aria-hidden="true"
 								className={cn(
-									"mobile-step-scroll flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold sm:hidden",
+									"mobile-step-scroll flex size-12 shrink-0 items-center justify-center rounded-full text-lg font-semibold sm:hidden",
 									step.color,
 									step.intensity.ring,
 									step.intensity.shadow,
@@ -136,7 +136,7 @@ export function CreativeProcessTimeline() {
 									{step.title}
 									{isLast(index) && (
 										<Sparkles
-											className="text-secondary ml-1.5 inline-block h-4 w-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
+											className="text-secondary ml-1.5 inline-block size-4 opacity-70 motion-safe:transition-opacity motion-safe:group-hover:opacity-100"
 											aria-hidden="true"
 										/>
 									)}

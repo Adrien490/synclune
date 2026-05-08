@@ -53,7 +53,7 @@ export function DiscountUpdateForm({ discount }: DiscountUpdateFormProps) {
 		withCallbacks(
 			updateDiscount,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du code...",
+				loadingMessage: "Mise à jour du code…",
 				onSuccess: () => haptic("success"),
 				onError: () => haptic("error"),
 			}),
@@ -280,7 +280,7 @@ export function DiscountUpdateForm({ discount }: DiscountUpdateFormProps) {
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
 						<Button disabled={!canSubmit || isPending} type="submit">
-							{isPending ? "Enregistrement..." : "Enregistrer"}
+							{isPending ? "Enregistrement…" : "Enregistrer"}
 						</Button>
 					)}
 				</form.Subscribe>

@@ -63,7 +63,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 		withCallbacks(
 			exportSingleOrder,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour de la commande...",
+				loadingMessage: "Mise à jour de la commande…",
 				onSuccess: (state) => {
 					if (!state.csv || !state.filename) return;
 					const blob = new Blob([state.csv], { type: "text/csv;charset=utf-8" });
@@ -172,19 +172,19 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				{/* Action primaire contextuelle — full-width mobile, naturelle desktop */}
 				{permissions.canMarkAsPaid && (
 					<Button size="sm" onClick={handleMarkAsPaid} className="flex-1 md:flex-none">
-						<CreditCard className="h-4 w-4" aria-hidden="true" />
+						<CreditCard className="size-4" aria-hidden="true" />
 						Marquer payée
 					</Button>
 				)}
 				{permissions.canMarkAsShipped && (
 					<Button size="sm" onClick={handleMarkAsShipped} className="flex-1 md:flex-none">
-						<Truck className="h-4 w-4" aria-hidden="true" />
+						<Truck className="size-4" aria-hidden="true" />
 						Marquer expédiée
 					</Button>
 				)}
 				{permissions.canMarkAsDelivered && (
 					<Button size="sm" onClick={handleMarkAsDelivered} className="flex-1 md:flex-none">
-						<CircleCheck className="h-4 w-4" aria-hidden="true" />
+						<CircleCheck className="size-4" aria-hidden="true" />
 						Marquer livrée
 					</Button>
 				)}
@@ -193,17 +193,17 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" size="sm">
-							<Ellipsis className="h-4 w-4" aria-hidden="true" />
+							<Ellipsis className="size-4" aria-hidden="true" />
 							<span className="sr-only">Plus d'actions</span>
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end" className="w-52">
 						<DropdownMenuItem onClick={handleOpenNotes}>
-							<StickyNote className="h-4 w-4" aria-hidden="true" />
+							<StickyNote className="size-4" aria-hidden="true" />
 							Notes {notesCount > 0 && `(${notesCount})`}
 						</DropdownMenuItem>
 						<DropdownMenuItem onClick={handleResendEmail}>
-							<Mail className="h-4 w-4" aria-hidden="true" />
+							<Mail className="size-4" aria-hidden="true" />
 							Renvoyer un email
 						</DropdownMenuItem>
 						<DropdownMenuItem asChild>
@@ -214,28 +214,28 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 									disabled={isExporting}
 									className="flex w-full items-center gap-2 px-2 py-1.5 text-sm"
 								>
-									<Download className="h-4 w-4" aria-hidden="true" />
-									{isExporting ? "Export..." : "Exporter en CSV"}
+									<Download className="size-4" aria-hidden="true" />
+									{isExporting ? "Export…" : "Exporter en CSV"}
 								</button>
 							</form>
 						</DropdownMenuItem>
 						{permissions.canUpdateTracking && (
 							<DropdownMenuItem onClick={handleUpdateTracking}>
-								<Edit className="h-4 w-4" aria-hidden="true" />
+								<Edit className="size-4" aria-hidden="true" />
 								Modifier le suivi
 							</DropdownMenuItem>
 						)}
 						{permissions.canRefund && (
 							<DropdownMenuItem asChild>
 								<Link href={`/admin/ventes/remboursements/nouveau?orderId=${order.id}`}>
-									<RotateCcw className="h-4 w-4" aria-hidden="true" />
+									<RotateCcw className="size-4" aria-hidden="true" />
 									Créer un remboursement
 								</Link>
 							</DropdownMenuItem>
 						)}
 						{canMarkAsReturned && (
 							<DropdownMenuItem onClick={handleMarkAsReturned}>
-								<PackageX className="h-4 w-4" aria-hidden="true" />
+								<PackageX className="size-4" aria-hidden="true" />
 								Marquer retournée
 							</DropdownMenuItem>
 						)}
@@ -245,7 +245,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 								onClick={handleRevertToProcessing}
 								className="text-destructive focus:text-destructive"
 							>
-								<Undo2 className="h-4 w-4" aria-hidden="true" />
+								<Undo2 className="size-4" aria-hidden="true" />
 								Annuler l'expédition
 							</DropdownMenuItem>
 						)}
@@ -254,7 +254,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 								onClick={handleCancel}
 								className="text-destructive focus:text-destructive"
 							>
-								<CircleX className="h-4 w-4" aria-hidden="true" />
+								<CircleX className="size-4" aria-hidden="true" />
 								Annuler la commande
 							</DropdownMenuItem>
 						)}

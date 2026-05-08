@@ -307,7 +307,7 @@ export const WISHLIST_MERGE_LIMIT: RateLimitConfig = {
  *
  * Stricte car operation destructive (suppression de tous les items, jusqu'a 500)
  */
-export const WISHLIST_CLEAR_LIMIT: RateLimitConfig = {
+const WISHLIST_CLEAR_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
@@ -318,7 +318,7 @@ export const WISHLIST_CLEAR_LIMIT: RateLimitConfig = {
  * Aligne avec CART_ADD_LIMIT car l'action ajoute au panier (cote serveur,
  * un appel = un add cart + un remove wishlist atomique)
  */
-export const WISHLIST_MOVE_TO_CART_LIMIT: RateLimitConfig = {
+const WISHLIST_MOVE_TO_CART_LIMIT: RateLimitConfig = {
 	limit: 15,
 	windowMs: minutes(1),
 };
@@ -332,7 +332,7 @@ export const WISHLIST_MOVE_TO_CART_LIMIT: RateLimitConfig = {
  *
  * Stricte car operation destructive (suppression de tous les items)
  */
-export const CART_CLEAR_LIMIT: RateLimitConfig = {
+const CART_CLEAR_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
@@ -342,7 +342,7 @@ export const CART_CLEAR_LIMIT: RateLimitConfig = {
  *
  * Stricte contre brute force de codes (complementaire au rate limit discount validate)
  */
-export const CART_DISCOUNT_LIMIT: RateLimitConfig = {
+const CART_DISCOUNT_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
@@ -352,7 +352,7 @@ export const CART_DISCOUNT_LIMIT: RateLimitConfig = {
  *
  * Permissive car modifications fréquentes legitimes en checkout
  */
-export const CART_METADATA_LIMIT: RateLimitConfig = {
+const CART_METADATA_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(1),
 };
@@ -362,7 +362,7 @@ export const CART_METADATA_LIMIT: RateLimitConfig = {
  *
  * Modérée car action legitime mais potentiellement couteuse (multiple adds)
  */
-export const CART_REORDER_LIMIT: RateLimitConfig = {
+const CART_REORDER_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
@@ -634,22 +634,22 @@ export const ADMIN_COLLECTION_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
-export const ADMIN_COLLECTION_DUPLICATE_LIMIT: RateLimitConfig = {
+const ADMIN_COLLECTION_DUPLICATE_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_COLLECTION_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
+const ADMIN_COLLECTION_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_COLLECTION_BULK_STATUS_LIMIT: RateLimitConfig = {
+const ADMIN_COLLECTION_BULK_STATUS_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_COLLECTION_MANAGE_PRODUCTS_LIMIT: RateLimitConfig = {
+const ADMIN_COLLECTION_MANAGE_PRODUCTS_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(5),
 };
@@ -731,7 +731,7 @@ export const USER_CANCEL_DELETION_LIMIT: RateLimitConfig = {
  *
  * STRICT : Action de securite qui change les methodes d'authentification
  */
-export const USER_UNLINK_OAUTH_LIMIT: RateLimitConfig = {
+const USER_UNLINK_OAUTH_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 dissociations maximum
 	windowMs: hours(1), // par heure
 };
@@ -807,7 +807,7 @@ export const ADMIN_USER_SEND_RESET_LIMIT: RateLimitConfig = {
  * STRICT : Protege l'utilisateur cible contre le flood d'emails
  * (meme user ne peut pas recevoir plus de 3 emails/heure meme depuis plusieurs admins)
  */
-export const ADMIN_USER_SEND_RESET_TARGET_LIMIT: RateLimitConfig = {
+const ADMIN_USER_SEND_RESET_TARGET_LIMIT: RateLimitConfig = {
 	limit: 3, // 3 emails maximum par user cible
 	windowMs: hours(1), // par heure
 };
@@ -827,7 +827,7 @@ export const ADMIN_USER_INVALIDATE_SESSIONS_LIMIT: RateLimitConfig = {
  *
  * TRES STRICT : Action irreversible, demandes legales/CNIL/DPO uniquement
  */
-export const ADMIN_USER_ANONYMIZE_NOW_LIMIT: RateLimitConfig = {
+const ADMIN_USER_ANONYMIZE_NOW_LIMIT: RateLimitConfig = {
 	limit: 5, // 5 anonymisations maximum
 	windowMs: hours(1), // par heure
 };
@@ -1015,7 +1015,7 @@ export const ADMIN_MATERIAL_REFRESH_LIMIT: RateLimitConfig = {
 /**
  * Limite pour la fusion de materiaux (admin)
  */
-export const ADMIN_MATERIAL_MERGE_LIMIT: RateLimitConfig = {
+const ADMIN_MATERIAL_MERGE_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
@@ -1097,7 +1097,7 @@ export const ADMIN_COLOR_REFRESH_LIMIT: RateLimitConfig = {
 /**
  * Limite pour la fusion de couleurs (admin)
  */
-export const ADMIN_COLOR_MERGE_LIMIT: RateLimitConfig = {
+const ADMIN_COLOR_MERGE_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
@@ -1105,7 +1105,7 @@ export const ADMIN_COLOR_MERGE_LIMIT: RateLimitConfig = {
 /**
  * Limite pour le reordonnancement de couleurs (admin)
  */
-export const ADMIN_COLOR_REORDER_LIMIT: RateLimitConfig = {
+const ADMIN_COLOR_REORDER_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(5),
 };
@@ -1159,12 +1159,12 @@ export const ADMIN_PRODUCT_TYPE_REFRESH_LIMIT: RateLimitConfig = {
 	windowMs: minutes(1),
 };
 
-export const ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT: RateLimitConfig = {
+const ADMIN_PRODUCT_TYPE_DUPLICATE_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_PRODUCT_TYPE_MERGE_LIMIT: RateLimitConfig = {
+const ADMIN_PRODUCT_TYPE_MERGE_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
@@ -1420,7 +1420,7 @@ export const ADMIN_DISCOUNT_REFRESH_LIMIT: RateLimitConfig = {
 /**
  * Limite pour la restauration d'un code promo soft-deleted (admin)
  */
-export const ADMIN_DISCOUNT_RESTORE_LIMIT: RateLimitConfig = {
+const ADMIN_DISCOUNT_RESTORE_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
@@ -1430,7 +1430,7 @@ export const ADMIN_DISCOUNT_RESTORE_LIMIT: RateLimitConfig = {
  *
  * STRICT: chaque appel peut generer jusqu'a 1000 codes (campagnes marketing)
  */
-export const ADMIN_DISCOUNT_BULK_GENERATE_LIMIT: RateLimitConfig = {
+const ADMIN_DISCOUNT_BULK_GENERATE_LIMIT: RateLimitConfig = {
 	limit: 3,
 	windowMs: minutes(5),
 };
@@ -1438,7 +1438,7 @@ export const ADMIN_DISCOUNT_BULK_GENERATE_LIMIT: RateLimitConfig = {
 /**
  * Limite pour la prolongation rapide de validite (admin)
  */
-export const ADMIN_DISCOUNT_EXTEND_VALIDITY_LIMIT: RateLimitConfig = {
+const ADMIN_DISCOUNT_EXTEND_VALIDITY_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(5),
 };
@@ -1448,7 +1448,7 @@ export const ADMIN_DISCOUNT_EXTEND_VALIDITY_LIMIT: RateLimitConfig = {
  *
  * Stricte car action sensible (perte du compteur usageCount)
  */
-export const ADMIN_DISCOUNT_RESET_COUNTER_LIMIT: RateLimitConfig = {
+const ADMIN_DISCOUNT_RESET_COUNTER_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
@@ -1525,7 +1525,7 @@ export const ADMIN_REVIEW_MODERATE_LIMIT: RateLimitConfig = {
 /**
  * Limite pour la restauration d'un avis soft-deleted (admin)
  */
-export const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
+const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
@@ -1574,12 +1574,12 @@ export const ADMIN_ANNOUNCEMENT_TOGGLE_STATUS_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
-export const ADMIN_ANNOUNCEMENT_BULK_DELETE_LIMIT: RateLimitConfig = {
+const ADMIN_ANNOUNCEMENT_BULK_DELETE_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_ANNOUNCEMENT_DUPLICATE_LIMIT: RateLimitConfig = {
+const ADMIN_ANNOUNCEMENT_DUPLICATE_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
@@ -1602,27 +1602,27 @@ export const PUBLIC_ANNOUNCEMENT_DISMISS_LIMIT: RateLimitConfig = {
 // 🏪 ADMIN STORE SETTINGS
 // ========================================
 
-export const ADMIN_STORE_SETTINGS_CLOSE_STORE_LIMIT: RateLimitConfig = {
+const ADMIN_STORE_SETTINGS_CLOSE_STORE_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_STORE_SETTINGS_REOPEN_STORE_LIMIT: RateLimitConfig = {
+const ADMIN_STORE_SETTINGS_REOPEN_STORE_LIMIT: RateLimitConfig = {
 	limit: 5,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_STORE_SETTINGS_UPDATE_CLOSURE_MESSAGE_LIMIT: RateLimitConfig = {
+const ADMIN_STORE_SETTINGS_UPDATE_CLOSURE_MESSAGE_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT: RateLimitConfig = {
+const ADMIN_STORE_SETTINGS_UPDATE_REOPENS_AT_LIMIT: RateLimitConfig = {
 	limit: 10,
 	windowMs: minutes(5),
 };
 
-export const ADMIN_STORE_SETTINGS_UPDATE_ANNOUNCEMENT_LIMIT: RateLimitConfig = {
+const ADMIN_STORE_SETTINGS_UPDATE_ANNOUNCEMENT_LIMIT: RateLimitConfig = {
 	limit: 20,
 	windowMs: minutes(5),
 };

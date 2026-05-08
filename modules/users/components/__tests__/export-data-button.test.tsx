@@ -79,10 +79,10 @@ describe("ExportDataButton", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Export en cours...' when isPending is true", () => {
+	it("shows 'Export en cours…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<ExportDataButton />);
-		expect(screen.getByRole("button").textContent).toBe("Export en cours...");
+		expect(screen.getByRole("button").textContent).toBe("Export en cours…");
 	});
 
 	it("disables button when isPending is true", () => {

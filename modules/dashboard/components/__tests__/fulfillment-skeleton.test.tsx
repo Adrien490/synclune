@@ -108,11 +108,9 @@ describe("FulfillmentSkeleton", () => {
 	it("renders 4 legend item skeletons", () => {
 		render(<FulfillmentSkeleton />);
 
-		// Each legend item has a dot skeleton (h-2.5 w-2.5 rounded-full) and a label skeleton
+		// Each legend item has a dot skeleton (size-2.5 rounded-full) and a label skeleton
 		const skeletons = screen.getAllByTestId("skeleton");
-		const dotSkeletons = skeletons.filter(
-			(s) => s.className.includes("h-2.5") && s.className.includes("w-2.5"),
-		);
+		const dotSkeletons = skeletons.filter((s) => s.className.includes("size-2.5"));
 		expect(dotSkeletons).toHaveLength(4);
 	});
 

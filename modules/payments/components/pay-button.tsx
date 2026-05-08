@@ -122,11 +122,11 @@ export function PayButton({
 
 	const phaseMessage =
 		phase === "validating"
-			? "Validation..."
+			? "Validation…"
 			: phase === "creating-order"
-				? "Création de la commande..."
+				? "Création de la commande…"
 				: phase === "awaiting-3ds"
-					? "Vérification 3D Secure..."
+					? "Vérification 3D Secure…"
 					: "";
 
 	return (
@@ -135,7 +135,7 @@ export function PayButton({
 				<Alert role="status" aria-live="polite">
 					<ShieldCheck className="size-4" />
 					<AlertDescription>
-						Vérification 3D Secure en cours — une fenêtre de votre banque va s&apos;ouvrir.
+						Vérification 3D Secure en cours, une fenêtre de votre banque va s&apos;ouvrir.
 					</AlertDescription>
 				</Alert>
 			)}
@@ -160,7 +160,7 @@ export function PayButton({
 				{isProcessing ? (
 					<>
 						<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-						<span>{phaseMessage || "Traitement..."}</span>
+						<span>{phaseMessage || "Traitement…"}</span>
 					</>
 				) : (
 					<>

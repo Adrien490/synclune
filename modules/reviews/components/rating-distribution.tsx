@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import { X } from "lucide-react";
 
 import { Progress } from "@/shared/components/ui/progress";
@@ -19,7 +19,7 @@ interface RatingDistributionProps {
  * Baymard: 90% des utilisateurs cliquent instinctivement sur les barres
  * pour filtrer, et 53% recherchent activement les avis négatifs
  */
-export function RatingDistribution({ distribution, className }: RatingDistributionProps) {
+function RatingDistributionInner({ distribution, className }: RatingDistributionProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -166,5 +166,13 @@ export function RatingDistribution({ distribution, className }: RatingDistributi
 				</div>
 			)}
 		</div>
+	);
+}
+
+export function RatingDistribution(props: ComponentProps<typeof RatingDistributionInner>) {
+	return (
+		<Suspense fallback={null}>
+			<RatingDistributionInner {...props} />
+		</Suspense>
 	);
 }

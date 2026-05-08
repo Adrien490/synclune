@@ -6,6 +6,7 @@ import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { Button } from "@/shared/components/ui/button";
 import { useAppForm } from "@/shared/components/forms";
 import { createCollection } from "@/modules/collections/actions/create-collection";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { cn } from "@/shared/utils/cn";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
@@ -30,6 +31,7 @@ export function CreateCollectionForm({
 	className,
 }: CreateCollectionFormProps = {}) {
 	const router = useRouter();
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
 		defaultValues: {
@@ -43,7 +45,7 @@ export function CreateCollectionForm({
 		withCallbacks(
 			createCollection,
 			createToastCallbacks({
-				loadingMessage: "Création de la collection...",
+				loadingMessage: "Création de la collection…",
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					form.reset();
@@ -80,10 +82,15 @@ export function CreateCollectionForm({
 
 	return (
 		<form
+			ref={formRef}
 			action={action}
 			className={cn("space-y-4", className)}
+			onInvalidCapture={onInvalidCapture}
 			onSubmit={() => {
 				void form.handleSubmit();
+				if (!form.state.canSubmit) {
+					focusFirstInvalid();
+				}
 			}}
 		>
 			{/* Hidden field pour status */}
@@ -134,7 +141,7 @@ export function CreateCollectionForm({
 				{(field) => (
 					<field.TextareaField
 						label="Description"
-						placeholder="Décrivez cette collection..."
+						placeholder="Décrivez cette collection…"
 						disabled={isPending}
 						rows={4}
 					/>
@@ -160,7 +167,7 @@ export function CreateCollectionForm({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
-								{isPending ? "Création..." : "Créer"}
+								{isPending ? "Création…" : "Créer"}
 							</Button>
 						)}
 					</form.Subscribe>

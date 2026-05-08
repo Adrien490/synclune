@@ -74,7 +74,7 @@ function TooltipMaybe({
  * <Fab
  *   fabKey={FAB_KEYS.ADMIN_DASHBOARD}
  *   initialHidden={isHidden}
- *   icon={<Plus className="h-6 w-6" />}
+ *   icon={<Plus className="size-6" />}
  *   tooltip={{ title: "Actions rapides" }}
  *   ariaLabel="Ouvrir le menu d'actions rapides"
  *   onClick={() => setOpen(true)}

@@ -366,10 +366,10 @@ describe("ChangeProductStatusAlertDialog", () => {
 			mockToggleProductStatus.isPending = true;
 		});
 
-		it("shows 'Changement en cours...' when pending", () => {
+		it("shows 'Changement en cours…' when pending", () => {
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Changement en cours...");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Changement en cours…");
 		});
 
 		it("shows loader icon when pending", () => {

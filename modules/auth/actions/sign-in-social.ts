@@ -3,9 +3,8 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { signInSocialSchema } from "../schemas/auth.schemas";
 
 export const signInSocial = async (_: unknown, formData: FormData): Promise<ActionState> => {
@@ -39,9 +38,7 @@ export const signInSocial = async (_: unknown, formData: FormData): Promise<Acti
 
 		redirect(response.url);
 	} catch (err) {
-		if (isRedirectError(err)) {
-			throw err;
-		}
+		unstable_rethrow(err);
 
 		// Message générique pour éviter l'exposition d'erreurs techniques
 		return error("Une erreur est survenue lors de la connexion. Veuillez réessayer.");

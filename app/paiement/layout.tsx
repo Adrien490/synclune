@@ -50,7 +50,7 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 						<Link
 							href="/produits"
 							aria-label="Boutique"
-							className="group text-muted-foreground hover:text-foreground hover:bg-muted/60 inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm transition-colors sm:px-3"
+							className="group text-muted-foreground hover:text-foreground hover:bg-muted/60 inline-flex items-center gap-1.5 rounded-lg p-2 text-sm transition-colors sm:px-3"
 						>
 							<ArrowLeft className="size-4 transition-transform group-hover:-translate-x-0.5" />
 							<span className="hidden sm:inline">Boutique</span>

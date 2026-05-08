@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import { type ProductStatus } from "@/app/generated/prisma/browser";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
@@ -171,7 +172,7 @@ function formatProductFilter(
 	};
 }
 
-export function ProductsFilterBadges({
+function ProductsFilterBadgesInner({
 	productTypes,
 	collections,
 	colors,
@@ -196,5 +197,13 @@ export function ProductsFilterBadges({
 				})
 			}
 		/>
+	);
+}
+
+export function ProductsFilterBadges(props: ComponentProps<typeof ProductsFilterBadgesInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductsFilterBadgesInner {...props} />
+		</Suspense>
 	);
 }

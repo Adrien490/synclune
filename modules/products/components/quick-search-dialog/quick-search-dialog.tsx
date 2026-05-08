@@ -148,9 +148,7 @@ export function QuickSearchDialog({
 	const shouldReduceMotion = useReducedMotion();
 
 	const currentType = productTypes[placeholderIndex];
-	const placeholder = currentType
-		? `Rechercher : ${currentType.label}...`
-		: "Rechercher un bijou...";
+	const placeholder = currentType ? `Rechercher : ${currentType.label}...` : "Rechercher un bijou…";
 	const showAnimatedPlaceholder = inputValue.length === 0 && productTypes.length > 0;
 
 	const navigateToSearch = (term: string, { saveToRecent = true } = {}) => {

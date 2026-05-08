@@ -65,7 +65,7 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 			</h2>
 			<div className="border-border/60 border-t pt-4">
 				<Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
-					<RotateCcw className="mr-2 h-4 w-4" />
+					<RotateCcw className="mr-2 size-4" />
 					Demander un retour
 				</Button>
 			</div>
@@ -112,7 +112,7 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 							<Textarea
 								id="return-message"
 								name="message"
-								placeholder="Décrivez la raison de votre retour..."
+								placeholder="Décrivez la raison de votre retour…"
 								maxLength={500}
 								rows={3}
 								disabled={isPending}
@@ -134,8 +134,8 @@ export function RequestReturnButton({ orderId, daysRemaining }: RequestReturnBut
 							<Button type="submit" disabled={!reason || isPending}>
 								{isPending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 motion-safe:animate-spin" />
-										Envoi...
+										<LoaderCircle className="mr-2 size-4 motion-safe:animate-spin" />
+										Envoi…
 									</>
 								) : (
 									"Envoyer la demande"

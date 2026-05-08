@@ -98,7 +98,7 @@ function MarkAsShippedFormContent({
 		<>
 			<ResponsiveDialogHeader>
 				<ResponsiveDialogTitle className="flex items-center gap-2">
-					<Truck className="h-5 w-5" />
+					<Truck className="size-5" />
 					Marquer comme expédiée
 				</ResponsiveDialogTitle>
 				<ResponsiveDialogDescription>
@@ -183,7 +183,7 @@ function MarkAsShippedFormContent({
 					</div>
 
 					{/* Custom URL Mode Checkbox */}
-					<div className="bg-muted/20 flex items-start space-x-3 rounded-lg border p-3">
+					<div className="bg-muted/20 flex items-start gap-x-3 rounded-lg border p-3">
 						<Checkbox
 							id="customUrlMode"
 							checked={customUrlMode}
@@ -195,7 +195,7 @@ function MarkAsShippedFormContent({
 								htmlFor="customUrlMode"
 								className="flex cursor-pointer items-center gap-2 text-sm"
 							>
-								<Link2 className="h-4 w-4" />
+								<Link2 className="size-4" />
 								URL personnalisée
 							</Label>
 							<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
@@ -203,7 +203,7 @@ function MarkAsShippedFormContent({
 					</div>
 
 					{/* Send Email Checkbox */}
-					<div className="bg-muted/30 flex items-start space-x-3 rounded-lg border p-4">
+					<div className="bg-muted/30 flex items-start gap-x-3 rounded-lg border p-4">
 						<Checkbox
 							id="sendEmailCheckbox"
 							checked={sendEmail}
@@ -212,7 +212,7 @@ function MarkAsShippedFormContent({
 						/>
 						<div className="space-y-1 leading-none">
 							<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
-								<Mail className="h-4 w-4" />
+								<Mail className="size-4" />
 								Envoyer l'email de confirmation
 							</Label>
 							<p className="text-muted-foreground text-xs">
@@ -228,7 +228,7 @@ function MarkAsShippedFormContent({
 						Annuler
 					</Button>
 					<Button type="submit" disabled={isPending || !trackingNumber.trim()}>
-						{isPending ? "Expédition..." : "Valider l'expédition"}
+						{isPending ? "Expédition…" : "Valider l'expédition"}
 					</Button>
 				</ResponsiveDialogFooter>
 			</form>

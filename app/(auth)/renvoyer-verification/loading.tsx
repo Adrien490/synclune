@@ -10,7 +10,7 @@ export default function ResendVerificationLoading() {
 
 			{/* Logo skeleton */}
 			<div className="absolute top-4 right-4 z-20 sm:top-6 sm:right-6">
-				<Skeleton className="h-11 w-11 rounded-full" />
+				<Skeleton className="size-11 rounded-full" />
 			</div>
 
 			{/* Contenu principal */}
@@ -28,8 +28,8 @@ export default function ResendVerificationLoading() {
 					<div className="space-y-6">
 						<div className="bg-card rounded-lg border p-6 shadow-sm">
 							<div className="mb-4 flex items-start gap-3">
-								<Skeleton className="h-5 w-5 shrink-0" />
-								<div className="flex-1 space-y-1">
+								<Skeleton className="size-5 shrink-0" />
+								<div className="flex-1 gap-y-1">
 									<Skeleton className="h-4 w-24" />
 									<Skeleton className="h-4 w-full" />
 								</div>

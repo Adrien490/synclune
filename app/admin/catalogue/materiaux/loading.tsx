@@ -7,7 +7,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function MaterialsManagementLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des matériaux">
-			<span className="sr-only">Chargement des matériaux...</span>
+			<span className="sr-only">Chargement des matériaux…</span>
 
 			<PageHeader
 				variant="compact"

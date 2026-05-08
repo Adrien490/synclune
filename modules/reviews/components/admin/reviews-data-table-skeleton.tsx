@@ -56,7 +56,7 @@ export function ReviewsDataTableSkeleton() {
 									<Skeleton className="h-5 w-14" />
 								</TableCell>
 								<TableCell>
-									<Skeleton className="ml-auto h-8 w-8" />
+									<Skeleton className="ml-auto size-8" />
 								</TableCell>
 							</TableRow>
 						))}

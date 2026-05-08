@@ -27,8 +27,8 @@ const itemCountBadgeVariants = cva(
 	{
 		variants: {
 			size: {
-				sm: "h-5 w-5 text-[10px]",
-				default: "h-[22px] w-[22px] text-[11px]",
+				sm: "size-5 text-[10px]",
+				default: "size-[22px] text-[11px]",
 			},
 		},
 		defaultVariants: {

@@ -6,7 +6,7 @@ import { filterCompatibleSkus } from "@/modules/skus/services/sku-filter.service
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Size } from "@/modules/skus/types/sku-selector.types";
 import dynamic from "next/dynamic";
 
@@ -40,7 +40,7 @@ interface SizeSelectorProps {
  * - Affichage en grid adaptatif (3-4 colonnes)
  * - Navigation clavier (fleches)
  */
-export function SizeSelector({
+function SizeSelectorInner({
 	sizes,
 	product,
 	productTypeSlug,
@@ -179,5 +179,13 @@ export function SizeSelector({
 				})}
 			</div>
 		</fieldset>
+	);
+}
+
+export function SizeSelector(props: ComponentProps<typeof SizeSelectorInner>) {
+	return (
+		<Suspense fallback={null}>
+			<SizeSelectorInner {...props} />
+		</Suspense>
 	);
 }

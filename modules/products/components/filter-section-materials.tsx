@@ -51,7 +51,7 @@ export function MaterialFilterSection({
 					<SectionSearch
 						value={materialSearch}
 						onChange={onMaterialSearchChange}
-						placeholder="Rechercher un matériau..."
+						placeholder="Rechercher un matériau…"
 					/>
 				)}
 				<div className="space-y-1">

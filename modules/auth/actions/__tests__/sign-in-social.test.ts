@@ -13,7 +13,7 @@ const {
 	mockError,
 	mockUnauthorized,
 	mockRedirect,
-	mockIsRedirectError,
+	mockUnstableRethrow,
 } = vi.hoisted(() => ({
 	mockAuth: {
 		api: {
@@ -26,14 +26,14 @@ const {
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
 	mockRedirect: vi.fn(),
-	mockIsRedirectError: vi.fn(),
+	mockUnstableRethrow: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("next/navigation", () => ({ redirect: mockRedirect }));
-vi.mock("next/dist/client/components/redirect-error", () => ({
-	isRedirectError: mockIsRedirectError,
+vi.mock("next/navigation", () => ({
+	redirect: mockRedirect,
+	unstable_rethrow: mockUnstableRethrow,
 }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
@@ -74,7 +74,8 @@ describe("signInSocial", () => {
 		mockAuth.api.getSession.mockResolvedValue(null);
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.signInSocial.mockResolvedValue({ url: "https://accounts.google.com/oauth" });
-		mockIsRedirectError.mockReturnValue(false);
+		// Default: unstable_rethrow no-op (non-redirect errors)
+		mockUnstableRethrow.mockImplementation(() => undefined);
 
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
 		mockUnauthorized.mockImplementation((msg: string) => ({
@@ -107,7 +108,9 @@ describe("signInSocial", () => {
 		mockRedirect.mockImplementation(() => {
 			throw redirectError;
 		});
-		mockIsRedirectError.mockReturnValue(true);
+		mockUnstableRethrow.mockImplementation((err: unknown) => {
+			if (err === redirectError) throw err;
+		});
 
 		await expect(signInSocial(undefined, validFormData)).rejects.toThrow("REDIRECT");
 
@@ -121,7 +124,9 @@ describe("signInSocial", () => {
 		mockRedirect.mockImplementation(() => {
 			throw redirectError;
 		});
-		mockIsRedirectError.mockReturnValue(true);
+		mockUnstableRethrow.mockImplementation((err: unknown) => {
+			if (err === redirectError) throw err;
+		});
 
 		await expect(signInSocial(undefined, validFormData)).rejects.toThrow("REDIRECT");
 
@@ -155,14 +160,15 @@ describe("signInSocial", () => {
 		mockRedirect.mockImplementation(() => {
 			throw redirectError;
 		});
-		mockIsRedirectError.mockReturnValue(true);
+		mockUnstableRethrow.mockImplementation((err: unknown) => {
+			if (err === redirectError) throw err;
+		});
 
 		await expect(signInSocial(undefined, validFormData)).rejects.toThrow("NEXT_REDIRECT");
 	});
 
 	it("should return generic error on unexpected exception", async () => {
 		mockAuth.api.signInSocial.mockRejectedValue(new Error("Network failure"));
-		mockIsRedirectError.mockReturnValue(false);
 
 		const result = await signInSocial(undefined, validFormData);
 
@@ -180,7 +186,9 @@ describe("signInSocial", () => {
 		mockRedirect.mockImplementation(() => {
 			throw redirectError;
 		});
-		mockIsRedirectError.mockReturnValue(true);
+		mockUnstableRethrow.mockImplementation((err: unknown) => {
+			if (err === redirectError) throw err;
+		});
 
 		await expect(signInSocial(undefined, formDataNoCallback)).rejects.toThrow("REDIRECT");
 

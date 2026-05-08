@@ -65,3 +65,99 @@ async function fetchColor(slug: string, includeInactive: boolean): Promise<GetCo
 		return null;
 	}
 }
+
+// ============================================================================
+// DETAIL — page admin enrichie (10 SKU actifs + count + produits distincts)
+// ============================================================================
+
+export type ColorDetailReturn = NonNullable<Awaited<ReturnType<typeof fetchColorDetail>>>;
+
+export async function getColorDetailBySlug(slug: string): Promise<ColorDetailReturn | null> {
+	if (!slug) return null;
+
+	const admin = await isAdmin();
+	if (!admin) return null;
+
+	return fetchColorDetail(slug);
+}
+
+async function fetchColorDetail(slug: string) {
+	"use cache";
+	cacheColorDetail(slug);
+
+	try {
+		return await prisma.color.findFirst({
+			where: { slug },
+			select: {
+				id: true,
+				slug: true,
+				name: true,
+				hex: true,
+				isActive: true,
+				position: true,
+				createdAt: true,
+				updatedAt: true,
+				skus: {
+					where: { isActive: true },
+					take: 10,
+					orderBy: { product: { title: "asc" } },
+					select: {
+						id: true,
+						sku: true,
+						size: true,
+						priceInclTax: true,
+						isDefault: true,
+						inventory: true,
+						material: { select: { name: true, slug: true } },
+						product: {
+							select: {
+								id: true,
+								slug: true,
+								title: true,
+								status: true,
+								skus: {
+									where: { isDefault: true },
+									take: 1,
+									select: {
+										images: {
+											where: { isPrimary: true },
+											take: 1,
+											select: { url: true, blurDataUrl: true, altText: true },
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				_count: { select: { skus: { where: { isActive: true } } } },
+			},
+		});
+	} catch (error) {
+		Sentry.captureException(error, {
+			tags: { module: "colors", operation: "fetchColorDetail" },
+			extra: { slug },
+		});
+		return null;
+	}
+}
+
+export async function getColorDistinctProductCount(colorId: string): Promise<number> {
+	const admin = await isAdmin();
+	if (!admin) return 0;
+
+	try {
+		const result = await prisma.productSku.findMany({
+			where: { colorId, isActive: true },
+			select: { productId: true },
+			distinct: ["productId"],
+		});
+		return result.length;
+	} catch (error) {
+		Sentry.captureException(error, {
+			tags: { module: "colors", operation: "getColorDistinctProductCount" },
+			extra: { colorId },
+		});
+		return 0;
+	}
+}

@@ -133,6 +133,7 @@ vi.mock("lucide-react", () => ({
 	Copy: () => <span data-testid="icon-copy" />,
 	DollarSign: () => <span data-testid="icon-dollar" />,
 	EllipsisVertical: () => <span data-testid="icon-more-vertical" />,
+	Eye: () => <span data-testid="icon-eye" />,
 	Package: () => <span data-testid="icon-package" />,
 	Pencil: () => <span data-testid="icon-pencil" />,
 	Power: () => <span data-testid="icon-power" />,

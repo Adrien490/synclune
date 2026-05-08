@@ -31,10 +31,10 @@ export function ProductSkuRowActions(props: ProductSkuRowActionsProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					className="size-11 p-0 transition-transform active:scale-95"
 					aria-label="Actions pour cette variante"
 				>
-					<EllipsisVertical className="h-4 w-4" />
+					<EllipsisVertical className="size-4" />
 					<span className="sr-only">Ouvrir le menu d&apos;actions</span>
 				</Button>
 			</ResponsiveActionMenuTrigger>

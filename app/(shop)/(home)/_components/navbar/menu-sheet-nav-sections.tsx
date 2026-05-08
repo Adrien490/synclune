@@ -116,7 +116,7 @@ export function UserHeader({ session, wishlistCount, cartCount }: UserHeaderProp
 	const firstName = session.user.name?.split(" ")[0] || "vous";
 
 	return (
-		<div className="bg-primary/5 mb-4 rounded-xl px-4 py-4">
+		<div className="bg-primary/5 mb-4 rounded-xl p-4">
 			<SheetClose asChild>
 				<Link
 					href={ROUTES.ACCOUNT.ROOT}

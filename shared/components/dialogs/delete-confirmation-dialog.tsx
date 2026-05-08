@@ -72,7 +72,7 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 	isPending,
 	hiddenFields,
 	submitLabel = "Supprimer",
-	pendingLabel = "Suppression...",
+	pendingLabel = "Suppression…",
 }: DeleteConfirmationDialogProps<T>) {
 	const dialog = useAlertDialog<T>(dialogId);
 

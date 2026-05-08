@@ -656,17 +656,17 @@ describe("ProductsFilterSheet", () => {
 
 		it("does not render color search input when colors count <= 8", () => {
 			renderDefault();
-			expect(screen.queryByPlaceholderText("Rechercher une couleur...")).not.toBeInTheDocument();
+			expect(screen.queryByPlaceholderText("Rechercher une couleur…")).not.toBeInTheDocument();
 		});
 
 		it("renders color search input when colors count > 8", () => {
 			renderDefault({ colors: manyColors });
-			expect(screen.getByPlaceholderText("Rechercher une couleur...")).toBeInTheDocument();
+			expect(screen.getByPlaceholderText("Rechercher une couleur…")).toBeInTheDocument();
 		});
 
 		it("filters colors when searching", async () => {
 			renderDefault({ colors: manyColors });
-			const searchInput = screen.getByPlaceholderText("Rechercher une couleur...");
+			const searchInput = screen.getByPlaceholderText("Rechercher une couleur…");
 			await act(async () => {
 				fireEvent.change(searchInput, { target: { value: "Couleur 1" } });
 			});
@@ -676,7 +676,7 @@ describe("ProductsFilterSheet", () => {
 
 		it("shows 'Aucun résultat' when color search yields no match", async () => {
 			renderDefault({ colors: manyColors });
-			const searchInput = screen.getByPlaceholderText("Rechercher une couleur...");
+			const searchInput = screen.getByPlaceholderText("Rechercher une couleur…");
 			await act(async () => {
 				fireEvent.change(searchInput, { target: { value: "zzzzzz" } });
 			});
@@ -707,17 +707,17 @@ describe("ProductsFilterSheet", () => {
 
 		it("does not render material search input when materials count <= 8", () => {
 			renderDefault();
-			expect(screen.queryByPlaceholderText("Rechercher un matériau...")).not.toBeInTheDocument();
+			expect(screen.queryByPlaceholderText("Rechercher un matériau…")).not.toBeInTheDocument();
 		});
 
 		it("renders material search input when materials count > 8", () => {
 			renderDefault({ materials: manyMaterials });
-			expect(screen.getByPlaceholderText("Rechercher un matériau...")).toBeInTheDocument();
+			expect(screen.getByPlaceholderText("Rechercher un matériau…")).toBeInTheDocument();
 		});
 
 		it("filters materials when searching", async () => {
 			renderDefault({ materials: manyMaterials });
-			const searchInput = screen.getByPlaceholderText("Rechercher un matériau...");
+			const searchInput = screen.getByPlaceholderText("Rechercher un matériau…");
 			await act(async () => {
 				fireEvent.change(searchInput, { target: { value: "Matériau 1" } });
 			});
@@ -727,7 +727,7 @@ describe("ProductsFilterSheet", () => {
 
 		it("shows 'Aucun résultat' when material search yields no match", async () => {
 			renderDefault({ materials: manyMaterials });
-			const searchInput = screen.getByPlaceholderText("Rechercher un matériau...");
+			const searchInput = screen.getByPlaceholderText("Rechercher un matériau…");
 			await act(async () => {
 				fireEvent.change(searchInput, { target: { value: "zzzzzz" } });
 			});
@@ -1181,13 +1181,13 @@ describe("ProductsFilterSheet", () => {
 	describe("search state management", () => {
 		it("color search input starts empty", () => {
 			renderDefault({ colors: manyColors });
-			const searchInput = screen.getByPlaceholderText("Rechercher une couleur...");
+			const searchInput = screen.getByPlaceholderText("Rechercher une couleur…");
 			expect((searchInput as HTMLInputElement).value).toBe("");
 		});
 
 		it("material search input starts empty", () => {
 			renderDefault({ materials: manyMaterials });
-			const searchInput = screen.getByPlaceholderText("Rechercher un matériau...");
+			const searchInput = screen.getByPlaceholderText("Rechercher un matériau…");
 			expect((searchInput as HTMLInputElement).value).toBe("");
 		});
 	});

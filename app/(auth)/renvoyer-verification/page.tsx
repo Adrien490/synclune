@@ -27,7 +27,7 @@ export default function ResendVerificationPage() {
 			<div className="space-y-6">
 				<div className="bg-card rounded-lg border p-6 shadow-sm">
 					<div className="mb-4 flex items-start gap-3">
-						<Mail className="text-primary mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+						<Mail className="text-primary mt-0.5 size-5 shrink-0" aria-hidden="true" />
 						<div className="space-y-1">
 							<p className="text-sm font-medium">Email non reçu ?</p>
 							<p className="text-muted-foreground text-sm">

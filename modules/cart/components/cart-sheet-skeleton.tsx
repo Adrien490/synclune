@@ -12,7 +12,7 @@ export function CartSheetSkeleton() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement du panier"
-			className="flex-1 space-y-4 px-6 py-4"
+			className="flex-1 gap-y-4 px-6 py-4"
 		>
 			{Array.from({ length: 3 }).map((_, i) => (
 				<div

@@ -198,11 +198,11 @@ describe("RemoveCartItemAlertDialog", () => {
 		expect(screen.getByTestId("confirm-btn")).toBeDisabled();
 	});
 
-	it("shows 'Retrait...' text when isPending", () => {
+	it("shows 'Retrait…' text when isPending", () => {
 		mockIsOpen.value = true;
 		mockIsPending.value = true;
 		render(<RemoveCartItemAlertDialog />);
-		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Retrait...");
+		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Retrait…");
 	});
 
 	it("shows loader icon when isPending", () => {

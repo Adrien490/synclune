@@ -1,7 +1,12 @@
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import {
+	BulkSelectionHeaderCheckbox,
+	BulkSelectionProvider,
+	BulkSelectionRowCheckbox,
+	TableEmptyState,
+} from "@/shared/components/data-table";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -16,6 +21,7 @@ import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.con
 import { DiscountType } from "@/app/generated/prisma/client";
 import { Ticket } from "lucide-react";
 import { DiscountRowActions } from "./discount-row-actions";
+import { DiscountsBulkActionsBar } from "./discounts-bulk-actions-bar";
 import { CreateDiscountButton } from "./create-discount-button";
 import { formatEuro } from "@/shared/utils/format-euro";
 import {
@@ -67,81 +73,96 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 		);
 	}
 
+	const pageItemIds = discounts.map((d) => d.id);
+
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<TableScrollContainer>
-					<Table
-						aria-label="Liste des codes promo"
-						caption="Liste des remises"
-						striped
-						className="min-w-full table-fixed"
-					>
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[18%]">Code</TableHead>
-								<TableHead className="w-[14%]">Type</TableHead>
-								<TableHead className="w-[12%]">Valeur</TableHead>
-								<TableHead className="w-[14%] text-center">Utilisations</TableHead>
-								<TableHead className="w-[10%] text-center">Statut</TableHead>
-								<TableHead
-									className="w-[8%] text-right"
-									aria-label="Actions disponibles pour chaque code promo"
-								>
-									Actions
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{discounts.map((discount) => (
-								<TableRow key={discount.id}>
-									<TableCell>
-										<code className="bg-muted rounded px-2 py-1 text-sm font-semibold">
-											{discount.code}
-										</code>
-									</TableCell>
-									<TableCell>
-										<span className="text-muted-foreground text-sm">
-											{DISCOUNT_TYPE_LABELS[discount.type]}
-										</span>
-									</TableCell>
-									<TableCell>
-										<span className="text-sm font-medium">
-											{formatValue(discount.type, discount.value)}
-										</span>
-									</TableCell>
-									<TableCell className="text-center">
-										<span className="text-sm">
-											{formatUsage(discount.usageCount, discount.maxUsageCount)}
-										</span>
-									</TableCell>
-									<TableCell className="text-center">
-										{(() => {
-											const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
-											return <Badge variant={status.variant}>{status.label}</Badge>;
-										})()}
-									</TableCell>
-									<TableCell>
-										<div className="flex justify-end">
-											<DiscountRowActions discount={discount} />
-										</div>
-									</TableCell>
+				<BulkSelectionProvider pageItemIds={pageItemIds}>
+					<DiscountsBulkActionsBar />
+					<TableScrollContainer>
+						<Table
+							aria-label="Liste des codes promo"
+							caption="Liste des remises"
+							striped
+							className="min-w-full table-fixed"
+						>
+							<TableHeader>
+								<TableRow>
+									<TableHead className="w-[4%]">
+										<BulkSelectionHeaderCheckbox itemsLabel="codes promo" />
+										<span className="sr-only">Sélection</span>
+									</TableHead>
+									<TableHead className="w-[16%]">Code</TableHead>
+									<TableHead className="w-[14%]">Type</TableHead>
+									<TableHead className="w-[12%]">Valeur</TableHead>
+									<TableHead className="w-[14%] text-center">Utilisations</TableHead>
+									<TableHead className="w-[10%] text-center">Statut</TableHead>
+									<TableHead
+										className="w-[8%] text-right"
+										aria-label="Actions disponibles pour chaque code promo"
+									>
+										Actions
+									</TableHead>
 								</TableRow>
-							))}
-						</TableBody>
-					</Table>
-				</TableScrollContainer>
+							</TableHeader>
+							<TableBody>
+								{discounts.map((discount) => (
+									<TableRow key={discount.id}>
+										<TableCell>
+											<BulkSelectionRowCheckbox
+												id={discount.id}
+												itemLabel={`Code ${discount.code}`}
+											/>
+										</TableCell>
+										<TableCell>
+											<code className="bg-muted rounded px-2 py-1 text-sm font-semibold">
+												{discount.code}
+											</code>
+										</TableCell>
+										<TableCell>
+											<span className="text-muted-foreground text-sm">
+												{DISCOUNT_TYPE_LABELS[discount.type]}
+											</span>
+										</TableCell>
+										<TableCell>
+											<span className="text-sm font-medium">
+												{formatValue(discount.type, discount.value)}
+											</span>
+										</TableCell>
+										<TableCell className="text-center">
+											<span className="text-sm">
+												{formatUsage(discount.usageCount, discount.maxUsageCount)}
+											</span>
+										</TableCell>
+										<TableCell className="text-center">
+											{(() => {
+												const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
+												return <Badge variant={status.variant}>{status.label}</Badge>;
+											})()}
+										</TableCell>
+										<TableCell>
+											<div className="flex justify-end">
+												<DiscountRowActions discount={discount} />
+											</div>
+										</TableCell>
+									</TableRow>
+								))}
+							</TableBody>
+						</Table>
+					</TableScrollContainer>
 
-				<div className="mt-4">
-					<CursorPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={discounts.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-					/>
-				</div>
+					<div className="mt-4">
+						<CursorPagination
+							perPage={perPage}
+							hasNextPage={pagination.hasNextPage}
+							hasPreviousPage={pagination.hasPreviousPage}
+							currentPageSize={discounts.length}
+							nextCursor={pagination.nextCursor}
+							prevCursor={pagination.prevCursor}
+						/>
+					</div>
+				</BulkSelectionProvider>
 			</CardContent>
 		</Card>
 	);

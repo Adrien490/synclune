@@ -13,7 +13,7 @@ export default function CreateVariantLoading() {
 			aria-label="Chargement de la création de variante"
 			className="space-y-6"
 		>
-			<span className="sr-only">Chargement...</span>
+			<span className="sr-only">Chargement…</span>
 
 			{/* Breadcrumb (6 items, desktop only) */}
 			<div className="hidden md:flex md:items-center md:gap-2">
@@ -40,7 +40,7 @@ export default function CreateVariantLoading() {
 					<Skeleton className="h-4 w-20" />
 					<div className="flex gap-2">
 						<Skeleton className="h-10 flex-1" />
-						<Skeleton className="h-10 w-10 rounded-full" />
+						<Skeleton className="size-10 rounded-full" />
 					</div>
 				</div>
 

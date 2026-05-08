@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import { createProductFilterFormatter } from "@/modules/products/utils/format-product-filter";
 import { FilterBadges } from "@/shared/components/filter-badges";
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
@@ -27,7 +28,7 @@ interface ProductFilterBadgesProps {
  * Composant pour afficher les filtres actifs de produits
  * Utilise le composant FilterBadges global avec formatage personnalisé
  */
-export function ProductFilterBadges({
+function ProductFilterBadgesInner({
 	colors,
 	materials,
 	productTypes = EMPTY_PRODUCT_TYPES,
@@ -99,5 +100,13 @@ export function ProductFilterBadges({
 			onClearAll={handleClearAll}
 			compactMobile
 		/>
+	);
+}
+
+export function ProductFilterBadges(props: ComponentProps<typeof ProductFilterBadgesInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductFilterBadgesInner {...props} />
+		</Suspense>
 	);
 }

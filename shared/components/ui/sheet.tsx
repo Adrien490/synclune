@@ -123,6 +123,7 @@ function SheetContent({
 	showCloseButton = true,
 	title,
 	onOverlayClick,
+	registerOverlay = true,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
 	overlayClassName?: string;
@@ -133,9 +134,16 @@ function SheetContent({
 	/** Fired when the user taps the scrim overlay to dismiss.
 	 * Useful for attaching haptic feedback. */
 	onOverlayClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+	/**
+	 * When `false`, this sheet does NOT push onto the global overlay stack,
+	 * so bottom-anchored UI (AdminMobileBottomBar) stays visible behind it.
+	 * Use for onboarding/welcome sheets that should not collapse the bar.
+	 * @default true
+	 */
+	registerOverlay?: boolean;
 }) {
 	const { direction } = React.useContext(SheetContext);
-	useRegisterOverlay();
+	useRegisterOverlay(registerOverlay);
 
 	return (
 		<SheetPortal>
@@ -151,8 +159,10 @@ function SheetContent({
 					// Left sheet avec safe-area latérale (mode paysage)
 					direction === "left" &&
 						"inset-y-0 left-0 h-full w-full border-r pl-[max(0px,env(safe-area-inset-left))] sm:max-w-sm",
-					direction === "top" && "inset-x-0 top-0 h-auto border-b",
-					direction === "bottom" && "inset-x-0 bottom-0 h-auto border-t",
+					direction === "top" &&
+						"inset-x-0 top-0 h-auto border-b pt-[max(0px,env(safe-area-inset-top))]",
+					direction === "bottom" &&
+						"inset-x-0 bottom-0 h-auto border-t pb-[max(0px,env(safe-area-inset-bottom))]",
 					className,
 				)}
 				{...props}

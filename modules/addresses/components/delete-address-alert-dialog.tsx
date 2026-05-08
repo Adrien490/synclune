@@ -76,7 +76,7 @@ export function DeleteAddressAlertDialog() {
 							onClick={() => triggerHaptic("medium")}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Suppression..." : "Supprimer"}
+							{isPending ? "Suppression…" : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

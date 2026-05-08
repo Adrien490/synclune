@@ -219,11 +219,11 @@ describe("DeleteGalleryMediaAlertDialog", () => {
 		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
 	});
 
-	it("shows 'Suppression...' text when isPending", () => {
+	it("shows 'Suppression…' text when isPending", () => {
 		mockIsOpen.value = true;
 		mockIsPending.value = true;
 		mockDialogData.value = { index: 0, url: "https://utfs.io/f/img.jpg", onRemove: vi.fn() };
 		render(<DeleteGalleryMediaAlertDialog />);
-		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Suppression...");
+		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Suppression…");
 	});
 });

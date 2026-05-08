@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import { Filter } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Button } from "@/shared/components/ui/button";
@@ -38,7 +39,7 @@ interface ProductFilterTriggerProps {
  * <ProductFilterTrigger variant="full" className="hidden md:flex" />
  * ```
  */
-export function ProductFilterTrigger({ className, variant = "full" }: ProductFilterTriggerProps) {
+function ProductFilterTriggerInner({ className, variant = "full" }: ProductFilterTriggerProps) {
 	const { open } = useDialog(PRODUCT_FILTER_DIALOG_ID);
 	const searchParams = useSearchParams();
 	const pathname = usePathname();
@@ -99,5 +100,13 @@ export function ProductFilterTrigger({ className, variant = "full" }: ProductFil
 				</Badge>
 			)}
 		</Button>
+	);
+}
+
+export function ProductFilterTrigger(props: ComponentProps<typeof ProductFilterTriggerInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductFilterTriggerInner {...props} />
+		</Suspense>
 	);
 }

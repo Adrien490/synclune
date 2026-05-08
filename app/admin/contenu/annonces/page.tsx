@@ -24,7 +24,7 @@ export default async function AnnouncementsAdminPage() {
 				actions={
 					<Button variant="outline" size="sm" asChild>
 						<Link href="/" target="_blank">
-							<ExternalLink className="h-4 w-4" />
+							<ExternalLink className="size-4" />
 							Voir sur la boutique
 						</Link>
 					</Button>

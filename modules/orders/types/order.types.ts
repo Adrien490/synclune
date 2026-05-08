@@ -43,7 +43,7 @@ export type GetOrdersReturn = {
 import type { ShippingCountry } from "@/shared/constants/countries";
 
 /** Transporteur de livraison */
-export type ShippingCarrier = "standard";
+type ShippingCarrier = "standard";
 
 /** Tarif de livraison */
 export interface ShippingRate {
@@ -79,7 +79,7 @@ export interface OrderForShipValidation {
 
 export type ShipValidationResult = { canShip: true } | { canShip: false; reason: ShipBlockReason };
 
-export type ShipBlockReason = "already_shipped" | "cancelled" | "unpaid";
+type ShipBlockReason = "already_shipped" | "cancelled" | "unpaid";
 
 export interface OrderStateInput {
 	status: OrderStatus;
@@ -101,22 +101,22 @@ export interface OrderPermissions {
 }
 
 // Validation result types for status transition functions
-export type DeliveryBlockReason = "already_delivered" | "not_shipped";
+type DeliveryBlockReason = "already_delivered" | "not_shipped";
 export type DeliveryValidationResult =
 	| { canDeliver: true }
 	| { canDeliver: false; reason: DeliveryBlockReason };
 
-export type ReturnBlockReason = "already_returned" | "not_delivered";
+type ReturnBlockReason = "already_returned" | "not_delivered";
 export type ReturnValidationResult =
 	| { canReturn: true }
 	| { canReturn: false; reason: ReturnBlockReason };
 
-export type ProcessingBlockReason = "already_processing" | "not_pending" | "cancelled" | "unpaid";
+type ProcessingBlockReason = "already_processing" | "not_pending" | "cancelled" | "unpaid";
 export type ProcessingValidationResult =
 	| { canProcess: true }
 	| { canProcess: false; reason: ProcessingBlockReason };
 
-export type RevertBlockReason = "not_shipped";
+type RevertBlockReason = "not_shipped";
 export type RevertValidationResult =
 	| { canRevert: true }
 	| { canRevert: false; reason: RevertBlockReason };

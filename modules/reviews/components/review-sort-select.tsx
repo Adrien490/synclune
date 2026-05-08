@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, Suspense } from "react";
 import {
 	Select,
 	SelectContent,
@@ -24,7 +24,7 @@ const DEFAULT_SORT: ReviewSortField = "createdAt-desc";
  * Sélecteur de tri pour les avis clients
  * Met à jour les searchParams pour déclencher un re-fetch serveur
  */
-export function ReviewSortSelect() {
+function ReviewSortSelectInner() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -67,5 +67,13 @@ export function ReviewSortSelect() {
 				))}
 			</SelectContent>
 		</Select>
+	);
+}
+
+export function ReviewSortSelect() {
+	return (
+		<Suspense fallback={null}>
+			<ReviewSortSelectInner />
+		</Suspense>
 	);
 }

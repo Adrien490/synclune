@@ -22,7 +22,7 @@ export function useInvalidateUserSessions(options?: UseInvalidateUserSessionsOpt
 			async (_prev: ActionState | undefined, formData: FormData) =>
 				invalidateUserSessions(formData.get("userId") as string),
 			createToastCallbacks({
-				loadingMessage: "Déconnexion en cours...",
+				loadingMessage: "Déconnexion en cours…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

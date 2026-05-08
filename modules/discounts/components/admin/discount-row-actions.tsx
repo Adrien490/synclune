@@ -27,11 +27,11 @@ export function DiscountRowActions({ discount }: DiscountRowActionsProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
+					className="size-11 p-0 motion-safe:transition-transform motion-safe:active:scale-95"
 					aria-label={`Actions pour ${discount.code}`}
 					onPointerDown={() => haptic("selection")}
 				>
-					<EllipsisVertical className="h-4 w-4" />
+					<EllipsisVertical className="size-4" />
 				</Button>
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent

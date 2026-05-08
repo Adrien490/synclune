@@ -38,4 +38,35 @@ describe("useRegisterOverlay", () => {
 		c.unmount();
 		expect(useOverlayStackStore.getState().count).toBe(0);
 	});
+
+	it("does not push when enabled=false", () => {
+		const { unmount } = renderHook(() => useRegisterOverlay(false));
+		expect(useOverlayStackStore.getState().count).toBe(0);
+
+		unmount();
+		expect(useOverlayStackStore.getState().count).toBe(0);
+	});
+
+	it("pushes when enabled flips from false to true", () => {
+		const { rerender, unmount } = renderHook(({ enabled }) => useRegisterOverlay(enabled), {
+			initialProps: { enabled: false },
+		});
+		expect(useOverlayStackStore.getState().count).toBe(0);
+
+		rerender({ enabled: true });
+		expect(useOverlayStackStore.getState().count).toBe(1);
+
+		unmount();
+		expect(useOverlayStackStore.getState().count).toBe(0);
+	});
+
+	it("pops when enabled flips from true to false", () => {
+		const { rerender } = renderHook(({ enabled }) => useRegisterOverlay(enabled), {
+			initialProps: { enabled: true },
+		});
+		expect(useOverlayStackStore.getState().count).toBe(1);
+
+		rerender({ enabled: false });
+		expect(useOverlayStackStore.getState().count).toBe(0);
+	});
 });

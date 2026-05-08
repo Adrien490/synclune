@@ -49,7 +49,7 @@ export function CreateProductTypeForm({
 			createProductType,
 			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
-				loadingMessage: "Création du type...",
+				loadingMessage: "Création du type…",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -144,7 +144,7 @@ export function CreateProductTypeForm({
 					{(field) => (
 						<field.TextareaField
 							label="Description"
-							placeholder="Décrivez le type de produit..."
+							placeholder="Décrivez le type de produit…"
 							disabled={isPending}
 							rows={4}
 						/>
@@ -157,7 +157,7 @@ export function CreateProductTypeForm({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement..." : "Créer"}
+								{isPending ? "Enregistrement…" : "Créer"}
 							</Button>
 						)}
 					</form.Subscribe>

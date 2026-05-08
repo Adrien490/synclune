@@ -14,7 +14,7 @@ export default function LegalLoading() {
 			aria-busy="true"
 			aria-label="Chargement des mentions légales"
 		>
-			<span className="sr-only">Chargement des mentions légales...</span>
+			<span className="sr-only">Chargement des mentions légales…</span>
 
 			<PageHeaderSkeleton />
 
@@ -37,7 +37,7 @@ export default function LegalLoading() {
 									<Skeleton className="bg-muted/30 h-4 w-full" />
 									<Skeleton className="bg-muted/30 h-4 w-5/6" />
 									<Skeleton className="bg-muted/30 h-4 w-full" />
-									<Skeleton className="bg-muted/30 h-4 w-4/5" />
+									<Skeleton className="bg-muted/30 size-4/5" />
 								</div>
 							</section>
 						))}

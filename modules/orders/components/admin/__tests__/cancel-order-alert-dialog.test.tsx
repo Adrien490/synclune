@@ -183,12 +183,12 @@ describe("CancelOrderAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Annulation...' on submit button when isPending is true", () => {
+	it("shows 'Annulation…' on submit button when isPending is true", () => {
 		mockIsPending = true;
 
 		render(<CancelOrderAlertDialog />);
 
-		expect(screen.getByText("Annulation...")).toBeInTheDocument();
+		expect(screen.getByText("Annulation…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending is true", () => {

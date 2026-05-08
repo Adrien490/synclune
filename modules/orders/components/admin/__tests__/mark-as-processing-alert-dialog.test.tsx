@@ -157,12 +157,12 @@ describe("MarkAsProcessingAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Passage...' on submit button when isPending is true", () => {
+	it("shows 'Passage…' on submit button when isPending is true", () => {
 		mockIsPending = true;
 
 		render(<MarkAsProcessingAlertDialog />);
 
-		expect(screen.getByText("Passage...")).toBeInTheDocument();
+		expect(screen.getByText("Passage…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending is true", () => {

@@ -83,7 +83,7 @@ export function RemoveCartItemAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Retrait..." : "Retirer"}
+							{isPending ? "Retrait…" : "Retirer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

@@ -6,6 +6,7 @@ import { Send, Trash2, LoaderCircle } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { Label } from "@/shared/components/ui/label";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -43,6 +44,7 @@ export function ReviewResponseForm({
 }: ReviewResponseFormProps) {
 	const [content, setContent] = useState(existingResponse?.content ?? "");
 	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const { createResponse, editResponse, removeResponse, isPending } = useReviewResponseForm({
 		onSuccess,
@@ -50,6 +52,11 @@ export function ReviewResponseForm({
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
+
+		if (!isValid) {
+			focusFirstInvalid();
+			return;
+		}
 
 		if (existingResponse) {
 			editResponse(existingResponse.id, content);
@@ -68,7 +75,12 @@ export function ReviewResponseForm({
 	const isValid = content.trim().length >= REVIEW_CONFIG.MIN_RESPONSE_LENGTH;
 
 	return (
-		<form onSubmit={handleSubmit} className={cn("space-y-4", className)}>
+		<form
+			ref={formRef}
+			onSubmit={handleSubmit}
+			onInvalidCapture={onInvalidCapture}
+			className={cn("space-y-4", className)}
+		>
 			<div className="space-y-2">
 				<Label htmlFor="response-content">
 					{existingResponse ? "Modifier votre réponse" : "Répondre à cet avis"}
@@ -77,7 +89,7 @@ export function ReviewResponseForm({
 					id="response-content"
 					value={content}
 					onChange={(e) => setContent(e.target.value)}
-					placeholder="Écrivez votre réponse..."
+					placeholder="Écrivez votre réponse…"
 					rows={4}
 					maxLength={REVIEW_CONFIG.MAX_RESPONSE_LENGTH}
 					disabled={isPending}
@@ -103,7 +115,7 @@ export function ReviewResponseForm({
 					{isPending ? (
 						<>
 							<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
-							{existingResponse ? "Modification..." : "Envoi..."}
+							{existingResponse ? "Modification…" : "Envoi…"}
 						</>
 					) : (
 						<>
@@ -144,7 +156,7 @@ export function ReviewResponseForm({
 									{isPending ? (
 										<>
 											<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
-											Suppression...
+											Suppression…
 										</>
 									) : (
 										<>

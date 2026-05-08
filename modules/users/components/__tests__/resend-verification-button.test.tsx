@@ -124,10 +124,10 @@ describe("ResendVerificationButton", () => {
 		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
 	});
 
-	it("shows 'Envoi...' text when isPending is true", () => {
+	it("shows 'Envoi…' text when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<ResendVerificationButton email="user@example.com" />);
-		expect(screen.getByRole("button").textContent).toContain("Envoi...");
+		expect(screen.getByRole("button").textContent).toContain("Envoi…");
 	});
 
 	it("disables button when isPending is true", () => {

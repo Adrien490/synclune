@@ -64,7 +64,7 @@ export function MarkAsDeliveredAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Mise à jour..." : "Marquer comme livrée"}
+							{isPending ? "Mise à jour…" : "Marquer comme livrée"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

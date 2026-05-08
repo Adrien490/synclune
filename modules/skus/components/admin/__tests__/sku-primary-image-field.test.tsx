@@ -249,7 +249,7 @@ describe("SkuPrimaryImageField", () => {
 		});
 
 		expect(toast.error).toHaveBeenCalledWith(
-			"L'image dépasse la limite de 16MB",
+			"L'image dépasse la limite de 16 Mo",
 			expect.any(Object),
 		);
 		expect(defaultProps.onChange).not.toHaveBeenCalled();

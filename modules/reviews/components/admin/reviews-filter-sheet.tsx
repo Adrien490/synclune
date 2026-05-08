@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense, type ComponentProps } from "react";
 
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
@@ -25,7 +25,7 @@ interface FilterFormData {
 
 const RATING_OPTIONS = [5, 4, 3, 2, 1] as const;
 
-export function ReviewsFilterSheet({
+function ReviewsFilterSheetInner({
 	className,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
@@ -182,5 +182,13 @@ export function ReviewsFilterSheet({
 				</form.Field>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function ReviewsFilterSheet(props: ComponentProps<typeof ReviewsFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ReviewsFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

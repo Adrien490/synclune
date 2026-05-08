@@ -20,7 +20,7 @@ export default function ProductDetailLoading() {
 			aria-busy="true"
 			aria-label="Chargement du produit"
 		>
-			<span className="sr-only">Chargement du produit...</span>
+			<span className="sr-only">Chargement du produit…</span>
 
 			{/* Particle system placeholder */}
 			<div

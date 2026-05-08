@@ -15,7 +15,7 @@ export default function CheckoutReturnLoading() {
 			className="flex min-h-screen items-center justify-center px-4"
 		>
 			<div className="max-w-sm space-y-5 text-center">
-				<Spinner className="mx-auto h-10 w-10" />
+				<Spinner className="mx-auto size-10" />
 				<div className="space-y-2">
 					<p className="text-foreground text-base font-medium">
 						Vérification de votre paiement

@@ -68,7 +68,7 @@ export function DiscountFormDialog() {
 		withCallbacks(
 			createDiscount,
 			createToastCallbacks({
-				loadingMessage: "Création du code...",
+				loadingMessage: "Création du code…",
 				onSuccess: () => {
 					haptic("success");
 					close();
@@ -87,7 +87,7 @@ export function DiscountFormDialog() {
 		withCallbacks(
 			updateDiscount,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du code...",
+				loadingMessage: "Mise à jour du code…",
 				onSuccess: () => {
 					haptic("success");
 					close();
@@ -163,7 +163,7 @@ export function DiscountFormDialog() {
 					className="flex min-h-0 flex-1 flex-col"
 				>
 					{/* Contenu scrollable */}
-					<div className="flex-1 space-y-6 overflow-y-auto pr-2">
+					<div className="flex-1 gap-y-6 overflow-y-auto pr-2">
 						{/* Hidden field for ID in update mode */}
 						{isUpdateMode && <input type="hidden" name="id" value={discount!.id} />}
 
@@ -388,7 +388,7 @@ export function DiscountFormDialog() {
 						<form.Subscribe selector={(state) => [state.canSubmit]}>
 							{([canSubmit]) => (
 								<Button disabled={!canSubmit || isPending} type="submit">
-									{isPending ? "Enregistrement..." : isUpdateMode ? "Enregistrer" : "Créer"}
+									{isPending ? "Enregistrement…" : isUpdateMode ? "Enregistrer" : "Créer"}
 								</Button>
 							)}
 						</form.Subscribe>

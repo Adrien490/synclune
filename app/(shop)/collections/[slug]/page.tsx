@@ -93,7 +93,8 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 
 	return (
 		<div className="min-h-screen">
-			{/* Structured Data JSON-LD pour SEO */}
+			{/* Structured Data JSON-LD pour SEO — SAFE: serialized via safeJsonLd */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{

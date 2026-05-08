@@ -45,12 +45,12 @@ export function ToolbarSkeleton({
 				{buttonCount > 1 ? (
 					<ButtonGroup>
 						{Array.from({ length: buttonCount }).map((_, i) => (
-							<div key={`b${i}`} className="animate-shimmer h-9 w-9 rounded-md" />
+							<div key={`b${i}`} className="animate-shimmer size-9 rounded-md" />
 						))}
 					</ButtonGroup>
 				) : (
 					Array.from({ length: buttonCount }).map((_, i) => (
-						<div key={`b${i}`} className="animate-shimmer h-9 w-9 rounded-md" />
+						<div key={`b${i}`} className="animate-shimmer size-9 rounded-md" />
 					))
 				)}
 			</div>

@@ -211,7 +211,7 @@ describe("SearchInput", () => {
 	it("uses default placeholder when none provided", () => {
 		render(<SearchInput paramName="q" />);
 
-		expect(screen.getByPlaceholderText("Rechercher...")).toBeInTheDocument();
+		expect(screen.getByPlaceholderText("Rechercher…")).toBeInTheDocument();
 	});
 
 	it("renders a submit button in submit mode", () => {
@@ -223,7 +223,7 @@ describe("SearchInput", () => {
 	it("shows clear button when input has a value", async () => {
 		render(<SearchInput paramName="q" mode="live" />);
 
-		const input = screen.getByPlaceholderText("Rechercher...");
+		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "bracelet" } });
 
 		expect(screen.getByRole("button", { name: "Effacer la recherche" })).toBeInTheDocument();
@@ -233,7 +233,7 @@ describe("SearchInput", () => {
 		const onValueChange = vi.fn();
 		render(<SearchInput paramName="q" mode="live" onValueChange={onValueChange} />);
 
-		const input = screen.getByPlaceholderText("Rechercher...");
+		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "collier" } });
 
 		const clearButton = screen.getByRole("button", { name: "Effacer la recherche" });
@@ -247,7 +247,7 @@ describe("SearchInput", () => {
 		const onValueChange = vi.fn();
 		render(<SearchInput paramName="q" mode="live" onValueChange={onValueChange} />);
 
-		const input = screen.getByPlaceholderText("Rechercher...");
+		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "bague" } });
 
 		expect(onValueChange).toHaveBeenCalledWith("bague");
@@ -256,7 +256,7 @@ describe("SearchInput", () => {
 	it("navigates to /produits in submit mode when form is submitted", () => {
 		render(<SearchInput paramName="q" mode="submit" />);
 
-		const input = screen.getByPlaceholderText("Rechercher...");
+		const input = screen.getByPlaceholderText("Rechercher…");
 		fireEvent.change(input, { target: { value: "bague lune" } });
 
 		const form = screen.getByRole("search");

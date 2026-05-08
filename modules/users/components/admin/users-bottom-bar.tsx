@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Filter, Search } from "lucide-react";
 
@@ -24,7 +25,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(USERS_SORT_LABELS).map(([value
  * Sous-header sticky (mobile, admin) pour la liste clients.
  * 3 actions : Filtrer | Trier | Rechercher.
  */
-export function UsersBottomBar() {
+function UsersBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -88,5 +89,13 @@ export function UsersBottomBar() {
 				adapter={usersAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function UsersBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<UsersBottomBarInner />
+		</Suspense>
 	);
 }

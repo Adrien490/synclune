@@ -144,6 +144,20 @@ vi.mock("@/modules/media/utils/uploadthing", () => ({
 	),
 }));
 
+vi.mock("@/shared/components/media-upload/upload-action-sheet", () => ({
+	UploadActionSheet: ({
+		desktopFallback,
+		triggerLabel,
+	}: {
+		desktopFallback?: React.ReactNode;
+		triggerLabel?: string;
+	}) => (
+		<div data-testid="upload-action-sheet" data-trigger-label={triggerLabel}>
+			{desktopFallback}
+		</div>
+	),
+}));
+
 vi.mock("@/shared/constants/validation-limits", () => ({
 	ARRAY_LIMITS: { SKU_MEDIA: 10 },
 }));
@@ -241,7 +255,7 @@ describe("CreateProductMediaCard", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
-				screen.getByText("La première image sera l'image principale. Glissez pour réordonner."),
+				screen.getByText("La première image sera l'image principale. Maintenez pour réordonner."),
 			).toBeInTheDocument();
 		});
 	});
@@ -479,52 +493,25 @@ describe("CreateProductMediaCard", () => {
 		});
 	});
 
-	describe("camera capture button (mobile only)", () => {
-		it("renders camera button when on mobile", () => {
-			mockUseIsMobile.mockReturnValue(true);
+	describe("upload action sheet (drawer mobile + dropzone desktop)", () => {
+		it("renders UploadActionSheet wrapping the dropzone", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByTestId("icon-camera")).toBeInTheDocument();
-			expect(screen.getByLabelText("Prendre une photo avec l'appareil photo")).toBeInTheDocument();
+			expect(screen.getByTestId("upload-action-sheet")).toBeInTheDocument();
 		});
 
-		it("does not render camera button on desktop", () => {
-			mockUseIsMobile.mockReturnValue(false);
+		it("UploadActionSheet trigger label is 'Ajouter des médias' in empty state", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.queryByTestId("icon-camera")).not.toBeInTheDocument();
+			const sheet = screen.getByTestId("upload-action-sheet");
+			expect(sheet).toHaveAttribute("data-trigger-label", "Ajouter des médias");
 		});
 
-		it("camera input has accept=image/* and capture=environment", () => {
-			mockUseIsMobile.mockReturnValue(true);
+		it("UploadActionSheet exposes UploadDropzone as desktop fallback", () => {
 			const form = createMediaForm();
-			const { container } = render(
-				<CreateProductMediaCard form={form as never} {...defaultProps} />,
-			);
-			const input = container.querySelector<HTMLInputElement>('input[type="file"][capture]');
-			expect(input).not.toBeNull();
-			expect(input?.getAttribute("accept")).toBe("image/*");
-			expect(input?.getAttribute("capture")).toBe("environment");
-			expect(input?.multiple).toBe(true);
-		});
-
-		it("camera button click forwards selected files to handleUpload", () => {
-			mockUseIsMobile.mockReturnValue(true);
-			const handleUpload = vi.fn();
-			const form = createMediaForm();
-			const { container } = render(
-				<CreateProductMediaCard
-					form={form as never}
-					{...defaultProps}
-					handleUpload={handleUpload}
-				/>,
-			);
-			const input = container.querySelector<HTMLInputElement>('input[type="file"][capture]')!;
-			const file = new File(["x"], "shot.jpg", { type: "image/jpeg" });
-			Object.defineProperty(input, "files", { value: [file], configurable: true });
-			fireEvent.change(input);
-			expect(handleUpload).toHaveBeenCalledTimes(1);
-			expect(handleUpload.mock.calls[0]![0]).toEqual([file]);
+			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
+			const sheet = screen.getByTestId("upload-action-sheet");
+			expect(sheet.querySelector("[data-testid='upload-dropzone']")).not.toBeNull();
 		});
 	});
 });

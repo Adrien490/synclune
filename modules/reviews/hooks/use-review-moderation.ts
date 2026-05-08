@@ -19,7 +19,7 @@ export function useReviewModeration(options?: UseReviewModerationOptions) {
 		withCallbacks(
 			moderateReview,
 			createToastCallbacks({
-				loadingMessage: "Modération en cours...",
+				loadingMessage: "Modération en cours…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

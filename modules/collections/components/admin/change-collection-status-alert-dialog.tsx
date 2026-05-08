@@ -114,7 +114,7 @@ export function ChangeCollectionStatusAlertDialog() {
 							className={cn("text-white", config.color)}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Changement en cours..." : `Changer en ${config.label}`}
+							{isPending ? "Changement en cours…" : `Changer en ${config.label}`}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

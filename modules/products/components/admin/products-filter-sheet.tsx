@@ -12,6 +12,8 @@ import {
 	useRef,
 	useState,
 	useTransition,
+	Suspense,
+	type ComponentProps,
 } from "react";
 import { useAppForm } from "@/shared/components/forms";
 import { ProductsFilterSections } from "./products-filter-sections";
@@ -44,7 +46,7 @@ type SectionValue =
 // MAIN COMPONENT
 // ============================================================================
 
-export function ProductsFilterSheet({
+function ProductsFilterSheetInner({
 	className,
 	productTypes = EMPTY_PRODUCT_TYPES,
 	collections = EMPTY_COLLECTIONS,
@@ -384,5 +386,13 @@ export function ProductsFilterSheet({
 				</div>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function ProductsFilterSheet(props: ComponentProps<typeof ProductsFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductsFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

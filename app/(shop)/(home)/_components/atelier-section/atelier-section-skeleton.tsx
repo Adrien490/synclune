@@ -33,7 +33,7 @@ export function AtelierSectionSkeleton() {
 						<div className="space-y-2">
 							<Skeleton className="bg-muted/30 h-5 w-full" />
 							<Skeleton className="bg-muted/30 h-5 w-full" />
-							<Skeleton className="bg-muted/30 mx-auto h-5 w-5/6" />
+							<Skeleton className="bg-muted/30 mx-auto size-5/6" />
 						</div>
 						<div className="space-y-2">
 							<Skeleton className="bg-muted/30 h-5 w-full" />
@@ -50,7 +50,7 @@ export function AtelierSectionSkeleton() {
 					<div className="hidden lg:grid lg:grid-cols-4 lg:gap-6">
 						{Array.from({ length: processSteps.length }).map((_, i) => (
 							<div key={i} className="text-center">
-								<Skeleton className="bg-muted/40 mx-auto h-12 w-12 rounded-full" />
+								<Skeleton className="bg-muted/40 mx-auto size-12 rounded-full" />
 								<Skeleton className="bg-muted/50 mx-auto mt-4 h-5 w-32" />
 								<Skeleton className="bg-muted/30 mt-2 h-4 w-full" />
 								<Skeleton className="bg-muted/30 mx-auto mt-1 h-4 w-5/6" />
@@ -62,11 +62,11 @@ export function AtelierSectionSkeleton() {
 					<div className="space-y-8 sm:space-y-12 lg:hidden">
 						{Array.from({ length: processSteps.length }).map((_, i) => (
 							<div key={i} className="flex items-start gap-4">
-								<Skeleton className="bg-muted/40 h-12 w-12 shrink-0 rounded-full" />
-								<div className="flex-1 space-y-2 pb-8">
+								<Skeleton className="bg-muted/40 size-12 shrink-0 rounded-full" />
+								<div className="flex-1 gap-y-2 pb-8">
 									<Skeleton className="bg-muted/50 h-6 w-40" />
 									<Skeleton className="bg-muted/30 h-5 w-full" />
-									<Skeleton className="bg-muted/30 h-5 w-5/6" />
+									<Skeleton className="bg-muted/30 size-5/6" />
 								</div>
 							</div>
 						))}

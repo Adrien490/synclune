@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 
@@ -32,7 +33,7 @@ interface SkusBottomBarProps {
  * n'existe encore côté admin (la SearchInput URL-driven du Toolbar desktop
  * suffit, et les listes de variantes par produit sont typiquement <50 lignes).
  */
-export function SkusBottomBar({ productSlug, colorOptions, materialOptions }: SkusBottomBarProps) {
+function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: SkusBottomBarProps) {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -97,5 +98,13 @@ export function SkusBottomBar({ productSlug, colorOptions, materialOptions }: Sk
 				showResetOption
 			/>
 		</>
+	);
+}
+
+export function SkusBottomBar(props: ComponentProps<typeof SkusBottomBarInner>) {
+	return (
+		<Suspense fallback={null}>
+			<SkusBottomBarInner {...props} />
+		</Suspense>
 	);
 }

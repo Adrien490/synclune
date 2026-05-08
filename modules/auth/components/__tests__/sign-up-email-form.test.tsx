@@ -183,10 +183,10 @@ describe("SignUpEmailForm", () => {
 		expect(screen.getByRole("button", { name: /s'inscrire/i })).toBeDefined();
 	});
 
-	it("shows 'Inscription en cours...' when isPending", () => {
+	it("shows 'Inscription en cours…' when isPending", () => {
 		mockIsPending.value = true;
 		render(<SignUpEmailForm />);
-		expect(screen.getByText("Inscription en cours...")).toBeDefined();
+		expect(screen.getByText("Inscription en cours…")).toBeDefined();
 	});
 
 	it("shows success alert when state.status is SUCCESS", () => {

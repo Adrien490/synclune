@@ -7,7 +7,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Material } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -31,7 +31,7 @@ interface MaterialSelectorProps {
  * - Affichage en grid 2 colonnes
  * - Navigation clavier (fleches)
  */
-export function MaterialSelector({ materials, product, defaultSku }: MaterialSelectorProps) {
+function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelectorProps) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -149,5 +149,13 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 				})}
 			</div>
 		</fieldset>
+	);
+}
+
+export function MaterialSelector(props: ComponentProps<typeof MaterialSelectorInner>) {
+	return (
+		<Suspense fallback={null}>
+			<MaterialSelectorInner {...props} />
+		</Suspense>
 	);
 }

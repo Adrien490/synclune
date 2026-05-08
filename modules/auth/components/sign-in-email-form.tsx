@@ -159,7 +159,7 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 							{isPending ? (
 								<>
 									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									<span>Connexion...</span>
+									<span>Connexion…</span>
 								</>
 							) : (
 								"Se connecter"

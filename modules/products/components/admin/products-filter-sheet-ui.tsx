@@ -45,7 +45,7 @@ export function SectionHeader({
 					className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 focus-visible:ring-ring ml-auto flex min-h-9 min-w-9 cursor-pointer items-center justify-center rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 					aria-label={`Effacer le filtre ${label}`}
 				>
-					<X className="h-3 w-3" />
+					<X className="size-3" />
 				</span>
 			)}
 		</div>
@@ -59,7 +59,7 @@ export function SectionHeader({
 export function SectionSearch({
 	value,
 	onChange,
-	placeholder = "Rechercher...",
+	placeholder = "Rechercher…",
 }: {
 	value: string;
 	onChange: (value: string) => void;
@@ -67,7 +67,7 @@ export function SectionSearch({
 }) {
 	return (
 		<div className="relative mb-2">
-			<Search className="text-muted-foreground absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+			<Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
 			<Input
 				type="text"
 				value={value}

@@ -8,6 +8,7 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 import { useProductActions } from "../../hooks/use-product-actions";
 
@@ -22,9 +23,9 @@ const STATUS_CONFIG: Record<
 	ProductStatus,
 	{ label: string; variant: "default" | "secondary" | "outline" }
 > = {
-	[ProductStatus.PUBLIC]: { label: "Public", variant: "default" },
-	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
-	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
+	[ProductStatus.PUBLIC]: { label: "● Public", variant: "default" },
+	[ProductStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
+	[ProductStatus.ARCHIVED]: { label: "▣ Archivé", variant: "outline" },
 };
 
 interface Sku {
@@ -72,21 +73,20 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 		productStatus: product.status,
 	});
 
+	const stockVariant = getStockVariant(stock);
+	const stockAriaLabel = getStockAriaLabel(stock);
+
 	return (
 		<LongPressMenuLink
-			href={`/admin/catalogue/produits/${product.slug}/modifier`}
+			href={`/admin/catalogue/produits/${product.slug}`}
 			ariaLabel={`Produit ${product.title}`}
 			sections={sections}
 			menuTitle="Actions"
 			menuDescription={product.title}
 			className="text-left"
+			viewTransitionName={`product-card-${product.id}`}
 		>
-			<Item
-				variant="outline"
-				size="sm"
-				className="w-full gap-3"
-				aria-roledescription="carte produit"
-			>
+			<Item variant="outline" size="sm" className="w-full gap-3">
 				{primaryImage ? (
 					<Image
 						src={primaryImage.thumbnailUrl ?? primaryImage.url}
@@ -107,12 +107,19 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{product.title}</span>
-						<Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
+						<Badge
+							variant={statusConfig.variant}
+							style={{ viewTransitionName: `product-status-${product.id}` }}
+						>
+							{statusConfig.label}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{priceDisplay}</span>
 						<span aria-hidden="true">·</span>
-						<span>{stock} en stock</span>
+						<Badge variant={stockVariant} aria-label={stockAriaLabel}>
+							{stock}
+						</Badge>
 						<span aria-hidden="true">·</span>
 						<span>
 							{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}

@@ -11,7 +11,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function ColorsLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des couleurs">
-			<span className="sr-only">Chargement des couleurs...</span>
+			<span className="sr-only">Chargement des couleurs…</span>
 
 			<PageHeader
 				variant="compact"

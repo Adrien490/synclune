@@ -35,7 +35,7 @@ export function SecuritySection({ emailVerified, providers, email }: SecuritySec
 						<div className="flex items-center justify-between">
 							<p className="text-sm font-medium">Mot de passe</p>
 							<Button variant="outline" size="sm" onClick={() => setPasswordDialogOpen(true)}>
-								<Lock className="mr-2 h-4 w-4" aria-hidden="true" />
+								<Lock className="mr-2 size-4" aria-hidden="true" />
 								Modifier
 							</Button>
 						</div>
@@ -43,7 +43,7 @@ export function SecuritySection({ emailVerified, providers, email }: SecuritySec
 
 					{emailVerified ? (
 						<div className="flex items-center gap-2">
-							<CircleCheck className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+							<CircleCheck className="size-4 text-emerald-600" aria-hidden="true" />
 							<p className="text-muted-foreground text-sm">Email vérifiée</p>
 						</div>
 					) : (

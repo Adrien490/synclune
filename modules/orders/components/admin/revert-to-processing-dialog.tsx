@@ -78,7 +78,7 @@ export function RevertToProcessingDialog() {
 					</Label>
 					<Textarea
 						id="reason"
-						placeholder="Ex: Erreur d'adresse, produit indisponible, demande client..."
+						placeholder="Ex: Erreur d'adresse, produit indisponible, demande client…"
 						value={reason}
 						onChange={(e) => setReason(e.target.value)}
 						rows={3}
@@ -98,7 +98,7 @@ export function RevertToProcessingDialog() {
 						onClick={handleSubmit}
 						disabled={!reason.trim() || isPending}
 					>
-						{isPending && <LoaderCircle className="h-4 w-4 animate-spin" />}
+						{isPending && <LoaderCircle className="size-4 animate-spin" />}
 						Annuler l'expédition
 					</Button>
 				</ResponsiveDialogFooter>

@@ -140,13 +140,13 @@ describe("SectionHeader", () => {
 
 describe("SectionSearch", () => {
 	it("renders input with placeholder", () => {
-		render(<SectionSearch value="" onChange={vi.fn()} placeholder="Rechercher..." />);
-		expect(screen.getByTestId("search-input")).toHaveAttribute("placeholder", "Rechercher...");
+		render(<SectionSearch value="" onChange={vi.fn()} placeholder="Rechercher…" />);
+		expect(screen.getByTestId("search-input")).toHaveAttribute("placeholder", "Rechercher…");
 	});
 
 	it("uses default placeholder when not specified", () => {
 		render(<SectionSearch value="" onChange={vi.fn()} />);
-		expect(screen.getByTestId("search-input")).toHaveAttribute("placeholder", "Rechercher...");
+		expect(screen.getByTestId("search-input")).toHaveAttribute("placeholder", "Rechercher…");
 	});
 
 	it("displays current value", () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, Suspense, type ComponentProps } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useFilter, type FilterDefinition } from "@/shared/hooks/use-filter";
@@ -19,7 +19,7 @@ interface NoResultsFiltersProps {
  * Affiche les filtres actifs dans le NoResultsRecovery
  * Client Component pour la gestion des URL params
  */
-export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersProps) {
+function NoResultsFiltersInner({ resetUrl = "/produits" }: NoResultsFiltersProps) {
 	const searchParams = useSearchParams();
 	const containerRef = useRef<HTMLDivElement>(null);
 	const { optimisticActiveFilters, removeFilterOptimistic, removeFiltersOptimistic } = useFilter({
@@ -104,5 +104,13 @@ export function NoResultsFilters({ resetUrl = "/produits" }: NoResultsFiltersPro
 				<Link href={resetUrl}>Effacer les filtres</Link>
 			</Button>
 		</div>
+	);
+}
+
+export function NoResultsFilters(props: ComponentProps<typeof NoResultsFiltersInner>) {
+	return (
+		<Suspense fallback={null}>
+			<NoResultsFiltersInner {...props} />
+		</Suspense>
 	);
 }

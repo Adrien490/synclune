@@ -247,7 +247,7 @@ describe("RejectRefundAlertDialog", () => {
 
 		render(<RejectRefundAlertDialog />);
 
-		expect(screen.getByText("Refus...")).toBeInTheDocument();
+		expect(screen.getByText("Refus…")).toBeInTheDocument();
 	});
 
 	it("shows loader icon when isPending is true", () => {
@@ -277,7 +277,7 @@ describe("RejectRefundAlertDialog", () => {
 
 		render(<RejectRefundAlertDialog />);
 
-		expect(screen.getByText("Refus...")).toBeDisabled();
+		expect(screen.getByText("Refus…")).toBeDisabled();
 	});
 
 	// ─── Constants ────────────────────────────────────────────────────────────

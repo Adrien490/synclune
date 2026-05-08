@@ -129,7 +129,7 @@ describe("SortSelect", () => {
 		it("uses default placeholder when not provided", () => {
 			render(<SortSelect label="Trier par" options={mockOptions} />);
 
-			expect(screen.getByText("Sélectionner...")).toBeInTheDocument();
+			expect(screen.getByText("Sélectionner…")).toBeInTheDocument();
 		});
 	});
 

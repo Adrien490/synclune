@@ -153,7 +153,7 @@ export function RequestPasswordResetForm() {
 							) : isPending ? (
 								<>
 									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									<span>Envoi en cours...</span>
+									<span>Envoi en cours…</span>
 								</>
 							) : isCoolingDown ? (
 								`Renvoyer dans ${remainingSeconds}s`

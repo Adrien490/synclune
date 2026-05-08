@@ -187,7 +187,7 @@ export function SkuSelectorFormContent({
 							{ duration: MOTION_CONFIG.duration.normal },
 							!!shouldReduceMotion,
 						)}
-						className="bg-muted relative h-24 w-24 shrink-0 overflow-hidden rounded-lg sm:h-40 sm:w-40"
+						className="bg-muted relative size-24 shrink-0 overflow-hidden rounded-lg sm:size-40"
 					>
 						<Image
 							src={currentImage.url}
@@ -304,7 +304,7 @@ export function SkuSelectorFormContent({
 					className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 				>
 					Voir la fiche produit
-					<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+					<ArrowRight className="size-3.5" aria-hidden="true" />
 				</Link>
 
 				{/* Color selector */}
@@ -371,7 +371,7 @@ export function SkuSelectorFormContent({
 					}}
 				>
 					{isPending
-						? "Ajout en cours..."
+						? "Ajout en cours…"
 						: `Ajouter au panier · ${formatEuro(displayPrice * quantity)}`}
 				</Button>
 				{/* Validation error -- always present for aria-describedby, content swapped */}

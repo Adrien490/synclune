@@ -15,7 +15,6 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
-import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
 	Tooltip,
 	TooltipContent,
@@ -372,7 +371,6 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
 		<div
 			data-slot="sidebar-content"
 			data-sidebar="content"
-			data-vaul-no-drag
 			className={cn(
 				"flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden",
 				className,
@@ -595,43 +593,6 @@ function SidebarMenuBadge({ className, ...props }: React.ComponentProps<"div">) 
 	);
 }
 
-function SidebarMenuSkeleton({
-	className,
-	showIcon = false,
-	...props
-}: React.ComponentProps<"div"> & {
-	showIcon?: boolean;
-}) {
-	// Random width between 50 to 90%, set only on client to avoid hydration mismatch
-	const [width, setWidth] = React.useState("70%"); // Default fixed width for SSR
-
-	React.useEffect(() => {
-		// Set random width only on client after mount
-		// eslint-disable-next-line react-hooks/set-state-in-effect
-		setWidth(`${Math.floor(Math.random() * 40) + 50}%`);
-	}, []);
-
-	return (
-		<div
-			data-slot="sidebar-menu-skeleton"
-			data-sidebar="menu-skeleton"
-			className={cn("flex h-8 items-center gap-2 rounded-md px-2", className)}
-			{...props}
-		>
-			{showIcon && <Skeleton className="size-4 rounded-md" data-sidebar="menu-skeleton-icon" />}
-			<Skeleton
-				className="h-4 max-w-(--skeleton-width) flex-1"
-				data-sidebar="menu-skeleton-text"
-				style={
-					{
-						"--skeleton-width": width,
-					} as React.CSSProperties
-				}
-			/>
-		</div>
-	);
-}
-
 function SidebarMenuSub({ className, ...props }: React.ComponentProps<"ul">) {
 	return (
 		<ul
@@ -702,7 +663,6 @@ export {
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
-	SidebarMenuSkeleton,
 	SidebarProvider,
 	SidebarSeparator,
 	SidebarTrigger,

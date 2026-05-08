@@ -173,10 +173,10 @@ describe("SignInEmailForm", () => {
 		expect(screen.getByRole("button", { name: /se connecter/i })).toBeDefined();
 	});
 
-	it("shows 'Connexion...' when isPending", () => {
+	it("shows 'Connexion…' when isPending", () => {
 		mockIsPending.value = true;
 		render(<SignInEmailForm callbackURL="/" />);
-		expect(screen.getByText("Connexion...")).toBeDefined();
+		expect(screen.getByText("Connexion…")).toBeDefined();
 	});
 
 	it("shows error alert when state has error", () => {

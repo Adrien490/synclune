@@ -5,7 +5,7 @@ import { type GET_PRODUCT_SKU_SELECT } from "../constants/sku.constants";
 // FUNCTION TYPES
 // ============================================================================
 
-export type GetProductSkuReturn = Prisma.ProductSkuGetPayload<{
+type GetProductSkuReturn = Prisma.ProductSkuGetPayload<{
 	select: typeof GET_PRODUCT_SKU_SELECT;
 }>;
 

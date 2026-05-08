@@ -44,7 +44,7 @@ export function AdminMobileHeader() {
 	return (
 		<header
 			className={cn(
-				"pwa-header fixed inset-x-0 top-0 z-40 flex h-[var(--admin-header-height,3.5rem)] items-center md:hidden",
+				"pwa-header fixed inset-x-0 top-0 z-40 flex min-h-[var(--admin-header-height,3.5rem)] items-center md:hidden",
 				"motion-safe:transition-[background-color,border-color,box-shadow,backdrop-filter] motion-safe:duration-300 motion-safe:ease-out",
 				"border-b",
 				isScrolled

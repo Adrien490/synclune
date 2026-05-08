@@ -13,7 +13,7 @@ export function ExportDataButton() {
 				commandes, favoris).
 			</p>
 			<Button variant="outline" onClick={exportData} disabled={isPending}>
-				{isPending ? "Export en cours..." : "Exporter mes données"}
+				{isPending ? "Export en cours…" : "Exporter mes données"}
 			</Button>
 		</div>
 	);

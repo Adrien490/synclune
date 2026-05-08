@@ -131,7 +131,7 @@ export function UpdatePriceDialog() {
 							Annuler
 						</Button>
 						<Button type="submit" disabled={!isValid || isPending}>
-							{isPending ? "Enregistrement..." : "Enregistrer"}
+							{isPending ? "Enregistrement…" : "Enregistrer"}
 						</Button>
 					</ResponsiveDialogFooter>
 				</form>

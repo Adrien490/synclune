@@ -173,10 +173,10 @@ describe("DeleteDiscountAlertDialog", () => {
 		expect(screen.getByTestId("submit-button")).toBeDisabled();
 	});
 
-	it("shows 'Suppression...' on submit button when isPending", () => {
+	it("shows 'Suppression…' on submit button when isPending", () => {
 		mockIsPending.value = true;
 		render(<DeleteDiscountAlertDialog />);
-		expect(screen.getByText("Suppression...")).toBeInTheDocument();
+		expect(screen.getByText("Suppression…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending", () => {

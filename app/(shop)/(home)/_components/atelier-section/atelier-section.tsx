@@ -1,8 +1,8 @@
 import { Fade, HandDrawnUnderline, SplitText } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SectionTitle } from "@/shared/components/section-title";
 import { IMAGES } from "@/shared/constants/images";
-import { ParallaxImage } from "../parallax-image";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
@@ -65,7 +65,8 @@ export async function AtelierSection() {
 			aria-labelledby="atelier-section-title"
 			data-content-type="about-creator"
 		>
-			{/* HowTo JSON-LD Schema for SEO */}
+			{/* HowTo JSON-LD Schema — SAFE: serialized via safeJsonLd */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				id="howto-schema"
 				type="application/ld+json"
@@ -98,14 +99,10 @@ export async function AtelierSection() {
 					</header>
 
 					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
-						<div className="relative mx-auto mb-10 aspect-[4/3] max-w-4xl overflow-hidden rounded-2xl sm:mb-14 sm:aspect-[16/7]">
-							<ParallaxImage
-								src={IMAGES.ATELIER}
-								alt="L'atelier de création Synclune, où chaque bijou prend vie"
-								blurDataURL={IMAGES.ATELIER_BLUR}
-								intensity={8}
-								sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 56rem"
-								className="rounded-2xl object-cover"
+						<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
+							<PlaceholderImage
+								className="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
+								label="L'atelier de création Synclune, où chaque bijou prend vie"
 							/>
 						</div>
 					</Fade>

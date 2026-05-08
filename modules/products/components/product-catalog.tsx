@@ -109,13 +109,14 @@ export function ProductCatalog({
 	}));
 
 	const searchPlaceholder = activeProductType
-		? `Rechercher des ${activeProductType.label.toLowerCase()}...`
-		: "Rechercher des bijoux...";
+		? `Rechercher des ${activeProductType.label.toLowerCase()}…`
+		: "Rechercher des bijoux…";
 
 	return (
 		<div className="min-h-screen">
 			<ScrollRestoration />
-			{/* JSON-LD Structured Data */}
+			{/* JSON-LD Structured Data — SAFE: serialized via safeJsonLd (no user HTML) */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
 
 			<PageHeader

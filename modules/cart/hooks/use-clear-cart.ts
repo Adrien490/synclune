@@ -14,7 +14,7 @@ export function useClearCart(onSuccess?: () => void) {
 		withCallbacks(
 			clearCart,
 			createToastCallbacks({
-				loadingMessage: "Vidage du panier...",
+				loadingMessage: "Vidage du panier…",
 				showSuccessToast: true,
 				showErrorToast: true,
 				onSuccess: () => onSuccess?.(),

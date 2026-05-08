@@ -161,7 +161,8 @@ export default async function ProductPage({
 			{/* Enregistrer la vue produit (client-side, non-bloquant) */}
 			<RecordProductView slug={product.slug} />
 
-			{/* Structured Data JSON-LD pour SEO */}
+			{/* Structured Data JSON-LD pour SEO — SAFE: serialized via safeJsonLd */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{

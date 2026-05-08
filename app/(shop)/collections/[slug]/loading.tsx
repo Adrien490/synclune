@@ -9,7 +9,7 @@ export default function CollectionDetailLoading() {
 			aria-busy="true"
 			aria-label="Chargement de la collection"
 		>
-			<span className="sr-only">Chargement de la collection...</span>
+			<span className="sr-only">Chargement de la collection…</span>
 
 			<PageHeaderSkeleton hasDescription />
 

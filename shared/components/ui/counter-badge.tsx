@@ -43,7 +43,7 @@ export function CounterBadge({ count, max, label, icon: Icon, className }: Count
 			aria-live="polite"
 			aria-atomic="true"
 		>
-			{Icon && <Icon className="h-4 w-4" aria-hidden="true" />}
+			{Icon && <Icon className="size-4" aria-hidden="true" />}
 			<span>
 				{count}/{max} {label}
 			</span>

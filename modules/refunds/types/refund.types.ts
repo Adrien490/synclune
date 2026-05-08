@@ -23,11 +23,11 @@ export type RefundFilters = z.infer<typeof refundFiltersSchema>;
 // ENTITY TYPES
 // ============================================================================
 
-export type Refund = Prisma.RefundGetPayload<{
+type Refund = Prisma.RefundGetPayload<{
 	select: typeof GET_REFUNDS_SELECT;
 }>;
 
-export type RefundDetail = Prisma.RefundGetPayload<{
+type RefundDetail = Prisma.RefundGetPayload<{
 	select: typeof GET_REFUND_SELECT;
 }>;
 

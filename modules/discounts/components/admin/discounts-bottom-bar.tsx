@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
@@ -24,7 +25,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(DISCOUNTS_SORT_LABELS).map(([v
  * Sous-header sticky (mobile, admin) pour la liste codes promo.
  * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
-export function DiscountsBottomBar() {
+function DiscountsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -104,5 +105,13 @@ export function DiscountsBottomBar() {
 
 			<DiscountsFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />
 		</>
+	);
+}
+
+export function DiscountsBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<DiscountsBottomBarInner />
+		</Suspense>
 	);
 }

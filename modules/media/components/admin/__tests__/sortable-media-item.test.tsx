@@ -347,21 +347,21 @@ describe("SortableMediaItem", () => {
 		it("shows mobile hint overlay when showLongPressHint is true", () => {
 			renderItem({ showLongPressHint: true });
 
-			const hints = screen.getAllByText("Maintenir pour déplacer");
+			const hints = screen.getAllByText("Maintenez pour réordonner");
 			expect(hints).toHaveLength(1);
 		});
 
 		it("does not render hint text when showLongPressHint is false", () => {
 			renderItem({ showLongPressHint: false });
 
-			expect(screen.queryByText("Maintenir pour déplacer")).not.toBeInTheDocument();
+			expect(screen.queryByText("Maintenez pour réordonner")).not.toBeInTheDocument();
 		});
 
 		it("does not render hint on non-touch device even when showLongPressHint is true", () => {
 			mockUseIsTouchDevice.mockReturnValue(false);
 			renderItem({ showLongPressHint: true });
 
-			expect(screen.queryByText("Maintenir pour déplacer")).not.toBeInTheDocument();
+			expect(screen.queryByText("Maintenez pour réordonner")).not.toBeInTheDocument();
 		});
 	});
 

@@ -32,7 +32,7 @@ function FieldSkeleton({ labelWidth = "w-24" }: { labelWidth?: string }) {
 export default function EditProductLoadingPage() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement du bijou" className="space-y-6">
-			<span className="sr-only">Chargement du bijou...</span>
+			<span className="sr-only">Chargement du bijou…</span>
 
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>

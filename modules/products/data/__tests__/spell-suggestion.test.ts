@@ -2,14 +2,20 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mocks (hoisted to avoid reference errors) ──────────────────
 
-const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout } = vi.hoisted(() => ({
-	mockTransaction: vi.fn(),
-	mockSetTrigramThreshold: vi.fn(),
-	mockSetStatementTimeout: vi.fn(),
-}));
+const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout, mockIsPgTrgmAvailable } =
+	vi.hoisted(() => ({
+		mockTransaction: vi.fn(),
+		mockSetTrigramThreshold: vi.fn(),
+		mockSetStatementTimeout: vi.fn(),
+		mockIsPgTrgmAvailable: vi.fn().mockResolvedValue(true),
+	}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: { $transaction: mockTransaction },
+}));
+
+vi.mock("@/shared/lib/pg-trgm-availability", () => ({
+	isPgTrgmAvailable: mockIsPgTrgmAvailable,
 }));
 
 vi.mock("../../utils/trigram-helpers", () => ({
@@ -227,5 +233,27 @@ describe("getSpellSuggestion", () => {
 
 	it("exports SUGGESTION_THRESHOLD_RESULTS constant", () => {
 		expect(SUGGESTION_THRESHOLD_RESULTS).toBe(3);
+	});
+
+	// ─── pg_trgm fallback ──────────────────────────────────────
+
+	describe("pg_trgm unavailable", () => {
+		beforeEach(() => {
+			mockIsPgTrgmAvailable.mockResolvedValue(false);
+		});
+
+		it("returns null without querying the database", async () => {
+			const result = await getSpellSuggestion("colier");
+
+			expect(result).toBeNull();
+			expect(mockTransaction).not.toHaveBeenCalled();
+		});
+
+		it("still validates input first (short-circuit before pg_trgm check)", async () => {
+			const result = await getSpellSuggestion("");
+
+			expect(result).toBeNull();
+			expect(mockIsPgTrgmAvailable).not.toHaveBeenCalled();
+		});
 	});
 });

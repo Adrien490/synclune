@@ -29,7 +29,7 @@ export function PageHeaderSkeleton({
 				aria-label="Chargement de l'en-tête"
 			>
 				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
-					<div className="min-w-0 flex-1 space-y-3">
+					<div className="min-w-0 flex-1 gap-y-3">
 						<div className="bg-muted h-9 w-48 rounded" />
 						{hasDescription && <div className="bg-muted h-5 w-72 rounded" />}
 					</div>
@@ -52,7 +52,7 @@ export function PageHeaderSkeleton({
 		>
 			<div className="relative mx-auto max-w-6xl px-4 pt-20 pb-2 motion-safe:animate-pulse sm:px-6 sm:pt-32 sm:pb-4 lg:px-8">
 				<div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-					<div className="min-w-0 flex-1 space-y-2">
+					<div className="min-w-0 flex-1 gap-y-2">
 						{/* Breadcrumb mobile */}
 						<div className="bg-muted h-5 w-20 rounded sm:hidden" />
 						{/* Breadcrumb desktop */}

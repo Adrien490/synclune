@@ -204,7 +204,7 @@ describe("TopProductsList", () => {
 			expect(screen.getByText("Voir tous les produits")).toBeInTheDocument();
 		});
 
-		it("links each product to /admin/catalogue/produits/[slug]/modifier when slug exists", () => {
+		it("links each product to /admin/catalogue/produits/[slug] (fiche détails) when slug exists", () => {
 			render(
 				<TopProductsList
 					listData={makeListData([makeProduct({ productSlug: "collier-argent" })])}
@@ -212,7 +212,7 @@ describe("TopProductsList", () => {
 			);
 
 			const link = screen.getByRole("link", { name: /Rang 1, Bracelet Or/ });
-			expect(link).toHaveAttribute("href", "/admin/catalogue/produits/collier-argent/modifier");
+			expect(link).toHaveAttribute("href", "/admin/catalogue/produits/collier-argent");
 		});
 
 		it("renders a non-link row when productSlug is null (deleted product)", () => {
@@ -225,8 +225,10 @@ describe("TopProductsList", () => {
 			);
 
 			const links = screen.queryAllByRole("link");
-			// Only the footer "Voir tous les produits" link should remain
-			expect(links.filter((l) => l.getAttribute("href")?.includes("/modifier"))).toHaveLength(0);
+			// Only the footer "Voir tous les produits" link (= no slug segment) should remain.
+			expect(
+				links.filter((l) => l.getAttribute("href")?.match(/\/admin\/catalogue\/produits\/.+/)),
+			).toHaveLength(0);
 			expect(screen.getByText("Produit supprimé")).toBeInTheDocument();
 		});
 

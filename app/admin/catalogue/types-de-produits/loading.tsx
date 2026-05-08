@@ -7,7 +7,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function ProductTypesLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des types de produits">
-			<span className="sr-only">Chargement des types de produits...</span>
+			<span className="sr-only">Chargement des types de produits…</span>
 
 			<PageHeader
 				variant="compact"

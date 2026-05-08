@@ -42,12 +42,12 @@ export function ReorderButton({ orderId }: ReorderButtonProps) {
 					>
 						{isPending ? (
 							<>
-								<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-								Ajout au panier...
+								<LoaderCircle className="mr-2 size-4 animate-spin" />
+								Ajout au panier…
 							</>
 						) : (
 							<>
-								<RotateCcw className="mr-2 h-4 w-4" />
+								<RotateCcw className="mr-2 size-4" />
 								Ajouter au panier
 							</>
 						)}

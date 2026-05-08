@@ -76,9 +76,9 @@ export interface StaggerProps {
 /**
  * Direction type for slide animations
  */
-export type SlideDirection = "up" | "down" | "left" | "right";
+type SlideDirection = "up" | "down" | "left" | "right";
 
 /**
  * Viewport amount type for reveal animations
  */
-export type ViewportAmount = number | "some" | "all";
+type ViewportAmount = number | "some" | "all";

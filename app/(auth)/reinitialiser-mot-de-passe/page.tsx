@@ -41,7 +41,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
 						role="alert"
 						className="bg-destructive/15 border-destructive/30 flex items-start gap-3 rounded-md border p-4"
 					>
-						<CircleAlert className="text-destructive mt-0.5 h-5 w-5 shrink-0" />
+						<CircleAlert className="text-destructive mt-0.5 size-5 shrink-0" />
 						<div className="space-y-1">
 							<p className="text-destructive text-sm font-medium">Lien invalide ou expiré</p>
 							<p className="text-destructive/90 text-sm">
@@ -57,7 +57,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
 						role="alert"
 						className="bg-accent/30 border-accent-foreground/30 flex items-start gap-3 rounded-md border p-4"
 					>
-						<CircleAlert className="text-accent-foreground mt-0.5 h-5 w-5 shrink-0" />
+						<CircleAlert className="text-accent-foreground mt-0.5 size-5 shrink-0" />
 						<div className="space-y-1">
 							<p className="text-accent-foreground text-sm font-medium">Token manquant</p>
 							<p className="text-accent-foreground/90 text-sm">

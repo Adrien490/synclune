@@ -96,7 +96,7 @@ describe("AtelierSectionSkeleton", () => {
 		const desktopTimeline = container.querySelector(".hidden.lg\\:grid.lg\\:grid-cols-4");
 		const circleSkeletons = Array.from(
 			desktopTimeline!.querySelectorAll("[data-testid='skeleton']"),
-		).filter((el) => el.classList.contains("rounded-full") && el.classList.contains("h-12"));
+		).filter((el) => el.classList.contains("rounded-full") && el.classList.contains("size-12"));
 
 		expect(circleSkeletons).toHaveLength(4);
 	});
@@ -107,7 +107,7 @@ describe("AtelierSectionSkeleton", () => {
 		const mobileTimeline = container.querySelector(".lg\\:hidden");
 		const circleSkeletons = Array.from(
 			mobileTimeline!.querySelectorAll("[data-testid='skeleton']"),
-		).filter((el) => el.classList.contains("rounded-full") && el.classList.contains("h-12"));
+		).filter((el) => el.classList.contains("rounded-full") && el.classList.contains("size-12"));
 
 		expect(circleSkeletons).toHaveLength(4);
 	});

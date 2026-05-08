@@ -18,7 +18,7 @@ export default function ConfigurationPage() {
 					title: "Boutique",
 					description: "Fermeture temporaire, messages clients",
 					href: "/admin/configuration/boutique",
-					icon: <Store className="h-5 w-5" />,
+					icon: <Store className="size-5" />,
 				},
 			]}
 		/>

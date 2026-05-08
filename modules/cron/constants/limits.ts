@@ -5,18 +5,7 @@
  * 1. Prevent timeouts (Vercel functions have max 60s execution time)
  * 2. Avoid overwhelming external APIs (Stripe rate limits)
  * 3. Keep database load manageable
- *
- * Rationale for each limit:
- * - BATCH_SIZE_SMALL (10): For operations that make external API calls per item
- * - BATCH_SIZE_MEDIUM (25): For mixed operations with some external calls
- * - BATCH_SIZE_LARGE (50): For pure database operations
  */
-
-/**
- * Small batch size for operations with external API calls
- * Used by: retry-webhooks (makes Stripe API call per event)
- */
-export const BATCH_SIZE_SMALL = 10;
 
 /**
  * Medium batch size for mixed operations
@@ -34,18 +23,6 @@ export const BATCH_SIZE_LARGE = 50;
  * Maximum retry attempts for webhook events
  */
 export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
-
-/**
- * Maximum retry attempts for failed email tasks (dead-letter queue)
- * After this many attempts the record stays unresolved for manual review
- */
-export const MAX_EMAIL_RETRY_ATTEMPTS = 3;
-
-/**
- * Exponential backoff delays between email retry attempts (minutes)
- * attempt 1 → 60 min, attempt 2 → 240 min, attempt 3+ → 960 min
- */
-export const EMAIL_RETRY_BACKOFF_MINUTES = [60, 240, 960] as const;
 
 /**
  * Retention periods in days
@@ -110,19 +87,6 @@ export const MAX_PAGES_PER_RUN = 5;
  * Batch size for paginated DB queries when loading referenced media keys
  */
 export const DB_QUERY_BATCH_SIZE = 500;
-
-/**
- * Delay between consecutive email sends in batch cron jobs (ms)
- * Prevents hitting Resend's rate limit during large batches
- */
-export const EMAIL_THROTTLE_MS = 100;
-
-/**
- * Age threshold for pending orders to be eligible for cleanup (ms)
- * Orders older than this with a non-terminal PI status will be cancelled.
- * 30 minutes gives enough time for 3DS challenges and slow connections.
- */
-export const PENDING_ORDER_MAX_AGE_MS = 30 * 60 * 1000;
 
 /**
  * Time thresholds in milliseconds

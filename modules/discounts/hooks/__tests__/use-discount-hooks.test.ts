@@ -770,7 +770,7 @@ describe("useDuplicateDiscount", () => {
 				result.current.duplicate("discount-123");
 			});
 
-			expect(mockToastLoading).toHaveBeenCalledWith("Duplication en cours...");
+			expect(mockToastLoading).toHaveBeenCalledWith("Duplication en cours…");
 		});
 
 		it("dismisses the loading toast after action completes", async () => {

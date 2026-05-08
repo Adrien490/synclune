@@ -66,7 +66,7 @@ function VariantCard({
 								className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
 								aria-label="Plus d'informations sur la variante par défaut"
 							>
-								<Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
+								<Info className="text-muted-foreground hover:text-foreground size-4 transition-colors" />
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="bottom" className="max-w-62.5">
@@ -102,7 +102,7 @@ function VariantCard({
 												<div className="flex items-center gap-2">
 													{c && (
 														<div
-															className="border-border h-4 w-4 rounded-full border"
+															className="border-border size-4 rounded-full border"
 															style={{ backgroundColor: c.hex }}
 															aria-hidden="true"
 														/>
@@ -116,7 +116,7 @@ function VariantCard({
 											return c ? (
 												<div className="flex items-center gap-2">
 													<div
-														className="border-border h-4 w-4 rounded-full border"
+														className="border-border size-4 rounded-full border"
 														style={{ backgroundColor: c.hex }}
 														aria-hidden="true"
 													/>
@@ -134,7 +134,7 @@ function VariantCard({
 									type="button"
 									variant="outline"
 									size="icon"
-									className="shrink-0"
+									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
 									onClick={() => {
 										haptic("light");
 										colorDialog.open({
@@ -146,7 +146,7 @@ function VariantCard({
 									}}
 									aria-label="Créer une nouvelle couleur"
 								>
-									<Plus className="h-4 w-4" />
+									<Plus className="size-4" />
 								</Button>
 							</div>
 						</div>
@@ -178,7 +178,7 @@ function VariantCard({
 									type="button"
 									variant="outline"
 									size="icon"
-									className="shrink-0"
+									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
 									onClick={() => {
 										haptic("light");
 										materialDialog.open({
@@ -190,7 +190,7 @@ function VariantCard({
 									}}
 									aria-label="Créer un nouveau matériau"
 								>
-									<Plus className="h-4 w-4" />
+									<Plus className="size-4" />
 								</Button>
 							</div>
 						</div>
@@ -202,7 +202,7 @@ function VariantCard({
 						<div className="space-y-2">
 							<FieldLabel optional>Taille</FieldLabel>
 							<field.InputGroupField
-								placeholder="Ex: 52, Ajustable, 18cm..."
+								placeholder="Ex: 52, Ajustable, 18cm…"
 								inputMode="text"
 								enterKeyHint="next"
 								autoCapitalize="none"
@@ -260,7 +260,7 @@ function PricingCard({ form }: { form: EditProductFormInstance }) {
 								aria-describedby="price-edit-sale-hint"
 							>
 								<InputGroupAddon>
-									<Euro className="h-4 w-4" />
+									<Euro className="size-4" />
 								</InputGroupAddon>
 							</field.InputGroupField>
 							<p id="price-edit-sale-hint" className="text-muted-foreground text-xs">
@@ -288,7 +288,7 @@ function PricingCard({ form }: { form: EditProductFormInstance }) {
 								aria-describedby="price-edit-compare-hint"
 							>
 								<InputGroupAddon>
-									<Euro className="h-4 w-4" />
+									<Euro className="size-4" />
 								</InputGroupAddon>
 							</field.InputGroupField>
 							<p id="price-edit-compare-hint" className="text-muted-foreground text-xs">
@@ -326,7 +326,7 @@ function StockCard({ form }: { form: EditProductFormInstance }) {
 								aria-describedby="stock-edit-hint"
 							>
 								<InputGroupAddon align="inline-end">
-									<Package className="text-muted-foreground h-4 w-4" />
+									<Package className="text-muted-foreground size-4" />
 									<InputGroupText className="text-muted-foreground text-xs">unités</InputGroupText>
 								</InputGroupAddon>
 							</field.InputGroupField>

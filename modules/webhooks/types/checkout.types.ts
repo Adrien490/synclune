@@ -1,4 +1,4 @@
-export interface OrderItem {
+interface OrderItem {
 	productTitle: string | null;
 	skuColor: string | null;
 	skuMaterial: string | null;

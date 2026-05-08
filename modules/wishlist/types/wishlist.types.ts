@@ -23,7 +23,7 @@ export type GetWishlistParams = {
  * Type d'un article de wishlist avec ses données SKU et produit
  * Inclut: SKU (prix, inventaire, couleur, matériau), produit (titre, slug), image primaire
  */
-export type WishlistItem = Prisma.WishlistItemGetPayload<{
+type WishlistItem = Prisma.WishlistItemGetPayload<{
 	select: typeof GET_WISHLIST_ITEM_SELECT;
 }>;
 

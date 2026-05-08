@@ -81,7 +81,7 @@ export function DeleteDiscountAlertDialog() {
 							onClick={() => haptic("heavy")}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Suppression..." : "Supprimer"}
+							{isPending ? "Suppression…" : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

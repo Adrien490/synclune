@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense, type ComponentProps } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown } from "lucide-react";
 
@@ -37,7 +37,7 @@ interface SortDrawerTriggerProps {
  * />
  * ```
  */
-export function SortDrawerTrigger({
+function SortDrawerTriggerInner({
 	options,
 	filterKey = "sortBy",
 	className,
@@ -76,5 +76,13 @@ export function SortDrawerTrigger({
 				showResetOption={showResetOption}
 			/>
 		</>
+	);
+}
+
+export function SortDrawerTrigger(props: ComponentProps<typeof SortDrawerTriggerInner>) {
+	return (
+		<Suspense fallback={null}>
+			<SortDrawerTriggerInner {...props} />
+		</Suspense>
 	);
 }

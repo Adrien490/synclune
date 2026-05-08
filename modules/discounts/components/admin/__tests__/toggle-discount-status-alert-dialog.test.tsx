@@ -193,10 +193,10 @@ describe("ToggleDiscountStatusAlertDialog", () => {
 		expect(screen.getByTestId("submit-button")).toHaveTextContent("Activer");
 	});
 
-	it("shows 'En cours...' on submit button when isPending", () => {
+	it("shows 'En cours…' on submit button when isPending", () => {
 		mockIsPending.value = true;
 		render(<ToggleDiscountStatusAlertDialog />);
-		expect(screen.getByText("En cours...")).toBeInTheDocument();
+		expect(screen.getByText("En cours…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending", () => {

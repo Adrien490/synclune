@@ -65,10 +65,10 @@ describe("RemoveUnavailableItemsButton", () => {
 		).toBeInTheDocument();
 	});
 
-	it("shows 'Suppression en cours...' when isPending", () => {
+	it("shows 'Suppression en cours…' when isPending", () => {
 		mockIsPending.value = true;
 		render(<RemoveUnavailableItemsButton itemsCount={2} unavailableQuantity={1} />);
-		expect(screen.getByRole("button")).toHaveTextContent("Suppression en cours...");
+		expect(screen.getByRole("button")).toHaveTextContent("Suppression en cours…");
 	});
 
 	it("is disabled when isPending", () => {

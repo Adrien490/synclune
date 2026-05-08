@@ -10,7 +10,7 @@ const RECENT_SEARCHES_STORAGE_PREFIX = "synclune:admin-recent-searches:";
 const recentSearchTermSchema = z.string().trim().min(1).max(RECENT_SEARCHES_MAX_TERM_LENGTH);
 const recentSearchesStorageSchema = z.array(recentSearchTermSchema).max(RECENT_SEARCHES_MAX_ITEMS);
 
-export function recentSearchesStorageKey(scope: string): string {
+function recentSearchesStorageKey(scope: string): string {
 	return `${RECENT_SEARCHES_STORAGE_PREFIX}${scope}`;
 }
 

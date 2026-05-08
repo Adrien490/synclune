@@ -33,7 +33,7 @@ export function HomepageReviewCard({ review, className }: HomepageReviewCardProp
 				className,
 			)}
 		>
-			<div className="space-y-3 px-4 py-4 sm:px-6">
+			<div className="space-y-3 p-4 sm:px-6">
 				{/* Header: name + verified badge */}
 				<div>
 					<span className="text-foreground truncate font-medium">{userName}</span>

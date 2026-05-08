@@ -86,7 +86,7 @@ export function DuplicateProductAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Duplication..." : "Dupliquer"}
+							{isPending ? "Duplication…" : "Dupliquer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

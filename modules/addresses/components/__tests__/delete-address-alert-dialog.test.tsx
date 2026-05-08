@@ -195,11 +195,11 @@ describe("DeleteAddressAlertDialog", () => {
 		expect(screen.getByTestId("action-btn")).toBeDisabled();
 	});
 
-	it("shows 'Suppression...' text when isPending=true", () => {
+	it("shows 'Suppression…' text when isPending=true", () => {
 		mockIsPending.value = true;
 		setupOpenDialog();
 		render(<DeleteAddressAlertDialog />);
-		expect(screen.getByTestId("action-btn")).toHaveTextContent("Suppression...");
+		expect(screen.getByTestId("action-btn")).toHaveTextContent("Suppression…");
 	});
 
 	it("sets aria-busy on action button when pending", () => {

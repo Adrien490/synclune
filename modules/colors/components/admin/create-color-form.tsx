@@ -4,8 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { createColor } from "@/modules/colors/actions/create-color";
-import { ColorPalette } from "@/modules/colors/components/color-palette";
-import { HexColorInput } from "@/modules/colors/components/hex-color-input";
+import { ColorPickerField } from "@/modules/colors/components/admin/color-picker-field";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
@@ -52,7 +51,7 @@ export function CreateColorForm({
 			createColor,
 			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
-				loadingMessage: "Création de la couleur...",
+				loadingMessage: "Création de la couleur…",
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
@@ -119,16 +118,12 @@ export function CreateColorForm({
 				>
 					{(field) => (
 						<div className="space-y-4">
-							<Label>
+							<Label htmlFor="hex">
 								Couleur
 								<span className="text-destructive ml-1">*</span>
 							</Label>
-							<ColorPalette
-								value={field.state.value}
-								onChange={(hex) => field.handleChange(hex)}
-								disabled={isPending}
-							/>
-							<HexColorInput
+							<ColorPickerField
+								id="hex"
 								value={field.state.value}
 								onChange={(hex) => field.handleChange(hex)}
 								disabled={isPending}
@@ -171,7 +166,7 @@ export function CreateColorForm({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement..." : "Créer"}
+								{isPending ? "Enregistrement…" : "Créer"}
 							</Button>
 						)}
 					</form.Subscribe>

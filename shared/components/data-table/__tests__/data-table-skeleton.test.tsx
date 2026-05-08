@@ -139,10 +139,8 @@ describe("DataTableSkeleton", () => {
 		const skeletons = screen.getAllByTestId("skeleton");
 		// 1 header skeleton + 1 body cell skeleton = 2
 		expect(skeletons.length).toBe(2);
-		// checkbox skeleton: h-4 w-4
-		const bodySkeletons = skeletons.filter(
-			(s) => s.className.includes("h-4") && s.className.includes("w-4"),
-		);
+		// checkbox skeleton: size-4
+		const bodySkeletons = skeletons.filter((s) => s.className.includes("size-4"));
 		expect(bodySkeletons.length).toBeGreaterThan(0);
 	});
 

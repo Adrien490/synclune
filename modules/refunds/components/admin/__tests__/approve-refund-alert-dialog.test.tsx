@@ -219,7 +219,7 @@ describe("ApproveRefundAlertDialog", () => {
 
 		render(<ApproveRefundAlertDialog />);
 
-		expect(screen.getByText("Approbation...")).toBeInTheDocument();
+		expect(screen.getByText("Approbation…")).toBeInTheDocument();
 	});
 
 	it("shows loader icon when isPending is true", () => {
@@ -249,7 +249,7 @@ describe("ApproveRefundAlertDialog", () => {
 
 		render(<ApproveRefundAlertDialog />);
 
-		expect(screen.getByText("Approbation...")).toBeDisabled();
+		expect(screen.getByText("Approbation…")).toBeDisabled();
 	});
 
 	// ─── Constants ────────────────────────────────────────────────────────────

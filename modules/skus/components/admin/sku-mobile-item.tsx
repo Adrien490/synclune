@@ -6,7 +6,7 @@ import Image from "next/image";
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
+import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
@@ -26,18 +26,6 @@ const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 
 const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
 
-const getStockVariant = (inventory: number): "destructive" | "warning" | "success" => {
-	if (inventory === 0) return "destructive";
-	if (inventory <= STOCK_THRESHOLDS.LOW) return "warning";
-	return "success";
-};
-
-const getStockAriaLabel = (inventory: number) => {
-	if (inventory === 0) return "Stock épuisé";
-	if (inventory <= STOCK_THRESHOLDS.LOW) return `Stock faible : ${inventory} disponible(s)`;
-	return `${inventory} en stock`;
-};
-
 export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
 	const stockVariant = getStockVariant(sku.inventory);
@@ -55,19 +43,15 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 
 	return (
 		<LongPressMenuLink
-			href={`/admin/catalogue/produits/${productSlug}/variantes/${sku.id}/modifier`}
+			href={`/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`}
 			ariaLabel={`Variante ${sku.sku}`}
 			sections={sections}
 			menuTitle="Actions variante"
 			menuDescription={sku.sku}
 			className="text-left"
+			viewTransitionName={`sku-card-${sku.id}`}
 		>
-			<Item
-				variant="outline"
-				size="sm"
-				className="w-full gap-3"
-				aria-roledescription="carte variante"
-			>
+			<Item variant="outline" size="sm" className="w-full gap-3">
 				{primaryImage ? (
 					primaryImage.mediaType === "VIDEO" ? (
 						<video
@@ -103,7 +87,11 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 						<span className="truncate font-semibold">{sku.sku}</span>
 						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
 						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
-						<Badge variant={stockVariant} aria-label={getStockAriaLabel(sku.inventory)}>
+						<Badge
+							variant={stockVariant}
+							aria-label={getStockAriaLabel(sku.inventory)}
+							style={{ viewTransitionName: `sku-stock-${sku.id}` }}
+						>
 							{sku.inventory}
 						</Badge>
 					</ItemTitle>

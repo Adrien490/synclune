@@ -118,7 +118,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par nom, slug, description..."
+								placeholder="Rechercher par nom, slug, description…"
 								ariaLabel="Rechercher une collection par nom, slug ou description"
 								className="w-full"
 							/>

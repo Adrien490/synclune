@@ -369,11 +369,11 @@ describe("UpdateTrackingDialog", () => {
 		expect(screen.getByText("Mettre à jour")).toBeInTheDocument();
 	});
 
-	it('shows "Mise à jour..." when isPending is true', () => {
+	it('shows "Mise à jour…" when isPending is true', () => {
 		mockFormHook.isPending = true;
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		expect(screen.getByText("Mise à jour...")).toBeInTheDocument();
+		expect(screen.getByText("Mise à jour…")).toBeInTheDocument();
 		expect(screen.queryByText("Mettre à jour")).toBeNull();
 	});
 
@@ -406,7 +406,7 @@ describe("UpdateTrackingDialog", () => {
 		mockFormStore.trackingNumber = "8N00234567890";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const submitBtn = screen.getByText("Mise à jour...").closest("button");
+		const submitBtn = screen.getByText("Mise à jour…").closest("button");
 		expect(submitBtn).toBeDisabled();
 	});
 

@@ -1,8 +1,16 @@
 "use client";
 
+import { Gem } from "lucide-react";
+
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "@/shared/components/ui/item";
 
 import { useMaterialActions } from "../../hooks/use-material-actions";
 
@@ -19,7 +27,7 @@ interface MaterialMobileItemProps {
 
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	const skuCount = material._count.skus || 0;
-	const statusLabel = material.isActive ? "Actif" : "Inactif";
+	const statusLabel = material.isActive ? "● Actif" : "○ Inactif";
 
 	const { sections } = useMaterialActions({
 		materialId: material.id,
@@ -31,23 +39,27 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 
 	return (
 		<LongPressMenuLink
-			href={`/admin/catalogue/materiaux/${material.slug}/modifier`}
+			href={`/admin/catalogue/materiaux/${material.slug}`}
 			ariaLabel={`Matériau ${material.name}`}
 			sections={sections}
 			menuTitle="Actions"
 			menuDescription={material.name}
 			className="text-left"
+			viewTransitionName={`material-card-${material.id}`}
 		>
-			<Item
-				variant="outline"
-				size="sm"
-				className="w-full gap-3"
-				aria-roledescription="carte materiau"
-			>
+			<Item variant="outline" size="sm" className="w-full gap-3">
+				<ItemMedia variant="icon">
+					<Gem className="text-muted-foreground size-5" aria-hidden="true" />
+				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{material.name}</span>
-						<Badge variant={material.isActive ? "default" : "secondary"}>{statusLabel}</Badge>
+						<Badge
+							variant={material.isActive ? "default" : "secondary"}
+							style={{ viewTransitionName: `material-status-${material.id}` }}
+						>
+							{statusLabel}
+						</Badge>
 					</ItemTitle>
 					{material.description ? (
 						<ItemDescription className="line-clamp-1">{material.description}</ItemDescription>

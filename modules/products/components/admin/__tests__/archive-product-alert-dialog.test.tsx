@@ -305,10 +305,10 @@ describe("ArchiveProductAlertDialog", () => {
 			mockToggleProductStatus.isPending = true;
 		});
 
-		it("shows 'Archivage...' label when pending in archive mode", () => {
+		it("shows 'Archivage…' label when pending in archive mode", () => {
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Archivage...");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Archivage…");
 		});
 
 		it("shows loader icon when pending", () => {
@@ -335,7 +335,7 @@ describe("ArchiveProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveAttribute("aria-busy", "true");
 		});
 
-		it("shows 'Restauration...' label when pending in unarchive mode", () => {
+		it("shows 'Restauration…' label when pending in unarchive mode", () => {
 			mockDialog.data = {
 				productId: "prod-2",
 				productTitle: "Collier Étoile",
@@ -343,7 +343,7 @@ describe("ArchiveProductAlertDialog", () => {
 			};
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Restauration...");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Restauration…");
 		});
 	});
 

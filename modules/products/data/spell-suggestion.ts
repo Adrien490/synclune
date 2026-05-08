@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
+import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -102,6 +103,10 @@ export async function getSpellSuggestion(
 
 	// No words eligible for correction
 	if (eligibleWords.length === 0) return null;
+
+	// Spell suggestions rely entirely on similarity() and the % operator,
+	// so there is no meaningful fallback when pg_trgm is unavailable.
+	if (!(await isPgTrgmAvailable())) return null;
 
 	const startTime = performance.now();
 

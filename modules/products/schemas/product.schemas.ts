@@ -391,14 +391,6 @@ export const bulkArchiveProductsSchema = z.object({
 	targetStatus: z.enum(["ARCHIVED", "PUBLIC"]).default("ARCHIVED"),
 });
 
-export const bulkChangeProductStatusSchema = z.object({
-	productIds: z
-		.array(z.cuid2({ message: "ID produit invalide" }))
-		.min(1, "Au moins un produit doit être sélectionné")
-		.max(100, "Maximum 100 produits par opération"),
-	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
-});
-
 export const updateProductCollectionsSchema = z.object({
 	productId: z.cuid2({ message: "ID produit invalide" }),
 	collectionIds: z

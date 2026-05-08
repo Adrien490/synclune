@@ -417,7 +417,7 @@ describe("ChartLegendContent", () => {
 			</ChartContainer>,
 		);
 
-		const swatch = container.querySelector(".h-2.w-2");
+		const swatch = container.querySelector(".size-2");
 		expect(swatch).toBeInTheDocument();
 		expect((swatch as HTMLElement).style.backgroundColor).toBe("rgb(136, 132, 216)");
 	});

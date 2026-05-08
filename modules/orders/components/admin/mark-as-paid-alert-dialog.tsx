@@ -64,7 +64,7 @@ export function MarkAsPaidAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Marquage..." : "Marquer comme payée"}
+							{isPending ? "Marquage…" : "Marquer comme payée"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

@@ -67,7 +67,7 @@ export function StatRow({
 			</ItemActions>
 			{href && (
 				<ChevronRight
-					className="text-muted-foreground/60 ml-1 h-4 w-4 shrink-0"
+					className="text-muted-foreground/60 ml-1 size-4 shrink-0"
 					aria-hidden="true"
 				/>
 			)}

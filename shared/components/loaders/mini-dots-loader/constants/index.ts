@@ -1,10 +1,10 @@
 export const sizeClasses = {
 	dots: {
-		xs: "h-0.5 w-0.5",
-		sm: "h-1 w-1",
-		md: "h-1.5 w-1.5",
-		lg: "h-2 w-2",
-		xl: "h-2.5 w-2.5",
+		xs: "size-0.5",
+		sm: "size-1",
+		md: "size-1.5",
+		lg: "size-2",
+		xl: "size-2.5",
 	},
 };
 

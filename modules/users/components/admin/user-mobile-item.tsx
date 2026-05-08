@@ -51,7 +51,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 							<span className="truncate font-semibold">{displayName}</span>
 							{user.emailVerified ? (
 								<CircleCheck
-									className="h-4 w-4 shrink-0 text-green-600"
+									className="size-4 shrink-0 text-green-600"
 									aria-label="Email verifie"
 								/>
 							) : null}

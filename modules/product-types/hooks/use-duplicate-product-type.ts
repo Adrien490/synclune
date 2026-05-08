@@ -33,7 +33,7 @@ export const useDuplicateProductType = (options?: UseDuplicateProductTypeOptions
 		withCallbacks(
 			duplicateProductType,
 			createToastCallbacks({
-				loadingMessage: "Duplication du type...",
+				loadingMessage: "Duplication du type…",
 				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
 					if (

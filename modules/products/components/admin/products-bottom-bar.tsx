@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
@@ -42,7 +43,7 @@ interface ProductsBottomBarProps {
  * au scroll. L'ancienne bottom-bar a migré en haut de page ; la nav globale
  * `AdminMobileBottomBar` reste visible en bas simultanément.
  */
-export function ProductsBottomBar({
+function ProductsBottomBarInner({
 	productTypes,
 	collections,
 	colors,
@@ -137,5 +138,13 @@ export function ProductsBottomBar({
 				adapter={productsAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function ProductsBottomBar(props: ComponentProps<typeof ProductsBottomBarInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductsBottomBarInner {...props} />
+		</Suspense>
 	);
 }

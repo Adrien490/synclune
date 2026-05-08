@@ -31,14 +31,14 @@ export function RefreshButton({
 					onClick={onRefresh}
 					disabled={isPending}
 					className={cn(
-						"border-border/60 hover:border-border hover:bg-accent/30 h-11 w-11 transition-all duration-200",
+						"border-border/60 hover:border-border hover:bg-accent/30 size-11 transition-all duration-200",
 						hideOnMobile && "hidden md:flex",
 						className,
 					)}
 					aria-label={label}
 				>
 					<RefreshCw
-						className={cn("h-4 w-4", isPending && "motion-safe:animate-spin")}
+						className={cn("size-4", isPending && "motion-safe:animate-spin")}
 						aria-hidden="true"
 					/>
 				</Button>

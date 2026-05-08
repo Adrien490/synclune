@@ -13,7 +13,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { Camera, FolderOpen, Image as ImageIcon, Plus, Upload } from "lucide-react";
+import { Camera, FolderOpen, Image as ImageIcon, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 
 interface UploadActionSheetProps {
@@ -233,40 +233,5 @@ export function UploadActionSheet({
 				onChange={handleFiles}
 			/>
 		</>
-	);
-}
-
-/**
- * Visual placeholder used by desktop fallback when no UploadDropzone is provided.
- * Renders a generic dashed dropzone tile.
- */
-export function DesktopUploadPlaceholder({
-	onClick,
-	disabled,
-	label = "Glissez des fichiers ou cliquez pour parcourir",
-	className,
-}: {
-	onClick?: () => void;
-	disabled?: boolean;
-	label?: string;
-	className?: string;
-}) {
-	const haptic = useHaptic();
-	return (
-		<button
-			type="button"
-			disabled={disabled}
-			onClick={() => {
-				haptic("light");
-				onClick?.();
-			}}
-			className={cn(
-				"hover:border-primary/50 hover:bg-muted/50 border-border/50 flex min-h-[140px] w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-6 text-center motion-safe:transition-colors",
-				className,
-			)}
-		>
-			<Upload className="text-muted-foreground size-10" aria-hidden="true" />
-			<span className="text-sm font-medium">{label}</span>
-		</button>
 	);
 }

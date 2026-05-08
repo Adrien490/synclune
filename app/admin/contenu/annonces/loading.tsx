@@ -8,7 +8,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function AnnouncementsLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des annonces">
-			<span className="sr-only">Chargement des annonces...</span>
+			<span className="sr-only">Chargement des annonces…</span>
 
 			<PageHeader
 				variant="compact"
@@ -17,7 +17,7 @@ export default function AnnouncementsLoading() {
 				actions={
 					<Button variant="outline" size="sm" asChild>
 						<Link href="/" target="_blank">
-							<ExternalLink className="h-4 w-4" />
+							<ExternalLink className="size-4" />
 							Voir sur la boutique
 						</Link>
 					</Button>

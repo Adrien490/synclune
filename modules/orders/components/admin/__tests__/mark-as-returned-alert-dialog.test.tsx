@@ -178,12 +178,12 @@ describe("MarkAsReturnedAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Marquage...' on submit button when isPending is true", () => {
+	it("shows 'Marquage…' on submit button when isPending is true", () => {
 		mockIsPending = true;
 
 		render(<MarkAsReturnedAlertDialog />);
 
-		expect(screen.getByText("Marquage...")).toBeInTheDocument();
+		expect(screen.getByText("Marquage…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending is true", () => {

@@ -328,7 +328,7 @@ describe("CollectionProductsList", () => {
 
 	// ─── Product title link ───────────────────────────────────────────────────
 
-	it("renders product title as a link to the admin edit page", () => {
+	it("renders product title as a link to the admin product detail page", () => {
 		render(
 			<CollectionProductsList
 				collectionId="col-1"
@@ -339,7 +339,7 @@ describe("CollectionProductsList", () => {
 
 		const link = screen.getByRole("link", { name: "Bague Soleil" });
 		expect(link).toBeInTheDocument();
-		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/bague-soleil/modifier");
+		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/bague-soleil");
 	});
 
 	// ─── Status badge ─────────────────────────────────────────────────────────

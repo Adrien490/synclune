@@ -7,7 +7,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function ProductVariantsLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des variantes" className="space-y-6">
-			<span className="sr-only">Chargement des variantes...</span>
+			<span className="sr-only">Chargement des variantes…</span>
 
 			{/* Breadcrumb (desktop) — réserve la hauteur même si le slug n'est pas connu */}
 			<div className="hidden md:flex md:items-center md:gap-2">

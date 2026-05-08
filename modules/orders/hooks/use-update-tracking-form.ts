@@ -36,7 +36,7 @@ export const useUpdateTrackingForm = (options: UseUpdateTrackingFormOptions) => 
 		withCallbacks(
 			updateTracking,
 			createToastCallbacks({
-				loadingMessage: "Mise à jour du suivi...",
+				loadingMessage: "Mise à jour du suivi…",
 				onSuccess: handleComplete,
 				onWarning: handleComplete, // Fermer le dialog aussi en cas de warning
 			}),

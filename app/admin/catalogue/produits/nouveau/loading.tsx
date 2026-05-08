@@ -39,15 +39,15 @@ function MobileWizardSkeleton() {
 				</div>
 
 				{/* Info box */}
-				<div className="flex items-center gap-3 rounded-lg border border-dashed px-3 py-3">
-					<Skeleton className="h-5 w-5" />
+				<div className="flex items-center gap-3 rounded-lg border border-dashed p-3">
+					<Skeleton className="size-5" />
 					<Skeleton className="h-4 w-48" />
 				</div>
 
 				{/* Zone d'upload */}
 				<div className="rounded-xl border-2 border-dashed p-8">
 					<div className="flex flex-col items-center gap-4">
-						<Skeleton className="h-12 w-12 rounded-full" />
+						<Skeleton className="size-12 rounded-full" />
 						<div className="space-y-2 text-center">
 							<Skeleton className="mx-auto h-5 w-40" />
 							<Skeleton className="mx-auto h-3 w-52" />
@@ -90,7 +90,7 @@ function DesktopFormSkeleton() {
 					{/* Zone d'upload */}
 					<div className="rounded-lg border-2 border-dashed p-6">
 						<div className="flex flex-col items-center gap-3">
-							<Skeleton className="h-12 w-12 rounded-full" />
+							<Skeleton className="size-12 rounded-full" />
 							<Skeleton className="h-5 w-36" />
 							<Skeleton className="h-3 w-48" />
 						</div>
@@ -129,7 +129,7 @@ function DesktopFormSkeleton() {
 				<div className="space-y-1 border-t pt-4">
 					<div className="flex items-center gap-2">
 						<Skeleton className="h-4 w-36" />
-						<Skeleton className="h-3.5 w-3.5 rounded-full" />
+						<Skeleton className="size-3.5 rounded-full" />
 					</div>
 					<Skeleton className="h-3 w-52" />
 				</div>
@@ -195,7 +195,7 @@ function DesktopFormSkeleton() {
 export default function CreateProductLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement du formulaire">
-			<span className="sr-only">Chargement du formulaire...</span>
+			<span className="sr-only">Chargement du formulaire…</span>
 
 			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
 

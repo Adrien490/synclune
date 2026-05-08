@@ -119,7 +119,6 @@ export default function ScrollFade({
 				ref={containerRef}
 				data-slot="scroll-fade-container"
 				data-testid="scroll-fade-container"
-				data-vaul-no-drag
 				className={cn(
 					hideScrollbar &&
 						"[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",

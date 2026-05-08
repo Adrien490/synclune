@@ -3,7 +3,6 @@ import "server-only";
 import { AccountStatus, PrismaClient } from "@/app/generated/prisma/client";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { traceContext } from "@prisma/sqlcommenter-trace-context";
-import { logger } from "@/shared/lib/logger";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl && process.env.NODE_ENV !== "test") {
@@ -44,34 +43,6 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export { prisma };
-
-// ============================================================================
-// VÉRIFICATION EXTENSION pg_trgm
-// ============================================================================
-
-/**
- * Vérifie que l'extension pg_trgm est installée (une seule fois au démarrage)
- * Nécessaire pour la recherche fuzzy et les suggestions orthographiques
- */
-async function verifyPgTrgmExtension() {
-	try {
-		const result = await prisma.$queryRaw<{ extname: string }[]>`
-			SELECT extname::text FROM pg_extension WHERE extname = 'pg_trgm'
-		`;
-		if (result.length === 0) {
-			logger.warn("Extension pg_trgm non installée - recherche fuzzy désactivée", {
-				service: "prisma",
-			});
-		}
-	} catch (error) {
-		logger.error("Erreur vérification pg_trgm", error, { service: "prisma" });
-	}
-}
-
-// Exécuter en dev uniquement (éviter ralentissement cold start en prod)
-if (process.env.NODE_ENV === "development") {
-	void verifyPgTrgmExtension();
-}
 
 /**
  * Helper pour filtrer les enregistrements soft-deleted

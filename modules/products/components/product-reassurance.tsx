@@ -13,7 +13,7 @@ import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
  */
 export function ProductReassurance() {
 	return (
-		<ul className="text-muted-foreground bg-muted/30 border-border/50 space-y-2.5 rounded-xl border px-4 py-4 text-sm">
+		<ul className="text-muted-foreground bg-muted/30 border-border/50 space-y-2.5 rounded-xl border p-4 text-sm">
 			{/* Frais de livraison explicites - Baymard : 64% cherchent cette info avant add-to-cart */}
 			<li className="flex items-start gap-2.5">
 				<Truck className="text-foreground mt-0.5 size-4 shrink-0" aria-hidden="true" />

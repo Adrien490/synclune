@@ -6,12 +6,12 @@
 /**
  * Classes de taille pour le bouton "Retour au début"
  */
-export const RESET_BUTTON_SIZE = "h-12 w-12 md:h-9 md:w-20";
+export const RESET_BUTTON_SIZE = "size-12 md:h-9 md:w-20";
 
 /**
  * Classes de taille pour les boutons précédent/suivant
  */
-export const NAV_BUTTON_SIZE = "h-12 w-12 md:h-9 md:w-9";
+export const NAV_BUTTON_SIZE = "size-12 md:size-9";
 
 /**
  * Classes de taille pour l'indicateur de page central

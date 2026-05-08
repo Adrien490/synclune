@@ -51,7 +51,7 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 							className={cn(
 								"rounded-full",
 								!prefersReduced && "transition-all duration-200",
-								i === current ? "h-2.5 w-2.5 bg-white ring-1 ring-white/50" : "h-2 w-2 bg-white/80",
+								i === current ? "size-2.5 bg-white ring-1 ring-white/50" : "size-2 bg-white/80",
 							)}
 						/>
 					</button>

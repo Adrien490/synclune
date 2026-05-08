@@ -5,7 +5,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function VentesLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des ventes">
-			<span className="sr-only">Chargement des ventes...</span>
+			<span className="sr-only">Chargement des ventes…</span>
 
 			<PageHeader
 				variant="compact"
@@ -20,7 +20,7 @@ export default function VentesLoading() {
 						<CardHeader>
 							<div className="flex items-start justify-between">
 								<div className="flex items-center gap-3">
-									<Skeleton className="h-10 w-10 rounded-lg" />
+									<Skeleton className="size-10 rounded-lg" />
 									<div className="space-y-2">
 										<Skeleton className="h-5 w-24" />
 										<Skeleton className="h-4 w-40" />

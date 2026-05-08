@@ -43,10 +43,10 @@ describe("DecorativeHalo", () => {
 		expect(container.firstChild).toHaveAttribute("aria-hidden", "true");
 	});
 
-	it('size="lg" applies w-12 h-12 class', () => {
+	it('size="lg" applies size-12 class', () => {
 		const { container } = render(<DecorativeHalo size="lg" />);
 		const classes = (container.firstChild as HTMLElement).className;
-		expect(classes).toContain("w-12 h-12");
+		expect(classes).toContain("size-12");
 	});
 
 	it('variant="rose" applies bg-[color:var(--rose-300)] class', () => {

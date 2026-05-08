@@ -320,7 +320,7 @@ describe("ProductCatalog", () => {
 		it("uses generic jewelry placeholder by default", () => {
 			render(<ProductCatalog {...makeProps()} />);
 			const input = screen.getByTestId("search-input");
-			expect(input).toHaveAttribute("placeholder", "Rechercher des bijoux...");
+			expect(input).toHaveAttribute("placeholder", "Rechercher des bijoux…");
 		});
 
 		it("uses product type specific placeholder when activeProductType is set", () => {
@@ -332,7 +332,7 @@ describe("ProductCatalog", () => {
 				/>,
 			);
 			const input = screen.getByTestId("search-input");
-			expect(input).toHaveAttribute("placeholder", "Rechercher des bagues...");
+			expect(input).toHaveAttribute("placeholder", "Rechercher des bagues…");
 		});
 	});
 

@@ -31,7 +31,7 @@ export const HOME_FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 			<>
 				Oui, à <strong className="text-foreground font-semibold">100 %</strong>. Chaque pièce est
 				dessinée, peinte, cuite et assemblée dans mon atelier à Pessac. Aucune production en série,
-				aucune sous-traitance — chaque création passe entre mes mains.
+				aucune sous-traitance, chaque création passe entre mes mains.
 			</>
 		),
 	},
@@ -143,6 +143,8 @@ export function HomeFaq() {
 			className={`bg-background relative scroll-mt-24 lg:scroll-mt-28 ${SECTION_SPACING.section}`}
 			style={{ viewTransitionName: "home-faq" }}
 		>
+			{/* SAFE: serialized via safeJsonLd (no user HTML) */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				id="home-faq-schema"
 				type="application/ld+json"

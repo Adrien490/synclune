@@ -9,10 +9,15 @@ import { ProductStatus } from "@/app/generated/prisma/client";
 
 // Shared components
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import {
+	BulkSelectionHeaderCheckbox,
+	BulkSelectionProvider,
+	BulkSelectionRowCheckbox,
+	TableEmptyState,
+} from "@/shared/components/data-table";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
-import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
 	Table,
 	TableBody,
@@ -29,6 +34,7 @@ import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 // Local components
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
+import { ProductsBulkActionsBar } from "./products-bulk-actions-bar";
 
 // =============================================================================
 // Constants
@@ -123,138 +129,158 @@ export async function ProductsDataTable({
 		);
 	}
 
+	const pageItemIds = products.map((p) => p.id);
+
 	return (
 		<Card className="hidden md:block">
 			<CardContent>
-				<TableScrollContainer>
-					<Table aria-label="Liste des bijoux" striped noRegion className="min-w-full table-fixed">
-						<TableHeader>
-							<TableRow>
-								<TableHead className="w-[8%]">Image</TableHead>
-								<TableHead className="w-[22%]">Titre</TableHead>
-								<TableHead className="w-[10%]">Statut</TableHead>
-								<TableHead className="w-[8%] text-center">Variantes</TableHead>
-								<TableHead className="w-[14%] text-right">Prix</TableHead>
-								<TableHead className="w-[8%] text-center">Stock</TableHead>
-								<TableHead className="w-[8%]" aria-label="Actions disponibles pour chaque produit">
-									Actions
-								</TableHead>
-							</TableRow>
-						</TableHeader>
-						<TableBody>
-							{products.map((product) => {
-								const totalStock = getTotalStock(product);
-								const skusCount = product._count.skus || 0;
-								const priceRange = getPriceRange(product);
+				<BulkSelectionProvider pageItemIds={pageItemIds}>
+					<ProductsBulkActionsBar />
+					<TableScrollContainer>
+						<Table
+							aria-label="Liste des bijoux"
+							striped
+							noRegion
+							className="min-w-full table-fixed"
+						>
+							<TableHeader>
+								<TableRow>
+									<TableHead className="w-[4%]">
+										<BulkSelectionHeaderCheckbox itemsLabel="bijoux" />
+										<span className="sr-only">Sélection</span>
+									</TableHead>
+									<TableHead className="w-[8%]">Image</TableHead>
+									<TableHead className="w-[20%]">Titre</TableHead>
+									<TableHead className="w-[10%]">Statut</TableHead>
+									<TableHead className="w-[8%] text-center">Variantes</TableHead>
+									<TableHead className="w-[12%] text-right">Prix</TableHead>
+									<TableHead className="w-[8%] text-center">Stock</TableHead>
+									<TableHead
+										className="w-[8%]"
+										aria-label="Actions disponibles pour chaque produit"
+									>
+										Actions
+									</TableHead>
+								</TableRow>
+							</TableHeader>
+							<TableBody>
+								{products.map((product) => {
+									const totalStock = getTotalStock(product);
+									const skusCount = product._count.skus || 0;
+									const priceRange = getPriceRange(product);
 
-								return (
-									<TableRow key={product.id}>
-										<TableCell className="py-3">
-											<ProductImageCell
-												images={product.skus[0]?.images ?? []}
-												productTitle={product.title}
-											/>
-										</TableCell>
-										<TableCell>
-											<div className="overflow-hidden">
-												<Link
-													href={`/admin/catalogue/produits/${product.slug}/modifier`}
-													className="text-foreground hover:text-foreground block truncate font-semibold hover:underline"
-													title={`Modifier ${product.title}`}
-													aria-label={`Modifier ${product.title}`}
+									return (
+										<TableRow key={product.id}>
+											<TableCell className="py-3">
+												<BulkSelectionRowCheckbox id={product.id} itemLabel={product.title} />
+											</TableCell>
+											<TableCell className="py-3">
+												<ProductImageCell
+													images={product.skus[0]?.images ?? []}
+													productTitle={product.title}
+												/>
+											</TableCell>
+											<TableCell>
+												<div className="overflow-hidden">
+													<Link
+														href={`/admin/catalogue/produits/${product.slug}`}
+														className="text-foreground hover:text-foreground block truncate font-semibold hover:underline"
+														title={`Voir ${product.title}`}
+														aria-label={`Voir ${product.title}`}
+													>
+														{product.title}
+													</Link>
+												</div>
+											</TableCell>
+											<TableCell>
+												<Badge variant={STATUS_CONFIG[product.status].variant}>
+													{STATUS_CONFIG[product.status].label}
+												</Badge>
+											</TableCell>
+											<TableCell className="text-center">
+												{skusCount > 0 ? (
+													<Link
+														href={`/admin/catalogue/produits/${product.slug}/variantes`}
+														className="text-sm font-medium hover:underline"
+														aria-label={`${skusCount} variante${skusCount > 1 ? "s" : ""} - Cliquer pour gerer`}
+														title="Gerer les variantes"
+													>
+														{skusCount}
+													</Link>
+												) : (
+													<span
+														className="text-muted-foreground text-sm"
+														aria-label="Aucune variante"
+													>
+														—
+													</span>
+												)}
+											</TableCell>
+											<TableCell className="text-right">
+												<span
+													className="text-sm font-medium"
+													title={formatPriceDisplay(priceRange)}
+													aria-label={formatPriceAriaLabel(priceRange)}
 												>
-													{product.title}
-												</Link>
-											</div>
-										</TableCell>
-										<TableCell>
-											<Badge variant={STATUS_CONFIG[product.status].variant}>
-												{STATUS_CONFIG[product.status].label}
-											</Badge>
-										</TableCell>
-										<TableCell className="text-center">
-											{skusCount > 0 ? (
+													{formatPriceDisplay(priceRange)}
+												</span>
+											</TableCell>
+											<TableCell className="text-center">
 												<Link
 													href={`/admin/catalogue/produits/${product.slug}/variantes`}
-													className="text-sm font-medium hover:underline"
-													aria-label={`${skusCount} variante${skusCount > 1 ? "s" : ""} - Cliquer pour gerer`}
-													title="Gerer les variantes"
-												>
-													{skusCount}
-												</Link>
-											) : (
-												<span
-													className="text-muted-foreground text-sm"
-													aria-label="Aucune variante"
-												>
-													—
-												</span>
-											)}
-										</TableCell>
-										<TableCell className="text-right">
-											<span
-												className="text-sm font-medium"
-												title={formatPriceDisplay(priceRange)}
-												aria-label={formatPriceAriaLabel(priceRange)}
-											>
-												{formatPriceDisplay(priceRange)}
-											</span>
-										</TableCell>
-										<TableCell className="text-center">
-											<Link
-												href={`/admin/catalogue/produits/${product.slug}/variantes`}
-												title="Gérer le stock des variantes"
-												aria-label={
-													totalStock === 0
-														? "Stock épuisé - Gérer les variantes"
-														: totalStock <= STOCK_THRESHOLDS.CRITICAL
-															? `Stock critique : ${totalStock} - Gérer les variantes`
-															: totalStock <= STOCK_THRESHOLDS.LOW
-																? `Stock faible : ${totalStock} - Gérer les variantes`
-																: `${totalStock} en stock - Gérer les variantes`
-												}
-											>
-												<Badge
-													variant={
+													title="Gérer le stock des variantes"
+													aria-label={
 														totalStock === 0
-															? "destructive"
+															? "Stock épuisé - Gérer les variantes"
 															: totalStock <= STOCK_THRESHOLDS.CRITICAL
-																? "destructive"
+																? `Stock critique : ${totalStock} - Gérer les variantes`
 																: totalStock <= STOCK_THRESHOLDS.LOW
-																	? "warning"
-																	: "success"
+																	? `Stock faible : ${totalStock} - Gérer les variantes`
+																	: `${totalStock} en stock - Gérer les variantes`
 													}
-													className="cursor-pointer hover:opacity-80"
 												>
-													{totalStock}
-												</Badge>
-											</Link>
-										</TableCell>
-										<TableCell className="text-right">
-											<ProductRowActions
-												productId={product.id}
-												productSlug={product.slug}
-												productTitle={product.title}
-												productStatus={product.status}
-											/>
-										</TableCell>
-									</TableRow>
-								);
-							})}
-						</TableBody>
-					</Table>
-				</TableScrollContainer>
+													<Badge
+														variant={
+															totalStock === 0
+																? "destructive"
+																: totalStock <= STOCK_THRESHOLDS.CRITICAL
+																	? "destructive"
+																	: totalStock <= STOCK_THRESHOLDS.LOW
+																		? "warning"
+																		: "success"
+														}
+														className="cursor-pointer hover:opacity-80"
+													>
+														{totalStock}
+													</Badge>
+												</Link>
+											</TableCell>
+											<TableCell className="text-right">
+												<ProductRowActions
+													productId={product.id}
+													productSlug={product.slug}
+													productTitle={product.title}
+													productStatus={product.status}
+												/>
+											</TableCell>
+										</TableRow>
+									);
+								})}
+							</TableBody>
+						</Table>
+					</TableScrollContainer>
 
-				<div className="mt-4">
-					<CursorPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={products.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-					/>
-				</div>
+					<div className="mt-4">
+						<CursorPagination
+							perPage={perPage}
+							hasNextPage={pagination.hasNextPage}
+							hasPreviousPage={pagination.hasPreviousPage}
+							currentPageSize={products.length}
+							nextCursor={pagination.nextCursor}
+							prevCursor={pagination.prevCursor}
+						/>
+					</div>
+				</BulkSelectionProvider>
 			</CardContent>
 		</Card>
 	);

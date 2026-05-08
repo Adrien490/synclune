@@ -28,8 +28,8 @@ export function ListSkeleton({
 						{Array.from({ length: itemCount }).map((_, i) => (
 							<div key={i} className="flex items-center justify-between rounded-lg border p-3">
 								<div className="flex flex-1 items-center gap-3">
-									<Skeleton className="h-5 w-5 rounded" /> {/* Icone */}
-									<div className="flex-1 space-y-1">
+									<Skeleton className="size-5 rounded" /> {/* Icone */}
+									<div className="flex-1 gap-y-1">
 										<Skeleton className="h-4 w-32" /> {/* Titre produit */}
 										<Skeleton className="h-3 w-24" /> {/* Sous-titre */}
 									</div>

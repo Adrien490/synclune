@@ -22,8 +22,6 @@ interface LoadMoreReviewsResult {
 	error?: string;
 }
 
-const EMPTY: LoadMoreReviewsResult = { reviews: [], nextCursor: null, hasMore: false };
-
 /**
  * Server action to load the next page of reviews
  * Used by the "Voir plus d'avis" button
@@ -34,12 +32,22 @@ export async function loadMoreReviews(
 	try {
 		const validation = loadMoreReviewsSchema.safeParse(params);
 		if (!validation.success) {
-			return { ...EMPTY, error: "Paramètres invalides" };
+			return {
+				reviews: [],
+				nextCursor: null,
+				hasMore: false,
+				error: "Paramètres invalides",
+			};
 		}
 
 		const rateCheck = await enforceRateLimitForCurrentUser(REVIEW_LOAD_MORE_LIMIT);
 		if ("error" in rateCheck) {
-			return { ...EMPTY, error: "Trop de requêtes. Veuillez patienter." };
+			return {
+				reviews: [],
+				nextCursor: null,
+				hasMore: false,
+				error: "Trop de requêtes. Veuillez patienter.",
+			};
 		}
 
 		const { productId, cursor, filterRating, sortBy } = validation.data;
@@ -63,7 +71,9 @@ export async function loadMoreReviews(
 		};
 	} catch {
 		return {
-			...EMPTY,
+			reviews: [],
+			nextCursor: null,
+			hasMore: false,
 			error: "Impossible de charger plus d'avis",
 		};
 	}

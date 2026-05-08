@@ -154,10 +154,10 @@ describe("RequestPasswordResetForm", () => {
 		).toBeDefined();
 	});
 
-	it("shows 'Envoi en cours...' when isPending", () => {
+	it("shows 'Envoi en cours…' when isPending", () => {
 		mockIsPending.value = true;
 		render(<RequestPasswordResetForm />);
-		expect(screen.getByText("Envoi en cours...")).toBeDefined();
+		expect(screen.getByText("Envoi en cours…")).toBeDefined();
 	});
 
 	it("shows loader icon when isPending", () => {
@@ -221,7 +221,7 @@ describe("RequestPasswordResetForm", () => {
 	});
 
 	it("does not show error alert for INITIAL status", () => {
-		mockState.value = { status: "initial", message: "Chargement..." };
+		mockState.value = { status: "initial", message: "Chargement…" };
 		render(<RequestPasswordResetForm />);
 		expect(screen.queryByTestId("error-alert")).toBeNull();
 	});

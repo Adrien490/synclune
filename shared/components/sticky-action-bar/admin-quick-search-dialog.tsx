@@ -4,6 +4,7 @@ import { Loader2, Search, X } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+	Suspense,
 	useCallback,
 	useEffect,
 	useLayoutEffect,
@@ -54,7 +55,7 @@ interface AdminQuickSearchDialogProps<TItem> {
  *
  * Pluggable via `adapter` (10 scopes : products, orders, users, etc.).
  */
-export function AdminQuickSearchDialog<TItem>({
+function AdminQuickSearchDialogInner<TItem>({
 	open,
 	onOpenChange,
 	adapter,
@@ -551,5 +552,13 @@ export function AdminQuickSearchDialog<TItem>({
 				/>
 			</DialogContent>
 		</Dialog>
+	);
+}
+
+export function AdminQuickSearchDialog<TItem>(props: AdminQuickSearchDialogProps<TItem>) {
+	return (
+		<Suspense fallback={null}>
+			<AdminQuickSearchDialogInner<TItem> {...props} />
+		</Suspense>
 	);
 }

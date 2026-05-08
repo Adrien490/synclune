@@ -1,5 +1,6 @@
 "use client";
 
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary } from "@/shared/components/forms/error-summary";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
@@ -198,10 +199,7 @@ export function CreateProductVariantForm({
 			</fieldset>
 
 			<form.AppForm>
-				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-4 border-t px-4 py-3 backdrop-blur-md motion-safe:transition-[backdrop-filter] md:bottom-0 md:-mx-6 md:px-6">
-					<span className="sr-only" role="status" aria-live="polite">
-						{isPending ? "Envoi du formulaire en cours..." : ""}
-					</span>
+				<AdminFormFooter pending={isPending}>
 					<form.Subscribe selector={(state) => [state.canSubmit] as const}>
 						{([canSubmit]) => (
 							<div className="flex justify-end">
@@ -234,7 +232,7 @@ export function CreateProductVariantForm({
 							</div>
 						)}
 					</form.Subscribe>
-				</div>
+				</AdminFormFooter>
 			</form.AppForm>
 		</form>
 	);

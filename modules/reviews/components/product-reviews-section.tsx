@@ -89,11 +89,11 @@ export function ProductReviewsSectionSkeleton() {
 			{/* Skeleton résumé */}
 			<div className="flex flex-col gap-6 sm:flex-row sm:gap-10">
 				<div className="flex flex-col items-center">
-					<Skeleton className="h-14 w-14" />
+					<Skeleton className="size-14" />
 					<Skeleton className="mt-2 h-4 w-24" />
 					<Skeleton className="mt-1 h-3 w-16" />
 				</div>
-				<div className="flex-1 space-y-2">
+				<div className="flex-1 gap-y-2">
 					{Array.from({ length: 5 }).map((_, i) => (
 						<div key={i} className="flex items-center gap-3">
 							<Skeleton className="h-4 w-14" />

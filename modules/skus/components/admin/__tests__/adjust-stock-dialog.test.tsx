@@ -257,7 +257,7 @@ describe("AdjustStockDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Ajustement...' text when pending", () => {
+	it("shows 'Ajustement…' text when pending", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: { skuId: "sku_1", skuName: "Bague Or - T52", currentStock: 10 },
@@ -267,6 +267,6 @@ describe("AdjustStockDialog", () => {
 
 		render(<AdjustStockDialog />);
 
-		expect(screen.getByText("Ajustement...")).toBeInTheDocument();
+		expect(screen.getByText("Ajustement…")).toBeInTheDocument();
 	});
 });

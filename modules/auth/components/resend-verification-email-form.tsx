@@ -155,7 +155,7 @@ export function ResendVerificationEmailForm({ defaultEmail }: ResendVerification
 								<Mail className="size-4" aria-hidden="true" />
 							)}
 							{isPending
-								? "Envoi en cours..."
+								? "Envoi en cours…"
 								: state?.status === ActionStatus.SUCCESS
 									? "Email envoyé"
 									: isCoolingDown

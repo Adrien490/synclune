@@ -54,7 +54,7 @@ const alignClasses: Record<string, string> = {
 function renderCell(cell: CellType): ReactNode {
 	switch (cell.type) {
 		case "checkbox":
-			return <Skeleton className="h-4 w-4" />;
+			return <Skeleton className="size-4" />;
 		case "text":
 			return <Skeleton className={cn("h-4", cell.width)} />;
 		case "badge":
@@ -68,7 +68,7 @@ function renderCell(cell: CellType): ReactNode {
 			return <Skeleton className="rounded-full" style={{ height: size * 4, width: size * 4 }} />;
 		}
 		case "actions":
-			return <Skeleton className="ml-auto h-8 w-8" />;
+			return <Skeleton className="ml-auto size-8" />;
 		case "custom":
 			return cell.render();
 	}

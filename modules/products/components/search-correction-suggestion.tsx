@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -13,7 +14,7 @@ interface SearchCorrectionSuggestionProps {
  *
  * Le lien conserve tous les filtres actuels en ne remplaçant que le terme de recherche
  */
-export function SearchCorrectionSuggestion({ suggestion }: SearchCorrectionSuggestionProps) {
+function SearchCorrectionSuggestionInner({ suggestion }: SearchCorrectionSuggestionProps) {
 	const searchParams = useSearchParams();
 
 	// Construire l'URL avec le terme suggéré tout en conservant les autres params
@@ -33,5 +34,15 @@ export function SearchCorrectionSuggestion({ suggestion }: SearchCorrectionSugge
 			</Link>{" "}
 			?
 		</div>
+	);
+}
+
+export function SearchCorrectionSuggestion(
+	props: ComponentProps<typeof SearchCorrectionSuggestionInner>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<SearchCorrectionSuggestionInner {...props} />
+		</Suspense>
 	);
 }

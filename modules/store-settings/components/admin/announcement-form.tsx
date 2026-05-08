@@ -38,10 +38,7 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 	const form = useAppForm({ defaultValues: initial });
 
 	const [, formAction, isPending] = useActionState(
-		withCallbacks(
-			updateAnnouncement,
-			createToastCallbacks({ loadingMessage: "Enregistrement..." }),
-		),
+		withCallbacks(updateAnnouncement, createToastCallbacks({ loadingMessage: "Enregistrement…" })),
 		undefined,
 	);
 
@@ -140,7 +137,7 @@ export function AnnouncementForm(props: AnnouncementFormProps) {
 					className="min-h-11"
 				>
 					{isPending && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-					{isPending ? "Enregistrement..." : "Enregistrer"}
+					{isPending ? "Enregistrement…" : "Enregistrer"}
 				</Button>
 			</div>
 		</form>
@@ -170,7 +167,7 @@ function AnnouncementPreview({ message, isActive }: { message: string; isActive:
 			</div>
 			{!isActive && (
 				<p className="text-muted-foreground text-xs">
-					Inactif — activez la diffusion pour afficher le bandeau aux visiteurs.
+					Inactif : activez la diffusion pour afficher le bandeau aux visiteurs.
 				</p>
 			)}
 		</div>

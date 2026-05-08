@@ -57,10 +57,10 @@ function SvgShape({
 const SCROLL_PARALLAX_RANGE = 40;
 
 /** Default repulsion offset in pixels when not overridden via props */
-export const DEFAULT_REPULSION_STRENGTH = 30;
+const DEFAULT_REPULSION_STRENGTH = 30;
 
 /** Default repulsion radius as fraction of container diagonal (0-1) */
-export const DEFAULT_REPULSION_RADIUS = 0.15;
+const DEFAULT_REPULSION_RADIUS = 0.15;
 
 /**
  * Animated particle with mouse parallax.

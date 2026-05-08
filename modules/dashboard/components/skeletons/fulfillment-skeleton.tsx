@@ -20,7 +20,7 @@ export function FulfillmentSkeleton() {
 				<div className="mt-3 flex gap-4">
 					{Array.from({ length: 4 }).map((_, i) => (
 						<div key={i} className="flex items-center gap-1.5">
-							<Skeleton className="h-2.5 w-2.5 rounded-full" />
+							<Skeleton className="size-2.5 rounded-full" />
 							<Skeleton className="h-3 w-16" />
 						</div>
 					))}

@@ -80,7 +80,7 @@ describe("useClearCart", () => {
 				result.current.action(makeFormData());
 			});
 
-			expect(mockToast.loading).toHaveBeenCalledWith("Vidage du panier...");
+			expect(mockToast.loading).toHaveBeenCalledWith("Vidage du panier…");
 		});
 
 		it("dismisses loading toast on completion", async () => {

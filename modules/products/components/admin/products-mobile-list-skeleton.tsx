@@ -1,4 +1,4 @@
-import { Item, ItemActions, ItemContent, ItemGroup } from "@/shared/components/ui/item";
+import { Item, ItemContent, ItemGroup } from "@/shared/components/ui/item";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 export function ProductsMobileListSkeleton() {
@@ -14,7 +14,6 @@ export function ProductsMobileListSkeleton() {
 							className="gap-3"
 							style={{ animationDelay: `${i * 100}ms` }}
 						>
-							{/* Image placeholder */}
 							<Skeleton shape="rounded" className="size-12 shrink-0" />
 
 							<ItemContent>
@@ -24,13 +23,10 @@ export function ProductsMobileListSkeleton() {
 								</div>
 								<div className="flex items-center gap-2">
 									<Skeleton shape="text" className="h-3 w-16" />
+									<Skeleton shape="rounded" className="h-5 w-10" />
 									<Skeleton shape="text" className="h-3 w-20" />
-									<Skeleton shape="text" className="h-3 w-18" />
 								</div>
 							</ItemContent>
-							<ItemActions>
-								<Skeleton shape="rounded" className="size-8" />
-							</ItemActions>
 						</Item>
 					))}
 				</ItemGroup>

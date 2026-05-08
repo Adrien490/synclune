@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function CreateCollectionLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement du formulaire">
-			<span className="sr-only">Chargement du formulaire...</span>
+			<span className="sr-only">Chargement du formulaire…</span>
 
 			<h1 className="mb-6 text-2xl font-semibold">Nouvelle collection</h1>
 

@@ -1,6 +1,7 @@
 import { Prisma } from "@/app/generated/prisma/client";
 import { setStatementTimeout, setTrigramThreshold } from "@/modules/products/utils/trigram-helpers";
 import { logger } from "@/shared/lib/logger";
+import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
 
 /**
@@ -66,6 +67,8 @@ export async function fuzzySearchIds(
 		}
 	}
 
+	const pgTrgmAvailable = await isPgTrgmAvailable();
+
 	// Build OR conditions across all columns.
 	// Table/column names are validated against ALLOWED_FUZZY_COLUMNS above.
 	// Only `term` is user-supplied and is always passed through parameterized queries.
@@ -75,6 +78,12 @@ export async function fuzzySearchIds(
 		const col = nullable
 			? Prisma.sql`COALESCE(${Prisma.raw(`"${table}"."${column}"`)}, '')`
 			: Prisma.raw(`"${table}"."${column}"`);
+
+		if (!pgTrgmAvailable) {
+			// Degraded fallback: ILIKE only, no accent folding.
+			return Prisma.sql`(LOWER(${col}) LIKE LOWER(${like}))`;
+		}
+
 		return Prisma.sql`(
 			immutable_unaccent(${col}) ILIKE immutable_unaccent(${like})
 			OR immutable_unaccent(${col}) % immutable_unaccent(${term})
@@ -93,7 +102,9 @@ export async function fuzzySearchIds(
 
 	try {
 		const queryPromise = prisma.$transaction(async (tx) => {
-			await setTrigramThreshold(tx, ADMIN_FUZZY_THRESHOLD);
+			if (pgTrgmAvailable) {
+				await setTrigramThreshold(tx, ADMIN_FUZZY_THRESHOLD);
+			}
 			await setStatementTimeout(tx, ADMIN_FUZZY_TIMEOUT_MS);
 
 			return tx.$queryRaw<{ id: string }[]>`

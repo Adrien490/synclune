@@ -253,10 +253,10 @@ describe("CreateCollectionForm", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Création...' text when isPending is true", () => {
+	it("shows 'Création…' text when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<CreateCollectionForm />);
-		expect(screen.getByText("Création...")).toBeInTheDocument();
+		expect(screen.getByText("Création…")).toBeInTheDocument();
 	});
 
 	// ─── Name field placeholder ───────────────────────────────────────────────
@@ -270,7 +270,7 @@ describe("CreateCollectionForm", () => {
 
 	it("renders description textarea with correct placeholder", () => {
 		render(<CreateCollectionForm />);
-		expect(screen.getByPlaceholderText("Décrivez cette collection...")).toBeInTheDocument();
+		expect(screen.getByPlaceholderText("Décrivez cette collection…")).toBeInTheDocument();
 	});
 
 	// ─── ARCHIVED option excluded ─────────────────────────────────────────────
@@ -303,7 +303,7 @@ describe("CreateCollectionForm", () => {
 	it("disables the submit button when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<CreateCollectionForm />);
-		expect(screen.getByRole("button", { name: "Création..." })).toBeDisabled();
+		expect(screen.getByRole("button", { name: "Création…" })).toBeDisabled();
 	});
 
 	// ─── canSubmit=false ──────────────────────────────────────────────────────

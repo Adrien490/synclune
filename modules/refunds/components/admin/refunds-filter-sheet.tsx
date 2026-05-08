@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense, type ComponentProps } from "react";
 
 interface RefundsFilterSheetProps {
 	className?: string;
@@ -35,7 +35,7 @@ interface FilterFormData {
 	};
 }
 
-export function RefundsFilterSheet({
+function RefundsFilterSheetInner({
 	className,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
@@ -278,5 +278,13 @@ export function RefundsFilterSheet({
 				</fieldset>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function RefundsFilterSheet(props: ComponentProps<typeof RefundsFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<RefundsFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

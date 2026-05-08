@@ -9,7 +9,7 @@ export default function WishlistLoading() {
 			aria-busy="true"
 			aria-label="Chargement des favoris"
 		>
-			<span className="sr-only">Chargement des favoris...</span>
+			<span className="sr-only">Chargement des favoris…</span>
 
 			<PageHeaderSkeleton hasDescription={false} />
 

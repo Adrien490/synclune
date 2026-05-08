@@ -24,7 +24,7 @@ export function useOrderNotes() {
 				async (_p: ActionState | undefined, fd: FormData) =>
 					addOrderNote(fd.get("orderId") as string, fd.get("content") as string),
 				createToastCallbacks({
-					loadingMessage: "Ajout de la note...",
+					loadingMessage: "Ajout de la note…",
 					onSuccess: () => {
 						addSuccessRef.current?.();
 					},
@@ -39,7 +39,7 @@ export function useOrderNotes() {
 				async (_p: ActionState | undefined, fd: FormData) =>
 					deleteOrderNote(fd.get("noteId") as string),
 				createToastCallbacks({
-					loadingMessage: "Suppression de la note...",
+					loadingMessage: "Suppression de la note…",
 					onSuccess: () => {
 						removeSuccessRef.current?.();
 					},

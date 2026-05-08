@@ -5,7 +5,7 @@
 /**
  * Donnees completes d'un SKU pour l'affichage et la validation
  */
-export interface SkuData {
+interface SkuData {
 	id: string;
 	sku: string;
 	priceInclTax: number;

@@ -38,7 +38,7 @@ export function AddressCard({ address }: AddressCardProps) {
 					</p>
 					{address.isDefault && (
 						<Badge variant="secondary" className="h-5 shrink-0 px-1.5">
-							<Star className="mr-1 h-3 w-3 fill-current" aria-hidden="true" />
+							<Star className="mr-1 size-3 fill-current" aria-hidden="true" />
 							<span className="text-xs">Par défaut</span>
 						</Badge>
 					)}
@@ -47,7 +47,7 @@ export function AddressCard({ address }: AddressCardProps) {
 			</div>
 
 			{/* Adresse complète */}
-			<div className="text-muted-foreground flex-1 space-y-0.5 text-sm">
+			<div className="text-muted-foreground flex-1 gap-y-0.5 text-sm">
 				<p>{address.address1}</p>
 				{address.address2 && <p>{address.address2}</p>}
 				<p>
@@ -57,7 +57,7 @@ export function AddressCard({ address }: AddressCardProps) {
 
 			{/* Téléphone */}
 			<div className="text-muted-foreground border-border/50 flex items-center gap-1.5 border-t pt-2 text-sm">
-				<Phone className="h-3.5 w-3.5" aria-hidden="true" />
+				<Phone className="size-3.5" aria-hidden="true" />
 				<span className="truncate">{formatPhone(address.phone)}</span>
 			</div>
 		</div>

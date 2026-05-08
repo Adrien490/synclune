@@ -91,7 +91,7 @@ export function DeleteAccountDialog() {
 							aria-busy={isPending}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Envoi de la demande..." : "Demander la suppression"}
+							{isPending ? "Envoi de la demande…" : "Demander la suppression"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

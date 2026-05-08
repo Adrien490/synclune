@@ -21,7 +21,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useTransition } from "react";
+import { useEffect, useRef, useTransition, Suspense, type ComponentProps } from "react";
 
 import {
 	ADDRESS_DIALOG_ID,
@@ -41,7 +41,7 @@ interface AddressFormDialogProps {
 	addressSearchError?: boolean;
 }
 
-export function AddressFormDialog({
+function AddressFormDialogInner({
 	addressSuggestions = EMPTY_SUGGESTIONS,
 	addressSearchError = false,
 }: AddressFormDialogProps) {
@@ -77,6 +77,14 @@ export function AddressFormDialog({
 			    (otherwise opening would close the parent form drawer). */}
 			<DiscardAddressChangesAlertDialog />
 		</ResponsiveDialog>
+	);
+}
+
+export function AddressFormDialog(props: ComponentProps<typeof AddressFormDialogInner>) {
+	return (
+		<Suspense fallback={null}>
+			<AddressFormDialogInner {...props} />
+		</Suspense>
 	);
 }
 
@@ -270,7 +278,7 @@ function AddressFormContent({
 									getItemDescription={(item) =>
 										item.postcode && item.city ? `${item.postcode} ${item.city}` : item.city || null
 									}
-									placeholder="Rechercher une adresse..."
+									placeholder="Rechercher une adresse…"
 									isLoading={isPendingAddress}
 									disabled={isPending}
 									error={
@@ -367,7 +375,7 @@ function AddressFormContent({
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement..." : mode === "create" ? "Ajouter" : "Enregistrer"}
+								{isPending ? "Enregistrement…" : mode === "create" ? "Ajouter" : "Enregistrer"}
 							</Button>
 						)}
 					</form.Subscribe>

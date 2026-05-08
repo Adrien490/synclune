@@ -8,7 +8,7 @@ export default function ForgotPasswordLoading() {
 			aria-busy="true"
 			aria-label="Chargement"
 		>
-			<span className="sr-only">Chargement...</span>
+			<span className="sr-only">Chargement…</span>
 
 			{/* Back link */}
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6">
@@ -17,7 +17,7 @@ export default function ForgotPasswordLoading() {
 
 			{/* Logo */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-				<Skeleton className="bg-muted/40 h-10 w-10 rounded-full" />
+				<Skeleton className="bg-muted/40 size-10 rounded-full" />
 			</div>
 
 			{/* Main content */}

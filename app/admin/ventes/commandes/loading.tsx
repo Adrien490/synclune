@@ -6,7 +6,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function OrdersAdminLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des commandes">
-			<span className="sr-only">Chargement des commandes...</span>
+			<span className="sr-only">Chargement des commandes…</span>
 
 			<PageHeader variant="compact" title="Commandes" className="hidden md:block" />
 

@@ -68,7 +68,7 @@ export function RejectRefundAlertDialog() {
 						<Textarea
 							id="reject-reason"
 							name="reason"
-							placeholder="Indiquez la raison du refus..."
+							placeholder="Indiquez la raison du refus…"
 							rows={3}
 							maxLength={500}
 							disabled={isPending}
@@ -83,7 +83,7 @@ export function RejectRefundAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
-							{isPending ? "Refus..." : "Refuser"}
+							{isPending ? "Refus…" : "Refuser"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

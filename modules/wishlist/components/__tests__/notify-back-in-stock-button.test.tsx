@@ -135,12 +135,12 @@ describe("NotifyBackInStockButton", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Enregistrement...' when isPending is true", () => {
+	it("shows 'Enregistrement…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(
 			<NotifyBackInStockButton productId="prod-1" productTitle="Bague Lune" isInWishlist={false} />,
 		);
-		expect(document.body.textContent).toContain("Enregistrement...");
+		expect(document.body.textContent).toContain("Enregistrement…");
 	});
 
 	it("disables button when isPending is true", () => {

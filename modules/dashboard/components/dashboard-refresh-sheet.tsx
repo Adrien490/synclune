@@ -146,7 +146,7 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 					</div>
 				</SheetHeader>
 
-				<div className="flex-1 space-y-4 px-6 py-6">
+				<div className="flex-1 gap-y-4 p-6">
 					<div className="bg-muted/40 rounded-lg border px-4 py-3">
 						<p className="text-muted-foreground text-xs tracking-wide uppercase">
 							Dernière mise à jour

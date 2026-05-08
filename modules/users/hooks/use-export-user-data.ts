@@ -37,7 +37,7 @@ export function useExportUserData(options?: UseExportUserDataOptions) {
 		withCallbacks(
 			async (_prev: ActionState | undefined, _formData: FormData) => exportUserData(),
 			createToastCallbacks({
-				loadingMessage: "Export des données en cours...",
+				loadingMessage: "Export des données en cours…",
 				onSuccess: (result) => {
 					if (result.data) {
 						const data = result.data as UserDataExport;

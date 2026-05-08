@@ -169,10 +169,10 @@ describe("OrderNotesDialog", () => {
 	});
 
 	describe("textarea", () => {
-		it("shows textarea with placeholder 'Ajouter une note...'", () => {
+		it("shows textarea with placeholder 'Ajouter une note…'", () => {
 			openDialog();
 			render(<OrderNotesDialog />);
-			expect(screen.getByPlaceholderText("Ajouter une note...")).toBeInTheDocument();
+			expect(screen.getByPlaceholderText("Ajouter une note…")).toBeInTheDocument();
 		});
 
 		it("add button is disabled when textarea is empty", () => {

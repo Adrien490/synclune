@@ -1,4 +1,4 @@
-import { Item, ItemActions, ItemContent, ItemGroup } from "@/shared/components/ui/item";
+import { Item, ItemContent, ItemGroup } from "@/shared/components/ui/item";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 export function CollectionsMobileListSkeleton() {
@@ -14,18 +14,15 @@ export function CollectionsMobileListSkeleton() {
 							className="gap-3"
 							style={{ animationDelay: `${i * 100}ms` }}
 						>
+							<Skeleton shape="rounded" className="size-12 shrink-0" />
 							<ItemContent>
 								<div className="flex items-center gap-2">
-									<Skeleton shape="rounded" className="h-5 w-28" />
+									<Skeleton shape="text" className="h-5 w-28" />
 									<Skeleton shape="rounded" className="h-5 w-16" />
 								</div>
-								<div className="flex items-center gap-2">
-									<Skeleton shape="text" className="h-3 w-20" />
-								</div>
+								<Skeleton shape="text" className="h-3 w-32" />
+								<Skeleton shape="text" className="h-3 w-20" />
 							</ItemContent>
-							<ItemActions>
-								<Skeleton shape="rounded" className="size-8" />
-							</ItemActions>
 						</Item>
 					))}
 				</ItemGroup>

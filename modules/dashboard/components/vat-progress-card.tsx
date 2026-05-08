@@ -44,7 +44,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 			role="region"
 			aria-label={`Seuil TVA franchise ${year}`}
 		>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<div className="flex items-center gap-1.5">
 					<CardTitle className="text-muted-foreground text-sm font-medium">
 						Seuil TVA {year}
@@ -53,10 +53,10 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 						<TooltipTrigger asChild>
 							<button
 								type="button"
-								className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex h-11 w-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+								className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
 								aria-label="Info: Seuil TVA franchise"
 							>
-								<Info className="h-3.5 w-3.5" aria-hidden="true" />
+								<Info className="size-3.5" aria-hidden="true" />
 							</button>
 						</TooltipTrigger>
 						<TooltipContent side="top" className="max-w-xs">
@@ -69,13 +69,13 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 				</div>
 				<div
 					className={cn(
-						"inline-flex h-8 w-8 items-center justify-center rounded-full border transition-colors",
+						"inline-flex size-8 items-center justify-center rounded-full border transition-colors",
 						status === "critical" && "border-destructive/30 bg-destructive/15 text-destructive",
 						status === "warning" && "border-warning/30 bg-warning/15 text-warning",
 						status === "default" && "border-info/30 bg-info/15 text-info",
 					)}
 				>
-					<Receipt className="h-4 w-4" aria-hidden="true" />
+					<Receipt className="size-4" aria-hidden="true" />
 				</div>
 			</CardHeader>
 

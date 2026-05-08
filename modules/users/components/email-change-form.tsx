@@ -49,7 +49,7 @@ export function EmailChangeForm() {
 			<form.Subscribe selector={(s) => [s.canSubmit]}>
 				{([canSubmit]) => (
 					<Button type="submit" variant="outline" size="sm" disabled={!canSubmit || isPending}>
-						{isPending ? "Envoi..." : "Modifier l'email"}
+						{isPending ? "Envoi…" : "Modifier l'email"}
 					</Button>
 				)}
 			</form.Subscribe>

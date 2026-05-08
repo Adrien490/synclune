@@ -25,7 +25,8 @@ interface ColorMobileItemProps {
 
 export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	const skuCount = color._count.skus || 0;
-	const statusLabel = color.isActive ? "Actif" : "Inactif";
+	const statusLabel = color.isActive ? "● Actif" : "○ Inactif";
+	const hexUpper = color.hex.toUpperCase();
 
 	const { sections } = useColorActions({
 		colorId: color.id,
@@ -36,32 +37,36 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 
 	return (
 		<LongPressMenuLink
-			href={`/admin/catalogue/couleurs/${color.slug}/modifier`}
+			href={`/admin/catalogue/couleurs/${color.slug}`}
 			ariaLabel={`Couleur ${color.name}`}
 			sections={sections}
 			menuTitle="Actions"
 			menuDescription={color.name}
 			className="text-left"
+			viewTransitionName={`color-card-${color.id}`}
 		>
-			<Item
-				variant="outline"
-				size="sm"
-				className="w-full gap-3"
-				aria-roledescription="carte couleur"
-			>
+			<Item variant="outline" size="sm" className="w-full gap-3">
 				<ItemMedia variant="icon">
 					<span
 						className="border-border size-8 rounded-full border"
 						style={{ backgroundColor: color.hex }}
-						aria-hidden="true"
+						role="img"
+						aria-label={`Aperçu couleur ${hexUpper}`}
 					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{color.name}</span>
-						<Badge variant={color.isActive ? "default" : "secondary"}>{statusLabel}</Badge>
+						<Badge
+							variant={color.isActive ? "default" : "secondary"}
+							style={{ viewTransitionName: `color-status-${color.id}` }}
+						>
+							{statusLabel}
+						</Badge>
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+						<span className="text-muted-foreground font-mono text-xs">{hexUpper}</span>
+						<span aria-hidden="true">·</span>
 						<span>
 							{skuCount} variante{skuCount !== 1 ? "s" : ""}
 						</span>

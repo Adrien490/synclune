@@ -42,9 +42,24 @@ vi.mock("@/modules/media/utils/uploadthing", () => ({
 	UploadDropzone: () => <div data-testid="upload-dropzone" />,
 }));
 
+vi.mock("@/shared/components/media-upload/upload-action-sheet", () => ({
+	UploadActionSheet: ({ desktopFallback }: { desktopFallback?: React.ReactNode }) => (
+		<div data-testid="upload-action-sheet">{desktopFallback}</div>
+	),
+}));
+
+vi.mock("@/shared/components/media-upload/pending-uploads-grid", () => ({
+	PendingUploadsGrid: ({ files }: { files: File[] }) => (
+		<div data-testid="pending-uploads-grid" data-count={files.length} />
+	),
+}));
+
 vi.mock("@/shared/components/media-upload/upload-progress", () => ({
 	UploadProgress: ({ progress }: { progress?: number; isProcessing?: boolean }) => (
 		<div data-testid="upload-progress">{progress}</div>
+	),
+	UploadErrorBanner: ({ failedFiles }: { failedFiles: { fileName: string }[] }) => (
+		<div data-testid="upload-error-banner" data-count={failedFiles.length} />
 	),
 }));
 
@@ -85,13 +100,26 @@ import type { MediaData } from "@/modules/skus/types/sku-form.types";
 // FIXTURES
 // ============================================================================
 
+const galleryUploadMock = {
+	upload: vi.fn().mockResolvedValue([]),
+	uploadSingle: vi.fn(),
+	validateFiles: vi.fn(),
+	cancel: vi.fn(),
+	retryFailed: vi.fn(),
+	retrySingle: vi.fn(),
+	clearFailed: vi.fn(),
+	isUploading: false,
+	progress: null,
+	failedFiles: [],
+	queuedCount: 0,
+} as unknown as Parameters<typeof SkuGalleryField>[0]["galleryUpload"];
+
 const defaultProps = {
 	value: [] as MediaData[],
 	setValue: vi.fn(),
 	pushValue: vi.fn(),
 	productName: "Bague Or",
-	uploadMedia: vi.fn().mockResolvedValue([]),
-	isUploading: false,
+	galleryUpload: galleryUploadMock,
 };
 
 const mediaItem: MediaData = {

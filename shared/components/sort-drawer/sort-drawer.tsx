@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useRef, useTransition } from "react";
+import { useOptimistic, useRef, useTransition, Suspense, type ComponentProps } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { Check, X } from "lucide-react";
@@ -58,7 +58,7 @@ interface SortDrawerProps {
  * />
  * ```
  */
-export function SortDrawer({
+function SortDrawerInner({
 	open,
 	onOpenChange,
 	options,
@@ -254,5 +254,13 @@ export function SortDrawer({
 				</DrawerBody>
 			</DrawerContent>
 		</Drawer>
+	);
+}
+
+export function SortDrawer(props: ComponentProps<typeof SortDrawerInner>) {
+	return (
+		<Suspense fallback={null}>
+			<SortDrawerInner {...props} />
+		</Suspense>
 	);
 }

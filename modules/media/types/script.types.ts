@@ -23,7 +23,7 @@ export type ScriptMediaItem = Prisma.SkuMediaGetPayload<{
 /**
  * Performance metrics for media processing
  */
-export interface ProcessMetrics {
+interface ProcessMetrics {
 	/** Total processing duration (ms) */
 	totalMs: number;
 	/** Download duration (ms) */

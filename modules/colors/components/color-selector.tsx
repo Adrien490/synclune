@@ -7,7 +7,7 @@ import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import { Check } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import type { Color } from "@/modules/skus/types/sku-selector.types";
 import { useRadioGroupKeyboard } from "@/shared/hooks/use-radio-group-keyboard";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -31,7 +31,7 @@ interface ColorSelectorProps {
  * - Bouton de réinitialisation
  * - Navigation clavier (fleches)
  */
-export function ColorSelector({
+function ColorSelectorInner({
 	colors,
 	product,
 	showMaterialLabel = false,
@@ -204,5 +204,13 @@ export function ColorSelector({
 				})}
 			</div>
 		</fieldset>
+	);
+}
+
+export function ColorSelector(props: ComponentProps<typeof ColorSelectorInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ColorSelectorInner {...props} />
+		</Suspense>
 	);
 }

@@ -112,31 +112,28 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 				Prix (€)
 			</legend>
 			<div className="space-y-4">
-				{/* data-vaul-no-drag empeche le drawer de capturer le drag du slider */}
-				<div data-vaul-no-drag>
-					<Slider
-						value={sliderPosition}
-						onValueChange={(newPos) => {
-							if (!draggingRef.current) {
-								draggingRef.current = true;
-								haptic("light");
-							}
-							setSliderPosition([newPos[0]!, newPos[1]!]);
-							// Convertir les positions en prix reels
-							const newMinPrice = sliderToPrice(newPos[0]!, maxPrice);
-							const newMaxPrice = sliderToPrice(newPos[1]!, maxPrice);
-							onChange([newMinPrice, newMaxPrice]);
-						}}
-						onValueCommit={() => {
-							draggingRef.current = false;
-							haptic("selection");
-						}}
-						max={SLIDER_MAX}
-						min={0}
-						step={1}
-						className="w-full"
-					/>
-				</div>
+				<Slider
+					value={sliderPosition}
+					onValueChange={(newPos) => {
+						if (!draggingRef.current) {
+							draggingRef.current = true;
+							haptic("light");
+						}
+						setSliderPosition([newPos[0]!, newPos[1]!]);
+						// Convertir les positions en prix reels
+						const newMinPrice = sliderToPrice(newPos[0]!, maxPrice);
+						const newMaxPrice = sliderToPrice(newPos[1]!, maxPrice);
+						onChange([newMinPrice, newMaxPrice]);
+					}}
+					onValueCommit={() => {
+						draggingRef.current = false;
+						haptic("selection");
+					}}
+					max={SLIDER_MAX}
+					min={0}
+					step={1}
+					className="w-full"
+				/>
 				<div className="flex items-center gap-3">
 					<div className="flex-1">
 						<Input

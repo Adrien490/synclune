@@ -85,7 +85,7 @@ export function ToggleDiscountStatusAlertDialog() {
 							)}
 						>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "En cours..." : isActive ? "Désactiver" : "Activer"}
+							{isPending ? "En cours…" : isActive ? "Désactiver" : "Activer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

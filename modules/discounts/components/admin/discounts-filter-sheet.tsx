@@ -7,7 +7,7 @@ import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { Separator } from "@/shared/components/ui/separator";
 import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, Suspense, type ComponentProps } from "react";
 
 interface DiscountsFilterSheetProps {
 	className?: string;
@@ -19,7 +19,7 @@ interface FilterFormData {
 	hasUsages: string;
 }
 
-export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
+function DiscountsFilterSheetInner({ className }: DiscountsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -217,5 +217,13 @@ export function DiscountsFilterSheet({ className }: DiscountsFilterSheetProps) {
 				</form.Field>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function DiscountsFilterSheet(props: ComponentProps<typeof DiscountsFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<DiscountsFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

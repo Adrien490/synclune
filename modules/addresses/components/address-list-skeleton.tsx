@@ -16,11 +16,11 @@ export function AddressListSkeleton() {
 							<div className="flex flex-1 items-center gap-2">
 								<Skeleton className="bg-muted/50 h-5 w-32" />
 							</div>
-							<Skeleton className="bg-muted/40 h-8 w-8 rounded-md" />
+							<Skeleton className="bg-muted/40 size-8 rounded-md" />
 						</div>
 
 						{/* Adresse complète */}
-						<div className="flex-1 space-y-2">
+						<div className="flex-1 gap-y-2">
 							<Skeleton className="bg-muted/40 h-4 w-full" />
 							<Skeleton className="bg-muted/30 h-4 w-3/4" />
 							<Skeleton className="bg-muted/30 h-4 w-2/3" />
@@ -28,7 +28,7 @@ export function AddressListSkeleton() {
 
 						{/* Téléphone */}
 						<div className="border-border/50 flex items-center gap-1.5 border-t pt-2">
-							<Skeleton className="bg-muted/40 h-3.5 w-3.5 rounded-full" />
+							<Skeleton className="bg-muted/40 size-3.5 rounded-full" />
 							<Skeleton className="bg-muted/40 h-4 w-36" />
 						</div>
 					</div>

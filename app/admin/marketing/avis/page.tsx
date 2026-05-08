@@ -118,7 +118,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 							<p className="text-muted-foreground text-sm font-medium">Total avis</p>
 							<p className="mt-1 text-2xl font-bold">{stats.total}</p>
 						</div>
-						<MessageSquare className="text-muted-foreground h-8 w-8" />
+						<MessageSquare className="text-muted-foreground size-8" />
 					</div>
 				</div>
 
@@ -128,7 +128,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 							<p className="text-muted-foreground text-sm font-medium">Publiés</p>
 							<p className="text-secondary-foreground mt-1 text-2xl font-bold">{stats.published}</p>
 						</div>
-						<CircleCheck className="text-secondary-foreground h-8 w-8" />
+						<CircleCheck className="text-secondary-foreground size-8" />
 					</div>
 				</div>
 
@@ -138,7 +138,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 							<p className="text-muted-foreground text-sm font-medium">Masqués</p>
 							<p className="text-muted-foreground mt-1 text-2xl font-bold">{stats.hidden}</p>
 						</div>
-						<EyeOff className="text-muted-foreground h-8 w-8" />
+						<EyeOff className="text-muted-foreground size-8" />
 					</div>
 				</div>
 
@@ -153,7 +153,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 								<RatingStars rating={globalStats.averageRating} size="sm" />
 							)}
 						</div>
-						<Star className="text-muted-foreground h-8 w-8" />
+						<Star className="text-muted-foreground size-8" />
 					</div>
 				</div>
 			</div>
@@ -168,7 +168,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 							mode="live"
 							size="sm"
 							paramName="search"
-							placeholder="Rechercher par client, produit..."
+							placeholder="Rechercher par client, produit…"
 							ariaLabel="Rechercher un avis"
 							className="w-full"
 						/>

@@ -171,14 +171,14 @@ describe("CloseStoreForm", () => {
 	it("sets aria-busy on form while pending", () => {
 		mockIsPending.value = true;
 		render(<CloseStoreForm />);
-		const form = screen.getByRole("button", { name: /Fermeture\.\.\./i }).closest("form");
+		const form = screen.getByRole("button", { name: /Fermeture…/i }).closest("form");
 		expect(form).toHaveAttribute("aria-busy", "true");
 	});
 
 	it("shows 'Fermeture...' label and spinner while pending", () => {
 		mockIsPending.value = true;
 		render(<CloseStoreForm />);
-		expect(screen.getByRole("button", { name: /Fermeture\.\.\./i })).toBeDisabled();
+		expect(screen.getByRole("button", { name: /Fermeture…/i })).toBeDisabled();
 	});
 
 	it("redirects to /admin/configuration/boutique and resets form on success", () => {

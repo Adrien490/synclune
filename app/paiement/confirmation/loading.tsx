@@ -22,7 +22,7 @@ export default function CheckoutSuccessLoading() {
 					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							{/* Success icon */}
-							<Skeleton className="bg-primary/20 mx-auto h-16 w-16 rounded-full" />
+							<Skeleton className="bg-primary/20 mx-auto size-16 rounded-full" />
 
 							{/* Title */}
 							<Skeleton className="bg-muted/50 mx-auto h-8 w-80" />
@@ -41,8 +41,8 @@ export default function CheckoutSuccessLoading() {
 								<div className="space-y-3">
 									{Array.from({ length: 2 }).map((_, i) => (
 										<div key={i} className="flex gap-3">
-											<Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
-											<div className="min-w-0 flex-1 space-y-1.5">
+											<Skeleton className="size-14 shrink-0 rounded-xl" />
+											<div className="min-w-0 flex-1 gap-y-1.5">
 												<Skeleton className="bg-muted/50 h-4 w-40" />
 												<Skeleton className="bg-muted/30 h-3 w-32" />
 												<Skeleton className="bg-muted/30 h-3 w-16" />
@@ -92,15 +92,15 @@ export default function CheckoutSuccessLoading() {
 							{/* Prochaines étapes */}
 							<div className="space-y-4">
 								<div className="flex items-center gap-2">
-									<Skeleton className="bg-primary/30 h-5 w-5 rounded" />
+									<Skeleton className="bg-primary/30 size-5 rounded" />
 									<Skeleton className="bg-muted/50 h-6 w-72" />
 								</div>
 
 								<div className="space-y-3">
 									{Array.from({ length: 3 }).map((_, i) => (
 										<div key={i} className="flex items-start gap-3">
-											<Skeleton className="bg-primary/20 h-8 w-8 shrink-0 rounded-full" />
-											<div className="flex-1 space-y-2">
+											<Skeleton className="bg-primary/20 size-8 shrink-0 rounded-full" />
+											<div className="flex-1 gap-y-2">
 												<Skeleton className="bg-muted/50 h-5 w-48" />
 												<Skeleton className="bg-muted/30 h-4 w-full" />
 												<Skeleton className="bg-muted/30 h-4 w-5/6" />

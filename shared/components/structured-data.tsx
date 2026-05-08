@@ -130,6 +130,8 @@ export function StructuredData({
 	};
 
 	return (
+		// SAFE: serialized via safeJsonLd (no user HTML)
+		// react-doctor-disable-next-line react/no-danger
 		<script
 			type="application/ld+json"
 			dangerouslySetInnerHTML={{

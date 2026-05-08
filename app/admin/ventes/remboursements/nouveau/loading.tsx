@@ -22,12 +22,12 @@ export default function NewRefundLoading() {
 			aria-label="Chargement du formulaire de remboursement"
 			className="space-y-6"
 		>
-			<span className="sr-only">Chargement du formulaire de remboursement...</span>
+			<span className="sr-only">Chargement du formulaire de remboursement…</span>
 
 			{/* Header */}
 			<div className="flex items-center gap-4">
 				<Button variant="ghost" size="sm" disabled>
-					<ArrowLeft className="h-4 w-4" />
+					<ArrowLeft className="size-4" />
 					Retour
 				</Button>
 				<div>
@@ -40,10 +40,10 @@ export default function NewRefundLoading() {
 				{/* Left column - Items selection */}
 				<div className="space-y-6 lg:col-span-2">
 					<Card>
-						<CardHeader className="flex flex-row items-center justify-between space-y-0">
+						<CardHeader className="flex flex-row items-center justify-between">
 							<div>
 								<CardTitle className="flex items-center gap-2">
-									<Package className="h-5 w-5" />
+									<Package className="size-5" />
 									Articles a rembourser
 								</CardTitle>
 								<CardDescription>Selectionnez les articles et quantites</CardDescription>
@@ -54,9 +54,9 @@ export default function NewRefundLoading() {
 							<div className="space-y-4">
 								{Array.from({ length: 3 }).map((_, i) => (
 									<div key={i} className="flex items-start gap-4 rounded-lg border p-4">
-										<Skeleton className="mt-1 h-4 w-4" />
-										<Skeleton className="h-16 w-16 rounded-md" />
-										<div className="flex-1 space-y-2">
+										<Skeleton className="mt-1 size-4" />
+										<Skeleton className="size-16 rounded-md" />
+										<div className="flex-1 gap-y-2">
 											<Skeleton className="h-5 w-48" />
 											<Skeleton className="h-4 w-32" />
 											<div className="flex items-center gap-4">
@@ -123,7 +123,7 @@ export default function NewRefundLoading() {
 
 					{/* Submit */}
 					<Button className="w-full" disabled>
-						<RotateCcw className="h-4 w-4" />
+						<RotateCcw className="size-4" />
 						Creer la demande
 					</Button>
 				</div>

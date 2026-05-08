@@ -22,7 +22,7 @@ export function useSendPasswordResetAdmin(options?: UseSendPasswordResetAdminOpt
 			async (_prev: ActionState | undefined, formData: FormData) =>
 				sendPasswordResetAdmin(formData.get("userId") as string),
 			createToastCallbacks({
-				loadingMessage: "Envoi de l'email...",
+				loadingMessage: "Envoi de l'email…",
 				onSuccess: () => {
 					options?.onSuccess?.();
 				},

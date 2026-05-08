@@ -59,3 +59,80 @@ async function fetchSkuById(skuId: string): Promise<SkuWithImages | null> {
 		},
 	});
 }
+
+// ============================================================================
+// GET SKU DETAIL BY ID — page détail admin enrichie
+// ============================================================================
+
+export type SkuDetailReturn = NonNullable<Awaited<ReturnType<typeof fetchSkuDetailById>>>;
+
+export async function getSkuDetailById(skuId: string) {
+	if (!skuId) return null;
+
+	const admin = await isAdmin();
+	if (!admin) return null;
+
+	try {
+		return await fetchSkuDetailById(skuId);
+	} catch (error) {
+		logger.error("Failed to fetch sku detail by id", error, { service: "getSkuDetailById" });
+		return null;
+	}
+}
+
+async function fetchSkuDetailById(skuId: string) {
+	"use cache";
+	cacheSkuDetailById(skuId);
+
+	return prisma.productSku.findUnique({
+		where: { id: skuId },
+		select: {
+			id: true,
+			sku: true,
+			productId: true,
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			isActive: true,
+			isDefault: true,
+			size: true,
+			createdAt: true,
+			updatedAt: true,
+			color: { select: { id: true, name: true, hex: true, slug: true } },
+			material: { select: { id: true, name: true, slug: true } },
+			images: {
+				select: {
+					id: true,
+					url: true,
+					thumbnailUrl: true,
+					blurDataUrl: true,
+					altText: true,
+					mediaType: true,
+					isPrimary: true,
+				},
+				orderBy: { position: "asc" },
+			},
+			_count: { select: { orderItems: true } },
+			product: {
+				select: {
+					id: true,
+					slug: true,
+					title: true,
+					status: true,
+					_count: { select: { skus: true } },
+					skus: {
+						where: { isDefault: true },
+						take: 1,
+						select: {
+							images: {
+								where: { isPrimary: true },
+								take: 1,
+								select: { url: true, blurDataUrl: true, altText: true },
+							},
+						},
+					},
+				},
+			},
+		},
+	});
+}

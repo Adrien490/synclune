@@ -5,7 +5,7 @@ import { SectionTitle } from "@/shared/components/section-title";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
-import { ChevronDown, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Suspense } from "react";
 import { HeroCtaButtons } from "./hero-cta-buttons";
 import { ParticleBackground } from "./hero-decorations";
@@ -70,7 +70,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] 2xl:max-w-7xl">
 				<div className="flex flex-col items-center">
 					{/* Centered content */}
-					<div className="flex flex-col items-center space-y-5 sm:space-y-7 md:space-y-10">
+					<div className="flex flex-col items-center gap-y-5 sm:gap-y-7 md:gap-y-10">
 						{/* Main title - "Des bijoux" is server-rendered for LCP */}
 						<div className="w-full space-y-4 text-center sm:space-y-6">
 							<SectionTitle
@@ -111,14 +111,6 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 					</div>
 				</div>
 			</div>
-
-			{/* Scroll cue — mobile/tablet only, decorative, motion-reduce safe */}
-			<span
-				aria-hidden="true"
-				className="text-foreground/40 pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-1/2 z-20 -translate-x-1/2 motion-safe:animate-bounce motion-reduce:hidden lg:hidden"
-			>
-				<ChevronDown size={24} strokeWidth={1.5} />
-			</span>
 		</section>
 	);
 }

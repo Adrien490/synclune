@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
@@ -24,7 +25,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, labe
  * Sous-header sticky (mobile, admin) pour la liste commandes.
  * 3 actions : Trier | Rechercher | Filtrer.
  */
-export function OrdersBottomBar() {
+function OrdersBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -95,5 +96,13 @@ export function OrdersBottomBar() {
 
 			<OrdersFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />
 		</>
+	);
+}
+
+export function OrdersBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<OrdersBottomBarInner />
+		</Suspense>
 	);
 }

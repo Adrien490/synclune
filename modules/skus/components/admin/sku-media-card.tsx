@@ -52,8 +52,7 @@ export function SkuMediaCard({
 							setValue={(value) => field.setValue(value)}
 							pushValue={(value) => field.pushValue(value)}
 							productName={productTitle}
-							uploadMedia={galleryUpload.upload}
-							isUploading={galleryUpload.isUploading}
+							galleryUpload={galleryUpload}
 						/>
 					)}
 				</form.Field>

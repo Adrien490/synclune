@@ -409,10 +409,10 @@ describe("CreateRefundForm", () => {
 		expect(screen.getByText(/Créer la demande/)).toBeInTheDocument();
 	});
 
-	it("shows 'Création en cours...' when isPending is true", () => {
+	it("shows 'Création en cours…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("Création en cours...")).toBeInTheDocument();
+		expect(screen.getByText("Création en cours…")).toBeInTheDocument();
 	});
 
 	// ─── Already refunded ─────────────────────────────────────────────────────
@@ -641,7 +641,7 @@ describe("CreateRefundForm", () => {
 
 	it("renders textarea with placeholder text", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByPlaceholderText("Détails supplémentaires...")).toBeInTheDocument();
+		expect(screen.getByPlaceholderText("Détails supplémentaires…")).toBeInTheDocument();
 	});
 
 	it("disables note textarea when isPending is true", () => {
@@ -670,8 +670,8 @@ describe("CreateRefundForm", () => {
 	it("disables submit button when isPending is true regardless of canSubmit", () => {
 		mockIsPending.value = true;
 		render(<CreateRefundForm order={createMockOrder()} />);
-		// When pending, button shows "Création en cours..." and is disabled
-		const pendingBtn = screen.getByRole("button", { name: "Création en cours..." });
+		// When pending, button shows "Création en cours…" and is disabled
+		const pendingBtn = screen.getByRole("button", { name: "Création en cours…" });
 		expect(pendingBtn).toBeDisabled();
 	});
 

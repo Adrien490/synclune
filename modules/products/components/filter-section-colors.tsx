@@ -54,7 +54,7 @@ export function ColorFilterSection({
 					<SectionSearch
 						value={colorSearch}
 						onChange={onColorSearchChange}
-						placeholder="Rechercher une couleur..."
+						placeholder="Rechercher une couleur…"
 					/>
 				)}
 				<div className="space-y-1">
@@ -76,7 +76,7 @@ export function ColorFilterSection({
 									indicator={
 										<span
 											className={cn(
-												"relative h-6 w-6 rounded-full shadow-sm",
+												"relative size-6 rounded-full shadow-sm",
 												light ? "border-border border" : "border-border/50 border",
 												isSelected
 													? "ring-primary ring-2 ring-offset-1"
@@ -88,7 +88,7 @@ export function ColorFilterSection({
 										>
 											{isSelected && (
 												<Check
-													className="absolute inset-0 m-auto h-3 w-3"
+													className="absolute inset-0 m-auto size-3"
 													style={{
 														color: getContrastTextColor(color.hex),
 													}}

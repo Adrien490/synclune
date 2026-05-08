@@ -214,7 +214,7 @@ export function SignUpEmailForm() {
 							{isPending ? (
 								<>
 									<LoaderCircle className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-									<span>Inscription en cours...</span>
+									<span>Inscription en cours…</span>
 								</>
 							) : (
 								"S'inscrire"

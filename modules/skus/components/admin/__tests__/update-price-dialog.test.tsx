@@ -217,7 +217,7 @@ describe("UpdatePriceDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Enregistrement...' when pending", () => {
+	it("shows 'Enregistrement…' when pending", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: {
@@ -232,7 +232,7 @@ describe("UpdatePriceDialog", () => {
 
 		render(<UpdatePriceDialog />);
 
-		expect(screen.getByText("Enregistrement...")).toBeInTheDocument();
+		expect(screen.getByText("Enregistrement…")).toBeInTheDocument();
 	});
 
 	it("disables buttons when pending", () => {
@@ -251,6 +251,6 @@ describe("UpdatePriceDialog", () => {
 		render(<UpdatePriceDialog />);
 
 		expect(screen.getByText("Annuler")).toBeDisabled();
-		expect(screen.getByText("Enregistrement...")).toBeDisabled();
+		expect(screen.getByText("Enregistrement…")).toBeDisabled();
 	});
 });

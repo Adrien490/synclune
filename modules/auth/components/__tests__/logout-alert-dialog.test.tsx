@@ -84,12 +84,12 @@ describe("LogoutAlertDialog", () => {
 		expect(screen.getByTestId("submit")).toHaveTextContent("Se déconnecter");
 	});
 
-	it("should show 'Déconnexion...' when isPending", () => {
+	it("should show 'Déconnexion…' when isPending", () => {
 		mockLogout.isPending = true;
 
 		render(<LogoutAlertDialog open={true} onOpenChange={vi.fn()} />);
 
-		expect(screen.getByTestId("submit")).toHaveTextContent("Déconnexion...");
+		expect(screen.getByTestId("submit")).toHaveTextContent("Déconnexion…");
 	});
 
 	it("should show 'Déconnecté !' when isLoggedOut", () => {

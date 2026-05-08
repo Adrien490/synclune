@@ -12,7 +12,7 @@ export default function AuthLoading() {
 			aria-busy="true"
 			aria-label="Chargement"
 		>
-			<span className="sr-only">Chargement...</span>
+			<span className="sr-only">Chargement…</span>
 
 			{/* Back link */}
 			<div className="absolute top-4 left-4 sm:top-6 sm:left-6">
@@ -21,7 +21,7 @@ export default function AuthLoading() {
 
 			{/* Logo en haut à droite */}
 			<div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-				<Skeleton className="bg-muted/40 h-10 w-10 rounded-full" />
+				<Skeleton className="bg-muted/40 size-10 rounded-full" />
 			</div>
 
 			{/* Main content */}
@@ -81,7 +81,7 @@ export default function AuthLoading() {
 
 						{/* Terms checkbox */}
 						<div className="flex items-center gap-2">
-							<Skeleton className="bg-muted/40 h-4 w-4 rounded" />
+							<Skeleton className="bg-muted/40 size-4 rounded" />
 							<Skeleton className="bg-muted/30 h-4 w-72" />
 						</div>
 

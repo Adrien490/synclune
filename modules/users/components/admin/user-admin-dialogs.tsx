@@ -83,12 +83,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isDeletePending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Suppression...
+										<LoaderCircle className="mr-2 size-4 animate-spin" />
+										Suppression…
 									</>
 								) : (
 									<>
-										<Trash2 className="mr-2 h-4 w-4" />
+										<Trash2 className="mr-2 size-4" />
 										Supprimer
 									</>
 								)}
@@ -120,12 +120,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isSuspendPending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Suspension...
+										<LoaderCircle className="mr-2 size-4 animate-spin" />
+										Suspension…
 									</>
 								) : (
 									<>
-										<CircleX className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 size-4" />
 										Suspendre
 									</>
 								)}
@@ -156,12 +156,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isRestorePending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Restauration...
+										<LoaderCircle className="mr-2 size-4 animate-spin" />
+										Restauration…
 									</>
 								) : (
 									<>
-										<RotateCcw className="mr-2 h-4 w-4" />
+										<RotateCcw className="mr-2 size-4" />
 										Restaurer
 									</>
 								)}
@@ -194,12 +194,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Promotion...
+										<LoaderCircle className="mr-2 size-4 animate-spin" />
+										Promotion…
 									</>
 								) : (
 									<>
-										<CircleCheck className="mr-2 h-4 w-4" />
+										<CircleCheck className="mr-2 size-4" />
 										Promouvoir
 									</>
 								)}
@@ -232,12 +232,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<Button type="submit" disabled={isPending}>
 								{isChangeRolePending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Rétrogradation...
+										<LoaderCircle className="mr-2 size-4 animate-spin" />
+										Rétrogradation…
 									</>
 								) : (
 									<>
-										<CircleX className="mr-2 h-4 w-4" />
+										<CircleX className="mr-2 size-4" />
 										Rétrograder
 									</>
 								)}

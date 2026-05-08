@@ -24,7 +24,7 @@ export function useReviewResponseForm(options?: UseReviewResponseFormOptions) {
 	const [isPending, startTransition] = useTransition();
 
 	const callbacks = createToastCallbacks<ActionState>({
-		loadingMessage: "Envoi de la réponse...",
+		loadingMessage: "Envoi de la réponse…",
 		onSuccess: () => {
 			options?.onSuccess?.();
 		},

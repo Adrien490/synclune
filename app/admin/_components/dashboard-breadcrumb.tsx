@@ -156,7 +156,7 @@ export function DashboardBreadcrumb() {
 										className="hover:text-foreground text-muted-foreground focus-visible:ring-primary inline-flex min-h-11 min-w-11 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
 										aria-label="Afficher les niveaux parents"
 									>
-										<Ellipsis className="h-4 w-4" />
+										<Ellipsis className="size-4" />
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="start">
 										{breadcrumbs.slice(0, -1).map((segment) => (
@@ -221,7 +221,7 @@ export function DashboardBreadcrumb() {
 										className="hover:text-foreground flex items-center gap-1 transition-colors"
 										aria-label="Afficher plus de segments"
 									>
-										<Ellipsis className="h-4 w-4" />
+										<Ellipsis className="size-4" />
 									</DropdownMenuTrigger>
 									<DropdownMenuContent align="start">
 										{collapsedSegments.map((segment) => (

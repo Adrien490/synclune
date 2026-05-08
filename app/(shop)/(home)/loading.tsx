@@ -13,7 +13,7 @@ export default function HomeLoading() {
 			aria-busy="true"
 			aria-label="Chargement de la page d'accueil"
 		>
-			<span className="sr-only">Chargement en cours...</span>
+			<span className="sr-only">Chargement en cours…</span>
 
 			<HeroSectionSkeleton />
 			<LatestCreationsSkeleton productsCount={4} />

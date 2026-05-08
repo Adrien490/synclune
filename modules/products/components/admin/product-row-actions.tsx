@@ -8,6 +8,7 @@ import {
 	ResponsiveActionMenuTrigger,
 } from "@/shared/components/responsive-action-menu";
 import { Button } from "@/shared/components/ui/button";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 
 import { useProductActions } from "../../hooks/use-product-actions";
 
@@ -20,6 +21,7 @@ interface ProductRowActionsProps {
 
 export function ProductRowActions(props: ProductRowActionsProps) {
 	const { sections } = useProductActions(props);
+	const haptic = useHaptic();
 
 	return (
 		<ResponsiveActionMenu>
@@ -27,10 +29,11 @@ export function ProductRowActions(props: ProductRowActionsProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					className="size-11 p-0 transition-transform active:scale-95"
 					aria-label={`Actions pour ${props.productTitle}`}
+					onPointerDown={() => haptic("selection")}
 				>
-					<EllipsisVertical className="h-4 w-4" />
+					<EllipsisVertical className="size-4" />
 				</Button>
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent

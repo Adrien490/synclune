@@ -1,11 +1,13 @@
 "use client";
 
 import { DashboardBreadcrumb } from "@/app/admin/_components/dashboard-breadcrumb";
+import { KEYBOARD_SHORTCUTS_DIALOG_ID } from "@/app/admin/_components/keyboard-shortcuts-dialog";
 import { Separator } from "@/shared/components/ui/separator";
 import { Kbd, KbdGroup } from "@/shared/components/ui/kbd";
 import { SidebarTrigger } from "@/shared/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
-import { ExternalLink } from "lucide-react";
+import { useDialog } from "@/shared/providers/dialog-store-provider";
+import { ExternalLink, Keyboard } from "lucide-react";
 import Link from "next/link";
 
 /**
@@ -13,6 +15,8 @@ import Link from "next/link";
  * Sidebar trigger + breadcrumb
  */
 export function DashboardHeader() {
+	const { open: openShortcuts } = useDialog(KEYBOARD_SHORTCUTS_DIALOG_ID);
+
 	return (
 		<header
 			className="border-border relative hidden h-14 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:flex md:h-16"
@@ -39,6 +43,24 @@ export function DashboardHeader() {
 				<div className="min-w-0 flex-1">
 					<DashboardBreadcrumb />
 				</div>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<button
+							type="button"
+							onClick={() => openShortcuts()}
+							className="hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex size-8 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-1 focus-visible:outline-none"
+							aria-label="Afficher les raccourcis clavier"
+						>
+							<Keyboard className="size-4" aria-hidden="true" />
+						</button>
+					</TooltipTrigger>
+					<TooltipContent side="bottom">
+						<span>Raccourcis clavier</span>
+						<KbdGroup className="ml-2">
+							<Kbd>?</Kbd>
+						</KbdGroup>
+					</TooltipContent>
+				</Tooltip>
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Link

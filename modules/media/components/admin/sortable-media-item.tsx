@@ -157,7 +157,7 @@ export function SortableMediaItem({
 	};
 
 	const mobileActionItems = (
-		<div className="flex flex-col gap-1 pb-2" data-vaul-no-drag>
+		<div className="flex flex-col gap-1 pb-2">
 			<button
 				type="button"
 				onClick={handleOpenLightbox}
@@ -339,7 +339,7 @@ export function SortableMediaItem({
 							aria-label={`Lire la vidéo ${index + 1}`}
 						>
 							<div className="rounded-full bg-black/70 p-3 shadow-xl transition-colors hover:bg-black/90">
-								<Play className="h-6 w-6 text-white" fill="white" />
+								<Play className="size-6 text-white" fill="white" />
 							</div>
 						</button>
 					</div>
@@ -370,7 +370,7 @@ export function SortableMediaItem({
 			{isPrimary && (
 				<div className="pointer-events-none absolute bottom-2 left-2 z-10 sm:top-2 sm:bottom-auto sm:left-2">
 					<div className="flex items-center gap-1 rounded bg-amber-600 px-1.5 py-0.5 text-xs font-bold text-white shadow-md">
-						<Star className="h-3 w-3" fill="currentColor" aria-hidden="true" />
+						<Star className="size-3" fill="currentColor" aria-hidden="true" />
 						<span className="sm:hidden">1</span>
 						<span className="hidden sm:inline">Principal</span>
 					</div>
@@ -393,8 +393,8 @@ export function SortableMediaItem({
 							: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
 					)}
 				>
-					<div className="flex h-11 w-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
-						<GripVertical className="h-5 w-5 text-white" aria-hidden="true" />
+					<div className="flex size-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
+						<GripVertical className="size-5 text-white" aria-hidden="true" />
 					</div>
 				</button>
 			)}
@@ -409,7 +409,7 @@ export function SortableMediaItem({
 					aria-hidden="true"
 				>
 					<div className="rounded-md bg-black/90 px-2.5 py-1.5 text-xs whitespace-nowrap text-white shadow-lg">
-						Maintenir pour déplacer
+						Maintenez pour réordonner
 					</div>
 				</div>
 			)}
@@ -436,10 +436,10 @@ export function SortableMediaItem({
 									e.stopPropagation();
 									handleOpenLightbox();
 								}}
-								className="h-9 w-9 rounded-full border-0 bg-black/70 hover:bg-black/90"
+								className="size-9 rounded-full border-0 bg-black/70 hover:bg-black/90"
 								aria-label={`Agrandir le média ${index + 1}`}
 							>
-								<Expand className="h-4 w-4 text-white" aria-hidden="true" />
+								<Expand className="size-4 text-white" aria-hidden="true" />
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>Agrandir</TooltipContent>
@@ -455,10 +455,10 @@ export function SortableMediaItem({
 									e.stopPropagation();
 									handleOpenDeleteDialog();
 								}}
-								className="hover:bg-destructive h-9 w-9 rounded-full border-0 bg-black/70"
+								className="hover:bg-destructive size-9 rounded-full border-0 bg-black/70"
 								aria-label={`Supprimer le média ${index + 1}`}
 							>
-								<Trash2 className="h-4 w-4 text-white" aria-hidden="true" />
+								<Trash2 className="size-4 text-white" aria-hidden="true" />
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>Supprimer</TooltipContent>
@@ -476,10 +476,10 @@ export function SortableMediaItem({
 								variant="secondary"
 								size="icon"
 								onClick={() => haptic("light")}
-								className="h-11 w-11 rounded-full border-0 bg-black/70 hover:bg-black/90"
+								className="size-11 rounded-full border-0 bg-black/40 backdrop-blur-md hover:bg-black/70"
 								aria-label={`Actions pour le média ${index + 1}`}
 							>
-								<EllipsisVertical className="h-5 w-5 text-white" />
+								<EllipsisVertical className="size-5 text-white" />
 							</Button>
 						</DrawerTrigger>
 						<DrawerContent onOverlayClick={() => haptic("selection")} className="max-h-[60vh]">

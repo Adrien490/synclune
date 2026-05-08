@@ -16,7 +16,7 @@ function SectionHeading({ id, label }: { id: string; label: string }) {
 export default function DashboardLoading() {
 	return (
 		<section role="status" aria-busy="true" aria-label="Chargement du tableau de bord">
-			<span className="sr-only">Chargement du tableau de bord...</span>
+			<span className="sr-only">Chargement du tableau de bord…</span>
 
 			<PageHeader variant="compact" title="Tableau de bord" className="hidden md:block" />
 

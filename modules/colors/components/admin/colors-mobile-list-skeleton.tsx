@@ -1,4 +1,4 @@
-import { Item, ItemActions, ItemContent, ItemGroup, ItemMedia } from "@/shared/components/ui/item";
+import { Item, ItemContent, ItemGroup, ItemMedia } from "@/shared/components/ui/item";
 import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 export function ColorsMobileListSkeleton() {
@@ -22,11 +22,11 @@ export function ColorsMobileListSkeleton() {
 									<Skeleton shape="rounded" className="h-5 w-24" />
 									<Skeleton shape="rounded" className="h-5 w-12" />
 								</div>
-								<Skeleton shape="text" className="h-3 w-20" />
+								<div className="flex items-center gap-2">
+									<Skeleton shape="text" className="h-3 w-16" />
+									<Skeleton shape="text" className="h-3 w-20" />
+								</div>
 							</ItemContent>
-							<ItemActions>
-								<Skeleton shape="rounded" className="size-8" />
-							</ItemActions>
 						</Item>
 					))}
 				</ItemGroup>

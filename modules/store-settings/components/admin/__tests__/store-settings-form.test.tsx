@@ -3,6 +3,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 afterEach(cleanup);
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({
+		push: vi.fn(),
+		replace: vi.fn(),
+		prefetch: vi.fn(),
+		back: vi.fn(),
+		forward: vi.fn(),
+		refresh: vi.fn(),
+	}),
+}));
+
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => ({
 		isOpen: false,

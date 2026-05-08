@@ -14,7 +14,7 @@ export default function AccessibilityLoading() {
 			aria-busy="true"
 			aria-label="Chargement de la page d'accessibilité"
 		>
-			<span className="sr-only">Chargement de la page d'accessibilité...</span>
+			<span className="sr-only">Chargement de la page d'accessibilité…</span>
 
 			<PageHeaderSkeleton />
 
@@ -40,8 +40,8 @@ export default function AccessibilityLoading() {
 						<div className="space-y-4">
 							{Array.from({ length: 10 }).map((_, i) => (
 								<div key={i} className="flex gap-3">
-									<Skeleton className="bg-muted/40 h-5 w-5 shrink-0 rounded-sm" />
-									<div className="flex-1 space-y-2">
+									<Skeleton className="bg-muted/40 size-5 shrink-0 rounded-sm" />
+									<div className="flex-1 gap-y-2">
 										<Skeleton className="bg-muted/40 h-4 w-48" />
 										<Skeleton className="bg-muted/30 h-3 w-full" />
 									</div>
@@ -73,7 +73,7 @@ export default function AccessibilityLoading() {
 						<div className="mt-4 space-y-3">
 							{Array.from({ length: 6 }).map((_, i) => (
 								<div key={i} className="flex gap-2">
-									<Skeleton className="bg-muted/40 h-5 w-5 shrink-0 rounded-sm" />
+									<Skeleton className="bg-muted/40 size-5 shrink-0 rounded-sm" />
 									<Skeleton className="bg-muted/30 h-4 w-56" />
 								</div>
 							))}

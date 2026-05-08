@@ -88,7 +88,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par nom, slug ou description..."
+								placeholder="Rechercher par nom, slug ou description…"
 								ariaLabel="Rechercher un matériau par nom, slug ou description"
 								className="w-full"
 							/>

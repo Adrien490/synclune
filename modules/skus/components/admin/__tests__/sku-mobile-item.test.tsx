@@ -183,16 +183,13 @@ describe("SkuMobileItem", () => {
 		expect(screen.getByTestId("sku-image")).toHaveAttribute("src", "https://example.com/img.jpg");
 	});
 
-	it("navigue vers la page édition variante au tap (Link href)", () => {
+	it("navigue vers la page détail variante au tap (Link href)", () => {
 		render(
 			<SkuMobileItem sku={createSku({ id: "sku-42", sku: "REF-42" })} productSlug="produit-x" />,
 		);
 		const link = screen.getByLabelText("Variante REF-42");
 		expect(link.tagName).toBe("A");
-		expect(link).toHaveAttribute(
-			"href",
-			"/admin/catalogue/produits/produit-x/variantes/sku-42/modifier",
-		);
+		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/produit-x/variantes/sku-42");
 	});
 
 	it("exposes accessible aria-label on the link", () => {

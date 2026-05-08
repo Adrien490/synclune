@@ -57,7 +57,7 @@ export function AddressSelector({
 							/>
 							<MapPin
 								className={cn(
-									"mt-0.5 h-4 w-4 shrink-0",
+									"mt-0.5 size-4 shrink-0",
 									isSelected ? "text-primary" : "text-muted-foreground",
 								)}
 							/>

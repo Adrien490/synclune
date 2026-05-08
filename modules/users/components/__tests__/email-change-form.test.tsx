@@ -128,10 +128,10 @@ describe("EmailChangeForm", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Envoi...' when isPending is true", () => {
+	it("shows 'Envoi…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<EmailChangeForm />);
-		expect(screen.getByRole("button").textContent).toContain("Envoi...");
+		expect(screen.getByRole("button").textContent).toContain("Envoi…");
 	});
 
 	it("disables button when isPending is true", () => {

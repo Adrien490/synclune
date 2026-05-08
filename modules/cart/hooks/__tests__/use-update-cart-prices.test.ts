@@ -220,7 +220,7 @@ describe("useUpdateCartPrices", () => {
 				await result.current.action(makeFormData());
 			});
 
-			expect(toast.loading).toHaveBeenCalledWith("Mise à jour des prix...");
+			expect(toast.loading).toHaveBeenCalledWith("Mise à jour des prix…");
 		});
 
 		it("shows a success toast when action succeeds", async () => {

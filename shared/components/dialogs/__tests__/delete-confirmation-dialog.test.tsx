@@ -270,9 +270,9 @@ describe("DeleteConfirmationDialog", () => {
 		});
 
 		it("shows pendingLabel when isPending", () => {
-			renderDialog({ pendingLabel: "Suppression...", isPending: true });
+			renderDialog({ pendingLabel: "Suppression…", isPending: true });
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Suppression...");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Suppression…");
 		});
 
 		it("shows loader icon when isPending", () => {

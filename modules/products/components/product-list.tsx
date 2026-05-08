@@ -45,7 +45,7 @@ export function ProductList({
 	if (error) {
 		return (
 			<Alert variant="destructive">
-				<TriangleAlert className="h-4 w-4" />
+				<TriangleAlert className="size-4" />
 				<AlertDescription className="flex flex-col gap-3 sm:flex-row sm:items-center">
 					<span>Une erreur est survenue lors du chargement des produits.</span>
 					<RefreshButton />
@@ -81,7 +81,8 @@ export function ProductList({
 	// Layout Grid par defaut
 	return (
 		<div className="space-y-6">
-			{/* ItemList structured data for product grid */}
+			{/* ItemList structured data — SAFE: serialized via safeJsonLd (no user HTML) */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{

@@ -199,12 +199,12 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 									{/* Icône sur la ligne */}
 									<div
 										className={cn(
-											"bg-background absolute left-0 flex h-8 w-8 items-center justify-center rounded-full border-2",
+											"bg-background absolute left-0 flex size-8 items-center justify-center rounded-full border-2",
 											config.color,
 										)}
 										aria-label={config.label}
 									>
-										<Icon className="h-4 w-4" aria-hidden="true" />
+										<Icon className="size-4" aria-hidden="true" />
 										<span className="sr-only">{config.symbol}</span>
 									</div>
 
@@ -275,7 +275,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 								onClick={() => setIsExpanded(true)}
 								className="text-muted-foreground"
 							>
-								<ChevronDown className="mr-1 h-4 w-4" aria-hidden="true" />
+								<ChevronDown className="mr-1 size-4" aria-hidden="true" />
 								Voir {hiddenCount} entrées plus anciennes
 							</Button>
 						</div>
@@ -290,7 +290,7 @@ export function OrderHistoryTimeline({ history }: OrderHistoryTimelineProps) {
 								onClick={() => setIsExpanded(false)}
 								className="text-muted-foreground"
 							>
-								<ChevronDown className="mr-1 h-4 w-4 rotate-180" aria-hidden="true" />
+								<ChevronDown className="mr-1 size-4 rotate-180" aria-hidden="true" />
 								Réduire
 							</Button>
 						</div>

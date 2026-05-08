@@ -34,10 +34,10 @@ export function OrderRowActions({ order }: OrderRowActionsProps) {
 				<Button
 					variant="ghost"
 					size="sm"
-					className="h-11 w-11 p-0 transition-transform active:scale-95"
+					className="size-11 p-0 transition-transform active:scale-95"
 					aria-label={`Actions pour la commande ${order.orderNumber}`}
 				>
-					<EllipsisVertical className="h-4 w-4" />
+					<EllipsisVertical className="size-4" />
 				</Button>
 			</ResponsiveActionMenuTrigger>
 			<ResponsiveActionMenuContent

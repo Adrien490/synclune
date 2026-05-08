@@ -2,7 +2,7 @@
 // TYPES - USER ACCOUNTS
 // ============================================================================
 
-export type UserAccount = {
+type UserAccount = {
 	id: string;
 	providerId: string;
 	accountId: string;

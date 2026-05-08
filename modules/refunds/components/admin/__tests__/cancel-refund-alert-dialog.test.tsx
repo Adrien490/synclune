@@ -208,7 +208,7 @@ describe("CancelRefundAlertDialog", () => {
 
 		render(<CancelRefundAlertDialog />);
 
-		expect(screen.getByText("Annulation...")).toBeInTheDocument();
+		expect(screen.getByText("Annulation…")).toBeInTheDocument();
 	});
 
 	it("shows loader icon when isPending is true", () => {
@@ -238,7 +238,7 @@ describe("CancelRefundAlertDialog", () => {
 
 		render(<CancelRefundAlertDialog />);
 
-		expect(screen.getByText("Annulation...")).toBeDisabled();
+		expect(screen.getByText("Annulation…")).toBeDisabled();
 	});
 
 	// ─── Constants ────────────────────────────────────────────────────────────

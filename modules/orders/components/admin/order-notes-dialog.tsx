@@ -78,7 +78,7 @@ export function OrderNotesDialog() {
 				{/* Formulaire d'ajout */}
 				<div className="shrink-0 space-y-2 border-b pb-4">
 					<Textarea
-						placeholder="Ajouter une note..."
+						placeholder="Ajouter une note…"
 						value={newNote}
 						onChange={(e) => setNewNote(e.target.value)}
 						className="min-h-20 resize-none"
@@ -86,9 +86,9 @@ export function OrderNotesDialog() {
 					<div className="flex justify-end">
 						<Button onClick={handleAddNote} disabled={isPendingAdd || !newNote.trim()} size="sm">
 							{isPendingAdd ? (
-								<LoaderCircle className="h-4 w-4 animate-spin" />
+								<LoaderCircle className="size-4 animate-spin" />
 							) : (
-								<MessageSquarePlus className="h-4 w-4" />
+								<MessageSquarePlus className="size-4" />
 							)}
 							Ajouter
 						</Button>
@@ -96,16 +96,16 @@ export function OrderNotesDialog() {
 				</div>
 
 				{/* Liste des notes */}
-				<div className="flex-1 space-y-3 overflow-auto py-4">
+				<div className="flex-1 gap-y-3 overflow-auto py-4">
 					{isPendingFetch ? (
 						<div className="flex items-center justify-center py-8">
-							<LoaderCircle className="text-muted-foreground h-6 w-6 animate-spin" />
+							<LoaderCircle className="text-muted-foreground size-6 animate-spin" />
 						</div>
 					) : fetchError ? (
 						<div className="text-destructive py-8 text-center">{fetchError}</div>
 					) : notes.length === 0 ? (
 						<div className="text-muted-foreground py-8 text-center">
-							<StickyNote className="mx-auto mb-3 h-12 w-12 opacity-50" />
+							<StickyNote className="mx-auto mb-3 size-12 opacity-50" />
 							<p>Aucune note pour cette commande</p>
 						</div>
 					) : (
@@ -127,14 +127,14 @@ export function OrderNotesDialog() {
 									<Button
 										variant="ghost"
 										size="icon"
-										className="text-destructive hover:text-destructive h-7 w-7 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+										className="text-destructive hover:text-destructive size-7 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
 										onClick={() => handleDeleteNote(note.id)}
 										disabled={isPendingDelete}
 									>
 										{isPendingDelete ? (
-											<LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+											<LoaderCircle className="size-3.5 animate-spin" />
 										) : (
-											<Trash2 className="h-3.5 w-3.5" />
+											<Trash2 className="size-3.5" />
 										)}
 									</Button>
 								</div>

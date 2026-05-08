@@ -28,13 +28,9 @@ interface PostWebhookTasksResult {
 	errors: Array<{ type: string; error: string }>;
 }
 
-export type EmailTask = Exclude<PostWebhookTask, { type: "INVALIDATE_CACHE" }>;
+type EmailTask = Exclude<PostWebhookTask, { type: "INVALIDATE_CACHE" }>;
 
-/**
- * Dispatches a single email task to the correct email service.
- * Exported for use by the retry-failed-emails cron service.
- */
-export async function dispatchEmailTask(task: EmailTask): Promise<void> {
+async function dispatchEmailTask(task: EmailTask): Promise<void> {
 	switch (task.type) {
 		case "ORDER_CONFIRMATION_EMAIL":
 			await sendOrderConfirmationEmail(task.data);

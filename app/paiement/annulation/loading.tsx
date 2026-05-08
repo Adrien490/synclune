@@ -22,7 +22,7 @@ export default function CheckoutCancelLoading() {
 					<Card className="border-primary/10 rounded-2xl shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							{/* Error icon */}
-							<Skeleton className="bg-muted/80 mx-auto h-18 w-18 rounded-full" />
+							<Skeleton className="bg-muted/80 mx-auto size-18 rounded-full" />
 
 							{/* Title */}
 							<Skeleton className="bg-muted/50 mx-auto h-8 w-64" />
@@ -42,7 +42,7 @@ export default function CheckoutCancelLoading() {
 							<div className="space-y-3">
 								<Skeleton className="bg-muted/30 h-4 w-full" />
 								<Skeleton className="bg-muted/30 h-4 w-full" />
-								<Skeleton className="bg-muted/30 h-4 w-4/5" />
+								<Skeleton className="bg-muted/30 size-4/5" />
 							</div>
 
 							{/* Reassurance message */}

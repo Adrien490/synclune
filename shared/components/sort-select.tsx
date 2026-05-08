@@ -18,7 +18,7 @@ import type { SortSelectProps } from "@/shared/types/component.types";
 export function SortSelect({
 	label,
 	options,
-	placeholder = "Sélectionner...",
+	placeholder = "Sélectionner…",
 	className,
 	maxHeight = 300,
 }: SortSelectProps) {
@@ -75,14 +75,14 @@ export function SortSelect({
 							disabled={isPending}
 							className={cn(
 								"absolute top-1/2 right-9 z-10 -translate-y-1/2 sm:right-10",
-								"h-9 w-9 sm:h-10 sm:w-10",
+								"size-9 sm:size-10",
 								"text-muted-foreground hover:text-foreground",
 								"hover:bg-accent/50 active:bg-accent/70",
 							)}
 							aria-label={`Effacer le tri ${selectedOption?.label ?? "actuel"}`}
 							title={`Effacer le tri ${selectedOption?.label ?? "actuel"}`}
 						>
-							<X className="h-4 w-4" />
+							<X className="size-4" />
 						</Button>
 					)}
 				</div>

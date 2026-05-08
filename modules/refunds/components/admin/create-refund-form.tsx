@@ -184,7 +184,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			<div className="flex items-center gap-4">
 				<Button variant="ghost" size="sm" asChild>
 					<Link href={`/admin/ventes/commandes/${order.id}`}>
-						<ArrowLeft className="h-4 w-4" />
+						<ArrowLeft className="size-4" />
 						Retour
 					</Link>
 				</Button>
@@ -209,10 +209,10 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 					{/* Left column - Items selection */}
 					<div className="space-y-6 lg:col-span-2">
 						<Card>
-							<CardHeader className="flex flex-row items-center justify-between space-y-0">
+							<CardHeader className="flex flex-row items-center justify-between">
 								<div id="refund-items">
 									<CardTitle className="flex items-center gap-2">
-										<Package className="h-5 w-5" />
+										<Package className="size-5" />
 										Articles à rembourser
 									</CardTitle>
 									<CardDescription>Sélectionnez les articles et quantités</CardDescription>
@@ -287,7 +287,7 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 								<Textarea
 									value={note}
 									onChange={(e) => form.setFieldValue("note", e.target.value)}
-									placeholder="Détails supplémentaires..."
+									placeholder="Détails supplémentaires…"
 									rows={3}
 									disabled={isPending}
 								/>
@@ -328,10 +328,10 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 						{/* Submit */}
 						<Button type="submit" className="w-full" disabled={!canSubmit || isPending}>
 							{isPending ? (
-								"Création en cours..."
+								"Création en cours…"
 							) : (
 								<>
-									<RotateCcw className="h-4 w-4" />
+									<RotateCcw className="size-4" />
 									Créer la demande ({formatEuro(totalAmount)})
 								</>
 							)}

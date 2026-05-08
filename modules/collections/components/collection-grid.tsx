@@ -65,6 +65,8 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 
 	return (
 		<div className="space-y-8">
+			{/* SAFE: serialized via safeJsonLd (no user HTML) */}
+			{/* react-doctor-disable-next-line react/no-danger */}
 			<script
 				type="application/ld+json"
 				dangerouslySetInnerHTML={{

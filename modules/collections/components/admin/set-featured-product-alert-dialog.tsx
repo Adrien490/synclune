@@ -60,7 +60,7 @@ export function SetFeaturedProductAlertDialog() {
 					<AlertDialogTitle className="flex items-center gap-2">
 						<Star
 							className={cn(
-								"h-5 w-5",
+								"size-5",
 								isFeatured ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground",
 							)}
 						/>
@@ -107,8 +107,8 @@ export function SetFeaturedProductAlertDialog() {
 						{isPending && <LoaderCircle className="animate-spin" />}
 						{isPending
 							? isFeatured
-								? "Retrait..."
-								: "Definition..."
+								? "Retrait…"
+								: "Definition…"
 							: isFeatured
 								? "Retirer"
 								: "Definir comme vedette"}

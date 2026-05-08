@@ -54,7 +54,7 @@ export function UserReviewCard({ review }: UserReviewCardProps) {
 				</div>
 
 				{/* Contenu */}
-				<div className="flex-1 space-y-3 p-4">
+				<div className="flex-1 gap-y-3 p-4">
 					{/* En-tête: titre produit + statut */}
 					<div className="flex items-start justify-between gap-2">
 						<div className="min-w-0">

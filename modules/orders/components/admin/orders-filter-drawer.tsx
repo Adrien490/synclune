@@ -1,6 +1,6 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check } from "lucide-react";
 import {
@@ -44,7 +44,7 @@ function getCurrentFilter(searchParams: URLSearchParams): string {
 	return "all";
 }
 
-export function OrdersFilterDrawer({ open, onOpenChange }: OrdersFilterDrawerProps) {
+function OrdersFilterDrawerInner({ open, onOpenChange }: OrdersFilterDrawerProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -112,5 +112,13 @@ export function OrdersFilterDrawer({ open, onOpenChange }: OrdersFilterDrawerPro
 				</DrawerBody>
 			</DrawerContent>
 		</Drawer>
+	);
+}
+
+export function OrdersFilterDrawer(props: ComponentProps<typeof OrdersFilterDrawerInner>) {
+	return (
+		<Suspense fallback={null}>
+			<OrdersFilterDrawerInner {...props} />
+		</Suspense>
 	);
 }

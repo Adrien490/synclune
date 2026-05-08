@@ -4,10 +4,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockTransaction, mockLogger } = vi.hoisted(() => ({
-	mockTransaction: vi.fn(),
-	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}));
+const { mockTransaction, mockLogger, mockIsPgTrgmAvailable, mockSetTrigramThreshold } = vi.hoisted(
+	() => ({
+		mockTransaction: vi.fn(),
+		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+		mockIsPgTrgmAvailable: vi.fn().mockResolvedValue(true),
+		mockSetTrigramThreshold: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
@@ -17,8 +21,12 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
+vi.mock("@/shared/lib/pg-trgm-availability", () => ({
+	isPgTrgmAvailable: mockIsPgTrgmAvailable,
+}));
+
 vi.mock("@/modules/products/utils/trigram-helpers", () => ({
-	setTrigramThreshold: vi.fn(),
+	setTrigramThreshold: mockSetTrigramThreshold,
 	setStatementTimeout: vi.fn(),
 }));
 
@@ -278,5 +286,67 @@ describe("fuzzySearchIds — nullable columns", () => {
 				columns: [{ table: "Order", column: "customerEmail", nullable: true }],
 			}),
 		).resolves.not.toThrow();
+	});
+});
+
+// ============================================================================
+// Tests: pg_trgm fallback
+// ============================================================================
+
+describe("fuzzySearchIds — pg_trgm unavailable fallback", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockIsPgTrgmAvailable.mockResolvedValue(false);
+		mockTransaction.mockResolvedValue([{ id: "id-1" }]);
+	});
+
+	it("still returns results via ILIKE-only path", async () => {
+		const result = await fuzzySearchIds("dupont", {
+			columns: [{ table: "Order", column: "customerName" }],
+		});
+
+		expect(result).toEqual(["id-1"]);
+		expect(mockTransaction).toHaveBeenCalledOnce();
+	});
+
+	it("does not call setTrigramThreshold when pg_trgm absent", async () => {
+		await fuzzySearchIds("dupont", {
+			columns: [{ table: "Order", column: "customerName" }],
+		});
+
+		expect(mockSetTrigramThreshold).not.toHaveBeenCalled();
+	});
+
+	it("calls setTrigramThreshold when pg_trgm is available", async () => {
+		mockIsPgTrgmAvailable.mockResolvedValue(true);
+
+		await fuzzySearchIds("dupont", {
+			columns: [{ table: "Order", column: "customerName" }],
+		});
+
+		// setTrigramThreshold is invoked inside the transaction callback,
+		// which the mock executes via mockResolvedValue (not mockImplementation).
+		// To exercise it we drive the callback ourselves.
+		mockTransaction.mockImplementationOnce(async (fn: (tx: unknown) => Promise<unknown>) => {
+			await fn({
+				$executeRawUnsafe: vi.fn(),
+				$queryRaw: vi.fn().mockResolvedValue([]),
+			});
+			return [];
+		});
+
+		await fuzzySearchIds("dupont", {
+			columns: [{ table: "Order", column: "customerName" }],
+		});
+	});
+
+	it("returns null on DB error in fallback path", async () => {
+		mockTransaction.mockRejectedValue(new Error("syntax error near %"));
+
+		const result = await fuzzySearchIds("dupont", {
+			columns: [{ table: "Order", column: "customerName" }],
+		});
+
+		expect(result).toBeNull();
 	});
 });

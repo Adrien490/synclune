@@ -371,7 +371,7 @@ describe("ColorsSection", () => {
 			);
 			expect(screen.getByTestId("section-search")).toHaveAttribute(
 				"placeholder",
-				"Rechercher une couleur...",
+				"Rechercher une couleur…",
 			);
 		});
 	});
@@ -620,7 +620,7 @@ describe("MaterialsSection", () => {
 			);
 			expect(screen.getByTestId("section-search")).toHaveAttribute(
 				"placeholder",
-				"Rechercher un matériau...",
+				"Rechercher un matériau…",
 			);
 		});
 	});

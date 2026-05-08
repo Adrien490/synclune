@@ -120,7 +120,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 			</Link>
 
 			{/* Infos */}
-			<div className="min-w-0 flex-1 space-y-1">
+			<div className="min-w-0 flex-1 gap-y-1">
 				{/* Nom */}
 				<Link
 					href={`/creations/${item.sku.product.slug}`}
@@ -137,7 +137,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 							<dt className="sr-only">Couleur</dt>
 							<dd className="inline-flex items-center gap-1">
 								<span
-									className="border-border inline-block h-2.5 w-2.5 rounded-full border"
+									className="border-border inline-block size-2.5 rounded-full border"
 									style={{ backgroundColor: item.sku.color.hex }}
 									aria-hidden="true"
 								/>

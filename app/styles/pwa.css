@@ -70,18 +70,20 @@ textarea {
 	-webkit-tap-highlight-color: oklch(0.8593 0.097 340.78 / 0.2);
 }
 
+/* Header fixe (mobile + PWA) : respecter safe-area top.
+ * S'applique aussi en Safari mode navigateur — sinon le contenu du header
+ * (h-[var(--admin-header-height)]) tombe sous l'encoche iPhone X+. */
+.pwa-header {
+	padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Footer fixe (mobile + PWA) : respecter safe-area bottom. */
+.pwa-footer {
+	padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
 /* Styles spécifiques mode standalone (PWA installée) */
 @media (display-mode: standalone) {
-	/* Header fixe : respecter safe-area top */
-	.pwa-header {
-		padding-top: env(safe-area-inset-top, 0);
-	}
-
-	/* Footer fixe : respecter safe-area bottom */
-	.pwa-footer {
-		padding-bottom: env(safe-area-inset-bottom, 0);
-	}
-
 	/* Désactiver pull-to-refresh natif */
 	body {
 		overscroll-behavior-y: contain;

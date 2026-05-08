@@ -154,7 +154,7 @@ function ResultLink({ id, href, ariaLabel, isActive, onSelect, children }: Resul
 
 function ResultsSkeleton() {
 	return (
-		<SkeletonGroup label="Chargement des résultats..." className="space-y-2 px-4 pb-4">
+		<SkeletonGroup label="Chargement des résultats…" className="space-y-2 px-4 pb-4">
 			{Array.from({ length: SKELETON_ROWS }).map((_, i) => (
 				<div key={i} className="flex items-center gap-3 py-2">
 					<Skeleton shape="rounded" className="size-12 shrink-0" />

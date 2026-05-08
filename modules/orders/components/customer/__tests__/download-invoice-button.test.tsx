@@ -131,7 +131,7 @@ describe("DownloadInvoiceButton", () => {
 
 			expect(screen.getByRole("button")).toBeDisabled();
 			expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
-			expect(screen.getByText("Téléchargement...")).toBeInTheDocument();
+			expect(screen.getByText("Téléchargement…")).toBeInTheDocument();
 			expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
 
 			vi.unstubAllGlobals();

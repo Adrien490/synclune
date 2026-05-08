@@ -85,7 +85,7 @@ export function UpdateReviewForm({
 						<field.TextareaField
 							label="Votre avis"
 							required
-							placeholder="Partagez votre expérience avec ce produit..."
+							placeholder="Partagez votre expérience avec ce produit…"
 							rows={4}
 							maxLength={REVIEW_CONFIG.MAX_CONTENT_LENGTH}
 							showCounter
@@ -113,7 +113,7 @@ export function UpdateReviewForm({
 					)}
 					<Button type="submit" disabled={isPending} className="flex-1">
 						{isPending ? (
-							"Enregistrement..."
+							"Enregistrement…"
 						) : (
 							<>
 								<Send className="mr-2 size-4" aria-hidden="true" />

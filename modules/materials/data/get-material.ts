@@ -66,3 +66,94 @@ async function fetchMaterial(
 		return null;
 	}
 }
+
+// ============================================================================
+// DETAIL — page admin enrichie (10 SKU actifs + count + produits distincts)
+// ============================================================================
+
+export type MaterialDetailReturn = NonNullable<Awaited<ReturnType<typeof fetchMaterialDetail>>>;
+
+export async function getMaterialDetailBySlug(slug: string): Promise<MaterialDetailReturn | null> {
+	if (!slug) return null;
+
+	const admin = await isAdmin();
+	if (!admin) return null;
+
+	return fetchMaterialDetail(slug);
+}
+
+async function fetchMaterialDetail(slug: string) {
+	"use cache";
+	cacheMaterialDetail(slug);
+
+	try {
+		return await prisma.material.findFirst({
+			where: { slug },
+			select: {
+				id: true,
+				slug: true,
+				name: true,
+				description: true,
+				isActive: true,
+				createdAt: true,
+				updatedAt: true,
+				skus: {
+					where: { isActive: true },
+					take: 10,
+					orderBy: { product: { title: "asc" } },
+					select: {
+						id: true,
+						sku: true,
+						size: true,
+						priceInclTax: true,
+						isDefault: true,
+						inventory: true,
+						color: { select: { name: true, hex: true, slug: true } },
+						product: {
+							select: {
+								id: true,
+								slug: true,
+								title: true,
+								status: true,
+								skus: {
+									where: { isDefault: true },
+									take: 1,
+									select: {
+										images: {
+											where: { isPrimary: true },
+											take: 1,
+											select: { url: true, blurDataUrl: true, altText: true },
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				_count: { select: { skus: { where: { isActive: true } } } },
+			},
+		});
+	} catch (error) {
+		logger.error("Failed to fetch material detail", error, { service: "fetchMaterialDetail" });
+		return null;
+	}
+}
+
+export async function getMaterialDistinctProductCount(materialId: string): Promise<number> {
+	const admin = await isAdmin();
+	if (!admin) return 0;
+
+	try {
+		const result = await prisma.productSku.findMany({
+			where: { materialId, isActive: true },
+			select: { productId: true },
+			distinct: ["productId"],
+		});
+		return result.length;
+	} catch (error) {
+		logger.error("Failed to count distinct products for material", error, {
+			service: "getMaterialDistinctProductCount",
+		});
+		return 0;
+	}
+}

@@ -468,7 +468,7 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 								onClick={() => api?.scrollTo(index)}
 								className={cn(
 									// Touch target 44px (WCAG 2.5.5)
-									"relative flex h-11 w-11 shrink-0 items-center justify-center",
+									"relative flex size-11 shrink-0 items-center justify-center",
 									// Shape for visual feedback
 									"rounded-full",
 									// Visual feedback on clickable area
@@ -481,7 +481,7 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 							>
 								<span
 									className={cn(
-										"h-2.5 w-2.5 rounded-full sm:h-3 sm:w-3",
+										"size-2.5 rounded-full sm:size-3",
 										"ease-out motion-safe:transition-[transform,opacity,background-color] motion-safe:duration-200",
 										index === selectedIndex
 											? "bg-primary ring-primary/30 scale-100 ring-2"

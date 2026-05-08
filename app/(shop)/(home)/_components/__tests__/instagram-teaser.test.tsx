@@ -62,6 +62,9 @@ vi.mock("lucide-react", () => ({
 	ArrowUpRight: (props: Record<string, unknown>) => (
 		<svg data-testid="arrow-icon" aria-hidden={props["aria-hidden"] as boolean} />
 	),
+	ImageIcon: (props: Record<string, unknown>) => (
+		<svg data-testid="image-icon" aria-hidden={props["aria-hidden"] as boolean} />
+	),
 }));
 
 vi.mock("@/shared/constants/spacing", () => ({
@@ -80,22 +83,8 @@ vi.mock("@/shared/constants/brand", () => ({
 	},
 }));
 
-vi.mock("@/shared/constants/images", () => ({
-	IMAGES: {
-		ATELIER: "https://example.com/atelier.jpg",
-		ATELIER_BLUR: "data:image/svg+xml;base64,abc",
-	},
-}));
-
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockHaptic,
-}));
-
-vi.mock("next/image", () => ({
-	default: ({ src, alt, ...props }: { src: string; alt: string; [key: string]: unknown }) => (
-		// eslint-disable-next-line @next/next/no-img-element
-		<img src={src} alt={alt} {...(props as object)} />
-	),
 }));
 
 import { InstagramTeaser } from "../instagram-teaser";
@@ -149,13 +138,11 @@ describe("InstagramTeaser", () => {
 		expect(subtitle?.textContent).toContain("Les coulisses, les essais ratés");
 	});
 
-	it("renders Image with descriptive alt and lazy loading", () => {
+	it("renders PlaceholderImage with descriptive aria-label", () => {
 		render(<InstagramTeaser />);
 
-		const img = screen.getByAltText(/Aperçu de la galerie Instagram/i);
-		expect(img).toBeInTheDocument();
-		expect(img).toHaveAttribute("loading", "lazy");
-		expect(img).toHaveAttribute("placeholder", "blur");
+		const placeholder = screen.getByRole("img", { name: /Aperçu de la galerie Instagram/i });
+		expect(placeholder).toBeInTheDocument();
 	});
 
 	it("renders Instagram handle badge with handle text", () => {

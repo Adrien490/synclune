@@ -150,7 +150,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									<div className="space-y-3">
 										{order.items.map((item) => (
 											<div key={item.id} className="flex gap-3 text-sm">
-												<div className="bg-muted relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border">
+												<div className="bg-muted relative size-14 shrink-0 overflow-hidden rounded-xl border">
 													{item.skuImageUrl ? (
 														<Image
 															src={item.skuImageUrl}
@@ -207,7 +207,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										</div>
 										{shippingInfo && (
 											<div className="text-muted-foreground flex items-center gap-1 pl-0.5 text-xs">
-												<TruckIcon className="h-3 w-3" />
+												<TruckIcon className="size-3" />
 												Délai estimé : {shippingInfo.estimatedDays}
 											</div>
 										)}
@@ -243,9 +243,9 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										rel="noopener noreferrer"
 										className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-sm text-sm underline transition-colors hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 									>
-										<Receipt className="h-4 w-4" />
+										<Receipt className="size-4" />
 										Télécharger mon reçu
-										<ExternalLink className="h-3 w-3" />
+										<ExternalLink className="size-3" />
 									</a>
 								</div>
 							)}
@@ -265,13 +265,13 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							{/* Prochaines étapes */}
 							<div className="space-y-4">
 								<h3 className="font-display flex items-center gap-2 font-normal">
-									<Sparkles className="text-primary h-5 w-5" />
+									<Sparkles className="text-primary size-5" />
 									Que va-t-il se passer maintenant ?
 								</h3>
 
 								<Stagger className="space-y-3" stagger={0.1} y={15} delay={0.3}>
 									<div className="flex items-start gap-3">
-										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+										<div className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full">
 											<span className="text-primary text-sm font-semibold">1</span>
 										</div>
 										<div>
@@ -284,7 +284,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									</div>
 
 									<div className="flex items-start gap-3">
-										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+										<div className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full">
 											<span className="text-primary text-sm font-semibold">2</span>
 										</div>
 										<div>
@@ -297,7 +297,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									</div>
 
 									<div className="flex items-start gap-3">
-										<div className="bg-primary/10 mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+										<div className="bg-primary/10 mt-1 flex size-8 shrink-0 items-center justify-center rounded-full">
 											<span className="text-primary text-sm font-semibold">3</span>
 										</div>
 										<div>
@@ -315,8 +315,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							{!session && (
 								<Card className="rounded-xl border-dashed">
 									<CardContent className="flex items-start gap-4 p-4">
-										<div className="bg-primary/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-											<UserPlus className="text-primary h-5 w-5" />
+										<div className="bg-primary/10 flex size-10 shrink-0 items-center justify-center rounded-full">
+											<UserPlus className="text-primary size-5" />
 										</div>
 										<div className="space-y-2">
 											<h3 className="font-semibold">
@@ -328,7 +328,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											</p>
 											<Button asChild variant="outline" size="sm">
 												<Link href="/inscription">
-													<UserPlus className="h-4 w-4" />
+													<UserPlus className="size-4" />
 													Créer mon compte
 												</Link>
 											</Button>
@@ -342,14 +342,14 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 								{session ? (
 									<Button asChild size="lg" className="flex-1">
 										<Link href={`/commandes/${order.orderNumber}`}>
-											<Package className="mr-2 h-4 w-4" />
+											<Package className="mr-2 size-4" />
 											Suivre ma commande
 										</Link>
 									</Button>
 								) : (
 									<Button asChild size="lg" className="flex-1">
 										<Link href="/">
-											<Package className="mr-2 h-4 w-4" />
+											<Package className="mr-2 size-4" />
 											Retour à l'accueil
 										</Link>
 									</Button>

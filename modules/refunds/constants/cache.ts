@@ -55,26 +55,3 @@ export function cacheRefundDetail(refundId: string, orderId?: string) {
 		cacheTag(REFUNDS_CACHE_TAGS.DETAIL(refundId), REFUNDS_CACHE_TAGS.LIST);
 	}
 }
-
-// ============================================
-// INVALIDATION HELPERS
-// ============================================
-
-/**
- * Tags a invalider lors de la creation/modification/annulation d'un refund.
- * Invalide la liste refunds + la liste orders (refunds y sont embarques)
- * + le tag per-order + le refund detail + dashboard KPIs.
- *
- * A utiliser dans refund actions pour eviter d'enumerer les 6-7 updateTag a chaque fois.
- */
-export function getRefundInvalidationTags(orderId: string, refundId?: string): string[] {
-	const tags: string[] = [
-		REFUNDS_CACHE_TAGS.LIST,
-		ORDERS_CACHE_TAGS.LIST,
-		ORDERS_CACHE_TAGS.REFUNDS(orderId),
-	];
-	if (refundId) {
-		tags.push(REFUNDS_CACHE_TAGS.DETAIL(refundId));
-	}
-	return tags;
-}

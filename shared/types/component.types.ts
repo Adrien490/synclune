@@ -23,6 +23,19 @@ export interface CursorPaginationProps {
 	 * Ameliore l'accessibilite clavier en ramenant le focus au bon endroit
 	 */
 	focusTargetRef?: RefObject<HTMLElement | null>;
+	/**
+	 * Total optionnel d'éléments dans la collection (toutes pages confondues).
+	 * Si fourni, l'affichage devient "Affiche X-Y sur N résultats" — utile aux
+	 * power-users pour estimer le volume restant. Le backend doit calculer ce
+	 * count avec parcimonie (ex: $count en transaction avec findMany).
+	 */
+	totalCount?: number;
+	/**
+	 * Index du premier élément affiché sur la page courante (1-based).
+	 * Utilisé avec totalCount pour calculer la plage X-Y. Si non fourni,
+	 * seul le total est affiché.
+	 */
+	startIndex?: number;
 }
 
 /**

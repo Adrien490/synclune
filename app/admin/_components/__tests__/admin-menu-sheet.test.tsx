@@ -285,7 +285,7 @@ describe("AdminMenuSheet", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
 			const input = screen.getByLabelText("Filtrer les pages de navigation");
-			expect(input).toHaveAttribute("placeholder", "Filtrer les pages...");
+			expect(input).toHaveAttribute("placeholder", "Filtrer les pages…");
 		});
 	});
 

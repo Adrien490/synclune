@@ -20,8 +20,8 @@ export function SuccessIcon() {
 
 	if (shouldReduceMotion) {
 		return (
-			<div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
-				<CircleCheck className="text-primary h-10 w-10" />
+			<div className="bg-primary/10 mx-auto flex size-16 items-center justify-center rounded-full">
+				<CircleCheck className="text-primary size-10" />
 			</div>
 		);
 	}
@@ -34,7 +34,7 @@ export function SuccessIcon() {
 				...MOTION_CONFIG.spring.success,
 				delay: 0.2,
 			}}
-			className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full"
+			className="bg-primary/10 mx-auto flex size-16 items-center justify-center rounded-full"
 		>
 			<m.div
 				initial={{ scale: 0.5, opacity: 0, rotate: -45 }}
@@ -46,7 +46,7 @@ export function SuccessIcon() {
 					delay: 0.5,
 				}}
 			>
-				<CircleCheck className="text-primary h-10 w-10" />
+				<CircleCheck className="text-primary size-10" />
 			</m.div>
 		</m.div>
 	);

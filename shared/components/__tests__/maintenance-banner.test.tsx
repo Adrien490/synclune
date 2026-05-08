@@ -40,7 +40,7 @@ describe("MaintenanceBanner", () => {
 		render(<MaintenanceBanner closureMessage={null} />);
 
 		expect(
-			screen.getByText(/Mode maintenance — La boutique est fermée pour les visiteurs/),
+			screen.getByText(/Mode maintenance : la boutique est fermée pour les visiteurs/),
 		).toBeInTheDocument();
 	});
 

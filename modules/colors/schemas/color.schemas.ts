@@ -101,12 +101,12 @@ export const toggleColorStatusSchema = z.object({
 	isActive: z.boolean(),
 });
 
-export const bulkToggleColorStatusSchema = z.object({
-	ids: z
+export const bulkToggleColorsStatusSchema = z.object({
+	colorIds: z
 		.array(z.cuid2("ID invalide"))
-		.min(1, "Aucune couleur sélectionnée")
+		.min(1, "Au moins une couleur est requise")
 		.max(200, "Maximum 200 couleurs par opération"),
-	isActive: z.boolean(),
+	targetIsActive: z.boolean(),
 });
 
 export const duplicateColorSchema = z.object({

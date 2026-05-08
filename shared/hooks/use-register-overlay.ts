@@ -12,11 +12,15 @@ import { useOverlayStackStore } from "@/shared/stores/use-overlay-stack-store";
  *
  * Mount = open: Radix/Vaul portals only mount Content while the overlay is
  * open, so we don't need to track the `open` prop separately.
+ *
+ * Pass `enabled=false` to opt out (e.g. onboarding welcome sheet that should
+ * not collapse the bottom-bar behind it).
  */
-export function useRegisterOverlay() {
+export function useRegisterOverlay(enabled: boolean = true) {
 	useEffect(() => {
+		if (!enabled) return;
 		const { push, pop } = useOverlayStackStore.getState();
 		push();
 		return pop;
-	}, []);
+	}, [enabled]);
 }

@@ -185,7 +185,7 @@ export default async function ProductVariantsPage({
 					<div className="flex items-center gap-2">
 						<Button variant="outline" asChild>
 							<Link href={`/admin/catalogue/produits/${slug}/modifier`}>
-								<ArrowLeft className="mr-2 h-4 w-4" />
+								<ArrowLeft className="mr-2 size-4" />
 								Modifier le produit
 							</Link>
 						</Button>
@@ -208,7 +208,7 @@ export default async function ProductVariantsPage({
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher une variante..."
+								placeholder="Rechercher une variante…"
 								ariaLabel="Rechercher une variante"
 								className="w-full"
 							/>

@@ -105,7 +105,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par label, slug..."
+								placeholder="Rechercher par label, slug…"
 								ariaLabel="Rechercher un type de bijou par label ou slug"
 								className="w-full"
 							/>

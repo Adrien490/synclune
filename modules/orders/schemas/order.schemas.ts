@@ -215,6 +215,20 @@ export const cancelOrderSchema = z.object({
 	autoRefund: z.boolean().optional().default(false),
 });
 
+/**
+ * Schema pour annulation en lot de commandes PENDING/UNPAID.
+ * Ne s'applique qu'aux commandes pas encore payées (paymentStatus = PENDING).
+ * Les commandes payées ou expédiées doivent être annulées individuellement
+ * pour un traitement Stripe + remboursement spécifique.
+ */
+export const bulkCancelOrdersSchema = z.object({
+	orderIds: z
+		.array(z.cuid2())
+		.min(1, "Au moins une commande doit être sélectionnée")
+		.max(50, "Maximum 50 commandes par opération"),
+	reason: z.string().max(500).optional(),
+});
+
 // ============================================================================
 // MARK AS PAID SCHEMA
 // ============================================================================
@@ -364,75 +378,6 @@ export const revertToProcessingSchema = z.object({
  */
 export const markAsReturnedSchema = z.object({
 	id: z.cuid2(),
-	reason: z.string().max(500).optional(),
-});
-
-// ============================================================================
-// BULK MARK AS DELIVERED SCHEMA
-// ============================================================================
-
-/**
- * Schema pour marquer plusieurs commandes comme livrées
- * Filtrage automatique : seules les commandes SHIPPED seront traitées
- */
-export const bulkMarkAsDeliveredSchema = z.object({
-	ids: z
-		.array(z.cuid2())
-		.min(1, "Au moins une commande doit être sélectionnée")
-		.max(100, "Maximum 100 commandes par opération"),
-	sendEmail: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.default(false)
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			return val === "true";
-		}),
-});
-
-// ============================================================================
-// BULK CANCEL ORDERS SCHEMA
-// ============================================================================
-
-/**
- * Schema pour passer plusieurs commandes en préparation en masse
- * Filtrage automatique : seules les commandes PENDING payées seront traitées
- */
-export const bulkMarkAsProcessingSchema = z.object({
-	ids: z
-		.array(z.cuid2())
-		.min(1, "Au moins une commande doit être sélectionnée")
-		.max(100, "Maximum 100 commandes par opération"),
-});
-
-/**
- * Schema pour marquer plusieurs commandes comme expédiées en masse
- * Filtrage automatique : seules les commandes PROCESSING seront traitées
- */
-export const bulkMarkAsShippedSchema = z.object({
-	ids: z
-		.array(z.cuid2())
-		.min(1, "Au moins une commande doit être sélectionnée")
-		.max(100, "Maximum 100 commandes par opération"),
-	sendEmail: z
-		.union([z.boolean(), z.enum(["true", "false"])])
-		.optional()
-		.default(false)
-		.transform((val) => {
-			if (typeof val === "boolean") return val;
-			return val === "true";
-		}),
-});
-
-/**
- * Schema pour annuler plusieurs commandes en masse
- * Filtrage automatique : seules les commandes non annulées seront traitées
- */
-export const bulkCancelOrdersSchema = z.object({
-	ids: z
-		.array(z.cuid2())
-		.min(1, "Au moins une commande doit être sélectionnée")
-		.max(100, "Maximum 100 commandes par opération"),
 	reason: z.string().max(500).optional(),
 });
 

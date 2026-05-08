@@ -99,8 +99,8 @@ export function ArchiveCollectionAlertDialog() {
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending
 								? isArchiving
-									? "Archivage..."
-									: "Restauration..."
+									? "Archivage…"
+									: "Restauration…"
 								: isArchiving
 									? "Archiver"
 									: "Restaurer"}

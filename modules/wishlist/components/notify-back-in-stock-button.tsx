@@ -49,7 +49,7 @@ export function NotifyBackInStockButton({
 				className="w-full gap-2"
 			>
 				<Bell className="size-4" />
-				{isPending ? "Enregistrement..." : "M'alerter quand disponible"}
+				{isPending ? "Enregistrement…" : "M'alerter quand disponible"}
 			</Button>
 		</form>
 	);

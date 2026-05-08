@@ -27,7 +27,7 @@ export function CancelDeletionBanner({ daysRemaining }: CancelDeletionBannerProp
 				<form action={action}>
 					<Button type="submit" variant="outline" size="sm" disabled={isPending}>
 						{isPending && <LoaderCircle className="animate-spin" />}
-						{isPending ? "Annulation..." : "Annuler la suppression"}
+						{isPending ? "Annulation…" : "Annuler la suppression"}
 					</Button>
 				</form>
 			</AlertDescription>

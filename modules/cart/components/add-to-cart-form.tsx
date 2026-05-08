@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense, type ComponentProps } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import { useVariantValidation } from "@/modules/skus/hooks/use-sku-validation";
@@ -20,7 +21,7 @@ interface AddToCartFormProps {
  * Les badges de réassurance sont dans ProductReassurance (RSC).
  * La quantité est toujours 1, modifiable ensuite dans le panier.
  */
-export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
+function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 	const { action, isPending, state } = useAddToCart({ showErrorToast: false });
 	const searchParams = useSearchParams();
 
@@ -98,7 +99,7 @@ export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
 				{isPending ? (
 					<span className="inline-flex items-center gap-2">
 						<LoaderCircle size={18} className="animate-spin" aria-hidden="true" />
-						<span>Ajout en cours...</span>
+						<span>Ajout en cours…</span>
 					</span>
 				) : !selectedSku ? (
 					<>
@@ -122,5 +123,13 @@ export function AddToCartForm({ product, selectedSku }: AddToCartFormProps) {
 				</p>
 			)}
 		</form>
+	);
+}
+
+export function AddToCartForm(props: ComponentProps<typeof AddToCartFormInner>) {
+	return (
+		<Suspense fallback={null}>
+			<AddToCartFormInner {...props} />
+		</Suspense>
 	);
 }

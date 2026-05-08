@@ -134,11 +134,7 @@ function AutocompleteLoadingSkeletons({
 	return (
 		<>
 			{[...Array<unknown>(count)].map((_, i) => (
-				<li
-					key={`skeleton-${i}`}
-					className="min-h-11 px-3 py-3 md:min-h-0 md:py-2"
-					aria-hidden="true"
-				>
+				<li key={`skeleton-${i}`} className="min-h-11 p-3 md:min-h-0 md:py-2" aria-hidden="true">
 					<div className="flex items-center gap-3">
 						{hasImage && (
 							<Skeleton
@@ -253,7 +249,7 @@ function AutocompleteItem<T>({
 			aria-posinset={index + 1}
 			aria-setsize={itemCount}
 			className={cn(
-				"min-h-11 cursor-pointer touch-manipulation px-3 py-3 transition-colors duration-150 select-none [-webkit-tap-highlight-color:transparent] md:min-h-0 md:py-2",
+				"min-h-11 cursor-pointer touch-manipulation p-3 transition-colors duration-150 select-none [-webkit-tap-highlight-color:transparent] md:min-h-0 md:py-2",
 				isActive ? "bg-accent" : "bg-card hover:bg-muted active:bg-accent",
 			)}
 			onClick={() => onSelect(item)}

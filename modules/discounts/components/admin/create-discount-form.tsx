@@ -42,7 +42,7 @@ export function CreateDiscountForm({ className }: CreateDiscountFormProps) {
 		withCallbacks(
 			createDiscount,
 			createToastCallbacks({
-				loadingMessage: "Création du code...",
+				loadingMessage: "Création du code…",
 				onSuccess: () => {
 					haptic("success");
 					form.reset();
@@ -276,7 +276,7 @@ export function CreateDiscountForm({ className }: CreateDiscountFormProps) {
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
 							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Création..." : "Créer"}
+								{isPending ? "Création…" : "Créer"}
 							</Button>
 						)}
 					</form.Subscribe>

@@ -36,7 +36,7 @@ export function useDuplicateMaterial(options?: UseDuplicateMaterialOptions) {
 		withCallbacks(
 			duplicateMaterial,
 			createToastCallbacks({
-				loadingMessage: "Duplication en cours...",
+				loadingMessage: "Duplication en cours…",
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					if (typeof result.message === "string" && isDuplicateMaterialSuccessData(result.data)) {

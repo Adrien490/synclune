@@ -18,7 +18,7 @@ export function HomeFaqSkeleton() {
 					{Array.from({ length: 6 }).map((_, i) => (
 						<div key={i} className="border-border flex items-center justify-between border-b py-5">
 							<Skeleton className="bg-muted/40 h-5 w-3/4 max-w-xl" />
-							<Skeleton className="bg-muted/30 h-4 w-4 shrink-0 rounded" />
+							<Skeleton className="bg-muted/30 size-4 shrink-0 rounded" />
 						</div>
 					))}
 				</div>

@@ -68,8 +68,7 @@ describe("MiniDotsLoader", () => {
 		const { container } = render(<MiniDotsLoader />);
 		const dots = container.querySelectorAll("span");
 		for (const dot of dots) {
-			expect(dot.className).toContain("h-1");
-			expect(dot.className).toContain("w-1");
+			expect(dot.className).toContain("size-1");
 		}
 	});
 
@@ -77,7 +76,7 @@ describe("MiniDotsLoader", () => {
 		const { container } = render(<MiniDotsLoader size="xs" />);
 		const dots = container.querySelectorAll("span");
 		for (const dot of dots) {
-			expect(dot.className).toContain("h-0.5");
+			expect(dot.className).toContain("size-0.5");
 		}
 	});
 
@@ -85,7 +84,7 @@ describe("MiniDotsLoader", () => {
 		const { container } = render(<MiniDotsLoader size="md" />);
 		const dots = container.querySelectorAll("span");
 		for (const dot of dots) {
-			expect(dot.className).toContain("h-1.5");
+			expect(dot.className).toContain("size-1.5");
 		}
 	});
 
@@ -93,7 +92,7 @@ describe("MiniDotsLoader", () => {
 		const { container } = render(<MiniDotsLoader size="lg" />);
 		const dots = container.querySelectorAll("span");
 		for (const dot of dots) {
-			expect(dot.className).toContain("h-2");
+			expect(dot.className).toContain("size-2");
 		}
 	});
 
@@ -101,7 +100,7 @@ describe("MiniDotsLoader", () => {
 		const { container } = render(<MiniDotsLoader size="xl" />);
 		const dots = container.querySelectorAll("span");
 		for (const dot of dots) {
-			expect(dot.className).toContain("h-2.5");
+			expect(dot.className).toContain("size-2.5");
 		}
 	});
 

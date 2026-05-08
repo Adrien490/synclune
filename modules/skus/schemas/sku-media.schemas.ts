@@ -47,33 +47,3 @@ export const updateSkuMediaAltTextSchema = z.object({
 export const restoreSkuSchema = z.object({
 	skuId: z.cuid2({ message: "ID SKU invalide" }),
 });
-
-/**
- * Restauration bulk de SKUs soft-deleted
- */
-const cuid2Schema = z.cuid2({ message: "ID invalide dans le tableau" });
-
-const parseJsonIdsArray = z.string().transform((str, ctx): string[] | typeof z.NEVER => {
-	try {
-		const parsed: unknown = JSON.parse(str);
-		if (!Array.isArray(parsed)) {
-			ctx.addIssue({ code: "custom", message: "Format invalide: tableau attendu" });
-			return z.NEVER;
-		}
-		const items = parsed as unknown as unknown[];
-		for (const id of items) {
-			if (typeof id !== "string" || !cuid2Schema.safeParse(id).success) {
-				ctx.addIssue({ code: "custom", message: "ID invalide dans le tableau" });
-				return z.NEVER;
-			}
-		}
-		return items as string[];
-	} catch {
-		ctx.addIssue({ code: "custom", message: "JSON invalide" });
-		return z.NEVER;
-	}
-});
-
-export const bulkRestoreSkusSchema = z.object({
-	ids: parseJsonIdsArray,
-});

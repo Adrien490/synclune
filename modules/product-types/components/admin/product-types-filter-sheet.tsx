@@ -4,7 +4,7 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState, useTransition, Suspense, type ComponentProps } from "react";
 
 interface ProductTypesFilterSheetProps {
 	className?: string;
@@ -17,7 +17,7 @@ interface FilterFormData {
 	isActive: string;
 }
 
-export function ProductTypesFilterSheet({
+function ProductTypesFilterSheetInner({
 	className,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
@@ -143,5 +143,15 @@ export function ProductTypesFilterSheet({
 				</form.Field>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function ProductTypesFilterSheet(
+	props: ComponentProps<typeof ProductTypesFilterSheetInner>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<ProductTypesFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

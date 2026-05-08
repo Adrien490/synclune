@@ -286,11 +286,11 @@ describe("DuplicateProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Dupliquer");
 		});
 
-		it("shows 'Duplication...' label when pending", () => {
+		it("shows 'Duplication…' label when pending", () => {
 			mockDuplicateProduct.isPending = true;
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Duplication...");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Duplication…");
 		});
 
 		it("shows loader icon when pending", () => {

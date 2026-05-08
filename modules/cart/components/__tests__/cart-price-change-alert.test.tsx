@@ -135,7 +135,7 @@ describe("CartPriceChangeAlert", () => {
 		mockIsPending.value = true;
 		const items = [createItem("1", 2000, 2500)];
 		render(<CartPriceChangeAlert items={items as never} />);
-		expect(screen.getByRole("button", { name: /Mise à jour\.\.\./i })).toBeDisabled();
+		expect(screen.getByRole("button", { name: /Mise à jour…/i })).toBeDisabled();
 	});
 
 	it("shows savings message when price decreased", () => {

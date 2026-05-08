@@ -2,19 +2,31 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 
 // ─── Mocks (hoisted to avoid reference errors) ──────────────────
 
-const { mockTransaction, mockSetTrigramThreshold, mockSetStatementTimeout, mockLogger } =
-	vi.hoisted(() => ({
-		mockTransaction: vi.fn(),
-		mockSetTrigramThreshold: vi.fn(),
-		mockSetStatementTimeout: vi.fn(),
-		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-	}));
+const {
+	mockTransaction,
+	mockQueryRaw,
+	mockSetTrigramThreshold,
+	mockSetStatementTimeout,
+	mockLogger,
+	mockIsPgTrgmAvailable,
+} = vi.hoisted(() => ({
+	mockTransaction: vi.fn(),
+	mockQueryRaw: vi.fn(),
+	mockSetTrigramThreshold: vi.fn(),
+	mockSetStatementTimeout: vi.fn(),
+	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+	mockIsPgTrgmAvailable: vi.fn().mockResolvedValue(true),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
-	prisma: { $transaction: mockTransaction },
+	prisma: { $transaction: mockTransaction, $queryRaw: mockQueryRaw },
 }));
 
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
+
+vi.mock("@/shared/lib/pg-trgm-availability", () => ({
+	isPgTrgmAvailable: mockIsPgTrgmAvailable,
+}));
 
 vi.mock("../../utils/trigram-helpers", () => ({
 	setTrigramThreshold: mockSetTrigramThreshold,
@@ -175,5 +187,63 @@ describe("fuzzySearchProductIds", () => {
 		setupTransaction([]);
 		await fuzzySearchProductIds("collier", { status: "PUBLIC" });
 		expect(mockTransaction).toHaveBeenCalledTimes(1);
+	});
+
+	// ─── pg_trgm fallback ──────────────────────────────────────
+
+	describe("pg_trgm unavailable fallback", () => {
+		beforeEach(() => {
+			mockIsPgTrgmAvailable.mockResolvedValue(false);
+		});
+
+		it("uses $queryRaw directly without $transaction when pg_trgm absent", async () => {
+			mockQueryRaw.mockResolvedValue([
+				{ productId: "id-1", totalCount: BigInt(1) },
+				{ productId: "id-2", totalCount: BigInt(1) },
+			]);
+
+			const result = await fuzzySearchProductIds("collier or");
+
+			expect(mockTransaction).not.toHaveBeenCalled();
+			expect(mockQueryRaw).toHaveBeenCalledTimes(1);
+			expect(result.ids).toEqual(["id-1", "id-2"]);
+			expect(result.totalCount).toBe(1);
+		});
+
+		it("returns empty result when fallback returns no rows", async () => {
+			mockQueryRaw.mockResolvedValue([]);
+
+			const result = await fuzzySearchProductIds("xyz123");
+
+			expect(result).toEqual({ ids: [], totalCount: 0 });
+		});
+
+		it("returns empty result on fallback DB error (silent catch)", async () => {
+			mockQueryRaw.mockRejectedValue(new Error("connection refused"));
+
+			const result = await fuzzySearchProductIds("collier");
+
+			expect(result).toEqual({ ids: [], totalCount: 0 });
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				expect.stringContaining("Fuzzy fallback error"),
+				expect.any(Error),
+				expect.objectContaining({ service: "fuzzySearchProductIds.fallback" }),
+			);
+		});
+
+		it("does not call setTrigramThreshold in fallback path", async () => {
+			mockQueryRaw.mockResolvedValue([]);
+
+			await fuzzySearchProductIds("collier");
+
+			expect(mockSetTrigramThreshold).not.toHaveBeenCalled();
+		});
+
+		it("still validates input (empty term short-circuits)", async () => {
+			const result = await fuzzySearchProductIds("");
+
+			expect(result).toEqual({ ids: [], totalCount: 0 });
+			expect(mockQueryRaw).not.toHaveBeenCalled();
+		});
 	});
 });

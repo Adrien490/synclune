@@ -36,7 +36,9 @@
 		"db:push": "prisma db push",
 		"dev:debug": "NODE_OPTIONS='--inspect' next dev --turbopack",
 		"validate": "pnpm lint && pnpm typecheck && pnpm format:check && pnpm test run",
-		"knip": "knip"
+		"knip": "knip",
+		"doctor": "react-doctor . --offline -y",
+		"doctor:full": "react-doctor . --offline -y --full --verbose"
 	},
 	"lint-staged": {
 		"*.{ts,tsx,js,jsx,mjs}": [
@@ -86,7 +88,6 @@
 		"better-auth": "^1.6.9",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
-		"cmdk": "^1.1.1",
 		"color": "^5.0.3",
 		"date-fns": "^4.1.0",
 		"embla-carousel-autoplay": "^8.6.0",

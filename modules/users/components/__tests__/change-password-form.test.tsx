@@ -228,7 +228,7 @@ describe("ChangePasswordForm", () => {
 	it("submit button is disabled when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<ChangePasswordForm />);
-		const button = screen.getByRole("button", { name: /Changement en cours.../i });
+		const button = screen.getByRole("button", { name: /Changement en cours…/i });
 		expect(button).toBeDisabled();
 	});
 
@@ -346,10 +346,10 @@ describe("ChangePasswordForm", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Changement en cours...' when isPending is true", () => {
+	it("shows 'Changement en cours…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<ChangePasswordForm />);
-		expect(document.body.textContent).toContain("Changement en cours...");
+		expect(document.body.textContent).toContain("Changement en cours…");
 	});
 
 	it("disables all password fields when isPending is true", () => {

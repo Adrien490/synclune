@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useTransition, Suspense, type ComponentProps } from "react";
 import {
 	Select,
 	SelectContent,
@@ -31,7 +31,7 @@ interface PeriodSelectorProps {
 	variant?: "select" | "segmented";
 }
 
-export function PeriodSelector({ fullWidth, variant = "select" }: PeriodSelectorProps) {
+function PeriodSelectorInner({ fullWidth, variant = "select" }: PeriodSelectorProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -118,5 +118,13 @@ export function PeriodSelector({ fullWidth, variant = "select" }: PeriodSelector
 				)}
 			</SelectContent>
 		</Select>
+	);
+}
+
+export function PeriodSelector(props: ComponentProps<typeof PeriodSelectorInner>) {
+	return (
+		<Suspense fallback={null}>
+			<PeriodSelectorInner {...props} />
+		</Suspense>
 	);
 }

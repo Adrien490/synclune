@@ -19,7 +19,7 @@ export function SelectFilter({
 	filterKey,
 	label,
 	options,
-	placeholder = "Sélectionner...",
+	placeholder = "Sélectionner…",
 	className,
 	maxHeight = 400,
 	noPrefix = false,
@@ -75,8 +75,8 @@ export function SelectFilter({
 
 						{/* Mobile icon with active value indicator */}
 						<div className="flex items-center justify-center gap-1 sm:hidden">
-							<ArrowUpDown className="h-4 w-4" />
-							{value && <span className="bg-primary h-1.5 w-1.5 rounded-full" aria-hidden="true" />}
+							<ArrowUpDown className="size-4" />
+							{value && <span className="bg-primary size-1.5 rounded-full" aria-hidden="true" />}
 						</div>
 					</SelectTrigger>
 					<SelectContent className="max-w-[calc(100vw-2rem)]">
@@ -102,11 +102,11 @@ export function SelectFilter({
 						size="icon"
 						aria-label={`Effacer le filtre ${selectedOption?.label ?? label}`}
 						title={`Effacer le filtre ${selectedOption?.label ?? label}`}
-						className="h-8 w-8 shrink-0 rounded-full"
+						className="size-8 shrink-0 rounded-full"
 						onClick={handleClear}
 						disabled={isPending}
 					>
-						<X className="h-4 w-4" />
+						<X className="size-4" />
 					</Button>
 				)}
 			</div>

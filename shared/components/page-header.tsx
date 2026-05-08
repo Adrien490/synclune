@@ -79,7 +79,7 @@ export function PageHeader({
 		return (
 			<header className={cn("mb-4 space-y-6 md:mb-6", className)} aria-labelledby="page-title">
 				<div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-start md:justify-between">
-					<div className="min-w-0 flex-1 space-y-3">
+					<div className="min-w-0 flex-1 gap-y-3">
 						<h1
 							id="page-title"
 							className={cn(

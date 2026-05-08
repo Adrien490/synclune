@@ -2,6 +2,7 @@
 
 import { Lock, Unlock } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useRef } from "react";
 
 import { Badge } from "@/shared/components/ui/badge";
@@ -15,6 +16,7 @@ import {
 } from "@/shared/components/ui/card";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import type { StoreSettingsAdmin } from "../../types/store-settings.types";
 import { EditClosureMessageForm } from "./edit-closure-message-form";
@@ -31,6 +33,7 @@ const dateTimeFormatter = new Intl.DateTimeFormat("fr-FR", {
 });
 
 export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
+	const router = useRouter();
 	const reopenDialog = useAlertDialog(REOPEN_STORE_DIALOG_ID);
 	const previousFocusRef = useRef<HTMLElement | null>(null);
 
@@ -44,7 +47,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 		: null;
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4 sm:space-y-6">
 			{/* ─── Section 1 : Statut actuel ─────────────────────────────────── */}
 			<Card>
 				<CardHeader>
@@ -73,33 +76,55 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 					{settings.isClosed ? (
 						<>
 							{closedAtFormatted && settings.closedBy && (
-								<p className="text-muted-foreground text-xs">
+								<p className="text-muted-foreground text-xs wrap-anywhere">
 									Fermée par{" "}
-									<span className="text-foreground font-medium">{settings.closedBy}</span> le{" "}
-									{closedAtFormatted}
+									<span className="text-foreground font-medium break-all">{settings.closedBy}</span>{" "}
+									le {closedAtFormatted}
 								</p>
 							)}
 
-							<div className="space-y-6 border-t pt-4">
+							<div className="space-y-4 border-t pt-4 sm:space-y-6">
 								<EditClosureMessageForm currentMessage={settings.closureMessage ?? ""} />
 								<div className="border-t pt-4">
 									<EditReopensAtForm currentReopensAt={settings.reopensAt} />
 								</div>
 							</div>
 
-							<div className="flex justify-end border-t pt-4">
-								<Button type="button" onClick={handleOpenReopenDialog} className="min-h-11">
+							<div className="border-t pt-4 sm:flex sm:justify-end">
+								<Button
+									type="button"
+									onClick={handleOpenReopenDialog}
+									className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
+								>
 									<Unlock className="mr-2 size-4" />
 									Réouvrir la boutique
 								</Button>
 							</div>
 						</>
 					) : (
-						<div className="flex justify-end">
-							<Button variant="destructive" asChild className="min-h-11">
+						<div className="sm:flex sm:justify-end">
+							<Button
+								variant="destructive"
+								asChild
+								className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
+							>
 								<Link
 									href="/admin/configuration/boutique/fermer"
-									onClick={() => triggerHaptic("light")}
+									onClick={(event) => {
+										if (
+											event.defaultPrevented ||
+											event.button !== 0 ||
+											event.metaKey ||
+											event.ctrlKey ||
+											event.shiftKey ||
+											event.altKey
+										) {
+											return;
+										}
+										event.preventDefault();
+										triggerHaptic("light");
+										withViewTransition(() => router.push("/admin/configuration/boutique/fermer"));
+									}}
 									style={{ viewTransitionName: "store-status-action" }}
 								>
 									<Lock className="mr-2 size-4" />
@@ -111,7 +136,7 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 				</CardContent>
 			</Card>
 
-			<ReopenStoreDialog previousFocusRef={previousFocusRef} />
+			<ReopenStoreDialog previousFocusRef={previousFocusRef} reopensAt={settings.reopensAt} />
 		</div>
 	);
 }

@@ -46,7 +46,7 @@ export function MarkAsReturnedAlertDialog() {
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle className="flex items-center gap-2">
-							<RotateCcw className="h-5 w-5" />
+							<RotateCcw className="size-5" />
 							Commande retournée
 						</AlertDialogTitle>
 						<AlertDialogDescription asChild>
@@ -104,7 +104,7 @@ export function MarkAsReturnedAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Marquage..." : "Marquer comme retourné"}
+							{isPending ? "Marquage…" : "Marquer comme retourné"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

@@ -6,7 +6,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function UsersAdminLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des clients">
-			<span className="sr-only">Chargement des clients...</span>
+			<span className="sr-only">Chargement des clients…</span>
 
 			<PageHeader variant="compact" title="Clients" className="hidden md:block" />
 

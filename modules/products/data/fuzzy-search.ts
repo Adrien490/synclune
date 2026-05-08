@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
 import { logger } from "@/shared/lib/logger";
+import { isPgTrgmAvailable } from "@/shared/lib/pg-trgm-availability";
 import { prisma } from "@/shared/lib/prisma";
 
 import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
@@ -145,6 +146,10 @@ export async function fuzzySearchProductIds(
 	const words = splitSearchTerms(searchTerm);
 	if (words.length === 0) return { ids: [], totalCount: 0 };
 
+	if (!(await isPgTrgmAvailable())) {
+		return fuzzySearchProductIdsIlikeFallback(words, status, limit);
+	}
+
 	const startTime = performance.now();
 
 	try {
@@ -215,6 +220,67 @@ export async function fuzzySearchProductIds(
 			error,
 			{ service: "fuzzySearchProductIds", durationMs },
 		);
+		return { ids: [], totalCount: 0 };
+	}
+}
+
+/**
+ * Degraded fallback used when pg_trgm is not installed.
+ * AND across words, ILIKE on title and description, no relevance scoring,
+ * no synonyms, no accent folding (immutable_unaccent depends on the unaccent
+ * extension which often ships alongside pg_trgm in our migrations).
+ */
+async function fuzzySearchProductIdsIlikeFallback(
+	words: string[],
+	status: ProductStatus | undefined,
+	limit: number,
+): Promise<FuzzySearchReturn> {
+	const startTime = performance.now();
+
+	try {
+		const whereFragments = words.map((word) => {
+			const like = `%${escapeLikePattern(word)}%`;
+			return Prisma.sql`(
+				LOWER(p.title) LIKE LOWER(${like})
+				OR LOWER(COALESCE(p.description, '')) LIKE LOWER(${like})
+			)`;
+		});
+		const whereClause = Prisma.join(whereFragments, " AND ");
+
+		type FallbackRow = { productId: string; totalCount: bigint };
+		const results = await prisma.$queryRaw<FallbackRow[]>`
+			WITH matched AS (
+				SELECT p.id as "productId"
+				FROM "Product" p
+				WHERE
+					p."deletedAt" IS NULL
+					${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+					AND ${whereClause}
+			)
+			SELECT "productId", COUNT(*) OVER() as "totalCount"
+			FROM matched
+			LIMIT ${limit}
+		`;
+
+		const durationMs = Math.round(performance.now() - startTime);
+		const totalCount = results.length > 0 ? Number(results[0]!.totalCount) : 0;
+
+		if (durationMs > 500) {
+			logger.warn(`Slow fuzzy fallback | results=${totalCount} | duration=${durationMs}ms`, {
+				service: "fuzzySearchProductIds.fallback",
+			});
+		}
+
+		return {
+			ids: results.map((r) => r.productId),
+			totalCount,
+		};
+	} catch (error) {
+		const durationMs = Math.round(performance.now() - startTime);
+		logger.error(`Fuzzy fallback error | duration=${durationMs}ms`, error, {
+			service: "fuzzySearchProductIds.fallback",
+			durationMs,
+		});
 		return { ids: [], totalCount: 0 };
 	}
 }

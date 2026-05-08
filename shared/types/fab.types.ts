@@ -3,7 +3,7 @@ import type { FabKey } from "@/shared/constants/fab";
 /**
  * Contenu du tooltip pour les FAB
  */
-export interface FabTooltipContent {
+interface FabTooltipContent {
 	/** Titre du tooltip (gras) */
 	title: string;
 	/** Description optionnelle (sous le titre) */

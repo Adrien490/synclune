@@ -59,10 +59,23 @@ vi.mock("@/modules/collections/constants/collection-status.constants", () => ({
 	},
 }));
 
+vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
+	useUnsavedChanges: vi.fn(() => ({ allowNavigation: vi.fn() })),
+}));
+
+vi.mock("@/shared/hooks/use-focus-first-error", () => ({
+	useFocusFirstError: vi.fn(() => ({
+		formRef: { current: null },
+		focusFirstInvalid: vi.fn(),
+		onInvalidCapture: vi.fn(),
+	})),
+}));
+
 vi.mock("@/shared/components/forms", () => ({
 	useAppForm: vi.fn(({ defaultValues }: { defaultValues: Record<string, unknown> }) => ({
 		reset: vi.fn(),
 		handleSubmit: vi.fn(),
+		state: { isDirty: false, canSubmit: true },
 		AppField: ({
 			name,
 			children,
@@ -282,10 +295,10 @@ describe("EditCollectionForm", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Enregistrement...' when isPending is true", () => {
+	it("shows 'Enregistrement…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<EditCollectionForm collection={createCollection()} />);
-		expect(screen.getByText("Enregistrement...")).toBeInTheDocument();
+		expect(screen.getByText("Enregistrement…")).toBeInTheDocument();
 	});
 
 	// ─── Props ────────────────────────────────────────────────────────────────

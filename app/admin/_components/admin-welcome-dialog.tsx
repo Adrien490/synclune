@@ -1,10 +1,20 @@
 "use client";
 
-import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
-import { Heart, LoaderCircle } from "lucide-react";
+import {
+	useEffect,
+	useEffectEvent,
+	useRef,
+	useState,
+	useTransition,
+	type CSSProperties,
+} from "react";
+import { LoaderCircle } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
+import Image from "next/image";
 
 import { markWelcomeShown } from "@/modules/auth/actions/mark-welcome-shown";
+import { Stagger } from "@/shared/components/animations/stagger";
+import { PolaroidFrame } from "@/shared/components/polaroid-frame";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
@@ -25,16 +35,12 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
-interface AdminWelcomeDialogProps {
-	userName: string | null;
-}
-
 // Délai avant qu'Esc / clic-extérieur / drag-down puissent fermer.
 // 2s = compromis : laisse l'animation d'ouverture (~600ms) respirer + audible
 // pour les screen-readers, sans bloquer un utilisateur pressé trop longtemps.
 const DISMISS_DELAY_MS = 2000;
 
-export function AdminWelcomeDialog({ userName }: AdminWelcomeDialogProps) {
+export function AdminWelcomeDialog() {
 	const [open, setOpen] = useState(true);
 	const [canDismiss, setCanDismiss] = useState(false);
 	const [isPending, startTransition] = useTransition();
@@ -69,21 +75,12 @@ export function AdminWelcomeDialog({ userName }: AdminWelcomeDialogProps) {
 			if (result.status === ActionStatus.SUCCESS) {
 				closeDialog();
 				haptic("success");
-				toast.success("Bisous bisous", { duration: 3500 });
 			} else {
 				haptic("error");
 				toast.error(result.message);
 			}
 		});
 	};
-
-	const firstName = userName?.split(" ")[0] ?? null;
-	const titleNode = (
-		<>
-			{firstName ?? "Bienvenue"}
-			<span aria-hidden="true"> 💛</span>
-		</>
-	);
 
 	const TitleSlot = isMobile ? SheetTitle : ResponsiveDialogTitle;
 
@@ -100,32 +97,69 @@ export function AdminWelcomeDialog({ userName }: AdminWelcomeDialogProps) {
 				className="flex flex-col items-center gap-6 px-2 py-4 text-center sm:px-4"
 			>
 				<m.div
-					initial={shouldReduceMotion ? false : { scale: 0, rotate: -20 }}
+					initial={shouldReduceMotion ? false : { scale: 0, rotate: -8 }}
 					animate={{ scale: 1, rotate: 0 }}
 					transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 14 }}
-					className="bg-primary/10 text-primary rounded-full p-4"
-					aria-hidden="true"
 				>
-					<Heart className="h-8 w-8 fill-current" />
+					<PolaroidFrame
+						tiltDegree={-3}
+						washiTape
+						washiColor="peach"
+						washiPosition="top-left"
+						vintage
+						className="w-44 hover:shadow-[0_0_25px_var(--color-glow-yellow),0_12px_24px_-8px_rgba(0,0,0,0.15)] sm:w-52"
+					>
+						<Image
+							src="/adri-lele.jpg"
+							alt="Adri et Lélé"
+							fill
+							sizes="(max-width: 640px) 160px, 192px"
+							className="object-cover object-[center_30%]"
+							priority
+						/>
+					</PolaroidFrame>
 				</m.div>
 
 				<div className="space-y-3">
 					<TitleSlot asChild>
-						<h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-							{/* TODO Adrien : titre à personnaliser */}
-							{titleNode}
+						<h2 className="text-shadow-glow text-2xl font-semibold tracking-tight sm:text-3xl">
+							Coucou Lélé&nbsp;!
 						</h2>
 					</TitleSlot>
 
-					{/* TODO Adrien : remplis ce bloc avec tes mots à toi.
-					    Garde la structure <p> pour le rythme de lecture.
-					    Supprime ce commentaire avant le commit. */}
-					<div className="text-foreground/85 space-y-3 text-base leading-relaxed text-pretty">
-						<p>[Premier paragraphe — pose le moment]</p>
-						<p>[Deuxième paragraphe — dis-lui ce que tu ressens]</p>
-						<p className="text-foreground font-medium">[Phrase finale, plus forte]</p>
-						<p className="text-foreground">— Adri</p>
-					</div>
+					<Stagger
+						stagger={0.18}
+						y={12}
+						delay={0.6}
+						className="text-foreground/85 space-y-3 text-base leading-relaxed text-pretty"
+					>
+						<p>Voilà la première version du site.</p>
+						<p className="text-foreground font-medium">
+							Au nom de notre amitié<span aria-hidden="true"> 💛</span>
+						</p>
+						<div className="flex flex-col items-center gap-1 pt-1">
+							<svg
+								viewBox="0 0 30 4"
+								aria-hidden="true"
+								className="text-foreground/40 h-[0.4em] w-12"
+							>
+								<line
+									x1="0"
+									y1="2"
+									x2="30"
+									y2="2"
+									stroke="currentColor"
+									strokeWidth="1.5"
+									strokeLinecap="round"
+									className="doodle-draw"
+									style={{ "--path-length": "30", "--draw-delay": "1.2s" } as CSSProperties}
+								/>
+							</svg>
+							<p className="font-cursive text-foreground text-shadow-glow text-3xl sm:text-4xl">
+								Adri
+							</p>
+						</div>
+					</Stagger>
 				</div>
 
 				<Button
@@ -137,7 +171,7 @@ export function AdminWelcomeDialog({ userName }: AdminWelcomeDialogProps) {
 				>
 					{isPending ? (
 						<>
-							<LoaderCircle className="h-4 w-4 animate-spin" />
+							<LoaderCircle className="size-4 animate-spin" />
 							Un instant&nbsp;…
 						</>
 					) : (
@@ -160,6 +194,7 @@ export function AdminWelcomeDialog({ userName }: AdminWelcomeDialogProps) {
 			>
 				<SheetContent
 					showCloseButton={false}
+					registerOverlay={false}
 					className="rounded-t-2xl px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:px-6"
 				>
 					<SheetHandle />

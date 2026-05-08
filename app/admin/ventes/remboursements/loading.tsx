@@ -6,7 +6,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function RefundsAdminLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des remboursements">
-			<span className="sr-only">Chargement des remboursements...</span>
+			<span className="sr-only">Chargement des remboursements…</span>
 
 			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 

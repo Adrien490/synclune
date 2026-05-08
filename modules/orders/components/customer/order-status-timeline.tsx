@@ -77,7 +77,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 			<div className="border-border/60 border-t pt-4">
 				{isCancelled ? (
 					<div className="bg-destructive/10 flex items-center gap-3 rounded-lg p-4">
-						<CircleX className="text-destructive h-6 w-6" />
+						<CircleX className="text-destructive size-6" />
 						<div>
 							<p className="text-destructive font-medium">Commande annulée</p>
 							<p className="text-muted-foreground text-sm">Cette commande a été annulée.</p>
@@ -100,7 +100,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 										{/* Icon */}
 										<div
 											className={cn(
-												"relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-2",
+												"relative z-10 flex size-8 items-center justify-center rounded-full border-2",
 												isFailed
 													? "border-destructive bg-destructive/10 text-destructive"
 													: isCompleted
@@ -110,7 +110,7 @@ export function OrderStatusTimeline({ order }: OrderStatusTimelineProps) {
 															: "border-border bg-muted text-muted-foreground",
 											)}
 										>
-											<Icon className="h-4 w-4" aria-hidden="true" />
+											<Icon className="size-4" aria-hidden="true" />
 										</div>
 
 										{/* Content */}

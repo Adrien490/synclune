@@ -11,7 +11,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function DiscountsLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des codes promo">
-			<span className="sr-only">Chargement des codes promo...</span>
+			<span className="sr-only">Chargement des codes promo…</span>
 
 			<PageHeader
 				variant="compact"

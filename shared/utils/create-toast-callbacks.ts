@@ -33,7 +33,7 @@ export const hasMessage = (
  * @example
  * ```typescript
  * const callbacks = createToastCallbacks({
- *   loadingMessage: "Ajout en cours...",
+ *   loadingMessage: "Ajout en cours…",
  *   successAction: {
  *     label: "Voir le panier",
  *     onClick: () => router.push("/panier")

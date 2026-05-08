@@ -57,7 +57,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 									autoCorrect="off"
 								/>
 								<div className="text-muted-foreground flex items-start gap-1.5 text-sm">
-									<Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+									<Info className="mt-0.5 size-3.5 shrink-0" />
 									<span>
 										Vous avez déjà un compte ?{" "}
 										<Link
@@ -77,7 +77,7 @@ export function CheckoutContactSection({ form, session }: CheckoutContactSection
 				{/* Email display for logged-in users */}
 				{!isGuest && session.user.email && (
 					<div className="border-primary/10 bg-primary/3 flex flex-wrap items-center gap-2 rounded-xl border p-3.5 text-sm">
-						<Mail className="text-muted-foreground h-4 w-4 shrink-0" />
+						<Mail className="text-muted-foreground size-4 shrink-0" />
 						<span className="text-muted-foreground">Email :</span>
 						<span className="font-medium">{session.user.email}</span>
 						<button

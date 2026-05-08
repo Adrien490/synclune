@@ -103,7 +103,7 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 				href="/admin/ventes/commandes"
 				className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors md:hidden"
 			>
-				<ChevronLeft className="h-4 w-4" aria-hidden="true" />
+				<ChevronLeft className="size-4" aria-hidden="true" />
 				Retour aux commandes
 			</Link>
 

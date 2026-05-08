@@ -1,8 +1,16 @@
 "use client";
 
+import { Tag } from "lucide-react";
+
 import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
-import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import {
+	Item,
+	ItemContent,
+	ItemDescription,
+	ItemMedia,
+	ItemTitle,
+} from "@/shared/components/ui/item";
 
 import { useProductTypeActions } from "../../hooks/use-product-type-actions";
 
@@ -20,7 +28,7 @@ interface ProductTypeMobileItemProps {
 
 export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProps) {
 	const productsCount = productType._count.products || 0;
-	const statusLabel = productType.isActive ? "Actif" : "Inactif";
+	const statusLabel = productType.isActive ? "● Actif" : "○ Inactif";
 
 	const { sections } = useProductTypeActions({
 		productTypeId: productType.id,
@@ -33,23 +41,27 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 
 	return (
 		<LongPressMenuLink
-			href={`/admin/catalogue/types-de-produits/${productType.slug}/modifier`}
+			href={`/admin/catalogue/types-de-produits/${productType.slug}`}
 			ariaLabel={`Type de bijou ${productType.label}`}
 			sections={sections}
 			menuTitle="Actions"
 			menuDescription={productType.label}
 			className="text-left"
+			viewTransitionName={`product-type-card-${productType.id}`}
 		>
-			<Item
-				variant="outline"
-				size="sm"
-				className="w-full gap-3"
-				aria-roledescription="carte type de bijou"
-			>
+			<Item variant="outline" size="sm" className="w-full gap-3">
+				<ItemMedia variant="icon">
+					<Tag className="text-muted-foreground size-5" aria-hidden="true" />
+				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0 flex-wrap">
 						<span className="truncate font-semibold">{productType.label}</span>
-						<Badge variant={productType.isActive ? "default" : "secondary"}>{statusLabel}</Badge>
+						<Badge
+							variant={productType.isActive ? "default" : "secondary"}
+							style={{ viewTransitionName: `product-type-status-${productType.id}` }}
+						>
+							{statusLabel}
+						</Badge>
 						{productType.isSystem ? <Badge variant="outline">Systeme</Badge> : null}
 					</ItemTitle>
 					{productType.description ? (

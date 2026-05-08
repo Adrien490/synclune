@@ -43,7 +43,7 @@ export default function PrivacyPolicyLoading() {
 								<div className="space-y-2">
 									<Skeleton className="bg-muted/30 h-5 w-full" />
 									<Skeleton className="bg-muted/30 h-5 w-full" />
-									<Skeleton className="bg-muted/30 h-5 w-5/6" />
+									<Skeleton className="bg-muted/30 size-5/6" />
 								</div>
 
 								{/* Liste optionnelle */}
@@ -51,7 +51,7 @@ export default function PrivacyPolicyLoading() {
 									<div className="ml-4 space-y-2">
 										{Array.from({ length: 3 }).map((_, j) => (
 											<div key={j} className="flex gap-2">
-												<Skeleton className="bg-muted/40 mt-2 h-2 w-2 shrink-0 rounded-full" />
+												<Skeleton className="bg-muted/40 mt-2 size-2 shrink-0 rounded-full" />
 												<Skeleton className="bg-muted/30 h-5 w-full" />
 											</div>
 										))}

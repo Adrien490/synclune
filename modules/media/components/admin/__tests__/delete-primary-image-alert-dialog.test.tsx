@@ -195,12 +195,12 @@ describe("DeletePrimaryImageAlertDialog", () => {
 		expect(screen.getByTestId("confirm-btn")).toBeDisabled();
 	});
 
-	it("shows loader and 'Suppression...' when pending", () => {
+	it("shows loader and 'Suppression…' when pending", () => {
 		mockIsOpen.value = true;
 		mockIsPending.value = true;
 		mockDialogData.value = { imageUrl: "https://utfs.io/f/img.jpg", onRemove: vi.fn() };
 		render(<DeletePrimaryImageAlertDialog />);
 		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
-		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Suppression...");
+		expect(screen.getByTestId("confirm-btn")).toHaveTextContent("Suppression…");
 	});
 });

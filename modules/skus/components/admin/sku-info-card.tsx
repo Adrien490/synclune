@@ -63,7 +63,7 @@ function AttributesCard({
 								className="-m-2 hidden h-8 min-h-11 w-8 min-w-11 hover:bg-transparent sm:inline-flex"
 								aria-label="Plus d'informations sur les attributs de la variante"
 							>
-								<Info className="text-muted-foreground hover:text-foreground h-4 w-4 transition-colors" />
+								<Info className="text-muted-foreground hover:text-foreground size-4 transition-colors" />
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent side="bottom" className="max-w-62.5">
@@ -93,7 +93,7 @@ function AttributesCard({
 												<div className="flex items-center gap-2">
 													{c && (
 														<div
-															className="border-border h-4 w-4 rounded-full border"
+															className="border-border size-4 rounded-full border"
 															style={{ backgroundColor: c.hex }}
 															aria-hidden="true"
 														/>
@@ -107,7 +107,7 @@ function AttributesCard({
 											return c ? (
 												<div className="flex items-center gap-2">
 													<div
-														className="border-border h-4 w-4 rounded-full border"
+														className="border-border size-4 rounded-full border"
 														style={{ backgroundColor: c.hex }}
 														aria-hidden="true"
 													/>
@@ -125,7 +125,7 @@ function AttributesCard({
 									type="button"
 									variant="outline"
 									size="icon"
-									className="shrink-0"
+									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
 									onClick={() => {
 										haptic("light");
 										colorDialog.open({
@@ -137,7 +137,7 @@ function AttributesCard({
 									}}
 									aria-label="Créer une nouvelle couleur"
 								>
-									<Plus className="h-4 w-4" />
+									<Plus className="size-4" />
 								</Button>
 							</div>
 						</div>
@@ -163,7 +163,7 @@ function AttributesCard({
 									type="button"
 									variant="outline"
 									size="icon"
-									className="shrink-0"
+									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
 									onClick={() => {
 										haptic("light");
 										materialDialog.open({
@@ -175,7 +175,7 @@ function AttributesCard({
 									}}
 									aria-label="Créer un nouveau matériau"
 								>
-									<Plus className="h-4 w-4" />
+									<Plus className="size-4" />
 								</Button>
 							</div>
 						</div>
@@ -187,7 +187,7 @@ function AttributesCard({
 						<div className="space-y-2">
 							<FieldLabel optional>Taille</FieldLabel>
 							<field.InputGroupField
-								placeholder="Ex: 52, Ajustable, 18cm..."
+								placeholder="Ex: 52, Ajustable, 18cm…"
 								inputMode="text"
 								enterKeyHint="next"
 								autoCapitalize="none"

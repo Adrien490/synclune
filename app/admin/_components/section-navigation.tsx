@@ -80,7 +80,7 @@ export function SectionNavigation({
 								<div className="flex items-start justify-between">
 									<div className="flex items-center gap-3">
 										{link.icon && (
-											<div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg">
+											<div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-lg">
 												{link.icon}
 											</div>
 										)}

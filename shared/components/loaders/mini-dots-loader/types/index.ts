@@ -1,7 +1,7 @@
 import { type HTMLAttributes } from "react";
 
-export type MiniDotsLoaderSize = "xs" | "sm" | "md" | "lg" | "xl";
-export type MiniDotsLoaderColor =
+type MiniDotsLoaderSize = "xs" | "sm" | "md" | "lg" | "xl";
+type MiniDotsLoaderColor =
 	| "default"
 	| "primary"
 	| "secondary"

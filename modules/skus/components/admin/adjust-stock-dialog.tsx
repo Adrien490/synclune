@@ -52,7 +52,7 @@ function AdjustStockFormContent({
 		<>
 			<ResponsiveDialogHeader>
 				<ResponsiveDialogTitle className="flex items-center gap-2">
-					<Package className="text-primary h-5 w-5" />
+					<Package className="text-primary size-5" />
 					Ajuster le stock
 				</ResponsiveDialogTitle>
 				<ResponsiveDialogDescription>
@@ -78,7 +78,7 @@ function AdjustStockFormContent({
 							disabled={isPending || newStock - 1 < 0}
 							aria-label="Diminuer de 1"
 						>
-							<Minus className="h-4 w-4" />
+							<Minus className="size-4" />
 						</Button>
 						<form.Field name="adjustment">
 							{(field) => (
@@ -101,7 +101,7 @@ function AdjustStockFormContent({
 							disabled={isPending}
 							aria-label="Augmenter de 1"
 						>
-							<Plus className="h-4 w-4" />
+							<Plus className="size-4" />
 						</Button>
 					</div>
 				</div>
@@ -113,7 +113,7 @@ function AdjustStockFormContent({
 							<div className="text-muted-foreground mb-1 text-xs">Actuel</div>
 							<div className="font-semibold">{currentStock}</div>
 						</div>
-						<ArrowRight className="text-muted-foreground h-4 w-4" />
+						<ArrowRight className="text-muted-foreground size-4" />
 						<div className="text-center">
 							<div className="text-muted-foreground mb-1 text-xs">Nouveau</div>
 							<div
@@ -157,7 +157,7 @@ function AdjustStockFormContent({
 								name="reason"
 								value={field.state.value}
 								onChange={(e) => field.handleChange(e.target.value)}
-								placeholder="Ex: Correction inventaire, casse..."
+								placeholder="Ex: Correction inventaire, casse…"
 								disabled={isPending}
 								className="mt-2"
 							/>
@@ -170,7 +170,7 @@ function AdjustStockFormContent({
 						Annuler
 					</Button>
 					<Button type="submit" disabled={!isValid || isPending}>
-						{isPending ? "Ajustement..." : "Confirmer"}
+						{isPending ? "Ajustement…" : "Confirmer"}
 					</Button>
 				</ResponsiveDialogFooter>
 			</form>

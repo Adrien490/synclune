@@ -38,7 +38,7 @@ export interface AdminQuickSearchAdapter<TItem> {
 	minQueryLength?: number;
 }
 
-export interface AdminQuickSearchRenderContext {
+interface AdminQuickSearchRenderContext {
 	/** DOM id for the rendered link (matches getResultId). */
 	id: string;
 	/** True when this option is the active descendant (keyboard nav). */

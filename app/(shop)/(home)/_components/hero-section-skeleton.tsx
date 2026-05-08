@@ -28,7 +28,7 @@ export function HeroSectionSkeleton() {
 			<div className="relative z-10 container mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				<div className="flex flex-col items-center">
 					{/* Contenu centré */}
-					<div className="flex flex-col items-center space-y-5 sm:space-y-7 md:space-y-10">
+					<div className="flex flex-col items-center gap-y-5 sm:gap-y-7 md:gap-y-10">
 						{/* Titre principal */}
 						<div className="w-full space-y-4 text-center sm:space-y-6">
 							{/* Titre "Des bijoux colorés" */}

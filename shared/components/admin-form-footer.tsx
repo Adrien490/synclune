@@ -21,7 +21,7 @@ interface AdminFormFooterProps extends React.HTMLAttributes<HTMLDivElement> {
  */
 export function AdminFormFooter({
 	pending,
-	pendingMessage = "Envoi du formulaire en cours...",
+	pendingMessage = "Envoi du formulaire en cours…",
 	className,
 	children,
 	...props

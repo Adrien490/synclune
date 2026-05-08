@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense, type ComponentProps } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Search, ArrowUpDown, SlidersHorizontal } from "lucide-react";
 
@@ -38,7 +38,7 @@ interface ProductSortBarProps {
  * - Live region pour annoncer les changements d'etat
  * - Touch targets 44px (WCAG 2.5.5)
  */
-export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) {
+function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 	const [sortOpen, setSortOpen] = useState(false);
 	const [focusedIndex, setFocusedIndex] = useState(0);
 	const { open: openSearch, close: closeSearch } = useDialog(QUICK_SEARCH_DIALOG_ID);
@@ -276,5 +276,13 @@ export function ProductSortBar({ sortOptions, className }: ProductSortBarProps) 
 				showResetOption
 			/>
 		</>
+	);
+}
+
+export function ProductSortBar(props: ComponentProps<typeof ProductSortBarInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductSortBarInner {...props} />
+		</Suspense>
 	);
 }

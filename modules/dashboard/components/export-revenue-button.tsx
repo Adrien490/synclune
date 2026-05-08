@@ -91,9 +91,9 @@ export function ExportRevenueButton({ period }: ExportRevenueButtonProps) {
 			className="gap-2"
 		>
 			{isExporting ? (
-				<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
+				<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
 			) : (
-				<Download className="h-4 w-4" aria-hidden="true" />
+				<Download className="size-4" aria-hidden="true" />
 			)}
 			<span className="hidden sm:inline">Exporter</span>
 		</Button>

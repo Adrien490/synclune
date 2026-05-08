@@ -76,7 +76,7 @@ export function DeleteCollectionAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
-							{isPending ? "Suppression..." : "Supprimer"}
+							{isPending ? "Suppression…" : "Supprimer"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

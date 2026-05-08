@@ -1,6 +1,3 @@
-import { ArrowLeft, Pencil } from "lucide-react";
-
-import { Button } from "@/shared/components/ui/button";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -8,11 +5,24 @@ import {
 	BreadcrumbList,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
-/**
- * Loading skeleton pour la page detail collection
- */
+function CardLineSkeleton({ titleWidth = "w-32" }: { titleWidth?: string }) {
+	return (
+		<Card>
+			<CardHeader>
+				<Skeleton className={`h-5 ${titleWidth}`} />
+			</CardHeader>
+			<CardContent className="space-y-3">
+				<Skeleton className="h-4 w-full" />
+				<Skeleton className="h-4 w-2/3" />
+				<Skeleton className="h-4 w-1/2" />
+			</CardContent>
+		</Card>
+	);
+}
+
 export default function CollectionDetailLoading() {
 	return (
 		<div
@@ -21,9 +31,9 @@ export default function CollectionDetailLoading() {
 			aria-label="Chargement du détail de la collection"
 			className="space-y-6"
 		>
-			<span className="sr-only">Chargement...</span>
-			{/* Breadcrumb */}
-			<Breadcrumb className="hidden md:block">
+			<span className="sr-only">Chargement…</span>
+
+			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
@@ -34,53 +44,46 @@ export default function CollectionDetailLoading() {
 					</BreadcrumbItem>
 					<BreadcrumbSeparator />
 					<BreadcrumbItem>
-						<Skeleton className="h-4 w-24" />
+						<Skeleton className="h-4 w-32" />
 					</BreadcrumbItem>
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			{/* Header skeleton */}
-			<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+			<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 				<div className="space-y-2">
-					<Skeleton className="h-8 w-48" />
-					<Skeleton className="h-4 w-64" />
+					<Skeleton className="h-7 w-48 sm:h-9 sm:w-64" />
+					<Skeleton className="h-5 w-24" />
+					<Skeleton className="hidden h-4 w-56 md:block" />
 				</div>
 				<div className="flex items-center gap-2">
-					<Button variant="outline" disabled>
-						<ArrowLeft className="mr-2 h-4 w-4" />
-						Retour
-					</Button>
-					<Button disabled>
-						<Pencil className="mr-2 h-4 w-4" />
-						Modifier
-					</Button>
+					<Skeleton className="h-11 w-28 sm:h-9" />
+					<Skeleton className="size-11 sm:size-9" />
 				</div>
 			</div>
 
-			{/* Infos de la collection */}
-			<div className="flex flex-wrap gap-3">
-				<Skeleton className="h-6 w-20 rounded-full" />
-				<Skeleton className="h-6 w-24 rounded-full" />
-				<Skeleton className="h-6 w-20 rounded-full" />
-			</div>
-
-			{/* Liste des produits */}
-			<div className="space-y-4">
-				<Skeleton className="h-6 w-48" />
-				<Skeleton className="h-4 w-96" />
-
-				{/* Products grid skeleton */}
-				<div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-					{Array.from({ length: 10 }).map((_, i) => (
-						<div key={i} className="space-y-2">
-							<Skeleton className="aspect-square w-full rounded-lg" />
+			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+				<div className="space-y-6 lg:col-span-2">
+					<CardLineSkeleton titleWidth="w-28" />
+					<Card>
+						<CardHeader>
+							<Skeleton className="h-5 w-32" />
+						</CardHeader>
+						<CardContent className="space-y-3">
 							<Skeleton className="h-4 w-3/4" />
-							<div className="flex justify-between">
-								<Skeleton className="h-3 w-16" />
-								<Skeleton className="h-5 w-5 rounded-full" />
+							<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+								{Array.from({ length: 8 }).map((_, i) => (
+									<div key={i} className="space-y-2">
+										<Skeleton className="aspect-square w-full rounded-lg" />
+										<Skeleton className="h-3 w-3/4" />
+									</div>
+								))}
 							</div>
-						</div>
-					))}
+						</CardContent>
+					</Card>
+				</div>
+				<div className="space-y-6">
+					<CardLineSkeleton titleWidth="w-32" />
+					<CardLineSkeleton titleWidth="w-28" />
 				</div>
 			</div>
 		</div>

@@ -14,7 +14,7 @@ export function useCancelRefund(options?: UseCancelRefundOptions) {
 		withCallbacks(
 			cancelRefund,
 			createToastCallbacks({
-				loadingMessage: "Annulation du remboursement...",
+				loadingMessage: "Annulation du remboursement…",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

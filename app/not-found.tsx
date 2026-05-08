@@ -24,7 +24,7 @@ export default function NotFound() {
 					}
 					title={
 						<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">
-							<span className="sr-only">Erreur 404 — </span>Oups, vous vous êtes surement perdu 💔
+							<span className="sr-only">Erreur 404 : </span>Oups, vous vous êtes surement perdu 💔
 						</h1>
 					}
 					description={

@@ -2,8 +2,6 @@
  * Types centralisés pour les hooks partagés
  */
 
-import type { RefObject } from "react";
-
 // =============================================================================
 // FILTER TYPES
 // =============================================================================
@@ -29,31 +27,4 @@ export interface UseFilterOptions {
 	 * @default false (remet à la page 1)
 	 */
 	preservePage?: boolean;
-}
-
-// =============================================================================
-// CURSOR PAGINATION TYPES
-// =============================================================================
-
-export interface UseCursorPaginationProps {
-	nextCursor: string | null;
-	prevCursor: string | null;
-	/**
-	 * Callback appelé après chaque navigation pour gérer le focus
-	 * Par défaut, scroll vers le haut de la page
-	 */
-	onNavigate?: () => void;
-	/**
-	 * Ref vers l'élément qui doit recevoir le focus après navigation
-	 * Améliore l'accessibilité en permettant aux utilisateurs de clavier/screen reader
-	 * de reprendre la navigation depuis le bon endroit
-	 */
-	focusTargetRef?: RefObject<HTMLElement | null>;
-	/**
-	 * Active les raccourcis clavier pour la pagination
-	 * Alt+ArrowLeft = Page précédente
-	 * Alt+ArrowRight = Page suivante
-	 * @default true
-	 */
-	enableKeyboardShortcuts?: boolean;
 }

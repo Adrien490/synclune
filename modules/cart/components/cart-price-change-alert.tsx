@@ -108,12 +108,12 @@ export function CartPriceChangeAlert({ items }: CartPriceChangeAlertProps) {
 				>
 					{isPending ? (
 						<>
-							<RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-							Mise à jour...
+							<RefreshCw className="mr-1.5 size-3.5 animate-spin" />
+							Mise à jour…
 						</>
 					) : (
 						<>
-							<RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+							<RefreshCw className="mr-1.5 size-3.5" />
 							Actualiser les prix
 						</>
 					)}

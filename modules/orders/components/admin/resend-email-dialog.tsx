@@ -109,11 +109,11 @@ export function ResendEmailDialog() {
 						{availableOptions.map((option) => {
 							const Icon = option.icon;
 							return (
-								<div key={option.value} className="flex items-start space-x-3">
+								<div key={option.value} className="flex items-start gap-x-3">
 									<RadioGroupItem value={option.value} id={option.value} className="mt-1" />
 									<Label htmlFor={option.value} className="flex cursor-pointer flex-col">
 										<span className="flex items-center gap-2 font-medium">
-											<Icon className="h-4 w-4" aria-hidden="true" />
+											<Icon className="size-4" aria-hidden="true" />
 											{option.label}
 										</span>
 										<span className="text-muted-foreground text-sm font-normal">
@@ -138,8 +138,8 @@ export function ResendEmailDialog() {
 						Annuler
 					</Button>
 					<Button onClick={handleSubmit} disabled={isPending}>
-						<Mail className="mr-2 h-4 w-4" aria-hidden="true" />
-						{isPending ? "Envoi..." : "Envoyer"}
+						<Mail className="mr-2 size-4" aria-hidden="true" />
+						{isPending ? "Envoi…" : "Envoyer"}
 					</Button>
 				</ResponsiveDialogFooter>
 			</ResponsiveDialogContent>

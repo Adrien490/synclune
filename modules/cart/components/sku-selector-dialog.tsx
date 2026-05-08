@@ -140,7 +140,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 					<div className="space-y-6 py-4">
 						{/* Image + Prix skeleton */}
 						<div className="flex gap-4">
-							<Skeleton className="h-24 w-24 shrink-0 rounded-lg sm:h-40 sm:w-40" />
+							<Skeleton className="size-24 shrink-0 rounded-lg sm:size-40" />
 							<div className="flex flex-col justify-center gap-2">
 								<Skeleton className="h-8 w-20" />
 							</div>
@@ -158,9 +158,9 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 						<div className="space-y-2">
 							<Skeleton className="h-4 w-16" />
 							<div className="flex items-center gap-3">
-								<Skeleton className="h-11 w-11 rounded-md" />
+								<Skeleton className="size-11 rounded-md" />
 								<Skeleton className="h-6 w-8" />
-								<Skeleton className="h-11 w-11 rounded-md" />
+								<Skeleton className="size-11 rounded-md" />
 							</div>
 						</div>
 					</div>
@@ -215,7 +215,7 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 							className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
 						>
 							Voir la fiche produit
-							<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+							<ArrowRight className="size-3.5" aria-hidden="true" />
 						</Link>
 					</div>
 				)}

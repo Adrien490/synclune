@@ -390,7 +390,7 @@ describe("CreateProductForm", () => {
 			setup({}, { isPending: true });
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getByRole("status")).toHaveTextContent("Envoi du formulaire en cours...");
+			expect(screen.getByRole("status")).toHaveTextContent("Envoi du formulaire en cours…");
 		});
 
 		it("disables submit button when media is uploading", () => {
@@ -459,7 +459,7 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(
-				screen.getByText("La première image sera l'image principale. Glissez pour réordonner."),
+				screen.getByText("La première image sera l'image principale. Maintenez pour réordonner."),
 			).toBeInTheDocument();
 		});
 	});
@@ -695,7 +695,7 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(
-				screen.getByText("La première image sera l'image principale. Glissez pour réordonner."),
+				screen.getByText("La première image sera l'image principale. Maintenez pour réordonner."),
 			).toBeInTheDocument();
 		});
 

@@ -21,9 +21,9 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 
 	return (
 		<Card>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+			<CardHeader className="flex flex-row items-center justify-between pb-3">
 				<CardTitle className="flex items-center gap-2 text-base">
-					<RotateCcw className="h-5 w-5" aria-hidden="true" />
+					<RotateCcw className="size-5" aria-hidden="true" />
 					Remboursements
 					{refunds.length > 0 && (
 						<Badge variant="secondary" className="ml-1">
@@ -34,7 +34,7 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 				{canRefund && (
 					<Button variant="outline" size="sm" asChild>
 						<Link href={`/admin/ventes/remboursements/nouveau?orderId=${orderId}`}>
-							<Plus className="h-4 w-4" aria-hidden="true" />
+							<Plus className="size-4" aria-hidden="true" />
 							Créer
 						</Link>
 					</Button>
@@ -68,7 +68,7 @@ export function OrderRefundsCard({ refunds, orderId, canRefund }: OrderRefundsCa
 								</div>
 								<Button variant="ghost" size="sm" asChild>
 									<Link href={`/admin/ventes/remboursements/${refund.id}`}>
-										<ExternalLink className="h-4 w-4" aria-hidden="true" />
+										<ExternalLink className="size-4" aria-hidden="true" />
 										<span className="sr-only">Voir le détail du remboursement</span>
 									</Link>
 								</Button>

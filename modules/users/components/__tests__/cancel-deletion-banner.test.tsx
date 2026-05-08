@@ -42,12 +42,12 @@ describe("CancelDeletionBanner", () => {
 		expect(screen.getByRole("button", { name: /Annuler la suppression/i })).toBeInTheDocument();
 	});
 
-	it("shows pending state: button disabled with 'Annulation...' text", () => {
+	it("shows pending state: button disabled with 'Annulation…' text", () => {
 		useCancelAccountDeletionMock.mockReturnValue({ action: vi.fn(), isPending: true });
 		render(<CancelDeletionBanner daysRemaining={10} />);
 
 		const btn = screen.getByRole("button");
 		expect(btn).toBeDisabled();
-		expect(btn.textContent).toContain("Annulation...");
+		expect(btn.textContent).toContain("Annulation…");
 	});
 });

@@ -101,8 +101,8 @@ export function ArchiveProductAlertDialog() {
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending
 								? isArchiving
-									? "Archivage..."
-									: "Restauration..."
+									? "Archivage…"
+									: "Restauration…"
 								: isArchiving
 									? "Archiver"
 									: "Désarchiver"}

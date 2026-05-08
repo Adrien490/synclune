@@ -96,7 +96,7 @@ function GalleryThumbnailList({
 			title={title}
 			onClick={() => onScrollTo(index)}
 			onError={() => onError(media.id)}
-			className={isDesktop ? "hover:shadow-sm" : "h-14 w-14 shrink-0"}
+			className={isDesktop ? "hover:shadow-sm" : "size-14 shrink-0"}
 			isLCPCandidate={index === 0}
 		/>
 	));

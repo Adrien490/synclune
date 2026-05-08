@@ -21,20 +21,12 @@ export const suspendUserSchema = z.object({
 	id: z.cuid2("ID utilisateur invalide"),
 });
 
-export const bulkSuspendUsersSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
-});
-
 // ============================================================================
 // RESTORE USER SCHEMAS (Admin)
 // ============================================================================
 
 export const restoreUserSchema = z.object({
 	id: z.cuid2("ID utilisateur invalide"),
-});
-
-export const bulkRestoreUsersSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
 });
 
 // ============================================================================
@@ -57,14 +49,6 @@ export const bulkChangeUserRoleSchema = z.object({
 
 export const toggleEmailVerifiedSchema = z.object({
 	id: z.cuid2("ID utilisateur invalide"),
-});
-
-// ============================================================================
-// BULK INVALIDATE SESSIONS SCHEMA (Admin)
-// ============================================================================
-
-export const bulkInvalidateSessionsSchema = z.object({
-	ids: z.array(z.cuid2("ID invalide")).min(1, "Aucun utilisateur selectionne").max(200),
 });
 
 // ============================================================================

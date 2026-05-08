@@ -44,7 +44,7 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 		withCallbacks(
 			updateProduct,
 			createToastCallbacks<ActionState>({
-				loadingMessage: "Mise à jour du produit...",
+				loadingMessage: "Mise à jour du produit…",
 				showSuccessToast: false,
 				showErrorToast: true,
 				onSuccess: (result) => {

@@ -26,7 +26,7 @@ export function useExportUserDataAdmin(options?: UseExportUserDataAdminOptions) 
 				async (_p: ActionState | undefined, fd: FormData) =>
 					exportUserDataAdmin(fd.get("userId") as string),
 				createToastCallbacks({
-					loadingMessage: "Export des données en cours...",
+					loadingMessage: "Export des données en cours…",
 					onSuccess: (result) => {
 						if (result.data) {
 							const data = result.data as UserDataExport;

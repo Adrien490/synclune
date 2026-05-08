@@ -10,7 +10,15 @@ import {
 } from "@/shared/components/ui/select";
 import { cn } from "@/shared/utils/cn";
 import { ChevronLeft, ChevronRight, ChevronsLeft, LoaderCircle } from "lucide-react";
-import { useEffect, useEffectEvent, useId, useRef, useTransition } from "react";
+import {
+	useEffect,
+	useEffectEvent,
+	useId,
+	useRef,
+	useTransition,
+	Suspense,
+	type ComponentProps,
+} from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "../ui/button";
 import { NAV_BUTTON_SIZE, PAGE_INDICATOR_SIZE, RESET_BUTTON_SIZE } from "./constants";
@@ -28,7 +36,7 @@ const PAGINATION_BUTTON_CLASSES = [
 	"motion-safe:transition-all motion-safe:duration-300 motion-reduce:transition-none",
 ] as const;
 
-export function CursorPagination({
+function CursorPaginationInner({
 	perPage: _perPageProp,
 	hasNextPage,
 	hasPreviousPage,
@@ -193,7 +201,7 @@ export function CursorPagination({
 
 	// Message pour les screen readers
 	const ariaLiveMessage = (() => {
-		if (isPending) return "Chargement des résultats...";
+		if (isPending) return "Chargement des résultats…";
 		if (currentPageSize === 0) return "Aucun résultat.";
 
 		const parts = [
@@ -344,6 +352,14 @@ export function CursorPagination({
 				</nav>
 			)}
 		</div>
+	);
+}
+
+export function CursorPagination(props: ComponentProps<typeof CursorPaginationInner>) {
+	return (
+		<Suspense fallback={null}>
+			<CursorPaginationInner {...props} />
+		</Suspense>
 	);
 }
 

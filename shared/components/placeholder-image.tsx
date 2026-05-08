@@ -18,7 +18,7 @@ export function PlaceholderImage({ className, label }: { className?: string; lab
 			aria-label={label}
 			aria-hidden={label ? undefined : true}
 		>
-			<ImageIcon className="text-muted-foreground/60 h-12 w-12" aria-hidden="true" />
+			<ImageIcon className="text-muted-foreground/60 size-12" aria-hidden="true" />
 		</div>
 	);
 }

@@ -44,7 +44,7 @@ export function IdleContent({
 
 	return (
 		<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
-			<div className="space-y-6 px-4 py-4">
+			<div className="space-y-6 p-4">
 				{/* Recently Viewed Products */}
 				{recentlyViewed.length > 0 && (
 					<section aria-labelledby="recently-viewed-heading">
@@ -141,7 +141,7 @@ export function IdleContent({
 												role="option"
 												aria-selected={false}
 												className={cn(
-													"flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left font-medium transition-all",
+													"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
 													"hover:bg-muted",
 													"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 													"disabled:opacity-50",

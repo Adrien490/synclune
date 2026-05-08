@@ -83,7 +83,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 								<div className="flex flex-col items-center gap-2">
 									<div
 										className={cn(
-											"relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all",
+											"relative flex size-10 items-center justify-center rounded-full border-2 transition-all",
 											isCompleted && "border-primary bg-primary text-primary-foreground",
 											isCurrent && !isWaitingPayment && "border-primary bg-primary/10 text-primary",
 											isWaitingPayment && "border-amber-500 bg-amber-500/10 text-amber-600",
@@ -91,7 +91,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 											isCurrent && "ring-primary/20 ring-4",
 										)}
 									>
-										<Icon className="h-5 w-5" aria-hidden="true" />
+										<Icon className="size-5" aria-hidden="true" />
 										{isCurrent && (
 											<span
 												className="bg-primary/30 absolute inset-0 rounded-full motion-safe:animate-ping"
@@ -131,7 +131,7 @@ export function OrderProgressStepper({ status, paymentStatus }: OrderProgressSte
 			{isCancelled && (
 				<div className="mt-4 flex justify-center">
 					<Badge variant="destructive" className="gap-1">
-						<CircleX className="h-3.5 w-3.5" aria-hidden="true" />
+						<CircleX className="size-3.5" aria-hidden="true" />
 						Commande annulée
 					</Badge>
 				</div>

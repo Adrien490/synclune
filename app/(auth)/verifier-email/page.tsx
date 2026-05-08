@@ -83,8 +83,8 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 				backLabel="Retour au site"
 				title="Bienvenue"
 				icon={
-					<div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-500/15">
-						<Sparkles className="h-8 w-8 text-green-600" aria-hidden="true" />
+					<div className="flex size-16 items-center justify-center rounded-full bg-green-500/15">
+						<Sparkles className="size-8 text-green-600" aria-hidden="true" />
 					</div>
 				}
 			>
@@ -94,7 +94,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 						role="status"
 						aria-live="polite"
 					>
-						<CircleCheck className="h-12 w-12 text-green-500" aria-hidden="true" />
+						<CircleCheck className="size-12 text-green-500" aria-hidden="true" />
 						<div className="space-y-2 text-center">
 							<p className={cn("font-display text-lg font-normal text-green-700")}>
 								Email vérifié avec succès
@@ -128,8 +128,8 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 			backLabel="Retour au site"
 			title="Vérification d'email"
 			icon={
-				<div className="bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full">
-					<CircleAlert className="text-destructive h-8 w-8" aria-hidden="true" />
+				<div className="bg-destructive/10 flex size-16 items-center justify-center rounded-full">
+					<CircleAlert className="text-destructive size-8" aria-hidden="true" />
 				</div>
 			}
 		>
@@ -139,7 +139,7 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
 					role="alert"
 					aria-live="assertive"
 				>
-					<CircleAlert className="text-destructive h-12 w-12" aria-hidden="true" />
+					<CircleAlert className="text-destructive size-12" aria-hidden="true" />
 					<div className="space-y-2 text-center">
 						<p className="text-destructive text-lg font-medium">
 							{!token && !error ? "Lien incomplet" : "Erreur de vérification"}

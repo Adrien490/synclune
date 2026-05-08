@@ -20,7 +20,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, Suspense, type ComponentProps } from "react";
 
 interface OrdersFilterSheetProps {
 	className?: string;
@@ -41,7 +41,7 @@ interface FilterFormData {
 const MAX_PRICE = 10000; // 100€ in cents
 const DEFAULT_PRICE_RANGE = [0, MAX_PRICE];
 
-export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
+function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -520,5 +520,13 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 				</form.Field>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function OrdersFilterSheet(props: ComponentProps<typeof OrdersFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<OrdersFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

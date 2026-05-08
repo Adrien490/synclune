@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useTransition, Suspense, type ComponentProps } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Spinner } from "@/shared/components/ui/spinner";
@@ -20,7 +20,7 @@ interface ClearSearchButtonProps {
  * <ClearSearchButton className="md:hidden" />
  * ```
  */
-export function ClearSearchButton({ className }: ClearSearchButtonProps) {
+function ClearSearchButtonInner({ className }: ClearSearchButtonProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -53,5 +53,13 @@ export function ClearSearchButton({ className }: ClearSearchButtonProps) {
 		>
 			{isPending ? <Spinner className="size-4" /> : <X className="size-5" />}
 		</Button>
+	);
+}
+
+export function ClearSearchButton(props: ComponentProps<typeof ClearSearchButtonInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ClearSearchButtonInner {...props} />
+		</Suspense>
 	);
 }

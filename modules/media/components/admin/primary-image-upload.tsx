@@ -11,6 +11,7 @@ import { MediaErrorFallback } from "@/modules/media/components/media-error-fallb
 import { DELETE_PRIMARY_IMAGE_DIALOG_ID } from "./delete-primary-image-alert-dialog";
 import { isVideoUrl } from "@/modules/media/utils/media-type-detection";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { cn } from "@/shared/utils/cn";
 
 /**
@@ -62,6 +63,7 @@ export function PrimaryImageUpload({
 	const [videoError, setVideoError] = useState(false);
 	const deleteDialog = useAlertDialog(DELETE_PRIMARY_IMAGE_DIALOG_ID);
 	const haptic = useHaptic();
+	const isTouchDevice = useIsTouchDevice();
 
 	// Auto-detect mediaType if not provided
 	const effectiveMediaType = mediaType ?? detectMediaTypeFromUrl(imageUrl);
@@ -165,7 +167,7 @@ export function PrimaryImageUpload({
 									{/* Centered play icon */}
 									<div className="pointer-events-none absolute inset-0 flex items-center justify-center transition-opacity group-hover:opacity-0">
 										<div className="rounded-full bg-black/70 p-4 shadow-xl">
-											<svg className="h-8 w-8 text-white" fill="currentColor" viewBox="0 0 16 16">
+											<svg className="size-8 text-white" fill="currentColor" viewBox="0 0 16 16">
 												<path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z" />
 											</svg>
 										</div>
@@ -190,20 +192,34 @@ export function PrimaryImageUpload({
 								</div>
 							</div>
 
-							{/* Hover/focus overlay */}
-							<div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+							{isTouchDevice ? (
+								/* Touch devices: permanent delete button (no hover state available) */
 								<Button
 									type="button"
 									variant="destructive"
-									size="sm"
+									size="icon"
 									onClick={handleOpenDeleteDialog}
-									className="gap-2"
+									className="absolute right-2 bottom-2 z-20 size-11 rounded-full shadow-lg"
 									aria-label="Supprimer le média principal"
 								>
-									<Trash2 className="h-4 w-4" />
-									Supprimer
+									<Trash2 className="size-5" aria-hidden="true" />
 								</Button>
-							</div>
+							) : (
+								/* Desktop: hover/focus overlay */
+								<div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+									<Button
+										type="button"
+										variant="destructive"
+										size="sm"
+										onClick={handleOpenDeleteDialog}
+										className="gap-2"
+										aria-label="Supprimer le média principal"
+									>
+										<Trash2 className="size-4" />
+										Supprimer
+									</Button>
+								</div>
+							)}
 						</div>
 					</m.div>
 				) : (

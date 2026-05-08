@@ -8,7 +8,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function EditVariantLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement de l'édition de variante">
-			<span className="sr-only">Chargement...</span>
+			<span className="sr-only">Chargement…</span>
 
 			{/* Breadcrumb (6 items, desktop only) */}
 			<div className="mb-4 hidden md:flex md:items-center md:gap-2">

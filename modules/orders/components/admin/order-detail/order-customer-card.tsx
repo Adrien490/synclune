@@ -8,7 +8,7 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 		<Card>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
-					<User className="h-5 w-5" aria-hidden="true" />
+					<User className="size-5" aria-hidden="true" />
 					Client
 				</CardTitle>
 			</CardHeader>
@@ -21,7 +21,7 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 							aria-label={`Voir le profil de ${order.customerName}`}
 						>
 							{order.customerName}
-							<ExternalLink className="h-3 w-3" aria-hidden="true" />
+							<ExternalLink className="size-3" aria-hidden="true" />
 						</Link>
 					) : (
 						<>
@@ -32,7 +32,7 @@ export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 					<p className="text-muted-foreground text-sm">{order.customerEmail}</p>
 					{order.customerPhone && (
 						<p className="text-muted-foreground flex items-center gap-1 text-sm">
-							<Phone className="h-3 w-3" aria-hidden="true" />
+							<Phone className="size-3" aria-hidden="true" />
 							{order.customerPhone}
 						</p>
 					)}

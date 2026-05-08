@@ -11,7 +11,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function CatalogLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement du catalogue">
-			<span className="sr-only">Chargement du catalogue...</span>
+			<span className="sr-only">Chargement du catalogue…</span>
 
 			{/* Page Header */}
 			<PageHeader
@@ -29,7 +29,7 @@ export default function CatalogLoading() {
 							<div className="flex items-start justify-between">
 								<div className="flex items-center gap-3">
 									{/* Icon placeholder */}
-									<Skeleton className="h-10 w-10 rounded-lg" />
+									<Skeleton className="size-10 rounded-lg" />
 									<div className="space-y-2">
 										{/* Title */}
 										<Skeleton className="h-5 w-24" />

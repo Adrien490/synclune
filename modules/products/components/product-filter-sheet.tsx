@@ -14,6 +14,8 @@ import {
 	useRef,
 	useState,
 	useTransition,
+	Suspense,
+	type ComponentProps,
 } from "react";
 import { PRODUCT_FILTER_DIALOG_ID } from "@/modules/products/constants/product.constants";
 import { PriceRangeInputs } from "./price-range-inputs";
@@ -90,7 +92,7 @@ function scrollToProductsGrid() {
 // MAIN COMPONENT
 // ============================================================================
 
-export function ProductFilterSheet({
+function ProductFilterSheetInner({
 	colors = EMPTY_COLORS,
 	materials = EMPTY_MATERIALS,
 	productTypes = EMPTY_PRODUCT_TYPES,
@@ -426,5 +428,13 @@ export function ProductFilterSheet({
 				</div>
 			</form>
 		</FilterSheetWrapper>
+	);
+}
+
+export function ProductFilterSheet(props: ComponentProps<typeof ProductFilterSheetInner>) {
+	return (
+		<Suspense fallback={null}>
+			<ProductFilterSheetInner {...props} />
+		</Suspense>
 	);
 }

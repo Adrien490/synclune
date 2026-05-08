@@ -42,6 +42,7 @@ function PricingCard({ form }: { form: SkuFormInstance }) {
 		<Card
 			role="region"
 			aria-label="Tarification"
+			style={{ viewTransitionName: "sku-pricing" }}
 			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
@@ -66,7 +67,7 @@ function PricingCard({ form }: { form: SkuFormInstance }) {
 								aria-describedby="sku-price-sale-hint"
 							>
 								<InputGroupAddon>
-									<Euro className="h-4 w-4" />
+									<Euro className="size-4" />
 								</InputGroupAddon>
 							</field.InputGroupField>
 							<p id="sku-price-sale-hint" className="text-muted-foreground text-xs">
@@ -94,7 +95,7 @@ function PricingCard({ form }: { form: SkuFormInstance }) {
 								aria-describedby="sku-price-compare-hint"
 							>
 								<InputGroupAddon>
-									<Euro className="h-4 w-4" />
+									<Euro className="size-4" />
 								</InputGroupAddon>
 							</field.InputGroupField>
 							<p id="sku-price-compare-hint" className="text-muted-foreground text-xs">
@@ -114,6 +115,7 @@ function StockCard({ form }: { form: SkuFormInstance }) {
 		<Card
 			role="region"
 			aria-label="Stock"
+			style={{ viewTransitionName: "sku-stock" }}
 			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
@@ -132,7 +134,7 @@ function StockCard({ form }: { form: SkuFormInstance }) {
 								aria-describedby="sku-stock-hint"
 							>
 								<InputGroupAddon align="inline-end">
-									<Package className="text-muted-foreground h-4 w-4" />
+									<Package className="text-muted-foreground size-4" />
 									<InputGroupText className="text-muted-foreground text-xs">unités</InputGroupText>
 								</InputGroupAddon>
 							</field.InputGroupField>

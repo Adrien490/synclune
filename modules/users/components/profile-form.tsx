@@ -73,7 +73,7 @@ export function ProfileForm({ user }: ProfileFormProps) {
 				<form.Subscribe selector={(s) => [s.canSubmit]}>
 					{([canSubmit]) => (
 						<Button type="submit" disabled={!canSubmit || isPending}>
-							{isPending ? "Enregistrement..." : "Enregistrer les modifications"}
+							{isPending ? "Enregistrement…" : "Enregistrer les modifications"}
 						</Button>
 					)}
 				</form.Subscribe>

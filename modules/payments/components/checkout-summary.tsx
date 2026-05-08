@@ -71,7 +71,7 @@ function SummaryContent({
 				{cart.items.map((item) => (
 					<div key={item.id} className="flex gap-3 text-sm">
 						{/* Image */}
-						<div className="bg-muted border-primary/10 relative h-16 w-16 shrink-0 overflow-hidden rounded-xl border">
+						<div className="bg-muted border-primary/10 relative size-16 shrink-0 overflow-hidden rounded-xl border">
 							{item.sku.images[0] ? (
 								<Image
 									src={item.sku.images[0].url}
@@ -190,7 +190,7 @@ function SummaryContent({
 								aria-label="Pourquoi pas de TVA ?"
 							>
 								<span>TVA non applicable, art. 293 B du CGI</span>
-								<Info className="h-3 w-3" aria-hidden="true" />
+								<Info className="size-3" aria-hidden="true" />
 							</button>
 						</TooltipTrigger>
 						<TooltipContent className="max-w-xs text-center">
@@ -212,7 +212,7 @@ function SummaryContent({
 
 				{/* Message sécurité */}
 				<div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs">
-					<Shield className="text-success h-3.5 w-3.5" />
+					<Shield className="text-success size-3.5" />
 					<span>Paiement 100% sécurisé</span>
 				</div>
 
@@ -291,7 +291,7 @@ export function CheckoutSummary({
 								<div className="flex items-center gap-2">
 									<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
 									<ChevronDown
-										className={`text-muted-foreground h-4 w-4 transition-transform ${
+										className={`text-muted-foreground size-4 transition-transform ${
 											isMobileOpen ? "rotate-180" : ""
 										}`}
 									/>

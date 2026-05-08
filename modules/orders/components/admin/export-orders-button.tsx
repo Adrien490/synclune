@@ -151,7 +151,7 @@ export function ExportOrdersButton() {
 		<Dialog open={state.open} onOpenChange={(open) => dispatch({ type: "SET_OPEN", open })}>
 			<DialogTrigger asChild>
 				<Button variant="outline" size="sm">
-					<Download className="mr-2 h-4 w-4" />
+					<Download className="mr-2 size-4" />
 					Exporter
 				</Button>
 			</DialogTrigger>
@@ -258,11 +258,11 @@ export function ExportOrdersButton() {
 					</Button>
 					<Button onClick={handleExport} disabled={state.isExporting}>
 						{state.isExporting ? (
-							<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+							<LoaderCircle className="mr-2 size-4 animate-spin" />
 						) : (
-							<Download className="mr-2 h-4 w-4" />
+							<Download className="mr-2 size-4" />
 						)}
-						{state.isExporting ? "Export en cours..." : "Télécharger CSV"}
+						{state.isExporting ? "Export en cours…" : "Télécharger CSV"}
 					</Button>
 				</DialogFooter>
 			</DialogContent>

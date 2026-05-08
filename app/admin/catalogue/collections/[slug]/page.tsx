@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Pencil } from "lucide-react";
 import dynamic from "next/dynamic";
+import { notFound } from "next/navigation";
 
-import { Button } from "@/shared/components/ui/button";
+import { CollectionDetailPage } from "@/modules/collections/components/admin/collection-detail";
+import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -13,17 +13,21 @@ import {
 	BreadcrumbPage,
 	BreadcrumbSeparator,
 } from "@/shared/components/ui/breadcrumb";
-import { PageHeader } from "@/shared/components/page-header";
-import { Badge } from "@/shared/components/ui/badge";
-import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
-import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
-import { CollectionProductsList } from "@/modules/collections/components/admin/collection-products-list";
 
-// Lazy loading - dialogs charges uniquement a l'ouverture
 const SetFeaturedProductAlertDialog = dynamic(() =>
 	import("@/modules/collections/components/admin/set-featured-product-alert-dialog").then(
 		(mod) => mod.SetFeaturedProductAlertDialog,
 	),
+);
+
+const CollectionFormDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/collection-form-dialog").then(
+		(mod) => mod.CollectionFormDialog,
+	),
+);
+
+const CollectionsAdminDialogs = dynamic(() =>
+	import("../_components/collections-admin-dialogs").then((mod) => mod.CollectionsAdminDialogs),
 );
 
 type CollectionDetailPageProps = {
@@ -35,40 +39,28 @@ export async function generateMetadata({ params }: CollectionDetailPageProps): P
 	const collection = await getCollectionBySlug({ slug });
 
 	if (!collection) {
-		return {
-			title: "Collection introuvable - Administration",
-		};
+		return { title: "Collection introuvable - Administration" };
 	}
 
 	return {
 		title: `${collection.name} - Administration`,
-		description: `Gerer la collection ${collection.name}`,
+		description: `Détails de la collection ${collection.name}`,
 	};
 }
 
-export default async function CollectionDetailPage({ params }: CollectionDetailPageProps) {
+export default async function AdminCollectionDetailPage({ params }: CollectionDetailPageProps) {
 	const { slug } = await params;
-
 	const collection = await getCollectionBySlug({ slug });
 
 	if (!collection) {
 		notFound();
 	}
 
-	// Compter les produits publics
-	const publicProductsCount = collection.products.filter(
-		(pc) => pc.product.status === "PUBLIC",
-	).length;
-
-	// Trouver le produit featured actuel
-	const featuredProduct = collection.products.find((pc) => pc.isFeatured);
-
 	return (
 		<div className="space-y-6">
-			<SetFeaturedProductAlertDialog />
+			<AdminDetailBackLink href="/admin/catalogue/collections" label="Retour aux collections" />
 
-			{/* Breadcrumb */}
-			<Breadcrumb className="hidden md:block">
+			<Breadcrumb className="hidden md:flex">
 				<BreadcrumbList>
 					<BreadcrumbItem>
 						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
@@ -84,56 +76,11 @@ export default async function CollectionDetailPage({ params }: CollectionDetailP
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<PageHeader
-				variant="compact"
-				title={collection.name}
-				description={collection.description ?? undefined}
-				className="hidden md:block"
-				actions={
-					<div className="flex items-center gap-2">
-						<Button variant="outline" asChild>
-							<Link href="/admin/catalogue/collections">
-								<ArrowLeft className="mr-2 h-4 w-4" />
-								Retour
-							</Link>
-						</Button>
-						<Button asChild>
-							<Link href={`/admin/catalogue/collections/${slug}/modifier`}>
-								<Pencil className="mr-2 h-4 w-4" />
-								Modifier
-							</Link>
-						</Button>
-					</div>
-				}
-			/>
+			<CollectionDetailPage collection={collection} />
 
-			{/* Infos de la collection */}
-			<div className="flex flex-wrap gap-3">
-				<Badge variant="outline">{COLLECTION_STATUS_LABELS[collection.status]}</Badge>
-				<Badge variant="secondary">
-					{collection.products.length} produit{collection.products.length > 1 ? "s" : ""}
-				</Badge>
-				<Badge variant="secondary">
-					{publicProductsCount} public{publicProductsCount > 1 ? "s" : ""}
-				</Badge>
-				{featuredProduct && (
-					<Badge variant="default">Vedette : {featuredProduct.product.title}</Badge>
-				)}
-			</div>
-
-			{/* Liste des produits */}
-			<div className="space-y-4">
-				<h2 className="text-lg font-semibold">Produits de la collection</h2>
-				<p className="text-muted-foreground text-sm">
-					Cliquez sur l'etoile pour definir le produit vedette. Ce produit sera utilise comme image
-					representative de la collection.
-				</p>
-				<CollectionProductsList
-					collectionId={collection.id}
-					collectionSlug={collection.slug}
-					products={collection.products}
-				/>
-			</div>
+			<SetFeaturedProductAlertDialog />
+			<CollectionFormDialog />
+			<CollectionsAdminDialogs />
 		</div>
 	);
 }

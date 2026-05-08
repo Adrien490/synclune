@@ -38,7 +38,7 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 						return (
 							<div key={item.id} className="flex gap-4 py-4 first:pt-0 last:pb-0">
 								{/* Image */}
-								<div className="bg-muted relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+								<div className="bg-muted relative size-20 shrink-0 overflow-hidden rounded-lg">
 									{imageUrl ? (
 										<Image
 											src={imageUrl}

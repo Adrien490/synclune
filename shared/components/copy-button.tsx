@@ -29,7 +29,7 @@ export function CopyButton({ text, label, className, size = "sm" }: CopyButtonPr
 			aria-label={`Copier ${label.toLowerCase()}`}
 			onClick={handleCopy}
 		>
-			<Copy className="h-4 w-4" aria-hidden="true" />
+			<Copy className="size-4" aria-hidden="true" />
 		</Button>
 	);
 }

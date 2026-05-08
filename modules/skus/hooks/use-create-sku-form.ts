@@ -24,7 +24,7 @@ export const useCreateProductSkuForm = (options?: UseCreateProductSkuFormOptions
 		withCallbacks(
 			createProductSku,
 			createToastCallbacks<ActionState>({
-				loadingMessage: "Création de la variante...",
+				loadingMessage: "Création de la variante…",
 				showSuccessToast: false,
 				showErrorToast: true,
 				onSuccess: (result) => {

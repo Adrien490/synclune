@@ -112,14 +112,14 @@ describe("ToolbarSkeleton", () => {
 	it("renders no button skeletons by default (buttonCount=0)", () => {
 		const { container } = render(<ToolbarSkeleton />);
 
-		const buttonSkeletons = container.querySelectorAll(".h-9.w-9");
+		const buttonSkeletons = container.querySelectorAll(".size-9");
 		expect(buttonSkeletons.length).toBe(0);
 	});
 
 	it("renders 1 button skeleton without ButtonGroup when buttonCount=1", () => {
 		const { container } = render(<ToolbarSkeleton buttonCount={1} />);
 
-		const buttonSkeletons = container.querySelectorAll(".h-9.w-9");
+		const buttonSkeletons = container.querySelectorAll(".size-9");
 		expect(buttonSkeletons.length).toBe(1);
 		expect(screen.queryByTestId("button-group")).toBeNull();
 	});
@@ -134,7 +134,7 @@ describe("ToolbarSkeleton", () => {
 		render(<ToolbarSkeleton buttonCount={3} />);
 
 		const buttonGroup = screen.getByTestId("button-group");
-		const buttonSkeletons = buttonGroup.querySelectorAll(".h-9.w-9");
+		const buttonSkeletons = buttonGroup.querySelectorAll(".size-9");
 		expect(buttonSkeletons.length).toBe(3);
 	});
 

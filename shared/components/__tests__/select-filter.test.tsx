@@ -145,7 +145,7 @@ describe("SelectFilter", () => {
 		it("uses default placeholder when not provided", () => {
 			render(<SelectFilter filterKey="status" label="Statut" options={mockOptions} />);
 
-			expect(screen.getByText("Sélectionner...")).toBeInTheDocument();
+			expect(screen.getByText("Sélectionner…")).toBeInTheDocument();
 		});
 	});
 

@@ -24,7 +24,7 @@ const PAGE_HANDLER_TIMEOUT = 1500;
  * to register custom refresh logic (e.g. server-action cache invalidation) that PTR will await
  * before running `router.refresh()`. A fallback timeout prevents a stuck handler from blocking UX.
  */
-export const PULL_TO_REFRESH_EVENT = "admin:pull-to-refresh" as const;
+const PULL_TO_REFRESH_EVENT = "admin:pull-to-refresh" as const;
 
 export interface PullToRefreshEventDetail {
 	waitFor: (promise: Promise<void>) => void;

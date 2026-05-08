@@ -42,7 +42,7 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 			<h2 className="text-base font-semibold">Annulation</h2>
 			<div className="border-border/60 border-t pt-4">
 				<Button variant="outline" className="w-full" onClick={() => setOpen(true)}>
-					<CircleX className="mr-2 h-4 w-4" />
+					<CircleX className="mr-2 size-4" />
 					Annuler la commande
 				</Button>
 			</div>
@@ -79,8 +79,8 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
 							<Button type="submit" variant="destructive" disabled={isPending}>
 								{isPending ? (
 									<>
-										<LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-										Annulation...
+										<LoaderCircle className="mr-2 size-4 animate-spin" />
+										Annulation…
 									</>
 								) : (
 									"Confirmer l'annulation"

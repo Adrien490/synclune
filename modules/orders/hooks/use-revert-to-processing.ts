@@ -9,7 +9,7 @@ export function useRevertToProcessing() {
 	const [state, action, isPending] = useActionState(
 		withCallbacks(
 			revertToProcessing,
-			createToastCallbacks({ loadingMessage: "Retour en préparation..." }),
+			createToastCallbacks({ loadingMessage: "Retour en préparation…" }),
 		),
 		undefined,
 	);

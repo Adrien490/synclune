@@ -1,0 +1,28 @@
+{
+	"ignore": {
+		"rules": ["react-doctor/server-auth-actions", "react-doctor/rendering-hydration-mismatch-time"],
+		"files": [
+			"e2e/**",
+			"**/__tests__/**",
+			"**/*.test.ts",
+			"**/*.test.tsx",
+			"emails/**",
+			"scripts/**"
+		],
+		"overrides": [
+			{
+				"files": ["modules/**/actions/**", "shared/actions/**"],
+				"rules": ["react-doctor/nextjs-no-redirect-in-try-catch"]
+			},
+			{
+				"files": [
+					"modules/skus/components/admin/skus-data-table.tsx",
+					"modules/products/components/admin/products-data-table.tsx",
+					"modules/products/components/price-range-inputs.tsx"
+				],
+				"rules": ["react-doctor/design-no-em-dash-in-jsx-text"]
+			}
+		]
+	},
+	"failOn": "none"
+}

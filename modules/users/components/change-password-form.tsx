@@ -163,7 +163,7 @@ export function ChangePasswordForm({ onOpenChange }: ChangePasswordFormProps) {
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (
 						<Button disabled={!canSubmit || isPending} type="submit">
-							{isPending ? "Changement en cours..." : "Changer le mot de passe"}
+							{isPending ? "Changement en cours…" : "Changer le mot de passe"}
 						</Button>
 					)}
 				</form.Subscribe>

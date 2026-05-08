@@ -80,7 +80,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par numéro de commande, email client..."
+								placeholder="Rechercher par numéro de commande, email client…"
 								ariaLabel="Rechercher un remboursement"
 								className="w-full"
 							/>

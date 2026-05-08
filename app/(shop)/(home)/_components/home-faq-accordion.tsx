@@ -10,7 +10,7 @@ import {
 } from "@/shared/components/ui/accordion";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
-export interface HomeFaqAccordionItem {
+interface HomeFaqAccordionItem {
 	id: string;
 	question: string;
 	answer: ReactNode;

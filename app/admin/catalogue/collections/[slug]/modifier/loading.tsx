@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function EditCollectionLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement du formulaire">
-			<span className="sr-only">Chargement du formulaire...</span>
+			<span className="sr-only">Chargement du formulaire…</span>
 
 			{/* Title (matches dynamic collection.name in page.tsx) */}
 			<Skeleton className="mb-6 h-8 w-48" />

@@ -22,14 +22,14 @@ export default function OrderDetailLoading() {
 			aria-label="Chargement de la commande"
 			className="space-y-6"
 		>
-			<span className="sr-only">Chargement de la commande...</span>
+			<span className="sr-only">Chargement de la commande…</span>
 
 			{/* Bouton retour mobile */}
 			<Link
 				href="/admin/ventes/commandes"
 				className="text-muted-foreground flex items-center gap-1 text-sm md:hidden"
 			>
-				<ChevronLeft className="h-4 w-4" aria-hidden="true" />
+				<ChevronLeft className="size-4" aria-hidden="true" />
 				Retour aux commandes
 			</Link>
 
@@ -67,7 +67,7 @@ export default function OrderDetailLoading() {
 			<div className="flex items-center justify-between gap-2 overflow-x-auto py-2">
 				{Array.from({ length: 4 }).map((_, i) => (
 					<div key={i} className="flex items-center gap-2">
-						<Skeleton className="h-8 w-8 rounded-full" />
+						<Skeleton className="size-8 rounded-full" />
 						<Skeleton className="hidden h-4 w-16 sm:block" />
 					</div>
 				))}
@@ -92,8 +92,8 @@ export default function OrderDetailLoading() {
 						<CardContent className="space-y-4">
 							{Array.from({ length: 3 }).map((_, i) => (
 								<div key={i} className="flex gap-4 py-2">
-									<Skeleton className="h-16 w-16 rounded-md" />
-									<div className="flex-1 space-y-2">
+									<Skeleton className="size-16 rounded-md" />
+									<div className="flex-1 gap-y-2">
 										<Skeleton className="h-4 w-48" />
 										<Skeleton className="h-3 w-32" />
 									</div>
@@ -127,7 +127,7 @@ export default function OrderDetailLoading() {
 						</CardHeader>
 						<CardContent className="space-y-3">
 							<div className="flex items-center gap-3">
-								<Skeleton className="h-10 w-10 rounded-full" />
+								<Skeleton className="size-10 rounded-full" />
 								<div className="space-y-1">
 									<Skeleton className="h-4 w-32" />
 									<Skeleton className="h-3 w-40" />
@@ -178,8 +178,8 @@ export default function OrderDetailLoading() {
 						<CardContent className="space-y-4">
 							{Array.from({ length: 3 }).map((_, i) => (
 								<div key={i} className="flex gap-3">
-									<Skeleton className="h-4 w-4 rounded-full" />
-									<div className="flex-1 space-y-1">
+									<Skeleton className="size-4 rounded-full" />
+									<div className="flex-1 gap-y-1">
 										<Skeleton className="h-4 w-32" />
 										<Skeleton className="h-3 w-24" />
 									</div>

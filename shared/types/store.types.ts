@@ -23,7 +23,7 @@ export type SheetState = {
 	openSheet: SheetId | null;
 };
 
-export type SheetActions = {
+type SheetActions = {
 	open: (sheetId: SheetId) => void;
 	close: () => void;
 	toggle: (sheetId: SheetId) => void;
@@ -48,7 +48,7 @@ export type DialogState = {
 	dialogs: Record<string, { isOpen: boolean; data?: DialogData }>;
 };
 
-export type DialogActions = {
+type DialogActions = {
 	openDialog: (dialogId: string, data?: DialogData) => void;
 	closeDialog: (dialogId: string) => void;
 	toggleDialog: (dialogId: string) => void;
@@ -77,7 +77,7 @@ export type AlertDialogState = {
 	alertDialogs: Record<string, { isOpen: boolean; data?: AlertDialogData }>;
 };
 
-export type AlertDialogActions = {
+type AlertDialogActions = {
 	openAlertDialog: (dialogId: string, data?: AlertDialogData) => void;
 	closeAlertDialog: (dialogId: string) => void;
 	isAlertDialogOpen: (dialogId: string) => boolean;
@@ -112,7 +112,7 @@ export interface CookieConsentState {
 /**
  * Actions disponibles
  */
-export interface CookieConsentActions {
+interface CookieConsentActions {
 	// Accepter les cookies
 	acceptCookies: () => void;
 	// Refuser les cookies
@@ -131,12 +131,12 @@ export type CookieConsentStore = CookieConsentState & CookieConsentActions;
 // BADGE COUNTS STORE TYPES
 // =============================================================================
 
-export interface BadgeCountsState {
+interface BadgeCountsState {
 	wishlistCount: number;
 	cartCount: number;
 }
 
-export interface BadgeCountsActions {
+interface BadgeCountsActions {
 	setWishlistCount: (count: number) => void;
 	setCartCount: (count: number) => void;
 	incrementWishlist: () => void;
@@ -151,11 +151,11 @@ export type BadgeCountsStore = BadgeCountsState & BadgeCountsActions;
 // OVERLAY STACK STORE TYPES
 // =============================================================================
 
-export interface OverlayStackState {
+interface OverlayStackState {
 	count: number;
 }
 
-export interface OverlayStackActions {
+interface OverlayStackActions {
 	push: () => void;
 	pop: () => void;
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
@@ -24,7 +25,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(COLORS_SORT_LABELS).map(([valu
  * Sous-header sticky (mobile, admin) pour la liste couleurs.
  * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
-export function ColorsBottomBar() {
+function ColorsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -108,5 +109,13 @@ export function ColorsBottomBar() {
 				adapter={colorsAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function ColorsBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<ColorsBottomBarInner />
+		</Suspense>
 	);
 }

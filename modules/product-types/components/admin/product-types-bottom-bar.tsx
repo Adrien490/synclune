@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
@@ -26,7 +27,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(PRODUCT_TYPES_SORT_LABELS).map
  * Sous-header sticky (mobile, admin) pour la liste types de produits.
  * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
-export function ProductTypesBottomBar() {
+function ProductTypesBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -110,5 +111,13 @@ export function ProductTypesBottomBar() {
 				adapter={productTypesAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function ProductTypesBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<ProductTypesBottomBarInner />
+		</Suspense>
 	);
 }

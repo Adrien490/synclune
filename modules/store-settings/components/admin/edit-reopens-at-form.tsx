@@ -7,6 +7,7 @@ import { useAppForm } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
@@ -28,10 +29,12 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 	const [, formAction, isPending] = useActionState(
 		withCallbacks(
 			updateReopensAt,
-			createToastCallbacks({ loadingMessage: "Mise à jour de la date..." }),
+			createToastCallbacks({ loadingMessage: "Mise à jour de la date…" }),
 		),
 		undefined,
 	);
+
+	useUnsavedChanges(form.state.isDirty, !isPending);
 
 	return (
 		<form
@@ -45,7 +48,12 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 			}}
 			className="space-y-3"
 			aria-busy={isPending}
+			data-pending={isPending ? "true" : undefined}
 		>
+			<span className="sr-only" role="status" aria-live="polite">
+				{isPending ? "Mise à jour de la date en cours…" : ""}
+			</span>
+
 			<form.AppField name="reopensAt">
 				{(field) => (
 					<field.DateTimeField
@@ -60,18 +68,17 @@ export function EditReopensAtForm({ currentReopensAt }: EditReopensAtFormProps) 
 
 			<form.Subscribe selector={(state) => state.values.reopensAt !== initialValue}>
 				{(isDirty) => (
-					<div className="flex justify-end">
+					<div className="sm:flex sm:justify-end">
 						<Button
 							type="submit"
-							size="sm"
 							variant="outline"
 							disabled={isPending || !isDirty}
 							aria-busy={isPending}
 							onClick={() => triggerHaptic("light")}
-							className="min-h-11"
+							className="min-h-11 w-full transition-transform duration-150 active:scale-[0.98] sm:w-auto"
 						>
 							{isPending && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-							{isPending ? "Mise à jour..." : "Mettre à jour la date"}
+							{isPending ? "Mise à jour…" : "Mettre à jour la date"}
 						</Button>
 					</div>
 				)}

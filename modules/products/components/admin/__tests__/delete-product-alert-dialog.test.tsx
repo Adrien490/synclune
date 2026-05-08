@@ -243,11 +243,11 @@ describe("DeleteProductAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Supprimer");
 		});
 
-		it("shows 'Suppression...' label when pending", () => {
+		it("shows 'Suppression…' label when pending", () => {
 			mockDeleteProduct.isPending = true;
 			renderDialog();
 
-			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Suppression...");
+			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Suppression…");
 		});
 
 		it("shows loader icon when pending", () => {

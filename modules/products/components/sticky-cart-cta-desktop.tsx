@@ -113,7 +113,7 @@ export function StickyCartCTADesktop({
 						{/* Miniature (décorative) */}
 						{currentSku.images[0]?.url && (
 							<div
-								className="border-border bg-muted relative h-10 w-10 shrink-0 overflow-hidden rounded-lg border"
+								className="border-border bg-muted relative size-10 shrink-0 overflow-hidden rounded-lg border"
 								aria-hidden="true"
 							>
 								<Image
@@ -159,7 +159,7 @@ export function StickyCartCTADesktop({
 								"focus-visible:ring-primary focus-visible:ring-2 focus-visible:ring-offset-2",
 							)}
 						>
-							{isPending ? "Ajout..." : !isAvailable ? "Indisponible" : "Ajouter au panier"}
+							{isPending ? "Ajout…" : !isAvailable ? "Indisponible" : "Ajouter au panier"}
 						</Button>
 					</form>
 				</m.aside>

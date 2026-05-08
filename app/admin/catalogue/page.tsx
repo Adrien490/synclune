@@ -19,31 +19,31 @@ export default async function CatalogPage() {
 						title: "Bijoux",
 						description: "Gérer les bijoux et leurs variantes",
 						href: "/admin/catalogue/produits",
-						icon: <Package className="h-5 w-5" />,
+						icon: <Package className="size-5" />,
 					},
 					{
 						title: "Types de bijoux",
 						description: "Gérer les types de bijoux",
 						href: "/admin/catalogue/types-de-produits",
-						icon: <Tag className="h-5 w-5" />,
+						icon: <Tag className="size-5" />,
 					},
 					{
 						title: "Collections",
 						description: "Organiser les bijoux en collections",
 						href: "/admin/catalogue/collections",
-						icon: <Layers className="h-5 w-5" />,
+						icon: <Layers className="size-5" />,
 					},
 					{
 						title: "Couleurs",
 						description: "Gérer les couleurs disponibles",
 						href: "/admin/catalogue/couleurs",
-						icon: <Palette className="h-5 w-5" />,
+						icon: <Palette className="size-5" />,
 					},
 					{
 						title: "Matériaux",
 						description: "Gérer les matériaux (or, argent, plastique…)",
 						href: "/admin/catalogue/materiaux",
-						icon: <Gem className="h-5 w-5" />,
+						icon: <Gem className="size-5" />,
 					},
 				]}
 			/>

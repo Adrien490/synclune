@@ -7,7 +7,7 @@ import { Button } from "@/shared/components/ui/button";
 export default function ProductsListLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des bijoux" className="space-y-6">
-			<span className="sr-only">Chargement des bijoux...</span>
+			<span className="sr-only">Chargement des bijoux…</span>
 
 			<PageHeader
 				title="Produits"

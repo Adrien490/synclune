@@ -22,7 +22,7 @@ export function useAdjustStockForm(options: UseAdjustStockFormOptions) {
 		withCallbacks(
 			adjustSkuStock,
 			createToastCallbacks({
-				loadingMessage: "Ajustement du stock...",
+				loadingMessage: "Ajustement du stock…",
 				onSuccess: () => {
 					options.onSuccess?.();
 				},

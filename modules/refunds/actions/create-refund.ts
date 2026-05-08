@@ -25,11 +25,13 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { createRefundSchema } from "../schemas/refund.schemas";
 
 /** Active refund statuses that count toward refunded amounts/quantities */
+// SAFE: read-only frozen array of enum values, never mutated
+// react-doctor-disable-next-line react-doctor/server-no-mutable-module-state
 const ACTIVE_REFUND_STATUSES = [
 	RefundStatus.PENDING,
 	RefundStatus.APPROVED,
 	RefundStatus.COMPLETED,
-];
+] as const;
 
 /**
  * Crée un remboursement (statut PENDING)
@@ -110,7 +112,7 @@ export async function createRefund(
 							refundItems: {
 								where: {
 									refund: {
-										status: { in: ACTIVE_REFUND_STATUSES },
+										status: { in: [...ACTIVE_REFUND_STATUSES] },
 									},
 								},
 								select: {
@@ -121,7 +123,7 @@ export async function createRefund(
 					},
 					refunds: {
 						where: {
-							status: { in: ACTIVE_REFUND_STATUSES },
+							status: { in: [...ACTIVE_REFUND_STATUSES] },
 						},
 						select: {
 							amount: true,

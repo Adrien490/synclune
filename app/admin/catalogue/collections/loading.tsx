@@ -7,7 +7,7 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 export default function CollectionsManagementLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des collections">
-			<span className="sr-only">Chargement des collections...</span>
+			<span className="sr-only">Chargement des collections…</span>
 
 			<PageHeader
 				variant="compact"

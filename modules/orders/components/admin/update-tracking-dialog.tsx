@@ -108,7 +108,7 @@ function UpdateTrackingFormContent({
 		<>
 			<ResponsiveDialogHeader>
 				<ResponsiveDialogTitle className="flex items-center gap-2">
-					<Truck className="h-5 w-5" />
+					<Truck className="size-5" />
 					Modifier le suivi
 				</ResponsiveDialogTitle>
 				<ResponsiveDialogDescription>
@@ -196,7 +196,7 @@ function UpdateTrackingFormContent({
 					</div>
 
 					{/* Custom URL Mode Checkbox */}
-					<div className="bg-muted/20 flex items-start space-x-3 rounded-lg border p-3">
+					<div className="bg-muted/20 flex items-start gap-x-3 rounded-lg border p-3">
 						<Checkbox
 							id="customUrlMode"
 							checked={customUrlMode}
@@ -208,7 +208,7 @@ function UpdateTrackingFormContent({
 								htmlFor="customUrlMode"
 								className="flex cursor-pointer items-center gap-2 text-sm"
 							>
-								<Link2 className="h-4 w-4" />
+								<Link2 className="size-4" />
 								URL personnalisée
 							</Label>
 							<p className="text-muted-foreground text-xs">Saisir manuellement l'URL de suivi</p>
@@ -216,7 +216,7 @@ function UpdateTrackingFormContent({
 					</div>
 
 					{/* Send Email Checkbox */}
-					<div className="bg-muted/30 flex items-start space-x-3 rounded-lg border p-4">
+					<div className="bg-muted/30 flex items-start gap-x-3 rounded-lg border p-4">
 						<Checkbox
 							id="sendEmailCheckbox"
 							checked={sendEmail}
@@ -225,7 +225,7 @@ function UpdateTrackingFormContent({
 						/>
 						<div className="space-y-1 leading-none">
 							<Label htmlFor="sendEmailCheckbox" className="flex cursor-pointer items-center gap-2">
-								<Mail className="h-4 w-4" />
+								<Mail className="size-4" />
 								Envoyer un email au client
 							</Label>
 							<p className="text-muted-foreground text-xs">
@@ -241,7 +241,7 @@ function UpdateTrackingFormContent({
 						Annuler
 					</Button>
 					<Button type="submit" disabled={isPending || !trackingNumber.trim()}>
-						{isPending ? "Mise à jour..." : "Mettre à jour"}
+						{isPending ? "Mise à jour…" : "Mettre à jour"}
 					</Button>
 				</ResponsiveDialogFooter>
 			</form>

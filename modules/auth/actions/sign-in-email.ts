@@ -3,9 +3,8 @@
 import { auth } from "@/modules/auth/lib/auth";
 import { error, unauthorized, validateInput, safeFormGet } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
-import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { AUTH_ERROR_CODES } from "../constants/error-messages";
 import { signInEmailSchema } from "../schemas/auth.schemas";
 
@@ -43,10 +42,8 @@ export const signInEmail = async (
 		// Redirection après connexion réussie
 		redirect(callbackURL);
 	} catch (err: unknown) {
-		// Les erreurs de redirection Next.js doivent être propagées
-		if (isRedirectError(err)) {
-			throw err;
-		}
+		// Les erreurs de redirection/notFound Next.js doivent être propagées
+		unstable_rethrow(err);
 
 		// Gestion des erreurs spécifiques de Better Auth
 		if (err instanceof Error) {

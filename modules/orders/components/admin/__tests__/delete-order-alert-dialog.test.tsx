@@ -157,12 +157,12 @@ describe("DeleteOrderAlertDialog", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Suppression...' on submit button when isPending is true", () => {
+	it("shows 'Suppression…' on submit button when isPending is true", () => {
 		mockIsPending = true;
 
 		render(<DeleteOrderAlertDialog />);
 
-		expect(screen.getByText("Suppression...")).toBeInTheDocument();
+		expect(screen.getByText("Suppression…")).toBeInTheDocument();
 	});
 
 	it("disables cancel button when isPending is true", () => {

@@ -98,7 +98,7 @@ export function ReviewsLoadMore({
 						{isPending ? (
 							<>
 								<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
-								Chargement...
+								Chargement…
 							</>
 						) : (
 							"Voir plus d'avis"

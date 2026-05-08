@@ -49,7 +49,7 @@ describe("UploadProgress", () => {
 			expect(screen.getByText("Téléversement… 50%")).toBeTruthy();
 		});
 
-		it("affiche le spinner et 'Traitement...' quand isProcessing=true à 100%", () => {
+		it("affiche le spinner et 'Traitement…' quand isProcessing=true à 100%", () => {
 			const { container } = render(<UploadProgress progress={100} isProcessing />);
 
 			const status = screen.getByRole("status");

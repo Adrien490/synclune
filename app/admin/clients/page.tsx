@@ -123,7 +123,7 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 								mode="live"
 								size="sm"
 								paramName="search"
-								placeholder="Rechercher par nom, email..."
+								placeholder="Rechercher par nom, email…"
 								ariaLabel="Rechercher un client par nom ou email"
 								className="w-full"
 							/>

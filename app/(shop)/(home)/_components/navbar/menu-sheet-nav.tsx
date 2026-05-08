@@ -152,7 +152,7 @@ export function MenuSheetNav({
 					<div className="border-border/80 w-full border-t" />
 				</div>
 				<div className="bg-background/95 relative rounded-full px-3">
-					<Heart className="text-muted-foreground fill-muted-foreground/20 h-4 w-4" />
+					<Heart className="text-muted-foreground fill-muted-foreground/20 size-4" />
 				</div>
 			</m.div>
 

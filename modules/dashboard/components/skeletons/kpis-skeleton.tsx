@@ -20,9 +20,9 @@ export function KpiCardSkeleton() {
 	return (
 		<div className="min-w-[72vw] shrink-0 snap-start sm:min-w-0 sm:shrink">
 			<Card className={cn(CHART_STYLES.card, "min-h-45")}>
-				<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+				<CardHeader className="flex flex-row items-center justify-between pb-2">
 					<Skeleton className="h-4 w-24" />
-					<Skeleton className="h-10 w-10 rounded-full" />
+					<Skeleton className="size-10 rounded-full" />
 				</CardHeader>
 				<CardContent>
 					<Skeleton className="mb-2 h-10 w-36" />
@@ -43,9 +43,9 @@ export function KpiCardSkeleton() {
 function KpiCardCompactSkeleton() {
 	return (
 		<Card className={cn(CHART_STYLES.card, "min-h-25")}>
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<Skeleton className="h-4 w-28" />
-				<Skeleton className="h-6 w-6 rounded-full" />
+				<Skeleton className="size-6 rounded-full" />
 			</CardHeader>
 			<CardContent>
 				<Skeleton className="mb-1 h-7 w-20" />

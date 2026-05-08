@@ -33,7 +33,7 @@ export const useMarkAsShippedForm = (options: UseMarkAsShippedFormOptions) => {
 		withCallbacks(
 			markAsShipped,
 			createToastCallbacks({
-				loadingMessage: "Marquage comme expédiée...",
+				loadingMessage: "Marquage comme expédiée…",
 				onSuccess: handleComplete,
 				onWarning: handleComplete, // Fermer le dialog aussi en cas de warning
 			}),

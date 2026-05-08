@@ -439,7 +439,7 @@ describe("FilterSheetWrapper", () => {
 			render(<FilterSheetWrapper isPending>content</FilterSheetWrapper>);
 
 			const liveRegion = screen.getByRole("status");
-			expect(liveRegion).toHaveTextContent("Mise à jour des filtres en cours...");
+			expect(liveRegion).toHaveTextContent("Mise à jour des filtres en cours…");
 		});
 
 		it("live region is empty when not pending", () => {

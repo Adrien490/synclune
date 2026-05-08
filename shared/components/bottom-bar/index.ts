@@ -1,7 +1,6 @@
 export {
 	BottomBar,
 	ActiveDot,
-	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,

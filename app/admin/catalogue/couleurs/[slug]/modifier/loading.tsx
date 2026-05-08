@@ -3,7 +3,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 export default function EditColorLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement du formulaire">
-			<span className="sr-only">Chargement du formulaire...</span>
+			<span className="sr-only">Chargement du formulaire…</span>
 
 			<Skeleton className="mb-6 h-8 w-48" />
 
@@ -20,7 +20,7 @@ export default function EditColorLoading() {
 							))}
 						</div>
 						<div className="flex items-center gap-2">
-							<Skeleton className="h-10 w-10 rounded-md" />
+							<Skeleton className="size-10 rounded-md" />
 							<Skeleton className="h-10 flex-1" />
 						</div>
 					</div>

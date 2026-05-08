@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
@@ -26,7 +27,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(COLLECTIONS_SORT_LABELS).map(
  * Sous-header sticky (mobile, admin) pour la liste collections.
  * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
-export function CollectionsBottomBar() {
+function CollectionsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
@@ -110,5 +111,13 @@ export function CollectionsBottomBar() {
 				adapter={collectionsAdminQuickSearchAdapter}
 			/>
 		</>
+	);
+}
+
+export function CollectionsBottomBar() {
+	return (
+		<Suspense fallback={null}>
+			<CollectionsBottomBarInner />
+		</Suspense>
 	);
 }

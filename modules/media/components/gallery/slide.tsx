@@ -39,10 +39,10 @@ function VideoLoadingSpinner() {
 			aria-label="Chargement de la vidéo"
 		>
 			<div className="relative">
-				<div className="border-primary/20 h-10 w-10 rounded-full border-3" />
+				<div className="border-primary/20 size-10 rounded-full border-3" />
 				<div
 					className={cn(
-						"border-t-primary absolute inset-0 h-10 w-10 rounded-full border-3 border-transparent",
+						"border-t-primary absolute inset-0 size-10 rounded-full border-3 border-transparent",
 						!prefersReduced && "animate-spin",
 					)}
 				/>
@@ -73,7 +73,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 			}
 		>
 			<div className="bg-background/90 flex flex-col items-center gap-3 rounded-xl p-4 shadow-lg backdrop-blur-sm">
-				<CircleAlert className="text-muted-foreground h-8 w-8" aria-hidden="true" />
+				<CircleAlert className="text-muted-foreground size-8" aria-hidden="true" />
 				<p className="text-muted-foreground text-center text-sm">Impossible de charger la vidéo</p>
 				<button
 					type="button"
@@ -84,7 +84,7 @@ function VideoErrorFallback({ onRetry, poster }: VideoErrorFallbackProps) {
 					}}
 					className="bg-primary text-primary-foreground hover:bg-primary/90 flex min-h-11 touch-manipulation items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
 				>
-					<RefreshCw className="h-4 w-4" aria-hidden="true" />
+					<RefreshCw className="size-4" aria-hidden="true" />
 					Réessayer
 				</button>
 			</div>

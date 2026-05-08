@@ -67,17 +67,17 @@ export function ToggleReviewStatusAlertDialog() {
 					>
 						{isPending ? (
 							<>
-								<LoaderCircle className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
-								{isPublished ? "Masquage..." : "Publication..."}
+								<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
+								{isPublished ? "Masquage…" : "Publication…"}
 							</>
 						) : isPublished ? (
 							<>
-								<EyeOff className="mr-2 h-4 w-4" aria-hidden="true" />
+								<EyeOff className="mr-2 size-4" aria-hidden="true" />
 								Masquer
 							</>
 						) : (
 							<>
-								<Eye className="mr-2 h-4 w-4" aria-hidden="true" />
+								<Eye className="mr-2 size-4" aria-hidden="true" />
 								Publier
 							</>
 						)}

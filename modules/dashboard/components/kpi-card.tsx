@@ -51,7 +51,7 @@ const kpiCardVariants = cva(
  */
 const KPI_FLAT_MOBILE_OVERRIDES =
 	"border-0 bg-none from-transparent shadow-none rounded-none min-h-0 py-3 px-0 gap-1 " +
-	"md:bg-linear-to-br md:rounded-xl md:shadow-sm md:px-6 md:py-6 md:gap-2";
+	"md:bg-linear-to-br md:rounded-xl md:shadow-sm md:p-6 md:gap-2";
 
 interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	title: string;
@@ -106,9 +106,9 @@ export function KpiCard({
 }: KpiCardProps) {
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
-		size === "featured" && "w-10 h-10",
-		size === "default" && "w-8 h-8",
-		size === "compact" && "w-6 h-6",
+		size === "featured" && "size-10",
+		size === "default" && "size-8",
+		size === "compact" && "size-6",
 	);
 
 	// Unique id used to expose tooltip text to AT when the card is a link
@@ -145,18 +145,18 @@ export function KpiCard({
 			)}
 
 			<div
-				className="bg-secondary absolute top-2 right-2 h-1 w-1 rounded-full opacity-40 transition-opacity group-hover:opacity-60"
+				className="bg-secondary absolute top-2 right-2 size-1 rounded-full opacity-40 transition-opacity group-hover:opacity-60"
 				aria-hidden="true"
 			/>
 
 			{href && (
 				<ChevronRight
-					className="text-muted-foreground/70 group-hover:text-primary absolute right-3 bottom-3 h-4 w-4 transition-[transform,color] group-hover:translate-x-0.5"
+					className="text-muted-foreground/70 group-hover:text-primary absolute right-3 bottom-3 size-4 transition-[transform,color] group-hover:translate-x-0.5"
 					aria-hidden="true"
 				/>
 			)}
 
-			<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<div className="flex items-center gap-1.5">
 					<CardTitle className="text-muted-foreground text-sm font-medium">{title}</CardTitle>
 					{tooltip && !href && (
@@ -164,10 +164,10 @@ export function KpiCard({
 							<TooltipTrigger asChild>
 								<button
 									type="button"
-									className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex h-11 w-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+									className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
 									aria-label={`Info: ${title}`}
 								>
-									<Info className="h-3.5 w-3.5" aria-hidden="true" />
+									<Info className="size-3.5" aria-hidden="true" />
 								</button>
 							</TooltipTrigger>
 							<TooltipContent side="top" className="max-w-xs">
@@ -177,7 +177,7 @@ export function KpiCard({
 					)}
 					{tooltip && href && (
 						<>
-							<Info className="text-muted-foreground/60 h-3.5 w-3.5" aria-hidden="true" />
+							<Info className="text-muted-foreground/60 size-3.5" aria-hidden="true" />
 							<span id={tooltipDescriptionId} className="sr-only">
 								{tooltip}
 							</span>

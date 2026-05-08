@@ -151,7 +151,7 @@ export default async function AccessibilityPage() {
 									},
 								].map((item) => (
 									<div key={item.title} className="bg-muted/20 flex gap-3 rounded-lg border p-4">
-										<Check className="text-secondary mt-0.5 h-5 w-5 shrink-0" />
+										<Check className="text-secondary mt-0.5 size-5 shrink-0" />
 										<div>
 											<p className="text-foreground font-medium">{item.title}</p>
 											<p className="text-muted-foreground text-sm">{item.description}</p>
@@ -246,7 +246,7 @@ export default async function AccessibilityPage() {
 									"Navigation au clavier uniquement",
 								].map((tech) => (
 									<li key={tech} className="flex gap-2">
-										<Check className="text-secondary h-5 w-5 shrink-0" />
+										<Check className="text-secondary size-5 shrink-0" />
 										<span>{tech}</span>
 									</li>
 								))}

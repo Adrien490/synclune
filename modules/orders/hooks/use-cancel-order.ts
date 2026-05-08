@@ -14,7 +14,7 @@ export function useCancelOrder(options?: UseCancelOrderOptions) {
 		withCallbacks(
 			cancelOrder,
 			createToastCallbacks({
-				loadingMessage: "Annulation de la commande...",
+				loadingMessage: "Annulation de la commande…",
 				onSuccess: () => options?.onSuccess?.(),
 			}),
 		),

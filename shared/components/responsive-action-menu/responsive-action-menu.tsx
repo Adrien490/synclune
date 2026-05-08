@@ -317,9 +317,9 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 					}}
 				>
 					{item.pending ? (
-						<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+						<Loader2 className="size-4 animate-spin" aria-hidden="true" />
 					) : Icon ? (
-						<Icon className="h-4 w-4" aria-hidden="true" />
+						<Icon className="size-4" aria-hidden="true" />
 					) : null}
 					{item.label}
 				</Link>
@@ -342,9 +342,9 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 			}}
 		>
 			{item.pending ? (
-				<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+				<Loader2 className="size-4 animate-spin" aria-hidden="true" />
 			) : Icon ? (
-				<Icon className="h-4 w-4" aria-hidden="true" />
+				<Icon className="size-4" aria-hidden="true" />
 			) : null}
 			{item.label}
 		</DropdownMenuItem>

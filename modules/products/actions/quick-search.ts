@@ -9,13 +9,6 @@ import { PRODUCT_SEARCH_LIMIT } from "@/shared/lib/rate-limit-config";
 import { quickSearchProducts, type QuickSearchResult } from "../data/quick-search-products";
 import { sanitizeForLog } from "../utils/search-helpers";
 
-const EMPTY_RESULT: QuickSearchResult = {
-	kind: "success",
-	products: [],
-	suggestion: null,
-	totalCount: 0,
-};
-
 const quickSearchSchema = z.string().trim().max(100);
 
 export async function quickSearch(query: string): Promise<QuickSearchResult> {
@@ -25,7 +18,9 @@ export async function quickSearch(query: string): Promise<QuickSearchResult> {
 		if ("error" in rateCheck) return { kind: "rate-limited" };
 
 		const parsed = quickSearchSchema.safeParse(query);
-		if (!parsed.success) return EMPTY_RESULT;
+		if (!parsed.success) {
+			return { kind: "success", products: [], suggestion: null, totalCount: 0 };
+		}
 
 		const sanitizedQuery = parsed.data;
 

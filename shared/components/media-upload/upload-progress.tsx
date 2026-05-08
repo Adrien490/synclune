@@ -106,15 +106,12 @@ export function UploadProgress({
 				<span className="sr-only">{srText}</span>
 
 				{isComplete ? (
-					<div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 sm:h-5 sm:w-5">
-						<Check className="h-4 w-4 text-emerald-600 sm:h-3 sm:w-3" aria-hidden="true" />
+					<div className="flex size-7 items-center justify-center rounded-full bg-emerald-500/20 sm:size-5">
+						<Check className="size-4 text-emerald-600 sm:size-3" aria-hidden="true" />
 					</div>
 				) : (
 					<LoaderCircle
-						className={cn(
-							"text-primary h-7 w-7 sm:h-5 sm:w-5",
-							!shouldReduceMotion && "animate-spin",
-						)}
+						className={cn("text-primary size-7 sm:size-5", !shouldReduceMotion && "animate-spin")}
 						aria-hidden="true"
 					/>
 				)}
@@ -146,15 +143,12 @@ export function UploadProgress({
 			<span className="sr-only">{srText}</span>
 
 			{isComplete ? (
-				<div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20 sm:h-10 sm:w-10">
-					<Check className="h-6 w-6 text-emerald-600 sm:h-5 sm:w-5" aria-hidden="true" />
+				<div className="flex size-12 items-center justify-center rounded-full bg-emerald-500/20 sm:size-10">
+					<Check className="size-6 text-emerald-600 sm:size-5" aria-hidden="true" />
 				</div>
 			) : (
 				<LoaderCircle
-					className={cn(
-						"text-primary h-10 w-10 sm:h-8 sm:w-8",
-						!shouldReduceMotion && "animate-spin",
-					)}
+					className={cn("text-primary size-10 sm:size-8", !shouldReduceMotion && "animate-spin")}
 					aria-hidden="true"
 				/>
 			)}
@@ -210,7 +204,7 @@ export function UploadProgress({
 					className="h-11 min-w-11 gap-1.5 px-3"
 					aria-label="Annuler l'upload"
 				>
-					<X className="h-4 w-4" aria-hidden="true" />
+					<X className="size-4" aria-hidden="true" />
 					<span className="text-xs">Annuler</span>
 				</Button>
 			)}

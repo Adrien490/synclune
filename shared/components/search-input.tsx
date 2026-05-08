@@ -8,6 +8,8 @@ import {
 	useRef,
 	useState,
 	useTransition,
+	Suspense,
+	type ComponentProps,
 } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
@@ -95,9 +97,9 @@ const sizeStyles = {
  *
  * Optional `onSubmit` callback for side effects (e.g., save recent searches, close dialogs)
  */
-export function SearchInput({
+function SearchInputInner({
 	paramName,
-	placeholder = "Rechercher...",
+	placeholder = "Rechercher…",
 	mode = "submit",
 	size = "md",
 	debounceMs = 300,
@@ -412,7 +414,7 @@ export function SearchInput({
 			{/* Live region for screen readers */}
 			<span id={statusId} role="status" aria-live="polite" className="sr-only">
 				{isPending
-					? "Recherche en cours..."
+					? "Recherche en cours…"
 					: resultCount !== undefined
 						? resultCount === 0
 							? "Aucun resultat"
@@ -420,5 +422,13 @@ export function SearchInput({
 						: ""}
 			</span>
 		</form>
+	);
+}
+
+export function SearchInput(props: ComponentProps<typeof SearchInputInner>) {
+	return (
+		<Suspense fallback={null}>
+			<SearchInputInner {...props} />
+		</Suspense>
 	);
 }

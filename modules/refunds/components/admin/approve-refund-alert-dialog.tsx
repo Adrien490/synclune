@@ -70,7 +70,7 @@ export function ApproveRefundAlertDialog() {
 						</AlertDialogCancel>
 						<AlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="motion-safe:animate-spin" />}
-							{isPending ? "Approbation..." : "Approuver"}
+							{isPending ? "Approbation…" : "Approuver"}
 						</AlertDialogAction>
 					</AlertDialogFooter>
 				</form>

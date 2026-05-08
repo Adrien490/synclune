@@ -14,13 +14,6 @@ import type { sendPaymentFailedEmail } from "@/modules/emails/services/payment-e
 // SERVICE RESULT TYPES
 // ============================================================================
 
-/** Résultat de la synchronisation des remboursements Stripe */
-export interface RefundSyncResult {
-	processed: boolean;
-	isFullyRefunded: boolean;
-	totalRefunded: number;
-}
-
 /** Enregistrement de remboursement avec ses relations */
 export interface RefundRecord {
 	id: string;

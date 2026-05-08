@@ -1,6 +1,16 @@
 "use client";
 
-import { Check, Copy, DollarSign, Package, Pencil, Power, PowerOff, Trash2 } from "lucide-react";
+import {
+	Check,
+	Copy,
+	DollarSign,
+	Eye,
+	Package,
+	Pencil,
+	Power,
+	PowerOff,
+	Trash2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
@@ -72,6 +82,12 @@ export function useSkuActions({
 		{
 			key: "manage",
 			items: [
+				{
+					key: "view",
+					label: "Voir les détails",
+					icon: Eye,
+					href: `/admin/catalogue/produits/${productSlug}/variantes/${skuId}`,
+				},
 				{
 					key: "edit",
 					label: "Modifier",

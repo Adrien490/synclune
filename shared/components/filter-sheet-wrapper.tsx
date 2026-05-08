@@ -124,7 +124,7 @@ export function FilterSheetWrapper({
 					: "Filtres"
 			}
 		>
-			<Filter className="h-4 w-4" aria-hidden="true" />
+			<Filter className="size-4" aria-hidden="true" />
 			<span>Filtres</span>
 			{activeFiltersCount > 0 && (
 				<>
@@ -198,7 +198,7 @@ export function FilterSheetWrapper({
 									className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive min-h-11 shrink-0 text-xs transition-colors"
 									aria-label="Effacer tous les filtres"
 								>
-									<X className="mr-1 h-3 w-3" aria-hidden="true" />
+									<X className="mr-1 size-3" aria-hidden="true" />
 									<span className="hidden md:inline">Tout effacer</span>
 									<span className="md:hidden">Effacer</span>
 								</Button>
@@ -258,9 +258,7 @@ export function FilterSheetWrapper({
 									disabled={isPending}
 									className="h-11 w-full text-base"
 								>
-									{isPending && (
-										<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-									)}
+									{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
 									{applyButtonText}
 								</Button>
 							</div>
@@ -272,9 +270,7 @@ export function FilterSheetWrapper({
 									</Button>
 								</SheetClose>
 								<Button type="button" onClick={handleApply} disabled={isPending} className="flex-1">
-									{isPending && (
-										<LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />
-									)}
+									{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
 									{applyButtonText}
 									<Kbd className="text-muted-foreground/60 ml-1.5 hidden text-[10px] font-normal lg:inline">
 										⌘↵
@@ -284,7 +280,7 @@ export function FilterSheetWrapper({
 						</>
 					) : (
 						<Button type="button" onClick={handleApply} disabled={isPending} className="w-full">
-							{isPending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}
+							{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
 							{applyButtonText}
 						</Button>
 					)}
@@ -292,7 +288,7 @@ export function FilterSheetWrapper({
 
 				{/* Live region for screen readers */}
 				<div role="status" aria-live="polite" className="sr-only">
-					{isPending && "Mise à jour des filtres en cours..."}
+					{isPending && "Mise à jour des filtres en cours…"}
 				</div>
 			</SheetContent>
 

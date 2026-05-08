@@ -13,7 +13,7 @@ const {
 	mockError,
 	mockUnauthorized,
 	mockRedirect,
-	mockIsRedirectError,
+	mockUnstableRethrow,
 } = vi.hoisted(() => ({
 	mockAuth: {
 		api: {
@@ -26,14 +26,14 @@ const {
 	mockError: vi.fn(),
 	mockUnauthorized: vi.fn(),
 	mockRedirect: vi.fn(),
-	mockIsRedirectError: vi.fn(),
+	mockUnstableRethrow: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
-vi.mock("next/navigation", () => ({ redirect: mockRedirect }));
-vi.mock("next/dist/client/components/redirect-error", () => ({
-	isRedirectError: mockIsRedirectError,
+vi.mock("next/navigation", () => ({
+	redirect: mockRedirect,
+	unstable_rethrow: mockUnstableRethrow,
 }));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
@@ -76,7 +76,8 @@ describe("signInEmail", () => {
 		mockAuth.api.getSession.mockResolvedValue(null);
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.signInEmail.mockResolvedValue({ user: { id: "user-1" } });
-		mockIsRedirectError.mockReturnValue(false);
+		// Default: unstable_rethrow no-op (non-redirect errors)
+		mockUnstableRethrow.mockImplementation(() => undefined);
 
 		mockError.mockImplementation((msg: string) => ({ status: ActionStatus.ERROR, message: msg }));
 		mockUnauthorized.mockImplementation((msg: string) => ({
@@ -104,7 +105,9 @@ describe("signInEmail", () => {
 		mockRedirect.mockImplementation(() => {
 			throw redirectError;
 		});
-		mockIsRedirectError.mockReturnValue(true);
+		mockUnstableRethrow.mockImplementation((err: unknown) => {
+			if (err === redirectError) throw err;
+		});
 
 		await expect(signInEmail(undefined, validFormData)).rejects.toThrow("REDIRECT");
 		expect(mockRedirect).toHaveBeenCalledWith("/boutique");
@@ -132,7 +135,9 @@ describe("signInEmail", () => {
 		mockRedirect.mockImplementation(() => {
 			throw redirectError;
 		});
-		mockIsRedirectError.mockReturnValue(true);
+		mockUnstableRethrow.mockImplementation((err: unknown) => {
+			if (err === redirectError) throw err;
+		});
 		mockAuth.api.signInEmail.mockResolvedValue(null);
 
 		await expect(signInEmail(undefined, validFormData)).rejects.toThrow("REDIRECT");

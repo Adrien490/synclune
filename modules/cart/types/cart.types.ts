@@ -16,7 +16,7 @@ export type CartItem = NonNullable<GetCartReturn>["items"][0];
 // TYPES - CART SUMMARY
 // ============================================================================
 
-export type CartSummary = {
+type CartSummary = {
 	itemCount: number;
 	totalAmount: number;
 	hasItems: boolean;

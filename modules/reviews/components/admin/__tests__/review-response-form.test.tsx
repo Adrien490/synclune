@@ -223,6 +223,6 @@ describe("ReviewResponseForm", () => {
 
 	it("renders the textarea with placeholder", () => {
 		render(<ReviewResponseForm reviewId="rev-1" />);
-		expect(screen.getByPlaceholderText("Écrivez votre réponse...")).toBeInTheDocument();
+		expect(screen.getByPlaceholderText("Écrivez votre réponse…")).toBeInTheDocument();
 	});
 });

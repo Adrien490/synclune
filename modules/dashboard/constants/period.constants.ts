@@ -50,8 +50,6 @@ export type ComparisonMode = "previous" | "yoy";
 
 export const DEFAULT_COMPARISON_MODE: ComparisonMode = "previous";
 
-export const COMPARISON_MODE_SEARCH_PARAM = "comparison";
-
 export const YOY_COMPARISON_LABELS: Record<DashboardPeriod, string> = {
 	"7d": "vs N-1 (7j)",
 	"30d": "vs N-1 (30j)",

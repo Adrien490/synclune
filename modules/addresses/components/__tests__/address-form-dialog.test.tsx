@@ -87,7 +87,7 @@ vi.mock("@/shared/components/forms", () => ({
 vi.mock("@/shared/components/autocomplete", () => ({
 	Autocomplete: ({ error }: { error?: string }) => (
 		<div>
-			<input placeholder="Rechercher une adresse..." />
+			<input placeholder="Rechercher une adresse…" />
 			{error && <p>{error}</p>}
 		</div>
 	),
@@ -356,7 +356,7 @@ describe("AddressFormDialog", () => {
 			expect(screen.getByText("Limite de 10 adresses atteinte")).toBeInTheDocument();
 		});
 
-		it("shows 'Enregistrement...' in submit button when pending", () => {
+		it("shows 'Enregistrement…' in submit button when pending", () => {
 			setupOpenDialog();
 			mockUseCreateAddress.mockReturnValue({
 				state: undefined,
@@ -366,7 +366,7 @@ describe("AddressFormDialog", () => {
 
 			render(<AddressFormDialog />);
 
-			expect(screen.getByRole("button", { name: "Enregistrement..." })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: "Enregistrement…" })).toBeInTheDocument();
 		});
 
 		it("does not show any alert when state is undefined", () => {
