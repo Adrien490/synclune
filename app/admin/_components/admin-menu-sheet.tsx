@@ -6,6 +6,7 @@ import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
+	SheetHandle,
 	SheetHeader,
 	SheetTitle,
 } from "@/shared/components/ui/sheet";
@@ -131,11 +132,9 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 					<SheetDescription>Navigation du tableau de bord administrateur</SheetDescription>
 				</SheetHeader>
 
-				{/* Drag handle */}
-				<div
-					className="bg-muted-foreground/25 mx-auto mt-3 mb-2 h-1.5 w-10 shrink-0 rounded-full"
-					aria-hidden="true"
-				/>
+				{/* Drag handle Vaul — affordance toujours draggable malgré le ScrollFade
+				 * en dessous, sinon le swipe est intercepté par le scroll interne. */}
+				<SheetHandle className="mt-3 mb-2" />
 
 				{/* Search bar — filtre uniquement les pages de navigation.
 				 * Pour rechercher des commandes, produits, clients ou déclencher des

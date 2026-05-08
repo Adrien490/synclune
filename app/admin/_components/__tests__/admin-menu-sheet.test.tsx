@@ -117,6 +117,9 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	),
 	SheetTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
 	SheetDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
+	SheetHandle: ({ className }: { className?: string }) => (
+		<div data-testid="sheet-handle" className={className} />
+	),
 }));
 
 vi.mock("@/modules/auth/components/logout-alert-dialog", () => ({

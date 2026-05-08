@@ -117,6 +117,9 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
 	SheetDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
 	SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	SheetHandle: ({ className, ...props }: { className?: string; [key: string]: unknown }) => (
+		<div data-testid="sheet-handle" className={className} {...props} />
+	),
 }));
 
 // Mock ScrollFade
@@ -253,14 +256,14 @@ describe("MenuSheet", () => {
 			expect(mockHaptic).toHaveBeenCalledWith("light");
 		});
 
-		it("renders a decorative drag-handle pill (iOS grab affordance)", () => {
-			const { container } = render(<MenuSheet {...baseProps} />);
+		it("renders a functional Vaul drag-handle pill (iOS swipe-to-close affordance)", () => {
+			render(<MenuSheet {...baseProps} />);
 
-			const handle = container.querySelector('[aria-hidden="true"].rounded-full');
-			expect(handle).not.toBeNull();
-			expect(handle?.className).toMatch(/h-12/);
-			expect(handle?.className).toMatch(/w-1/);
-			expect(handle?.className).toMatch(/right-1/);
+			const handle = screen.getByTestId("sheet-handle");
+			expect(handle.getAttribute("aria-label")).toMatch(/glisser pour fermer/i);
+			expect(handle.className).toMatch(/h-12/);
+			expect(handle.className).toMatch(/w-1/);
+			expect(handle.className).toMatch(/right-1/);
 		});
 
 		it("renders an aria-live region announcing the menu and link count", () => {

@@ -10,6 +10,8 @@ import { Drawer as DrawerPrimitive } from "vaul";
 function Drawer({
 	open,
 	onOpenChange,
+	scrollLockTimeout = 800,
+	closeThreshold = 0.15,
 	...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
 	const { handleClose } = useBackButtonClose({
@@ -31,9 +33,22 @@ function Drawer({
 	const isInsideVaul = useIsInsideVaul();
 	const VaulRoot = isInsideVaul ? DrawerPrimitive.NestedRoot : DrawerPrimitive.Root;
 
+	// Défauts cohérents avec le wrapper Sheet :
+	// - scrollLockTimeout 800ms : évite les fermetures accidentelles juste
+	//   après un scroll sur mobile (Vaul default 100ms est trop court).
+	// - closeThreshold 0.15 : fraction de la hauteur du drawer à swiper pour
+	//   déclencher la fermeture. Vaul default 0.25 demande ~23% de viewport
+	//   sur grands drawers, trop pénible. 0.15 reste un geste volontaire.
 	return (
 		<VaulNestedProvider>
-			<VaulRoot data-slot="drawer" open={open} onOpenChange={wrappedOnOpenChange} {...props} />
+			<VaulRoot
+				data-slot="drawer"
+				open={open}
+				onOpenChange={wrappedOnOpenChange}
+				scrollLockTimeout={scrollLockTimeout}
+				closeThreshold={closeThreshold}
+				{...props}
+			/>
 		</VaulNestedProvider>
 	);
 }

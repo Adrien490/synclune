@@ -20,6 +20,7 @@ function Sheet({
 	open,
 	onOpenChange,
 	scrollLockTimeout = 800,
+	closeThreshold = 0.15,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Root> & {
 	direction?: SheetDirection;
@@ -29,6 +30,15 @@ function Sheet({
 	 * @default 800
 	 */
 	scrollLockTimeout?: number;
+	/**
+	 * Fraction de la hauteur du sheet à swiper pour déclencher la fermeture
+	 * (Vaul default 0.25 = ~23% de viewport sur sheet 92dvh, trop exigeant
+	 * sur grands drawers). 0.15 reste un geste délibéré (~14% viewport)
+	 * mais beaucoup plus confortable. La fermeture par velocity (0.4) reste
+	 * inchangée pour les flicks rapides.
+	 * @default 0.15
+	 */
+	closeThreshold?: number;
 }) {
 	// Gère uniquement le bouton retour du navigateur (mobile)
 	// Les autres fermetures (X, overlay, etc.) passent directement par onOpenChange
@@ -55,6 +65,7 @@ function Sheet({
 					open={open}
 					onOpenChange={onOpenChange}
 					scrollLockTimeout={scrollLockTimeout}
+					closeThreshold={closeThreshold}
 					noBodyStyles
 					{...props}
 				/>

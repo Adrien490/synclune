@@ -9,6 +9,7 @@ import {
 	Sheet,
 	SheetContent,
 	SheetDescription,
+	SheetHandle,
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
@@ -122,10 +123,12 @@ export function MenuSheet({
 					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md"
 					onOverlayClick={() => haptic("light")}
 				>
-					{/* Drag-handle pill (iOS-like grab affordance for swipe-to-close) */}
-					<div
-						aria-hidden="true"
-						className="bg-border/60 pointer-events-none absolute top-1/2 right-1 h-12 w-1 -translate-y-1/2 rounded-full"
+					{/* Drag-handle pill verticale (iOS-like) — Vaul Handle pour drag réel
+					 * malgré le ScrollFade en dessous. mx-auto/mt-* du composant base
+					 * sont overridés pour le placement absolute right-edge. */}
+					<SheetHandle
+						aria-label="Glisser pour fermer le menu"
+						className="absolute top-1/2 right-1 mx-0 mt-0 h-12 w-1 -translate-y-1/2 before:-inset-x-4 before:-inset-y-2"
 					/>
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">
 						<SheetTitle className="font-cursive flex h-9 items-center text-xl font-bold">
