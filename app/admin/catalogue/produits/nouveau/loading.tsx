@@ -1,212 +1,147 @@
-import { PageHeader } from "@/shared/components/page-header";
+import { PageHeaderSkeleton } from "@/shared/components/page-header-skeleton";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 const CARD_SHELL =
 	"lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md";
 const CARD_INNER = "px-0 sm:px-0 lg:px-6";
 
-/**
- * Skeleton wizard pour mobile
- * Structure: Barre de progression dots + Une section + Footer navigation
- * Step 1 = Visuels (nouvel ordre)
- */
-function MobileWizardSkeleton() {
+function CardSkeleton({
+	ariaLabel,
+	titleWidth,
+	children,
+}: {
+	ariaLabel: string;
+	titleWidth: string;
+	children: React.ReactNode;
+}) {
 	return (
-		<div className="flex min-h-0 flex-col">
-			{/* Barre de progression sticky */}
-			<div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b px-4 py-3 backdrop-blur-sm">
-				<div className="flex items-center justify-between gap-4">
-					{/* 3 dots de progression */}
-					<div className="flex gap-2">
-						<Skeleton className="size-3 rounded-full" />
-						<Skeleton className="size-3 rounded-full" />
-						<Skeleton className="size-3 rounded-full" />
-					</div>
-					{/* Label de l'étape */}
-					<Skeleton className="h-4 w-16" />
-				</div>
+		<div role="region" aria-label={ariaLabel} className={CARD_SHELL}>
+			<div className={CARD_INNER}>
+				<Skeleton className={`h-5 ${titleWidth}`} />
 			</div>
+			<div className={`${CARD_INNER} space-y-4`}>{children}</div>
+		</div>
+	);
+}
 
-			{/* Contenu - première étape (Visuels) */}
-			<div className="space-y-4 py-4">
-				{/* Header avec compteur */}
-				<div className="flex items-center justify-between">
-					<div className="space-y-1">
-						<Skeleton className="h-4 w-16" />
-						<Skeleton className="h-3 w-64" />
-					</div>
-					<Skeleton className="h-6 w-12 rounded-full" />
-				</div>
+function FieldSkeleton({
+	labelWidth = "w-24",
+	hintWidth,
+}: {
+	labelWidth?: string;
+	hintWidth?: string;
+}) {
+	return (
+		<div className="space-y-2">
+			<Skeleton className={`h-4 ${labelWidth}`} />
+			<Skeleton className="h-10 w-full" />
+			{hintWidth ? <Skeleton className={`h-3 ${hintWidth}`} /> : null}
+		</div>
+	);
+}
 
-				{/* Info box */}
-				<div className="flex items-center gap-3 rounded-lg border border-dashed p-3">
-					<Skeleton className="size-5" />
-					<Skeleton className="h-4 w-48" />
-				</div>
-
-				{/* Zone d'upload */}
-				<div className="rounded-xl border-2 border-dashed p-8">
-					<div className="flex flex-col items-center gap-4">
-						<Skeleton className="size-12 rounded-full" />
-						<div className="space-y-2 text-center">
-							<Skeleton className="mx-auto h-5 w-40" />
-							<Skeleton className="mx-auto h-3 w-52" />
-						</div>
-					</div>
-				</div>
-			</div>
-
-			{/* Footer navigation sticky */}
-			<div className="bg-background/95 sticky bottom-16 z-10 -mx-4 mt-auto border-t px-4 py-3 backdrop-blur-sm">
-				<Skeleton className="h-12 w-full" />
+function FieldWithAddButtonSkeleton({ labelWidth }: { labelWidth: string }) {
+	return (
+		<div className="space-y-2">
+			<Skeleton className={`h-4 ${labelWidth}`} />
+			<div className="flex gap-2">
+				<Skeleton className="h-10 flex-1" />
+				<Skeleton className="size-11 shrink-0 sm:size-9" />
 			</div>
 		</div>
 	);
 }
 
-/**
- * Skeleton desktop pour le formulaire complet
- * Structure: Champs en flux continu + Footer
- */
-function DesktopFormSkeleton() {
-	return (
-		<div className="space-y-6">
-			{/* Visuels — responsive: card visible uniquement sur lg+ */}
-			<div className={CARD_SHELL}>
-				<div className={`${CARD_INNER} space-y-2`}>
-					<Skeleton className="h-5 w-20" />
-					<Skeleton className="h-4 w-48" />
-				</div>
-				<div className={`${CARD_INNER} space-y-3`}>
-					{/* Header avec compteur */}
-					<div className="flex items-center justify-between">
-						<div className="space-y-1">
-							<Skeleton className="h-4 w-16" />
-							<Skeleton className="h-3 w-72" />
-						</div>
-						<Skeleton className="h-6 w-12 rounded-full" />
-					</div>
-
-					{/* Zone d'upload */}
-					<div className="rounded-lg border-2 border-dashed p-6">
-						<div className="flex flex-col items-center gap-3">
-							<Skeleton className="size-12 rounded-full" />
-							<Skeleton className="h-5 w-36" />
-							<Skeleton className="h-3 w-48" />
-						</div>
-					</div>
-				</div>
-			</div>
-
-			{/* Le bijou */}
-			<div className="space-y-6">
-				{/* Titre */}
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-28" />
-					<Skeleton className="h-10 w-full" />
-				</div>
-
-				{/* Description */}
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-24" />
-					<Skeleton className="h-24 w-full" />
-					<Skeleton className="ml-auto h-3 w-32" />
-				</div>
-
-				{/* Type + Collections */}
-				<div className="space-y-4">
-					<div className="space-y-2">
-						<Skeleton className="h-4 w-28" />
-						<Skeleton className="h-10 w-full" />
-					</div>
-					<div className="space-y-2">
-						<Skeleton className="h-4 w-24" />
-						<Skeleton className="h-10 w-full" />
-					</div>
-				</div>
-
-				{/* Séparateur attributs variante */}
-				<div className="space-y-1 border-t pt-4">
-					<div className="flex items-center gap-2">
-						<Skeleton className="h-4 w-36" />
-						<Skeleton className="size-3.5 rounded-full" />
-					</div>
-					<Skeleton className="h-3 w-52" />
-				</div>
-
-				{/* Couleur */}
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-20" />
-					<Skeleton className="h-10 w-full" />
-				</div>
-
-				{/* Matériau + Taille */}
-				<div className="space-y-4">
-					<div className="space-y-2">
-						<Skeleton className="h-4 w-20" />
-						<Skeleton className="h-10 w-full" />
-					</div>
-					<div className="space-y-2">
-						<Skeleton className="h-4 w-16" />
-						<Skeleton className="h-10 w-full" />
-					</div>
-				</div>
-			</div>
-
-			{/* Prix et stock */}
-			<div className="space-y-6">
-				{/* Prix de vente */}
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-32" />
-					<Skeleton className="h-10 w-full" />
-					<Skeleton className="h-3 w-40" />
-				</div>
-
-				{/* Ancien prix (barré) */}
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-40" />
-					<Skeleton className="h-10 w-full" />
-					<Skeleton className="h-3 w-56" />
-				</div>
-
-				{/* Stock */}
-				<div className="space-y-2">
-					<Skeleton className="h-4 w-32" />
-					<Skeleton className="h-10 w-full" />
-					<Skeleton className="h-3 w-52" />
-				</div>
-			</div>
-
-			{/* Sticky footer (mirrors CreateProductForm submit bar) */}
-			<div className="bg-background/95 sticky bottom-0 z-10 -mx-6 border-t px-6 py-3 backdrop-blur-md">
-				<div className="flex justify-end">
-					<Skeleton className="h-11 w-full sm:w-56" />
-				</div>
-			</div>
-		</div>
-	);
-}
-
-/**
- * Loading skeleton adaptatif pour la page de création de produit
- * - Mobile: Wizard avec une étape à la fois (Step 1 = Visuels)
- * - Desktop: Formulaire complet (Visuels en haut, puis grille)
- */
 export default function CreateProductLoading() {
 	return (
-		<div role="status" aria-busy="true" aria-label="Chargement du formulaire">
+		<div role="status" aria-busy="true" aria-label="Chargement du formulaire" className="space-y-6">
 			<span className="sr-only">Chargement du formulaire…</span>
 
-			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
+			<PageHeaderSkeleton variant="compact" hasDescription={false} className="hidden md:block" />
 
-			{/* Mobile: Wizard skeleton */}
-			<div className="md:hidden">
-				<MobileWizardSkeleton />
-			</div>
+			<div className="space-y-6">
+				<div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start">
+					{/* Main column — Médias + Informations */}
+					<div className="space-y-6 lg:col-span-2">
+						{/* Médias */}
+						<CardSkeleton ariaLabel="Médias du bijou" titleWidth="w-20">
+							<div className="space-y-3">
+								<div className="flex items-center justify-between gap-3">
+									<Skeleton className="h-3 w-64 max-w-[60%]" />
+									<Skeleton className="h-6 w-12 rounded-full" />
+								</div>
 
-			{/* Desktop: Formulaire complet */}
-			<div className="hidden md:block">
-				<DesktopFormSkeleton />
+								{/* Info banner empty state */}
+								<div className="flex items-center gap-3 rounded-lg border border-dashed p-3">
+									<Skeleton className="size-5 shrink-0" />
+									<Skeleton className="h-4 w-48" />
+								</div>
+
+								{/* Upload trigger button */}
+								<Skeleton className="h-11 w-full rounded-md" />
+								<Skeleton className="mx-auto h-3 w-56" />
+							</div>
+						</CardSkeleton>
+
+						{/* Informations */}
+						<CardSkeleton ariaLabel="Informations générales du bijou" titleWidth="w-32">
+							<FieldSkeleton labelWidth="w-28" />
+
+							{/* Description (textarea + counter) */}
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-24" />
+								<Skeleton className="h-24 w-full" />
+								<Skeleton className="ml-auto h-3 w-24" />
+							</div>
+
+							{/* Type (select + plus button) */}
+							<FieldWithAddButtonSkeleton labelWidth="w-24" />
+
+							{/* Collections (multi-select + hint) */}
+							<FieldSkeleton labelWidth="w-24" hintWidth="w-64" />
+						</CardSkeleton>
+					</div>
+
+					{/* Sidebar — 4 cards */}
+					<div className="space-y-6">
+						{/* Variante */}
+						<CardSkeleton ariaLabel="Variante initiale" titleWidth="w-24">
+							<FieldWithAddButtonSkeleton labelWidth="w-20" />
+							<FieldWithAddButtonSkeleton labelWidth="w-24" />
+							<FieldSkeleton labelWidth="w-16" />
+						</CardSkeleton>
+
+						{/* Tarification */}
+						<CardSkeleton ariaLabel="Tarification" titleWidth="w-28">
+							<FieldSkeleton labelWidth="w-32" hintWidth="w-40" />
+							<FieldSkeleton labelWidth="w-40" hintWidth="w-56" />
+						</CardSkeleton>
+
+						{/* Stock */}
+						<CardSkeleton ariaLabel="Stock" titleWidth="w-20">
+							<FieldSkeleton labelWidth="w-32" hintWidth="w-52" />
+						</CardSkeleton>
+
+						{/* Statut */}
+						<CardSkeleton ariaLabel="Statut du bijou" titleWidth="w-20">
+							<div className="space-y-2">
+								<Skeleton className="h-4 w-20" />
+								<div className="space-y-2">
+									<Skeleton className="h-6 w-32" />
+									<Skeleton className="h-6 w-32" />
+								</div>
+								<Skeleton className="h-3 w-72 max-w-full" />
+							</div>
+						</CardSkeleton>
+					</div>
+				</div>
+
+				{/* Sticky footer — mirror AdminFormFooter */}
+				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+					<div className="flex justify-end">
+						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-56" />
+					</div>
+				</div>
 			</div>
 		</div>
 	);

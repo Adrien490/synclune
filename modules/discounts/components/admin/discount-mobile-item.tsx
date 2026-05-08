@@ -1,6 +1,6 @@
 "use client";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -47,13 +47,17 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 	const { sections } = useDiscountActions({ discount });
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/marketing/discounts/${discount.id}/modifier`}
-			ariaLabel={`Code promo ${discount.code}`}
-			sections={sections}
-			menuTitle="Actions"
-			menuDescription={discount.code}
-			className="text-left"
+		<MobileSelectableCard
+			id={discount.id}
+			itemLabel={`Code promo ${discount.code}`}
+			longPressProps={{
+				href: `/admin/marketing/discounts/${discount.id}/modifier`,
+				ariaLabel: `Code promo ${discount.code}`,
+				sections,
+				menuTitle: "Actions",
+				menuDescription: discount.code,
+				className: "text-left",
+			}}
 		>
 			<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte code promo">
 				<ItemContent className="min-w-0">
@@ -74,6 +78,6 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

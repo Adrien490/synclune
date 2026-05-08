@@ -7,7 +7,7 @@ import { useReducedMotion } from "motion/react";
 export function DiscountsMobileListSkeleton() {
 	const reduced = useReducedMotion();
 	return (
-		<div className="md:hidden">
+		<div className="pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<SkeletonGroup label="Chargement des codes promo">
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (

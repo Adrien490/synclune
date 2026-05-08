@@ -42,6 +42,7 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 	if (refunds.length === 0) {
 		return (
 			<TableEmptyState
+				className="hidden md:block"
 				icon={ReceiptText}
 				title="Aucun remboursement trouvé"
 				description="Aucun remboursement ne correspond aux critères de recherche."

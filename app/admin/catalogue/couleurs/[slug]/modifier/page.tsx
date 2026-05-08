@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditColorForm } from "@/modules/colors/components/admin/edit-color-form";
 import { getColorBySlug } from "@/modules/colors/data/get-color";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 interface EditColorPageProps {
 	params: Promise<{ slug: string }>;
@@ -23,12 +24,13 @@ export default async function EditColorPage({ params }: EditColorPageProps) {
 	if (!color) notFound();
 
 	return (
-		<>
-			<h1 className="mb-6 hidden text-2xl font-semibold md:block">{color.name}</h1>
+		<div className="space-y-4">
+			<AdminDetailBackLink href={`/admin/catalogue/couleurs/${slug}`} label="Retour à la couleur" />
+			<h1 className="hidden text-2xl font-semibold md:block">{color.name}</h1>
 			<EditColorForm
 				color={{ id: color.id, name: color.name, slug: color.slug, hex: color.hex }}
 				className="max-w-2xl"
 			/>
-		</>
+		</div>
 	);
 }

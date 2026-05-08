@@ -1,24 +1,40 @@
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
-import { Skeleton } from "@/shared/components/ui/skeleton";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function ProductVariantsLoading() {
 	return (
 		<div role="status" aria-busy="true" aria-label="Chargement des variantes" className="space-y-6">
 			<span className="sr-only">Chargement des variantes…</span>
 
-			{/* Breadcrumb (desktop) — réserve la hauteur même si le slug n'est pas connu */}
-			<div className="hidden md:flex md:items-center md:gap-2">
-				<Skeleton className="h-4 w-12" />
-				<span className="text-muted-foreground">/</span>
-				<Skeleton className="h-4 w-20" />
-				<span className="text-muted-foreground">/</span>
-				<Skeleton className="h-4 w-32" />
-				<span className="text-muted-foreground">/</span>
-				<Skeleton className="h-4 w-24" />
-			</div>
+			<Breadcrumb className="hidden md:block">
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/catalogue/produits">Produits</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<Skeleton className="h-4 w-32" />
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<Skeleton className="h-4 w-20" />
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
 
 			<PageHeader
 				variant="compact"

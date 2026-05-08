@@ -12,13 +12,12 @@ export default function MaterialsManagementLoading() {
 			<PageHeader
 				variant="compact"
 				title="Matériaux"
-				description="Gérez les matériaux disponibles pour vos créations"
 				actions={<Skeleton className="h-10 w-40" />}
 				className="hidden md:block"
 			/>
 
 			<div className="space-y-6">
-				<ToolbarSkeleton selectCount={1} buttonCount={1} />
+				<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 
 				<div className="min-h-[1px]" aria-hidden="true" />
 

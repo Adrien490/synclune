@@ -3,19 +3,31 @@ import { FolderOpen } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { BulkSelectionProvider } from "@/shared/components/data-table";
+import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import {
+	MobileSelectionBottomBar,
+	MobileSelectionHeader,
+} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
+import { CollectionsBulkActionsBar } from "./collections-bulk-actions-bar";
 import { CreateCollectionButton } from "./create-collection-button";
 import { CollectionMobileItem } from "./collection-mobile-item";
 
 interface CollectionsMobileListProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
 	perPage: number;
+	hasActiveFilters?: boolean;
 }
 
-export function CollectionsMobileList({ collectionsPromise, perPage }: CollectionsMobileListProps) {
+export function CollectionsMobileList({
+	collectionsPromise,
+	perPage,
+	hasActiveFilters,
+}: CollectionsMobileListProps) {
 	const { collections, pagination } = use(collectionsPromise);
 
 	if (collections.length === 0) {
@@ -24,32 +36,50 @@ export function CollectionsMobileList({ collectionsPromise, perPage }: Collectio
 				<TableEmptyState
 					icon={FolderOpen}
 					title="Aucune collection trouvee"
-					description="Aucune collection ne correspond aux criteres de recherche."
-					actionElement={<CreateCollectionButton />}
+					description={
+						hasActiveFilters
+							? "Aucune collection ne correspond aux criteres de recherche."
+							: "Aucune collection pour l'instant."
+					}
+					actionElement={
+						hasActiveFilters ? (
+							<EmptyResetFiltersAction href="/admin/catalogue/collections" />
+						) : (
+							<CreateCollectionButton />
+						)
+					}
 				/>
 			</div>
 		);
 	}
 
-	return (
-		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={collections.length} singular="collection" plural="collections" />
-			<ItemGroup aria-label="Collections" className="gap-2">
-				{collections.map((collection) => (
-					<div key={collection.id} role="listitem">
-						<CollectionMobileItem collection={collection} />
-					</div>
-				))}
-			</ItemGroup>
+	const pageItemIds = collections.map((c) => c.id);
 
-			<CursorPagination
-				perPage={perPage}
-				hasNextPage={pagination.hasNextPage}
-				hasPreviousPage={pagination.hasPreviousPage}
-				currentPageSize={collections.length}
-				nextCursor={pagination.nextCursor}
-				prevCursor={pagination.prevCursor}
-			/>
-		</div>
+	return (
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+				<MobileSelectionHeader itemsLabel={{ singular: "collection", plural: "collections" }} />
+				<AdminListLiveCount count={collections.length} singular="collection" plural="collections" />
+				<ItemGroup aria-label="Collections" className="gap-2">
+					{collections.map((collection) => (
+						<div key={collection.id} role="listitem">
+							<CollectionMobileItem collection={collection} />
+						</div>
+					))}
+				</ItemGroup>
+
+				<CursorPagination
+					perPage={perPage}
+					hasNextPage={pagination.hasNextPage}
+					hasPreviousPage={pagination.hasPreviousPage}
+					currentPageSize={collections.length}
+					nextCursor={pagination.nextCursor}
+					prevCursor={pagination.prevCursor}
+				/>
+			</div>
+			<MobileSelectionBottomBar>
+				<CollectionsBulkActionsBar presentation="bottom-bar" />
+			</MobileSelectionBottomBar>
+		</BulkSelectionProvider>
 	);
 }

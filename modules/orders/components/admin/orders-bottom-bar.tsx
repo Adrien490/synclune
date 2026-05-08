@@ -4,17 +4,13 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/order.constants";
 import { OrdersFilterDrawer } from "./orders-filter-drawer";
-import { ordersAdminQuickSearchAdapter } from "./orders-quick-search-adapter";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -88,10 +84,11 @@ function OrdersBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={ordersAdminQuickSearchAdapter}
+				placeholder="Numéro, email, client…"
+				ariaLabel="Rechercher une commande par numéro, email ou client"
 			/>
 
 			<OrdersFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

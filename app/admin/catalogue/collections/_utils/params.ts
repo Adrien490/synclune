@@ -3,42 +3,45 @@ import type { GetCollectionsParams } from "@/modules/collections/data/get-collec
 import { getFirstParam } from "@/shared/utils/params";
 import type { CollectionsSearchParams } from "../page";
 
+const VALID_STATUSES = new Set<string>(Object.values(CollectionStatus));
+
 export const parseFilters = (params: CollectionsSearchParams): GetCollectionsParams["filters"] => {
 	let hasProducts: boolean | undefined = undefined;
-	let status: CollectionStatus | undefined = undefined;
+	const statuses: CollectionStatus[] = [];
 
 	Object.entries(params).forEach(([key, value]) => {
-		if (key.startsWith("filter_")) {
-			const filterKey = key.replace("filter_", "");
-			const filterValue = getFirstParam(value);
+		if (!key.startsWith("filter_")) return;
 
-			if (filterValue) {
-				switch (filterKey) {
-					case "hasProducts":
-						hasProducts = filterValue === "true";
-						break;
+		const filterKey = key.replace("filter_", "");
+
+		if (filterKey === "status") {
+			const raw = Array.isArray(value) ? value : [value];
+			raw.forEach((v) => {
+				if (typeof v === "string" && VALID_STATUSES.has(v)) {
+					statuses.push(v as CollectionStatus);
 				}
-			}
+			});
+			return;
+		}
+
+		const filterValue = getFirstParam(value);
+		if (!filterValue) return;
+
+		if (filterKey === "hasProducts") {
+			hasProducts = filterValue === "true";
 		}
 	});
 
-	// Parse status from direct param (not filter_), undefined = tous les statuts
-	const statusParam = getFirstParam(params.status);
-	if (statusParam && Object.values(CollectionStatus).includes(statusParam as CollectionStatus)) {
-		status = statusParam as CollectionStatus;
-	}
-	// Pas de défaut - undefined = affiche tous les statuts
+	const uniqueStatuses = Array.from(new Set(statuses));
+	const status =
+		uniqueStatuses.length === 0
+			? undefined
+			: uniqueStatuses.length === 1
+				? uniqueStatuses[0]
+				: uniqueStatuses;
 
 	return {
 		hasProducts,
 		status,
 	};
-};
-
-export const parseStatus = (params: CollectionsSearchParams): CollectionStatus | undefined => {
-	const statusParam = getFirstParam(params.status);
-	if (statusParam && Object.values(CollectionStatus).includes(statusParam as CollectionStatus)) {
-		return statusParam as CollectionStatus;
-	}
-	return undefined; // Pas de défaut = affiche tous les statuts
 };

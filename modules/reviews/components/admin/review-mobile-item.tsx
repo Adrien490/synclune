@@ -3,7 +3,7 @@
 import { ReviewStatus } from "@/app/generated/prisma/enums";
 import { CircleCheck, EyeOff } from "lucide-react";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { RatingStars } from "@/shared/components/rating-stars";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
@@ -21,13 +21,17 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 	const { sections } = useReviewActions({ review });
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/marketing/avis/${review.id}`}
-			ariaLabel={`Avis sur ${review.product.title}`}
-			sections={sections}
-			menuTitle="Actions avis"
-			menuDescription={review.product.title}
-			className="rounded-md text-left"
+		<MobileSelectableCard
+			id={review.id}
+			itemLabel={`Avis sur ${review.product.title}`}
+			longPressProps={{
+				href: `/admin/marketing/avis/${review.id}`,
+				ariaLabel: `Avis sur ${review.product.title}`,
+				sections,
+				menuTitle: "Actions avis",
+				menuDescription: review.product.title,
+				className: "rounded-md text-left",
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3" aria-roledescription="carte avis">
 				<ItemContent className="min-w-0">
@@ -64,6 +68,6 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

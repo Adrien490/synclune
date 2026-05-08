@@ -56,6 +56,7 @@ export async function CollectionsDataTable({
 	if (collections.length === 0) {
 		return (
 			<TableEmptyState
+				className="hidden md:block"
 				icon={FolderOpen}
 				title="Aucune collection trouvée"
 				description="Aucune collection ne correspond aux criteres de recherche."

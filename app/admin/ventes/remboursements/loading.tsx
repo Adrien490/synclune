@@ -11,7 +11,7 @@ export default function RefundsAdminLoading() {
 			<PageHeader variant="compact" title="Remboursements" className="hidden md:block" />
 
 			<div className="space-y-6">
-				<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />
+				<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 
 				<RefundsMobileListSkeleton />
 				<RefundsDataTableSkeleton />

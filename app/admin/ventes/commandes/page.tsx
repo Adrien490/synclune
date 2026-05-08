@@ -119,7 +119,13 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 
 				{/* Liste mobile */}
 				<Suspense fallback={<OrdersMobileListSkeleton />}>
-					<OrdersMobileList ordersPromise={ordersPromise} perPage={perPage} />
+					<OrdersMobileList
+						ordersPromise={ordersPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

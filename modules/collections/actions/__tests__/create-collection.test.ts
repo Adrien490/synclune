@@ -162,6 +162,15 @@ describe("createCollection", () => {
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
+	it("should return id and name in success data (for on-the-fly creation)", async () => {
+		const result = await createCollection(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect((result as { data?: { id?: string; name?: string } }).data).toMatchObject({
+			id: "col-1",
+			name: "Nouvelle Collection",
+		});
+	});
+
 	it("should call handleActionError on unexpected exception", async () => {
 		mockPrisma.$transaction.mockRejectedValue(new Error("DB crash"));
 		const result = await createCollection(undefined, validFormData);

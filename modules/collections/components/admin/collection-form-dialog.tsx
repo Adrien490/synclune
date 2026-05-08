@@ -15,6 +15,7 @@ export const COLLECTION_DIALOG_ID = "collection-form";
 
 interface CollectionDialogData extends Record<string, unknown> {
 	collection?: EditableCollection;
+	onCreated?: (id: string) => void;
 }
 
 export function CollectionFormDialog() {
@@ -50,7 +51,11 @@ export function CollectionFormDialog() {
 						redirectOnSuccess={false}
 					/>
 				) : (
-					<CreateCollectionForm onSuccess={close} redirectOnSuccess={false} />
+					<CreateCollectionForm
+						onSuccess={close}
+						onCreated={data?.onCreated}
+						redirectOnSuccess={false}
+					/>
 				)}
 			</ResponsiveDialogContent>
 		</ResponsiveDialog>

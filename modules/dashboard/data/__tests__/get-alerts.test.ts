@@ -4,19 +4,15 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockRefundCount, mockDisputeCount, mockProductSkuCount, mockCacheDefault } = vi.hoisted(
-	() => ({
-		mockRefundCount: vi.fn(),
-		mockDisputeCount: vi.fn(),
-		mockProductSkuCount: vi.fn(),
-		mockCacheDefault: vi.fn(),
-	}),
-);
+const { mockRefundCount, mockProductSkuCount, mockCacheDefault } = vi.hoisted(() => ({
+	mockRefundCount: vi.fn(),
+	mockProductSkuCount: vi.fn(),
+	mockCacheDefault: vi.fn(),
+}));
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
 		refund: { count: mockRefundCount },
-		dispute: { count: mockDisputeCount },
 		productSku: { count: mockProductSkuCount },
 	},
 }));
@@ -41,12 +37,6 @@ vi.mock("@/modules/dashboard/constants/cache", () => ({
 }));
 
 vi.mock("@/app/generated/prisma/client", () => ({
-	DisputeStatus: {
-		NEEDS_RESPONSE: "NEEDS_RESPONSE",
-		UNDER_REVIEW: "UNDER_REVIEW",
-		WON: "WON",
-		LOST: "LOST",
-	},
 	ProductStatus: { PUBLIC: "PUBLIC", DRAFT: "DRAFT", ARCHIVED: "ARCHIVED" },
 	RefundStatus: {
 		PENDING: "PENDING",
@@ -66,20 +56,17 @@ describe("fetchDashboardAlerts", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 		mockRefundCount.mockResolvedValue(0);
-		mockDisputeCount.mockResolvedValue(0);
 		mockProductSkuCount.mockResolvedValue(0);
 	});
 
 	it("should return all alert counts", async () => {
 		mockRefundCount.mockResolvedValue(3);
-		mockDisputeCount.mockResolvedValue(1);
 		mockProductSkuCount.mockResolvedValue(5);
 
 		const result = await fetchDashboardAlerts();
 
 		expect(result).toEqual({
 			pendingRefunds: 3,
-			activeDisputes: 1,
 			lowStockSkus: 5,
 		});
 	});
@@ -89,7 +76,6 @@ describe("fetchDashboardAlerts", () => {
 
 		expect(result).toEqual({
 			pendingRefunds: 0,
-			activeDisputes: 0,
 			lowStockSkus: 0,
 		});
 	});
@@ -99,14 +85,6 @@ describe("fetchDashboardAlerts", () => {
 
 		expect(mockRefundCount).toHaveBeenCalledWith({
 			where: { status: "PENDING" },
-		});
-	});
-
-	it("should query disputes with NEEDS_RESPONSE and UNDER_REVIEW statuses", async () => {
-		await fetchDashboardAlerts();
-
-		expect(mockDisputeCount).toHaveBeenCalledWith({
-			where: { status: { in: ["NEEDS_RESPONSE", "UNDER_REVIEW"] } },
 		});
 	});
 
@@ -128,11 +106,10 @@ describe("fetchDashboardAlerts", () => {
 		expect(mockCacheDefault).toHaveBeenCalledWith("dashboard-alerts");
 	});
 
-	it("should make all 3 queries in parallel", async () => {
+	it("should make 2 queries in parallel", async () => {
 		await fetchDashboardAlerts();
 
 		expect(mockRefundCount).toHaveBeenCalledTimes(1);
-		expect(mockDisputeCount).toHaveBeenCalledTimes(1);
 		expect(mockProductSkuCount).toHaveBeenCalledTimes(1);
 	});
 });

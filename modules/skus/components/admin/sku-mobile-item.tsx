@@ -3,7 +3,7 @@
 import { Package } from "lucide-react";
 import Image from "next/image";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
@@ -42,14 +42,18 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	});
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`}
-			ariaLabel={`Variante ${sku.sku}`}
-			sections={sections}
-			menuTitle="Actions variante"
-			menuDescription={sku.sku}
-			className="text-left"
-			viewTransitionName={`sku-card-${sku.id}`}
+		<MobileSelectableCard
+			id={sku.id}
+			itemLabel={`Variante ${sku.sku}`}
+			longPressProps={{
+				href: `/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`,
+				ariaLabel: `Variante ${sku.sku}`,
+				sections,
+				menuTitle: "Actions variante",
+				menuDescription: sku.sku,
+				className: "text-left",
+				viewTransitionName: `sku-card-${sku.id}`,
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">
 				{primaryImage ? (
@@ -70,7 +74,7 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 							alt=""
 							width={48}
 							height={48}
-							sizes="48px"
+							sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 							className="size-12 shrink-0 rounded-md border object-cover"
 							{...(primaryImage.blurDataUrl
 								? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
@@ -125,6 +129,6 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

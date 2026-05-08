@@ -26,7 +26,7 @@ export function DeleteProductAlertDialog() {
 			dialogId={DELETE_PRODUCT_DIALOG_ID}
 			action={action}
 			isPending={isPending}
-			hiddenFields={[{ name: "id", dataKey: "productId" }]}
+			hiddenFields={[{ name: "productId", dataKey: "productId" }]}
 			description={(data) => (
 				<div className="space-y-3">
 					<p>

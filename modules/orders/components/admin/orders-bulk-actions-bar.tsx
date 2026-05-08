@@ -5,25 +5,32 @@ import { Loader2, XCircle } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
 
 import { bulkCancelOrders } from "../../actions/bulk-cancel-orders";
 
-export function OrdersBulkActionsBar() {
+interface OrdersBulkActionsBarProps {
+	presentation?: "inline" | "bottom-bar";
+}
+
+export function OrdersBulkActionsBar({ presentation = "inline" }: OrdersBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [state, action, isPending] = useActionState(bulkCancelOrders, undefined);
+	const noSelection = selectedCount === 0;
+	const isBottomBar = presentation === "bottom-bar";
+	const buttonSize = isBottomBar ? "default" : "sm";
 
 	useEffect(() => {
 		if (!state) return;
@@ -45,40 +52,46 @@ export function OrdersBulkActionsBar() {
 
 	return (
 		<>
-			<BulkSelectionToolbar itemsLabel={{ singular: "commande", plural: "commandes" }}>
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "commande", plural: "commandes" }}
+				presentation={presentation}
+				aria-busy={isPending}
+			>
 				<Button
 					type="button"
 					variant="destructive"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setConfirmOpen(true)}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<XCircle className="size-4" aria-hidden="true" />
 					Annuler
 				</Button>
 			</BulkSelectionToolbar>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={confirmOpen}
 				onOpenChange={(next) => {
 					if (!next && !isPending) setConfirmOpen(false);
 				}}
 			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							Annuler {selectedCount} commande{selectedCount > 1 ? "s" : ""} ?
-						</AlertDialogTitle>
-						<AlertDialogDescription>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							Seules les commandes <strong>en attente non payées</strong> seront annulées. Le stock
 							sera restauré, les codes promo libérés, et un email d'annulation envoyé à chaque
 							client. Les commandes déjà payées ou expédiées seront ignorées et devront être
 							annulées individuellement.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isPending}>Conserver</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>
+							Conserver
+						</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="button"
 							onClick={handleConfirm}
 							disabled={isPending}
@@ -87,10 +100,10 @@ export function OrdersBulkActionsBar() {
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							Annuler les commandes
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

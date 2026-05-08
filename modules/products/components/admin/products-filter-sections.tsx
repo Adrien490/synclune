@@ -250,6 +250,15 @@ function AvailabilitySection({ form }: { form: FilterForm }) {
 									En stock
 								</CheckboxFilterItem>
 								<CheckboxFilterItem
+									id="admin-filter-low-stock"
+									checked={field.state.value === "low_stock"}
+									onCheckedChange={(checked) => {
+										field.handleChange(checked ? "low_stock" : null);
+									}}
+								>
+									Stock faible
+								</CheckboxFilterItem>
+								<CheckboxFilterItem
 									id="admin-filter-out-of-stock"
 									checked={field.state.value === "out_of_stock"}
 									onCheckedChange={(checked) => {

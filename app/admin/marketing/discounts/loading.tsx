@@ -21,7 +21,7 @@ export default function DiscountsLoading() {
 			/>
 
 			<div className="space-y-6">
-				<ToolbarSkeleton selectCount={1} buttonCount={1} />
+				<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />
 
 				{/* Filter badges placeholder */}
 				<div className="min-h-[1px]" aria-hidden="true" />

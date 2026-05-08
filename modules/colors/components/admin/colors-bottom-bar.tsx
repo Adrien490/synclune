@@ -4,16 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { COLORS_SORT_LABELS } from "../../constants/color.constants";
-import { colorsAdminQuickSearchAdapter } from "./colors-quick-search-adapter";
 import { ColorsFilterSheet } from "./colors-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(COLORS_SORT_LABELS).map(([value, label]) => ({
@@ -103,10 +99,11 @@ function ColorsBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={colorsAdminQuickSearchAdapter}
+				placeholder="Nom, slug, hex…"
+				ariaLabel="Rechercher une couleur"
 			/>
 		</>
 	);

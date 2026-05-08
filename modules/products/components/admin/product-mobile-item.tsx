@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
@@ -77,14 +77,18 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	const stockAriaLabel = getStockAriaLabel(stock);
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/catalogue/produits/${product.slug}`}
-			ariaLabel={`Produit ${product.title}`}
-			sections={sections}
-			menuTitle="Actions"
-			menuDescription={product.title}
-			className="text-left"
-			viewTransitionName={`product-card-${product.id}`}
+		<MobileSelectableCard
+			id={product.id}
+			itemLabel={`Produit ${product.title}`}
+			longPressProps={{
+				href: `/admin/catalogue/produits/${product.slug}`,
+				ariaLabel: `Produit ${product.title}`,
+				sections,
+				menuTitle: "Actions",
+				menuDescription: product.title,
+				className: "text-left",
+				viewTransitionName: `product-card-${product.id}`,
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">
 				{primaryImage ? (
@@ -93,7 +97,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 						alt=""
 						width={48}
 						height={48}
-						sizes="48px"
+						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 						className="size-12 shrink-0 rounded-md border object-cover"
 						{...(primaryImage.blurDataUrl
 							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
@@ -133,6 +137,6 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

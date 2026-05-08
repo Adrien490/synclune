@@ -15,6 +15,7 @@ const { mockDialogData, mockDialogIsOpen, mockDialogClose } = vi.hoisted(() => (
 				description: string | null;
 				status: string;
 			};
+			onCreated?: (id: string) => void;
 		} | null,
 	},
 	mockDialogIsOpen: { current: false },
@@ -59,11 +60,19 @@ vi.mock("@/shared/components/responsive-dialog", () => ({
 vi.mock("@/modules/collections/components/admin/create-collection-form", () => ({
 	CreateCollectionForm: ({
 		onSuccess: _onSuccess,
+		onCreated,
 		redirectOnSuccess,
 	}: {
 		onSuccess?: () => void;
+		onCreated?: (id: string) => void;
 		redirectOnSuccess?: boolean;
-	}) => <div data-testid="create-collection-form" data-redirect={String(redirectOnSuccess)} />,
+	}) => (
+		<div
+			data-testid="create-collection-form"
+			data-redirect={String(redirectOnSuccess)}
+			data-has-on-created={String(typeof onCreated === "function")}
+		/>
+	),
 }));
 
 vi.mock("@/modules/collections/components/admin/edit-collection-form", () => ({
@@ -151,5 +160,25 @@ describe("CollectionFormDialog", () => {
 		mockDialogIsOpen.current = false;
 		render(<CollectionFormDialog />);
 		expect(screen.queryByTestId("responsive-dialog")).not.toBeInTheDocument();
+	});
+
+	// ─── onCreated propagation (on-the-fly creation from product forms) ───────
+
+	it("propagates onCreated from dialog data to CreateCollectionForm", () => {
+		mockDialogData.current = { onCreated: vi.fn() };
+		render(<CollectionFormDialog />);
+		expect(screen.getByTestId("create-collection-form")).toHaveAttribute(
+			"data-has-on-created",
+			"true",
+		);
+	});
+
+	it("does not pass onCreated to CreateCollectionForm when not provided in data", () => {
+		mockDialogData.current = null;
+		render(<CollectionFormDialog />);
+		expect(screen.getByTestId("create-collection-form")).toHaveAttribute(
+			"data-has-on-created",
+			"false",
+		);
 	});
 });

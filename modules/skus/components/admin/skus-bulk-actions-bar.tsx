@@ -5,15 +5,15 @@ import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
@@ -22,10 +22,17 @@ import { bulkToggleSkusStatus } from "../../actions/bulk-toggle-skus-status";
 
 type BulkAction = "activate" | "deactivate";
 
-export function SkusBulkActionsBar() {
+interface SkusBulkActionsBarProps {
+	presentation?: "inline" | "bottom-bar";
+}
+
+export function SkusBulkActionsBar({ presentation = "inline" }: SkusBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const [state, action, isPending] = useActionState(bulkToggleSkusStatus, undefined);
+	const noSelection = selectedCount === 0;
+	const isBottomBar = presentation === "bottom-bar";
+	const buttonSize = isBottomBar ? "default" : "sm";
 
 	useEffect(() => {
 		if (!state) return;
@@ -50,13 +57,17 @@ export function SkusBulkActionsBar() {
 
 	return (
 		<>
-			<BulkSelectionToolbar itemsLabel={{ singular: "variante", plural: "variantes" }}>
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "variante", plural: "variantes" }}
+				presentation={presentation}
+				aria-busy={isPending}
+			>
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction("activate")}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
 					Activer
@@ -64,37 +75,37 @@ export function SkusBulkActionsBar() {
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction("deactivate")}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
 					Désactiver
 				</Button>
 			</BulkSelectionToolbar>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={dialogOpen}
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
 			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							{isActivate
 								? `Activer ${selectedCount} variante${selectedCount > 1 ? "s" : ""} ?`
 								: `Désactiver ${selectedCount} variante${selectedCount > 1 ? "s" : ""} ?`}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							{isActivate
 								? `${selectedCount > 1 ? "Les variantes activées seront" : "La variante activée sera"} de nouveau achetable${selectedCount > 1 ? "s" : ""} en boutique.`
 								: `${selectedCount > 1 ? "Les variantes désactivées ne seront" : "La variante désactivée ne sera"} plus achetable${selectedCount > 1 ? "s" : ""}. Les variantes par défaut et celles indispensables à un produit public sont automatiquement protégées.`}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="button"
 							onClick={() => pendingAction && handleConfirm(pendingAction)}
 							disabled={isPending}
@@ -102,10 +113,10 @@ export function SkusBulkActionsBar() {
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							{isActivate ? "Activer" : "Désactiver"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

@@ -2,7 +2,7 @@
 
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/enums";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { formatDateShort } from "@/shared/utils/dates";
@@ -43,13 +43,17 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 	});
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/ventes/remboursements/${refund.id}`}
-			ariaLabel={`Remboursement ${refund.order.orderNumber}`}
-			sections={sections}
-			menuTitle="Actions remboursement"
-			menuDescription={refund.order.orderNumber}
-			className="rounded-md text-left"
+		<MobileSelectableCard
+			id={refund.id}
+			itemLabel={`Remboursement ${refund.order.orderNumber}`}
+			longPressProps={{
+				href: `/admin/ventes/remboursements/${refund.id}`,
+				ariaLabel: `Remboursement ${refund.order.orderNumber}`,
+				sections,
+				menuTitle: "Actions remboursement",
+				menuDescription: refund.order.orderNumber,
+				className: "rounded-md text-left",
+			}}
 		>
 			<Item
 				variant="outline"
@@ -60,7 +64,10 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{refund.order.orderNumber}</span>
-						<Badge variant={REFUND_STATUS_VARIANTS[refund.status]}>
+						<Badge
+							variant={REFUND_STATUS_VARIANTS[refund.status]}
+							style={{ viewTransitionName: `refund-status-${refund.id}` }}
+						>
 							{REFUND_STATUS_LABELS[refund.status]}
 						</Badge>
 					</ItemTitle>
@@ -75,6 +82,6 @@ export function RefundMobileItem({ refund }: RefundMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

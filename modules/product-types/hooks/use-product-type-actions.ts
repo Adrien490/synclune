@@ -83,7 +83,7 @@ export function useProductTypeActions({
 					key: "products",
 					label: "Voir les produits",
 					icon: ExternalLink,
-					href: `/admin/catalogue/produits?productTypeId=${productTypeId}`,
+					href: `/admin/catalogue/produits?filter_typeId=${slug}`,
 				},
 				{
 					key: "duplicate",

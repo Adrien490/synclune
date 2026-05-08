@@ -2,6 +2,7 @@ import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getCollectionBySlug } from "@/modules/collections/data/get-collection";
 import { EditCollectionForm } from "@/modules/collections/components/admin/edit-collection-form";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 interface EditCollectionPageProps {
 	params: Promise<{ slug: string }>;
@@ -22,9 +23,13 @@ export default async function EditCollectionPage({ params }: EditCollectionPageP
 	if (!collection) notFound();
 
 	return (
-		<>
-			<h1 className="mb-6 hidden text-2xl font-semibold md:block">{collection.name}</h1>
+		<div className="space-y-4">
+			<AdminDetailBackLink
+				href={`/admin/catalogue/collections/${slug}`}
+				label="Retour à la collection"
+			/>
+			<h1 className="hidden text-2xl font-semibold md:block">{collection.name}</h1>
 			<EditCollectionForm collection={collection} className="max-w-lg" />
-		</>
+		</div>
 	);
 }

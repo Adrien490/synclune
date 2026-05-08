@@ -1,4 +1,11 @@
 import { PageHeader } from "@/shared/components/page-header";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function CloseStoreLoading() {
@@ -13,18 +20,26 @@ export default function CloseStoreLoading() {
 
 			{/* Back link mobile (matches AdminDetailBackLink) */}
 			<div className="md:hidden">
-				<Skeleton className="bg-muted/40 h-5 w-48" />
+				<Skeleton className="h-5 w-48" />
 			</div>
 
-			{/* Breadcrumb (4 items, desktop) */}
-			<div className="hidden md:flex md:items-center md:gap-2">
-				{Array.from({ length: 4 }).map((_, i) => (
-					<div key={i} className="flex items-center gap-2">
-						<Skeleton className="bg-muted/40 h-4 w-24" />
-						{i < 3 && <span className="text-muted-foreground">/</span>}
-					</div>
-				))}
-			</div>
+			<Breadcrumb className="hidden md:block">
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/configuration/boutique">
+							Paramètres boutique
+						</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<Skeleton className="h-4 w-32" />
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
 
 			<PageHeader
 				variant="compact"

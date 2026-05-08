@@ -4,16 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { DISCOUNTS_SORT_LABELS } from "../../constants/discount.constants";
-import { discountsAdminQuickSearchAdapter } from "./discounts-quick-search-adapter";
 import { DiscountsFilterDrawer } from "./discounts-filter-drawer";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(DISCOUNTS_SORT_LABELS).map(([value, label]) => ({
@@ -97,10 +93,11 @@ function DiscountsBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={discountsAdminQuickSearchAdapter}
+				placeholder="Code promo…"
+				ariaLabel="Rechercher un code promo"
 			/>
 
 			<DiscountsFilterDrawer open={isOpen("filter")} onOpenChange={onOpenChange("filter")} />

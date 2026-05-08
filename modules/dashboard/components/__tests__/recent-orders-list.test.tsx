@@ -249,52 +249,15 @@ describe("RecentOrdersList", () => {
 		expect(screen.getByText("À préparer")).toBeInTheDocument();
 	});
 
-	it("links each order to its detail page", () => {
+	it("does not render any anchor (rows are non-interactive)", () => {
 		render(<RecentOrdersList listData={{ orders: [createOrder({ id: "order-42" })] }} />);
 
-		const links = screen.getAllByRole("link");
-		const orderLink = links.find((l) => l.getAttribute("href")?.includes("order-42"));
-		expect(orderLink).toHaveAttribute("href", "/admin/ventes/commandes/order-42");
-	});
-
-	it("fires a 'light' haptic when an order link is tapped", async () => {
-		const { fireEvent } = await import("@testing-library/react");
-		render(<RecentOrdersList listData={{ orders: [createOrder({ id: "order-42" })] }} />);
-
-		const links = screen.getAllByRole("link");
-		const orderLink = links.find((l) => l.getAttribute("href")?.includes("order-42"))!;
-		fireEvent.click(orderLink);
-
-		expect(mockHaptic).toHaveBeenCalledWith("light");
+		expect(screen.queryAllByRole("link")).toHaveLength(0);
 	});
 
 	// -------------------------------------------------------------------------
 	// Accessibility
 	// -------------------------------------------------------------------------
-
-	it("renders aria-label on each order link with order number, total, customer, and status", () => {
-		render(
-			<RecentOrdersList
-				listData={{
-					orders: [
-						createOrder({
-							orderNumber: "SYN-042",
-							total: 4250,
-							customerName: "Jean Martin",
-							status: "DELIVERED" as RecentOrderItem["status"],
-						}),
-					],
-				}}
-			/>,
-		);
-
-		const links = screen.getAllByRole("link");
-		const orderLink = links.find((l) => l.getAttribute("aria-label")?.includes("SYN-042"));
-		expect(orderLink).toHaveAttribute(
-			"aria-label",
-			"Commande #SYN-042, 4250.00 €, Jean Martin, Livrée",
-		);
-	});
 
 	it("renders title attribute on truncated customer info", () => {
 		render(<RecentOrdersList listData={{ orders: [createOrder()] }} />);
@@ -303,20 +266,8 @@ describe("RecentOrdersList", () => {
 		expect(truncatedElement).toBeInTheDocument();
 	});
 
-	// -------------------------------------------------------------------------
-	// Footer link
-	// -------------------------------------------------------------------------
-
-	it("renders 'Voir toutes les commandes' link when orders exist", () => {
+	it("does not render a 'Voir toutes les commandes' footer link", () => {
 		render(<RecentOrdersList listData={{ orders: [createOrder()] }} />);
-
-		const footerLink = screen.getByText("Voir toutes les commandes");
-		expect(footerLink).toBeInTheDocument();
-		expect(footerLink.closest("a")).toHaveAttribute("href", "/admin/ventes/commandes");
-	});
-
-	it("does not render footer link when no orders", () => {
-		render(<RecentOrdersList listData={{ orders: [] }} />);
 
 		expect(screen.queryByText("Voir toutes les commandes")).toBeNull();
 	});

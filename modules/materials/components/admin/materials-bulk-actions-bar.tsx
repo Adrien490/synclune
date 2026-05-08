@@ -5,15 +5,15 @@ import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
@@ -22,10 +22,19 @@ import { bulkToggleMaterialsStatus } from "../../actions/bulk-toggle-materials-s
 
 type BulkAction = "activate" | "deactivate";
 
-export function MaterialsBulkActionsBar() {
+interface MaterialsBulkActionsBarProps {
+	presentation?: "inline" | "bottom-bar";
+}
+
+export function MaterialsBulkActionsBar({
+	presentation = "inline",
+}: MaterialsBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const [state, action, isPending] = useActionState(bulkToggleMaterialsStatus, undefined);
+	const noSelection = selectedCount === 0;
+	const isBottomBar = presentation === "bottom-bar";
+	const buttonSize = isBottomBar ? "default" : "sm";
 
 	useEffect(() => {
 		if (!state) return;
@@ -50,13 +59,17 @@ export function MaterialsBulkActionsBar() {
 
 	return (
 		<>
-			<BulkSelectionToolbar itemsLabel={{ singular: "matériau", plural: "matériaux" }}>
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "matériau", plural: "matériaux" }}
+				presentation={presentation}
+				aria-busy={isPending}
+			>
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction("activate")}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
 					Activer
@@ -64,37 +77,37 @@ export function MaterialsBulkActionsBar() {
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction("deactivate")}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
 					Désactiver
 				</Button>
 			</BulkSelectionToolbar>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={dialogOpen}
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
 			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							{isActivate
 								? `Activer ${selectedCount} matériau${selectedCount > 1 ? "x" : ""} ?`
 								: `Désactiver ${selectedCount} matériau${selectedCount > 1 ? "x" : ""} ?`}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							{isActivate
 								? `${selectedCount > 1 ? "Les matériaux activés seront" : "Le matériau activé sera"} disponible${selectedCount > 1 ? "s" : ""} pour les nouvelles variantes produits.`
 								: `${selectedCount > 1 ? "Les matériaux désactivés ne seront" : "Le matériau désactivé ne sera"} plus proposé${selectedCount > 1 ? "s" : ""} dans les nouvelles variantes.`}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="button"
 							onClick={() => pendingAction && handleConfirm(pendingAction)}
 							disabled={isPending}
@@ -102,10 +115,10 @@ export function MaterialsBulkActionsBar() {
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							{isActivate ? "Activer" : "Désactiver"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

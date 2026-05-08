@@ -1,17 +1,35 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
+
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 
 interface BulkSelectionContextValue {
 	selectedIds: ReadonlySet<string>;
 	pageItemIds: ReadonlyArray<string>;
 	selectedCount: number;
+	/** Nombre d'items sélectionnés appartenant à la page courante. */
+	selectedOnPage: number;
 	isSelected: (id: string) => boolean;
 	toggle: (id: string) => void;
 	togglePage: () => void;
 	clear: () => void;
 	pageState: "none" | "some" | "all";
+	/**
+	 * Mobile-only "selection mode" flag (pattern Mail iOS).
+	 * Desktop ignores this flag (checkboxes always visible in the table header).
+	 */
+	selectionMode: boolean;
+	enterSelectionMode: () => void;
+	exitSelectionMode: () => void;
+	/**
+	 * Sélectionne tous les `pageItemIds` si tous ne sont pas déjà sélectionnés
+	 * (mêmes items + ajouts), sinon désélectionne uniquement ceux de la page
+	 * (le reste de `selectedIds` cross-page reste intact). **Idempotent / toggle**.
+	 * Alias intuitif côté mobile pour `togglePage`.
+	 */
+	selectAllVisible: () => void;
 }
 
 const BulkSelectionContext = createContext<BulkSelectionContextValue | null>(null);
@@ -33,8 +51,9 @@ interface BulkSelectionProviderProps {
  */
 export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionProviderProps) {
 	const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+	const [selectionMode, setSelectionMode] = useState(false);
 
-	const toggle = useCallback((id: string) => {
+	const toggle = (id: string) => {
 		setSelectedIds((prev) => {
 			const next = new Set(prev);
 			if (next.has(id)) {
@@ -44,9 +63,10 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 			}
 			return next;
 		});
-	}, []);
+	};
 
-	const togglePage = useCallback(() => {
+	const togglePage = () => {
+		triggerHaptic("selection");
 		setSelectedIds((prev) => {
 			const allSelected = pageItemIds.length > 0 && pageItemIds.every((id) => prev.has(id));
 			const next = new Set(prev);
@@ -57,27 +77,45 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 			}
 			return next;
 		});
-	}, [pageItemIds]);
+	};
 
-	const clear = useCallback(() => setSelectedIds(new Set()), []);
+	const clear = () => {
+		triggerHaptic("selection");
+		setSelectedIds(new Set());
+		setSelectionMode(false);
+	};
 
-	const value = useMemo<BulkSelectionContextValue>(() => {
-		const isSelected = (id: string) => selectedIds.has(id);
-		const selectedOnPage = pageItemIds.filter((id) => selectedIds.has(id)).length;
-		const pageState: "none" | "some" | "all" =
-			selectedOnPage === 0 ? "none" : selectedOnPage === pageItemIds.length ? "all" : "some";
+	const enterSelectionMode = () => {
+		triggerHaptic("selection");
+		setSelectionMode(true);
+	};
 
-		return {
-			selectedIds,
-			pageItemIds,
-			selectedCount: selectedIds.size,
-			isSelected,
-			toggle,
-			togglePage,
-			clear,
-			pageState,
-		};
-	}, [selectedIds, pageItemIds, toggle, togglePage, clear]);
+	const exitSelectionMode = () => {
+		triggerHaptic("selection");
+		setSelectedIds(new Set());
+		setSelectionMode(false);
+	};
+
+	const isSelected = (id: string) => selectedIds.has(id);
+	const selectedOnPage = pageItemIds.filter((id) => selectedIds.has(id)).length;
+	const pageState: "none" | "some" | "all" =
+		selectedOnPage === 0 ? "none" : selectedOnPage === pageItemIds.length ? "all" : "some";
+
+	const value: BulkSelectionContextValue = {
+		selectedIds,
+		pageItemIds,
+		selectedCount: selectedIds.size,
+		selectedOnPage,
+		isSelected,
+		toggle,
+		togglePage,
+		clear,
+		pageState,
+		selectionMode,
+		enterSelectionMode,
+		exitSelectionMode,
+		selectAllVisible: togglePage,
+	};
 
 	return <BulkSelectionContext.Provider value={value}>{children}</BulkSelectionContext.Provider>;
 }

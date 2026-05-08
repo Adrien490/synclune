@@ -82,6 +82,11 @@ vi.mock("@/modules/product-types/components/product-type-form-dialog", () => ({
 	ProductTypeFormDialog: () => null,
 }));
 
+vi.mock("@/modules/collections/components/admin/collection-form-dialog", () => ({
+	COLLECTION_DIALOG_ID: "collection-form",
+	CollectionFormDialog: () => null,
+}));
+
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({
 		open: mockOpenDialog,
@@ -252,7 +257,8 @@ describe("CreateProductInfoCard", () => {
 
 		it("renders Plus icon in create type button", () => {
 			setup();
-			expect(screen.getByTestId("icon-plus")).toBeInTheDocument();
+			// Two Plus icons exist (typeId + collectionIds), so we assert at least one.
+			expect(screen.getAllByTestId("icon-plus").length).toBeGreaterThanOrEqual(1);
 		});
 	});
 
@@ -278,6 +284,22 @@ describe("CreateProductInfoCard", () => {
 			expect(
 				screen.getByText("Un produit peut appartenir à plusieurs collections"),
 			).toBeInTheDocument();
+		});
+
+		it("renders create-collection button with correct aria-label", () => {
+			setup();
+			expect(
+				screen.getByRole("button", { name: "Créer une nouvelle collection" }),
+			).toBeInTheDocument();
+		});
+
+		it("opens the collection dialog when the + button is clicked", async () => {
+			const user = (await import("@testing-library/user-event")).default.setup();
+			setup();
+			await user.click(screen.getByRole("button", { name: "Créer une nouvelle collection" }));
+			expect(mockOpenDialog).toHaveBeenCalledWith(
+				expect.objectContaining({ onCreated: expect.any(Function) }),
+			);
 		});
 	});
 });

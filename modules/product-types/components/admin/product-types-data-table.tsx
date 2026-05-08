@@ -36,6 +36,7 @@ export async function ProductTypesDataTable({
 	if (productTypes.length === 0) {
 		return (
 			<TableEmptyState
+				className="hidden md:block"
 				icon={Tags}
 				title="Aucun type trouvé"
 				description="Aucun type de bijou ne correspond aux critères de recherche."

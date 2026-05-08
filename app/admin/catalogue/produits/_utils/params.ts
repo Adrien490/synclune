@@ -54,9 +54,13 @@ export const parseFilters = (params: ProductsSearchParams): ProductFilters => {
 						filters.status = validStatuses;
 					}
 				}
-				// Stock status field (in_stock / out_of_stock)
+				// Stock status field (in_stock / low_stock / out_of_stock)
 				else if (filterKey === "stockStatus") {
-					if (filterValue === "in_stock" || filterValue === "out_of_stock") {
+					if (
+						filterValue === "in_stock" ||
+						filterValue === "low_stock" ||
+						filterValue === "out_of_stock"
+					) {
 						filters.stockStatus = filterValue;
 					}
 				}

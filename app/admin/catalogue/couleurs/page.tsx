@@ -116,7 +116,13 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 
 				{/* Liste mobile */}
 				<Suspense fallback={<ColorsMobileListSkeleton />}>
-					<ColorsMobileList colorsPromise={colorsPromise} perPage={perPage} />
+					<ColorsMobileList
+						colorsPromise={colorsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

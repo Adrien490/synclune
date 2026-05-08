@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { PageHeader } from "@/shared/components/page-header";
 import {
 	Breadcrumb,
@@ -76,6 +77,11 @@ export default async function EditSkuPage({ params }: { params: EditSkuPageParam
 
 	return (
 		<div className="space-y-6">
+			<AdminDetailBackLink
+				href={`/admin/catalogue/produits/${slug}/variantes/${skuId}`}
+				label="Retour à la variante"
+			/>
+
 			{/* Breadcrumb personnalise */}
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>

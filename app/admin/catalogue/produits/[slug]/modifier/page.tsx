@@ -6,6 +6,7 @@ import { getProductBySlug } from "@/modules/products/data/get-product";
 import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { PageHeader } from "@/shared/components/page-header";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
@@ -25,6 +26,11 @@ const ColorFormDialog = dynamic(() =>
 const MaterialFormDialog = dynamic(() =>
 	import("@/modules/materials/components/material-form-dialog").then(
 		(mod) => mod.MaterialFormDialog,
+	),
+);
+const CollectionFormDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/collection-form-dialog").then(
+		(mod) => mod.CollectionFormDialog,
 	),
 );
 
@@ -52,7 +58,8 @@ export default async function EditProductPage({ params }: { params: EditProductP
 	]);
 
 	return (
-		<>
+		<div className="space-y-4">
+			<AdminDetailBackLink href={`/admin/catalogue/produits/${slug}`} label="Retour au produit" />
 			<PageHeader title={product.title} variant="compact" />
 
 			<EditProductForm
@@ -67,6 +74,7 @@ export default async function EditProductPage({ params }: { params: EditProductP
 			<ProductTypeFormDialog />
 			<ColorFormDialog />
 			<MaterialFormDialog />
-		</>
+			<CollectionFormDialog />
+		</div>
 	);
 }

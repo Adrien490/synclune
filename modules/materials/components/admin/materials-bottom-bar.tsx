@@ -4,16 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { MATERIALS_SORT_LABELS } from "../../constants/materials.constants";
-import { materialsAdminQuickSearchAdapter } from "./materials-quick-search-adapter";
 import { MaterialsFilterSheet } from "./materials-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(MATERIALS_SORT_LABELS).map(([value, label]) => ({
@@ -103,10 +99,11 @@ function MaterialsBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={materialsAdminQuickSearchAdapter}
+				placeholder="Nom, slug…"
+				ariaLabel="Rechercher un matériau"
 			/>
 		</>
 	);

@@ -4,16 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/refund.constants";
-import { refundsAdminQuickSearchAdapter } from "./refunds-quick-search-adapter";
 import { RefundsFilterSheet } from "./refunds-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, label]) => ({
@@ -95,10 +91,11 @@ function RefundsBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={refundsAdminQuickSearchAdapter}
+				placeholder="Numéro de commande, email…"
+				ariaLabel="Rechercher un remboursement"
 			/>
 		</>
 	);

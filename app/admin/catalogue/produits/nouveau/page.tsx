@@ -1,3 +1,4 @@
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { PageHeader } from "@/shared/components/page-header";
 import { CreateProductForm } from "@/modules/products/components/admin/create-product-form";
 import { getProductTypeOptions } from "@/modules/product-types/data/get-product-type-options";
@@ -26,6 +27,11 @@ const MaterialFormDialog = dynamic(() =>
 		(mod) => mod.MaterialFormDialog,
 	),
 );
+const CollectionFormDialog = dynamic(() =>
+	import("@/modules/collections/components/admin/collection-form-dialog").then(
+		(mod) => mod.CollectionFormDialog,
+	),
+);
 
 export const metadata: Metadata = {
 	title: "Nouveau produit - Administration",
@@ -42,7 +48,9 @@ export default async function NewProductPage() {
 	]);
 
 	return (
-		<>
+		<div className="space-y-4">
+			<AdminDetailBackLink href="/admin/catalogue/produits" label="Retour aux produits" />
+
 			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
 
 			<CreateProductForm
@@ -56,6 +64,7 @@ export default async function NewProductPage() {
 			<ProductTypeFormDialog />
 			<ColorFormDialog />
 			<MaterialFormDialog />
-		</>
+			<CollectionFormDialog />
+		</div>
 	);
 }

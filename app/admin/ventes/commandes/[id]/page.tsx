@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { OrderDetailPage as OrderDetail } from "@/modules/orders/components/admin/order-detail";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const CancelOrderAlertDialog = dynamic(() =>
@@ -98,14 +97,7 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 
 	return (
 		<div className="space-y-6">
-			{/* Bouton retour mobile */}
-			<Link
-				href="/admin/ventes/commandes"
-				className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors md:hidden"
-			>
-				<ChevronLeft className="size-4" aria-hidden="true" />
-				Retour aux commandes
-			</Link>
+			<AdminDetailBackLink href="/admin/ventes/commandes" label="Retour aux commandes" />
 
 			{/* Breadcrumb (caché sur mobile) */}
 			<Breadcrumb className="hidden md:flex">

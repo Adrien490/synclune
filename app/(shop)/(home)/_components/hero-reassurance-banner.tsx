@@ -15,7 +15,7 @@ type Item = {
 const ITEMS: readonly Item[] = [
 	{
 		title: "Faits main en France",
-		description: "Atelier de Léane à Pessac",
+		description: "Atelier de Léane à Nantes",
 		href: ROUTES.SHOP.ABOUT,
 	},
 	{

@@ -3,6 +3,7 @@ import { notDeleted } from "@/shared/lib/prisma";
 import type { GetProductsParams, ProductFilters } from "../types/product.types";
 import type { SearchResult } from "../types/product-services.types";
 
+import { LOW_STOCK_THRESHOLD } from "../constants/product.constants";
 import { FUZZY_MIN_LENGTH } from "../constants/search.constants";
 import { SEARCH_SYNONYMS } from "../constants/search-synonyms";
 import { fuzzySearchProductIds } from "../data/fuzzy-search";
@@ -382,6 +383,16 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 							isActive: true,
 							inventory: { gt: 0 },
 						},
+					},
+				},
+			});
+		} else if (filters.stockStatus === "low_stock") {
+			// Low stock: at least one active SKU with 0 < inventory <= LOW_STOCK_THRESHOLD
+			conditions.push({
+				skus: {
+					some: {
+						isActive: true,
+						inventory: { gt: 0, lte: LOW_STOCK_THRESHOLD },
 					},
 				},
 			});

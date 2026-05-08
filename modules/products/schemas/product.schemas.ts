@@ -41,7 +41,7 @@ export const productFiltersSchema = z
 		color: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		material: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
 		status: z.union([z.enum(ProductStatus), z.array(z.enum(ProductStatus))]).optional(),
-		stockStatus: z.enum(["in_stock", "out_of_stock"]).optional(),
+		stockStatus: z.enum(["in_stock", "low_stock", "out_of_stock"]).optional(),
 		onSale: z.boolean().optional(),
 		ratingMin: z.number().int().min(1).max(5).optional(),
 		collectionId: optionalStringOrStringArraySchema,
@@ -96,10 +96,7 @@ export const getProductsSchema = z.object({
 	sortBy: productSortBySchema.default(GET_PRODUCTS_DEFAULT_SORT_BY),
 	search: z.string().max(TEXT_LIMITS.PRODUCT_SEARCH.max).optional(),
 	filters: productFiltersSchema.default({}),
-	status: z
-		.enum([ProductStatus.PUBLIC, ProductStatus.DRAFT, ProductStatus.ARCHIVED])
-		.optional()
-		.default(ProductStatus.PUBLIC),
+	status: z.enum([ProductStatus.PUBLIC, ProductStatus.DRAFT, ProductStatus.ARCHIVED]).optional(),
 	includeDeleted: z.boolean().optional(),
 });
 

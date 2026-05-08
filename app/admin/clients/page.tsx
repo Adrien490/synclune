@@ -151,7 +151,13 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 
 				{/* Liste mobile */}
 				<Suspense fallback={<UsersMobileListSkeleton />}>
-					<UsersMobileList usersPromise={usersPromise} perPage={perPage} />
+					<UsersMobileList
+						usersPromise={usersPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

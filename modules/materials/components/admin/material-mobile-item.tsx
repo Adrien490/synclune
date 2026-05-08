@@ -2,7 +2,7 @@
 
 import { Gem } from "lucide-react";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -38,14 +38,18 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	});
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/catalogue/materiaux/${material.slug}`}
-			ariaLabel={`Matériau ${material.name}`}
-			sections={sections}
-			menuTitle="Actions"
-			menuDescription={material.name}
-			className="text-left"
-			viewTransitionName={`material-card-${material.id}`}
+		<MobileSelectableCard
+			id={material.id}
+			itemLabel={`Matériau ${material.name}`}
+			longPressProps={{
+				href: `/admin/catalogue/materiaux/${material.slug}`,
+				ariaLabel: `Matériau ${material.name}`,
+				sections,
+				menuTitle: "Actions",
+				menuDescription: material.name,
+				className: "text-left",
+				viewTransitionName: `material-card-${material.id}`,
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">
 				<ItemMedia variant="icon">
@@ -71,6 +75,6 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

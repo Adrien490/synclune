@@ -111,7 +111,8 @@ function ProductsFilterSheetInner({
 				const n = Number(value);
 				if (!isNaN(n)) priceMax = Math.round(n / 100);
 			} else if (key === "filter_stockStatus") {
-				if (value === "in_stock" || value === "out_of_stock") stockStatus = value;
+				if (value === "in_stock" || value === "low_stock" || value === "out_of_stock")
+					stockStatus = value;
 			} else if (key === "filter_onSale") {
 				onSale = value === "true";
 			} else if (key === "filter_createdAfter") createdAfter = value;

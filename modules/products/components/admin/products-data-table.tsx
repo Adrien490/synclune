@@ -116,6 +116,7 @@ export async function ProductsDataTable({
 	if (products.length === 0) {
 		return (
 			<TableEmptyState
+				className="hidden md:block"
 				icon={Package}
 				title="Aucun bijou trouvé"
 				description="Aucun bijou ne correspond aux critères de recherche."

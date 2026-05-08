@@ -14,6 +14,7 @@ import dynamic from "next/dynamic";
 import { ReviewsAdminDialogs } from "./_components/reviews-admin-dialogs";
 import { ReviewsDataTable } from "@/modules/reviews/components/admin/reviews-data-table";
 import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/reviews-data-table-skeleton";
+import { ReviewsFilterBadges } from "@/modules/reviews/components/admin/reviews-filter-badges";
 import { ReviewsMobileList } from "@/modules/reviews/components/admin/reviews-mobile-list";
 import { ReviewsMobileListSkeleton } from "@/modules/reviews/components/admin/reviews-mobile-list-skeleton";
 import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constants";
@@ -207,11 +208,18 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 						noPrefix
 					/>
 				</Toolbar>
+
+				{/* Badges de filtres actifs (visible mobile + desktop) */}
+				<ReviewsFilterBadges />
 			</Suspense>
 
 			{/* Liste mobile */}
 			<Suspense fallback={<ReviewsMobileListSkeleton />}>
-				<ReviewsMobileList reviewsPromise={reviewsPromise} perPage={perPage} />
+				<ReviewsMobileList
+					reviewsPromise={reviewsPromise}
+					perPage={perPage}
+					hasActiveFilters={!!search || !!params.status || !!params.rating || !!params.hasResponse}
+				/>
 			</Suspense>
 
 			{/* DataTable desktop */}

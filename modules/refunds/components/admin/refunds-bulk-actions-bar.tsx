@@ -5,25 +5,34 @@ import { CheckCircle, Loader2 } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
 
 import { bulkApproveRefunds } from "../../actions/bulk-approve-refunds";
 
-export function RefundsBulkActionsBar() {
+interface RefundsBulkActionsBarProps {
+	presentation?: "inline" | "bottom-bar";
+}
+
+export function RefundsBulkActionsBar({
+	presentation = "inline",
+}: RefundsBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 	const [state, action, isPending] = useActionState(bulkApproveRefunds, undefined);
+	const noSelection = selectedCount === 0;
+	const isBottomBar = presentation === "bottom-bar";
+	const buttonSize = isBottomBar ? "default" : "sm";
 
 	useEffect(() => {
 		if (!state) return;
@@ -44,40 +53,44 @@ export function RefundsBulkActionsBar() {
 
 	return (
 		<>
-			<BulkSelectionToolbar itemsLabel={{ singular: "remboursement", plural: "remboursements" }}>
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "remboursement", plural: "remboursements" }}
+				presentation={presentation}
+				aria-busy={isPending}
+			>
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setConfirmOpen(true)}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<CheckCircle className="size-4" aria-hidden="true" />
 					Approuver
 				</Button>
 			</BulkSelectionToolbar>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={confirmOpen}
 				onOpenChange={(next) => {
 					if (!next && !isPending) setConfirmOpen(false);
 				}}
 			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							Approuver {selectedCount} remboursement{selectedCount > 1 ? "s" : ""} ?
-						</AlertDialogTitle>
-						<AlertDialogDescription>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							Les remboursements <strong>en attente</strong> sélectionnés passeront au statut
 							APPROUVÉ. Le <strong>traitement Stripe effectif reste manuel</strong> (chaque
 							remboursement doit être traité individuellement via sa fiche pour déclencher le refund
 							Stripe). Les autres statuts seront ignorés.
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="button"
 							onClick={handleConfirm}
 							disabled={isPending}
@@ -85,10 +98,10 @@ export function RefundsBulkActionsBar() {
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							Approuver
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

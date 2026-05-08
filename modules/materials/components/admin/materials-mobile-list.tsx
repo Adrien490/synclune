@@ -3,19 +3,31 @@ import { Gem } from "lucide-react";
 
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { BulkSelectionProvider } from "@/shared/components/data-table";
+import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import {
+	MobileSelectionBottomBar,
+	MobileSelectionHeader,
+} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
 
 import type { GetMaterialsReturn } from "@/modules/materials/types/materials.types";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import { MaterialMobileItem } from "./material-mobile-item";
+import { MaterialsBulkActionsBar } from "./materials-bulk-actions-bar";
 
 interface MaterialsMobileListProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
 	perPage: number;
+	hasActiveFilters?: boolean;
 }
 
-export function MaterialsMobileList({ materialsPromise, perPage }: MaterialsMobileListProps) {
+export function MaterialsMobileList({
+	materialsPromise,
+	perPage,
+	hasActiveFilters,
+}: MaterialsMobileListProps) {
 	const { materials, pagination } = use(materialsPromise);
 
 	if (materials.length === 0) {
@@ -24,32 +36,50 @@ export function MaterialsMobileList({ materialsPromise, perPage }: MaterialsMobi
 				<TableEmptyState
 					icon={Gem}
 					title="Aucun materiau trouve"
-					description="Aucun materiau ne correspond aux criteres de recherche."
-					actionElement={<CreateMaterialButton />}
+					description={
+						hasActiveFilters
+							? "Aucun materiau ne correspond aux criteres de recherche."
+							: "Aucun materiau pour l'instant."
+					}
+					actionElement={
+						hasActiveFilters ? (
+							<EmptyResetFiltersAction href="/admin/catalogue/materiaux" />
+						) : (
+							<CreateMaterialButton />
+						)
+					}
 				/>
 			</div>
 		);
 	}
 
-	return (
-		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
-			<ItemGroup aria-label="Materiaux" className="gap-2">
-				{materials.map((material) => (
-					<div key={material.id} role="listitem">
-						<MaterialMobileItem material={material} />
-					</div>
-				))}
-			</ItemGroup>
+	const pageItemIds = materials.map((m) => m.id);
 
-			<CursorPagination
-				perPage={perPage}
-				hasNextPage={pagination.hasNextPage}
-				hasPreviousPage={pagination.hasPreviousPage}
-				currentPageSize={materials.length}
-				nextCursor={pagination.nextCursor}
-				prevCursor={pagination.prevCursor}
-			/>
-		</div>
+	return (
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+				<MobileSelectionHeader itemsLabel={{ singular: "matériau", plural: "matériaux" }} />
+				<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
+				<ItemGroup aria-label="Materiaux" className="gap-2">
+					{materials.map((material) => (
+						<div key={material.id} role="listitem">
+							<MaterialMobileItem material={material} />
+						</div>
+					))}
+				</ItemGroup>
+
+				<CursorPagination
+					perPage={perPage}
+					hasNextPage={pagination.hasNextPage}
+					hasPreviousPage={pagination.hasPreviousPage}
+					currentPageSize={materials.length}
+					nextCursor={pagination.nextCursor}
+					prevCursor={pagination.prevCursor}
+				/>
+			</div>
+			<MobileSelectionBottomBar>
+				<MaterialsBulkActionsBar presentation="bottom-bar" />
+			</MobileSelectionBottomBar>
+		</BulkSelectionProvider>
 	);
 }

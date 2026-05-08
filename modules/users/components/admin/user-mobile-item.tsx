@@ -2,7 +2,7 @@
 
 import { CircleCheck } from "lucide-react";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { formatDateShort } from "@/shared/utils/dates";
 
@@ -32,13 +32,17 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 
 	return (
 		<>
-			<LongPressMenuLink
-				href={`/admin/clients/${user.id}`}
-				ariaLabel={`Client ${displayName}`}
-				sections={sections}
-				menuTitle="Actions utilisateur"
-				menuDescription={displayName}
-				className="text-left"
+			<MobileSelectableCard
+				id={user.id}
+				itemLabel={`Client ${displayName}`}
+				longPressProps={{
+					href: `/admin/clients/${user.id}`,
+					ariaLabel: `Client ${displayName}`,
+					sections,
+					menuTitle: "Actions utilisateur",
+					menuDescription: displayName,
+					className: "text-left",
+				}}
 			>
 				<Item
 					variant="outline"
@@ -68,7 +72,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 						</ItemDescription>
 					</ItemContent>
 				</Item>
-			</LongPressMenuLink>
+			</MobileSelectableCard>
 
 			<UserAdminDialogs user={{ id: user.id, name: user.name, email: user.email }} />
 		</>

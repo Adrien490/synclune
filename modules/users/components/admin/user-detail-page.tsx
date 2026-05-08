@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, CircleCheck, Eye } from "lucide-react";
+import { CircleCheck, Eye } from "lucide-react";
 
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
@@ -31,26 +32,16 @@ export function UserDetailPage({ user, orderCount }: UserDetailPageProps) {
 
 	return (
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+			<AdminDetailBackLink href="/admin/clients" label="Retour aux clients" />
 			<header className="space-y-2">
-				<div className="flex items-start justify-between gap-4">
-					<div className="space-y-1">
-						<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-							{displayName}
-							{user.emailVerified ? (
-								<CircleCheck
-									className="size-5 shrink-0 text-green-600"
-									aria-label="Email vérifié"
-								/>
-							) : null}
-						</h1>
-						<p className="text-muted-foreground text-sm">{user.email}</p>
-					</div>
-					<Button variant="outline" size="sm" asChild className="shrink-0">
-						<Link href="/admin/clients">
-							<ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-							Retour
-						</Link>
-					</Button>
+				<div className="space-y-1">
+					<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+						{displayName}
+						{user.emailVerified ? (
+							<CircleCheck className="size-5 shrink-0 text-green-600" aria-label="Email vérifié" />
+						) : null}
+					</h1>
+					<p className="text-muted-foreground text-sm">{user.email}</p>
 				</div>
 			</header>
 

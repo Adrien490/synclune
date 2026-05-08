@@ -21,7 +21,7 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 				className="text-sm"
 				role="status"
 				aria-label={`Statut de la commande : ${orderStatusLabel}`}
-				style={{ viewTransitionName: "order-status-pill" }}
+				style={{ viewTransitionName: `order-status-${order.id}` }}
 			>
 				{orderStatusLabel}
 			</Badge>
@@ -30,7 +30,7 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 				className="text-sm"
 				role="status"
 				aria-label={`Statut du paiement : ${paymentStatusLabel}`}
-				style={{ viewTransitionName: "order-payment-pill" }}
+				style={{ viewTransitionName: `order-payment-${order.id}` }}
 			>
 				{paymentStatusLabel}
 			</Badge>
@@ -39,7 +39,7 @@ export function OrderStatusBadges({ order }: OrderStatusBadgesProps) {
 				className="text-sm"
 				role="status"
 				aria-label={`Statut du traitement : ${fulfillmentStatusLabel}`}
-				style={{ viewTransitionName: "order-fulfillment-pill" }}
+				style={{ viewTransitionName: `order-fulfillment-${order.id}` }}
 			>
 				{fulfillmentStatusLabel}
 			</Badge>

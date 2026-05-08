@@ -286,8 +286,13 @@ describe("parseFilters — stockStatus field", () => {
 		expect(result.stockStatus).toBe("out_of_stock");
 	});
 
-	it("ignores an invalid stockStatus value", () => {
+	it("parses low_stock", () => {
 		const result = parseFilters(makeParams({ filter_stockStatus: "low_stock" }));
+		expect(result.stockStatus).toBe("low_stock");
+	});
+
+	it("ignores an invalid stockStatus value", () => {
+		const result = parseFilters(makeParams({ filter_stockStatus: "very_low" }));
 		expect(result.stockStatus).toBeUndefined();
 	});
 

@@ -28,8 +28,8 @@ export const BRAND = {
 	contact: {
 		email: process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr",
 		location: {
-			city: "Pessac",
-			postalCode: "33600",
+			city: "Nantes",
+			postalCode: "44000",
 			country: "France",
 		},
 	},

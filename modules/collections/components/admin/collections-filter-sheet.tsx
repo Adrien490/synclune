@@ -1,6 +1,8 @@
 "use client";
 
+import { CollectionStatus } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
+import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -15,7 +17,16 @@ interface CollectionsFilterSheetProps {
 
 interface FilterFormData {
 	hasProducts: string;
+	statuses: string[];
 }
+
+const STATUS_OPTIONS: ReadonlyArray<{ value: CollectionStatus; label: string }> = [
+	{ value: CollectionStatus.PUBLIC, label: "Publiées" },
+	{ value: CollectionStatus.DRAFT, label: "Brouillons" },
+	{ value: CollectionStatus.ARCHIVED, label: "Archivées" },
+];
+
+const VALID_STATUS_VALUES = new Set<string>(STATUS_OPTIONS.map((o) => o.value));
 
 function CollectionsFilterSheetInner({
 	className,
@@ -33,15 +44,19 @@ function CollectionsFilterSheetInner({
 
 	const initialValues = ((): FilterFormData => {
 		let hasProducts = "all";
+		const statuses: string[] = [];
 
 		searchParams.forEach((value, key) => {
 			if (key === "filter_hasProducts") {
 				hasProducts = value === "true" ? "with" : "without";
+			} else if (key === "filter_status" && VALID_STATUS_VALUES.has(value)) {
+				statuses.push(value);
 			}
 		});
 
 		return {
 			hasProducts,
+			statuses: Array.from(new Set(statuses)),
 		};
 	})();
 
@@ -55,7 +70,7 @@ function CollectionsFilterSheetInner({
 	const applyFilters = (formData: FilterFormData) => {
 		const params = new URLSearchParams(searchParams.toString());
 
-		const filterKeys = ["filter_hasProducts"];
+		const filterKeys = ["filter_hasProducts", "filter_status"];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
@@ -65,6 +80,9 @@ function CollectionsFilterSheetInner({
 			params.set("filter_hasProducts", formData.hasProducts === "with" ? "true" : "false");
 		}
 
+		// Add status filter (multi-select)
+		formData.statuses.forEach((s) => params.append("filter_status", s));
+
 		startTransition(() => {
 			router.push(`?${params.toString()}`, { scroll: false });
 		});
@@ -73,10 +91,11 @@ function CollectionsFilterSheetInner({
 	const clearAllFilters = () => {
 		form.reset({
 			hasProducts: "all",
+			statuses: [],
 		});
 
 		const params = new URLSearchParams(searchParams.toString());
-		const filterKeys = ["filter_hasProducts"];
+		const filterKeys = ["filter_hasProducts", "filter_status"];
 		filterKeys.forEach((key) => params.delete(key));
 		params.delete("cursor");
 		params.delete("direction");
@@ -115,6 +134,33 @@ function CollectionsFilterSheetInner({
 				}}
 				className="space-y-6"
 			>
+				{/* Status Filter (multi-select) */}
+				<form.Field name="statuses">
+					{(field) => (
+						<fieldset className="space-y-1">
+							<legend className="text-foreground mb-2 text-sm font-medium">Statut</legend>
+							{STATUS_OPTIONS.map(({ value, label }) => {
+								const checked = field.state.value.includes(value);
+								return (
+									<CheckboxFilterItem
+										key={value}
+										id={`status-${value}`}
+										checked={checked}
+										onCheckedChange={(next) => {
+											const current = field.state.value;
+											field.handleChange(
+												next ? [...current, value] : current.filter((v) => v !== value),
+											);
+										}}
+									>
+										{label}
+									</CheckboxFilterItem>
+								);
+							})}
+						</fieldset>
+					)}
+				</form.Field>
+
 				{/* hasProducts Filter */}
 				<form.Field name="hasProducts">
 					{(field) => (

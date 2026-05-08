@@ -1,12 +1,10 @@
 "use client";
 
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import {
 	Card,
 	CardContent,
 	CardDescription,
-	CardFooter,
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
@@ -19,7 +17,6 @@ import {
 	ItemSeparator,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import type {
 	GetRecentOrdersReturn,
@@ -28,8 +25,6 @@ import type {
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { cn } from "@/shared/utils/cn";
-import { ArrowRight, ChevronRight } from "lucide-react";
-import Link from "next/link";
 
 import {
 	ORDER_STATUS_LABELS,
@@ -64,59 +59,29 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 						{orders.map((order: RecentOrderItem, index) => (
 							<div key={order.id}>
 								{index > 0 && <ItemSeparator />}
-								<Item asChild size="sm">
-									<Link
-										href={`/admin/ventes/commandes/${order.id}`}
-										onClick={() => triggerHaptic("light")}
-										aria-label={`Commande #${order.orderNumber}, ${order.total.toFixed(2)} €, ${order.customerName}, ${ORDER_STATUS_LABELS[order.status]}`}
-									>
-										<ItemContent>
-											<ItemTitle className="gap-1.5">
-												<span className="text-sm font-medium">#{order.orderNumber}</span>
-												<Badge
-													variant={ORDER_STATUS_VARIANTS[order.status]}
-													className="text-[10px]"
-												>
-													{ORDER_STATUS_LABELS[order.status]}
-												</Badge>
-											</ItemTitle>
-											<ItemDescription className="text-xs">
-												<span className="truncate">{order.customerName}</span>
-												<span className="block text-[11px]">
-													{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
-												</span>
-											</ItemDescription>
-										</ItemContent>
-										<ItemActions className="shrink-0">
-											<span className="text-foreground text-sm font-semibold tabular-nums">
-												{order.total.toFixed(2)} €
+								<Item size="sm">
+									<ItemContent>
+										<ItemTitle className="gap-1.5">
+											<span className="text-sm font-medium">#{order.orderNumber}</span>
+											<Badge variant={ORDER_STATUS_VARIANTS[order.status]} className="text-[10px]">
+												{ORDER_STATUS_LABELS[order.status]}
+											</Badge>
+										</ItemTitle>
+										<ItemDescription className="text-xs">
+											<span className="truncate">{order.customerName}</span>
+											<span className="block text-[11px]">
+												{format(new Date(order.createdAt), "dd/MM à HH:mm", { locale: fr })}
 											</span>
-											<ChevronRight
-												className="text-muted-foreground/60 size-4"
-												aria-hidden="true"
-											/>
-										</ItemActions>
-									</Link>
+										</ItemDescription>
+									</ItemContent>
+									<ItemActions className="shrink-0">
+										<span className="text-foreground text-sm font-semibold tabular-nums">
+											{order.total.toFixed(2)} €
+										</span>
+									</ItemActions>
 								</Item>
 							</div>
 						))}
-						{orders.length > 0 && (
-							<>
-								<ItemSeparator />
-								<Item asChild size="sm">
-									<Link
-										href="/admin/ventes/commandes"
-										onClick={() => triggerHaptic("light")}
-										className="text-primary text-sm font-medium"
-									>
-										<ItemContent>
-											<ItemTitle className="text-primary">Voir toutes les commandes</ItemTitle>
-										</ItemContent>
-										<ChevronRight className="text-primary size-4" aria-hidden="true" />
-									</Link>
-								</Item>
-							</>
-						)}
 					</ItemGroup>
 				)}
 			</section>
@@ -134,13 +99,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 			<CardContent>
 				<div className="space-y-4">
 					{orders.map((order: RecentOrderItem) => (
-						<Link
-							key={order.id}
-							href={`/admin/ventes/commandes/${order.id}`}
-							onClick={() => triggerHaptic("light")}
-							className="hover:bg-accent flex items-center justify-between rounded-lg border p-3 transition-colors"
-							aria-label={`Commande #${order.orderNumber}, ${order.total.toFixed(2)} €, ${order.customerName}, ${ORDER_STATUS_LABELS[order.status]}`}
-						>
+						<div key={order.id} className="flex items-center justify-between rounded-lg border p-3">
 							<div className="min-w-0 flex-1 gap-y-1">
 								<div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
 									<p className="text-sm font-medium">#{order.orderNumber}</p>
@@ -170,7 +129,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 							<div className="text-right">
 								<p className="font-bold tabular-nums">{order.total.toFixed(2)} €</p>
 							</div>
-						</Link>
+						</div>
 					))}
 					{orders.length === 0 && (
 						<p className="text-muted-foreground py-4 text-center text-sm">
@@ -179,16 +138,6 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 					)}
 				</div>
 			</CardContent>
-			{orders.length > 0 && (
-				<CardFooter className="justify-center border-t pt-4">
-					<Button asChild variant="ghost" size="sm" className="gap-1.5">
-						<Link href="/admin/ventes/commandes">
-							Voir toutes les commandes
-							<ArrowRight className="size-3.5" aria-hidden="true" />
-						</Link>
-					</Button>
-				</CardFooter>
-			)}
 		</Card>
 	);
 }

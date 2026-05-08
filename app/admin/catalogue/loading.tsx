@@ -13,13 +13,18 @@ export default function CatalogLoading() {
 		<div role="status" aria-busy="true" aria-label="Chargement du catalogue">
 			<span className="sr-only">Chargement du catalogue…</span>
 
-			{/* Page Header */}
+			{/* Page Header (desktop) */}
 			<PageHeader
 				variant="compact"
 				title="Catalogue"
 				description="Gérez vos bijoux, collections et tout ce qui compose votre catalogue"
 				className="hidden md:block"
 			/>
+
+			{/* Mobile description (mirror SectionNavigation: title covered by AdminMobileHeader) */}
+			<div className="mb-4 md:hidden">
+				<Skeleton className="h-4 w-72 max-w-full" />
+			</div>
 
 			{/* Navigation Cards Grid - matches SectionNavigation structure */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">

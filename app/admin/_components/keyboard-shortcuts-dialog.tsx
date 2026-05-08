@@ -86,7 +86,7 @@ export function KeyboardShortcutsDialog() {
 
 	return (
 		<Dialog open={isOpen} onOpenChange={(next) => (next ? open() : close())}>
-			<DialogContent className="max-w-lg">
+			<DialogContent className="max-h-[90vh] max-w-lg gap-4 overflow-y-auto p-6">
 				<DialogHeader>
 					<DialogTitle>Raccourcis clavier</DialogTitle>
 					<DialogDescription>

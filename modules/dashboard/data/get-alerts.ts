@@ -1,14 +1,13 @@
-import { DisputeStatus, ProductStatus, RefundStatus } from "@/app/generated/prisma/client";
+import { ProductStatus, RefundStatus } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheDashboard } from "@/shared/lib/cache";
 import { DASHBOARD_CACHE_TAGS } from "@/modules/dashboard/constants/cache";
+import { LOW_STOCK_THRESHOLD } from "@/modules/products/constants/product.constants";
 
 import type { DashboardAlerts } from "../types/dashboard.types";
 
 export type { DashboardAlerts } from "../types/dashboard.types";
-
-const LOW_STOCK_THRESHOLD = 3;
 
 /**
  * Fetches actionable alert counts for the dashboard
@@ -20,16 +19,9 @@ export async function fetchDashboardAlerts(): Promise<DashboardAlerts> {
 	cacheDashboard(DASHBOARD_CACHE_TAGS.ALERTS);
 
 	return Sentry.startSpan({ name: "dashboard.fetchAlerts", op: "db.read" }, async () => {
-		const [pendingRefunds, activeDisputes, lowStockSkus] = await Promise.all([
+		const [pendingRefunds, lowStockSkus] = await Promise.all([
 			prisma.refund.count({
 				where: { status: RefundStatus.PENDING },
-			}),
-			prisma.dispute.count({
-				where: {
-					status: {
-						in: [DisputeStatus.NEEDS_RESPONSE, DisputeStatus.UNDER_REVIEW],
-					},
-				},
 			}),
 			prisma.productSku.count({
 				where: {
@@ -43,6 +35,6 @@ export async function fetchDashboardAlerts(): Promise<DashboardAlerts> {
 			}),
 		]);
 
-		return { pendingRefunds, activeDisputes, lowStockSkus };
+		return { pendingRefunds, lowStockSkus };
 	});
 }

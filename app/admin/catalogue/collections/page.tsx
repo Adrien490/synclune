@@ -15,12 +15,11 @@ import { CollectionsMobileList } from "@/modules/collections/components/admin/co
 import { CollectionsMobileListSkeleton } from "@/modules/collections/components/admin/collections-mobile-list-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
 import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
-import { CollectionStatusNavigation } from "@/modules/collections/components/admin/collection-status-navigation";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
 import { CollectionsAdminDialogs } from "./_components/collections-admin-dialogs";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
-import { parseFilters, parseStatus } from "./_utils/params";
+import { parseFilters } from "./_utils/params";
 
 // Lazy loading - dialogs et bottom bar charges uniquement a l'ouverture
 const CollectionsBottomBar = dynamic(() =>
@@ -36,6 +35,7 @@ const CollectionFormDialog = dynamic(() =>
 
 type CollectionFiltersSearchParams = {
 	filter_hasProducts?: string;
+	filter_status?: string | string[];
 };
 
 export type CollectionsSearchParams = {
@@ -44,12 +44,7 @@ export type CollectionsSearchParams = {
 	perPage?: string;
 	sortBy?: string;
 	search?: string;
-	status?: string;
 } & CollectionFiltersSearchParams;
-
-export type ParsedCollectionFilters = {
-	hasProducts?: boolean;
-};
 
 export const metadata: Metadata = {
 	title: "Collections - Administration",
@@ -74,7 +69,6 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 		| "products-ascending"
 		| "products-descending";
 	const search = getFirstParam(params.search);
-	const status = parseStatus(params);
 
 	// La promise de collections n'est PAS awaitée pour permettre le streaming
 	const collectionsPromise = getCollections({
@@ -101,11 +95,6 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 
 			<div className="space-y-6">
 				<CollectionsBottomBar />
-
-				{/* Onglets de statut */}
-				<div className="hidden md:block">
-					<CollectionStatusNavigation currentStatus={status} searchParams={params} />
-				</div>
 
 				<Suspense
 					fallback={<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />}
@@ -147,7 +136,13 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 
 				{/* Liste mobile */}
 				<Suspense fallback={<CollectionsMobileListSkeleton />}>
-					<CollectionsMobileList collectionsPromise={collectionsPromise} perPage={perPage} />
+					<CollectionsMobileList
+						collectionsPromise={collectionsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

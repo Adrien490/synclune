@@ -204,10 +204,10 @@ describe("DeleteProductAlertDialog", () => {
 			);
 		});
 
-		it("populates hidden id field from productId data key", () => {
+		it("populates hidden productId field from productId data key", () => {
 			const { container } = renderDialog();
 
-			const field = container.querySelector('input[name="id"]') as HTMLInputElement;
+			const field = container.querySelector('input[name="productId"]') as HTMLInputElement;
 			expect(field.value).toBe("prod-1");
 		});
 	});
@@ -223,11 +223,11 @@ describe("DeleteProductAlertDialog", () => {
 			expect(() => renderDialog()).not.toThrow();
 		});
 
-		it("uses empty string for hidden id when data is null", () => {
+		it("uses empty string for hidden productId when data is null", () => {
 			mockDialog.data = null;
 			const { container } = renderDialog();
 
-			const field = container.querySelector('input[name="id"]') as HTMLInputElement;
+			const field = container.querySelector('input[name="productId"]') as HTMLInputElement;
 			expect(field.value).toBe("");
 		});
 	});

@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 
@@ -52,14 +52,18 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 	});
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/catalogue/collections/${collection.slug}/modifier`}
-			ariaLabel={`Collection ${collection.name}`}
-			sections={sections}
-			menuTitle="Actions collection"
-			menuDescription={collection.name}
-			className="text-left"
-			viewTransitionName={`collection-card-${collection.id}`}
+		<MobileSelectableCard
+			id={collection.id}
+			itemLabel={`Collection ${collection.name}`}
+			longPressProps={{
+				href: `/admin/catalogue/collections/${collection.slug}/modifier`,
+				ariaLabel: `Collection ${collection.name}`,
+				sections,
+				menuTitle: "Actions collection",
+				menuDescription: collection.name,
+				className: "text-left",
+				viewTransitionName: `collection-card-${collection.id}`,
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">
 				{cover ? (
@@ -68,7 +72,7 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 						alt=""
 						width={48}
 						height={48}
-						sizes="48px"
+						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 						className="size-12 shrink-0 rounded-md border object-cover"
 						{...(cover.blurDataUrl ? { placeholder: "blur", blurDataURL: cover.blurDataUrl } : {})}
 					/>
@@ -97,6 +101,6 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

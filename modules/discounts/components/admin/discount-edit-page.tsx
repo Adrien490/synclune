@@ -1,7 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-
-import { Button } from "@/shared/components/ui/button";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { Separator } from "@/shared/components/ui/separator";
 
 import type { GetDiscountReturn } from "../../types/discount.types";
@@ -15,23 +12,16 @@ interface DiscountEditPageProps {
 export function DiscountEditPage({ discount }: DiscountEditPageProps) {
 	return (
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+			<AdminDetailBackLink href="/admin/marketing/discounts" label="Retour aux codes promo" />
 			<header className="space-y-2">
-				<div className="flex items-start justify-between gap-4">
-					<div className="space-y-1">
-						<h1 className="text-2xl font-semibold tracking-tight">
-							Modifier le code{" "}
-							<code className="bg-muted rounded px-1.5 py-0.5 text-xl">{discount.code}</code>
-						</h1>
-						<p className="text-muted-foreground text-sm">
-							Modifiez les paramètres du code promo existant.
-						</p>
-					</div>
-					<Button variant="outline" size="sm" asChild className="shrink-0">
-						<Link href="/admin/marketing/discounts">
-							<ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-							Retour
-						</Link>
-					</Button>
+				<div className="space-y-1">
+					<h1 className="text-2xl font-semibold tracking-tight">
+						Modifier le code{" "}
+						<code className="bg-muted rounded px-1.5 py-0.5 text-xl">{discount.code}</code>
+					</h1>
+					<p className="text-muted-foreground text-sm">
+						Modifiez les paramètres du code promo existant.
+					</p>
 				</div>
 			</header>
 

@@ -1,1 +1,1 @@
-export { LongPressMenuLink } from "./long-press-menu-link";
+export { LongPressMenuLink, type LongPressMenuLinkProps } from "./long-press-menu-link";

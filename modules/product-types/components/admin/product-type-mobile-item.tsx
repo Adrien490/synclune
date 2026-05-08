@@ -2,7 +2,7 @@
 
 import { Tag } from "lucide-react";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -40,14 +40,18 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 	});
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/catalogue/types-de-produits/${productType.slug}`}
-			ariaLabel={`Type de bijou ${productType.label}`}
-			sections={sections}
-			menuTitle="Actions"
-			menuDescription={productType.label}
-			className="text-left"
-			viewTransitionName={`product-type-card-${productType.id}`}
+		<MobileSelectableCard
+			id={productType.id}
+			itemLabel={`Type de bijou ${productType.label}`}
+			longPressProps={{
+				href: `/admin/catalogue/types-de-produits/${productType.slug}`,
+				ariaLabel: `Type de bijou ${productType.label}`,
+				sections,
+				menuTitle: "Actions",
+				menuDescription: productType.label,
+				className: "text-left",
+				viewTransitionName: `product-type-card-${productType.id}`,
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">
 				<ItemMedia variant="icon">
@@ -74,6 +78,6 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

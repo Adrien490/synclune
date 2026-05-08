@@ -189,6 +189,5 @@ export type GetTopProductsReturn = {
 
 export type DashboardAlerts = {
 	pendingRefunds: number;
-	activeDisputes: number;
 	lowStockSkus: number;
 };

@@ -5,6 +5,8 @@ import { StickyNote } from "lucide-react";
 import { useState } from "react";
 
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
+import { useBulkSelectionContextOptional } from "@/shared/components/data-table";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
@@ -43,13 +45,54 @@ type Order = {
 	invoiceNumber?: string | null;
 };
 
+function OrderCardContent({ order }: { order: Order }) {
+	return (
+		<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte commande">
+			<ItemContent className="min-w-0">
+				<ItemTitle>
+					<span className="truncate font-semibold">{order.orderNumber}</span>
+					<Badge
+						variant={ORDER_STATUS_VARIANTS[order.status]}
+						style={{ viewTransitionName: `order-status-${order.id}` }}
+					>
+						{ORDER_STATUS_LABELS[order.status]}
+					</Badge>
+					<Badge
+						variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
+						style={{ viewTransitionName: `order-payment-${order.id}` }}
+					>
+						{PAYMENT_STATUS_LABELS[order.paymentStatus]}
+					</Badge>
+				</ItemTitle>
+				<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+					<span>{order.customerName ?? order.customerEmail}</span>
+					<span aria-hidden="true">·</span>
+					<span className="font-medium">{formatEuro(order.total)}</span>
+					<span aria-hidden="true">·</span>
+					<span>{formatDateShort(order.createdAt)}</span>
+					<span aria-hidden="true">·</span>
+					<span>
+						{order._count.items} article{order._count.items > 1 ? "s" : ""}
+					</span>
+				</ItemDescription>
+			</ItemContent>
+		</Item>
+	);
+}
+
 /**
  * Mobile item pour la liste des commandes.
- * - Tap : navigation vers la page détail.
- * - Long-press 500ms : ouvre le menu d'actions (parité row-actions desktop).
- * - Swipe droit (→) : ouvre les notes internes (safe action).
+ *
+ * - **Mode OFF** :
+ *   - Tap : navigation vers la page détail.
+ *   - Long-press 500ms : ouvre le menu d'actions (parité row-actions desktop).
+ *   - Swipe droit (→) : ouvre les notes internes (safe action).
+ * - **Mode sélection ON** : SwipeableCard, swipe et long-press désactivés ;
+ *   la card devient `<button role="checkbox">` qui toggle la sélection (pattern
+ *   Mail iOS, géré via `MobileSelectableCard`).
  */
 export function OrdersMobileListItem({ order }: { order: Order }) {
+	const ctx = useBulkSelectionContextOptional();
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 	const [menuOpen, setMenuOpen] = useState(false);
 
@@ -75,6 +118,14 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 		notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber });
 	};
 
+	if (ctx?.selectionMode) {
+		return (
+			<MobileSelectableCard id={order.id} itemLabel={`Commande ${order.orderNumber}`}>
+				<OrderCardContent order={order} />
+			</MobileSelectableCard>
+		);
+	}
+
 	return (
 		<>
 			<SwipeableCard
@@ -96,30 +147,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 						"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
 					)}
 				>
-					<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte commande">
-						<ItemContent className="min-w-0">
-							<ItemTitle>
-								<span className="truncate font-semibold">{order.orderNumber}</span>
-								<Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
-									{ORDER_STATUS_LABELS[order.status]}
-								</Badge>
-								<Badge variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}>
-									{PAYMENT_STATUS_LABELS[order.paymentStatus]}
-								</Badge>
-							</ItemTitle>
-							<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-								<span>{order.customerName ?? order.customerEmail}</span>
-								<span aria-hidden="true">·</span>
-								<span className="font-medium">{formatEuro(order.total)}</span>
-								<span aria-hidden="true">·</span>
-								<span>{formatDateShort(order.createdAt)}</span>
-								<span aria-hidden="true">·</span>
-								<span>
-									{order._count.items} article{order._count.items > 1 ? "s" : ""}
-								</span>
-							</ItemDescription>
-						</ItemContent>
-					</Item>
+					<OrderCardContent order={order} />
 				</Link>
 			</SwipeableCard>
 

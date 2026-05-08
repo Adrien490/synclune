@@ -117,7 +117,13 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 
 				{/* Liste mobile */}
 				<Suspense fallback={<MaterialsMobileListSkeleton />}>
-					<MaterialsMobileList materialsPromise={materialsPromise} perPage={perPage} />
+					<MaterialsMobileList
+						materialsPromise={materialsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

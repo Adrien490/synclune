@@ -93,7 +93,6 @@ describe("DashboardKpis", () => {
 				comparisonLabel: "vs mois dernier",
 				size: "featured",
 				priority: "critical",
-				href: "/admin/ventes/commandes?paymentStatus=PAID",
 			}),
 		);
 	});
@@ -166,7 +165,6 @@ describe("DashboardKpis", () => {
 				comparisonLabel: "vs mois dernier",
 				size: "featured",
 				priority: "critical",
-				href: "/admin/ventes/commandes",
 			}),
 		);
 	});
@@ -208,7 +206,6 @@ describe("DashboardKpis", () => {
 				numericValue: 5,
 				priority: "alert",
 				status: "warning",
-				href: "/admin/ventes/commandes?filter_fulfillmentStatus=UNFULFILLED",
 			}),
 		);
 	});

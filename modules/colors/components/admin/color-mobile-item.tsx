@@ -1,6 +1,6 @@
 "use client";
 
-import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -36,14 +36,18 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	});
 
 	return (
-		<LongPressMenuLink
-			href={`/admin/catalogue/couleurs/${color.slug}`}
-			ariaLabel={`Couleur ${color.name}`}
-			sections={sections}
-			menuTitle="Actions"
-			menuDescription={color.name}
-			className="text-left"
-			viewTransitionName={`color-card-${color.id}`}
+		<MobileSelectableCard
+			id={color.id}
+			itemLabel={`Couleur ${color.name}`}
+			longPressProps={{
+				href: `/admin/catalogue/couleurs/${color.slug}`,
+				ariaLabel: `Couleur ${color.name}`,
+				sections,
+				menuTitle: "Actions",
+				menuDescription: color.name,
+				className: "text-left",
+				viewTransitionName: `color-card-${color.id}`,
+			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">
 				<ItemMedia variant="icon">
@@ -73,6 +77,6 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</LongPressMenuLink>
+		</MobileSelectableCard>
 	);
 }

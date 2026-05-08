@@ -2,6 +2,13 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as React from "react";
 
+// ResizeObserver polyfill (required by @radix-ui/react-use-size in jsdom)
+global.ResizeObserver = class ResizeObserver {
+	observe() {}
+	unobserve() {}
+	disconnect() {}
+};
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -346,10 +353,10 @@ describe("CollectionsFilterSheet", () => {
 		expect(mockFormReset).toHaveBeenCalledOnce();
 	});
 
-	it("resets form to default values (hasProducts: 'all') on clear-all", () => {
+	it("resets form to default values (hasProducts: 'all', statuses: []) on clear-all", () => {
 		render(<CollectionsFilterSheet />);
 		fireEvent.click(screen.getByTestId("btn-clear"));
-		expect(mockFormReset).toHaveBeenCalledWith({ hasProducts: "all" });
+		expect(mockFormReset).toHaveBeenCalledWith({ hasProducts: "all", statuses: [] });
 	});
 
 	it("calls router.push when the clear-all button is clicked", () => {

@@ -19,6 +19,8 @@ import { withViewTransition } from "@/shared/utils/with-view-transition";
 interface CreateCollectionFormProps {
 	/** Callback appelé après succès */
 	onSuccess?: () => void;
+	/** Callback appelé avec l'id de la collection créée (création à la volée) */
+	onCreated?: (id: string) => void;
 	/** Rediriger vers la liste après succès (défaut: true) */
 	redirectOnSuccess?: boolean;
 	/** Classes CSS additionnelles */
@@ -27,6 +29,7 @@ interface CreateCollectionFormProps {
 
 export function CreateCollectionForm({
 	onSuccess,
+	onCreated,
 	redirectOnSuccess = true,
 	className,
 }: CreateCollectionFormProps = {}) {
@@ -49,7 +52,11 @@ export function CreateCollectionForm({
 				showSuccessToast: false,
 				onSuccess: (result) => {
 					form.reset();
-					const data = (result as { data?: { collectionStatus?: CollectionStatus } }).data;
+					const data = (
+						result as {
+							data?: { id?: string; name?: string; collectionStatus?: CollectionStatus };
+						}
+					).data;
 					const statusActionLabels: Record<CollectionStatus, string> = {
 						[CollectionStatus.DRAFT]: "Voir les brouillons",
 						[CollectionStatus.PUBLIC]: "Voir les publiées",
@@ -67,6 +74,9 @@ export function CreateCollectionForm({
 								: undefined,
 						},
 					);
+					if (data?.id) {
+						onCreated?.(data.id);
+					}
 					onSuccess?.();
 					if (redirectOnSuccess) {
 						setTimeout(

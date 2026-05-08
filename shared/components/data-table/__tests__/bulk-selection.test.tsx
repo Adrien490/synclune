@@ -157,4 +157,108 @@ describe("BulkSelectionToolbar", () => {
 		fireEvent.click(screen.getByLabelText("Effacer la sélection"));
 		expect(screen.queryByRole("region", { name: "Actions groupées" })).not.toBeInTheDocument();
 	});
+
+	it("renders children full-width without count/clear in bottom-bar mode", () => {
+		renderWithProvider(
+			["a"],
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "produit", plural: "produits" }}
+				presentation="bottom-bar"
+			>
+				<button data-testid="bulk-action-archive">Archiver</button>
+			</BulkSelectionToolbar>,
+		);
+
+		expect(screen.getByTestId("bulk-action-archive")).toBeInTheDocument();
+		expect(screen.queryByLabelText("Effacer la sélection")).not.toBeInTheDocument();
+		expect(screen.queryByRole("region", { name: "Actions groupées" })).not.toBeInTheDocument();
+	});
+
+	it("returns null in bottom-bar mode without children", () => {
+		const { container } = renderWithProvider(
+			["a"],
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "produit", plural: "produits" }}
+				presentation="bottom-bar"
+			/>,
+		);
+
+		expect(container).toBeEmptyDOMElement();
+	});
+});
+
+// ============================================================================
+// SELECTION MODE (mobile pattern Mail iOS)
+// ============================================================================
+
+import { useBulkSelectionContext } from "../bulk-selection-context";
+
+function SelectionModeProbe() {
+	const {
+		selectionMode,
+		selectedCount,
+		enterSelectionMode,
+		exitSelectionMode,
+		selectAllVisible,
+		clear,
+		toggle,
+		pageState,
+	} = useBulkSelectionContext();
+	return (
+		<div>
+			<span data-testid="mode">{selectionMode ? "on" : "off"}</span>
+			<span data-testid="count">{selectedCount}</span>
+			<span data-testid="page-state">{pageState}</span>
+			<button onClick={enterSelectionMode}>enter</button>
+			<button onClick={exitSelectionMode}>exit</button>
+			<button onClick={selectAllVisible}>select-all</button>
+			<button onClick={clear}>clear</button>
+			<button onClick={() => toggle("a")}>toggle-a</button>
+		</div>
+	);
+}
+
+describe("BulkSelectionContext — selectionMode", () => {
+	it("starts in OFF mode by default", () => {
+		renderWithProvider(["a", "b"], <SelectionModeProbe />);
+		expect(screen.getByTestId("mode")).toHaveTextContent("off");
+	});
+
+	it("enterSelectionMode flips selectionMode to ON", () => {
+		renderWithProvider(["a", "b"], <SelectionModeProbe />);
+		fireEvent.click(screen.getByText("enter"));
+		expect(screen.getByTestId("mode")).toHaveTextContent("on");
+	});
+
+	it("exitSelectionMode resets selectionMode and clears selection", () => {
+		renderWithProvider(["a", "b"], <SelectionModeProbe />);
+		fireEvent.click(screen.getByText("enter"));
+		fireEvent.click(screen.getByText("toggle-a"));
+		expect(screen.getByTestId("count")).toHaveTextContent("1");
+
+		fireEvent.click(screen.getByText("exit"));
+		expect(screen.getByTestId("mode")).toHaveTextContent("off");
+		expect(screen.getByTestId("count")).toHaveTextContent("0");
+	});
+
+	it("clear() also resets selectionMode (sortie cohérente)", () => {
+		renderWithProvider(["a", "b"], <SelectionModeProbe />);
+		fireEvent.click(screen.getByText("enter"));
+		fireEvent.click(screen.getByText("toggle-a"));
+		fireEvent.click(screen.getByText("clear"));
+
+		expect(screen.getByTestId("mode")).toHaveTextContent("off");
+		expect(screen.getByTestId("count")).toHaveTextContent("0");
+	});
+
+	it("selectAllVisible is idempotent (toggle on/off)", () => {
+		renderWithProvider(["a", "b"], <SelectionModeProbe />);
+		fireEvent.click(screen.getByText("select-all"));
+		expect(screen.getByTestId("count")).toHaveTextContent("2");
+		expect(screen.getByTestId("page-state")).toHaveTextContent("all");
+
+		fireEvent.click(screen.getByText("select-all"));
+		expect(screen.getByTestId("count")).toHaveTextContent("0");
+		expect(screen.getByTestId("page-state")).toHaveTextContent("none");
+	});
 });

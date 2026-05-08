@@ -8,7 +8,6 @@ import type { DashboardAlerts } from "../../types/dashboard.types";
 // ============================================================================
 
 vi.mock("lucide-react", () => ({
-	AlertTriangle: () => <span data-testid="icon-alert-triangle" />,
 	CalendarClock: () => <span data-testid="icon-calendar-clock" />,
 	PackageX: () => <span data-testid="icon-package-x" />,
 	Receipt: () => <span data-testid="icon-receipt" />,
@@ -58,7 +57,6 @@ afterEach(cleanup);
 function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 	return {
 		pendingRefunds: 0,
-		activeDisputes: 0,
 		lowStockSkus: 0,
 		...overrides,
 	};
@@ -73,26 +71,6 @@ describe("DashboardAlerts", () => {
 		const { container } = render(<DashboardAlertsComponent alerts={makeAlerts()} />);
 
 		expect(container.firstChild).toBeNull();
-	});
-
-	it("renders dispute alert with Urgent badge", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ activeDisputes: 2 })} />);
-
-		expect(screen.getByText("2 litiges Stripe")).toBeInTheDocument();
-		expect(screen.getByText("Urgent")).toBeInTheDocument();
-	});
-
-	it("renders singular litige text for 1 dispute", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ activeDisputes: 1 })} />);
-
-		expect(screen.getByText("1 litige Stripe")).toBeInTheDocument();
-	});
-
-	it("links dispute alert to litiges page", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ activeDisputes: 1 })} />);
-
-		const link = screen.getByText("1 litige Stripe").closest("a");
-		expect(link).toHaveAttribute("href", "/admin/ventes/litiges");
 	});
 
 	it("renders refund alert", () => {
@@ -128,12 +106,9 @@ describe("DashboardAlerts", () => {
 
 	it("renders all alerts when all counts > 0", () => {
 		render(
-			<DashboardAlertsComponent
-				alerts={makeAlerts({ pendingRefunds: 2, activeDisputes: 1, lowStockSkus: 5 })}
-			/>,
+			<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 2, lowStockSkus: 5 })} />,
 		);
 
-		expect(screen.getByText("1 litige Stripe")).toBeInTheDocument();
 		expect(screen.getByText("2 remboursements en attente")).toBeInTheDocument();
 		expect(screen.getByText("5 SKUs stock bas")).toBeInTheDocument();
 	});
@@ -187,7 +162,7 @@ describe("DashboardAlerts", () => {
 			expect(screen.getByText("Bascule TVA")).toBeInTheDocument();
 		});
 
-		it("links VAT alert to year-scoped orders page", () => {
+		it("renders VAT alert as non-interactive (no anchor)", () => {
 			render(
 				<DashboardAlertsComponent
 					alerts={makeAlerts()}
@@ -195,8 +170,7 @@ describe("DashboardAlerts", () => {
 				/>,
 			);
 
-			const link = screen.getByText(/Seuil TVA/).closest("a");
-			expect(link).toHaveAttribute("href", "/admin/ventes/commandes?period=year");
+			expect(screen.getByText(/Seuil TVA/).closest("a")).toBeNull();
 		});
 	});
 

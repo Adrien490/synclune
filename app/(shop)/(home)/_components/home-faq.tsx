@@ -26,11 +26,11 @@ export const HOME_FAQ_ITEMS: ReadonlyArray<FaqItem> = [
 		id: "fait-main",
 		question: "Vos bijoux sont-ils vraiment faits main ?",
 		answerText:
-			"Oui, à 100 %. Chaque pièce est dessinée, peinte, cuite et assemblée dans mon atelier à Pessac. Aucune production en série, aucune sous-traitance — chaque création passe entre mes mains.",
+			"Oui, à 100 %. Chaque pièce est dessinée, peinte, cuite et assemblée dans mon atelier à Nantes. Aucune production en série, aucune sous-traitance — chaque création passe entre mes mains.",
 		answer: (
 			<>
 				Oui, à <strong className="text-foreground font-semibold">100 %</strong>. Chaque pièce est
-				dessinée, peinte, cuite et assemblée dans mon atelier à Pessac. Aucune production en série,
+				dessinée, peinte, cuite et assemblée dans mon atelier à Nantes. Aucune production en série,
 				aucune sous-traitance, chaque création passe entre mes mains.
 			</>
 		),

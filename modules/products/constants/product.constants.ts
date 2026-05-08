@@ -295,6 +295,10 @@ export const GET_PRODUCTS_MAX_RESULTS_PER_PAGE = 200;
 export const GET_PRODUCTS_DEFAULT_SORT_BY = "created-descending";
 export const GET_PRODUCTS_ADMIN_FALLBACK_SORT_BY = "created-descending";
 
+// SKU is considered low stock when inventory > 0 AND inventory <= threshold.
+// Shared between dashboard alerts and the admin products list filter.
+export const LOW_STOCK_THRESHOLD = 3;
+
 export const GET_PRODUCTS_SORT_FIELDS = [
 	"rating-descending",
 	"title-ascending",

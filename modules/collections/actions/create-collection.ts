@@ -45,7 +45,7 @@ export async function createCollection(
 			: null;
 
 		// Transaction pour garantir l'atomicité (unicité du nom + création)
-		const slug = await prisma.$transaction(async (tx) => {
+		const { slug, id } = await prisma.$transaction(async (tx) => {
 			// Vérifier l'unicité du nom
 			const existingName = await tx.collection.findFirst({
 				where: { name: sanitizedName },
@@ -59,7 +59,7 @@ export async function createCollection(
 			const slug = await generateSlug(tx, "collection", sanitizedName);
 
 			// Créer la collection
-			await tx.collection.create({
+			const created = await tx.collection.create({
 				data: {
 					name: sanitizedName,
 					slug,
@@ -68,7 +68,7 @@ export async function createCollection(
 				},
 			});
 
-			return slug;
+			return { slug, id: created.id };
 		});
 
 		// Invalider le cache
@@ -85,6 +85,8 @@ export async function createCollection(
 		});
 
 		return success("Collection créée avec succès", {
+			id,
+			name: sanitizedName,
 			collectionStatus: validatedData.status,
 		});
 	} catch (e) {

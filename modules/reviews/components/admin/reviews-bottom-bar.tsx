@@ -4,15 +4,11 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
-import { reviewsAdminQuickSearchAdapter } from "./reviews-quick-search-adapter";
 import { ReviewsFilterSheet } from "./reviews-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = [
@@ -96,10 +92,11 @@ function ReviewsBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={reviewsAdminQuickSearchAdapter}
+				placeholder="Client, produit, contenu…"
+				ariaLabel="Rechercher un avis"
 			/>
 		</>
 	);

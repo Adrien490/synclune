@@ -36,8 +36,17 @@ vi.mock("@/shared/utils/with-callbacks", () => ({
 	withCallbacks: (action: unknown) => action,
 }));
 
+type ToastCallbacksConfig = {
+	onSuccess?: (result: unknown) => void;
+};
+
+const capturedToastCallbacks = vi.hoisted(() => ({ current: null as ToastCallbacksConfig | null }));
+
 vi.mock("@/shared/utils/create-toast-callbacks", () => ({
-	createToastCallbacks: () => ({}),
+	createToastCallbacks: (config: ToastCallbacksConfig) => {
+		capturedToastCallbacks.current = config;
+		return {};
+	},
 }));
 
 vi.mock("sonner", () => ({
@@ -369,5 +378,36 @@ describe("CreateCollectionForm", () => {
 
 	it("accepts redirectOnSuccess=false without crashing", () => {
 		expect(() => render(<CreateCollectionForm redirectOnSuccess={false} />)).not.toThrow();
+	});
+
+	// ─── onCreated callback ──────────────────────────────────────────────────
+
+	it("accepts onCreated callback prop without crashing", () => {
+		const onCreated = vi.fn();
+		expect(() => render(<CreateCollectionForm onCreated={onCreated} />)).not.toThrow();
+	});
+
+	it("calls onCreated with the id returned by the action on success", () => {
+		const onCreated = vi.fn();
+		render(<CreateCollectionForm onCreated={onCreated} redirectOnSuccess={false} />);
+
+		capturedToastCallbacks.current?.onSuccess?.({
+			data: { id: "col-42", name: "Été 2026", collectionStatus: "DRAFT" },
+			message: "Collection créée avec succès",
+		});
+
+		expect(onCreated).toHaveBeenCalledWith("col-42");
+	});
+
+	it("does not call onCreated when no id is returned", () => {
+		const onCreated = vi.fn();
+		render(<CreateCollectionForm onCreated={onCreated} redirectOnSuccess={false} />);
+
+		capturedToastCallbacks.current?.onSuccess?.({
+			data: { collectionStatus: "DRAFT" },
+			message: "Collection créée avec succès",
+		});
+
+		expect(onCreated).not.toHaveBeenCalled();
 	});
 });

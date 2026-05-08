@@ -3,10 +3,17 @@ import { Package } from "lucide-react";
 import Link from "next/link";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
+import { BulkSelectionProvider } from "@/shared/components/data-table";
+import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
+import {
+	MobileSelectionBottomBar,
+	MobileSelectionHeader,
+} from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
 import type { GetProductsReturn } from "@/modules/products/types/product.types";
 import { ProductMobileItem } from "./product-mobile-item";
+import { ProductsBulkActionsBar } from "./products-bulk-actions-bar";
 
 interface ProductsMobileListProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -33,37 +40,49 @@ export function ProductsMobileList({
 							: "Commencez par créer votre premier produit."
 					}
 					actionElement={
-						<Link
-							href="/admin/catalogue/produits/nouveau"
-							className="bg-primary text-primary-foreground inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium"
-						>
-							Nouveau produit
-						</Link>
+						hasActiveFilters ? (
+							<EmptyResetFiltersAction href="/admin/catalogue/produits" />
+						) : (
+							<Link
+								href="/admin/catalogue/produits/nouveau"
+								className="bg-primary text-primary-foreground inline-flex h-9 items-center justify-center rounded-md px-4 text-sm font-medium"
+							>
+								Nouveau produit
+							</Link>
+						)
 					}
 				/>
 			</div>
 		);
 	}
 
-	return (
-		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-			<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
-			<ItemGroup aria-label="Produits" className="gap-2">
-				{products.map((product) => (
-					<div key={product.id} role="listitem">
-						<ProductMobileItem product={product} />
-					</div>
-				))}
-			</ItemGroup>
+	const pageItemIds = products.map((p) => p.id);
 
-			<CursorPagination
-				perPage={perPage}
-				hasNextPage={pagination.hasNextPage}
-				hasPreviousPage={pagination.hasPreviousPage}
-				currentPageSize={products.length}
-				nextCursor={pagination.nextCursor}
-				prevCursor={pagination.prevCursor}
-			/>
-		</div>
+	return (
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+				<MobileSelectionHeader itemsLabel={{ singular: "produit", plural: "produits" }} />
+				<AdminListLiveCount count={products.length} singular="produit" plural="produits" />
+				<ItemGroup aria-label="Produits" className="gap-2">
+					{products.map((product) => (
+						<div key={product.id} role="listitem">
+							<ProductMobileItem product={product} />
+						</div>
+					))}
+				</ItemGroup>
+
+				<CursorPagination
+					perPage={perPage}
+					hasNextPage={pagination.hasNextPage}
+					hasPreviousPage={pagination.hasPreviousPage}
+					currentPageSize={products.length}
+					nextCursor={pagination.nextCursor}
+					prevCursor={pagination.prevCursor}
+				/>
+			</div>
+			<MobileSelectionBottomBar>
+				<ProductsBulkActionsBar presentation="bottom-bar" />
+			</MobileSelectionBottomBar>
+		</BulkSelectionProvider>
 	);
 }

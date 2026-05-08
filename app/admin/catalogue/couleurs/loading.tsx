@@ -21,7 +21,7 @@ export default function ColorsLoading() {
 			/>
 
 			<div className="space-y-6">
-				<ToolbarSkeleton selectCount={1} buttonCount={2} />
+				<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 
 				{/* Filter badges placeholder */}
 				<div className="min-h-[1px]" aria-hidden="true" />

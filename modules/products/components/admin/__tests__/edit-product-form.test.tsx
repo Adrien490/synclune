@@ -59,6 +59,11 @@ vi.mock("@/modules/materials/components/material-form-dialog", () => ({
 	MaterialFormDialog: () => null,
 }));
 
+vi.mock("@/modules/collections/components/admin/collection-form-dialog", () => ({
+	COLLECTION_DIALOG_ID: "collection-form",
+	CollectionFormDialog: () => null,
+}));
+
 vi.mock("@/shared/components/forms", () => ({
 	FieldLabel: ({ children, ...props }: { children: React.ReactNode }) => (
 		<label {...props}>{children}</label>

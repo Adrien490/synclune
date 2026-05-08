@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { RefundsDataTable } from "@/modules/refunds/components/admin/refunds-data-table";
 import { RefundsDataTableSkeleton } from "@/modules/refunds/components/admin/refunds-data-table-skeleton";
+import { RefundsFilterBadges } from "@/modules/refunds/components/admin/refunds-filter-badges";
 import { RefundsMobileList } from "@/modules/refunds/components/admin/refunds-mobile-list";
 import { RefundsMobileListSkeleton } from "@/modules/refunds/components/admin/refunds-mobile-list-skeleton";
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
@@ -100,11 +101,20 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 						<RefundsFilterSheet />
 						<RefreshRefundsButton />
 					</Toolbar>
+
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<RefundsFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}
 				<Suspense fallback={<RefundsMobileListSkeleton />}>
-					<RefundsMobileList refundsPromise={refundsPromise} perPage={perPage} />
+					<RefundsMobileList
+						refundsPromise={refundsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

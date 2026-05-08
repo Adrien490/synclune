@@ -36,6 +36,7 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 	if (users.length === 0) {
 		return (
 			<TableEmptyState
+				className="hidden md:block"
 				icon={Users}
 				title="Aucun client trouvé"
 				description="Aucun client ne correspond aux criteres de recherche."

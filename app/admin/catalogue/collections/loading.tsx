@@ -6,31 +6,27 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 
 export default function CollectionsManagementLoading() {
 	return (
-		<div role="status" aria-busy="true" aria-label="Chargement des collections">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement des collections"
+			className="space-y-6"
+		>
 			<span className="sr-only">Chargement des collections…</span>
 
 			<PageHeader
 				variant="compact"
 				title="Collections"
-				description="Gérez vos collections de bijoux"
+				actions={<Skeleton className="h-10 w-48" />}
 				className="hidden md:block"
 			/>
 
-			<div className="space-y-6">
-				{/* Status navigation tabs (desktop) */}
-				<div className="hidden gap-2 md:flex md:items-center">
-					{Array.from({ length: 4 }).map((_, i) => (
-						<Skeleton key={i} className="h-9 w-24 rounded-md" />
-					))}
-				</div>
+			<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 
-				<ToolbarSkeleton selectCount={2} buttonCount={1} />
+			<div className="min-h-[1px]" aria-hidden="true" />
 
-				<div className="min-h-[1px]" aria-hidden="true" />
-
-				<CollectionsMobileListSkeleton />
-				<CollectionsDataTableSkeleton />
-			</div>
+			<CollectionsMobileListSkeleton />
+			<CollectionsDataTableSkeleton />
 		</div>
 	);
 }

@@ -5,15 +5,15 @@ import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
@@ -22,10 +22,17 @@ import { bulkToggleColorsStatus } from "../../actions/bulk-toggle-colors-status"
 
 type BulkAction = "activate" | "deactivate";
 
-export function ColorsBulkActionsBar() {
+interface ColorsBulkActionsBarProps {
+	presentation?: "inline" | "bottom-bar";
+}
+
+export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const [state, action, isPending] = useActionState(bulkToggleColorsStatus, undefined);
+	const noSelection = selectedCount === 0;
+	const isBottomBar = presentation === "bottom-bar";
+	const buttonSize = isBottomBar ? "default" : "sm";
 
 	useEffect(() => {
 		if (!state) return;
@@ -50,13 +57,17 @@ export function ColorsBulkActionsBar() {
 
 	return (
 		<>
-			<BulkSelectionToolbar itemsLabel={{ singular: "couleur", plural: "couleurs" }}>
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "couleur", plural: "couleurs" }}
+				presentation={presentation}
+				aria-busy={isPending}
+			>
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction("activate")}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
 					Activer
@@ -64,37 +75,37 @@ export function ColorsBulkActionsBar() {
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction("deactivate")}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
 					Désactiver
 				</Button>
 			</BulkSelectionToolbar>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={dialogOpen}
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
 			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							{isActivate
 								? `Activer ${selectedCount} couleur${selectedCount > 1 ? "s" : ""} ?`
 								: `Désactiver ${selectedCount} couleur${selectedCount > 1 ? "s" : ""} ?`}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							{isActivate
 								? `${selectedCount > 1 ? "Les couleurs activées seront" : "La couleur activée sera"} disponible${selectedCount > 1 ? "s" : ""} pour les nouvelles variantes produits.`
 								: `${selectedCount > 1 ? "Les couleurs désactivées ne seront" : "La couleur désactivée ne sera"} plus proposée${selectedCount > 1 ? "s" : ""} dans les nouvelles variantes. Les variantes existantes restent inchangées.`}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="button"
 							onClick={() => pendingAction && handleConfirm(pendingAction)}
 							disabled={isPending}
@@ -102,10 +113,10 @@ export function ColorsBulkActionsBar() {
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							{isActivate ? "Activer" : "Désactiver"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

@@ -3,7 +3,7 @@ import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 export function SkusMobileListSkeleton() {
 	return (
-		<div className="md:hidden">
+		<div className="pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 			<SkeletonGroup label="Chargement des variantes">
 				<ItemGroup>
 					{Array.from({ length: 5 }).map((_, i) => (

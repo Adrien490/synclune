@@ -4,16 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { PRODUCT_TYPES_SORT_LABELS } from "../../constants/product-type.constants";
-import { productTypesAdminQuickSearchAdapter } from "./product-types-quick-search-adapter";
 import { ProductTypesFilterSheet } from "./product-types-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(PRODUCT_TYPES_SORT_LABELS).map(
@@ -105,10 +101,11 @@ function ProductTypesBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={productTypesAdminQuickSearchAdapter}
+				placeholder="Label, slug…"
+				ariaLabel="Rechercher un type de produit"
 			/>
 		</>
 	);

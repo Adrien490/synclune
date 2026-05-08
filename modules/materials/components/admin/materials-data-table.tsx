@@ -34,6 +34,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 	if (materials.length === 0) {
 		return (
 			<TableEmptyState
+				className="hidden md:block"
 				icon={Gem}
 				title="Aucun matériau trouvé"
 				description="Aucun materiau ne correspond aux criteres de recherche."

@@ -117,10 +117,10 @@ describe("ProductTypeRowActions", () => {
 		expect(screen.getByText("Voir les produits")).toBeInTheDocument();
 	});
 
-	it("links to products filtered by productTypeId", () => {
-		render(<ProductTypeRowActions {...defaultProps} productTypeId="pt-42" />);
+	it("links to products filtered by type slug", () => {
+		render(<ProductTypeRowActions {...defaultProps} />);
 		const link = screen.getByText("Voir les produits").closest("a");
-		expect(link).toHaveAttribute("href", "/admin/catalogue/produits?productTypeId=pt-42");
+		expect(link).toHaveAttribute("href", "/admin/catalogue/produits?filter_typeId=colliers");
 	});
 
 	// ─── Non-system type ──────────────────────────────────────────────────────

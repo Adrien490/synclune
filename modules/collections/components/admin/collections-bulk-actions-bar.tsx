@@ -6,15 +6,15 @@ import { ArchiveRestore, ArchiveX, Loader2 } from "lucide-react";
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/shared/components/ui/alert-dialog";
+	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
+	ResponsiveAlertDialogCancel,
+	ResponsiveAlertDialogContent,
+	ResponsiveAlertDialogDescription,
+	ResponsiveAlertDialogFooter,
+	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogTitle,
+} from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
 import { ActionStatus } from "@/shared/types/server-action";
 import { toast } from "@/shared/utils/toast";
@@ -23,10 +23,19 @@ import { bulkArchiveCollections } from "../../actions/bulk-archive-collections";
 
 type BulkAction = "ARCHIVED" | "PUBLIC";
 
-export function CollectionsBulkActionsBar() {
+interface CollectionsBulkActionsBarProps {
+	presentation?: "inline" | "bottom-bar";
+}
+
+export function CollectionsBulkActionsBar({
+	presentation = "inline",
+}: CollectionsBulkActionsBarProps = {}) {
 	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const [state, action, isPending] = useActionState(bulkArchiveCollections, undefined);
+	const noSelection = selectedCount === 0;
+	const isBottomBar = presentation === "bottom-bar";
+	const buttonSize = isBottomBar ? "default" : "sm";
 
 	useEffect(() => {
 		if (!state) return;
@@ -51,13 +60,17 @@ export function CollectionsBulkActionsBar() {
 
 	return (
 		<>
-			<BulkSelectionToolbar itemsLabel={{ singular: "collection", plural: "collections" }}>
+			<BulkSelectionToolbar
+				itemsLabel={{ singular: "collection", plural: "collections" }}
+				presentation={presentation}
+				aria-busy={isPending}
+			>
 				<Button
 					type="button"
 					variant="outline"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction(CollectionStatus.PUBLIC)}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<ArchiveRestore className="size-4" aria-hidden="true" />
 					Restaurer
@@ -65,37 +78,37 @@ export function CollectionsBulkActionsBar() {
 				<Button
 					type="button"
 					variant="destructive"
-					size="sm"
+					size={buttonSize}
 					onClick={() => setPendingAction(CollectionStatus.ARCHIVED)}
-					disabled={isPending}
+					disabled={isPending || noSelection}
 				>
 					<ArchiveX className="size-4" aria-hidden="true" />
 					Archiver
 				</Button>
 			</BulkSelectionToolbar>
 
-			<AlertDialog
+			<ResponsiveAlertDialog
 				open={dialogOpen}
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
 			>
-				<AlertDialogContent>
-					<AlertDialogHeader>
-						<AlertDialogTitle>
+				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeader>
+						<ResponsiveAlertDialogTitle>
 							{isArchive
 								? `Archiver ${selectedCount} collection${selectedCount > 1 ? "s" : ""} ?`
 								: `Restaurer ${selectedCount} collection${selectedCount > 1 ? "s" : ""} ?`}
-						</AlertDialogTitle>
-						<AlertDialogDescription>
+						</ResponsiveAlertDialogTitle>
+						<ResponsiveAlertDialogDescription>
 							{isArchive
 								? `${selectedCount > 1 ? "Les collections archivées" : "La collection archivée"} ne ${selectedCount > 1 ? "seront" : "sera"} plus visible${selectedCount > 1 ? "s" : ""} sur la boutique. Vous pourrez ${selectedCount > 1 ? "les" : "la"} restaurer à tout moment.`
 								: `${selectedCount > 1 ? "Les collections sélectionnées" : "La collection sélectionnée"} ${selectedCount > 1 ? "seront" : "sera"} repassée${selectedCount > 1 ? "s" : ""} en statut public.`}
-						</AlertDialogDescription>
-					</AlertDialogHeader>
-					<AlertDialogFooter>
-						<AlertDialogCancel disabled={isPending}>Annuler</AlertDialogCancel>
-						<AlertDialogAction
+						</ResponsiveAlertDialogDescription>
+					</ResponsiveAlertDialogHeader>
+					<ResponsiveAlertDialogFooter>
+						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
+						<ResponsiveAlertDialogAction
 							type="button"
 							onClick={() => pendingAction && handleConfirm(pendingAction)}
 							disabled={isPending}
@@ -108,10 +121,10 @@ export function CollectionsBulkActionsBar() {
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							{isArchive ? "Archiver" : "Restaurer"}
-						</AlertDialogAction>
-					</AlertDialogFooter>
-				</AlertDialogContent>
-			</AlertDialog>
+						</ResponsiveAlertDialogAction>
+					</ResponsiveAlertDialogFooter>
+				</ResponsiveAlertDialogContent>
+			</ResponsiveAlertDialog>
 		</>
 	);
 }

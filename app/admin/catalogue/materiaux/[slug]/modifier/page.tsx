@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EditMaterialForm } from "@/modules/materials/components/admin/edit-material-form";
 import { getMaterialBySlug } from "@/modules/materials/data/get-material";
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 
 interface EditMaterialPageProps {
 	params: Promise<{ slug: string }>;
@@ -23,8 +24,9 @@ export default async function EditMaterialPage({ params }: EditMaterialPageProps
 	if (!material) notFound();
 
 	return (
-		<>
-			<h1 className="mb-6 hidden text-2xl font-semibold md:block">{material.name}</h1>
+		<div className="space-y-4">
+			<AdminDetailBackLink href={`/admin/catalogue/materiaux/${slug}`} label="Retour au matériau" />
+			<h1 className="hidden text-2xl font-semibold md:block">{material.name}</h1>
 			<EditMaterialForm
 				material={{
 					id: material.id,
@@ -35,6 +37,6 @@ export default async function EditMaterialPage({ params }: EditMaterialPageProps
 				}}
 				className="max-w-lg"
 			/>
-		</>
+		</div>
 	);
 }

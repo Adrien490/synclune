@@ -4,6 +4,7 @@ import { FieldLabel } from "@/shared/components/forms";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { MultiSelect } from "@/shared/components/multi-select";
+import { COLLECTION_DIALOG_ID } from "@/modules/collections/components/admin/collection-form-dialog";
 import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -28,6 +29,7 @@ export function CreateProductInfoCard({
 	const router = useRouter();
 	const haptic = useHaptic();
 	const typeDialog = useDialog(PRODUCT_TYPE_DIALOG_ID);
+	const collectionDialog = useDialog(COLLECTION_DIALOG_ID);
 
 	return (
 		<Card
@@ -135,19 +137,41 @@ export function CreateProductInfoCard({
 					{(field) => (
 						<div className="space-y-2">
 							<FieldLabel optional>Collections</FieldLabel>
-							<MultiSelect
-								options={collections.map((c) => ({
-									value: c.id,
-									label: c.name,
-								}))}
-								defaultValue={field.state.value}
-								onValueChange={(values) => {
-									haptic("selection");
-									field.handleChange(values);
-								}}
-								placeholder="Sélectionner des collections"
-								aria-describedby="collections-hint"
-							/>
+							<div className="flex gap-2">
+								<div className="flex-1">
+									<MultiSelect
+										options={collections.map((c) => ({
+											value: c.id,
+											label: c.name,
+										}))}
+										defaultValue={field.state.value}
+										onValueChange={(values) => {
+											haptic("selection");
+											field.handleChange(values);
+										}}
+										placeholder="Sélectionner des collections"
+										aria-describedby="collections-hint"
+									/>
+								</div>
+								<Button
+									type="button"
+									variant="outline"
+									size="icon"
+									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+									onClick={() => {
+										haptic("light");
+										collectionDialog.open({
+											onCreated: (id: string) => {
+												field.handleChange([...field.state.value, id]);
+												router.refresh();
+											},
+										});
+									}}
+									aria-label="Créer une nouvelle collection"
+								>
+									<Plus className="size-4" />
+								</Button>
+							</div>
 							<p id="collections-hint" className="text-muted-foreground text-xs">
 								Un produit peut appartenir à plusieurs collections
 							</p>

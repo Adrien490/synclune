@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Receipt } from "lucide-react";
+import { ExternalLink, Receipt } from "lucide-react";
 
+import { AdminDetailBackLink } from "@/shared/components/admin-detail-back-link";
 import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { formatDateShort } from "@/shared/utils/dates";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -23,30 +23,23 @@ interface RefundDetailPageProps {
 export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 	return (
 		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+			<AdminDetailBackLink href="/admin/ventes/remboursements" label="Retour aux remboursements" />
 			<header className="space-y-2">
-				<div className="flex items-start justify-between gap-4">
-					<div className="space-y-1">
-						<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-							<Receipt className="size-6" aria-hidden="true" />
-							Remboursement
-						</h1>
-						<p className="text-muted-foreground text-sm">
-							Commande{" "}
-							<Link
-								href={`/admin/ventes/commandes/${refund.order.id}`}
-								className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
-							>
-								{refund.order.orderNumber}
-								<ExternalLink className="size-3" aria-hidden="true" />
-							</Link>
-						</p>
-					</div>
-					<Button variant="outline" size="sm" asChild className="shrink-0">
-						<Link href="/admin/ventes/remboursements">
-							<ArrowLeft className="mr-2 size-4" aria-hidden="true" />
-							Retour
+				<div className="space-y-1">
+					<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
+						<Receipt className="size-6" aria-hidden="true" />
+						Remboursement
+					</h1>
+					<p className="text-muted-foreground text-sm">
+						Commande{" "}
+						<Link
+							href={`/admin/ventes/commandes/${refund.order.id}`}
+							className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
+						>
+							{refund.order.orderNumber}
+							<ExternalLink className="size-3" aria-hidden="true" />
 						</Link>
-					</Button>
+					</p>
 				</div>
 			</header>
 
@@ -66,7 +59,10 @@ export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 					<dd className="font-medium">{formatEuro(refund.amount)}</dd>
 					<dt className="text-muted-foreground">Statut</dt>
 					<dd>
-						<Badge variant={REFUND_STATUS_VARIANTS[refund.status]}>
+						<Badge
+							variant={REFUND_STATUS_VARIANTS[refund.status]}
+							style={{ viewTransitionName: `refund-status-${refund.id}` }}
+						>
 							{REFUND_STATUS_LABELS[refund.status]}
 						</Badge>
 					</dd>

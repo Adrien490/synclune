@@ -1,0 +1,148 @@
+import { useEffect } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: vi.fn(),
+	useHaptic: () => vi.fn(),
+}));
+
+vi.mock("lucide-react", () => ({
+	Check: (props: Record<string, unknown>) => <svg data-testid="check-icon" {...props} />,
+}));
+
+// Flatten LongPressMenuLink to a plain anchor for assertion ergonomics — its own
+// suite covers tap/long-press semantics exhaustively.
+vi.mock("@/shared/components/long-press-menu-link", () => ({
+	LongPressMenuLink: ({
+		href,
+		ariaLabel,
+		children,
+		className,
+	}: {
+		href: string;
+		ariaLabel: string;
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<a href={href} aria-label={ariaLabel} className={className}>
+			{children}
+		</a>
+	),
+}));
+
+import { BulkSelectionProvider, useBulkSelectionContext } from "@/shared/components/data-table";
+import { MobileSelectableCard } from "../mobile-selectable-card";
+
+const longPressProps = {
+	href: "/admin/catalogue/produits/anneau",
+	ariaLabel: "Produit Anneau doré",
+	sections: [],
+	menuTitle: "Actions",
+};
+
+function EnterModeOnMount() {
+	const { enterSelectionMode } = useBulkSelectionContext();
+	useEffect(() => {
+		enterSelectionMode();
+	}, [enterSelectionMode]);
+	return null;
+}
+
+afterEach(cleanup);
+
+describe("MobileSelectableCard", () => {
+	it("renders LongPressMenuLink (anchor) when no provider in parent", () => {
+		render(
+			<MobileSelectableCard
+				id="p-1"
+				itemLabel="Produit Anneau doré"
+				longPressProps={longPressProps}
+			>
+				<span>Card content</span>
+			</MobileSelectableCard>,
+		);
+
+		const link = screen.getByRole("link", { name: "Produit Anneau doré" });
+		expect(link.tagName).toBe("A");
+		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/anneau");
+	});
+
+	it("renders LongPressMenuLink when selectionMode is OFF", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["p-1"]}>
+				<MobileSelectableCard
+					id="p-1"
+					itemLabel="Produit Anneau doré"
+					longPressProps={longPressProps}
+				>
+					<span>Card content</span>
+				</MobileSelectableCard>
+			</BulkSelectionProvider>,
+		);
+
+		expect(screen.getByRole("link", { name: "Produit Anneau doré" })).toBeInTheDocument();
+		expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+	});
+
+	it("renders a button with role=checkbox in selection mode", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["p-1"]}>
+				<EnterModeOnMount />
+				<MobileSelectableCard
+					id="p-1"
+					itemLabel="Produit Anneau doré"
+					longPressProps={longPressProps}
+				>
+					<span>Card content</span>
+				</MobileSelectableCard>
+			</BulkSelectionProvider>,
+		);
+
+		const checkbox = screen.getByRole("checkbox", {
+			name: "Sélectionner Produit Anneau doré",
+		});
+		expect(checkbox).toBeInTheDocument();
+		expect(checkbox).toHaveAttribute("aria-checked", "false");
+		expect(screen.queryByRole("link")).not.toBeInTheDocument();
+	});
+
+	it("toggles aria-checked and label on click in selection mode", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["p-1"]}>
+				<EnterModeOnMount />
+				<MobileSelectableCard
+					id="p-1"
+					itemLabel="Produit Anneau doré"
+					longPressProps={longPressProps}
+				>
+					<span>Card content</span>
+				</MobileSelectableCard>
+			</BulkSelectionProvider>,
+		);
+
+		fireEvent.click(screen.getByRole("checkbox", { name: "Sélectionner Produit Anneau doré" }));
+
+		const checkbox = screen.getByRole("checkbox", {
+			name: "Désélectionner Produit Anneau doré",
+		});
+		expect(checkbox).toHaveAttribute("aria-checked", "true");
+	});
+
+	it("renders children inside the selectable button", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["p-1"]}>
+				<EnterModeOnMount />
+				<MobileSelectableCard
+					id="p-1"
+					itemLabel="Produit Anneau doré"
+					longPressProps={longPressProps}
+				>
+					<span data-testid="card-content">Card content</span>
+				</MobileSelectableCard>
+			</BulkSelectionProvider>,
+		);
+
+		expect(screen.getByTestId("card-content")).toBeInTheDocument();
+	});
+});

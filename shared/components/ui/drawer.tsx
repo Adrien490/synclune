@@ -93,6 +93,16 @@ function DrawerOverlay({
 	);
 }
 
+/**
+ * Rendered inside DrawerPortal so it mounts only while the drawer is open
+ * (Vaul Portal does not render children when open=false). Effect cleanup
+ * runs on close → overlay-stack stays consistent.
+ */
+function OverlayStackRegister() {
+	useRegisterOverlay();
+	return null;
+}
+
 function DrawerContent({
 	className,
 	children,
@@ -106,10 +116,9 @@ function DrawerContent({
 	 */
 	onOverlayClick?: React.MouseEventHandler<HTMLDivElement>;
 }) {
-	useRegisterOverlay();
-
 	return (
 		<DrawerPortal data-slot="drawer-portal">
+			<OverlayStackRegister />
 			<DrawerOverlay onClick={onOverlayClick} />
 			<DrawerPrimitive.Content
 				data-slot="drawer-content"

@@ -13,7 +13,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useLongPress } from "@/shared/hooks/use-long-press";
 import { cn } from "@/shared/utils/cn";
 
-interface LongPressMenuLinkProps {
+export interface LongPressMenuLinkProps {
 	/** Destination de la navigation au tap simple (Next.js `<Link>`). */
 	href: string;
 	/** Label accessible appliqué au Link (lu par les screen readers). */

@@ -71,7 +71,6 @@ export function DashboardKpis({
 									icon={<Euro className="size-4" />}
 									size="featured"
 									priority={revenuePriority}
-									href="/admin/ventes/commandes?paymentStatus=PAID"
 									tooltip="Chiffre d'affaires net (après remboursements) des commandes payées ce mois"
 									subtitle={revenueSubtitle}
 									badge={
@@ -98,7 +97,6 @@ export function DashboardKpis({
 									icon={<ShoppingBag className="size-4" />}
 									size="featured"
 									priority="critical"
-									href="/admin/ventes/commandes"
 									tooltip="Nombre de commandes payées ce mois"
 								/>
 							</div>
@@ -132,7 +130,6 @@ export function DashboardKpis({
 									size="featured"
 									priority={kpis.pendingShipment.count > 0 ? "alert" : "info"}
 									status={kpis.pendingShipment.count > 0 ? "warning" : "default"}
-									href="/admin/ventes/commandes?filter_fulfillmentStatus=UNFULFILLED"
 									tooltip="Commandes payées en attente d'expédition"
 								/>
 							</div>

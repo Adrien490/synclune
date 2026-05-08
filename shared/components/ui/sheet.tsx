@@ -116,6 +116,16 @@ function SheetOverlay({
 	);
 }
 
+/**
+ * Rendered inside SheetPortal so it mounts only while the sheet is open
+ * (Vaul/Radix Portal does not render children when open=false). Effect
+ * cleanup runs on close → overlay-stack stays consistent.
+ */
+function OverlayStackRegister({ enabled }: { enabled: boolean }) {
+	useRegisterOverlay(enabled);
+	return null;
+}
+
 function SheetContent({
 	className,
 	children,
@@ -143,10 +153,10 @@ function SheetContent({
 	registerOverlay?: boolean;
 }) {
 	const { direction } = React.useContext(SheetContext);
-	useRegisterOverlay(registerOverlay);
 
 	return (
 		<SheetPortal>
+			<OverlayStackRegister enabled={registerOverlay} />
 			<SheetOverlay className={overlayClassName} onClick={onOverlayClick} />
 			<SheetPrimitive.Content
 				data-slot="sheet-content"

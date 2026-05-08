@@ -128,7 +128,13 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 
 				{/* Liste mobile */}
 				<Suspense fallback={<DiscountsMobileListSkeleton />}>
-					<DiscountsMobileList discountsPromise={discountsPromise} perPage={perPage} />
+					<DiscountsMobileList
+						discountsPromise={discountsPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

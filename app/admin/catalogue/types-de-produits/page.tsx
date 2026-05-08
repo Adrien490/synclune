@@ -134,7 +134,13 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 
 				{/* Liste mobile */}
 				<Suspense fallback={<ProductTypesMobileListSkeleton />}>
-					<ProductTypesMobileList productTypesPromise={productTypesPromise} perPage={perPage} />
+					<ProductTypesMobileList
+						productTypesPromise={productTypesPromise}
+						perPage={perPage}
+						hasActiveFilters={
+							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
+						}
+					/>
 				</Suspense>
 
 				{/* DataTable desktop */}

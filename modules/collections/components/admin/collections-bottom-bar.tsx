@@ -4,16 +4,12 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { COLLECTIONS_SORT_LABELS } from "../../constants/collection.constants";
-import { collectionsAdminQuickSearchAdapter } from "./collections-quick-search-adapter";
 import { CollectionsFilterSheet } from "./collections-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(COLLECTIONS_SORT_LABELS).map(
@@ -105,10 +101,11 @@ function CollectionsBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={collectionsAdminQuickSearchAdapter}
+				placeholder="Nom, slug, description…"
+				ariaLabel="Rechercher une collection"
 			/>
 		</>
 	);

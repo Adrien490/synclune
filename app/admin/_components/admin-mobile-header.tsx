@@ -8,10 +8,20 @@ import { usePathname, useRouter } from "next/navigation";
 import { generateBreadcrumbs } from "./dashboard-breadcrumb";
 
 const DETAIL_ROUTE_PATTERNS = [
+	// Catalogue — detail + edit + create (5 resources)
+	/^\/admin\/catalogue\/(collections|couleurs|materiaux|produits|types-de-produits)\/[^/]+(\/modifier)?$/,
+	/^\/admin\/catalogue\/(collections|couleurs|materiaux|produits|types-de-produits)\/nouveau$/,
+	// Catalogue — SKU variantes (detail + edit + create)
+	/^\/admin\/catalogue\/produits\/[^/]+\/variantes\/(nouveau|[^/]+(\/modifier)?)$/,
+	// Clients
+	/^\/admin\/clients\/[^/]+$/,
+	// Marketing — avis (detail) + discounts (edit + create)
+	/^\/admin\/marketing\/avis\/[^/]+$/,
+	/^\/admin\/marketing\/discounts\/(nouveau|[^/]+\/modifier)$/,
+	// Ventes — commandes (detail) + remboursements (detail + create)
 	/^\/admin\/ventes\/commandes\/[^/]+$/,
-	/^\/admin\/ventes\/remboursements\/[^/]+$/,
-	/^\/admin\/catalogue\/produits\/[^/]+$/,
-	/^\/admin\/catalogue\/collections\/[^/]+$/,
+	/^\/admin\/ventes\/remboursements\/(nouveau|[^/]+)$/,
+	// Configuration — destructive actions
 	/^\/admin\/configuration\/boutique\/fermer$/,
 ];
 

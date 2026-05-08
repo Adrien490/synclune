@@ -4,17 +4,13 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Filter, Search } from "lucide-react";
 
+import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
-import {
-	AdminQuickSearchDialog,
-	StickyActionBar,
-	type StickyActionBarItem,
-} from "@/shared/components/sticky-action-bar";
+import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { USERS_SORT_LABELS } from "../../constants/user.constants";
 import { UsersFilterSheet } from "./users-filter-sheet";
-import { usersAdminQuickSearchAdapter } from "./users-quick-search-adapter";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(USERS_SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -83,10 +79,11 @@ function UsersBottomBarInner() {
 				showResetOption
 			/>
 
-			<AdminQuickSearchDialog
+			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				adapter={usersAdminQuickSearchAdapter}
+				placeholder="Nom, email…"
+				ariaLabel="Rechercher un client par nom ou email"
 			/>
 		</>
 	);

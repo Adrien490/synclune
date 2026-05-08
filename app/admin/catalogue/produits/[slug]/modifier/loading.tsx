@@ -31,8 +31,13 @@ function FieldSkeleton({ labelWidth = "w-24" }: { labelWidth?: string }) {
 
 export default function EditProductLoadingPage() {
 	return (
-		<div role="status" aria-busy="true" aria-label="Chargement du bijou" className="space-y-6">
+		<div role="status" aria-busy="true" aria-label="Chargement du bijou" className="space-y-4">
 			<span className="sr-only">Chargement du bijou…</span>
+
+			{/* Mobile back link (mirror AdminDetailBackLink) */}
+			<div className="md:hidden">
+				<Skeleton className="h-5 w-36" />
+			</div>
 
 			<Breadcrumb className="hidden md:block">
 				<BreadcrumbList>

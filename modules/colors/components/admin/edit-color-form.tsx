@@ -4,12 +4,13 @@ import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { updateColor } from "@/modules/colors/actions/update-color";
-import { ColorPickerField } from "@/modules/colors/components/admin/color-picker-field";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { FieldLabel } from "@/shared/components/forms/field-label";
 import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
-import { Label } from "@/shared/components/ui/label";
+import { Field, FieldError } from "@/shared/components/ui/field";
+import { Input } from "@/shared/components/ui/input";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -109,25 +110,59 @@ export function EditColorForm({
 							if (!value || value.length < 1) {
 								return "Le code couleur est requis";
 							}
+							if (!/^#[0-9A-Fa-f]{6}$/.test(value)) {
+								return "Format invalide. Utilisez #RRGGBB (ex: #FF5733)";
+							}
 							return undefined;
 						},
 					}}
 				>
-					{(field) => (
-						<div className="space-y-4">
-							<Label htmlFor="hex">
-								Couleur
-								<span className="text-destructive ml-1">*</span>
-							</Label>
-							<ColorPickerField
-								id="hex"
-								value={field.state.value}
-								onChange={(hex) => field.handleChange(hex)}
-								disabled={isPending}
-							/>
-							<input type="hidden" name="hex" value={field.state.value} />
-						</div>
-					)}
+					{(field) => {
+						const safe = /^#[0-9A-Fa-f]{6}$/.test(field.state.value)
+							? field.state.value
+							: "#000000";
+						const errorId = `${field.name}-error`;
+						const hasError = field.state.meta.errors.length > 0;
+						return (
+							<Field data-invalid={hasError}>
+								<FieldLabel htmlFor={field.name} required>
+									Couleur
+								</FieldLabel>
+								<div className="flex items-stretch gap-2">
+									<input
+										type="color"
+										aria-label="Choisir une couleur"
+										value={safe}
+										onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+										disabled={isPending}
+										className="h-10 w-12 shrink-0 cursor-pointer rounded-md border bg-transparent disabled:cursor-not-allowed disabled:opacity-50"
+									/>
+									<Input
+										id={field.name}
+										name={field.name}
+										type="text"
+										value={field.state.value}
+										onChange={(e) => field.handleChange(e.target.value.toUpperCase())}
+										onBlur={field.handleBlur}
+										placeholder="#000000"
+										disabled={isPending}
+										required
+										maxLength={7}
+										className="flex-1 font-mono"
+										inputMode="text"
+										autoCapitalize="characters"
+										autoComplete="off"
+										autoCorrect="off"
+										spellCheck={false}
+										enterKeyHint="next"
+										aria-invalid={hasError}
+										aria-describedby={hasError ? errorId : undefined}
+									/>
+								</div>
+								<FieldError id={errorId} errors={field.state.meta.errors} />
+							</Field>
+						);
+					}}
 				</form.AppField>
 
 				<form.AppField

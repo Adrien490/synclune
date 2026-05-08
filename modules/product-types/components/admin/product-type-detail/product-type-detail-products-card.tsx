@@ -98,7 +98,7 @@ export function ProductTypeDetailProductsCard({ productType }: ProductTypeDetail
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
 				>
 					<Link
-						href={`/admin/catalogue/produits?productTypeId=${productType.id}`}
+						href={`/admin/catalogue/produits?filter_typeId=${productType.slug}`}
 						onClick={() => haptic("light")}
 					>
 						Voir tous les produits
