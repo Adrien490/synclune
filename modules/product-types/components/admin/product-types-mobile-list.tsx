@@ -1,6 +1,7 @@
 import { use } from "react";
 import { Tags } from "lucide-react";
 
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { ItemGroup } from "@/shared/components/ui/item";
@@ -35,6 +36,11 @@ export function ProductTypesMobileList({
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount
+				count={productTypes.length}
+				singular="type de bijou"
+				plural="types de bijoux"
+			/>
 			<ItemGroup aria-label="Types de bijoux" className="gap-2">
 				{productTypes.map((productType) => (
 					<div key={productType.id} role="listitem">

@@ -20,12 +20,7 @@ import { UsersFilterSheet } from "@/modules/users/components/admin/users-filter-
 import { UsersBottomBar } from "@/modules/users/components/admin/users-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
-import dynamic from "next/dynamic";
 import type { Role } from "@/app/generated/prisma/client";
-
-const UserItemDrawer = dynamic(() =>
-	import("@/modules/users/components/admin/user-item-drawer").then((mod) => mod.UserItemDrawer),
-);
 
 export const metadata: Metadata = {
 	title: "Clients - Administration",
@@ -150,10 +145,8 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 						</ButtonGroup>
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<UsersFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<UsersFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}
@@ -170,8 +163,6 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 					/>
 				</Suspense>
 			</div>
-
-			<UserItemDrawer />
 		</>
 	);
 }

@@ -120,7 +120,7 @@ export function MaterialSelector({ materials, product, defaultSku }: MaterialSel
 							onKeyDown={(e) => handleKeyDown(e, index)}
 							disabled={!isAvailable}
 							className={cn(
-								"flex items-center justify-between rounded-lg border p-3 text-left transition-all",
+								"flex min-h-13 items-center justify-between rounded-lg border p-3 text-left transition-all sm:min-h-11",
 								"hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-50",
 								isSelected
 									? "border-primary bg-primary/5"

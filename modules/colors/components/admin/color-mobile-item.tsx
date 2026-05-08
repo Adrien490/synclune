@@ -1,5 +1,6 @@
 "use client";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import {
 	Item,
@@ -8,11 +9,8 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 
-import { COLOR_ITEM_DRAWER_ID, type ColorItemDrawerData } from "./color-item-drawer";
+import { useColorActions } from "../../hooks/use-color-actions";
 
 interface ColorMobileItemProps {
 	color: {
@@ -26,35 +24,24 @@ interface ColorMobileItemProps {
 }
 
 export function ColorMobileItem({ color }: ColorMobileItemProps) {
-	const { open } = useDialog<ColorItemDrawerData>(COLOR_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const skuCount = color._count.skus || 0;
 	const statusLabel = color.isActive ? "Actif" : "Inactif";
 
-	const handleOpen = () => {
-		haptic("selection");
-		open({
-			color: {
-				id: color.id,
-				name: color.name,
-				hex: color.hex,
-				slug: color.slug,
-				isActive: color.isActive,
-				skuCount,
-			},
-		});
-	};
+	const { sections } = useColorActions({
+		colorId: color.id,
+		colorName: color.name,
+		colorHex: color.hex,
+		colorSlug: color.slug,
+	});
 
 	return (
-		<button
-			type="button"
-			aria-label={`Couleur ${color.name}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/catalogue/couleurs/${color.slug}/modifier`}
+			ariaLabel={`Couleur ${color.name}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={color.name}
+			className="text-left"
 		>
 			<Item
 				variant="outline"
@@ -81,6 +68,6 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

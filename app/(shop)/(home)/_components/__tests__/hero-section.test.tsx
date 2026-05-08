@@ -68,10 +68,13 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-// Mock lucide-react Heart icon
+// Mock lucide-react icons used by the hero section
 vi.mock("lucide-react", () => ({
 	Heart: (props: Record<string, unknown>) => (
 		<svg data-testid="heart-icon" aria-hidden={props["aria-hidden"] as boolean} />
+	),
+	ChevronDown: (props: Record<string, unknown>) => (
+		<svg data-testid="chevron-down-icon" aria-hidden={props["aria-hidden"] as boolean} />
 	),
 }));
 

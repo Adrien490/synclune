@@ -56,6 +56,11 @@ vi.mock("@/shared/components/ui/badge", () => ({
 	),
 }));
 
+// Stub animations — HandDrawnAccent uses framer-motion useInView (IntersectionObserver)
+vi.mock("@/shared/components/animations", () => ({
+	HandDrawnAccent: () => null,
+}));
+
 import { ProductInfo } from "../product-info";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";

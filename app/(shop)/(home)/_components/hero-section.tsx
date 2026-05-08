@@ -5,7 +5,7 @@ import { SectionTitle } from "@/shared/components/section-title";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
 import { extractHeroImages } from "../_utils/extract-hero-images";
 import { SplitTextCSS } from "@/shared/components/animations";
-import { Heart } from "lucide-react";
+import { ChevronDown, Heart } from "lucide-react";
 import { Suspense } from "react";
 import { HeroCtaButtons } from "./hero-cta-buttons";
 import { ParticleBackground } from "./hero-decorations";
@@ -37,7 +37,8 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			id="hero-section"
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
-			className="relative flex min-h-[calc(60svh-4rem)] items-center mask-b-from-90% mask-b-to-100% pt-16 pb-10 sm:min-h-[calc(90svh-5rem)] sm:mask-b-from-85% sm:pt-20 sm:pb-16 md:pt-28 md:pb-24 lg:min-h-screen"
+			style={{ viewTransitionName: "shop-hero" }}
+			className="relative flex min-h-[calc(60svh-4rem)] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-5rem)] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-x-0 top-0 bottom-0 -z-10" aria-hidden="true">
@@ -80,7 +81,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 								id="hero-title"
 								className="text-foreground"
 							>
-								<span className="inline-flex flex-wrap items-center justify-center gap-[0.35em]">
+								<span className="inline-flex flex-wrap items-center justify-center gap-x-[0.35em] gap-y-2">
 									<SplitTextCSS>Des bijoux</SplitTextCSS>{" "}
 									<HeroRotatingWord words={["colorés", "uniques"]} duration={3500} />
 								</span>
@@ -94,11 +95,12 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 									Créés à la main pour des occasions particulières, ou pour sublimer votre
 									quotidien{" "}
 								</span>
+								{/* sr-only describes the decorative Heart icon for screen readers */}
 								<span className="sr-only">avec amour</span>
 								<Heart
 									size={22}
 									fill="currentColor"
-									className="text-primary inline align-middle"
+									className="text-primary inline-block align-[-0.15em]"
 									aria-hidden="true"
 								/>
 							</p>
@@ -109,6 +111,14 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 					</div>
 				</div>
 			</div>
+
+			{/* Scroll cue — mobile/tablet only, decorative, motion-reduce safe */}
+			<span
+				aria-hidden="true"
+				className="text-foreground/40 pointer-events-none absolute bottom-[calc(env(safe-area-inset-bottom,0px)+1rem)] left-1/2 z-20 -translate-x-1/2 motion-safe:animate-bounce motion-reduce:hidden lg:hidden"
+			>
+				<ChevronDown size={24} strokeWidth={1.5} />
+			</span>
 		</section>
 	);
 }

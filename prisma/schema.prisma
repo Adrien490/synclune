@@ -52,6 +52,9 @@ model User {
   anonymizedAt        DateTime? // Date d'anonymisation effective
   deletionRequestedAt DateTime? // Demande de suppression enregistree
 
+  // === ONBOARDING ===
+  welcomeShownAt DateTime? // Premier affichage du message de bienvenue admin
+
   sessions       Session[]
   accounts       Account[]
   orders         Order[]

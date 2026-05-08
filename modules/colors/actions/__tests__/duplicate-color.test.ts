@@ -192,6 +192,21 @@ describe("duplicateColor", () => {
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 
+	it("should pass new color slug to invalidation tags so DETAIL tag is busted", async () => {
+		await duplicateColor(undefined, validFormData);
+		expect(mockGetColorInvalidationTags).toHaveBeenCalledWith("or-rose-copie");
+	});
+
+	it("should return slug in success data so consumers can navigate to edit page", async () => {
+		const result = await duplicateColor(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(result.data).toMatchObject({
+			id: "color-2",
+			name: "Or Rose (copie)",
+			slug: "or-rose-copie",
+		});
+	});
+
 	it("should call handleActionError on unexpected exception", async () => {
 		mockPrisma.color.create.mockRejectedValue(new Error("DB crash"));
 		const result = await duplicateColor(undefined, validFormData);

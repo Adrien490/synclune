@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
@@ -22,7 +22,7 @@ const SORT_OPTIONS: SortOption[] = Object.entries(DISCOUNTS_SORT_LABELS).map(([v
 
 /**
  * Sous-header sticky (mobile, admin) pour la liste codes promo.
- * 3 actions : Trier | Rechercher | Filtrer.
+ * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
 export function DiscountsBottomBar() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
@@ -30,21 +30,26 @@ export function DiscountsBottomBar() {
 	const searchParams = useSearchParams();
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const hasActiveSort = searchParams.has("sortBy");
-	const hasActiveFilter =
-		searchParams.has("filter_type") ||
-		searchParams.has("filter_isActive") ||
-		searchParams.has("filter_hasUsages");
+	const activeFilterCount = Array.from(searchParams.keys()).filter((key) =>
+		key.startsWith("filter_"),
+	).length;
 
 	const items: StickyActionBarItem[] = [
 		{
-			key: "sort",
-			icon: ArrowUpDown,
-			label: "Trier",
-			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
-			onClick: () => open("sort"),
-			active: hasActiveSort,
+			key: "filter",
+			icon: SlidersHorizontal,
+			label: "Filtrer",
+			ariaLabel:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
+					: "Ouvrir les filtres",
+			onClick: () => open("filter"),
+			badgeCount: activeFilterCount,
 			haspopup: "dialog",
-			announcement: hasActiveSort ? "Tri actif" : undefined,
+			announcement:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
+					: undefined,
 		},
 		{
 			key: "search",
@@ -61,20 +66,28 @@ export function DiscountsBottomBar() {
 				: undefined,
 		},
 		{
-			key: "filter",
-			icon: SlidersHorizontal,
-			label: "Filtrer",
-			ariaLabel: hasActiveFilter ? "Filtre actif. Modifier le filtre" : "Ouvrir les filtres",
-			onClick: () => open("filter"),
-			active: hasActiveFilter,
+			kind: "link",
+			key: "add",
+			icon: Plus,
+			label: "Ajouter",
+			ariaLabel: "Créer un nouveau code promo",
+			href: "/admin/marketing/discounts/nouveau",
+		},
+		{
+			key: "sort",
+			icon: ArrowUpDown,
+			label: "Trier",
+			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
+			onClick: () => open("sort"),
+			active: hasActiveSort,
 			haspopup: "dialog",
-			announcement: hasActiveFilter ? "Filtres actifs" : undefined,
+			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 	];
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Tri, recherche et filtres" />
+			<StickyActionBar items={items} ariaLabel="Filtres, recherche, ajout et tri" />
 
 			<SortDrawer
 				open={isOpen("sort")}

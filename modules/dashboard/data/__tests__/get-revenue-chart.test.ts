@@ -34,6 +34,10 @@ vi.mock("next/cache", () => ({
 	updateTag: vi.fn(),
 }));
 
+vi.mock("@sentry/nextjs", () => ({
+	startSpan: <T>(_opts: unknown, fn: () => T) => fn(),
+}));
+
 vi.mock("@/shared/lib/cache", () => ({
 	cacheDashboard: mockCacheDefault,
 }));

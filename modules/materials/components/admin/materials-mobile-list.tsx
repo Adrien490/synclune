@@ -1,6 +1,7 @@
 import { use } from "react";
 import { Gem } from "lucide-react";
 
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { ItemGroup } from "@/shared/components/ui/item";
@@ -32,6 +33,7 @@ export function MaterialsMobileList({ materialsPromise, perPage }: MaterialsMobi
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
 			<ItemGroup aria-label="Materiaux" className="gap-2">
 				{materials.map((material) => (
 					<div key={material.id} role="listitem">

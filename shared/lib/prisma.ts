@@ -32,7 +32,10 @@ const prisma =
 	globalForPrisma.prisma ??
 	new PrismaClient({
 		adapter,
-		log: process.env.NODE_ENV === "development" ? ["query", "warn", "error"] : ["error"],
+		// `query` retiré en dev : Prisma 7 émet `WHERE id IN (NULL)` sur les preloads
+		// d'includes quand le parent renvoie 0 ligne (panier vide, liste filtrée vide…).
+		// Bruit verbeux non bloquant. Pour debugger une query : remettre "query" temporairement.
+		log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"],
 		comments: [traceContext()],
 	});
 

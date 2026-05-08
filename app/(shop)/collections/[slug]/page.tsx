@@ -108,7 +108,15 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 			/>
 
 			{/* Section principale avec catalogue */}
-			<section className="bg-background pt-6 pb-12 lg:pt-8 lg:pb-16">
+			<section className="bg-background relative isolate overflow-hidden pt-6 pb-12 lg:pt-8 lg:pb-16">
+				<div
+					aria-hidden="true"
+					className="bg-primary/15 pointer-events-none absolute -top-8 right-4 -z-10 size-48 rounded-full blur-3xl motion-safe:animate-pulse sm:right-12"
+				/>
+				<div
+					aria-hidden="true"
+					className="bg-secondary/25 pointer-events-none absolute top-40 left-4 -z-10 size-36 rounded-full blur-3xl [animation-delay:1.5s] motion-safe:animate-pulse sm:left-12"
+				/>
 				<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 					<Suspense fallback={<ProductListSkeleton />}>
 						<ProductList

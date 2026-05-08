@@ -16,7 +16,14 @@ import {
  */
 export default function OrderDetailLoading() {
 	return (
-		<div className="space-y-6">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement de la commande"
+			className="space-y-6"
+		>
+			<span className="sr-only">Chargement de la commande...</span>
+
 			{/* Bouton retour mobile */}
 			<Link
 				href="/admin/ventes/commandes"

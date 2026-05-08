@@ -16,13 +16,11 @@ import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filt
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import dynamic from "next/dynamic";
 
-// Lazy loading - form dialog page-level (CreateColorButton) + drawer (delete imbrique)
+// Lazy loading - form dialog page-level (CreateColorButton)
 const ColorFormDialog = dynamic(() =>
 	import("@/modules/colors/components/color-form-dialog").then((mod) => mod.ColorFormDialog),
 );
-const ColorItemDrawer = dynamic(() =>
-	import("@/modules/colors/components/admin/color-item-drawer").then((mod) => mod.ColorItemDrawer),
-);
+import { ColorsAdminDialogs } from "./_components/colors-admin-dialogs";
 import { RefreshColorsButton } from "@/modules/colors/components/admin/refresh-colors-button";
 import { ColorsBottomBar } from "@/modules/colors/components/admin/colors-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -112,10 +110,8 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 						</ButtonGroup>
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<ColorsFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<ColorsFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}
@@ -130,8 +126,8 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 			</div>
 
 			<ColorFormDialog />
-			{/* ItemDrawer mobile + delete imbrique */}
-			<ColorItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete) */}
+			<ColorsAdminDialogs />
 		</>
 	);
 }

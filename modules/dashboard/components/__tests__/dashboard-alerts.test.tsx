@@ -9,7 +9,9 @@ import type { DashboardAlerts } from "../../types/dashboard.types";
 
 vi.mock("lucide-react", () => ({
 	AlertTriangle: () => <span data-testid="icon-alert-triangle" />,
+	CalendarClock: () => <span data-testid="icon-calendar-clock" />,
 	PackageX: () => <span data-testid="icon-package-x" />,
+	Receipt: () => <span data-testid="icon-receipt" />,
 	RotateCcw: () => <span data-testid="icon-rotate-ccw" />,
 }));
 
@@ -149,5 +151,99 @@ describe("DashboardAlerts", () => {
 
 		const container = screen.getByRole("status");
 		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant votre attention");
+	});
+
+	describe("VAT threshold alert", () => {
+		it("does not render VAT alert below 80%", () => {
+			const { container } = render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					vatProgress={{ ytdRevenue: 1000000, threshold: 3750000, progress: 50, year: 2026 }}
+				/>,
+			);
+
+			expect(container.firstChild).toBeNull();
+		});
+
+		it("renders VAT alert when progress >= 80%", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					vatProgress={{ ytdRevenue: 3100000, threshold: 3750000, progress: 82.6, year: 2026 }}
+				/>,
+			);
+
+			expect(screen.getByText(/Seuil TVA 2026 atteint à 83 %/)).toBeInTheDocument();
+		});
+
+		it("renders Bascule TVA badge when progress >= 100%", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					vatProgress={{ ytdRevenue: 4000000, threshold: 3750000, progress: 106.7, year: 2026 }}
+				/>,
+			);
+
+			expect(screen.getByText("Bascule TVA")).toBeInTheDocument();
+		});
+
+		it("links VAT alert to year-scoped orders page", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					vatProgress={{ ytdRevenue: 3100000, threshold: 3750000, progress: 82.6, year: 2026 }}
+				/>,
+			);
+
+			const link = screen.getByText(/Seuil TVA/).closest("a");
+			expect(link).toHaveAttribute("href", "/admin/ventes/commandes?period=year");
+		});
+	});
+
+	describe("URSSAF deadline alert", () => {
+		it("does not render URSSAF alert when daysUntil > 15", () => {
+			const { container } = render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					urssafDeadline={{
+						date: new Date("2026-04-30T23:59:59Z"),
+						daysUntil: 30,
+						quarterLabel: "T1 2026",
+					}}
+				/>,
+			);
+
+			expect(container.firstChild).toBeNull();
+		});
+
+		it("renders URSSAF alert when within 15 days", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					urssafDeadline={{
+						date: new Date("2026-04-30T23:59:59Z"),
+						daysUntil: 12,
+						quarterLabel: "T1 2026",
+					}}
+				/>,
+			);
+
+			expect(screen.getByText("Déclaration URSSAF T1 2026 dans 12 jours")).toBeInTheDocument();
+		});
+
+		it("uses singular jour when daysUntil is 1", () => {
+			render(
+				<DashboardAlertsComponent
+					alerts={makeAlerts()}
+					urssafDeadline={{
+						date: new Date("2026-04-30T23:59:59Z"),
+						daysUntil: 1,
+						quarterLabel: "T1 2026",
+					}}
+				/>,
+			);
+
+			expect(screen.getByText("Déclaration URSSAF T1 2026 dans 1 jour")).toBeInTheDocument();
+		});
 	});
 });

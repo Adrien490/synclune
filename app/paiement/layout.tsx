@@ -31,6 +31,14 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 			<link rel="dns-prefetch" href="https://js.stripe.com" />
 			<link rel="preconnect" href="https://js.stripe.com" crossOrigin="anonymous" />
 
+			{/* Skip to main content (WCAG 2.4.1) */}
+			<a
+				href="#main-content"
+				className="bg-background text-foreground border-primary focus-visible:ring-ring sr-only z-50 rounded-md border px-4 py-2 text-sm font-medium shadow-md focus-visible:not-sr-only focus-visible:fixed focus-visible:top-4 focus-visible:left-4 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+			>
+				Aller au contenu
+			</a>
+
 			{/* Header minimal */}
 			<header className="bg-background/90 border-primary/10 border-b-0 pt-[env(safe-area-inset-top)] backdrop-blur-md md:border-b">
 				{/* Decorative top line */}

@@ -97,6 +97,7 @@ export async function duplicateProductType(
 		return success(`Type "${duplicate.label}" dupliqué`, {
 			id: duplicate.id,
 			label: duplicate.label,
+			slug: duplicate.slug,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer le type de produit");

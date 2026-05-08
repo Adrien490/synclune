@@ -110,6 +110,7 @@ describe("duplicateProductType", () => {
 		mockPrisma.productType.create.mockResolvedValue({
 			id: "pt-copy",
 			label: "Bague (copie)",
+			slug: "bague-copie",
 		});
 		mockGenerateUniqueReadableName.mockResolvedValue({
 			success: true,
@@ -223,11 +224,15 @@ describe("duplicateProductType", () => {
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-list");
 	});
 
-	it("should return success with duplicate id and label in data", async () => {
+	it("should return success with duplicate id, label, and slug in data", async () => {
 		const result = await duplicateProductType(undefined, validFormData);
 		expect(mockSuccess).toHaveBeenCalledWith(
 			expect.stringContaining("Bague (copie)"),
-			expect.objectContaining({ id: "pt-copy", label: "Bague (copie)" }),
+			expect.objectContaining({
+				id: "pt-copy",
+				label: "Bague (copie)",
+				slug: "bague-copie",
+			}),
 		);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});

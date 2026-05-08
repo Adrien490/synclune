@@ -32,6 +32,7 @@ export const useDuplicateProduct = (options?: UseDuplicateProductOptions) => {
 			duplicateProduct,
 			createToastCallbacks({
 				loadingMessage: "Duplication du produit...",
+				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
 					if (
 						result &&

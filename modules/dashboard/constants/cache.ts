@@ -7,7 +7,7 @@
 // ============================================
 
 /**
- * Tags used by the 3 dashboard data functions.
+ * Tags used by the dashboard data functions.
  * These are the actual tags applied to cache entries
  * and can be invalidated with updateTag().
  */
@@ -16,8 +16,7 @@ export const DASHBOARD_CACHE_TAGS = {
 	REVENUE_CHART: "dashboard-revenue-chart",
 	RECENT_ORDERS: "dashboard-recent-orders",
 	ALERTS: "dashboard-alerts",
-	FULFILLMENT: "dashboard-fulfillment",
 	TOP_PRODUCTS: "dashboard-top-products",
-	ACTIVE_DISCOUNTS: "dashboard-active-discounts",
-	CUSTOMER_KPIS: "dashboard-customer-kpis",
+	REVIEW_HEALTH: "dashboard-review-health",
+	VAT_PROGRESS: "dashboard-vat-progress",
 } as const;

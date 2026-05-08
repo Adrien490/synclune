@@ -1,18 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
-} from "@/shared/components/ui/collapsible";
 import { Separator } from "@/shared/components/ui/separator";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/shared/components/ui/tooltip";
 import type { ShippingRate } from "@/modules/orders/constants/shipping-rates";
 import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { ChevronDown, Shield } from "lucide-react";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
+import { ChevronDown, Info, Shield } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
 import type { ValidateDiscountCodeReturn } from "@/modules/discounts/types/discount.types";
 import Image from "next/image";
@@ -36,7 +39,20 @@ interface CheckoutSummaryProps {
  * Affiche le récapitulatif des articles, frais de port et total
  * Mobile: collapsible summary. Desktop: sticky sidebar.
  */
-export function CheckoutSummary({
+interface SummaryContentProps {
+	cart: NonNullable<GetCartReturn>;
+	subtotal: number;
+	shipping: number;
+	shippingUnavailable: boolean;
+	shippingInfo: ShippingRate | null;
+	total: number;
+	discountAmount: number;
+	appliedDiscount?: AppliedDiscount | null;
+	totalItems: number;
+	onEditCart: () => void;
+}
+
+function SummaryContent({
 	cart,
 	subtotal,
 	shipping,
@@ -45,13 +61,10 @@ export function CheckoutSummary({
 	total,
 	discountAmount,
 	appliedDiscount,
-}: CheckoutSummaryProps) {
-	const { open: openCart } = useSheet("cart");
-	const haptic = useHaptic();
-
-	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
-
-	const summaryContent = (
+	totalItems,
+	onEditCart,
+}: SummaryContentProps) {
+	return (
 		<>
 			{/* Liste des articles */}
 			<div className="space-y-3">
@@ -111,10 +124,7 @@ export function CheckoutSummary({
 			<div className="text-center">
 				<button
 					type="button"
-					onClick={() => {
-						haptic("light");
-						openCart();
-					}}
+					onClick={onEditCart}
 					aria-label="Modifier mon panier"
 					className="text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
@@ -135,9 +145,9 @@ export function CheckoutSummary({
 
 				{/* Discount line */}
 				{appliedDiscount && discountAmount > 0 && (
-					<div className="flex items-center justify-between">
-						<span className="text-green-600">Réduction ({appliedDiscount.code})</span>
-						<span className="text-base/6 font-medium text-green-600 tabular-nums">
+					<div className="text-success flex items-center justify-between">
+						<span>Réduction ({appliedDiscount.code})</span>
+						<span className="text-base/6 font-medium tabular-nums">
 							-{formatEuro(discountAmount)}
 						</span>
 					</div>
@@ -171,9 +181,24 @@ export function CheckoutSummary({
 					<span className="text-xl/7 tabular-nums sm:text-2xl/8">{formatEuro(total)}</span>
 				</div>
 				{/* Info micro-entreprise */}
-				<div className="text-muted-foreground text-right text-xs/5 tracking-normal antialiased">
-					TVA non applicable, art. 293 B du CGI
-				</div>
+				<TooltipProvider delayDuration={200}>
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<button
+								type="button"
+								className="text-muted-foreground focus-visible:ring-ring ml-auto flex items-center gap-1 rounded-sm text-xs/5 tracking-normal antialiased focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								aria-label="Pourquoi pas de TVA ?"
+							>
+								<span>TVA non applicable, art. 293 B du CGI</span>
+								<Info className="h-3 w-3" aria-hidden="true" />
+							</button>
+						</TooltipTrigger>
+						<TooltipContent className="max-w-xs text-center">
+							Synclune est en franchise en base de TVA (régime micro-entreprise). Aucune TVA
+							n&apos;est facturée sur vos commandes.
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
 			</div>
 
 			{/* Badges de confiance (Baymard: icônes CB + message sécurité) */}
@@ -187,7 +212,7 @@ export function CheckoutSummary({
 
 				{/* Message sécurité */}
 				<div className="text-muted-foreground flex items-center justify-center gap-1.5 text-xs">
-					<Shield className="h-3.5 w-3.5 text-green-600" />
+					<Shield className="text-success h-3.5 w-3.5" />
 					<span>Paiement 100% sécurisé</span>
 				</div>
 
@@ -204,15 +229,60 @@ export function CheckoutSummary({
 			</div>
 		</>
 	);
+}
+
+export function CheckoutSummary({
+	cart,
+	subtotal,
+	shipping,
+	shippingUnavailable,
+	shippingInfo,
+	total,
+	discountAmount,
+	appliedDiscount,
+}: CheckoutSummaryProps) {
+	const { open: openCart } = useSheet("cart");
+	const haptic = useHaptic();
+	const [isMobileOpen, setIsMobileOpen] = useState(true);
+
+	const totalItems = cart.items.reduce((sum, item) => sum + item.quantity, 0);
+
+	const handleEditCart = () => {
+		haptic("light");
+		withViewTransition(() => openCart());
+	};
+
+	const contentProps: SummaryContentProps = {
+		cart,
+		subtotal,
+		shipping,
+		shippingUnavailable,
+		shippingInfo,
+		total,
+		discountAmount,
+		appliedDiscount,
+		totalItems,
+		onEditCart: handleEditCart,
+	};
 
 	return (
 		<>
-			{/* Mobile: collapsible summary (open by default so users see their cart) */}
-			<Collapsible defaultOpen className="md:hidden">
+			{/* Mobile: collapsible summary (open by default so users see their cart).
+			    Content is conditionally rendered to avoid mounting <Image> requests when collapsed. */}
+			<section className="md:hidden" aria-label="Récapitulatif de votre commande">
 				<h2 className="sr-only">Récapitulatif de votre commande</h2>
 
 				<Card className="border-primary/10 rounded-2xl shadow-md">
-					<CollapsibleTrigger onClick={() => haptic("selection")} className="w-full text-left">
+					<button
+						type="button"
+						onClick={() => {
+							haptic("selection");
+							setIsMobileOpen((prev) => !prev);
+						}}
+						aria-expanded={isMobileOpen}
+						aria-controls="checkout-summary-mobile-content"
+						className="w-full text-left"
+					>
 						<CardHeader className="pb-0">
 							<div className="flex items-center justify-between">
 								<CardTitle className="text-base">
@@ -220,16 +290,22 @@ export function CheckoutSummary({
 								</CardTitle>
 								<div className="flex items-center gap-2">
 									<span className="text-lg font-semibold tabular-nums">{formatEuro(total)}</span>
-									<ChevronDown className="text-muted-foreground h-4 w-4 transition-transform [[data-state=open]>&]:rotate-180" />
+									<ChevronDown
+										className={`text-muted-foreground h-4 w-4 transition-transform ${
+											isMobileOpen ? "rotate-180" : ""
+										}`}
+									/>
 								</div>
 							</div>
 						</CardHeader>
-					</CollapsibleTrigger>
-					<CollapsibleContent>
-						<CardContent className="space-y-4 pt-4 pb-6">{summaryContent}</CardContent>
-					</CollapsibleContent>
+					</button>
+					{isMobileOpen && (
+						<CardContent id="checkout-summary-mobile-content" className="space-y-4 pt-4 pb-6">
+							<SummaryContent {...contentProps} />
+						</CardContent>
+					)}
 				</Card>
-			</Collapsible>
+			</section>
 
 			{/* Desktop: sticky sidebar */}
 			<Card className="border-primary/10 hidden rounded-2xl shadow-md md:sticky md:top-24 md:block">
@@ -241,7 +317,9 @@ export function CheckoutSummary({
 					</CardTitle>
 				</CardHeader>
 
-				<CardContent className="space-y-4 pb-6">{summaryContent}</CardContent>
+				<CardContent className="space-y-4 pb-6">
+					<SummaryContent {...contentProps} />
+				</CardContent>
 			</Card>
 		</>
 	);

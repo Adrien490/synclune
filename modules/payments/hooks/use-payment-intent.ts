@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { initializePayment } from "../actions/initialize-payment";
 import { updatePaymentAmount } from "../actions/update-payment-amount";
 import { cancelOrphanPaymentIntent } from "../actions/cancel-orphan-payment-intent";
+import { validateCart } from "@/modules/cart/actions/validate-cart";
 
 /** Re-validate cart if tab was hidden for more than 10 minutes */
 const STALE_THRESHOLD_MS = 10 * 60 * 1000;
@@ -38,6 +40,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		error: null,
 	});
 
+	const router = useRouter();
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 	const initCalledRef = useRef(false);
 	const hiddenAtRef = useRef<number | null>(null);
@@ -107,26 +110,37 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 			if (elapsed < STALE_THRESHOLD_MS) return;
 
 			// Re-initialize payment to refresh prices and validate PI is still active.
+			// Also re-validate cart in parallel (stock may have changed during inactivity).
 			// The old PI may become orphaned if the cart changed (different idempotency key).
 			// Stripe auto-cancels uncaptured PIs after 7 days — no manual cleanup needed.
 			const previousPiId = state.paymentIntentId;
 			setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-			void initializePayment({
-				cartItems: params.cartItems,
-				email: params.email,
-			}).then((result) => {
-				if (result.success) {
+			void Promise.all([
+				initializePayment({
+					cartItems: params.cartItems,
+					email: params.email,
+				}),
+				validateCart(),
+			]).then(([piResult, cartValidation]) => {
+				// If cart is no longer valid (stock/availability changed), reload the page
+				// so the parent server component re-renders the issues banner.
+				if (!cartValidation.isValid && cartValidation.issues.length > 0) {
+					router.refresh();
+					return;
+				}
+
+				if (piResult.success) {
 					// Cancel the previous PI if a new one was created (cart hash changed)
-					if (previousPiId && result.paymentIntentId !== previousPiId) {
+					if (previousPiId && piResult.paymentIntentId !== previousPiId) {
 						void cancelOrphanPaymentIntent(previousPiId);
 					}
 					setState({
-						clientSecret: result.clientSecret,
-						paymentIntentId: result.paymentIntentId,
-						subtotal: result.subtotal,
-						shipping: result.shipping,
-						total: result.total,
+						clientSecret: piResult.clientSecret,
+						paymentIntentId: piResult.paymentIntentId,
+						subtotal: piResult.subtotal,
+						shipping: piResult.shipping,
+						total: piResult.total,
 						isLoading: false,
 						error: null,
 					});
@@ -134,7 +148,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 					setState((prev) => ({
 						...prev,
 						isLoading: false,
-						error: result.error,
+						error: piResult.error,
 					}));
 				}
 			});
@@ -142,7 +156,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 		document.addEventListener("visibilitychange", handleVisibilityChange);
 		return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-	}, [state.paymentIntentId, params.cartItems, params.email]);
+	}, [state.paymentIntentId, params.cartItems, params.email, router]);
 
 	function updateAmount(country: string, postalCode: string, discountAmount: number) {
 		if (!state.paymentIntentId) return;

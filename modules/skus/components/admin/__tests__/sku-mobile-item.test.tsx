@@ -1,19 +1,27 @@
 import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { mockOpen, mockHaptic } = vi.hoisted(() => ({
-	mockOpen: vi.fn(),
-	mockHaptic: vi.fn(),
+vi.mock("@/shared/components/long-press-menu-link", () => ({
+	LongPressMenuLink: ({
+		href,
+		ariaLabel,
+		children,
+		className,
+	}: {
+		href: string;
+		ariaLabel: string;
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<a href={href} aria-label={ariaLabel} className={className}>
+			{children}
+		</a>
+	),
 }));
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: () => ({ open: mockOpen, close: vi.fn(), isOpen: false, data: null }),
-}));
-
-vi.mock("@/shared/hooks/use-haptic", () => ({
-	useHaptic: () => mockHaptic,
+vi.mock("@/modules/skus/hooks/use-sku-actions", () => ({
+	useSkuActions: () => ({ sections: [] }),
 }));
 
 vi.mock("@/shared/constants/cache-tags", () => ({
@@ -64,14 +72,6 @@ vi.mock("lucide-react", () => ({
 	Package: () => <svg data-testid="icon-package" />,
 }));
 
-vi.mock("../sku-item-drawer", () => ({
-	SKU_ITEM_DRAWER_ID: "sku-item-drawer",
-}));
-
-vi.mock("../sku-row-actions", () => ({
-	ProductSkuRowActions: () => null,
-}));
-
 import { SkuMobileItem } from "../sku-mobile-item";
 
 type Sku = Parameters<typeof SkuMobileItem>[0]["sku"];
@@ -107,11 +107,6 @@ function createSku(overrides: Partial<Sku> = {}): Sku {
 afterEach(cleanup);
 
 describe("SkuMobileItem", () => {
-	beforeEach(() => {
-		mockOpen.mockClear();
-		mockHaptic.mockClear();
-	});
-
 	it("renders the SKU code", () => {
 		render(<SkuMobileItem sku={createSku({ sku: "REF-999" })} productSlug="bague-lune" />);
 		expect(screen.getByText("REF-999")).toBeInTheDocument();
@@ -188,74 +183,22 @@ describe("SkuMobileItem", () => {
 		expect(screen.getByTestId("sku-image")).toHaveAttribute("src", "https://example.com/img.jpg");
 	});
 
-	it("opens drawer on tap", async () => {
-		const user = userEvent.setup();
-		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" />);
-		await user.click(screen.getByRole("button", { name: /Variante/i }));
-		expect(mockOpen).toHaveBeenCalledTimes(1);
-	});
-
-	it("passes sku identifiers to drawer open payload", async () => {
-		const user = userEvent.setup();
+	it("navigue vers la page édition variante au tap (Link href)", () => {
 		render(
-			<SkuMobileItem
-				sku={createSku({ id: "sku-42", sku: "REF-42", isDefault: true })}
-				productSlug="produit-x"
-			/>,
+			<SkuMobileItem sku={createSku({ id: "sku-42", sku: "REF-42" })} productSlug="produit-x" />,
 		);
-		await user.click(screen.getByRole("button", { name: /Variante REF-42/i }));
-		const payload = mockOpen.mock.calls[0]?.[0];
-		expect(payload).toMatchObject({
-			sku: {
-				id: "sku-42",
-				skuCode: "REF-42",
-				productSlug: "produit-x",
-				isDefault: true,
-			},
-		});
-	});
-
-	it("passes primaryImage in drawer payload when SKU has a primary image", async () => {
-		const user = userEvent.setup();
-		render(
-			<SkuMobileItem
-				sku={createSku({
-					images: [
-						{
-							id: "img-1",
-							url: "https://example.com/img.jpg",
-							blurDataUrl: "blur",
-							altText: "Alt text",
-							isPrimary: true,
-							mediaType: "IMAGE",
-						},
-					],
-				})}
-				productSlug="bague-lune"
-			/>,
+		const link = screen.getByLabelText("Variante REF-42");
+		expect(link.tagName).toBe("A");
+		expect(link).toHaveAttribute(
+			"href",
+			"/admin/catalogue/produits/produit-x/variantes/sku-42/modifier",
 		);
-		await user.click(screen.getByRole("button", { name: /Variante/i }));
-		const payload = mockOpen.mock.calls[0]?.[0];
-		expect(payload.sku.primaryImage).toEqual({
-			url: "https://example.com/img.jpg",
-			blurDataUrl: "blur",
-			mediaType: "IMAGE",
-			altText: "Alt text",
-		});
 	});
 
-	it("passes primaryImage=null in drawer payload when SKU has no images", async () => {
-		const user = userEvent.setup();
-		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" />);
-		await user.click(screen.getByRole("button", { name: /Variante/i }));
-		const payload = mockOpen.mock.calls[0]?.[0];
-		expect(payload.sku.primaryImage).toBeNull();
-	});
-
-	it("exposes accessible aria-label on the button", () => {
+	it("exposes accessible aria-label on the link", () => {
 		render(
 			<SkuMobileItem sku={createSku({ id: "sku-99", sku: "REF-99" })} productSlug="bague-lune" />,
 		);
-		expect(screen.getByRole("button", { name: "Variante REF-99" })).toBeInTheDocument();
+		expect(screen.getByLabelText("Variante REF-99")).toBeInTheDocument();
 	});
 });

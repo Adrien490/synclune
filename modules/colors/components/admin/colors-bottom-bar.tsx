@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
@@ -13,6 +13,7 @@ import { useToolbarDrawer } from "@/shared/hooks";
 
 import { COLORS_SORT_LABELS } from "../../constants/color.constants";
 import { colorsAdminQuickSearchAdapter } from "./colors-quick-search-adapter";
+import { ColorsFilterSheet } from "./colors-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(COLORS_SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -21,25 +22,34 @@ const SORT_OPTIONS: SortOption[] = Object.entries(COLORS_SORT_LABELS).map(([valu
 
 /**
  * Sous-header sticky (mobile, admin) pour la liste couleurs.
- * 2 actions : Trier | Rechercher.
+ * 4 actions : Filtrer | Rechercher | Ajouter | Trier.
  */
 export function ColorsBottomBar() {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search">();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const hasActiveSort = searchParams.has("sortBy");
+	const activeFilterCount = Array.from(searchParams.keys()).filter((key) =>
+		key.startsWith("filter_"),
+	).length;
 
 	const items: StickyActionBarItem[] = [
 		{
-			key: "sort",
-			icon: ArrowUpDown,
-			label: "Trier",
-			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
-			onClick: () => open("sort"),
-			active: hasActiveSort,
+			key: "filter",
+			icon: SlidersHorizontal,
+			label: "Filtrer",
+			ariaLabel:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
+					: "Ouvrir les filtres",
+			onClick: () => open("filter"),
+			badgeCount: activeFilterCount,
 			haspopup: "dialog",
-			announcement: hasActiveSort ? "Tri actif" : undefined,
+			announcement:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
+					: undefined,
 		},
 		{
 			key: "search",
@@ -55,11 +65,35 @@ export function ColorsBottomBar() {
 				? `Recherche "${searchParams.get("search")}" active`
 				: undefined,
 		},
+		{
+			kind: "link",
+			key: "add",
+			icon: Plus,
+			label: "Ajouter",
+			ariaLabel: "Créer une nouvelle couleur",
+			href: "/admin/catalogue/couleurs/nouveau",
+		},
+		{
+			key: "sort",
+			icon: ArrowUpDown,
+			label: "Trier",
+			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
+			onClick: () => open("sort"),
+			active: hasActiveSort,
+			haspopup: "dialog",
+			announcement: hasActiveSort ? "Tri actif" : undefined,
+		},
 	];
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Tri et recherche" />
+			<StickyActionBar items={items} ariaLabel="Filtres, recherche, ajout et tri" />
+
+			<ColorsFilterSheet
+				open={isOpen("filter")}
+				onOpenChange={onOpenChange("filter")}
+				hideTrigger
+			/>
 
 			<SortDrawer
 				open={isOpen("sort")}

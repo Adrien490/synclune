@@ -5,13 +5,11 @@ import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 
-import { PRODUCT_ITEM_DRAWER_ID, type ProductItemDrawerData } from "./product-item-drawer";
+import { useProductActions } from "../../hooks/use-product-actions";
 
 const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 	style: "currency",
@@ -62,46 +60,26 @@ const getPriceDisplay = (skus: Sku[]) => {
 };
 
 export function ProductMobileItem({ product }: ProductMobileItemProps) {
-	const { open } = useDialog<ProductItemDrawerData>(PRODUCT_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const statusConfig = STATUS_CONFIG[product.status];
 	const priceDisplay = getPriceDisplay(product.skus);
 	const stock = getTotalStock(product.skus);
 	const primaryImage = product.skus.flatMap((sku) => sku.images).find((img) => img.isPrimary);
 
-	const handleOpen = () => {
-		haptic("selection");
-		open({
-			product: {
-				id: product.id,
-				slug: product.slug,
-				title: product.title,
-				status: product.status,
-				priceDisplay,
-				stock,
-				variantsCount: product.skus.length,
-				typeLabel: product.type?.label ?? null,
-				primaryImage: primaryImage
-					? {
-							url: primaryImage.url,
-							thumbnailUrl: primaryImage.thumbnailUrl ?? null,
-							blurDataUrl: primaryImage.blurDataUrl ?? null,
-						}
-					: null,
-			},
-		});
-	};
+	const { sections } = useProductActions({
+		productId: product.id,
+		productSlug: product.slug,
+		productTitle: product.title,
+		productStatus: product.status,
+	});
 
 	return (
-		<button
-			type="button"
-			aria-label={`Produit ${product.title}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/catalogue/produits/${product.slug}/modifier`}
+			ariaLabel={`Produit ${product.title}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={product.title}
+			className="text-left"
 		>
 			<Item
 				variant="outline"
@@ -148,6 +126,6 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

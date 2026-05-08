@@ -37,18 +37,9 @@ export const auth = betterAuth({
 		},
 	},
 	user: {
-		additionalFields: {
-			firstName: {
-				type: "string",
-				required: false, // Optionnel pour permettre Google OAuth
-				input: true,
-			},
-			lastName: {
-				type: "string",
-				required: false, // Optionnel pour permettre Google OAuth
-				input: true,
-			},
-		},
+		// Pas d'additionalFields firstName/lastName : ces données vivent uniquement
+		// sur le modèle Address (shipping/billing). Better Auth tentait un fallback join
+		// sur des colonnes User inexistantes (drift schéma → erreur P2022 ColumnNotFound).
 		changeEmail: {
 			enabled: true,
 		},

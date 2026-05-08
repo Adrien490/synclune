@@ -5,8 +5,26 @@ import { duplicateProductType } from "@/modules/product-types/actions/duplicate-
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
+export interface DuplicateProductTypeSuccessData {
+	id: string;
+	label: string;
+	slug: string;
+}
+
+const isDuplicateProductTypeSuccessData = (
+	value: unknown,
+): value is DuplicateProductTypeSuccessData => {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		typeof (value as DuplicateProductTypeSuccessData).id === "string" &&
+		typeof (value as DuplicateProductTypeSuccessData).label === "string" &&
+		typeof (value as DuplicateProductTypeSuccessData).slug === "string"
+	);
+};
+
 interface UseDuplicateProductTypeOptions {
-	onSuccess?: (message: string) => void;
+	onSuccess?: (message: string, data: DuplicateProductTypeSuccessData) => void;
 }
 
 export const useDuplicateProductType = (options?: UseDuplicateProductTypeOptions) => {
@@ -16,14 +34,17 @@ export const useDuplicateProductType = (options?: UseDuplicateProductTypeOptions
 			duplicateProductType,
 			createToastCallbacks({
 				loadingMessage: "Duplication du type...",
+				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
 						typeof result === "object" &&
 						"message" in result &&
-						typeof result.message === "string"
+						typeof result.message === "string" &&
+						"data" in result &&
+						isDuplicateProductTypeSuccessData(result.data)
 					) {
-						options?.onSuccess?.(result.message);
+						options?.onSuccess?.(result.message, result.data);
 					}
 				},
 			}),

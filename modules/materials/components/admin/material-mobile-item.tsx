@@ -1,12 +1,10 @@
 "use client";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 
-import { MATERIAL_ITEM_DRAWER_ID, type MaterialItemDrawerData } from "./material-item-drawer";
+import { useMaterialActions } from "../../hooks/use-material-actions";
 
 interface MaterialMobileItemProps {
 	material: {
@@ -20,35 +18,25 @@ interface MaterialMobileItemProps {
 }
 
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
-	const { open } = useDialog<MaterialItemDrawerData>(MATERIAL_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const skuCount = material._count.skus || 0;
 	const statusLabel = material.isActive ? "Actif" : "Inactif";
 
-	const handleOpen = () => {
-		haptic("selection");
-		open({
-			material: {
-				id: material.id,
-				name: material.name,
-				slug: material.slug,
-				description: material.description,
-				isActive: material.isActive,
-				skuCount,
-			},
-		});
-	};
+	const { sections } = useMaterialActions({
+		materialId: material.id,
+		materialName: material.name,
+		materialSlug: material.slug,
+		materialDescription: material.description,
+		materialIsActive: material.isActive,
+	});
 
 	return (
-		<button
-			type="button"
-			aria-label={`Matériau ${material.name}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/catalogue/materiaux/${material.slug}/modifier`}
+			ariaLabel={`Matériau ${material.name}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={material.name}
+			className="text-left"
 		>
 			<Item
 				variant="outline"
@@ -71,6 +59,6 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

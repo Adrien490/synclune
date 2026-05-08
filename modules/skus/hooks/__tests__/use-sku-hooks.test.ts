@@ -347,7 +347,12 @@ describe("useDuplicateSku", () => {
 		mockDuplicateSku.mockResolvedValue({
 			status: "success" as const,
 			message: "SKU dupliqué",
-			data: { id: "new-sku-id", sku: "REF-001-COPIE" },
+			data: {
+				id: "new-sku-id",
+				sku: "REF-001-COPIE",
+				productId: "prod-1",
+				productSlug: "bracelet-lune",
+			},
 		});
 	});
 
@@ -368,7 +373,7 @@ describe("useDuplicateSku", () => {
 		expect(formData.get("skuId")).toBe("sku-123");
 	});
 
-	it("calls onSuccess with { id, sku } when action succeeds", async () => {
+	it("calls onSuccess with (message, { id, sku, productId, productSlug }) when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateSku({ onSuccess }));
 
@@ -376,7 +381,12 @@ describe("useDuplicateSku", () => {
 			result.current.duplicate("sku-123", "Bague Or");
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith({ id: "new-sku-id", sku: "REF-001-COPIE" });
+		expect(onSuccess).toHaveBeenCalledWith("SKU dupliqué", {
+			id: "new-sku-id",
+			sku: "REF-001-COPIE",
+			productId: "prod-1",
+			productSlug: "bracelet-lune",
+		});
 	});
 
 	it("calls onError with message when action fails", async () => {

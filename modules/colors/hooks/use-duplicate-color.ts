@@ -5,8 +5,24 @@ import { duplicateColor } from "@/modules/colors/actions/duplicate-color";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
+export interface DuplicateColorSuccessData {
+	id: string;
+	name: string;
+	slug: string;
+}
+
+const isDuplicateColorSuccessData = (value: unknown): value is DuplicateColorSuccessData => {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		typeof (value as DuplicateColorSuccessData).id === "string" &&
+		typeof (value as DuplicateColorSuccessData).name === "string" &&
+		typeof (value as DuplicateColorSuccessData).slug === "string"
+	);
+};
+
 interface UseDuplicateColorOptions {
-	onSuccess?: (data: { id: string; name: string }) => void;
+	onSuccess?: (message: string, data: DuplicateColorSuccessData) => void;
 	onError?: (message: string) => void;
 }
 
@@ -21,9 +37,10 @@ export function useDuplicateColor(options?: UseDuplicateColorOptions) {
 			duplicateColor,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
+				showSuccessToast: false,
 				onSuccess: (result) => {
-					if (result.data) {
-						options?.onSuccess?.(result.data as { id: string; name: string });
+					if (typeof result.message === "string" && isDuplicateColorSuccessData(result.data)) {
+						options?.onSuccess?.(result.message, result.data);
 					}
 				},
 				onError: (result) => {

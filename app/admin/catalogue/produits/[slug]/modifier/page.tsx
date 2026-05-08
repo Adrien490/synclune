@@ -7,14 +7,6 @@ import { notFound } from "next/navigation";
 import dynamic from "next/dynamic";
 import { EditProductForm } from "@/modules/products/components/admin/edit-product-form";
 import { PageHeader } from "@/shared/components/page-header";
-import {
-	Breadcrumb,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
-} from "@/shared/components/ui/breadcrumb";
 
 // Lazy loading - dialogs charges uniquement a l'ouverture
 const DeleteGalleryMediaAlertDialog = dynamic(() =>
@@ -61,23 +53,7 @@ export default async function EditProductPage({ params }: { params: EditProductP
 
 	return (
 		<>
-			<Breadcrumb className="hidden md:block">
-				<BreadcrumbList>
-					<BreadcrumbItem>
-						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbLink href="/admin/catalogue/produits">Produits</BreadcrumbLink>
-					</BreadcrumbItem>
-					<BreadcrumbSeparator />
-					<BreadcrumbItem>
-						<BreadcrumbPage>{product.title}</BreadcrumbPage>
-					</BreadcrumbItem>
-				</BreadcrumbList>
-			</Breadcrumb>
-
-			<PageHeader title={product.title} variant="compact" className="hidden md:block" />
+			<PageHeader title={product.title} variant="compact" />
 
 			<EditProductForm
 				product={product}

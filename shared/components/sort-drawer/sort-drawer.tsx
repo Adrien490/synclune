@@ -13,6 +13,7 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/shared/components/ui/drawer";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import type { SortOption } from "@/shared/types/sort.types";
 import { cn } from "@/shared/utils/cn";
 
@@ -72,6 +73,14 @@ export function SortDrawer({
 	const [isPending, startTransition] = useTransition();
 	const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
 	const shouldReduceMotion = useReducedMotion();
+	const triggerHaptic = useHaptic();
+
+	const handleOpenChange = (next: boolean) => {
+		if (!next) {
+			triggerHaptic("selection");
+		}
+		onOpenChange(next);
+	};
 
 	// URL parameter key (no prefix)
 	const paramKey = filterKey;
@@ -92,6 +101,11 @@ export function SortDrawer({
 
 	// Handle option selection
 	const handleSelect = (value: string) => {
+		// Pas de haptic si l'utilisateur retape l'option déjà sélectionnée
+		if (value !== optimisticValue) {
+			triggerHaptic("light");
+		}
+
 		const params = new URLSearchParams(searchParams.toString());
 
 		// Update or remove the parameter
@@ -153,7 +167,7 @@ export function SortDrawer({
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange}>
+		<Drawer open={open} onOpenChange={handleOpenChange}>
 			<DrawerContent>
 				<DrawerHeader className="relative pb-2">
 					<DrawerTitle className="flex items-center gap-2">
@@ -165,7 +179,7 @@ export function SortDrawer({
 					<Button
 						variant="ghost"
 						size="icon"
-						onClick={() => onOpenChange(false)}
+						onClick={() => handleOpenChange(false)}
 						className="absolute top-4 right-4 size-11"
 						aria-label="Fermer"
 					>

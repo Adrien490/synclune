@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import {
@@ -12,6 +12,7 @@ import {
 import { useToolbarDrawer } from "@/shared/hooks";
 
 import { reviewsAdminQuickSearchAdapter } from "./reviews-quick-search-adapter";
+import { ReviewsFilterSheet } from "./reviews-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = [
 	{ value: "createdAt-desc", label: "Plus recents" },
@@ -20,27 +21,36 @@ const SORT_OPTIONS: SortOption[] = [
 	{ value: "rating-asc", label: "Notes les plus basses" },
 ];
 
+const REVIEW_FILTER_KEYS = ["status", "rating", "hasResponse"] as const;
+
 /**
  * Sous-header sticky (mobile, admin) pour la liste avis.
- * 2 actions : Trier | Rechercher.
+ * 3 actions : Filtrer | Rechercher | Trier.
  */
 export function ReviewsBottomBar() {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search">();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 
 	const searchParams = useSearchParams();
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const hasActiveSort = searchParams.has("sortBy");
+	const activeFilterCount = REVIEW_FILTER_KEYS.filter((key) => searchParams.has(key)).length;
 
 	const items: StickyActionBarItem[] = [
 		{
-			key: "sort",
-			icon: ArrowUpDown,
-			label: "Trier",
-			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
-			onClick: () => open("sort"),
-			active: hasActiveSort,
+			key: "filter",
+			icon: SlidersHorizontal,
+			label: "Filtrer",
+			ariaLabel:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
+					: "Ouvrir les filtres",
+			onClick: () => open("filter"),
+			badgeCount: activeFilterCount,
 			haspopup: "dialog",
-			announcement: hasActiveSort ? "Tri actif" : undefined,
+			announcement:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
+					: undefined,
 		},
 		{
 			key: "search",
@@ -56,11 +66,27 @@ export function ReviewsBottomBar() {
 				? `Recherche "${searchParams.get("search")}" active`
 				: undefined,
 		},
+		{
+			key: "sort",
+			icon: ArrowUpDown,
+			label: "Trier",
+			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
+			onClick: () => open("sort"),
+			active: hasActiveSort,
+			haspopup: "dialog",
+			announcement: hasActiveSort ? "Tri actif" : undefined,
+		},
 	];
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Tri et recherche" />
+			<StickyActionBar items={items} ariaLabel="Filtres, recherche et tri" />
+
+			<ReviewsFilterSheet
+				open={isOpen("filter")}
+				onOpenChange={onOpenChange("filter")}
+				hideTrigger
+			/>
 
 			<SortDrawer
 				open={isOpen("sort")}

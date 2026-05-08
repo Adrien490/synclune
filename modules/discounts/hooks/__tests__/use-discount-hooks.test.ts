@@ -686,7 +686,7 @@ describe("useDuplicateDiscount", () => {
 	// --------------------------------------------------------------------------
 
 	describe("callbacks", () => {
-		it("calls onSuccess with { id, code } when action succeeds with data", async () => {
+		it("calls onSuccess with (message, { id, code }) when action succeeds with data", async () => {
 			const onSuccess = vi.fn();
 			const { result } = renderHook(() => useDuplicateDiscount({ onSuccess }));
 
@@ -694,7 +694,10 @@ describe("useDuplicateDiscount", () => {
 				result.current.duplicate("discount-123");
 			});
 
-			expect(onSuccess).toHaveBeenCalledWith({ id: "new-id", code: "PROMO10-COPY-1" });
+			expect(onSuccess).toHaveBeenCalledWith("Code dupliqué", {
+				id: "new-id",
+				code: "PROMO10-COPY-1",
+			});
 		});
 
 		it("does not call onSuccess when action succeeds without data", async () => {

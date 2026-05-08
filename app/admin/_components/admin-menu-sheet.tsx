@@ -42,25 +42,28 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 		if (isOpen) closeMenu();
 	}, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	// Focus management: focus search input on open, then scroll to active
+	// Focus management : scroll vers l'élément actif (pattern iOS Settings).
+	// Pas d'autofocus search input — anti-pattern mobile (clavier virtuel
+	// s'ouvre à chaque tap Menu, intention nav ≠ recherche). Si l'utilisateur
+	// veut filtrer, il tape la search bar lui-même.
+	// Double rAF garantit que le drawer Vaul a fini son layout initial avant
+	// scrollIntoView (évite scroll mal-placé pendant l'animation slide-in).
 	useEffect(() => {
 		if (!isOpen || !navRef.current) return;
 
-		const timer = setTimeout(() => {
-			// Focus search first — most useful for quick navigation
-			if (searchInputRef.current) {
-				searchInputRef.current.focus({ preventScroll: true });
-				return;
-			}
+		let cancelled = false;
+		const rafId = requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				if (cancelled || !navRef.current) return;
+				const activeLink = navRef.current.querySelector<HTMLAnchorElement>('[aria-current="page"]');
+				activeLink?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+			});
+		});
 
-			const activeLink = navRef.current?.querySelector<HTMLAnchorElement>('[aria-current="page"]');
-			if (activeLink) {
-				activeLink.scrollIntoView({ block: "nearest", behavior: "smooth" });
-				activeLink.focus({ preventScroll: true });
-			}
-		}, 350);
-
-		return () => clearTimeout(timer);
+		return () => {
+			cancelled = true;
+			cancelAnimationFrame(rafId);
+		};
 	}, [isOpen]);
 
 	function handleLogoutClick() {

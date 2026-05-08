@@ -29,12 +29,16 @@ vi.mock("@/shared/providers/sheet-store-provider", () => ({
 }));
 
 // Mock sonner to prevent toast side effects
+const { mockToastError } = vi.hoisted(() => ({
+	mockToastError: vi.fn(),
+}));
+
 vi.mock("sonner", () => ({
 	toast: {
 		loading: vi.fn(),
 		dismiss: vi.fn(),
 		success: vi.fn(),
-		error: vi.fn(),
+		error: mockToastError,
 		warning: vi.fn(),
 	},
 }));
@@ -398,6 +402,69 @@ describe("useAddToCart", () => {
 	// --------------------------------------------------------------------------
 	// Combined behaviors
 	// --------------------------------------------------------------------------
+
+	// --------------------------------------------------------------------------
+	// showErrorToast option
+	// --------------------------------------------------------------------------
+
+	describe("showErrorToast option", () => {
+		it("calls toast.error on error by default", async () => {
+			mockAddToCart.mockResolvedValue(ERROR_RESULT);
+			const { result } = renderHook(() => useAddToCart());
+
+			await act(async () => {
+				result.current.action(makeFormData({ quantity: "1" }));
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith(ERROR_RESULT.message, expect.any(Object));
+		});
+
+		it("calls toast.error on error when showErrorToast is explicitly true", async () => {
+			mockAddToCart.mockResolvedValue(ERROR_RESULT);
+			const { result } = renderHook(() => useAddToCart({ showErrorToast: true }));
+
+			await act(async () => {
+				result.current.action(makeFormData({ quantity: "1" }));
+			});
+
+			expect(mockToastError).toHaveBeenCalledWith(ERROR_RESULT.message, expect.any(Object));
+		});
+
+		it("does not call toast.error on error when showErrorToast is false", async () => {
+			mockAddToCart.mockResolvedValue(ERROR_RESULT);
+			const { result } = renderHook(() => useAddToCart({ showErrorToast: false }));
+
+			await act(async () => {
+				result.current.action(makeFormData({ quantity: "1" }));
+			});
+
+			expect(mockToastError).not.toHaveBeenCalled();
+		});
+
+		it("still rolls back the badge on error when showErrorToast is false", async () => {
+			mockAddToCart.mockResolvedValue(ERROR_RESULT);
+			const { result } = renderHook(() => useAddToCart({ showErrorToast: false }));
+
+			await act(async () => {
+				result.current.action(makeFormData({ quantity: "2" }));
+			});
+
+			expect(mockAdjustCart).toHaveBeenCalledWith(2);
+			expect(mockAdjustCart).toHaveBeenCalledWith(-2);
+			expect(mockToastError).not.toHaveBeenCalled();
+		});
+
+		it("still exposes the error in state when showErrorToast is false", async () => {
+			mockAddToCart.mockResolvedValue(ERROR_RESULT);
+			const { result } = renderHook(() => useAddToCart({ showErrorToast: false }));
+
+			await act(async () => {
+				result.current.action(makeFormData({ quantity: "1" }));
+			});
+
+			expect(result.current.state).toEqual(ERROR_RESULT);
+		});
+	});
 
 	describe("combined behaviors on success", () => {
 		it("calls adjustCart, opens sheet, and calls onSuccess on a single success", async () => {

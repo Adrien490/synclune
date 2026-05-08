@@ -2,8 +2,8 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 
 /**
- * Skeleton aligné sur HomeFaq : SectionTitle + sous-titre + 6 accordion items.
- * Réserve la hauteur réelle (~520px desktop) pour éviter le CLS en bas de la home.
+ * Skeleton aligné sur HomeFaq : SectionTitle + sous-titre + 6 accordion items + CTA bottom.
+ * Réserve la hauteur réelle (~600px desktop) pour éviter le CLS en bas de la home.
  */
 export function HomeFaqSkeleton() {
 	return (
@@ -21,6 +21,10 @@ export function HomeFaqSkeleton() {
 							<Skeleton className="bg-muted/30 h-4 w-4 shrink-0 rounded" />
 						</div>
 					))}
+				</div>
+
+				<div className="mt-10 flex justify-center lg:mt-14">
+					<Skeleton className="bg-muted/40 h-12 w-72 max-w-full rounded-md" />
 				</div>
 			</div>
 		</section>

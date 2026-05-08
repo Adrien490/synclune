@@ -9,6 +9,8 @@ import { parseOrderParams } from "@/modules/orders/utils/parse-order-params";
 import { ExportOrdersButton } from "@/modules/orders/components/admin/export-orders-button";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
+
+import { OrdersAdminDialogs } from "./_components/orders-admin-dialogs";
 import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-table";
 import { OrdersDataTableSkeleton } from "@/modules/orders/components/admin/orders-data-table-skeleton";
 import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-filter-badges";
@@ -20,10 +22,6 @@ import { parseFilters } from "./_utils/params";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
 
-// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
-const OrderItemDrawer = dynamic(() =>
-	import("@/modules/orders/components/admin/order-item-drawer").then((mod) => mod.OrderItemDrawer),
-);
 const OrdersBottomBar = dynamic(() =>
 	import("@/modules/orders/components/admin/orders-bottom-bar").then((mod) => mod.OrdersBottomBar),
 );
@@ -115,10 +113,8 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 						</ButtonGroup>
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<OrdersFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<OrdersFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}
@@ -132,8 +128,8 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 				</Suspense>
 			</div>
 
-			{/* ItemDrawer mobile + dialogs imbriques (cancel, delete, mark-as-*, notes) */}
-			<OrderItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (cancel, delete, mark-as-*, notes) */}
+			<OrdersAdminDialogs />
 		</>
 	);
 }

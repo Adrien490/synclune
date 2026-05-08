@@ -126,6 +126,7 @@ describe("PayButton", () => {
 		total: 9900,
 		disabled: false,
 		shippingUnavailable: false,
+		isOnline: true,
 		getFormData: vi.fn().mockResolvedValue({ email: "test@example.com" }),
 	};
 
@@ -174,6 +175,16 @@ describe("PayButton", () => {
 	it("is disabled when shippingUnavailable=true", () => {
 		render(<PayButton {...defaultProps} shippingUnavailable={true} />);
 		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("is disabled when isOnline=false", () => {
+		render(<PayButton {...defaultProps} isOnline={false} />);
+		expect(screen.getByRole("button")).toBeDisabled();
+	});
+
+	it("shows offline message when isOnline=false", () => {
+		render(<PayButton {...defaultProps} isOnline={false} />);
+		expect(screen.getByRole("alert")).toHaveTextContent(/connexion internet/i);
 	});
 
 	// ─── Shipping unavailable message ─────────────────────────────────────────
@@ -229,9 +240,16 @@ describe("PayButton", () => {
 		expect(mockStripe.value?.confirmPayment).toHaveBeenCalled();
 	});
 
-	it("renders status live region sr-only for phase announcements", () => {
+	it("button announces busy state to assistive tech when processing", async () => {
+		mockConfirmCheckout.mockImplementation(
+			() =>
+				new Promise((resolve) =>
+					setTimeout(() => resolve({ success: true, orderId: "order-123" }), 50),
+				),
+		);
 		render(<PayButton {...defaultProps} />);
-		const liveRegions = screen.getAllByRole("status");
-		expect(liveRegions.length).toBeGreaterThanOrEqual(1);
+		const button = screen.getByRole("button");
+		await userEvent.click(button);
+		expect(button).toHaveAttribute("aria-busy", "true");
 	});
 });

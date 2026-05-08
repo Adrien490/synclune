@@ -18,7 +18,7 @@ export default async function ContentPage() {
 					title: "Annonces",
 					description: "Gérer les annonces promotionnelles affichées sur la boutique",
 					href: "/admin/contenu/annonces",
-					icon: Megaphone,
+					icon: <Megaphone className="h-5 w-5" />,
 				},
 			]}
 		/>

@@ -4,20 +4,32 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 interface ProductTypesFilterSheetProps {
 	className?: string;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
 interface FilterFormData {
 	isActive: string;
 }
 
-export function ProductTypesFilterSheet({ className }: ProductTypesFilterSheetProps) {
+export function ProductTypesFilterSheet({
+	className,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
+}: ProductTypesFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isOpen = controlledOpen ?? internalOpen;
+	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
 	const initialValues = ((): FilterFormData => {
 		let isActive = "all";
@@ -83,6 +95,9 @@ export function ProductTypesFilterSheet({ className }: ProductTypesFilterSheetPr
 
 	return (
 		<FilterSheetWrapper
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

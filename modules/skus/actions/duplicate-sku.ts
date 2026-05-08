@@ -144,7 +144,12 @@ export async function duplicateSku(
 		return {
 			status: ActionStatus.SUCCESS,
 			message: `Variante dupliquée: ${duplicate.sku}`,
-			data: { id: duplicate.id, sku: duplicate.sku },
+			data: {
+				id: duplicate.id,
+				sku: duplicate.sku,
+				productId: original.productId,
+				productSlug: original.product.slug,
+			},
 		};
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer la variante");

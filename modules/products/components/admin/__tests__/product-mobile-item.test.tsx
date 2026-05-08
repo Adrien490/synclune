@@ -1,28 +1,33 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockOpenDrawer } = vi.hoisted(() => ({
-	mockOpenDrawer: vi.fn(),
-}));
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // MODULE MOCKS
 // ============================================================================
 
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: () => ({ open: mockOpenDrawer }),
+// Flatten LongPressMenuLink to a plain anchor so we can assert href + aria-label
+// without simulating touch events (covered exhaustively in the component's own
+// test suite).
+vi.mock("@/shared/components/long-press-menu-link", () => ({
+	LongPressMenuLink: ({
+		href,
+		ariaLabel,
+		children,
+		className,
+	}: {
+		href: string;
+		ariaLabel: string;
+		children: React.ReactNode;
+		className?: string;
+	}) => (
+		<a href={href} aria-label={ariaLabel} className={className}>
+			{children}
+		</a>
+	),
 }));
 
-vi.mock("../product-item-drawer", () => ({
-	PRODUCT_ITEM_DRAWER_ID: "product-item-drawer",
-}));
-
-vi.mock("../product-row-actions", () => ({
-	ProductRowActions: () => null,
+vi.mock("../../../hooks/use-product-actions", () => ({
+	useProductActions: () => ({ sections: [] }),
 }));
 
 vi.mock("next/image", () => ({
@@ -76,10 +81,6 @@ const baseProduct = {
 // ============================================================================
 
 describe("ProductMobileItem", () => {
-	beforeEach(() => {
-		mockOpenDrawer.mockReset();
-	});
-
 	afterEach(cleanup);
 
 	it("rend le titre et le badge de statut", () => {
@@ -112,42 +113,11 @@ describe("ProductMobileItem", () => {
 		expect(screen.queryByTestId("product-image")).not.toBeInTheDocument();
 	});
 
-	it("ouvre le drawer avec le bon payload au tap", () => {
+	it("navigue vers la page d'édition au tap (Link href)", () => {
 		render(<ProductMobileItem product={baseProduct} />);
-		fireEvent.click(screen.getByLabelText("Produit Anneau doré"));
-
-		expect(mockOpenDrawer).toHaveBeenCalledWith({
-			product: {
-				id: "p-1",
-				slug: "anneau-doré",
-				title: "Anneau doré",
-				status: "PUBLIC",
-				priceDisplay: expect.stringMatching(/45,00\s*€\s*–\s*55,00\s*€/),
-				stock: 15,
-				variantsCount: 2,
-				typeLabel: "Bagues",
-				primaryImage: {
-					url: "https://cdn/img.jpg",
-					thumbnailUrl: "https://cdn/img-thumb.jpg",
-					blurDataUrl: "data:image/png;base64,xxx",
-				},
-			},
-		});
-	});
-
-	it("propage primaryImage à null si aucune image", () => {
-		const noImg = {
-			...baseProduct,
-			skus: baseProduct.skus.map((s) => ({ ...s, images: [] })),
-		};
-		render(<ProductMobileItem product={noImg} />);
-		fireEvent.click(screen.getByLabelText("Produit Anneau doré"));
-
-		expect(mockOpenDrawer).toHaveBeenCalledWith(
-			expect.objectContaining({
-				product: expect.objectContaining({ primaryImage: null }),
-			}),
-		);
+		const link = screen.getByLabelText("Produit Anneau doré");
+		expect(link.tagName).toBe("A");
+		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/anneau-doré/modifier");
 	});
 
 	it("affiche un seul prix si min == max", () => {

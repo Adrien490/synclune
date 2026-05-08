@@ -21,12 +21,7 @@ const RefundsBottomBar = dynamic(() =>
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import type { Metadata } from "next";
 
-// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
-const RefundItemDrawer = dynamic(() =>
-	import("@/modules/refunds/components/admin/refund-item-drawer").then(
-		(mod) => mod.RefundItemDrawer,
-	),
-);
+import { RefundsAdminDialogs } from "./_components/refunds-admin-dialogs";
 
 export type RefundFiltersSearchParams = {
 	filter_status?: string;
@@ -118,8 +113,8 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 				</Suspense>
 			</div>
 
-			{/* ItemDrawer mobile + dialogs imbriques (approve/process/reject/cancel) */}
-			<RefundItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (approve, process, reject, cancel) */}
+			<RefundsAdminDialogs />
 		</>
 	);
 }

@@ -1,6 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { LucideIcon } from "lucide-react";
 
 // ============================================================================
 // MODULE MOCKS
@@ -63,17 +62,20 @@ afterEach(cleanup);
 // HELPERS
 // ============================================================================
 
-const MockIcon: LucideIcon = ((props: Record<string, unknown>) => (
-	<svg data-testid="icon" {...props} />
-)) as unknown as LucideIcon;
+const MockIcon = () => <svg data-testid="icon" />;
 
 const baseLinks = [
-	{ title: "Produits", description: "Gérer les produits", href: "/admin/produits", icon: MockIcon },
+	{
+		title: "Produits",
+		description: "Gérer les produits",
+		href: "/admin/produits",
+		icon: <MockIcon />,
+	},
 	{
 		title: "Collections",
 		description: "Gérer les collections",
 		href: "/admin/collections",
-		icon: MockIcon,
+		icon: <MockIcon />,
 	},
 	{ title: "Couleurs", href: "/admin/couleurs" },
 ];
@@ -89,11 +91,13 @@ describe("SectionNavigation", () => {
 			expect(screen.getByText("Catalogue")).toBeInTheDocument();
 		});
 
-		it("renders page header with description", () => {
+		it("renders description in page header (desktop) + mobile fallback", () => {
+			// Mobile description duplicate (visible only md:hidden) : 2 occurrences
+			// car AdminMobileHeader gère le titre côté mobile mais pas la description.
 			render(
 				<SectionNavigation title="Catalogue" description="Gérer le catalogue" links={baseLinks} />,
 			);
-			expect(screen.getByText("Gérer le catalogue")).toBeInTheDocument();
+			expect(screen.getAllByText("Gérer le catalogue")).toHaveLength(2);
 		});
 
 		it("renders all links as cards", () => {

@@ -54,28 +54,23 @@ vi.mock("@/shared/components/ui/card", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/collapsible", () => ({
-	Collapsible: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="collapsible">{children}</div>
+vi.mock("@/shared/components/ui/separator", () => ({
+	Separator: () => <hr data-testid="separator" />,
+}));
+
+vi.mock("@/shared/components/ui/tooltip", () => ({
+	TooltipProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	Tooltip: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	TooltipTrigger: ({ children }: { children: React.ReactNode; asChild?: boolean }) => (
+		<>{children}</>
 	),
-	CollapsibleContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="collapsible-content">{children}</div>
-	),
-	CollapsibleTrigger: ({
-		children,
-		className,
-	}: {
-		children: React.ReactNode;
-		className?: string;
-	}) => (
-		<button data-testid="collapsible-trigger" className={className}>
-			{children}
-		</button>
+	TooltipContent: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="tooltip-content">{children}</div>
 	),
 }));
 
-vi.mock("@/shared/components/ui/separator", () => ({
-	Separator: () => <hr data-testid="separator" />,
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (cb: () => void) => cb(),
 }));
 
 vi.mock("@/shared/components/icons/payment-icons", () => ({
@@ -86,6 +81,7 @@ vi.mock("@/shared/components/icons/payment-icons", () => ({
 
 vi.mock("lucide-react", () => ({
 	ChevronDown: () => <svg data-testid="chevron-down" />,
+	Info: () => <svg data-testid="info-icon" />,
 	Pencil: () => <svg data-testid="pencil-icon" />,
 	Shield: () => <svg data-testid="shield-icon" />,
 	ShoppingBag: () => <svg data-testid="shopping-bag-icon" />,
@@ -482,15 +478,15 @@ describe("CheckoutSummary", () => {
 	});
 
 	describe("mobile layout", () => {
-		it("renders a collapsible for mobile", () => {
+		it("renders a mobile summary section", () => {
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
-			expect(screen.getByTestId("collapsible")).toBeInTheDocument();
+			expect(screen.getByLabelText("Récapitulatif de votre commande")).toBeInTheDocument();
 		});
 
-		it("shows total item count in the collapsible trigger", () => {
+		it("shows total item count in the mobile toggle", () => {
 			const cart = createCart([
 				createCartItem({ id: "item-1", quantity: 2 }),
 				createCartItem({ id: "item-2", quantity: 1 }),
@@ -498,7 +494,8 @@ describe("CheckoutSummary", () => {
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
-			expect(screen.getByTestId("collapsible-trigger").textContent).toContain("3 articles");
+			const toggle = screen.getByRole("button", { expanded: true });
+			expect(toggle.textContent).toContain("3 articles");
 		});
 	});
 

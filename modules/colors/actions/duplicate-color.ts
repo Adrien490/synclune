@@ -97,12 +97,13 @@ export async function duplicateColor(
 		});
 
 		// 8. Invalidate cache
-		const tags = getColorInvalidationTags();
+		const tags = getColorInvalidationTags(duplicate.slug);
 		tags.forEach((tag) => updateTag(tag));
 
 		return success(`Couleur dupliquee: ${duplicate.name}`, {
 			id: duplicate.id,
 			name: duplicate.name,
+			slug: duplicate.slug,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer la couleur");

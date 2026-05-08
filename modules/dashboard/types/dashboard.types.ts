@@ -8,9 +8,6 @@ import {
 // TYPES - SERVICE INPUTS (from services/)
 // ============================================================================
 
-/**
- * Raw order data for transformation
- */
 export interface OrderForTransform {
 	id: string;
 	orderNumber: string;
@@ -35,20 +32,28 @@ export type GetKpisReturn = {
 		netAmount: number;
 		refundAmount: number;
 		refundCount: number;
+		/** Pourcentage de commandes payées remboursées sur la période courante */
+		refundRate: number;
 		evolution: number;
+		/** Order count of the previous comparison period — used to gate evolution display when volume is too low to be meaningful */
+		previousVolume: number;
 	};
 	monthlyOrders: {
 		count: number;
 		evolution: number;
+		previousVolume: number;
 	};
 	averageOrderValue: {
 		amount: number;
 		evolution: number;
+		previousVolume: number;
 	};
 	conversionRate: {
 		rate: number;
 		evolution: number;
 		abandoned: number;
+		/** Total orders (paid + abandoned) of the previous period — denominator volume */
+		previousVolume: number;
 	};
 	pendingShipment: {
 		count: number;
@@ -56,15 +61,37 @@ export type GetKpisReturn = {
 	discountImpact: {
 		amount: number;
 		evolution: number;
-	};
-	reviewHealth: {
-		averageRating: number;
-		totalReviews: number;
+		previousVolume: number;
 	};
 	avgFulfillmentTime: {
 		hours: number;
 		evolution: number;
+		previousVolume: number;
 	};
+};
+
+// ============================================================================
+// TYPES - REVIEW HEALTH (split from KPIs, cached `reference`)
+// ============================================================================
+
+export type GetReviewHealthReturn = {
+	averageRating: number;
+	totalReviews: number;
+};
+
+// ============================================================================
+// TYPES - VAT THRESHOLD (franchise en base art. 293 B CGI)
+// ============================================================================
+
+export type GetVatProgressReturn = {
+	/** Cumul du chiffre d'affaires payé depuis le 1er janvier de l'année en cours */
+	ytdRevenue: number;
+	/** Seuil de franchise applicable (37 500 € prestations / 85 000 € ventes) */
+	threshold: number;
+	/** Pourcentage du seuil atteint (0–100+) */
+	progress: number;
+	/** Année courante (utile pour libellé UI) */
+	year: number;
 };
 
 // ============================================================================
@@ -140,28 +167,12 @@ export type GetRecentOrdersReturn = {
 };
 
 // ============================================================================
-// TYPES - ALERTS
-// ============================================================================
-
-// ============================================================================
-// TYPES - FULFILLMENT PIPELINE
-// ============================================================================
-
-export type FulfillmentPipeline = {
-	unfulfilled: number;
-	processing: number;
-	shipped: number;
-	delivered: number;
-	returned: number;
-	lateShipments: number;
-};
-
-// ============================================================================
 // TYPES - TOP PRODUCTS
 // ============================================================================
 
 export type TopProductItem = {
 	productId: string | null;
+	productSlug: string | null;
 	title: string;
 	imageUrl: string | null;
 	unitsSold: number;
@@ -173,24 +184,6 @@ export type GetTopProductsReturn = {
 };
 
 // ============================================================================
-// TYPES - ACTIVE DISCOUNTS
-// ============================================================================
-
-export type ActiveDiscountItem = {
-	id: string;
-	code: string;
-	type: string;
-	value: number;
-	usageCount: number;
-	maxUsageCount: number | null;
-	endsAt: Date | null;
-};
-
-export type GetActiveDiscountsReturn = {
-	discounts: ActiveDiscountItem[];
-};
-
-// ============================================================================
 // TYPES - ALERTS
 // ============================================================================
 
@@ -198,50 +191,4 @@ export type DashboardAlerts = {
 	pendingRefunds: number;
 	activeDisputes: number;
 	lowStockSkus: number;
-};
-
-// ============================================================================
-// TYPES - CUSTOMER KPIs
-// ============================================================================
-
-export type TopSpenderItem = {
-	userId: string;
-	customerName: string;
-	customerEmail: string;
-	totalSpent: number;
-	orderCount: number;
-};
-
-export type GetCustomerKpisReturn = {
-	newCustomers: {
-		count: number;
-		evolution: number;
-	};
-	returningRate: {
-		rate: number;
-		returningCount: number;
-		totalActiveCustomers: number;
-		evolution: number;
-	};
-	topSpender: TopSpenderItem | null;
-};
-
-// ============================================================================
-// TYPES - CART ABANDONMENT
-// ============================================================================
-
-export type GetCartAbandonmentReturn = {
-	activeCarts: {
-		count: number;
-		totalValue: number;
-	};
-	abandonedEmailsSent: {
-		count: number;
-		evolution: number;
-	};
-	recoveryRate: {
-		rate: number;
-		recoveredCount: number;
-		evolution: number;
-	};
 };

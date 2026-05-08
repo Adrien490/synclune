@@ -13,6 +13,11 @@ interface UseAddToCartOptions {
 	onSuccess?: (message: string) => void;
 	/** Ouvrir le cart sheet apres ajout reussi (defaut: true) */
 	openSheetOnSuccess?: boolean;
+	/**
+	 * Afficher un toast d'erreur en cas d'echec (defaut: true).
+	 * Desactive sur la page produit ou l'indisponibilite est deja visible inline.
+	 */
+	showErrorToast?: boolean;
 }
 
 /**
@@ -41,6 +46,7 @@ export const useAddToCart = (options?: UseAddToCartOptions) => {
 				addToCart,
 				createToastCallbacks({
 					showSuccessToast: false,
+					showErrorToast: options?.showErrorToast ?? true,
 					onSuccess: (result: unknown) => {
 						triggerHaptic("success");
 						if (shouldOpenSheet) {

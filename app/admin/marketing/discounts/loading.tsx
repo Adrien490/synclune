@@ -16,7 +16,7 @@ export default function DiscountsLoading() {
 			<PageHeader
 				variant="compact"
 				title="Codes promo"
-				actions={<Skeleton className="h-10 w-36 motion-safe:animate-pulse" />}
+				actions={<Skeleton className="h-10 w-36" />}
 				className="hidden md:block"
 			/>
 

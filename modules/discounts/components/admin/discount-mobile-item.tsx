@@ -1,10 +1,8 @@
 "use client";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 
 import { DiscountType } from "@/app/generated/prisma/enums";
@@ -12,13 +10,12 @@ import {
 	DISCOUNT_TYPE_ICONS,
 	DISCOUNT_TYPE_LABELS,
 } from "@/modules/discounts/constants/discount.constants";
+import { useDiscountActions } from "@/modules/discounts/hooks/use-discount-actions";
 import {
 	getDiscountStatus,
 	type DiscountStatus,
 } from "@/modules/discounts/services/discount-validation.service";
 import type { Discount } from "@/modules/discounts/types/discount.types";
-
-import { DISCOUNT_ITEM_DRAWER_ID, type DiscountItemDrawerData } from "./discount-item-drawer";
 
 const STATUS_BADGE_CONFIG: Record<
 	DiscountStatus,
@@ -46,25 +43,17 @@ interface DiscountMobileItemProps {
 }
 
 export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
-	const { open } = useDialog<DiscountItemDrawerData>(DISCOUNT_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
-
-	const handleOpen = () => {
-		haptic("selection");
-		open({ discount });
-	};
+	const { sections } = useDiscountActions({ discount });
 
 	return (
-		<button
-			type="button"
-			aria-label={`Code promo ${discount.code}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary block w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/marketing/discounts/${discount.id}/modifier`}
+			ariaLabel={`Code promo ${discount.code}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={discount.code}
+			className="text-left"
 		>
 			<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte code promo">
 				<ItemContent className="min-w-0">
@@ -85,6 +74,6 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

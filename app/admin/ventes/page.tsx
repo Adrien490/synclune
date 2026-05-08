@@ -18,13 +18,13 @@ export default function VentesPage() {
 					title: "Commandes",
 					description: "Suivre et gérer les commandes clients",
 					href: "/admin/ventes/commandes",
-					icon: ShoppingCart,
+					icon: <ShoppingCart className="h-5 w-5" />,
 				},
 				{
 					title: "Remboursements",
 					description: "Gérer les demandes de remboursement",
 					href: "/admin/ventes/remboursements",
-					icon: RefreshCcw,
+					icon: <RefreshCcw className="h-5 w-5" />,
 				},
 			]}
 		/>

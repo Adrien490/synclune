@@ -8,8 +8,11 @@ import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts
 import { ChartError } from "@/modules/dashboard/components/chart-error";
 import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
+import { TopProductsList } from "@/modules/dashboard/components/top-products-list";
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
+import { ExportRevenueButton } from "@/modules/dashboard/components/export-revenue-button";
+import { VatProgressCard } from "@/modules/dashboard/components/vat-progress-card";
 
 import {
 	KpisSkeleton,
@@ -19,8 +22,12 @@ import {
 
 import { fetchDashboardRevenueChart } from "@/modules/dashboard/data/get-revenue-chart";
 import { fetchDashboardRecentOrders } from "@/modules/dashboard/data/get-recent-orders";
+import { fetchDashboardTopProducts } from "@/modules/dashboard/data/get-top-products";
 import { fetchDashboardKpis } from "@/modules/dashboard/data/get-kpis";
 import { fetchDashboardAlerts } from "@/modules/dashboard/data/get-alerts";
+import { fetchDashboardReviewHealth } from "@/modules/dashboard/data/get-review-health";
+import { fetchDashboardVatProgress } from "@/modules/dashboard/data/get-vat-progress";
+import { getNextUrssafDeadline } from "@/modules/dashboard/services/urssaf-deadline.service";
 
 import {
 	getComparisonLabel,
@@ -50,11 +57,14 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 		<section aria-label="Tableau de bord">
 			<PageHeader
 				variant="compact"
-				title="Tableau de bord"
+				title="Ton atelier"
+				description="Voici ce qui se passe aujourd'hui"
+				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
 				className="hidden md:block"
 				actions={
 					<div className="flex items-center gap-2">
 						<PeriodSelector />
+						<ExportRevenueButton period={period} />
 						<RefreshDashboardButton />
 					</div>
 				}
@@ -76,6 +86,13 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 					</Suspense>
 				</section>
 
+				<section aria-labelledby="dashboard-section-compliance" className="space-y-4">
+					<SectionHeading id="dashboard-section-compliance" label="Conformité fiscale" />
+					<Suspense fallback={<VatProgressSkeleton />}>
+						<VatProgressWrapper />
+					</Suspense>
+				</section>
+
 				<section aria-labelledby="dashboard-section-trends" className="space-y-4">
 					<SectionHeading id="dashboard-section-trends" label="Tendances" />
 					<Suspense
@@ -91,12 +108,21 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				</section>
 
 				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
-					<SectionHeading id="dashboard-section-activity" label="Commandes récentes" />
-					<Suspense
-						fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />}
-					>
-						<RecentOrdersWrapper />
-					</Suspense>
+					<SectionHeading id="dashboard-section-activity" label="Activité" />
+					<div className="grid gap-6 lg:grid-cols-2">
+						<Suspense
+							fallback={
+								<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes recentes" />
+							}
+						>
+							<RecentOrdersWrapper />
+						</Suspense>
+						<Suspense
+							fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement du top produits" />}
+						>
+							<TopProductsWrapper period={period} />
+						</Suspense>
+					</div>
 				</section>
 			</div>
 		</section>
@@ -111,6 +137,15 @@ function SectionHeading({ id, label }: { id: string; label: string }) {
 	);
 }
 
+function VatProgressSkeleton() {
+	return (
+		<div
+			className="bg-muted/40 h-32 animate-pulse rounded-xl"
+			aria-label="Chargement du suivi de seuil TVA"
+		/>
+	);
+}
+
 async function KpisWrapper({
 	period,
 	comparisonMode,
@@ -119,8 +154,12 @@ async function KpisWrapper({
 	comparisonMode: ComparisonMode;
 }) {
 	let kpis;
+	let reviewHealth;
 	try {
-		kpis = await fetchDashboardKpis(period, comparisonMode);
+		[kpis, reviewHealth] = await Promise.all([
+			fetchDashboardKpis(period, comparisonMode),
+			fetchDashboardReviewHealth(),
+		]);
 	} catch (error) {
 		Sentry.captureException(error);
 		return (
@@ -131,19 +170,51 @@ async function KpisWrapper({
 			/>
 		);
 	}
-
-	return <DashboardKpis kpis={kpis} comparisonLabel={getComparisonLabel(period, comparisonMode)} />;
+	return (
+		<DashboardKpis
+			kpis={kpis}
+			reviewHealth={reviewHealth}
+			comparisonLabel={getComparisonLabel(period, comparisonMode)}
+		/>
+	);
 }
 
 async function AlertsWrapper() {
 	let alerts;
+	let vatProgress;
 	try {
-		alerts = await fetchDashboardAlerts();
+		[alerts, vatProgress] = await Promise.all([
+			fetchDashboardAlerts(),
+			fetchDashboardVatProgress().catch((error) => {
+				Sentry.captureException(error);
+				return null;
+			}),
+		]);
 	} catch (error) {
 		Sentry.captureException(error);
 		return null;
 	}
-	return <DashboardAlerts alerts={alerts} />;
+	const urssafDeadline = getNextUrssafDeadline();
+	return (
+		<DashboardAlerts alerts={alerts} vatProgress={vatProgress} urssafDeadline={urssafDeadline} />
+	);
+}
+
+async function VatProgressWrapper() {
+	let data;
+	try {
+		data = await fetchDashboardVatProgress();
+	} catch (error) {
+		Sentry.captureException(error);
+		return (
+			<ChartError
+				title="Erreur de chargement"
+				description="Impossible de charger le suivi du seuil TVA."
+				minHeight={120}
+			/>
+		);
+	}
+	return <VatProgressCard data={data} />;
 }
 
 async function RevenueChartWrapper({ period }: { period: DashboardPeriod }) {
@@ -176,4 +247,20 @@ async function RecentOrdersWrapper() {
 		);
 	}
 	return <RecentOrdersList listData={listData} />;
+}
+
+async function TopProductsWrapper({ period }: { period: DashboardPeriod }) {
+	let listData;
+	try {
+		listData = await fetchDashboardTopProducts(period);
+	} catch (error) {
+		Sentry.captureException(error);
+		return (
+			<ChartError
+				title="Erreur de chargement"
+				description="Impossible de charger le top des produits."
+			/>
+		);
+	}
+	return <TopProductsList listData={listData} />;
 }

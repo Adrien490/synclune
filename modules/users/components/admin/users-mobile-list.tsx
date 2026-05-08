@@ -1,6 +1,7 @@
 import { use } from "react";
 import { Users } from "lucide-react";
 
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { ItemGroup } from "@/shared/components/ui/item";
@@ -30,6 +31,7 @@ export function UsersMobileList({ usersPromise, perPage }: UsersMobileListProps)
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={users.length} singular="client" plural="clients" />
 			<ItemGroup aria-label="Clients" className="gap-2">
 				{users.map((user) => (
 					<div key={user.id} role="listitem">

@@ -55,3 +55,48 @@ export const stripeAppearance: Appearance = {
 		},
 	},
 };
+
+/**
+ * Dark mode counterpart — selected via `useStripeAppearance` when the user's
+ * system prefers dark. Synclune doesn't ship a dark theme yet but this keeps
+ * Stripe Elements from clashing on devices with `prefers-color-scheme: dark`.
+ */
+export const stripeAppearanceDark: Appearance = {
+	theme: "night",
+	variables: {
+		colorPrimary: "#d977b0",
+		colorBackground: "#1a1a2e",
+		colorText: "#fcfcfd",
+		colorTextSecondary: "#a8a8b3",
+		colorDanger: "#e87568",
+		borderRadius: "0.75rem",
+		fontFamily:
+			'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+		fontSizeBase: "16px",
+		spacingUnit: "4px",
+	},
+	rules: {
+		".Input": {
+			border: "1px solid #3a3a4e",
+			boxShadow: "none",
+			padding: "14px 12px",
+		},
+		".Input:focus": {
+			border: "1px solid #d977b0",
+			boxShadow: "0 0 0 1px #d977b0",
+		},
+		".Tab": {
+			border: "1px solid #3a3a4e",
+			boxShadow: "none",
+		},
+		".Tab--selected": {
+			border: "1px solid #d977b0",
+			boxShadow: "0 0 0 1px #d977b0",
+		},
+		".Label": {
+			fontWeight: "500",
+			fontSize: "14px",
+			color: "#fcfcfd",
+		},
+	},
+};

@@ -1,0 +1,62 @@
+"use client";
+
+import { ExternalLink, Eye, EyeOff } from "lucide-react";
+
+import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+
+import { TOGGLE_REVIEW_STATUS_DIALOG_ID } from "../components/admin/toggle-review-status-alert-dialog";
+import type { ReviewAdmin } from "../types/review.types";
+
+interface UseReviewActionsParams {
+	review: Pick<ReviewAdmin, "id" | "status" | "user" | "product">;
+}
+
+export function useReviewActions({ review }: UseReviewActionsParams): {
+	sections: ActionMenuSection[];
+} {
+	const toggleDialog = useAlertDialog(TOGGLE_REVIEW_STATUS_DIALOG_ID);
+
+	const isPublished = review.status === "PUBLISHED";
+
+	const sections: ActionMenuSection[] = [
+		{
+			key: "navigate",
+			items: [
+				{
+					key: "detail",
+					label: "Voir le détail",
+					icon: Eye,
+					href: `/admin/marketing/avis/${review.id}`,
+				},
+				{
+					key: "product",
+					label: "Voir le produit",
+					icon: ExternalLink,
+					href: `/creations/${review.product.slug}`,
+					external: true,
+				},
+			],
+		},
+		{
+			key: "moderation",
+			items: [
+				{
+					key: "toggle",
+					label: isPublished ? "Masquer" : "Publier",
+					icon: isPublished ? EyeOff : Eye,
+					variant: isPublished ? "destructive" : "default",
+					onSelect: () =>
+						toggleDialog.open({
+							reviewId: review.id,
+							authorName: review.user.name ?? "Anonyme",
+							productTitle: review.product.title,
+							isPublished,
+						}),
+				},
+			],
+		},
+	];
+
+	return { sections };
+}

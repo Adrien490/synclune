@@ -12,7 +12,11 @@ import {
 } from "@/shared/components/ui/alert-dialog";
 import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { toast } from "@/shared/utils/toast";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 import { LoaderCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
 
@@ -24,10 +28,23 @@ interface DuplicateProductData {
 
 export function DuplicateProductAlertDialog() {
 	const duplicateDialog = useAlertDialog<DuplicateProductData>(DUPLICATE_PRODUCT_DIALOG_ID);
+	const router = useRouter();
+	const haptic = useHaptic();
 
 	const { action, isPending } = useDuplicateProduct({
-		onSuccess: () => {
+		onSuccess: (message, data) => {
+			haptic("success");
 			duplicateDialog.close();
+			router.refresh();
+			toast.success(message, {
+				action: {
+					label: "Voir le bijou",
+					onClick: () =>
+						withViewTransition(() =>
+							router.push(`/admin/catalogue/produits/${data.slug}/modifier`),
+						),
+				},
+			});
 		},
 	});
 

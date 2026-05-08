@@ -6,17 +6,13 @@ import { SearchInput } from "@/shared/components/search-input";
 import { SelectFilter } from "@/shared/components/select-filter";
 import dynamic from "next/dynamic";
 
-// Lazy loading - form dialog page-level (CreateProductTypeButton) + drawer (delete imbrique)
+// Lazy loading - form dialog page-level (CreateProductTypeButton)
 const ProductTypeFormDialog = dynamic(() =>
 	import("@/modules/product-types/components/product-type-form-dialog").then(
 		(mod) => mod.ProductTypeFormDialog,
 	),
 );
-const ProductTypeItemDrawer = dynamic(() =>
-	import("@/modules/product-types/components/admin/product-type-item-drawer").then(
-		(mod) => mod.ProductTypeItemDrawer,
-	),
-);
+import { ProductTypesAdminDialogs } from "./_components/product-types-admin-dialogs";
 import { CreateProductTypeButton } from "@/modules/product-types/components/admin/create-product-type-button";
 import { ProductTypesBottomBar } from "@/modules/product-types/components/admin/product-types-bottom-bar";
 import { getProductTypes, SORT_LABELS } from "@/modules/product-types/data/get-product-types";
@@ -86,8 +82,8 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 	return (
 		<>
 			<ProductTypeFormDialog />
-			{/* ItemDrawer mobile + delete imbrique */}
-			<ProductTypeItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete) */}
+			<ProductTypesAdminDialogs />
 			<PageHeader
 				variant="compact"
 				title="Types de bijoux"
@@ -132,10 +128,8 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 						</ButtonGroup>
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<ProductTypesFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<ProductTypesFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}

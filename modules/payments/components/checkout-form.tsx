@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
 import { Alert, AlertDescription, AlertTitle } from "@/shared/components/ui/alert";
 import { Button } from "@/shared/components/ui/button";
@@ -73,7 +73,6 @@ interface CheckoutFormProps {
  */
 export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 	const isGuest = !session;
-	const headingRef = useRef<HTMLHeadingElement>(null);
 	const { formRef, focusFirstInvalid } = useFocusFirstError();
 
 	const { form } = useCheckoutForm({ session, addresses });
@@ -184,120 +183,193 @@ export function CheckoutForm({ cart, session, addresses }: CheckoutFormProps) {
 				const shippingInfo = getShippingInfo(country, postalCode as string);
 
 				return (
-					<form
-						ref={formRef}
-						onSubmit={(e) => e.preventDefault()}
-						noValidate
-						aria-label="Formulaire de paiement"
-						className="grid gap-6 pb-32 lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0"
-					>
-						<div className="space-y-8">
-							<h1 ref={headingRef} tabIndex={-1} className="sr-only">
-								Paiement sécurisé
-							</h1>
-
-							{!isOnline && (
-								<Alert variant="destructive" role="alert" aria-live="assertive">
-									<WifiOff className="size-4" />
-									<AlertTitle>Connexion internet perdue</AlertTitle>
-									<AlertDescription>
-										Vérifiez votre connexion internet avant de continuer. Le paiement nécessite une
-										connexion active.
-									</AlertDescription>
-								</Alert>
-							)}
-
-							{pi.error && (
-								<Alert variant="destructive" role="alert">
-									<CircleAlert className="size-4" />
-									<AlertDescription className="flex flex-wrap items-center gap-3">
-										<span>{pi.error}</span>
-										<Button
-											type="button"
-											size="sm"
-											variant="outline"
-											onClick={() => void pi.retry()}
-											disabled={pi.isLoading}
-											aria-busy={pi.isLoading}
-										>
-											Réessayer
-										</Button>
-									</AlertDescription>
-								</Alert>
-							)}
-
-							<div className="space-y-8">
-								{/* === SECTION 1: Contact === */}
-								<CheckoutContactSection form={form} session={session} />
-
-								{/* === SECTION 2: Shipping Address === */}
-								<CheckoutSection title="Livraison">
-									<CheckoutAddressFields form={form} session={session} addresses={addresses} />
-								</CheckoutSection>
-
-								{/* === SECTION 3: Shipping Method === */}
-								<CheckoutSection title="Mode d'expédition">
-									<ShippingMethodSection
-										shipping={shipping}
-										shippingUnavailable={shippingUnavailable}
-										shippingInfo={shippingInfo}
-									/>
-								</CheckoutSection>
-
-								{/* === SECTION 4: Discount Code === */}
-								<CheckoutDiscountSection form={form} cart={cart} />
-
-								{/* === SECTION 5: Payment === */}
-								<CheckoutSection title="Paiement">
-									{pi.isLoading ? (
-										<PaymentSectionSkeleton />
-									) : pi.clientSecret ? (
-										<form.Subscribe
-											selector={(s) => ({
-												canSubmit: s.canSubmit,
-												email: s.values.email,
-												billingName: s.values.shipping.fullName,
-											})}
-										>
-											{({ canSubmit, email, billingName }) => (
-												<CheckoutStripeSection
-													clientSecret={pi.clientSecret!}
-													total={total}
-													canSubmit={canSubmit}
-													shippingUnavailable={shippingUnavailable}
-													email={
-														isGuest
-															? (email as string) || undefined
-															: session.user.email || undefined
-													}
-													billingName={(billingName as string) || undefined}
-													getFormData={getFormData}
-													allowNavigation={allowNavigation}
-												/>
-											)}
-										</form.Subscribe>
-									) : null}
-								</CheckoutSection>
-							</div>
-						</div>
-
-						<div className="order-first lg:order-0">
-							<CheckoutSummary
-								cart={cart}
-								subtotal={subtotal}
-								shipping={shipping}
-								shippingUnavailable={shippingUnavailable}
-								shippingInfo={shippingInfo}
-								total={total}
-								discountAmount={discountAmount}
-								appliedDiscount={
-									appliedDiscount as NonNullable<ValidateDiscountCodeReturn["discount"]> | null
-								}
-							/>
-						</div>
-					</form>
+					<CheckoutFormBody
+						form={form}
+						formRef={formRef}
+						cart={cart}
+						session={session}
+						addresses={addresses}
+						isGuest={isGuest}
+						isOnline={isOnline}
+						pi={pi}
+						subtotal={subtotal}
+						shipping={shipping}
+						shippingInfo={shippingInfo}
+						shippingUnavailable={shippingUnavailable}
+						total={total}
+						discountAmount={discountAmount}
+						appliedDiscount={appliedDiscount as AppliedDiscount | null}
+						country={country}
+						postalCode={postalCode as string}
+						getFormData={getFormData}
+						allowNavigation={allowNavigation}
+					/>
 				);
 			}}
 		</form.Subscribe>
+	);
+}
+
+interface CheckoutFormBodyProps {
+	form: ReturnType<typeof useCheckoutForm>["form"];
+	formRef: React.RefObject<HTMLFormElement | null>;
+	cart: NonNullable<GetCartReturn>;
+	session: Session | null;
+	addresses: GetUserAddressesReturn | null;
+	isGuest: boolean;
+	isOnline: boolean;
+	pi: ReturnType<typeof usePaymentIntent>;
+	subtotal: number;
+	shipping: number;
+	shippingInfo: ReturnType<typeof getShippingInfo>;
+	shippingUnavailable: boolean;
+	total: number;
+	discountAmount: number;
+	appliedDiscount: AppliedDiscount | null;
+	country: ShippingCountry;
+	postalCode: string;
+	getFormData: () => Promise<ConfirmCheckoutData | null>;
+	allowNavigation: () => void;
+}
+
+function CheckoutFormBody({
+	form,
+	formRef,
+	cart,
+	session,
+	addresses,
+	isGuest,
+	isOnline,
+	pi,
+	subtotal,
+	shipping,
+	shippingInfo,
+	shippingUnavailable,
+	total,
+	discountAmount,
+	appliedDiscount,
+	country,
+	postalCode,
+	getFormData,
+	allowNavigation,
+}: CheckoutFormBodyProps) {
+	// Keep Stripe PaymentIntent amount in sync with country/postalCode/discount changes
+	// so wallet previews (Apple Pay / Google Pay / Link) display the correct total.
+	// `updateAmount` is debounced 500ms internally.
+	useEffect(() => {
+		if (!pi.paymentIntentId || shippingUnavailable) return;
+		pi.updateAmount(country, postalCode, discountAmount);
+		// pi.updateAmount is stable; reading from refs internally.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [pi.paymentIntentId, country, postalCode, discountAmount, shippingUnavailable]);
+
+	return (
+		<form
+			ref={formRef}
+			onSubmit={(e) => e.preventDefault()}
+			noValidate
+			aria-label="Formulaire de paiement"
+			className="grid gap-6 pb-32 lg:grid-cols-[1fr_360px] lg:gap-8 lg:pb-0"
+		>
+			<div className="space-y-8">
+				{!isOnline && (
+					<Alert variant="destructive" role="alert" aria-live="assertive">
+						<WifiOff className="size-4" />
+						<AlertTitle>Connexion internet perdue</AlertTitle>
+						<AlertDescription>
+							Vérifiez votre connexion internet avant de continuer. Le paiement nécessite une
+							connexion active.
+						</AlertDescription>
+					</Alert>
+				)}
+
+				{pi.error && (
+					<Alert variant="destructive" role="alert">
+						<CircleAlert className="size-4" />
+						<AlertDescription className="flex flex-wrap items-center gap-3">
+							<span>{pi.error}</span>
+							<Button
+								type="button"
+								size="sm"
+								variant="outline"
+								onClick={() => void pi.retry()}
+								disabled={pi.isLoading}
+								aria-busy={pi.isLoading}
+							>
+								Réessayer
+							</Button>
+						</AlertDescription>
+					</Alert>
+				)}
+
+				<div className="space-y-8">
+					{/* === SECTION 1: Contact === */}
+					<CheckoutContactSection form={form} session={session} />
+
+					{/* === SECTION 2: Shipping Address === */}
+					<CheckoutSection title="Livraison">
+						<CheckoutAddressFields form={form} session={session} addresses={addresses} />
+					</CheckoutSection>
+
+					{/* === SECTION 3: Shipping Method === */}
+					<CheckoutSection title="Mode d'expédition">
+						<ShippingMethodSection
+							shipping={shipping}
+							shippingUnavailable={shippingUnavailable}
+							shippingInfo={shippingInfo}
+						/>
+					</CheckoutSection>
+
+					{/* === SECTION 4: Discount Code === */}
+					<CheckoutDiscountSection form={form} cart={cart} />
+
+					{/* === SECTION 5: Payment === */}
+					<CheckoutSection title="Paiement">
+						{pi.isLoading ? (
+							<PaymentSectionSkeleton />
+						) : pi.clientSecret ? (
+							<form.Subscribe
+								selector={(s) => ({
+									canSubmit: s.canSubmit,
+									email: s.values.email,
+									billingName: s.values.shipping.fullName,
+								})}
+							>
+								{({ canSubmit, email, billingName }) => (
+									<CheckoutStripeSection
+										clientSecret={pi.clientSecret!}
+										total={total}
+										canSubmit={canSubmit}
+										shippingUnavailable={shippingUnavailable}
+										isOnline={isOnline}
+										email={
+											isGuest ? (email as string) || undefined : (session?.user.email ?? undefined)
+										}
+										billingName={(billingName as string) || undefined}
+										getFormData={getFormData}
+										allowNavigation={allowNavigation}
+									/>
+								)}
+							</form.Subscribe>
+						) : null}
+					</CheckoutSection>
+				</div>
+			</div>
+
+			<div className="order-first lg:order-0">
+				<CheckoutSummary
+					cart={cart}
+					subtotal={subtotal}
+					shipping={shipping}
+					shippingUnavailable={shippingUnavailable}
+					shippingInfo={shippingInfo}
+					total={total}
+					discountAmount={discountAmount}
+					appliedDiscount={
+						appliedDiscount as NonNullable<ValidateDiscountCodeReturn["discount"]> | null
+					}
+				/>
+			</div>
+		</form>
 	);
 }

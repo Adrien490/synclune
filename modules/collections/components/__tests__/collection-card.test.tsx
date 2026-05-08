@@ -50,9 +50,9 @@ vi.mock("@/modules/collections/constants/image-sizes.constants", () => ({
 	ABOVE_FOLD_THRESHOLD: 4,
 }));
 
-vi.mock("lucide-react", () => ({
-	Gem: ({ className }: { className?: string }) => (
-		<svg data-testid="gem-icon" className={className} />
+vi.mock("@/shared/components/placeholder-image", () => ({
+	PlaceholderImage: ({ className, label }: { className?: string; label?: string }) => (
+		<div data-testid="placeholder-image" className={className} aria-label={label} role="img" />
 	),
 }));
 
@@ -111,10 +111,14 @@ describe("CollectionCard", () => {
 		);
 	});
 
-	it("renders the gem placeholder when no images are provided", () => {
+	it("renders the shared placeholder when no images are provided", () => {
 		renderCard({ images: [] });
-		expect(screen.getByTestId("gem-icon")).toBeInTheDocument();
-		expect(screen.getByText("Bientôt disponible")).toBeInTheDocument();
+		const placeholder = screen.getByTestId("placeholder-image");
+		expect(placeholder).toBeInTheDocument();
+		expect(placeholder).toHaveAttribute(
+			"aria-label",
+			expect.stringContaining("Bagues Artisanales"),
+		);
 	});
 
 	it("renders product count when provided and greater than zero", () => {

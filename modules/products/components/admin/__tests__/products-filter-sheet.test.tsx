@@ -44,32 +44,6 @@ vi.mock("@/shared/utils/view-transition", () => ({
 	withViewTransition: <T,>(cb: () => T): T => cb(),
 }));
 
-vi.mock("../admin-filter-active-chips", () => ({
-	AdminFilterActiveChips: ({
-		formData,
-		onRemove,
-	}: {
-		formData: { statuses: string[]; colorSlugs: string[] };
-		onRemove: (chip: { kind: string; value?: string; slug?: string }) => void;
-	}) => {
-		const chipCount = formData.statuses.length + formData.colorSlugs.length;
-		if (chipCount === 0) return null;
-		const firstStatus = formData.statuses[0];
-		return (
-			<div data-testid="admin-filter-active-chips" data-count={chipCount}>
-				{firstStatus && (
-					<button
-						data-testid="chip-remove-status"
-						onClick={() => onRemove({ kind: "status", value: firstStatus })}
-					>
-						Remove status
-					</button>
-				)}
-			</div>
-		);
-	},
-}));
-
 vi.mock("@/shared/components/filter-sheet-wrapper", () => ({
 	FilterSheetWrapper: ({
 		children,
@@ -1184,27 +1158,6 @@ describe("ProductsFilterSheet", () => {
 			const badges = screen.queryAllByTestId("badge");
 			const priceBadge = badges.find((b) => b.textContent!.includes("€ -"));
 			expect(priceBadge).toBeUndefined();
-		});
-	});
-
-	// ─── Active chips integration ────────────────────────────────────────────
-
-	describe("active filter chips integration", () => {
-		it("does not render the chips region when no filters are active", () => {
-			renderDefault();
-			expect(screen.queryByTestId("admin-filter-active-chips")).not.toBeInTheDocument();
-		});
-
-		it("renders the chips region when filters are active in URL", () => {
-			mockSearchParams.value = new URLSearchParams("filter_status=PUBLIC");
-			renderDefault();
-			expect(screen.getByTestId("admin-filter-active-chips")).toBeInTheDocument();
-		});
-
-		it("invokes the chip onRemove handler without throwing when clicked", () => {
-			mockSearchParams.value = new URLSearchParams("filter_status=PUBLIC");
-			renderDefault();
-			expect(() => fireEvent.click(screen.getByTestId("chip-remove-status"))).not.toThrow();
 		});
 	});
 

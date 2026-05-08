@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import { createMaterial } from "@/modules/materials/actions/create-material";
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { useAppForm } from "@/shared/components/forms";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { Button } from "@/shared/components/ui/button";
@@ -14,6 +15,7 @@ import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 interface CreateMaterialFormProps {
 	onSuccess?: () => void;
@@ -66,11 +68,12 @@ export function CreateMaterialForm({
 					onSuccess?.();
 					if (redirectOnSuccess) {
 						setTimeout(
-							() => router.push("/admin/catalogue/materiaux"),
+							() => withViewTransition(() => router.push("/admin/catalogue/materiaux")),
 							FORM_SUCCESS_REDIRECT_DELAY_MS,
 						);
 					}
 				},
+				onError: () => haptic("error"),
 			}),
 		),
 		undefined,
@@ -121,6 +124,8 @@ export function CreateMaterialForm({
 							placeholder="ex: Argent 925, Or 18 carats, Acier inoxydable"
 							disabled={isPending}
 							required
+							autoCapitalize="words"
+							enterKeyHint="next"
 						/>
 					)}
 				</form.AppField>
@@ -147,15 +152,17 @@ export function CreateMaterialForm({
 				</form.AppField>
 			</div>
 
-			<div className="flex justify-end pt-4">
-				<form.Subscribe selector={(state) => [state.canSubmit]}>
-					{([canSubmit]) => (
-						<Button disabled={!canSubmit || isPending} type="submit">
-							{isPending ? "Enregistrement..." : "Créer"}
-						</Button>
-					)}
-				</form.Subscribe>
-			</div>
+			<AdminFormFooter pending={isPending}>
+				<div className="flex justify-end">
+					<form.Subscribe selector={(state) => [state.canSubmit]}>
+						{([canSubmit]) => (
+							<Button disabled={!canSubmit || isPending} type="submit">
+								{isPending ? "Enregistrement..." : "Créer"}
+							</Button>
+						)}
+					</form.Subscribe>
+				</div>
+			</AdminFormFooter>
 		</form>
 	);
 }

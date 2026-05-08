@@ -1,15 +1,10 @@
 "use client";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 
-import {
-	PRODUCT_TYPE_ITEM_DRAWER_ID,
-	type ProductTypeItemDrawerData,
-} from "./product-type-item-drawer";
+import { useProductTypeActions } from "../../hooks/use-product-type-actions";
 
 interface ProductTypeMobileItemProps {
 	productType: {
@@ -24,36 +19,26 @@ interface ProductTypeMobileItemProps {
 }
 
 export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProps) {
-	const { open } = useDialog<ProductTypeItemDrawerData>(PRODUCT_TYPE_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const productsCount = productType._count.products || 0;
 	const statusLabel = productType.isActive ? "Actif" : "Inactif";
 
-	const handleOpen = () => {
-		haptic("selection");
-		open({
-			productType: {
-				id: productType.id,
-				label: productType.label,
-				slug: productType.slug,
-				description: productType.description,
-				isActive: productType.isActive,
-				isSystem: productType.isSystem,
-				productsCount,
-			},
-		});
-	};
+	const { sections } = useProductTypeActions({
+		productTypeId: productType.id,
+		isSystem: productType.isSystem,
+		label: productType.label,
+		description: productType.description,
+		slug: productType.slug,
+		productsCount,
+	});
 
 	return (
-		<button
-			type="button"
-			aria-label={`Type de bijou ${productType.label}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/catalogue/types-de-produits/${productType.slug}/modifier`}
+			ariaLabel={`Type de bijou ${productType.label}`}
+			sections={sections}
+			menuTitle="Actions"
+			menuDescription={productType.label}
+			className="text-left"
 		>
 			<Item
 				variant="outline"
@@ -77,6 +62,6 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

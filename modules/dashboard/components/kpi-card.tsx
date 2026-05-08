@@ -8,6 +8,7 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ChevronRight, Info } from "lucide-react";
 import Link from "next/link";
+import { LOW_VOLUME_THRESHOLD } from "../constants/dashboard.constants";
 import { KpiEvolution } from "./kpi-evolution";
 import { KpiValue } from "./kpi-value";
 
@@ -77,6 +78,8 @@ interface KpiCardProps extends VariantProps<typeof kpiCardVariants> {
 	 * on mobile viewports (< md) for a flat iOS-native density. Desktop is unaffected.
 	 */
 	flatOnMobile?: boolean;
+	/** Volume of the previous comparison period — gates evolution display below LOW_VOLUME_THRESHOLD */
+	previousVolume?: number;
 }
 
 export function KpiCard({
@@ -99,6 +102,7 @@ export function KpiCard({
 	invertEvolutionColors = false,
 	sparklinePath,
 	flatOnMobile = false,
+	previousVolume,
 }: KpiCardProps) {
 	const iconClassName = cn(
 		"inline-flex items-center justify-center rounded-full bg-primary/15 border border-primary/20 text-primary can-hover:group-hover:bg-primary/20 can-hover:group-hover:scale-110 transition-[transform,background-color] duration-300",
@@ -113,6 +117,12 @@ export function KpiCard({
 
 	const cardContent = (
 		<>
+			{size === "featured" && (
+				<div
+					aria-hidden="true"
+					className="bg-primary/20 pointer-events-none absolute -top-12 -right-12 size-40 rounded-full blur-3xl [animation-duration:4s] motion-safe:animate-pulse"
+				/>
+			)}
 			{sparklinePath && (
 				<>
 					<svg
@@ -193,6 +203,7 @@ export function KpiCard({
 							evolution={evolution}
 							comparisonLabel={comparisonLabel}
 							invertColors={invertEvolutionColors}
+							previousVolume={previousVolume}
 						/>
 					)}
 					{badge && (
@@ -216,9 +227,12 @@ export function KpiCard({
 	);
 
 	const displayValue = numericValue !== undefined ? `${numericValue}${suffix ?? ""}` : value;
+	const isLowVolume = previousVolume !== undefined && previousVolume < LOW_VOLUME_THRESHOLD;
 	const evolutionText =
 		evolution !== undefined
-			? `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
+			? isLowVolume
+				? ". Comparaison non significative — données insuffisantes"
+				: `. ${evolution >= 0 ? "En hausse" : "En baisse"} de ${Math.abs(evolution).toFixed(1)}%${comparisonLabel ? ` ${comparisonLabel}` : ""}`
 			: "";
 	const accessibleLabel = `${title}: ${displayValue}${evolutionText}${href ? ". Cliquer pour voir les détails" : ""}`;
 

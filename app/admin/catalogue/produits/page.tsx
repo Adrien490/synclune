@@ -17,14 +17,8 @@ import {
 import { parseProductParams } from "@/modules/products/utils/parse-product-params";
 import Link from "next/link";
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
 
-// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
-const ProductItemDrawer = dynamic(() =>
-	import("@/modules/products/components/admin/product-item-drawer").then(
-		(mod) => mod.ProductItemDrawer,
-	),
-);
+import { ProductsAdminDialogs } from "./_components/products-admin-dialogs";
 import { ProductsDataTable } from "@/modules/products/components/admin/products-data-table";
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
 import { ProductsFilterBadges } from "@/modules/products/components/admin/products-filter-badges";
@@ -94,8 +88,8 @@ export default function ProductsAdminPage({ searchParams }: ProductsAdminPagePro
 				<ProductsContent searchParams={searchParams} />
 			</Suspense>
 
-			{/* ItemDrawer mobile + dialogs imbriques (delete/archive/status/duplicate/collections) */}
-			<ProductItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete, archive, status, duplicate, collections) */}
+			<ProductsAdminDialogs />
 		</>
 	);
 }
@@ -200,15 +194,13 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				</ButtonGroup>
 			</Toolbar>
 
-			{/* Badges de filtres actifs */}
-			<div className="hidden md:block">
-				<ProductsFilterBadges
-					productTypes={productTypes}
-					collections={collections}
-					colors={colors}
-					materials={materials}
-				/>
-			</div>
+			{/* Badges de filtres actifs (visible mobile + desktop) */}
+			<ProductsFilterBadges
+				productTypes={productTypes}
+				collections={collections}
+				colors={colors}
+				materials={materials}
+			/>
 
 			{/* Liste mobile */}
 			<Suspense fallback={<ProductsMobileListSkeleton />}>

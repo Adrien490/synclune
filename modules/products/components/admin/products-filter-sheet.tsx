@@ -14,10 +14,6 @@ import {
 	useTransition,
 } from "react";
 import { useAppForm } from "@/shared/components/forms";
-import {
-	AdminFilterActiveChips,
-	type AdminFilterChipDescriptor,
-} from "./admin-filter-active-chips";
 import { ProductsFilterSections } from "./products-filter-sections";
 import {
 	ALL_FILTER_KEYS,
@@ -335,73 +331,6 @@ export function ProductsFilterSheet({
 		(formValues.updatedAfter ? 1 : 0) +
 		(formValues.updatedBefore ? 1 : 0);
 
-	// Supprime un filtre individuel via une chip (sans fermer la sheet).
-	const handleRemoveChip = (chip: AdminFilterChipDescriptor) => {
-		switch (chip.kind) {
-			case "status": {
-				const current = form.state.values.statuses;
-				form.setFieldValue(
-					"statuses",
-					current.filter((s) => s !== chip.value),
-				);
-				return;
-			}
-			case "type": {
-				const current = form.state.values.typeSlugs;
-				form.setFieldValue(
-					"typeSlugs",
-					current.filter((s) => s !== chip.slug),
-				);
-				return;
-			}
-			case "collection": {
-				const current = form.state.values.collectionIds;
-				form.setFieldValue(
-					"collectionIds",
-					current.filter((id) => id !== chip.id),
-				);
-				return;
-			}
-			case "color": {
-				const current = form.state.values.colorSlugs;
-				form.setFieldValue(
-					"colorSlugs",
-					current.filter((s) => s !== chip.slug),
-				);
-				return;
-			}
-			case "material": {
-				const current = form.state.values.materialSlugs;
-				form.setFieldValue(
-					"materialSlugs",
-					current.filter((s) => s !== chip.slug),
-				);
-				return;
-			}
-			case "price":
-				form.setFieldValue("priceRange", DEFAULT_PRICE_RANGE);
-				return;
-			case "stockStatus":
-				form.setFieldValue("stockStatus", null);
-				return;
-			case "onSale":
-				form.setFieldValue("onSale", false);
-				return;
-			case "createdAfter":
-				form.setFieldValue("createdAfter", "");
-				return;
-			case "createdBefore":
-				form.setFieldValue("createdBefore", "");
-				return;
-			case "updatedAfter":
-				form.setFieldValue("updatedAfter", "");
-				return;
-			case "updatedBefore":
-				form.setFieldValue("updatedBefore", "");
-				return;
-		}
-	};
-
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
@@ -423,16 +352,6 @@ export function ProductsFilterSheet({
 					void form.handleSubmit();
 				}}
 			>
-				<AdminFilterActiveChips
-					formData={form.state.values}
-					productTypes={productTypes}
-					collections={collections}
-					colors={sortedColors}
-					materials={sortedMaterials}
-					defaultPriceRange={DEFAULT_PRICE_RANGE}
-					onRemove={handleRemoveChip}
-				/>
-
 				<Accordion
 					ref={accordionRef}
 					type="multiple"

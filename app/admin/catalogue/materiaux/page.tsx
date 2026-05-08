@@ -16,17 +16,13 @@ import { MaterialsFilterSheet } from "@/modules/materials/components/admin/mater
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import dynamic from "next/dynamic";
 
-// Lazy loading - form dialog page-level (CreateMaterialButton) + drawer (delete imbrique)
+// Lazy loading - form dialog page-level (CreateMaterialButton)
 const MaterialFormDialog = dynamic(() =>
 	import("@/modules/materials/components/material-form-dialog").then(
 		(mod) => mod.MaterialFormDialog,
 	),
 );
-const MaterialItemDrawer = dynamic(() =>
-	import("@/modules/materials/components/admin/material-item-drawer").then(
-		(mod) => mod.MaterialItemDrawer,
-	),
-);
+import { MaterialsAdminDialogs } from "./_components/materials-admin-dialogs";
 import { RefreshMaterialsButton } from "@/modules/materials/components/admin/refresh-materials-button";
 import { MaterialsBottomBar } from "@/modules/materials/components/admin/materials-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
@@ -115,10 +111,8 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 						</ButtonGroup>
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<MaterialsFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<MaterialsFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}
@@ -133,8 +127,8 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 			</div>
 
 			<MaterialFormDialog />
-			{/* ItemDrawer mobile + delete imbrique */}
-			<MaterialItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete) */}
+			<MaterialsAdminDialogs />
 		</>
 	);
 }

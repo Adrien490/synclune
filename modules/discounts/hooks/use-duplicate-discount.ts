@@ -5,8 +5,22 @@ import { duplicateDiscount } from "@/modules/discounts/actions/admin/duplicate-d
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
+export interface DuplicateDiscountSuccessData {
+	id: string;
+	code: string;
+}
+
+const isDuplicateDiscountSuccessData = (value: unknown): value is DuplicateDiscountSuccessData => {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		typeof (value as DuplicateDiscountSuccessData).id === "string" &&
+		typeof (value as DuplicateDiscountSuccessData).code === "string"
+	);
+};
+
 interface UseDuplicateDiscountOptions {
-	onSuccess?: (data: { id: string; code: string }) => void;
+	onSuccess?: (message: string, data: DuplicateDiscountSuccessData) => void;
 	onError?: (message: string) => void;
 }
 
@@ -21,9 +35,10 @@ export function useDuplicateDiscount(options?: UseDuplicateDiscountOptions) {
 			duplicateDiscount,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
+				showSuccessToast: false,
 				onSuccess: (result) => {
-					if (result.data) {
-						options?.onSuccess?.(result.data as { id: string; code: string });
+					if (typeof result.message === "string" && isDuplicateDiscountSuccessData(result.data)) {
+						options?.onSuccess?.(result.message, result.data);
 					}
 				},
 				onError: (result) => {

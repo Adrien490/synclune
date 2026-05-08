@@ -2,6 +2,7 @@ import { use } from "react";
 import { type RefundStatus, type RefundReason } from "@/app/generated/prisma/client";
 import { ReceiptText } from "lucide-react";
 import Link from "next/link";
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { StopEventPropagation } from "@/shared/components/stop-event-propagation";
@@ -53,6 +54,7 @@ export function RefundsMobileList({ refundsPromise, perPage }: RefundsMobileList
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={refunds.length} singular="remboursement" plural="remboursements" />
 			<ItemGroup aria-label="Remboursements" className="gap-2">
 				{refunds.map((refund) => (
 					<div key={refund.id} role="listitem">

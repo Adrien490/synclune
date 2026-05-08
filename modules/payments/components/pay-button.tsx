@@ -14,6 +14,7 @@ interface PayButtonProps {
 	total: number;
 	disabled: boolean;
 	shippingUnavailable: boolean;
+	isOnline: boolean;
 	email?: string;
 	billingName?: string;
 	getFormData: () => Promise<ConfirmCheckoutData | null>;
@@ -33,6 +34,7 @@ export function PayButton({
 	total,
 	disabled,
 	shippingUnavailable,
+	isOnline,
 	email,
 	billingName,
 	getFormData,
@@ -129,10 +131,6 @@ export function PayButton({
 
 	return (
 		<div className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:static md:space-y-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none md:backdrop-blur-none">
-			<span role="status" aria-live="polite" className="sr-only">
-				{phaseMessage}
-			</span>
-
 			{isAwaiting3ds && (
 				<Alert role="status" aria-live="polite">
 					<ShieldCheck className="size-4" />
@@ -152,7 +150,9 @@ export function PayButton({
 				type="button"
 				size="lg"
 				className="min-h-11 w-full text-base shadow-md transition-shadow hover:shadow-lg"
-				disabled={disabled || !stripe || !elements || isProcessing || shippingUnavailable}
+				disabled={
+					disabled || !stripe || !elements || isProcessing || shippingUnavailable || !isOnline
+				}
 				aria-busy={isProcessing}
 				onClick={handleClick}
 				style={{ viewTransitionName: "checkout-pay-cta" }}
@@ -170,7 +170,11 @@ export function PayButton({
 				)}
 			</Button>
 
-			{shippingUnavailable ? (
+			{!isOnline ? (
+				<p className="text-destructive text-center text-sm" role="alert">
+					Vérifiez votre connexion internet pour continuer.
+				</p>
+			) : shippingUnavailable ? (
 				<p className="text-destructive text-center text-sm" role="alert">
 					Cette zone n&apos;est pas livrable.
 				</p>

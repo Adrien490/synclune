@@ -208,10 +208,15 @@ describe("duplicateSku", () => {
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 
-	it("should return success with new SKU id and sku code", async () => {
+	it("should return success with new SKU id, sku code, and parent product info for navigation", async () => {
 		const result = await duplicateSku(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.data).toMatchObject({ id: VALID_CUID_2, sku: "BRC-LUNE-OR-M-COPY" });
+		expect(result.data).toMatchObject({
+			id: VALID_CUID_2,
+			sku: "BRC-LUNE-OR-M-COPY",
+			productId: "prod-1",
+			productSlug: "bracelet-lune",
+		});
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

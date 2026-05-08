@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
@@ -13,6 +13,7 @@ import { useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/refund.constants";
 import { refundsAdminQuickSearchAdapter } from "./refunds-quick-search-adapter";
+import { RefundsFilterSheet } from "./refunds-filter-sheet";
 
 const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, label]) => ({
 	value,
@@ -21,38 +22,34 @@ const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, labe
 
 /**
  * Sous-header sticky (mobile, admin) pour la liste remboursements.
- * 3 actions : Trier | Rechercher | Filtrer (délégué à RefundsFilterSheet
- * desktop via un param d'URL, conservé du design précédent).
+ * 3 actions : Filtrer | Rechercher | Trier.
  */
 export function RefundsBottomBar() {
-	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search">();
+	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 	const searchParams = useSearchParams();
-	const router = useRouter();
 
 	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
 	const hasActiveSort = searchParams.has("sortBy");
-	const hasActiveFilter =
-		searchParams.has("filter_status") ||
-		searchParams.has("filter_reason") ||
-		searchParams.has("filter_createdAfter") ||
-		searchParams.has("filter_createdBefore");
-
-	const handleOpenFilterSheet = () => {
-		const params = new URLSearchParams(searchParams);
-		params.set("_filterOpen", "true");
-		router.push(`?${params.toString()}`, { scroll: false });
-	};
+	const activeFilterCount = Array.from(searchParams.keys()).filter((key) =>
+		key.startsWith("filter_"),
+	).length;
 
 	const items: StickyActionBarItem[] = [
 		{
-			key: "sort",
-			icon: ArrowUpDown,
-			label: "Trier",
-			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
-			onClick: () => open("sort"),
-			active: hasActiveSort,
+			key: "filter",
+			icon: SlidersHorizontal,
+			label: "Filtrer",
+			ariaLabel:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
+					: "Ouvrir les filtres",
+			onClick: () => open("filter"),
+			badgeCount: activeFilterCount,
 			haspopup: "dialog",
-			announcement: hasActiveSort ? "Tri actif" : undefined,
+			announcement:
+				activeFilterCount > 0
+					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
+					: undefined,
 		},
 		{
 			key: "search",
@@ -69,20 +66,26 @@ export function RefundsBottomBar() {
 				: undefined,
 		},
 		{
-			key: "filter",
-			icon: SlidersHorizontal,
-			label: "Filtrer",
-			ariaLabel: hasActiveFilter ? "Filtres actifs. Modifier les filtres" : "Ouvrir les filtres",
-			onClick: handleOpenFilterSheet,
-			active: hasActiveFilter,
+			key: "sort",
+			icon: ArrowUpDown,
+			label: "Trier",
+			ariaLabel: hasActiveSort ? "Tri actif. Modifier le tri" : "Ouvrir les options de tri",
+			onClick: () => open("sort"),
+			active: hasActiveSort,
 			haspopup: "dialog",
-			announcement: hasActiveFilter ? "Filtres actifs" : undefined,
+			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 	];
 
 	return (
 		<>
-			<StickyActionBar items={items} ariaLabel="Tri, recherche et filtres" />
+			<StickyActionBar items={items} ariaLabel="Filtres, recherche et tri" />
+
+			<RefundsFilterSheet
+				open={isOpen("filter")}
+				onOpenChange={onOpenChange("filter")}
+				hideTrigger
+			/>
 
 			<SortDrawer
 				open={isOpen("sort")}

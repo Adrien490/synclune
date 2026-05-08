@@ -5,8 +5,26 @@ import { duplicateSku } from "@/modules/skus/actions/duplicate-sku";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 
+export interface DuplicateSkuSuccessData {
+	id: string;
+	sku: string;
+	productId: string;
+	productSlug: string;
+}
+
+const isDuplicateSkuSuccessData = (value: unknown): value is DuplicateSkuSuccessData => {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		typeof (value as DuplicateSkuSuccessData).id === "string" &&
+		typeof (value as DuplicateSkuSuccessData).sku === "string" &&
+		typeof (value as DuplicateSkuSuccessData).productId === "string" &&
+		typeof (value as DuplicateSkuSuccessData).productSlug === "string"
+	);
+};
+
 interface UseDuplicateSkuOptions {
-	onSuccess?: (data: { id: string; sku: string }) => void;
+	onSuccess?: (message: string, data: DuplicateSkuSuccessData) => void;
 	onError?: (message: string) => void;
 }
 
@@ -21,9 +39,10 @@ export function useDuplicateSku(options?: UseDuplicateSkuOptions) {
 			duplicateSku,
 			createToastCallbacks({
 				loadingMessage: "Duplication en cours...",
+				showSuccessToast: false,
 				onSuccess: (result) => {
-					if (result.data) {
-						options?.onSuccess?.(result.data as { id: string; sku: string });
+					if (typeof result.message === "string" && isDuplicateSkuSuccessData(result.data)) {
+						options?.onSuccess?.(result.message, result.data);
 					}
 				},
 				onError: (result) => {

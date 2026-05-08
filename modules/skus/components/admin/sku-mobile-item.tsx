@@ -3,17 +3,14 @@
 import { Package } from "lucide-react";
 import Image from "next/image";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
+import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
-
-import { SKU_ITEM_DRAWER_ID, type SkuItemDrawerData } from "./sku-item-drawer";
 
 type Sku = GetProductSkusReturn["productSkus"][number];
 
@@ -42,48 +39,28 @@ const getStockAriaLabel = (inventory: number) => {
 };
 
 export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
-	const { open } = useDialog<SkuItemDrawerData>(SKU_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
 	const stockVariant = getStockVariant(sku.inventory);
 
-	const handleOpen = () => {
-		haptic("selection");
-		open({
-			sku: {
-				id: sku.id,
-				skuCode: sku.sku,
-				productSlug,
-				isDefault: sku.isDefault,
-				isActive: sku.isActive,
-				inventory: sku.inventory,
-				priceInclTax: sku.priceInclTax,
-				compareAtPrice: sku.compareAtPrice,
-				colorName: sku.color?.name ?? null,
-				materialName: sku.material?.name ?? null,
-				size: sku.size,
-				primaryImage: primaryImage
-					? {
-							url: primaryImage.url,
-							blurDataUrl: primaryImage.blurDataUrl,
-							mediaType: primaryImage.mediaType,
-							altText: primaryImage.altText,
-						}
-					: null,
-			},
-		});
-	};
+	const { sections } = useSkuActions({
+		skuId: sku.id,
+		skuName: sku.sku,
+		productSlug,
+		isDefault: sku.isDefault,
+		isActive: sku.isActive,
+		inventory: sku.inventory,
+		priceInclTax: sku.priceInclTax,
+		compareAtPrice: sku.compareAtPrice,
+	});
 
 	return (
-		<button
-			type="button"
-			aria-label={`Variante ${sku.sku}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/catalogue/produits/${productSlug}/variantes/${sku.id}/modifier`}
+			ariaLabel={`Variante ${sku.sku}`}
+			sections={sections}
+			menuTitle="Actions variante"
+			menuDescription={sku.sku}
+			className="text-left"
 		>
 			<Item
 				variant="outline"
@@ -160,6 +137,6 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

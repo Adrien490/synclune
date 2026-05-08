@@ -152,7 +152,7 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 
 	return (
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-			<div>
+			<div className="hidden md:block">
 				<h1 className="text-2xl font-semibold tracking-tight">Commande {order.orderNumber}</h1>
 				<p className="text-muted-foreground text-sm">
 					Créée le{" "}
@@ -166,23 +166,24 @@ export function OrderHeader({ order, notesCount }: OrderHeaderProps) {
 				</p>
 			</div>
 
-			{/* Actions */}
-			<div className="flex items-center gap-2">
-				{/* Action primaire contextuelle */}
+			{/* Actions : sticky bottom au-dessus de la bottom-bar admin sur mobile,
+			 * inline à droite du titre sur desktop. */}
+			<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+				{/* Action primaire contextuelle — full-width mobile, naturelle desktop */}
 				{permissions.canMarkAsPaid && (
-					<Button size="sm" onClick={handleMarkAsPaid}>
+					<Button size="sm" onClick={handleMarkAsPaid} className="flex-1 md:flex-none">
 						<CreditCard className="h-4 w-4" aria-hidden="true" />
 						Marquer payée
 					</Button>
 				)}
 				{permissions.canMarkAsShipped && (
-					<Button size="sm" onClick={handleMarkAsShipped}>
+					<Button size="sm" onClick={handleMarkAsShipped} className="flex-1 md:flex-none">
 						<Truck className="h-4 w-4" aria-hidden="true" />
 						Marquer expédiée
 					</Button>
 				)}
 				{permissions.canMarkAsDelivered && (
-					<Button size="sm" onClick={handleMarkAsDelivered}>
+					<Button size="sm" onClick={handleMarkAsDelivered} className="flex-1 md:flex-none">
 						<CircleCheck className="h-4 w-4" aria-hidden="true" />
 						Marquer livrée
 					</Button>

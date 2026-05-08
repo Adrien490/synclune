@@ -5,21 +5,32 @@ import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockDialog, mockDuplicateProduct, mockRouterPush, mockUseDuplicateProduct } = vi.hoisted(
-	() => ({
-		mockDialog: {
-			isOpen: true,
-			data: null as Record<string, unknown> | null,
-			close: vi.fn(),
-		},
-		mockDuplicateProduct: {
-			action: vi.fn(),
-			isPending: false,
-		},
-		mockRouterPush: vi.fn(),
-		mockUseDuplicateProduct: vi.fn(),
-	}),
-);
+const {
+	mockDialog,
+	mockDuplicateProduct,
+	mockRouterPush,
+	mockRouterRefresh,
+	mockUseDuplicateProduct,
+	mockHaptic,
+	mockToastSuccess,
+	mockWithViewTransition,
+} = vi.hoisted(() => ({
+	mockDialog: {
+		isOpen: true,
+		data: null as Record<string, unknown> | null,
+		close: vi.fn(),
+	},
+	mockDuplicateProduct: {
+		action: vi.fn(),
+		isPending: false,
+	},
+	mockRouterPush: vi.fn(),
+	mockRouterRefresh: vi.fn(),
+	mockUseDuplicateProduct: vi.fn(),
+	mockHaptic: vi.fn(),
+	mockToastSuccess: vi.fn(),
+	mockWithViewTransition: vi.fn((fn: () => void) => fn()),
+}));
 
 // ============================================================================
 // MODULE MOCKS
@@ -30,7 +41,19 @@ vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 }));
 
 vi.mock("next/navigation", () => ({
-	useRouter: () => ({ push: mockRouterPush }),
+	useRouter: () => ({ push: mockRouterPush, refresh: mockRouterRefresh }),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+}));
+
+vi.mock("@/shared/utils/toast", () => ({
+	toast: { success: mockToastSuccess },
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: mockWithViewTransition,
 }));
 
 vi.mock("@/modules/products/hooks/use-duplicate-product", () => ({
@@ -132,6 +155,10 @@ beforeEach(() => {
 	mockDuplicateProduct.action = vi.fn();
 	mockDuplicateProduct.isPending = false;
 	mockRouterPush.mockReset();
+	mockRouterRefresh.mockReset();
+	mockHaptic.mockReset();
+	mockToastSuccess.mockReset();
+	mockWithViewTransition.mockImplementation((fn: () => void) => fn());
 	mockUseDuplicateProduct.mockImplementation(() => mockDuplicateProduct);
 });
 
@@ -332,11 +359,11 @@ describe("DuplicateProductAlertDialog", () => {
 	});
 
 	// --------------------------------------------------------------------------
-	// onSuccess behavior (close dialog + redirect to edit page)
+	// onSuccess behavior (close dialog + refresh list + toast with "Voir" action)
 	// --------------------------------------------------------------------------
 
 	describe("onSuccess", () => {
-		it("closes the dialog without redirecting", () => {
+		const callOnSuccess = () => {
 			renderDialog();
 
 			const onSuccess = mockUseDuplicateProduct.mock.calls[0]?.[0]?.onSuccess as
@@ -349,9 +376,27 @@ describe("DuplicateProductAlertDialog", () => {
 				title: "Copie de Bague Lune",
 				slug: "copie-de-bague-lune",
 			});
+		};
 
+		it("closes the dialog and refreshes the route so the new product appears in the list", () => {
+			callOnSuccess();
 			expect(mockDialog.close).toHaveBeenCalledTimes(1);
-			expect(mockRouterPush).not.toHaveBeenCalled();
+			expect(mockRouterRefresh).toHaveBeenCalledTimes(1);
+			expect(mockHaptic).toHaveBeenCalledWith("success");
+		});
+
+		it("emits a success toast with a 'Voir le bijou' action that navigates to the edit page", () => {
+			callOnSuccess();
+			expect(mockToastSuccess).toHaveBeenCalledTimes(1);
+			const [message, options] = mockToastSuccess.mock.calls[0]!;
+			expect(message).toBe("Produit dupliqué");
+			expect((options as { action: { label: string } }).action.label).toBe("Voir le bijou");
+
+			(options as { action: { onClick: () => void } }).action.onClick();
+			expect(mockWithViewTransition).toHaveBeenCalledTimes(1);
+			expect(mockRouterPush).toHaveBeenCalledWith(
+				"/admin/catalogue/produits/copie-de-bague-lune/modifier",
+			);
 		});
 	});
 

@@ -3,42 +3,31 @@
 import { ReviewStatus } from "@/app/generated/prisma/enums";
 import { CircleCheck, EyeOff } from "lucide-react";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
+import { RatingStars } from "@/shared/components/rating-stars";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { RatingStars } from "@/shared/components/rating-stars";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 import { formatDateShort } from "@/shared/utils/dates";
 
 import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
+import { useReviewActions } from "../../hooks/use-review-actions";
 import type { ReviewAdmin } from "../../types/review.types";
-
-import { REVIEW_ITEM_DRAWER_ID, type ReviewItemDrawerData } from "./review-item-drawer";
 
 interface ReviewMobileItemProps {
 	review: ReviewAdmin;
 }
 
 export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
-	const { open } = useDialog<ReviewItemDrawerData>(REVIEW_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
-
-	const handleOpen = () => {
-		haptic("selection");
-		open({ review });
-	};
+	const { sections } = useReviewActions({ review });
 
 	return (
-		<button
-			type="button"
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:border-ring focus-visible:ring-ring/50 block w-full rounded-md text-left outline-none",
-				"focus-visible:ring-[3px]",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
-			aria-label={`Ouvrir la fiche de l'avis sur ${review.product.title}`}
+		<LongPressMenuLink
+			href={`/admin/marketing/avis/${review.id}`}
+			ariaLabel={`Avis sur ${review.product.title}`}
+			sections={sections}
+			menuTitle="Actions avis"
+			menuDescription={review.product.title}
+			className="rounded-md text-left"
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3" aria-roledescription="carte avis">
 				<ItemContent className="min-w-0">
@@ -75,6 +64,6 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

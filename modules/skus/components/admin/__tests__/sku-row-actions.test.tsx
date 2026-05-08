@@ -65,6 +65,23 @@ vi.mock("@/modules/skus/hooks/use-duplicate-sku", () => ({
 	}),
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => vi.fn(),
+	triggerHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/utils/toast", () => ({
+	toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (fn: () => void) => fn(),
+}));
+
 vi.mock("next/link", () => ({
 	default: ({ href, children }: { href: string; children: React.ReactNode }) => (
 		<a href={href}>{children}</a>

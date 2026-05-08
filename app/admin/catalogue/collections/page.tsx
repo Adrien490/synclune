@@ -18,6 +18,7 @@ import { CollectionsFilterSheet } from "@/modules/collections/components/admin/c
 import { CollectionStatusNavigation } from "@/modules/collections/components/admin/collection-status-navigation";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
+import { CollectionsAdminDialogs } from "./_components/collections-admin-dialogs";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters, parseStatus } from "./_utils/params";
 
@@ -30,11 +31,6 @@ const CollectionsBottomBar = dynamic(() =>
 const CollectionFormDialog = dynamic(() =>
 	import("@/modules/collections/components/admin/collection-form-dialog").then(
 		(mod) => mod.CollectionFormDialog,
-	),
-);
-const CollectionItemDrawer = dynamic(() =>
-	import("@/modules/collections/components/admin/collection-item-drawer").then(
-		(mod) => mod.CollectionItemDrawer,
 	),
 );
 
@@ -93,8 +89,8 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 	return (
 		<>
 			<CollectionFormDialog />
-			{/* ItemDrawer mobile + dialogs imbriques (delete/archive/change-status) */}
-			<CollectionItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete, archive, change-status) */}
+			<CollectionsAdminDialogs />
 
 			<PageHeader
 				variant="compact"
@@ -145,10 +141,8 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 						</ButtonGroup>
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<CollectionsFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<CollectionsFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}

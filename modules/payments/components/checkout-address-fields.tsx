@@ -273,7 +273,7 @@ export function CheckoutAddressFields({ form, session, addresses }: CheckoutAddr
 									label="Téléphone"
 									required
 									defaultCountry={((country as string) || "FR") as ShippingCountry}
-									enterKeyHint="done"
+									enterKeyHint={isGuest ? "done" : "next"}
 								/>
 								<p className="text-muted-foreground text-sm">
 									Utilisé uniquement par le transporteur en cas de problème de livraison.

@@ -2,6 +2,7 @@ import { use } from "react";
 import { ReviewStatus } from "@/app/generated/prisma/client";
 import { MessageSquare, CircleCheck, EyeOff } from "lucide-react";
 import Link from "next/link";
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import {
@@ -43,6 +44,7 @@ export function ReviewsMobileList({ reviewsPromise, perPage }: ReviewsMobileList
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={adminReviews.length} singular="avis" plural="avis" />
 			<ItemGroup aria-label="Avis clients" className="gap-2">
 				{adminReviews.map((review) => (
 					<Item

@@ -179,7 +179,7 @@ describe("useDuplicateColor", () => {
 		mockDuplicateColor.mockResolvedValue({
 			status: "success" as const,
 			message: "Couleur dupliquée",
-			data: { id: "new-id", name: "Or - Copie" },
+			data: { id: "new-id", name: "Or - Copie", slug: "or-copie" },
 		});
 	});
 
@@ -200,7 +200,7 @@ describe("useDuplicateColor", () => {
 		expect(formData.get("colorId")).toBe("color-123");
 	});
 
-	it("calls onSuccess with { id, name } when action succeeds", async () => {
+	it("calls onSuccess with (message, { id, name, slug }) when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateColor({ onSuccess }));
 
@@ -208,7 +208,11 @@ describe("useDuplicateColor", () => {
 			result.current.duplicate("color-123");
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith({ id: "new-id", name: "Or - Copie" });
+		expect(onSuccess).toHaveBeenCalledWith("Couleur dupliquée", {
+			id: "new-id",
+			name: "Or - Copie",
+			slug: "or-copie",
+		});
 	});
 
 	it("calls onError with message when action fails", async () => {

@@ -2,6 +2,7 @@
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { Button } from "@/shared/components/ui/button";
 import { useAppForm } from "@/shared/components/forms";
 import { createCollection } from "@/modules/collections/actions/create-collection";
@@ -12,6 +13,7 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { toast } from "@/shared/utils/toast";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 interface CreateCollectionFormProps {
 	/** Callback appelé après succès */
@@ -66,7 +68,7 @@ export function CreateCollectionForm({
 					onSuccess?.();
 					if (redirectOnSuccess) {
 						setTimeout(
-							() => router.push("/admin/catalogue/collections"),
+							() => withViewTransition(() => router.push("/admin/catalogue/collections")),
 							FORM_SUCCESS_REDIRECT_DELAY_MS,
 						);
 					}
@@ -111,6 +113,8 @@ export function CreateCollectionForm({
 						placeholder="ex: Nouveautés 2025, Collection Été"
 						disabled={isPending}
 						required
+						autoCapitalize="words"
+						enterKeyHint="next"
 					/>
 				)}
 			</form.AppField>
@@ -151,16 +155,17 @@ export function CreateCollectionForm({
 				)}
 			</form.AppField>
 
-			{/* Footer */}
-			<div className="flex justify-end pt-4">
-				<form.Subscribe selector={(state) => [state.canSubmit]}>
-					{([canSubmit]) => (
-						<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
-							{isPending ? "Création..." : "Créer"}
-						</Button>
-					)}
-				</form.Subscribe>
-			</div>
+			<AdminFormFooter pending={isPending}>
+				<div className="flex justify-end">
+					<form.Subscribe selector={(state) => [state.canSubmit]}>
+						{([canSubmit]) => (
+							<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
+								{isPending ? "Création..." : "Créer"}
+							</Button>
+						)}
+					</form.Subscribe>
+				</div>
+			</AdminFormFooter>
 		</form>
 	);
 }

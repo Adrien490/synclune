@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { cacheTag } from "next/cache";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
@@ -42,34 +43,37 @@ export async function fetchDashboardRevenueChart(
 	const chartConfig = getChartConfig(period);
 	cacheTag(`${DASHBOARD_CACHE_TAGS.REVENUE_CHART}-${chartConfig.granularity}`);
 
-	const periodLabel = DASHBOARD_PERIODS[period].label;
+	return Sentry.startSpan(
+		{ name: "dashboard.fetchRevenueChart", op: "db.read", attributes: { period } },
+		async () => {
+			const periodLabel = DASHBOARD_PERIODS[period].label;
 
-	// Agregation cote DB with dynamic date format based on granularity
-	const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
-		SELECT
-			TO_CHAR("paidAt" AT TIME ZONE 'UTC', ${chartConfig.sqlDateFormat}) as date,
-			COALESCE(SUM(total), 0) as revenue,
-			COUNT(*) as orders,
-			COALESCE(SUM(subtotal), 0) as subtotal,
-			COALESCE(SUM("discountAmount"), 0) as discounts,
-			COALESCE(SUM("shippingCost"), 0) as shipping
-		FROM "Order"
-		WHERE "paidAt" >= ${chartConfig.startDate}
-			AND "paymentStatus"::text = ${PaymentStatus.PAID}
-			AND "deletedAt" IS NULL
-		GROUP BY date
-		ORDER BY date ASC
-	`;
+			const revenueRows = await prisma.$queryRaw<RevenueRow[]>`
+				SELECT
+					TO_CHAR("paidAt" AT TIME ZONE 'UTC', ${chartConfig.sqlDateFormat}) as date,
+					COALESCE(SUM(total), 0) as revenue,
+					COUNT(*) as orders,
+					COALESCE(SUM(subtotal), 0) as subtotal,
+					COALESCE(SUM("discountAmount"), 0) as discounts,
+					COALESCE(SUM("shippingCost"), 0) as shipping
+				FROM "Order"
+				WHERE "paidAt" >= ${chartConfig.startDate}
+					AND "paymentStatus"::text = ${PaymentStatus.PAID}
+					AND "deletedAt" IS NULL
+				GROUP BY date
+				ORDER BY date ASC
+			`;
 
-	// Transform into continuous time series with French labels
-	const maps = buildRevenueMap(revenueRows);
-	const rawData = fillMissingDates(
-		maps,
-		chartConfig.startDate,
-		chartConfig.pointCount,
-		chartConfig.granularity,
+			const maps = buildRevenueMap(revenueRows);
+			const rawData = fillMissingDates(
+				maps,
+				chartConfig.startDate,
+				chartConfig.pointCount,
+				chartConfig.granularity,
+			);
+			const data = formatChartData(rawData, chartConfig.granularity);
+
+			return { data, periodLabel };
+		},
 	);
-	const data = formatChartData(rawData, chartConfig.granularity);
-
-	return { data, periodLabel };
 }

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function CreateProductTypePage() {
 	return (
 		<>
-			<h1 className="mb-6 text-2xl font-semibold">Nouveau type de produit</h1>
+			<h1 className="mb-6 hidden text-2xl font-semibold md:block">Nouveau type de produit</h1>
 			<CreateProductTypeForm className="max-w-md" />
 		</>
 	);

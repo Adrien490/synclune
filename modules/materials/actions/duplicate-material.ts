@@ -118,6 +118,7 @@ export async function duplicateMaterial(
 		return success(`Materiau duplique: ${duplicate.name}`, {
 			id: duplicate.id,
 			name: duplicate.name,
+			slug: duplicate.slug,
 		});
 	} catch (e) {
 		return handleActionError(e, "Impossible de dupliquer le materiau");

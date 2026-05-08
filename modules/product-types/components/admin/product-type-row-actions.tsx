@@ -1,22 +1,15 @@
 "use client";
 
-import { Copy, EllipsisVertical, ExternalLink, Pencil, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { EllipsisVertical } from "lucide-react";
 
-import { PRODUCT_TYPE_DIALOG_ID } from "@/modules/product-types/components/product-type-form-dialog";
-import { useDuplicateProductType } from "@/modules/product-types/hooks/use-duplicate-product-type";
 import {
 	ResponsiveActionMenu,
 	ResponsiveActionMenuContent,
 	ResponsiveActionMenuTrigger,
-	type ActionMenuSection,
 } from "@/shared/components/responsive-action-menu";
 import { Button } from "@/shared/components/ui/button";
-import { useIsMobile } from "@/shared/hooks/use-mobile";
-import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 
-import { DELETE_PRODUCT_TYPE_DIALOG_ID } from "./delete-product-type-alert-dialog";
+import { useProductTypeActions } from "../../hooks/use-product-type-actions";
 
 interface ProductTypeRowActionsProps {
 	productTypeId: string;
@@ -27,69 +20,8 @@ interface ProductTypeRowActionsProps {
 	productsCount?: number;
 }
 
-export function ProductTypeRowActions({
-	productTypeId,
-	isSystem = false,
-	label,
-	description,
-	slug,
-	productsCount = 0,
-}: ProductTypeRowActionsProps) {
-	const { open: openFormDialog } = useDialog(PRODUCT_TYPE_DIALOG_ID);
-	const deleteDialog = useAlertDialog(DELETE_PRODUCT_TYPE_DIALOG_ID);
-	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType();
-	const isMobile = useIsMobile();
-	const router = useRouter();
-
-	const sections: ActionMenuSection[] = [
-		{
-			key: "manage",
-			label: isSystem ? "Type système protégé" : undefined,
-			items: [
-				{
-					key: "edit",
-					label: isSystem ? "Voir (lecture seule)" : "Éditer",
-					icon: Pencil,
-					disabled: isSystem,
-					onSelect: () => {
-						if (isMobile) {
-							router.push(`/admin/catalogue/types-de-produits/${slug}/modifier`);
-						} else {
-							openFormDialog({
-								productType: { id: productTypeId, label, description: description ?? null, slug },
-							});
-						}
-					},
-				},
-				{
-					key: "products",
-					label: "Voir les produits",
-					icon: ExternalLink,
-					href: `/admin/catalogue/produits?productTypeId=${productTypeId}`,
-				},
-				{
-					key: "duplicate",
-					label: "Dupliquer",
-					icon: Copy,
-					disabled: isDuplicating,
-					onSelect: () => duplicateProductType(productTypeId),
-				},
-			],
-		},
-		{
-			key: "danger",
-			items: [
-				{
-					key: "delete",
-					label: "Supprimer",
-					icon: Trash2,
-					variant: "destructive",
-					hidden: isSystem,
-					onSelect: () => deleteDialog.open({ productTypeId, label, productsCount }),
-				},
-			],
-		},
-	];
+export function ProductTypeRowActions(props: ProductTypeRowActionsProps) {
+	const { sections } = useProductTypeActions(props);
 
 	return (
 		<ResponsiveActionMenu>
@@ -103,7 +35,7 @@ export function ProductTypeRowActions({
 					<EllipsisVertical className="h-4 w-4" />
 				</Button>
 			</ResponsiveActionMenuTrigger>
-			<ResponsiveActionMenuContent title="Actions" description={label} sections={sections} />
+			<ResponsiveActionMenuContent title="Actions" description={props.label} sections={sections} />
 		</ResponsiveActionMenu>
 	);
 }

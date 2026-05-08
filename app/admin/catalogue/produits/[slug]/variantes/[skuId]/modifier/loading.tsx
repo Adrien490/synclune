@@ -14,7 +14,7 @@ export default function EditVariantLoading() {
 			<div className="mb-4 hidden md:flex md:items-center md:gap-2">
 				{Array.from({ length: 6 }).map((_, i) => (
 					<div key={i} className="flex items-center gap-2">
-						<Skeleton className="bg-muted/40 h-4 w-20 motion-safe:animate-pulse" />
+						<Skeleton className="bg-muted/40 h-4 w-20" />
 						{i < 5 && <span className="text-muted-foreground">/</span>}
 					</div>
 				))}
@@ -106,11 +106,10 @@ export default function EditVariantLoading() {
 					</div>
 				</div>
 
-				{/* Form Footer */}
-				<div className="mt-6">
-					<div className="flex items-center justify-between gap-4">
-						<Skeleton className="h-10 w-24" />
-						<Skeleton className="h-10 w-40" />
+				{/* Sticky footer (mirrors EditProductVariantForm submit bar) */}
+				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-4 border-t px-4 py-3 backdrop-blur-md md:bottom-0 md:-mx-6 md:px-6">
+					<div className="flex justify-end">
+						<Skeleton className="h-11 w-full sm:w-56" />
 					</div>
 				</div>
 			</div>

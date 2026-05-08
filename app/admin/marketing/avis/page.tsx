@@ -10,6 +10,8 @@ import type { Metadata } from "next";
 import { getReviews, getReviewCountsByStatus } from "@/modules/reviews/data/get-reviews";
 import { getGlobalReviewStats } from "@/modules/reviews/data/get-global-review-stats";
 import dynamic from "next/dynamic";
+
+import { ReviewsAdminDialogs } from "./_components/reviews-admin-dialogs";
 import { ReviewsDataTable } from "@/modules/reviews/components/admin/reviews-data-table";
 import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/reviews-data-table-skeleton";
 import { ReviewsMobileList } from "@/modules/reviews/components/admin/reviews-mobile-list";
@@ -19,11 +21,6 @@ import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constan
 const ReviewsBottomBar = dynamic(() =>
 	import("@/modules/reviews/components/admin/reviews-bottom-bar").then(
 		(mod) => mod.ReviewsBottomBar,
-	),
-);
-const ReviewItemDrawer = dynamic(() =>
-	import("@/modules/reviews/components/admin/review-item-drawer").then(
-		(mod) => mod.ReviewItemDrawer,
 	),
 );
 import { RatingStars } from "@/shared/components/rating-stars";
@@ -162,7 +159,7 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 			</div>
 
 			{/* Toolbar */}
-			<Suspense fallback={<ToolbarSkeleton selectCount={3} className="hidden md:flex" />}>
+			<Suspense fallback={<ToolbarSkeleton selectCount={4} className="hidden md:flex" />}>
 				<Toolbar
 					className="hidden md:flex"
 					ariaLabel="Barre d'outils de gestion des avis"
@@ -222,8 +219,8 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 				<ReviewsDataTable reviewsPromise={reviewsPromise} perPage={perPage} />
 			</Suspense>
 
-			{/* ItemDrawer mobile + dialogs imbriques (detail/moderate) */}
-			<ReviewItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (toggle status) */}
+			<ReviewsAdminDialogs />
 		</>
 	);
 }

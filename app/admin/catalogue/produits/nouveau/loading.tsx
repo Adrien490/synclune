@@ -1,6 +1,9 @@
 import { PageHeader } from "@/shared/components/page-header";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
+
+const CARD_SHELL =
+	"lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md";
+const CARD_INNER = "px-0 sm:px-0 lg:px-6";
 
 /**
  * Skeleton wizard pour mobile
@@ -67,14 +70,14 @@ function MobileWizardSkeleton() {
  */
 function DesktopFormSkeleton() {
 	return (
-		<div className="space-y-6 pb-32">
-			{/* Visuels */}
-			<Card>
-				<CardHeader>
+		<div className="space-y-6">
+			{/* Visuels — responsive: card visible uniquement sur lg+ */}
+			<div className={CARD_SHELL}>
+				<div className={`${CARD_INNER} space-y-2`}>
 					<Skeleton className="h-5 w-20" />
 					<Skeleton className="h-4 w-48" />
-				</CardHeader>
-				<CardContent className="space-y-3">
+				</div>
+				<div className={`${CARD_INNER} space-y-3`}>
 					{/* Header avec compteur */}
 					<div className="flex items-center justify-between">
 						<div className="space-y-1">
@@ -92,8 +95,8 @@ function DesktopFormSkeleton() {
 							<Skeleton className="h-3 w-48" />
 						</div>
 					</div>
-				</CardContent>
-			</Card>
+				</div>
+			</div>
 
 			{/* Le bijou */}
 			<div className="space-y-6">
@@ -174,10 +177,11 @@ function DesktopFormSkeleton() {
 				</div>
 			</div>
 
-			{/* Footer */}
-			<div className="flex justify-end gap-3">
-				<Skeleton className="h-10 w-48" />
-				<Skeleton className="h-10 w-36" />
+			{/* Sticky footer (mirrors CreateProductForm submit bar) */}
+			<div className="bg-background/95 sticky bottom-0 z-10 -mx-6 border-t px-6 py-3 backdrop-blur-md">
+				<div className="flex justify-end">
+					<Skeleton className="h-11 w-full sm:w-56" />
+				</div>
 			</div>
 		</div>
 	);
@@ -190,7 +194,9 @@ function DesktopFormSkeleton() {
  */
 export default function CreateProductLoading() {
 	return (
-		<>
+		<div role="status" aria-busy="true" aria-label="Chargement du formulaire">
+			<span className="sr-only">Chargement du formulaire...</span>
+
 			<PageHeader title="Nouveau produit" variant="compact" className="hidden md:block" />
 
 			{/* Mobile: Wizard skeleton */}
@@ -202,6 +208,6 @@ export default function CreateProductLoading() {
 			<div className="hidden md:block">
 				<DesktopFormSkeleton />
 			</div>
-		</>
+		</div>
 	);
 }

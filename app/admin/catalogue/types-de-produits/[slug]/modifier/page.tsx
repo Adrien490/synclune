@@ -24,7 +24,7 @@ export default async function EditProductTypePage({ params }: EditProductTypePag
 
 	return (
 		<>
-			<h1 className="mb-6 text-2xl font-semibold">{productType.label}</h1>
+			<h1 className="mb-6 hidden text-2xl font-semibold md:block">{productType.label}</h1>
 			<EditProductTypeForm
 				productType={{
 					id: productType.id,

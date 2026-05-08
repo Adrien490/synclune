@@ -5,8 +5,26 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { duplicateCollection } from "@/modules/collections/actions/duplicate-collection";
 
+export interface DuplicateCollectionSuccessData {
+	collectionId: string;
+	name: string;
+	slug: string;
+}
+
+const isDuplicateCollectionSuccessData = (
+	value: unknown,
+): value is DuplicateCollectionSuccessData => {
+	return (
+		value !== null &&
+		typeof value === "object" &&
+		typeof (value as DuplicateCollectionSuccessData).collectionId === "string" &&
+		typeof (value as DuplicateCollectionSuccessData).name === "string" &&
+		typeof (value as DuplicateCollectionSuccessData).slug === "string"
+	);
+};
+
 interface UseDuplicateCollectionOptions {
-	onSuccess?: (message: string) => void;
+	onSuccess?: (message: string, data: DuplicateCollectionSuccessData) => void;
 }
 
 export const useDuplicateCollection = (options?: UseDuplicateCollectionOptions) => {
@@ -15,14 +33,17 @@ export const useDuplicateCollection = (options?: UseDuplicateCollectionOptions) 
 			duplicateCollection,
 			createToastCallbacks({
 				loadingMessage: "Duplication de la collection...",
+				showSuccessToast: false,
 				onSuccess: (result: unknown) => {
 					if (
 						result &&
 						typeof result === "object" &&
 						"message" in result &&
-						typeof result.message === "string"
+						typeof result.message === "string" &&
+						"data" in result &&
+						isDuplicateCollectionSuccessData(result.data)
 					) {
-						options?.onSuccess?.(result.message);
+						options?.onSuccess?.(result.message, result.data);
 					}
 				},
 			}),

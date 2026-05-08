@@ -17,7 +17,14 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+
+interface RefundsFilterSheetProps {
+	className?: string;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
+}
 
 interface FilterFormData {
 	status: string;
@@ -28,10 +35,19 @@ interface FilterFormData {
 	};
 }
 
-export function RefundsFilterSheet() {
+export function RefundsFilterSheet({
+	className,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
+}: RefundsFilterSheetProps = {}) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isOpen = controlledOpen ?? internalOpen;
+	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
 	const initialValues = ((): FilterFormData => {
 		return {
@@ -114,11 +130,15 @@ export function RefundsFilterSheet() {
 
 	return (
 		<FilterSheetWrapper
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}
 			onApply={() => void form.handleSubmit()}
 			isPending={isPending}
+			triggerClassName={className}
 		>
 			<form
 				onSubmit={(e) => {

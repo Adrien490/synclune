@@ -4,20 +4,32 @@ import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
 import { useAppForm } from "@/shared/components/forms";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 interface CollectionsFilterSheetProps {
 	className?: string;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
 interface FilterFormData {
 	hasProducts: string;
 }
 
-export function CollectionsFilterSheet({ className }: CollectionsFilterSheetProps) {
+export function CollectionsFilterSheet({
+	className,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
+}: CollectionsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isOpen = controlledOpen ?? internalOpen;
+	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
 	const initialValues = ((): FilterFormData => {
 		let hasProducts = "all";
@@ -85,6 +97,9 @@ export function CollectionsFilterSheet({ className }: CollectionsFilterSheetProp
 
 	return (
 		<FilterSheetWrapper
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

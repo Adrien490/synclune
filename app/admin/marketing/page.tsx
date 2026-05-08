@@ -18,13 +18,13 @@ export default function MarketingPage() {
 					title: "Codes promo",
 					description: "Gérer les codes de réduction",
 					href: "/admin/marketing/discounts",
-					icon: Ticket,
+					icon: <Ticket className="h-5 w-5" />,
 				},
 				{
 					title: "Avis clients",
 					description: "Gérer les avis et témoignages",
 					href: "/admin/marketing/avis",
-					icon: MessageSquare,
+					icon: <MessageSquare className="h-5 w-5" />,
 				},
 			]}
 		/>

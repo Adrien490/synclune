@@ -1,0 +1,137 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+const { mockOrderAggregate, mockCacheDashboard, mockCacheTag } = vi.hoisted(() => ({
+	mockOrderAggregate: vi.fn(),
+	mockCacheDashboard: vi.fn(),
+	mockCacheTag: vi.fn(),
+}));
+
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: {
+		order: { aggregate: mockOrderAggregate },
+	},
+	notDeleted: { deletedAt: null },
+}));
+
+vi.mock("@/shared/lib/cache", () => ({
+	cacheDashboard: mockCacheDashboard,
+}));
+
+vi.mock("next/cache", () => ({
+	cacheTag: mockCacheTag,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	startSpan: <T>(_opts: unknown, fn: () => T) => fn(),
+}));
+
+vi.mock("@/modules/dashboard/constants/cache", () => ({
+	DASHBOARD_CACHE_TAGS: { VAT_PROGRESS: "dashboard-vat-progress" },
+}));
+
+vi.mock("@/modules/orders/constants/cache", () => ({
+	ORDERS_CACHE_TAGS: { LIST: "orders-list" },
+}));
+
+vi.mock("@/app/generated/prisma/client", () => ({
+	PaymentStatus: { PAID: "PAID" },
+}));
+
+import { fetchDashboardVatProgress } from "../get-vat-progress";
+
+describe("fetchDashboardVatProgress", () => {
+	const ORIGINAL_ENV = process.env.VAT_FRANCHISE_THRESHOLD_EUR;
+
+	beforeEach(() => {
+		vi.resetAllMocks();
+		vi.useFakeTimers();
+		vi.setSystemTime(new Date("2026-05-15T12:00:00Z"));
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		if (ORIGINAL_ENV === undefined) {
+			delete process.env.VAT_FRANCHISE_THRESHOLD_EUR;
+		} else {
+			process.env.VAT_FRANCHISE_THRESHOLD_EUR = ORIGINAL_ENV;
+		}
+	});
+
+	it("returns ytdRevenue, threshold (cents) and progress percentage", async () => {
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 1500000 } });
+
+		const result = await fetchDashboardVatProgress();
+
+		expect(result.ytdRevenue).toBe(1500000);
+		expect(result.threshold).toBe(3750000);
+		expect(result.progress).toBeCloseTo(40);
+		expect(result.year).toBe(2026);
+	});
+
+	it("scopes the aggregate query from the first day of the current UTC year", async () => {
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
+
+		await fetchDashboardVatProgress();
+
+		const call = mockOrderAggregate.mock.calls[0]![0];
+		const yearStart = call.where.paidAt.gte as Date;
+		expect(yearStart.getUTCFullYear()).toBe(2026);
+		expect(yearStart.getUTCMonth()).toBe(0);
+		expect(yearStart.getUTCDate()).toBe(1);
+		expect(call.where.paymentStatus).toBe("PAID");
+		expect(call.where.deletedAt).toBeNull();
+	});
+
+	it("defaults the threshold to 37 500 € (services) when env var is unset", async () => {
+		delete process.env.VAT_FRANCHISE_THRESHOLD_EUR;
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 100000 } });
+
+		const result = await fetchDashboardVatProgress();
+
+		expect(result.threshold).toBe(3_750_000);
+	});
+
+	it("uses the configured threshold when env var is a positive number", async () => {
+		process.env.VAT_FRANCHISE_THRESHOLD_EUR = "85000";
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
+
+		const result = await fetchDashboardVatProgress();
+
+		expect(result.threshold).toBe(8_500_000);
+	});
+
+	it("falls back to the default when env var is invalid", async () => {
+		process.env.VAT_FRANCHISE_THRESHOLD_EUR = "not-a-number";
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
+
+		const result = await fetchDashboardVatProgress();
+
+		expect(result.threshold).toBe(3_750_000);
+	});
+
+	it("returns 0 progress when no orders are paid", async () => {
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: null } });
+
+		const result = await fetchDashboardVatProgress();
+
+		expect(result.ytdRevenue).toBe(0);
+		expect(result.progress).toBe(0);
+	});
+
+	it("returns >100 progress when threshold is exceeded (no cap at fetcher level)", async () => {
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 4_000_000 } });
+
+		const result = await fetchDashboardVatProgress();
+
+		expect(result.progress).toBeCloseTo(106.67, 1);
+	});
+
+	it("attaches dashboard + orders-list cache tags", async () => {
+		mockOrderAggregate.mockResolvedValueOnce({ _sum: { total: 0 } });
+
+		await fetchDashboardVatProgress();
+
+		expect(mockCacheDashboard).toHaveBeenCalledWith("dashboard-vat-progress");
+		expect(mockCacheTag).toHaveBeenCalledWith("orders-list");
+	});
+});

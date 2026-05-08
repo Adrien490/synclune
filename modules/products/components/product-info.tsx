@@ -1,4 +1,5 @@
 import { Badge } from "@/shared/components/ui/badge";
+import { HandDrawnAccent } from "@/shared/components/animations";
 import { ShareButton } from "@/modules/products/components/share-button";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductReviewStatistics } from "@/modules/reviews/types/review.types";
@@ -29,6 +30,13 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 					<p className="text-foreground text-3xl/10 font-medium tracking-normal" itemProp="name">
 						{product.title}
 					</p>
+					<HandDrawnAccent
+						variant="heart"
+						color="var(--primary)"
+						width={22}
+						height={22}
+						className="opacity-70"
+					/>
 					{/* Badge note cliquable - scrolle vers les avis (mobile) */}
 					{reviewStats && (
 						<div className="sm:hidden">

@@ -20,6 +20,8 @@ interface PageHeaderProps {
 	breadcrumbs?: BreadcrumbItem[];
 	/** Action(s) optionnelle(s) à afficher à droite du header (bouton, etc.) */
 	actions?: ReactNode;
+	/** Classes CSS additionnelles pour le titre h1 (font, taille, couleur…) */
+	titleClassName?: string;
 	/** Classes CSS additionnelles pour la description */
 	descriptionClassName?: string;
 	/** Classes CSS additionnelles pour le conteneur */
@@ -65,6 +67,7 @@ export function PageHeader({
 	description,
 	breadcrumbs = EMPTY_BREADCRUMBS,
 	actions,
+	titleClassName,
 	descriptionClassName,
 	className,
 	variant = "default",
@@ -79,7 +82,10 @@ export function PageHeader({
 					<div className="min-w-0 flex-1 space-y-3">
 						<h1
 							id="page-title"
-							className="font-display text-foreground wrap-break-words text-2xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl"
+							className={cn(
+								"font-display text-foreground wrap-break-words text-2xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl",
+								titleClassName,
+							)}
 							title={title}
 						>
 							{title}
@@ -191,6 +197,7 @@ export function PageHeader({
 							className={cn(
 								"font-display text-foreground wrap-break-words text-2xl font-normal tracking-normal sm:text-3xl lg:text-4xl",
 								breadcrumbs.length > 0 && "sr-only sm:not-sr-only",
+								titleClassName,
 							)}
 						>
 							{title}

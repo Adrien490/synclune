@@ -16,7 +16,14 @@ import { Separator } from "@/shared/components/ui/separator";
  */
 export default function NewRefundLoading() {
 	return (
-		<div className="space-y-6">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement du formulaire de remboursement"
+			className="space-y-6"
+		>
+			<span className="sr-only">Chargement du formulaire de remboursement...</span>
+
 			{/* Header */}
 			<div className="flex items-center gap-4">
 				<Button variant="ghost" size="sm" disabled>

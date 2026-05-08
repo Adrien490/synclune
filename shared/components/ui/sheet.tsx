@@ -81,7 +81,7 @@ function SheetHandle({ className, ...props }: React.ComponentProps<typeof SheetP
 		<SheetPrimitive.Handle
 			data-slot="sheet-handle"
 			className={cn(
-				"bg-muted-foreground/30 relative mx-auto mt-2 h-1 w-10 shrink-0 rounded-full",
+				"bg-muted-foreground/30 relative mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full",
 				"cursor-grab active:cursor-grabbing",
 				// Zone tactile étendue 44px min (Apple HIG / WCAG 2.5.5)
 				"before:absolute before:-inset-x-6 before:-inset-y-4 before:content-['']",
@@ -105,7 +105,7 @@ function SheetOverlay({
 		<SheetPrimitive.Overlay
 			data-slot="sheet-overlay"
 			className={cn(
-				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-sm backdrop-saturate-150",
+				"fixed inset-0 z-(--z-overlay) bg-black/50 backdrop-blur-md backdrop-saturate-150",
 				"motion-safe:data-[state=open]:animate-in motion-safe:data-[state=closed]:animate-out",
 				"motion-safe:data-[state=closed]:fade-out-0 motion-safe:data-[state=open]:fade-in-0",
 				className,

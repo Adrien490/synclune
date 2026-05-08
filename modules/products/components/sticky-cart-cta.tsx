@@ -42,7 +42,7 @@ export function StickyCartCTA({
 
 	useBottomBarHeight(60, isVisible);
 
-	const { action, isPending } = useAddToCart();
+	const { action, isPending } = useAddToCart({ showErrorToast: false });
 
 	// Verifier si le SKU est disponible
 	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;

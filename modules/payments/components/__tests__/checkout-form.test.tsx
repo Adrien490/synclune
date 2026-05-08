@@ -211,12 +211,15 @@ describe("CheckoutForm", () => {
 			expect(screen.getByTestId("checkout-summary")).toBeInTheDocument();
 		});
 
-		it("renders accessible sr-only heading", () => {
+		it("does not duplicate h1 — page parent owns the page heading", () => {
 			render(<CheckoutForm cart={createMockCart() as never} session={null} addresses={null} />);
 
-			const heading = screen.getByRole("heading", { name: "Paiement sécurisé" });
-			expect(heading).toBeInTheDocument();
-			expect(heading.className).toContain("sr-only");
+			// The form labels itself with aria-label="Formulaire de paiement"; the page
+			// (`app/paiement/page.tsx`) owns the single <h1>. CheckoutForm must not render its own.
+			const inFormHeadings = screen
+				.queryAllByRole("heading", { level: 1 })
+				.filter((h) => h.textContent === "Paiement sécurisé");
+			expect(inFormHeadings).toHaveLength(0);
 		});
 	});
 

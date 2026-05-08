@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function CreateColorPage() {
 	return (
 		<>
-			<h1 className="mb-6 text-2xl font-semibold">Nouvelle couleur</h1>
+			<h1 className="mb-6 hidden text-2xl font-semibold md:block">Nouvelle couleur</h1>
 			<CreateColorForm className="max-w-2xl" />
 		</>
 	);

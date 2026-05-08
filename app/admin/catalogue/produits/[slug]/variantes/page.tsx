@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import dynamic from "next/dynamic";
 
+import { SkusAdminDialogs } from "./_components/skus-admin-dialogs";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Breadcrumb,
@@ -34,11 +34,6 @@ import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { SkusBottomBar } from "@/modules/skus/components/admin/skus-bottom-bar";
 import { SkusFilterSheet } from "@/modules/skus/components/admin/skus-filter-sheet";
 import { SkusFilterBadges } from "@/modules/skus/components/admin/skus-filter-badges";
-
-// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
-const SkuItemDrawer = dynamic(() =>
-	import("@/modules/skus/components/admin/sku-item-drawer").then((mod) => mod.SkuItemDrawer),
-);
 
 export type ProductVariantsSearchParams = {
 	cursor?: string;
@@ -149,8 +144,8 @@ export default async function ProductVariantsPage({
 
 	return (
 		<div className="space-y-6">
-			{/* ItemDrawer mobile + dialogs imbriques (delete/adjust-stock/update-price) */}
-			<SkuItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete, adjust-stock, update-price) */}
+			<SkusAdminDialogs />
 
 			<SkusBottomBar
 				productSlug={slug}
@@ -236,9 +231,8 @@ export default async function ProductVariantsPage({
 						</ButtonGroup>
 					</Toolbar>
 
-					<div className="hidden md:block">
-						<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<SkusFilterBadges colors={colorOptions} materials={materialOptions} />
 				</Suspense>
 
 				<Suspense fallback={<SkusDataTableSkeleton />}>

@@ -286,21 +286,6 @@ vi.mock("@/shared/components/ui/switch", () => ({
 	),
 }));
 
-vi.mock("../filter-active-chips", () => ({
-	FilterActiveChips: ({
-		formData,
-	}: {
-		formData: { colors: string[]; materials: string[]; productTypes: string[] };
-	}) => (
-		<div
-			data-testid="filter-active-chips"
-			data-colors-count={formData.colors.length}
-			data-materials-count={formData.materials.length}
-			data-types-count={formData.productTypes.length}
-		/>
-	),
-}));
-
 // ============================================================================
 // TEST DATA
 // ============================================================================

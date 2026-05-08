@@ -2,13 +2,11 @@
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 
+import { LongPressMenuLink } from "@/shared/components/long-press-menu-link";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import { useHaptic } from "@/shared/hooks/use-haptic";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
 
-import { COLLECTION_ITEM_DRAWER_ID, type CollectionItemDrawerData } from "./collection-item-drawer";
+import { useCollectionActions } from "../../hooks/use-collection-actions";
 
 interface CollectionMobileItemProps {
 	collection: {
@@ -31,35 +29,26 @@ const STATUS_CONFIG: Record<
 };
 
 export function CollectionMobileItem({ collection }: CollectionMobileItemProps) {
-	const { open } = useDialog<CollectionItemDrawerData>(COLLECTION_ITEM_DRAWER_ID);
-	const haptic = useHaptic();
 	const productsCount = collection._count.products || 0;
 	const statusConfig = STATUS_CONFIG[collection.status];
 
-	const handleOpen = () => {
-		haptic("selection");
-		open({
-			collection: {
-				id: collection.id,
-				name: collection.name,
-				slug: collection.slug,
-				description: collection.description,
-				status: collection.status,
-				productsCount,
-			},
-		});
-	};
+	const { sections } = useCollectionActions({
+		collectionId: collection.id,
+		collectionName: collection.name,
+		collectionSlug: collection.slug,
+		collectionDescription: collection.description,
+		collectionStatus: collection.status,
+		productsCount,
+	});
 
 	return (
-		<button
-			type="button"
-			aria-label={`Collection ${collection.name}`}
-			onClick={handleOpen}
-			className={cn(
-				"focus-visible:ring-primary w-full rounded-lg text-left",
-				"focus-visible:ring-2 focus-visible:outline-none",
-				"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
-			)}
+		<LongPressMenuLink
+			href={`/admin/catalogue/collections/${collection.slug}/modifier`}
+			ariaLabel={`Collection ${collection.name}`}
+			sections={sections}
+			menuTitle="Actions collection"
+			menuDescription={collection.name}
+			className="text-left"
 		>
 			<Item
 				variant="outline"
@@ -79,6 +68,6 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 					</ItemDescription>
 				</ItemContent>
 			</Item>
-		</button>
+		</LongPressMenuLink>
 	);
 }

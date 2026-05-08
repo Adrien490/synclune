@@ -5,20 +5,32 @@ import { useAppForm } from "@/shared/components/forms";
 import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 
 interface MaterialsFilterSheetProps {
 	className?: string;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+	hideTrigger?: boolean;
 }
 
 interface FilterFormData {
 	isActive: string;
 }
 
-export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
+export function MaterialsFilterSheet({
+	className,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+	hideTrigger,
+}: MaterialsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
+
+	const [internalOpen, setInternalOpen] = useState(false);
+	const isOpen = controlledOpen ?? internalOpen;
+	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
 	const initialValues = ((): FilterFormData => {
 		let isActive = "all";
@@ -72,6 +84,9 @@ export function MaterialsFilterSheet({ className }: MaterialsFilterSheetProps) {
 
 	return (
 		<FilterSheetWrapper
+			open={isOpen}
+			onOpenChange={handleOpenChange}
+			hideTrigger={hideTrigger}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

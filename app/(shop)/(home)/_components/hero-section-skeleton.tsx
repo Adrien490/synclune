@@ -6,7 +6,7 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
  */
 export function HeroSectionSkeleton() {
 	return (
-		<section className="relative flex min-h-[calc(60dvh-4rem)] items-center overflow-hidden mask-b-from-90% mask-b-to-100% pt-16 pb-10 sm:min-h-[calc(90dvh-5rem)] sm:mask-b-from-85% sm:pt-20 sm:pb-16 md:pt-28 md:pb-24 lg:min-h-screen">
+		<section className="relative flex min-h-[calc(60svh-4rem)] items-center overflow-hidden mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-5rem)] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen">
 			{/* Background gradient */}
 			<div
 				className="absolute inset-0 bg-linear-to-br from-pink-50/20 via-transparent to-amber-50/20"

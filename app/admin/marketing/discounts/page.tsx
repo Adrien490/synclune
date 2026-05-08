@@ -21,12 +21,8 @@ import dynamic from "next/dynamic";
 import type { DiscountType } from "@/app/generated/prisma/client";
 import { type Metadata } from "next";
 
-// Lazy loading - drawer charge uniquement a l'ouverture (dialogs imbriques inclus)
-const DiscountItemDrawer = dynamic(() =>
-	import("@/modules/discounts/components/admin/discount-item-drawer").then(
-		(mod) => mod.DiscountItemDrawer,
-	),
-);
+import { DiscountsAdminDialogs } from "./_components/discounts-admin-dialogs";
+
 const DiscountsBottomBar = dynamic(() =>
 	import("@/modules/discounts/components/admin/discounts-bottom-bar").then(
 		(mod) => mod.DiscountsBottomBar,
@@ -126,10 +122,8 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 						<DiscountsFilterSheet />
 					</Toolbar>
 
-					{/* Badges de filtres actifs */}
-					<div className="hidden md:block">
-						<DiscountsFilterBadges />
-					</div>
+					{/* Badges de filtres actifs (visible mobile + desktop) */}
+					<DiscountsFilterBadges />
 				</Suspense>
 
 				{/* Liste mobile */}
@@ -143,8 +137,8 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 				</Suspense>
 			</div>
 
-			{/* ItemDrawer mobile + dialogs imbriques (form/delete/toggle) */}
-			<DiscountItemDrawer />
+			{/* Dialogs des actions long-press / row-actions (delete, toggle) */}
+			<DiscountsAdminDialogs />
 		</>
 	);
 }

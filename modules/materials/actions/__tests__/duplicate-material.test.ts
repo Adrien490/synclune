@@ -191,12 +191,16 @@ describe("duplicateMaterial", () => {
 		expect(mockUpdateTag).toHaveBeenCalled();
 	});
 
-	it("should return success with duplicate id and name", async () => {
+	it("should return success with duplicate id, name, and slug", async () => {
 		const result = await duplicateMaterial(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(mockSuccess).toHaveBeenCalledWith(
 			expect.stringContaining("Argent 925 (copie)"),
-			expect.objectContaining({ id: "mat-2" }),
+			expect.objectContaining({
+				id: "mat-2",
+				name: "Argent 925 (copie)",
+				slug: "argent-925-copie",
+			}),
 		);
 	});
 

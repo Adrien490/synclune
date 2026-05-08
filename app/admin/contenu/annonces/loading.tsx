@@ -1,4 +1,8 @@
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+
 import { PageHeader } from "@/shared/components/page-header";
+import { Button } from "@/shared/components/ui/button";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 
 export default function AnnouncementsLoading() {
@@ -9,16 +13,19 @@ export default function AnnouncementsLoading() {
 			<PageHeader
 				variant="compact"
 				title="Annonces"
-				description="Gérez les annonces promotionnelles affichées sur la boutique"
-				actions={<Skeleton className="h-10 w-40" />}
-				className="hidden md:block"
+				description="Configurez le bandeau d'annonce affiché au-dessus du navbar."
+				actions={
+					<Button variant="outline" size="sm" asChild>
+						<Link href="/" target="_blank">
+							<ExternalLink className="h-4 w-4" />
+							Voir sur la boutique
+						</Link>
+					</Button>
+				}
 			/>
 
-			<div className="space-y-3">
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-12 w-full" />
-				<Skeleton className="h-12 w-full" />
-			</div>
+			{/* Mirrors Suspense fallback in page.tsx: <Skeleton className="h-96 w-full" /> */}
+			<Skeleton className="h-96 w-full" />
 		</div>
 	);
 }

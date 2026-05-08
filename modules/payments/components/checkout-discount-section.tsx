@@ -34,13 +34,13 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 				{(appliedDiscount) => {
 					if (appliedDiscount) {
 						return (
-							<div className="flex items-center justify-between gap-2 rounded-lg border border-green-200 bg-green-50/50 px-3 py-2.5">
+							<div className="border-success/30 bg-success/10 flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5">
 								<div className="flex min-w-0 items-center gap-2">
-									<Check className="h-4 w-4 shrink-0 text-green-600" aria-hidden="true" />
-									<span className="truncate text-sm font-medium text-green-700">
+									<Check className="text-success h-4 w-4 shrink-0" aria-hidden="true" />
+									<span className="text-success truncate text-sm font-medium">
 										{appliedDiscount.code}
 									</span>
-									<span className="text-sm text-green-600">
+									<span className="text-success text-sm">
 										-{formatEuro(appliedDiscount.discountAmount)}
 									</span>
 								</div>
@@ -125,10 +125,17 @@ export function CheckoutDiscountSection({ form, cart }: CheckoutDiscountSectionP
 																field.state.meta.isValidating ||
 																!(field.state.value as string).trim()
 															}
+															aria-busy={field.state.meta.isValidating}
 															onClick={() => field.handleBlur()}
 														>
 															{field.state.meta.isValidating ? (
-																<LoaderCircle className="h-4 w-4 motion-safe:animate-spin" />
+																<>
+																	<LoaderCircle
+																		className="h-4 w-4 motion-safe:animate-spin"
+																		aria-hidden="true"
+																	/>
+																	<span>Validation…</span>
+																</>
 															) : (
 																"Appliquer"
 															)}

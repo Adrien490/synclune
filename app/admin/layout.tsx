@@ -9,6 +9,7 @@ import { AdminMobileBottomBar } from "./_components/admin-mobile-bottom-bar";
 import { AdminMobileHeader } from "./_components/admin-mobile-header";
 import { AdminSidebar } from "./_components/admin-sidebar";
 import { AdminSidebarSkeleton } from "./_components/admin-sidebar-skeleton";
+import { AdminWelcomeDialog } from "./_components/admin-welcome-dialog";
 import { DashboardHeaderWrapper } from "./_components/dashboard-header-wrapper";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
 import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
@@ -68,6 +69,7 @@ async function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 				<AdminMobileBottomBar />
 			</SidebarInset>
 			<AdminMenuSheet user={user} />
+			{result.user.welcomeShownAt === null && <AdminWelcomeDialog userName={result.user.name} />}
 		</SidebarProvider>
 	);
 }

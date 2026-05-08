@@ -1,8 +1,8 @@
 import { ABOVE_FOLD_THRESHOLD } from "@/modules/collections/constants/image-sizes.constants";
 import { COLLECTION_TEXTS } from "@/modules/collections/constants/collection-texts.constants";
+import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Gem } from "lucide-react";
 import Link from "next/link";
 import type { CollectionImage } from "../types/collection.types";
 import { CollectionImagesGrid } from "./collection-images-grid";
@@ -83,18 +83,10 @@ export function CollectionCard({
 					collectionSlug={slug}
 				/>
 			) : (
-				<div
-					role="presentation"
-					className="from-primary/5 to-primary/10 relative flex aspect-square flex-col items-center justify-center gap-3 overflow-hidden rounded-t-lg bg-linear-to-br"
-				>
-					<Gem
-						className="text-primary/30 h-12 w-12 motion-safe:animate-pulse sm:h-16 sm:w-16"
-						aria-hidden="true"
-					/>
-					<span className="text-muted-foreground text-xs" aria-hidden="true">
-						{COLLECTION_TEXTS.PLACEHOLDER.COMING_SOON}
-					</span>
-				</div>
+				<PlaceholderImage
+					className="rounded-t-lg rounded-b-none border-0"
+					label={`${name} — ${COLLECTION_TEXTS.PLACEHOLDER.COMING_SOON}`}
+				/>
 			)}
 
 			{/* Titre avec elements decoratifs */}

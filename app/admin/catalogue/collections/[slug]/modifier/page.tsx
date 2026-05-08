@@ -23,7 +23,7 @@ export default async function EditCollectionPage({ params }: EditCollectionPageP
 
 	return (
 		<>
-			<h1 className="mb-6 text-2xl font-semibold">{collection.name}</h1>
+			<h1 className="mb-6 hidden text-2xl font-semibold md:block">{collection.name}</h1>
 			<EditCollectionForm collection={collection} className="max-w-lg" />
 		</>
 	);

@@ -1,36 +1,19 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// ============================================================================
-// HOISTED MOCKS
-// ============================================================================
-
-const { mockToggleStatus } = vi.hoisted(() => ({
-	mockToggleStatus: vi.fn(),
+const { mockOpenAlertDialog } = vi.hoisted(() => ({
+	mockOpenAlertDialog: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));
 vi.mock("@/shared/lib/prisma", () => ({}));
 
-vi.mock("@/modules/reviews/hooks/use-review-moderation", () => ({
-	useReviewModeration: () => ({ toggleStatus: mockToggleStatus, isPending: false }),
+vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+	useAlertDialog: () => ({ open: mockOpenAlertDialog, close: vi.fn(), isOpen: false, data: null }),
 }));
 
-vi.mock("./review-detail-dialog", () => ({
-	ReviewDetailDialog: () => <div data-testid="review-detail-dialog" />,
-}));
-
-vi.mock("next/dynamic", () => ({
-	default: (fn: () => Promise<{ ReviewDetailDialog: unknown }>) => {
-		void fn();
-		return () => <div data-testid="review-detail-dialog" />;
-	},
-}));
-
-vi.mock("next/link", () => ({
-	default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-		<a href={href}>{children}</a>
-	),
+vi.mock("../toggle-review-status-alert-dialog", () => ({
+	TOGGLE_REVIEW_STATUS_DIALOG_ID: "toggle-review-status",
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -59,50 +42,15 @@ vi.mock("@/shared/components/responsive-action-menu", async () => {
 	return buildResponsiveActionMenuMock();
 });
 
-vi.mock("@/shared/components/ui/alert-dialog", () => ({
-	AlertDialog: ({
-		children,
-		open,
-	}: {
-		children: React.ReactNode;
-		open?: boolean;
-		onOpenChange?: (open: boolean) => void;
-	}) => (open ? <div data-testid="alert-dialog">{children}</div> : null),
-	AlertDialogContent: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="alert-dialog-content">{children}</div>
-	),
-	AlertDialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	AlertDialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-	AlertDialogDescription: ({ children }: { children: React.ReactNode }) => <p>{children}</p>,
-	AlertDialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	AlertDialogCancel: ({
-		children,
-		disabled,
-	}: {
-		children: React.ReactNode;
-		disabled?: boolean;
-	}) => (
-		<button disabled={disabled} data-testid="alert-dialog-cancel">
-			{children}
-		</button>
-	),
-}));
-
 vi.mock("lucide-react", () => ({
 	Eye: () => <svg data-testid="icon-eye" />,
 	EyeOff: () => <svg data-testid="icon-eye-off" />,
 	ExternalLink: () => <svg data-testid="icon-external-link" />,
-	LoaderCircle: () => <svg data-testid="icon-loader" />,
 	EllipsisVertical: () => <svg data-testid="icon-ellipsis" />,
-	MessageSquare: () => <svg data-testid="icon-message-square" />,
 }));
 
 import { ReviewRowActions } from "../review-row-actions";
 import type { ReviewAdmin } from "@/modules/reviews/types/review.types";
-
-// ============================================================================
-// HELPERS
-// ============================================================================
 
 function createReview(overrides: Partial<ReviewAdmin> = {}): ReviewAdmin {
 	return {
@@ -132,10 +80,6 @@ function createReview(overrides: Partial<ReviewAdmin> = {}): ReviewAdmin {
 
 afterEach(cleanup);
 
-// ============================================================================
-// TESTS
-// ============================================================================
-
 describe("ReviewRowActions", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -146,14 +90,17 @@ describe("ReviewRowActions", () => {
 		expect(screen.getByRole("button", { name: "Actions" })).toBeInTheDocument();
 	});
 
-	it("renders 'Voir le détail' menu item", () => {
+	it("renders 'Voir le détail' as a link to the detail page", () => {
 		render(<ReviewRowActions review={createReview()} />);
-		expect(screen.getByText("Voir le détail")).toBeInTheDocument();
+		const link = screen.getByRole("menuitem", { name: "Voir le détail" });
+		expect(link).toHaveAttribute("href", "/admin/marketing/avis/rev-1");
 	});
 
-	it("renders 'Voir le produit' menu item", () => {
+	it("renders 'Voir le produit' as an external link", () => {
 		render(<ReviewRowActions review={createReview()} />);
-		expect(screen.getByText("Voir le produit")).toBeInTheDocument();
+		const link = screen.getByRole("menuitem", { name: "Voir le produit" });
+		expect(link).toHaveAttribute("href", "/creations/bague-argent");
+		expect(link).toHaveAttribute("target", "_blank");
 	});
 
 	it("groups actions into navigate + moderation sections", () => {
@@ -169,26 +116,5 @@ describe("ReviewRowActions", () => {
 	it("shows 'Publier' when review is HIDDEN", () => {
 		render(<ReviewRowActions review={createReview({ status: "HIDDEN" })} />);
 		expect(screen.getByText("Publier")).toBeInTheDocument();
-	});
-
-	it("renders 'Voir le produit' link pointing to the product page", () => {
-		render(
-			<ReviewRowActions
-				review={createReview({ product: { id: "p1", title: "T", slug: "bague-argent" } })}
-			/>,
-		);
-		const link = screen.getByRole("menuitem", { name: /Voir le produit/ });
-		expect(link).toHaveAttribute("href", "/creations/bague-argent");
-	});
-
-	it("shows moderation dialog title for PUBLISHED review when moderate button is in the DOM", () => {
-		render(<ReviewRowActions review={createReview({ status: "PUBLISHED" })} />);
-		// Dialog is closed by default — only the menu items are visible
-		expect(screen.queryByText("Masquer cet avis ?")).toBeNull();
-	});
-
-	it("shows correct dialog title for HIDDEN review (not open by default)", () => {
-		render(<ReviewRowActions review={createReview({ status: "HIDDEN" })} />);
-		expect(screen.queryByText("Publier cet avis ?")).toBeNull();
 	});
 });

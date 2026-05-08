@@ -39,7 +39,7 @@ export function StickyCartCTADesktop({
 	const observerRef = useRef<IntersectionObserver | null>(null);
 	const prefersReducedMotion = useReducedMotion();
 
-	const { action, isPending } = useAddToCart();
+	const { action, isPending } = useAddToCart({ showErrorToast: false });
 
 	const isAvailable = currentSku.inventory > 0 && currentSku.isActive;
 	const canAddToCart = isAvailable;

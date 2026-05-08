@@ -2,6 +2,7 @@ import { use } from "react";
 import Link from "next/link";
 import { Package } from "lucide-react";
 
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { ItemGroup } from "@/shared/components/ui/item";
@@ -51,6 +52,7 @@ export function SkusMobileList({
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={productSkus.length} singular="variante" plural="variantes" />
 			<ItemGroup aria-label="Variantes" className="gap-2">
 				{productSkus.map((sku) => (
 					<div key={sku.id} role="listitem">

@@ -1,5 +1,6 @@
 import { use } from "react";
 import { Ticket } from "lucide-react";
+import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import { TableEmptyState } from "@/shared/components/data-table/table-empty-state";
 import { ItemGroup } from "@/shared/components/ui/item";
@@ -31,6 +32,7 @@ export function DiscountsMobileList({ discountsPromise, perPage }: DiscountsMobi
 
 	return (
 		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			<AdminListLiveCount count={discounts.length} singular="code promo" plural="codes promo" />
 			<ItemGroup aria-label="Codes promo" className="gap-2">
 				{discounts.map((discount) => (
 					<div key={discount.id} role="listitem">

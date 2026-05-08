@@ -16,6 +16,18 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({ open: mockOpenDialog }),
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
+vi.mock("@/shared/utils/toast", () => ({
+	toast: { success: vi.fn(), error: vi.fn(), loading: vi.fn(), dismiss: vi.fn() },
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (fn: () => void) => fn(),
+}));
+
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	useHaptic: () => mockHaptic,
 	triggerHaptic: mockHaptic,

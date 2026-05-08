@@ -1,5 +1,6 @@
 import { Clock, Euro, Package, Receipt, ShoppingBag, Star, Target } from "lucide-react";
 import type { GetKpisReturn } from "@/modules/dashboard/data/get-kpis";
+import type { GetReviewHealthReturn } from "@/modules/dashboard/data/get-review-health";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { KpiCard } from "./kpi-card";
@@ -14,30 +15,40 @@ function formatFulfillmentTime(hours: number): string {
 
 interface DashboardKpisProps {
 	kpis: GetKpisReturn;
+	reviewHealth: GetReviewHealthReturn;
 	comparisonLabel?: string;
 }
 
 /**
- * Dashboard KPIs grid - 4 featured + 4 compact
+ * Dashboard KPIs grid - 4 featured + 3 compact
  * Row 1: CA net, Commandes, Panier moyen, À expédier (horizontal scroll on mobile)
- * Row 2: Taux de conversion, Note moyenne, Délai d'expédition (2-col on mobile)
+ * Row 2: Finalisation panier, Note moyenne, Délai d'expédition (2-col on mobile)
+ *
+ * Note: `reviewHealth` is fetched separately (cache profile `reference` 24h)
+ * and passed as a prop to keep `kpis` cache (`user` 60s) lean.
  */
-export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: DashboardKpisProps) {
+export function DashboardKpis({
+	kpis,
+	reviewHealth,
+	comparisonLabel = "vs mois dernier",
+}: DashboardKpisProps) {
 	const hasRefunds = kpis.monthlyRevenue.refundCount > 0;
 	const hasDiscounts = kpis.discountImpact.amount > 0;
+	const refundRate = kpis.monthlyRevenue.refundRate;
 
-	// Build revenue subtitle with discount and refund info
 	const revenueSubtitleParts: string[] = [];
 	if (hasDiscounts) {
 		revenueSubtitleParts.push(`-${formatEuro(kpis.discountImpact.amount)} remises`);
 	}
 	if (hasRefunds) {
 		revenueSubtitleParts.push(
-			`-${formatEuro(kpis.monthlyRevenue.refundAmount)} remb. (${kpis.monthlyRevenue.refundCount})`,
+			`-${formatEuro(kpis.monthlyRevenue.refundAmount)} remb. (${refundRate.toFixed(1)}%)`,
 		);
 	}
 	const revenueSubtitle =
 		revenueSubtitleParts.length > 0 ? revenueSubtitleParts.join(" · ") : undefined;
+
+	const revenuePriority: "critical" | "alert" = refundRate >= 10 ? "alert" : "critical";
 
 	return (
 		<div className="space-y-4">
@@ -55,10 +66,11 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									numericValue={kpis.monthlyRevenue.netAmount}
 									suffix=" €"
 									evolution={kpis.monthlyRevenue.evolution}
+									previousVolume={kpis.monthlyRevenue.previousVolume}
 									comparisonLabel={comparisonLabel}
 									icon={<Euro className="h-4 w-4" />}
 									size="featured"
-									priority="critical"
+									priority={revenuePriority}
 									href="/admin/ventes/commandes?paymentStatus=PAID"
 									tooltip="Chiffre d'affaires net (après remboursements) des commandes payées ce mois"
 									subtitle={revenueSubtitle}
@@ -81,6 +93,7 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									value={kpis.monthlyOrders.count.toString()}
 									numericValue={kpis.monthlyOrders.count}
 									evolution={kpis.monthlyOrders.evolution}
+									previousVolume={kpis.monthlyOrders.previousVolume}
 									comparisonLabel={comparisonLabel}
 									icon={<ShoppingBag className="h-4 w-4" />}
 									size="featured"
@@ -99,6 +112,7 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 									numericValue={kpis.averageOrderValue.amount}
 									suffix=" €"
 									evolution={kpis.averageOrderValue.evolution}
+									previousVolume={kpis.averageOrderValue.previousVolume}
 									comparisonLabel={comparisonLabel}
 									icon={<Receipt className="h-4 w-4" />}
 									size="featured"
@@ -131,18 +145,19 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 			<div className="grid grid-cols-2 gap-x-4 gap-y-1 md:gap-4 lg:grid-cols-3">
 				<KpiCardAnimated index={4}>
 					<KpiCard
-						title="Taux de conversion"
+						title="Finalisation panier"
 						value={`${kpis.conversionRate.rate.toFixed(1)} %`}
 						numericValue={kpis.conversionRate.rate}
 						suffix=" %"
 						decimalPlaces={1}
 						evolution={kpis.conversionRate.evolution}
+						previousVolume={kpis.conversionRate.previousVolume}
 						comparisonLabel={comparisonLabel}
 						icon={<Target className="h-4 w-4" />}
 						size="compact"
 						priority="operational"
 						flatOnMobile
-						tooltip="Pourcentage de checkouts qui aboutissent à un paiement"
+						tooltip="Pourcentage de paniers créés qui aboutissent à un paiement (hors visiteurs sans panier — non mesuré)"
 						subtitle={
 							kpis.conversionRate.abandoned > 0
 								? `${kpis.conversionRate.abandoned} checkout${kpis.conversionRate.abandoned > 1 ? "s" : ""} abandonné${kpis.conversionRate.abandoned > 1 ? "s" : ""}`
@@ -155,11 +170,9 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 					<KpiCard
 						title="Note moyenne"
 						value={
-							kpis.reviewHealth.totalReviews > 0
-								? `${kpis.reviewHealth.averageRating.toFixed(1)} / 5`
-								: "—"
+							reviewHealth.totalReviews > 0 ? `${reviewHealth.averageRating.toFixed(1)} / 5` : "—"
 						}
-						numericValue={kpis.reviewHealth.averageRating}
+						numericValue={reviewHealth.averageRating}
 						icon={<Star className="h-4 w-4" />}
 						size="compact"
 						priority="info"
@@ -167,9 +180,7 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 						href="/admin/marketing/avis"
 						tooltip="Note moyenne des avis clients publiés"
 						subtitle={
-							kpis.reviewHealth.totalReviews > 0
-								? `${kpis.reviewHealth.totalReviews} avis`
-								: "Aucun avis"
+							reviewHealth.totalReviews > 0 ? `${reviewHealth.totalReviews} avis` : "Aucun avis"
 						}
 					/>
 				</KpiCardAnimated>
@@ -182,6 +193,7 @@ export function DashboardKpis({ kpis, comparisonLabel = "vs mois dernier" }: Das
 						evolution={
 							kpis.avgFulfillmentTime.hours > 0 ? kpis.avgFulfillmentTime.evolution : undefined
 						}
+						previousVolume={kpis.avgFulfillmentTime.previousVolume}
 						invertEvolutionColors
 						comparisonLabel={comparisonLabel}
 						icon={<Clock className="h-4 w-4" />}

@@ -1,143 +1,27 @@
+import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
 import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { Button } from "@/shared/components/ui/button";
-import { Toolbar } from "@/shared/components/toolbar";
-import { Skeleton } from "@/shared/components/ui/skeleton";
-/**
- * Loading skeleton pour la page de liste des produits
- * Structure: Header + Status Navigation + Toolbar + Filters + MobileList + Data Table
- */
+
 export default function ProductsListLoading() {
 	return (
-		<div className="space-y-6">
-			{/* Page Header */}
+		<div role="status" aria-busy="true" aria-label="Chargement des bijoux" className="space-y-6">
+			<span className="sr-only">Chargement des bijoux...</span>
+
 			<PageHeader
-				title="Bijoux"
-				description="Gérez votre catalogue de bijoux"
+				title="Produits"
 				variant="compact"
 				actions={<Button disabled>Nouveau produit</Button>}
 				className="hidden md:block"
 			/>
 
-			{/* Status Navigation - Skeleton tabs */}
-			<div className="flex items-center gap-2 overflow-x-auto pb-2">
-				{Array.from({ length: 4 }).map((_, i) => (
-					<Skeleton key={i} className="h-9 w-24 rounded-md" />
-				))}
-			</div>
+			<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 
-			{/* Toolbar with Search, Sort, and Filters */}
-			<Toolbar ariaLabel="Barre d'outils de gestion des produits">
-				<div className="flex flex-1 flex-wrap items-center gap-2">
-					{/* Search */}
-					<Skeleton className="h-10 w-full sm:max-w-md" />
+			<div className="min-h-[1px]" aria-hidden="true" />
 
-					{/* Sort */}
-					<Skeleton className="h-10 w-full sm:max-w-50 sm:min-w-45" />
-
-					{/* Filter button */}
-					<Skeleton className="h-10 w-25" />
-				</div>
-			</Toolbar>
-
-			{/* Active Filter Badges Area */}
-			<div className="flex flex-wrap gap-2">
-				<Skeleton className="h-7 w-24 rounded-full" />
-				<Skeleton className="h-7 w-32 rounded-full" />
-			</div>
-
-			{/* Mobile list */}
 			<ProductsMobileListSkeleton />
-
-			{/* Data Table (desktop) */}
-			<div className="hidden rounded-md border md:block">
-				{/* Table Header */}
-				<div className="bg-muted/50 border-b p-4">
-					<div className="flex items-center gap-4">
-						<Skeleton className="h-4 w-4" />
-						<div className="hidden lg:block">
-							<Skeleton className="h-4 w-16" />
-						</div>
-						<div className="flex-1">
-							<Skeleton className="h-4 w-20" />
-						</div>
-						<div className="hidden w-[15%] lg:block">
-							<Skeleton className="h-4 w-16" />
-						</div>
-						<div className="hidden text-center sm:block">
-							<Skeleton className="mx-auto h-4 w-20" />
-						</div>
-						<div className="hidden lg:block">
-							<Skeleton className="h-4 w-16" />
-						</div>
-						<div className="hidden text-center lg:block">
-							<Skeleton className="mx-auto h-4 w-12" />
-						</div>
-						<div className="w-[15%] sm:w-[8%]">
-							<Skeleton className="ml-auto h-4 w-16" />
-						</div>
-					</div>
-				</div>
-
-				{/* Table Rows */}
-				<div className="divide-y">
-					{Array.from({ length: 10 }).map((_, i) => (
-						<div key={i} className="p-4">
-							<div className="flex items-center gap-4">
-								{/* Checkbox */}
-								<Skeleton className="h-4 w-4" />
-
-								{/* Image - hidden on mobile */}
-								<div className="hidden lg:block">
-									<Skeleton className="h-12 w-12 rounded-md" />
-								</div>
-
-								{/* Title */}
-								<div className="flex-1 space-y-1">
-									<Skeleton className="h-4 w-48" />
-									<Skeleton className="h-3 w-32" />
-								</div>
-
-								{/* Type - hidden on lg- */}
-								<div className="hidden w-[15%] lg:block">
-									<Skeleton className="h-6 w-20 rounded-full" />
-								</div>
-
-								{/* Variants count - hidden on sm- */}
-								<div className="hidden text-center sm:block">
-									<Skeleton className="mx-auto h-4 w-8" />
-								</div>
-
-								{/* Price range - hidden on lg- */}
-								<div className="hidden lg:block">
-									<Skeleton className="h-4 w-24" />
-								</div>
-
-								{/* Stock - hidden on lg- */}
-								<div className="hidden text-center lg:block">
-									<Skeleton className="mx-auto h-6 w-12 rounded-full" />
-								</div>
-
-								{/* Actions */}
-								<div className="flex w-[15%] justify-end sm:w-[8%]">
-									<Skeleton className="h-8 w-8 rounded-md" />
-								</div>
-							</div>
-						</div>
-					))}
-				</div>
-
-				{/* Pagination */}
-				<div className="border-t p-4">
-					<div className="flex items-center justify-between">
-						<Skeleton className="h-4 w-40" />
-						<div className="flex items-center gap-2">
-							<Skeleton className="h-9 w-24" />
-							<Skeleton className="h-9 w-24" />
-						</div>
-					</div>
-				</div>
-			</div>
+			<ProductsDataTableSkeleton />
 		</div>
 	);
 }

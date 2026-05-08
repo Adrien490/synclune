@@ -23,7 +23,6 @@ import { ColorFilterSection } from "./filter-section-colors";
 import { MaterialFilterSection } from "./filter-section-materials";
 import { RatingFilterSection } from "./filter-section-rating";
 import { AvailabilityFilterSection } from "./filter-section-availability";
-import { FilterActiveChips, type FilterChipDescriptor } from "./filter-active-chips";
 import {
 	AccordionContent,
 	AccordionItem,
@@ -270,48 +269,6 @@ export function ProductFilterSheet({
 		(formValues.inStockOnly ? 1 : 0) +
 		(formValues.onSale ? 1 : 0);
 
-	// Supprime un filtre individuel via une chip (sans fermer la sheet).
-	const handleRemoveChip = (chip: FilterChipDescriptor) => {
-		switch (chip.kind) {
-			case "type": {
-				const current = form.state.values.productTypes;
-				form.setFieldValue(
-					"productTypes",
-					current.filter((s) => s !== chip.slug),
-				);
-				return;
-			}
-			case "color": {
-				const current = form.state.values.colors;
-				form.setFieldValue(
-					"colors",
-					current.filter((s) => s !== chip.slug),
-				);
-				return;
-			}
-			case "material": {
-				const current = form.state.values.materials;
-				form.setFieldValue(
-					"materials",
-					current.filter((s) => s !== chip.slug),
-				);
-				return;
-			}
-			case "price":
-				form.setFieldValue("priceRange", DEFAULT_PRICE_RANGE);
-				return;
-			case "rating":
-				form.setFieldValue("ratingMin", null);
-				return;
-			case "inStock":
-				form.setFieldValue("inStockOnly", false);
-				return;
-			case "onSale":
-				form.setFieldValue("onSale", false);
-				return;
-		}
-	};
-
 	return (
 		<FilterSheetWrapper
 			open={isOpen}
@@ -332,15 +289,6 @@ export function ProductFilterSheet({
 					void form.handleSubmit();
 				}}
 			>
-				<FilterActiveChips
-					formData={form.state.values}
-					colors={sortedColors}
-					materials={sortedMaterials}
-					productTypes={sortedProductTypes}
-					defaultPriceRange={DEFAULT_PRICE_RANGE}
-					onRemove={handleRemoveChip}
-				/>
-
 				<Accordion
 					ref={accordionRef}
 					type="multiple"

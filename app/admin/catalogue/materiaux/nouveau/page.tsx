@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function CreateMaterialPage() {
 	return (
 		<>
-			<h1 className="mb-6 text-2xl font-semibold">Nouveau matériau</h1>
+			<h1 className="mb-6 hidden text-2xl font-semibold md:block">Nouveau matériau</h1>
 			<CreateMaterialForm className="max-w-lg" />
 		</>
 	);

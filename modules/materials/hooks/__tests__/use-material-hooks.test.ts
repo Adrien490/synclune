@@ -246,7 +246,7 @@ describe("useDuplicateMaterial", () => {
 		mockDuplicateMaterial.mockResolvedValue({
 			status: "success" as const,
 			message: "Matériau dupliqué",
-			data: { id: "new-id", name: "Or - Copie" },
+			data: { id: "new-id", name: "Or - Copie", slug: "or-copie" },
 		});
 	});
 
@@ -267,7 +267,7 @@ describe("useDuplicateMaterial", () => {
 		expect(formData.get("materialId")).toBe("mat-123");
 	});
 
-	it("calls onSuccess with { id, name } when action succeeds", async () => {
+	it("calls onSuccess with (message, { id, name, slug }) when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useDuplicateMaterial({ onSuccess }));
 
@@ -275,7 +275,11 @@ describe("useDuplicateMaterial", () => {
 			result.current.duplicate("mat-123");
 		});
 
-		expect(onSuccess).toHaveBeenCalledWith({ id: "new-id", name: "Or - Copie" });
+		expect(onSuccess).toHaveBeenCalledWith("Matériau dupliqué", {
+			id: "new-id",
+			name: "Or - Copie",
+			slug: "or-copie",
+		});
 	});
 
 	it("calls onError with message when action fails", async () => {

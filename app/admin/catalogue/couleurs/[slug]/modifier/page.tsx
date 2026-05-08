@@ -24,7 +24,7 @@ export default async function EditColorPage({ params }: EditColorPageProps) {
 
 	return (
 		<>
-			<h1 className="mb-6 text-2xl font-semibold">{color.name}</h1>
+			<h1 className="mb-6 hidden text-2xl font-semibold md:block">{color.name}</h1>
 			<EditColorForm
 				color={{ id: color.id, name: color.name, slug: color.slug, hex: color.hex }}
 				className="max-w-2xl"

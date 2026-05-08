@@ -6,10 +6,18 @@ import { cleanup } from "@testing-library/react";
 // Hoisted mocks
 // ============================================================================
 
-const { mockInitializePayment, mockUpdatePaymentAmount, mockCancelOrphanPI } = vi.hoisted(() => ({
+const {
+	mockInitializePayment,
+	mockUpdatePaymentAmount,
+	mockCancelOrphanPI,
+	mockValidateCart,
+	mockRouterRefresh,
+} = vi.hoisted(() => ({
 	mockInitializePayment: vi.fn(),
 	mockUpdatePaymentAmount: vi.fn(),
 	mockCancelOrphanPI: vi.fn(),
+	mockValidateCart: vi.fn().mockResolvedValue({ isValid: true, issues: [] }),
+	mockRouterRefresh: vi.fn(),
 }));
 
 vi.mock("@/modules/payments/actions/initialize-payment", () => ({
@@ -22,6 +30,14 @@ vi.mock("@/modules/payments/actions/update-payment-amount", () => ({
 
 vi.mock("@/modules/payments/actions/cancel-orphan-payment-intent", () => ({
 	cancelOrphanPaymentIntent: mockCancelOrphanPI,
+}));
+
+vi.mock("@/modules/cart/actions/validate-cart", () => ({
+	validateCart: mockValidateCart,
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ refresh: mockRouterRefresh, push: vi.fn(), replace: vi.fn() }),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({}));
