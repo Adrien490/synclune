@@ -60,8 +60,6 @@ export function AdminSearchDrawerTop({
 							paramName={paramName}
 							mode="live"
 							size="sm"
-							// eslint-disable-next-line jsx-a11y/no-autofocus
-							autoFocus
 							preventMobileBlur
 							debounceMs={300}
 							placeholder={placeholder}

@@ -15,11 +15,10 @@ import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useMounted } from "@/shared/hooks/use-mounted";
-import { useAdminListSelectionStore } from "@/shared/stores/use-admin-list-selection-store";
 import { useHasOverlay } from "@/shared/stores/use-overlay-stack-store";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu, SquareCheck, SquareDashedMousePointer } from "lucide-react";
+import { Menu } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { getQuickAccessItems, type NavItem } from "./navigation-config";
 
@@ -32,12 +31,9 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const pathname = usePathname();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const hasOverlay = useHasOverlay();
-	const selectionControl = useAdminListSelectionStore((s) => s.control);
 
 	const isHidden = isMenuOpen || hasOverlay;
 	const tabs = getQuickAccessItems();
-	const showSelectionToggle = selectionControl !== null && selectionControl.pageHasItems;
-	const selectionActive = selectionControl?.selectionMode ?? false;
 
 	function renderTab(tab: NavItem) {
 		const isActive = isRouteActive(pathname, tab.url);
@@ -95,30 +91,6 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					<Menu className={bottomBarIconClass} aria-hidden="true" />
 					<span className={bottomBarLabelClass}>Menu</span>
 				</button>
-
-				{/* Toggle « Sélection » contextuel — visible uniquement sur les listes admin
-				    avec un BulkSelectionProvider monté et au moins un item sur la page. */}
-				{showSelectionToggle && (
-					<button
-						type="button"
-						className={cn(bottomBarItemClass, selectionActive && bottomBarActiveItemClass)}
-						onClick={() => {
-							triggerHaptic("selection");
-							if (selectionActive) selectionControl.exit();
-							else selectionControl.enter();
-						}}
-						aria-pressed={selectionActive}
-						aria-label={selectionActive ? "Quitter le mode sélection" : "Activer le mode sélection"}
-					>
-						{selectionActive && <ActiveDot />}
-						{selectionActive ? (
-							<SquareCheck className={bottomBarIconClass} aria-hidden="true" />
-						) : (
-							<SquareDashedMousePointer className={bottomBarIconClass} aria-hidden="true" />
-						)}
-						<span className={bottomBarLabelClass}>Sélection</span>
-					</button>
-				)}
 			</div>
 		</BottomBar>,
 		document.body,

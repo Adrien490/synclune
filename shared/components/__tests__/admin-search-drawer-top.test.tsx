@@ -171,14 +171,14 @@ describe("AdminSearchDrawerTop", () => {
 		expect(title.className).toContain("sr-only");
 	});
 
-	it("renders SearchInput with mode=live, autoFocus, preventMobileBlur, debounce 300", () => {
+	it("renders SearchInput with mode=live, preventMobileBlur, debounce 300, no autoFocus", () => {
 		render(<AdminSearchDrawerTop open onOpenChange={vi.fn()} />);
 
 		const input = screen.getByTestId("search-input");
 		expect(input).toHaveAttribute("data-param", "search");
 		expect(input).toHaveAttribute("data-mode", "live");
 		expect(input).toHaveAttribute("data-size", "sm");
-		expect(input).toHaveAttribute("data-autofocus", "true");
+		expect(input).toHaveAttribute("data-autofocus", "undefined");
 		expect(input).toHaveAttribute("data-prevent-mobile-blur", "true");
 		expect(input).toHaveAttribute("data-debounce", "300");
 	});
