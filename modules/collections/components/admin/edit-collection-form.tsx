@@ -7,6 +7,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useAppForm } from "@/shared/components/forms";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { useRouter } from "next/navigation";
@@ -36,6 +37,7 @@ export function EditCollectionForm({
 	className,
 }: EditCollectionFormProps) {
 	const router = useRouter();
+	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
@@ -66,7 +68,10 @@ export function EditCollectionForm({
 		undefined,
 	);
 
-	useUnsavedChanges(form.state.isDirty, !isPending);
+	// Mobile : pas de garde unsaved-changes (les confirms beforeunload/popstate
+	// natifs sont peu utiles sur mobile et entrent en conflit avec les gestes
+	// swipe-back iOS / Android — UX moins bonne que la perte de saisie).
+	useUnsavedChanges(form.state.isDirty, !isPending && !isMobile);
 
 	return (
 		<form

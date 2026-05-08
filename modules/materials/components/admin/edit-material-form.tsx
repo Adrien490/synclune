@@ -11,6 +11,7 @@ import { Button } from "@/shared/components/ui/button";
 import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
@@ -40,6 +41,7 @@ export function EditMaterialForm({
 }: EditMaterialFormProps) {
 	const router = useRouter();
 	const haptic = useHaptic();
+	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
@@ -75,7 +77,10 @@ export function EditMaterialForm({
 		undefined,
 	);
 
-	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending);
+	// Mobile : pas de garde unsaved-changes (les confirms beforeunload/popstate
+	// natifs sont peu utiles sur mobile et entrent en conflit avec les gestes
+	// swipe-back iOS / Android — UX moins bonne que la perte de saisie).
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
 
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
