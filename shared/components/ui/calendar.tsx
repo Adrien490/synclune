@@ -27,6 +27,7 @@ function Calendar({
 	return (
 		<DayPicker
 			showOutsideDays={showOutsideDays}
+			navLayout="around"
 			className={cn(
 				"bg-background group/calendar p-3 [--cell-size:--spacing(8)] [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
 				RTL_NEXT_BUTTON,
@@ -78,7 +79,7 @@ function Calendar({
 						: "rounded-md pl-2 pr-1 flex items-center gap-1 text-sm h-8 [&>svg]:text-muted-foreground [&>svg]:size-3.5",
 					defaultClassNames.caption_label,
 				),
-				table: "w-full border-collapse",
+				month_grid: "w-full border-collapse",
 				weekdays: cn("flex", defaultClassNames.weekdays),
 				weekday: cn(
 					"text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] select-none",

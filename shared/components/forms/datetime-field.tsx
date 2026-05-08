@@ -216,7 +216,8 @@ export function DateTimeField({
 							mode="single"
 							selected={selectedDate}
 							onSelect={handleDateSelect}
-							initialFocus
+							// eslint-disable-next-line jsx-a11y/no-autofocus -- Calendar in Popover: focus expected on explicit open
+							autoFocus
 						/>
 						{!dateOnly && selectedDate && (
 							<div className="border-t p-3">

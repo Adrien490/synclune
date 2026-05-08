@@ -436,7 +436,8 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 													field.handleChange(date ? date.toISOString() : "");
 												}}
 												disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
-												initialFocus
+												// eslint-disable-next-line jsx-a11y/no-autofocus -- Calendar in Popover: focus expected on explicit open
+												autoFocus
 											/>
 										</PopoverContent>
 									</Popover>
@@ -474,7 +475,8 @@ export function OrdersFilterSheet({ className }: OrdersFilterSheetProps) {
 													field.handleChange(date ? date.toISOString() : "");
 												}}
 												disabled={(date) => date > new Date() || date < new Date("2020-01-01")}
-												initialFocus
+												// eslint-disable-next-line jsx-a11y/no-autofocus -- Calendar in Popover: focus expected on explicit open
+												autoFocus
 											/>
 										</PopoverContent>
 									</Popover>
