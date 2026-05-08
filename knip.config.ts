@@ -5,12 +5,7 @@ const config: KnipConfig = {
 
 	ignore: ["app/generated/**", "e2e/**", "scripts/**"],
 
-	ignoreDependencies: [
-		"@react-email/preview-server",
-		"@better-auth/cli",
-		"pino-pretty",
-		"@types/color",
-	],
+	ignoreDependencies: ["@better-auth/cli", "pino-pretty", "@types/color"],
 
 	ignoreBinaries: ["license-checker-rsync-3"],
 

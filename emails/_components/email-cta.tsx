@@ -1,4 +1,4 @@
-import { Button, Section } from "@react-email/components";
+import { Button, Section } from "react-email";
 import { EMAIL_CLASSES, EMAIL_STYLES } from "../email-colors";
 
 interface EmailCTAProps {

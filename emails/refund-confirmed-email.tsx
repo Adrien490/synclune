@@ -1,5 +1,5 @@
 import { formatEuro } from "@/shared/utils/format-euro";
-import { Section, Text } from "@react-email/components";
+import { Section, Text } from "react-email";
 import {
 	EMAIL_CLASSES,
 	EMAIL_STYLES,

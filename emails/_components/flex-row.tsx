@@ -1,4 +1,4 @@
-import { Row, Column } from "@react-email/components";
+import { Row, Column } from "react-email";
 
 interface FlexRowProps {
 	left: React.ReactNode;

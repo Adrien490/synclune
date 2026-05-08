@@ -1,6 +1,6 @@
 import { formatEuro } from "@/shared/utils/format-euro";
 import type { AdminShippingAddress, OrderItem } from "@/modules/emails/types/email.types";
-import { Hr, Section, Text } from "@react-email/components";
+import { Hr, Section, Text } from "react-email";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailCard } from "./_components/email-card";
 import { EmailCTA } from "./_components/email-cta";

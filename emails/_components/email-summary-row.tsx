@@ -1,4 +1,4 @@
-import { Text } from "@react-email/components";
+import { Text } from "react-email";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "../email-colors";
 import { FlexRow } from "./flex-row";
 

@@ -19,7 +19,7 @@ vi.mock("resend", () => ({
 	},
 }));
 
-vi.mock("@react-email/components", () => ({
+vi.mock("react-email", () => ({
 	render: mockRender,
 }));
 

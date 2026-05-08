@@ -1,14 +1,4 @@
-import {
-	Body,
-	Container,
-	Head,
-	Html,
-	Img,
-	Link,
-	Preview,
-	Section,
-	Text,
-} from "@react-email/components";
+import { Body, Container, Head, Html, Img, Link, Preview, Section, Text } from "react-email";
 import { LEGAL_URLS, EMAIL_LOGO_URL } from "@/shared/constants/legal-urls";
 import { BRAND } from "@/shared/constants/brand";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_COLORS_DARK, EMAIL_STYLES } from "../email-colors";

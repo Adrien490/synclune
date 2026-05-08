@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { render } from "@react-email/components";
+import { render } from "react-email";
 import { Resend } from "resend";
 import { withRetry } from "@/shared/utils/with-retry";
 import { resendCircuitBreaker, CircuitBreakerError } from "@/shared/lib/circuit-breaker";

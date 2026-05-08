@@ -1,4 +1,4 @@
-import { Img, Link, Section, Text } from "@react-email/components";
+import { Img, Link, Section, Text } from "react-email";
 import { EMAIL_CLASSES, EMAIL_STYLES } from "./email-colors";
 import { EmailCTA } from "./_components/email-cta";
 import { EmailHeading } from "./_components/email-heading";

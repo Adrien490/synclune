@@ -1,4 +1,4 @@
-import { Text } from "@react-email/components";
+import { Text } from "react-email";
 import { EMAIL_CLASSES, EMAIL_STYLES } from "../email-colors";
 
 interface EmailHeadingProps {

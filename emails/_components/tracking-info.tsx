@@ -1,4 +1,4 @@
-import { Text } from "@react-email/components";
+import { Text } from "react-email";
 import { EMAIL_CLASSES, EMAIL_COLORS } from "../email-colors";
 import { EmailCard } from "./email-card";
 import { EmailSummaryRow } from "./email-summary-row";

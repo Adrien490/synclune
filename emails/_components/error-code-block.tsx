@@ -1,4 +1,4 @@
-import { Section } from "@react-email/components";
+import { Section } from "react-email";
 import { EMAIL_STYLES } from "../email-colors";
 
 interface ErrorCodeBlockProps {
