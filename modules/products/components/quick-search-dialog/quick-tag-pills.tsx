@@ -1,5 +1,6 @@
 "use client";
 
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
 import type { QuickSearchProductType } from "./constants";
@@ -31,12 +32,15 @@ export function QuickTagPills({
 					key={type.slug}
 					type="button"
 					aria-label={`Rechercher ${type.label}`}
-					onClick={() => onSelect(type.label)}
+					onClick={() => {
+						triggerHaptic("selection");
+						onSelect(type.label);
+					}}
 					className={cn(
-						"bg-muted/30 hover:bg-muted rounded-full border",
+						"bg-muted/30 hover:bg-muted inline-flex items-center justify-center rounded-full border",
 						size === "sm" ? "text-sm" : "text-xs",
-						"px-3 py-1.5",
-						"transition-colors",
+						"min-h-11 px-3.5 py-1.5 sm:min-h-9 sm:px-3",
+						"touch-manipulation transition-colors",
 						"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					)}
 				>

@@ -13,6 +13,7 @@ export type UploadPhase =
 	| "compressing"
 	| "uploading"
 	| "generating-thumbnails"
+	| "finalizing"
 	| "done";
 
 interface UploadProgressProps {
@@ -60,10 +61,13 @@ export function UploadProgress({
 		progress >= 100 &&
 		!isProcessing &&
 		phase !== "generating-thumbnails" &&
-		phase !== "compressing";
+		phase !== "compressing" &&
+		phase !== "finalizing";
 	const isThumbnailing = phase === "generating-thumbnails";
 	const isCompressing = phase === "compressing";
-	const isServerProcessing = (progress >= 100 && isProcessing) || isThumbnailing || isCompressing;
+	const isFinalizing = phase === "finalizing";
+	const isServerProcessing =
+		(progress >= 100 && isProcessing) || isThumbnailing || isCompressing || isFinalizing;
 
 	const handleCancel = () => {
 		haptic("light");
@@ -81,9 +85,11 @@ export function UploadProgress({
 			? "Compression des fichiers en cours"
 			: isThumbnailing
 				? "Génération des miniatures vidéo en cours"
-				: isServerProcessing
-					? "Traitement du fichier en cours"
-					: `Téléversement en cours, ${progress} pourcent${queueText}`;
+				: isFinalizing
+					? "Finalisation en cours"
+					: isServerProcessing
+						? "Traitement du fichier en cours"
+						: `Téléversement en cours, ${progress} pourcent${queueText}`;
 
 	const phaseLabel = isComplete
 		? "Terminé"
@@ -91,9 +97,11 @@ export function UploadProgress({
 			? "Compression…"
 			: isThumbnailing
 				? "Génération des miniatures…"
-				: isServerProcessing
-					? "Traitement…"
-					: `Téléversement… ${progress}%`;
+				: isFinalizing
+					? "Finalisation…"
+					: isServerProcessing
+						? "Traitement…"
+						: `Téléversement… ${progress}%`;
 
 	if (variant === "compact") {
 		return (

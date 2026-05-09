@@ -110,7 +110,8 @@ vi.mock("@/shared/components/ui/alert-dialog", () => {
 	};
 });
 
-vi.mock("lucide-react", () => ({
+vi.mock("lucide-react", async (importOriginal) => ({
+	...((await importOriginal()) as Record<string, unknown>),
 	LoaderCircle: (props: Record<string, unknown>) => {
 		const { createElement } = require("react");
 		return createElement("svg", { "data-testid": "loader-circle", ...props });
@@ -208,11 +209,12 @@ describe("ChangeProductStatusAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Changer en Brouillon");
 		});
 
-		it("submit button has gray styling for DRAFT", () => {
+		it("submit button has neutral tone for DRAFT (no bg override)", () => {
 			renderDialog();
 
 			const actionBtn = screen.getByTestId("alert-dialog-action");
-			expect(actionBtn.className).toContain("bg-gray-600");
+			expect(actionBtn.className).not.toContain("bg-emerald-600");
+			expect(actionBtn.className).not.toContain("bg-amber-600");
 		});
 
 		it("sets targetStatus hidden field to DRAFT", () => {
@@ -281,11 +283,11 @@ describe("ChangeProductStatusAlertDialog", () => {
 			expect(screen.getByTestId("alert-dialog-action")).toHaveTextContent("Changer en Public");
 		});
 
-		it("submit button has green styling for PUBLIC", () => {
+		it("submit button has emerald success tone for PUBLIC", () => {
 			renderDialog();
 
 			const actionBtn = screen.getByTestId("alert-dialog-action");
-			expect(actionBtn.className).toContain("bg-green-600");
+			expect(actionBtn.className).toContain("bg-emerald-600");
 		});
 	});
 
@@ -319,11 +321,11 @@ describe("ChangeProductStatusAlertDialog", () => {
 			);
 		});
 
-		it("submit button has orange styling for ARCHIVED", () => {
+		it("submit button has amber warning tone for ARCHIVED", () => {
 			renderDialog();
 
 			const actionBtn = screen.getByTestId("alert-dialog-action");
-			expect(actionBtn.className).toContain("bg-orange-600");
+			expect(actionBtn.className).toContain("bg-amber-600");
 		});
 
 		it("renders submit button with 'Changer en Archivé' label", () => {

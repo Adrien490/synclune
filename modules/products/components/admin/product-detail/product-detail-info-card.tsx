@@ -35,7 +35,12 @@ export function ProductDetailInfoCard({ product }: ProductDetailInfoCardProps) {
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Statut</dt>
 						<dd>
-							<Badge variant={status.variant}>{status.label}</Badge>
+							<Badge
+								variant={status.variant}
+								style={{ viewTransitionName: `product-status-${product.id}` }}
+							>
+								{status.label}
+							</Badge>
 						</dd>
 					</div>
 					{product.type ? (

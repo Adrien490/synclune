@@ -8,11 +8,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useToggleProductStatus } from "@/modules/products/hooks/use-toggle-product-status";
-import { LoaderCircle } from "lucide-react";
+import { Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
 
 export const ARCHIVE_PRODUCT_DIALOG_ID = "archive-product";
 
@@ -42,7 +43,11 @@ export function ArchiveProductAlertDialog() {
 	const targetStatus: "ARCHIVED" | "PUBLIC" = isArchiving ? "ARCHIVED" : "PUBLIC";
 
 	return (
-		<ResponsiveAlertDialog open={archiveDialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={archiveDialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone={isArchiving ? "warning" : "success"}
+		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="productId" value={archiveDialog.data?.productId ?? ""} />
@@ -53,6 +58,7 @@ export function ArchiveProductAlertDialog() {
 					/>
 					<input type="hidden" name="targetStatus" value={targetStatus} />
 
+					<ResponsiveAlertDialogHeroIcon icon={isArchiving ? Archive : ArchiveRestore} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isArchiving ? "Archiver le bijou" : "Désarchiver le bijou"}
@@ -90,12 +96,7 @@ export function ArchiveProductAlertDialog() {
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
-						>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending
 								? isArchiving

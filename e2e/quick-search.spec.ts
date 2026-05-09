@@ -1,3 +1,5 @@
+import type { Page } from "@playwright/test";
+
 import { test, expect } from "./fixtures";
 
 /**
@@ -136,5 +138,79 @@ test.describe("Quick Search Dialog", () => {
 			}
 		});
 		expect(hasFixedSearchAction).toBe(true);
+	});
+});
+
+/**
+ * RGPD consent compliance for recent searches — separate top-level describe
+ * so we can seed localStorage via addInitScript BEFORE the first page navigation.
+ */
+test.describe("Quick Search RGPD consent", () => {
+	async function seedConsent(page: Page, accepted: boolean) {
+		await page.addInitScript((acceptedValue) => {
+			window.localStorage.setItem(
+				"cookie-consent",
+				JSON.stringify({
+					state: {
+						accepted: acceptedValue,
+						consentDate: new Date().toISOString(),
+						policyVersion: 1,
+					},
+					version: 0,
+				}),
+			);
+		}, accepted);
+	}
+
+	async function submitSearch(page: Page, term: string) {
+		await page
+			.getByRole("button", { name: /ouvrir la recherche rapide/i })
+			.first()
+			.click();
+		const input = page.getByRole("combobox", { name: /rechercher un bijou/i });
+		await input.fill(term);
+		await page.keyboard.press("Enter");
+		await expect(page).toHaveURL(new RegExp(`/produits\\?search=${term}`, "i"), {
+			timeout: 5000,
+		});
+	}
+
+	test("does NOT set recent-searches cookie when consent is rejected @critical", async ({
+		page,
+		context,
+	}) => {
+		await seedConsent(page, false);
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		await submitSearch(page, "consenttestrgpd1");
+
+		// Give the (no-op) server action a window to run before asserting absence.
+		await page.waitForTimeout(500);
+
+		const cookies = await context.cookies();
+		expect(cookies.find((c) => c.name === "recent-searches")).toBeUndefined();
+	});
+
+	test("DOES set recent-searches cookie when consent is accepted @critical", async ({
+		page,
+		context,
+	}) => {
+		await seedConsent(page, true);
+		await page.goto("/");
+		await page.waitForLoadState("domcontentloaded");
+
+		await submitSearch(page, "consenttestrgpd2");
+
+		// Server Action is fired via startTransition; poll until the cookie lands.
+		await expect
+			.poll(
+				async () => {
+					const cookies = await context.cookies();
+					return cookies.find((c) => c.name === "recent-searches")?.value;
+				},
+				{ timeout: 5000 },
+			)
+			.toContain("consenttestrgpd2");
 	});
 });

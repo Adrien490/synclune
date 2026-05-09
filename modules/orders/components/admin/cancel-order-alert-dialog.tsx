@@ -8,12 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Checkbox } from "@/shared/components/ui/checkbox";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCancelOrder } from "@/modules/orders/hooks/use-cancel-order";
-import { LoaderCircle } from "lucide-react";
+import { Ban, LoaderCircle } from "lucide-react";
 import { useState } from "react";
 
 export const CANCEL_ORDER_DIALOG_ID = "cancel-order";
@@ -46,12 +47,17 @@ export function CancelOrderAlertDialog() {
 	const isPaid = cancelDialog.data?.isPaid ?? false;
 
 	return (
-		<ResponsiveAlertDialog open={cancelDialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={cancelDialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone="warning"
+		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={cancelDialog.data?.orderId ?? ""} />
 					<input type="hidden" name="autoRefund" value={isPaid && autoRefund ? "true" : "false"} />
 
+					<ResponsiveAlertDialogHeroIcon icon={Ban} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Confirmer l'annulation</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

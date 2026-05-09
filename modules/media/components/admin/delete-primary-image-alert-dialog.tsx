@@ -8,12 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDeleteUploadThingFiles } from "@/modules/media/lib/uploadthing/use-delete-uploadthing-files";
 import { startTransition } from "react";
-import { LoaderCircle } from "lucide-react";
+import { ImageOff, LoaderCircle } from "lucide-react";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 
 export const DELETE_PRIMARY_IMAGE_DIALOG_ID = "delete-primary-image";
@@ -63,8 +64,13 @@ export function DeletePrimaryImageAlertDialog() {
 	};
 
 	return (
-		<ResponsiveAlertDialog open={deleteDialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={deleteDialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone="destructive"
+		>
 			<ResponsiveAlertDialogContent>
+				<ResponsiveAlertDialogHeroIcon icon={ImageOff} />
 				<ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogTitle>Confirmer la suppression</ResponsiveAlertDialogTitle>
 					<ResponsiveAlertDialogDescription>

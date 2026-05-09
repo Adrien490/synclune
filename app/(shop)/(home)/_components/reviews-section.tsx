@@ -42,6 +42,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="reviews-title"
 			aria-describedby="reviews-subtitle"
+			style={{ viewTransitionName: "reviews-section" }}
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
 			<a
@@ -82,12 +83,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 							delay={MOTION_CONFIG.section.subtitle.delay}
 							duration={MOTION_CONFIG.section.subtitle.duration}
 						>
-							<div
-								role="status"
-								aria-live="polite"
-								aria-atomic="true"
-								className="mt-4 flex items-center justify-center gap-2"
-							>
+							<div className="mt-4 flex items-center justify-center gap-2">
 								<span className="sr-only">
 									Note moyenne : {formatRating(stats.averageRating)} sur 5, basée sur{" "}
 									{stats.totalReviews} avis.
@@ -119,10 +115,10 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 								loop: true,
 							}}
 							className="w-full"
-							aria-label={`Carrousel de ${Math.min(reviews.length, 4)} avis clients`}
+							aria-label={`Carrousel de ${reviews.length} avis clients`}
 						>
 							<CarouselContent className="-ml-4 py-4" showFade>
-								{reviews.slice(0, 4).map((review, index) => (
+								{reviews.map((review, index) => (
 									<CarouselItem
 										key={review.id}
 										index={index}

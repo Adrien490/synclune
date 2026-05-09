@@ -8,6 +8,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Textarea } from "@/shared/components/ui/textarea";
@@ -15,7 +16,7 @@ import { Label } from "@/shared/components/ui/label";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useRejectRefund } from "@/modules/refunds/hooks/use-reject-refund";
 import { ActionStatus } from "@/shared/types/server-action";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, XCircle } from "lucide-react";
 
 export const REJECT_REFUND_DIALOG_ID = "reject-refund";
 
@@ -44,11 +45,12 @@ export function RejectRefundAlertDialog() {
 	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="warning">
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
 
+					<ResponsiveAlertDialogHeroIcon icon={XCircle} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Refuser le remboursement</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

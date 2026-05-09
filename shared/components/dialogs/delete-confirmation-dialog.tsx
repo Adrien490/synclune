@@ -8,11 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
+	type ResponsiveAlertTone,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { LoaderCircle } from "lucide-react";
-import type { ReactNode } from "react";
+import { LoaderCircle, Trash2 } from "lucide-react";
+import type { ComponentType, ReactNode } from "react";
 
 interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
 	/** Unique dialog ID for the alert dialog store */
@@ -34,22 +36,22 @@ interface DeleteConfirmationDialogProps<T extends Record<string, unknown>> {
 	submitLabel?: string;
 	/** Pending button text (default: "Suppression...") */
 	pendingLabel?: string;
+	/** Tonalité visuelle (default: "destructive" — pilote couleur hero icon + bouton + haptic) */
+	tone?: ResponsiveAlertTone;
+	/** Hero icon affiché en haut sur mobile (default: Trash2) */
+	icon?: ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
 }
 
 /**
  * Generic delete confirmation dialog.
  *
- * Provides the common structure for single-item delete confirmations:
- * - AlertDialog with form
- * - Hidden fields populated from dialog data
- * - Cancel and submit buttons with loading state
+ * Hero icon centré (mobile) dans cercle tinted selon la tonalité, titre bold court,
+ * description text-balance, boutons full-width empilés (action h-12 rounded-xl en haut,
+ * cancel ghost en dessous). Le swipe-down + tap-overlay sont automatiquement bloqués
+ * quand `tone="destructive"` (défaut) — fermeture obligatoire via "Annuler".
  *
  * @example
  * ```tsx
- * const { action, isPending } = useDeleteColor({
- *   onSuccess: () => deleteDialog.close(),
- * });
- *
  * <DeleteConfirmationDialog
  *   dialogId={DELETE_COLOR_DIALOG_ID}
  *   action={action}
@@ -73,6 +75,8 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 	hiddenFields,
 	submitLabel = "Supprimer",
 	pendingLabel = "Suppression…",
+	tone = "destructive",
+	icon = Trash2,
 }: DeleteConfirmationDialogProps<T>) {
 	const dialog = useAlertDialog<T>(dialogId);
 
@@ -86,7 +90,7 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 		typeof description === "function" ? description(dialog.data) : description;
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone={tone}>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					{hiddenFields.map(({ name, dataKey }) => (
@@ -98,6 +102,7 @@ export function DeleteConfirmationDialog<T extends Record<string, unknown>>({
 						/>
 					))}
 
+					<ResponsiveAlertDialogHeroIcon icon={icon} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>{title}</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

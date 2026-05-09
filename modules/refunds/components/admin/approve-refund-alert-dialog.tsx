@@ -8,12 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useApproveRefund } from "@/modules/refunds/hooks/use-approve-refund";
 import { ActionStatus } from "@/shared/types/server-action";
-import { LoaderCircle } from "lucide-react";
+import { CheckCircle2, LoaderCircle } from "lucide-react";
 
 export const APPROVE_REFUND_DIALOG_ID = "approve-refund";
 
@@ -42,11 +43,12 @@ export function ApproveRefundAlertDialog() {
 	const formattedAmount = dialog.data?.amount ? (dialog.data.amount / 100).toFixed(2) : "0.00";
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="success">
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.refundId ?? ""} />
 
+					<ResponsiveAlertDialogHeroIcon icon={CheckCircle2} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Approuver le remboursement</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

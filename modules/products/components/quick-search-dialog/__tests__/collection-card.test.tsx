@@ -33,6 +33,14 @@ vi.mock("@/shared/components/animations/tap", () => ({
 	Tap: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (cb: () => void) => cb(),
+}));
+
 // ─── Import after mocks ──────────────────────────────────────────────────────
 
 import { CollectionCard } from "../collection-card";

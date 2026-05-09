@@ -24,7 +24,10 @@ export function ProductTypeDetailInfoCard({ productType }: ProductTypeDetailInfo
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Statut</dt>
 						<dd>
-							<Badge variant={productType.isActive ? "default" : "secondary"}>
+							<Badge
+								variant={productType.isActive ? "default" : "secondary"}
+								style={{ viewTransitionName: `product-type-status-${productType.id}` }}
+							>
 								{productType.isActive ? "Actif" : "Inactif"}
 							</Badge>
 						</dd>

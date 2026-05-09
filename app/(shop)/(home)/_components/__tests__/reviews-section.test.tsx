@@ -211,6 +211,14 @@ describe("ReviewsSection", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("reviews-subtitle");
 	});
 
+	it("applies viewTransitionName for View Transitions API", () => {
+		setupMockUse(mockReviews, mockStats);
+		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);
+
+		const section = document.getElementById("reviews");
+		expect(section?.style.viewTransitionName).toBe("reviews-section");
+	});
+
 	it("renders h2 title 'Ce que disent nos clientes'", () => {
 		setupMockUse(mockReviews, mockStats);
 		render(<ReviewsSection reviewsPromise={reviewsPromise} reviewStatsPromise={statsPromise} />);

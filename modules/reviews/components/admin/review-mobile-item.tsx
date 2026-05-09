@@ -40,12 +40,20 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 							{review.product.title}
 						</span>
 						{review.status === ReviewStatus.PUBLISHED ? (
-							<Badge variant="default" className="gap-1">
+							<Badge
+								variant="default"
+								className="gap-1"
+								style={{ viewTransitionName: `review-status-${review.id}` }}
+							>
 								<CircleCheck className="size-3" aria-hidden="true" />
 								{REVIEW_STATUS_LABELS.PUBLISHED}
 							</Badge>
 						) : (
-							<Badge variant="secondary" className="gap-1">
+							<Badge
+								variant="secondary"
+								className="gap-1"
+								style={{ viewTransitionName: `review-status-${review.id}` }}
+							>
 								<EyeOff className="size-3" aria-hidden="true" />
 								{REVIEW_STATUS_LABELS.HIDDEN}
 							</Badge>

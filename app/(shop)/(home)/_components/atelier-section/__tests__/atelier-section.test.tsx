@@ -208,6 +208,13 @@ describe("AtelierSection structure", () => {
 		expect(section!.getAttribute("aria-labelledby")).toBe("atelier-section-title");
 	});
 
+	it("applies viewTransitionName for View Transitions API", async () => {
+		await renderAtelierSection();
+
+		const section = document.querySelector<HTMLElement>("section#atelier-section");
+		expect(section?.style.viewTransitionName).toBe("atelier-section");
+	});
+
 	it("does not render an orphan skip link (CTA absent — section is silent storytelling)", async () => {
 		await renderAtelierSection();
 

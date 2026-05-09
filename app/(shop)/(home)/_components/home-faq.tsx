@@ -12,7 +12,11 @@ import { safeJsonLd } from "@/shared/utils/safe-json-ld";
 import { HomeFaqAccordion } from "./home-faq-accordion";
 import { SectionCtaLink } from "./section-cta-link";
 
-const FAQ_DATE_MODIFIED = "2026-05-08";
+// Last modification date of the FAQ schema. Uses the last git commit date in
+// Vercel deployments (true dateModified), falls back to build time elsewhere.
+const FAQ_DATE_MODIFIED =
+	process.env.VERCEL_GIT_COMMIT_AUTHOR_DATE?.split("T")[0] ??
+	new Date().toISOString().split("T")[0];
 
 interface FaqItem {
 	id: string;

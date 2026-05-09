@@ -7,6 +7,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import type { WebhookHandlerResult } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
+import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
  * Dispute reason labels for admin notification
@@ -72,118 +73,128 @@ export async function handleDisputeCreated(
 			? dispute.payment_intent
 			: dispute.payment_intent?.id;
 
-	if (!paymentIntentId) {
-		logger.error("[WEBHOOK] Dispute without payment_intent:", undefined, {
-			service: "webhook",
-			disputeId: dispute.id,
-		});
-		throw new Error(`Dispute ${dispute.id} has no payment_intent`);
-	}
-
-	const order = await prisma.order.findFirst({
-		where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
-		select: {
-			id: true,
-			orderNumber: true,
-			customerEmail: true,
-		},
-	});
-
-	if (!order) {
-		logger.error(`[WEBHOOK] No order found for disputed PI ${paymentIntentId}`, undefined, {
-			service: "webhook",
-		});
-		throw new Error(`No order found for dispute ${dispute.id} (PI: ${paymentIntentId})`);
-	}
-
-	// Prevent duplicate OrderNote on webhook replay
-	const existingNote = await prisma.orderNote.findFirst({
-		where: {
-			orderId: order.id,
-			content: { startsWith: `[LITIGE OUVERT] Litige Stripe ${dispute.id}` },
-		},
-		select: { id: true },
-	});
-
-	if (existingNote) {
-		logger.info(`[WEBHOOK] Dispute note already exists for ${dispute.id}, skipping creation`, {
-			service: "webhook",
-		});
-		return { success: true, skipped: true, reason: "Dispute note already created" };
-	}
-
-	// Create Dispute record and OrderNote atomically
-	const deadlineStr = dispute.evidence_details.due_by
-		? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
-		: "N/A";
-	const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
-
-	const dueBy = dispute.evidence_details.due_by
-		? new Date(dispute.evidence_details.due_by * 1000)
-		: null;
-
-	await prisma.$transaction(
-		async (tx) => {
-			await tx.dispute.create({
-				data: {
-					stripeDisputeId: dispute.id,
-					orderId: order.id,
-					amount: dispute.amount,
-					fee: dispute.balance_transactions[0]?.fee ?? 0,
-					reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
-					status: mapStripeDisputeStatus(dispute.status),
-					dueBy,
-				},
+	try {
+		if (!paymentIntentId) {
+			logger.error("[WEBHOOK] Dispute without payment_intent:", undefined, {
+				service: "webhook",
+				disputeId: dispute.id,
 			});
+			throw new Error(`Dispute ${dispute.id} has no payment_intent`);
+		}
 
-			await tx.orderNote.create({
-				data: {
-					orderId: order.id,
-					content: noteContent,
-					authorId: SYSTEM_AUTHOR_ID,
-					authorName: SYSTEM_AUTHOR_NAME,
-				},
+		const order = await prisma.order.findFirst({
+			where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
+			select: {
+				id: true,
+				orderNumber: true,
+				customerEmail: true,
+			},
+		});
+
+		if (!order) {
+			logger.error(`[WEBHOOK] No order found for disputed PI ${paymentIntentId}`, undefined, {
+				service: "webhook",
 			});
-		},
-		{ timeout: 10000 },
-	);
+			throw new Error(`No order found for dispute ${dispute.id} (PI: ${paymentIntentId})`);
+		}
 
-	logger.info(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`, {
-		service: "webhook",
-	});
+		// Prevent duplicate OrderNote on webhook replay
+		const existingNote = await prisma.orderNote.findFirst({
+			where: {
+				orderId: order.id,
+				content: { startsWith: `[LITIGE OUVERT] Litige Stripe ${dispute.id}` },
+			},
+			select: { id: true },
+		});
 
-	const baseUrl = getBaseUrl();
-	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
+		if (existingNote) {
+			logger.info(`[WEBHOOK] Dispute note already exists for ${dispute.id}, skipping creation`, {
+				service: "webhook",
+			});
+			return { success: true, skipped: true, reason: "Dispute note already created" };
+		}
 
-	return {
-		success: true,
-		tasks: [
-			{
-				type: "ADMIN_DISPUTE_ALERT",
-				data: {
-					orderNumber: order.orderNumber,
-					customerEmail: order.customerEmail || "Email non disponible",
-					amount: dispute.amount,
-					reason: DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason,
-					disputeId: dispute.id,
-					deadline: dispute.evidence_details.due_by
-						? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
-						: null,
-					dashboardUrl,
-					stripeDashboardUrl,
+		// Create Dispute record and OrderNote atomically
+		const deadlineStr = dispute.evidence_details.due_by
+			? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
+			: "N/A";
+		const noteContent = `[LITIGE OUVERT] Litige Stripe ${dispute.id}. Raison: ${DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason}. Montant contesté: ${dispute.amount} centimes. Deadline de réponse: ${deadlineStr}.`;
+
+		const dueBy = dispute.evidence_details.due_by
+			? new Date(dispute.evidence_details.due_by * 1000)
+			: null;
+
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.dispute.create({
+					data: {
+						stripeDisputeId: dispute.id,
+						orderId: order.id,
+						amount: dispute.amount,
+						fee: dispute.balance_transactions[0]?.fee ?? 0,
+						reason: STRIPE_REASON_MAP[dispute.reason] ?? DisputeReason.GENERAL,
+						status: mapStripeDisputeStatus(dispute.status),
+						dueBy,
+					},
+				});
+
+				await tx.orderNote.create({
+					data: {
+						orderId: order.id,
+						content: noteContent,
+						authorId: SYSTEM_AUTHOR_ID,
+						authorName: SYSTEM_AUTHOR_NAME,
+					},
+				});
+			},
+			{ timeout: 10000 },
+		);
+
+		logger.info(`⚠️ [WEBHOOK] Dispute ${dispute.id} created for order ${order.orderNumber}`, {
+			service: "webhook",
+		});
+
+		const baseUrl = getBaseUrl();
+		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
+		const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
+
+		return {
+			success: true,
+			tasks: [
+				{
+					type: "ADMIN_DISPUTE_ALERT",
+					data: {
+						orderNumber: order.orderNumber,
+						customerEmail: order.customerEmail || "Email non disponible",
+						amount: dispute.amount,
+						reason: DISPUTE_REASON_LABELS[dispute.reason] ?? dispute.reason,
+						disputeId: dispute.id,
+						deadline: dispute.evidence_details.due_by
+							? new Date(dispute.evidence_details.due_by * 1000).toLocaleDateString("fr-FR")
+							: null,
+						dashboardUrl,
+						stripeDashboardUrl,
+					},
 				},
-			},
-			{
-				type: "INVALIDATE_CACHE",
-				tags: [
-					ORDERS_CACHE_TAGS.LIST,
-					ORDERS_CACHE_TAGS.NOTES(order.id),
-					SHARED_CACHE_TAGS.ADMIN_BADGES,
-				],
-			},
-		],
-	};
+				{
+					type: "INVALIDATE_CACHE",
+					tags: [
+						ORDERS_CACHE_TAGS.LIST,
+						ORDERS_CACHE_TAGS.NOTES(order.id),
+						SHARED_CACHE_TAGS.ADMIN_BADGES,
+					],
+				},
+			],
+		};
+	} catch (error) {
+		captureWebhookError(error, {
+			handler: "handleDisputeCreated",
+			eventType: "charge.dispute.created",
+			stripeDisputeId: dispute.id,
+			paymentIntentId,
+		});
+		throw error;
+	}
 }
 
 /**
@@ -200,126 +211,136 @@ export async function handleDisputeClosed(
 			? dispute.payment_intent
 			: dispute.payment_intent?.id;
 
-	if (!paymentIntentId) {
-		logger.error("[WEBHOOK] Dispute closed without payment_intent:", undefined, {
-			service: "webhook",
-			disputeId: dispute.id,
-		});
-		throw new Error(`Dispute ${dispute.id} closed has no payment_intent`);
-	}
-
-	const order = await prisma.order.findFirst({
-		where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
-		select: {
-			id: true,
-			orderNumber: true,
-			customerEmail: true,
-			paymentStatus: true,
-		},
-	});
-
-	if (!order) {
-		logger.error(`[WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`, undefined, {
-			service: "webhook",
-		});
-		throw new Error(`No order found for closed dispute ${dispute.id} (PI: ${paymentIntentId})`);
-	}
-
-	// Prevent duplicate OrderNote on webhook replay
-	const existingNote = await prisma.orderNote.findFirst({
-		where: {
-			orderId: order.id,
-			content: { startsWith: `[LITIGE CLOTURE] Litige ${dispute.id}` },
-		},
-		select: { id: true },
-	});
-
-	if (existingNote) {
-		logger.info(`[WEBHOOK] Dispute closed note already exists for ${dispute.id}, skipping`, {
-			service: "webhook",
-		});
-		return { success: true, skipped: true, reason: "Dispute closed note already created" };
-	}
-
-	const won = dispute.status === "won";
-	const statusLabel = won ? "gagné" : "perdu";
-
-	// Update Dispute record, create OrderNote, and update order status atomically
-	const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${!won ? " Le montant a été débité par Stripe." : ""}`;
-
-	await prisma.$transaction(
-		async (tx) => {
-			// Update Dispute record if it exists
-			const existingDispute = await tx.dispute.findUnique({
-				where: { stripeDisputeId: dispute.id },
-				select: { id: true },
+	try {
+		if (!paymentIntentId) {
+			logger.error("[WEBHOOK] Dispute closed without payment_intent:", undefined, {
+				service: "webhook",
+				disputeId: dispute.id,
 			});
+			throw new Error(`Dispute ${dispute.id} closed has no payment_intent`);
+		}
 
-			if (existingDispute) {
-				await tx.dispute.update({
+		const order = await prisma.order.findFirst({
+			where: { stripePaymentIntentId: paymentIntentId, ...notDeleted },
+			select: {
+				id: true,
+				orderNumber: true,
+				customerEmail: true,
+				paymentStatus: true,
+			},
+		});
+
+		if (!order) {
+			logger.error(`[WEBHOOK] No order found for closed dispute PI ${paymentIntentId}`, undefined, {
+				service: "webhook",
+			});
+			throw new Error(`No order found for closed dispute ${dispute.id} (PI: ${paymentIntentId})`);
+		}
+
+		// Prevent duplicate OrderNote on webhook replay
+		const existingNote = await prisma.orderNote.findFirst({
+			where: {
+				orderId: order.id,
+				content: { startsWith: `[LITIGE CLOTURE] Litige ${dispute.id}` },
+			},
+			select: { id: true },
+		});
+
+		if (existingNote) {
+			logger.info(`[WEBHOOK] Dispute closed note already exists for ${dispute.id}, skipping`, {
+				service: "webhook",
+			});
+			return { success: true, skipped: true, reason: "Dispute closed note already created" };
+		}
+
+		const won = dispute.status === "won";
+		const statusLabel = won ? "gagné" : "perdu";
+
+		// Update Dispute record, create OrderNote, and update order status atomically
+		const noteContent = `[LITIGE CLOTURE] Litige ${dispute.id} clôturé: ${statusLabel}.${!won ? " Le montant a été débité par Stripe." : ""}`;
+
+		await prisma.$transaction(
+			async (tx) => {
+				// Update Dispute record if it exists
+				const existingDispute = await tx.dispute.findUnique({
 					where: { stripeDisputeId: dispute.id },
+					select: { id: true },
+				});
+
+				if (existingDispute) {
+					await tx.dispute.update({
+						where: { stripeDisputeId: dispute.id },
+						data: {
+							status: mapStripeDisputeStatus(dispute.status),
+							resolvedAt: new Date(),
+						},
+					});
+				}
+
+				await tx.orderNote.create({
 					data: {
-						status: mapStripeDisputeStatus(dispute.status),
-						resolvedAt: new Date(),
+						orderId: order.id,
+						content: noteContent,
+						authorId: SYSTEM_AUTHOR_ID,
+						authorName: SYSTEM_AUTHOR_NAME,
 					},
 				});
-			}
 
-			await tx.orderNote.create({
-				data: {
-					orderId: order.id,
-					content: noteContent,
-					authorId: SYSTEM_AUTHOR_ID,
-					authorName: SYSTEM_AUTHOR_NAME,
-				},
-			});
-
-			// If lost, Stripe has already debited the amount — mark as REFUNDED
-			if (!won && order.paymentStatus !== "REFUNDED") {
-				await tx.order.update({
-					where: { id: order.id },
-					data: { paymentStatus: "REFUNDED" },
-				});
-			}
-		},
-		{ timeout: 10000 },
-	);
-
-	logger.info(
-		`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
-		{ service: "webhook" },
-	);
-
-	const baseUrl = getBaseUrl();
-	const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
-	const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
-
-	return {
-		success: true,
-		tasks: [
-			{
-				type: "ADMIN_DISPUTE_ALERT",
-				data: {
-					orderNumber: order.orderNumber,
-					customerEmail: order.customerEmail || "Email non disponible",
-					amount: dispute.amount,
-					reason: won
-						? `Litige clôturé — Vous avez GAGNÉ`
-						: `Litige clôturé — Vous avez PERDU (montant débité)`,
-					disputeId: dispute.id,
-					deadline: null,
-					dashboardUrl,
-					stripeDashboardUrl,
-				},
+				// If lost, Stripe has already debited the amount — mark as REFUNDED
+				if (!won && order.paymentStatus !== "REFUNDED") {
+					await tx.order.update({
+						where: { id: order.id },
+						data: { paymentStatus: "REFUNDED" },
+					});
+				}
 			},
-			{
-				type: "INVALIDATE_CACHE",
-				tags: [
-					ORDERS_CACHE_TAGS.LIST,
-					ORDERS_CACHE_TAGS.NOTES(order.id),
-					SHARED_CACHE_TAGS.ADMIN_BADGES,
-				],
-			},
-		],
-	};
+			{ timeout: 10000 },
+		);
+
+		logger.info(
+			`${won ? "✅" : "❌"} [WEBHOOK] Dispute ${dispute.id} closed (${statusLabel}) for order ${order.orderNumber}`,
+			{ service: "webhook" },
+		);
+
+		const baseUrl = getBaseUrl();
+		const dashboardUrl = `${baseUrl}${ROUTES.ADMIN.ORDER_DETAIL(order.id)}`;
+		const stripeDashboardUrl = EXTERNAL_URLS.STRIPE.DISPUTE(dispute.id);
+
+		return {
+			success: true,
+			tasks: [
+				{
+					type: "ADMIN_DISPUTE_ALERT",
+					data: {
+						orderNumber: order.orderNumber,
+						customerEmail: order.customerEmail || "Email non disponible",
+						amount: dispute.amount,
+						reason: won
+							? `Litige clôturé — Vous avez GAGNÉ`
+							: `Litige clôturé — Vous avez PERDU (montant débité)`,
+						disputeId: dispute.id,
+						deadline: null,
+						dashboardUrl,
+						stripeDashboardUrl,
+					},
+				},
+				{
+					type: "INVALIDATE_CACHE",
+					tags: [
+						ORDERS_CACHE_TAGS.LIST,
+						ORDERS_CACHE_TAGS.NOTES(order.id),
+						SHARED_CACHE_TAGS.ADMIN_BADGES,
+					],
+				},
+			],
+		};
+	} catch (error) {
+		captureWebhookError(error, {
+			handler: "handleDisputeClosed",
+			eventType: "charge.dispute.closed",
+			stripeDisputeId: dispute.id,
+			paymentIntentId,
+		});
+		throw error;
+	}
 }

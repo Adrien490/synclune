@@ -8,13 +8,13 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useToggleDiscountStatus } from "@/modules/discounts/hooks/use-toggle-discount-status";
-import { cn } from "@/shared/utils/cn";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, ToggleLeft, ToggleRight } from "lucide-react";
 
 export const TOGGLE_DISCOUNT_STATUS_DIALOG_ID = "toggle-discount-status";
 
@@ -46,11 +46,16 @@ export function ToggleDiscountStatusAlertDialog() {
 	const targetState = isActive ? "désactiver" : "activer";
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={dialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone={isActive ? "warning" : "success"}
+		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.discountId ?? ""} />
 
+					<ResponsiveAlertDialogHeroIcon icon={isActive ? ToggleLeft : ToggleRight} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActive ? "Désactiver" : "Activer"} le code promo
@@ -74,16 +79,7 @@ export function ToggleDiscountStatusAlertDialog() {
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-							onClick={() => haptic("medium")}
-							className={cn(
-								"text-white",
-								isActive ? "bg-orange-600 hover:bg-orange-700" : "bg-green-600 hover:bg-green-700",
-							)}
-						>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "En cours…" : isActive ? "Désactiver" : "Activer"}
 						</ResponsiveAlertDialogAction>

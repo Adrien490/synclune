@@ -1,17 +1,18 @@
 "use client";
 
-import { CircleCheck, CircleX, LoaderCircle, RotateCcw, Trash2 } from "lucide-react";
+import { Ban, LoaderCircle, RotateCcw, ShieldCheck, UserMinus, UserX } from "lucide-react";
 
 import {
 	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
 	ResponsiveAlertDialogCancel,
 	ResponsiveAlertDialogContent,
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
 import { useChangeUserRole } from "@/modules/users/hooks/use-change-user-role";
@@ -64,10 +65,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 			<ResponsiveAlertDialog
 				open={deleteDialog.isOpen}
 				onOpenChange={(open) => (open ? deleteDialog.open() : deleteDialog.close())}
+				tone="destructive"
 			>
 				<ResponsiveAlertDialogContent>
 					<form action={deleteAction}>
 						<input type="hidden" name="id" value={user.id} />
+						<ResponsiveAlertDialogHeroIcon icon={UserX} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Supprimer l&apos;utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -80,19 +83,14 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
 							</ResponsiveAlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
-								{isDeletePending ? (
-									<>
-										<LoaderCircle className="mr-2 size-4 animate-spin" />
-										Suppression…
-									</>
-								) : (
-									<>
-										<Trash2 className="mr-2 size-4" />
-										Supprimer
-									</>
-								)}
-							</Button>
+							<ResponsiveAlertDialogAction
+								type="submit"
+								disabled={isPending}
+								aria-busy={isDeletePending}
+							>
+								{isDeletePending && <LoaderCircle className="motion-safe:animate-spin" />}
+								{isDeletePending ? "Suppression…" : "Supprimer"}
+							</ResponsiveAlertDialogAction>
 						</ResponsiveAlertDialogFooter>
 					</form>
 				</ResponsiveAlertDialogContent>
@@ -101,10 +99,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 			<ResponsiveAlertDialog
 				open={suspendDialog.isOpen}
 				onOpenChange={(open) => (open ? suspendDialog.open() : suspendDialog.close())}
+				tone="warning"
 			>
 				<ResponsiveAlertDialogContent>
 					<form action={suspendAction}>
 						<input type="hidden" name="id" value={user.id} />
+						<ResponsiveAlertDialogHeroIcon icon={Ban} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Suspendre l&apos;utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -117,19 +117,14 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
 							</ResponsiveAlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
-								{isSuspendPending ? (
-									<>
-										<LoaderCircle className="mr-2 size-4 animate-spin" />
-										Suspension…
-									</>
-								) : (
-									<>
-										<CircleX className="mr-2 size-4" />
-										Suspendre
-									</>
-								)}
-							</Button>
+							<ResponsiveAlertDialogAction
+								type="submit"
+								disabled={isPending}
+								aria-busy={isSuspendPending}
+							>
+								{isSuspendPending && <LoaderCircle className="motion-safe:animate-spin" />}
+								{isSuspendPending ? "Suspension…" : "Suspendre"}
+							</ResponsiveAlertDialogAction>
 						</ResponsiveAlertDialogFooter>
 					</form>
 				</ResponsiveAlertDialogContent>
@@ -138,10 +133,12 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 			<ResponsiveAlertDialog
 				open={restoreDialog.isOpen}
 				onOpenChange={(open) => (open ? restoreDialog.open() : restoreDialog.close())}
+				tone="success"
 			>
 				<ResponsiveAlertDialogContent>
 					<form action={restoreAction}>
 						<input type="hidden" name="id" value={user.id} />
+						<ResponsiveAlertDialogHeroIcon icon={RotateCcw} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Restaurer l&apos;utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -153,19 +150,14 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
 							</ResponsiveAlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
-								{isRestorePending ? (
-									<>
-										<LoaderCircle className="mr-2 size-4 animate-spin" />
-										Restauration…
-									</>
-								) : (
-									<>
-										<RotateCcw className="mr-2 size-4" />
-										Restaurer
-									</>
-								)}
-							</Button>
+							<ResponsiveAlertDialogAction
+								type="submit"
+								disabled={isPending}
+								aria-busy={isRestorePending}
+							>
+								{isRestorePending && <LoaderCircle className="motion-safe:animate-spin" />}
+								{isRestorePending ? "Restauration…" : "Restaurer"}
+							</ResponsiveAlertDialogAction>
 						</ResponsiveAlertDialogFooter>
 					</form>
 				</ResponsiveAlertDialogContent>
@@ -174,11 +166,13 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 			<ResponsiveAlertDialog
 				open={promoteDialog.isOpen}
 				onOpenChange={(open) => (open ? promoteDialog.open() : promoteDialog.close())}
+				tone="info"
 			>
 				<ResponsiveAlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="ADMIN" />
+						<ResponsiveAlertDialogHeroIcon icon={ShieldCheck} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Promouvoir en administrateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -191,19 +185,14 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
 							</ResponsiveAlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
-								{isChangeRolePending ? (
-									<>
-										<LoaderCircle className="mr-2 size-4 animate-spin" />
-										Promotion…
-									</>
-								) : (
-									<>
-										<CircleCheck className="mr-2 size-4" />
-										Promouvoir
-									</>
-								)}
-							</Button>
+							<ResponsiveAlertDialogAction
+								type="submit"
+								disabled={isPending}
+								aria-busy={isChangeRolePending}
+							>
+								{isChangeRolePending && <LoaderCircle className="motion-safe:animate-spin" />}
+								{isChangeRolePending ? "Promotion…" : "Promouvoir"}
+							</ResponsiveAlertDialogAction>
 						</ResponsiveAlertDialogFooter>
 					</form>
 				</ResponsiveAlertDialogContent>
@@ -212,11 +201,13 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 			<ResponsiveAlertDialog
 				open={demoteDialog.isOpen}
 				onOpenChange={(open) => (open ? demoteDialog.open() : demoteDialog.close())}
+				tone="warning"
 			>
 				<ResponsiveAlertDialogContent>
 					<form action={changeRoleAction}>
 						<input type="hidden" name="id" value={user.id} />
 						<input type="hidden" name="role" value="USER" />
+						<ResponsiveAlertDialogHeroIcon icon={UserMinus} />
 						<ResponsiveAlertDialogHeader>
 							<ResponsiveAlertDialogTitle>Rétrograder en utilisateur</ResponsiveAlertDialogTitle>
 							<ResponsiveAlertDialogDescription>
@@ -229,19 +220,14 @@ export function UserAdminDialogs({ user }: UserAdminDialogsProps) {
 							<ResponsiveAlertDialogCancel disabled={isPending}>
 								Annuler
 							</ResponsiveAlertDialogCancel>
-							<Button type="submit" disabled={isPending}>
-								{isChangeRolePending ? (
-									<>
-										<LoaderCircle className="mr-2 size-4 animate-spin" />
-										Rétrogradation…
-									</>
-								) : (
-									<>
-										<CircleX className="mr-2 size-4" />
-										Rétrograder
-									</>
-								)}
-							</Button>
+							<ResponsiveAlertDialogAction
+								type="submit"
+								disabled={isPending}
+								aria-busy={isChangeRolePending}
+							>
+								{isChangeRolePending && <LoaderCircle className="motion-safe:animate-spin" />}
+								{isChangeRolePending ? "Rétrogradation…" : "Rétrograder"}
+							</ResponsiveAlertDialogAction>
 						</ResponsiveAlertDialogFooter>
 					</form>
 				</ResponsiveAlertDialogContent>

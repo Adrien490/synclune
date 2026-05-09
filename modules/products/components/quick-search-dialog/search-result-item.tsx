@@ -79,7 +79,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 					"group/result flex items-center gap-3 rounded-xl px-3 py-2.5",
 					"hover:bg-muted transition-colors",
 					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-					"min-h-14",
+					"min-h-14 touch-manipulation",
 					"data-[active=true]:bg-muted",
 				)}
 			>

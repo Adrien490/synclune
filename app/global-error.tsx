@@ -13,7 +13,10 @@ export default function GlobalError({
 	reset: () => void;
 }) {
 	useEffect(() => {
-		Sentry.captureException(error);
+		const route = typeof window !== "undefined" ? window.location.pathname : "unknown";
+		Sentry.captureException(error, {
+			tags: { route, surface: "global-error", level: "critical" },
+		});
 	}, [error]);
 
 	return (

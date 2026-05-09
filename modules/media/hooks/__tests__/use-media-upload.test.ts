@@ -38,6 +38,10 @@ vi.mock("../../services/delete-uploadthing-files.service", () => ({
 		mockDeleteUploadThingFilesFromUrls(...args),
 }));
 
+vi.mock("@/modules/media/actions/delete-uploadthing-file", () => ({
+	deleteUploadThingFile: vi.fn().mockResolvedValue({ status: "success" }),
+}));
+
 vi.mock("@/shared/utils/with-retry", () => ({
 	withRetry: (fn: () => unknown, opts: unknown) => mockWithRetry(fn, opts),
 }));
@@ -46,6 +50,7 @@ vi.mock("sonner", () => ({
 	toast: {
 		error: vi.fn(),
 		warning: vi.fn(),
+		info: vi.fn(),
 	},
 }));
 
@@ -478,6 +483,37 @@ describe("useMediaUpload", () => {
 			const { unmount } = renderHook(() => useMediaUpload());
 			expect(() => unmount()).not.toThrow();
 		});
+
+		it("should toast 'Upload annulé' (no count) when cancelled before any success", async () => {
+			mockWithRetry.mockImplementation((_fn: () => unknown, opts: { signal?: AbortSignal }) => {
+				return new Promise((_, reject) => {
+					opts.signal?.addEventListener("abort", () => {
+						reject(new DOMException("Operation annulee", "AbortError"));
+					});
+				});
+			});
+
+			const { result } = renderHook(() => useMediaUpload());
+
+			let uploadPromise: Promise<unknown>;
+			act(() => {
+				uploadPromise = result.current.upload([createImageFile("slow.jpg")]);
+			});
+
+			act(() => {
+				result.current.cancel();
+			});
+
+			await act(async () => {
+				await uploadPromise!;
+			});
+
+			expect(toast.info).toHaveBeenCalledTimes(1);
+			const callArgs = vi.mocked(toast.info).mock.calls[0]!;
+			expect(callArgs[0]).toBe("Upload annulé");
+			// No description (no kept files) — wrapper still injects a default duration
+			expect(callArgs[1]).not.toHaveProperty("description");
+		});
 	});
 
 	// ========================================================================
@@ -532,7 +568,12 @@ describe("useMediaUpload", () => {
 			expect((results as { fileName: string }[])[0]?.fileName).toBe("ok.jpg");
 		});
 
-		it("should log orphan thumbnail warning when video upload fails", async () => {
+		it("should synchronously cleanup orphan thumbnail when video upload fails", async () => {
+			const { deleteUploadThingFile } =
+				await import("@/modules/media/actions/delete-uploadthing-file");
+			const deleteMock = vi.mocked(deleteUploadThingFile);
+			deleteMock.mockClear();
+
 			const thumbnailFile = createImageFile("thumb.jpg");
 			mockGenerateVideoThumbnail.mockResolvedValue({
 				thumbnailFile,
@@ -547,7 +588,6 @@ describe("useMediaUpload", () => {
 				.mockRejectedValueOnce(new Error("Video upload failed"));
 
 			vi.stubGlobal("URL", { ...URL, revokeObjectURL: vi.fn() });
-			const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
 			const { result } = renderHook(() => useMediaUpload());
 
@@ -555,13 +595,15 @@ describe("useMediaUpload", () => {
 				await result.current.upload([createVideoFile("fail.mp4")]);
 			});
 
-			// Orphan cleanup is now deferred to the monthly cron job — hook only warns
-			expect(warnSpy).toHaveBeenCalledWith(
-				"[useMediaUpload] Thumbnail orphelin sera nettoyé par le cron:",
-				"https://utfs.io/f/thumb.jpg",
-			);
+			// Wait for the fire-and-forget cleanup promise to resolve
+			await waitFor(() => expect(deleteMock).toHaveBeenCalled());
 
-			warnSpy.mockRestore();
+			// The action receives a FormData with fileUrl=thumbnailUrl
+			const callArgs = deleteMock.mock.calls[0];
+			expect(callArgs?.[0]).toBeUndefined();
+			expect(callArgs?.[1]).toBeInstanceOf(FormData);
+			expect((callArgs?.[1] as FormData).get("fileUrl")).toBe("https://utfs.io/f/thumb.jpg");
+
 			vi.unstubAllGlobals();
 		});
 	});
@@ -588,6 +630,44 @@ describe("useMediaUpload", () => {
 
 			expect(phases).toContain("validating");
 			expect(phases).toContain("uploading");
+			expect(phases).toContain("finalizing");
+			expect(phases).toContain("done");
+		});
+
+		it("should emit finalizing phase between successful uploads and done", async () => {
+			mockStartUpload.mockResolvedValue([
+				{ serverData: { url: "https://utfs.io/f/img.jpg", blurDataUrl: "blur" } },
+			]);
+
+			const phases: string[] = [];
+			const onProgress = vi.fn((p: { phase: string }) => {
+				phases.push(p.phase);
+			});
+			const { result } = renderHook(() => useMediaUpload({ onProgress }));
+
+			await act(async () => {
+				await result.current.upload([createImageFile("photo.jpg")]);
+			});
+
+			const finalizingIdx = phases.indexOf("finalizing");
+			const doneIdx = phases.indexOf("done");
+			expect(finalizingIdx).toBeGreaterThan(-1);
+			expect(doneIdx).toBeGreaterThan(finalizingIdx);
+		});
+
+		it("should NOT emit finalizing when no files were uploaded successfully", async () => {
+			// All files filtered out (oversized) → no successful results
+			const phases: string[] = [];
+			const onProgress = vi.fn((p: { phase: string }) => {
+				phases.push(p.phase);
+			});
+			const { result } = renderHook(() => useMediaUpload({ onProgress }));
+
+			await act(async () => {
+				await result.current.upload([createOversizedImageFile()]);
+			});
+
+			expect(phases).not.toContain("finalizing");
 			expect(phases).toContain("done");
 		});
 

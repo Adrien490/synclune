@@ -64,6 +64,7 @@ export async function AtelierSection() {
 			className={`bg-muted/20 relative overflow-hidden mask-t-from-97% mask-t-to-100% mask-b-from-99% mask-b-to-100% sm:mask-t-from-90% sm:mask-b-from-95% ${SECTION_SPACING.spacious}`}
 			aria-labelledby="atelier-section-title"
 			data-content-type="about-creator"
+			style={{ viewTransitionName: "atelier-section" }}
 		>
 			{/* HowTo JSON-LD Schema — SAFE: serialized via safeJsonLd */}
 			{/* react-doctor-disable-next-line react/no-danger */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { Loader2, XCircle } from "lucide-react";
+import { Ban, Loader2, XCircle } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
@@ -12,6 +12,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -74,8 +75,10 @@ export function OrdersBulkActionsBar({ presentation = "inline" }: OrdersBulkActi
 				onOpenChange={(next) => {
 					if (!next && !isPending) setConfirmOpen(false);
 				}}
+				tone="warning"
 			>
 				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeroIcon icon={Ban} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Annuler {selectedCount} commande{selectedCount > 1 ? "s" : ""} ?
@@ -96,7 +99,6 @@ export function OrdersBulkActionsBar({ presentation = "inline" }: OrdersBulkActi
 							onClick={handleConfirm}
 							disabled={isPending}
 							aria-busy={isPending || undefined}
-							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							Annuler les commandes

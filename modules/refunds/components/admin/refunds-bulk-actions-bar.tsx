@@ -12,6 +12,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -75,8 +76,10 @@ export function RefundsBulkActionsBar({
 				onOpenChange={(next) => {
 					if (!next && !isPending) setConfirmOpen(false);
 				}}
+				tone="success"
 			>
 				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeroIcon icon={CheckCircle} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Approuver {selectedCount} remboursement{selectedCount > 1 ? "s" : ""} ?

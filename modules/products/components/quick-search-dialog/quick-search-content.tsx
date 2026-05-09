@@ -72,7 +72,7 @@ export function QuickSearchContent({
 			</div>
 
 			<div className="min-h-0 flex-1">
-				<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
+				<ScrollFade axis="vertical" hideScrollbar={false} className="h-full overscroll-contain">
 					<div className="space-y-4 p-4">
 						{/* Spell suggestion */}
 						{suggestion && (

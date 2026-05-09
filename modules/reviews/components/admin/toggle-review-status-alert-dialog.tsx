@@ -4,14 +4,15 @@ import { Eye, EyeOff, LoaderCircle } from "lucide-react";
 
 import {
 	ResponsiveAlertDialog,
+	ResponsiveAlertDialogAction,
 	ResponsiveAlertDialogCancel,
 	ResponsiveAlertDialogContent,
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
-import { Button } from "@/shared/components/ui/button";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
 import { useReviewModeration } from "../../hooks/use-review-moderation";
@@ -36,8 +37,13 @@ export function ToggleReviewStatusAlertDialog() {
 	const isPublished = data?.isPublished ?? false;
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={(o) => !o && dialog.close()}>
+		<ResponsiveAlertDialog
+			open={dialog.isOpen}
+			onOpenChange={(o) => !o && dialog.close()}
+			tone={isPublished ? "warning" : "success"}
+		>
 			<ResponsiveAlertDialogContent>
+				<ResponsiveAlertDialogHeroIcon icon={isPublished ? EyeOff : Eye} />
 				<ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogTitle>
 						{isPublished ? "Masquer cet avis ?" : "Publier cet avis ?"}
@@ -60,28 +66,21 @@ export function ToggleReviewStatusAlertDialog() {
 				</ResponsiveAlertDialogHeader>
 				<ResponsiveAlertDialogFooter>
 					<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-					<Button
+					<ResponsiveAlertDialogAction
+						type="button"
 						onClick={() => data && toggleStatus(data.reviewId)}
 						disabled={isPending || !data}
-						variant={isPublished ? "destructive" : "default"}
+						aria-busy={isPending}
 					>
-						{isPending ? (
-							<>
-								<LoaderCircle className="mr-2 size-4 animate-spin" aria-hidden="true" />
-								{isPublished ? "Masquage…" : "Publication…"}
-							</>
-						) : isPublished ? (
-							<>
-								<EyeOff className="mr-2 size-4" aria-hidden="true" />
-								Masquer
-							</>
-						) : (
-							<>
-								<Eye className="mr-2 size-4" aria-hidden="true" />
-								Publier
-							</>
-						)}
-					</Button>
+						{isPending && <LoaderCircle className="motion-safe:animate-spin" aria-hidden="true" />}
+						{isPending
+							? isPublished
+								? "Masquage…"
+								: "Publication…"
+							: isPublished
+								? "Masquer"
+								: "Publier"}
+					</ResponsiveAlertDialogAction>
 				</ResponsiveAlertDialogFooter>
 			</ResponsiveAlertDialogContent>
 		</ResponsiveAlertDialog>

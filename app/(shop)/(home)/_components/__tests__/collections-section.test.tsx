@@ -173,6 +173,14 @@ describe("CollectionsSection", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("collections-subtitle");
 	});
 
+	it("applies viewTransitionName for View Transitions API", async () => {
+		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
+		render(await CollectionsSection());
+
+		const section = document.getElementById("collections");
+		expect(section?.style.viewTransitionName).toBe("collections-section");
+	});
+
 	it("renders h2 title 'Les dernières collections'", async () => {
 		mockGetCollections.mockResolvedValue(mockReturn(makeCollections(4)));
 		render(await CollectionsSection());

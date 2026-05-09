@@ -33,7 +33,11 @@ export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 						<span className="font-display text-foreground text-2xl font-medium">
 							{sku.inventory}
 						</span>
-						<Badge variant={stockVariant} aria-label={getStockAriaLabel(sku.inventory)}>
+						<Badge
+							variant={stockVariant}
+							aria-label={getStockAriaLabel(sku.inventory)}
+							style={{ viewTransitionName: `sku-stock-${sku.id}` }}
+						>
 							{sku.inventory === 0
 								? "Rupture"
 								: stockVariant === "destructive"

@@ -85,7 +85,13 @@ export interface UploadProgress {
 	/** Number of files waiting in queue */
 	queued: number;
 	/** Current phase */
-	phase: "validating" | "compressing" | "generating-thumbnails" | "uploading" | "done";
+	phase:
+		| "validating"
+		| "compressing"
+		| "generating-thumbnails"
+		| "uploading"
+		| "finalizing"
+		| "done";
 	/** Per-file progress entries (opt-in, keeps the total stable even after failures) */
 	files?: FileProgress[];
 }

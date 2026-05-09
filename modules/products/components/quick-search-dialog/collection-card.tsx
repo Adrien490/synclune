@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Layers } from "lucide-react";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import type { QuickSearchCollection } from "./constants";
 import { HighlightMatch } from "./search-result-item";
@@ -26,17 +28,29 @@ export function CollectionCard({
 	query,
 }: CollectionCardProps) {
 	const isCompact = variant === "compact";
+	const router = useRouter();
+	const href = `/collections/${collection.slug}`;
+	const thumbStyle = { viewTransitionName: `collection-thumb-${collection.slug}` };
+
+	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		// Let the browser handle modifier clicks (new tab, etc.)
+		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+		event.preventDefault();
+		onSelect();
+		withViewTransition(() => router.push(href));
+	};
 
 	return (
 		<Tap scale={0.97}>
 			<Link
-				href={`/collections/${collection.slug}`}
-				onClick={onSelect}
+				href={href}
+				onClick={handleClick}
 				data-active={undefined}
 				role="option"
 				aria-selected={false}
 				className={cn(
 					"flex items-center rounded-xl text-left transition-all",
+					"touch-manipulation",
 					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					"data-[active=true]:bg-muted",
 					isCompact
@@ -52,7 +66,10 @@ export function CollectionCard({
 					<>
 						<div className="flex min-w-0 items-center gap-2">
 							{collection.image ? (
-								<div className="bg-muted size-8 shrink-0 overflow-hidden rounded-lg">
+								<div
+									className="bg-muted size-8 shrink-0 overflow-hidden rounded-lg"
+									style={thumbStyle}
+								>
 									<Image
 										src={collection.image.url}
 										alt=""
@@ -77,7 +94,10 @@ export function CollectionCard({
 				) : (
 					<>
 						{collection.image ? (
-							<div className="bg-muted size-10 shrink-0 overflow-hidden rounded-lg">
+							<div
+								className="bg-muted size-10 shrink-0 overflow-hidden rounded-lg"
+								style={thumbStyle}
+							>
 								<Image
 									src={collection.image.url}
 									alt=""

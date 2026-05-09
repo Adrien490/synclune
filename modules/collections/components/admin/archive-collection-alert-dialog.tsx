@@ -9,11 +9,12 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { LoaderCircle } from "lucide-react";
+import { Archive, ArchiveRestore, LoaderCircle } from "lucide-react";
 
 export const ARCHIVE_COLLECTION_DIALOG_ID = "archive-collection";
 
@@ -45,12 +46,17 @@ export function ArchiveCollectionAlertDialog() {
 		: CollectionStatus.PUBLIC;
 
 	return (
-		<ResponsiveAlertDialog open={archiveDialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={archiveDialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone={isArchiving ? "warning" : "success"}
+		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={archiveDialog.data?.collectionId ?? ""} />
 					<input type="hidden" name="status" value={targetStatus} />
 
+					<ResponsiveAlertDialogHeroIcon icon={isArchiving ? Archive : ArchiveRestore} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isArchiving ? "Archiver la collection" : "Restaurer la collection"}
@@ -88,12 +94,7 @@ export function ArchiveCollectionAlertDialog() {
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-							className={isArchiving ? "bg-orange-600 text-white hover:bg-orange-700" : undefined}
-						>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending
 								? isArchiving

@@ -189,34 +189,46 @@ export function QuickSearchDialog({
 	const handleClose = () => {
 		close();
 		reset();
+		setDragOffset(0);
+		setIsDragging(false);
 	};
 
 	// Swipe-down-to-dismiss on mobile (triggered from header drag handle area)
 	const touchStartYRef = useRef<number | null>(null);
 	const touchDeltaYRef = useRef(0);
+	const [dragOffset, setDragOffset] = useState(0);
+	const [isDragging, setIsDragging] = useState(false);
 	const handleHeaderTouchStart = (e: React.TouchEvent<HTMLElement>) => {
 		const y = e.touches[0]?.clientY;
 		if (typeof y === "number") {
 			touchStartYRef.current = y;
 			touchDeltaYRef.current = 0;
+			setIsDragging(true);
 		}
 	};
 	const handleHeaderTouchMove = (e: React.TouchEvent<HTMLElement>) => {
 		if (touchStartYRef.current === null) return;
 		const y = e.touches[0]?.clientY;
 		if (typeof y === "number") {
-			touchDeltaYRef.current = y - touchStartYRef.current;
+			const raw = y - touchStartYRef.current;
+			touchDeltaYRef.current = raw;
+			// Rubber band upward (negative): apply 0.3 dampening; downward: 1:1
+			const offset = raw < 0 ? raw * 0.3 : raw;
+			setDragOffset(offset);
 		}
 	};
 	const handleHeaderTouchEnd = () => {
 		const delta = touchDeltaYRef.current;
 		touchStartYRef.current = null;
 		touchDeltaYRef.current = 0;
+		setIsDragging(false);
 		// Threshold: 80px downward swipe from header triggers close
 		if (delta > 80) {
 			triggerHaptic("medium");
 			handleClose();
 		}
+		// Snap back to 0 (transition handled by !isDragging)
+		setDragOffset(0);
 	};
 
 	return (
@@ -233,10 +245,14 @@ export function QuickSearchDialog({
 					triggerRef.current?.focus();
 				}}
 				aria-busy={isPending}
+				style={{
+					transform: dragOffset !== 0 ? `translateY(${dragOffset}px)` : undefined,
+					transition: isDragging ? "none" : "transform 200ms cubic-bezier(0.32, 0.72, 0, 1)",
+				}}
 				className={cn(
 					"group/search",
-					// Mobile: bottom-sheet pleine hauteur (100dvh)
-					"fixed inset-0 top-0 right-0 bottom-0 left-0 h-dvh w-full max-w-none translate-x-0 translate-y-0",
+					// Mobile: bottom-sheet pleine hauteur (suit le clavier via --vvh, fallback 100dvh)
+					"fixed inset-0 top-0 right-0 bottom-0 left-0 h-[var(--vvh,100dvh)] w-full max-w-none translate-x-0 translate-y-0",
 					"overflow-hidden rounded-none border-0",
 					"motion-safe:data-[state=open]:slide-in-from-bottom motion-safe:data-[state=closed]:slide-out-to-bottom",
 					"motion-safe:data-[state=open]:zoom-in-100 motion-safe:data-[state=closed]:zoom-out-100",
@@ -396,7 +412,7 @@ export function QuickSearchDialog({
 					aria-label="Résultats de recherche"
 					tabIndex={-1}
 					className={cn(
-						"min-h-0 flex-1 overflow-hidden",
+						"min-h-0 flex-1 overflow-hidden overscroll-contain",
 						"group-has-[[data-pending]]/search:opacity-50",
 						"group-has-[[data-pending]]/search:pointer-events-none",
 						"transition-opacity duration-200",

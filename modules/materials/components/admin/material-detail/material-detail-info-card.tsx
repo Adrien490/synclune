@@ -24,7 +24,10 @@ export function MaterialDetailInfoCard({ material }: MaterialDetailInfoCardProps
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Statut</dt>
 						<dd>
-							<Badge variant={material.isActive ? "default" : "secondary"}>
+							<Badge
+								variant={material.isActive ? "default" : "secondary"}
+								style={{ viewTransitionName: `material-status-${material.id}` }}
+							>
 								{material.isActive ? "Actif" : "Inactif"}
 							</Badge>
 						</dd>

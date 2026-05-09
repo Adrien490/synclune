@@ -13,6 +13,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -90,8 +91,10 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
+				tone={isPromote ? "warning" : "info"}
 			>
 				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeroIcon icon={isPromote ? Shield : ShieldOff} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isPromote
@@ -111,11 +114,6 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 							onClick={() => pendingAction && handleConfirm(pendingAction)}
 							disabled={isPending}
 							aria-busy={isPending || undefined}
-							className={
-								isPromote
-									? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-									: undefined
-							}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							{isPromote ? "Promouvoir" : "Rétrograder"}

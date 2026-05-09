@@ -53,6 +53,7 @@ export function ReviewDetailPage({ review }: ReviewDetailPageProps) {
 						variant={isPublished ? "default" : "secondary"}
 						role="status"
 						aria-label={`Statut : ${REVIEW_STATUS_LABELS[review.status]}`}
+						style={{ viewTransitionName: `review-status-${review.id}` }}
 					>
 						{isPublished ? (
 							<CircleCheck className="mr-1 size-3" aria-hidden="true" />

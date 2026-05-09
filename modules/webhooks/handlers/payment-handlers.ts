@@ -20,6 +20,7 @@ import {
 	processOrderFromPaymentIntent,
 	buildPostCheckoutTasksFromPI,
 } from "../services/checkout.service";
+import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
  * Resolves orderId from PI metadata.
@@ -59,6 +60,12 @@ export async function handlePaymentSuccess(
 		} catch (error) {
 			logger.error(`❌ [WEBHOOK] Error processing PI flow for order ${orderId}:`, error, {
 				service: "webhook",
+			});
+			captureWebhookError(error, {
+				handler: "handlePaymentSuccess",
+				eventType: "payment_intent.succeeded",
+				orderId,
+				paymentIntentId: paymentIntent.id,
 			});
 			// Send immediate admin alert — payment was received but order processing failed
 			try {
@@ -167,6 +174,12 @@ export async function handlePaymentFailure(
 		logger.error(`❌ [WEBHOOK] Error handling payment failure for order ${orderId}:`, error, {
 			service: "webhook",
 		});
+		captureWebhookError(error, {
+			handler: "handlePaymentFailure",
+			eventType: "payment_intent.payment_failed",
+			orderId,
+			paymentIntentId: paymentIntent.id,
+		});
 		throw error;
 	}
 }
@@ -244,6 +257,12 @@ export async function handlePaymentCanceled(
 		logger.error(`❌ [WEBHOOK] Error handling payment cancelation for order ${orderId}:`, error, {
 			service: "webhook",
 		});
+		captureWebhookError(error, {
+			handler: "handlePaymentCanceled",
+			eventType: "payment_intent.canceled",
+			orderId,
+			paymentIntentId: paymentIntent.id,
+		});
 		throw error;
 	}
 }
@@ -257,59 +276,72 @@ export async function handlePaymentCanceled(
 export async function handleInvoicePaymentFailed(
 	invoice: Stripe.Invoice,
 ): Promise<WebhookHandlerResult> {
-	// Try to find the related order via invoice metadata or customer email
 	const orderId = invoice.metadata?.orderId;
-	const order = orderId
-		? await prisma.order.findFirst({
-				where: { id: orderId, ...notDeleted },
-				select: {
-					id: true,
-					orderNumber: true,
-					customerEmail: true,
-					stripePaymentIntentId: true,
+
+	try {
+		// Try to find the related order via invoice metadata or customer email
+		const order = orderId
+			? await prisma.order.findFirst({
+					where: { id: orderId, ...notDeleted },
+					select: {
+						id: true,
+						orderNumber: true,
+						customerEmail: true,
+						stripePaymentIntentId: true,
+					},
+				})
+			: null;
+
+		const orderNumber = order?.orderNumber ?? invoice.number ?? "N/A";
+		const customerEmail = order?.customerEmail ?? invoice.customer_email ?? "N/A";
+		const amount = invoice.amount_due || 0;
+
+		// Extract error message from the invoice
+		const errorMessage =
+			invoice.last_finalization_error?.message ??
+			`Invoice payment failed (status: ${invoice.status})`;
+
+		const dashboardUrl = order
+			? buildUrl(ROUTES.ADMIN.ORDER_DETAIL(order.id))
+			: buildUrl(ROUTES.ADMIN.ORDERS);
+
+		logger.info(`❌ [WEBHOOK] Invoice payment failed for order ${orderNumber} (${amount} cents)`, {
+			service: "webhook",
+		});
+
+		return {
+			success: true,
+			tasks: [
+				{
+					type: "ADMIN_INVOICE_FAILED_ALERT",
+					data: {
+						orderNumber,
+						customerEmail,
+						amount,
+						errorMessage,
+						stripePaymentIntentId: order?.stripePaymentIntentId ?? undefined,
+						dashboardUrl,
+					},
 				},
-			})
-		: null;
-
-	const orderNumber = order?.orderNumber ?? invoice.number ?? "N/A";
-	const customerEmail = order?.customerEmail ?? invoice.customer_email ?? "N/A";
-	const amount = invoice.amount_due || 0;
-
-	// Extract error message from the invoice
-	const errorMessage =
-		invoice.last_finalization_error?.message ??
-		`Invoice payment failed (status: ${invoice.status})`;
-
-	const dashboardUrl = order
-		? buildUrl(ROUTES.ADMIN.ORDER_DETAIL(order.id))
-		: buildUrl(ROUTES.ADMIN.ORDERS);
-
-	logger.info(`❌ [WEBHOOK] Invoice payment failed for order ${orderNumber} (${amount} cents)`, {
-		service: "webhook",
-	});
-
-	return {
-		success: true,
-		tasks: [
-			{
-				type: "ADMIN_INVOICE_FAILED_ALERT",
-				data: {
-					orderNumber,
-					customerEmail,
-					amount,
-					errorMessage,
-					stripePaymentIntentId: order?.stripePaymentIntentId ?? undefined,
-					dashboardUrl,
+				{
+					type: "INVALIDATE_CACHE",
+					tags: [
+						ORDERS_CACHE_TAGS.LIST,
+						SHARED_CACHE_TAGS.ADMIN_BADGES,
+						SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
+					],
 				},
-			},
-			{
-				type: "INVALIDATE_CACHE",
-				tags: [
-					ORDERS_CACHE_TAGS.LIST,
-					SHARED_CACHE_TAGS.ADMIN_BADGES,
-					SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST,
-				],
-			},
-		],
-	};
+			],
+		};
+	} catch (error) {
+		logger.error(`❌ [WEBHOOK] Error handling invoice.payment_failed:`, error, {
+			service: "webhook",
+		});
+		captureWebhookError(error, {
+			handler: "handleInvoicePaymentFailed",
+			eventType: "invoice.payment_failed",
+			orderId,
+		});
+		throw error;
+	}
 }

@@ -8,6 +8,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useDuplicateProduct } from "@/modules/products/hooks/use-duplicate-product";
@@ -15,7 +16,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
-import { LoaderCircle } from "lucide-react";
+import { Copy, LoaderCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export const DUPLICATE_PRODUCT_DIALOG_ID = "duplicate-product";
@@ -55,11 +56,16 @@ export function DuplicateProductAlertDialog() {
 	};
 
 	return (
-		<ResponsiveAlertDialog open={duplicateDialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={duplicateDialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone="info"
+		>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="productId" value={duplicateDialog.data?.productId ?? ""} />
 
+					<ResponsiveAlertDialogHeroIcon icon={Copy} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Dupliquer ce bijou</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription asChild>

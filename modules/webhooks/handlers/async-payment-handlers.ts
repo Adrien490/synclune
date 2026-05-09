@@ -8,6 +8,7 @@ import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
+import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
  * Gère les paiements asynchrones réussis (SEPA, Sofort, etc.)
@@ -18,9 +19,9 @@ export async function handleAsyncPaymentSucceeded(
 ): Promise<WebhookHandlerResult | null> {
 	logger.info(`🏦 [WEBHOOK] Async payment succeeded: ${session.id}`, { service: "webhook" });
 
-	try {
-		const orderId = session.metadata?.orderId ?? session.client_reference_id;
+	const orderId = session.metadata?.orderId ?? session.client_reference_id ?? undefined;
 
+	try {
 		if (!orderId) {
 			logger.error("❌ [WEBHOOK] No order ID found in async payment session", undefined, {
 				service: "webhook",
@@ -39,6 +40,12 @@ export async function handleAsyncPaymentSucceeded(
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling async payment succeeded:`, error, {
 			service: "webhook",
+		});
+		captureWebhookError(error, {
+			handler: "handleAsyncPaymentSucceeded",
+			eventType: "checkout.session.async_payment_succeeded",
+			orderId,
+			checkoutSessionId: session.id,
 		});
 		throw error;
 	}
@@ -66,9 +73,9 @@ export async function handleAsyncPaymentFailed(
 ): Promise<WebhookHandlerResult> {
 	logger.info(`🚫 [WEBHOOK] Async payment failed: ${session.id}`, { service: "webhook" });
 
-	try {
-		const orderId = session.metadata?.orderId ?? session.client_reference_id;
+	const orderId = session.metadata?.orderId ?? session.client_reference_id ?? undefined;
 
+	try {
 		if (!orderId) {
 			logger.error("❌ [WEBHOOK] No order ID found in failed async payment session", undefined, {
 				service: "webhook",
@@ -201,6 +208,12 @@ export async function handleAsyncPaymentFailed(
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling async payment failed:`, error, {
 			service: "webhook",
+		});
+		captureWebhookError(error, {
+			handler: "handleAsyncPaymentFailed",
+			eventType: "checkout.session.async_payment_failed",
+			orderId,
+			checkoutSessionId: session.id,
 		});
 		throw error;
 	}

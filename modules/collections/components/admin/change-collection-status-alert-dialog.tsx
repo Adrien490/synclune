@@ -9,12 +9,14 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
+	type ResponsiveAlertTone,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useUpdateCollectionStatus } from "@/modules/collections/hooks/use-update-collection-status";
-import { cn } from "@/shared/utils/cn";
-import { LoaderCircle } from "lucide-react";
+import { Archive, FileText, Globe, LoaderCircle } from "lucide-react";
+import type { ComponentType } from "react";
 
 export const CHANGE_COLLECTION_STATUS_DIALOG_ID = "change-collection-status";
 
@@ -26,26 +28,37 @@ interface ChangeCollectionStatusData {
 	[key: string]: unknown;
 }
 
-const STATUS_CONFIG = {
+const STATUS_CONFIG: Record<
+	CollectionStatus,
+	{
+		label: string;
+		tone: ResponsiveAlertTone;
+		icon: ComponentType<{ className?: string }>;
+		description: string;
+	}
+> = {
 	[CollectionStatus.DRAFT]: {
 		label: "Brouillon",
-		color: "bg-gray-600 hover:bg-gray-700",
+		tone: "neutral",
+		icon: FileText,
 		description:
 			"La collection sera sauvegardee comme brouillon. Elle ne sera pas visible sur la boutique mais restera accessible dans le dashboard pour modifications.",
 	},
 	[CollectionStatus.PUBLIC]: {
 		label: "Public",
-		color: "bg-green-600 hover:bg-green-700",
+		tone: "success",
+		icon: Globe,
 		description:
 			"La collection sera publiee sur la boutique et visible par tous les visiteurs. Assurez-vous que toutes les informations sont correctes.",
 	},
 	[CollectionStatus.ARCHIVED]: {
 		label: "Archivee",
-		color: "bg-orange-600 hover:bg-orange-700",
+		tone: "warning",
+		icon: Archive,
 		description:
 			"La collection sera archivee. Elle ne sera plus visible sur la boutique mais restera accessible dans le dashboard. Vous pourrez la restaurer a tout moment.",
 	},
-} as const;
+};
 
 export function ChangeCollectionStatusAlertDialog() {
 	const dialog = useAlertDialog<ChangeCollectionStatusData>(CHANGE_COLLECTION_STATUS_DIALOG_ID);
@@ -72,12 +85,13 @@ export function ChangeCollectionStatusAlertDialog() {
 		(currentStatus !== CollectionStatus.PUBLIC && targetStatus === CollectionStatus.PUBLIC);
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone={config.tone}>
 			<ResponsiveAlertDialogContent>
 				<form action={action}>
 					<input type="hidden" name="id" value={dialog.data?.collectionId ?? ""} />
 					<input type="hidden" name="status" value={targetStatus} />
 
+					<ResponsiveAlertDialogHeroIcon icon={config.icon} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							Changer le statut en &quot;{config.label}&quot;
@@ -107,12 +121,7 @@ export function ChangeCollectionStatusAlertDialog() {
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
 						<ResponsiveAlertDialogCancel disabled={isPending}>Annuler</ResponsiveAlertDialogCancel>
-						<ResponsiveAlertDialogAction
-							type="submit"
-							disabled={isPending}
-							aria-busy={isPending}
-							className={cn("text-white", config.color)}
-						>
+						<ResponsiveAlertDialogAction type="submit" disabled={isPending} aria-busy={isPending}>
 							{isPending && <LoaderCircle className="animate-spin" />}
 							{isPending ? "Changement en cours…" : `Changer en ${config.label}`}
 						</ResponsiveAlertDialogAction>

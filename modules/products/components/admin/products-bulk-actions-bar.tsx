@@ -13,6 +13,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -133,8 +134,10 @@ export function ProductsBulkActionsBar({ presentation = "inline" }: ProductsBulk
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
+				tone={dialogIsArchive ? "warning" : "success"}
 			>
 				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeroIcon icon={dialogIsArchive ? ArchiveX : ArchiveRestore} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{dialogIsArchive
@@ -162,11 +165,6 @@ export function ProductsBulkActionsBar({ presentation = "inline" }: ProductsBulk
 							onClick={() => pendingAction && handleConfirm(pendingAction)}
 							disabled={isPending}
 							aria-busy={isPending || undefined}
-							className={
-								dialogIsArchive
-									? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-									: undefined
-							}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
 							{dialogIsArchive ? "Archiver" : "Restaurer"}

@@ -26,6 +26,15 @@ describe("escapeLikePattern", () => {
 		expect(escapeLikePattern("%_\\")).toBe("\\%\\_\\\\");
 	});
 
+	it("neutralizes SQL LIKE wildcards in injection-like payloads", () => {
+		// Quotes / semicolons remain (Prisma.sql parametrizes — safe), but %, _ and \ are escaped.
+		expect(escapeLikePattern("'; DROP TABLE--%_\\")).toBe("'; DROP TABLE--\\%\\_\\\\");
+	});
+
+	it("preserves emoji and multi-byte unicode unchanged", () => {
+		expect(escapeLikePattern("café 🎃 日本")).toBe("café 🎃 日本");
+	});
+
 	it("handles empty string", () => {
 		expect(escapeLikePattern("")).toBe("");
 	});
@@ -116,6 +125,35 @@ describe("splitSearchTerms", () => {
 
 	it("handles unicode characters", () => {
 		expect(splitSearchTerms("bijoux café résine")).toEqual(["bijoux", "café", "résine"]);
+	});
+
+	// Defensive coverage — query terms originate from user input.
+	describe("malicious / hostile inputs", () => {
+		it("returns empty array when input is whitespace-only at scale (DoS guard)", () => {
+			expect(splitSearchTerms(" ".repeat(1000))).toEqual([]);
+		});
+
+		it("survives mixed whitespace bomb (tabs, newlines, spaces)", () => {
+			expect(splitSearchTerms("\t\n\r ".repeat(50))).toEqual([]);
+		});
+
+		it("rejects huge query exceeding MAX_SEARCH_LENGTH (1000 chars)", () => {
+			expect(splitSearchTerms("a".repeat(1000))).toEqual([]);
+		});
+
+		it("treats a SQL injection payload as plain words (no special parsing)", () => {
+			// MAX_SEARCH_LENGTH guards length; here we assert no crash + tokens preserved.
+			const payload = "'; DROP TABLE";
+			expect(splitSearchTerms(payload)).toEqual(["';", "DROP", "TABLE"]);
+		});
+
+		it("preserves emoji as a single token", () => {
+			expect(splitSearchTerms("🎃 collier")).toEqual(["🎃", "collier"]);
+		});
+
+		it("preserves multi-script unicode (CJK, Cyrillic) as words", () => {
+			expect(splitSearchTerms("日本語 collier кольцо")).toEqual(["日本語", "collier", "кольцо"]);
+		});
 	});
 });
 

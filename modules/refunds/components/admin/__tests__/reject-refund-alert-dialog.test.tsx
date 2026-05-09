@@ -109,7 +109,8 @@ vi.mock("@/shared/components/ui/label", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
+vi.mock("lucide-react", async (importOriginal) => ({
+	...((await importOriginal()) as Record<string, unknown>),
 	LoaderCircle: ({ className }: { className?: string }) => (
 		<svg data-testid="loader-circle" className={className} />
 	),

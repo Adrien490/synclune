@@ -9,6 +9,7 @@ import { ConditionalAnalytics } from "@/shared/components/conditional-analytics"
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
+import { SentryUserBridge } from "@/shared/components/sentry-user-bridge";
 import { Suspense } from "react";
 import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import type { Metadata } from "next";
@@ -30,6 +31,11 @@ export const metadata: Metadata = {
 async function MobileBottomNavWithAuth() {
 	const session = await getSession().catch(() => null);
 	return <ShopMobileBottomNav isAuthenticated={Boolean(session?.user)} />;
+}
+
+async function SentryUserBridgeWithAuth() {
+	const session = await getSession().catch(() => null);
+	return <SentryUserBridge userId={session?.user.id} role={session?.user.role} />;
 }
 
 export default async function AccountLayout({ children }: { children: React.ReactNode }) {
@@ -56,6 +62,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
 			<CartAndSkuWrapper />
 			<Suspense fallback={null}>
 				<MobileBottomNavWithAuth />
+			</Suspense>
+			<Suspense fallback={null}>
+				<SentryUserBridgeWithAuth />
 			</Suspense>
 			<CookieBanner />
 			<ConditionalAnalytics />

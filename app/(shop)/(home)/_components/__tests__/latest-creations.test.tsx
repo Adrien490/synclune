@@ -121,6 +121,13 @@ describe("LatestCreations", () => {
 		expect(section?.getAttribute("aria-describedby")).toBe("latest-creations-subtitle");
 	});
 
+	it("applies viewTransitionName for View Transitions API", async () => {
+		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
+
+		const section = document.getElementById("latest-creations");
+		expect(section?.style.viewTransitionName).toBe("latest-creations");
+	});
+
 	it("renders h2 title 'Nouvelles créations'", async () => {
 		render(await LatestCreations({ productsPromise: makePromise(mockProducts) }));
 
@@ -138,10 +145,23 @@ describe("LatestCreations", () => {
 		expect(subtitle?.textContent).toContain("Tout juste sorties de l'atelier");
 	});
 
-	it("returns null when products array is empty", async () => {
-		const result = await LatestCreations({ productsPromise: makePromise([]) });
+	it("renders empty state with fallback CTA when products array is empty", async () => {
+		render(await LatestCreations({ productsPromise: makePromise([]) }));
 
-		expect(result).toBeNull();
+		// Header is preserved
+		const heading = screen.getByRole("heading", { level: 2 });
+		expect(heading.textContent).toContain("Nouvelles créations");
+
+		// Subtitle swaps to "arrivent très bientôt"
+		const subtitle = document.getElementById("latest-creations-subtitle");
+		expect(subtitle?.textContent).toContain("De nouveaux bijoux arrivent très bientôt");
+
+		// No product cards
+		expect(screen.queryByTestId(/^product-card-/)).not.toBeInTheDocument();
+
+		// Fallback CTA targets /produits (full catalog)
+		const ctaLink = screen.getByText("Voir toute la boutique");
+		expect(ctaLink.closest("a")).toHaveAttribute("href", "/produits");
 	});
 
 	it("renders correct number of ProductCard components", async () => {

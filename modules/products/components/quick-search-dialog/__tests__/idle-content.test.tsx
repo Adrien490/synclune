@@ -57,6 +57,18 @@ vi.mock("@/shared/utils/format-euro", () => ({
 	formatEuro: (n: number) => `${(n / 100).toFixed(2)} €`,
 }));
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn(), prefetch: vi.fn() }),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (cb: () => void) => cb(),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: vi.fn(),
+}));
+
 // Motion mocks — AnimatePresence and m.div just render children
 vi.mock("motion/react", () => ({
 	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,

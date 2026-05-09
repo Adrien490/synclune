@@ -8,11 +8,11 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
-import { cn } from "@/shared/utils/cn";
-import { LoaderCircle, Star } from "lucide-react";
+import { LoaderCircle, Star, StarOff } from "lucide-react";
 import { useSetFeaturedProduct } from "../../hooks/use-set-featured-product";
 
 export const SET_FEATURED_PRODUCT_DIALOG_ID = "set-featured-product";
@@ -54,16 +54,15 @@ export function SetFeaturedProductAlertDialog() {
 	const isFeatured = dialog.data?.isFeatured ?? false;
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog
+			open={dialog.isOpen}
+			onOpenChange={handleOpenChange}
+			tone={isFeatured ? "warning" : "info"}
+		>
 			<ResponsiveAlertDialogContent>
+				<ResponsiveAlertDialogHeroIcon icon={isFeatured ? StarOff : Star} />
 				<ResponsiveAlertDialogHeader>
-					<ResponsiveAlertDialogTitle className="flex items-center gap-2">
-						<Star
-							className={cn(
-								"size-5",
-								isFeatured ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground",
-							)}
-						/>
+					<ResponsiveAlertDialogTitle>
 						{isFeatured ? "Retirer le produit vedette" : "Definir le produit vedette"}
 					</ResponsiveAlertDialogTitle>
 					<ResponsiveAlertDialogDescription asChild>

@@ -124,6 +124,22 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 		disabled?: boolean;
 		type?: string;
 	}) => <button disabled={disabled}>{children}</button>,
+	AlertDialogAction: ({
+		children,
+		disabled,
+		onClick,
+		type,
+	}: {
+		children: React.ReactNode;
+		disabled?: boolean;
+		onClick?: (e: React.MouseEvent) => void;
+		type?: "submit" | "button" | "reset";
+	}) => (
+		<button type={type} disabled={disabled} onClick={onClick}>
+			{children}
+		</button>
+	),
+	AlertDialogTrigger: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock("next/link", () => ({
@@ -142,7 +158,8 @@ vi.mock("next/link", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
+vi.mock("lucide-react", async (importOriginal) => ({
+	...((await importOriginal()) as Record<string, unknown>),
 	CircleCheck: () => <svg data-testid="icon-circle-check" />,
 	CircleX: () => <svg data-testid="icon-circle-x" />,
 	Download: () => <svg data-testid="icon-download" />,

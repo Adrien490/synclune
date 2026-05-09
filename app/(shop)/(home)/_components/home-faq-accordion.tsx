@@ -20,6 +20,9 @@ interface HomeFaqAccordionProps {
 	items: ReadonlyArray<HomeFaqAccordionItem>;
 }
 
+// Matches the 280ms grid-rows transition in AccordionContent — scroll once expanded
+const EXPAND_ANIMATION_MS = 320;
+
 export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
 	const haptic = useHaptic();
 
@@ -30,11 +33,24 @@ export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
 			className="mx-auto max-w-3xl"
 			aria-label="Liste des questions fréquentes"
 			onValueChange={(value) => {
-				if (value) haptic("selection");
+				if (!value) return;
+				haptic("selection");
+				const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+				window.setTimeout(() => {
+					document.getElementById(value)?.scrollIntoView({
+						behavior: prefersReducedMotion ? "auto" : "smooth",
+						block: "nearest",
+					});
+				}, EXPAND_ANIMATION_MS);
 			}}
 		>
 			{items.map((item) => (
-				<AccordionItem key={item.id} value={item.id} className="scroll-mt-24 lg:scroll-mt-28">
+				<AccordionItem
+					key={item.id}
+					id={item.id}
+					value={item.id}
+					className="scroll-mt-24 lg:scroll-mt-28"
+				>
 					<AccordionTrigger
 						headingLevel={3}
 						className="text-base data-[state=open]:font-medium sm:text-lg"

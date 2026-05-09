@@ -12,6 +12,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -89,8 +90,10 @@ export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActi
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
+				tone={isActivate ? "success" : "warning"}
 			>
 				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeroIcon icon={isActivate ? Power : PowerOff} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActivate

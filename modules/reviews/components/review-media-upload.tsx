@@ -202,6 +202,47 @@ export function ReviewMediaUpload({
 						<UploadDropzone
 							endpoint="reviewMedia"
 							aria-label="Zone d'upload des photos pour l'avis"
+							onBeforeUploadBegin={(files) => {
+								const remainingSlots = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length;
+								const accepted: File[] = [];
+								const wrongType: string[] = [];
+								const oversized: string[] = [];
+
+								for (const file of files) {
+									if (accepted.length >= remainingSlots) break;
+									if (!file.type.startsWith("image/")) {
+										wrongType.push(file.name);
+										continue;
+									}
+									if (file.size > REVIEW_MAX_SIZE) {
+										oversized.push(file.name);
+										continue;
+									}
+									accepted.push(file);
+								}
+
+								if (wrongType.length > 0) {
+									toast.warning(`${wrongType.length} fichier(s) ignoré(s)`, {
+										description: "Seules les images sont acceptées",
+									});
+								}
+								if (oversized.length > 0) {
+									toast.warning(`${oversized.length} fichier(s) trop volumineux`, {
+										description: "Maximum 4 Mo par photo",
+									});
+								}
+								if (files.length > remainingSlots && accepted.length === remainingSlots) {
+									const dropped =
+										files.length - remainingSlots - wrongType.length - oversized.length;
+									if (dropped > 0) {
+										toast.warning(`Limite de ${REVIEW_CONFIG.MAX_MEDIA_COUNT} photos`, {
+											description: `${dropped} fichier(s) ignoré(s)`,
+										});
+									}
+								}
+
+								return accepted;
+							}}
 							onUploadBegin={() => haptic("light")}
 							onClientUploadComplete={(res) => {
 								haptic("success");

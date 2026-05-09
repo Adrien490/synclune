@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { cacheLife, cacheTag } from "next/cache";
 
 import { Prisma, type ProductStatus } from "@/app/generated/prisma/client";
@@ -152,76 +153,87 @@ export async function fuzzySearchProductIds(
 
 	const startTime = performance.now();
 
-	try {
-		// Build per-word WHERE fragments (AND: every word must match)
-		// Each word is expanded with synonyms (OR between variants)
-		const whereFragments = words.map(buildWordGroupWhereFragment);
-		const whereClause = Prisma.join(whereFragments, " AND ");
+	return Sentry.startSpan(
+		{ name: "fuzzy-search.products", op: "db.query" },
+		async (span): Promise<FuzzySearchReturn> => {
+			span.setAttribute("search.word_count", words.length);
+			span.setAttribute("search.has_status_filter", Boolean(status));
 
-		// Build per-word SCORE fragments (sum of per-word best scores)
-		const scoreFragments = words.map(buildWordGroupScoreFragment);
-		const scoreExpr =
-			scoreFragments.length === 1
-				? scoreFragments[0]
-				: Prisma.sql`(${Prisma.join(scoreFragments, " + ")})`;
+			try {
+				// Build per-word WHERE fragments (AND: every word must match)
+				// Each word is expanded with synonyms (OR between variants)
+				const whereFragments = words.map(buildWordGroupWhereFragment);
+				const whereClause = Prisma.join(whereFragments, " AND ");
 
-		// Transaction with SET LOCAL to isolate the similarity threshold
-		// and statement_timeout to cancel runaway queries server-side
-		const queryPromise = prisma.$transaction(async (tx) => {
-			await setTrigramThreshold(tx, threshold);
-			await setStatementTimeout(tx, FUZZY_TIMEOUT_MS);
+				// Build per-word SCORE fragments (sum of per-word best scores)
+				const scoreFragments = words.map(buildWordGroupScoreFragment);
+				const scoreExpr =
+					scoreFragments.length === 1
+						? scoreFragments[0]
+						: Prisma.sql`(${Prisma.join(scoreFragments, " + ")})`;
 
-			type ResultWithCount = FuzzySearchResult & { totalCount: bigint };
-			return tx.$queryRaw<ResultWithCount[]>`
-				WITH matched AS (
-					SELECT
-						p.id as "productId",
-						${scoreExpr} as score
-					FROM "Product" p
-					WHERE
-						p."deletedAt" IS NULL
-						${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
-						AND ${whereClause}
-				)
-				SELECT "productId", score, COUNT(*) OVER() as "totalCount"
-				FROM matched
-				ORDER BY score DESC
-				LIMIT ${limit}
-			`;
-		});
+				// Transaction with SET LOCAL to isolate the similarity threshold
+				// and statement_timeout to cancel runaway queries server-side
+				const queryPromise = prisma.$transaction(async (tx) => {
+					await setTrigramThreshold(tx, threshold);
+					await setStatementTimeout(tx, FUZZY_TIMEOUT_MS);
 
-		// Client-side timeout (complements server-side SET LOCAL statement_timeout)
-		let timeoutId: ReturnType<typeof setTimeout>;
-		const timeoutPromise = new Promise<never>((_, reject) => {
-			timeoutId = setTimeout(() => reject(new Error("Fuzzy search timeout")), FUZZY_TIMEOUT_MS);
-		});
+					type ResultWithCount = FuzzySearchResult & { totalCount: bigint };
+					return tx.$queryRaw<ResultWithCount[]>`
+						WITH matched AS (
+							SELECT
+								p.id as "productId",
+								${scoreExpr} as score
+							FROM "Product" p
+							WHERE
+								p."deletedAt" IS NULL
+								${status ? Prisma.sql`AND p.status = ${status}::"ProductStatus"` : Prisma.empty}
+								AND ${whereClause}
+						)
+						SELECT "productId", score, COUNT(*) OVER() as "totalCount"
+						FROM matched
+						ORDER BY score DESC
+						LIMIT ${limit}
+					`;
+				});
 
-		const results = await Promise.race([queryPromise, timeoutPromise]).finally(() => {
-			clearTimeout(timeoutId);
-		});
-		const durationMs = Math.round(performance.now() - startTime);
-		const totalCount = results.length > 0 ? Number(results[0]!.totalCount) : 0;
+				// Client-side timeout (complements server-side SET LOCAL statement_timeout)
+				let timeoutId: ReturnType<typeof setTimeout>;
+				const timeoutPromise = new Promise<never>((_, reject) => {
+					timeoutId = setTimeout(() => reject(new Error("Fuzzy search timeout")), FUZZY_TIMEOUT_MS);
+				});
 
-		if (durationMs > 500) {
-			logger.warn(
-				`Slow fuzzy search | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`,
-				{ service: "fuzzySearchProductIds" },
-			);
-		}
+				const results = await Promise.race([queryPromise, timeoutPromise]).finally(() => {
+					clearTimeout(timeoutId);
+				});
+				const durationMs = Math.round(performance.now() - startTime);
+				const totalCount = results.length > 0 ? Number(results[0]!.totalCount) : 0;
 
-		return {
-			ids: results.map((r) => r.productId),
-			totalCount,
-		};
-	} catch (error) {
-		const durationMs = Math.round(performance.now() - startTime);
-		logger.error(
-			`Fuzzy search error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms`,
-			error,
-			{ service: "fuzzySearchProductIds", durationMs },
-		);
-		return { ids: [], totalCount: 0 };
-	}
+				span.setAttribute("search.result_count", totalCount);
+				span.setAttribute("search.duration_ms", durationMs);
+
+				if (durationMs > 500) {
+					logger.warn(
+						`Slow fuzzy search | term="${sanitizeForLog(searchTerm)}" | results=${totalCount} | duration=${durationMs}ms`,
+						{ service: "fuzzySearchProductIds" },
+					);
+				}
+
+				return {
+					ids: results.map((r) => r.productId),
+					totalCount,
+				};
+			} catch (error) {
+				const durationMs = Math.round(performance.now() - startTime);
+				logger.error(
+					`Fuzzy search error | term="${sanitizeForLog(searchTerm)}" | duration=${durationMs}ms`,
+					error,
+					{ service: "fuzzySearchProductIds", durationMs },
+				);
+				return { ids: [], totalCount: 0 };
+			}
+		},
+	);
 }
 
 /**

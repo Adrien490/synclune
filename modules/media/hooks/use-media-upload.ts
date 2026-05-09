@@ -12,6 +12,7 @@ import {
 	isValidMediaType,
 } from "@/modules/media/utils/upload-helpers";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
+import { deleteUploadThingFile } from "@/modules/media/actions/delete-uploadthing-file";
 import { withRetry } from "@/shared/utils/with-retry";
 import { toast } from "@/shared/utils/toast";
 import type {
@@ -292,7 +293,19 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			return null;
 		} catch (error) {
 			if (thumbnailUrl) {
-				console.warn("[useMediaUpload] Thumbnail orphelin sera nettoyé par le cron:", thumbnailUrl);
+				// Best-effort synchronous cleanup of orphan thumbnail.
+				// Only catalogMedia uploads videos (reviewMedia rejects them server-side),
+				// and the deleteUploadThingFile action is admin-gated — matches the catalog flow.
+				const orphanUrl = thumbnailUrl;
+				void (async () => {
+					try {
+						const formData = new FormData();
+						formData.append("fileUrl", orphanUrl);
+						await deleteUploadThingFile(undefined, formData);
+					} catch (cleanupError) {
+						console.warn("[useMediaUpload] Cleanup thumbnail orphelin échoué:", cleanupError);
+					}
+				})();
 			}
 			throw error;
 		}
@@ -478,6 +491,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					entry.resolve(batchResults);
 				} catch (error) {
 					if (error instanceof DOMException && error.name === "AbortError") {
+						const keptCount = cumulativeResultsRef.current.length;
 						entry.resolve([]);
 						for (const remaining of queueRef.current) {
 							remaining.resolve([]);
@@ -486,6 +500,13 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 						setQueuedCount(0);
 						setProgress(null);
 						isProcessingRef.current = false;
+						if (keptCount > 0) {
+							toast.info("Upload annulé", {
+								description: `${keptCount} fichier${keptCount > 1 ? "s" : ""} conservé${keptCount > 1 ? "s" : ""}`,
+							});
+						} else {
+							toast.info("Upload annulé");
+						}
 						return;
 					}
 
@@ -496,10 +517,15 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				}
 			}
 
-			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
 			if (cumulativeResultsRef.current.length > 0) {
+				updateProgress({
+					phase: "finalizing",
+					completed: cumulativeCompletedRef.current,
+					queued: 0,
+				});
 				onSuccessRef.current?.(cumulativeResultsRef.current);
 			}
+			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
 
 			doneTimeoutRef.current = setTimeout(() => {
 				doneTimeoutRef.current = null;

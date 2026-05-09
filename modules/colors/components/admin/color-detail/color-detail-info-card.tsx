@@ -23,7 +23,10 @@ export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Statut</dt>
 						<dd>
-							<Badge variant={color.isActive ? "default" : "secondary"}>
+							<Badge
+								variant={color.isActive ? "default" : "secondary"}
+								style={{ viewTransitionName: `color-status-${color.id}` }}
+							>
 								{color.isActive ? "Active" : "Inactive"}
 							</Badge>
 						</dd>

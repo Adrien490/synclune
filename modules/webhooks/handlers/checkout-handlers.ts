@@ -13,6 +13,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
+import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
  * Gère la complétion d'une session checkout
@@ -95,16 +96,23 @@ export async function handleCheckoutSessionCompleted(
 		logger.error("❌ [WEBHOOK] Error handling checkout session completed:", error, {
 			service: "webhook",
 		});
+		const piId =
+			typeof session.payment_intent === "string"
+				? session.payment_intent
+				: session.payment_intent?.id;
+		captureWebhookError(error, {
+			handler: "handleCheckoutSessionCompleted",
+			eventType: "checkout.session.completed",
+			orderId,
+			checkoutSessionId: session.id,
+			paymentIntentId: piId,
+		});
 		// Send immediate admin alert — payment was received but order processing failed
 		try {
 			const order = await prisma.order.findFirst({
 				where: { id: orderId },
 				select: { orderNumber: true, customerEmail: true, total: true },
 			});
-			const piId =
-				typeof session.payment_intent === "string"
-					? session.payment_intent
-					: session.payment_intent?.id;
 			if (order && piId) {
 				await sendAdminOrderProcessingFailedAlert({
 					orderNumber: order.orderNumber,
@@ -167,6 +175,12 @@ export async function handleCheckoutSessionExpired(
 			error,
 			{ service: "webhook" },
 		);
+		captureWebhookError(error, {
+			handler: "handleCheckoutSessionExpired",
+			eventType: "checkout.session.expired",
+			orderId,
+			checkoutSessionId: session.id,
+		});
 		throw error;
 	}
 }

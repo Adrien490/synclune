@@ -304,19 +304,27 @@ export function SortableMediaItem({
 									e.stopPropagation();
 									handleOpenLightbox();
 								}}
-								onMouseEnter={(e) => {
-									if (shouldReduceMotion) return;
-									if (e.currentTarget.readyState === 0) {
-										e.currentTarget.load();
-									}
-									e.currentTarget.play().catch(() => {
-										// Ignore autoplay errors (e.g. user hasn't interacted yet)
-									});
-								}}
-								onMouseLeave={(e) => {
-									e.currentTarget.pause();
-									e.currentTarget.currentTime = 0;
-								}}
+								onMouseEnter={
+									isTouchDevice
+										? undefined
+										: (e) => {
+												if (shouldReduceMotion) return;
+												if (e.currentTarget.readyState === 0) {
+													e.currentTarget.load();
+												}
+												e.currentTarget.play().catch(() => {
+													// Ignore autoplay errors (e.g. user hasn't interacted yet)
+												});
+											}
+								}
+								onMouseLeave={
+									isTouchDevice
+										? undefined
+										: (e) => {
+												e.currentTarget.pause();
+												e.currentTarget.currentTime = 0;
+											}
+								}
 								aria-label={media.altText ?? `Aperçu vidéo ${index + 1}`}
 							>
 								<track kind="captions" srcLang="fr" label="Français" default />

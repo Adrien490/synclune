@@ -4,12 +4,15 @@ import { ChevronRight, Search, X } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { Tap } from "@/shared/components/animations/tap";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import { CollectionCard } from "./collection-card";
 import type { QuickSearchCollection, RecentlyViewedProduct } from "./constants";
@@ -36,14 +39,31 @@ export function IdleContent({
 	isPending,
 }: IdleContentProps) {
 	const hasContent = searches.length > 0 || collections.length > 0 || recentlyViewed.length > 0;
+	const router = useRouter();
 
 	// Defer dialog close to next frame so <Link> navigation starts first
 	const handleNavigateClose = () => {
 		requestAnimationFrame(() => onClose());
 	};
 
+	const handleViewAllCollections = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+		event.preventDefault();
+		triggerHaptic("light");
+		onClose();
+		withViewTransition(() => router.push("/collections"));
+	};
+
+	const handleViewAllProducts = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+		event.preventDefault();
+		triggerHaptic("light");
+		onClose();
+		withViewTransition(() => router.push("/produits"));
+	};
+
 	return (
-		<ScrollFade axis="vertical" hideScrollbar={false} className="h-full">
+		<ScrollFade axis="vertical" hideScrollbar={false} className="h-full overscroll-contain">
 			<div className="space-y-6 p-4">
 				{/* Recently Viewed Products */}
 				{recentlyViewed.length > 0 && (
@@ -112,9 +132,12 @@ export function IdleContent({
 							<Button
 								variant="ghost"
 								size="sm"
-								onClick={onClearSearches}
+								onClick={() => {
+									triggerHaptic("medium");
+									onClearSearches();
+								}}
 								disabled={isPending}
-								className="hover:text-destructive -mr-2 h-auto px-2.5 py-1.5 text-xs"
+								className="hover:text-destructive -mr-2 h-11 touch-manipulation px-3 text-sm sm:h-9"
 								aria-label="Effacer toutes les recherches récentes"
 							>
 								Effacer
@@ -142,7 +165,7 @@ export function IdleContent({
 												aria-selected={false}
 												className={cn(
 													"flex w-full items-center gap-3 rounded-xl p-3 text-left font-medium transition-all",
-													"hover:bg-muted",
+													"hover:bg-muted touch-manipulation",
 													"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 													"disabled:opacity-50",
 													"data-[active=true]:bg-muted",
@@ -159,10 +182,10 @@ export function IdleContent({
 											type="button"
 											onClick={() => onRemoveSearch(term)}
 											disabled={isPending}
-											className="text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 items-center justify-center rounded-xl transition-all group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
+											className="text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive focus-visible:ring-ring flex size-11 shrink-0 touch-manipulation items-center justify-center rounded-xl transition-all group-focus-within/item:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-50 md:opacity-0 md:group-hover/item:opacity-100"
 											aria-label={`Supprimer "${term}"`}
 										>
-											<X className="size-4" />
+											<X className="size-5 sm:size-4" />
 										</button>
 									</m.div>
 								))}
@@ -198,8 +221,8 @@ export function IdleContent({
 						<div className="mt-3 text-center">
 							<Link
 								href="/collections"
-								onClick={handleNavigateClose}
-								className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+								onClick={handleViewAllCollections}
+								className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex min-h-11 touch-manipulation items-center gap-1.5 rounded-md px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:min-h-9"
 							>
 								Voir toutes les collections
 								<ChevronRight className="size-4" aria-hidden="true" />
@@ -214,8 +237,8 @@ export function IdleContent({
 						<Search className="text-muted-foreground/20 mx-auto mb-4 size-10" aria-hidden="true" />
 						<p className="text-muted-foreground text-sm">Trouvez votre prochain bijou</p>
 						<div className="mt-4">
-							<Button asChild variant="outline" size="sm">
-								<Link href="/produits" onClick={handleNavigateClose}>
+							<Button asChild variant="outline" className="min-h-11 touch-manipulation sm:min-h-10">
+								<Link href="/produits" onClick={handleViewAllProducts}>
 									Voir tous les produits
 								</Link>
 							</Button>

@@ -13,6 +13,7 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
@@ -92,8 +93,10 @@ export function ReviewsBulkActionsBar({
 				onOpenChange={(next) => {
 					if (!next && !isPending) setPendingAction(null);
 				}}
+				tone={isHide ? "warning" : "success"}
 			>
 				<ResponsiveAlertDialogContent>
+					<ResponsiveAlertDialogHeroIcon icon={isHide ? EyeOff : CircleCheck} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isHide ? `Masquer ${selectedCount} avis ?` : `Publier ${selectedCount} avis ?`}

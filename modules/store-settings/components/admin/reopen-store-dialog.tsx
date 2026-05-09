@@ -1,6 +1,6 @@
 "use client";
 
-import { LoaderCircle } from "lucide-react";
+import { DoorOpen, LoaderCircle } from "lucide-react";
 import { useActionState, useEffect } from "react";
 
 import {
@@ -11,9 +11,9 @@ import {
 	ResponsiveAlertDialogDescription,
 	ResponsiveAlertDialogFooter,
 	ResponsiveAlertDialogHeader,
+	ResponsiveAlertDialogHeroIcon,
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -62,9 +62,10 @@ export function ReopenStoreDialog({ previousFocusRef, reopensAt }: ReopenStoreDi
 	const reopensAtFormatted = reopensAt ? reopensAtFormatter.format(new Date(reopensAt)) : null;
 
 	return (
-		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange}>
+		<ResponsiveAlertDialog open={dialog.isOpen} onOpenChange={handleOpenChange} tone="success">
 			<ResponsiveAlertDialogContent>
 				<form action={formAction}>
+					<ResponsiveAlertDialogHeroIcon icon={DoorOpen} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>Réouvrir la boutique</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
@@ -88,7 +89,6 @@ export function ReopenStoreDialog({ previousFocusRef, reopensAt }: ReopenStoreDi
 							type="submit"
 							disabled={isPending}
 							aria-busy={isPending}
-							onClick={() => triggerHaptic("light")}
 							className="min-h-11 transition-transform duration-150 active:scale-[0.98]"
 							style={{ viewTransitionName: "store-status-action" }}
 						>

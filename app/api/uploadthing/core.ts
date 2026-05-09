@@ -1,22 +1,69 @@
 import { createUploadthing, type FileRouter } from "uploadthing/next";
 import { UploadThingError } from "uploadthing/server";
+import * as Sentry from "@sentry/nextjs";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { requireAdminApiRoute } from "@/modules/auth/lib/require-auth";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import { headers } from "next/headers";
 import { generateThumbHashWithRetry } from "@/modules/media/services/generate-thumbhash";
+import {
+	ImageDimensionsTooLargeError,
+	validateImageDimensions,
+} from "@/modules/media/services/validate-image-dimensions.service";
+import { utapi } from "@/shared/lib/uploadthing";
 import { UPLOAD_LIMITS } from "@/modules/media/constants/upload-limits";
 
 /**
- * Génère un ThumbHash placeholder avec retry, retourne undefined en cas d'échec
- * ThumbHash est le standard 2025 (~25 bytes vs ~200 bytes pour plaiceholder)
+ * Génère un ThumbHash placeholder avec retry, retourne undefined en cas d'échec.
+ * ThumbHash est le standard 2025 (~25 bytes vs ~200 bytes pour plaiceholder).
+ * Les échecs sont remontés à Sentry pour visibilité (taux d'échec ThumbHash, timeouts, etc.).
  */
 async function generateBlurSafe(url: string): Promise<string | undefined> {
 	try {
 		const result = await generateThumbHashWithRetry(url);
 		return result.dataUrl;
-	} catch {
+	} catch (err) {
+		Sentry.captureException(err, {
+			tags: { source: "uploadthing", step: "thumbhash-generation" },
+		});
 		return undefined;
+	}
+}
+
+/**
+ * Capture les erreurs inattendues (DB, network, bug code) sans capturer les
+ * UploadThingError métier (rate-limit, MIME, taille — déjà attendues et bruyantes).
+ */
+function captureUnexpected(err: unknown, tags: Record<string, string | number | undefined>): void {
+	if (err instanceof UploadThingError) return;
+	Sentry.captureException(err, { tags: { source: "uploadthing", ...tags } });
+}
+
+/**
+ * Rejette les images dont les dimensions dépassent la limite (image-bomb DoS).
+ * Supprime le fichier orphelin sur UploadThing avant de throw l'erreur client.
+ */
+async function rejectImageBomb(file: { ufsUrl: string; key: string; name: string }): Promise<void> {
+	try {
+		await validateImageDimensions(file.ufsUrl);
+	} catch (err) {
+		if (err instanceof ImageDimensionsTooLargeError) {
+			try {
+				await utapi.deleteFiles([file.key]);
+			} catch (deleteErr) {
+				Sentry.captureException(deleteErr, {
+					tags: { source: "uploadthing", step: "image-bomb-cleanup", fileKey: file.key },
+				});
+			}
+			throw new UploadThingError(
+				`Dimensions trop élevées: ${file.name} (${err.width}×${err.height}px). Max ${err.maxPixels / 1_000_000}MP.`,
+			);
+		}
+		// Lecture metadata échouée pour autre raison (corrupted header, network) → on log
+		// et on laisse passer (defense-in-depth: ThumbHash + sharp downstream re-décodent et échoueront proprement)
+		Sentry.captureException(err, {
+			tags: { source: "uploadthing", step: "dimensions-validation", fileKey: file.key },
+		});
 	}
 }
 
@@ -98,72 +145,93 @@ export const ourFileRouter = {
 		video: { maxFileSize: "512MB", maxFileCount: 6 },
 	})
 		.middleware(async ({ files }) => {
-			// 1. Vérifier l'authentification et les permissions admin (DB re-verification)
-			const admin = await requireAdminApiRoute();
-			if ("response" in admin) {
-				throw new UploadThingError(
-					"Seuls les administrateurs peuvent uploader des médias de catalogue",
-				);
-			}
-
-			// 2. Rate limiting
-			const headersList = await headers();
-			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(admin.user.id, null, clientIp);
-			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG, clientIp);
-
-			if (!rateLimit.success) {
-				throw new UploadThingError(
-					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
-				);
-			}
-
-			// 3. Validation MIME et taille côté serveur
-			for (const file of files) {
-				const isVideo = file.type.startsWith("video/");
-				const isImage = file.type.startsWith("image/");
-
-				if (isVideo) {
-					validateMimeType(file, ALLOWED_VIDEO_TYPES);
-					validateFileSize(file, 512 * 1024 * 1024); // 512MB
-				} else if (isImage) {
-					validateMimeType(file, ALLOWED_IMAGE_TYPES);
-					validateFileSize(file, 16 * 1024 * 1024); // 16MB
-				} else {
+			try {
+				// 1. Vérifier l'authentification et les permissions admin (DB re-verification)
+				const admin = await requireAdminApiRoute();
+				if ("response" in admin) {
 					throw new UploadThingError(
-						`Type de fichier non supporté: ${file.name} (${file.type}). Seules les images et vidéos sont acceptées.`,
+						"Seuls les administrateurs peuvent uploader des médias de catalogue",
 					);
 				}
-			}
 
-			return {
-				userId: admin.user.id,
-				userName: admin.user.name,
-			};
+				// 2. Rate limiting
+				const headersList = await headers();
+				const clientIp = await getClientIp(headersList);
+				const rateLimitId = getRateLimitIdentifier(admin.user.id, null, clientIp);
+				const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.CATALOG, clientIp);
+
+				if (!rateLimit.success) {
+					throw new UploadThingError(
+						rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
+					);
+				}
+
+				// 3. Validation MIME et taille côté serveur
+				for (const file of files) {
+					const isVideo = file.type.startsWith("video/");
+					const isImage = file.type.startsWith("image/");
+
+					if (isVideo) {
+						validateMimeType(file, ALLOWED_VIDEO_TYPES);
+						validateFileSize(file, 512 * 1024 * 1024); // 512MB
+					} else if (isImage) {
+						validateMimeType(file, ALLOWED_IMAGE_TYPES);
+						validateFileSize(file, 16 * 1024 * 1024); // 16MB
+					} else {
+						throw new UploadThingError(
+							`Type de fichier non supporté: ${file.name} (${file.type}). Seules les images et vidéos sont acceptées.`,
+						);
+					}
+				}
+
+				return {
+					userId: admin.user.id,
+					userName: admin.user.name,
+				};
+			} catch (err) {
+				captureUnexpected(err, {
+					endpoint: "catalogMedia",
+					step: "middleware",
+					fileCount: files.length,
+				});
+				throw err;
+			}
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			const isImage = file.type.startsWith("image/");
+			try {
+				const isImage = file.type.startsWith("image/");
 
-			// Pour les images: generer le blur placeholder (avec retry)
-			if (isImage) {
-				const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+				// Pour les images: rejeter les image-bombs puis generer le blur placeholder
+				if (isImage) {
+					await rejectImageBomb(file);
+					const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+					return {
+						url: file.ufsUrl,
+						thumbnailUrl: null,
+						blurDataUrl,
+						uploadedBy: metadata.userId,
+					};
+				}
+
+				// Pour les videos: pas de traitement serveur
+				// Le thumbnail est genere cote client via Canvas API (useMediaUpload hook)
+				// et uploade separement avant la video
 				return {
 					url: file.ufsUrl,
 					thumbnailUrl: null,
-					blurDataUrl,
+					blurDataUrl: null,
 					uploadedBy: metadata.userId,
 				};
+			} catch (err) {
+				captureUnexpected(err, {
+					endpoint: "catalogMedia",
+					step: "onUploadComplete",
+					userId: metadata.userId,
+					fileType: file.type,
+					fileSize: file.size,
+				});
+				throw err;
 			}
-
-			// Pour les videos: pas de traitement serveur
-			// Le thumbnail est genere cote client via Canvas API (useMediaUpload hook)
-			// et uploade separement avant la video
-			return {
-				url: file.ufsUrl,
-				thumbnailUrl: null,
-				blurDataUrl: null,
-				uploadedBy: metadata.userId,
-			};
 		}),
 
 	// Route pour les photos d'avis clients
@@ -172,44 +240,67 @@ export const ourFileRouter = {
 		image: { maxFileSize: "4MB", maxFileCount: 3 },
 	})
 		.middleware(async ({ files }) => {
-			// 1. Authentification requise
-			const session = await getSession();
-			if (!session?.user) {
-				throw new UploadThingError("Vous devez être connecté pour ajouter des photos à votre avis");
+			try {
+				// 1. Authentification requise
+				const session = await getSession();
+				if (!session?.user) {
+					throw new UploadThingError(
+						"Vous devez être connecté pour ajouter des photos à votre avis",
+					);
+				}
+
+				// 2. Rate limiting
+				const headersList = await headers();
+				const clientIp = await getClientIp(headersList);
+				const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
+				const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.REVIEW_MEDIA, clientIp);
+
+				if (!rateLimit.success) {
+					throw new UploadThingError(
+						rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
+					);
+				}
+
+				// 3. Validation MIME et taille côté serveur
+				for (const file of files) {
+					validateMimeType(file, ALLOWED_IMAGE_TYPES);
+					validateFileSize(file, 4 * 1024 * 1024); // 4MB
+				}
+
+				return {
+					userId: session.user.id,
+					userName: session.user.name,
+				};
+			} catch (err) {
+				captureUnexpected(err, {
+					endpoint: "reviewMedia",
+					step: "middleware",
+					fileCount: files.length,
+				});
+				throw err;
 			}
-
-			// 2. Rate limiting
-			const headersList = await headers();
-			const clientIp = await getClientIp(headersList);
-			const rateLimitId = getRateLimitIdentifier(session.user.id, null, clientIp);
-			const rateLimit = await checkRateLimit(rateLimitId, UPLOAD_LIMITS.REVIEW_MEDIA, clientIp);
-
-			if (!rateLimit.success) {
-				throw new UploadThingError(
-					rateLimit.error ?? "Trop de tentatives d'upload. Veuillez patienter.",
-				);
-			}
-
-			// 3. Validation MIME et taille côté serveur
-			for (const file of files) {
-				validateMimeType(file, ALLOWED_IMAGE_TYPES);
-				validateFileSize(file, 4 * 1024 * 1024); // 4MB
-			}
-
-			return {
-				userId: session.user.id,
-				userName: session.user.name,
-			};
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
-			// Générer le blur placeholder pour les photos d'avis (avec retry)
-			const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+			try {
+				// Rejeter les image-bombs puis generer le blur placeholder
+				await rejectImageBomb(file);
+				const blurDataUrl = await generateBlurSafe(file.ufsUrl);
 
-			return {
-				url: file.ufsUrl,
-				blurDataUrl,
-				uploadedBy: metadata.userId,
-			};
+				return {
+					url: file.ufsUrl,
+					blurDataUrl,
+					uploadedBy: metadata.userId,
+				};
+			} catch (err) {
+				captureUnexpected(err, {
+					endpoint: "reviewMedia",
+					step: "onUploadComplete",
+					userId: metadata.userId,
+					fileType: file.type,
+					fileSize: file.size,
+				});
+				throw err;
+			}
 		}),
 } satisfies FileRouter;
 

@@ -48,6 +48,7 @@ export async function CollectionsSection() {
 			)}
 			aria-labelledby="collections-title"
 			aria-describedby="collections-subtitle"
+			style={{ viewTransitionName: "collections-section" }}
 		>
 			{/* Skip link for keyboard navigation - skip carousel */}
 			<a

@@ -32,7 +32,10 @@ export function CollectionDetailInfoCard({ collection }: CollectionDetailInfoCar
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Statut</dt>
 						<dd>
-							<Badge variant={STATUS_VARIANTS[collection.status]}>
+							<Badge
+								variant={STATUS_VARIANTS[collection.status]}
+								style={{ viewTransitionName: `collection-status-${collection.id}` }}
+							>
 								{COLLECTION_STATUS_LABELS[collection.status]}
 							</Badge>
 						</dd>

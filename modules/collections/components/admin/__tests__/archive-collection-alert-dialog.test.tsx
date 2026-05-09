@@ -96,7 +96,8 @@ vi.mock("@/shared/components/ui/alert-dialog", () => ({
 	),
 }));
 
-vi.mock("lucide-react", () => ({
+vi.mock("lucide-react", async (importOriginal) => ({
+	...((await importOriginal()) as Record<string, unknown>),
 	LoaderCircle: () => <svg data-testid="icon-loader" />,
 }));
 

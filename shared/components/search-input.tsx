@@ -327,6 +327,9 @@ function SearchInputInner({
 							<Input
 								ref={inputRef}
 								autoComplete="off"
+								autoCorrect="off"
+								autoCapitalize="off"
+								spellCheck={false}
 								// eslint-disable-next-line jsx-a11y/no-autofocus
 								autoFocus={autoFocus}
 								role={ariaExpanded !== undefined ? "combobox" : undefined}

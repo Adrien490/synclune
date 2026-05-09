@@ -1,5 +1,6 @@
 import { CollectionsSectionSkeleton } from "@/modules/collections/components/collections-section-skeleton";
 import { AtelierSectionSkeleton } from "./_components/atelier-section";
+import { HeroReassuranceBannerSkeleton } from "./_components/hero-reassurance-banner-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { HomeFaqSkeleton } from "./_components/home-faq-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
@@ -16,6 +17,7 @@ export default function HomeLoading() {
 			<span className="sr-only">Chargement en cours…</span>
 
 			<HeroSectionSkeleton />
+			<HeroReassuranceBannerSkeleton />
 			<LatestCreationsSkeleton productsCount={4} />
 			<CollectionsSectionSkeleton collectionsCount={6} />
 			<ReviewsSectionSkeleton />

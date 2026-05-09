@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
 import { Tap } from "@/shared/components/animations/tap";
 import { cn } from "@/shared/utils/cn";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import type { QuickSearchProductType } from "./constants";
 import { HighlightMatch } from "./search-result-item";
@@ -20,17 +22,28 @@ interface CategoryCardProps {
 
 export function CategoryCard({ type, onSelect, variant = "full", query }: CategoryCardProps) {
 	const isCompact = variant === "compact";
+	const router = useRouter();
+	const href = `/produits/${type.slug}`;
+
+	const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+		// Let the browser handle modifier clicks (new tab, etc.)
+		if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey) return;
+		event.preventDefault();
+		onSelect();
+		withViewTransition(() => router.push(href));
+	};
 
 	return (
 		<Tap scale={0.97}>
 			<Link
-				href={`/produits/${type.slug}`}
-				onClick={onSelect}
+				href={href}
+				onClick={handleClick}
 				data-active={undefined}
 				role="option"
 				aria-selected={false}
 				className={cn(
 					"rounded-xl text-left font-medium transition-all",
+					"touch-manipulation",
 					"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					"data-[active=true]:bg-muted",
 					isCompact

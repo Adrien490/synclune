@@ -13,6 +13,7 @@ import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.types";
+import { captureWebhookError } from "../utils/capture-webhook-error";
 
 /**
  * Gère les remboursements (charge.refunded)
@@ -21,11 +22,10 @@ import type { WebhookHandlerResult, PostWebhookTask } from "../types/webhook.typ
 export async function handleChargeRefunded(charge: Stripe.Charge): Promise<WebhookHandlerResult> {
 	logger.info(`💰 [WEBHOOK] Charge refunded: ${charge.id}`, { service: "webhook" });
 
-	try {
-		// 1. Récupérer le payment intent associé
-		const paymentIntentId =
-			typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+	const paymentIntentId =
+		typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
 
+	try {
 		if (!paymentIntentId) {
 			logger.error("❌ [WEBHOOK] No payment intent found for refunded charge", undefined, {
 				service: "webhook",
@@ -116,6 +116,12 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		return { success: true, tasks };
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling charge refunded:`, error, { service: "webhook" });
+		captureWebhookError(error, {
+			handler: "handleChargeRefunded",
+			eventType: "charge.refunded",
+			stripeChargeId: charge.id,
+			paymentIntentId,
+		});
 		throw error;
 	}
 }
@@ -172,6 +178,11 @@ export async function handleRefundUpdated(
 		return { success: true };
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling refund updated:`, error, { service: "webhook" });
+		captureWebhookError(error, {
+			handler: "handleRefundUpdated",
+			eventType: "refund.updated",
+			stripeRefundId: stripeRefund.id,
+		});
 		throw error;
 	}
 }
@@ -229,6 +240,11 @@ export async function handleRefundFailed(
 		return { success: true, tasks };
 	} catch (error) {
 		logger.error(`❌ [WEBHOOK] Error handling refund failed:`, error, { service: "webhook" });
+		captureWebhookError(error, {
+			handler: "handleRefundFailed",
+			eventType: "refund.failed",
+			stripeRefundId: stripeRefund.id,
+		});
 		throw error;
 	}
 }

@@ -4,6 +4,7 @@ import { Search } from "lucide-react";
 
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { Button } from "@/shared/components/ui/button";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { QUICK_SEARCH_DIALOG_ID } from "./constants";
 
@@ -24,12 +25,13 @@ export function QuickSearchTrigger({ className, ref }: QuickSearchTriggerProps) 
 			variant="ghost"
 			size="icon"
 			onClick={() => {
+				triggerHaptic("light");
 				// Blur trigger before dialog opens to prevent aria-hidden conflict:
 				// Radix sets aria-hidden on the header before focus moves to dialog content
 				if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
 				open();
 			}}
-			className={cn("size-11 transition-all duration-300 ease-out", className)}
+			className={cn("size-11 touch-manipulation transition-all duration-300 ease-out", className)}
 			aria-label="Ouvrir la recherche rapide"
 			aria-expanded={isOpen}
 			aria-haspopup="dialog"

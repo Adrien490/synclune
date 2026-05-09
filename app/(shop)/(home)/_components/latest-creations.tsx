@@ -14,10 +14,7 @@ export async function LatestCreations({
 	productsPromise: Promise<GetProductsReturn>;
 }) {
 	const { products } = await productsPromise;
-
-	if (products.length === 0) {
-		return null;
-	}
+	const isEmpty = products.length === 0;
 
 	return (
 		<section
@@ -25,6 +22,7 @@ export async function LatestCreations({
 			className={`bg-background relative overflow-hidden ${SECTION_SPACING.section}`}
 			aria-labelledby="latest-creations-title"
 			aria-describedby="latest-creations-subtitle"
+			style={{ viewTransitionName: "latest-creations" }}
 		>
 			<div className={`relative ${CONTAINER_CLASS}`}>
 				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
@@ -41,20 +39,37 @@ export async function LatestCreations({
 						id="latest-creations-subtitle"
 						className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
 					>
-						Tout juste sorties de l'atelier et réalisées avec amour !
+						{isEmpty
+							? "De nouveaux bijoux arrivent très bientôt dans l'atelier."
+							: "Tout juste sorties de l'atelier et réalisées avec amour !"}
 					</p>
 				</header>
-				<LatestCreationsHapticBridge>
-					<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
-						{products.map((product, index) => (
-							<div key={product.id} data-latest-haptic="card" className="contents">
-								<CursorGlow>
-									<ProductCard product={product} index={index} sectionId="latest" />
-								</CursorGlow>
-							</div>
-						))}
-					</div>
-				</LatestCreationsHapticBridge>
+				{isEmpty ? (
+					<Fade
+						y={MOTION_CONFIG.section.cta.y}
+						delay={MOTION_CONFIG.section.cta.delay}
+						duration={MOTION_CONFIG.section.cta.duration}
+						inView
+						once
+						className="mb-6 text-center sm:mb-8 lg:mb-12"
+					>
+						<p className="text-muted-foreground mx-auto max-w-xl text-base">
+							En attendant, parcours toute la boutique pour découvrir les pièces déjà disponibles.
+						</p>
+					</Fade>
+				) : (
+					<LatestCreationsHapticBridge>
+						<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
+							{products.map((product, index) => (
+								<div key={product.id} data-latest-haptic="card" className="contents">
+									<CursorGlow>
+										<ProductCard product={product} index={index} sectionId="latest" />
+									</CursorGlow>
+								</div>
+							))}
+						</div>
+					</LatestCreationsHapticBridge>
+				)}
 				<Fade
 					y={MOTION_CONFIG.section.cta.y}
 					delay={MOTION_CONFIG.section.cta.delay}
@@ -64,14 +79,16 @@ export async function LatestCreations({
 					className="text-center"
 				>
 					<SectionCtaLink
-						href="/produits?sortBy=created-descending"
+						href={isEmpty ? "/produits" : "/produits?sortBy=created-descending"}
 						hapticPattern="selection"
 						aria-describedby="latest-creations-cta-description"
 					>
-						Voir tous les nouveaux bijoux
+						{isEmpty ? "Voir toute la boutique" : "Voir tous les nouveaux bijoux"}
 					</SectionCtaLink>
 					<span id="latest-creations-cta-description" className="sr-only">
-						Découvrir tous les bijoux récemment créés dans la boutique Synclune
+						{isEmpty
+							? "Parcourir l'ensemble du catalogue Synclune"
+							: "Découvrir tous les bijoux récemment créés dans la boutique Synclune"}
 					</span>
 				</Fade>
 			</div>

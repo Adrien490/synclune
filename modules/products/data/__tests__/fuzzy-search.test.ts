@@ -22,6 +22,12 @@ vi.mock("@/shared/lib/prisma", () => ({
 	prisma: { $transaction: mockTransaction, $queryRaw: mockQueryRaw },
 }));
 
+// Sentry.startSpan: pass-through to the callback with a no-op span object.
+vi.mock("@sentry/nextjs", () => ({
+	startSpan: (_options: unknown, callback: (span: { setAttribute: () => void }) => unknown) =>
+		callback({ setAttribute: () => {} }),
+}));
+
 vi.mock("@/shared/lib/logger", () => ({ logger: mockLogger }));
 
 vi.mock("@/shared/lib/pg-trgm-availability", () => ({
@@ -79,6 +85,18 @@ describe("fuzzySearchProductIds", () => {
 
 	it("returns empty result for string exceeding max length", async () => {
 		const result = await fuzzySearchProductIds("a".repeat(101));
+		expect(result).toEqual({ ids: [], totalCount: 0 });
+		expect(mockTransaction).not.toHaveBeenCalled();
+	});
+
+	it("returns empty result for very large hostile input (1000 chars)", async () => {
+		const result = await fuzzySearchProductIds("x".repeat(1000));
+		expect(result).toEqual({ ids: [], totalCount: 0 });
+		expect(mockTransaction).not.toHaveBeenCalled();
+	});
+
+	it("returns empty result for whitespace bomb", async () => {
+		const result = await fuzzySearchProductIds(" ".repeat(50));
 		expect(result).toEqual({ ids: [], totalCount: 0 });
 		expect(mockTransaction).not.toHaveBeenCalled();
 	});

@@ -52,6 +52,8 @@ const mockSearchResult = {
 describe("quickSearch", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
+		// Force sampling to always capture (Math.random < 0.1 ⇒ true)
+		vi.spyOn(Math, "random").mockReturnValue(0);
 
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockQuickSearchProducts.mockResolvedValue(mockSearchResult);
@@ -114,12 +116,67 @@ describe("quickSearch", () => {
 					action: "quick-search",
 					kind: "zero-result",
 					hasSuggestion: "true",
+					queryLength: "4-10",
+					latencyBucket: expect.stringMatching(/^(<100|<250|<500|<1000|>=1000)$/),
 				}),
 				extra: expect.objectContaining({
 					term: "bracelt",
 					suggestion: "bague",
 					responseTimeMs: expect.any(Number),
+					sampleRate: 0.1,
 				}),
+			}),
+		);
+	});
+
+	it("should skip Sentry capture when sampling roll falls outside the rate", async () => {
+		vi.spyOn(Math, "random").mockReturnValue(0.5); // 0.5 >= 0.1 ⇒ skip
+		mockQuickSearchProducts.mockResolvedValue({
+			kind: "success",
+			products: [],
+			suggestion: null,
+			totalCount: 0,
+		});
+
+		await quickSearch("bracelt");
+
+		// logger.warn still fires (always logged), but Sentry skipped by sampling
+		expect(mockLogger.warn).toHaveBeenCalled();
+		expect(mockSentry.captureMessage).not.toHaveBeenCalled();
+	});
+
+	it("buckets query length correctly (short query: 1-3)", async () => {
+		mockQuickSearchProducts.mockResolvedValue({
+			kind: "success",
+			products: [],
+			suggestion: null,
+			totalCount: 0,
+		});
+
+		await quickSearch("xyz");
+
+		expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+			"search.zero_result",
+			expect.objectContaining({
+				tags: expect.objectContaining({ queryLength: "1-3" }),
+			}),
+		);
+	});
+
+	it("buckets query length correctly (long query: 31+)", async () => {
+		mockQuickSearchProducts.mockResolvedValue({
+			kind: "success",
+			products: [],
+			suggestion: null,
+			totalCount: 0,
+		});
+
+		await quickSearch("a".repeat(50));
+
+		expect(mockSentry.captureMessage).toHaveBeenCalledWith(
+			"search.zero_result",
+			expect.objectContaining({
+				tags: expect.objectContaining({ queryLength: "31+" }),
 			}),
 		);
 	});

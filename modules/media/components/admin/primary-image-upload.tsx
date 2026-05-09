@@ -142,17 +142,24 @@ export function PrimaryImageUpload({
 											muted
 											playsInline
 											preload="none"
-											onMouseEnter={(e) => {
-												// Throttle: load and play only if not already in progress
-												if (e.currentTarget.readyState === 0) {
-													e.currentTarget.load();
-												}
-												void e.currentTarget.play();
-											}}
-											onMouseLeave={(e) => {
-												e.currentTarget.pause();
-												e.currentTarget.currentTime = 0;
-											}}
+											onMouseEnter={
+												isTouchDevice
+													? undefined
+													: (e) => {
+															if (e.currentTarget.readyState === 0) {
+																e.currentTarget.load();
+															}
+															void e.currentTarget.play();
+														}
+											}
+											onMouseLeave={
+												isTouchDevice
+													? undefined
+													: (e) => {
+															e.currentTarget.pause();
+															e.currentTarget.currentTime = 0;
+														}
+											}
 											onError={() => setVideoError(true)}
 											aria-label="Aperçu vidéo du média principal"
 										>
