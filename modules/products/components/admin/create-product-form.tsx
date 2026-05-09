@@ -58,11 +58,15 @@ export function CreateProductForm({
 		isUploading: isMediaUploading,
 		progress: uploadProgress,
 		cancel: cancelMediaUpload,
+		cancelOne: cancelOneMediaUpload,
 		failedFiles: failedMediaUploads,
 		retryFailed: retryFailedMediaUploads,
 		retrySingle: retrySingleMediaUpload,
 		clearFailed: clearFailedMediaUploads,
-	} = useMediaUpload();
+	} = useMediaUpload({
+		enableOfflineQueue: true,
+		offlineContextKey: "create-product",
+	});
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
@@ -72,7 +76,7 @@ export function CreateProductForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(message || "Bijou créé avec succès", {
+			toast.success(message || "Nouveau bijou dans l'atelier", {
 				action: {
 					label: "Voir les bijoux",
 					onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
@@ -85,7 +89,16 @@ export function CreateProductForm({
 	});
 
 	// Guard against accidental navigation loss: beforeunload + popstate + Link clicks (via NavigationGuardProvider)
-	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+	// Block navigation when form is dirty OR an upload is currently in flight (P0.2)
+	const { allowNavigation } = useUnsavedChanges(
+		form.state.isDirty || isMediaUploading,
+		!isPending,
+		{
+			message: isMediaUploading
+				? "Un téléversement est en cours. Quitter abandonnera les fichiers en cours."
+				: undefined,
+		},
+	);
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
@@ -213,6 +226,7 @@ export function CreateProductForm({
 						setDeletedImageUrls={setDeletedImageUrls}
 						failedFiles={failedMediaUploads}
 						onCancel={cancelMediaUpload}
+						onCancelOne={cancelOneMediaUpload}
 						onRetry={() => {
 							void retryFailedMediaUploads();
 						}}
@@ -220,6 +234,10 @@ export function CreateProductForm({
 							void retrySingleMediaUpload(file);
 						}}
 						onDismissErrors={clearFailedMediaUploads}
+						onReplayOffline={async (files) => {
+							// Re-feed offline-queued files into the same upload pipeline
+							await uploadMedia(files);
+						}}
 					/>
 					<CreateProductInfoCard
 						form={form}

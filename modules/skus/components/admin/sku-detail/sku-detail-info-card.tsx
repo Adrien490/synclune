@@ -29,7 +29,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							</span>
 							<CopyButton
 								text={sku.sku}
-								label="Référence SKU"
+								label="Référence variante"
 								className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
 							/>
 						</dd>

@@ -4,7 +4,12 @@ import { Button } from "@/shared/components/ui/button";
 import { Progress } from "@/shared/components/ui/progress";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
-import { useReducedMotion } from "motion/react";
+import {
+	formatBytesShort,
+	formatEtaLabel,
+	formatSpeedLabel,
+} from "@/modules/media/utils/format-eta";
+import { AnimatePresence, m, useReducedMotion } from "motion/react";
 import { AlertTriangle, Check, LoaderCircle, RefreshCw, X } from "lucide-react";
 import type { FileProgress } from "@/modules/media/types/hooks.types";
 
@@ -37,6 +42,16 @@ interface UploadProgressProps {
 	completedCount?: number;
 	/** Per-file progress entries — when provided, renders a scrollable list (variant default only) */
 	files?: FileProgress[];
+	/** Bytes uploaded across all files — drives the "X Mo / Y Mo" label (P0.1) */
+	bytesUploaded?: number;
+	/** Total bytes to upload (P0.1) */
+	bytesTotal?: number;
+	/** Bytes-per-second over a sliding window — drives the speed label (P1.1) */
+	bytesPerSecond?: number | null;
+	/** Estimated seconds until completion — drives the ETA label (P1.1) */
+	etaSeconds?: number | null;
+	/** Per-file cancellation hook — when provided, renders an X button on queued/uploading items (P1.5) */
+	onCancelOne?: (fileName: string) => void;
 }
 
 /**
@@ -54,6 +69,11 @@ export function UploadProgress({
 	onCancel,
 	completedCount,
 	files,
+	bytesUploaded,
+	bytesTotal,
+	bytesPerSecond,
+	etaSeconds,
+	onCancelOne,
 }: UploadProgressProps) {
 	const shouldReduceMotion = useReducedMotion();
 	const haptic = useHaptic();
@@ -102,6 +122,14 @@ export function UploadProgress({
 					: isServerProcessing
 						? "Traitement…"
 						: `Téléversement… ${progress}%`;
+
+	const etaLabel = !isComplete && phase === "uploading" ? formatEtaLabel(etaSeconds ?? null) : null;
+	const speedLabel =
+		!isComplete && phase === "uploading" ? formatSpeedLabel(bytesPerSecond ?? null) : null;
+	const bytesLabel =
+		!isComplete && phase === "uploading" && bytesTotal && bytesTotal > 0
+			? `${formatBytesShort(bytesUploaded ?? 0)} / ${formatBytesShort(bytesTotal)}`
+			: null;
 
 	if (variant === "compact") {
 		return (
@@ -173,16 +201,23 @@ export function UploadProgress({
 						isComplete && "[&>[data-slot=progress-indicator]]:bg-emerald-500",
 					)}
 				/>
-				<p
-					className={cn(
-						"text-center text-base font-medium sm:text-sm",
-						isComplete ? "text-emerald-600" : "text-foreground",
-						!isServerProcessing && "tabular-nums",
-					)}
-					aria-hidden="true"
-				>
-					{phaseLabel}
-				</p>
+				<AnimatePresence mode="wait" initial={false}>
+					<m.p
+						key={phaseLabel}
+						initial={shouldReduceMotion ? false : { opacity: 0, y: 4 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={shouldReduceMotion ? undefined : { opacity: 0, y: -4 }}
+						transition={{ duration: 0.18 }}
+						className={cn(
+							"text-center text-base font-medium sm:text-sm",
+							isComplete ? "text-emerald-600" : "text-foreground",
+							!isServerProcessing && "tabular-nums",
+						)}
+						aria-hidden="true"
+					>
+						{phaseLabel}
+					</m.p>
+				</AnimatePresence>
 				{currentFileName && !isComplete && (
 					<p
 						className="text-muted-foreground truncate text-center text-xs"
@@ -192,6 +227,26 @@ export function UploadProgress({
 						{currentFileName}
 					</p>
 				)}
+				{(bytesLabel ?? etaLabel ?? speedLabel) && (
+					<div
+						className="text-muted-foreground flex flex-wrap items-center justify-center gap-x-2 text-center text-xs tabular-nums"
+						aria-hidden="true"
+					>
+						{bytesLabel && <span>{bytesLabel}</span>}
+						{etaLabel && (
+							<>
+								<span aria-hidden="true">•</span>
+								<span>{etaLabel}</span>
+							</>
+						)}
+						{speedLabel && (
+							<>
+								<span aria-hidden="true">•</span>
+								<span>{speedLabel}</span>
+							</>
+						)}
+					</div>
+				)}
 				{queuedCount > 0 && !isComplete && (
 					<p className="text-muted-foreground text-center text-xs" aria-hidden="true">
 						+{queuedCount} en attente
@@ -200,7 +255,11 @@ export function UploadProgress({
 			</div>
 
 			{files && files.length > 0 && !isComplete && (
-				<FileProgressList files={files} reducedMotion={shouldReduceMotion} />
+				<FileProgressList
+					files={files}
+					reducedMotion={shouldReduceMotion}
+					onCancelOne={onCancelOne}
+				/>
 			)}
 
 			{onCancel && !isComplete && (
@@ -221,22 +280,28 @@ export function UploadProgress({
 }
 
 // ----------------------------------------------------------------------------
-// Per-file progress list (P2.1)
+// Per-file progress list
 // ----------------------------------------------------------------------------
 
 interface FileProgressListProps {
 	files: FileProgress[];
 	reducedMotion: boolean | null;
+	onCancelOne?: (fileName: string) => void;
 }
 
-function FileProgressList({ files, reducedMotion }: FileProgressListProps) {
+function FileProgressList({ files, reducedMotion, onCancelOne }: FileProgressListProps) {
 	return (
 		<ul
 			className="bg-muted/20 flex max-h-40 w-full flex-col gap-1 overflow-y-auto overscroll-contain rounded-md border p-2 text-xs"
 			aria-label="Détails par fichier"
 		>
 			{files.map((file) => (
-				<FileProgressItem key={file.fileName} file={file} reducedMotion={reducedMotion} />
+				<FileProgressItem
+					key={file.fileName}
+					file={file}
+					reducedMotion={reducedMotion}
+					onCancel={onCancelOne}
+				/>
 			))}
 		</ul>
 	);
@@ -254,12 +319,20 @@ const stateLabels: Record<FileProgress["state"], string> = {
 interface FileProgressItemProps {
 	file: FileProgress;
 	reducedMotion: boolean | null;
+	onCancel?: (fileName: string) => void;
 }
 
-function FileProgressItem({ file, reducedMotion }: FileProgressItemProps) {
+function FileProgressItem({ file, reducedMotion, onCancel }: FileProgressItemProps) {
+	const haptic = useHaptic();
 	const isDone = file.state === "done";
 	const isFailed = file.state === "failed";
 	const isActive = file.state === "uploading" || file.state === "compressing";
+	const canCancel = onCancel && (file.state === "queued" || file.state === "uploading");
+
+	const handleCancel = () => {
+		haptic("light");
+		onCancel?.(file.fileName);
+	};
 
 	return (
 		<li
@@ -292,6 +365,9 @@ function FileProgressItem({ file, reducedMotion }: FileProgressItemProps) {
 			<span className="flex-1 truncate" title={file.fileName}>
 				{file.fileName}
 			</span>
+			{isActive && file.percent > 0 && file.percent < 100 && (
+				<span className="text-muted-foreground tabular-nums">{file.percent}%</span>
+			)}
 			<span
 				className={cn(
 					"text-muted-foreground tabular-nums",
@@ -301,6 +377,19 @@ function FileProgressItem({ file, reducedMotion }: FileProgressItemProps) {
 			>
 				{stateLabels[file.state]}
 			</span>
+			{canCancel && (
+				<button
+					type="button"
+					onClick={handleCancel}
+					aria-label={`Annuler ${file.fileName}`}
+					className={cn(
+						"text-muted-foreground hover:text-destructive focus-visible:ring-primary relative flex size-6 shrink-0 items-center justify-center rounded-full focus-visible:ring-2 focus-visible:outline-none",
+						"after:absolute after:-inset-2 after:content-['']",
+					)}
+				>
+					<X className="size-3" aria-hidden="true" />
+				</button>
+			)}
 		</li>
 	);
 }

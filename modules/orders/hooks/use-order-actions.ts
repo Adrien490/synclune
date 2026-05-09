@@ -19,6 +19,7 @@ import {
 
 import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -61,6 +62,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
+	const selectActionItem = useBulkSelectionActionItem(order.id);
 
 	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
@@ -91,6 +93,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 		{
 			key: "info",
 			items: [
+				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "view",
 					label: "Voir les détails",

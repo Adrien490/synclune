@@ -7,11 +7,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockSearchParamsKeys = vi.fn<() => string[]>();
 const mockSearchParamsHas = vi.fn<(key: string) => boolean>();
+const mockSearchParamsGet = vi.fn<(key: string) => string | null>();
 
 vi.mock("next/navigation", () => ({
 	useSearchParams: () => ({
 		keys: () => mockSearchParamsKeys(),
 		has: (key: string) => mockSearchParamsHas(key),
+		get: (key: string) => mockSearchParamsGet(key),
 	}),
 }));
 
@@ -105,6 +107,7 @@ afterEach(() => {
 beforeEach(() => {
 	mockSearchParamsKeys.mockReturnValue([]);
 	mockSearchParamsHas.mockReturnValue(false);
+	mockSearchParamsGet.mockReturnValue(null);
 });
 
 // ============================================================================
@@ -145,13 +148,13 @@ describe("SkusBottomBar", () => {
 	});
 
 	it("Sort item is active when sortBy URL param is present", () => {
-		mockSearchParamsHas.mockImplementation((key) => key === "sortBy");
+		mockSearchParamsGet.mockImplementation((key) => (key === "sortBy" ? "name-asc" : null));
 		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-sort")).toHaveAttribute("data-active", "true");
 	});
 
 	it("Sort item not active when sortBy URL param is absent", () => {
-		mockSearchParamsHas.mockReturnValue(false);
+		mockSearchParamsGet.mockReturnValue(null);
 		render(<SkusBottomBar productSlug="x" colorOptions={[]} materialOptions={[]} />);
 		expect(screen.getByTestId("bar-item-sort")).toHaveAttribute("data-active", "false");
 	});

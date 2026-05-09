@@ -7,12 +7,12 @@ import { TEXT_LIMITS, ARRAY_LIMITS } from "@/shared/constants/validation-limits"
  * La position 0 sera attribuee au premier element du tableau.
  */
 export const reorderSkuMediaSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 	mediaIds: z
 		.array(z.cuid2({ message: "ID media invalide" }))
 		.min(1, { message: "Au moins un media est requis" })
 		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1, {
-			message: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1} medias par SKU`,
+			message: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA + 1} médias par variante`,
 		}),
 });
 
@@ -21,7 +21,7 @@ export const reorderSkuMediaSchema = z.object({
  * Un seul media primary par SKU (contrainte metier).
  */
 export const setPrimarySkuMediaSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 	mediaId: z.cuid2({ message: "ID media invalide" }),
 });
 
@@ -45,5 +45,5 @@ export const updateSkuMediaAltTextSchema = z.object({
  * Restauration d'un SKU soft-deleted
  */
 export const restoreSkuSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 });

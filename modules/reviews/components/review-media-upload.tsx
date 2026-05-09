@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
@@ -11,10 +11,12 @@ import {
 } from "@/shared/components/media-upload/upload-progress";
 import { UploadActionSheet } from "@/shared/components/media-upload/upload-action-sheet";
 import { PendingUploadsGrid } from "@/shared/components/media-upload/pending-uploads-grid";
-import { UploadDropzone } from "@/modules/media/utils/uploadthing";
+import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
+import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { cn } from "@/shared/utils/cn";
 
@@ -35,11 +37,15 @@ interface ReviewMediaUploadProps {
 }
 
 const REVIEW_MAX_SIZE = 4 * 1024 * 1024;
+const REVIEW_OFFLINE_CONTEXT_KEY = "review-media";
 
 /**
  * Upload de photos pour les avis clients.
- * Mobile : camera capture natif via UploadActionSheet.
- * Desktop : drag & drop UploadDropzone avec paste support.
+ * Mobile : capture native via UploadActionSheet.
+ * Desktop : drop zone native (drag&drop fichiers depuis Finder).
+ *
+ * Tout passe par `useMediaUpload` — pipeline unifié mobile/desktop avec
+ * compression HEIC + retry + bytes-based progress (P0.3).
  */
 export function ReviewMediaUpload({
 	media,
@@ -51,12 +57,16 @@ export function ReviewMediaUpload({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+	const [isDropTarget, setIsDropTarget] = useState(false);
+	const fileInputRef = useRef<HTMLInputElement>(null);
 
 	const remaining = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length;
 	const canAddMore = remaining > 0 && !disabled;
 
 	const {
 		upload,
+		cancel,
+		cancelOne,
 		retryFailed,
 		retrySingle,
 		clearFailed,
@@ -68,6 +78,8 @@ export function ReviewMediaUpload({
 		endpoint: "reviewMedia",
 		maxFiles: REVIEW_CONFIG.MAX_MEDIA_COUNT,
 		maxSizeImage: REVIEW_MAX_SIZE,
+		enableOfflineQueue: true,
+		offlineContextKey: REVIEW_OFFLINE_CONTEXT_KEY,
 		onSuccess: (results) => {
 			haptic("success");
 			const newMedia = [
@@ -85,19 +97,78 @@ export function ReviewMediaUpload({
 		},
 	});
 
-	const handleFilesSelected = (files: File[]) => {
+	// Block navigation while files are pending or an upload is in flight (P0.2)
+	useUnsavedChanges(pendingFiles.length > 0 || isUploading, true, {
+		message:
+			pendingFiles.length > 0
+				? "Des photos sont en attente de téléversement. Quitter les abandonnera."
+				: "Un téléversement est en cours. Quitter abandonnera les fichiers en cours.",
+	});
+
+	// Offline queue (P1.2)
+	const offlineQueue = useOfflineUploadQueue({
+		endpoint: "reviewMedia",
+		contextKey: REVIEW_OFFLINE_CONTEXT_KEY,
+	});
+
+	const handleReplayOffline = async () => {
+		const files = await offlineQueue.drainAsFiles();
+		if (files.length === 0) return;
+		await upload(files);
+		const { listEntries } = await import("@/modules/media/lib/offline-upload-queue");
+		const entries = await listEntries({
+			endpoint: "reviewMedia",
+			contextKey: REVIEW_OFFLINE_CONTEXT_KEY,
+		});
+		for (const e of entries) await offlineQueue.drop(e.id);
+	};
+
+	// Local validation: filter wrong-type / oversized / over-limit files before queueing
+	const acceptFiles = (files: File[]): File[] => {
 		const remainingSlots = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length - pendingFiles.length;
 		if (remainingSlots <= 0) {
 			toast.warning(`Maximum ${REVIEW_CONFIG.MAX_MEDIA_COUNT} photos`);
-			return;
+			return [];
 		}
-		const accepted = files.slice(0, remainingSlots);
-		if (files.length > accepted.length) {
-			toast.warning(`${files.length - accepted.length} photo(s) ignorée(s)`, {
-				description: `Limite de ${REVIEW_CONFIG.MAX_MEDIA_COUNT} photos atteinte`,
+		const accepted: File[] = [];
+		const wrongType: string[] = [];
+		const oversized: string[] = [];
+		for (const file of files) {
+			if (accepted.length >= remainingSlots) break;
+			if (!file.type.startsWith("image/")) {
+				wrongType.push(file.name);
+				continue;
+			}
+			if (file.size > REVIEW_MAX_SIZE) {
+				oversized.push(file.name);
+				continue;
+			}
+			accepted.push(file);
+		}
+		if (wrongType.length > 0) {
+			toast.warning(`${wrongType.length} fichier(s) ignoré(s)`, {
+				description: "Seules les images sont acceptées",
 			});
 		}
-		setPendingFiles((prev) => [...prev, ...accepted]);
+		if (oversized.length > 0) {
+			toast.warning(`${oversized.length} fichier(s) trop volumineux`, {
+				description: "Maximum 4 Mo par photo",
+			});
+		}
+		const dropped = files.length - accepted.length - wrongType.length - oversized.length;
+		if (dropped > 0) {
+			toast.warning(`Limite de ${REVIEW_CONFIG.MAX_MEDIA_COUNT} photos`, {
+				description: `${dropped} fichier(s) ignoré(s)`,
+			});
+		}
+		return accepted;
+	};
+
+	const handleFilesSelected = (files: File[]) => {
+		const accepted = acceptFiles(files);
+		if (accepted.length > 0) {
+			setPendingFiles((prev) => [...prev, ...accepted]);
+		}
 	};
 
 	const handleRemovePending = (index: number) => {
@@ -167,12 +238,22 @@ export function ReviewMediaUpload({
 				</>
 			)}
 
+			{offlineQueue.queuedCount > 0 && (
+				<OfflineQueueBanner
+					queuedCount={offlineQueue.queuedCount}
+					isOffline={offlineQueue.isOffline}
+					onReplay={() => void handleReplayOffline()}
+					disabled={isUploading}
+				/>
+			)}
+
 			{pendingFiles.length > 0 && (
 				<PendingUploadsGrid
 					files={pendingFiles}
 					onRemove={handleRemovePending}
 					onConfirm={handleConfirmUpload}
 					onCancel={() => setPendingFiles([])}
+					onReorder={(next) => setPendingFiles(next)}
 					disabled={isUploading}
 					confirmLabel={`Téléverser ${pendingFiles.length} photo${pendingFiles.length > 1 ? "s" : ""}`}
 				/>
@@ -199,120 +280,17 @@ export function ReviewMediaUpload({
 					sheetDescription="Prenez votre bijou en photo ou choisissez depuis votre galerie"
 					showCamera
 					desktopFallback={
-						<UploadDropzone
-							endpoint="reviewMedia"
-							aria-label="Zone d'upload des photos pour l'avis"
-							onBeforeUploadBegin={(files) => {
-								const remainingSlots = REVIEW_CONFIG.MAX_MEDIA_COUNT - media.length;
-								const accepted: File[] = [];
-								const wrongType: string[] = [];
-								const oversized: string[] = [];
-
-								for (const file of files) {
-									if (accepted.length >= remainingSlots) break;
-									if (!file.type.startsWith("image/")) {
-										wrongType.push(file.name);
-										continue;
-									}
-									if (file.size > REVIEW_MAX_SIZE) {
-										oversized.push(file.name);
-										continue;
-									}
-									accepted.push(file);
-								}
-
-								if (wrongType.length > 0) {
-									toast.warning(`${wrongType.length} fichier(s) ignoré(s)`, {
-										description: "Seules les images sont acceptées",
-									});
-								}
-								if (oversized.length > 0) {
-									toast.warning(`${oversized.length} fichier(s) trop volumineux`, {
-										description: "Maximum 4 Mo par photo",
-									});
-								}
-								if (files.length > remainingSlots && accepted.length === remainingSlots) {
-									const dropped =
-										files.length - remainingSlots - wrongType.length - oversized.length;
-									if (dropped > 0) {
-										toast.warning(`Limite de ${REVIEW_CONFIG.MAX_MEDIA_COUNT} photos`, {
-											description: `${dropped} fichier(s) ignoré(s)`,
-										});
-									}
-								}
-
-								return accepted;
+						<NativeReviewDropzone
+							remaining={remaining}
+							isDropTarget={isDropTarget}
+							setIsDropTarget={setIsDropTarget}
+							disabled={disabled}
+							fileInputRef={fileInputRef}
+							onPaste={(files) => {
+								handleFilesSelected(files);
 							}}
-							onUploadBegin={() => haptic("light")}
-							onClientUploadComplete={(res) => {
-								haptic("success");
-								if (res.length > 0) {
-									const newMedia: ReviewMediaItem[] = res.map((file) => ({
-										url: file.ufsUrl,
-										blurDataUrl: file.serverData.blurDataUrl ?? undefined,
-										altText: undefined,
-									}));
-									const updatedMedia = [...media, ...newMedia].slice(
-										0,
-										REVIEW_CONFIG.MAX_MEDIA_COUNT,
-									);
-									onChange(updatedMedia);
-									toast.success(
-										`${res.length} photo${res.length > 1 ? "s" : ""} ajoutée${res.length > 1 ? "s" : ""}`,
-									);
-								}
-							}}
-							onUploadError={(error) => {
-								haptic("error");
-								toast.error(error.message || "Erreur lors de l'upload");
-							}}
-							config={{ mode: "auto", appendOnPaste: true }}
-							appearance={{
-								container: cn(
-									"border-2 border-dashed rounded-lg p-4 cursor-pointer motion-safe:transition-colors relative",
-									"hover:border-primary/50 hover:bg-muted/50",
-									"ut-uploading:border-primary ut-uploading:bg-primary/5",
-								),
-								uploadIcon: "hidden",
-								label: "hidden",
-								allowedContent: "hidden",
-								button: "hidden",
-							}}
-							content={{
-								uploadIcon: ({ isUploading: uploading, uploadProgress }) => {
-									if (uploading) {
-										return (
-											<div
-												className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg backdrop-blur-sm"
-												role="status"
-												aria-live="polite"
-											>
-												<UploadProgress
-													progress={uploadProgress}
-													variant="compact"
-													isProcessing={uploadProgress >= 100}
-												/>
-											</div>
-										);
-									}
-									return null;
-								},
-								label: ({ isUploading: uploading }) => {
-									if (uploading) return null;
-									return (
-										<div className="flex flex-col items-center gap-2 py-2">
-											<div className="text-center">
-												<p className="text-sm font-medium">Glissez vos photos ou cliquez</p>
-												<p className="text-muted-foreground text-xs">
-													{remaining} restante{remaining > 1 ? "s" : ""} (max 4 Mo)
-												</p>
-											</div>
-										</div>
-									);
-								},
-								allowedContent: () => null,
-								button: () => <span className="sr-only">Ajouter des photos</span>,
-							}}
+							onPickFiles={() => fileInputRef.current?.click()}
+							onFiles={handleFilesSelected}
 						/>
 					}
 				/>
@@ -333,6 +311,12 @@ export function ReviewMediaUpload({
 						queuedCount={queuedCount}
 						completedCount={progress.completed}
 						files={progress.files}
+						bytesUploaded={progress.bytesUploaded}
+						bytesTotal={progress.bytesTotal}
+						bytesPerSecond={progress.bytesPerSecond}
+						etaSeconds={progress.etaSeconds}
+						onCancel={cancel}
+						onCancelOne={cancelOne}
 					/>
 				</div>
 			)}
@@ -342,6 +326,116 @@ export function ReviewMediaUpload({
 					Limite de {REVIEW_CONFIG.MAX_MEDIA_COUNT} photos atteinte
 				</p>
 			)}
+		</div>
+	);
+}
+
+interface NativeReviewDropzoneProps {
+	remaining: number;
+	isDropTarget: boolean;
+	setIsDropTarget: (v: boolean) => void;
+	disabled: boolean;
+	fileInputRef: React.RefObject<HTMLInputElement | null>;
+	onFiles: (files: File[]) => void;
+	onPickFiles: () => void;
+	onPaste: (files: File[]) => void;
+}
+
+/**
+ * Minimal native HTML5 drop zone — replaces the previous UploadThing UploadDropzone
+ * so the desktop pipeline goes through useMediaUpload (HEIC compression, retry,
+ * bytes-based progress, failedFiles tracking). (P0.3)
+ */
+function NativeReviewDropzone({
+	remaining,
+	isDropTarget,
+	setIsDropTarget,
+	disabled,
+	fileInputRef,
+	onFiles,
+	onPickFiles,
+	onPaste,
+}: NativeReviewDropzoneProps) {
+	useEffect(() => {
+		const handlePaste = (e: ClipboardEvent) => {
+			if (disabled) return;
+			const items = e.clipboardData?.files;
+			if (!items || items.length === 0) return;
+			const files = Array.from(items).filter((f) => f.type.startsWith("image/"));
+			if (files.length > 0) {
+				e.preventDefault();
+				onPaste(files);
+			}
+		};
+		window.addEventListener("paste", handlePaste);
+		return () => window.removeEventListener("paste", handlePaste);
+	}, [disabled, onPaste]);
+
+	return (
+		<div
+			role="button"
+			tabIndex={disabled ? -1 : 0}
+			aria-label="Zone d'upload des photos pour l'avis (glissez ou cliquez)"
+			aria-disabled={disabled}
+			onKeyDown={(e) => {
+				if (disabled) return;
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					onPickFiles();
+				}
+			}}
+			onClick={() => {
+				if (disabled) return;
+				onPickFiles();
+			}}
+			onDragOver={(e) => {
+				if (disabled) return;
+				if (!e.dataTransfer.types.includes("Files")) return;
+				e.preventDefault();
+				e.dataTransfer.dropEffect = "copy";
+				setIsDropTarget(true);
+			}}
+			onDragLeave={(e) => {
+				if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+				setIsDropTarget(false);
+			}}
+			onDrop={(e) => {
+				if (disabled) return;
+				if (e.dataTransfer.files.length === 0) return;
+				e.preventDefault();
+				setIsDropTarget(false);
+				onFiles(Array.from(e.dataTransfer.files));
+			}}
+			className={cn(
+				"flex w-full cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed p-4 motion-safe:transition-colors",
+				"hover:border-primary/50 hover:bg-muted/50",
+				"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
+				isDropTarget && "border-primary bg-primary/5",
+				disabled && "cursor-not-allowed opacity-50",
+			)}
+		>
+			<p className="text-sm font-medium">
+				{isDropTarget ? "Relâchez pour ajouter" : "Glissez vos photos ou cliquez"}
+			</p>
+			<p className="text-muted-foreground text-xs">
+				{remaining} restante{remaining > 1 ? "s" : ""} (max 4 Mo) — collez aussi avec Ctrl/Cmd+V
+			</p>
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept="image/*,image/heic,image/heif,.heic,.heif"
+				multiple={remaining > 1}
+				hidden
+				aria-hidden="true"
+				tabIndex={-1}
+				onChange={(e) => {
+					const files = e.target.files;
+					if (!files || files.length === 0) return;
+					const arr = Array.from(files);
+					e.target.value = "";
+					onFiles(arr);
+				}}
+			/>
 		</div>
 	);
 }

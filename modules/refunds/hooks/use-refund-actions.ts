@@ -4,6 +4,7 @@ import { Check, CircleX, CreditCard, Eye, Trash2 } from "lucide-react";
 
 import { RefundStatus } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
 import { APPROVE_REFUND_DIALOG_ID } from "../components/admin/approve-refund-alert-dialog";
@@ -28,6 +29,7 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 	const processDialog = useAlertDialog(PROCESS_REFUND_DIALOG_ID);
 	const rejectDialog = useAlertDialog(REJECT_REFUND_DIALOG_ID);
 	const cancelDialog = useAlertDialog(CANCEL_REFUND_DIALOG_ID);
+	const selectActionItem = useBulkSelectionActionItem(refund.id);
 
 	const canApprove = refund.status === RefundStatus.PENDING;
 	const canProcess = refund.status === RefundStatus.APPROVED;
@@ -45,6 +47,7 @@ export function useRefundActions({ refund }: UseRefundActionsParams): {
 		{
 			key: "navigate",
 			items: [
+				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "detail",
 					label: "Voir le détail",

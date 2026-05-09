@@ -147,10 +147,11 @@ describe("ReviewMediaUpload", () => {
 
 	it("desktop fallback dropzone has correct aria-label", () => {
 		render(<ReviewMediaUpload media={[]} onChange={vi.fn()} />);
-		expect(screen.getByTestId("upload-dropzone")).toHaveAttribute(
-			"aria-label",
-			"Zone d'upload des photos pour l'avis",
-		);
+		// P0.3: native HTML5 dropzone replaces UploadThing UploadDropzone — pipeline unifié
+		const dropzone = screen.getByRole("button", {
+			name: /Zone d'upload des photos pour l'avis/i,
+		});
+		expect(dropzone).toBeInTheDocument();
 	});
 
 	it("does not render upload trigger when at max limit (3 media)", () => {

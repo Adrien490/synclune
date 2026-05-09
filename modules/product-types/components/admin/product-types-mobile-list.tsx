@@ -35,10 +35,10 @@ export function ProductTypesMobileList({
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={Tags}
-					title="Aucun type trouve"
+					title="Aucun type trouvé"
 					description={
 						hasActiveFilters
-							? "Aucun type de bijou ne correspond aux criteres de recherche."
+							? "Aucun type de bijou ne correspond aux critères de recherche."
 							: "Aucun type de bijou pour l'instant."
 					}
 					actionElement={

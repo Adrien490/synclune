@@ -21,7 +21,7 @@ export function ProductDetailStorefrontLinkCard({
 	const isPublic = status === "PUBLIC";
 
 	return (
-		<Card>
+		<Card style={{ viewTransitionName: "product-detail-storefront" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					{isPublic ? (
@@ -37,7 +37,7 @@ export function ProductDetailStorefrontLinkCard({
 					<Button
 						asChild
 						variant="outline"
-						className="w-full transition-transform duration-150 active:scale-[0.98]"
+						className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
 						<Link
 							href={`/creations/${slug}`}

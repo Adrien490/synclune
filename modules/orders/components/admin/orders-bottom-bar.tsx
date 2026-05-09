@@ -1,13 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
-import { useToolbarDrawer } from "@/shared/hooks";
+import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/order.constants";
 import { OrdersFilterDrawer } from "./orders-filter-drawer";
@@ -23,18 +22,8 @@ const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, labe
  */
 function OrdersBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-
-	const searchParams = useSearchParams();
-	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
-	const hasActiveSort = searchParams.has("sortBy");
-	const hasActiveFilter =
-		searchParams.has("filter_status") ||
-		searchParams.has("filter_paymentStatus") ||
-		searchParams.has("filter_totalMin") ||
-		searchParams.has("filter_totalMax") ||
-		searchParams.has("filter_createdAfter") ||
-		searchParams.has("filter_createdBefore") ||
-		searchParams.has("filter_showDeleted");
+	const { hasActiveSearch, searchValue, hasActiveSort, hasActiveFilter, activeFilterCount } =
+		useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -45,6 +34,7 @@ function OrdersBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 		{
@@ -52,23 +42,23 @@ function OrdersBottomBarInner() {
 			icon: Search,
 			label: "Rechercher",
 			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
+				? `Recherche: "${searchValue}". Modifier la recherche`
 				: "Ouvrir la recherche",
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
-			announcement: hasActiveSearch
-				? `Recherche "${searchParams.get("search")}" active`
-				: undefined,
+			expanded: isOpen("search"),
+			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
 		{
 			key: "filter",
 			icon: SlidersHorizontal,
 			label: "Filtrer",
-			ariaLabel: hasActiveFilter ? "Filtre actif. Modifier le filtre" : "Ouvrir les filtres",
+			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
-			active: hasActiveFilter,
+			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			expanded: isOpen("filter"),
 			announcement: hasActiveFilter ? "Filtres actifs" : undefined,
 		},
 	];

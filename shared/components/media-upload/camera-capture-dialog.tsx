@@ -11,8 +11,8 @@ import {
 } from "@/shared/components/ui/dialog";
 import { useCameraStream, type CameraStreamError } from "@/modules/media/hooks/use-camera-stream";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { Camera, RefreshCcw, SwitchCamera, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Camera, Check, RefreshCcw, RotateCcw, SwitchCamera, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface CameraCaptureDialogProps {
 	open: boolean;
@@ -58,6 +58,15 @@ export function CameraCaptureDialog({
 }: CameraCaptureDialogProps) {
 	const haptic = useHaptic();
 	const [isCapturing, setIsCapturing] = useState(false);
+	const [preview, setPreviewState] = useState<{ file: File; url: string } | null>(null);
+	const previewRef = useRef<{ file: File; url: string } | null>(null);
+	const setPreview = (next: { file: File; url: string } | null) => {
+		const prev = previewRef.current;
+		if (prev) URL.revokeObjectURL(prev.url);
+		previewRef.current = next;
+		setPreviewState(next);
+	};
+	const clearPreview = () => setPreview(null);
 	const { videoRef, start, stop, capture, toggleFacing, facing, error, isStreaming } =
 		useCameraStream({ autoStart: false, facingMode: "environment" });
 
@@ -68,12 +77,21 @@ export function CameraCaptureDialog({
 			stop();
 			// eslint-disable-next-line react-hooks/set-state-in-effect
 			setIsCapturing(false);
+			clearPreview();
 		}
 		return () => {
 			if (!open) stop();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
+
+	// Revoke object URL on unmount
+	useEffect(() => {
+		return () => {
+			const current = previewRef.current;
+			if (current) URL.revokeObjectURL(current.url);
+		};
+	}, []);
 
 	const handleCapture = async () => {
 		if (isCapturing) return;
@@ -83,14 +101,29 @@ export function CameraCaptureDialog({
 			const file = await capture();
 			if (file) {
 				haptic("success");
-				onCapture(file);
-				onOpenChange(false);
+				// Stop the stream while previewing — saves battery + matches iOS Camera.app (P2.4)
+				stop();
+				setPreview({ file, url: URL.createObjectURL(file) });
 			} else {
 				haptic("error");
 			}
 		} finally {
 			setIsCapturing(false);
 		}
+	};
+
+	const handleRetake = async () => {
+		haptic("light");
+		clearPreview();
+		await start();
+	};
+
+	const handleKeep = () => {
+		if (!preview) return;
+		haptic("success");
+		onCapture(preview.file);
+		clearPreview();
+		onOpenChange(false);
 	};
 
 	const handleToggleFacing = async () => {
@@ -116,6 +149,13 @@ export function CameraCaptureDialog({
 						<div className="absolute inset-0 flex items-center justify-center p-6">
 							<ErrorPanel error={error} onRetry={() => void start()} />
 						</div>
+					) : preview ? (
+						// eslint-disable-next-line @next/next/no-img-element -- blob preview not for optimisation
+						<img
+							src={preview.url}
+							alt="Capture — vérifiez avant de garder"
+							className="h-full w-full object-cover"
+						/>
 					) : (
 						<video
 							ref={videoRef}
@@ -132,44 +172,84 @@ export function CameraCaptureDialog({
 						className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-3 p-4"
 						style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
 					>
-						<Button
-							type="button"
-							variant="secondary"
-							size="icon"
-							onClick={handleToggleFacing}
-							disabled={!isStreaming || !!error}
-							className="text-foreground size-11 rounded-full bg-white/80 backdrop-blur hover:bg-white"
-							aria-label={
-								facing === "environment"
-									? "Basculer sur la caméra avant"
-									: "Basculer sur la caméra arrière"
-							}
-						>
-							<SwitchCamera className="size-5" aria-hidden="true" />
-						</Button>
+						{preview ? (
+							// Refaire / Garder mode (P2.4 — pattern iOS Camera.app)
+							<>
+								<Button
+									type="button"
+									variant="secondary"
+									onClick={handleRetake}
+									className="text-foreground gap-2 rounded-full bg-white/80 px-5 backdrop-blur hover:bg-white"
+									aria-label="Refaire la photo"
+								>
+									<RotateCcw className="size-4" aria-hidden="true" />
+									Refaire
+								</Button>
+								<Button
+									type="button"
+									variant="default"
+									onClick={handleKeep}
+									className="gap-2 rounded-full px-5"
+									aria-label="Garder la photo"
+								>
+									<Check className="size-4" aria-hidden="true" />
+									Garder
+								</Button>
+								<DialogClose asChild>
+									<Button
+										type="button"
+										variant="secondary"
+										size="icon"
+										onClick={() => haptic("light")}
+										className="text-foreground size-11 rounded-full bg-white/80 backdrop-blur hover:bg-white"
+										aria-label="Fermer la caméra"
+									>
+										<X className="size-5" aria-hidden="true" />
+									</Button>
+								</DialogClose>
+							</>
+						) : (
+							<>
+								<Button
+									type="button"
+									variant="secondary"
+									size="icon"
+									onClick={handleToggleFacing}
+									disabled={!isStreaming || !!error}
+									className="text-foreground size-11 rounded-full bg-white/80 backdrop-blur hover:bg-white"
+									aria-label={
+										facing === "environment"
+											? "Basculer sur la caméra avant"
+											: "Basculer sur la caméra arrière"
+									}
+								>
+									<SwitchCamera className="size-5" aria-hidden="true" />
+								</Button>
 
-						<button
-							type="button"
-							onClick={handleCapture}
-							disabled={!isStreaming || isCapturing || !!error}
-							aria-label="Capturer la photo"
-							className="relative flex size-16 items-center justify-center rounded-full border-4 border-white bg-white/20 disabled:opacity-50"
-						>
-							<span className="size-12 rounded-full bg-white" aria-hidden="true" />
-						</button>
+								<button
+									type="button"
+									onClick={handleCapture}
+									disabled={!isStreaming || isCapturing || !!error}
+									aria-label="Capturer la photo"
+									className="relative flex size-16 items-center justify-center rounded-full border-4 border-white bg-white/20 disabled:opacity-50"
+								>
+									<span className="size-12 rounded-full bg-white" aria-hidden="true" />
+								</button>
 
-						<DialogClose asChild>
-							<Button
-								type="button"
-								variant="secondary"
-								size="icon"
-								onClick={() => haptic("light")}
-								className="text-foreground size-11 rounded-full bg-white/80 backdrop-blur hover:bg-white"
-								aria-label="Fermer la caméra"
-							>
-								<X className="size-5" aria-hidden="true" />
-							</Button>
-						</DialogClose>
+								<DialogClose asChild>
+									<Button
+										type="button"
+										variant="secondary"
+										size="icon"
+										onClick={() => haptic("light")}
+										className="text-foreground size-11 rounded-full bg-white/80 backdrop-blur hover:bg-white"
+										aria-label="Fermer la caméra"
+									>
+										<X className="size-5" aria-hidden="true" />
+									</Button>
+								</DialogClose>
+							</>
+						)}
 					</div>
 				</div>
 

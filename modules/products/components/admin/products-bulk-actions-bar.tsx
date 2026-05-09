@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { ArchiveRestore, ArchiveX, Loader2 } from "lucide-react";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
@@ -17,8 +17,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
+import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkArchiveProducts } from "../../actions/bulk-archive-products";
 
@@ -34,61 +33,27 @@ interface LastSubmission {
 	targetStatus: BulkAction;
 }
 
-async function runBulkArchive(ids: string[], targetStatus: BulkAction) {
-	const fd = new FormData();
-	fd.set("productIds", JSON.stringify(ids));
-	fd.set("targetStatus", targetStatus);
-	return bulkArchiveProducts(undefined, fd);
-}
-
 export function ProductsBulkActionsBar({ presentation = "inline" }: ProductsBulkActionsBarProps) {
-	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
+	const { selectedIds, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
-	const lastSubmissionRef = useRef<LastSubmission | null>(null);
 
-	const [state, action, isPending] = useActionState(bulkArchiveProducts, undefined);
-
-	useEffect(() => {
-		if (!state) return;
-		if (state.status === ActionStatus.SUCCESS) {
-			const last = lastSubmissionRef.current;
-			const undoTarget: BulkAction | null = last
-				? last.targetStatus === "ARCHIVED"
-					? "PUBLIC"
-					: "ARCHIVED"
-				: null;
-
-			toast.success(state.message, {
-				duration: 6000,
-				action:
-					last && undoTarget
-						? {
-								label: "Annuler",
-								onClick: async () => {
-									const result = await runBulkArchive(last.ids, undoTarget);
-									if (result.status === ActionStatus.SUCCESS) {
-										toast.success("Action annulée");
-									} else {
-										toast.error(result.message);
-									}
-								},
-							}
-						: undefined,
-			});
-			lastSubmissionRef.current = null;
-			clear();
-		} else if (state.message) {
-			toast.error(state.message);
-		}
-	}, [state, clear]);
+	const { submit, isPending } = useBulkActionWithToast<LastSubmission>(bulkArchiveProducts, {
+		undo: {
+			buildUndoFormData: (snap) => {
+				const fd = new FormData();
+				fd.set("productIds", JSON.stringify(snap.ids));
+				fd.set("targetStatus", snap.targetStatus === "ARCHIVED" ? "PUBLIC" : "ARCHIVED");
+				return fd;
+			},
+		},
+	});
 
 	function handleConfirm(targetStatus: BulkAction) {
 		const ids = Array.from(selectedIds);
-		lastSubmissionRef.current = { ids, targetStatus };
 		const fd = new FormData();
 		fd.set("productIds", JSON.stringify(ids));
 		fd.set("targetStatus", targetStatus);
-		action(fd);
+		submit(fd, { ids, targetStatus });
 		setPendingAction(null);
 	}
 

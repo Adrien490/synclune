@@ -76,6 +76,7 @@ export function StructuredData({
 		});
 
 		// ItemList for the "Latest Creations" rail — enables Google product carousel rich result.
+		// Each item embeds a full Product with Offer (price, availability) for Google Shopping eligibility.
 		if (featuredProducts && featuredProducts.length > 0) {
 			graphSchemas.push({
 				"@type": "ItemList",
@@ -83,12 +84,53 @@ export function StructuredData({
 				name: "Nouvelles créations Synclune",
 				numberOfItems: featuredProducts.length,
 				itemListOrder: "https://schema.org/ItemListOrderDescending",
-				itemListElement: featuredProducts.map((product, index) => ({
-					"@type": "ListItem",
-					position: index + 1,
-					url: `${SITE_URL}/creations/${product.slug}`,
-					name: product.title,
-				})),
+				itemListElement: featuredProducts.map((product, index) => {
+					const url = `${SITE_URL}/creations/${product.slug}`;
+					// skus are pre-sorted by [isDefault desc, priceInclTax asc] in GET_PRODUCTS_SELECT
+					const defaultSku = product.skus[0];
+					const primaryImage =
+						defaultSku?.images.find((img) => img.isPrimary) ?? defaultSku?.images[0];
+					const priceCents = defaultSku?.priceInclTax;
+					const inStock = (defaultSku?.inventory ?? 0) > 0;
+
+					const productNode: Record<string, unknown> = {
+						"@type": "Product",
+						"@id": `${url}#product`,
+						name: product.title,
+						url,
+						...(product.description && { description: product.description }),
+						...(primaryImage && { image: primaryImage.url }),
+						...(product.reviewStats &&
+							product.reviewStats.totalCount > 0 && {
+								aggregateRating: {
+									"@type": "AggregateRating",
+									ratingValue: product.reviewStats.averageRating,
+									reviewCount: product.reviewStats.totalCount,
+									bestRating: 5,
+									worstRating: 1,
+								},
+							}),
+						...(typeof priceCents === "number" && {
+							offers: {
+								"@type": "Offer",
+								url,
+								price: (priceCents / 100).toFixed(2),
+								priceCurrency: "EUR",
+								availability: inStock
+									? "https://schema.org/InStock"
+									: "https://schema.org/OutOfStock",
+								itemCondition: "https://schema.org/NewCondition",
+							},
+						}),
+					};
+
+					return {
+						"@type": "ListItem",
+						position: index + 1,
+						url,
+						item: productNode,
+					};
+				}),
 			});
 		}
 

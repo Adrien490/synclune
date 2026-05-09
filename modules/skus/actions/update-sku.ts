@@ -139,7 +139,7 @@ export async function updateProductSku(
 			});
 
 			if (!existingSku) {
-				throw new BusinessError("Le SKU spécifié n'existe pas.");
+				throw new BusinessError("La variante spécifiée n'existe pas.");
 			}
 
 			// Produit PUBLIC: garantir qu'au moins 1 SKU actif reste si on desactive celui-ci
@@ -329,7 +329,7 @@ export async function updateProductSku(
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Un SKU avec ce code existe déjà.",
+				message: "Une variante avec ce code existe déjà.",
 			};
 		}
 		return handleActionError(e, "Une erreur est survenue lors de la mise à jour de la variante.");

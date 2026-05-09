@@ -210,7 +210,7 @@ const initialSkuSchema = z
 // Schema pour SKU par defaut (update de produit)
 const defaultSkuSchema = z
 	.object({
-		skuId: z.cuid2({ message: "ID SKU invalide" }),
+		skuId: z.cuid2({ message: "ID variante invalide" }),
 		...baseSkuFields,
 	})
 	.refine(skuPriceRefinement, {

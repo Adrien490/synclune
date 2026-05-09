@@ -47,7 +47,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit car il n'a aucun SKU actif. Veuillez activer au moins un SKU avant de publier.",
+				"Impossible de publier ce produit car il n'a aucune variante active. Veuillez activer au moins une variante avant de publier.",
 		};
 	}
 
@@ -57,7 +57,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit car aucun SKU actif n'a de stock. Veuillez ajouter du stock a au moins une variante.",
+				"Impossible de publier ce produit car aucune variante active n'a de stock. Veuillez ajouter du stock à au moins une variante.",
 		};
 	}
 
@@ -67,7 +67,7 @@ export function validateProductForPublication(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de publier ce produit car aucun SKU actif n'a d'image principale. Veuillez ajouter une image a au moins une variante.",
+				"Impossible de publier ce produit car aucune variante active n'a d'image principale. Veuillez ajouter une image à au moins une variante.",
 		};
 	}
 
@@ -85,7 +85,7 @@ export function validatePublicProductCreation(
 		return {
 			isValid: false,
 			errorMessage:
-				"Impossible de créer un produit PUBLIC avec un SKU inactif. Veuillez activer le SKU ou créer le produit en DRAFT.",
+				"Impossible de créer un produit PUBLIC avec une variante inactive. Veuillez activer la variante ou créer le produit en DRAFT.",
 		};
 	}
 

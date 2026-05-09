@@ -86,7 +86,9 @@ export async function duplicateSku(
 			});
 
 			if (!skuResult.success) {
-				throw new BusinessError(skuResult.error ?? "Impossible de générer un code SKU unique");
+				throw new BusinessError(
+					skuResult.error ?? "Impossible de générer un code unique pour la variante",
+				);
 			}
 
 			const newSku = skuResult.name!;

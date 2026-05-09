@@ -92,8 +92,8 @@ export function AdminMobileHeader() {
 					)}
 					<h1
 						className={cn(
-							"min-w-0 truncate text-left leading-none font-semibold tracking-tight",
-							showParent ? "text-sm" : "text-base",
+							"font-display min-w-0 truncate text-left leading-none font-normal tracking-normal",
+							showParent ? "text-base" : "text-lg",
 						)}
 					>
 						{pageTitle}

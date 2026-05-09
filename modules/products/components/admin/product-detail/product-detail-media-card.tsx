@@ -79,7 +79,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 							type="button"
 							onClick={() => openAt(0)}
 							aria-label={`Agrandir l'image principale${primary.altText ? ` : ${primary.altText}` : ""}`}
-							className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-lg border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
+							className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in touch-manipulation overflow-hidden rounded-lg border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99]"
 						>
 							<Image
 								src={primary.url}
@@ -94,35 +94,74 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 							/>
 						</button>
 						{rest.length > 0 ? (
-							<ul
-								className="grid grid-cols-4 gap-2 sm:grid-cols-6"
-								aria-label={`${rest.length} image${rest.length > 1 ? "s" : ""} secondaire${rest.length > 1 ? "s" : ""}`}
-							>
-								{rest.map((image, restIndex) => (
-									<li key={image.id} className="relative">
-										<button
-											type="button"
-											onClick={() => openAt(restIndex + 1)}
-											aria-label={`Agrandir l'image ${restIndex + 2}${image.altText ? ` : ${image.altText}` : ""}`}
-											className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in overflow-hidden rounded-md border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95"
-										>
-											<Image
-												src={image.thumbnailUrl ?? image.url}
-												alt={image.altText ?? ""}
-												fill
-												sizes="120px"
-												className="object-cover"
-												{...(image.blurDataUrl
-													? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }
-													: {})}
-											/>
-										</button>
-									</li>
-								))}
-							</ul>
+							<>
+								<ul
+									className="-mx-[var(--admin-main-x,1.5rem)] flex snap-x snap-mandatory gap-2 overflow-x-auto overscroll-contain px-[var(--admin-main-x,1.5rem)] pb-1 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden"
+									aria-label={`Galerie d'images (swipe horizontal, ${images.length} image${images.length > 1 ? "s" : ""})`}
+								>
+									{images.map((image, index) => (
+										<li key={image.id} className="shrink-0 snap-start">
+											<button
+												type="button"
+												onClick={() => openAt(index)}
+												aria-label={`Agrandir l'image ${index + 1}${image.altText ? ` : ${image.altText}` : ""}`}
+												className="focus-visible:ring-ring relative block size-20 cursor-zoom-in touch-manipulation overflow-hidden rounded-md border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95"
+											>
+												<Image
+													src={image.thumbnailUrl ?? image.url}
+													alt={image.altText ?? ""}
+													fill
+													sizes="80px"
+													className="object-cover"
+													{...(image.blurDataUrl
+														? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }
+														: {})}
+												/>
+											</button>
+										</li>
+									))}
+								</ul>
+								<ul
+									className="hidden grid-cols-4 gap-2 overscroll-contain sm:grid-cols-6 md:grid"
+									aria-label={`${rest.length} image${rest.length > 1 ? "s" : ""} secondaire${rest.length > 1 ? "s" : ""}`}
+								>
+									{rest.map((image, restIndex) => (
+										<li key={image.id} className="relative">
+											<button
+												type="button"
+												onClick={() => openAt(restIndex + 1)}
+												aria-label={`Agrandir l'image ${restIndex + 2}${image.altText ? ` : ${image.altText}` : ""}`}
+												className="focus-visible:ring-ring relative block aspect-square w-full cursor-zoom-in touch-manipulation overflow-hidden rounded-md border transition-transform duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95"
+											>
+												<Image
+													src={image.thumbnailUrl ?? image.url}
+													alt={image.altText ?? ""}
+													fill
+													sizes="120px"
+													className="object-cover"
+													{...(image.blurDataUrl
+														? { placeholder: "blur" as const, blurDataURL: image.blurDataUrl }
+														: {})}
+												/>
+											</button>
+										</li>
+									))}
+								</ul>
+							</>
 						) : null}
 						{lightbox.isOpen ? (
-							<Suspense fallback={null}>
+							<Suspense
+								fallback={
+									<div
+										className="bg-background/95 fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-md"
+										role="status"
+										aria-busy="true"
+										aria-label="Chargement de la galerie"
+									>
+										<div className="bg-muted/30 aspect-square w-full max-w-3xl animate-pulse rounded-lg" />
+									</div>
+								}
+							>
 								<MediaLightbox
 									open={lightbox.isOpen}
 									close={lightbox.close}
@@ -144,7 +183,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 							asChild
 							size="sm"
 							variant="outline"
-							className="transition-transform duration-150 active:scale-[0.98]"
+							className="touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 						>
 							<Link
 								href={`/admin/catalogue/produits/${product.slug}/modifier`}

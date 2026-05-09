@@ -15,6 +15,7 @@ interface BulkSelectionContextValue {
 	isSelected: (id: string) => boolean;
 	toggle: (id: string) => void;
 	togglePage: () => void;
+	/** Reset selection AND exit selection mode (used after bulk action completes). */
 	clear: () => void;
 	pageState: "none" | "some" | "all";
 	/**
@@ -23,6 +24,11 @@ interface BulkSelectionContextValue {
 	 */
 	selectionMode: boolean;
 	enterSelectionMode: () => void;
+	/**
+	 * Toggle selection mode OFF but **keep `selectedIds`** (Mail iOS pattern).
+	 * Re-entering the mode restores the previous selection. To wipe the
+	 * selection (e.g. after a successful bulk action), call `clear()` instead.
+	 */
 	exitSelectionMode: () => void;
 	/**
 	 * Sélectionne tous les `pageItemIds` si tous ne sont pas déjà sélectionnés
@@ -93,7 +99,6 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 
 	const exitSelectionMode = () => {
 		triggerHaptic("selection");
-		setSelectedIds(new Set());
 		setSelectionMode(false);
 	};
 

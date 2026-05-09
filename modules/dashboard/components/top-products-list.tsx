@@ -79,7 +79,10 @@ export function TopProductsList({ listData, periodLabel }: TopProductsListProps)
 		return (
 			<section className="space-y-3" aria-labelledby="top-products-mobile-title">
 				<header>
-					<h3 id="top-products-mobile-title" className="text-base font-semibold">
+					<h3
+						id="top-products-mobile-title"
+						className="font-display text-lg font-normal tracking-tight"
+					>
 						Top produits
 					</h3>
 					<p className="text-muted-foreground text-xs">{description}</p>

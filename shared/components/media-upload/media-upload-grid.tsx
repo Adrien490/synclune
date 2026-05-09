@@ -41,6 +41,8 @@ interface MediaUploadGridProps {
 	maxItems?: number;
 	/** Upload zone (rendered by parent) */
 	renderUploadZone?: () => React.ReactNode;
+	/** When provided, enables native drag-and-drop of files from the OS file system (P2.5) */
+	onFilesDropped?: (files: File[]) => void;
 }
 
 export function MediaUploadGrid({
@@ -49,10 +51,12 @@ export function MediaUploadGrid({
 	skipUtapiDelete,
 	maxItems = 6,
 	renderUploadZone,
+	onFilesDropped,
 }: MediaUploadGridProps) {
 	const deleteDialog = useAlertDialog(DELETE_GALLERY_MEDIA_DIALOG_ID);
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
+	const [isFileDropTarget, setIsFileDropTarget] = useState(false);
 
 	// Image loading state
 	const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -266,9 +270,34 @@ export function MediaUploadGrid({
 				</div>
 
 				<div
-					className="grid w-full grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4"
+					className={`grid w-full grid-cols-2 gap-3 rounded-lg sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4 ${
+						isFileDropTarget && onFilesDropped
+							? "ring-primary bg-primary/5 ring-2 ring-offset-2 transition-colors"
+							: ""
+					}`}
 					role="list"
 					aria-label="Médias du produit"
+					{...(onFilesDropped
+						? {
+								onDragOver: (e: React.DragEvent<HTMLDivElement>) => {
+									if (!e.dataTransfer.types.includes("Files")) return;
+									e.preventDefault();
+									e.dataTransfer.dropEffect = "copy";
+									setIsFileDropTarget(true);
+								},
+								onDragLeave: (e: React.DragEvent<HTMLDivElement>) => {
+									if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+									setIsFileDropTarget(false);
+								},
+								onDrop: (e: React.DragEvent<HTMLDivElement>) => {
+									if (e.dataTransfer.files.length === 0) return;
+									e.preventDefault();
+									setIsFileDropTarget(false);
+									triggerHaptic("medium");
+									onFilesDropped(Array.from(e.dataTransfer.files));
+								},
+							}
+						: {})}
 				>
 					{media.map((m, index) => {
 						const isImageLoaded = loadedImages.has(m.url);

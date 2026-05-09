@@ -1,12 +1,11 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
-import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
-import { useToolbarDrawer } from "@/shared/hooks";
+import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { GET_PRODUCT_SKUS_SORT_FIELDS, SORT_LABELS } from "../../constants/sku.constants";
 import { SkusFilterSheet } from "./skus-filter-sheet";
@@ -35,25 +34,18 @@ interface SkusBottomBarProps {
  */
 function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: SkusBottomBarProps) {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "filter">();
-
-	const searchParams = useSearchParams();
-	const hasActiveSort = searchParams.has("sortBy");
-	const activeFilterCount = Array.from(searchParams.keys()).filter((key) =>
-		key.startsWith("filter_"),
-	).length;
+	const { hasActiveSort, activeFilterCount } = useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
 			key: "filter",
 			icon: SlidersHorizontal,
 			label: "Filtrer",
-			ariaLabel:
-				activeFilterCount > 0
-					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
-					: "Ouvrir les filtres",
+			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
 					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
@@ -66,6 +58,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 			label: "Ajouter",
 			ariaLabel: "Créer une nouvelle variante",
 			href: `/admin/catalogue/produits/${productSlug}/variantes/nouveau`,
+			viewTransitionName: "admin-add-action",
 		},
 		{
 			key: "sort",
@@ -75,6 +68,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 	];

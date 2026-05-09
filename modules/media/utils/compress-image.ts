@@ -20,8 +20,10 @@ export interface CompressImageOptions {
 	maxDim?: number;
 	/** Output quality 0-1. Default: 0.85 */
 	quality?: number;
-	/** Output MIME type. Default: "image/webp" with JPEG fallback */
-	mimeType?: "image/webp" | "image/jpeg";
+	/** Output MIME type. Default: best available ("image/avif" → "image/webp" → "image/jpeg") */
+	mimeType?: "image/avif" | "image/webp" | "image/jpeg";
+	/** Progress callback fired between phases (decode, resize, encode) — values in [0..1] */
+	onProgress?: (percent: number) => void;
 }
 
 export interface CompressImageResult {
@@ -86,11 +88,46 @@ function supportsWebPEncoding(): boolean {
 	}
 }
 
+/**
+ * True if the browser can encode AVIF via canvas.toDataURL (Safari 16.4+, Chrome 85+ desktop, Chrome 100+ Android).
+ * AVIF compresses ~30-50% better than WebP at equivalent visual quality.
+ */
+let _avifSupportCache: boolean | null = null;
+function supportsAvifEncoding(): boolean {
+	if (_avifSupportCache !== null) return _avifSupportCache;
+	if (typeof document === "undefined") {
+		_avifSupportCache = false;
+		return false;
+	}
+	try {
+		const canvas = document.createElement("canvas");
+		canvas.width = 1;
+		canvas.height = 1;
+		_avifSupportCache = canvas.toDataURL("image/avif").startsWith("data:image/avif");
+		return _avifSupportCache;
+	} catch {
+		_avifSupportCache = false;
+		return false;
+	}
+}
+
 function pickOutputMimeType(
 	requested: CompressImageOptions["mimeType"],
-): "image/webp" | "image/jpeg" {
+): "image/avif" | "image/webp" | "image/jpeg" {
 	if (requested === "image/jpeg") return "image/jpeg";
+	if (requested === "image/webp") return supportsWebPEncoding() ? "image/webp" : "image/jpeg";
+	if (requested === "image/avif") {
+		if (supportsAvifEncoding()) return "image/avif";
+		return supportsWebPEncoding() ? "image/webp" : "image/jpeg";
+	}
+	// Default: prefer AVIF, then WebP, then JPEG
+	if (supportsAvifEncoding()) return "image/avif";
 	return supportsWebPEncoding() ? "image/webp" : "image/jpeg";
+}
+
+/** Test helper: reset the AVIF support detection cache between specs */
+export function _resetAvifSupportCache(): void {
+	_avifSupportCache = null;
 }
 
 function computeTargetDimensions(
@@ -111,7 +148,8 @@ function computeTargetDimensions(
 function renameWithExtension(originalName: string, newMimeType: string): string {
 	const dot = originalName.lastIndexOf(".");
 	const stem = dot > 0 ? originalName.slice(0, dot) : originalName;
-	const ext = newMimeType === "image/webp" ? ".webp" : ".jpg";
+	const ext =
+		newMimeType === "image/avif" ? ".avif" : newMimeType === "image/webp" ? ".webp" : ".jpg";
 	return `${stem}${ext}`;
 }
 
@@ -151,15 +189,20 @@ export async function compressImage(
 	options: CompressImageOptions = {},
 ): Promise<CompressImageResult> {
 	const originalSize = file.size;
+	const onProgress = options.onProgress;
 
 	// Skip small files entirely — compression would add no benefit
 	if (originalSize < SKIP_COMPRESSION_THRESHOLD) {
+		onProgress?.(1);
 		return { file, compressed: false, originalSize, finalSize: originalSize };
 	}
 
 	if (typeof createImageBitmap !== "function" || typeof OffscreenCanvas === "undefined") {
+		onProgress?.(1);
 		return { file, compressed: false, originalSize, finalSize: originalSize };
 	}
+
+	onProgress?.(0.05);
 
 	const heic = isHeicFile(file);
 	let bitmap: ImageBitmap;
@@ -177,6 +220,9 @@ export async function compressImage(
 		}
 	}
 
+	// Decode complete — heaviest step for HEIC (libheif WASM)
+	onProgress?.(0.6);
+
 	const reducedData = prefersReducedData();
 	const maxDim = options.maxDim ?? (reducedData ? 1280 : 2048);
 	const quality = options.quality ?? (reducedData ? 0.75 : 0.85);
@@ -188,13 +234,38 @@ export async function compressImage(
 	const ctx = canvas.getContext("2d");
 	if (!ctx) {
 		bitmap.close();
+		onProgress?.(1);
 		return { file, compressed: false, originalSize, finalSize: originalSize };
 	}
 
 	ctx.drawImage(bitmap, 0, 0, width, height);
 	bitmap.close();
+	onProgress?.(0.8);
 
-	const blob = await canvas.convertToBlob({ type: outputMimeType, quality });
+	let blob: Blob;
+	try {
+		blob = await canvas.convertToBlob({ type: outputMimeType, quality });
+	} catch {
+		// Some platforms reject AVIF in convertToBlob despite passing the toDataURL check —
+		// retry once with WebP/JPEG fallback.
+		if (outputMimeType === "image/avif") {
+			const fallback = supportsWebPEncoding() ? "image/webp" : "image/jpeg";
+			blob = await canvas.convertToBlob({ type: fallback, quality });
+			const newName = renameWithExtension(file.name, fallback);
+			const compressedFile = new File([blob], newName, {
+				type: fallback,
+				lastModified: file.lastModified,
+			});
+			onProgress?.(1);
+			if (blob.size >= originalSize && !heic) {
+				return { file, compressed: false, originalSize, finalSize: originalSize };
+			}
+			return { file: compressedFile, compressed: true, originalSize, finalSize: blob.size };
+		}
+		throw new Error(`Compression failed for ${file.name}`);
+	}
+
+	onProgress?.(1);
 
 	// If compression made it bigger (rare, e.g. tiny PNG with alpha), keep original
 	if (blob.size >= originalSize && !heic) {

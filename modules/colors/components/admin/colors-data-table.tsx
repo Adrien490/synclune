@@ -37,7 +37,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 				className="hidden md:flex"
 				icon={Palette}
 				title="Aucune couleur trouvée"
-				description="Aucune couleur ne correspond aux criteres de recherche."
+				description="Aucune couleur ne correspond aux critères de recherche."
 				actionElement={<CreateColorButton />}
 			/>
 		);

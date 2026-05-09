@@ -64,7 +64,7 @@ export async function setPrimarySkuMedia(
 				throw new BusinessError("Le media n'existe pas.");
 			}
 			if (media.skuId !== skuId) {
-				throw new BusinessError("Le media n'appartient pas a ce SKU.");
+				throw new BusinessError("Le média n'appartient pas à cette variante.");
 			}
 			if (media.mediaType !== "IMAGE") {
 				throw new BusinessError(

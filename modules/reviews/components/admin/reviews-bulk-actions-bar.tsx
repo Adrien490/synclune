@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useState } from "react";
 import { CircleCheck, EyeOff, Loader2 } from "lucide-react";
 
 import { ReviewStatus } from "@/app/generated/prisma/enums";
@@ -17,8 +17,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
+import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkModerateReviews } from "../../actions/bulk-moderate-reviews";
 
@@ -31,28 +30,18 @@ interface ReviewsBulkActionsBarProps {
 export function ReviewsBulkActionsBar({
 	presentation = "inline",
 }: ReviewsBulkActionsBarProps = {}) {
-	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
+	const { selectedIds, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
-	const [state, action, isPending] = useActionState(bulkModerateReviews, undefined);
+	const { submit, isPending } = useBulkActionWithToast(bulkModerateReviews);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
-
-	useEffect(() => {
-		if (!state) return;
-		if (state.status === ActionStatus.SUCCESS) {
-			toast.success(state.message);
-			clear();
-		} else if (state.message) {
-			toast.error(state.message);
-		}
-	}, [state, clear]);
 
 	function handleConfirm(target: BulkAction) {
 		const fd = new FormData();
 		fd.set("reviewIds", JSON.stringify(Array.from(selectedIds)));
 		fd.set("targetStatus", target);
-		action(fd);
+		submit(fd);
 		setPendingAction(null);
 	}
 

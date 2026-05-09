@@ -53,7 +53,7 @@ export function SkuDetailHeader({ sku }: SkuDetailHeaderProps) {
 					</h1>
 					<CopyButton
 						text={sku.sku}
-						label="Référence SKU"
+						label="Référence variante"
 						className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
 					/>
 				</div>

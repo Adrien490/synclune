@@ -60,7 +60,6 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				title="Ton atelier"
 				description="Voici ce qui se passe aujourd'hui"
 				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
-				className="hidden md:block"
 				actions={
 					<div className="flex items-center gap-2">
 						<PeriodSelector />
@@ -131,7 +130,10 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 
 function SectionHeading({ id, label }: { id: string; label: string }) {
 	return (
-		<h2 id={id} className="text-muted-foreground text-xs font-semibold tracking-[0.08em] uppercase">
+		<h2
+			id={id}
+			className="text-muted-foreground font-display text-sm font-normal tracking-tight italic"
+		>
 			{label}
 		</h2>
 	);

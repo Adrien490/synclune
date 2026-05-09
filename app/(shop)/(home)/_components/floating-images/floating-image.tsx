@@ -68,7 +68,9 @@ export function FloatingImage({
 	}
 
 	return (
-		// Layer 1: parallax scroll (y + opacity)
+		// Layer 1: parallax scroll (y + opacity).
+		// `parallaxOpacity` is null when native CSS scroll-driven animations are supported —
+		// the parent container handles opacity through `animation-timeline: scroll()` on the compositor thread.
 		<m.div
 			ref={ref}
 			className={`absolute ${position.className} ${position.widthClasses} pointer-events-auto ${position.visibilityClass}`}
@@ -78,7 +80,7 @@ export function FloatingImage({
 					: {
 							x: pointerXSpring,
 							y: combinedY,
-							opacity: parallaxOpacity,
+							...(parallaxOpacity !== null && { opacity: parallaxOpacity }),
 							willChange: isInView ? "transform" : "auto",
 						}
 			}

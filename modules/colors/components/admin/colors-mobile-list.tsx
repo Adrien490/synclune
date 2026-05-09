@@ -35,10 +35,10 @@ export function ColorsMobileList({
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={Palette}
-					title="Aucune couleur trouvee"
+					title="Aucune couleur trouvée"
 					description={
 						hasActiveFilters
-							? "Aucune couleur ne correspond aux criteres de recherche."
+							? "Aucune couleur ne correspond aux critères de recherche."
 							: "Aucune couleur pour l'instant."
 					}
 					actionElement={

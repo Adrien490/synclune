@@ -4,6 +4,7 @@ import { Copy, ExternalLink, SquarePen, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -34,6 +35,7 @@ export function useColorActions({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
+	const selectActionItem = useBulkSelectionActionItem(colorId);
 	const { duplicate, isPending: isDuplicating } = useDuplicateColor({
 		onSuccess: (message, data) => {
 			haptic("success");
@@ -54,6 +56,7 @@ export function useColorActions({
 		{
 			key: "manage",
 			items: [
+				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "edit",
 					label: "Éditer",

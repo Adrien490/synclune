@@ -41,9 +41,9 @@ interface TableEmptyStateProps {
  * ```tsx
  * <TableEmptyState
  *   icon={ShoppingBag}
- *   title="Aucune commande trouvee"
- *   description="Aucune commande ne correspond aux criteres de recherche."
- *   action={{ label: "Creer une commande", href: "/admin/commandes/nouveau" }}
+ *   title="Aucune commande trouvée"
+ *   description="Aucune commande ne correspond aux critères de recherche."
+ *   action={{ label: "Créer une commande", href: "/admin/commandes/nouveau" }}
  * />
  * ```
  */

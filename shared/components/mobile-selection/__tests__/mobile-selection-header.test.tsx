@@ -5,18 +5,26 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
 }));
 
+vi.mock("lucide-react", () => ({
+	CheckSquare: (props: Record<string, unknown>) => (
+		<svg data-testid="check-square-icon" {...props} />
+	),
+}));
+
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
 		children,
 		onClick,
+		variant,
 		"aria-pressed": ariaPressed,
 		...props
 	}: {
 		children: React.ReactNode;
 		onClick?: () => void;
+		variant?: string;
 		"aria-pressed"?: boolean;
 	} & Record<string, unknown>) => (
-		<button onClick={onClick} aria-pressed={ariaPressed} {...props}>
+		<button onClick={onClick} aria-pressed={ariaPressed} data-variant={variant} {...props}>
 			{children}
 		</button>
 	),
@@ -48,6 +56,18 @@ describe("MobileSelectionHeader", () => {
 
 		expect(screen.getByRole("button", { name: "Sélectionner" })).toBeInTheDocument();
 		expect(screen.queryByRole("button", { name: "Annuler" })).not.toBeInTheDocument();
+	});
+
+	it("'Sélectionner' button uses outline variant + CheckSquare icon for affordance", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["a", "b"]}>
+				<MobileSelectionHeader itemsLabel={itemsLabel} />
+			</BulkSelectionProvider>,
+		);
+
+		const button = screen.getByRole("button", { name: "Sélectionner" });
+		expect(button).toHaveAttribute("data-variant", "outline");
+		expect(screen.getByTestId("check-square-icon")).toBeInTheDocument();
 	});
 
 	it("flips to mode ON header on Sélectionner click", () => {

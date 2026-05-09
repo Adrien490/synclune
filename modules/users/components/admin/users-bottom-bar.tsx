@@ -1,13 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Filter, Search } from "lucide-react";
 
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
-import { useToolbarDrawer } from "@/shared/hooks";
+import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { USERS_SORT_LABELS } from "../../constants/user.constants";
 import { UsersFilterSheet } from "./users-filter-sheet";
@@ -23,21 +22,19 @@ const SORT_OPTIONS: SortOption[] = Object.entries(USERS_SORT_LABELS).map(([value
  */
 function UsersBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-
-	const searchParams = useSearchParams();
-	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
-	const hasActiveSort = searchParams.has("sortBy");
-	const hasActiveFilter = Array.from(searchParams.keys()).some((key) => key.startsWith("filter_"));
+	const { hasActiveSearch, searchValue, hasActiveSort, hasActiveFilter, activeFilterCount } =
+		useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
 			key: "filter",
 			icon: Filter,
 			label: "Filtrer",
-			ariaLabel: hasActiveFilter ? "Filtres actifs. Modifier les filtres" : "Ouvrir les filtres",
+			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
-			active: hasActiveFilter,
+			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			expanded: isOpen("filter"),
 			announcement: hasActiveFilter ? "Filtres actifs" : undefined,
 		},
 		{
@@ -48,6 +45,7 @@ function UsersBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 		{
@@ -55,14 +53,13 @@ function UsersBottomBarInner() {
 			icon: Search,
 			label: "Rechercher",
 			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
+				? `Recherche: "${searchValue}". Modifier la recherche`
 				: "Ouvrir la recherche",
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
-			announcement: hasActiveSearch
-				? `Recherche "${searchParams.get("search")}" active`
-				: undefined,
+			expanded: isOpen("search"),
+			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
 	];
 

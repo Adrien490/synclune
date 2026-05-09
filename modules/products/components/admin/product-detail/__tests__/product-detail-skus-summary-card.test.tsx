@@ -2,9 +2,12 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("lucide-react", () => ({
+	AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
 	ArrowRight: () => <svg data-testid="icon-arrow-right" />,
 	LayoutList: () => <svg data-testid="icon-layout-list" />,
-	Star: () => <svg data-testid="icon-star" />,
+	Star: ({ "aria-label": ariaLabel }: { "aria-label"?: string }) => (
+		<svg data-testid="icon-star" aria-label={ariaLabel} />
+	),
 }));
 
 vi.mock("next/link", () => ({
@@ -58,7 +61,17 @@ vi.mock("@/shared/components/ui/card", () => ({
 
 import { ProductDetailSkusSummaryCard } from "../product-detail-skus-summary-card";
 
-const makeProduct = (skus: Array<{ priceInclTax: number; inventory: number }>) =>
+type SkuInput = {
+	priceInclTax: number;
+	inventory: number;
+	isDefault?: boolean;
+	color?: { name: string } | null;
+	material?: { name: string } | null;
+	size?: string | null;
+	sku?: string;
+};
+
+const makeProduct = (skus: Array<SkuInput>) =>
 	({
 		id: "p-1",
 		slug: "anneau-lune",
@@ -68,7 +81,16 @@ const makeProduct = (skus: Array<{ priceInclTax: number; inventory: number }>) =
 		createdAt: new Date(),
 		updatedAt: new Date(),
 		type: null,
-		skus,
+		skus: skus.map((s, i) => ({
+			id: `sku-${i}`,
+			sku: s.sku ?? `SKU-${i}`,
+			priceInclTax: s.priceInclTax,
+			inventory: s.inventory,
+			isDefault: s.isDefault ?? i === 0,
+			color: s.color ?? null,
+			material: s.material ?? null,
+			size: s.size ?? null,
+		})),
 		collections: [],
 	}) as any;
 
@@ -124,7 +146,11 @@ describe("ProductDetailSkusSummaryCard", () => {
 				product={makeProduct([{ priceInclTax: 4500, inventory: 0 }])}
 			/>,
 		);
-		expect(screen.getByLabelText("0 en stock")).toHaveAttribute("data-variant", "destructive");
+		// Plusieurs badges peuvent porter aria-label="0 en stock" (total + per-SKU)
+		// → vérifier qu'au moins un a la variante destructive
+		const stockBadges = screen.getAllByLabelText("0 en stock");
+		expect(stockBadges.length).toBeGreaterThanOrEqual(1);
+		expect(stockBadges.some((b) => b.getAttribute("data-variant") === "destructive")).toBe(true);
 	});
 
 	it("contient le lien vers /variantes", () => {
@@ -137,5 +163,99 @@ describe("ProductDetailSkusSummaryCard", () => {
 			"href",
 			"/admin/catalogue/produits/anneau-lune/variantes",
 		);
+	});
+
+	it("affiche jusqu'à 3 variantes en preview avec leur stock individuel", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4500, inventory: 12, color: { name: "Or" }, size: "50" },
+					{ priceInclTax: 4500, inventory: 5, color: { name: "Argent" }, size: "52" },
+					{ priceInclTax: 4500, inventory: 3, color: { name: "Bronze" }, size: "54" },
+					{ priceInclTax: 4500, inventory: 7, color: { name: "Cuivre" }, size: "56" },
+				])}
+			/>,
+		);
+		const preview = screen.getByLabelText("Aperçu des variantes");
+		expect(preview).toBeInTheDocument();
+		const items = preview.querySelectorAll("li");
+		expect(items).toHaveLength(3);
+		expect(preview.textContent).toContain("Or · 50");
+		expect(preview.textContent).toContain("Argent · 52");
+	});
+
+	it("affiche '+ N autres' quand il y a plus de 3 variantes", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4500, inventory: 1 },
+					{ priceInclTax: 4500, inventory: 1 },
+					{ priceInclTax: 4500, inventory: 1 },
+					{ priceInclTax: 4500, inventory: 1 },
+					{ priceInclTax: 4500, inventory: 1 },
+				])}
+			/>,
+		);
+		expect(screen.getByText(/\+ 2 autres variantes/)).toBeInTheDocument();
+	});
+
+	it("affiche l'alerte rupture si au moins une variante a un stock à 0", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4500, inventory: 10 },
+					{ priceInclTax: 4500, inventory: 0 },
+				])}
+			/>,
+		);
+		expect(screen.getByText(/1 variante en rupture/)).toBeInTheDocument();
+		expect(screen.getByTestId("icon-alert-triangle")).toBeInTheDocument();
+	});
+
+	it("n'affiche pas l'alerte rupture si aucune variante n'est à 0", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4500, inventory: 10 },
+					{ priceInclTax: 4500, inventory: 5 },
+				])}
+			/>,
+		);
+		expect(screen.queryByText(/en rupture/)).not.toBeInTheDocument();
+		expect(screen.queryByTestId("icon-alert-triangle")).not.toBeInTheDocument();
+	});
+
+	it("marque le SKU défaut avec une icône Star dans la preview", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{
+						priceInclTax: 4500,
+						inventory: 10,
+						isDefault: true,
+						color: { name: "Or" },
+						size: "50",
+					},
+					{ priceInclTax: 4500, inventory: 5, color: { name: "Argent" }, size: "52" },
+				])}
+			/>,
+		);
+		const stars = screen.getAllByTestId("icon-star");
+		// 1 occurrence dans la preview pour le SKU défaut (le bloc "Par défaut" historique a été retiré)
+		expect(stars.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it("affiche le badge 'Rupture' sur la variante out-of-stock dans la preview", () => {
+		render(
+			<ProductDetailSkusSummaryCard
+				product={makeProduct([
+					{ priceInclTax: 4500, inventory: 0, color: { name: "Or" }, size: "50" },
+				])}
+			/>,
+		);
+		const ruptureBadges = screen
+			.getAllByTestId("badge")
+			.filter((b) => /Rupture/.test(String(b.textContent)));
+		expect(ruptureBadges.length).toBeGreaterThanOrEqual(1);
 	});
 });

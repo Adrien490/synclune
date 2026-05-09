@@ -14,6 +14,33 @@ const { mockUseReducedMotion } = vi.hoisted(() => ({
 // ---------------------------------------------------------------------------
 vi.mock("motion/react", () => ({
 	useReducedMotion: mockUseReducedMotion,
+	AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+	m: new Proxy(
+		{},
+		{
+			get: (_, tag: string) => {
+				const Component = ({
+					children,
+					initial: _initial,
+					animate: _animate,
+					exit: _exit,
+					transition: _transition,
+					...props
+				}: {
+					children?: React.ReactNode;
+					initial?: unknown;
+					animate?: unknown;
+					exit?: unknown;
+					transition?: unknown;
+				} & Record<string, unknown>) => {
+					const Tag = tag as keyof React.JSX.IntrinsicElements;
+					return <Tag {...props}>{children}</Tag>;
+				};
+				Component.displayName = `m.${tag}`;
+				return Component;
+			},
+		},
+	),
 }));
 
 // ---------------------------------------------------------------------------

@@ -65,10 +65,12 @@ export interface FileProgress {
 	fileName: string;
 	/** Current file state */
 	state: FileProgressState;
-	/** Percent 0-100 (only meaningful for "uploading"; 100 on "done") */
+	/** Percent 0-100 (bytes-based when uploading; reflects compression progress when compressing; 100 on "done") */
 	percent: number;
 	/** Original file size in bytes */
 	sizeBytes: number;
+	/** Bytes uploaded so far (uploading phase only) */
+	bytesUploaded?: number;
 	/** Media type */
 	mediaType: "IMAGE" | "VIDEO";
 	/** Human-readable error message if state === "failed" */
@@ -94,6 +96,14 @@ export interface UploadProgress {
 		| "done";
 	/** Per-file progress entries (opt-in, keeps the total stable even after failures) */
 	files?: FileProgress[];
+	/** Total bytes to upload across all files in the active session */
+	bytesTotal?: number;
+	/** Bytes uploaded so far across all files in the active session */
+	bytesUploaded?: number;
+	/** Estimated bytes-per-second over a sliding window (uploading phase only) */
+	bytesPerSecond?: number;
+	/** Estimated seconds until completion (uploading phase only). null when unknown */
+	etaSeconds?: number | null;
 }
 
 export interface FailedUpload {
@@ -114,6 +124,8 @@ export interface UseMediaUploadReturn {
 	validateFiles: (files: File[]) => File[];
 	/** Cancel the current upload */
 	cancel: () => void;
+	/** Cancel a single queued or in-flight video file (no-op if already done/failed/uploading-image-batch) */
+	cancelOne: (fileName: string) => void;
 	/** Re-upload all files currently in the failedFiles list */
 	retryFailed: () => Promise<MediaUploadResult[]>;
 	/** Re-upload a single previously failed file (by reference) */

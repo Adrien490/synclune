@@ -35,10 +35,10 @@ export function CollectionsMobileList({
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={FolderOpen}
-					title="Aucune collection trouvee"
+					title="Aucune collection trouvée"
 					description={
 						hasActiveFilters
-							? "Aucune collection ne correspond aux criteres de recherche."
+							? "Aucune collection ne correspond aux critères de recherche."
 							: "Aucune collection pour l'instant."
 					}
 					actionElement={

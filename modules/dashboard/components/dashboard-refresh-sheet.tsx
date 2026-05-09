@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Loader2, RefreshCw, X } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -17,6 +17,7 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { cn } from "@/shared/utils/cn";
 import { useRefreshDashboard } from "@/modules/dashboard/hooks/use-refresh-dashboard";
+import { RelativeClock } from "@/modules/dashboard/components/relative-clock";
 
 interface DashboardRefreshSheetProps {
 	open: boolean;
@@ -24,20 +25,6 @@ interface DashboardRefreshSheetProps {
 }
 
 const MOBILE_SNAP_POINTS: (number | string)[] = [0.5];
-
-const RELATIVE_FORMATTER = new Intl.RelativeTimeFormat("fr", { numeric: "auto" });
-
-/** Format a past Date into a French relative time string ("il y a 5 s", "il y a 2 min"). */
-function formatRelativeTime(date: Date, now: number): string {
-	const diffSeconds = Math.round((date.getTime() - now) / 1000);
-	if (Math.abs(diffSeconds) < 60) return RELATIVE_FORMATTER.format(diffSeconds, "second");
-	const diffMinutes = Math.round(diffSeconds / 60);
-	if (Math.abs(diffMinutes) < 60) return RELATIVE_FORMATTER.format(diffMinutes, "minute");
-	const diffHours = Math.round(diffMinutes / 60);
-	if (Math.abs(diffHours) < 24) return RELATIVE_FORMATTER.format(diffHours, "hour");
-	const diffDays = Math.round(diffHours / 24);
-	return RELATIVE_FORMATTER.format(diffDays, "day");
-}
 
 /**
  * Bottom-sheet (mobile) / right-sheet (desktop) to trigger a manual dashboard
@@ -55,20 +42,6 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 			onOpenChange(false);
 		},
 	});
-
-	// Tick every second while the sheet is open so the "il y a Xs" label updates live.
-	const [now, setNow] = useState(() => Date.now());
-	useEffect(() => {
-		if (!open) return;
-		// rAF before the first setNow avoids cascading renders flagged by
-		// react-hooks/set-state-in-effect while still resynchronising on re-open.
-		const raf = requestAnimationFrame(() => setNow(Date.now()));
-		const id = window.setInterval(() => setNow(Date.now()), 1000);
-		return () => {
-			cancelAnimationFrame(raf);
-			window.clearInterval(id);
-		};
-	}, [open]);
 
 	const previousFocusRef = useRef<HTMLElement | null>(null);
 	useEffect(() => {
@@ -95,10 +68,6 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 	const handleClose = () => {
 		haptic("selection");
 	};
-
-	const lastSyncLabel = lastRefreshedAt
-		? formatRelativeTime(lastRefreshedAt, now)
-		: "Jamais dans cette session";
 
 	return (
 		<Sheet
@@ -157,7 +126,7 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 							aria-atomic="true"
 							data-testid="dashboard-refresh-last-sync"
 						>
-							{lastSyncLabel}
+							<RelativeClock from={lastRefreshedAt} paused={!open} />
 						</p>
 					</div>
 

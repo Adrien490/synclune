@@ -84,8 +84,8 @@ vi.mock("../../constants/color.constants", () => ({
 	COLORS_SORT_LABELS: {
 		"name-ascending": "Nom (A-Z)",
 		"name-descending": "Nom (Z-A)",
-		"skuCount-ascending": "Moins de SKU",
-		"skuCount-descending": "Plus de SKU",
+		"skuCount-ascending": "Moins de variantes",
+		"skuCount-descending": "Plus de variantes",
 	},
 }));
 

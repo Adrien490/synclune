@@ -45,6 +45,7 @@ import {
 	getCartItemIssueLabel,
 } from "../services/cart-item.service";
 import { CartOptimisticContext } from "../contexts/cart-optimistic-context";
+import { CartCloseContext } from "../contexts/cart-close-context";
 import { cartReducer } from "../services/cart-reducer.service";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { CART_TARGET_ATTR } from "../lib/fly-to-cart";
@@ -181,21 +182,7 @@ function CartSheetBody({
 					</div>
 				</>
 			)}
-			<div
-				role="presentation"
-				onClick={(e) => {
-					if ((e.target as HTMLElement).closest("a")) {
-						close();
-					}
-				}}
-				onKeyDown={(e) => {
-					if ((e.key === "Enter" || e.key === " ") && (e.target as HTMLElement).closest("a")) {
-						close();
-					}
-				}}
-			>
-				{recommendations}
-			</div>
+			{recommendations}
 			{hasItems && (
 				<CartSheetFooter
 					totalItems={totalItems}
@@ -249,10 +236,15 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		} else {
 			haptic("selection");
 			close();
-			// Return focus to the saved element after Vaul portal teardown.
+			// Return focus to the saved element after Vaul/Radix portal teardown.
+			// Double rAF aligns with Vaul's animation cycle: first frame settles
+			// the unmount commit, second frame ensures focus is applied after
+			// any native focus restoration the primitive may have queued.
 			const target = previousFocusRef.current;
 			if (target && document.contains(target)) {
-				setTimeout(() => target.focus({ preventScroll: true }), 0);
+				requestAnimationFrame(() => {
+					requestAnimationFrame(() => target.focus({ preventScroll: true }));
+				});
 			}
 			previousFocusRef.current = null;
 		}
@@ -277,77 +269,94 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 	};
 
 	return (
-		<CartOptimisticContext.Provider value={cartOptimisticValue}>
-			{isMobile ? (
-				<Drawer open={isOpen} onOpenChange={handleOpenChange}>
-					<DrawerContent
-						className="group/sheet mt-0 flex h-[100dvh] max-h-[100dvh] flex-col gap-0 rounded-t-none px-0 pt-[env(safe-area-inset-top)]"
-						data-pending={isPending ? "" : undefined}
-						aria-busy={isPending}
-					>
-						<DrawerHeader className="relative shrink-0 border-b px-6 py-3">
-							<DrawerTitle>
-								Mon panier
+		<CartCloseContext.Provider value={close}>
+			<CartOptimisticContext.Provider value={cartOptimisticValue}>
+				{isMobile ? (
+					<Drawer open={isOpen} onOpenChange={handleOpenChange}>
+						<DrawerContent
+							className="group/sheet mt-0 flex h-[var(--vvh,100dvh)] max-h-[var(--vvh,100dvh)] flex-col gap-0 rounded-t-none px-0 pt-[env(safe-area-inset-top)]"
+							data-pending={isPending ? "" : undefined}
+							aria-busy={isPending}
+							onOverlayClick={handleOverlayClick}
+						>
+							<DrawerHeader className="relative shrink-0 border-b px-6 py-3">
+								<DrawerTitle
+									aria-label={
+										hasItems
+											? `Mon panier, ${totalItems} article${totalItems > 1 ? "s" : ""}`
+											: undefined
+									}
+								>
+									Mon panier
+									{hasItems && (
+										<span
+											aria-hidden="true"
+											className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+										>
+											{" "}
+											({totalItems})
+										</span>
+									)}
+								</DrawerTitle>
+								<DrawerDescription className="sr-only">
+									Gérez les articles de votre panier
+								</DrawerDescription>
 								{hasItems && (
-									<span
-										aria-hidden="true"
-										className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
-									>
-										{" "}
-										({totalItems})
-									</span>
+									<div className="absolute top-1/2 right-4 -translate-y-1/2">
+										<CartClearButton disabled={isPending} />
+									</div>
 								)}
-							</DrawerTitle>
-							<DrawerDescription className="sr-only">
-								Gérez les articles de votre panier
-							</DrawerDescription>
-							{hasItems && (
-								<div className="absolute top-1/2 right-4 -translate-y-1/2">
-									<CartClearButton disabled={isPending} />
-								</div>
-							)}
-						</DrawerHeader>
-						<CartSheetBody {...bodyProps} />
-					</DrawerContent>
-					<RemoveCartItemAlertDialog />
-					<ClearCartAlertDialog />
-				</Drawer>
-			) : (
-				<Sheet direction="right" open={isOpen} onOpenChange={handleOpenChange}>
-					<SheetContent
-						className="group/sheet flex w-full flex-col gap-0 p-0 pb-[max(0px,env(safe-area-inset-bottom))] sm:max-w-lg"
-						data-pending={isPending ? "" : undefined}
-						aria-busy={isPending}
-						onOverlayClick={handleOverlayClick}
-					>
-						<SheetHeader className="relative shrink-0 border-b px-6 py-4">
-							<SheetTitle>
-								Mon panier
+							</DrawerHeader>
+							<CartSheetBody {...bodyProps} />
+						</DrawerContent>
+						<RemoveCartItemAlertDialog />
+						<ClearCartAlertDialog />
+					</Drawer>
+				) : (
+					<Sheet direction="right" open={isOpen} onOpenChange={handleOpenChange}>
+						<SheetContent
+							className="group/sheet flex w-full flex-col gap-0 p-0 pb-[env(safe-area-inset-bottom)] sm:max-w-lg"
+							data-pending={isPending ? "" : undefined}
+							aria-busy={isPending}
+							onOverlayClick={handleOverlayClick}
+						>
+							<SheetHeader className="relative shrink-0 border-b px-6 py-4">
+								<SheetTitle
+									aria-label={
+										hasItems
+											? `Mon panier, ${totalItems} article${totalItems > 1 ? "s" : ""}`
+											: undefined
+									}
+								>
+									Mon panier
+									{hasItems && (
+										<span
+											aria-hidden="true"
+											className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
+										>
+											{" "}
+											({totalItems})
+										</span>
+									)}
+								</SheetTitle>
+								<SheetDescription className="sr-only">
+									Gérez les articles de votre panier
+								</SheetDescription>
 								{hasItems && (
-									<span
-										aria-hidden="true"
-										className="transition-opacity duration-200 group-has-[[data-pending]]/sheet:opacity-50"
-									>
-										{" "}
-										({totalItems})
-									</span>
+									// right-16 = right-4 + size-10, leaves room for the Sheet's
+									// built-in close button (Radix renders top-right by default).
+									<div className="absolute top-1/2 right-16 -translate-y-1/2">
+										<CartClearButton disabled={isPending} />
+									</div>
 								)}
-							</SheetTitle>
-							<SheetDescription className="sr-only">
-								Gérez les articles de votre panier
-							</SheetDescription>
-							{hasItems && (
-								<div className="absolute top-1/2 right-16 -translate-y-1/2">
-									<CartClearButton disabled={isPending} />
-								</div>
-							)}
-						</SheetHeader>
-						<CartSheetBody {...bodyProps} />
-					</SheetContent>
-					<RemoveCartItemAlertDialog />
-					<ClearCartAlertDialog />
-				</Sheet>
-			)}
-		</CartOptimisticContext.Provider>
+							</SheetHeader>
+							<CartSheetBody {...bodyProps} />
+						</SheetContent>
+						<RemoveCartItemAlertDialog />
+						<ClearCartAlertDialog />
+					</Sheet>
+				)}
+			</CartOptimisticContext.Provider>
+		</CartCloseContext.Provider>
 	);
 }

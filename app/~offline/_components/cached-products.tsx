@@ -2,70 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 
-interface CachedProduct {
-	url: string;
-	title: string;
-	image: string | null;
-}
-
-/** Extracts product data (title, og:image) from cached HTML page. */
-function parseCachedProductFromHtml(html: string, requestUrl: string): CachedProduct | null {
-	const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-	const rawTitle = titleMatch?.[1] ?? "";
-	const title = rawTitle.replace(/\s*[|–—-]\s*Synclune.*$/i, "").trim();
-
-	const ogImageMatch = html.match(
-		/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
-	);
-	const image = ogImageMatch?.[1] ?? null;
-
-	if (title) {
-		const pathname = new URL(requestUrl).pathname;
-		return { url: pathname, title, image };
-	}
-	return null;
-}
+import { useCachedProducts } from "./use-cached-products";
 
 /**
  * Displays product pages cached by the service worker.
  * Reads from the "product-pages" cache and extracts title + og:image from HTML.
  */
 export function CachedProducts() {
-	const [products, setProducts] = useState<CachedProduct[]>([]);
-	const [loading, setLoading] = useState(true);
-
-	useEffect(() => {
-		async function loadCachedProducts() {
-			try {
-				if (!("caches" in window)) {
-					setLoading(false);
-					return;
-				}
-
-				const cache = await caches.open("product-pages");
-				const keys = await cache.keys();
-
-				const results = await Promise.all(
-					keys.map(async (request): Promise<CachedProduct | null> => {
-						const response = await cache.match(request);
-						if (!response) return null;
-						const html = await response.text();
-						return parseCachedProductFromHtml(html, request.url);
-					}),
-				);
-
-				setProducts(results.filter((p): p is CachedProduct => p !== null));
-				setLoading(false);
-			} catch {
-				// Cache API not available or failed
-				setLoading(false);
-			}
-		}
-
-		void loadCachedProducts();
-	}, []);
+	const { products, loading } = useCachedProducts();
 
 	if (loading) {
 		return (

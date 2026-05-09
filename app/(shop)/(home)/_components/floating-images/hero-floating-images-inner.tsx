@@ -1,21 +1,37 @@
 "use client";
 
 import { useMotionValue, useReducedMotion, useScroll, useTransform } from "motion/react";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
+import { cssSupports } from "@/shared/utils/css-supports";
 import { FloatingImage } from "./floating-image";
 import { IMAGE_POSITIONS } from "./image-positions";
 import type { HeroFloatingImagesProps } from "./types";
 
+const noopSubscribe = () => () => {};
+const getScrollTimelineSupport = () => cssSupports("animation-timeline", "scroll()");
+const getServerScrollTimelineSupport = () => false;
+
 export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesProps) {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldReduceMotion = useReducedMotion();
+
+	// Detect native CSS scroll-driven animations support (Chrome/Edge 115+, Safari 26+).
+	// When supported, opacity is animated via CSS keyframe (compositor thread)
+	// instead of motion-react useTransform (main thread).
+	const supportsScrollTimeline = useSyncExternalStore(
+		noopSubscribe,
+		getScrollTimelineSupport,
+		getServerScrollTimelineSupport,
+	);
 
 	const { scrollYProgress } = useScroll({
 		target: containerRef,
 		offset: ["start start", "end start"],
 	});
 
-	const parallaxOpacity = useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]);
+	const parallaxOpacityMotion = useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]);
+	// When CSS scroll-timeline is available, defer opacity to the container's CSS animation.
+	const parallaxOpacity = supportsScrollTimeline ? null : parallaxOpacityMotion;
 
 	// Pointer-reactive parallax: normalized -1..1 across the hero container
 	const pointerX = useMotionValue(0);
@@ -76,7 +92,7 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 		<div
 			ref={containerRef}
 			aria-hidden="true"
-			className="pointer-events-none absolute inset-0 z-0 hidden md:block"
+			className="hero-floating-images-scroll-fade pointer-events-none absolute inset-0 z-0 hidden md:block"
 			style={{ contain: "layout paint" }}
 		>
 			{images.map((image, index) => {

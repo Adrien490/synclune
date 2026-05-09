@@ -56,7 +56,7 @@ function EmptyHeader({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 const emptyMediaVariants = cva(
-	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300 motion-safe:animate-sparkle-pulse",
+	"flex shrink-0 items-center justify-center mb-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 transition-all duration-300 motion-safe:animate-sparkle-pulse shadow-[0_0_24px_var(--color-glow-pink)]",
 	{
 		variants: {
 			variant: {

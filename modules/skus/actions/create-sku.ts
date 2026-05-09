@@ -281,7 +281,7 @@ export async function createProductSku(
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
 			return {
 				status: ActionStatus.ERROR,
-				message: "Un SKU avec ce code existe déjà.",
+				message: "Une variante avec ce code existe déjà.",
 			};
 		}
 		return handleActionError(e, "Une erreur est survenue lors de la création de la variante.");

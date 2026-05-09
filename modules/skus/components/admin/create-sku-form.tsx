@@ -50,7 +50,10 @@ export function CreateProductVariantForm({
 	const variantsListPath = `/admin/catalogue/produits/${productSlug}/variantes`;
 
 	const primaryUpload = useUploadThing("catalogMedia");
-	const galleryUpload = useMediaUpload();
+	const galleryUpload = useMediaUpload({
+		enableOfflineQueue: true,
+		offlineContextKey: `create-sku-${product.id}`,
+	});
 
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
@@ -74,7 +77,15 @@ export function CreateProductVariantForm({
 	}, [product.id, form]);
 
 	const isMediaUploading = primaryUpload.isUploading || galleryUpload.isUploading;
-	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+	const { allowNavigation } = useUnsavedChanges(
+		form.state.isDirty || isMediaUploading,
+		!isPending,
+		{
+			message: isMediaUploading
+				? "Un téléversement est en cours. Quitter abandonnera les fichiers en cours."
+				: undefined,
+		},
+	);
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
@@ -191,6 +202,7 @@ export function CreateProductVariantForm({
 						productTitle={product.title}
 						primaryUpload={primaryUpload}
 						galleryUpload={galleryUpload}
+						offlineContextKey={`create-sku-${product.id}`}
 					/>
 					<SkuInfoCard form={form} colors={colors} materials={materials} />
 				</div>

@@ -41,13 +41,13 @@ describe("validateProductForPublication", () => {
 			skus: [{ id: "sku-1", isActive: false, inventory: 5, images: [{ id: "img-1" }] }],
 		});
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("SKU actif");
+		expect(result.errorMessage).toContain("variante active");
 	});
 
 	it("should reject product with empty SKUs array", () => {
 		const result = validateProductForPublication({ ...validProduct, skus: [] });
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("SKU actif");
+		expect(result.errorMessage).toContain("variante active");
 	});
 
 	it("should reject product with no stock on active SKUs", () => {
@@ -89,7 +89,7 @@ describe("validatePublicProductCreation", () => {
 	it("should reject inactive SKU", () => {
 		const result = validatePublicProductCreation({ isActive: false, inventory: 5 });
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("SKU inactif");
+		expect(result.errorMessage).toContain("variante inactive");
 	});
 
 	it("should reject SKU with zero inventory", () => {
@@ -107,6 +107,6 @@ describe("validatePublicProductCreation", () => {
 	it("should check isActive before inventory", () => {
 		const result = validatePublicProductCreation({ isActive: false, inventory: 0 });
 		expect(result.isValid).toBe(false);
-		expect(result.errorMessage).toContain("SKU inactif");
+		expect(result.errorMessage).toContain("variante inactive");
 	});
 });

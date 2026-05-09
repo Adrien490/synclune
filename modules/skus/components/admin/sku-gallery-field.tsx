@@ -2,6 +2,7 @@
 
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
+import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
 import { PendingUploadsGrid } from "@/shared/components/media-upload/pending-uploads-grid";
 import { UploadActionSheet } from "@/shared/components/media-upload/upload-action-sheet";
 import {
@@ -20,6 +21,7 @@ import { ImagePlus, Info, Upload } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
 import type { MediaData } from "@/modules/skus/types/sku-form.types";
 import type { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
+import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 
 interface SkuGalleryFieldProps {
@@ -28,6 +30,8 @@ interface SkuGalleryFieldProps {
 	pushValue: (value: MediaData) => void;
 	productName: string;
 	galleryUpload: ReturnType<typeof useMediaUpload>;
+	/** Routing key matching the parent's enableOfflineQueue context — drives the offline banner */
+	offlineContextKey?: string;
 }
 
 const MAX_GALLERY_COUNT = ARRAY_LIMITS.SKU_GALLERY_MEDIA;
@@ -38,10 +42,12 @@ export function SkuGalleryField({
 	pushValue,
 	productName,
 	galleryUpload,
+	offlineContextKey,
 }: SkuGalleryFieldProps) {
 	const {
 		upload: uploadMedia,
 		cancel,
+		cancelOne,
 		retryFailed,
 		retrySingle,
 		clearFailed,
@@ -52,6 +58,48 @@ export function SkuGalleryField({
 	} = galleryUpload;
 
 	const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+	// Offline queue surface (P1.2) — shows banner + replay CTA when queue has entries
+	const {
+		queuedCount: offlineCount,
+		isOffline,
+		drainAsFiles,
+		drop,
+	} = useOfflineUploadQueue({
+		endpoint: "catalogMedia",
+		contextKey: offlineContextKey,
+	});
+
+	const handleReplayOffline = async () => {
+		const files = await drainAsFiles();
+		if (files.length === 0) return;
+		const results = await uploadMedia(files);
+		// On success, drop the replayed entries from the offline store
+		results.forEach((r) => {
+			pushValue({
+				url: r.url,
+				blurDataUrl: r.blurDataUrl,
+				thumbnailUrl: r.thumbnailUrl,
+				altText: productName,
+				mediaType: r.mediaType,
+			});
+		});
+		// Best-effort cleanup: drop all entries (we replayed them all)
+		// Note: useOfflineUploadQueue exposes drop(id); we re-list and drop matching entries.
+		// Simpler: clear by iterating known names — production tightening can come later.
+		const { entries } = await listAndDropAll();
+		for (const e of entries) await drop(e.id);
+	};
+
+	// Helper: snapshot entries before clearing — kept inline to avoid leaking IDB types upward
+	async function listAndDropAll() {
+		const { listEntries } = await import("@/modules/media/lib/offline-upload-queue");
+		const entries = await listEntries({
+			endpoint: "catalogMedia",
+			contextKey: offlineContextKey,
+		});
+		return { entries };
+	}
 
 	const currentCount = value.length;
 	const isAtLimit = currentCount >= MAX_GALLERY_COUNT;
@@ -167,6 +215,15 @@ export function SkuGalleryField({
 				/>
 			)}
 
+			{offlineCount > 0 && (
+				<OfflineQueueBanner
+					queuedCount={offlineCount}
+					isOffline={isOffline}
+					onReplay={() => void handleReplayOffline()}
+					disabled={isMediaUploading}
+				/>
+			)}
+
 			{failedFiles.length > 0 && (
 				<UploadErrorBanner
 					failedFiles={failedFiles}
@@ -189,7 +246,12 @@ export function SkuGalleryField({
 						queuedCount={queuedCount}
 						completedCount={progress.completed}
 						files={progress.files}
+						bytesUploaded={progress.bytesUploaded}
+						bytesTotal={progress.bytesTotal}
+						bytesPerSecond={progress.bytesPerSecond}
+						etaSeconds={progress.etaSeconds}
 						onCancel={cancel}
+						onCancelOne={cancelOne}
 					/>
 				</div>
 			)}

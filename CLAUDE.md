@@ -365,9 +365,9 @@ const form = useAppForm<MyInput>({
 | **E2E smoke**       | CI PR + push main                       | `pnpm e2e --grep @smoke` | ~3 min      |
 | **E2E complet**     | CI PR + push main (sharded ×4)          | `pnpm e2e`               | ~15 min     |
 
-### Critical path (5 modules)
+### Critical path (7 modules)
 
-Les modules `cart`, `orders`, `payments`, `webhooks`, `auth` sont les flows transactionnels revenus/sécurité. Leurs tests s'exécutent :
+Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refunds` sont les flows transactionnels revenus/sécurité. Leurs tests s'exécutent :
 
 - **Pre-commit local** (hook husky) : uniquement si `git diff --cached` contient un fichier sous ces modules — commit instantané sinon.
 - **CI** : job `tests-critical` dédié en parallèle de `quality` pour feedback rapide.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useState } from "react";
 import { Ban, Loader2, XCircle } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,8 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
+import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkCancelOrders } from "../../actions/bulk-cancel-orders";
 
@@ -26,28 +25,18 @@ interface OrdersBulkActionsBarProps {
 }
 
 export function OrdersBulkActionsBar({ presentation = "inline" }: OrdersBulkActionsBarProps = {}) {
-	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
+	const { selectedIds, selectedCount } = useBulkSelectionContext();
 	const [confirmOpen, setConfirmOpen] = useState(false);
-	const [state, action, isPending] = useActionState(bulkCancelOrders, undefined);
+	const { submit, isPending } = useBulkActionWithToast(bulkCancelOrders);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
-
-	useEffect(() => {
-		if (!state) return;
-		if (state.status === ActionStatus.SUCCESS) {
-			toast.success(state.message);
-			clear();
-		} else if (state.message) {
-			toast.error(state.message);
-		}
-	}, [state, clear]);
 
 	function handleConfirm() {
 		const fd = new FormData();
 		fd.set("orderIds", JSON.stringify(Array.from(selectedIds)));
 		fd.set("reason", "Annulation en lot via admin");
-		action(fd);
+		submit(fd);
 		setConfirmOpen(false);
 	}
 

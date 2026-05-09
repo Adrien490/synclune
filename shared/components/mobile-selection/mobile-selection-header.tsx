@@ -1,5 +1,7 @@
 "use client";
 
+import { CheckSquare } from "lucide-react";
+
 import { Button } from "@/shared/components/ui/button";
 import { useBulkSelectionContext } from "@/shared/components/data-table";
 import { useEscapeKey } from "@/shared/hooks/use-escape-key";
@@ -56,11 +58,12 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 				<SelectionModeAnnouncer />
 				<Button
 					type="button"
-					variant="ghost"
+					variant="outline"
 					size="sm"
 					onClick={enterSelectionMode}
-					className="min-h-11 px-3"
+					className="min-h-11 gap-2 px-3"
 				>
+					<CheckSquare className="size-4" aria-hidden="true" />
 					Sélectionner
 				</Button>
 			</div>

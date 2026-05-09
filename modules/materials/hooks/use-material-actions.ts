@@ -4,6 +4,7 @@ import { Copy, ExternalLink, Power, PowerOff, SquarePen, Trash2 } from "lucide-r
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -37,6 +38,7 @@ export function useMaterialActions({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
+	const selectActionItem = useBulkSelectionActionItem(materialId);
 	const { duplicate, isPending: isDuplicating } = useDuplicateMaterial({
 		onSuccess: (message, data) => {
 			haptic("success");
@@ -58,6 +60,7 @@ export function useMaterialActions({
 		{
 			key: "manage",
 			items: [
+				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "edit",
 					label: "Éditer",

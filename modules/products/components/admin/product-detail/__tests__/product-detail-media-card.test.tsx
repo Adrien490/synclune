@@ -150,9 +150,12 @@ describe("ProductDetailMediaCard", () => {
 		]);
 		render(<ProductDetailMediaCard product={product} />);
 		const images = screen.getAllByTestId("next-image");
-		expect(images).toHaveLength(2);
+		// Primary en premier (rendu hors des galeries)
 		expect(images[0]).toHaveAttribute("src", "https://cdn/b.jpg");
-		expect(images[1]).toHaveAttribute("src", "https://cdn/a.jpg");
+		// Toutes les URLs doivent apparaître au moins une fois (mobile strip + desktop grid)
+		const urls = images.map((img) => img.getAttribute("src"));
+		expect(urls).toContain("https://cdn/b.jpg");
+		expect(urls.some((u) => u === "https://cdn/a.jpg")).toBe(true);
 	});
 
 	it("utilise le premier SKU si aucun n'est isDefault", () => {

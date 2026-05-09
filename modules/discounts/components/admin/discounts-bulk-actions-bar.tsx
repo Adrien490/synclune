@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,8 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
+import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkToggleDiscountsStatus } from "../../actions/bulk-toggle-discounts-status";
 
@@ -30,28 +29,18 @@ interface DiscountsBulkActionsBarProps {
 export function DiscountsBulkActionsBar({
 	presentation = "inline",
 }: DiscountsBulkActionsBarProps = {}) {
-	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
+	const { selectedIds, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
-	const [state, action, isPending] = useActionState(bulkToggleDiscountsStatus, undefined);
+	const { submit, isPending } = useBulkActionWithToast(bulkToggleDiscountsStatus);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
-
-	useEffect(() => {
-		if (!state) return;
-		if (state.status === ActionStatus.SUCCESS) {
-			toast.success(state.message);
-			clear();
-		} else if (state.message) {
-			toast.error(state.message);
-		}
-	}, [state, clear]);
 
 	function handleConfirm(target: BulkAction) {
 		const fd = new FormData();
 		fd.set("discountIds", JSON.stringify(Array.from(selectedIds)));
 		fd.set("targetIsActive", target === "activate" ? "true" : "false");
-		action(fd);
+		submit(fd);
 		setPendingAction(null);
 	}
 

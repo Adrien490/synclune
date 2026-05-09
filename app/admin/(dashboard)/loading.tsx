@@ -7,7 +7,10 @@ import {
 
 function SectionHeading({ id, label }: { id: string; label: string }) {
 	return (
-		<h2 id={id} className="text-muted-foreground text-xs font-semibold tracking-[0.08em] uppercase">
+		<h2
+			id={id}
+			className="text-muted-foreground font-display text-sm font-normal tracking-tight italic"
+		>
 			{label}
 		</h2>
 	);
@@ -18,7 +21,12 @@ export default function DashboardLoading() {
 		<section role="status" aria-busy="true" aria-label="Chargement du tableau de bord">
 			<span className="sr-only">Chargement du tableau de bord…</span>
 
-			<PageHeader variant="compact" title="Tableau de bord" className="hidden md:block" />
+			<PageHeader
+				variant="compact"
+				title="Ton atelier"
+				description="Voici ce qui se passe aujourd'hui"
+				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
+			/>
 
 			<div className="space-y-8">
 				{/* DashboardAlerts placeholder (réserve la hauteur de l'alert si présente) */}

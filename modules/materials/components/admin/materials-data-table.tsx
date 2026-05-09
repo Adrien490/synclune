@@ -37,7 +37,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 				className="hidden md:flex"
 				icon={Gem}
 				title="Aucun matériau trouvé"
-				description="Aucun materiau ne correspond aux criteres de recherche."
+				description="Aucun matériau ne correspond aux critères de recherche."
 				actionElement={<CreateMaterialButton />}
 			/>
 		);

@@ -15,6 +15,8 @@ try {
 		additionalPrecacheEntries: [{ url: "/~offline", revision }],
 		swSrc: "app/sw.ts",
 		useNativeEsbuild: false,
+		// Allow large lazy-loaded chunks (e.g. recharts bundle ~2.7 MB) in precache
+		maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
 	});
 } catch (error) {
 	Sentry.captureException(error, { tags: { component: "serwist-route" } });

@@ -54,6 +54,7 @@ const SITE_URL = "https://synclune.fr";
 // Import AFTER mocks
 import { StructuredData } from "../structured-data";
 import type { ReviewHomepage } from "@/modules/reviews/types/review.types";
+import type { Product } from "@/modules/products/types/product.types";
 import type { GlobalReviewStats } from "@/shared/constants/seo-config";
 
 // ============================================================================
@@ -68,6 +69,73 @@ function getScriptData(): Record<string, unknown> {
 
 function buildReviewStats(overrides: Partial<GlobalReviewStats> = {}): GlobalReviewStats {
 	return { totalReviews: 42, averageRating: 4.8, ...overrides };
+}
+
+type FeaturedProductOverrides = {
+	slug?: string;
+	title?: string;
+	description?: string | null;
+	priceInclTax?: number;
+	inventory?: number;
+	primaryImageUrl?: string;
+	reviewStats?: { averageRating: number; totalCount: number } | null;
+	skipPrice?: boolean;
+};
+
+function buildFeaturedProduct(overrides: FeaturedProductOverrides = {}): Product {
+	const {
+		slug = "bague-lune",
+		title = "Bague Lune",
+		description = "Bague artisanale en argent",
+		priceInclTax = 4500,
+		inventory = 3,
+		primaryImageUrl = "https://cdn.synclune.fr/bague-lune-primary.webp",
+		reviewStats = { averageRating: 4.8, totalCount: 12 },
+		skipPrice = false,
+	} = overrides;
+
+	const skus = skipPrice
+		? []
+		: [
+				{
+					id: "sku-1",
+					sku: "BL-001",
+					priceInclTax,
+					compareAtPrice: null,
+					inventory,
+					isActive: true,
+					isDefault: true,
+					images: [
+						{
+							id: "img-1",
+							url: primaryImageUrl,
+							thumbnailUrl: null,
+							blurDataUrl: null,
+							altText: title,
+							mediaType: "IMAGE" as const,
+							isPrimary: true,
+						},
+					],
+					material: null,
+					color: null,
+					size: null,
+				},
+			];
+
+	return {
+		id: "product-1",
+		slug,
+		title,
+		description,
+		type: { id: "type-1", slug: "bague", label: "Bague", isActive: true },
+		status: "PUBLIC",
+		createdAt: new Date(),
+		updatedAt: new Date(),
+		reviewStats,
+		skus,
+		_count: { skus: skus.length },
+		collections: [],
+	} as unknown as Product;
 }
 
 function buildReview(overrides: Partial<ReviewHomepage> = {}): ReviewHomepage {
@@ -341,6 +409,174 @@ describe("StructuredData", () => {
 			const author = review["author"] as Record<string, unknown>;
 
 			expect(author["name"]).toBe("Anonyme");
+		});
+	});
+
+	describe("ItemList featuredProducts (Offer schema)", () => {
+		it("omits ItemList when featuredProducts is empty", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			expect(graph.find((s) => s["@type"] === "ItemList")).toBeUndefined();
+		});
+
+		it("adds ItemList with Product items wrapping Offer when featuredProducts are provided", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[buildFeaturedProduct()]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			const itemList = graph.find((s) => s["@type"] === "ItemList") as Record<string, unknown>;
+
+			expect(itemList).toBeDefined();
+			expect(itemList["numberOfItems"]).toBe(1);
+
+			const elements = itemList["itemListElement"] as Array<Record<string, unknown>>;
+			expect(elements).toHaveLength(1);
+
+			const first = elements[0] as Record<string, unknown>;
+			expect(first["@type"]).toBe("ListItem");
+			expect(first["position"]).toBe(1);
+			expect(first["url"]).toBe(`${SITE_URL}/creations/bague-lune`);
+
+			const productNode = first["item"] as Record<string, unknown>;
+			expect(productNode["@type"]).toBe("Product");
+			expect(productNode["@id"]).toBe(`${SITE_URL}/creations/bague-lune#product`);
+			expect(productNode["name"]).toBe("Bague Lune");
+			expect(productNode["url"]).toBe(`${SITE_URL}/creations/bague-lune`);
+			expect(productNode["image"]).toBe("https://cdn.synclune.fr/bague-lune-primary.webp");
+			expect(productNode["description"]).toBe("Bague artisanale en argent");
+		});
+
+		it("emits an Offer with EUR currency, formatted price and InStock when inventory > 0", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[buildFeaturedProduct({ priceInclTax: 4500, inventory: 5 })]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			const itemList = graph.find((s) => s["@type"] === "ItemList") as Record<string, unknown>;
+			const elements = itemList["itemListElement"] as Array<Record<string, unknown>>;
+			const productNode = (elements[0] as Record<string, unknown>)["item"] as Record<
+				string,
+				unknown
+			>;
+			const offer = productNode["offers"] as Record<string, unknown>;
+
+			expect(offer["@type"]).toBe("Offer");
+			expect(offer["price"]).toBe("45.00");
+			expect(offer["priceCurrency"]).toBe("EUR");
+			expect(offer["availability"]).toBe("https://schema.org/InStock");
+			expect(offer["itemCondition"]).toBe("https://schema.org/NewCondition");
+			expect(offer["url"]).toBe(`${SITE_URL}/creations/bague-lune`);
+		});
+
+		it("emits OutOfStock availability when inventory is 0", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[buildFeaturedProduct({ inventory: 0 })]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			const itemList = graph.find((s) => s["@type"] === "ItemList") as Record<string, unknown>;
+			const elements = itemList["itemListElement"] as Array<Record<string, unknown>>;
+			const productNode = (elements[0] as Record<string, unknown>)["item"] as Record<
+				string,
+				unknown
+			>;
+			const offer = productNode["offers"] as Record<string, unknown>;
+
+			expect(offer["availability"]).toBe("https://schema.org/OutOfStock");
+		});
+
+		it("omits Offer entirely when no SKU is available (priceInclTax undefined)", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[buildFeaturedProduct({ skipPrice: true })]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			const itemList = graph.find((s) => s["@type"] === "ItemList") as Record<string, unknown>;
+			const elements = itemList["itemListElement"] as Array<Record<string, unknown>>;
+			const productNode = (elements[0] as Record<string, unknown>)["item"] as Record<
+				string,
+				unknown
+			>;
+
+			expect(productNode).not.toHaveProperty("offers");
+		});
+
+		it("includes aggregateRating on Product when product has reviews", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[
+						buildFeaturedProduct({ reviewStats: { averageRating: 4.5, totalCount: 8 } }),
+					]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			const itemList = graph.find((s) => s["@type"] === "ItemList") as Record<string, unknown>;
+			const elements = itemList["itemListElement"] as Array<Record<string, unknown>>;
+			const productNode = (elements[0] as Record<string, unknown>)["item"] as Record<
+				string,
+				unknown
+			>;
+			const aggregate = productNode["aggregateRating"] as Record<string, unknown>;
+
+			expect(aggregate["@type"]).toBe("AggregateRating");
+			expect(aggregate["ratingValue"]).toBe(4.5);
+			expect(aggregate["reviewCount"]).toBe(8);
+		});
+
+		it("omits aggregateRating on Product when product has zero reviews", () => {
+			render(
+				<StructuredData
+					reviewStats={buildReviewStats()}
+					includeHomepageSchemas
+					featuredProducts={[
+						buildFeaturedProduct({ reviewStats: { averageRating: 0, totalCount: 0 } }),
+					]}
+				/>,
+			);
+
+			const data = getScriptData();
+			const graph = data["@graph"] as Array<Record<string, unknown>>;
+			const itemList = graph.find((s) => s["@type"] === "ItemList") as Record<string, unknown>;
+			const elements = itemList["itemListElement"] as Array<Record<string, unknown>>;
+			const productNode = (elements[0] as Record<string, unknown>)["item"] as Record<
+				string,
+				unknown
+			>;
+
+			expect(productNode).not.toHaveProperty("aggregateRating");
 		});
 	});
 

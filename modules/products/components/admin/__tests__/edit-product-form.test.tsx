@@ -347,7 +347,7 @@ describe("EditProductForm", () => {
 			expect(screen.getByText("Tarification")).toBeInTheDocument();
 			expect(screen.getByText("Stock")).toBeInTheDocument();
 			expect(screen.getByText("Statut")).toBeInTheDocument();
-			expect(screen.getByText("Statut du SKU")).toBeInTheDocument();
+			expect(screen.getByText("Statut de la variante")).toBeInTheDocument();
 		});
 
 		it("renders title field label", () => {

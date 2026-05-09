@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,8 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
-import { ActionStatus } from "@/shared/types/server-action";
-import { toast } from "@/shared/utils/toast";
+import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkToggleSkusStatus } from "../../actions/bulk-toggle-skus-status";
 
@@ -32,57 +31,30 @@ interface LastSubmission {
 	targetIsActive: boolean;
 }
 
-async function runBulkToggle(ids: string[], targetIsActive: boolean) {
-	const fd = new FormData();
-	fd.set("skuIds", JSON.stringify(ids));
-	fd.set("targetIsActive", targetIsActive ? "true" : "false");
-	return bulkToggleSkusStatus(undefined, fd);
-}
-
 export function SkusBulkActionsBar({ presentation = "inline" }: SkusBulkActionsBarProps = {}) {
-	const { selectedIds, clear, selectedCount } = useBulkSelectionContext();
+	const { selectedIds, selectedCount } = useBulkSelectionContext();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
-	const lastSubmissionRef = useRef<LastSubmission | null>(null);
-	const [state, action, isPending] = useActionState(bulkToggleSkusStatus, undefined);
+	const { submit, isPending } = useBulkActionWithToast<LastSubmission>(bulkToggleSkusStatus, {
+		undo: {
+			buildUndoFormData: (snap) => {
+				const fd = new FormData();
+				fd.set("skuIds", JSON.stringify(snap.ids));
+				fd.set("targetIsActive", snap.targetIsActive ? "false" : "true");
+				return fd;
+			},
+		},
+	});
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
-	useEffect(() => {
-		if (!state) return;
-		if (state.status === ActionStatus.SUCCESS) {
-			const last = lastSubmissionRef.current;
-			toast.success(state.message, {
-				duration: 6000,
-				action: last
-					? {
-							label: "Annuler",
-							onClick: async () => {
-								const result = await runBulkToggle(last.ids, !last.targetIsActive);
-								if (result.status === ActionStatus.SUCCESS) {
-									toast.success("Action annulée");
-								} else {
-									toast.error(result.message);
-								}
-							},
-						}
-					: undefined,
-			});
-			lastSubmissionRef.current = null;
-			clear();
-		} else if (state.message) {
-			toast.error(state.message);
-		}
-	}, [state, clear]);
-
 	function handleConfirm(target: BulkAction) {
 		const ids = Array.from(selectedIds);
 		const targetIsActive = target === "activate";
-		lastSubmissionRef.current = { ids, targetIsActive };
 		const fd = new FormData();
 		fd.set("skuIds", JSON.stringify(ids));
 		fd.set("targetIsActive", targetIsActive ? "true" : "false");
-		action(fd);
+		submit(fd, { ids, targetIsActive });
 		setPendingAction(null);
 	}
 

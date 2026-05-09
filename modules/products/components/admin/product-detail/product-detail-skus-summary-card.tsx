@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, LayoutList, Star } from "lucide-react";
+import { AlertTriangle, ArrowRight, LayoutList, Star } from "lucide-react";
 import Link from "next/link";
 
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -9,6 +9,8 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+
+const PREVIEW_LIMIT = 3;
 
 function buildVariantLabel(sku: ProductSku): string {
 	const parts: string[] = [];
@@ -39,8 +41,15 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 	const prices = skus.map((sku) => sku.priceInclTax);
 	const minPrice = prices.length > 0 ? Math.min(...prices) : null;
 	const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
-	const defaultSku = skus.find((sku) => sku.isDefault) ?? skus[0] ?? null;
-	const defaultVariantLabel = defaultSku ? buildVariantLabel(defaultSku) : "";
+	const outOfStockCount = skus.filter((sku) => sku.inventory === 0).length;
+
+	const sortedSkus = [...skus].sort((a, b) => {
+		if (a.isDefault && !b.isDefault) return -1;
+		if (!a.isDefault && b.isDefault) return 1;
+		return 0;
+	});
+	const previewSkus = sortedSkus.slice(0, PREVIEW_LIMIT);
+	const remainingCount = Math.max(0, skus.length - PREVIEW_LIMIT);
 
 	const priceLabel =
 		minPrice === null || maxPrice === null
@@ -57,7 +66,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 				: "success";
 
 	return (
-		<Card>
+		<Card style={{ viewTransitionName: "product-detail-skus" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<LayoutList className="size-5" aria-hidden="true" />
@@ -84,27 +93,56 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 					</div>
 				</dl>
 
-				{defaultSku ? (
-					<div className="space-y-2 border-t pt-4">
-						<div className="flex items-center gap-2">
-							<Badge variant="secondary" className="shrink-0">
-								<Star className="size-3" aria-hidden="true" />
-								Par défaut
-							</Badge>
-							{defaultVariantLabel ? (
-								<span className="text-foreground/90 min-w-0 truncate text-sm">
-									{defaultVariantLabel}
-								</span>
-							) : null}
-						</div>
-						<p className="text-muted-foreground font-mono text-xs break-all">{defaultSku.sku}</p>
-					</div>
+				{outOfStockCount > 0 ? (
+					<p className="text-destructive flex items-center gap-1.5 text-xs" role="status">
+						<AlertTriangle className="size-3.5 shrink-0" aria-hidden="true" />
+						{outOfStockCount} variante{outOfStockCount > 1 ? "s" : ""} en rupture
+					</p>
+				) : null}
+
+				{previewSkus.length > 0 ? (
+					<ul className="-mx-2 space-y-0.5 border-t pt-3" aria-label="Aperçu des variantes">
+						{previewSkus.map((sku) => {
+							const label = buildVariantLabel(sku) || sku.sku;
+							const isOutOfStock = sku.inventory === 0;
+							return (
+								<li
+									key={sku.id}
+									className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm"
+								>
+									<div className="flex min-w-0 items-center gap-1.5">
+										{sku.isDefault ? (
+											<Star
+												className="text-muted-foreground size-3 shrink-0"
+												aria-label="Variante par défaut"
+											/>
+										) : null}
+										<span className="truncate">{label}</span>
+									</div>
+									<Badge
+										variant={isOutOfStock ? "destructive" : "secondary"}
+										className="shrink-0"
+										aria-label={`${sku.inventory} en stock`}
+									>
+										{isOutOfStock ? "Rupture" : `${sku.inventory}`}
+									</Badge>
+								</li>
+							);
+						})}
+					</ul>
+				) : null}
+
+				{remainingCount > 0 ? (
+					<p className="text-muted-foreground text-xs">
+						+ {remainingCount} autre{remainingCount > 1 ? "s" : ""} variante
+						{remainingCount > 1 ? "s" : ""}
+					</p>
 				) : null}
 
 				<Button
 					asChild
 					variant="outline"
-					className="w-full transition-transform duration-150 active:scale-[0.98]"
+					className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 				>
 					<Link
 						href={`/admin/catalogue/produits/${product.slug}/variantes`}

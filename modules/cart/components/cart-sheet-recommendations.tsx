@@ -2,7 +2,7 @@ import { getRelatedProducts } from "@/modules/products/data/get-related-products
 import ScrollFade from "@/shared/components/scroll-fade";
 import { formatEuro } from "@/shared/utils/format-euro";
 import Image from "next/image";
-import Link from "next/link";
+import { CartCloseLink } from "./cart-close-link";
 
 /**
  * Compact cross-sell section for the cart sheet (RSC)
@@ -37,7 +37,7 @@ export async function CartSheetRecommendations() {
 						const price = primarySku?.priceInclTax;
 
 						return (
-							<Link
+							<CartCloseLink
 								key={product.id}
 								href={`/creations/${product.slug}`}
 								className="group/reco focus-visible:ring-ring flex w-28 shrink-0 flex-col gap-1.5 rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
@@ -69,7 +69,7 @@ export async function CartSheetRecommendations() {
 										</p>
 									)}
 								</div>
-							</Link>
+							</CartCloseLink>
 						);
 					})}
 				</div>

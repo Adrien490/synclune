@@ -4,6 +4,7 @@ import { Copy, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
@@ -38,6 +39,7 @@ export function useProductTypeActions({
 	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const router = useRouter();
+	const selectActionItem = useBulkSelectionActionItem(productTypeId);
 	const { duplicateProductType, isPending: isDuplicating } = useDuplicateProductType({
 		onSuccess: (message, data) => {
 			haptic("success");
@@ -59,6 +61,7 @@ export function useProductTypeActions({
 			key: "manage",
 			label: isSystem ? "Type système protégé" : undefined,
 			items: [
+				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "edit",
 					label: isSystem ? "Voir (lecture seule)" : "Éditer",

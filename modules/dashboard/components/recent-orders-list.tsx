@@ -46,7 +46,10 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 		return (
 			<section className="space-y-3" aria-labelledby="recent-orders-mobile-title">
 				<header>
-					<h3 id="recent-orders-mobile-title" className="text-base font-semibold">
+					<h3
+						id="recent-orders-mobile-title"
+						className="font-display text-lg font-normal tracking-tight"
+					>
 						Dernières commandes
 					</h3>
 					<p className="text-muted-foreground text-xs">Les 5 commandes les plus récentes</p>

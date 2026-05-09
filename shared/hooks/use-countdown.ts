@@ -46,12 +46,16 @@ export function useCountdown(endDate: Date | string | null | undefined): Countdo
 	const [, setTick] = useState(0);
 
 	useEffect(() => {
-		if (target === null || snapshot?.isExpired) return;
+		if (target === null) return;
+		if (Date.now() >= target) return;
 		const interval = setInterval(() => {
+			if (Date.now() >= target) {
+				clearInterval(interval);
+			}
 			setTick((t) => t + 1);
 		}, MINUTE_MS);
 		return () => clearInterval(interval);
-	}, [target, snapshot?.isExpired]);
+	}, [target]);
 
 	return snapshot;
 }

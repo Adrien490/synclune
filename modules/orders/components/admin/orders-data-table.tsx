@@ -44,10 +44,10 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 				className="hidden md:flex"
 				icon={ShoppingBag}
 				title="Aucune commande trouvée"
-				description="Aucune commande ne correspond aux criteres de recherche."
+				description="Aucune commande ne correspond aux critères de recherche."
 				actionElement={
 					<Button variant="outline" asChild>
-						<Link href="/admin/ventes/commandes">Reinitialiser les filtres</Link>
+						<Link href="/admin/ventes/commandes">Réinitialiser les filtres</Link>
 					</Button>
 				}
 			/>

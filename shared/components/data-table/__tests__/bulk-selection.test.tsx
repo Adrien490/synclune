@@ -230,7 +230,7 @@ describe("BulkSelectionContext — selectionMode", () => {
 		expect(screen.getByTestId("mode")).toHaveTextContent("on");
 	});
 
-	it("exitSelectionMode resets selectionMode and clears selection", () => {
+	it("exitSelectionMode flips mode OFF but KEEPS selection (Mail iOS pattern)", () => {
 		renderWithProvider(["a", "b"], <SelectionModeProbe />);
 		fireEvent.click(screen.getByText("enter"));
 		fireEvent.click(screen.getByText("toggle-a"));
@@ -238,10 +238,21 @@ describe("BulkSelectionContext — selectionMode", () => {
 
 		fireEvent.click(screen.getByText("exit"));
 		expect(screen.getByTestId("mode")).toHaveTextContent("off");
-		expect(screen.getByTestId("count")).toHaveTextContent("0");
+		expect(screen.getByTestId("count")).toHaveTextContent("1");
 	});
 
-	it("clear() also resets selectionMode (sortie cohérente)", () => {
+	it("re-entering the mode after exit restores the prior selection", () => {
+		renderWithProvider(["a", "b"], <SelectionModeProbe />);
+		fireEvent.click(screen.getByText("enter"));
+		fireEvent.click(screen.getByText("toggle-a"));
+		fireEvent.click(screen.getByText("exit"));
+		fireEvent.click(screen.getByText("enter"));
+
+		expect(screen.getByTestId("mode")).toHaveTextContent("on");
+		expect(screen.getByTestId("count")).toHaveTextContent("1");
+	});
+
+	it("clear() resets BOTH selection and selectionMode (used after bulk action)", () => {
 		renderWithProvider(["a", "b"], <SelectionModeProbe />);
 		fireEvent.click(screen.getByText("enter"));
 		fireEvent.click(screen.getByText("toggle-a"));

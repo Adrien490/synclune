@@ -22,7 +22,7 @@ export function MaterialDetailStatsCard({
 			<CardContent>
 				<dl className="grid gap-3 text-sm">
 					<div className="flex items-center justify-between gap-3">
-						<dt className="text-muted-foreground">SKU actifs</dt>
+						<dt className="text-muted-foreground">Variantes actives</dt>
 						<dd className="font-medium">{skusCount}</dd>
 					</div>
 					<div className="flex items-center justify-between gap-3">

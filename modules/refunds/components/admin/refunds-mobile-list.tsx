@@ -34,10 +34,10 @@ export function RefundsMobileList({
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={ReceiptText}
-					title="Aucun remboursement trouve"
+					title="Aucun remboursement trouvé"
 					description={
 						hasActiveFilters
-							? "Aucun remboursement ne correspond aux criteres de recherche."
+							? "Aucun remboursement ne correspond aux critères de recherche."
 							: "Aucun remboursement pour l'instant."
 					}
 					actionElement={

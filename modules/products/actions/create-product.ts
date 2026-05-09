@@ -278,9 +278,9 @@ export async function createProduct(
 
 		// 11. Success
 		return success(
-			`Produit "${product.title}" créé avec succès${
-				product.status === "PUBLIC" ? " et publié" : ""
-			}.`,
+			`Nouveau bijou « ${product.title} » dans l'atelier${
+				product.status === "PUBLIC" ? " — publié" : ""
+			}`,
 			product,
 		);
 	} catch (e) {

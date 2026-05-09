@@ -34,10 +34,10 @@ export function ReviewsMobileList({
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={MessageSquare}
-					title="Aucun avis trouve"
+					title="Aucun avis trouvé"
 					description={
 						hasActiveFilters
-							? "Aucun avis ne correspond aux criteres de recherche."
+							? "Aucun avis ne correspond aux critères de recherche."
 							: "Aucun avis pour l'instant."
 					}
 					actionElement={

@@ -6,21 +6,14 @@ import { CopyButton } from "@/shared/components/copy-button";
 import { DescriptionCollapse } from "@/shared/components/description-collapse";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 
-const STATUS_CONFIG: Record<
-	GetProductReturn["status"],
-	{ label: string; variant: "default" | "secondary" | "outline" }
-> = {
-	PUBLIC: { label: "Public", variant: "default" },
-	DRAFT: { label: "Brouillon", variant: "secondary" },
-	ARCHIVED: { label: "Archivé", variant: "outline" },
-};
+import { PRODUCT_STATUS_CONFIG } from "./product-detail-status.constants";
 
 interface ProductDetailInfoCardProps {
 	product: GetProductReturn;
 }
 
 export function ProductDetailInfoCard({ product }: ProductDetailInfoCardProps) {
-	const status = STATUS_CONFIG[product.status];
+	const status = PRODUCT_STATUS_CONFIG[product.status];
 
 	return (
 		<Card style={{ viewTransitionName: "product-edit-info" }}>

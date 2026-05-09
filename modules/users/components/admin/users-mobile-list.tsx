@@ -30,10 +30,10 @@ export function UsersMobileList({ usersPromise, perPage, hasActiveFilters }: Use
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={Users}
-					title="Aucun client trouve"
+					title="Aucun client trouvé"
 					description={
 						hasActiveFilters
-							? "Aucun client ne correspond aux criteres de recherche."
+							? "Aucun client ne correspond aux critères de recherche."
 							: "Aucun client pour l'instant."
 					}
 					actionElement={

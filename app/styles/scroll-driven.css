@@ -63,6 +63,29 @@
 		}
 	}
 
+	/* Hero floating images: opacity 1 → 0.2 as the user scrolls past the hero.
+	   Replaces motion-react useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]) */
+	@keyframes hero-floating-fade {
+		0%,
+		40% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0.2;
+		}
+	}
+
+	/* Parallax image: subtle vertical motion as the image traverses the viewport.
+	   Replaces motion-react useTransform on translateY for scroll-bound parallax. */
+	@keyframes parallax-image-translate {
+		from {
+			translate: 0 calc(var(--parallax-from, -7%));
+		}
+		to {
+			translate: 0 calc(var(--parallax-to, 7%));
+		}
+	}
+
 	@supports (animation-timeline: view()) {
 		/* Desktop horizontal timeline line */
 		.timeline-line-desktop {
@@ -140,6 +163,27 @@
 			animation: step-reveal linear both;
 			animation-timeline: view();
 			animation-range: entry 30% cover 50%;
+		}
+
+		/* Parallax image: scroll-bound translateY using the element's view timeline.
+		   Replaces motion-react useScroll/useTransform for scroll-only parallax.
+		   Pointer-reactive parallax (mouse-tracking) stays in JS where CSS cannot reach. */
+		.parallax-image-scroll {
+			animation: parallax-image-translate linear both;
+			animation-timeline: view();
+			animation-range: cover 0% cover 100%;
+			will-change: translate;
+		}
+	}
+
+	@supports (animation-timeline: scroll()) {
+		/* Hero floating images: page-scroll-bound opacity fade (1 → 0.2 across the first viewport).
+		   Replaces motion-react useTransform(scrollYProgress, [0, 0.4, 1], [1, 1, 0.2]).
+		   Pointer-reactive offsets remain in motion-react (not expressible in pure CSS). */
+		.hero-floating-images-scroll-fade {
+			animation: hero-floating-fade linear both;
+			animation-timeline: scroll(nearest);
+			animation-range: 0 100vh;
 		}
 	}
 
@@ -221,6 +265,14 @@
 		/* Confession glow: gradient statique */
 		.confession-glow {
 			animation: none;
+		}
+
+		/* Hero floating images & parallax image: keep static (no scroll-driven motion) */
+		.hero-floating-images-scroll-fade,
+		.parallax-image-scroll {
+			animation: none;
+			translate: 0;
+			opacity: 1;
 		}
 	}
 }

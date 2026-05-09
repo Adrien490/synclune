@@ -59,7 +59,7 @@ export async function CollectionsDataTable({
 				className="hidden md:flex"
 				icon={FolderOpen}
 				title="Aucune collection trouvée"
-				description="Aucune collection ne correspond aux criteres de recherche."
+				description="Aucune collection ne correspond aux critères de recherche."
 				actionElement={<CreateCollectionButton />}
 			/>
 		);

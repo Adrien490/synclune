@@ -12,6 +12,8 @@ interface SkuMediaCardProps {
 	productTitle: string;
 	primaryUpload: ReturnType<typeof useUploadThing>;
 	galleryUpload: ReturnType<typeof useMediaUpload>;
+	/** Routing key matching the parent's enableOfflineQueue context */
+	offlineContextKey?: string;
 }
 
 export function SkuMediaCard({
@@ -19,6 +21,7 @@ export function SkuMediaCard({
 	productTitle,
 	primaryUpload,
 	galleryUpload,
+	offlineContextKey,
 }: SkuMediaCardProps) {
 	return (
 		<Card
@@ -53,6 +56,7 @@ export function SkuMediaCard({
 							pushValue={(value) => field.pushValue(value)}
 							productName={productTitle}
 							galleryUpload={galleryUpload}
+							offlineContextKey={offlineContextKey}
 						/>
 					)}
 				</form.Field>

@@ -67,7 +67,7 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 							<>
 								<span aria-hidden="true">·</span>
 								<Badge variant="outline" className="text-xs">
-									Repondu
+									Répondu
 								</Badge>
 							</>
 						) : null}

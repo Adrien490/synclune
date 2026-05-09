@@ -84,11 +84,13 @@ export function UploadActionSheet({
 
 	const handleSourceTap = (ref: React.RefObject<HTMLInputElement | null>) => {
 		haptic("selection");
+		// Click the hidden input SYNCHRONOUSLY in the same user-gesture tick (P1.6).
+		// iOS Safari < 17 strips the gesture handle if the click is deferred via rAF,
+		// resulting in the file picker silently failing to open.
+		// Order matters: click first, then close — the drawer's exit animation runs
+		// concurrently with the native file picker presentation.
+		ref.current?.click();
 		setOpen(false);
-		// Defer click so the drawer close animation runs first
-		requestAnimationFrame(() => {
-			ref.current?.click();
-		});
 	};
 
 	const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {

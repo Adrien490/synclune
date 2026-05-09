@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Input } from "@/shared/components/ui/input";
 import { Slider } from "@/shared/components/ui/slider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
@@ -25,30 +25,28 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 	// Tracks if we've tickled haptic during current drag (avoid spam per tick)
 	const draggingRef = useRef(false);
 
-	// Etat local pour permettre l'edition libre des inputs texte
-	const [minInput, setMinInput] = useState(String(value[0]));
-	const [maxInput, setMaxInput] = useState(String(value[1]));
-
-	// Position interne du slider (0-100) avec echelle non-lineaire
-	const [sliderPosition, setSliderPosition] = useState<[number, number]>([
-		priceToSlider(value[0], maxPrice),
-		priceToSlider(value[1], maxPrice),
-	]);
-
-	// Extract values for clean dependency tracking
 	const minValue = value[0];
 	const maxValue = value[1];
 
-	// Synchroniser l'etat local quand la valeur externe change
-	useEffect(() => {
-		queueMicrotask(() => setMinInput(String(minValue)));
-		queueMicrotask(() => setSliderPosition((prev) => [priceToSlider(minValue, maxPrice), prev[1]]));
-	}, [minValue, maxPrice]);
+	// Etat local pour permettre l'edition libre des inputs texte
+	const [minInput, setMinInput] = useState(() => String(minValue));
+	const [maxInput, setMaxInput] = useState(() => String(maxValue));
 
-	useEffect(() => {
-		queueMicrotask(() => setMaxInput(String(maxValue)));
-		queueMicrotask(() => setSliderPosition((prev) => [prev[0], priceToSlider(maxValue, maxPrice)]));
-	}, [maxValue, maxPrice]);
+	// Position interne du slider (0-100) avec echelle non-lineaire
+	const [sliderPosition, setSliderPosition] = useState<[number, number]>(() => [
+		priceToSlider(minValue, maxPrice),
+		priceToSlider(maxValue, maxPrice),
+	]);
+
+	// Sync state when external props change — set during render (no useEffect).
+	// React 19 idiomatic pattern: https://react.dev/reference/react/useState#storing-information-from-previous-renders
+	const [prevSync, setPrevSync] = useState({ min: minValue, max: maxValue, cap: maxPrice });
+	if (prevSync.min !== minValue || prevSync.max !== maxValue || prevSync.cap !== maxPrice) {
+		setPrevSync({ min: minValue, max: maxValue, cap: maxPrice });
+		setMinInput(String(minValue));
+		setMaxInput(String(maxValue));
+		setSliderPosition([priceToSlider(minValue, maxPrice), priceToSlider(maxValue, maxPrice)]);
+	}
 
 	const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const inputValue = e.target.value;

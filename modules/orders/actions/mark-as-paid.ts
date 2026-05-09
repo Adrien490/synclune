@@ -124,7 +124,7 @@ export async function markAsPaid(
 					});
 
 					if (result.count === 0) {
-						throw new Error(`Stock insuffisant ou SKU inactif pour ${item.productTitle}`);
+						throw new Error(`Stock insuffisant ou variante inactive pour ${item.productTitle}`);
 					}
 				}
 			}

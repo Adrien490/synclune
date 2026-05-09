@@ -98,6 +98,14 @@ export default defineConfig({
 					statements: 80,
 					branches: 70,
 				},
+				"modules/wishlist/actions/": {
+					statements: 85,
+					branches: 75,
+				},
+				"modules/emails/services/": {
+					statements: 80,
+					branches: 65,
+				},
 			},
 		},
 	},

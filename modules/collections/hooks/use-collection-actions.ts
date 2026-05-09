@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
+import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -45,6 +46,7 @@ export function useCollectionActions({
 	const { open: openChangeStatusDialog } = useAlertDialog(CHANGE_COLLECTION_STATUS_DIALOG_ID);
 	const isMobile = useIsMobile();
 	const router = useRouter();
+	const selectActionItem = useBulkSelectionActionItem(collectionId);
 
 	const isArchived = collectionStatus === CollectionStatus.ARCHIVED;
 	const isDraft = collectionStatus === CollectionStatus.DRAFT;
@@ -54,6 +56,7 @@ export function useCollectionActions({
 		{
 			key: "navigate",
 			items: [
+				...(selectActionItem ? [selectActionItem] : []),
 				{
 					key: "view",
 					label: "Voir la page publique",

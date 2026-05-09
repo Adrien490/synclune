@@ -1,13 +1,12 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
-import { useToolbarDrawer } from "@/shared/hooks";
+import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/refund.constants";
 import { RefundsFilterSheet } from "./refunds-filter-sheet";
@@ -23,26 +22,19 @@ const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, labe
  */
 function RefundsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
-	const searchParams = useSearchParams();
-
-	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
-	const hasActiveSort = searchParams.has("sortBy");
-	const activeFilterCount = Array.from(searchParams.keys()).filter((key) =>
-		key.startsWith("filter_"),
-	).length;
+	const { hasActiveSearch, searchValue, hasActiveSort, activeFilterCount } =
+		useActiveListControls();
 
 	const items: StickyActionBarItem[] = [
 		{
 			key: "filter",
 			icon: SlidersHorizontal,
 			label: "Filtrer",
-			ariaLabel:
-				activeFilterCount > 0
-					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
-					: "Ouvrir les filtres",
+			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
 					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
@@ -53,14 +45,13 @@ function RefundsBottomBarInner() {
 			icon: Search,
 			label: "Rechercher",
 			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
+				? `Recherche: "${searchValue}". Modifier la recherche`
 				: "Ouvrir la recherche",
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
-			announcement: hasActiveSearch
-				? `Recherche "${searchParams.get("search")}" active`
-				: undefined,
+			expanded: isOpen("search"),
+			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
 		{
 			key: "sort",
@@ -70,6 +61,7 @@ function RefundsBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 	];

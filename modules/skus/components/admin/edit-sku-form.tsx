@@ -56,7 +56,10 @@ export function EditProductVariantForm({
 	const variantsListPath = `/admin/catalogue/produits/${productSlug}/variantes`;
 
 	const primaryUpload = useUploadThing("catalogMedia");
-	const galleryUpload = useMediaUpload();
+	const galleryUpload = useMediaUpload({
+		enableOfflineQueue: true,
+		offlineContextKey: `edit-sku-${sku.id}`,
+	});
 
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
@@ -80,7 +83,15 @@ export function EditProductVariantForm({
 	});
 
 	const isMediaUploading = primaryUpload.isUploading || galleryUpload.isUploading;
-	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+	const { allowNavigation } = useUnsavedChanges(
+		form.state.isDirty || isMediaUploading,
+		!isPending,
+		{
+			message: isMediaUploading
+				? "Un téléversement est en cours. Quitter abandonnera les fichiers en cours."
+				: undefined,
+		},
+	);
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
@@ -197,6 +208,7 @@ export function EditProductVariantForm({
 						productTitle={product.title}
 						primaryUpload={primaryUpload}
 						galleryUpload={galleryUpload}
+						offlineContextKey={`edit-sku-${sku.id}`}
 					/>
 					<SkuInfoCard
 						form={form as unknown as SkuFormInstance}

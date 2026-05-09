@@ -18,11 +18,10 @@ interface MobileSelectionBottomBarProps {
  * ET qu'il y a des items affichés (`pageItemIds.length > 0`).
  *
  * Garanties UX (pattern Mail iOS) :
- * - Empilée **au-dessus** de la `AdminMobileBottomBar` (offset
- *   `bottom: calc(56px + safe-area-inset-bottom)`) afin que le toggle
- *   « Sélection » de la nav globale reste accessible au pouce pour quitter le
- *   mode. La hauteur reportée à `useBottomBarHeight` (112) couvre les deux
- *   bars empilées pour les offsets de contenu (FAB, sticky CTAs).
+ * - **Remplace** la `AdminMobileBottomBar` (qui se cache via le bridge
+ *   `useAdminListSelectionStore`) — elle est donc collée au safe-area-bottom
+ *   directement, sans empilement. Hauteur 112 reportée à `useBottomBarHeight`
+ *   pour offsetter le contenu (FAB, sticky CTAs).
  * - Hijack du back-button hardware Android / swipe-back iOS via `useBackButtonClose`
  *   → un retour quitte le mode sélection au lieu de la page.
  *
@@ -53,7 +52,7 @@ export function MobileSelectionBottomBar({
 			zIndex="z-(--z-bar)"
 			height={112}
 			aria-label={ariaLabel}
-			className={cn("bottom-[calc(56px+env(safe-area-inset-bottom))] px-3 py-2 pb-2", className)}
+			className={cn("bottom-[env(safe-area-inset-bottom)] px-3 py-2 pb-2", className)}
 		>
 			{children}
 		</BottomBar>

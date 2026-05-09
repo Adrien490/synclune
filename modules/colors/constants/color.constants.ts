@@ -71,6 +71,6 @@ export const COLORS_SORT_LABELS = {
 	[COLORS_SORT_OPTIONS.POSITION_DESC]: "Ordre chromatique (inverse)",
 	[COLORS_SORT_OPTIONS.NAME_ASC]: "Nom (A-Z)",
 	[COLORS_SORT_OPTIONS.NAME_DESC]: "Nom (Z-A)",
-	[COLORS_SORT_OPTIONS.SKU_COUNT_ASC]: "Moins de SKU",
-	[COLORS_SORT_OPTIONS.SKU_COUNT_DESC]: "Plus de SKU",
+	[COLORS_SORT_OPTIONS.SKU_COUNT_ASC]: "Moins de variantes",
+	[COLORS_SORT_OPTIONS.SKU_COUNT_DESC]: "Plus de variantes",
 } as const;

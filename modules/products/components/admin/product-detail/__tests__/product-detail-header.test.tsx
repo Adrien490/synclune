@@ -12,6 +12,21 @@ vi.mock("next/link", () => ({
 	),
 }));
 
+vi.mock("@/shared/components/ui/badge", () => ({
+	Badge: ({
+		children,
+		variant,
+	}: {
+		children: React.ReactNode;
+		variant?: string;
+		className?: string;
+	}) => (
+		<span data-testid="badge" data-variant={variant}>
+			{children}
+		</span>
+	),
+}));
+
 vi.mock("@/shared/components/ui/button", () => ({
 	Button: ({
 		children,
@@ -120,5 +135,21 @@ describe("ProductDetailHeader", () => {
 		const content = screen.getByTestId("actions-menu-content");
 		expect(content).toHaveAttribute("data-title", "Actions");
 		expect(content.querySelector('[data-action-key="duplicate"]')).toBeInTheDocument();
+	});
+
+	it("affiche le badge status mobile (md:hidden) avec le label correspondant", () => {
+		render(<ProductDetailHeader product={{ ...baseProduct, status: "DRAFT" }} />);
+		const badge = screen.getByTestId("badge");
+		expect(badge).toHaveTextContent("Brouillon");
+		expect(badge).toHaveAttribute("data-variant", "secondary");
+	});
+
+	it("affiche une date de création relative dans la meta mobile", () => {
+		render(<ProductDetailHeader product={baseProduct} />);
+		// La meta mobile et la phrase desktop contiennent toutes deux 'Créé' ;
+		// vérifier qu'au moins l'une des occurrences correspond à une date relative.
+		const matches = screen.getAllByText(/Créé /);
+		expect(matches.length).toBeGreaterThanOrEqual(1);
+		expect(matches.some((node) => /il y a/.test(String(node.textContent)))).toBe(true);
 	});
 });

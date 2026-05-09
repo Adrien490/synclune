@@ -38,7 +38,7 @@ const FIELD_LABELS: Record<string, string> = {
 	"defaultSku.priceInclTaxEuros": "Prix de vente",
 	"defaultSku.compareAtPriceEuros": "Prix comparé",
 	"defaultSku.inventory": "Stock",
-	"defaultSku.isActive": "Statut du SKU",
+	"defaultSku.isActive": "Statut de la variante",
 };
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
@@ -60,11 +60,15 @@ export function EditProductForm({
 		isUploading: isMediaUploading,
 		progress: uploadProgress,
 		cancel: cancelMediaUpload,
+		cancelOne: cancelOneMediaUpload,
 		failedFiles: failedMediaUploads,
 		retryFailed: retryFailedMediaUploads,
 		retrySingle: retrySingleMediaUpload,
 		clearFailed: clearFailedMediaUploads,
-	} = useMediaUpload();
+	} = useMediaUpload({
+		enableOfflineQueue: true,
+		offlineContextKey: `edit-product-${product.id}`,
+	});
 
 	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
@@ -80,7 +84,7 @@ export function EditProductForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(message || "Bijou modifié avec succès", {
+			toast.success(message || "Bijou peaufiné", {
 				action: {
 					label: "Voir les bijoux",
 					onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
@@ -90,7 +94,15 @@ export function EditProductForm({
 		},
 	});
 
-	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
+	const { allowNavigation } = useUnsavedChanges(
+		form.state.isDirty || isMediaUploading,
+		!isPending,
+		{
+			message: isMediaUploading
+				? "Un téléversement est en cours. Quitter abandonnera les fichiers en cours."
+				: undefined,
+		},
+	);
 	useEffect(() => {
 		allowNavigationRef.current = allowNavigation;
 	}, [allowNavigation]);
@@ -224,6 +236,7 @@ export function EditProductForm({
 						setDeletedImageUrls={setDeletedImageUrls}
 						failedFiles={failedMediaUploads}
 						onCancel={cancelMediaUpload}
+						onCancelOne={cancelOneMediaUpload}
 						onRetry={() => {
 							void retryFailedMediaUploads();
 						}}
@@ -231,6 +244,10 @@ export function EditProductForm({
 							void retrySingleMediaUpload(file);
 						}}
 						onDismissErrors={clearFailedMediaUploads}
+						offlineContextKey={`edit-product-${product.id}`}
+						onReplayOffline={async (files) => {
+							await uploadMedia(files);
+						}}
 					/>
 					<EditProductInfoCard form={form} productTypes={productTypes} collections={collections} />
 				</div>

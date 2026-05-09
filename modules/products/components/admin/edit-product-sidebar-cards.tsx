@@ -72,7 +72,7 @@ function VariantCard({
 						<TooltipContent side="bottom" className="max-w-62.5">
 							<p>
 								Ces attributs concernent la variante par défaut du produit. Les autres variantes se
-								gèrent depuis la page SKU.
+								gèrent depuis la page Variantes.
 							</p>
 						</TooltipContent>
 					</Tooltip>
@@ -385,11 +385,11 @@ function SkuStatusCard({ form }: { form: EditProductFormInstance }) {
 	return (
 		<Card
 			role="region"
-			aria-label="Statut du SKU par défaut"
+			aria-label="Statut de la variante par défaut"
 			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
 		>
 			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Statut du SKU</CardTitle>
+				<CardTitle className={MOBILE_SECTION_TITLE}>Statut de la variante</CardTitle>
 			</CardHeader>
 			<CardContent className="px-0 sm:px-0 lg:px-6">
 				<form.AppField

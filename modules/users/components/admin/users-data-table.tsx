@@ -39,7 +39,7 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 				className="hidden md:flex"
 				icon={Users}
 				title="Aucun client trouvé"
-				description="Aucun client ne correspond aux criteres de recherche."
+				description="Aucun client ne correspond aux critères de recherche."
 				action={resetHref ? { label: "Réinitialiser les filtres", href: resetHref } : undefined}
 			/>
 		);

@@ -68,7 +68,7 @@ function AttributesCard({
 						</TooltipTrigger>
 						<TooltipContent side="bottom" className="max-w-62.5">
 							<p>
-								Couleur, matériau et taille distinguent cette variante des autres SKU du même
+								Couleur, matériau et taille distinguent cette variante des autres variantes du même
 								produit.
 							</p>
 						</TooltipContent>

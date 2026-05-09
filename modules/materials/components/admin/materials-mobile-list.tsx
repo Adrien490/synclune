@@ -35,11 +35,11 @@ export function MaterialsMobileList({
 			<div className="md:hidden">
 				<TableEmptyState
 					icon={Gem}
-					title="Aucun materiau trouve"
+					title="Aucun matériau trouvé"
 					description={
 						hasActiveFilters
-							? "Aucun materiau ne correspond aux criteres de recherche."
-							: "Aucun materiau pour l'instant."
+							? "Aucun matériau ne correspond aux critères de recherche."
+							: "Aucun matériau pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? (

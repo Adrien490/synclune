@@ -118,7 +118,7 @@ export async function updateProduct(
 		});
 
 		if (!existingSku) {
-			return notFound("Le SKU");
+			return notFound("La variante");
 		}
 
 		// 5. Validation metier : Produit PUBLIC doit avoir au moins 1 SKU actif
@@ -128,7 +128,7 @@ export async function updateProduct(
 			existingProduct._count.skus === 1
 		) {
 			return validationError(
-				"Impossible de desactiver le seul SKU d'un produit PUBLIC. Veuillez creer un autre SKU actif ou mettre le produit en DRAFT.",
+				"Impossible de désactiver la seule variante d'un produit PUBLIC. Veuillez créer une autre variante active ou mettre le produit en DRAFT.",
 			);
 		}
 
@@ -327,7 +327,7 @@ export async function updateProduct(
 		});
 
 		// 13. Success
-		return success(`Produit "${updatedProduct.title}" modifié avec succès.`, updatedProduct);
+		return success(`Bijou « ${updatedProduct.title} » peaufiné`, updatedProduct);
 	} catch (e) {
 		return handleActionError(e, "Impossible de modifier le produit");
 	}

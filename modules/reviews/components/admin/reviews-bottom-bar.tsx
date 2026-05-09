@@ -7,7 +7,7 @@ import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
-import { useToolbarDrawer } from "@/shared/hooks";
+import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { ReviewsFilterSheet } from "./reviews-filter-sheet";
 
@@ -26,10 +26,10 @@ const REVIEW_FILTER_KEYS = ["status", "rating", "hasResponse"] as const;
  */
 function ReviewsBottomBarInner() {
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
+	const { hasActiveSearch, searchValue, hasActiveSort } = useActiveListControls();
 
+	// Reviews use bare keys (status/rating/hasResponse) instead of the filter_* prefix.
 	const searchParams = useSearchParams();
-	const hasActiveSearch = searchParams.has("search") && searchParams.get("search") !== "";
-	const hasActiveSort = searchParams.has("sortBy");
 	const activeFilterCount = REVIEW_FILTER_KEYS.filter((key) => searchParams.has(key)).length;
 
 	const items: StickyActionBarItem[] = [
@@ -37,13 +37,11 @@ function ReviewsBottomBarInner() {
 			key: "filter",
 			icon: SlidersHorizontal,
 			label: "Filtrer",
-			ariaLabel:
-				activeFilterCount > 0
-					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}. Modifier les filtres`
-					: "Ouvrir les filtres",
+			ariaLabel: "Ouvrir les filtres",
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
 					? `${activeFilterCount} filtre${activeFilterCount > 1 ? "s" : ""} actif${activeFilterCount > 1 ? "s" : ""}`
@@ -54,14 +52,13 @@ function ReviewsBottomBarInner() {
 			icon: Search,
 			label: "Rechercher",
 			ariaLabel: hasActiveSearch
-				? `Recherche: "${searchParams.get("search")}". Modifier la recherche`
+				? `Recherche: "${searchValue}". Modifier la recherche`
 				: "Ouvrir la recherche",
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
-			announcement: hasActiveSearch
-				? `Recherche "${searchParams.get("search")}" active`
-				: undefined,
+			expanded: isOpen("search"),
+			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
 		{
 			key: "sort",
@@ -71,6 +68,7 @@ function ReviewsBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
 	];

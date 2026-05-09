@@ -13,6 +13,16 @@ import {
 } from "@/modules/media/utils/upload-helpers";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
 import { deleteUploadThingFile } from "@/modules/media/actions/delete-uploadthing-file";
+import {
+	enqueue as enqueueOffline,
+	OfflineQueueFullError,
+	type OfflineUploadEndpoint,
+} from "@/modules/media/lib/offline-upload-queue";
+import {
+	computeEtaSeconds,
+	computeThroughput,
+	type ThroughputSample,
+} from "@/modules/media/utils/format-eta";
 import { withRetry } from "@/shared/utils/with-retry";
 import { toast } from "@/shared/utils/toast";
 import type {
@@ -27,20 +37,50 @@ import type {
 } from "../types/hooks.types";
 import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
 
+interface UseMediaUploadOptionsExtended extends UseMediaUploadOptions {
+	/** Persist files in the offline IndexedDB queue when a network failure occurs (default: false) */
+	enableOfflineQueue?: boolean;
+	/** Routing key stored alongside offline-queued files so the right surface can replay them */
+	offlineContextKey?: string;
+}
+
+type CurrentBatchTracker = {
+	mode: "image-batch" | "video-single";
+	files: File[];
+	startBytes: number;
+	totalBytes: number;
+};
+
+const ETA_TICK_INTERVAL_MS = 500;
+
+function isLikelyNetworkError(err: unknown): boolean {
+	if (err instanceof TypeError) {
+		// fetch() rejects with TypeError when offline / DNS fails
+		return /failed to fetch|networkerror|load failed/i.test(err.message);
+	}
+	if (typeof navigator !== "undefined" && navigator.onLine === false) return true;
+	if (err instanceof Error) {
+		return /network|offline|timeout/i.test(err.message);
+	}
+	return false;
+}
+
 /**
  * Production-ready hook for media uploads (images and videos)
  *
  * Features:
- * - Client-side image compression (HEIC, EXIF rotation, WebP output)
- * - Parallel batch image upload
+ * - Client-side image compression (HEIC, EXIF rotation, AVIF/WebP output)
+ * - Bytes-based progress per file via UploadThing onUploadProgress
+ * - Sliding-window ETA + throughput estimation
+ * - Parallel batch image upload + sequential video upload (configurable concurrency)
  * - Queue system: add files during an active upload
  * - Client-side video thumbnail generation (Canvas API)
  * - Retry with exponential backoff (network) + manual retry for failed files
- * - Cancellation via AbortController
- * - Real-time progress tracking with phase
+ * - Cancellation: global (cancel) and per-file (cancelOne) via AbortController
+ * - Offline queue (IndexedDB 50MB cap) for network failures
  * - Per-file error tracking exposed via failedFiles
  */
-export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUploadReturn {
+export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): UseMediaUploadReturn {
 	const {
 		endpoint = "catalogMedia",
 		maxSizeImage = DEFAULT_MAX_SIZE_IMAGE,
@@ -50,6 +90,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		onSuccess,
 		onError,
 		onProgress,
+		enableOfflineQueue = false,
+		offlineContextKey,
 	} = options;
 
 	const [progress, setProgress] = useState<UploadProgress | null>(null);
@@ -67,6 +109,21 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	const cumulativeResultsRef = useRef<MediaUploadResult[]>([]);
 	const cumulativeCompletedRef = useRef(0);
 	const doneTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Bytes accounting (P0.1)
+	const bytesUploadedRef = useRef(0);
+	const bytesTotalRef = useRef(0);
+	const currentBatchRef = useRef<CurrentBatchTracker | null>(null);
+
+	// Per-file cancellation (P1.5)
+	const cancelledNamesRef = useRef<Set<string>>(new Set());
+	const videoSubAbortRef = useRef<AbortController | null>(null);
+	const currentVideoNameRef = useRef<string | null>(null);
+
+	// Throughput sampling for ETA (P1.1)
+	const throughputSamplesRef = useRef<ThroughputSample[]>([]);
+	const etaTickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
 	const onProgressRef = useRef(onProgress);
 	// eslint-disable-next-line react-hooks/refs
 	onProgressRef.current = onProgress;
@@ -77,15 +134,25 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	// eslint-disable-next-line react-hooks/refs
 	onErrorRef.current = onError;
 
-	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing(endpoint);
+	// UploadThing hook with batch-percent callback that we route to the active batch (P0.1)
+	const { startUpload, isUploading: isUploadThingUploading } = useUploadThing(endpoint, {
+		uploadProgressGranularity: "fine",
+		onUploadProgress: (percent: number) => {
+			const tracker = currentBatchRef.current;
+			if (!tracker) return;
+			const batchUploaded = Math.min(tracker.totalBytes, (percent / 100) * tracker.totalBytes);
+			const globalUploaded = tracker.startBytes + batchUploaded;
+			updateBytesUploaded(globalUploaded, tracker);
+		},
+	});
 
-	// Abort in-progress uploads and clear timers on unmount
+	// Cleanup on unmount
 	useEffect(() => {
 		return () => {
 			abortControllerRef.current?.abort();
-			if (doneTimeoutRef.current) {
-				clearTimeout(doneTimeoutRef.current);
-			}
+			videoSubAbortRef.current?.abort();
+			if (doneTimeoutRef.current) clearTimeout(doneTimeoutRef.current);
+			if (etaTickIntervalRef.current) clearInterval(etaTickIntervalRef.current);
 		};
 	}, []);
 
@@ -104,6 +171,8 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 						queued: 0,
 						phase: "validating" as const,
 						files: [],
+						bytesUploaded: 0,
+						bytesTotal: 0,
 						...update,
 					};
 			onProgressRef.current?.(newProgress);
@@ -117,6 +186,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			state: "queued",
 			percent: 0,
 			sizeBytes: file.size,
+			bytesUploaded: 0,
 			mediaType: getMediaTypeFromFile(file),
 		}));
 		updateProgress({ files: entries });
@@ -148,8 +218,103 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 	};
 
 	/**
+	 * Update global bytes counter and per-file bytes within the active batch.
+	 * Updates the throughput sample buffer for ETA computation.
+	 */
+	const updateBytesUploaded = (globalBytes: number, tracker: CurrentBatchTracker) => {
+		bytesUploadedRef.current = globalBytes;
+		throughputSamplesRef.current.push({
+			bytes: globalBytes,
+			timestamp: performance.now(),
+		});
+		if (throughputSamplesRef.current.length > 60) {
+			throughputSamplesRef.current = throughputSamplesRef.current.slice(-30);
+		}
+
+		setProgress((prev) => {
+			if (!prev?.files) return prev;
+			const batchTotalBytes = tracker.totalBytes || 1;
+			const batchUploaded = Math.max(
+				0,
+				Math.min(batchTotalBytes, globalBytes - tracker.startBytes),
+			);
+			const batchPercent = (batchUploaded / batchTotalBytes) * 100;
+			const namesInBatch = new Set(tracker.files.map((f) => f.name));
+			const nextFiles = prev.files.map((entry) => {
+				if (!namesInBatch.has(entry.fileName)) return entry;
+				if (entry.state === "done" || entry.state === "failed") return entry;
+				const sharedPercent = Math.round(batchPercent);
+				return {
+					...entry,
+					state: "uploading" as const,
+					percent: sharedPercent,
+					bytesUploaded: Math.round((sharedPercent / 100) * entry.sizeBytes),
+				};
+			});
+			const next: UploadProgress = {
+				...prev,
+				files: nextFiles,
+				bytesUploaded: globalBytes,
+				bytesTotal: bytesTotalRef.current,
+			};
+			onProgressRef.current?.(next);
+			return next;
+		});
+	};
+
+	const startEtaTicker = () => {
+		if (etaTickIntervalRef.current) return;
+		etaTickIntervalRef.current = setInterval(() => {
+			const tracker = currentBatchRef.current;
+			if (!tracker) return;
+			const bytesPerSecond = computeThroughput(throughputSamplesRef.current);
+			const etaSeconds = computeEtaSeconds(
+				bytesUploadedRef.current,
+				bytesTotalRef.current,
+				bytesPerSecond,
+			);
+			setProgress((prev) => {
+				if (!prev) return prev;
+				if (prev.bytesPerSecond === bytesPerSecond && prev.etaSeconds === etaSeconds) return prev;
+				const next: UploadProgress = { ...prev, bytesPerSecond, etaSeconds };
+				onProgressRef.current?.(next);
+				return next;
+			});
+		}, ETA_TICK_INTERVAL_MS);
+	};
+
+	const stopEtaTicker = () => {
+		if (etaTickIntervalRef.current) {
+			clearInterval(etaTickIntervalRef.current);
+			etaTickIntervalRef.current = null;
+		}
+	};
+
+	/**
+	 * Light-weight pre-validation (count + MIME) — runs BEFORE compression to avoid
+	 * burning CPU/battery on files that will be dropped anyway. (P1.3)
+	 */
+	const preValidateBasic = (files: File[]): File[] => {
+		const mediaFiles = files.filter(isValidMediaType);
+		if (mediaFiles.length < files.length) {
+			const rejected = files.length - mediaFiles.length;
+			toast.warning(`${rejected} fichier(s) ignoré(s)`, {
+				description: "Seules les images et vidéos sont acceptées",
+			});
+		}
+		if (mediaFiles.length > maxFiles) {
+			toast.warning(`Maximum ${maxFiles} fichiers`, {
+				description: `${mediaFiles.length - maxFiles} fichier(s) ignoré(s)`,
+			});
+			return mediaFiles.slice(0, maxFiles);
+		}
+		return mediaFiles;
+	};
+
+	/**
 	 * Pre-compress image files (> 1MB) before validation/upload.
 	 * Handles HEIC decode failures by surfacing a clear error and skipping the file.
+	 * Emits compression progress per file (P2.2).
 	 */
 	const prepareFiles = async (files: File[]): Promise<File[]> => {
 		const prepared: File[] = [];
@@ -160,6 +325,10 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			updateProgress({ phase: "compressing" });
 		}
 		for (const file of files) {
+			if (cancelledNamesRef.current.has(file.name)) {
+				markFileState(file.name, "failed", "Annulé");
+				continue;
+			}
 			if (getMediaTypeFromFile(file) === "VIDEO") {
 				prepared.push(file);
 				continue;
@@ -169,7 +338,11 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				markFileState(file.name, "compressing");
 			}
 			try {
-				const result = await compressImage(file);
+				const result = await compressImage(file, {
+					onProgress: (p) => {
+						updateFileEntry(file.name, { percent: Math.round(p * 100) });
+					},
+				});
 				prepared.push(result.file);
 			} catch (err) {
 				if (err instanceof HeicDecodeError) {
@@ -192,6 +365,11 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		return prepared;
 	};
 
+	/**
+	 * Public validation API exposed via UseMediaUploadReturn.
+	 * Runs full validation (MIME + size + count) — kept atomic so callers can
+	 * pre-filter files outside the upload pipeline if needed.
+	 */
 	const validateFiles = (files: File[]): File[] => {
 		const mediaFiles = files.filter(isValidMediaType);
 
@@ -233,6 +411,55 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		}
 
 		return validSizeFiles;
+	};
+
+	/** Internal post-compression size check — used inside processBatch */
+	const validateSizesInternal = (files: File[]): File[] => {
+		const oversized: File[] = [];
+		const validSizeFiles: File[] = [];
+		for (const f of files) {
+			if (isOversized(f)) {
+				oversized.push(f);
+				pushFailed(f, `Fichier trop volumineux (${formatFileSize(f.size)})`);
+			} else {
+				validSizeFiles.push(f);
+			}
+		}
+		if (oversized.length > 0) {
+			const details = oversized
+				.slice(0, 3)
+				.map((f) => `${f.name} (${formatFileSize(f.size)})`)
+				.join(", ");
+			const suffix = oversized.length > 3 ? ` et ${oversized.length - 3} autre(s)` : "";
+			toast.error(`${oversized.length} fichier(s) trop volumineux`, {
+				description: details + suffix,
+			});
+		}
+		return validSizeFiles;
+	};
+
+	const persistOfflineIfPossible = async (files: File[]): Promise<File[]> => {
+		if (!enableOfflineQueue) return [];
+		const persisted: File[] = [];
+		for (const file of files) {
+			try {
+				await enqueueOffline({
+					file,
+					endpoint: endpoint as OfflineUploadEndpoint,
+					contextKey: offlineContextKey,
+				});
+				persisted.push(file);
+			} catch (e) {
+				if (e instanceof OfflineQueueFullError) {
+					toast.warning("File hors-ligne pleine", {
+						description: "Reconnectez-vous pour reprendre vos téléversements en attente.",
+					});
+					break;
+				}
+				console.warn("[useMediaUpload] enqueue offline échoué:", file.name, e);
+			}
+		}
+		return persisted;
 	};
 
 	const uploadVideo = async (
@@ -293,9 +520,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			return null;
 		} catch (error) {
 			if (thumbnailUrl) {
-				// Best-effort synchronous cleanup of orphan thumbnail.
-				// Only catalogMedia uploads videos (reviewMedia rejects them server-side),
-				// and the deleteUploadThingFile action is admin-gated — matches the catalog flow.
 				const orphanUrl = thumbnailUrl;
 				void (async () => {
 					try {
@@ -321,28 +545,47 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			throw new DOMException("Operation annulee", "AbortError");
 		}
 
-		const results = await withRetry(() => startUpload(imageFiles), {
-			maxAttempts: 3,
-			baseDelay: 1000,
-			signal,
-		});
+		// Set up batch tracker for byte-routing the global UploadThing percent (P0.1)
+		const batchTotalBytes = imageFiles.reduce((s, f) => s + f.size, 0);
+		currentBatchRef.current = {
+			mode: "image-batch",
+			files: imageFiles,
+			startBytes: bytesUploadedRef.current,
+			totalBytes: batchTotalBytes,
+		};
 
-		const uploadResults: MediaUploadResult[] = [];
+		try {
+			const results = await withRetry(() => startUpload(imageFiles), {
+				maxAttempts: 3,
+				baseDelay: 1000,
+				signal,
+			});
 
-		for (let i = 0; i < (results ?? []).length; i++) {
-			const result = results![i]!;
-			const serverData = result.serverData;
-			if (serverData.url) {
-				uploadResults.push({
-					url: serverData.url,
-					mediaType: "IMAGE",
-					fileName: imageFiles[i]!.name,
-					blurDataUrl: serverData.blurDataUrl ?? undefined,
-				});
+			const uploadResults: MediaUploadResult[] = [];
+
+			for (let i = 0; i < (results ?? []).length; i++) {
+				const result = results![i]!;
+				const serverData = result.serverData;
+				if (serverData.url) {
+					uploadResults.push({
+						url: serverData.url,
+						mediaType: "IMAGE",
+						fileName: imageFiles[i]!.name,
+						blurDataUrl: serverData.blurDataUrl ?? undefined,
+					});
+				}
 			}
-		}
 
-		return uploadResults;
+			// Lock in bytes accounting at end of batch (callback may be coarse on tiny files)
+			updateBytesUploaded(
+				currentBatchRef.current.startBytes + batchTotalBytes,
+				currentBatchRef.current,
+			);
+
+			return uploadResults;
+		} finally {
+			currentBatchRef.current = null;
+		}
 	};
 
 	const uploadVideos = async (
@@ -361,7 +604,43 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 			const batch = videoFiles.slice(i, i + videoConcurrency);
 			updateProgress({ current: batch.map((f) => f.name).join(", ") });
 
-			const batchResults = await Promise.allSettled(batch.map((file) => uploadVideo(file, signal)));
+			const batchResults = await Promise.allSettled(
+				batch.map(async (file) => {
+					if (cancelledNamesRef.current.has(file.name)) {
+						markFileState(file.name, "failed", "Annulé");
+						return null;
+					}
+					// Per-video sub-abort enables cancelOne mid-flight (P1.5)
+					const subAbort = new AbortController();
+					videoSubAbortRef.current = subAbort;
+					currentVideoNameRef.current = file.name;
+					const composite = new AbortController();
+					const onParentAbort = () => composite.abort();
+					const onSubAbort = () => composite.abort();
+					signal.addEventListener("abort", onParentAbort);
+					subAbort.signal.addEventListener("abort", onSubAbort);
+					try {
+						currentBatchRef.current = {
+							mode: "video-single",
+							files: [file],
+							startBytes: bytesUploadedRef.current,
+							totalBytes: file.size,
+						};
+						const r = await uploadVideo(file, composite.signal);
+						updateBytesUploaded(
+							currentBatchRef.current.startBytes + file.size,
+							currentBatchRef.current,
+						);
+						return r;
+					} finally {
+						currentBatchRef.current = null;
+						signal.removeEventListener("abort", onParentAbort);
+						subAbort.signal.removeEventListener("abort", onSubAbort);
+						if (videoSubAbortRef.current === subAbort) videoSubAbortRef.current = null;
+						if (currentVideoNameRef.current === file.name) currentVideoNameRef.current = null;
+					}
+				}),
+			);
 
 			for (let j = 0; j < batchResults.length; j++) {
 				const result = batchResults[j]!;
@@ -370,7 +649,12 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 					results.push(result.value);
 				} else if (result.status === "rejected") {
 					if (result.reason instanceof DOMException && result.reason.name === "AbortError") {
-						throw result.reason;
+						// Per-file abort = silent skip (cancelOne flow); parent abort = propagate.
+						// TS narrows signal.aborted=false from L594 check; runtime can flip it after await.
+						// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+						if (signal.aborted) throw result.reason;
+						markFileState(file.name, "failed", "Annulé");
+						continue;
 					}
 					const message =
 						result.reason instanceof Error ? result.reason.message : "Échec du téléversement vidéo";
@@ -387,28 +671,37 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		rawFiles: File[],
 		signal: AbortSignal,
 	): Promise<MediaUploadResult[]> => {
-		// 1. Pre-compress images (> 1MB) and surface HEIC decode failures
+		// 1. Pre-validate count + MIME BEFORE compression (P1.3) — avoids burning CPU
 		updateProgress({ phase: "validating" });
-		setFileProgressList(rawFiles);
-		const prepared = await prepareFiles(rawFiles);
+		const preValidated = preValidateBasic(rawFiles);
+		if (preValidated.length === 0) return [];
+		setFileProgressList(preValidated);
+
+		// 2. Pre-compress images (> 1MB) and surface HEIC decode failures
+		const prepared = await prepareFiles(preValidated);
 		if (signal.aborted) {
 			throw new DOMException("Operation annulee", "AbortError");
 		}
 
-		// 2. Validate (MIME, size, count) — drops oversized into failedFiles
-		const files = validateFiles(prepared);
+		// 3. Validate post-compression sizes (size may differ after compression).
+		// Use the internal size-only checker — preValidateBasic already handled MIME + count.
+		const files = validateSizesInternal(prepared);
 		if (files.length === 0) return [];
 
-		// 3. Reconcile total based on validated count (raw input may have been larger)
+		// 4. Reconcile total based on validated count + bytes accounting (P0.1)
 		const queuedFileCount = queueRef.current.reduce((sum, e) => sum + e.files.length, 0);
+		const batchBytes = files.reduce((s, f) => s + f.size, 0);
+		bytesTotalRef.current += batchBytes;
 		updateProgress({
 			total: cumulativeCompletedRef.current + files.length + queuedFileCount,
+			bytesTotal: bytesTotalRef.current,
 		});
 
 		const images = files.filter((f) => getMediaTypeFromFile(f) === "IMAGE");
 		const videos = files.filter((f) => getMediaTypeFromFile(f) === "VIDEO");
 
 		updateProgress({ phase: "uploading", current: `${images.length} image(s)` });
+		startEtaTicker();
 
 		const uploadResults: MediaUploadResult[] = [];
 
@@ -434,6 +727,23 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				}
 			} catch (err) {
 				if (err instanceof DOMException && err.name === "AbortError") throw err;
+				if (isLikelyNetworkError(err) && enableOfflineQueue) {
+					const persisted = await persistOfflineIfPossible(images);
+					if (persisted.length > 0) {
+						const persistedNames = new Set(persisted.map((f) => f.name));
+						for (const f of images) {
+							if (persistedNames.has(f.name)) {
+								markFileState(f.name, "failed", "En attente de connexion");
+							} else {
+								pushFailed(f, "Échec réseau");
+							}
+						}
+						toast.info(`${persisted.length} fichier(s) en attente de connexion`, {
+							description: "Ils seront renvoyés au retour en ligne.",
+						});
+						return uploadResults;
+					}
+				}
 				const message = err instanceof Error ? err.message : "Échec du téléversement image";
 				for (const f of images) pushFailed(f, message);
 				throw err;
@@ -474,6 +784,10 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 		cumulativeResultsRef.current = [];
 		cumulativeCompletedRef.current = 0;
+		bytesUploadedRef.current = 0;
+		bytesTotalRef.current = 0;
+		throughputSamplesRef.current = [];
+		cancelledNamesRef.current = new Set();
 
 		try {
 			while (queueRef.current.length > 0) {
@@ -481,8 +795,6 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				setQueuedCount(queueRef.current.length);
 
 				const queuedFileCount = queueRef.current.reduce((sum, e) => sum + e.files.length, 0);
-				// Don't include entry.files in total here — raw count may be > maxFiles.
-				// processBatch reconciles total after validation.
 				updateProgress({ queued: queuedFileCount });
 
 				try {
@@ -499,6 +811,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 						queueRef.current = [];
 						setQueuedCount(0);
 						setProgress(null);
+						stopEtaTicker();
 						isProcessingRef.current = false;
 						if (keptCount > 0) {
 							toast.info("Upload annulé", {
@@ -526,23 +839,25 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 				onSuccessRef.current?.(cumulativeResultsRef.current);
 			}
 			updateProgress({ phase: "done", completed: cumulativeCompletedRef.current, queued: 0 });
+			stopEtaTicker();
 
 			doneTimeoutRef.current = setTimeout(() => {
 				doneTimeoutRef.current = null;
 				setProgress(null);
 				cumulativeResultsRef.current = [];
 				cumulativeCompletedRef.current = 0;
+				bytesUploadedRef.current = 0;
+				bytesTotalRef.current = 0;
 			}, 1000);
 		} finally {
 			isProcessingRef.current = false;
+			stopEtaTicker();
 		}
 	};
 
 	const upload = (files: File[]): Promise<MediaUploadResult[]> => {
 		if (files.length === 0) return Promise.resolve([]);
 
-		// Push raw files to queue synchronously so cancel() can clear them mid-prepare.
-		// processBatch() will compress + validate inside the abort-aware queue worker.
 		return new Promise<MediaUploadResult[]>((resolve, reject) => {
 			queueRef.current.push({ files, resolve, reject });
 			setQueuedCount(queueRef.current.length);
@@ -560,6 +875,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 
 	const cancel = () => {
 		abortControllerRef.current?.abort();
+		videoSubAbortRef.current?.abort();
 		abortControllerRef.current = null;
 		for (const entry of queueRef.current) {
 			entry.resolve([]);
@@ -569,17 +885,47 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		setProgress(null);
 		cumulativeResultsRef.current = [];
 		cumulativeCompletedRef.current = 0;
+		bytesUploadedRef.current = 0;
+		bytesTotalRef.current = 0;
+		throughputSamplesRef.current = [];
+		cancelledNamesRef.current = new Set();
+		stopEtaTicker();
+	};
+
+	/**
+	 * Cancel a single file by name (P1.5).
+	 * - File queued / not yet uploading → marked "failed: Annulé", removed from session
+	 * - Single video currently uploading → sub-AbortController fires, sequential loop continues
+	 * - File inside an in-flight image batch → cannot interrupt (UploadThing batch is atomic);
+	 *   surfaces a toast and leaves the upload running
+	 */
+	const cancelOne = (fileName: string) => {
+		cancelledNamesRef.current.add(fileName);
+		markFileState(fileName, "failed", "Annulé");
+		if (currentVideoNameRef.current === fileName && videoSubAbortRef.current) {
+			videoSubAbortRef.current.abort();
+			return;
+		}
+		const tracker = currentBatchRef.current;
+		if (tracker?.mode === "image-batch" && tracker.files.some((f) => f.name === fileName)) {
+			toast.info("Impossible d'annuler", {
+				description:
+					"Le fichier est en cours de téléversement avec d'autres. Annulez l'upload pour tout arrêter.",
+			});
+		}
 	};
 
 	const retryFailed = async (): Promise<MediaUploadResult[]> => {
 		const toRetry = failedFiles.map((f) => f.file);
 		if (toRetry.length === 0) return [];
 		setFailedFiles([]);
+		for (const f of toRetry) cancelledNamesRef.current.delete(f.name);
 		return upload(toRetry);
 	};
 
 	const retrySingle = async (file: File): Promise<MediaUploadResult | null> => {
 		setFailedFiles((prev) => prev.filter((entry) => entry.file !== file));
+		cancelledNamesRef.current.delete(file.name);
 		const results = await upload([file]);
 		return results[0] ?? null;
 	};
@@ -593,6 +939,7 @@ export function useMediaUpload(options: UseMediaUploadOptions = {}): UseMediaUpl
 		uploadSingle,
 		validateFiles,
 		cancel,
+		cancelOne,
 		retryFailed,
 		retrySingle,
 		clearFailed,

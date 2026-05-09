@@ -160,11 +160,11 @@ export const createProductSkuSchema = baseSkuFieldsSchema
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
 
 export const deleteProductSkuSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 });
 
 export const updateProductSkuStatusSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 	isActive: z.boolean(),
 });
 
@@ -228,7 +228,7 @@ export const bulkUpdatePriceSchema = z.object({
 export const updateProductSkuSchema = baseSkuFieldsSchema
 	.extend({
 		// SKU ID (required - on modifie un SKU existant)
-		skuId: z.cuid2({ message: "ID SKU invalide" }),
+		skuId: z.cuid2({ message: "ID variante invalide" }),
 	})
 	.refine(refinePrimaryImageNotVideo, PRIMARY_IMAGE_ERROR)
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
@@ -243,7 +243,7 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
  * Note: Les prix sont en EUROS (convertis en centimes côté serveur)
  */
 export const updateSkuPriceSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 	priceInclTaxEuros: z.coerce
 		.number()
 		.positive({ error: "Le prix doit être supérieur à 0" })
@@ -264,7 +264,7 @@ export const updateSkuPriceSchema = z.object({
  * Utilisé dans le dialog d'ajustement de stock
  */
 export const adjustSkuStockSchema = z.object({
-	skuId: z.cuid2({ message: "ID SKU invalide" }),
+	skuId: z.cuid2({ message: "ID variante invalide" }),
 	adjustment: z
 		.number()
 		.int({ error: "L'ajustement doit être un entier" })

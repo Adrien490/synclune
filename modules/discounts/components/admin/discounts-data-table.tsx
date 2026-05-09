@@ -68,7 +68,7 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 				className="hidden md:flex"
 				icon={Ticket}
 				title="Aucun code promo trouvé"
-				description="Aucun code promo ne correspond aux criteres de recherche."
+				description="Aucun code promo ne correspond aux critères de recherche."
 				actionElement={<CreateDiscountButton />}
 			/>
 		);

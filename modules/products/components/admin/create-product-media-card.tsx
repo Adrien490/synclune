@@ -2,6 +2,7 @@
 
 import { MediaCounterBadge } from "@/shared/components/media-upload/media-counter-badge";
 import { MediaUploadGrid } from "@/shared/components/media-upload/media-upload-grid";
+import { OfflineQueueBanner } from "@/shared/components/media-upload/offline-queue-banner";
 import { UploadActionSheet } from "@/shared/components/media-upload/upload-action-sheet";
 import {
 	UploadErrorBanner,
@@ -10,8 +11,9 @@ import {
 } from "@/shared/components/media-upload/upload-progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { UploadDropzone } from "@/modules/media/utils/uploadthing";
-import type { FailedUpload } from "@/modules/media/types/hooks.types";
+import type { FailedUpload, FileProgress } from "@/modules/media/types/hooks.types";
 import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
+import { useOfflineUploadQueue } from "@/modules/media/hooks/use-offline-upload-queue";
 import { ARRAY_LIMITS } from "@/shared/constants/validation-limits";
 import { ImagePlus, Info, Upload } from "lucide-react";
 import { useEffect, useRef } from "react";
@@ -41,6 +43,11 @@ interface UploadProgressShape {
 	total: number;
 	queued: number;
 	current?: string;
+	files?: FileProgress[];
+	bytesUploaded?: number;
+	bytesTotal?: number;
+	bytesPerSecond?: number | null;
+	etaSeconds?: number | null;
 }
 
 interface CreateProductMediaCardProps {
@@ -51,9 +58,12 @@ interface CreateProductMediaCardProps {
 	setDeletedImageUrls: React.Dispatch<React.SetStateAction<string[]>>;
 	failedFiles: FailedUpload[];
 	onCancel: () => void;
+	onCancelOne?: (fileName: string) => void;
 	onRetry: () => void;
 	onRetryOne?: (file: File) => void;
 	onDismissErrors: () => void;
+	/** Drain offline queue + upload via parent's handleUpload (P1.2) */
+	onReplayOffline?: (files: File[]) => void | Promise<void>;
 }
 
 export function CreateProductMediaCard({
@@ -64,11 +74,28 @@ export function CreateProductMediaCard({
 	setDeletedImageUrls,
 	failedFiles,
 	onCancel,
+	onCancelOne,
 	onRetry,
 	onRetryOne,
 	onDismissErrors,
+	onReplayOffline,
 }: CreateProductMediaCardProps) {
 	const maxMediaCount = ARRAY_LIMITS.SKU_MEDIA;
+
+	// Offline queue surface (P1.2)
+	const offlineQueue = useOfflineUploadQueue({
+		endpoint: "catalogMedia",
+		contextKey: "create-product",
+	});
+
+	const handleReplayOffline = async () => {
+		const files = await offlineQueue.drainAsFiles();
+		if (files.length === 0 || !onReplayOffline) return;
+		await onReplayOffline(files);
+		const { listEntries } = await import("@/modules/media/lib/offline-upload-queue");
+		const entries = await listEntries({ endpoint: "catalogMedia", contextKey: "create-product" });
+		for (const e of entries) await offlineQueue.drop(e.id);
+	};
 
 	return (
 		<Card
@@ -113,6 +140,15 @@ export function CreateProductMediaCard({
 									</div>
 								)}
 
+								{offlineQueue.queuedCount > 0 && (
+									<OfflineQueueBanner
+										queuedCount={offlineQueue.queuedCount}
+										isOffline={offlineQueue.isOffline}
+										onReplay={() => void handleReplayOffline()}
+										disabled={isMediaUploading}
+									/>
+								)}
+
 								{failedFiles.length > 0 && (
 									<UploadErrorBanner
 										failedFiles={failedFiles}
@@ -131,6 +167,7 @@ export function CreateProductMediaCard({
 										maxMediaCount={maxMediaCount}
 										handleUpload={handleUpload}
 										onCancel={onCancel}
+										onCancelOne={onCancelOne}
 									/>
 								) : (
 									<MediaUploadGrid
@@ -141,6 +178,7 @@ export function CreateProductMediaCard({
 											thumbnailUrl: m.thumbnailUrl ?? undefined,
 											blurDataUrl: m.blurDataUrl ?? undefined,
 										}))}
+										onFilesDropped={(files) => handleUpload(files, field as unknown as MediaField)}
 										onChange={(newMedia) => {
 											const currentUrls = new Set(newMedia.map((m) => m.url));
 											const removed = field.state.value
@@ -227,6 +265,7 @@ function EmptyMediaState({
 	maxMediaCount,
 	handleUpload,
 	onCancel,
+	onCancelOne,
 }: {
 	field: MediaArrayField;
 	isMediaUploading: boolean;
@@ -235,6 +274,7 @@ function EmptyMediaState({
 	maxMediaCount: number;
 	handleUpload: (files: File[], field: MediaField) => void;
 	onCancel: () => void;
+	onCancelOne?: (fileName: string) => void;
 }) {
 	const dropzoneRef = useRef<HTMLDivElement>(null);
 	useDropzoneAccept(dropzoneRef);
@@ -249,7 +289,14 @@ function EmptyMediaState({
 						phase={uploadProgress.phase as UploadPhase}
 						currentFileName={uploadProgress.current}
 						queuedCount={uploadProgress.queued}
+						completedCount={uploadProgress.completed}
+						files={uploadProgress.files}
+						bytesUploaded={uploadProgress.bytesUploaded}
+						bytesTotal={uploadProgress.bytesTotal}
+						bytesPerSecond={uploadProgress.bytesPerSecond}
+						etaSeconds={uploadProgress.etaSeconds}
 						onCancel={onCancel}
+						onCancelOne={onCancelOne}
 					/>
 				</div>
 			)}

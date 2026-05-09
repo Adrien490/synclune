@@ -15,7 +15,7 @@ interface ProductDetailCollectionsCardProps {
 export function ProductDetailCollectionsCard({ collections }: ProductDetailCollectionsCardProps) {
 	const haptic = useHaptic();
 	return (
-		<Card>
+		<Card style={{ viewTransitionName: "product-detail-collections" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<FolderOpen className="size-5" aria-hidden="true" />
@@ -34,7 +34,7 @@ export function ProductDetailCollectionsCard({ collections }: ProductDetailColle
 								<Link
 									href={`/admin/catalogue/collections/${entry.collection.slug}`}
 									onClick={() => haptic("light")}
-									className="hover:bg-muted/40 hover:text-primary active:bg-muted/60 focus-visible:ring-ring flex items-center justify-between gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+									className="hover:bg-muted/40 hover:text-primary active:bg-muted/60 focus-visible:ring-ring flex touch-manipulation items-center justify-between gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
 								>
 									<span className="min-w-0 truncate">{entry.collection.name}</span>
 									{entry.isFeatured ? (

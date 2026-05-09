@@ -2,11 +2,29 @@
 
 import { m, useScroll, useTransform, useReducedMotion } from "motion/react";
 import Image from "next/image";
-import type { RefObject } from "react";
-import { useRef } from "react";
+import type { CSSProperties, RefObject } from "react";
+import { useRef, useSyncExternalStore } from "react";
 import { cn } from "@/shared/utils/cn";
+import { cssSupports } from "@/shared/utils/css-supports";
 import { useIsTouchDevice } from "@/shared/hooks";
 import { useMounted } from "@/shared/hooks/use-mounted";
+
+const noopSubscribe = () => () => {};
+const getViewTimelineSupport = () => cssSupports("animation-timeline", "view()");
+const getServerViewTimelineSupport = () => false;
+
+/**
+ * Detect support for `animation-timeline: view()` (Chrome/Edge 115+, Safari 26+).
+ * Lets us swap motion-react `useScroll` for native CSS scroll-driven animation
+ * (compositor thread) on capable browsers, with seamless fallback elsewhere.
+ *
+ * Uses `useSyncExternalStore` to avoid an effect+setState cascade and to keep
+ * SSR/CSR snapshots in sync (server snapshot returns false, client snapshot
+ * reads `CSS.supports` once, no re-render storms).
+ */
+function useSupportsViewTimeline(): boolean {
+	return useSyncExternalStore(noopSubscribe, getViewTimelineSupport, getServerViewTimelineSupport);
+}
 
 interface ParallaxImageProps {
 	src: string;
@@ -110,6 +128,7 @@ export function ParallaxImage({
 	const containerRef = useRef<HTMLDivElement>(null);
 	const shouldReduceMotion = useReducedMotion();
 	const isTouchDevice = useIsTouchDevice();
+	const supportsViewTimeline = useSupportsViewTimeline();
 
 	// Hydration safety: avoids useReducedMotion server/client mismatches
 	const isMounted = useMounted();
@@ -146,6 +165,33 @@ export function ParallaxImage({
 				className={cn("relative h-full w-full overflow-hidden", containerClassName)}
 			>
 				{imageElement}
+			</div>
+		);
+	}
+
+	// Native CSS scroll-driven path: zero JS work on the main thread, animation runs on compositor.
+	// `animation-timeline: view()` is automatically scoped to the element entering/leaving the viewport.
+	if (supportsViewTimeline) {
+		const cssVars = {
+			"--parallax-from": `-${safeIntensity}%`,
+			"--parallax-to": `${safeIntensity}%`,
+		} as CSSProperties;
+		return (
+			<div
+				ref={containerRef}
+				className={cn("relative h-full w-full overflow-hidden", containerClassName)}
+			>
+				<div
+					role="presentation"
+					className="parallax-image-scroll absolute inset-x-0 w-full"
+					style={{
+						height: `${100 + safeIntensity * 2}%`,
+						top: `-${safeIntensity}%`,
+						...cssVars,
+					}}
+				>
+					{imageElement}
+				</div>
 			</div>
 		);
 	}

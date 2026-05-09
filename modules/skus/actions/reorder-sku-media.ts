@@ -71,12 +71,12 @@ export async function reorderSkuMedia(
 			const existingIds = new Set(sku.images.map((m) => m.id));
 			if (mediaIds.length !== existingIds.size) {
 				throw new BusinessError(
-					"La liste fournie doit contenir exactement tous les medias du SKU.",
+					"La liste fournie doit contenir exactement tous les médias de la variante.",
 				);
 			}
 			for (const id of mediaIds) {
 				if (!existingIds.has(id)) {
-					throw new BusinessError("Un media fourni n'appartient pas a ce SKU.");
+					throw new BusinessError("Un média fourni n'appartient pas à cette variante.");
 				}
 			}
 
@@ -114,6 +114,6 @@ export async function reorderSkuMedia(
 			mediaCount: mediaIds.length,
 		});
 	} catch (e) {
-		return handleActionError(e, "Impossible de reordonner les medias du SKU");
+		return handleActionError(e, "Impossible de réordonner les médias de la variante");
 	}
 }
