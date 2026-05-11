@@ -36,6 +36,11 @@ interface SortDrawerProps {
 	showResetOption?: boolean;
 	/** Label for reset option */
 	resetLabel?: string;
+	/**
+	 * DOM `id` of the drawer content node. Wire in pair with `aria-controls`
+	 * on the trigger button.
+	 */
+	id?: string;
 }
 
 /**
@@ -67,6 +72,7 @@ function SortDrawerInner({
 	autoCloseOnSelect = true,
 	showResetOption = false,
 	resetLabel = "Par défaut",
+	id,
 }: SortDrawerProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -168,7 +174,7 @@ function SortDrawerInner({
 
 	return (
 		<Drawer open={open} onOpenChange={handleOpenChange}>
-			<DrawerContent>
+			<DrawerContent id={id}>
 				<DrawerHeader className="relative pb-2">
 					<DrawerTitle className="flex items-center gap-2">
 						{title}

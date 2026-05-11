@@ -4,16 +4,17 @@ import { createPortal } from "react-dom";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Home, Search, Heart, ShoppingBag, User } from "lucide-react";
-import { useEffect, useEffectEvent, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
 	BottomBar,
-	ActiveDot,
+	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
+	bottomBarBadgeClass,
 } from "@/shared/components/bottom-bar";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
@@ -60,7 +61,6 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 	// Announce badge count changes to assistive tech (skip first render).
 	const prevCountsRef = useRef<{ cart: number; wishlist: number } | null>(null);
 	const [announcement, setAnnouncement] = useState<string>("");
-	const announce = useEffectEvent((msg: string) => setAnnouncement(msg));
 	useEffect(() => {
 		const prev = prevCountsRef.current;
 		if (prev === null) {
@@ -84,7 +84,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 		}
 		if (messages.length > 0) {
 			// eslint-disable-next-line react-hooks/set-state-in-effect
-			announce(messages.join(", "));
+			setAnnouncement(messages.join(", "));
 		}
 		prevCountsRef.current = { cart: cartCount, wishlist: wishlistCount };
 	}, [cartCount, wishlistCount]);
@@ -157,10 +157,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 						<span className="relative">
 							<tab.icon className={bottomBarIconClass} aria-hidden="true" />
 							{"badge" in tab && tab.badge != null && tab.badge > 0 && (
-								<span
-									className="bg-primary text-primary-foreground absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
-									aria-label={tab.badgeAriaLabel(tab.badge)}
-								>
+								<span className={bottomBarBadgeClass} aria-label={tab.badgeAriaLabel(tab.badge)}>
 									{tab.badge > 99 ? "99+" : tab.badge}
 								</span>
 							)}
@@ -180,7 +177,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 								aria-haspopup="dialog"
 								aria-label={tab.label}
 							>
-								{tab.isActive && <ActiveDot />}
+								{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 								{iconEl}
 								<span className={bottomBarLabelClass}>{tab.label}</span>
 							</button>
@@ -197,7 +194,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 							className={cn(bottomBarItemClass, tab.isActive && bottomBarActiveItemClass)}
 							aria-current={tab.isActive ? "page" : undefined}
 						>
-							{tab.isActive && <ActiveDot />}
+							{tab.isActive && <BottomBarActivePill groupId="shop-nav" />}
 							{iconEl}
 							<span className={bottomBarLabelClass}>{tab.label}</span>
 						</Link>

@@ -16,6 +16,7 @@ interface ColorsRowActionsProps {
 	colorName: string;
 	colorHex: string;
 	colorSlug: string;
+	colorDescription?: string | null;
 }
 
 export function ColorsRowActions(props: ColorsRowActionsProps) {

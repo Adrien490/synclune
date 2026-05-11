@@ -18,6 +18,7 @@ interface ColorMobileItemProps {
 		name: string;
 		hex: string;
 		slug: string;
+		description: string | null;
 		isActive: boolean;
 		_count: { skus: number };
 	};
@@ -33,6 +34,7 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 		colorName: color.name,
 		colorHex: color.hex,
 		colorSlug: color.slug,
+		colorDescription: color.description,
 	});
 
 	return (
@@ -75,6 +77,11 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 							{skuCount} variante{skuCount !== 1 ? "s" : ""}
 						</span>
 					</ItemDescription>
+					{color.description && (
+						<ItemDescription className="text-muted-foreground line-clamp-1 text-xs italic">
+							{color.description}
+						</ItemDescription>
+					)}
 				</ItemContent>
 			</Item>
 		</MobileSelectableCard>

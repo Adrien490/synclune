@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { createColor } from "@/modules/colors/actions/create-color";
 import { ColorFormFields } from "@/modules/colors/components/admin/color-form-fields";
+import { ColorLibrarySheet } from "@/modules/colors/components/admin/color-library-sheet";
 import { useColorForm } from "@/modules/colors/hooks/use-color-form";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
@@ -37,7 +38,7 @@ export function CreateColorForm({
 	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
-	const form = useColorForm({ name: "", hex: "#000000" });
+	const form = useColorForm({ name: "", hex: "#000000", description: "" });
 
 	const isDirty = form.state.isDirty;
 	const allowNavigationRef = useRef<(() => void) | null>(null);
@@ -102,6 +103,16 @@ export function CreateColorForm({
 			}}
 		>
 			<RequiredFieldsNote />
+
+			<ColorLibrarySheet
+				disabled={isPending}
+				onSelect={(entry) => {
+					form.setFieldValue("name", entry.name);
+					form.setFieldValue("hex", entry.hex);
+					form.setFieldValue("description", entry.description ?? "");
+					haptic("success");
+				}}
+			/>
 
 			<ColorFormFields form={form} isPending={isPending} />
 

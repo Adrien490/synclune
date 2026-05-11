@@ -1,5 +1,6 @@
 "use client";
 
+import { useDeferredValue, useRef } from "react";
 import { CheckSquare } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button";
@@ -45,7 +46,31 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 		selectAllVisible,
 	} = useBulkSelectionContext();
 
-	useEscapeKey(exitSelectionMode, selectionMode);
+	const enterButtonRef = useRef<HTMLButtonElement>(null);
+
+	// Restaure le focus sur le bouton « Sélectionner » à la sortie du mode (WCAG 2.4.3).
+	// rAF garantit que le DOM a re-render et que le bouton est de nouveau dans l'arbre.
+	const handleExit = () => {
+		exitSelectionMode();
+		requestAnimationFrame(() => enterButtonRef.current?.focus());
+	};
+
+	useEscapeKey(handleExit, selectionMode);
+
+	const label = selectedCount > 1 ? itemsLabel.plural : itemsLabel.singular;
+	const allOnPageSelected = pageState === "all";
+	const hasOffPageSelection = selectedCount > selectedOnPage;
+
+	const countText =
+		selectedCount === 0
+			? "Aucun élément sélectionné"
+			: hasOffPageSelection
+				? `${selectedCount} ${label} (${selectedOnPage} sur cette page)`
+				: `${selectedCount} ${label} sélectionné${selectedCount > 1 ? "s" : ""}`;
+
+	// Évite le spam d'annonces aria-live au tap rapide en mode sélection (React 19).
+	// Hoisté avant les early returns pour respecter les Rules of Hooks.
+	const deferredCountText = useDeferredValue(countText);
 
 	if (pageItemIds.length === 0) return null;
 
@@ -57,6 +82,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 			<div className={cn(stickyShell, "flex items-center justify-end md:hidden", className)}>
 				<SelectionModeAnnouncer />
 				<Button
+					ref={enterButtonRef}
 					type="button"
 					variant="outline"
 					size="sm"
@@ -69,17 +95,6 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 			</div>
 		);
 	}
-
-	const label = selectedCount > 1 ? itemsLabel.plural : itemsLabel.singular;
-	const allOnPageSelected = pageState === "all";
-	const hasOffPageSelection = selectedCount > selectedOnPage;
-
-	const countText =
-		selectedCount === 0
-			? "Aucun élément sélectionné"
-			: hasOffPageSelection
-				? `${selectedCount} ${label} (${selectedOnPage} sur cette page)`
-				: `${selectedCount} ${label} sélectionné${selectedCount > 1 ? "s" : ""}`;
 
 	return (
 		<div
@@ -95,13 +110,13 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 				type="button"
 				variant="ghost"
 				size="sm"
-				onClick={exitSelectionMode}
+				onClick={handleExit}
 				className="min-h-11 px-3"
 			>
 				Annuler
 			</Button>
 			<span aria-live="polite" className="truncate text-sm font-medium">
-				{countText}
+				{deferredCountText}
 			</span>
 			<Button
 				type="button"

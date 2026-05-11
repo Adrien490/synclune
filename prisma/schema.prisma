@@ -208,15 +208,18 @@ model ProductType {
 }
 
 model Color {
-  id       String       @id @default(cuid())
-  slug     String       @unique
-  name     String       @unique @db.VarChar(100)
-  hex      String       @db.VarChar(7)
-  isActive Boolean      @default(true) // Coherence avec Material
-  skus     ProductSku[]
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String       @unique @db.VarChar(100)
+  hex         String       @db.VarChar(7)
+  description String?      @db.Text // Notes créatrice (or rose 18K mat, hypoallergénique, etc.)
+  isActive    Boolean      @default(true) // Coherence avec Material
+  skus        ProductSku[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([isActive])
 }
 
 model Material {

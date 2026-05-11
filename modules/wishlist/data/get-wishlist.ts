@@ -37,15 +37,13 @@ export async function getWishlist(params: GetWishlistParams = {}): Promise<GetWi
 }
 
 /**
- * Récupère la wishlist d'un utilisateur ou visiteur avec pagination et cache
+ * Récupère la wishlist d'un utilisateur ou visiteur avec pagination et cache.
  *
- * @internal Only called by getWishlist wrapper. Do not call directly with arbitrary userId.
- * @param userId - ID de l'utilisateur connecté (optionnel)
- * @param sessionId - ID de session visiteur (optionnel)
- * @param params - Paramètres de pagination (cursor, direction, perPage)
- * @returns Wishlist items paginés avec informations de pagination
+ * @internal Privé au module — accédé uniquement via le wrapper `getWishlist`
+ * (qui résout `userId`/`sessionId` depuis la session/cookies). Ne JAMAIS appeler
+ * directement avec un userId arbitraire : aucune vérification d'ownership ici.
  */
-export async function fetchWishlist(
+async function fetchWishlist(
 	userId?: string,
 	sessionId?: string,
 	params: GetWishlistParams = {},

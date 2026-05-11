@@ -122,6 +122,17 @@ describe("GalleryDots", () => {
 
 			expect(onSelect).toHaveBeenCalledWith(0);
 		});
+
+		it("active and inactive dot spans have no viewTransitionName", () => {
+			render(<GalleryDots current={1} total={3} onSelect={vi.fn()} />);
+
+			const tabs = screen.getAllByRole("tab");
+			const activeSpan = tabs[1]!.querySelector("span") as HTMLSpanElement;
+			const inactiveSpan = tabs[0]!.querySelector("span") as HTMLSpanElement;
+
+			expect(activeSpan.style.viewTransitionName).toBe("");
+			expect(inactiveSpan.style.viewTransitionName).toBe("");
+		});
 	});
 
 	// ============================================================================

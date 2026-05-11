@@ -32,12 +32,15 @@ interface UsersFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 function UsersFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: UsersFilterSheetProps = {}) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -176,6 +179,7 @@ function UsersFilterSheetInner({
 			open={controlledOpen}
 			onOpenChange={controlledOnOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 		>
 			<form
 				onSubmit={(e) => {

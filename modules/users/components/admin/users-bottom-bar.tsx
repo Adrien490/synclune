@@ -6,6 +6,7 @@ import { ArrowUpDown, Filter, Search } from "lucide-react";
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
+import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { USERS_SORT_LABELS } from "../../constants/user.constants";
@@ -15,6 +16,8 @@ const SORT_OPTIONS: SortOption[] = Object.entries(USERS_SORT_LABELS).map(([value
 	value,
 	label,
 }));
+
+const IDS = getAdminDrawerIds("users");
 
 /**
  * Sous-header sticky (mobile, admin) pour la liste clients.
@@ -34,6 +37,7 @@ function UsersBottomBarInner() {
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			controls: IDS.filter,
 			expanded: isOpen("filter"),
 			announcement: hasActiveFilter ? "Filtres actifs" : undefined,
 		},
@@ -45,6 +49,7 @@ function UsersBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
@@ -58,6 +63,7 @@ function UsersBottomBarInner() {
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
+			controls: IDS.search,
 			expanded: isOpen("search"),
 			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
@@ -67,13 +73,19 @@ function UsersBottomBarInner() {
 		<>
 			<StickyActionBar items={items} ariaLabel="Filtres, tri et recherche" />
 
-			<UsersFilterSheet open={isOpen("filter")} onOpenChange={onOpenChange("filter")} hideTrigger />
+			<UsersFilterSheet
+				open={isOpen("filter")}
+				onOpenChange={onOpenChange("filter")}
+				hideTrigger
+				id={IDS.filter}
+			/>
 
 			<SortDrawer
 				open={isOpen("sort")}
 				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
+				id={IDS.sort}
 			/>
 
 			<AdminSearchDrawerTop
@@ -81,6 +93,7 @@ function UsersBottomBarInner() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, email…"
 				ariaLabel="Rechercher un client par nom ou email"
+				id={IDS.search}
 			/>
 		</>
 	);

@@ -211,14 +211,19 @@ afterEach(() => {
 
 describe("ProductCatalog", () => {
 	describe("page title", () => {
+		// Le titre est rendu deux fois : mobile (`<h1 sm:hidden>` compact) et desktop
+		// (PageHeader `hidden sm:block`). En DOM jsdom, les deux sont présents (CSS ignoré),
+		// d'où `getAllByRole` au lieu de `getByRole`.
 		it('shows "Les créations" by default', () => {
 			render(<ProductCatalog {...makeProps()} />);
-			expect(screen.getByRole("heading", { name: "Les créations" })).toBeInTheDocument();
+			const headings = screen.getAllByRole("heading", { name: "Les créations" });
+			expect(headings.length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows search term title when searchTerm is provided", () => {
 			render(<ProductCatalog {...makeProps({ searchTerm: "bague" })} />);
-			expect(screen.getByRole("heading", { name: 'Recherche "bague"' })).toBeInTheDocument();
+			const headings = screen.getAllByRole("heading", { name: 'Recherche "bague"' });
+			expect(headings.length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows product type label when activeProductType is provided", () => {
@@ -229,7 +234,8 @@ describe("ProductCatalog", () => {
 					})}
 				/>,
 			);
-			expect(screen.getByRole("heading", { name: "Bagues" })).toBeInTheDocument();
+			const headings = screen.getAllByRole("heading", { name: "Bagues" });
+			expect(headings.length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("prioritises searchTerm title over activeProductType label", () => {
@@ -241,7 +247,15 @@ describe("ProductCatalog", () => {
 					})}
 				/>,
 			);
-			expect(screen.getByRole("heading", { name: 'Recherche "argent"' })).toBeInTheDocument();
+			const headings = screen.getAllByRole("heading", { name: 'Recherche "argent"' });
+			expect(headings.length).toBeGreaterThanOrEqual(1);
+		});
+
+		it("exposes a mobile-only H1 (WCAG 2.4.6) via data-testid", () => {
+			render(<ProductCatalog {...makeProps()} />);
+			const mobileTitle = screen.getByTestId("catalog-mobile-title");
+			expect(mobileTitle.tagName).toBe("H1");
+			expect(mobileTitle.className).toContain("sm:hidden");
 		});
 	});
 

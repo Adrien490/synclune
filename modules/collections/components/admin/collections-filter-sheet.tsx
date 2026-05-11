@@ -13,6 +13,8 @@ interface CollectionsFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 interface FilterFormData {
@@ -33,6 +35,7 @@ function CollectionsFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: CollectionsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -119,6 +122,7 @@ function CollectionsFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

@@ -18,6 +18,8 @@ import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.con
 interface DiscountsFilterDrawerProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	/** DOM `id` of the drawer content node (paired with `aria-controls`). */
+	id?: string;
 }
 
 const FILTER_OPTIONS = [
@@ -49,7 +51,7 @@ function getCurrentFilter(searchParams: URLSearchParams): string {
 	return "all";
 }
 
-function DiscountsFilterDrawerInner({ open, onOpenChange }: DiscountsFilterDrawerProps) {
+function DiscountsFilterDrawerInner({ open, onOpenChange, id }: DiscountsFilterDrawerProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -91,7 +93,7 @@ function DiscountsFilterDrawerInner({ open, onOpenChange }: DiscountsFilterDrawe
 
 	return (
 		<Drawer open={open} onOpenChange={onOpenChange}>
-			<DrawerContent>
+			<DrawerContent id={id}>
 				<DrawerHeader>
 					<DrawerTitle>Filtrer les codes promo</DrawerTitle>
 				</DrawerHeader>

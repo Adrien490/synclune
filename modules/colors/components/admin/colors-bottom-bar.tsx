@@ -6,6 +6,7 @@ import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
+import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { COLORS_SORT_LABELS } from "../../constants/color.constants";
@@ -15,6 +16,8 @@ const SORT_OPTIONS: SortOption[] = Object.entries(COLORS_SORT_LABELS).map(([valu
 	value,
 	label,
 }));
+
+const IDS = getAdminDrawerIds("colors");
 
 /**
  * Sous-header sticky (mobile, admin) pour la liste couleurs.
@@ -34,6 +37,7 @@ function ColorsBottomBarInner() {
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			controls: IDS.filter,
 			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
@@ -50,6 +54,7 @@ function ColorsBottomBarInner() {
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
+			controls: IDS.search,
 			expanded: isOpen("search"),
 			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
@@ -70,6 +75,7 @@ function ColorsBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
@@ -83,6 +89,7 @@ function ColorsBottomBarInner() {
 				open={isOpen("filter")}
 				onOpenChange={onOpenChange("filter")}
 				hideTrigger
+				id={IDS.filter}
 			/>
 
 			<SortDrawer
@@ -90,6 +97,7 @@ function ColorsBottomBarInner() {
 				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
+				id={IDS.sort}
 			/>
 
 			<AdminSearchDrawerTop
@@ -97,6 +105,7 @@ function ColorsBottomBarInner() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Nom, slug, hex…"
 				ariaLabel="Rechercher une couleur"
+				id={IDS.search}
 			/>
 		</>
 	);

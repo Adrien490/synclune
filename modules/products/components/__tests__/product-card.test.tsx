@@ -18,6 +18,7 @@ vi.mock("next/image", () => ({
 		quality: _quality,
 		sizes,
 		className,
+		style,
 	}: {
 		src: string;
 		alt: string;
@@ -28,6 +29,7 @@ vi.mock("next/image", () => ({
 		quality?: number;
 		sizes?: string;
 		className?: string;
+		style?: React.CSSProperties;
 	}) => (
 		// eslint-disable-next-line @next/next/no-img-element
 		<img
@@ -36,6 +38,7 @@ vi.mock("next/image", () => ({
 			className={className}
 			data-sizes={sizes}
 			data-priority={priority ? "true" : undefined}
+			data-vt={style?.viewTransitionName}
 		/>
 	),
 }));
@@ -124,6 +127,9 @@ vi.mock("@/modules/products/constants/product-texts.constants", () => ({
 		IMAGES: {
 			DEFAULT_ALT: (title: string, productType?: string) =>
 				productType ? `${productType} ${title}` : title,
+		},
+		STOCK: {
+			COMING_SOON: "Bientôt disponible",
 		},
 	},
 	MAX_COLOR_SWATCHES: 5,
@@ -417,6 +423,13 @@ describe("ProductCard", () => {
 			expect(article).not.toBeNull();
 		});
 
+		it("article has touch-manipulation for iOS tap latency (WCAG mobile)", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(<ProductCard product={createProduct()} />);
+			const article = container.querySelector("article");
+			expect(article?.className).toContain("touch-manipulation");
+		});
+
 		it("article is labelled by the product title", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			render(<ProductCard product={createProduct()} />);
@@ -515,9 +528,81 @@ describe("ProductCard", () => {
 					} as unknown as Partial<Product>)}
 				/>,
 			);
-			const link = screen.getByLabelText("Lire les 12 avis");
+			const link = screen.getByLabelText(/Lire les 12 avis/);
 			expect(link).toBeInTheDocument();
 			expect(link.getAttribute("href")).toBe("/creations/bague-lune-argent#reviews");
+		});
+
+		it("rating link aria-label includes the formatted average rating", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			render(
+				<ProductCard
+					product={createProduct({
+						reviewStats: { averageRating: 4.3, totalCount: 12 },
+					} as unknown as Partial<Product>)}
+				/>,
+			);
+			const link = screen.getByRole("link", {
+				name: "Lire les 12 avis (note moyenne : 4,3 sur 5)",
+			});
+			expect(link).toBeInTheDocument();
+		});
+	});
+
+	describe("title clamp", () => {
+		it("applies line-clamp-2 to the h3 to keep grid alignment for long titles", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			render(
+				<ProductCard
+					product={createProduct({
+						title: "Bracelet jonc gravé prénom personnalisé en argent 925 avec finition rhodiée",
+					})}
+				/>,
+			);
+			const heading = screen.getByRole("heading", { level: 3 });
+			expect(heading.className).toContain("line-clamp-2");
+		});
+	});
+
+	describe("secondary image (hover effect)", () => {
+		it("renders the secondary image with empty alt (decorative, WCAG H67)", () => {
+			mockGetProductCardData.mockReturnValue(
+				createCardData({
+					secondaryImage: {
+						id: "img-2",
+						url: "https://example.com/secondary.jpg",
+						alt: "Vue alternative",
+						mediaType: "IMAGE",
+					},
+				}),
+			);
+			const { container } = render(<ProductCard product={createProduct()} />);
+			const secondary = container.querySelector("img[src*='secondary.jpg']");
+			expect(secondary).not.toBeNull();
+			expect(secondary?.getAttribute("alt")).toBe("");
+		});
+
+		it("does not render a secondary image when none is provided", () => {
+			mockGetProductCardData.mockReturnValue(createCardData({ secondaryImage: null }));
+			const { container } = render(<ProductCard product={createProduct()} />);
+			const images = container.querySelectorAll("img");
+			expect(images.length).toBe(1);
+		});
+	});
+
+	describe("viewTransitionName scoping", () => {
+		it("scopes view transition name with sectionId to avoid grid collisions", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(<ProductCard product={createProduct()} sectionId="related" />);
+			const primary = container.querySelector("img[src*='image.jpg']");
+			expect(primary?.getAttribute("data-vt")).toBe("product-related-prod-1");
+		});
+
+		it("falls back to 'card' scope when sectionId is omitted", () => {
+			mockGetProductCardData.mockReturnValue(createCardData());
+			const { container } = render(<ProductCard product={createProduct()} />);
+			const primary = container.querySelector("img[src*='image.jpg']");
+			expect(primary?.getAttribute("data-vt")).toBe("product-card-prod-1");
 		});
 	});
 

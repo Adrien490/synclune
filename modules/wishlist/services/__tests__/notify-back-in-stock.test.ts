@@ -4,13 +4,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockPrisma, mockSendBackInStockEmail, mockLogger } = vi.hoisted(() => ({
-	mockPrisma: {
-		wishlistItem: { findMany: vi.fn(), updateMany: vi.fn() },
-	},
-	mockSendBackInStockEmail: vi.fn(),
-	mockLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
-}));
+const { mockPrisma, mockSendBackInStockEmail, mockLogger, mockCaptureWishlistError } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			wishlistItem: { findMany: vi.fn(), updateMany: vi.fn() },
+		},
+		mockSendBackInStockEmail: vi.fn(),
+		mockLogger: { error: vi.fn(), info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+		mockCaptureWishlistError: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -27,6 +30,9 @@ vi.mock("@/shared/constants/urls", () => ({
 }));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: mockLogger,
+}));
+vi.mock("@/modules/wishlist/utils/capture-wishlist-error", () => ({
+	captureWishlistError: mockCaptureWishlistError,
 }));
 
 import { notifyBackInStock } from "../notify-back-in-stock";
@@ -161,7 +167,7 @@ describe("notifyBackInStock", () => {
 		await expect(notifyBackInStock("prod-1")).resolves.toBeUndefined();
 	});
 
-	it("continues processing remaining items when one email fails", async () => {
+	it("continues processing remaining items when one email fails (no retry recovery)", async () => {
 		const items = [
 			makeWishlistItem({ id: "wi-1" }),
 			makeWishlistItem({
@@ -170,17 +176,95 @@ describe("notifyBackInStock", () => {
 			}),
 		];
 		mockPrisma.wishlistItem.findMany.mockResolvedValue(items);
+		// wi-1: rejected on first try AND on retry (permanent failure)
+		// wi-2: success on first try
 		mockSendBackInStockEmail
 			.mockRejectedValueOnce(new Error("fail"))
-			.mockResolvedValueOnce({ success: true });
+			.mockResolvedValueOnce({ success: true })
+			.mockRejectedValueOnce(new Error("fail again"));
 
 		await notifyBackInStock("prod-1");
 
-		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(2);
-		// Only second item should be batch-marked as notified
+		// 2 initial calls + 1 retry for wi-1
+		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(3);
+		// Only wi-2 should be batch-marked as notified (wi-1 permanently failed)
 		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				where: { id: { in: ["wi-2"] } },
+			}),
+		);
+		// Sentry captured for the send-email throw AND the retry-exhausted
+		expect(mockCaptureWishlistError).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({ stage: "send-email", wishlistItemId: "wi-1" }),
+		);
+		expect(mockCaptureWishlistError).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({ stage: "retry-exhausted", wishlistItemId: "wi-1" }),
+		);
+	});
+
+	it("retries failed-email items once after main loop and marks them notified on success", async () => {
+		const items = [
+			makeWishlistItem({ id: "wi-1" }),
+			makeWishlistItem({
+				id: "wi-2",
+				wishlist: { user: { email: "other@example.com", name: "Sophie" } },
+			}),
+		];
+		mockPrisma.wishlistItem.findMany.mockResolvedValue(items);
+		// wi-1: fails first, succeeds on retry
+		// wi-2: succeeds first try
+		mockSendBackInStockEmail
+			.mockResolvedValueOnce({ success: false }) // wi-1 first call
+			.mockResolvedValueOnce({ success: true }) // wi-2 first call
+			.mockResolvedValueOnce({ success: true }); // wi-1 retry
+
+		await notifyBackInStock("prod-1");
+
+		expect(mockSendBackInStockEmail).toHaveBeenCalledTimes(3);
+		// Initial pass marks wi-2
+		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenNthCalledWith(
+			1,
+			expect.objectContaining({ where: { id: { in: ["wi-2"] } } }),
+		);
+		// Retry pass marks wi-1
+		expect(mockPrisma.wishlistItem.updateMany).toHaveBeenNthCalledWith(
+			2,
+			expect.objectContaining({ where: { id: { in: ["wi-1"] } } }),
+		);
+		// No Sentry capture: retry succeeded
+		expect(mockCaptureWishlistError).not.toHaveBeenCalled();
+	});
+
+	it("captures Sentry error with stage send-email when send throws", async () => {
+		mockPrisma.wishlistItem.findMany.mockResolvedValue([makeWishlistItem({ id: "wi-throw" })]);
+		mockSendBackInStockEmail.mockRejectedValue(new Error("SMTP exploded"));
+
+		await notifyBackInStock("prod-1");
+
+		expect(mockCaptureWishlistError).toHaveBeenCalledWith(
+			expect.objectContaining({ message: "SMTP exploded" }),
+			expect.objectContaining({
+				service: "back-in-stock",
+				stage: "send-email",
+				productId: "prod-1",
+				wishlistItemId: "wi-throw",
+			}),
+		);
+	});
+
+	it("captures Sentry error with stage outer-loop when DB query throws", async () => {
+		mockPrisma.wishlistItem.findMany.mockRejectedValue(new Error("DB exploded"));
+
+		await notifyBackInStock("prod-1");
+
+		expect(mockCaptureWishlistError).toHaveBeenCalledWith(
+			expect.objectContaining({ message: "DB exploded" }),
+			expect.objectContaining({
+				service: "back-in-stock",
+				stage: "outer-loop",
+				productId: "prod-1",
 			}),
 		);
 	});

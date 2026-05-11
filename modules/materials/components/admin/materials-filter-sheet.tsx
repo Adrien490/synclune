@@ -12,6 +12,8 @@ interface MaterialsFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 interface FilterFormData {
@@ -23,6 +25,7 @@ function MaterialsFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: MaterialsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -87,6 +90,7 @@ function MaterialsFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

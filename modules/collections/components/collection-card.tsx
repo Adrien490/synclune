@@ -54,7 +54,7 @@ export function CollectionCard({
 		<article
 			aria-labelledby={titleId}
 			className={cn(
-				"bg-card group relative overflow-hidden rounded-lg",
+				"bg-card group relative touch-manipulation overflow-hidden rounded-lg lg:rounded-xl",
 				// COHERENCE ProductCard: border-2 transparent
 				"border-2 border-transparent shadow-sm",
 				"transition-[transform,border-color,box-shadow] duration-300 ease-out",
@@ -84,7 +84,7 @@ export function CollectionCard({
 				/>
 			) : (
 				<PlaceholderImage
-					className="rounded-t-lg rounded-b-none border-0"
+					className="rounded-t-lg rounded-b-none border-0 lg:rounded-t-xl"
 					label={`${name} — ${COLLECTION_TEXTS.PLACEHOLDER.COMING_SOON}`}
 				/>
 			)}
@@ -109,9 +109,8 @@ export function CollectionCard({
 				{/* Stretched link: titre enveloppe par Link avec ::after couvrant la carte */}
 				<Link
 					href={collectionUrl}
-					aria-label={name}
 					className={cn(
-						"focus-ring block after:absolute after:inset-0 after:z-10 after:rounded-lg",
+						"focus-ring block after:absolute after:inset-0 after:z-10 after:rounded-lg after:lg:rounded-xl",
 					)}
 				>
 					<HeadingTag
@@ -136,7 +135,7 @@ export function CollectionCard({
 
 				{/* Price range */}
 				{priceRange && (
-					<p className="text-foreground/80 mt-1.5 text-xs font-medium">
+					<p className="text-foreground/80 mt-1.5 text-xs font-medium wrap-anywhere">
 						<span className="sr-only">{COLLECTION_TEXTS.PRICING.PRICE_LABEL}</span>
 						{priceRange.min === priceRange.max
 							? `${formatEuro(priceRange.min, { compact: true })}`
@@ -146,7 +145,7 @@ export function CollectionCard({
 
 				{/* Product count — signal e-commerce mis en avant */}
 				{productCount !== undefined && productCount > 0 && (
-					<p className="text-foreground/70 mt-2 text-sm font-medium">
+					<p className="text-foreground/70 mt-2 text-sm font-medium wrap-anywhere">
 						{COLLECTION_TEXTS.PRODUCT_COUNT(productCount)}
 					</p>
 				)}

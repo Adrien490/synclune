@@ -56,6 +56,7 @@ function ProductsFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: ProductsFilterSheetProps) {
 	const maxPriceInEuros = Math.ceil(maxPriceInCents / 100);
 	const DEFAULT_PRICE_RANGE: [number, number] = [0, maxPriceInEuros];
@@ -339,6 +340,7 @@ function ProductsFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

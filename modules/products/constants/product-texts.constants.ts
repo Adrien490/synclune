@@ -21,6 +21,7 @@ export const PRODUCT_TEXTS = {
 		LOW_STOCK: "Stock limité",
 		OUT_OF_STOCK: "Rupture de stock",
 		ON_DEMAND: "Sur commande",
+		COMING_SOON: "Bientôt disponible",
 	},
 
 	// Prix et promotions

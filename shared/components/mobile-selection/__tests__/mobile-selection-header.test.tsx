@@ -1,5 +1,7 @@
+import type { ButtonHTMLAttributes } from "react";
+import { forwardRef } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
@@ -11,23 +13,19 @@ vi.mock("lucide-react", () => ({
 	),
 }));
 
+type MockButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: string };
+
 vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({
-		children,
-		onClick,
-		variant,
-		"aria-pressed": ariaPressed,
-		...props
-	}: {
-		children: React.ReactNode;
-		onClick?: () => void;
-		variant?: string;
-		"aria-pressed"?: boolean;
-	} & Record<string, unknown>) => (
-		<button onClick={onClick} aria-pressed={ariaPressed} data-variant={variant} {...props}>
-			{children}
-		</button>
-	),
+	Button: forwardRef<HTMLButtonElement, MockButtonProps>(function MockButton(
+		{ children, variant, ...props },
+		ref,
+	) {
+		return (
+			<button ref={ref} data-variant={variant} {...props}>
+				{children}
+			</button>
+		);
+	}),
 }));
 
 import { BulkSelectionProvider } from "@/shared/components/data-table";
@@ -109,5 +107,24 @@ describe("MobileSelectionHeader", () => {
 		fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
 
 		expect(screen.getByRole("button", { name: "Sélectionner" })).toBeInTheDocument();
+	});
+
+	it("restores focus on the 'Sélectionner' trigger after Annuler (WCAG 2.4.3)", async () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["a", "b"]}>
+				<MobileSelectionHeader itemsLabel={itemsLabel} />
+			</BulkSelectionProvider>,
+		);
+
+		fireEvent.click(screen.getByRole("button", { name: "Sélectionner" }));
+		fireEvent.click(screen.getByRole("button", { name: "Annuler" }));
+
+		// Flush requestAnimationFrame inside act so React has applied the state update.
+		await act(async () => {
+			await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+		});
+
+		const trigger = screen.getByRole("button", { name: "Sélectionner" });
+		expect(document.activeElement).toBe(trigger);
 	});
 });

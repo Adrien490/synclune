@@ -182,7 +182,7 @@ const defaultColors = [
 		name: "Or",
 		hex: "#FFD700",
 		isActive: true,
-		position: 0,
+		description: null,
 		createdAt: new Date("2026-01-01"),
 		updatedAt: new Date("2026-01-01"),
 		_count: { skus: 5 },

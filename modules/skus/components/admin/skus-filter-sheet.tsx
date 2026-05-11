@@ -28,6 +28,8 @@ interface SkusFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 function readFiltersFromSearchParams(searchParams: URLSearchParams): SkusFilterFormData {
@@ -88,6 +90,7 @@ function SkusFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: SkusFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -147,6 +150,7 @@ function SkusFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

@@ -24,6 +24,8 @@ interface RefundsFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 interface FilterFormData {
@@ -40,6 +42,7 @@ function RefundsFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: RefundsFilterSheetProps = {}) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -133,6 +136,7 @@ function RefundsFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

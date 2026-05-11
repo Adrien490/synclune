@@ -15,7 +15,7 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 	// >5 images = fraction counter (ultra compact)
 	if (total > 5) {
 		return (
-			<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 sm:hidden">
+			<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 touch-manipulation sm:hidden">
 				<div
 					className="rounded-full bg-black/50 px-2.5 py-1 text-xs font-medium text-white tabular-nums backdrop-blur-sm"
 					role="status"
@@ -28,11 +28,11 @@ export function GalleryDots({ current, total, onSelect }: GalleryDotsProps) {
 		);
 	}
 
-	// ≤4 images = dots compacts avec touch targets WCAG (44px minimum)
+	// ≤5 images = dots compacts avec touch targets WCAG (44px minimum)
 	return (
-		<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 sm:hidden">
+		<div className="absolute bottom-3 left-1/2 z-20 -translate-x-1/2 touch-manipulation sm:hidden">
 			<div
-				className="flex items-center gap-1 rounded-full bg-black/50 px-1 py-0.5 backdrop-blur-sm"
+				className="flex touch-manipulation items-center gap-1 rounded-full bg-black/50 px-1 py-0.5 backdrop-blur-sm"
 				role="tablist"
 				aria-label="Navigation galerie"
 			>

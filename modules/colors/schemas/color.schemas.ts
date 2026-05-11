@@ -74,15 +74,25 @@ export const colorNameSchema = z
 	.min(1, "Le nom est requis")
 	.max(100, "Le nom ne peut pas dépasser 100 caractères");
 
+export const colorDescriptionSchema = z
+	.string()
+	.trim()
+	.max(500, "La description ne peut pas dépasser 500 caractères")
+	.optional()
+	.transform((val) => (val && val.length > 0 ? val : null))
+	.nullable();
+
 export const createColorSchema = z.object({
 	name: colorNameSchema,
 	hex: hexColorSchema,
+	description: colorDescriptionSchema,
 });
 
 export const updateColorSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	name: colorNameSchema,
 	hex: hexColorSchema,
+	description: colorDescriptionSchema,
 });
 
 export const deleteColorSchema = z.object({
@@ -122,15 +132,3 @@ export const mergeColorsSchema = z
 		message: "La couleur source et la couleur cible doivent être différentes",
 		path: ["targetId"],
 	});
-
-export const reorderColorsSchema = z.object({
-	items: z
-		.array(
-			z.object({
-				id: z.cuid2("ID invalide"),
-				position: z.number().int().min(0),
-			}),
-		)
-		.min(1, "Aucune couleur à réordonner")
-		.max(500, "Maximum 500 couleurs par opération"),
-});

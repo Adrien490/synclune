@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import {
 	BottomBar,
-	ActiveDot,
+	BottomBarActivePill,
 	bottomBarContainerClass,
 	bottomBarItemClass,
 	bottomBarActiveItemClass,
@@ -50,7 +50,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 				className={cn(bottomBarItemClass, isActive && bottomBarActiveItemClass)}
 				aria-current={isActive ? "page" : undefined}
 			>
-				{isActive && <ActiveDot />}
+				{isActive && <BottomBarActivePill groupId="admin-nav" />}
 				<span className="relative">
 					<Icon className={bottomBarIconClass} aria-hidden="true" />
 					{badgeCount != null && badgeCount > 0 && (
@@ -89,7 +89,7 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					aria-expanded={isMenuOpen}
 					aria-label={isMenuOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"}
 				>
-					{isMenuOpen && <ActiveDot />}
+					{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
 					<Menu className={bottomBarIconClass} aria-hidden="true" />
 					<span className={bottomBarLabelClass}>Menu</span>
 				</button>

@@ -12,13 +12,13 @@ import { WISHLIST_CACHE_TAGS } from "../constants/cache";
 // ============================================
 
 /**
- * Configure le cache pour la wishlist d'un utilisateur/visiteur
- * - Durée : 5min fraîche, 1min revalidation, 1h expiration
+ * Configure le cache pour la wishlist d'un utilisateur/visiteur.
  *
- * Note: Utilise le profile "cart" intentionnellement car wishlist et panier
- * ont le même cycle de vie : données personnelles nécessitant une fraîcheur
- * similaire pour les mises à jour en temps réel (badges header, listes).
- * Si les besoins divergent, créer un profile "wishlist" dans next.config.ts.
+ * Utilise le profile `checkout` (stale 1m / revalidate 30s / expire 5m,
+ * voir `next.config.ts:cacheLife.checkout`) pour aligner la fraîcheur sur
+ * les besoins UX : badge navbar quasi instantané, sync icône cœur entre
+ * onglets, cohérence après mutation cross-device. Le profile `user` (2m/1m)
+ * serait trop lent pour ces interactions à forte fréquence.
  */
 export function cacheWishlist(userId?: string, sessionId?: string) {
 	cacheLife("checkout");
@@ -26,10 +26,9 @@ export function cacheWishlist(userId?: string, sessionId?: string) {
 }
 
 /**
- * Configure le cache pour le compteur de wishlist
- * - Durée : 5min fraîche, 1min revalidation, 1h expiration
+ * Configure le cache pour le compteur de wishlist.
  *
- * Note: Même profile "cart" que cacheWishlist() - voir documentation ci-dessus.
+ * Profile `checkout` — voir `cacheWishlist` pour le rationale.
  */
 export function cacheWishlistCount(userId?: string, sessionId?: string) {
 	cacheLife("checkout");
@@ -37,10 +36,9 @@ export function cacheWishlistCount(userId?: string, sessionId?: string) {
 }
 
 /**
- * Configure le cache pour les Product IDs de la wishlist
- * - Durée : 5min fraîche, 1min revalidation, 1h expiration
+ * Configure le cache pour les Product IDs de la wishlist (lookups O(1) ProductCards).
  *
- * Note: Même profile "cart" que cacheWishlist() - voir documentation ci-dessus.
+ * Profile `checkout` — voir `cacheWishlist` pour le rationale.
  */
 export function cacheWishlistProductIds(userId?: string, sessionId?: string) {
 	cacheLife("checkout");

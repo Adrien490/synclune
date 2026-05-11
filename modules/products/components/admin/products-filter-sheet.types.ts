@@ -18,6 +18,8 @@ export interface ProductsFilterSheetProps {
 	onOpenChange?: (open: boolean) => void;
 	/** Hide the default trigger button. */
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 export interface AdminFilterFormData {

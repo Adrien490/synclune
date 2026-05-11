@@ -57,6 +57,12 @@ export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
 							/>
 						</dd>
 					</div>
+					{color.description && (
+						<div className="border-border/60 mt-1 border-t pt-3">
+							<dt className="text-muted-foreground mb-1">Description</dt>
+							<dd className="text-foreground/80 text-sm leading-relaxed">{color.description}</dd>
+						</div>
+					)}
 				</dl>
 
 				{!color.isActive ? (

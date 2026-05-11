@@ -27,6 +27,7 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 		colorName: color.name,
 		colorHex: color.hex,
 		colorSlug: color.slug,
+		colorDescription: color.description,
 	});
 
 	return (
@@ -47,6 +48,9 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 						{color.isActive ? "Active" : "Inactive"}
 					</Badge>
 				</div>
+				{color.description && (
+					<p className="text-muted-foreground max-w-prose text-sm italic">{color.description}</p>
+				)}
 				<p className="text-muted-foreground hidden text-sm md:block">
 					Créée le {format(color.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
 					<span className="text-muted-foreground/70">

@@ -13,32 +13,57 @@ vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
 }));
 
-// Mock motion/react — render plain elements, expose useReducedMotion spy
-vi.mock("motion/react", () => ({
-	useReducedMotion: useReducedMotionMock,
-	motion: {
-		div: "div",
-		nav: "nav",
-	},
-	m: new Proxy(
-		{},
-		{
-			get: (_target, prop) => {
-				if (typeof prop === "symbol") return undefined;
-				return prop;
-			},
+// Mock motion/react — render plain elements while forwarding `layoutId` and
+// `transition` as data-attrs so tests can assert pill morphing wiring.
+vi.mock("motion/react", async () => {
+	const { createElement } = await import("react");
+
+	const makeStub =
+		(tag: string) =>
+		({
+			layoutId,
+			transition,
+			initial: _initial,
+			animate: _animate,
+			...rest
+		}: Record<string, unknown> & { children?: React.ReactNode }) => {
+			const extras: Record<string, string> = {};
+			if (layoutId !== undefined) extras["data-layout-id"] = String(layoutId);
+			if (transition !== undefined) extras["data-transition"] = JSON.stringify(transition);
+			return createElement(tag, { ...rest, ...extras });
+		};
+
+	return {
+		useReducedMotion: useReducedMotionMock,
+		motion: {
+			div: makeStub("div"),
+			nav: makeStub("nav"),
 		},
-	),
-}));
+		m: new Proxy(
+			{},
+			{
+				get: (_target, prop) => {
+					if (typeof prop === "symbol") return undefined;
+					return makeStub(String(prop));
+				},
+			},
+		),
+	};
+});
 
 // Mock useBottomBarHeight to track calls
 vi.mock("@/shared/hooks", () => ({
 	useBottomBarHeight: useBottomBarHeightMock,
 }));
 
-// Mock motion config
+// Mock motion config — include `snappy` used by BottomBarActivePill
 vi.mock("@/shared/components/animations/motion.config", () => ({
-	MOTION_CONFIG: { spring: { bar: { damping: 25, stiffness: 300 } } },
+	MOTION_CONFIG: {
+		spring: {
+			bar: { damping: 25, stiffness: 300 },
+			snappy: { damping: 35, stiffness: 500, mass: 0.3 },
+		},
+	},
 }));
 
 import {
@@ -204,6 +229,23 @@ describe("BottomBar", () => {
 
 		expect(useBottomBarHeightMock).toHaveBeenCalledWith(56, false);
 	});
+
+	it("renders native element with hidden attribute when reduced motion + isHidden", () => {
+		useReducedMotionMock.mockReturnValueOnce(true);
+		const { container } = render(
+			<BottomBar as="nav" isHidden aria-label="bar">
+				<span>content</span>
+			</BottomBar>,
+		);
+
+		// `hidden` attribute makes the element non-accessible; query DOM directly.
+		const el = container.querySelector("nav")!;
+		expect(el).toHaveAttribute("hidden");
+		expect(el).toHaveAttribute("inert");
+		expect(el).toHaveAttribute("aria-label", "bar");
+		// Native path: no Framer data attrs forwarded.
+		expect(el).not.toHaveAttribute("data-transition");
+	});
 });
 
 // ---------------------------------------------------------------------------
@@ -264,6 +306,21 @@ describe("BottomBarActivePill", () => {
 		const { container } = render(<BottomBarActivePill groupId="nav" />);
 		const span = container.querySelector("span")!;
 		expect(span).not.toHaveAttribute("layoutid");
+		expect(span).not.toHaveAttribute("data-layout-id");
+	});
+
+	it("forwards layoutId via Framer (pill morph wiring across tabs)", () => {
+		const { container } = render(<BottomBarActivePill groupId="shop-nav" />);
+		const span = container.querySelector("span")!;
+		expect(span).toHaveAttribute("data-layout-id", "shop-nav");
+	});
+
+	it("uses spring.snappy transition for iOS-18 morph feel", () => {
+		const { container } = render(<BottomBarActivePill groupId="admin-nav" />);
+		const span = container.querySelector("span")!;
+		const raw = span.getAttribute("data-transition");
+		expect(raw).not.toBeNull();
+		expect(JSON.parse(raw!)).toMatchObject({ damping: 35, stiffness: 500 });
 	});
 });
 

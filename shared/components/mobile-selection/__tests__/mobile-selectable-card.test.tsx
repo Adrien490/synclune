@@ -1,10 +1,11 @@
 import { useEffect } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
+const triggerHapticMock = vi.fn();
 vi.mock("@/shared/hooks/use-haptic", () => ({
-	triggerHaptic: vi.fn(),
-	useHaptic: () => vi.fn(),
+	triggerHaptic: (...args: unknown[]) => triggerHapticMock(...args),
+	useHaptic: () => triggerHapticMock,
 }));
 
 vi.mock("lucide-react", () => ({
@@ -48,6 +49,10 @@ function EnterModeOnMount() {
 	}, [enterSelectionMode]);
 	return null;
 }
+
+beforeEach(() => {
+	triggerHapticMock.mockClear();
+});
 
 afterEach(cleanup);
 
@@ -144,5 +149,27 @@ describe("MobileSelectableCard", () => {
 		);
 
 		expect(screen.getByTestId("card-content")).toBeInTheDocument();
+	});
+
+	it("triggers haptic 'selection' on toggle in selection mode (Mail iOS parity)", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["p-1"]}>
+				<EnterModeOnMount />
+				<MobileSelectableCard
+					id="p-1"
+					itemLabel="Produit Anneau doré"
+					longPressProps={longPressProps}
+				>
+					<span>Card content</span>
+				</MobileSelectableCard>
+			</BulkSelectionProvider>,
+		);
+
+		// EnterModeOnMount triggers haptic("selection") at mount — clear baseline.
+		triggerHapticMock.mockClear();
+
+		fireEvent.click(screen.getByRole("checkbox", { name: "Sélectionner Produit Anneau doré" }));
+
+		expect(triggerHapticMock).toHaveBeenCalledWith("selection");
 	});
 });

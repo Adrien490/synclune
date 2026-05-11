@@ -15,6 +15,8 @@ interface ReviewsFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 interface FilterFormData {
@@ -30,6 +32,7 @@ function ReviewsFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: ReviewsFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -94,6 +97,7 @@ function ReviewsFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

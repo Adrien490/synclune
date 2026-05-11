@@ -72,7 +72,7 @@ vi.mock("../constants/wishlist.constants", () => ({
 	GET_WISHLIST_MAX_RESULTS_PER_PAGE: 200,
 }));
 
-import { fetchWishlist } from "../get-wishlist";
+import { getWishlist } from "../get-wishlist";
 
 // ============================================================================
 // CONSTANTS
@@ -110,7 +110,7 @@ function createMockWishlistItem(overrides: Record<string, unknown> = {}) {
 // TESTS
 // ============================================================================
 
-describe("fetchWishlist", () => {
+describe("getWishlist", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
@@ -121,11 +121,13 @@ describe("fetchWishlist", () => {
 		});
 		mockPrisma.wishlistItem.count.mockResolvedValue(1);
 		mockPrisma.wishlistItem.findMany.mockResolvedValue([createMockWishlistItem()]);
+		mockGetSession.mockResolvedValue(null);
+		mockGetWishlistSessionId.mockResolvedValue(null);
 	});
 
 	// No userId and no sessionId → immediate empty return
-	it("should return empty result when no userId and no sessionId", async () => {
-		const result = await fetchWishlist(undefined, undefined);
+	it("should return empty result when neither session nor wishlist cookie present", async () => {
+		const result = await getWishlist();
 
 		expect(result).toEqual(EMPTY_RESULT);
 		expect(mockPrisma.wishlistItem.count).not.toHaveBeenCalled();
@@ -133,8 +135,10 @@ describe("fetchWishlist", () => {
 	});
 
 	// userId takes priority over sessionId
-	it("should query by userId when userId is provided", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined);
+	it("should query by userId when user is authenticated", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist();
 
 		expect(mockPrisma.wishlistItem.count).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -153,8 +157,10 @@ describe("fetchWishlist", () => {
 	});
 
 	// sessionId used when no userId
-	it("should query by sessionId when userId is not provided", async () => {
-		await fetchWishlist(undefined, VALID_SESSION_ID);
+	it("should query by sessionId for guest user", async () => {
+		mockGetWishlistSessionId.mockResolvedValue(VALID_SESSION_ID);
+
+		await getWishlist();
 
 		expect(mockPrisma.wishlistItem.count).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -174,7 +180,9 @@ describe("fetchWishlist", () => {
 
 	// Product filter: PUBLIC + notDeleted
 	it("should filter products by status PUBLIC and notDeleted", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined);
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist();
 
 		expect(mockPrisma.wishlistItem.count).toHaveBeenCalledWith(
 			expect.objectContaining({
@@ -190,10 +198,11 @@ describe("fetchWishlist", () => {
 
 	// totalCount 0 → early empty return (skips processCursorResults)
 	it("should return empty result when totalCount is 0", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
 		mockPrisma.wishlistItem.count.mockResolvedValue(0);
 		mockPrisma.wishlistItem.findMany.mockResolvedValue([]);
 
-		const result = await fetchWishlist(VALID_USER_ID, undefined);
+		const result = await getWishlist();
 
 		expect(result).toEqual(EMPTY_RESULT);
 		expect(mockProcessCursorResults).not.toHaveBeenCalled();
@@ -201,46 +210,56 @@ describe("fetchWishlist", () => {
 
 	// processCursorResults called with correct args
 	it("should call processCursorResults with items, take, direction and cursor", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
 		const items = [createMockWishlistItem()];
 		mockPrisma.wishlistItem.findMany.mockResolvedValue(items);
 		mockPrisma.wishlistItem.count.mockResolvedValue(1);
 
 		const params = { cursor: "cursor_abc", direction: "forward" as const, perPage: 10 };
-		await fetchWishlist(VALID_USER_ID, undefined, params);
+		await getWishlist(params);
 
 		expect(mockProcessCursorResults).toHaveBeenCalledWith(items, 10, "forward", "cursor_abc");
 	});
 
 	// perPage of 0 is not nullish: `0 ?? DEFAULT` evaluates to 0, then Math.max(1, 0) = 1
 	it("should fall back to default perPage when perPage is 0 (falsy)", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined, { perPage: 0 });
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist({ perPage: 0 });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
 	});
 
 	// perPage clamped to 1 minimum when given a negative number
 	it("should clamp perPage to minimum of 1 when given a negative number", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined, { perPage: -5 });
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist({ perPage: -5 });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 1 }));
 	});
 
 	// perPage clamped to MAX
 	it("should clamp perPage to MAX (200) when given a value above the limit", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined, { perPage: 9999 });
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist({ perPage: 9999 });
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 200 }));
 	});
 
 	// default perPage applied when not specified
 	it("should use default perPage (20) when perPage is not specified", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined, {});
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist({});
 
 		expect(mockBuildCursorPagination).toHaveBeenCalledWith(expect.objectContaining({ take: 20 }));
 	});
 
 	// Returns paginated items and pagination from processCursorResults
 	it("should return paginatedItems and pagination from processCursorResults", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
 		const paginatedItem = createMockWishlistItem({ id: "item_paginated" });
 		const pagination = {
 			nextCursor: "next_cursor",
@@ -251,16 +270,18 @@ describe("fetchWishlist", () => {
 		mockProcessCursorResults.mockReturnValue({ items: [paginatedItem], pagination });
 		mockPrisma.wishlistItem.count.mockResolvedValue(5);
 
-		const result = await fetchWishlist(VALID_USER_ID, undefined);
+		const result = await getWishlist();
 
 		expect(result.items).toEqual([paginatedItem]);
 		expect(result.pagination).toEqual(pagination);
 		expect(result.totalCount).toBe(5);
 	});
 
-	// count and findMany run in parallel (both receive same where clause)
+	// count and findMany run with same where clause
 	it("should run count and findMany with the same where clause", async () => {
-		await fetchWishlist(VALID_USER_ID, undefined);
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+
+		await getWishlist();
 
 		const countCall = mockPrisma.wishlistItem.count.mock.calls[0]![0];
 		const findManyCall = mockPrisma.wishlistItem.findMany.mock.calls[0]![0];
@@ -270,19 +291,31 @@ describe("fetchWishlist", () => {
 
 	// Error resilience: exception during DB calls returns empty result
 	it("should return empty result when an exception is thrown", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
 		mockPrisma.wishlistItem.count.mockRejectedValue(new Error("DB timeout"));
 
-		const result = await fetchWishlist(VALID_USER_ID, undefined);
+		const result = await getWishlist();
 
 		expect(result).toEqual(EMPTY_RESULT);
 	});
 
 	// Error resilience: findMany exception
 	it("should return empty result when findMany throws", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
 		mockPrisma.wishlistItem.findMany.mockRejectedValue(new Error("Connection lost"));
 
-		const result = await fetchWishlist(VALID_USER_ID, undefined);
+		const result = await getWishlist();
 
 		expect(result).toEqual(EMPTY_RESULT);
+	});
+
+	// Defense-in-depth: authenticated user ignores guest cookie
+	it("should ignore guest cookie when user is authenticated", async () => {
+		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
+		mockGetWishlistSessionId.mockResolvedValue(VALID_SESSION_ID);
+
+		await getWishlist();
+
+		expect(mockGetWishlistSessionId).not.toHaveBeenCalled();
 	});
 });

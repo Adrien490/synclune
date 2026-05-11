@@ -9,6 +9,7 @@ export const GET_COLORS_SELECT = {
 	name: true,
 	slug: true,
 	hex: true,
+	description: true,
 	isActive: true,
 	createdAt: true,
 	updatedAt: true,
@@ -24,6 +25,7 @@ export const GET_COLOR_SELECT = {
 	slug: true,
 	name: true,
 	hex: true,
+	description: true,
 	createdAt: true,
 	updatedAt: true,
 } as const satisfies Prisma.ColorSelect;

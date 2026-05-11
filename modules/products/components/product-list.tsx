@@ -65,17 +65,58 @@ export function ProductList({
 
 	const { nextCursor, prevCursor, hasNextPage, hasPreviousPage } = pagination;
 
-	// ItemList JSON-LD for rich snippets (carousel-style SERPs)
+	// ItemList JSON-LD for rich snippets (Google Shopping carousel-style SERPs).
+	// Each item embeds a full Product with Offer (price EUR, availability) and
+	// aggregateRating when reviews exist — mirrors home page pattern in
+	// `shared/components/structured-data.tsx` for consistency.
 	const itemListJsonLd = {
 		"@context": "https://schema.org",
 		"@type": "ItemList",
 		numberOfItems: totalCount,
-		itemListElement: products.map((product, index) => ({
-			"@type": "ListItem",
-			position: index + 1,
-			url: `${SITE_URL}/creations/${product.slug}`,
-			name: product.title,
-		})),
+		itemListElement: products.map((product, index) => {
+			const url = `${SITE_URL}/creations/${product.slug}`;
+			// skus are pre-sorted by [isDefault desc, priceInclTax asc] in GET_PRODUCTS_SELECT
+			const defaultSku = product.skus[0];
+			const primaryImage = defaultSku?.images.find((img) => img.isPrimary) ?? defaultSku?.images[0];
+			const priceCents = defaultSku?.priceInclTax;
+			const inStock = (defaultSku?.inventory ?? 0) > 0;
+
+			const productNode: Record<string, unknown> = {
+				"@type": "Product",
+				"@id": `${url}#product`,
+				name: product.title,
+				url,
+				...(product.description && { description: product.description }),
+				...(primaryImage && { image: primaryImage.url }),
+				...(product.reviewStats &&
+					product.reviewStats.totalCount > 0 && {
+						aggregateRating: {
+							"@type": "AggregateRating",
+							ratingValue: Number(product.reviewStats.averageRating).toFixed(1),
+							reviewCount: product.reviewStats.totalCount,
+							bestRating: 5,
+							worstRating: 1,
+						},
+					}),
+				...(typeof priceCents === "number" && {
+					offers: {
+						"@type": "Offer",
+						url,
+						price: (priceCents / 100).toFixed(2),
+						priceCurrency: "EUR",
+						availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+						itemCondition: "https://schema.org/NewCondition",
+					},
+				}),
+			};
+
+			return {
+				"@type": "ListItem",
+				position: index + 1,
+				url,
+				item: productNode,
+			};
+		}),
 	};
 
 	// Layout Grid par defaut

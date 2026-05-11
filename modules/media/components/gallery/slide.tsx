@@ -13,7 +13,7 @@ import {
 } from "@/modules/media/constants/gallery.constants";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { PRODUCT_TEXTS } from "@/modules/products/constants/product-texts.constants";
-import { GalleryHoverZoom } from "@/shared/components/gallery/hover-zoom";
+import { GalleryHoverZoom } from "@/shared/components/gallery";
 import { GalleryPinchZoom } from "./pinch-zoom";
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 

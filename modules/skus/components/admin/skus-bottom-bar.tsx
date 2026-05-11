@@ -5,6 +5,7 @@ import { ArrowUpDown, Plus, SlidersHorizontal } from "lucide-react";
 
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
+import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { GET_PRODUCT_SKUS_SORT_FIELDS, SORT_LABELS } from "../../constants/sku.constants";
@@ -17,6 +18,8 @@ const SORT_OPTIONS: SortOption[] = GET_PRODUCT_SKUS_SORT_FIELDS.map((field) => (
 	value: field,
 	label: SORT_LABELS[field] ?? field,
 }));
+
+const IDS = getAdminDrawerIds("skus");
 
 interface SkusBottomBarProps {
 	productSlug: string;
@@ -45,6 +48,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			controls: IDS.filter,
 			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
@@ -68,6 +72,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
@@ -81,6 +86,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 				open={isOpen("filter")}
 				onOpenChange={onOpenChange("filter")}
 				hideTrigger
+				id={IDS.filter}
 				colorOptions={colorOptions}
 				materialOptions={materialOptions}
 			/>
@@ -90,6 +96,7 @@ function SkusBottomBarInner({ productSlug, colorOptions, materialOptions }: Skus
 				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
+				id={IDS.sort}
 			/>
 		</>
 	);

@@ -6,7 +6,6 @@ import { cacheWishlistCount } from "../constants/cache";
 
 import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
 
-// Re-export pour compatibilité
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -22,9 +21,23 @@ import type { GetWishlistItemCountReturn } from "../types/wishlist.types";
  */
 export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn> {
 	try {
-		const session = await getSession().catch(() => null);
+		const session = await getSession().catch((e) => {
+			logger.warn(
+				`getSession failed in wishlist count, falling back to anonymous: ${e instanceof Error ? e.message : String(e)}`,
+				{ service: "wishlist" },
+			);
+			return null;
+		});
 		const userId = session?.user.id;
-		const sessionId = !userId ? await getWishlistSessionId().catch(() => null) : null;
+		const sessionId = !userId
+			? await getWishlistSessionId().catch((e) => {
+					logger.warn(
+						`getWishlistSessionId failed in wishlist count, no guest session: ${e instanceof Error ? e.message : String(e)}`,
+						{ service: "wishlist" },
+					);
+					return null;
+				})
+			: null;
 
 		return await fetchWishlistItemCount(userId, sessionId ?? undefined);
 	} catch (e) {
@@ -36,14 +49,13 @@ export async function getWishlistItemCount(): Promise<GetWishlistItemCountReturn
 }
 
 /**
- * Récupère le nombre d'items dans la wishlist d'un utilisateur ou visiteur
+ * Récupère le nombre d'items dans la wishlist d'un utilisateur ou visiteur.
  *
- * @internal Only called by getWishlistItemCount wrapper. Do not call directly with arbitrary userId.
- * @param userId - ID de l'utilisateur connecté (optionnel)
- * @param sessionId - ID de session visiteur (optionnel)
- * @returns Nombre d'items dans la wishlist
+ * @internal Privé au module — accédé uniquement via le wrapper `getWishlistItemCount`
+ * (qui résout `userId`/`sessionId` depuis la session/cookies). Ne JAMAIS appeler
+ * directement avec un userId arbitraire : aucune vérification d'ownership ici.
  */
-export async function fetchWishlistItemCount(
+async function fetchWishlistItemCount(
 	userId?: string,
 	sessionId?: string,
 ): Promise<GetWishlistItemCountReturn> {

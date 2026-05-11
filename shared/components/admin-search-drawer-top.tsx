@@ -14,6 +14,11 @@ interface AdminSearchDrawerTopProps {
 	paramName?: string;
 	placeholder?: string;
 	ariaLabel?: string;
+	/**
+	 * DOM `id` of the drawer content node. Wire in pair with `aria-controls`
+	 * on the trigger button.
+	 */
+	id?: string;
 }
 
 /**
@@ -29,6 +34,7 @@ export function AdminSearchDrawerTop({
 	paramName = "search",
 	placeholder = "Rechercher…",
 	ariaLabel,
+	id,
 }: AdminSearchDrawerTopProps) {
 	const triggerRef = useRef<HTMLElement | null>(null);
 
@@ -41,6 +47,7 @@ export function AdminSearchDrawerTop({
 	return (
 		<Drawer direction="top" modal={false} dismissible open={open} onOpenChange={onOpenChange}>
 			<DrawerContent
+				id={id}
 				className={cn(
 					"data-[vaul-drawer-direction=top]:mb-0",
 					"data-[vaul-drawer-direction=top]:max-h-none",

@@ -6,6 +6,7 @@ import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
+import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { SORT_LABELS } from "../../constants/refund.constants";
@@ -15,6 +16,8 @@ const SORT_OPTIONS: SortOption[] = Object.entries(SORT_LABELS).map(([value, labe
 	value,
 	label,
 }));
+
+const IDS = getAdminDrawerIds("refunds");
 
 /**
  * Sous-header sticky (mobile, admin) pour la liste remboursements.
@@ -34,6 +37,7 @@ function RefundsBottomBarInner() {
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			controls: IDS.filter,
 			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
@@ -50,6 +54,7 @@ function RefundsBottomBarInner() {
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
+			controls: IDS.search,
 			expanded: isOpen("search"),
 			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
@@ -61,6 +66,7 @@ function RefundsBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
@@ -74,6 +80,7 @@ function RefundsBottomBarInner() {
 				open={isOpen("filter")}
 				onOpenChange={onOpenChange("filter")}
 				hideTrigger
+				id={IDS.filter}
 			/>
 
 			<SortDrawer
@@ -81,6 +88,7 @@ function RefundsBottomBarInner() {
 				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
+				id={IDS.sort}
 			/>
 
 			<AdminSearchDrawerTop
@@ -88,6 +96,7 @@ function RefundsBottomBarInner() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Numéro de commande, email…"
 				ariaLabel="Rechercher un remboursement"
+				id={IDS.search}
 			/>
 		</>
 	);

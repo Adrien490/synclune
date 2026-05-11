@@ -95,6 +95,7 @@ async function fetchColorDetail(slug: string) {
 				slug: true,
 				name: true,
 				hex: true,
+				description: true,
 				isActive: true,
 				createdAt: true,
 				updatedAt: true,

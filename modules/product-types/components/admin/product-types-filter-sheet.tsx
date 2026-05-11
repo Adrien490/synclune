@@ -11,6 +11,8 @@ interface ProductTypesFilterSheetProps {
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
 	hideTrigger?: boolean;
+	/** DOM `id` of the sheet content (paired with `aria-controls`). */
+	id?: string;
 }
 
 interface FilterFormData {
@@ -22,6 +24,7 @@ function ProductTypesFilterSheetInner({
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
 	hideTrigger,
+	id,
 }: ProductTypesFilterSheetProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -98,6 +101,7 @@ function ProductTypesFilterSheetInner({
 			open={isOpen}
 			onOpenChange={handleOpenChange}
 			hideTrigger={hideTrigger}
+			id={id}
 			activeFiltersCount={activeFiltersCount}
 			hasActiveFilters={hasActiveFilters}
 			onClearAll={clearAllFilters}

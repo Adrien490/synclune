@@ -22,6 +22,7 @@ interface UseColorActionsParams {
 	colorName: string;
 	colorHex: string;
 	colorSlug: string;
+	colorDescription?: string | null;
 }
 
 export function useColorActions({
@@ -29,6 +30,7 @@ export function useColorActions({
 	colorName,
 	colorHex,
 	colorSlug,
+	colorDescription = null,
 }: UseColorActionsParams): { sections: ActionMenuSection[] } {
 	const { open: openDialog } = useDialog(COLOR_DIALOG_ID);
 	const { open: openAlert } = useAlertDialog(DELETE_COLOR_DIALOG_ID);
@@ -66,7 +68,13 @@ export function useColorActions({
 							router.push(`/admin/catalogue/couleurs/${colorSlug}/modifier`);
 						} else {
 							openDialog({
-								color: { id: colorId, name: colorName, hex: colorHex, slug: colorSlug },
+								color: {
+									id: colorId,
+									name: colorName,
+									hex: colorHex,
+									slug: colorSlug,
+									description: colorDescription,
+								},
 							});
 						}
 					},

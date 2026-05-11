@@ -24,6 +24,7 @@ export interface EditableColor {
 	name: string;
 	slug: string;
 	hex: string;
+	description: string | null;
 }
 
 interface EditColorFormProps {
@@ -44,7 +45,11 @@ export function EditColorForm({
 	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
-	const form = useColorForm({ name: color.name, hex: color.hex });
+	const form = useColorForm({
+		name: color.name,
+		hex: color.hex,
+		description: color.description ?? "",
+	});
 
 	const isDirty = form.state.isDirty;
 	const allowNavigationRef = useRef<(() => void) | null>(null);

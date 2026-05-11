@@ -89,6 +89,11 @@ export interface FilterSheetWrapperProps {
 	 * @default 3
 	 */
 	confirmClearThreshold?: number;
+	/**
+	 * DOM `id` of the popup content. Wire this in pair with `aria-controls`
+	 * on the trigger button so AT can announce which popup is operated.
+	 */
+	id?: string;
 }
 
 /**

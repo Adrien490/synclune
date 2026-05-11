@@ -13,3 +13,6 @@ export { useActiveListControls } from "./use-active-list-controls";
 
 // Modal/Lightbox hooks
 export { useLightbox } from "./use-lightbox";
+
+// A11y / keyboard navigation
+export { useRovingTabIndex } from "./use-roving-tab-index";

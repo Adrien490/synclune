@@ -33,10 +33,12 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extract data from FormData
+		const rawDescription = sanitizeText(safeFormGet(formData, "description") ?? "");
 		const rawData = {
 			id: formData.get("id"),
 			name: sanitizeText(safeFormGet(formData, "name") ?? ""),
 			hex: formData.get("hex"),
+			description: rawDescription.length > 0 ? rawDescription : undefined,
 		};
 
 		// Validate data
@@ -77,6 +79,7 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 				name: validatedData.name,
 				slug,
 				hex: validatedData.hex,
+				description: validatedData.description ?? null,
 			},
 		});
 

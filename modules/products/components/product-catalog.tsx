@@ -20,7 +20,6 @@ import { ProductSortBar } from "@/modules/products/components/product-sort-bar";
 import { Toolbar } from "@/shared/components/toolbar";
 import { PageHeader } from "@/shared/components/page-header";
 import { SelectFilter } from "@/shared/components/select-filter";
-import { ClearSearchButton } from "@/modules/products/components/clear-search-button";
 import { SearchInput } from "@/shared/components/search-input";
 
 import { safeJsonLd } from "@/shared/utils/safe-json-ld";
@@ -124,13 +123,6 @@ export function ProductCatalog({
 				title={pageTitle}
 				description={searchTerm ? undefined : pageDescription}
 				breadcrumbs={breadcrumbs}
-				actions={
-					<div className="flex items-center gap-2 md:hidden">
-						<Suspense fallback={null}>
-							<ClearSearchButton />
-						</Suspense>
-					</div>
-				}
 			/>
 
 			{/* Section principale avec catalogue */}
@@ -141,8 +133,16 @@ export function ProductCatalog({
 				<div
 					id="product-container"
 					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
-					style={{ viewTransitionName: "product-grid" }}
 				>
+					{/* H1 mobile compact — visible uniquement <sm, le `PageHeader` desktop prend
+					    le relais à partir de sm. Évite le fail WCAG 2.4.6 (page sans titre visible). */}
+					<h1
+						className="font-display text-foreground -mb-2 px-1 text-xl font-normal tracking-normal sm:hidden"
+						data-testid="catalog-mobile-title"
+					>
+						{pageTitle}
+					</h1>
+
 					{/* Mobile sticky sub-header (tri / recherche / filtres) */}
 					<Suspense fallback={null}>
 						<ProductSortBar sortOptions={sortOptions} />

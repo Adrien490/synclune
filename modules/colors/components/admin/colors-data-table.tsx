@@ -66,7 +66,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 									<TableHead key="preview" scope="col" role="columnheader" className="w-[8%]">
 										Aperçu
 									</TableHead>
-									<TableHead key="name" scope="col" role="columnheader" className="w-[26%]">
+									<TableHead key="name" scope="col" role="columnheader" className="w-[36%]">
 										Nom
 									</TableHead>
 									<TableHead
@@ -122,6 +122,14 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 													>
 														{color.name}
 													</span>
+													{color.description && (
+														<span
+															className="text-muted-foreground block truncate text-xs italic"
+															title={color.description}
+														>
+															{color.description}
+														</span>
+													)}
 												</div>
 											</TableCell>
 											<TableCell className="text-center">
@@ -136,6 +144,7 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 													colorName={color.name}
 													colorHex={color.hex}
 													colorSlug={color.slug}
+													colorDescription={color.description}
 												/>
 											</TableCell>
 										</TableRow>

@@ -1,5 +1,4 @@
 import { cn } from "@/shared/utils/cn";
-import { slugify } from "@/shared/utils/generate-slug";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -15,17 +14,14 @@ import { AddToCartCardButton } from "@/modules/cart/components/add-to-cart-card-
 import { StarIcon } from "@/shared/components/icons/star-icon";
 import type { ProductCarouselItem } from "@/modules/products/types/product.types";
 import { getProductCardData } from "@/modules/products/services/product-display.service";
+import { buildSkuUrl } from "@/modules/products/utils/build-sku-url";
+import { computeDiscountPercent } from "@/modules/products/utils/compute-discount-percent";
 import type { ComponentProps, ReactNode } from "react";
-import type { SkuFromList } from "@/modules/products/types/product-list.types";
 
-function buildSkuUrl(baseUrl: string, sku: SkuFromList): string {
-	const params = new URLSearchParams();
-	if (sku.color?.slug) params.set("color", sku.color.slug);
-	if (sku.material?.name) params.set("material", slugify(sku.material.name));
-	if (sku.size) params.set("size", sku.size);
-	const qs = params.toString();
-	return qs ? `${baseUrl}?${qs}` : baseUrl;
-}
+const ratingFormatter = new Intl.NumberFormat("fr-FR", {
+	minimumFractionDigits: 1,
+	maximumFractionDigits: 1,
+});
 
 interface ProductCardProps {
 	product: ProductCarouselItem;
@@ -74,14 +70,14 @@ function ProductCardRating({
 	averageRating,
 	totalCount,
 	productId,
+	formattedRating,
 }: {
 	averageRating: number;
 	totalCount: number;
 	productId: string;
+	formattedRating: string;
 }) {
 	if (totalCount === 0) return null;
-
-	const formattedRating = averageRating.toFixed(1).replace(".", ",");
 
 	return (
 		<div
@@ -154,7 +150,7 @@ export function ProductCard({
 
 	// No active SKU — produit en catalogue sans variante publiée (état "à venir")
 	const noActiveSku = defaultSku === null;
-	const outOfStockBadgeMessage = noActiveSku ? "Bientôt disponible" : stockMessage;
+	const outOfStockBadgeMessage = noActiveSku ? PRODUCT_TEXTS.STOCK.COMING_SOON : stockMessage;
 
 	// Unique ID for aria-labelledby (combines sectionId + product.id to avoid collisions)
 	const titleId = sectionId
@@ -165,8 +161,8 @@ export function ProductCard({
 	const showUrgencyBadge = stockStatus === "low_stock";
 
 	// Discount percentage for promo badge
-	const hasDiscount = compareAtPrice !== null && compareAtPrice > price && price > 0;
-	const discountPercent = hasDiscount ? Math.round((1 - price / compareAtPrice) * 100) : 0;
+	const discountPercent = computeDiscountPercent(price, compareAtPrice);
+	const hasDiscount = discountPercent > 0;
 
 	// Stock badges take priority over promo badge (same position)
 	const showPromoBadge =
@@ -179,6 +175,16 @@ export function ProductCard({
 			: baseUrl;
 
 	const isAboveFold = !disablePreload && (index ?? 0) < ABOVE_FOLD_THRESHOLD;
+
+	// Review stats: hoisted so the rating link can include the score in its aria-label.
+	const reviewStats =
+		product.reviewStats && product.reviewStats.totalCount > 0 ? product.reviewStats : null;
+	const reviewAverage = reviewStats ? Number(reviewStats.averageRating) : 0;
+	const formattedRating = reviewStats ? ratingFormatter.format(reviewAverage) : null;
+
+	// Scope viewTransitionName by sectionId to prevent collisions when the same
+	// product appears in multiple grids on the same page (e.g. related + recently-viewed).
+	const productViewTransitionName = `product-${sectionId ?? "card"}-${product.id}`;
 
 	// Build sr-only description for screen readers (badges info)
 	const badgeDescriptions: string[] = [];
@@ -204,7 +210,7 @@ export function ProductCard({
 			aria-labelledby={titleId}
 			aria-describedby={badgeDescId}
 			className={cn(
-				"product-card bg-card group relative grid gap-4 overflow-hidden rounded-lg border-2 border-transparent sm:rounded-xl",
+				"product-card bg-card group relative grid touch-manipulation gap-4 overflow-hidden rounded-lg border-2 border-transparent sm:rounded-xl",
 				"transition-[transform,border-color,box-shadow] duration-300 ease-out",
 				// Disable transforms for motion-reduce, keep color transitions (WCAG 2.3.3)
 				"motion-reduce:transition-colors",
@@ -264,7 +270,7 @@ export function ProductCard({
 							!secondaryImage &&
 								"motion-safe:can-hover:group-hover:scale-[1.08] ease-out motion-safe:transition-[transform] motion-safe:duration-300",
 						)}
-						style={{ viewTransitionName: `product-${product.id}` }}
+						style={{ viewTransitionName: productViewTransitionName }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
 						priority={isAboveFold}
@@ -273,7 +279,7 @@ export function ProductCard({
 					{secondaryImage && (
 						<Image
 							src={secondaryImage.url}
-							alt={secondaryImage.alt ?? PRODUCT_TEXTS.IMAGES.DEFAULT_ALT(title, productType)}
+							alt=""
 							fill
 							className="can-hover:group-hover:opacity-100 can-hover:group-hover:scale-100 scale-[1.02] rounded-lg object-cover opacity-0 ease-out motion-safe:transition-[opacity,transform] motion-safe:duration-500 sm:rounded-xl"
 							loading="lazy"
@@ -301,10 +307,7 @@ export function ProductCard({
 					href={productUrl}
 					className="focus-ring block after:absolute after:inset-0 after:z-10 focus-visible:rounded-sm"
 				>
-					<h3
-						id={titleId}
-						className={cn("text-foreground font-sans tracking-normal", "text-base sm:text-lg")}
-					>
+					<h3 id={titleId} className="text-foreground line-clamp-2 text-base sm:text-lg">
 						{title}
 					</h3>
 				</Link>
@@ -313,16 +316,17 @@ export function ProductCard({
 				{!noActiveSku && <ProductPrice price={price} compareAtPrice={compareAtPrice} />}
 
 				{/* Average rating — lien direct vers la section avis (saute le stretched link via z-30) */}
-				{product.reviewStats && product.reviewStats.totalCount > 0 && (
+				{reviewStats && formattedRating && (
 					<Link
 						href={`${productUrl}#reviews`}
 						className="focus-ring relative z-30 inline-flex w-fit rounded-sm"
-						aria-label={`Lire les ${product.reviewStats.totalCount} avis`}
+						aria-label={`Lire les ${reviewStats.totalCount} avis (note moyenne : ${formattedRating} sur 5)`}
 					>
 						<ProductCardRating
-							averageRating={Number(product.reviewStats.averageRating)}
-							totalCount={product.reviewStats.totalCount}
+							averageRating={reviewAverage}
+							totalCount={reviewStats.totalCount}
 							productId={product.id}
+							formattedRating={formattedRating}
 						/>
 					</Link>
 				)}

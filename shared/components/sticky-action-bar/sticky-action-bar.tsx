@@ -2,9 +2,10 @@
 
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
+import { useEffect, useRef, type CSSProperties, type MouseEvent } from "react";
 
 import { triggerHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
+import { useRovingTabIndex } from "@/shared/hooks/use-roving-tab-index";
 import { cn } from "@/shared/utils/cn";
 
 /**
@@ -35,6 +36,12 @@ interface StickyActionBarItemBase {
 	haspopup?: "dialog" | "menu" | "listbox" | "tree" | "grid";
 	/** ARIA expanded state — wire to drawer open state for `data-state="open"`. */
 	expanded?: boolean;
+	/**
+	 * DOM `id` of the controlled popup (drawer/dialog/menu). When provided
+	 * alongside `haspopup`, wired automatically as `aria-controls` so assistive
+	 * tech can announce which popup is operated.
+	 */
+	controls?: string;
 	/** Text shown in the polite live region when this item becomes active. */
 	announcement?: string;
 	/**
@@ -46,7 +53,7 @@ interface StickyActionBarItemBase {
 
 interface StickyActionBarButton extends StickyActionBarItemBase {
 	kind?: "button";
-	onClick: () => void;
+	onClick: (event: MouseEvent<HTMLButtonElement>) => void;
 	/** Disabled state. The keyboard navigation skips disabled items. */
 	disabled?: boolean;
 }
@@ -72,6 +79,17 @@ interface StickyActionBarProps {
 	ariaLabel: string;
 	/** Extra classes merged onto the nav. */
 	className?: string;
+	/**
+	 * CSS custom property name (without `var(...)`) used for `sticky top`.
+	 * Default: `"--admin-header-height"` (admin layout). For other contexts,
+	 * pass e.g. `"--shop-header-height"`. Falls back to `3.5rem` if unset.
+	 */
+	stickyTopVar?: string;
+	/**
+	 * `data-testid` for the root `<nav>`. Default: `"sticky-action-bar"`.
+	 * Override when multiple bars coexist in tests.
+	 */
+	testId?: string;
 }
 
 const baseItemClasses = cn(
@@ -97,29 +115,6 @@ function isDisabledItem(item: StickyActionBarItem): boolean {
 }
 
 /**
- * Returns the next non-disabled item index in the given direction (with
- * wrap-around). Returns null if every item is disabled.
- *
- * Use `from = -1, direction = 1` to find the FIRST enabled index.
- * Use `from = 0, direction = -1` to find the LAST enabled index.
- */
-function nextEnabledIndex(
-	items: StickyActionBarItem[],
-	from: number,
-	direction: 1 | -1,
-): number | null {
-	const count = items.length;
-	if (count === 0) return null;
-	let i = from;
-	for (let step = 0; step < count; step++) {
-		i = (i + direction + count) % count;
-		const item = items[i];
-		if (item && !isDisabledItem(item)) return i;
-	}
-	return null;
-}
-
-/**
  * Sous-header sticky (mobile uniquement) pour une rangée d'actions
  * contextuelles (Trier, Rechercher, Filtrer, Ajouter…).
  *
@@ -137,13 +132,20 @@ function nextEnabledIndex(
  *   - `active: true`       → booléen (recherche/tri appliqué). Affiche un
  *     petit dot. Annonce textuelle via `announcement` dans la live region.
  *
+ * **`controls`** : passer l'`id` DOM du popup pour câbler `aria-controls`
+ * quand `haspopup` est défini. Les drawers (`SortDrawer`,
+ * `AdminSearchDrawerTop`, `*-FilterSheet`) acceptent une prop `id` ;
+ * partager la constante entre le drawer et l'item.
+ *
  * **Haptic** : pattern `"selection"` (5ms) déclenché au tap par défaut.
  * Opt-out par item via `haptic: false`. Respecte `prefers-reduced-motion`
  * et le cooldown anti-cascade global.
  *
  * **Accessibilité** :
- *   - `role="toolbar"` avec navigation flèches gauche/droite/haut/bas + Home/End.
- *   - Roving `tabindex`. Les items disabled sont skippés.
+ *   - `role="toolbar"` avec navigation flèches gauche/droite/haut/bas + Home/End
+ *     (via `useRovingTabIndex` partagé).
+ *   - Roving `tabindex` avec auto-realign si l'item ciblé devient out-of-bounds
+ *     ou disabled (évite le deadlock "aucun item tab-able").
  *   - Live region `polite` qui annonce les changements d'état actif.
  *   - Touch targets ≥ 44px (WCAG 2.5.5) + `touch-manipulation` (élimine le
  *     300ms tap-delay iOS Safari).
@@ -151,28 +153,19 @@ function nextEnabledIndex(
  *     pour éviter la traversée de la notch en landscape.
  *
  * **Positionnement** :
- *   - `sticky top-[var(--admin-header-height,3.5rem)]` — s'aligne sur le
- *     header via la CSS custom property publiée par le layout admin
- *     (`[data-admin-layout]`).
- *   - `-mx-6` : compense le `p-6` du `<main>` admin pour un effet full-bleed.
+ *   - `sticky top: var(--admin-header-height, 3.5rem)` — paramétrable via
+ *     `stickyTopVar` pour usages hors admin (publier la var côté layout).
+ *   - `-mx-[var(--admin-main-x,1.5rem)]` : compense le padding horizontal du
+ *     `<main>` admin (var publiée par `[data-admin-layout]`) pour l'effet
+ *     full-bleed sans hardcoder `-mx-6`.
  *   - `md:hidden` : masquée sur desktop (la toolbar desktop prend le relais).
  *
  * @example
  * ```tsx
+ * const FILTER_ID = "admin-products-filter-drawer";
  * const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort"|"filter">();
- * const sp = useSearchParams();
  *
  * const items: StickyActionBarItem[] = [
- *   {
- *     key: "sort",
- *     icon: ArrowUpDown,
- *     label: "Trier",
- *     ariaLabel: "Ouvrir le tri",
- *     onClick: () => open("sort"),
- *     haspopup: "dialog",
- *     active: sp.has("sortBy"),
- *     expanded: isOpen("sort"),
- *   },
  *   {
  *     key: "filter",
  *     icon: SlidersHorizontal,
@@ -180,59 +173,27 @@ function nextEnabledIndex(
  *     ariaLabel: "Ouvrir les filtres",
  *     onClick: () => open("filter"),
  *     haspopup: "dialog",
+ *     controls: FILTER_ID,
  *     badgeCount: activeFilterCount,
  *     expanded: isOpen("filter"),
- *   },
- *   {
- *     kind: "link",
- *     key: "add",
- *     icon: Plus,
- *     label: "Ajouter",
- *     ariaLabel: "Ajouter un produit",
- *     href: "/admin/catalogue/produits/nouveau",
- *     viewTransitionName: "admin-add-action",
  *   },
  * ];
  *
  * <StickyActionBar items={items} ariaLabel="Tri et filtres" />
+ * <ProductsFilterSheet id={FILTER_ID} ... />
  * ```
  */
-export function StickyActionBar({ items, ariaLabel, className }: StickyActionBarProps) {
-	const [focusedIndex, setFocusedIndex] = useState<number>(
-		() => nextEnabledIndex(items, -1, 1) ?? 0,
-	);
-	const itemRefs = useRef<Array<HTMLButtonElement | HTMLAnchorElement | null>>([]);
-
-	const handleKeyDown = (e: KeyboardEvent, currentIndex: number) => {
-		if (items.length === 0) return;
-		let nextIndex: number | null = null;
-
-		switch (e.key) {
-			case "ArrowRight":
-			case "ArrowDown":
-				e.preventDefault();
-				nextIndex = nextEnabledIndex(items, currentIndex, 1);
-				break;
-			case "ArrowLeft":
-			case "ArrowUp":
-				e.preventDefault();
-				nextIndex = nextEnabledIndex(items, currentIndex, -1);
-				break;
-			case "Home":
-				e.preventDefault();
-				nextIndex = nextEnabledIndex(items, -1, 1);
-				break;
-			case "End":
-				e.preventDefault();
-				nextIndex = nextEnabledIndex(items, 0, -1);
-				break;
-		}
-
-		if (nextIndex !== null) {
-			setFocusedIndex(nextIndex);
-			itemRefs.current[nextIndex]?.focus();
-		}
-	};
+export function StickyActionBar({
+	items,
+	ariaLabel,
+	className,
+	stickyTopVar = "--admin-header-height",
+	testId = "sticky-action-bar",
+}: StickyActionBarProps) {
+	const { getTabIndex, setFocusedIndex, itemRefs, onKeyDown } = useRovingTabIndex<
+		StickyActionBarItem,
+		HTMLButtonElement | HTMLAnchorElement
+	>({ items, isDisabled: isDisabledItem });
 
 	// Live region — announce active-state transitions (debounced clear 3s)
 	const announcementRef = useRef<HTMLSpanElement>(null);
@@ -262,17 +223,20 @@ export function StickyActionBar({ items, ariaLabel, className }: StickyActionBar
 		triggerHaptic(item.haptic ?? "selection");
 	};
 
+	const stickyStyle: CSSProperties = { top: `var(${stickyTopVar},3.5rem)` };
+
 	return (
 		<nav
 			aria-label={ariaLabel}
-			data-testid="sticky-action-bar"
+			data-testid={testId}
+			style={stickyStyle}
 			className={cn(
 				"md:hidden",
-				"sticky top-[var(--admin-header-height,3.5rem)] z-30",
+				"sticky z-30",
 				"bg-background/95 supports-[backdrop-filter]:bg-background/60 backdrop-blur-md",
 				"border-border/50 border-b",
-				// Compense le p-6 du <main> admin pour l'effet full-bleed.
-				"-mx-6",
+				// Compense le padding horizontal du <main> admin pour l'effet full-bleed.
+				"-mx-[var(--admin-main-x,1.5rem)]",
 				className,
 			)}
 		>
@@ -288,12 +252,15 @@ export function StickyActionBar({ items, ariaLabel, className }: StickyActionBar
 						"aria-label": item.ariaLabel,
 						...(item.haspopup && { "aria-haspopup": item.haspopup }),
 						...(typeof item.expanded === "boolean" && { "aria-expanded": item.expanded }),
+						...(item.haspopup && item.controls && { "aria-controls": item.controls }),
 					};
 					const isActive = isItemActive(item);
 					const itemClassName = cn(baseItemClasses, isActive && activeItemClasses);
 					const dataAttrs = {
 						"data-active": isActive ? "" : undefined,
-						"data-state": item.expanded ? "open" : "closed",
+						...(typeof item.expanded === "boolean" && {
+							"data-state": item.expanded ? "open" : "closed",
+						}),
 					};
 					const indicator =
 						item.badgeCount && item.badgeCount > 0 ? (
@@ -336,9 +303,9 @@ export function StickyActionBar({ items, ariaLabel, className }: StickyActionBar
 								target={item.external ? "_blank" : undefined}
 								rel={item.external ? "noopener noreferrer" : undefined}
 								onClick={() => triggerItemHaptic(item)}
-								onKeyDown={(e) => handleKeyDown(e, index)}
+								onKeyDown={(e) => onKeyDown(e, index)}
 								onFocus={() => setFocusedIndex(index)}
-								tabIndex={focusedIndex === index ? 0 : -1}
+								tabIndex={getTabIndex(index)}
 								className={itemClassName}
 								style={linkStyle}
 								{...dataAttrs}
@@ -357,13 +324,13 @@ export function StickyActionBar({ items, ariaLabel, className }: StickyActionBar
 							}}
 							type="button"
 							disabled={item.disabled}
-							onClick={() => {
+							onClick={(e) => {
 								triggerItemHaptic(item);
-								item.onClick();
+								item.onClick(e);
 							}}
-							onKeyDown={(e) => handleKeyDown(e, index)}
+							onKeyDown={(e) => onKeyDown(e, index)}
 							onFocus={() => setFocusedIndex(index)}
-							tabIndex={focusedIndex === index ? 0 : -1}
+							tabIndex={getTabIndex(index)}
 							className={itemClassName}
 							{...dataAttrs}
 							{...commonA11y}

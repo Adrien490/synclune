@@ -19,6 +19,8 @@ import {
 interface OrdersFilterDrawerProps {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
+	/** DOM `id` of the drawer content node (paired with `aria-controls`). */
+	id?: string;
 }
 
 const FILTER_OPTIONS = [
@@ -44,7 +46,7 @@ function getCurrentFilter(searchParams: URLSearchParams): string {
 	return "all";
 }
 
-function OrdersFilterDrawerInner({ open, onOpenChange }: OrdersFilterDrawerProps) {
+function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -77,7 +79,7 @@ function OrdersFilterDrawerInner({ open, onOpenChange }: OrdersFilterDrawerProps
 
 	return (
 		<Drawer open={open} onOpenChange={onOpenChange}>
-			<DrawerContent>
+			<DrawerContent id={id}>
 				<DrawerHeader>
 					<DrawerTitle>Filtrer les commandes</DrawerTitle>
 				</DrawerHeader>

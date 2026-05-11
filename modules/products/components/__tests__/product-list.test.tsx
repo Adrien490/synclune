@@ -456,5 +456,85 @@ describe("ProductList", () => {
 			const data = JSON.parse(script!.innerHTML);
 			expect(data.numberOfItems).toBe(2);
 		});
+
+		it("embeds a Product node inside each ListItem (Google Shopping rich results)", async () => {
+			const { container } = await renderList({
+				productsPromise: makeSuccessResult(),
+				perPage: 24,
+			});
+			const script = container.querySelector('script[type="application/ld+json"]');
+			const data = JSON.parse(script!.innerHTML);
+			expect(data.itemListElement[0].item).toBeDefined();
+			expect(data.itemListElement[0].item["@type"]).toBe("Product");
+			expect(data.itemListElement[0].item.name).toBe("Product 1");
+			expect(data.itemListElement[0].item["@id"]).toMatch(/#product$/);
+		});
+
+		it("includes Offer with price and InStock when a SKU is available", async () => {
+			const productWithSku = {
+				...makeProduct("1"),
+				skus: [
+					{
+						priceInclTax: 4500,
+						inventory: 3,
+						images: [{ url: "https://cdn.example/img.jpg", isPrimary: true }],
+					},
+				],
+			} as unknown as ReturnType<typeof makeProduct>;
+			const { container } = await renderList({
+				productsPromise: makeSuccessResult({ products: [productWithSku] }),
+				perPage: 24,
+			});
+			const script = container.querySelector('script[type="application/ld+json"]');
+			const data = JSON.parse(script!.innerHTML);
+			const item = data.itemListElement[0].item;
+			expect(item.offers).toBeDefined();
+			expect(item.offers["@type"]).toBe("Offer");
+			expect(item.offers.price).toBe("45.00");
+			expect(item.offers.priceCurrency).toBe("EUR");
+			expect(item.offers.availability).toBe("https://schema.org/InStock");
+			expect(item.image).toBe("https://cdn.example/img.jpg");
+		});
+
+		it("marks Offer OutOfStock when inventory is zero", async () => {
+			const productOutOfStock = {
+				...makeProduct("2"),
+				skus: [{ priceInclTax: 3000, inventory: 0, images: [] }],
+			} as unknown as ReturnType<typeof makeProduct>;
+			const { container } = await renderList({
+				productsPromise: makeSuccessResult({ products: [productOutOfStock] }),
+				perPage: 24,
+			});
+			const script = container.querySelector('script[type="application/ld+json"]');
+			const data = JSON.parse(script!.innerHTML);
+			expect(data.itemListElement[0].item.offers.availability).toBe(
+				"https://schema.org/OutOfStock",
+			);
+		});
+
+		it("includes aggregateRating only when product has reviews", async () => {
+			const productWithReviews = {
+				...makeProduct("1"),
+				skus: [{ priceInclTax: 4500, inventory: 1, images: [] }],
+				reviewStats: { averageRating: 4.6, totalCount: 7 },
+			} as unknown as ReturnType<typeof makeProduct>;
+			const productWithoutReviews = {
+				...makeProduct("2"),
+				skus: [{ priceInclTax: 3000, inventory: 1, images: [] }],
+				reviewStats: { averageRating: 0, totalCount: 0 },
+			} as unknown as ReturnType<typeof makeProduct>;
+			const { container } = await renderList({
+				productsPromise: makeSuccessResult({
+					products: [productWithReviews, productWithoutReviews],
+				}),
+				perPage: 24,
+			});
+			const script = container.querySelector('script[type="application/ld+json"]');
+			const data = JSON.parse(script!.innerHTML);
+			expect(data.itemListElement[0].item.aggregateRating).toBeDefined();
+			expect(data.itemListElement[0].item.aggregateRating.ratingValue).toBe("4.6");
+			expect(data.itemListElement[0].item.aggregateRating.reviewCount).toBe(7);
+			expect(data.itemListElement[1].item.aggregateRating).toBeUndefined();
+		});
 	});
 });

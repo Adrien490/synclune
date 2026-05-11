@@ -15,6 +15,7 @@ import { getOrCreateCartSessionId, getCartExpirationDate } from "@/modules/cart/
 import { WISHLIST_ERROR_MESSAGES } from "@/modules/wishlist/constants/error-messages";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "@/modules/cart/constants/cart";
+import { lockAndValidateSkuForMove } from "@/modules/wishlist/services/lock-and-validate-sku-for-move";
 import {
 	validateInput,
 	handleActionError,
@@ -85,50 +86,8 @@ export async function moveToCart(
 
 		// 4. Transaction atomique
 		const result = await prisma.$transaction(async (tx) => {
-			// 4a. Verrouiller le SKU avec FOR UPDATE pour eviter race condition stock
-			const skuRows = await tx.$queryRaw<
-				Array<{
-					inventory: number;
-					isActive: boolean;
-					priceInclTax: number;
-					deletedAt: Date | null;
-					productId: string;
-					productStatus: string;
-					productDeletedAt: Date | null;
-				}>
-			>`
-				SELECT
-					s.inventory,
-					s."isActive",
-					s."priceInclTax",
-					s."deletedAt",
-					s."productId",
-					p.status AS "productStatus",
-					p."deletedAt" AS "productDeletedAt"
-				FROM "ProductSku" s
-				JOIN "Product" p ON s."productId" = p.id
-				WHERE s.id = ${skuId}
-				FOR UPDATE OF s
-			`;
-
-			const sku = skuRows[0];
-
-			if (!sku) {
-				throw new BusinessError(WISHLIST_ERROR_MESSAGES.SKU_NOT_FOUND);
-			}
-			if (sku.deletedAt || sku.productDeletedAt) {
-				throw new BusinessError(CART_ERROR_MESSAGES.PRODUCT_DELETED);
-			}
-			if (!sku.isActive) {
-				throw new BusinessError(WISHLIST_ERROR_MESSAGES.SKU_INACTIVE);
-			}
-			if (sku.productStatus !== "PUBLIC") {
-				throw new BusinessError(WISHLIST_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC);
-			}
-			// Validate skuId actually belongs to declared productId (anti-tampering)
-			if (sku.productId !== productId) {
-				throw new BusinessError(WISHLIST_ERROR_MESSAGES.SKU_NOT_FOUND);
-			}
+			// 4a. Verrouiller le SKU avec FOR UPDATE + valider produit/SKU (service partagé)
+			const sku = await lockAndValidateSkuForMove(tx, skuId, productId);
 
 			// 4b. Upsert cart
 			const cart = await tx.cart.upsert({
@@ -198,11 +157,22 @@ export async function moveToCart(
 			}
 
 			// 4d. Retirer de la wishlist (idempotent - deleteMany ne throw pas si 0)
+			// Skip the lookup entirely when guest has no wishlist session: Prisma 7
+			// treats `{ sessionId: undefined }` as an absent filter, which would
+			// silently match an arbitrary user's wishlist (IDOR / data loss).
 			let wishlistRemoved = false;
-			const wishlist = await tx.wishlist.findFirst({
-				where: userId ? { userId } : { sessionId: wishlistSessionId ?? undefined },
-				select: { id: true },
-			});
+			const wishlistQuery = userId
+				? { userId }
+				: wishlistSessionId
+					? { sessionId: wishlistSessionId }
+					: null;
+
+			const wishlist = wishlistQuery
+				? await tx.wishlist.findFirst({
+						where: wishlistQuery,
+						select: { id: true },
+					})
+				: null;
 
 			if (wishlist) {
 				const removeResult = await tx.wishlistItem.deleteMany({

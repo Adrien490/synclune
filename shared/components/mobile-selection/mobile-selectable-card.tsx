@@ -9,6 +9,7 @@ import {
 	LongPressMenuLink,
 	type LongPressMenuLinkProps,
 } from "@/shared/components/long-press-menu-link";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
 type LongPressProps = Omit<LongPressMenuLinkProps, "children">;
@@ -69,9 +70,12 @@ export function MobileSelectableCard({
 			role="checkbox"
 			aria-checked={isSelected}
 			aria-label={`${isSelected ? "Désélectionner" : "Sélectionner"} ${itemLabel}`}
-			onClick={() => ctx.toggle(id)}
+			onClick={() => {
+				triggerHaptic("selection");
+				ctx.toggle(id);
+			}}
 			className={cn(
-				"focus-visible:ring-primary relative flex w-full items-center gap-3 rounded-lg text-left",
+				"focus-visible:ring-primary relative flex min-h-11 w-full items-center gap-3 rounded-lg text-left",
 				"focus-visible:ring-2 focus-visible:outline-none",
 				"transform-gpu active:scale-[0.98] motion-safe:transition-[background-color,box-shadow] motion-safe:duration-150",
 				isSelected && "bg-primary/5 ring-primary/30 ring-2",

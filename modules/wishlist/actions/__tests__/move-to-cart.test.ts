@@ -364,4 +364,29 @@ describe("moveToCart", () => {
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
+
+	it("does NOT touch any wishlist when guest has no wishlist session (IDOR guard)", async () => {
+		// Guest with a cart session but no wishlist session: Prisma 7 treats
+		// `{ sessionId: undefined }` as an absent filter, so the previous code
+		// could match an arbitrary user's wishlist and delete from it.
+		mockGetSession.mockResolvedValue(null);
+		mockGetWishlistSessionId.mockResolvedValue(null);
+		mockGetOrCreateCartSessionId.mockResolvedValue(VALID_SESSION_ID);
+		setupValidSku();
+		mockPrisma.cart.upsert.mockResolvedValue({ id: "guest-cart-1" });
+		mockPrisma.cartItem.findUnique.mockResolvedValue(null);
+		mockPrisma.cartItem.count.mockResolvedValue(0);
+		mockPrisma.cartItem.create.mockResolvedValue({ id: "ci-1" });
+
+		const result = await moveToCart(undefined, createFormData(VALID_INPUT));
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		// Cart still created/added
+		expect(mockPrisma.cartItem.create).toHaveBeenCalled();
+		// Wishlist lookup MUST be skipped entirely — no findFirst, no deleteMany
+		expect(mockPrisma.wishlist.findFirst).not.toHaveBeenCalled();
+		expect(mockPrisma.wishlistItem.deleteMany).not.toHaveBeenCalled();
+		// No wishlist cache invalidation either
+		expect(mockGetWishlistInvalidationTags).not.toHaveBeenCalled();
+	});
 });

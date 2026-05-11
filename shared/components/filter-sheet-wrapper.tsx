@@ -50,6 +50,7 @@ export function FilterSheetWrapper({
 	onOverlayClick,
 	snapPoints,
 	confirmClearThreshold = 3,
+	id,
 }: FilterSheetWrapperProps) {
 	// Note: Ne pas utiliser de fallback pour permettre le mode uncontrolled
 	// Si controlledOpen est undefined, Vaul gère l'état en interne
@@ -149,6 +150,7 @@ export function FilterSheetWrapper({
 			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
 
 			<SheetContent
+				id={id}
 				className={cn(
 					"flex w-full flex-col overflow-hidden p-0",
 					// Desktop paysage (right-side sheet) : width constrained, full height

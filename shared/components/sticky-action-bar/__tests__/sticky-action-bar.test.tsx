@@ -482,6 +482,219 @@ describe("StickyActionBar", () => {
 		expect(link.getAttribute("style")).toContain("view-transition-name: admin-add-action");
 	});
 
+	describe("aria-controls", () => {
+		it("expose aria-controls quand haspopup + controls sont fournis", () => {
+			const items: StickyActionBarItem[] = [
+				{
+					key: "filter",
+					icon: SlidersHorizontal,
+					label: "Filtrer",
+					ariaLabel: "Ouvrir le panneau filtres",
+					onClick: vi.fn(),
+					haspopup: "dialog",
+					controls: "admin-products-filter-drawer",
+				},
+				...baseItems().slice(1),
+			];
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			expect(screen.getByLabelText("Ouvrir le panneau filtres")).toHaveAttribute(
+				"aria-controls",
+				"admin-products-filter-drawer",
+			);
+		});
+
+		it("n'expose PAS aria-controls quand haspopup absent (même si controls fourni)", () => {
+			const items: StickyActionBarItem[] = [
+				{
+					key: "filter",
+					icon: SlidersHorizontal,
+					label: "Filtrer",
+					ariaLabel: "Ouvrir le panneau filtres",
+					onClick: vi.fn(),
+					controls: "admin-products-filter-drawer",
+				},
+				...baseItems().slice(1),
+			];
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			expect(screen.getByLabelText("Ouvrir le panneau filtres")).not.toHaveAttribute(
+				"aria-controls",
+			);
+		});
+	});
+
+	describe("focusedIndex auto-realign", () => {
+		it("re-aligne le tabstop si items.length diminue sous focusedIndex", () => {
+			const items: StickyActionBarItem[] = baseItems();
+			const { rerender } = render(<StickyActionBar items={items} ariaLabel="Actions" />);
+
+			const filterBtn = screen.getByLabelText("Ouvrir les filtres");
+			filterBtn.focus();
+			fireEvent.keyDown(filterBtn, { key: "End" });
+			expect(filterBtn).toHaveAttribute("tabIndex", "0");
+
+			// Réduit la liste à 1 seul item — l'index 2 (filter) n'existe plus.
+			rerender(
+				<StickyActionBar
+					items={[
+						{
+							key: "sort",
+							icon: ArrowUpDown,
+							label: "Trier",
+							ariaLabel: "Ouvrir le tri",
+							onClick: vi.fn(),
+						},
+					]}
+					ariaLabel="Actions"
+				/>,
+			);
+
+			// L'unique item restant doit redevenir tab-able.
+			const remaining = screen.getByLabelText("Ouvrir le tri");
+			expect(remaining).toHaveAttribute("tabIndex", "0");
+		});
+
+		it("re-aligne le tabstop si l'item ciblé devient disabled", () => {
+			const searchItem = (overrides: Partial<StickyActionBarItem>): StickyActionBarItem =>
+				({
+					key: "search",
+					icon: Search,
+					label: "Rechercher",
+					ariaLabel: "Ouvrir la recherche",
+					onClick: vi.fn(),
+					...overrides,
+				}) as StickyActionBarItem;
+
+			const initial: StickyActionBarItem[] = [
+				{
+					key: "sort",
+					icon: ArrowUpDown,
+					label: "Trier",
+					ariaLabel: "Ouvrir le tri",
+					onClick: vi.fn(),
+				},
+				searchItem({}),
+			];
+			const { rerender } = render(<StickyActionBar items={initial} ariaLabel="Actions" />);
+
+			// Move tabstop onto search via onFocus (the component sets focusedIndex on focus).
+			const searchBtn = screen.getByLabelText("Ouvrir la recherche");
+			fireEvent.focus(searchBtn);
+			expect(searchBtn).toHaveAttribute("tabIndex", "0");
+
+			// Now search becomes disabled — focus should hop back to the first enabled item.
+			rerender(
+				<StickyActionBar
+					items={[
+						{
+							key: "sort",
+							icon: ArrowUpDown,
+							label: "Trier",
+							ariaLabel: "Ouvrir le tri",
+							onClick: vi.fn(),
+						},
+						searchItem({ disabled: true }),
+					]}
+					ariaLabel="Actions"
+				/>,
+			);
+
+			const sortBtn = screen.getByLabelText("Ouvrir le tri");
+			expect(sortBtn).toHaveAttribute("tabIndex", "0");
+		});
+	});
+
+	describe("onClick(event) signature", () => {
+		it("passe l'événement React.MouseEvent au handler onClick", () => {
+			const handle = vi.fn();
+			const items: StickyActionBarItem[] = [
+				{
+					key: "sort",
+					icon: ArrowUpDown,
+					label: "Trier",
+					ariaLabel: "Ouvrir le tri",
+					onClick: handle,
+				},
+				...baseItems().slice(1),
+			];
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			fireEvent.click(screen.getByLabelText("Ouvrir le tri"));
+			expect(handle).toHaveBeenCalledTimes(1);
+			const [event] = handle.mock.calls[0] as [{ type?: string; target?: unknown }];
+			expect(event).toBeDefined();
+			expect(event.type).toBe("click");
+			expect(event.target).toBeInstanceOf(HTMLElement);
+		});
+	});
+
+	describe("stickyTopVar prop", () => {
+		it("utilise --admin-header-height par défaut", () => {
+			const { container } = render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
+			const nav = container.querySelector("nav");
+			expect(nav?.getAttribute("style")).toContain("top: var(--admin-header-height,3.5rem)");
+		});
+
+		it("respecte le stickyTopVar custom", () => {
+			const { container } = render(
+				<StickyActionBar
+					items={baseItems()}
+					ariaLabel="Actions"
+					stickyTopVar="--shop-header-height"
+				/>,
+			);
+			const nav = container.querySelector("nav");
+			expect(nav?.getAttribute("style")).toContain("top: var(--shop-header-height,3.5rem)");
+		});
+
+		it("utilise les marges full-bleed via --admin-main-x", () => {
+			const { container } = render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
+			const nav = container.querySelector("nav");
+			expect(nav?.className).toContain("-mx-[var(--admin-main-x,1.5rem)]");
+		});
+	});
+
+	describe("testId prop", () => {
+		it("expose data-testid='sticky-action-bar' par défaut", () => {
+			render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
+			expect(screen.getByTestId("sticky-action-bar")).toBeInTheDocument();
+		});
+
+		it("respecte un testId custom", () => {
+			render(
+				<StickyActionBar
+					items={baseItems()}
+					ariaLabel="Actions"
+					testId="products-sticky-action-bar"
+				/>,
+			);
+			expect(screen.getByTestId("products-sticky-action-bar")).toBeInTheDocument();
+		});
+	});
+
+	describe("data-state conditionnel", () => {
+		it("expose data-state='open' uniquement quand expanded est défini et true", () => {
+			const items = baseItems();
+			items[0] = { ...items[0]!, expanded: true } as StickyActionBarItem;
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			expect(screen.getByLabelText("Ouvrir le tri")).toHaveAttribute("data-state", "open");
+		});
+
+		it("expose data-state='closed' quand expanded est défini et false", () => {
+			const items = baseItems();
+			items[0] = { ...items[0]!, expanded: false } as StickyActionBarItem;
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			expect(screen.getByLabelText("Ouvrir le tri")).toHaveAttribute("data-state", "closed");
+		});
+
+		it("n'expose PAS data-state quand expanded n'est pas défini", () => {
+			const items = baseItems();
+			render(<StickyActionBar items={items} ariaLabel="Actions" />);
+			// Aucun des 3 items n'a expanded défini.
+			expect(screen.getByLabelText("Ouvrir le tri")).not.toHaveAttribute("data-state");
+			expect(screen.getByLabelText("Ouvrir la recherche")).not.toHaveAttribute("data-state");
+			expect(screen.getByLabelText("Ouvrir les filtres")).not.toHaveAttribute("data-state");
+		});
+	});
+
 	it("refs restent stables apres rerender (focus toujours fonctionnel)", () => {
 		const { rerender } = render(<StickyActionBar items={baseItems()} ariaLabel="Actions" />);
 		const sortBtn = screen.getByLabelText("Ouvrir le tri");

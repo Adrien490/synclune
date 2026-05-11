@@ -1103,14 +1103,6 @@ const ADMIN_COLOR_MERGE_LIMIT: RateLimitConfig = {
 };
 
 /**
- * Limite pour le reordonnancement de couleurs (admin)
- */
-const ADMIN_COLOR_REORDER_LIMIT: RateLimitConfig = {
-	limit: 20,
-	windowMs: minutes(5),
-};
-
-/**
  * Toutes les limites admin couleurs
  */
 export const ADMIN_COLOR_LIMITS = {
@@ -1122,7 +1114,6 @@ export const ADMIN_COLOR_LIMITS = {
 	BULK_OPERATIONS: ADMIN_COLOR_BULK_OPERATIONS_LIMIT,
 	REFRESH: ADMIN_COLOR_REFRESH_LIMIT,
 	MERGE: ADMIN_COLOR_MERGE_LIMIT,
-	REORDER: ADMIN_COLOR_REORDER_LIMIT,
 } as const;
 
 // ========================================

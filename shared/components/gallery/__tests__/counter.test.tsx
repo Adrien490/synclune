@@ -79,4 +79,18 @@ describe("GalleryCounter", () => {
 			expect(screen.getByRole("status")).toHaveAttribute("aria-label", "Image 4 sur 5");
 		});
 	});
+
+	// ============================================================================
+	// Responsive (desktop-only — GalleryDots prend le relais mobile)
+	// ============================================================================
+
+	describe("responsive", () => {
+		it("wrapper is hidden on mobile (hidden sm:block)", () => {
+			render(<GalleryCounter current={0} total={3} />);
+
+			const wrapper = screen.getByRole("status").parentElement;
+			expect(wrapper?.className).toContain("hidden");
+			expect(wrapper?.className).toContain("sm:block");
+		});
+	});
 });

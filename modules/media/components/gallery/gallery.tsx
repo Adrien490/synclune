@@ -19,12 +19,16 @@ import { parseGalleryParams } from "@/modules/media/schemas/gallery-params.schem
 import { buildGallery } from "@/modules/media/services/gallery-builder.service";
 import { buildLightboxSlides } from "@/modules/media/services/lightbox-builder.service";
 
-import { GalleryCounter } from "@/shared/components/gallery/counter";
-import { GalleryNavigation } from "@/shared/components/gallery/navigation";
-import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
+import {
+	GalleryCounter,
+	GalleryDots,
+	GalleryNavigation,
+	GalleryZoomButton,
+} from "@/shared/components/gallery";
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import ScrollFade from "@/shared/components/scroll-fade";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
@@ -233,7 +237,9 @@ function GalleryContent({ product, title }: GalleryProps) {
 	// Effect Event to handle onSelect without re-registration
 	const onSelect = useEffectEvent(() => {
 		if (!emblaApi) return;
-		setCurrent(emblaApi.selectedScrollSnap());
+		const next = emblaApi.selectedScrollSnap();
+		// Wrap setCurrent dans View Transition pour morphing du dot actif (mobile)
+		withViewTransition(() => setCurrent(next));
 		// Haptic only on swipe-triggered selects (buttons already emit "selection" on click)
 		if (isDraggingRef.current) {
 			haptic("light");
@@ -249,7 +255,6 @@ function GalleryContent({ product, title }: GalleryProps) {
 	useEffect(() => {
 		if (!emblaApi) return;
 
-		// eslint-disable-next-line react-hooks/set-state-in-effect
 		onSelect();
 		emblaApi.on("select", onSelect);
 		emblaApi.on("pointerDown", onPointerDown);
@@ -402,8 +407,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 								)}
 							/>
 
-							{/* Image counter */}
+							{/* Image counter - Desktop only (mobile relies on GalleryDots) */}
 							{images.length > 1 && <GalleryCounter current={current} total={images.length} />}
+
+							{/* Dots / fraction indicator - Mobile only (sm:hidden interne) */}
+							{images.length > 1 && (
+								<GalleryDots current={current} total={images.length} onSelect={scrollTo} />
+							)}
 
 							{/* Zoom button - Desktop only */}
 							{currentMedia?.mediaType === "IMAGE" && <GalleryZoomButton onOpen={open} />}

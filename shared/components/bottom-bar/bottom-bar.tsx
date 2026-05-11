@@ -190,29 +190,48 @@ export function BottomBar({
 	useBottomBarHeight(height, enabled && !isHidden);
 	const prefersReducedMotion = useReducedMotion();
 
+	const sharedClassName = cn(
+		breakpointClass,
+		"fixed right-0 bottom-0 left-0",
+		zIndex,
+		"pb-[env(safe-area-inset-bottom)]",
+		// bg-background/80 acts as fallback when backdrop-filter is unsupported;
+		// stronger blur + lower opacity produces the native iOS Tab Bar material.
+		"bg-background/80 backdrop-blur-xl",
+		"border-border/60 border-t",
+		"shadow-[0_-0.5px_0_oklch(0_0_0/0.06)]",
+		isHidden && "pointer-events-none",
+		className,
+	);
+
+	// Reduced-motion: skip Framer entirely. No entrance spring, no diff/animate
+	// overhead; `hidden` attribute snaps the bar instantly when isHidden flips.
+	if (prefersReducedMotion) {
+		const commonProps = {
+			"aria-label": ariaLabel,
+			"data-hide-on-keyboard": "",
+			hidden: isHidden,
+			...(isHidden && { inert: true }),
+			className: sharedClassName,
+		};
+		return as === "nav" ? (
+			<nav {...commonProps}>{children}</nav>
+		) : (
+			<div {...commonProps}>{children}</div>
+		);
+	}
+
 	const Component = as === "nav" ? m.nav : m.div;
 
 	return (
 		<Component
-			initial={prefersReducedMotion ? false : { y: 100, opacity: 0 }}
+			initial={{ y: 100, opacity: 0 }}
 			animate={isHidden ? { y: 100, opacity: 0 } : { y: 0, opacity: 1 }}
-			transition={prefersReducedMotion ? { duration: 0 } : MOTION_CONFIG.spring.bar}
+			transition={MOTION_CONFIG.spring.bar}
 			aria-label={ariaLabel}
 			data-hide-on-keyboard=""
 			{...(isHidden && { inert: true })}
-			className={cn(
-				breakpointClass,
-				"fixed right-0 bottom-0 left-0",
-				zIndex,
-				"pb-[env(safe-area-inset-bottom)]",
-				// bg-background/80 acts as fallback when backdrop-filter is unsupported;
-				// stronger blur + lower opacity produces the native iOS Tab Bar material.
-				"bg-background/80 backdrop-blur-xl",
-				"border-border/60 border-t",
-				"shadow-[0_-0.5px_0_oklch(0_0_0/0.06)]",
-				isHidden && "pointer-events-none",
-				className,
-			)}
+			className={sharedClassName}
 		>
 			{children}
 		</Component>

@@ -7,9 +7,12 @@ import { ArrowUpDown, Search, SlidersHorizontal } from "lucide-react";
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
+import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
 
 import { ReviewsFilterSheet } from "./reviews-filter-sheet";
+
+const IDS = getAdminDrawerIds("reviews");
 
 const SORT_OPTIONS: SortOption[] = [
 	{ value: "createdAt-desc", label: "Plus recents" },
@@ -41,6 +44,7 @@ function ReviewsBottomBarInner() {
 			onClick: () => open("filter"),
 			badgeCount: activeFilterCount,
 			haspopup: "dialog",
+			controls: IDS.filter,
 			expanded: isOpen("filter"),
 			announcement:
 				activeFilterCount > 0
@@ -57,6 +61,7 @@ function ReviewsBottomBarInner() {
 			onClick: () => open("search"),
 			active: hasActiveSearch,
 			haspopup: "dialog",
+			controls: IDS.search,
 			expanded: isOpen("search"),
 			announcement: hasActiveSearch ? `Recherche "${searchValue}" active` : undefined,
 		},
@@ -68,6 +73,7 @@ function ReviewsBottomBarInner() {
 			onClick: () => open("sort"),
 			active: hasActiveSort,
 			haspopup: "dialog",
+			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
 		},
@@ -81,6 +87,7 @@ function ReviewsBottomBarInner() {
 				open={isOpen("filter")}
 				onOpenChange={onOpenChange("filter")}
 				hideTrigger
+				id={IDS.filter}
 			/>
 
 			<SortDrawer
@@ -88,6 +95,7 @@ function ReviewsBottomBarInner() {
 				onOpenChange={onOpenChange("sort")}
 				options={SORT_OPTIONS}
 				showResetOption
+				id={IDS.sort}
 			/>
 
 			<AdminSearchDrawerTop
@@ -95,6 +103,7 @@ function ReviewsBottomBarInner() {
 				onOpenChange={onOpenChange("search")}
 				placeholder="Client, produit, contenu…"
 				ariaLabel="Rechercher un avis"
+				id={IDS.search}
 			/>
 		</>
 	);
