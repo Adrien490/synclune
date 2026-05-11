@@ -11,7 +11,9 @@ interface CollectionDetailStatsCardProps {
 
 export function CollectionDetailStatsCard({ collection }: CollectionDetailStatsCardProps) {
 	const products = collection.products;
-	const total = products.length;
+	// _count.products is filtered to PUBLIC + reflects the real total even when
+	// the products array is capped (GET_COLLECTION_PRODUCTS_LIMIT).
+	const total = collection._count.products;
 	const publicCount = products.filter((pc) => pc.product.status === ProductStatus.PUBLIC).length;
 	const featured = products.find((pc) => pc.isFeatured);
 	const featuredImage =

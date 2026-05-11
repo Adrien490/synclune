@@ -54,12 +54,20 @@ export function StoreSettingsForm({ settings }: StoreSettingsFormProps) {
 					<div className="flex items-center justify-between gap-3">
 						<CardTitle>Statut actuel</CardTitle>
 						{settings.isClosed ? (
-							<Badge variant="destructive" className="gap-1">
+							<Badge
+								variant="destructive"
+								className="gap-1"
+								style={{ viewTransitionName: "store-status-badge" }}
+							>
 								<Lock className="size-3" aria-hidden="true" />
 								Fermée
 							</Badge>
 						) : (
-							<Badge variant="success" className="gap-1">
+							<Badge
+								variant="success"
+								className="gap-1"
+								style={{ viewTransitionName: "store-status-badge" }}
+							>
 								<Unlock className="size-3" aria-hidden="true" />
 								Ouverte
 							</Badge>

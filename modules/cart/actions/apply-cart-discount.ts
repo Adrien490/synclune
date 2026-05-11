@@ -13,6 +13,7 @@ import {
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { applyCartDiscountSchema } from "../schemas/cart.schemas";
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 import { GET_DISCOUNT_VALIDATION_SELECT } from "@/modules/discounts/constants/discount.constants";
@@ -49,6 +50,10 @@ export async function applyCartDiscount(
 			return error(CART_ERROR_MESSAGES.CART_NOT_FOUND);
 		}
 
+		// Defense-in-depth : bloquer l'application de discount quand la boutique est fermée.
+		const storeCheck = await assertStoreOpen();
+		if (storeCheck) return error(storeCheck.message);
+
 		// 2. Validation input
 		const rawData = { code: safeFormGet(formData, "code") };
 		const validated = validateInput(applyCartDiscountSchema, rawData);
@@ -57,7 +62,10 @@ export async function applyCartDiscount(
 
 		// 3. Recuperer le panier + subtotal serveur (jamais trust client)
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: {
 				id: true,
 				items: {

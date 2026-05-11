@@ -19,7 +19,7 @@ const {
 	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		storeSettings: { findUnique: vi.fn(), update: vi.fn() },
+		storeSettings: { findUnique: vi.fn(), updateMany: vi.fn() },
 	},
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -93,7 +93,7 @@ describe("updateReopensAt", () => {
 			isClosed: true,
 			reopensAt: PREVIOUS_DATE,
 		});
-		mockPrisma.storeSettings.update.mockResolvedValue({});
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 1 });
 		mockGetStoreSettingsInvalidationTags.mockReturnValue(["store-status", "store-settings"]);
 		mockLogAudit.mockResolvedValue(undefined);
 
@@ -152,29 +152,29 @@ describe("updateReopensAt", () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue(null);
 		await updateReopensAt(undefined, formData());
 		expect(mockError).toHaveBeenCalledWith("Paramètres boutique introuvables");
-		expect(mockPrisma.storeSettings.update).not.toHaveBeenCalled();
+		expect(mockPrisma.storeSettings.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ─── Pre-condition store closed ────────────────────────────────────────
 
-	it("rejects when store is open", async () => {
+	it("rejects when store is open (updateMany matches 0 rows)", async () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue({
 			isClosed: false,
 			reopensAt: null,
 		});
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 0 });
 		await updateReopensAt(undefined, formData());
 		expect(mockError).toHaveBeenCalledWith(
 			"La boutique est ouverte, aucune réouverture à planifier",
 		);
-		expect(mockPrisma.storeSettings.update).not.toHaveBeenCalled();
 	});
 
 	// ─── Update mutation ───────────────────────────────────────────────────
 
-	it("updates only reopensAt field", async () => {
+	it("updates only reopensAt field atomically with WHERE isClosed=true", async () => {
 		await updateReopensAt(undefined, formData());
-		expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith({
-			where: { id: SINGLETON_ID },
+		expect(mockPrisma.storeSettings.updateMany).toHaveBeenCalledWith({
+			where: { id: SINGLETON_ID, isClosed: true },
 			data: { reopensAt: FUTURE_DATE },
 		});
 	});
@@ -182,8 +182,8 @@ describe("updateReopensAt", () => {
 	it("sets reopensAt to null when empty input (disables auto-reopen)", async () => {
 		mockValidateInput.mockReturnValue({ data: { reopensAt: null } });
 		await updateReopensAt(undefined, formData({ reopensAt: "" }));
-		expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith({
-			where: { id: SINGLETON_ID },
+		expect(mockPrisma.storeSettings.updateMany).toHaveBeenCalledWith({
+			where: { id: SINGLETON_ID, isClosed: true },
 			data: { reopensAt: null },
 		});
 	});
@@ -250,7 +250,7 @@ describe("updateReopensAt", () => {
 	// ─── Error handling ────────────────────────────────────────────────────
 
 	it("calls handleActionError on unexpected exception", async () => {
-		mockPrisma.storeSettings.update.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.storeSettings.updateMany.mockRejectedValue(new Error("DB crash"));
 		const result = await updateReopensAt(undefined, formData());
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockHandleActionError).toHaveBeenCalledWith(

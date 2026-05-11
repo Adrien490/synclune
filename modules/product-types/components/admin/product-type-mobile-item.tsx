@@ -50,7 +50,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				menuTitle: "Actions",
 				menuDescription: productType.label,
 				className: "text-left",
-				viewTransitionName: `product-type-card-${productType.id}`,
+				viewTransitionName: `product-type-${productType.slug}`,
 			}}
 		>
 			<Item variant="outline" size="sm" className="w-full gap-3">

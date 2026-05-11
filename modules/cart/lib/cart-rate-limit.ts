@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { getSession } from "@/modules/auth/lib/get-current-session";
+import { prisma } from "@/shared/lib/prisma";
 import { checkRateLimit, getClientIp, getRateLimitIdentifier } from "@/shared/lib/rate-limit";
 import type { RateLimitConfig } from "@/shared/lib/rate-limit";
 import type { ActionState } from "@/shared/types/server-action";
@@ -34,6 +35,13 @@ type CheckCartRateLimitOptions = {
 	 * @default false
 	 */
 	createSessionIfMissing?: boolean;
+	/**
+	 * Si true, vérifie que l'userId de la session existe en DB AVANT de consommer le quota
+	 * rate-limit. Cas typique : compte supprimé pendant onglet ouvert → fallback guest sans
+	 * brûler le slot rate-limit user.
+	 * @default false
+	 */
+	validateUserExists?: boolean;
 };
 
 /**
@@ -62,11 +70,24 @@ export async function checkCartRateLimit(
 	limitConfig: RateLimitConfig,
 	options: CheckCartRateLimitOptions = {},
 ): Promise<CartRateLimitResult> {
-	const { createSessionIfMissing = false } = options;
+	const { createSessionIfMissing = false, validateUserExists = false } = options;
 
 	// 1. Récupérer la session utilisateur
 	const session = await getSession();
-	const userId = session?.user.id;
+	let userId = session?.user.id;
+
+	// 1b. (Optionnel) Vérifier que l'userId existe encore en DB AVANT rate-limit.
+	// Évite qu'un compte supprimé en cours de session ne brûle son quota user
+	// avant de tomber sur le fallback guest.
+	if (userId && validateUserExists) {
+		const userExists = await prisma.user.findUnique({
+			where: { id: userId },
+			select: { id: true },
+		});
+		if (!userExists) {
+			userId = undefined;
+		}
+	}
 
 	// 2. Gérer le sessionId selon le contexte
 	let sessionId: string | null = null;

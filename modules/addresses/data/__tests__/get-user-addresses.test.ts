@@ -149,12 +149,43 @@ describe("fetchUserAddresses", () => {
 	});
 
 	it("returns all addresses for the given user", async () => {
-		const addresses = [makeAddress({ id: "addr-1" }), makeAddress({ id: "addr-2" })];
+		const addresses = [
+			makeAddress({ id: "addr-1", address1: "12 Rue de la Paix" }),
+			makeAddress({ id: "addr-2", address1: "5 Avenue Foch" }),
+		];
 		mockPrisma.address.findMany.mockResolvedValue(addresses);
 
 		const result = await fetchUserAddresses("user-1");
 
 		expect(result).toHaveLength(2);
+	});
+
+	it("dedupes addresses sharing the same address1/postalCode/city/country signature", async () => {
+		const addresses = [
+			makeAddress({ id: "addr-1", isDefault: true }),
+			makeAddress({ id: "addr-2", isDefault: false }),
+			makeAddress({ id: "addr-3", address1: "5 Avenue Foch" }),
+		];
+		mockPrisma.address.findMany.mockResolvedValue(addresses);
+
+		const result = await fetchUserAddresses("user-1");
+
+		// 2 distinct visible addresses (default first kept, dup dropped)
+		expect(result).toHaveLength(2);
+		expect(result[0]?.id).toBe("addr-1");
+		expect(result[1]?.id).toBe("addr-3");
+	});
+
+	it("treats trailing whitespace and case as duplicates", async () => {
+		const addresses = [
+			makeAddress({ id: "addr-1", address1: "12 Rue de la Paix", city: "Paris" }),
+			makeAddress({ id: "addr-2", address1: "  12 Rue de la Paix  ", city: "PARIS" }),
+		];
+		mockPrisma.address.findMany.mockResolvedValue(addresses);
+
+		const result = await fetchUserAddresses("user-1");
+
+		expect(result).toHaveLength(1);
 	});
 
 	it("queries DB with correct userId filter", async () => {
@@ -201,10 +232,10 @@ describe("fetchUserAddresses", () => {
 		expect(result[0]?.isDefault).toBe(true);
 	});
 
-	it("calls cacheLife with cart profile", async () => {
+	it("calls cacheLife with the user profile", async () => {
 		await fetchUserAddresses("user-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("checkout");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with user-specific addresses tag", async () => {

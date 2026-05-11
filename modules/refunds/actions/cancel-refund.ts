@@ -20,6 +20,7 @@ import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { logAudit } from "@/shared/lib/audit-log";
 import { cancelRefundSchema } from "../schemas/refund.schemas";
+import { canTransition } from "../services/refund-state-machine.service";
 
 /**
  * Annule un remboursement (supprime si PENDING ou APPROVED)
@@ -75,8 +76,9 @@ export async function cancelRefund(
 			return error(REFUND_ERROR_MESSAGES.NOT_FOUND);
 		}
 
-		// Vérifier le statut actuel - on ne peut annuler que PENDING ou APPROVED
-		if (refund.status !== RefundStatus.PENDING && refund.status !== RefundStatus.APPROVED) {
+		// Vérifier le statut actuel - cancel transition autorisée seulement depuis
+		// PENDING ou APPROVED (state machine partagée)
+		if (!canTransition(refund.status, RefundStatus.CANCELLED)) {
 			return error(REFUND_ERROR_MESSAGES.CANNOT_CANCEL);
 		}
 

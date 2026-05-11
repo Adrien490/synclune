@@ -1,4 +1,4 @@
-import type { RefundStatus } from "@/app/generated/prisma/client";
+import type { RefundReason, RefundStatus } from "@/app/generated/prisma/client";
 import type { sendOrderConfirmationEmail } from "@/modules/emails/services/order-emails";
 import type {
 	sendAdminNewOrderEmail,
@@ -19,6 +19,7 @@ export interface RefundRecord {
 	id: string;
 	status: RefundStatus;
 	amount: number;
+	reason: RefundReason;
 	orderId: string;
 	order: {
 		id: string;

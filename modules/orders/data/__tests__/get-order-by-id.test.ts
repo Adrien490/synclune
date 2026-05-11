@@ -32,12 +32,7 @@ vi.mock("../../constants/order.constants", () => ({
 	GET_ORDER_SELECT: { id: true, orderNumber: true },
 }));
 
-vi.mock("../../constants/cache", () => ({
-	cacheOrdersDashboard: vi.fn((tag?: string) => {
-		mockCacheLife("user");
-		if (tag) mockCacheTag(tag);
-	}),
-}));
+vi.mock("../../constants/cache", () => ({}));
 
 vi.mock("@/shared/constants/cache-tags", () => ({
 	SHARED_CACHE_TAGS: {

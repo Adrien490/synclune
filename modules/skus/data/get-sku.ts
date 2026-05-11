@@ -119,9 +119,12 @@ async function fetchSkuDetailById(skuId: string) {
 					slug: true,
 					title: true,
 					status: true,
-					_count: { select: { skus: true } },
+					_count: { select: { skus: { where: { deletedAt: null } } } },
+					// Nested fetch of the default SKU's primary image. Backed by the partial
+					// unique index `ProductSku_productId_isDefault_unique` (productId, isDefault)
+					// WHERE isDefault=true AND deletedAt IS NULL — O(1) lookup, not an N+1 risk.
 					skus: {
-						where: { isDefault: true },
+						where: { isDefault: true, deletedAt: null },
 						take: 1,
 						select: {
 							images: {

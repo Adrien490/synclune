@@ -4,7 +4,8 @@
 // NOTE: Validation without Zod to avoid HMR Turbopack errors in
 // client components. Zod v4 is not compatible with "use client" + Turbopack.
 // Plain validation (no Zod) to avoid HMR Turbopack errors in "use client" boundaries.
-// Track: https://github.com/vercel/next.js/issues — revert to Zod when resolved.
+// Revisit when next@>=16.3 + zod@>=4.x stable (TODO: ouvrir/linker issue Next.js si pas déjà tracké).
+// Schema partagé avec utils admin server — bouge ce fichier vers schemas/server/ si besoin de Zod côté API.
 
 interface GalleryParams {
 	color?: string;

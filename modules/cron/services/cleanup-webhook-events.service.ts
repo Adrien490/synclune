@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
@@ -6,8 +7,19 @@ import {
 	RETENTION,
 	BATCH_DEADLINE_MS,
 } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
 
 const CRON_JOB = "cleanup-webhook-events";
+
+function captureStepError(error: unknown, step: string): void {
+	Sentry.withScope((scope) => {
+		scope.setTag("cronJob", CRON_JOB);
+		scope.setTag("step", step);
+		scope.setLevel("error");
+		scope.setFingerprint(["cron", CRON_JOB, step]);
+		Sentry.captureException(error);
+	});
+}
 
 /**
  * Cleans up old webhook events past their retention period.
@@ -16,13 +28,7 @@ const CRON_JOB = "cleanup-webhook-events";
  * FAILED events are kept longer (180 days) for debugging.
  * Stale PROCESSING/PENDING events are cleaned as stragglers.
  */
-export async function cleanupOldWebhookEvents(): Promise<{
-	completedDeleted: number;
-	failedDeleted: number;
-	skippedDeleted: number;
-	staleDeleted: number;
-	hasMore: boolean;
-}> {
+export async function cleanupOldWebhookEvents(): Promise<CronResult> {
 	logger.info("Starting webhook events cleanup", { cronJob: CRON_JOB });
 
 	const batchStart = Date.now();
@@ -37,6 +43,7 @@ export async function cleanupOldWebhookEvents(): Promise<{
 	let failedDeleted = 0;
 	let skippedDeleted = 0;
 	let staleDeleted = 0;
+	let errors = 0;
 	let hasMoreCompleted = false;
 	let hasMoreFailed = false;
 	let hasMoreSkipped = false;
@@ -69,6 +76,8 @@ export async function cleanupOldWebhookEvents(): Promise<{
 		}
 	} catch (error) {
 		logger.error("Error deleting completed events", error, { cronJob: CRON_JOB });
+		errors++;
+		captureStepError(error, "completed");
 	}
 
 	// 2. Delete FAILED events older than 180 days (bounded)
@@ -93,6 +102,8 @@ export async function cleanupOldWebhookEvents(): Promise<{
 			logger.info("Deleted failed events", { cronJob: CRON_JOB, count: failedDeleted });
 		} catch (error) {
 			logger.error("Error deleting failed events", error, { cronJob: CRON_JOB });
+			errors++;
+			captureStepError(error, "failed");
 		}
 	}
 
@@ -118,12 +129,15 @@ export async function cleanupOldWebhookEvents(): Promise<{
 			logger.info("Deleted skipped events", { cronJob: CRON_JOB, count: skippedDeleted });
 		} catch (error) {
 			logger.error("Error deleting skipped events", error, { cronJob: CRON_JOB });
+			errors++;
+			captureStepError(error, "skipped");
 		}
 	}
 
 	// 4. Delete stale PROCESSING/PENDING events older than 90 days (bounded)
-	// These should not exist: PROCESSING events are recovered by retry-webhooks,
-	// and PENDING events should be processed quickly. Clean up any stragglers.
+	// PROCESSING events older than 24h are flipped back to FAILED by retry-webhooks
+	// (modules/cron/services/retry-webhooks.service.ts) so this step only catches
+	// 90d+ stragglers that retry-webhooks has given up on. PENDING should be rare.
 	if (Date.now() - batchStart < BATCH_DEADLINE_MS) {
 		try {
 			const staleExpiryDate = new Date(
@@ -156,16 +170,22 @@ export async function cleanupOldWebhookEvents(): Promise<{
 			}
 		} catch (error) {
 			logger.error("Error deleting stale events", error, { cronJob: CRON_JOB });
+			errors++;
+			captureStepError(error, "stale");
 		}
 	}
 
 	logger.info("Cleanup completed", { cronJob: CRON_JOB });
 
 	return {
+		processed: completedDeleted + failedDeleted + skippedDeleted + staleDeleted,
+		errored: errors,
+		skipped: 0,
 		completedDeleted,
 		failedDeleted,
 		skippedDeleted,
 		staleDeleted,
+		errors,
 		hasMore: hasMoreCompleted || hasMoreFailed || hasMoreSkipped || hasMoreStale,
 	};
 }

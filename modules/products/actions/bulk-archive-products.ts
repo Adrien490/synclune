@@ -19,6 +19,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { updateTag } from "next/cache";
 
 import { bulkArchiveProductsSchema } from "../schemas/product.schemas";
+import { canTransitionProductStatus } from "../services/product-status-validation.service";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 
 /**
@@ -70,7 +71,7 @@ export async function bulkArchiveProducts(
 			return error("Aucun produit valide trouvé");
 		}
 
-		const eligible = products.filter((p) => p.status !== targetStatus);
+		const eligible = products.filter((p) => canTransitionProductStatus(p.status, targetStatus));
 
 		if (eligible.length === 0) {
 			return error(

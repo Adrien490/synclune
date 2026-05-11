@@ -6,7 +6,17 @@ import type { StoreStatus } from "../types/store-settings.types";
 
 /** Get store open/closed status for storefront gate. Fail-open: never block by accident. */
 export async function getStoreStatus(): Promise<StoreStatus> {
-	return fetchStoreStatus();
+	const cached = await fetchStoreStatus();
+
+	// Eventual-consistency fallback OUTSIDE cache: if reopensAt has passed, treat the
+	// store as open even before the cron `reopen-store` (every 15 min) flips the DB row.
+	// Date.now() can NOT live inside the "use cache" body — it would be frozen at
+	// cache-write time and never re-evaluate.
+	if (cached.isClosed && cached.reopensAt && cached.reopensAt.getTime() <= Date.now()) {
+		return { isClosed: false, closureMessage: null, reopensAt: null };
+	}
+
+	return cached;
 }
 
 async function fetchStoreStatus(): Promise<StoreStatus> {

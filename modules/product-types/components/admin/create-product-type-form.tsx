@@ -18,6 +18,8 @@ import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
+import { isCreateProductTypeSuccessData } from "../../utils/is-create-product-type-success-data";
+
 interface CreateProductTypeFormProps {
 	onSuccess?: () => void;
 	onCreated?: (id: string) => void;
@@ -44,7 +46,17 @@ export function CreateProductTypeForm({
 	});
 
 	const isDirty = form.state.isDirty;
-	const allowNavigationRef = useRef<(() => void) | null>(null);
+	// Assignment during render est OK pour refs (React 19 docs). Pas de useEffect.
+	const allowNavigationLatestRef = useRef<(() => void) | null>(null);
+	const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	// Cleanup setTimeout au unmount (évite memory leak + router.push sur composant détruit).
+	useEffect(
+		() => () => {
+			if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+		},
+		[],
+	);
 
 	const [, action, isPending] = useActionState(
 		withCallbacks(
@@ -52,24 +64,16 @@ export function CreateProductTypeForm({
 			// eslint-disable-next-line react-hooks/refs -- callback is invoked after submit, not during render
 			createToastCallbacks({
 				loadingMessage: "Création du type…",
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"data" in result &&
-						result.data &&
-						typeof result.data === "object" &&
-						"id" in result.data &&
-						typeof result.data.id === "string"
-					) {
+				onSuccess: (result) => {
+					if (isCreateProductTypeSuccessData(result.data)) {
 						onCreated?.(result.data.id);
 					}
 					haptic("success");
-					allowNavigationRef.current?.();
+					allowNavigationLatestRef.current?.();
 					form.reset();
 					onSuccess?.();
 					if (redirectOnSuccess) {
-						setTimeout(
+						redirectTimeoutRef.current = setTimeout(
 							() => withViewTransition(() => router.push("/admin/catalogue/types-de-produits")),
 							FORM_SUCCESS_REDIRECT_DELAY_MS,
 						);
@@ -85,10 +89,10 @@ export function CreateProductTypeForm({
 	// natifs sont peu utiles sur mobile et entrent en conflit avec les gestes
 	// swipe-back iOS / Android — UX moins bonne que la perte de saisie).
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
-
-	useEffect(() => {
-		allowNavigationRef.current = allowNavigation;
-	}, [allowNavigation]);
+	// Assignment durant render OK pour refs (React 19 docs : pattern recommandé
+	// vs useEffect pour sync. La fonction est invoquée après submit hors render).
+	// eslint-disable-next-line react-hooks/refs
+	allowNavigationLatestRef.current = allowNavigation;
 
 	return (
 		<form

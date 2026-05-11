@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import {
 	BulkSelectionHeaderCheckbox,
@@ -5,6 +7,7 @@ import {
 	BulkSelectionRowCheckbox,
 	TableEmptyState,
 } from "@/shared/components/data-table";
+import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -16,7 +19,7 @@ import {
 	TableRow,
 } from "@/shared/components/ui/table";
 import type { GetProductTypesReturn } from "@/modules/product-types/data/get-product-types";
-import { Tags } from "lucide-react";
+import { Lock, Tags } from "lucide-react";
 import { ProductTypeActiveToggle } from "./product-type-active-toggle";
 import { ProductTypeRowActions } from "./product-type-row-actions";
 import { ProductTypesBulkActionsBar } from "./product-types-bulk-actions-bar";
@@ -25,11 +28,13 @@ import { CreateProductTypeButton } from "./create-product-type-button";
 interface ProductTypesDataTableProps {
 	productTypesPromise: Promise<GetProductTypesReturn>;
 	perPage: number;
+	hasActiveFilters?: boolean;
 }
 
 export async function ProductTypesDataTable({
 	productTypesPromise,
 	perPage,
+	hasActiveFilters,
 }: ProductTypesDataTableProps) {
 	const { productTypes, pagination } = await productTypesPromise;
 
@@ -39,8 +44,18 @@ export async function ProductTypesDataTable({
 				className="hidden md:flex"
 				icon={Tags}
 				title="Aucun type trouvé"
-				description="Aucun type de bijou ne correspond aux critères de recherche."
-				actionElement={<CreateProductTypeButton />}
+				description={
+					hasActiveFilters
+						? "Aucun type de bijou ne correspond aux critères de recherche."
+						: "Aucun type de bijou pour l'instant."
+				}
+				actionElement={
+					hasActiveFilters ? (
+						<EmptyResetFiltersAction href="/admin/catalogue/types-de-produits" />
+					) : (
+						<CreateProductTypeButton />
+					)
+				}
 			/>
 		);
 	}
@@ -106,13 +121,10 @@ export async function ProductTypesDataTable({
 										<TableRow key={productType.id}>
 											<TableCell>
 												{productType.isSystem ? (
-													<span
-														className="text-muted-foreground inline-flex size-4 items-center justify-center text-xs"
+													<Lock
+														className="text-muted-foreground inline-block size-4"
 														aria-label="Type système verrouillé"
-														title="Type système verrouillé"
-													>
-														🔒
-													</span>
+													/>
 												) : (
 													<BulkSelectionRowCheckbox
 														id={productType.id}
@@ -122,12 +134,16 @@ export async function ProductTypesDataTable({
 											</TableCell>
 											<TableCell>
 												<div className="overflow-hidden">
-													<span
-														className="text-foreground block truncate font-semibold"
+													<Link
+														href={`/admin/catalogue/types-de-produits/${productType.slug}`}
+														className="text-foreground hover:text-foreground/80 focus-visible:ring-ring block truncate font-semibold outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
 														title={productType.label}
+														style={{
+															viewTransitionName: `product-type-${productType.slug}`,
+														}}
 													>
 														{productType.label}
-													</span>
+													</Link>
 												</div>
 											</TableCell>
 											<TableCell>

@@ -29,11 +29,18 @@ export function MaterialActiveToggle({ materialId, isActive }: MaterialActiveTog
 		});
 	};
 
+	const busy = isPending || isTransitionPending;
+
 	return (
-		<ActiveToggle
-			isActive={optimisticIsActive}
-			onToggle={handleToggle}
-			isPending={isPending || isTransitionPending}
-		/>
+		<>
+			<ActiveToggle isActive={optimisticIsActive} onToggle={handleToggle} isPending={busy} />
+			<span className="sr-only" aria-live="polite">
+				{busy
+					? "Mise à jour du statut du matériau en cours"
+					: optimisticIsActive
+						? "Matériau activé"
+						: "Matériau désactivé"}
+			</span>
+		</>
 	);
 }

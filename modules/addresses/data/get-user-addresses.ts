@@ -44,7 +44,7 @@ export async function getUserAddresses(): Promise<GetUserAddressesReturn | null>
  */
 export async function fetchUserAddresses(userId: string): Promise<GetUserAddressesReturn> {
 	"use cache: private";
-	cacheLife("checkout");
+	cacheLife("user");
 	cacheTag(ADDRESSES_CACHE_TAGS.USER_ADDRESSES(userId));
 
 	const addresses = await prisma.address.findMany({
@@ -55,5 +55,14 @@ export async function fetchUserAddresses(userId: string): Promise<GetUserAddress
 		orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
 	});
 
-	return addresses;
+	// Snapshot architecture (Order copies fields, no FK to Address) means a user can
+	// accumulate duplicates across `saveInfo` checkouts. Dedupe on the displayable
+	// signature, keeping the first occurrence (default first per orderBy above).
+	const seen = new Set<string>();
+	return addresses.filter((addr) => {
+		const key = `${addr.address1.trim().toLowerCase()}|${addr.postalCode.trim()}|${addr.city.trim().toLowerCase()}|${addr.country}`;
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
+	});
 }

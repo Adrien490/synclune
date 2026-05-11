@@ -21,6 +21,7 @@ import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { logAudit } from "@/shared/lib/audit-log";
 import { rejectRefundSchema } from "../schemas/refund.schemas";
+import { canTransition } from "../services/refund-state-machine.service";
 
 /**
  * Rejette un remboursement (passe de PENDING à REJECTED)
@@ -83,7 +84,7 @@ export async function rejectRefund(
 			return error(REFUND_ERROR_MESSAGES.ALREADY_REJECTED);
 		}
 
-		if (refund.status !== RefundStatus.PENDING) {
+		if (!canTransition(refund.status, RefundStatus.REJECTED)) {
 			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
 		}
 

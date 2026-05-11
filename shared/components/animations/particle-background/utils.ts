@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Easing, Transition } from "motion/react";
-import { SHAPE_CONFIGS } from "./constants";
+import { DEFAULT_DURATION, SHAPE_CONFIGS } from "./constants";
 import type { AnimationStyle, Particle, ParticleShape } from "./types";
 import { seededRandom } from "@/shared/utils/seeded-random";
 
@@ -17,8 +17,6 @@ const MAX_CACHE_SIZE = 50;
 export function clearParticleCache() {
 	particleCache.clear();
 }
-
-const DEFAULT_DURATION = 20;
 
 /** Génère un tableau de particules avec des propriétés déterministes (memoizé) */
 export function generateParticles(

@@ -24,7 +24,12 @@ const {
 		product: { findUnique: vi.fn() },
 		color: { findUnique: vi.fn() },
 		material: { findUnique: vi.fn() },
-		productSku: { findFirst: vi.fn(), create: vi.fn(), updateMany: vi.fn() },
+		productSku: {
+			findFirst: vi.fn(),
+			findUnique: vi.fn(),
+			create: vi.fn(),
+			updateMany: vi.fn(),
+		},
 		skuMedia: { create: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -56,6 +61,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	},
 	BusinessError: class extends Error {},
 	validateInput: vi.fn().mockReturnValue({ data: {} }),
+	validationError: (message: string) => ({ status: ActionStatus.VALIDATION_ERROR, message }),
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
@@ -72,6 +78,8 @@ vi.mock("../../utils/cache.utils", () => ({
 vi.mock("../../utils/parse-media-from-form", () => ({
 	parsePrimaryImageFromForm: mockParsePrimaryImage,
 	parseGalleryMediaFromForm: mockParseGalleryMedia,
+	parsePrimaryImageFromFormStrict: mockParsePrimaryImage,
+	parseGalleryMediaFromFormStrict: mockParseGalleryMedia,
 }));
 
 import { createProductSku } from "../create-sku";
@@ -128,6 +136,8 @@ describe("createProductSku", () => {
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		mockPrisma.material.findUnique.mockResolvedValue(null);
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
+		// Used by generateUniqueTechnicalName to check uniqueness of generated SKU code
+		mockPrisma.productSku.findUnique.mockResolvedValue(null);
 		mockPrisma.productSku.create.mockResolvedValue({
 			id: "sku-new",
 			sku: "BRC-001",

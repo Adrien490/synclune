@@ -333,44 +333,28 @@ describe("updateDiscount", () => {
 	// Cache invalidation
 	// ──────────────────────────────────────────────────────────────
 
-	it("should invalidate cache tags for id and old code after update", async () => {
+	it("should invalidate cache tags for id after update", async () => {
 		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
 
 		await updateDiscount(undefined, validFormData);
 
-		// id-based invalidation
 		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-123");
-
-		// old code always invalidated via DISCOUNT_CACHE_TAGS.DETAIL
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-PROMO20");
 	});
 
-	it("should invalidate id tags and old code tag when code changed", async () => {
+	it("should invalidate id-based tags only (no code-based cache anymore)", async () => {
 		mockSanitizeText.mockReturnValue("UPDATED-CODE");
 		mockPrisma.discount.findUnique
 			.mockResolvedValueOnce({ id: "disc-123", code: "OLD-CODE" })
 			.mockResolvedValueOnce(null);
-		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-detail"]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
 
 		await updateDiscount(undefined, validFormData);
 
-		// Called once for id-based invalidation
 		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
-		// New code tag is not pre-emptively invalidated (it's not yet in cache)
 		expect(mockGetDiscountInvalidationTags).not.toHaveBeenCalledWith("UPDATED-CODE");
-	});
-
-	it("should not call getDiscountInvalidationTags for new code when code is unchanged", async () => {
-		mockSanitizeText.mockReturnValue("PROMO20");
-		mockPrisma.discount.findUnique.mockResolvedValue({ id: "disc-123", code: "PROMO20" });
-
-		await updateDiscount(undefined, validFormData);
-
-		// Only called once (for id), not a second time for unchanged code
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledTimes(1);
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
+		expect(mockGetDiscountInvalidationTags).not.toHaveBeenCalledWith("OLD-CODE");
 	});
 
 	// ──────────────────────────────────────────────────────────────

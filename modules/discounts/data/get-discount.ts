@@ -1,12 +1,11 @@
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
 
-import { cacheDiscountDetail } from "../constants/cache";
+import { cacheDiscountDetailAdmin } from "../constants/cache";
 import { GET_DISCOUNT_SELECT } from "../constants/discount.constants";
 import { getDiscountSchema } from "../schemas/discount.schemas";
 import type { GetDiscountParams, GetDiscountReturn } from "../types/discount.types";
 
-// Re-export pour compatibilité
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -31,7 +30,7 @@ export async function getDiscountById(
  */
 async function fetchDiscount(params: GetDiscountParams): Promise<GetDiscountReturn> {
 	"use cache";
-	cacheDiscountDetail(params.id);
+	cacheDiscountDetailAdmin(params.id);
 
 	try {
 		const discount = await prisma.discount.findUnique({

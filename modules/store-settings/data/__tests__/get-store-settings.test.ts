@@ -31,6 +31,12 @@ const MOCK_SETTINGS = {
 	closedAt: null,
 	closedBy: null,
 	updatedAt: new Date("2026-03-14T10:00:00Z"),
+	announcementMessage: null,
+	announcementLink: null,
+	announcementStartsAt: null,
+	announcementEndsAt: null,
+	announcementIsActive: false,
+	clickAndCollectEnabled: false,
 };
 
 // ============================================================================
@@ -69,6 +75,7 @@ describe("getStoreSettings", () => {
 				announcementStartsAt: true,
 				announcementEndsAt: true,
 				announcementIsActive: true,
+				clickAndCollectEnabled: true,
 			},
 		});
 	});

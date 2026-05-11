@@ -88,8 +88,8 @@ vi.mock("../../schemas/review.schemas", () => ({
 vi.mock("../../services/review-stats.service", () => ({
 	updateProductReviewStats: mockUpdateProductReviewStats,
 }));
-vi.mock("../../data/can-user-review-product", () => ({
-	canUserReviewProduct: mockCanUserReviewProduct,
+vi.mock("../../services/eligibility.service", () => ({
+	checkReviewEligibility: mockCanUserReviewProduct,
 }));
 vi.mock("@/app/generated/prisma/client", () => ({
 	Prisma: {

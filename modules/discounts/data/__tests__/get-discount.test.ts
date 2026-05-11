@@ -4,14 +4,16 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockCacheLife, mockCacheTag, mockCacheDiscountDetail } = vi.hoisted(() => ({
-	mockPrisma: {
-		discount: { findUnique: vi.fn() },
-	},
-	mockCacheLife: vi.fn(),
-	mockCacheTag: vi.fn(),
-	mockCacheDiscountDetail: vi.fn(),
-}));
+const { mockPrisma, mockCacheLife, mockCacheTag, mockCacheDiscountDetailAdmin } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			discount: { findUnique: vi.fn() },
+		},
+		mockCacheLife: vi.fn(),
+		mockCacheTag: vi.fn(),
+		mockCacheDiscountDetailAdmin: vi.fn(),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -25,7 +27,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("../../constants/cache", () => ({
-	cacheDiscountDetail: mockCacheDiscountDetail,
+	cacheDiscountDetailAdmin: mockCacheDiscountDetailAdmin,
 }));
 
 vi.mock("../../constants/discount.constants", () => ({
@@ -170,7 +172,7 @@ describe("getDiscountById", () => {
 		);
 	});
 
-	it("calls cacheDiscountDetail with the discount id", async () => {
+	it("calls cacheDiscountDetailAdmin with the discount id", async () => {
 		mockSchema.safeParse.mockReturnValue({
 			success: true,
 			data: { id: "discount-cuid-42" },
@@ -178,7 +180,7 @@ describe("getDiscountById", () => {
 
 		await getDiscountById({ id: "discount-cuid-42" });
 
-		expect(mockCacheDiscountDetail).toHaveBeenCalledWith("discount-cuid-42");
+		expect(mockCacheDiscountDetailAdmin).toHaveBeenCalledWith("discount-cuid-42");
 	});
 
 	it("returns null on DB error", async () => {

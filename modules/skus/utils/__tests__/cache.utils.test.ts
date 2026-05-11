@@ -50,10 +50,10 @@ describe("cacheProductSkus", () => {
 // ============================================================================
 
 describe("cacheSkuDetailById", () => {
-	it("sets productDetail cache life and tags", () => {
+	it("sets user cache life (admin freshness) and tags", () => {
 		cacheSkuDetailById("sku-456");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 		expect(mockCacheTag).toHaveBeenCalledWith("sku-id-sku-456", "skus-list");
 	});
 });
@@ -119,14 +119,15 @@ describe("getSkuInvalidationTags", () => {
 // ============================================================================
 
 describe("getInventoryInvalidationTags", () => {
-	it("returns base inventory tags without skuIds", () => {
+	it("returns base inventory tags without skuIds (including products-list)", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123");
 
 		expect(tags).toContain("product-bague-or");
 		expect(tags).toContain("product-prod-123-skus");
+		expect(tags).toContain("products-list");
 		expect(tags).toContain("admin-inventory-list");
 		expect(tags).toContain("admin-badges");
-		expect(tags).toHaveLength(4);
+		expect(tags).toHaveLength(5);
 	});
 
 	it("includes SKU_STOCK tags for each skuId", () => {
@@ -134,13 +135,13 @@ describe("getInventoryInvalidationTags", () => {
 
 		expect(tags).toContain("sku-stock-sku-1");
 		expect(tags).toContain("sku-stock-sku-2");
-		expect(tags).toHaveLength(6);
+		expect(tags).toHaveLength(7);
 	});
 
 	it("handles empty skuIds array", () => {
 		const tags = getInventoryInvalidationTags("bague-or", "prod-123", []);
 
-		expect(tags).toHaveLength(4);
+		expect(tags).toHaveLength(5);
 	});
 });
 

@@ -77,11 +77,11 @@ export async function deleteProductSku(
 						status: true,
 						_count: {
 							select: {
-								skus: true,
+								skus: { where: { deletedAt: null } },
 							},
 						},
 						skus: {
-							where: { isActive: true },
+							where: { isActive: true, deletedAt: null },
 							select: { id: true },
 						},
 					},

@@ -2,7 +2,6 @@
  * Cache configuration for Orders module
  */
 
-import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 
 // ============================================
@@ -36,23 +35,6 @@ export const ORDERS_CACHE_TAGS = {
 } as const;
 
 // ============================================
-// CACHE CONFIGURATION HELPERS
-// ============================================
-
-/**
- * Configure le cache pour les données admin du dashboard commandes
- * - Utilisé pour : liste admin, détails commande
- * - Durée : 1min fraîche, 30s revalidation, 5min expiration
- * @param tag - Tag de cache optionnel (utiliser ORDERS_CACHE_TAGS ou SHARED_CACHE_TAGS)
- */
-export function cacheOrdersDashboard(tag?: string) {
-	cacheLife("user");
-	if (tag) {
-		cacheTag(tag);
-	}
-}
-
-// ============================================
 // INVALIDATION HELPERS
 // ============================================
 
@@ -74,6 +56,8 @@ export function getOrderInvalidationTags(userId?: string, orderId?: string): str
 			ORDERS_CACHE_TAGS.USER_ORDERS(userId),
 			ORDERS_CACHE_TAGS.LAST_ORDER(userId),
 			ORDERS_CACHE_TAGS.ACCOUNT_STATS(userId),
+			// Page admin détail user : compteur de commandes (cf. modules/users/data/get-user-detail-admin.ts)
+			`user-orders-count-${userId}`,
 		);
 	}
 

@@ -126,13 +126,13 @@ describe("toggleEmailVerified", () => {
 		}));
 	});
 
-	it("should return rate limit error first", async () => {
+	it("should return rate limit error before touching DB", async () => {
 		mockEnforceRateLimit.mockResolvedValue({
 			error: { status: ActionStatus.ERROR, message: "Rate" },
 		});
 		const result = await toggleEmailVerified(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockRequireAdminWithUser).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("should return auth error when not admin", async () => {

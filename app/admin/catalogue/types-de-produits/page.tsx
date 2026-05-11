@@ -79,6 +79,8 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 		filters: parseFilters(params),
 	});
 
+	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
+
 	return (
 		<>
 			<ProductTypeFormDialog />
@@ -137,15 +139,17 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					<ProductTypesMobileList
 						productTypesPromise={productTypesPromise}
 						perPage={perPage}
-						hasActiveFilters={
-							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
-						}
+						hasActiveFilters={hasActiveFilters}
 					/>
 				</Suspense>
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<ProductTypesDataTableSkeleton />}>
-					<ProductTypesDataTable productTypesPromise={productTypesPromise} perPage={perPage} />
+					<ProductTypesDataTable
+						productTypesPromise={productTypesPromise}
+						perPage={perPage}
+						hasActiveFilters={hasActiveFilters}
+					/>
 				</Suspense>
 			</div>
 		</>

@@ -52,7 +52,9 @@ export default async function AdminColorDetailPage({ params }: { params: ColorDe
 		notFound();
 	}
 
-	const distinctProductsCount = await getColorDistinctProductCount(color.id);
+	// Defer distinct count via Suspense streaming — avoids blocking the page
+	// shell on a query that drives a single sidebar KPI.
+	const distinctProductsCountPromise = getColorDistinctProductCount(color.id);
 
 	return (
 		<div className="space-y-6">
@@ -72,7 +74,7 @@ export default async function AdminColorDetailPage({ params }: { params: ColorDe
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<ColorDetailPage color={color} distinctProductsCount={distinctProductsCount} />
+			<ColorDetailPage color={color} distinctProductsCountPromise={distinctProductsCountPromise} />
 
 			<ColorFormDialog />
 			<ColorsAdminDialogs />

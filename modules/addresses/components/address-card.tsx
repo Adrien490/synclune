@@ -1,21 +1,18 @@
 import { Badge } from "@/shared/components/ui/badge";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { Star, Phone } from "lucide-react";
 import type { UserAddress } from "../types/user-addresses.types";
 import { AddressCardActions } from "./address-card-actions";
 import { cn } from "@/shared/utils/cn";
 
-function formatPhone(phone: string): string {
-	// Format FR numbers: +33612345678 → +33 6 12 34 56 78
-	const match = phone.match(/^\+33(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/);
-	if (match) {
-		return `+33 ${match[1]} ${match[2]} ${match[3]} ${match[4]} ${match[5]}`;
-	}
-	// Format 0X XX XX XX XX
-	const match2 = phone.match(/^0(\d)(\d{2})(\d{2})(\d{2})(\d{2})$/);
-	if (match2) {
-		return `0${match2[1]} ${match2[2]} ${match2[3]} ${match2[4]} ${match2[5]}`;
-	}
-	return phone;
+function formatPhone(phone: string, country: string): string {
+	// libphonenumber-js handles every shipping country supported by SHIPPING_COUNTRIES.
+	// Falls back to the raw value when parsing fails (rather than crashing).
+	const parsed = parsePhoneNumberFromString(
+		phone,
+		country as Parameters<typeof parsePhoneNumberFromString>[1],
+	);
+	return parsed?.formatInternational() ?? phone;
 }
 
 interface AddressCardProps {
@@ -58,7 +55,7 @@ export function AddressCard({ address }: AddressCardProps) {
 			{/* Téléphone */}
 			<div className="text-muted-foreground border-border/50 flex items-center gap-1.5 border-t pt-2 text-sm">
 				<Phone className="size-3.5" aria-hidden="true" />
-				<span className="truncate">{formatPhone(address.phone)}</span>
+				<span className="truncate">{formatPhone(address.phone, address.country)}</span>
 			</div>
 		</div>
 	);

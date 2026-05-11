@@ -283,7 +283,7 @@ describe("useExportUserData", () => {
 // ============================================================================
 
 describe("useExportUserDataAdmin", () => {
-	const exportPayload = { orders: [], profile: { name: "Bob" } };
+	const exportPayload = { orders: [], profile: { name: "Bob Martin" } };
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -304,17 +304,17 @@ describe("useExportUserDataAdmin", () => {
 		const { result } = renderHook(() => useExportUserDataAdmin());
 
 		await act(async () => {
-			result.current.exportData("user-456", "Bob Martin");
+			result.current.exportData("user-456");
 		});
 
 		expect(mockExportUserDataAdmin).toHaveBeenCalledWith("user-456");
 	});
 
-	it("calls downloadJSON with a filename containing the sanitized userName", async () => {
+	it("derives the filename from data.profile.name (sanitized)", async () => {
 		const { result } = renderHook(() => useExportUserDataAdmin());
 
 		await act(async () => {
-			result.current.exportData("user-456", "Bob Martin");
+			result.current.exportData("user-456");
 		});
 
 		expect(mockDownloadJSON).toHaveBeenCalledWith(
@@ -323,12 +323,31 @@ describe("useExportUserDataAdmin", () => {
 		);
 	});
 
+	it("falls back to 'utilisateur' when profile.name is null", async () => {
+		mockExportUserDataAdmin.mockResolvedValue({
+			status: "success" as const,
+			message: "Export réussi",
+			data: { orders: [], profile: { name: null } },
+		});
+
+		const { result } = renderHook(() => useExportUserDataAdmin());
+
+		await act(async () => {
+			result.current.exportData("user-456");
+		});
+
+		expect(mockDownloadJSON).toHaveBeenCalledWith(
+			expect.any(Object),
+			expect.stringMatching(/synclune-donnees-utilisateur-.*\.json/),
+		);
+	});
+
 	it("calls onSuccess with data when action succeeds", async () => {
 		const onSuccess = vi.fn();
 		const { result } = renderHook(() => useExportUserDataAdmin({ onSuccess }));
 
 		await act(async () => {
-			result.current.exportData("user-456", "Bob Martin");
+			result.current.exportData("user-456");
 		});
 
 		expect(onSuccess).toHaveBeenCalledWith(exportPayload);
@@ -340,7 +359,7 @@ describe("useExportUserDataAdmin", () => {
 		const { result } = renderHook(() => useExportUserDataAdmin({ onError }));
 
 		await act(async () => {
-			result.current.exportData("user-456", "Bob Martin");
+			result.current.exportData("user-456");
 		});
 
 		expect(onError).toHaveBeenCalledWith("Failed");

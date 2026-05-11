@@ -30,9 +30,9 @@ export function cacheStoreStatus() {
 	cacheTag(STORE_SETTINGS_CACHE_TAGS.STATUS);
 }
 
-/** Cache for admin settings - 1m stale / 30s revalidate */
+/** Cache for admin settings - reference profile (config quasi-statique, mutations admin invalident le tag) */
 export function cacheStoreSettings() {
-	cacheLife("user");
+	cacheLife("reference");
 	cacheTag(STORE_SETTINGS_CACHE_TAGS.SETTINGS);
 }
 

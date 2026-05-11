@@ -524,6 +524,7 @@ describe("sendRefundFailedAlert", () => {
 			id: "ref-1",
 			status: "FAILED" as const,
 			amount: 5000,
+			reason: "CUSTOMER_REQUEST" as const,
 			orderId: "order-1",
 			order: {
 				id: "order-1",
@@ -553,6 +554,7 @@ describe("sendRefundFailedAlert", () => {
 			id: "ref-1",
 			status: "FAILED" as const,
 			amount: 1000,
+			reason: "OTHER" as const,
 			orderId: "order-1",
 			order: {
 				id: "order-1",
@@ -572,6 +574,7 @@ describe("sendRefundFailedAlert", () => {
 			id: "ref-1",
 			status: "FAILED" as const,
 			amount: 2000,
+			reason: "DEFECTIVE" as const,
 			orderId: "order-1",
 			order: {
 				id: "order-1",

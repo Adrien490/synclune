@@ -34,7 +34,10 @@ export function ProductTypeDetailHeader({ productType }: ProductTypeDetailHeader
 	return (
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 			<div className="min-w-0 space-y-2">
-				<h1 className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl">
+				<h1
+					className="font-display text-foreground text-xl leading-tight font-normal tracking-normal sm:text-3xl lg:text-4xl"
+					style={{ viewTransitionName: `product-type-${productType.slug}` }}
+				>
 					{productType.label}
 				</h1>
 				<div className="flex flex-wrap items-center gap-2">

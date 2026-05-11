@@ -21,6 +21,7 @@ import { buildUrl, ROUTES } from "@/shared/constants/urls";
 import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { createStripeRefund } from "../lib/stripe-refund";
 import { processRefundSchema } from "../schemas/refund.schemas";
+import { captureRefundError } from "../utils/capture-refund-error";
 
 // Type pour le résultat de la query raw
 type RefundLockRow = {
@@ -28,6 +29,7 @@ type RefundLockRow = {
 	status: string;
 	amount: number;
 	reason: string;
+	attempt_count: number;
 	order_id: string;
 	order_number: string;
 	order_total: number;
@@ -92,6 +94,7 @@ export async function processRefund(
 					r.status::text,
 					r.amount,
 					r.reason::text,
+					r."attemptCount" as attempt_count,
 					o.id as order_id,
 					o."orderNumber" as order_number,
 					o.total as order_total,
@@ -159,6 +162,10 @@ export async function processRefund(
 		// ÉTAPE 2: Appel Stripe (hors transaction, avec idempotencyKey)
 		// La clé d'idempotence garantit qu'un retry ne crée pas de doublon
 		// ========================================================================
+		// P0.2: rotation de la clé d'idempotence par tentative.
+		// Stripe garde les réponses 4xx en cache 24h ; sans rotation, un
+		// `retryFailedRefund` re-déclenchant `processRefund` renverrait la
+		// réponse cachée (échec) au lieu d'effectuer un vrai retry.
 		const stripeResult = await createStripeRefund({
 			paymentIntentId: refundData.refund.stripe_payment_intent_id ?? undefined,
 			amount: refundData.refund.amount,
@@ -168,20 +175,29 @@ export async function processRefund(
 				order_number: refundData.refund.order_number,
 				order_id: refundData.refund.order_id,
 			},
-			idempotencyKey: `refund_${id}`,
+			idempotencyKey: `refund_${id}_${refundData.refund.attempt_count}`,
 		});
 
 		// P0.1: Gérer les différents états de retour Stripe
 		if (!stripeResult.success && !stripeResult.pending) {
-			// Marquer le remboursement comme échoué avec la raison
+			// Marquer le remboursement comme échoué avec la raison.
+			// Guard `status: APPROVED` empêche un cancelRefund concurrent (qui a
+			// passé le refund en CANCELLED entre Step 1 commit et l'appel Stripe)
+			// d'être écrasé par FAILED.
 			const failureMessage = stripeResult.error ?? REFUND_ERROR_MESSAGES.STRIPE_ERROR;
-			await prisma.refund.update({
-				where: { id },
+			const updated = await prisma.refund.updateMany({
+				where: { id, status: RefundStatus.APPROVED },
 				data: {
 					status: RefundStatus.FAILED,
 					failureReason: failureMessage,
 				},
 			});
+			if (updated.count === 0) {
+				logger.warn(
+					`Refund ${id} no longer APPROVED — concurrent state change detected; skipping FAILED transition`,
+					{ refundId: id, stripeRefundId: stripeResult.refundId ?? null },
+				);
+			}
 
 			// Invalidate cache so UI reflects FAILED status
 			updateTag(ORDERS_CACHE_TAGS.LIST);
@@ -201,12 +217,30 @@ export async function processRefund(
 
 		// P0.1: Si pending, garder APPROVED et attendre webhook refund.updated
 		if (stripeResult.pending) {
-			// Mettre à jour avec l'ID Stripe mais garder APPROVED
-			await prisma.refund.update({
-				where: { id },
+			// Mettre à jour avec l'ID Stripe mais garder APPROVED (guard TOCTOU)
+			await prisma.refund.updateMany({
+				where: { id, status: RefundStatus.APPROVED },
 				data: {
 					stripeRefundId: stripeResult.refundId,
-					// Status reste APPROVED - sera COMPLETED par webhook
+				},
+			});
+
+			// Cache invalidation + audit log même sur pending (UI doit refléter
+			// l'attempt ; conformité Art. L123-22 trace toutes les tentatives).
+			updateTag(REFUNDS_CACHE_TAGS.LIST);
+			updateTag(REFUNDS_CACHE_TAGS.DETAIL(id));
+			updateTag(ORDERS_CACHE_TAGS.REFUNDS(refundData.refund.order_id));
+			void logAudit({
+				adminId: adminUser.id,
+				adminName: adminUser.name ?? adminUser.email,
+				action: "refund.process.pending",
+				targetType: "refund",
+				targetId: id,
+				metadata: {
+					orderId: refundData.refund.order_id,
+					orderNumber: refundData.refund.order_number,
+					amount: refundData.refund.amount,
+					stripeRefundId: stripeResult.refundId,
 				},
 			});
 
@@ -219,10 +253,11 @@ export async function processRefund(
 
 		// ========================================================================
 		// ÉTAPE 2.5: Persister le stripeRefundId AVANT la finalisation
-		// Si Step 3 échoue, le cron reconciler pourra retrouver ce refund via stripeRefundId
+		// Si Step 3 échoue, le cron reconciler pourra retrouver ce refund via stripeRefundId.
+		// Guard `status: APPROVED` protège contre un cancelRefund concurrent.
 		// ========================================================================
-		await prisma.refund.update({
-			where: { id },
+		await prisma.refund.updateMany({
+			where: { id, status: RefundStatus.APPROVED },
 			data: { stripeRefundId: stripeResult.refundId },
 		});
 
@@ -230,36 +265,54 @@ export async function processRefund(
 		// ÉTAPE 3: Finalisation (transaction atomique)
 		// Met à jour le statut, restaure le stock, et update la commande
 		// ========================================================================
+		// P1.9: coalesce restocks par sku_id pour Promise.all parallèle (évite
+		// timeout transaction quand refund avec 100 items).
+		const restockBySkuId = new Map<string, number>();
+		for (const item of refundData.items) {
+			if (item.restock) {
+				restockBySkuId.set(item.sku_id, (restockBySkuId.get(item.sku_id) ?? 0) + item.quantity);
+			}
+		}
+		// P2.1: compteur réel mis à jour quand l'update réussit
+		let actualRestockedCount = 0;
+
 		try {
 			await prisma.$transaction(async (tx) => {
-				// 1. Mettre à jour le remboursement
-				await tx.refund.update({
-					where: { id },
+				// 1. Mettre à jour le remboursement (guard TOCTOU)
+				const updated = await tx.refund.updateMany({
+					where: { id, status: RefundStatus.APPROVED },
 					data: {
 						status: RefundStatus.COMPLETED,
 						stripeRefundId: stripeResult.refundId,
 						processedAt: new Date(),
 					},
 				});
-
-				// 3. Restaurer le stock pour les articles avec restock=true
-				for (const item of refundData.items) {
-					if (item.restock) {
-						try {
-							await tx.productSku.update({
-								where: { id: item.sku_id },
-								data: {
-									inventory: { increment: item.quantity },
-								},
-							});
-						} catch {
-							// SKU may have been deleted between refund creation and processing
-							logger.warn(`SKU ${item.sku_id} not found, skipping restock`);
-						}
-					}
+				if (updated.count === 0) {
+					// Concurrent cancellation / external webhook already finalized.
+					// Abort transaction — let the reconcile-refunds cron / webhook
+					// path observe the real state.
+					throw new Error("CONCURRENT_STATE_CHANGE");
 				}
 
-				// 4. Calculer si la commande est totalement ou partiellement remboursée
+				// 2. Restaurer le stock pour les articles avec restock=true (parallèle)
+				const restockResults = await Promise.all(
+					Array.from(restockBySkuId.entries()).map(([skuId, qty]) =>
+						tx.productSku
+							.update({
+								where: { id: skuId },
+								data: { inventory: { increment: qty } },
+							})
+							.then(() => true)
+							.catch(() => {
+								// SKU may have been deleted between refund creation and processing
+								logger.warn(`SKU ${skuId} not found, skipping restock`);
+								return false;
+							}),
+					),
+				);
+				actualRestockedCount = restockResults.filter(Boolean).length;
+
+				// 3. Calculer si la commande est totalement ou partiellement remboursée
 				const totalRefundedAfter = refundData.totalRefundedBefore + refundData.refund.amount;
 
 				// Mettre à jour le paymentStatus selon le montant remboursé
@@ -291,14 +344,14 @@ export async function processRefund(
 				updateTag(ORDERS_CACHE_TAGS.ACCOUNT_STATS(refundData.refund.order_user_id));
 			}
 
-			// Invalider le cache d'inventaire et vitrine si des articles ont été restockés
-			const restockedItems = refundData.items.filter((i) => i.restock);
-			const restockedCount = restockedItems.length;
-			if (restockedCount > 0) {
+			// Invalider le cache d'inventaire et vitrine si des articles ont été restockés.
+			// On utilise actualRestockedCount (P2.1) pour distinguer "demandé" vs "réussi"
+			// (SKU peuvent avoir été supprimés entre creation refund et processing).
+			const restockedSkuIds = Array.from(restockBySkuId.keys());
+			if (actualRestockedCount > 0 && restockedSkuIds.length > 0) {
 				updateTag(SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST);
 
 				// Invalidate storefront SKU stock and product caches
-				const restockedSkuIds = restockedItems.map((i) => i.sku_id);
 				for (const skuId of restockedSkuIds) {
 					updateTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId));
 				}
@@ -329,7 +382,8 @@ export async function processRefund(
 					orderNumber: refundData.refund.order_number,
 					amount: refundData.refund.amount,
 					stripeRefundId: stripeResult.refundId,
-					restockedItems: restockedCount,
+					restockedItems: actualRestockedCount,
+					restockedItemsRequested: restockBySkuId.size,
 				},
 			});
 
@@ -368,7 +422,7 @@ export async function processRefund(
 			}
 
 			const restockMessage =
-				restockedCount > 0 ? ` Stock restauré pour ${restockedCount} article(s).` : "";
+				actualRestockedCount > 0 ? ` Stock restauré pour ${actualRestockedCount} article(s).` : "";
 
 			return {
 				status: ActionStatus.SUCCESS,
@@ -379,8 +433,13 @@ export async function processRefund(
 			// SAGA compensation: Stripe refund succeeded but DB finalization failed.
 			// The stripeRefundId was already persisted in Step 2.5, so the cron
 			// reconciler will pick this up and finalize it.
+			const isConcurrent =
+				step3Error instanceof Error && step3Error.message === "CONCURRENT_STATE_CHANGE";
+
 			logger.error(
-				"SAGA Step 3 failed: Stripe refund succeeded but DB finalization failed",
+				isConcurrent
+					? "SAGA Step 3 aborted: refund no longer APPROVED (concurrent state change)"
+					: "SAGA Step 3 failed: Stripe refund succeeded but DB finalization failed",
 				step3Error,
 				{
 					refundId: id,
@@ -389,6 +448,15 @@ export async function processRefund(
 					amount: refundData.refund.amount,
 				},
 			);
+			captureRefundError(step3Error, {
+				action: "processRefund",
+				step: isConcurrent ? "step3-concurrent-state-change" : "step3-finalize",
+				refundId: id,
+				stripeRefundId: stripeResult.refundId,
+				orderId: refundData.refund.order_id,
+				orderNumber: refundData.refund.order_number,
+				amount: refundData.refund.amount,
+			});
 			return {
 				status: ActionStatus.WARNING,
 				message:

@@ -20,6 +20,7 @@ import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { logAudit } from "@/shared/lib/audit-log";
 import { approveRefundSchema } from "../schemas/refund.schemas";
+import { canTransition } from "../services/refund-state-machine.service";
 
 /**
  * Approuve un remboursement (passe de PENDING à APPROVED)
@@ -78,7 +79,7 @@ export async function approveRefund(
 			return error(REFUND_ERROR_MESSAGES.ALREADY_APPROVED);
 		}
 
-		if (refund.status !== RefundStatus.PENDING) {
+		if (!canTransition(refund.status, RefundStatus.APPROVED)) {
 			return error(REFUND_ERROR_MESSAGES.ALREADY_PROCESSED);
 		}
 

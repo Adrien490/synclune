@@ -1,25 +1,15 @@
 "use client";
 
 import { markAsDelivered } from "@/modules/orders/actions/mark-as-delivered";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
+import { useOrderAction } from "./use-order-action";
 
 interface UseMarkAsDeliveredOptions {
 	onSuccess?: () => void;
 }
 
 export function useMarkAsDelivered(options?: UseMarkAsDeliveredOptions) {
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			markAsDelivered,
-			createToastCallbacks({
-				loadingMessage: "Marquage comme livrée…",
-				onSuccess: () => options?.onSuccess?.(),
-			}),
-		),
-		undefined,
-	);
-
-	return { state, action, isPending };
+	return useOrderAction(markAsDelivered, {
+		loadingMessage: "Marquage comme livrée…",
+		onSuccess: options?.onSuccess,
+	});
 }

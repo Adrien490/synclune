@@ -9,9 +9,12 @@ import { logger } from "@/shared/lib/logger";
  * In production, Vercel adds the Authorization header with Bearer <CRON_SECRET>
  * In development, we skip verification for testing
  *
+ * @param jobName Optional cron job name for log fingerprinting (defaults to "verify")
  * @returns null if authorized, NextResponse with 401 if unauthorized
  */
-export async function verifyCronRequest(): Promise<NextResponse | null> {
+export async function verifyCronRequest(jobName?: string): Promise<NextResponse | null> {
+	const cronJob = jobName ?? "verify";
+
 	// Skip verification in development for testing
 	if (process.env.NODE_ENV === "development") {
 		return null;
@@ -21,7 +24,7 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 
 	// If CRON_SECRET is not set, reject all requests in production
 	if (!cronSecret) {
-		logger.error("CRON_SECRET environment variable is not set", undefined, { cronJob: "verify" });
+		logger.error("CRON_SECRET environment variable is not set", undefined, { cronJob });
 		return NextResponse.json({ error: "Cron secret not configured" }, { status: 500 });
 	}
 
@@ -35,7 +38,7 @@ export async function verifyCronRequest(): Promise<NextResponse | null> {
 			headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
 			headersList.get("x-real-ip") ??
 			"unknown";
-		logger.warn("Unauthorized cron request attempt", { cronJob: "verify", ip });
+		logger.warn("Unauthorized cron request attempt", { cronJob, ip });
 		return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 	}
 

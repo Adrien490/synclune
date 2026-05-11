@@ -16,6 +16,7 @@ import {
 import type { ActionState } from "@/shared/types/server-action";
 import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { updateCartItemSchema } from "../schemas/cart.schemas";
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
@@ -37,6 +38,11 @@ export async function updateCartItem(
 			return rateLimitResult.errorState;
 		}
 		const { userId, sessionId } = rateLimitResult.context;
+
+		// Defense-in-depth : bloquer les mutations panier quand la boutique est fermée
+		// (cf. add-to-cart.ts pour la justification — défense vs cart-sheet déjà montée).
+		const storeCheck = await assertStoreOpen();
+		if (storeCheck) return error(storeCheck.message);
 
 		// 2. Extraction des données du FormData
 		const rawData = {

@@ -5,14 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 interface ColorDetailStatsCardProps {
 	skusCount: number;
 	productsCount: number;
-	position: number;
 }
 
-export function ColorDetailStatsCard({
-	skusCount,
-	productsCount,
-	position,
-}: ColorDetailStatsCardProps) {
+export function ColorDetailStatsCard({ skusCount, productsCount }: ColorDetailStatsCardProps) {
 	return (
 		<Card>
 			<CardHeader>
@@ -30,10 +25,6 @@ export function ColorDetailStatsCard({
 					<div className="flex items-center justify-between gap-3">
 						<dt className="text-muted-foreground">Produits distincts</dt>
 						<dd className="font-medium">{productsCount}</dd>
-					</div>
-					<div className="flex items-center justify-between gap-3">
-						<dt className="text-muted-foreground">Position chromatique</dt>
-						<dd className="font-medium">#{position}</dd>
 					</div>
 				</dl>
 			</CardContent>

@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -59,31 +60,23 @@ export async function setFeaturedProduct(
 			return notFound("Produit dans cette collection");
 		}
 
-		// 4. Transaction: retirer l'ancien featured et definir le nouveau
-		await prisma.$transaction([
-			// Retirer le featured actuel de la collection
-			prisma.productCollection.updateMany({
-				where: {
-					collectionId,
-					isFeatured: true,
-				},
-				data: {
-					isFeatured: false,
-				},
-			}),
-			// Definir le nouveau produit featured
-			prisma.productCollection.update({
-				where: {
-					productId_collectionId: {
-						productId,
-						collectionId,
-					},
-				},
-				data: {
-					isFeatured: true,
-				},
-			}),
-		]);
+		// 4. Transaction interactive Serializable: deux admins concurrents sur la
+		// meme collection mais produits differents pourraient sinon violer la
+		// contrainte unique partielle (WHERE isFeatured = true). Serializable garantit
+		// l'atomicite read-modify-write sur les rows ProductCollection lus.
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.productCollection.updateMany({
+					where: { collectionId, isFeatured: true },
+					data: { isFeatured: false },
+				});
+				await tx.productCollection.update({
+					where: { productId_collectionId: { productId, collectionId } },
+					data: { isFeatured: true },
+				});
+			},
+			{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+		);
 
 		// 5. Invalider le cache de la collection
 		const collectionTags = getCollectionInvalidationTags(productCollection.collection.slug);

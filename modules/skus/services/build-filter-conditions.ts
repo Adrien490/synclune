@@ -57,7 +57,7 @@ export const buildFilterConditions = (
 			});
 		} else if (materials.length > 1) {
 			// Pour plusieurs matériaux, utiliser OR
-			conditions.push({
+			const materialOrClause: Prisma.ProductSkuWhereInput = {
 				OR: materials.map((mat) => ({
 					material: {
 						name: {
@@ -66,7 +66,8 @@ export const buildFilterConditions = (
 						},
 					},
 				})),
-			} as Prisma.ProductSkuWhereInput);
+			};
+			conditions.push(materialOrClause);
 		}
 	}
 
@@ -81,14 +82,15 @@ export const buildFilterConditions = (
 				},
 			});
 		} else if (skus.length > 1) {
-			conditions.push({
+			const skuOrClause: Prisma.ProductSkuWhereInput = {
 				OR: skus.map((sku) => ({
 					sku: {
 						contains: sku,
 						mode: Prisma.QueryMode.insensitive,
 					},
 				})),
-			} as Prisma.ProductSkuWhereInput);
+			};
+			conditions.push(skuOrClause);
 		}
 	}
 

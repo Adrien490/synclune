@@ -41,7 +41,8 @@ export async function getOrCreateStripeCustomer(
 			span.setAttribute("stripe.has_user", !!params.userId);
 
 			try {
-				const customerIdempotencyKey = `customer-create-${params.email}`;
+				// Lowercase + trim so case variations of the same email reuse the same Stripe customer.
+				const customerIdempotencyKey = `customer-create-${params.email.toLowerCase().trim()}`;
 
 				const customer = await stripe.customers.create(
 					{

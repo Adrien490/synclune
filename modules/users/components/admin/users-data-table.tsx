@@ -104,7 +104,11 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 											</TableCell>
 											<TableCell>
 												<div className="overflow-hidden">
-													<span className="block truncate font-bold" title={displayName}>
+													<span
+														className="block truncate font-bold"
+														title={displayName}
+														style={{ viewTransitionName: `user-name-${user.id}` }}
+													>
 														{displayName}
 													</span>
 												</div>

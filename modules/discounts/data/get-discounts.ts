@@ -15,15 +15,24 @@ import { getDiscountsSchema } from "../schemas/discount.schemas";
 import { buildDiscountWhereClause } from "../services/discount-query-builder";
 import type { GetDiscountsParams, GetDiscountsReturn } from "../types/discount.types";
 
-// Re-export pour compatibilité
 export { GET_DISCOUNTS_DEFAULT_PER_PAGE } from "../constants/discount.constants";
 export type { GetDiscountsReturn } from "../types/discount.types";
 
-// Aliases pour compatibilité
 export { DISCOUNTS_SORT_LABELS as SORT_LABELS } from "../constants/discount.constants";
+
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
+
+const EMPTY_RESULT: GetDiscountsReturn = {
+	discounts: [],
+	pagination: {
+		nextCursor: null,
+		prevCursor: null,
+		hasNextPage: false,
+		hasPreviousPage: false,
+	},
+};
 
 /**
  * Récupère la liste des codes promo avec pagination
@@ -32,7 +41,11 @@ export async function getDiscounts(params: GetDiscountsParams): Promise<GetDisco
 	const validation = getDiscountsSchema.safeParse(params);
 
 	if (!validation.success) {
-		throw new Error("Invalid parameters: " + JSON.stringify(validation.error.issues));
+		logger.error(
+			"[get-discounts] Invalid params",
+			new Error(JSON.stringify(validation.error.issues)),
+		);
+		return EMPTY_RESULT;
 	}
 
 	return fetchDiscounts(validation.data);
@@ -88,14 +101,6 @@ async function fetchDiscounts(params: GetDiscountsParams): Promise<GetDiscountsR
 			logger.error("[get-discounts] Failed to fetch discounts", error);
 		}
 
-		return {
-			discounts: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-		};
+		return EMPTY_RESULT;
 	}
 }

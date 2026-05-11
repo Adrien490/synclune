@@ -56,13 +56,11 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 		const where = buildColorWhereClause(params);
 		const direction = getSortDirection(params.sortBy);
 
-		const orderBy: Prisma.ColorOrderByWithRelationInput[] = params.sortBy.startsWith("position-")
-			? [{ position: direction }, { id: "asc" }]
-			: params.sortBy.startsWith("name-")
-				? [{ name: direction }, { id: "asc" }]
-				: params.sortBy.startsWith("skuCount-")
-					? [{ skus: { _count: direction } }, { id: "asc" }]
-					: [{ position: "asc" }, { id: "asc" }];
+		const orderBy: Prisma.ColorOrderByWithRelationInput[] = params.sortBy.startsWith("name-")
+			? [{ name: direction }, { id: "asc" }]
+			: params.sortBy.startsWith("skuCount-")
+				? [{ skus: { _count: direction } }, { id: "asc" }]
+				: [{ name: "asc" }, { id: "asc" }];
 
 		const take = Math.min(
 			Math.max(1, params.perPage || GET_COLORS_DEFAULT_PER_PAGE),

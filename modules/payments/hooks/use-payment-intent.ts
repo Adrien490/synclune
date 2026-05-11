@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { initializePayment } from "../actions/initialize-payment";
 import { updatePaymentAmount } from "../actions/update-payment-amount";
@@ -59,7 +59,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 		};
 	}, []);
 
-	const initFromCurrentParams = useCallback(async () => {
+	async function initFromCurrentParams() {
 		setState((prev) => ({ ...prev, isLoading: true, error: null }));
 		const result = await initializePayment({
 			cartItems: paramsRef.current.cartItems,
@@ -83,14 +83,14 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 				error: result.error,
 			}));
 		}
-	}, []);
+	}
 
-	// Create PI on mount
+	// Create PI on mount — runs once via initCalledRef guard.
 	useEffect(() => {
 		if (initCalledRef.current) return;
 		initCalledRef.current = true;
 		void initFromCurrentParams();
-	}, [initFromCurrentParams]);
+	}, []);
 
 	// Re-validate payment intent when tab becomes visible after long inactivity
 	useEffect(() => {
@@ -118,8 +118,8 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 			void Promise.all([
 				initializePayment({
-					cartItems: params.cartItems,
-					email: params.email,
+					cartItems: paramsRef.current.cartItems,
+					email: paramsRef.current.email,
 				}),
 				validateCart(),
 			]).then(([piResult, cartValidation]) => {
@@ -156,7 +156,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 
 		document.addEventListener("visibilitychange", handleVisibilityChange);
 		return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-	}, [state.paymentIntentId, params.cartItems, params.email, router]);
+	}, [state.paymentIntentId, router]);
 
 	function updateAmount(country: string, postalCode: string, discountAmount: number) {
 		if (!state.paymentIntentId) return;
@@ -165,10 +165,11 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 			clearTimeout(debounceTimerRef.current);
 		}
 
+		const piIdAtSchedule = state.paymentIntentId;
 		debounceTimerRef.current = setTimeout(async () => {
+			// Subtotal is recomputed server-side from the authenticated cart — never trust client.
 			const result = await updatePaymentAmount({
-				paymentIntentId: state.paymentIntentId!,
-				subtotal: state.subtotal,
+				paymentIntentId: piIdAtSchedule,
 				country,
 				postalCode,
 				discountAmount,
@@ -177,6 +178,7 @@ export function usePaymentIntent(params: UsePaymentIntentParams) {
 			if (result.success) {
 				setState((prev) => ({
 					...prev,
+					subtotal: result.subtotal,
 					shipping: result.shipping,
 					total: result.newTotal,
 				}));

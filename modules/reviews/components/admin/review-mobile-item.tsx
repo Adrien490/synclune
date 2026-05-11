@@ -1,6 +1,6 @@
 "use client";
 
-import { ReviewStatus } from "@/app/generated/prisma/enums";
+import { ReviewStatus } from "@/app/generated/prisma/browser";
 import { CircleCheck, EyeOff } from "lucide-react";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";

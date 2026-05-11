@@ -11,7 +11,7 @@ import {
 	REVIEW_ADMIN_SELECT,
 	REVIEW_PUBLIC_SELECT,
 } from "../constants/review.constants";
-import { cacheProductReviews, cacheReviewsAdmin } from "../constants/cache";
+import { cacheHomepageReviews, cacheProductReviews, cacheReviewsAdmin } from "../constants/cache";
 import type {
 	GetReviewsParams,
 	GetReviewsReturn,
@@ -78,8 +78,9 @@ async function fetchReviews(
 	} else if (context.productId) {
 		cacheProductReviews(context.productId);
 	} else {
-		// Public reviews without productId filter (e.g. homepage)
-		cacheProductReviews("public-all");
+		// Public reviews sans filtre productId (homepage, listings cross-produits) :
+		// utiliser le tag HOMEPAGE déjà invalidé par getReviewInvalidationTags.
+		cacheHomepageReviews();
 	}
 
 	try {

@@ -20,6 +20,7 @@ import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { logAudit } from "@/shared/lib/audit-log";
 import { retryFailedRefundSchema } from "../schemas/refund.schemas";
+import { canTransition } from "../services/refund-state-machine.service";
 
 /**
  * Relance un remboursement en échec (passe de FAILED à APPROVED)
@@ -79,14 +80,24 @@ export async function retryFailedRefund(
 			return error(REFUND_ERROR_MESSAGES.NOT_FAILED);
 		}
 
-		// Transition FAILED → APPROVED avec protection TOCTOU
-		// Le stripeRefundId (si présent) est conservé comme anchor d'idempotence
-		// pour que processRefund puisse s'appuyer sur le webhook de réconciliation
+		if (!canTransition(refund.status, RefundStatus.APPROVED)) {
+			return error(REFUND_ERROR_MESSAGES.NOT_FAILED);
+		}
+
+		// Transition FAILED → APPROVED avec protection TOCTOU.
+		// P0.2: incrémente `attemptCount` pour que processRefund génère une
+		// nouvelle clé d'idempotence Stripe (sinon Stripe rejoue la réponse
+		// d'erreur cachée pendant 24h).
+		// On efface aussi `stripeRefundId` : la précédente tentative n'a pas
+		// créé de refund Stripe valide (status = FAILED), donc l'anchor doit
+		// être réinitialisé pour permettre une vraie nouvelle attempt.
 		await prisma.refund.update({
 			where: { id, status: RefundStatus.FAILED },
 			data: {
 				status: RefundStatus.APPROVED,
 				failureReason: null,
+				stripeRefundId: null,
+				attemptCount: { increment: 1 },
 			},
 		});
 

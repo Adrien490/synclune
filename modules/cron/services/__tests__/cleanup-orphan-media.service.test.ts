@@ -56,7 +56,7 @@ describe("cleanupOrphanMedia", () => {
 	it("should return zero counts when no files exist in UploadThing", async () => {
 		const result = await cleanupOrphanMedia();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			filesScanned: 0,
 			orphansDeleted: 0,
 			errors: 0,

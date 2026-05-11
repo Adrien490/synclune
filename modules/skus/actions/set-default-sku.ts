@@ -6,8 +6,13 @@ import { logAudit } from "@/shared/lib/audit-log";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { ActionStatus } from "@/shared/types/server-action";
-import { BusinessError, validateInput, handleActionError, safeFormGet } from "@/shared/lib/actions";
+import {
+	BusinessError,
+	validateInput,
+	handleActionError,
+	safeFormGet,
+	success,
+} from "@/shared/lib/actions";
 import { updateTag } from "next/cache";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
@@ -102,10 +107,7 @@ export async function setDefaultSku(
 			metadata: { sku: skuData.sku, productTitle: skuData.product.title },
 		});
 
-		return {
-			status: ActionStatus.SUCCESS,
-			message: "Variante par défaut mise à jour avec succès",
-		};
+		return success("Variante par défaut mise à jour avec succès");
 	} catch (e) {
 		return handleActionError(e, "Erreur lors de la mise à jour de la variante par défaut");
 	}

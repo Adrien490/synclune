@@ -2,6 +2,7 @@
  * Types et utilitaires pour parser les medias depuis FormData
  */
 
+import { BusinessError } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import type { ParsedMedia } from "../types/sku.types";
 
@@ -80,4 +81,65 @@ export function parseGalleryMediaFromForm(
 		logger.error("Error parsing galleryMedia", error, { service: "parse-media-from-form" });
 		return [];
 	}
+}
+
+/**
+ * Variantes strictes : throw BusinessError au lieu de retourner undefined/[] quand
+ * le JSON est invalide. À utiliser dans les actions/ pour propager une vraie erreur
+ * de validation à l'utilisateur (pas un succès silencieux avec galerie tronquée).
+ *
+ * Les champs absents/vides restent valides (retour undefined/[]).
+ */
+export function parsePrimaryImageFromFormStrict(
+	formData: FormData,
+	fieldName = "primaryImage",
+): ParsedMedia | undefined {
+	const raw = formData.get(fieldName);
+	if (!raw || typeof raw !== "string" || raw.trim() === "") {
+		return undefined;
+	}
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		logger.error("Error parsing primaryImage", error, { service: "parse-media-from-form" });
+		throw new BusinessError("Image principale: format invalide. Veuillez relancer l'upload.");
+	}
+	if (
+		parsed &&
+		typeof parsed === "object" &&
+		"url" in parsed &&
+		typeof (parsed as Record<string, unknown>).url === "string"
+	) {
+		return parsed as ParsedMedia;
+	}
+	throw new BusinessError("Image principale: structure invalide. Veuillez relancer l'upload.");
+}
+
+export function parseGalleryMediaFromFormStrict(
+	formData: FormData,
+	fieldName = "galleryMedia",
+): ParsedMedia[] {
+	const raw = formData.get(fieldName);
+	if (!raw || typeof raw !== "string" || raw.trim() === "") {
+		return [];
+	}
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(raw);
+	} catch (error) {
+		logger.error("Error parsing galleryMedia", error, { service: "parse-media-from-form" });
+		throw new BusinessError("Galerie: format invalide. Veuillez relancer les uploads.");
+	}
+	if (!Array.isArray(parsed)) {
+		throw new BusinessError("Galerie: structure invalide. Veuillez relancer les uploads.");
+	}
+	return (parsed as unknown[]).filter(
+		(item): item is ParsedMedia =>
+			item !== null &&
+			item !== undefined &&
+			typeof item === "object" &&
+			"url" in item &&
+			typeof (item as Record<string, unknown>).url === "string",
+	);
 }

@@ -75,20 +75,20 @@ describe("getProductCollections", () => {
 		expect(result).toEqual([]);
 	});
 
-	it("calls cacheLife with products profile", async () => {
+	it("calls cacheLife with reference profile", async () => {
 		mockProductCollectionFindMany.mockResolvedValue([]);
 
 		await getProductCollections("prod-1");
 
-		expect(mockCacheLife).toHaveBeenCalledWith("catalog");
+		expect(mockCacheLife).toHaveBeenCalledWith("reference");
 	});
 
-	it("calls cacheTag with collections-list tag", async () => {
+	it("calls cacheTag with product-scoped + collections-list tags", async () => {
 		mockProductCollectionFindMany.mockResolvedValue([]);
 
 		await getProductCollections("prod-1");
 
-		expect(mockCacheTag).toHaveBeenCalledWith("collections-list");
+		expect(mockCacheTag).toHaveBeenCalledWith("product-prod-1-collections", "collections-list");
 	});
 });
 

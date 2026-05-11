@@ -1,4 +1,4 @@
-import { ReviewStatus } from "@/app/generated/prisma/client";
+import { ReviewStatus } from "@/app/generated/prisma/browser";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
 import {
 	BulkSelectionHeaderCheckbox,

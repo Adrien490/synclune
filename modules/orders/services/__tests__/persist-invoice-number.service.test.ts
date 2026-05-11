@@ -1,19 +1,27 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { Prisma } from "@/app/generated/prisma/client";
 
 // ============================================================================
 // Mocks
 // ============================================================================
 
-const { mockPrisma, mockUpdateTag, mockGenerateInvoiceNumber, mockLogger } = vi.hoisted(() => ({
-	mockPrisma: {
+const { mockTx, mockPrisma, mockUpdateTag, mockLogger } = vi.hoisted(() => {
+	const mockTx = {
+		$executeRaw: vi.fn(),
+		$queryRaw: vi.fn(),
 		order: {
 			update: vi.fn(),
 		},
-	},
-	mockUpdateTag: vi.fn(),
-	mockGenerateInvoiceNumber: vi.fn(),
-	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}));
+	};
+	return {
+		mockTx,
+		mockPrisma: {
+			$transaction: vi.fn(),
+		},
+		mockUpdateTag: vi.fn(),
+		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -27,10 +35,6 @@ vi.mock("next/cache", () => ({
 	cacheTag: vi.fn(),
 }));
 
-vi.mock("../invoice-number.service", () => ({
-	generateInvoiceNumber: mockGenerateInvoiceNumber,
-}));
-
 vi.mock("../../constants/cache", () => ({
 	getOrderInvalidationTags: vi.fn((_userId?: string, _orderId?: string) => [
 		"orders-list",
@@ -41,87 +45,293 @@ vi.mock("../../constants/cache", () => ({
 import { persistInvoiceNumber } from "../persist-invoice-number.service";
 
 // ============================================================================
-// Setup
+// Helpers
 // ============================================================================
+
+function makeP2002Error(): Prisma.PrismaClientKnownRequestError {
+	return new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+		code: "P2002",
+		clientVersion: "test",
+	});
+}
+
+function runTx() {
+	mockPrisma.$transaction.mockImplementation(async (cb: (tx: typeof mockTx) => Promise<unknown>) =>
+		cb(mockTx),
+	);
+}
 
 beforeEach(() => {
 	vi.clearAllMocks();
+	mockTx.$executeRaw.mockResolvedValue(undefined);
 });
 
 // ============================================================================
 // persistInvoiceNumber
 // ============================================================================
 
-describe("persistInvoiceNumber", () => {
-	it("generates and persists invoice number successfully", async () => {
-		mockGenerateInvoiceNumber.mockResolvedValue("F-2026-001");
-		mockPrisma.order.update.mockResolvedValue({
-			invoiceNumber: "F-2026-001",
-			invoiceGeneratedAt: new Date("2026-03-03T10:00:00Z"),
+describe("persistInvoiceNumber — generation + persistence atomique", () => {
+	describe("format", () => {
+		it("matches F-YYYY-NNNNN with current year", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toMatch(/^F-\d{4}-\d{5}$/);
+			expect(result?.invoiceNumber).toContain(`F-${year}-`);
 		});
 
-		const result = await persistInvoiceNumber("order-1", "user-1");
+		it("pads the sequence to 5 digits", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
 
-		expect(result).toEqual({
-			invoiceNumber: "F-2026-001",
-			invoiceGeneratedAt: new Date("2026-03-03T10:00:00Z"),
-		});
-		expect(mockPrisma.order.update).toHaveBeenCalledWith({
-			where: { id: "order-1" },
-			data: expect.objectContaining({
-				invoiceNumber: "F-2026-001",
-				invoiceStatus: "GENERATED",
-			}),
-			select: { invoiceNumber: true, invoiceGeneratedAt: true },
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			const sequence = result!.invoiceNumber.split("-")[2];
+			expect(sequence).toHaveLength(5);
 		});
 	});
 
-	it("invalidates cache tags after success", async () => {
-		mockGenerateInvoiceNumber.mockResolvedValue("F-2026-002");
-		mockPrisma.order.update.mockResolvedValue({
-			invoiceNumber: "F-2026-002",
-			invoiceGeneratedAt: new Date(),
+	describe("sequence", () => {
+		it("starts at F-YYYY-00001 when no previous invoice exists (premier numéro d'année)", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
 		});
 
-		await persistInvoiceNumber("order-1", "user-1");
+		it("increments from the last invoice number", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-00041` }]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
 
-		// Should invalidate all returned tags
-		expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
-		expect(mockUpdateTag).toHaveBeenCalledWith("order-detail");
-	});
+			const result = await persistInvoiceNumber("order-1", "user-1");
 
-	it("returns null when generateInvoiceNumber fails", async () => {
-		mockGenerateInvoiceNumber.mockRejectedValue(new Error("unique constraint"));
-
-		const result = await persistInvoiceNumber("order-1", "user-1");
-
-		expect(result).toBeNull();
-		expect(mockLogger.error).toHaveBeenCalledWith(
-			"Failed to persist invoice number",
-			expect.any(Error),
-			{ service: "persist-invoice-number" },
-		);
-	});
-
-	it("returns null when prisma update fails", async () => {
-		mockGenerateInvoiceNumber.mockResolvedValue("F-2026-003");
-		mockPrisma.order.update.mockRejectedValue(new Error("DB error"));
-
-		const result = await persistInvoiceNumber("order-1", "user-1");
-
-		expect(result).toBeNull();
-	});
-
-	it("handles null userId for guest orders", async () => {
-		mockGenerateInvoiceNumber.mockResolvedValue("F-2026-004");
-		mockPrisma.order.update.mockResolvedValue({
-			invoiceNumber: "F-2026-004",
-			invoiceGeneratedAt: new Date(),
+			expect(result?.invoiceNumber).toBe(`F-${year}-00042`);
 		});
 
-		const result = await persistInvoiceNumber("order-1", null);
+		it("treats null invoiceNumber row as no previous invoice", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: null }]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
 
-		expect(result).toBeDefined();
-		expect(result!.invoiceNumber).toBe("F-2026-004");
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
+		});
+
+		it("treats unparseable sequence as no previous invoice", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: `F-${year}-XXXXX` }]);
+			mockTx.order.update.mockImplementation(async (args: { data: { invoiceNumber: string } }) => ({
+				invoiceNumber: args.data.invoiceNumber,
+				invoiceGeneratedAt: new Date(),
+			}));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result?.invoiceNumber).toBe(`F-${year}-00001`);
+		});
+	});
+
+	describe("atomicity — advisory lock + SELECT + UPDATE in 1 tx", () => {
+		it("acquires pg_advisory_xact_lock first inside the transaction", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+			});
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockTx.$executeRaw).toHaveBeenCalledTimes(1);
+			const lockSql = mockTx.$executeRaw.mock.calls[0]![0];
+			const lockText = lockSql.strings.join("");
+			expect(lockText).toContain("pg_advisory_xact_lock");
+		});
+
+		it("uses a year-derived advisory lock key", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: `F-${year}-00001`,
+				invoiceGeneratedAt: new Date(),
+			});
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			const lockSql = mockTx.$executeRaw.mock.calls[0]![0];
+			const values = lockSql.values;
+			expect(values[0]).toBe(1_000_000 + year);
+		});
+
+		it("SELECT filters by current year prefix", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: `F-${year}-00001`,
+				invoiceGeneratedAt: new Date(),
+			});
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			const sqlArg = mockTx.$queryRaw.mock.calls[0]![0];
+			const sqlText = sqlArg.strings.join("");
+			expect(sqlText).toContain('"Order"');
+			expect(sqlText).toContain('"invoiceNumber"');
+			expect(sqlArg.values[0]).toBe(`F-${year}-%`);
+		});
+
+		it("UPDATE persists invoiceNumber + GENERATED status + generatedAt", async () => {
+			runTx();
+			const year = new Date().getFullYear();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: `F-${year}-00001`,
+				invoiceGeneratedAt: new Date(),
+			});
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockTx.order.update).toHaveBeenCalledWith({
+				where: { id: "order-1" },
+				data: expect.objectContaining({
+					invoiceNumber: `F-${year}-00001`,
+					invoiceStatus: "GENERATED",
+				}),
+				select: { invoiceNumber: true, invoiceGeneratedAt: true },
+			});
+		});
+
+		it("invalidates cache tags after successful persistence", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+			});
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockUpdateTag).toHaveBeenCalledWith("orders-list");
+			expect(mockUpdateTag).toHaveBeenCalledWith("order-detail");
+		});
+
+		it("handles null userId for guest orders", async () => {
+			runTx();
+			mockTx.$queryRaw.mockResolvedValue([]);
+			mockTx.order.update.mockResolvedValue({
+				invoiceNumber: "F-2026-00001",
+				invoiceGeneratedAt: new Date(),
+			});
+
+			const result = await persistInvoiceNumber("order-1", null);
+
+			expect(result).not.toBeNull();
+			expect(result!.invoiceNumber).toBe("F-2026-00001");
+		});
+	});
+
+	describe("retry on P2002 unique violation", () => {
+		it("retries the full tx on P2002 and succeeds on second attempt", async () => {
+			mockPrisma.$transaction
+				.mockImplementationOnce(() => Promise.reject(makeP2002Error()))
+				.mockImplementationOnce(async (cb: (tx: typeof mockTx) => Promise<unknown>) => {
+					mockTx.$queryRaw.mockResolvedValue([{ invoiceNumber: "F-2026-00005" }]);
+					mockTx.order.update.mockResolvedValueOnce({
+						invoiceNumber: "F-2026-00006",
+						invoiceGeneratedAt: new Date(),
+					});
+					return cb(mockTx);
+				});
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(2);
+			expect(result?.invoiceNumber).toBe("F-2026-00006");
+		});
+
+		it("returns null after MAX_RETRIES P2002 errors", async () => {
+			mockPrisma.$transaction.mockRejectedValue(makeP2002Error());
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result).toBeNull();
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(5);
+			expect(mockLogger.error).toHaveBeenCalledWith(
+				"Failed to persist invoice number",
+				expect.any(Error),
+				expect.objectContaining({ service: "persist-invoice-number" }),
+			);
+		});
+
+		it("does NOT retry on non-P2002 errors", async () => {
+			mockPrisma.$transaction.mockRejectedValue(new Error("Connection refused"));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result).toBeNull();
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		});
+
+		it("does NOT retry on P2001 (wrong code)", async () => {
+			const p2001Error = new Prisma.PrismaClientKnownRequestError("Record not found", {
+				code: "P2001",
+				clientVersion: "test",
+			});
+			mockPrisma.$transaction.mockRejectedValue(p2001Error);
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result).toBeNull();
+			expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	describe("error handling", () => {
+		it("returns null when transaction throws non-Prisma error", async () => {
+			mockPrisma.$transaction.mockRejectedValue(new Error("DB unreachable"));
+
+			const result = await persistInvoiceNumber("order-1", "user-1");
+
+			expect(result).toBeNull();
+		});
+
+		it("does NOT invalidate cache tags on failure", async () => {
+			mockPrisma.$transaction.mockRejectedValue(new Error("DB unreachable"));
+
+			await persistInvoiceNumber("order-1", "user-1");
+
+			expect(mockUpdateTag).not.toHaveBeenCalled();
+		});
 	});
 });

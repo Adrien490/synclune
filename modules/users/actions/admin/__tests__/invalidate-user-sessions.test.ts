@@ -74,6 +74,17 @@ vi.mock("@/shared/constants/cache-tags", () => ({
 		ADMIN_CUSTOMERS_LIST: "admin-customers-list",
 		ADMIN_BADGES: "admin-badges",
 	},
+	SESSION_CACHE_TAGS: {
+		SESSIONS: (userId: string) => `sessions-user-${userId}`,
+	},
+}));
+
+vi.mock("../../../constants/cache", () => ({
+	getUserFullInvalidationTags: (userId: string) => [`user-${userId}`],
+}));
+
+vi.mock("../../../constants/audit-actions", () => ({
+	USER_AUDIT_ACTIONS: { INVALIDATE_SESSIONS: "user.invalidateSessions" },
 }));
 
 import { invalidateUserSessions } from "../invalidate-user-sessions";
@@ -131,7 +142,7 @@ describe("invalidateUserSessions", () => {
 		const result = await invalidateUserSessions("user-456");
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

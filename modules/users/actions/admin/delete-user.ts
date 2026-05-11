@@ -2,8 +2,8 @@
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 
 import { updateTag } from "next/cache";
-import { prisma, softDelete, notDeleted } from "@/shared/lib/prisma";
-import { Role } from "@/app/generated/prisma/client";
+import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { AccountStatus, Role } from "@/app/generated/prisma/client";
 import type { ActionState } from "@/shared/types/server-action";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -14,22 +14,24 @@ import {
 	notFound,
 	handleActionError,
 	safeFormGet,
+	BusinessError,
 } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { deleteUserSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function deleteUser(_prevState: unknown, formData: FormData): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.DELETE_USER);
-		if ("error" in rateCheck) return rateCheck.error;
-
-		// 2. Verification des droits admin
+		// 1. Verification des droits admin (avant rate-limit)
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		// 2. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.DELETE_USER);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 3. Extraire et valider l'ID
 		const rawData = { id: safeFormGet(formData, "id") };
@@ -57,18 +59,28 @@ export async function deleteUser(_prevState: unknown, formData: FormData): Promi
 			return error("Cet utilisateur est deja supprime.");
 		}
 
-		// 5b. Verifier qu'on ne supprime pas le dernier admin
-		if (user.role === Role.ADMIN) {
-			const adminCount = await prisma.user.count({
-				where: { role: Role.ADMIN, ...notDeleted },
-			});
-			if (adminCount <= 1) {
-				return error("Impossible de supprimer le dernier administrateur.");
-			}
-		}
+		// 5b-6. Soft delete + admin count atomique (TOCTOU-safe)
+		await prisma.$transaction(
+			async (tx) => {
+				if (user.role === Role.ADMIN) {
+					const otherAdmins = await tx.user.count({
+						where: { role: Role.ADMIN, ...notDeleted, id: { not: userId } },
+					});
+					if (otherAdmins < 1) {
+						throw new BusinessError(
+							"Impossible de supprimer le dernier administrateur.",
+							"LAST_ADMIN",
+						);
+					}
+				}
 
-		// 6. Soft delete
-		await softDelete.user(userId);
+				await tx.user.update({
+					where: { id: userId },
+					data: { deletedAt: new Date(), accountStatus: AccountStatus.INACTIVE },
+				});
+			},
+			{ isolationLevel: "Serializable" },
+		);
 
 		// 7. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
@@ -81,7 +93,7 @@ export async function deleteUser(_prevState: unknown, formData: FormData): Promi
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: "user.delete",
+			action: USER_AUDIT_ACTIONS.DELETE,
 			targetType: "user",
 			targetId: userId,
 			metadata: { userName: user.name, userEmail: user.email, userRole: user.role },

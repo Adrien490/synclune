@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CircleCheck, EyeOff, Loader2 } from "lucide-react";
 
-import { ReviewStatus } from "@/app/generated/prisma/enums";
+import { ReviewStatus } from "@/app/generated/prisma/browser";
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
 import {
 	ResponsiveAlertDialog,

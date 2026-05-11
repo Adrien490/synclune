@@ -6,7 +6,9 @@ import { Button } from "@/shared/components/ui/button";
 import { Separator } from "@/shared/components/ui/separator";
 import { formatDateShort } from "@/shared/utils/dates";
 
+import type { AdminUserActiveSession } from "../../data/get-user-detail-admin";
 import { UserActionsClient } from "./user-actions-client";
+import { UserActiveSessionsSection } from "./user-active-sessions-section";
 import { UserAdminDialogs } from "./user-admin-dialogs";
 
 interface UserDetailPageProps {
@@ -21,9 +23,10 @@ interface UserDetailPageProps {
 		createdAt: Date;
 	};
 	orderCount: number;
+	activeSessions: AdminUserActiveSession[];
 }
 
-export function UserDetailPage({ user, orderCount }: UserDetailPageProps) {
+export function UserDetailPage({ user, orderCount, activeSessions }: UserDetailPageProps) {
 	const displayName = user.name ?? user.email;
 	const isAdmin = user.role === "ADMIN";
 	const isDeleted = !!user.deletedAt;
@@ -34,7 +37,7 @@ export function UserDetailPage({ user, orderCount }: UserDetailPageProps) {
 			<header className="space-y-2">
 				<div className="space-y-1">
 					<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-						{displayName}
+						<span style={{ viewTransitionName: `user-name-${user.id}` }}>{displayName}</span>
 						{user.emailVerified ? (
 							<CircleCheck className="size-5 shrink-0 text-green-600" aria-label="Email vérifié" />
 						) : null}
@@ -73,6 +76,10 @@ export function UserDetailPage({ user, orderCount }: UserDetailPageProps) {
 					<dd>{formatDateShort(user.createdAt)}</dd>
 				</dl>
 			</section>
+
+			<Separator />
+
+			<UserActiveSessionsSection sessions={activeSessions} />
 
 			<Separator />
 

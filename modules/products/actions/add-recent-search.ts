@@ -46,8 +46,7 @@ export async function addRecentSearch(
 			try {
 				const parsed: unknown = JSON.parse(decodeURIComponent(existingCookie.value));
 				if (Array.isArray(parsed)) {
-					const items = parsed as unknown as unknown[];
-					searches = items.filter((s): s is string => typeof s === "string");
+					searches = parsed.filter((s): s is string => typeof s === "string");
 				}
 			} catch (parseError) {
 				// Cookie corrompu - reset silencieux mais loggé

@@ -17,6 +17,9 @@ import { createOrderInTransaction } from "@/modules/payments/services/order-crea
 import { buildStripeLineItems } from "@/modules/payments/services/checkout-line-items.service";
 import { confirmCheckoutSchema, type ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { saveAddressInTransaction } from "@/modules/addresses/services/save-address.service";
+import { getUserAddressesInvalidationTags } from "@/modules/addresses/constants/cache";
+import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
+import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { logger } from "@/shared/lib/logger";
 import Stripe from "stripe";
 import * as Sentry from "@sentry/nextjs";
@@ -46,7 +49,15 @@ export async function confirmCheckout(
 
 			span.setAttribute("checkout.is_guest", !userId);
 
-			// 2. In-memory rate limiting
+			// 2. Store-open guard (admin bypass for live checkout testing)
+			if (session?.user.role !== "ADMIN") {
+				const storeCheck = await assertStoreOpen();
+				if (storeCheck) {
+					return { success: false, error: storeCheck.message };
+				}
+			}
+
+			// 3. In-memory rate limiting
 			const headersList = await headers();
 			const sessionId = !userId ? await getOrCreateCartSessionId() : null;
 			const ipAddress = await getClientIp(headersList);
@@ -189,7 +200,7 @@ export async function confirmCheckout(
 					const isAlreadySucceeded = stripeError.message.includes("succeeded");
 					const isAlreadyCanceled = stripeError.message.includes("canceled");
 					if (isAlreadySucceeded || isAlreadyCanceled) {
-						await cleanupFailedCheckout(order.id, orderDiscountCode);
+						await cleanupFailedCheckout(order.id, orderDiscountCode, appliedDiscountId);
 						return {
 							success: false,
 							error: isAlreadySucceeded
@@ -199,7 +210,7 @@ export async function confirmCheckout(
 					}
 				}
 				// Cleanup orphan order on Stripe failure
-				await cleanupFailedCheckout(order.id, orderDiscountCode);
+				await cleanupFailedCheckout(order.id, orderDiscountCode, appliedDiscountId);
 				if (stripeError instanceof CircuitBreakerError) {
 					return {
 						success: false,
@@ -225,6 +236,7 @@ export async function confirmCheckout(
 							phone: v.shippingAddress.phoneNumber,
 						}),
 					);
+					getUserAddressesInvalidationTags(userId).forEach((tag) => updateTag(tag));
 				} catch (e) {
 					addressSaved = false;
 					logger.warn("Failed to save address during checkout", {
@@ -246,8 +258,21 @@ export async function confirmCheckout(
 				...(v.saveInfo && userId && { addressSaved }),
 			};
 		} catch (e) {
-			logger.error("Failed to confirm checkout", e, { service: "checkout" });
-			Sentry.captureException(e);
+			const { kind, severity, code } = classifyStripeError(e);
+			if (severity === "info") {
+				// User-facing error (card decline) — keep out of Sentry to avoid on-call noise.
+				logger.info("Stripe declined checkout (user)", {
+					service: "checkout",
+					stripeKind: kind,
+					stripeCode: code,
+				});
+			} else {
+				logger.error("Failed to confirm checkout", e, {
+					service: "checkout",
+					stripeKind: kind,
+					stripeCode: code,
+				});
+			}
 			return {
 				success: false,
 				error: "Une erreur est survenue lors de la validation de la commande.",
@@ -256,7 +281,11 @@ export async function confirmCheckout(
 	});
 }
 
-async function cleanupFailedCheckout(orderId: string, orderDiscountCode: string | null) {
+async function cleanupFailedCheckout(
+	orderId: string,
+	orderDiscountCode: string | null,
+	appliedDiscountId: string | null,
+) {
 	await prisma.$transaction(async (tx) => {
 		if (orderDiscountCode) {
 			await tx.discountUsage.deleteMany({ where: { orderId } });
@@ -267,4 +296,8 @@ async function cleanupFailedCheckout(orderId: string, orderDiscountCode: string 
 		}
 		await tx.order.delete({ where: { id: orderId } });
 	});
+	// Invalidate discount usage cache after rollback so admin views reflect the new count.
+	if (appliedDiscountId) {
+		updateTag(DISCOUNT_CACHE_TAGS.USAGE(appliedDiscountId));
+	}
 }

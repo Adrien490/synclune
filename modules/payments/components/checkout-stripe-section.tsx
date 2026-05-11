@@ -1,13 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-	Elements,
-	ExpressCheckoutElement,
-	PaymentElement,
-	useElements,
-	useStripe,
-} from "@stripe/react-stripe-js";
+import { Elements, ExpressCheckoutElement, PaymentElement } from "@stripe/react-stripe-js";
 import type { StripeExpressCheckoutElementConfirmEvent } from "@stripe/stripe-js";
 import Link from "next/link";
 import { Lock } from "lucide-react";
@@ -16,7 +10,7 @@ import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { getStripe } from "@/shared/lib/stripe-client";
 import { useStripeAppearance } from "../hooks/use-stripe-appearance";
-import { confirmCheckout } from "../actions/confirm-checkout";
+import { useCheckoutSubmit } from "../hooks/use-checkout-submit";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 import { PayButton } from "./pay-button";
 import { PaymentSectionSkeleton } from "./payment-section-skeleton";
@@ -153,11 +147,11 @@ function ExpressCheckoutSection({
 	allowNavigation,
 	isOnline,
 }: ExpressCheckoutSectionProps) {
-	const stripe = useStripe();
-	const elements = useElements();
 	const haptic = useHaptic();
 	const [hasExpress, setHasExpress] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	const submit = useCheckoutSubmit({ getFormData, allowNavigation });
 
 	function showError(message: string) {
 		setError(message);
@@ -165,8 +159,6 @@ function ExpressCheckoutSection({
 	}
 
 	async function handleConfirm(_event: StripeExpressCheckoutElementConfirmEvent) {
-		if (!stripe || !elements) return;
-
 		setError(null);
 		haptic("medium");
 
@@ -175,42 +167,22 @@ function ExpressCheckoutSection({
 			return;
 		}
 
-		const formData = await getFormData();
-		if (!formData) {
-			// Form validation surfaced its own errors via aria-live;
-			// signal to wallet flow with a short hint above the element.
-			showError("Veuillez compléter le formulaire avant de payer.");
-			return;
+		const result = await submit({ returnUrlSuffix: "" });
+
+		switch (result.status) {
+			case "form-invalid":
+				// Form validation surfaced its own errors via aria-live;
+				// signal to wallet flow with a short hint above the element.
+				showError("Veuillez compléter le formulaire avant de payer.");
+				return;
+			case "submit-error":
+			case "checkout-error":
+			case "stripe-error":
+				showError(result.message);
+				return;
+			case "redirecting":
+				return;
 		}
-
-		const { error: submitError } = await elements.submit();
-		if (submitError) {
-			showError(submitError.message ?? "Erreur de validation du paiement.");
-			return;
-		}
-
-		const result = await confirmCheckout(formData);
-		if (!result.success) {
-			showError(result.error);
-			return;
-		}
-
-		// Disable beforeunload guard before Stripe takes over the page.
-		allowNavigation?.();
-
-		const { error: confirmError } = await stripe.confirmPayment({
-			elements,
-			confirmParams: {
-				return_url: `${window.location.origin}/paiement/retour?order_id=${result.orderId}`,
-			},
-		});
-
-		// confirmPayment only returns when there's an error (success → redirect via return_url)
-		const message =
-			confirmError.type === "card_error" || confirmError.type === "validation_error"
-				? (confirmError.message ?? "Erreur de paiement.")
-				: "Une erreur est survenue lors du paiement.";
-		showError(message);
 	}
 
 	return (

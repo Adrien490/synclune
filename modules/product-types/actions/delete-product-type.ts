@@ -56,6 +56,7 @@ export async function deleteProductType(
 					id: true,
 					isSystem: true,
 					label: true,
+					slug: true,
 					_count: {
 						select: {
 							products: {
@@ -86,7 +87,7 @@ export async function deleteProductType(
 			}
 
 			await tx.productType.delete({ where: { id: productTypeId } });
-			return { status: "deleted" as const, label: pt.label };
+			return { status: "deleted" as const, label: pt.label, slug: pt.slug };
 		});
 
 		if (result.status === "notFound") {
@@ -106,8 +107,8 @@ export async function deleteProductType(
 			metadata: { label: result.label },
 		});
 
-		// 5. Invalidation du cache
-		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
+		// 5. Invalidation du cache (incluant tag détail granulaire)
+		getProductTypeInvalidationTags(result.slug).forEach((tag) => updateTag(tag));
 
 		return success("Type de produit supprimé avec succès");
 	} catch (e) {

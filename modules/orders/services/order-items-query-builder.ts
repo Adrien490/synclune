@@ -9,28 +9,30 @@ import {
 // ORDER ITEMS QUERY BUILDER UTILS
 // ============================================================================
 
+/**
+ * Normalizes a `T | T[]` filter into a Prisma equality or `{ in: T[] }` clause —
+ * keeps single-value queries from generating `IN (?)` plans.
+ */
+function toIn<T>(value: T | T[]): T | { in: T[] } {
+	if (!Array.isArray(value)) return value;
+	return value.length === 1 ? value[0]! : { in: value };
+}
+
 export function buildOrderItemsFilterConditions(
 	filters: z.infer<typeof orderItemFiltersSchema>,
 ): Prisma.OrderItemWhereInput[] {
 	const conditions: Prisma.OrderItemWhereInput[] = [];
 
 	if (filters.orderId !== undefined) {
-		const orderIds = Array.isArray(filters.orderId) ? filters.orderId : [filters.orderId];
-		conditions.push(
-			orderIds.length === 1 ? { orderId: orderIds[0] } : { orderId: { in: orderIds } },
-		);
+		conditions.push({ orderId: toIn(filters.orderId) });
 	}
 
 	if (filters.productId !== undefined) {
-		const productIds = Array.isArray(filters.productId) ? filters.productId : [filters.productId];
-		conditions.push(
-			productIds.length === 1 ? { productId: productIds[0] } : { productId: { in: productIds } },
-		);
+		conditions.push({ productId: toIn(filters.productId) });
 	}
 
 	if (filters.skuId !== undefined) {
-		const skuIds = Array.isArray(filters.skuId) ? filters.skuId : [filters.skuId];
-		conditions.push(skuIds.length === 1 ? { skuId: skuIds[0] } : { skuId: { in: skuIds } });
+		conditions.push({ skuId: toIn(filters.skuId) });
 	}
 
 	if (typeof filters.priceMin === "number") conditions.push({ price: { gte: filters.priceMin } });

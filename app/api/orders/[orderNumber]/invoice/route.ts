@@ -70,6 +70,9 @@ export async function GET(
 			"Content-Type": "application/pdf",
 			"Content-Disposition": `attachment; filename="${filename}"`,
 			"Cache-Control": "private, max-age=3600",
+			"X-Frame-Options": "DENY",
+			"X-Content-Type-Options": "nosniff",
+			"Referrer-Policy": "no-referrer",
 		},
 	});
 }

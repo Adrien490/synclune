@@ -57,7 +57,7 @@ export async function bulkToggleProductTypesStatus(
 
 		const productTypes = await prisma.productType.findMany({
 			where: { id: { in: productTypeIds } },
-			select: { id: true, label: true, isActive: true, isSystem: true },
+			select: { id: true, label: true, slug: true, isActive: true, isSystem: true },
 		});
 
 		if (productTypes.length === 0) {
@@ -85,7 +85,11 @@ export async function bulkToggleProductTypesStatus(
 			data: { isActive: targetIsActive },
 		});
 
-		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
+		const invalidationTags = new Set<string>(getProductTypeInvalidationTags());
+		eligible.forEach((pt) => {
+			getProductTypeInvalidationTags(pt.slug).forEach((tag) => invalidationTags.add(tag));
+		});
+		invalidationTags.forEach((tag) => updateTag(tag));
 
 		void logAudit({
 			adminId: adminUser.id,

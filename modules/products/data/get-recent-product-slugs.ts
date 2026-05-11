@@ -37,8 +37,7 @@ export async function getRecentProductSlugs(): Promise<string[]> {
 		if (Array.isArray(parsed)) {
 			const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 			const MAX_SLUG_LENGTH = 100;
-			const items = parsed as unknown as unknown[];
-			return items
+			return parsed
 				.filter(
 					(s): s is string =>
 						typeof s === "string" && s.length <= MAX_SLUG_LENGTH && SLUG_PATTERN.test(s),

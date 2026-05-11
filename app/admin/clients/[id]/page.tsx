@@ -31,5 +31,11 @@ export default async function UserDetailRoute({ params }: UserDetailRouteProps) 
 		notFound();
 	}
 
-	return <UserDetailPage user={data.user} orderCount={data.orderCount} />;
+	return (
+		<UserDetailPage
+			user={data.user}
+			orderCount={data.orderCount}
+			activeSessions={data.activeSessions}
+		/>
+	);
 }

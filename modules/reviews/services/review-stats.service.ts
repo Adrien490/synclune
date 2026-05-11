@@ -1,3 +1,4 @@
+import { Prisma } from "@/app/generated/prisma/client";
 import type { PrismaTransaction } from "@/shared/types/prisma";
 import type {
 	ProductReviewStatistics,
@@ -86,6 +87,109 @@ export async function updateProductReviewStats(
 			...ratingCounts,
 		},
 	});
+}
+
+/** Raw query row for batched per-product stats computation */
+interface ReviewStatsBatchRow {
+	product_id: string;
+	total_count: bigint;
+	avg_rating: number | null;
+	rating1: bigint;
+	rating2: bigint;
+	rating3: bigint;
+	rating4: bigint;
+	rating5: bigint;
+}
+
+/**
+ * Recompute stats for many products in one round-trip per phase.
+ *
+ * - 1 SELECT GROUP BY productId for all products (1 query)
+ * - N upserts in parallel (Prisma sérialise sur la même tx mais évite les N
+ *   round-trips séquentiels du précédent code).
+ *
+ * À utiliser depuis les bulk actions admin où une boucle séquentielle
+ * `await updateProductReviewStats(tx, productId)` provoquait des timeouts
+ * transaction (cf. audit reviews 2026-05-11 P1.2).
+ */
+export async function recomputeProductReviewStatsBatch(
+	tx: PrismaTransaction,
+	productIds: string[],
+): Promise<void> {
+	if (productIds.length === 0) return;
+
+	const rows = await tx.$queryRaw<ReviewStatsBatchRow[]>`
+		SELECT
+			"productId" AS product_id,
+			COUNT(*)::bigint AS total_count,
+			AVG(rating) AS avg_rating,
+			COUNT(*) FILTER (WHERE rating = 1)::bigint AS rating1,
+			COUNT(*) FILTER (WHERE rating = 2)::bigint AS rating2,
+			COUNT(*) FILTER (WHERE rating = 3)::bigint AS rating3,
+			COUNT(*) FILTER (WHERE rating = 4)::bigint AS rating4,
+			COUNT(*) FILTER (WHERE rating = 5)::bigint AS rating5
+		FROM "ProductReview"
+		WHERE "productId" IN (${Prisma.join(productIds)})
+			AND status = 'PUBLISHED'
+			AND "deletedAt" IS NULL
+		GROUP BY "productId"
+	`;
+
+	// Garder une trace des productIds n'ayant aucun review PUBLISHED → stats à 0.
+	const seen = new Set(rows.map((r) => r.product_id));
+	const empties = productIds.filter((id) => !seen.has(id));
+
+	await Promise.all([
+		...rows.map((row) => {
+			const counts: RatingCounts = {
+				rating1Count: Number(row.rating1),
+				rating2Count: Number(row.rating2),
+				rating3Count: Number(row.rating3),
+				rating4Count: Number(row.rating4),
+				rating5Count: Number(row.rating5),
+			};
+			const totalCount = Number(row.total_count);
+			const averageRating = row.avg_rating ? Number(row.avg_rating) : 0;
+			return tx.productReviewStats.upsert({
+				where: { productId: row.product_id },
+				create: {
+					productId: row.product_id,
+					totalCount,
+					averageRating,
+					...counts,
+				},
+				update: {
+					totalCount,
+					averageRating,
+					...counts,
+				},
+			});
+		}),
+		...empties.map((productId) =>
+			tx.productReviewStats.upsert({
+				where: { productId },
+				create: {
+					productId,
+					totalCount: 0,
+					averageRating: 0,
+					rating1Count: 0,
+					rating2Count: 0,
+					rating3Count: 0,
+					rating4Count: 0,
+					rating5Count: 0,
+				},
+				update: {
+					totalCount: 0,
+					averageRating: 0,
+					rating1Count: 0,
+					rating2Count: 0,
+					rating3Count: 0,
+					rating4Count: 0,
+					rating5Count: 0,
+				},
+			}),
+		),
+	]);
 }
 
 // ============================================================================

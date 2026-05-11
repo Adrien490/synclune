@@ -92,7 +92,7 @@ export async function duplicateProductType(
 			metadata: { originalId: productTypeId, label: duplicate.label },
 		});
 
-		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
+		getProductTypeInvalidationTags(duplicate.slug).forEach((tag) => updateTag(tag));
 
 		return success(`Type "${duplicate.label}" dupliqué`, {
 			id: duplicate.id,

@@ -89,7 +89,9 @@ export async function bulkToggleMaterialsStatus(
 			adminName: adminUser.name ?? adminUser.email,
 			action: isActive ? "material.bulkActivate" : "material.bulkDeactivate",
 			targetType: "material",
-			targetId: eligibleIds.join(","),
+			// Bulk : utiliser "bulk" comme targetId pour éviter dépassement VARCHAR
+			// (200 cuid joints = ~5200 chars). La liste complète vit dans metadata.materialIds.
+			targetId: "bulk",
 			metadata: { count: eligibleIds.length, isActive, materialIds: eligibleIds },
 		});
 

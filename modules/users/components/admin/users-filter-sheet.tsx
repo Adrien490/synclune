@@ -4,7 +4,7 @@ import { useForm } from "@tanstack/react-form";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition, Suspense, type ComponentProps } from "react";
 
-import { Role } from "@/app/generated/prisma/browser";
+import { AccountStatus, Role } from "@/app/generated/prisma/browser";
 import { FilterSheetWrapper } from "@/shared/components/filter-sheet-wrapper";
 import { CheckboxFilterItem } from "@/shared/components/forms/checkbox-filter-item";
 import { RadioFilterItem } from "@/shared/components/forms/radio-filter-item";
@@ -16,8 +16,17 @@ type FilterValues = {
 	role: Role[];
 	emailVerified: boolean | undefined;
 	hasOrders: boolean | undefined;
+	accountStatus: AccountStatus | undefined;
 	includeDeleted: boolean;
 };
+
+const ACCOUNT_STATUS_OPTIONS: Array<{ value: AccountStatus | undefined; label: string }> = [
+	{ value: undefined, label: "Tous" },
+	{ value: AccountStatus.ACTIVE, label: "Actif" },
+	{ value: AccountStatus.INACTIVE, label: "Inactif" },
+	{ value: AccountStatus.PENDING_DELETION, label: "Suppression en attente" },
+	{ value: AccountStatus.ANONYMIZED, label: "Anonymisé" },
+];
 
 interface UsersFilterSheetProps {
 	open?: boolean;
@@ -40,6 +49,7 @@ function UsersFilterSheetInner({
 		if (searchParams.get("filter_role")) count++;
 		if (searchParams.get("filter_emailVerified")) count++;
 		if (searchParams.get("filter_hasOrders")) count++;
+		if (searchParams.get("filter_accountStatus")) count++;
 		if (searchParams.get("filter_includeDeleted") === "true") count++;
 		return count;
 	})();
@@ -56,6 +66,12 @@ function UsersFilterSheetInner({
 			});
 		}
 
+		const accountStatusParam = searchParams.get("filter_accountStatus");
+		const parsedAccountStatus =
+			accountStatusParam && (Object.values(AccountStatus) as string[]).includes(accountStatusParam)
+				? (accountStatusParam as AccountStatus)
+				: undefined;
+
 		return {
 			role: roles,
 			emailVerified:
@@ -70,6 +86,7 @@ function UsersFilterSheetInner({
 					: searchParams.get("filter_hasOrders") === "false"
 						? false
 						: undefined,
+			accountStatus: parsedAccountStatus,
 			includeDeleted: searchParams.get("filter_includeDeleted") === "true",
 		};
 	})();
@@ -102,6 +119,10 @@ function UsersFilterSheetInner({
 
 		if (values.hasOrders !== undefined) {
 			params.set("filter_hasOrders", String(values.hasOrders));
+		}
+
+		if (values.accountStatus !== undefined) {
+			params.set("filter_accountStatus", values.accountStatus);
 		}
 
 		if (values.includeDeleted) {
@@ -246,6 +267,33 @@ function UsersFilterSheetInner({
 										key={String(value)}
 										id={`hasOrders-${label}`}
 										name="hasOrders"
+										value={String(value)}
+										checked={field.state.value === value}
+										onCheckedChange={(checked) => {
+											if (checked) {
+												field.handleChange(value);
+											}
+										}}
+									>
+										{label}
+									</RadioFilterItem>
+								))}
+							</fieldset>
+						)}
+					</form.Field>
+
+					<Separator />
+
+					{/* Statut compte (RGPD) - Single-select */}
+					<form.Field name="accountStatus">
+						{(field) => (
+							<fieldset className="space-y-1">
+								<legend className="mb-2 text-sm font-medium">Statut du compte</legend>
+								{ACCOUNT_STATUS_OPTIONS.map(({ value, label }) => (
+									<RadioFilterItem
+										key={String(value)}
+										id={`accountStatus-${String(value)}`}
+										name="accountStatus"
 										value={String(value)}
 										checked={field.state.value === value}
 										onCheckedChange={(checked) => {

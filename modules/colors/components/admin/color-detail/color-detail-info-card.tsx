@@ -31,10 +31,6 @@ export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
 							</Badge>
 						</dd>
 					</div>
-					<div className="flex items-center justify-between gap-3">
-						<dt className="text-muted-foreground">Position</dt>
-						<dd className="font-medium">#{color.position}</dd>
-					</div>
 					<div className="flex items-start justify-between gap-3">
 						<dt className="text-muted-foreground shrink-0 pt-1.5">Slug</dt>
 						<dd className="flex min-w-0 items-start gap-1">

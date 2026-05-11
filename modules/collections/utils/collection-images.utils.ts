@@ -3,21 +3,26 @@ import type { Collection, CollectionImage } from "../types/collection.types";
 export function extractCollectionImages(products: Collection["products"]): CollectionImage[] {
 	if (!products.length) return [];
 
-	const seen = new Set<string>();
+	// Dedup par productId (et non par image URL) pour preserver la diversite visuelle
+	// quand plusieurs produits partagent le meme mockup. Affiche au plus une image
+	// par produit dans la Bento Grid.
+	const seenProducts = new Set<string>();
 
 	return products
-		.map((p) => p.product.skus[0]?.images[0])
-		.filter((img): img is NonNullable<typeof img> => Boolean(img))
-		.filter((img) => {
-			if (seen.has(img.url)) return false;
-			seen.add(img.url);
+		.filter((p) => {
+			if (seenProducts.has(p.product.id)) return false;
+			if (!p.product.skus[0]?.images[0]) return false;
+			seenProducts.add(p.product.id);
 			return true;
 		})
-		.map((img) => ({
-			url: img.url,
-			blurDataUrl: img.blurDataUrl,
-			alt: img.altText,
-		}));
+		.map((p) => {
+			const img = p.product.skus[0]!.images[0]!;
+			return {
+				url: img.url,
+				blurDataUrl: img.blurDataUrl,
+				alt: img.altText,
+			};
+		});
 }
 
 /** Extract min/max price range from collection products (in cents) */

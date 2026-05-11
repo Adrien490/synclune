@@ -20,11 +20,6 @@ export const BATCH_SIZE_MEDIUM = 25;
 export const BATCH_SIZE_LARGE = 50;
 
 /**
- * Maximum retry attempts for webhook events
- */
-export const MAX_WEBHOOK_RETRY_ATTEMPTS = 3;
-
-/**
  * Retention periods in days
  */
 export const RETENTION = {

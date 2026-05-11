@@ -19,7 +19,7 @@ const {
 	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		storeSettings: { findUnique: vi.fn(), update: vi.fn() },
+		storeSettings: { findUnique: vi.fn(), updateMany: vi.fn() },
 	},
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -91,7 +91,7 @@ describe("updateClosureMessage", () => {
 			isClosed: true,
 			closureMessage: "Ancien message",
 		});
-		mockPrisma.storeSettings.update.mockResolvedValue({});
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 1 });
 		mockGetStoreSettingsInvalidationTags.mockReturnValue(["store-status", "store-settings"]);
 		mockLogAudit.mockResolvedValue(undefined);
 
@@ -150,30 +150,30 @@ describe("updateClosureMessage", () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue(null);
 		await updateClosureMessage(undefined, formData());
 		expect(mockError).toHaveBeenCalledWith("Paramètres boutique introuvables");
-		expect(mockPrisma.storeSettings.update).not.toHaveBeenCalled();
+		expect(mockPrisma.storeSettings.updateMany).not.toHaveBeenCalled();
 	});
 
 	// ─── Pre-condition store closed ────────────────────────────────────────
 
-	it("rejects when store is open", async () => {
+	it("rejects when store is open (updateMany matches 0 rows)", async () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue({
 			isClosed: false,
 			closureMessage: null,
 		});
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 0 });
 		await updateClosureMessage(undefined, formData());
 		expect(mockError).toHaveBeenCalledWith("La boutique est ouverte, aucun message à modifier");
-		expect(mockPrisma.storeSettings.update).not.toHaveBeenCalled();
 	});
 
 	// ─── Update mutation ───────────────────────────────────────────────────
 
-	it("updates only closureMessage (preserves closedAt/closedBy/reopensAt)", async () => {
+	it("updates atomically with WHERE isClosed=true (preserves closedAt/closedBy/reopensAt)", async () => {
 		mockValidateInput.mockReturnValue({
 			data: { closureMessage: "Congés prolongés" },
 		});
 		await updateClosureMessage(undefined, formData());
-		expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith({
-			where: { id: SINGLETON_ID },
+		expect(mockPrisma.storeSettings.updateMany).toHaveBeenCalledWith({
+			where: { id: SINGLETON_ID, isClosed: true },
 			data: { closureMessage: "Congés prolongés" },
 		});
 	});
@@ -234,7 +234,7 @@ describe("updateClosureMessage", () => {
 	// ─── Error handling ────────────────────────────────────────────────────
 
 	it("calls handleActionError on unexpected exception", async () => {
-		mockPrisma.storeSettings.update.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.storeSettings.updateMany.mockRejectedValue(new Error("DB crash"));
 		const result = await updateClosureMessage(undefined, formData());
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockHandleActionError).toHaveBeenCalledWith(

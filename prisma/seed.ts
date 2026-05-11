@@ -3281,7 +3281,6 @@ async function main(): Promise<void> {
 			type: DiscountType.PERCENTAGE,
 			value: 20,
 			isActive: true,
-			manuallyDeactivated: true,
 			startsAt: new Date(),
 			endsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 		},

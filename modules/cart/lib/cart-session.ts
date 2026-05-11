@@ -10,6 +10,14 @@ const CART_SESSION_COOKIE_NAME = "cart_session";
 const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
+ * Valide qu'une chaîne respecte le format UUID v4 (canonique).
+ * Exporté pour les callers externes au module cart (ex. auth hook merge).
+ */
+export function isValidCartSessionId(value: string | null | undefined): value is string {
+	return typeof value === "string" && UUID_V4_REGEX.test(value);
+}
+
+/**
  * Durée de vie du cookie : 7 jours
  * Cette durée est réinitialisée à chaque interaction avec le panier
  * Utilise CART_EXPIRATION_DAYS pour cohérence avec la durée de vie du panier
@@ -24,8 +32,7 @@ export async function getCartSessionId(): Promise<string | null> {
 	const cookieStore = await cookies();
 	const sessionId = cookieStore.get(CART_SESSION_COOKIE_NAME)?.value;
 
-	// Validation du format UUID v4
-	if (!sessionId || !UUID_V4_REGEX.test(sessionId)) {
+	if (!isValidCartSessionId(sessionId)) {
 		return null;
 	}
 

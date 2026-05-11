@@ -1,4 +1,5 @@
 import { Prisma } from "@/app/generated/prisma/client";
+import { cacheLife, cacheTag } from "next/cache";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { requireAdmin } from "@/modules/auth/lib/require-auth";
@@ -7,7 +8,6 @@ import { fuzzySearchIds } from "@/shared/lib/fuzzy-search";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_SEARCH_LIMIT } from "@/shared/lib/rate-limit-config";
 import { getSortDirection } from "@/shared/utils/sort-direction";
-import { cacheOrdersDashboard } from "../constants/cache";
 
 import {
 	GET_ORDERS_DEFAULT_PER_PAGE,
@@ -67,7 +67,8 @@ async function fetchOrders(
 	fuzzyIds?: string[] | null,
 ): Promise<GetOrdersReturn> {
 	"use cache";
-	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	cacheLife("user");
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	try {
 		const where = buildOrderWhereClause(params, fuzzyIds);

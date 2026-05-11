@@ -32,17 +32,23 @@ function ColorsFilterSheetInner({
 	const isOpen = controlledOpen ?? internalOpen;
 	const handleOpenChange = controlledOnOpenChange ?? setInternalOpen;
 
-	const initialValues = ((): FilterFormData => {
+	// Single pass over searchParams: extract isActive form value AND count
+	// active filters (any key prefixed `filter_`).
+	const { initialValues, activeFiltersCount } = ((): {
+		initialValues: FilterFormData;
+		activeFiltersCount: number;
+	} => {
 		let isActive = "all";
-
+		let count = 0;
 		searchParams.forEach((value, key) => {
 			if (key === "filter_isActive") {
 				isActive = value === "true" ? "active" : "inactive";
 			}
+			if (key.startsWith("filter_")) count += 1;
 		});
-
-		return { isActive };
+		return { initialValues: { isActive }, activeFiltersCount: count };
 	})();
+	const hasActiveFilters = activeFiltersCount > 0;
 
 	const form = useAppForm({
 		defaultValues: initialValues,
@@ -72,15 +78,6 @@ function ColorsFilterSheetInner({
 			router.push(`?${params.toString()}`, { scroll: false });
 		});
 	};
-
-	const { hasActiveFilters, activeFiltersCount } = (() => {
-		let count = 0;
-		searchParams.forEach((value, key) => {
-			if (["page", "perPage", "sortBy", "search"].includes(key)) return;
-			if (key.startsWith("filter_")) count += 1;
-		});
-		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	})();
 
 	return (
 		<FilterSheetWrapper

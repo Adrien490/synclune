@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type CameraFacing = "user" | "environment";
 
@@ -96,7 +96,7 @@ export function useCameraStream(options: UseCameraStreamOptions = {}): UseCamera
 	const [error, setError] = useState<CameraStreamError | null>(null);
 	const [facing, setFacing] = useState<CameraFacing>(facingMode);
 
-	const stop = useCallback(() => {
+	const stop = () => {
 		const s = streamRef.current;
 		if (s) {
 			for (const track of s.getTracks()) {
@@ -109,9 +109,9 @@ export function useCameraStream(options: UseCameraStreamOptions = {}): UseCamera
 		if (videoRef.current) {
 			videoRef.current.srcObject = null;
 		}
-	}, []);
+	};
 
-	const start = useCallback(async () => {
+	const start = async () => {
 		if (!isGetUserMediaSupported()) {
 			setError({ kind: "unsupported", message: "getUserMedia non supporté" });
 			return;
@@ -144,13 +144,13 @@ export function useCameraStream(options: UseCameraStreamOptions = {}): UseCamera
 			setError(mapDomError(err));
 			setIsStreaming(false);
 		}
-	}, [facing, idealWidth, idealHeight]);
+	};
 
-	const toggleFacing = useCallback(async () => {
+	const toggleFacing = async () => {
 		stop();
 		setFacing((prev) => (prev === "environment" ? "user" : "environment"));
 		// start() is triggered by the effect below on facing change
-	}, [stop]);
+	};
 
 	// Start whenever facing changes and autoStart is enabled, or when explicitly started
 	useEffect(() => {
@@ -164,38 +164,35 @@ export function useCameraStream(options: UseCameraStreamOptions = {}): UseCamera
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [facing, autoStart]);
 
-	const capture = useCallback(
-		async (fileName = `camera-${Date.now()}.jpg`): Promise<File | null> => {
-			const video = videoRef.current;
-			if (!video || video.readyState < 2) return null;
+	const capture = async (fileName = `camera-${Date.now()}.jpg`): Promise<File | null> => {
+		const video = videoRef.current;
+		if (!video || video.readyState < 2) return null;
 
-			const width = video.videoWidth;
-			const height = video.videoHeight;
-			if (!width || !height) return null;
+		const width = video.videoWidth;
+		const height = video.videoHeight;
+		if (!width || !height) return null;
 
-			const canvas = document.createElement("canvas");
-			canvas.width = width;
-			canvas.height = height;
-			const ctx = canvas.getContext("2d");
-			if (!ctx) return null;
-			ctx.drawImage(video, 0, 0, width, height);
+		const canvas = document.createElement("canvas");
+		canvas.width = width;
+		canvas.height = height;
+		const ctx = canvas.getContext("2d");
+		if (!ctx) return null;
+		ctx.drawImage(video, 0, 0, width, height);
 
-			return new Promise<File | null>((resolve) => {
-				canvas.toBlob(
-					(blob) => {
-						if (!blob) {
-							resolve(null);
-							return;
-						}
-						resolve(new File([blob], fileName, { type: "image/jpeg" }));
-					},
-					"image/jpeg",
-					0.9,
-				);
-			});
-		},
-		[],
-	);
+		return new Promise<File | null>((resolve) => {
+			canvas.toBlob(
+				(blob) => {
+					if (!blob) {
+						resolve(null);
+						return;
+					}
+					resolve(new File([blob], fileName, { type: "image/jpeg" }));
+				},
+				"image/jpeg",
+				0.9,
+			);
+		});
+	};
 
 	return { videoRef, stream, isStreaming, error, start, stop, toggleFacing, facing, capture };
 }

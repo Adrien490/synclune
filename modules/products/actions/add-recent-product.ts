@@ -42,8 +42,7 @@ export async function addRecentProduct(
 			try {
 				const parsed: unknown = JSON.parse(decodeURIComponent(existingCookie.value));
 				if (Array.isArray(parsed)) {
-					const items = parsed as unknown as unknown[];
-					products = items.filter((s): s is string => typeof s === "string");
+					products = parsed.filter((s): s is string => typeof s === "string");
 				}
 			} catch {
 				// Cookie corrompu - reset silencieux

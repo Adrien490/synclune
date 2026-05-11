@@ -17,9 +17,9 @@ vi.mock("../constants/address.constants", () => ({
 		MIN_NAME_LENGTH: 2,
 		MAX_NAME_LENGTH: 50,
 		MIN_ADDRESS_LENGTH: 5,
-		MAX_ADDRESS_LENGTH: 100,
+		MAX_ADDRESS_LENGTH: 255,
 		MIN_CITY_LENGTH: 2,
-		MAX_CITY_LENGTH: 50,
+		MAX_CITY_LENGTH: 100,
 		POSTAL_CODE_REGEX: /^[0-9]{5}$/,
 		DEFAULT_COUNTRY: "FR",
 	},
@@ -29,9 +29,9 @@ vi.mock("../constants/address.constants", () => ({
 		LAST_NAME_TOO_SHORT: "Le nom doit contenir au moins 2 caracteres",
 		LAST_NAME_TOO_LONG: "Le nom ne peut pas depasser 50 caracteres",
 		ADDRESS_TOO_SHORT: "L'adresse doit contenir au moins 5 caracteres",
-		ADDRESS_TOO_LONG: "L'adresse ne peut pas depasser 100 caracteres",
+		ADDRESS_TOO_LONG: "L'adresse ne peut pas depasser 255 caracteres",
 		CITY_TOO_SHORT: "La ville doit contenir au moins 2 caracteres",
-		CITY_TOO_LONG: "La ville ne peut pas depasser 50 caracteres",
+		CITY_TOO_LONG: "La ville ne peut pas depasser 100 caracteres",
 		INVALID_POSTAL_CODE: "Le code postal doit contenir 5 chiffres",
 		PHONE_REQUIRED: "Le numero de telephone est requis",
 		INVALID_PHONE: "Le numero de telephone doit etre au format francais valide",
@@ -288,28 +288,28 @@ describe("addressFormSchema", () => {
 			expect(result.success).toBe(true);
 		});
 
-		it("accepts address1 at exactly 100 characters", () => {
+		it("accepts address1 at exactly 255 characters", () => {
 			const result = addressFormSchema.safeParse({
 				...VALID_ADDRESS,
-				address1: "a".repeat(100),
+				address1: "a".repeat(255),
 			});
 			expect(result.success).toBe(true);
 		});
 
-		it("rejects address1 longer than 100 characters", () => {
+		it("rejects address1 longer than 255 characters", () => {
 			const result = addressFormSchema.safeParse({
 				...VALID_ADDRESS,
-				address1: "a".repeat(101),
+				address1: "a".repeat(256),
 			});
 			expect(result.success).toBe(false);
 		});
 	});
 
 	describe("city field", () => {
-		it("rejects city longer than 50 characters", () => {
+		it("rejects city longer than 100 characters", () => {
 			const result = addressFormSchema.safeParse({
 				...VALID_ADDRESS,
-				city: "a".repeat(51),
+				city: "a".repeat(101),
 			});
 			expect(result.success).toBe(false);
 			if (!result.success) {
@@ -318,10 +318,10 @@ describe("addressFormSchema", () => {
 			}
 		});
 
-		it("accepts city at exactly 50 characters", () => {
+		it("accepts city at exactly 100 characters", () => {
 			const result = addressFormSchema.safeParse({
 				...VALID_ADDRESS,
-				city: "a".repeat(50),
+				city: "a".repeat(100),
 			});
 			expect(result.success).toBe(true);
 		});

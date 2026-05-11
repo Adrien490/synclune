@@ -1,32 +1,24 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockDialog, mockOrderNotes } = vi.hoisted(() => ({
+const { mockDialog, mockOrderNotes, mockGetOrderNotes } = vi.hoisted(() => ({
 	mockDialog: {
 		isOpen: false,
 		data: null as { orderId: string; orderNumber: string; [key: string]: unknown } | null,
 		close: vi.fn(),
 	},
 	mockOrderNotes: {
-		notes: [] as {
-			id: string;
-			content: string;
-			authorName: string;
-			createdAt: string;
-		}[],
-		fetchError: null as string | null,
-		loadNotes: vi.fn(),
-		reset: vi.fn(),
 		add: vi.fn(),
 		remove: vi.fn(),
-		isPendingFetch: false,
 		isPendingAdd: false,
 		isPendingDelete: false,
+		isPending: false,
 	},
+	mockGetOrderNotes: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
@@ -35,6 +27,11 @@ vi.mock("@/shared/providers/dialog-store-provider", () => ({
 
 vi.mock("@/modules/orders/hooks/use-order-notes", () => ({
 	useOrderNotes: () => mockOrderNotes,
+}));
+
+// Mock the server data fetcher to break the auth.ts → Stripe import chain in tests
+vi.mock("@/modules/orders/data/get-order-notes", () => ({
+	getOrderNotes: mockGetOrderNotes,
 }));
 
 vi.mock("date-fns", () => ({
@@ -132,7 +129,14 @@ function openDialog(overrides: { orderId?: string; orderNumber?: string } = {}) 
 	};
 }
 
-function makeNote(overrides: Partial<(typeof mockOrderNotes.notes)[0]> = {}) {
+function makeNote(
+	overrides: Partial<{
+		id: string;
+		content: string;
+		authorName: string;
+		createdAt: string;
+	}> = {},
+) {
 	return {
 		id: "note-1",
 		content: "Test note content",
@@ -157,12 +161,14 @@ describe("OrderNotesDialog", () => {
 
 		it("shows title 'Notes internes' when open", () => {
 			openDialog();
+			mockGetOrderNotes.mockResolvedValue({ notes: [] });
 			render(<OrderNotesDialog />);
 			expect(screen.getByText("Notes internes")).toBeInTheDocument();
 		});
 
 		it("shows order number in description", () => {
 			openDialog({ orderNumber: "CMD-2026-007" });
+			mockGetOrderNotes.mockResolvedValue({ notes: [] });
 			render(<OrderNotesDialog />);
 			expect(screen.getByText("CMD-2026-007")).toBeInTheDocument();
 		});
@@ -171,73 +177,85 @@ describe("OrderNotesDialog", () => {
 	describe("textarea", () => {
 		it("shows textarea with placeholder 'Ajouter une note…'", () => {
 			openDialog();
+			mockGetOrderNotes.mockResolvedValue({ notes: [] });
 			render(<OrderNotesDialog />);
 			expect(screen.getByPlaceholderText("Ajouter une note…")).toBeInTheDocument();
 		});
 
 		it("add button is disabled when textarea is empty", () => {
 			openDialog();
+			mockGetOrderNotes.mockResolvedValue({ notes: [] });
 			render(<OrderNotesDialog />);
 			const addButton = screen.getByRole("button", { name: /Ajouter/i });
 			expect(addButton).toBeDisabled();
 		});
 	});
 
-	describe("notes list states", () => {
-		it("shows loading spinner when isPendingFetch is true", () => {
+	describe("notes list states (Suspense + use)", () => {
+		it("shows fallback loader while the Promise is pending", () => {
 			openDialog();
-			mockOrderNotes.isPendingFetch = true;
-			mockOrderNotes.notes = [];
-			mockOrderNotes.fetchError = null;
+			mockGetOrderNotes.mockReturnValue(new Promise(() => {})); // never resolves
 			render(<OrderNotesDialog />);
 			expect(screen.getByTestId("loader")).toBeInTheDocument();
-			mockOrderNotes.isPendingFetch = false;
 		});
 
-		it("shows error message when fetchError is set", () => {
+		it("shows error message when result has an error", async () => {
 			openDialog();
-			mockOrderNotes.isPendingFetch = false;
-			mockOrderNotes.fetchError = "Erreur de chargement des notes";
-			mockOrderNotes.notes = [];
-			render(<OrderNotesDialog />);
-			expect(screen.getByText("Erreur de chargement des notes")).toBeInTheDocument();
-			mockOrderNotes.fetchError = null;
+			mockGetOrderNotes.mockResolvedValue({ error: "Erreur de chargement des notes" });
+			await act(async () => {
+				render(<OrderNotesDialog />);
+			});
+			await waitFor(() => {
+				expect(screen.getByText("Erreur de chargement des notes")).toBeInTheDocument();
+			});
 		});
 
-		it("shows empty state message when notes list is empty", () => {
+		it("shows empty state when notes list is empty", async () => {
 			openDialog();
-			mockOrderNotes.isPendingFetch = false;
-			mockOrderNotes.fetchError = null;
-			mockOrderNotes.notes = [];
-			render(<OrderNotesDialog />);
-			expect(screen.getByText("Aucune note pour cette commande")).toBeInTheDocument();
+			mockGetOrderNotes.mockResolvedValue({ notes: [] });
+			await act(async () => {
+				render(<OrderNotesDialog />);
+			});
+			await waitFor(() => {
+				expect(screen.getByText("Aucune note pour cette commande")).toBeInTheDocument();
+			});
 		});
 
-		it("renders note content when notes exist", () => {
+		it("renders note content when notes exist", async () => {
 			openDialog();
-			mockOrderNotes.isPendingFetch = false;
-			mockOrderNotes.fetchError = null;
-			mockOrderNotes.notes = [makeNote({ content: "Important: check address" })];
-			render(<OrderNotesDialog />);
-			expect(screen.getByText("Important: check address")).toBeInTheDocument();
+			mockGetOrderNotes.mockResolvedValue({
+				notes: [makeNote({ content: "Important: check address" })],
+			});
+			await act(async () => {
+				render(<OrderNotesDialog />);
+			});
+			await waitFor(() => {
+				expect(screen.getByText("Important: check address")).toBeInTheDocument();
+			});
 		});
 
-		it("renders note author name", () => {
+		it("renders note author name", async () => {
 			openDialog();
-			mockOrderNotes.isPendingFetch = false;
-			mockOrderNotes.fetchError = null;
-			mockOrderNotes.notes = [makeNote({ authorName: "Marie Dupont" })];
-			render(<OrderNotesDialog />);
-			expect(screen.getByText("Marie Dupont")).toBeInTheDocument();
+			mockGetOrderNotes.mockResolvedValue({
+				notes: [makeNote({ authorName: "Marie Dupont" })],
+			});
+			await act(async () => {
+				render(<OrderNotesDialog />);
+			});
+			await waitFor(() => {
+				expect(screen.getByText("Marie Dupont")).toBeInTheDocument();
+			});
 		});
 
-		it("renders formatted note date", () => {
+		it("renders formatted note date", async () => {
 			openDialog();
-			mockOrderNotes.isPendingFetch = false;
-			mockOrderNotes.fetchError = null;
-			mockOrderNotes.notes = [makeNote()];
-			render(<OrderNotesDialog />);
-			expect(screen.getByText("1 jan. 2026 à 10:00")).toBeInTheDocument();
+			mockGetOrderNotes.mockResolvedValue({ notes: [makeNote()] });
+			await act(async () => {
+				render(<OrderNotesDialog />);
+			});
+			await waitFor(() => {
+				expect(screen.getByText("1 jan. 2026 à 10:00")).toBeInTheDocument();
+			});
 		});
 	});
 });

@@ -30,6 +30,9 @@ export const PRODUCTS_CACHE_TAGS = {
 	/** SKUs d'un produit */
 	SKUS: (productId: string) => `product-${productId}-skus`,
 
+	/** Collections d'un produit (invalidé lors d'updateProductCollections / create / update) */
+	COLLECTIONS: (productId: string) => `product-${productId}-collections`,
+
 	/** Prix maximum des produits (pour filtres) */
 	MAX_PRICE: "max-product-price",
 

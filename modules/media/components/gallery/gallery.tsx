@@ -1,6 +1,7 @@
 "use client";
 
 import useEmblaCarousel from "embla-carousel-react";
+import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useEffectEvent, useRef, useState } from "react";
 
@@ -23,13 +24,15 @@ import { GalleryNavigation } from "@/shared/components/gallery/navigation";
 import { GalleryZoomButton } from "@/shared/components/gallery/zoom-button";
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { lazy } from "react";
 import ScrollFade from "@/shared/components/scroll-fade";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
-// Lazy loading - lightbox charge uniquement a l'ouverture
-const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
+// Code-split — lightbox charge uniquement à l'ouverture, jamais en SSR.
+const MediaLightbox = dynamic(() => import("@/modules/media/components/media-lightbox"), {
+	ssr: false,
+	loading: () => null,
+});
 
 import type { ProductMedia } from "@/modules/media/types/product-media.types";
 import type { GetProductReturn } from "@/modules/products/types/product.types";

@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheProductTypes } from "../constants/cache";
+import { cacheProductTypesPublic } from "../constants/cache";
 import type { ProductTypeOption } from "../types/product-type.types";
 
 // ============================================================================
@@ -20,7 +20,7 @@ export async function getProductTypeOptions(): Promise<ProductTypeOption[]> {
  */
 async function fetchProductTypeOptions(): Promise<ProductTypeOption[]> {
 	"use cache";
-	cacheProductTypes();
+	cacheProductTypesPublic();
 
 	try {
 		const productTypes = await prisma.productType.findMany({
@@ -37,6 +37,6 @@ async function fetchProductTypeOptions(): Promise<ProductTypeOption[]> {
 		Sentry.captureException(error, {
 			tags: { module: "product-types", operation: "getProductTypeOptions" },
 		});
-		return [];
+		throw error;
 	}
 }

@@ -1,18 +1,10 @@
 "use client";
 
 import { revertToProcessing } from "@/modules/orders/actions/revert-to-processing";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
+import { useOrderAction } from "./use-order-action";
 
 export function useRevertToProcessing() {
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			revertToProcessing,
-			createToastCallbacks({ loadingMessage: "Retour en préparation…" }),
-		),
-		undefined,
-	);
-
-	return { state, action, isPending };
+	return useOrderAction(revertToProcessing, {
+		loadingMessage: "Retour en préparation…",
+	});
 }

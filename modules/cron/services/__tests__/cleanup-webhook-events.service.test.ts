@@ -1,15 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { WebhookEventStatus } from "@/app/generated/prisma/client";
 
-const { mockPrisma, mockLogger } = vi.hoisted(() => ({
-	mockPrisma: {
-		webhookEvent: {
-			findMany: vi.fn(),
-			deleteMany: vi.fn(),
+const { mockPrisma, mockLogger, mockSentryCaptureException, mockSentryWithScope } = vi.hoisted(
+	() => ({
+		mockPrisma: {
+			webhookEvent: {
+				findMany: vi.fn(),
+				deleteMany: vi.fn(),
+			},
 		},
-	},
-	mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
-}));
+		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+		mockSentryCaptureException: vi.fn(),
+		mockSentryWithScope: vi.fn((cb: (scope: unknown) => void) =>
+			cb({ setTag: vi.fn(), setLevel: vi.fn(), setFingerprint: vi.fn() }),
+		),
+	}),
+);
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -17,6 +23,11 @@ vi.mock("@/shared/lib/prisma", () => ({
 
 vi.mock("@/shared/lib/logger", () => ({
 	logger: mockLogger,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	withScope: mockSentryWithScope,
+	captureException: mockSentryCaptureException,
 }));
 
 import { cleanupOldWebhookEvents } from "../cleanup-webhook-events.service";
@@ -36,7 +47,7 @@ describe("cleanupOldWebhookEvents", () => {
 	it("should return zero counts when no webhook events are expired", async () => {
 		const result = await cleanupOldWebhookEvents();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			completedDeleted: 0,
 			failedDeleted: 0,
 			skippedDeleted: 0,
@@ -247,7 +258,7 @@ describe("cleanupOldWebhookEvents", () => {
 			.mockResolvedValueOnce({ count: 2 });
 		const result = await cleanupOldWebhookEvents();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			completedDeleted: 25,
 			failedDeleted: 10,
 			skippedDeleted: 5,
@@ -438,5 +449,29 @@ describe("cleanupOldWebhookEvents", () => {
 		const result = await cleanupOldWebhookEvents();
 
 		expect(result.hasMore).toBe(false);
+	});
+
+	it("should track errors and report Sentry per failing step", async () => {
+		const dbError = new Error("DB connection lost");
+		mockPrisma.webhookEvent.findMany.mockRejectedValueOnce(dbError);
+
+		const result = await cleanupOldWebhookEvents();
+
+		expect(result.errored).toBe(1);
+		expect(mockSentryCaptureException).toHaveBeenCalledWith(dbError);
+		expect(mockSentryCaptureException).toHaveBeenCalledTimes(1);
+	});
+
+	it("should aggregate errors across multiple failing steps", async () => {
+		mockPrisma.webhookEvent.findMany
+			.mockRejectedValueOnce(new Error("step 1 failed"))
+			.mockRejectedValueOnce(new Error("step 2 failed"))
+			.mockResolvedValueOnce([])
+			.mockResolvedValueOnce([]);
+
+		const result = await cleanupOldWebhookEvents();
+
+		expect(result.errored).toBe(2);
+		expect(mockSentryCaptureException).toHaveBeenCalledTimes(2);
 	});
 });

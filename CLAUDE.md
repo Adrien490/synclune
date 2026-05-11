@@ -290,7 +290,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-9 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/`.
+10 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/` (or domain modules for transactional services).
 
 | Job                         | Schedule           |
 | --------------------------- | ------------------ |
@@ -298,6 +298,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 | `cleanup-sessions`          | Daily 3:00         |
 | `process-account-deletions` | Daily 5:00         |
 | `sync-async-payments`       | Every 4h           |
+| `reopen-store`              | Every 15 min       |
 | `cleanup-newsletter`        | Weekly Sunday 6:00 |
 | `cleanup-webhook-events`    | Monthly 1st 7:00   |
 | `hard-delete-retention`     | Monthly 1st 8:00   |

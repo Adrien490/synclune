@@ -37,10 +37,6 @@ vi.mock("../../constants/order-item.constants", () => ({
 }));
 
 vi.mock("../../constants/cache", () => ({
-	cacheOrdersDashboard: vi.fn((tag?: string) => {
-		mockCacheLife("user");
-		if (tag) mockCacheTag(tag);
-	}),
 	ORDERS_CACHE_TAGS: {
 		LIST: "orders-list",
 	},

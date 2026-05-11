@@ -70,6 +70,8 @@ model User {
   reviews ProductReview[]
 
   @@index([accountStatus, deletionRequestedAt]) // process-account-deletions cron
+  @@index([role, deletedAt]) // admin count guard + listing role filter
+  @@index([deletedAt, suspendedAt]) // admin listing soft-delete + suspension filter
 }
 
 model Session {
@@ -201,6 +203,8 @@ model ProductType {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([isActive])
 }
 
 model Color {
@@ -209,13 +213,10 @@ model Color {
   name     String       @unique @db.VarChar(100)
   hex      String       @db.VarChar(7)
   isActive Boolean      @default(true) // Coherence avec Material
-  position Int          @default(0) // Ordre chromatique custom (admin drag-and-drop)
   skus     ProductSku[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([position])
 }
 
 model Material {
@@ -228,6 +229,9 @@ model Material {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Filtre fréquent sur getMaterialOptions (where isActive: true) + listing admin
+  @@index([isActive])
 }
 
 // ============================================================================
@@ -236,7 +240,7 @@ model Material {
 
 model Collection {
   id          String           @id @default(cuid())
-  name        String           @db.VarChar(100)
+  name        String           @db.VarChar(100) @unique
   slug        String           @unique
   description String?          @db.Text
   status      CollectionStatus @default(DRAFT)
@@ -244,6 +248,11 @@ model Collection {
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
   products  ProductCollection[]
+
+  // Used by getPublicCollectionSlugs (status = PUBLIC),
+  // getCollectionOptions (status IN [DRAFT, PUBLIC]),
+  // getCollectionCountsByStatus (groupBy status), and storefront/sitemap filters.
+  @@index([status])
 }
 
 /// Table de jointure explicite Product <-> Collection (many-to-many)
@@ -303,6 +312,7 @@ model Product {
 
   @@index([typeId])
   @@index([status, createdAt(sort: Desc)]) // Admin: filtrage catalogue par statut
+  @@index([status, deletedAt]) // hard-delete-retention cron (soft-deleted ARCHIVED >= 10y)
 }
 
 model ProductSku {
@@ -315,7 +325,11 @@ model ProductSku {
   color   Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
 
   materialId String?
-  material   Material? @relation(fields: [materialId], references: [id], onDelete: SetNull)
+  // onDelete: Restrict — empêche la suppression d'un matériau référencé par un SKU
+  // (y compris soft-deleted). Aligné sur la pré-vérification applicative dans
+  // modules/materials/actions/delete-material.ts et ferme la race condition
+  // findUnique(_count) ↔ delete (cf. audit 2026-05-11 P1.1).
+  material   Material? @relation(fields: [materialId], references: [id], onDelete: Restrict)
 
   size String? @db.VarChar(50)
 
@@ -653,6 +667,7 @@ model Order {
   updatedAt DateTime @updatedAt
 
   @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, status, createdAt(sort: Desc)]) // Espace client : "mes commandes" filtrées par statut
   @@index([customerEmail])
   @@index([stripeCustomerId])
   @@index([paymentStatus, createdAt]) // sync-async-payments cron
@@ -823,6 +838,12 @@ model Refund {
   createdByUser User?     @relation("RefundCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   processedAt   DateTime? // Date de traitement effectif (Stripe)
 
+  // Nombre de tentatives Stripe (P0.2 idempotency key rotation).
+  // Incremente a chaque `retryFailedRefund` pour generer une nouvelle cle
+  // d'idempotence Stripe ; sinon Stripe rejoue la reponse mise en cache
+  // (24h pour les erreurs 4xx). Inclus dans `idempotencyKey: refund_${id}_${attemptCount}`.
+  attemptCount Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -832,6 +853,7 @@ model Refund {
 
   @@index([orderId])
   @@index([status, processedAt]) // reconcile-refunds cron
+  @@index([status, stripeRefundId]) // reconcile-refunds cron (APPROVED + non-null stripeRefundId)
   @@index([createdAt(sort: Desc)]) // Admin: tri chronologique remboursements
   @@index([createdBy]) // Admin: remboursements par admin
 }
@@ -947,8 +969,7 @@ model Discount {
   usageCount Int @default(0) // Compteur d'utilisations
 
   // Etat
-  isActive            Boolean @default(true)
-  manuallyDeactivated Boolean @default(false) // Set by admin toggle; prevents cron auto-reactivation
+  isActive Boolean @default(true)
 
   // Relations
   usages DiscountUsage[]
@@ -1041,6 +1062,7 @@ model ProductReview {
   @@unique([userId, productId])
   @@index([productId])
   @@index([productId, status, deletedAt])
+  @@index([deletedAt]) // hard-delete-retention cron (soft-deleted >= 10y, sans filtre product)
 }
 
 /// Photo jointe a un avis produit
@@ -1157,7 +1179,6 @@ model StoreSettings {
   closedAt         DateTime?
   reopensAt        DateTime?
   closedBy         String?   @db.VarChar(255)
-  scheduledCloseAt DateTime?
 
   // === ANNOUNCEMENT BAR (replaces dedicated AnnouncementBar table) ===
   announcementMessage  String?   @db.VarChar(200)
@@ -1165,6 +1186,11 @@ model StoreSettings {
   announcementStartsAt DateTime?
   announcementEndsAt   DateTime?
   announcementIsActive Boolean   @default(false)
+
+  // === FULFILLMENT GATES ===
+  // Active le mode "retrait en boutique" pour le checkout. Désactivé tant que
+  // l'infra logistique n'est pas opérationnelle (cf. modules/cart/actions/set-fulfillment-mode.ts).
+  clickAndCollectEnabled Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,8 +1,10 @@
+import * as Sentry from "@sentry/nextjs";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { cacheLife, cacheTag } from "next/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
+import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import {
 	GET_PRODUCT_SKUS_DEFAULT_PER_PAGE,
@@ -80,6 +82,10 @@ export async function fetchProductSkus(
 			pagination,
 		};
 	} catch (error) {
+		logger.error("Failed to fetch product SKUs", error, { service: "fetchProductSkus" });
+		Sentry.captureException(error, {
+			tags: { module: "skus", fetcher: "fetchProductSkus" },
+		});
 		return {
 			productSkus: [],
 			pagination: {

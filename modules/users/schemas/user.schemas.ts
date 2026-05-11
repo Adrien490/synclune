@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Role } from "@/app/generated/prisma/client";
+import { AccountStatus, Role } from "@/app/generated/prisma/client";
 import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import { optionalStringOrStringArraySchema } from "@/shared/schemas/filters.schema";
@@ -51,6 +51,14 @@ export const userFiltersSchema = z
 		hasOrders: z.boolean().optional(),
 		hasSessions: z.boolean().optional(),
 		minOrderCount: z.number().int().nonnegative().max(10000).optional(),
+		accountStatus: z
+			.enum([
+				AccountStatus.ACTIVE,
+				AccountStatus.INACTIVE,
+				AccountStatus.PENDING_DELETION,
+				AccountStatus.ANONYMIZED,
+			])
+			.optional(),
 		includeDeleted: z.boolean().optional(),
 	})
 	.refine((data) => {

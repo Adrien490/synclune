@@ -104,17 +104,16 @@ describe("UsersFilterBadges", () => {
 		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Inclure supprimés: Oui");
 	});
 
-	it("formats preferredLanguage as uppercase display value", () => {
-		mockFilters.value = [{ key: "filter_preferredLanguage", value: "fr" }];
+	it("formats accountStatus=PENDING_DELETION as 'Statut: Suppression en attente'", () => {
+		mockFilters.value = [{ key: "filter_accountStatus", value: "PENDING_DELETION" }];
 		render(<UsersFilterBadges />);
-		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Langue: FR");
+		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Statut: Suppression en attente");
 	});
 
-	it("formats createdAfter date in fr-FR locale", () => {
-		mockFilters.value = [{ key: "filter_createdAfter", value: "2026-01-15" }];
+	it("formats accountStatus=ANONYMIZED as 'Statut: Anonymisé'", () => {
+		mockFilters.value = [{ key: "filter_accountStatus", value: "ANONYMIZED" }];
 		render(<UsersFilterBadges />);
-		const text = screen.getByTestId("filter-badge-0").textContent!;
-		expect(text).toContain("Inscrit après");
+		expect(screen.getByTestId("filter-badge-0").textContent).toBe("Statut: Anonymisé");
 	});
 
 	it("uses key as label for unknown filter keys", () => {

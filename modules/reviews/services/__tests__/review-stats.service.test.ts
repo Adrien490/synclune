@@ -1,9 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
-import { formatReviewStats } from "../review-stats.service";
+import { formatReviewStats, recomputeProductReviewStatsBatch } from "../review-stats.service";
 import type { ReviewStats } from "../../types/review.types";
+import type { PrismaTransaction } from "@/shared/types/prisma";
 
 vi.mock("../../constants/review.constants", () => ({
 	REVIEW_CONFIG: { MAX_RATING: 5 },
+}));
+
+vi.mock("@/app/generated/prisma/client", () => ({
+	Prisma: {
+		join: (arr: unknown[]) => ({ __sql: "join", values: arr }),
+	},
 }));
 
 // ============================================================================
@@ -133,5 +140,134 @@ describe("formatReviewStats", () => {
 
 		expect(result.totalCount).toBe(42);
 		expect(result.averageRating).toBe(4.76);
+	});
+});
+
+// ============================================================================
+// recomputeProductReviewStatsBatch
+// ============================================================================
+
+function createMockTx() {
+	const queryRaw = vi.fn();
+	const upsert = vi.fn();
+	const tx = {
+		$queryRaw: queryRaw,
+		productReviewStats: { upsert },
+	} as unknown as PrismaTransaction;
+	return { tx, queryRaw, upsert };
+}
+
+describe("recomputeProductReviewStatsBatch", () => {
+	it("returns early without DB calls when productIds is empty", async () => {
+		const { tx, queryRaw, upsert } = createMockTx();
+
+		await recomputeProductReviewStatsBatch(tx, []);
+
+		expect(queryRaw).not.toHaveBeenCalled();
+		expect(upsert).not.toHaveBeenCalled();
+	});
+
+	it("upserts each row returned by the GROUP BY query", async () => {
+		const { tx, queryRaw, upsert } = createMockTx();
+		queryRaw.mockResolvedValue([
+			{
+				product_id: "prod-A",
+				total_count: 3n,
+				avg_rating: 4.5,
+				rating1: 0n,
+				rating2: 0n,
+				rating3: 0n,
+				rating4: 1n,
+				rating5: 2n,
+			},
+		]);
+		upsert.mockResolvedValue({});
+
+		await recomputeProductReviewStatsBatch(tx, ["prod-A"]);
+
+		expect(queryRaw).toHaveBeenCalledTimes(1);
+		expect(upsert).toHaveBeenCalledTimes(1);
+		expect(upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { productId: "prod-A" },
+				create: expect.objectContaining({
+					productId: "prod-A",
+					totalCount: 3,
+					averageRating: 4.5,
+					rating5Count: 2,
+					rating4Count: 1,
+				}),
+			}),
+		);
+	});
+
+	it("zeroes stats for productIds with no PUBLISHED reviews", async () => {
+		const { tx, queryRaw, upsert } = createMockTx();
+		// Only prod-A has rows ; prod-B should still be reset to zeros.
+		queryRaw.mockResolvedValue([
+			{
+				product_id: "prod-A",
+				total_count: 2n,
+				avg_rating: 5,
+				rating1: 0n,
+				rating2: 0n,
+				rating3: 0n,
+				rating4: 0n,
+				rating5: 2n,
+			},
+		]);
+		upsert.mockResolvedValue({});
+
+		await recomputeProductReviewStatsBatch(tx, ["prod-A", "prod-B"]);
+
+		expect(upsert).toHaveBeenCalledTimes(2);
+		expect(upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: { productId: "prod-B" },
+				create: expect.objectContaining({
+					productId: "prod-B",
+					totalCount: 0,
+					averageRating: 0,
+					rating1Count: 0,
+				}),
+			}),
+		);
+	});
+
+	it("converts null avg_rating to 0", async () => {
+		const { tx, queryRaw, upsert } = createMockTx();
+		queryRaw.mockResolvedValue([
+			{
+				product_id: "prod-A",
+				total_count: 0n,
+				avg_rating: null,
+				rating1: 0n,
+				rating2: 0n,
+				rating3: 0n,
+				rating4: 0n,
+				rating5: 0n,
+			},
+		]);
+		upsert.mockResolvedValue({});
+
+		await recomputeProductReviewStatsBatch(tx, ["prod-A"]);
+
+		expect(upsert).toHaveBeenCalledWith(
+			expect.objectContaining({
+				create: expect.objectContaining({ averageRating: 0 }),
+			}),
+		);
+	});
+
+	it("issues a single $queryRaw call regardless of product count", async () => {
+		const { tx, queryRaw, upsert } = createMockTx();
+		queryRaw.mockResolvedValue([]);
+		upsert.mockResolvedValue({});
+
+		await recomputeProductReviewStatsBatch(tx, ["a", "b", "c", "d", "e"]);
+
+		expect(queryRaw).toHaveBeenCalledTimes(1);
+		// All 5 products were absent from the result → 5 zero-upserts in parallel.
+		expect(upsert).toHaveBeenCalledTimes(5);
 	});
 });

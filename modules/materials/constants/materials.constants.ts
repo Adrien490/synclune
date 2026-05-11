@@ -4,6 +4,11 @@ import type { Prisma } from "@/app/generated/prisma/browser";
 // SELECT DEFINITIONS
 // ============================================================================
 
+// Affichage et tri alignés : on compte TOUS les SKUs (y compris soft-deleted)
+// pour que la colonne « Variantes » affiche la même valeur que celle utilisée
+// par orderBy { skus: { _count } }. Prisma ne supporte pas orderBy avec un
+// where partial sur le _count ; aligner le select sur le sort évite l'incohérence
+// (audit 2026-05-11 P1.3).
 export const GET_MATERIALS_SELECT = {
 	id: true,
 	name: true,
@@ -14,9 +19,7 @@ export const GET_MATERIALS_SELECT = {
 	updatedAt: true,
 	_count: {
 		select: {
-			skus: {
-				where: { isActive: true },
-			},
+			skus: true,
 		},
 	},
 } as const satisfies Prisma.MaterialSelect;

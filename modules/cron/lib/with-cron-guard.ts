@@ -6,10 +6,11 @@ import {
 	cronSuccess,
 	cronError,
 } from "@/modules/cron/lib/verify-cron";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 import { logger } from "@/shared/lib/logger";
 
-type CronJobResult = { errors?: number; [key: string]: unknown };
+type CronJobResult = CronResult;
 
 interface CronGuardOptions {
 	jobName: string;
@@ -26,8 +27,9 @@ function notifyAdmin(jobName: string, errors: number, details: Record<string, un
  * Unified guard for Vercel cron route handlers.
  *
  * - Verifies CRON_SECRET (timing-safe).
+ * - Opens a Sentry latency span (`cron.<jobName>`) with processed/errored/duration attributes.
  * - Wraps handler in try/catch with admin alert + Sentry fingerprint per job.
- * - Sends admin alert when result reports `errors > 0`.
+ * - Sends admin alert when result reports `errored > 0`.
  *
  * Usage:
  * ```ts
@@ -44,37 +46,48 @@ export function withCronGuard<R extends CronJobResult | null>(
 	const { jobName, defaultErrorMessage } = options;
 
 	return async () => {
-		const unauthorized = await verifyCronRequest();
+		const unauthorized = await verifyCronRequest(jobName);
 		if (unauthorized) return unauthorized;
 
 		const startTime = cronTimer();
-		try {
-			const result = await fn();
+		return Sentry.startSpan(
+			{ name: `cron.${jobName}`, op: "cron", attributes: { jobName } },
+			async (span) => {
+				try {
+					const result = await fn();
 
-			if (result === null) {
-				return cronError(`${jobName}: misconfigured (handler returned null)`, 500, jobName);
-			}
+					if (result === null) {
+						span.setAttribute("result", "misconfigured");
+						return cronError(`${jobName}: misconfigured (handler returned null)`, 500, jobName);
+					}
 
-			if (typeof result.errors === "number" && result.errors > 0) {
-				notifyAdmin(jobName, result.errors, result);
-			}
+					span.setAttribute("processed_count", result.processed);
+					span.setAttribute("errored_count", result.errored);
+					span.setAttribute("skipped_count", result.skipped);
+					span.setAttribute("duration_ms", Date.now() - startTime);
 
-			return cronSuccess({ job: jobName, ...result }, startTime);
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			const userMessage =
-				error instanceof Error ? error.message : (defaultErrorMessage ?? "Cron failed");
+					if (result.errored > 0) {
+						notifyAdmin(jobName, result.errored, result);
+					}
 
-			Sentry.withScope((scope) => {
-				scope.setTag("cronJob", jobName);
-				scope.setFingerprint(["cron", jobName]);
-				scope.setLevel("error");
-				Sentry.captureException(error instanceof Error ? error : new Error(message));
-			});
+					return cronSuccess({ job: jobName, ...result }, startTime);
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					const userMessage =
+						error instanceof Error ? error.message : (defaultErrorMessage ?? "Cron failed");
 
-			notifyAdmin(jobName, 1, { error: message });
+					Sentry.withScope((scope) => {
+						scope.setTag("cronJob", jobName);
+						scope.setFingerprint(["cron", jobName]);
+						scope.setLevel("error");
+						Sentry.captureException(error instanceof Error ? error : new Error(message));
+					});
 
-			return cronError(userMessage);
-		}
+					notifyAdmin(jobName, 1, { error: message });
+
+					return cronError(userMessage);
+				}
+			},
+		);
 	};
 }

@@ -96,9 +96,6 @@ vi.mock("@/modules/webhooks/services/alert.service", () => ({
 
 vi.mock("@/modules/webhooks/constants/webhook.constants", () => ({
 	ANTI_REPLAY_WINDOW_SECONDS,
-}));
-
-vi.mock("@/modules/cron/constants/limits", () => ({
 	MAX_WEBHOOK_RETRY_ATTEMPTS,
 }));
 

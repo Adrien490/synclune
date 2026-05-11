@@ -1,18 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-const { mockVerifyCronRequest, mockSendAdminCronFailedAlert, mockLogger, mockSentry } = vi.hoisted(
-	() => ({
+const {
+	mockVerifyCronRequest,
+	mockSendAdminCronFailedAlert,
+	mockLogger,
+	mockSentry,
+	spanSetAttribute,
+} = vi.hoisted(() => {
+	const spanSetAttribute = vi.fn();
+	return {
 		mockVerifyCronRequest: vi.fn(),
 		mockSendAdminCronFailedAlert: vi.fn(),
 		mockLogger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+		spanSetAttribute,
 		mockSentry: {
 			withScope: vi.fn((cb: (scope: unknown) => void) =>
 				cb({ setTag: vi.fn(), setFingerprint: vi.fn(), setLevel: vi.fn() }),
 			),
 			captureException: vi.fn(),
+			startSpan: vi.fn(
+				async (
+					_options: unknown,
+					cb: (span: { setAttribute: typeof spanSetAttribute }) => unknown,
+				) => cb({ setAttribute: spanSetAttribute }),
+			),
 		},
-	}),
-);
+	};
+});
 
 import type * as VerifyCronModule from "@/modules/cron/lib/verify-cron";
 
@@ -45,14 +59,22 @@ describe("withCronGuard", () => {
 		const blocked = new Response("nope", { status: 401 });
 		mockVerifyCronRequest.mockResolvedValueOnce(blocked);
 
-		const handler = withCronGuard({ jobName: "test" }, async () => ({ ok: true }));
+		const handler = withCronGuard({ jobName: "test" }, async () => ({
+			processed: 0,
+			errored: 0,
+			skipped: 0,
+		}));
 		const res = await handler();
 
 		expect(res).toBe(blocked);
 	});
 
 	it("wraps a successful handler in cronSuccess with job name", async () => {
-		const handler = withCronGuard({ jobName: "test" }, async () => ({ processed: 5 }));
+		const handler = withCronGuard({ jobName: "test" }, async () => ({
+			processed: 5,
+			errored: 0,
+			skipped: 0,
+		}));
 		const res = await handler();
 		const body = await res.json();
 
@@ -61,10 +83,11 @@ describe("withCronGuard", () => {
 		expect(mockSendAdminCronFailedAlert).not.toHaveBeenCalled();
 	});
 
-	it("alerts admin when result reports errors > 0", async () => {
+	it("alerts admin when result reports errored > 0", async () => {
 		const handler = withCronGuard({ jobName: "test" }, async () => ({
 			processed: 5,
-			errors: 2,
+			errored: 2,
+			skipped: 0,
 		}));
 
 		await handler();
@@ -96,5 +119,23 @@ describe("withCronGuard", () => {
 
 		expect(res.status).toBe(500);
 		expect(body.success).toBe(false);
+	});
+
+	it("opens a Sentry span with processed/errored/duration attributes", async () => {
+		const handler = withCronGuard({ jobName: "test" }, async () => ({
+			processed: 7,
+			errored: 2,
+			skipped: 0,
+		}));
+
+		await handler();
+
+		expect(mockSentry.startSpan).toHaveBeenCalledWith(
+			expect.objectContaining({ name: "cron.test", op: "cron" }),
+			expect.any(Function),
+		);
+		expect(spanSetAttribute).toHaveBeenCalledWith("processed_count", 7);
+		expect(spanSetAttribute).toHaveBeenCalledWith("errored_count", 2);
+		expect(spanSetAttribute).toHaveBeenCalledWith("duration_ms", expect.any(Number));
 	});
 });

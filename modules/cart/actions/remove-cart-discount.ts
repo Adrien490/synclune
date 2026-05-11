@@ -30,7 +30,10 @@ export async function removeCartDiscount(
 		}
 
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: { id: true, appliedDiscountCode: true },
 		});
 

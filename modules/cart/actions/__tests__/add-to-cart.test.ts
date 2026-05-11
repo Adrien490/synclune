@@ -16,6 +16,7 @@ const {
 	mockGetCartInvalidationTags,
 	mockGetCartExpirationDate,
 	mockGetOrCreateCartSessionId,
+	mockAssertStoreOpen,
 } = vi.hoisted(() => {
 	class MockBusinessError extends Error {
 		constructor(message: string) {
@@ -39,6 +40,7 @@ const {
 		mockGetCartInvalidationTags: vi.fn(),
 		mockGetCartExpirationDate: vi.fn(),
 		mockGetOrCreateCartSessionId: vi.fn(),
+		mockAssertStoreOpen: vi.fn(),
 	};
 });
 
@@ -104,6 +106,10 @@ vi.mock("../../constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
 }));
 
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
+}));
+
 import { addToCart } from "../add-to-cart";
 
 // ============================================================================
@@ -166,6 +172,7 @@ function setupDefaults() {
 	});
 	mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
 	mockPrisma.cart.findFirst.mockResolvedValue(null);
+	mockAssertStoreOpen.mockResolvedValue(null);
 
 	const { tx } = makeTx();
 	mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => {
@@ -214,18 +221,12 @@ describe("addToCart", () => {
 		expect(result).toEqual({ status: "error", message: "Rate limited" });
 	});
 
-	it("passes createSessionIfMissing to rate limit check", async () => {
+	it("passes createSessionIfMissing + validateUserExists to rate limit check", async () => {
 		await addToCart(undefined, makeFormData());
 		expect(mockCheckCartRateLimit).toHaveBeenCalledWith("add", {
 			createSessionIfMissing: true,
+			validateUserExists: true,
 		});
-	});
-
-	it("falls back to session when user not in DB", async () => {
-		mockPrisma.user.findUnique.mockResolvedValue(null);
-
-		await addToCart(undefined, makeFormData());
-		expect(mockGetOrCreateCartSessionId).toHaveBeenCalled();
 	});
 
 	it("returns error when no userId and no sessionId", async () => {
@@ -238,6 +239,20 @@ describe("addToCart", () => {
 		expect(mockError).toHaveBeenCalledWith(
 			"Impossible de creer une session panier. Veuillez reessayer.",
 		);
+	});
+
+	it("returns error when store is closed (defense-in-depth guard)", async () => {
+		mockAssertStoreOpen.mockResolvedValue({
+			closed: true,
+			message: "La boutique est temporairement fermée pour maintenance.",
+		});
+
+		await addToCart(undefined, makeFormData());
+
+		expect(mockError).toHaveBeenCalledWith(
+			"La boutique est temporairement fermée pour maintenance.",
+		);
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
 	it("returns error when cart exceeds MAX_CART_ITEMS", async () => {

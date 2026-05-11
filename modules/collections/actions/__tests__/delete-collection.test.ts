@@ -75,9 +75,13 @@ function makeCollection(overrides: Record<string, unknown> = {}) {
 		id: VALID_CUID,
 		slug: "bague-soleil",
 		name: "Bague Soleil",
-		_count: { products: 0 },
+		products: [] as Array<{ productId: string }>,
 		...overrides,
 	};
+}
+
+function withProducts(count: number) {
+	return Array.from({ length: count }, (_, i) => ({ productId: `prod-${i + 1}` }));
 }
 
 // ============================================================================
@@ -157,13 +161,13 @@ describe("deleteCollection", () => {
 		expect(mockPrisma.collection.delete).not.toHaveBeenCalled();
 	});
 
-	it("should query collection with product count", async () => {
+	it("should query collection with product associations (audit trail)", async () => {
 		await deleteCollection(undefined, validFormData);
 		expect(mockPrisma.collection.findUnique).toHaveBeenCalledWith({
 			where: { id: VALID_CUID },
 			include: {
-				_count: {
-					select: { products: true },
+				products: {
+					select: { productId: true },
 				},
 			},
 		});
@@ -172,7 +176,7 @@ describe("deleteCollection", () => {
 	// ---------- Success: no products ----------
 
 	it("should succeed and return short message when collection has no products", async () => {
-		mockPrisma.collection.findUnique.mockResolvedValue(makeCollection({ _count: { products: 0 } }));
+		mockPrisma.collection.findUnique.mockResolvedValue(makeCollection({ products: [] }));
 		const result = await deleteCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toBe("Collection supprimée avec succès");
@@ -188,7 +192,9 @@ describe("deleteCollection", () => {
 	// ---------- Success: with products ----------
 
 	it("should include preserved product count in message when collection had 1 product", async () => {
-		mockPrisma.collection.findUnique.mockResolvedValue(makeCollection({ _count: { products: 1 } }));
+		mockPrisma.collection.findUnique.mockResolvedValue(
+			makeCollection({ products: withProducts(1) }),
+		);
 		const result = await deleteCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("1 produit");
@@ -196,7 +202,9 @@ describe("deleteCollection", () => {
 	});
 
 	it("should use plural form when collection had multiple products", async () => {
-		mockPrisma.collection.findUnique.mockResolvedValue(makeCollection({ _count: { products: 3 } }));
+		mockPrisma.collection.findUnique.mockResolvedValue(
+			makeCollection({ products: withProducts(3) }),
+		);
 		const result = await deleteCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("3 produits");

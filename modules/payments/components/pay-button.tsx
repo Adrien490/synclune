@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert";
 import { LoaderCircle, Lock, ShieldCheck } from "lucide-react";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useHaptic } from "@/shared/hooks/use-haptic";
-import { confirmCheckout } from "../actions/confirm-checkout";
+import { useCheckoutSubmit } from "../hooks/use-checkout-submit";
 import type { ConfirmCheckoutData } from "../schemas/checkout.schema";
 
 interface PayButtonProps {
@@ -46,6 +46,12 @@ export function PayButton({
 	const [phase, setPhase] = useState<Phase>("idle");
 	const [error, setError] = useState<string | null>(null);
 
+	const submit = useCheckoutSubmit({
+		getFormData,
+		allowNavigation,
+		onPhase: setPhase,
+	});
+
 	const isProcessing = phase !== "idle";
 	const isAwaiting3ds = phase === "awaiting-3ds";
 
@@ -58,65 +64,34 @@ export function PayButton({
 		if (!stripe || !elements) return;
 
 		haptic("medium");
-		setPhase("validating");
 		setError(null);
 
 		try {
-			// 1. Get form data from parent (may validate unapplied discount code)
-			const formData = await getFormData();
-			if (!formData) {
-				setPhase("idle");
-				return;
-			}
-
-			// 2. Submit Elements to Stripe first (validates payment details)
-			const { error: submitError } = await elements.submit();
-			if (submitError) {
-				showError(submitError.message ?? "Erreur de validation du paiement.");
-				setPhase("idle");
-				return;
-			}
-
-			setPhase("creating-order");
-
-			// 3. Server action: create order + update PI with order metadata
-			const result = await confirmCheckout(formData);
-			if (!result.success) {
-				showError(result.error);
-				setPhase("idle");
-				return;
-			}
-
-			setPhase("awaiting-3ds");
-
-			// Disable beforeunload guard before Stripe takes over the page (3DS / redirect).
-			allowNavigation?.();
-
-			// 4. Confirm payment with Stripe (triggers 3DS if needed)
-			const { error: confirmError } = await stripe.confirmPayment({
-				elements,
-				confirmParams: {
-					return_url: `${window.location.origin}/paiement/retour?order_id=${result.orderId}`,
-					payment_method_data: {
-						billing_details: {
-							...(billingName && { name: billingName }),
-							...(email && { email }),
-						},
+			const result = await submit({
+				returnUrlSuffix: "",
+				paymentMethodData: {
+					billing_details: {
+						...(billingName && { name: billingName }),
+						...(email && { email }),
 					},
 				},
 			});
 
-			// If confirmPayment returns, it means there was an error
-			// (successful payments redirect to return_url)
-			const userMessage =
-				confirmError.type === "card_error" || confirmError.type === "validation_error"
-					? (confirmError.message ?? "Erreur de paiement.")
-					: "Une erreur est survenue lors du paiement.";
-			showError(userMessage);
+			switch (result.status) {
+				case "form-invalid":
+				case "submit-error":
+				case "checkout-error":
+				case "stripe-error":
+					if (result.status !== "form-invalid") showError(result.message);
+					setPhase("idle");
+					return;
+				case "redirecting":
+					// Successful path — Stripe will redirect the page, nothing else to do.
+					return;
+			}
 		} catch {
 			showError("Une erreur inattendue est survenue. Veuillez réessayer.");
-		} finally {
-			setPhase((prev) => (prev === "awaiting-3ds" || prev === "creating-order" ? "idle" : prev));
+			setPhase("idle");
 		}
 	}
 

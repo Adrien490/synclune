@@ -7,7 +7,6 @@ import { ActionStatus } from "@/shared/types/server-action";
 
 const {
 	mockPrisma,
-	mockSoftDelete,
 	mockRequireAdmin,
 	mockEnforceRateLimit,
 	mockValidateInput,
@@ -17,25 +16,36 @@ const {
 	mockHandleActionError,
 	mockUpdateTag,
 	mockGetUserFullInvalidationTags,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		user: { findUnique: vi.fn(), count: vi.fn() },
-	},
-	mockSoftDelete: { user: vi.fn() },
-	mockRequireAdmin: vi.fn(),
-	mockEnforceRateLimit: vi.fn(),
-	mockValidateInput: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
-	mockNotFound: vi.fn(),
-	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
-	mockGetUserFullInvalidationTags: vi.fn(),
-}));
+	MockBusinessError,
+} = vi.hoisted(() => {
+	class BusinessErrorMock extends Error {
+		readonly code?: string;
+		constructor(message: string, code?: string) {
+			super(message);
+			this.name = "BusinessError";
+			this.code = code;
+		}
+	}
+	return {
+		mockPrisma: {
+			user: { findUnique: vi.fn(), count: vi.fn(), update: vi.fn() },
+			$transaction: vi.fn(),
+		},
+		mockRequireAdmin: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+		mockNotFound: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockGetUserFullInvalidationTags: vi.fn(),
+		MockBusinessError: BusinessErrorMock,
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
-	softDelete: mockSoftDelete,
 	notDeleted: { deletedAt: null },
 }));
 
@@ -66,6 +76,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 	notFound: mockNotFound,
 	handleActionError: mockHandleActionError,
+	BusinessError: MockBusinessError,
 }));
 
 vi.mock("next/cache", () => ({
@@ -92,6 +103,7 @@ vi.mock("../../../constants/cache", () => ({
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	Role: { ADMIN: "ADMIN", USER: "USER" },
+	AccountStatus: { ACTIVE: "ACTIVE", INACTIVE: "INACTIVE" },
 }));
 
 import { deleteUser } from "../delete-user";
@@ -133,8 +145,16 @@ describe("deleteUser", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-123", name: "Admin" } });
 		mockValidateInput.mockReturnValue({ data: { id: "user-456" } });
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser());
-		mockSoftDelete.user.mockResolvedValue({});
+		mockPrisma.user.update.mockResolvedValue({});
 		mockGetUserFullInvalidationTags.mockReturnValue(["user-tag-1", "user-tag-2"]);
+
+		// $transaction propage la callback avec un tx qui partage les mêmes mocks.
+		mockPrisma.$transaction.mockImplementation(async (callback: unknown) => {
+			if (typeof callback === "function") {
+				return await (callback as (tx: typeof mockPrisma) => unknown)(mockPrisma);
+			}
+			return [];
+		});
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -149,10 +169,11 @@ describe("deleteUser", () => {
 			status: ActionStatus.NOT_FOUND,
 			message: `${entity} introuvable`,
 		}));
-		mockHandleActionError.mockImplementation((_e: unknown, msg: string) => ({
-			status: ActionStatus.ERROR,
-			message: msg,
-		}));
+		// BusinessError → ActionState ERROR avec son propre message (mirror handleActionError réel).
+		mockHandleActionError.mockImplementation((e: unknown, fallbackMsg: string) => {
+			const message = e instanceof MockBusinessError ? e.message : fallbackMsg;
+			return { status: ActionStatus.ERROR, message };
+		});
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -166,20 +187,21 @@ describe("deleteUser", () => {
 		const result = await deleteUser(undefined, validFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
 	// Auth
 	// ──────────────────────────────────────────────────────────────
 
-	it("should return auth error when not admin", async () => {
+	it("should return auth error when not admin (before rate-limit)", async () => {
 		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Non autorisé" };
 		mockRequireAdmin.mockResolvedValue({ error: authError });
 
 		const result = await deleteUser(undefined, validFormData);
 
 		expect(result).toEqual(authError);
+		expect(mockEnforceRateLimit).not.toHaveBeenCalled();
 		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
@@ -232,31 +254,35 @@ describe("deleteUser", () => {
 
 		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est deja supprime.");
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockSoftDelete.user).not.toHaveBeenCalled();
+		expect(mockPrisma.user.update).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
-	// Last admin protection
+	// Last admin protection (atomic count + update)
 	// ──────────────────────────────────────────────────────────────
 
 	it("should block deletion of the last admin", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "ADMIN" }));
-		mockPrisma.user.count.mockResolvedValue(1);
+		// 0 autres admins → bloque (check id: {not: userId})
+		mockPrisma.user.count.mockResolvedValue(0);
 
 		const result = await deleteUser(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Impossible de supprimer le dernier administrateur.");
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockSoftDelete.user).not.toHaveBeenCalled();
+		expect(result.message).toContain("dernier administrateur");
+		expect(mockPrisma.user.update).not.toHaveBeenCalled();
 	});
 
 	it("should allow deletion of an admin when other admins exist", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "ADMIN" }));
-		mockPrisma.user.count.mockResolvedValue(3);
+		mockPrisma.user.count.mockResolvedValue(2);
 
 		const result = await deleteUser(undefined, validFormData);
 
-		expect(mockSoftDelete.user).toHaveBeenCalledWith("user-456");
+		expect(mockPrisma.user.update).toHaveBeenCalledWith({
+			where: { id: "user-456" },
+			data: { deletedAt: expect.any(Date), accountStatus: "INACTIVE" },
+		});
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 	});
 
@@ -268,14 +294,27 @@ describe("deleteUser", () => {
 		expect(mockPrisma.user.count).not.toHaveBeenCalled();
 	});
 
+	it("should use a Serializable transaction for the soft-delete", async () => {
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "USER" }));
+
+		await deleteUser(undefined, validFormData);
+
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			isolationLevel: "Serializable",
+		});
+	});
+
 	// ──────────────────────────────────────────────────────────────
 	// Success — soft delete
 	// ──────────────────────────────────────────────────────────────
 
-	it("should call softDelete.user with correct id", async () => {
+	it("should soft delete with correct id (deletedAt + INACTIVE)", async () => {
 		await deleteUser(undefined, validFormData);
 
-		expect(mockSoftDelete.user).toHaveBeenCalledWith("user-456");
+		expect(mockPrisma.user.update).toHaveBeenCalledWith({
+			where: { id: "user-456" },
+			data: { deletedAt: expect.any(Date), accountStatus: "INACTIVE" },
+		});
 	});
 
 	it("should return success with user display name", async () => {
@@ -322,7 +361,7 @@ describe("deleteUser", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should call handleActionError on unexpected exception", async () => {
-		mockSoftDelete.user.mockRejectedValue(new Error("DB connection failed"));
+		mockPrisma.user.update.mockRejectedValue(new Error("DB connection failed"));
 
 		const result = await deleteUser(undefined, validFormData);
 

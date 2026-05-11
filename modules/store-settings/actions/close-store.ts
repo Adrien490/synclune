@@ -30,21 +30,10 @@ export async function closeStore(_prevState: unknown, formData: FormData): Promi
 
 		const { closureMessage, reopensAt } = validated.data;
 
-		const existing = await prisma.storeSettings.findUnique({
-			where: { id: STORE_SETTINGS_SINGLETON_ID },
-			select: { isClosed: true },
-		});
-
-		if (!existing) {
-			return error("Paramètres boutique introuvables");
-		}
-
-		if (existing.isClosed) {
-			return error("La boutique est déjà fermée");
-		}
-
-		await prisma.storeSettings.update({
-			where: { id: STORE_SETTINGS_SINGLETON_ID },
+		// Atomic check-and-set: WHERE isClosed=false guards against concurrent admin clicks
+		// (no findUnique-then-update race window).
+		const updated = await prisma.storeSettings.updateMany({
+			where: { id: STORE_SETTINGS_SINGLETON_ID, isClosed: false },
 			data: {
 				isClosed: true,
 				closureMessage,
@@ -53,6 +42,14 @@ export async function closeStore(_prevState: unknown, formData: FormData): Promi
 				reopensAt,
 			},
 		});
+
+		if (updated.count === 0) {
+			const existing = await prisma.storeSettings.findUnique({
+				where: { id: STORE_SETTINGS_SINGLETON_ID },
+				select: { id: true },
+			});
+			return error(existing ? "La boutique est déjà fermée" : "Paramètres boutique introuvables");
+		}
 
 		getStoreSettingsInvalidationTags().forEach((tag) => updateTag(tag));
 

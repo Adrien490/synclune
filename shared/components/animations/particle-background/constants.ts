@@ -8,6 +8,27 @@ export const DEFAULT_COLORS = [
 	"var(--color-particle-lavender)",
 ];
 
+/** Max parallax offset in pixels for the closest particles */
+export const PARALLAX_STRENGTH = 20;
+
+/** Duration in ms for the parallax lerp-to-zero reset on mouseleave */
+export const LERP_RESET_DURATION = 600;
+
+/** Upper bound for particle count to prevent excessive DOM nodes */
+export const MAX_PARTICLES = 30;
+
+/** Max vertical offset in pixels for scroll parallax (closest particles) */
+export const SCROLL_PARALLAX_RANGE = 40;
+
+/** Default repulsion offset in pixels when not overridden via props */
+export const DEFAULT_REPULSION_STRENGTH = 30;
+
+/** Default repulsion radius as fraction of container diagonal (0-1) */
+export const DEFAULT_REPULSION_RADIUS = 0.15;
+
+/** Base animation duration in seconds (multiplied by depth + speed factors) */
+export const DEFAULT_DURATION = 20;
+
 /** Configuration des formes de particules */
 export const SHAPE_CONFIGS: Record<ParticleShape, ShapeConfig> = {
 	circle: {

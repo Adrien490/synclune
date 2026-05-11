@@ -1,8 +1,8 @@
 "use server";
 
 import { updateTag } from "next/cache";
-import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
+import { handleActionError } from "@/shared/lib/actions";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
 import { batchValidateSkusForMerge } from "@/modules/cart/services/sku-validation.service";
@@ -242,13 +242,16 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 			},
 		};
 	} catch (error) {
-		logger.error("[MERGE_CARTS] Cart merge failed", error, {
-			action: "mergeCarts",
-			userId,
-		});
+		// `handleActionError` centralise Sentry breadcrumb + captureException + logger.error.
+		// mergeCarts retourne un `MergeCartsResult` (pas `ActionState`) → on extrait le message.
+		const errorState = handleActionError(
+			error,
+			"Une erreur est survenue lors de la fusion des paniers",
+			{ action: "mergeCarts", userId },
+		);
 		return {
 			status: ActionStatus.ERROR,
-			message: "Une erreur est survenue lors de la fusion des paniers",
+			message: errorState.message,
 		};
 	}
 }

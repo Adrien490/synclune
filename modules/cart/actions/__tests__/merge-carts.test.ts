@@ -46,7 +46,13 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
-	handleActionError: vi.fn(),
+	// Mirror real handleActionError contract: returns `{ status, message }` derived
+	// from BusinessError/ZodError/Prisma codes; falls back to `defaultMessage` otherwise.
+	// Mock keeps the message passthrough for assertions and is reset per-test.
+	handleActionError: vi.fn((_error: unknown, defaultMessage?: string) => ({
+		status: "error",
+		message: defaultMessage ?? "Une erreur est survenue",
+	})),
 	success: vi.fn(),
 	error: vi.fn(),
 }));

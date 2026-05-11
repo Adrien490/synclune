@@ -191,6 +191,9 @@ describe("GET /api/cron/sync-async-payments", () => {
 	describe("admin alert on errors", () => {
 		it("sends admin alert when result.errors > 0", async () => {
 			mockSyncAsyncPayments.mockResolvedValue({
+				processed: 3,
+				errored: 2,
+				skipped: 7,
 				checked: 10,
 				updated: 3,
 				errors: 2,
@@ -208,6 +211,9 @@ describe("GET /api/cron/sync-async-payments", () => {
 
 		it("includes checked and updated in the alert details", async () => {
 			mockSyncAsyncPayments.mockResolvedValue({
+				processed: 3,
+				errored: 1,
+				skipped: 6,
 				checked: 10,
 				updated: 3,
 				errors: 1,

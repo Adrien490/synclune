@@ -103,7 +103,11 @@ describe("setFeaturedProduct", () => {
 			"collection-bague-soleil",
 		]);
 		mockPrisma.productCollection.findUnique.mockResolvedValue(makeProductCollection());
-		mockPrisma.$transaction.mockResolvedValue([{ count: 1 }, {}]);
+		// Interactive transaction (Serializable isolation): execute the callback
+		// with the prisma mock as the tx argument so updateMany/update spies fire.
+		mockPrisma.$transaction.mockImplementation(
+			async (fn: (tx: typeof mockPrisma) => Promise<unknown>) => fn(mockPrisma),
+		);
 
 		mockSuccess.mockImplementation((msg: string) => ({
 			status: ActionStatus.SUCCESS,
@@ -189,11 +193,15 @@ describe("setFeaturedProduct", () => {
 		expect(result.message).toContain("Bague Soleil");
 	});
 
-	it("should pass an array of two operations to $transaction", async () => {
+	it("should pass an interactive callback to $transaction with Serializable isolation", async () => {
 		await setFeaturedProduct(undefined, validFormData);
-		const arg = mockPrisma.$transaction.mock.calls[0]![0];
-		expect(Array.isArray(arg)).toBe(true);
-		expect(arg).toHaveLength(2);
+		const args = mockPrisma.$transaction.mock.calls[0]!;
+		expect(typeof args[0]).toBe("function");
+		expect(args[1]).toEqual(
+			expect.objectContaining({
+				isolationLevel: expect.anything(),
+			}),
+		);
 	});
 
 	it("should call updateMany to clear existing featured before setting new one", async () => {

@@ -17,6 +17,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { anonymizeUserImmediatelySchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { USERS_CACHE_TAGS, getUserFullInvalidationTags } from "../../constants/cache";
 import { anonymizeUserInTransaction } from "../../services/anonymize-user.service";
 
@@ -35,12 +36,13 @@ export async function anonymizeUserImmediately(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.ANONYMIZE_NOW);
-		if ("error" in rateCheck) return rateCheck.error;
-
+		// Verification des droits admin avant rate-limit (anti-leak 429 vs 403)
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.ANONYMIZE_NOW);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		const rawData = {
 			id: safeFormGet(formData, "id"),
@@ -90,7 +92,7 @@ export async function anonymizeUserImmediately(
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: "user.anonymizeImmediately",
+			action: USER_AUDIT_ACTIONS.ANONYMIZE_IMMEDIATELY,
 			targetType: "user",
 			targetId: userId,
 			metadata: {

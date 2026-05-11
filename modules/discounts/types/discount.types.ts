@@ -7,8 +7,8 @@ import {
 	type GET_DISCOUNT_VALIDATION_SELECT,
 } from "../constants/discount.constants";
 import {
-	type getDiscountSchema,
 	type getDiscountByCodeSchema,
+	type getDiscountSchema,
 	type getDiscountsSchema,
 } from "../schemas/discount.schemas";
 
@@ -43,7 +43,9 @@ export type GetDiscountReturn = Prisma.DiscountGetPayload<{
 }> | null;
 
 export type GetDiscountByCodeParams = z.infer<typeof getDiscountByCodeSchema>;
-export type GetDiscountByCodeReturn = DiscountValidation | null;
+export type GetDiscountByCodeReturn = Prisma.DiscountGetPayload<{
+	select: typeof GET_DISCOUNT_VALIDATION_SELECT;
+}> | null;
 
 // ============================================================================
 // FUNCTION TYPES - LIST

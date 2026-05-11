@@ -217,6 +217,17 @@ describe("deleteAddress", () => {
 		// Another address is available
 		mockTx.address.findFirst.mockResolvedValue({ id: "addr-other", isDefault: false });
 
+		// Track call order to ensure DELETE happens BEFORE UPDATE (partial unique index).
+		const callOrder: string[] = [];
+		mockTx.address.delete.mockImplementation(async () => {
+			callOrder.push("delete");
+			return {};
+		});
+		mockTx.address.update.mockImplementation(async () => {
+			callOrder.push("update");
+			return {};
+		});
+
 		await deleteAddress(undefined, validFormData);
 
 		// Should promote the other address to default
@@ -229,6 +240,10 @@ describe("deleteAddress", () => {
 		expect(mockTx.address.delete).toHaveBeenCalledWith({
 			where: { id: "addr-abc123" },
 		});
+
+		// CRITICAL: DELETE must run BEFORE UPDATE to free the partial unique slot
+		// (Address_userId_isDefault_unique). Otherwise Postgres throws.
+		expect(callOrder).toEqual(["delete", "update"]);
 	});
 
 	it("should delete the default address without promotion when no other address exists", async () => {
@@ -263,6 +278,7 @@ describe("deleteAddress", () => {
 		expect(mockTx.address.findFirst).toHaveBeenCalledWith({
 			where: { userId: "user-123", id: { not: "addr-abc123" } },
 			orderBy: { createdAt: "desc" },
+			select: { id: true },
 		});
 	});
 

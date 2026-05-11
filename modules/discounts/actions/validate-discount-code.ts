@@ -1,6 +1,8 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { logger } from "@/shared/lib/logger";
 import { getClientIp } from "@/shared/lib/rate-limit";
 import { enforceRateLimit } from "@/shared/lib/actions/rate-limit";
 import { PAYMENT_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -204,7 +206,16 @@ export async function validateDiscountCode(
 			validation.data.userId,
 			validation.data.customerEmail,
 		);
-	} catch {
+	} catch (e) {
+		Sentry.captureException(e, {
+			tags: { module: "discounts", action: "validateDiscountCode" },
+			contexts: {
+				discount: {
+					codeLength: typeof code === "string" ? code.length : 0,
+				},
+			},
+		});
+		logger.error("validateDiscountCode failed", e, { service: "validateDiscountCode" });
 		return { valid: false, error: "Erreur lors de la validation du code" };
 	}
 }

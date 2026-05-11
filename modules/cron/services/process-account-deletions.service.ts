@@ -7,6 +7,7 @@ import {
 	deleteUploadThingFilesFromUrls,
 } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_MEDIUM, RETENTION } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { USERS_CACHE_TAGS } from "@/modules/users/constants/cache";
 import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -23,13 +24,10 @@ import { getStripeClient } from "@/shared/lib/stripe";
  * Note: Accounting data (Order, Refund) is retained for 10 years
  * per French Commercial Code Art. L123-22.
  */
-export async function processAccountDeletions(): Promise<{
-	processed: number;
-	errors: number;
-	hasMore: boolean;
-}> {
+export async function processAccountDeletions(): Promise<CronResult> {
 	logger.info("Starting account deletion processing", { cronJob: "process-account-deletions" });
 
+	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const gracePeriodEnd = new Date(
 		Date.now() - RETENTION.GDPR_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000,
 	);
@@ -56,7 +54,6 @@ export async function processAccountDeletions(): Promise<{
 		count: accountsToAnonymize.length,
 	});
 
-	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	let processed = 0;
 	let errors = 0;
 
@@ -174,6 +171,8 @@ export async function processAccountDeletions(): Promise<{
 
 	return {
 		processed,
+		errored: errors,
+		skipped: 0,
 		errors,
 		hasMore: accountsToAnonymize.length === BATCH_SIZE_MEDIUM,
 	};

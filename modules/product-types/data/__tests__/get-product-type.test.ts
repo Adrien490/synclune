@@ -35,6 +35,23 @@ vi.mock("../../constants/cache", () => ({
 		mockCacheLife("reference");
 		mockCacheTag("product-types-list");
 	},
+	cacheProductTypesAdmin: () => {
+		mockCacheLife("user");
+		mockCacheTag("product-types-list");
+	},
+	cacheProductTypesPublic: () => {
+		mockCacheLife("reference");
+		mockCacheTag("product-types-list");
+	},
+	cacheProductTypeDetail: (slug: string) => {
+		mockCacheLife("user");
+		mockCacheTag("product-types-list");
+		mockCacheTag(`product-type-${slug}`);
+	},
+	cacheProductTypeCounts: (id: string) => {
+		mockCacheLife("user");
+		mockCacheTag(`product-type-${id}-counts`);
+	},
 }));
 
 vi.mock("../../constants/product-type.constants", () => ({
@@ -181,32 +198,31 @@ describe("getProductTypeBySlug", () => {
 		expect(result).toBeNull();
 	});
 
-	it("calls cacheLife with reference profile", async () => {
+	it("calls cacheLife with user profile (cacheProductTypeDetail)", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 
 		await getProductTypeBySlug({ slug: "bague" });
 
-		expect(mockCacheLife).toHaveBeenCalledWith("reference");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
-	it("calls cacheTag with the product-types list tag", async () => {
+	it("calls cacheTag with both the list tag and the granular detail tag", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 		mockPrisma.productType.findUnique.mockResolvedValue(makeProductType());
 
 		await getProductTypeBySlug({ slug: "bague" });
 
 		expect(mockCacheTag).toHaveBeenCalledWith("product-types-list");
+		expect(mockCacheTag).toHaveBeenCalledWith("product-type-bague");
 	});
 
-	it("returns null on database error and captures exception", async () => {
+	it("rethrows on database error after capturing exception", async () => {
 		mockIsAdmin.mockResolvedValue(false);
 		const dbError = new Error("DB error");
 		mockPrisma.productType.findUnique.mockRejectedValue(dbError);
 
-		const result = await getProductTypeBySlug({ slug: "bague" });
-
-		expect(result).toBeNull();
+		await expect(getProductTypeBySlug({ slug: "bague" })).rejects.toThrow("DB error");
 		expect(mockSentry.captureException).toHaveBeenCalledWith(
 			dbError,
 			expect.objectContaining({

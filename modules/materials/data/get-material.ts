@@ -1,4 +1,7 @@
 import { type Prisma } from "@/app/generated/prisma/client";
+import * as Sentry from "@sentry/nextjs";
+import { cacheLife, cacheTag } from "next/cache";
+
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
@@ -9,7 +12,6 @@ import { GET_MATERIAL_SELECT } from "../constants/materials.constants";
 import { getMaterialSchema } from "../schemas/materials.schemas";
 import type { GetMaterialParams, GetMaterialReturn } from "../types/materials.types";
 
-// Re-export pour compatibilité
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -74,8 +76,6 @@ async function fetchMaterial(
 export type MaterialDetailReturn = NonNullable<Awaited<ReturnType<typeof fetchMaterialDetail>>>;
 
 export async function getMaterialDetailBySlug(slug: string): Promise<MaterialDetailReturn | null> {
-	if (!slug) return null;
-
 	const admin = await isAdmin();
 	if (!admin) return null;
 
@@ -143,6 +143,20 @@ export async function getMaterialDistinctProductCount(materialId: string): Promi
 	const admin = await isAdmin();
 	if (!admin) return 0;
 
+	return fetchMaterialDistinctProductCount(materialId);
+}
+
+/**
+ * Cached fetcher for the admin "produits distincts" KPI on the material detail
+ * page. Profile `user` (2 min stale / 1 min revalidate) is appropriate since
+ * this is admin-only data that becomes stale after SKU mutations affecting
+ * this material (handled via cross-module tag invalidation when SKUs move).
+ */
+async function fetchMaterialDistinctProductCount(materialId: string): Promise<number> {
+	"use cache";
+	cacheLife("user");
+	cacheTag(`material-${materialId}-product-count`);
+
 	try {
 		const result = await prisma.productSku.findMany({
 			where: { materialId, isActive: true },
@@ -151,8 +165,9 @@ export async function getMaterialDistinctProductCount(materialId: string): Promi
 		});
 		return result.length;
 	} catch (error) {
-		logger.error("Failed to count distinct products for material", error, {
-			service: "getMaterialDistinctProductCount",
+		Sentry.captureException(error, {
+			tags: { module: "materials", operation: "getMaterialDistinctProductCount" },
+			extra: { materialId },
 		});
 		return 0;
 	}

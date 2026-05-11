@@ -14,4 +14,12 @@ export const PRODUCT_TYPES_CACHE_TAGS = {
 } as const;
 
 // Re-exports pour retrocompatibilite
-export { cacheProductTypes } from "../utils/cache.utils";
+export {
+	cacheProductTypes,
+	cacheProductTypesAdmin,
+	cacheProductTypesPublic,
+	cacheProductTypeDetail,
+	cacheProductTypeCounts,
+	productTypeDetailTag,
+	productTypeCountsTag,
+} from "../utils/cache.utils";

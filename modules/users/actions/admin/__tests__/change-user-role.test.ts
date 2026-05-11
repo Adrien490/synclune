@@ -16,20 +16,33 @@ const {
 	mockHandleActionError,
 	mockUpdateTag,
 	mockGetUserFullInvalidationTags,
-} = vi.hoisted(() => ({
-	mockPrisma: {
-		user: { findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
-	},
-	mockRequireAdmin: vi.fn(),
-	mockEnforceRateLimit: vi.fn(),
-	mockValidateInput: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
-	mockNotFound: vi.fn(),
-	mockHandleActionError: vi.fn(),
-	mockUpdateTag: vi.fn(),
-	mockGetUserFullInvalidationTags: vi.fn(),
-}));
+	MockBusinessError,
+} = vi.hoisted(() => {
+	class BusinessErrorMock extends Error {
+		readonly code?: string;
+		constructor(message: string, code?: string) {
+			super(message);
+			this.name = "BusinessError";
+			this.code = code;
+		}
+	}
+	return {
+		mockPrisma: {
+			user: { findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
+			$transaction: vi.fn(),
+		},
+		mockRequireAdmin: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+		mockValidateInput: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+		mockNotFound: vi.fn(),
+		mockHandleActionError: vi.fn(),
+		mockUpdateTag: vi.fn(),
+		mockGetUserFullInvalidationTags: vi.fn(),
+		MockBusinessError: BusinessErrorMock,
+	};
+});
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
@@ -63,6 +76,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 	notFound: mockNotFound,
 	handleActionError: mockHandleActionError,
+	BusinessError: MockBusinessError,
 }));
 
 vi.mock("next/cache", () => ({
@@ -133,6 +147,13 @@ describe("changeUserRole", () => {
 		mockPrisma.user.update.mockResolvedValue({});
 		mockGetUserFullInvalidationTags.mockReturnValue(["user-tag-1", "user-tag-2"]);
 
+		mockPrisma.$transaction.mockImplementation(async (callback: unknown) => {
+			if (typeof callback === "function") {
+				return await (callback as (tx: typeof mockPrisma) => unknown)(mockPrisma);
+			}
+			return [];
+		});
+
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,
 			message: msg,
@@ -146,10 +167,10 @@ describe("changeUserRole", () => {
 			status: ActionStatus.NOT_FOUND,
 			message: `${entity} introuvable`,
 		}));
-		mockHandleActionError.mockImplementation((_e: unknown, msg: string) => ({
-			status: ActionStatus.ERROR,
-			message: msg,
-		}));
+		mockHandleActionError.mockImplementation((e: unknown, fallbackMsg: string) => {
+			const message = e instanceof MockBusinessError ? e.message : fallbackMsg;
+			return { status: ActionStatus.ERROR, message };
+		});
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -163,20 +184,21 @@ describe("changeUserRole", () => {
 		const result = await changeUserRole(undefined, promoteFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────
 	// Auth
 	// ──────────────────────────────────────────────────────────────
 
-	it("should return auth error when not admin", async () => {
+	it("should return auth error when not admin (before rate-limit)", async () => {
 		const authError = { status: ActionStatus.UNAUTHORIZED, message: "Non autorisé" };
 		mockRequireAdmin.mockResolvedValue({ error: authError });
 
 		const result = await changeUserRole(undefined, promoteFormData);
 
 		expect(result).toEqual(authError);
+		expect(mockEnforceRateLimit).not.toHaveBeenCalled();
 		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
@@ -246,25 +268,26 @@ describe("changeUserRole", () => {
 	});
 
 	// ──────────────────────────────────────────────────────────────
-	// Last admin protection (downgrade only)
+	// Last admin protection (atomic count + update — TOCTOU-safe)
 	// ──────────────────────────────────────────────────────────────
 
 	it("should block downgrade of the last admin", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "ADMIN" }));
 		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "USER" } });
-		mockPrisma.user.count.mockResolvedValue(1);
+		// 0 autre admin → bloque (count exclut le user en cours via id: {not: userId})
+		mockPrisma.user.count.mockResolvedValue(0);
 
 		const result = await changeUserRole(undefined, demoteFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Impossible de retirer le dernier administrateur.");
 		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("dernier administrateur");
 		expect(mockPrisma.user.update).not.toHaveBeenCalled();
 	});
 
 	it("should allow downgrade of an admin when other admins exist", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "ADMIN" }));
 		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "USER" } });
-		mockPrisma.user.count.mockResolvedValue(3);
+		mockPrisma.user.count.mockResolvedValue(2);
 
 		const result = await changeUserRole(undefined, demoteFormData);
 
@@ -282,6 +305,29 @@ describe("changeUserRole", () => {
 		await changeUserRole(undefined, promoteFormData);
 
 		expect(mockPrisma.user.count).not.toHaveBeenCalled();
+	});
+
+	it("should use a Serializable transaction for the role change", async () => {
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "USER" }));
+		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "ADMIN" } });
+
+		await changeUserRole(undefined, promoteFormData);
+
+		expect(mockPrisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+			isolationLevel: "Serializable",
+		});
+	});
+
+	it("should exclude the target userId from the remaining-admins count", async () => {
+		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "ADMIN" }));
+		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "USER" } });
+		mockPrisma.user.count.mockResolvedValue(2);
+
+		await changeUserRole(undefined, demoteFormData);
+
+		expect(mockPrisma.user.count).toHaveBeenCalledWith({
+			where: { role: "ADMIN", deletedAt: null, id: { not: "user-456" } },
+		});
 	});
 
 	// ──────────────────────────────────────────────────────────────
@@ -313,7 +359,7 @@ describe("changeUserRole", () => {
 	it("should return success with 'utilisateur' label when demoting to USER", async () => {
 		mockPrisma.user.findUnique.mockResolvedValue(makeUser({ role: "ADMIN" }));
 		mockValidateInput.mockReturnValue({ data: { id: "user-456", role: "USER" } });
-		mockPrisma.user.count.mockResolvedValue(3);
+		mockPrisma.user.count.mockResolvedValue(2);
 
 		const result = await changeUserRole(undefined, demoteFormData);
 

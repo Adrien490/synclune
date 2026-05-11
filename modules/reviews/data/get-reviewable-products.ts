@@ -39,6 +39,10 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 				fulfillmentStatus: "DELIVERED",
 				...notDeleted,
 			},
+			sku: {
+				product: { deletedAt: null },
+				...notDeleted,
+			},
 			review: null,
 		},
 		select: {
@@ -56,7 +60,6 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 							id: true,
 							title: true,
 							slug: true,
-							deletedAt: true,
 							skus: {
 								where: { isDefault: true },
 								take: 1,
@@ -85,7 +88,7 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 	// Collecter les productIds uniques (dedupliques)
 	const uniqueProductIds = new Set<string>();
 	for (const item of orderItems) {
-		if (item.sku.product.id && !item.sku.product.deletedAt) {
+		if (item.sku.product.id) {
 			uniqueProductIds.add(item.sku.product.id);
 		}
 	}
@@ -106,11 +109,6 @@ async function fetchReviewableProducts(userId: string): Promise<ReviewableProduc
 	const reviewableProducts: ReviewableProduct[] = [];
 
 	for (const item of orderItems) {
-		// Verifier que le produit n'est pas soft-deleted
-		if (item.sku.product.deletedAt) {
-			continue;
-		}
-
 		const productId = item.sku.product.id;
 		if (!productId) continue;
 

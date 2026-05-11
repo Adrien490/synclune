@@ -74,7 +74,7 @@ describe("syncAsyncPayments", () => {
 
 		const result = await syncAsyncPayments();
 
-		expect(result).toEqual({ checked: 0, updated: 0, errors: 0, hasMore: false });
+		expect(result).toMatchObject({ checked: 0, updated: 0, errors: 0, hasMore: false });
 	});
 
 	it("should query orders with correct time window", async () => {

@@ -144,11 +144,7 @@ export function getShippingZoneFromPostalCode(postalCode: string): ShippingZoneR
 		return { zone: "TOM", department: postalCode.substring(0, 3) };
 	}
 
-	if (
-		FRENCH_METROPOLITAN_DEPARTMENTS.includes(
-			department as (typeof FRENCH_METROPOLITAN_DEPARTMENTS)[number],
-		)
-	) {
+	if ((FRENCH_METROPOLITAN_DEPARTMENTS as readonly string[]).includes(department)) {
 		return { zone: "METROPOLITAN", department };
 	}
 

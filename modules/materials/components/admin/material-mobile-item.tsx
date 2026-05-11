@@ -26,7 +26,7 @@ interface MaterialMobileItemProps {
 }
 
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
-	const skuCount = material._count.skus || 0;
+	const skuCount = material._count.skus;
 	const statusLabel = material.isActive ? "● Actif" : "○ Inactif";
 
 	const { sections } = useMaterialActions({

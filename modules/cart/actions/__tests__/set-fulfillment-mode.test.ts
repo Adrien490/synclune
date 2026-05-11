@@ -9,6 +9,7 @@ const {
 	mockPrisma,
 	mockUpdateTag,
 	mockGetCartInvalidationTags,
+	mockGetStoreSettings,
 } = vi.hoisted(() => ({
 	mockCheckCartRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
@@ -20,6 +21,7 @@ const {
 	},
 	mockUpdateTag: vi.fn(),
 	mockGetCartInvalidationTags: vi.fn(),
+	mockGetStoreSettings: vi.fn(),
 }));
 
 vi.mock("@/modules/cart/lib/cart-rate-limit", () => ({
@@ -38,6 +40,9 @@ vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
 vi.mock("next/cache", () => ({ updateTag: mockUpdateTag }));
 vi.mock("@/modules/cart/constants/cache", () => ({
 	getCartInvalidationTags: mockGetCartInvalidationTags,
+}));
+vi.mock("@/modules/store-settings/data/get-store-settings", () => ({
+	getStoreSettings: mockGetStoreSettings,
 }));
 vi.mock("../../schemas/cart.schemas", () => ({
 	setFulfillmentModeSchema: {},
@@ -69,6 +74,9 @@ function setupDefaults() {
 	}));
 	mockError.mockImplementation((msg: string) => ({ status: "error", message: msg }));
 	mockHandleActionError.mockReturnValue({ status: "error", message: "fallback" });
+	// Gate CLICK_AND_COLLECT activé par défaut — les tests qui veulent tester le refus
+	// override avec `mockGetStoreSettings.mockResolvedValue({ clickAndCollectEnabled: false })`.
+	mockGetStoreSettings.mockResolvedValue({ clickAndCollectEnabled: true });
 }
 
 describe("setFulfillmentMode", () => {
@@ -99,5 +107,27 @@ describe("setFulfillmentMode", () => {
 		mockPrisma.cart.findFirst.mockResolvedValue(null);
 		await setFulfillmentMode(undefined, makeFormData());
 		expect(mockError).toHaveBeenCalled();
+	});
+
+	it("rejects CLICK_AND_COLLECT when StoreSettings.clickAndCollectEnabled is false", async () => {
+		mockGetStoreSettings.mockResolvedValue({ clickAndCollectEnabled: false });
+		await setFulfillmentMode(undefined, makeFormData("CLICK_AND_COLLECT"));
+		expect(mockError).toHaveBeenCalledWith(
+			"Le retrait en boutique n'est pas disponible pour le moment.",
+		);
+		expect(mockPrisma.cart.update).not.toHaveBeenCalled();
+	});
+
+	it("rejects CLICK_AND_COLLECT when StoreSettings row is null", async () => {
+		mockGetStoreSettings.mockResolvedValue(null);
+		await setFulfillmentMode(undefined, makeFormData("CLICK_AND_COLLECT"));
+		expect(mockError).toHaveBeenCalledWith(
+			"Le retrait en boutique n'est pas disponible pour le moment.",
+		);
+	});
+
+	it("does not call getStoreSettings for SHIPPING (no extra DB hit)", async () => {
+		await setFulfillmentMode(undefined, makeFormData("SHIPPING"));
+		expect(mockGetStoreSettings).not.toHaveBeenCalled();
 	});
 });

@@ -29,6 +29,8 @@ export const UI_DELAYS = {
 	ANIMATION_SWIPE_MS: 300,
 	/** Delay before video frame stabilization (ms) */
 	VIDEO_FRAME_STABILIZATION_MS: 50,
+	/** ETA recompute tick interval for upload progress (ms) */
+	ETA_TICK_INTERVAL_MS: 500,
 } as const;
 
 // ============================================================================

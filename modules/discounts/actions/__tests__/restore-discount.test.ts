@@ -196,12 +196,14 @@ describe("restoreDiscount", () => {
 		});
 	});
 
-	it("invalidates cache tags by code", async () => {
+	it("invalidates cache tags by id", async () => {
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
+
 		await restoreDiscount(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("PROMO20");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-PROMO20");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-123");
 	});
 
 	it("returns success with code in message", async () => {

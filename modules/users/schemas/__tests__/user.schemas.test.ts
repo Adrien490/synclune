@@ -7,6 +7,12 @@ import { z } from "zod";
 
 vi.mock("@/app/generated/prisma/client", () => ({
 	Role: { USER: "USER", ADMIN: "ADMIN" },
+	AccountStatus: {
+		ACTIVE: "ACTIVE",
+		INACTIVE: "INACTIVE",
+		PENDING_DELETION: "PENDING_DELETION",
+		ANONYMIZED: "ANONYMIZED",
+	},
 }));
 
 vi.mock("@/shared/constants/pagination", () => ({

@@ -20,7 +20,7 @@ import { UsersFilterSheet } from "@/modules/users/components/admin/users-filter-
 import { UsersBottomBar } from "@/modules/users/components/admin/users-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
-import type { Role } from "@/app/generated/prisma/client";
+import { AccountStatus, type Role } from "@/app/generated/prisma/client";
 
 export const metadata: Metadata = {
 	title: "Clients - Administration",
@@ -36,6 +36,7 @@ type UsersSearchParams = {
 	filter_role?: string;
 	filter_emailVerified?: string;
 	filter_hasOrders?: string;
+	filter_accountStatus?: string;
 	filter_includeDeleted?: string;
 };
 
@@ -70,6 +71,7 @@ function parseFilters(params: UsersSearchParams) {
 		role?: Role[];
 		emailVerified?: boolean;
 		hasOrders?: boolean;
+		accountStatus?: AccountStatus;
 		includeDeleted?: boolean;
 	} = {};
 
@@ -80,6 +82,12 @@ function parseFilters(params: UsersSearchParams) {
 	else if (params.filter_emailVerified === "false") filters.emailVerified = false;
 	if (params.filter_hasOrders === "true") filters.hasOrders = true;
 	else if (params.filter_hasOrders === "false") filters.hasOrders = false;
+	if (
+		params.filter_accountStatus &&
+		(Object.values(AccountStatus) as string[]).includes(params.filter_accountStatus)
+	) {
+		filters.accountStatus = params.filter_accountStatus as AccountStatus;
+	}
 	if (params.filter_includeDeleted === "true") filters.includeDeleted = true;
 
 	return filters;

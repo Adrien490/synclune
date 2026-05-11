@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { normalizeHex } from "../utils/hex-normalizer";
@@ -10,6 +10,9 @@ type HexColorInputProps = {
 	onChange: (hex: string) => void;
 	disabled?: boolean;
 	id?: string;
+	name?: string;
+	"aria-invalid"?: boolean;
+	"aria-describedby"?: string;
 };
 
 function stripHash(hex: string): string {
@@ -28,18 +31,27 @@ function expandToSixDigit(hex: string): string {
 	return "#000000";
 }
 
-export function HexColorInput({ value, onChange, disabled, id }: HexColorInputProps) {
+export function HexColorInput({
+	value,
+	onChange,
+	disabled,
+	id,
+	name,
+	"aria-invalid": ariaInvalid,
+	"aria-describedby": ariaDescribedBy,
+}: HexColorInputProps) {
 	const haptic = useHaptic();
-	const [text, setText] = useState(() => stripHash(value));
-	const lastEmittedRef = useRef<string>(normalizeHex(value));
-
-	useEffect(() => {
-		const normalized = normalizeHex(value);
-		if (normalized !== lastEmittedRef.current) {
-			setText(stripHash(normalized));
-			lastEmittedRef.current = normalized;
-		}
-	}, [value]);
+	// Local text state for the raw input being typed (allows partial input "F5").
+	// Sync with the controlled `value` prop using "Adjusting state during render"
+	// (React docs) — only resets when the parent updates the prop, not when
+	// handlers emit (which would clobber typed-in characters). Stored in state
+	// (not a ref) so the eslint react-hooks/refs rule stays clean.
+	const [text, setText] = useState(() => stripHash(normalizeHex(value)));
+	const [lastSyncedValue, setLastSyncedValue] = useState(value);
+	if (lastSyncedValue !== value) {
+		setLastSyncedValue(value);
+		setText(stripHash(normalizeHex(value)));
+	}
 
 	const isPartial = text.length > 0 && text.length !== 6;
 
@@ -53,8 +65,7 @@ export function HexColorInput({ value, onChange, disabled, id }: HexColorInputPr
 		setText(cleaned);
 		if (cleaned.length === 6) {
 			const normalized = normalizeHex(`#${cleaned}`);
-			if (normalized !== lastEmittedRef.current) {
-				lastEmittedRef.current = normalized;
+			if (normalized !== normalizeHex(value)) {
 				onChange(normalized);
 				haptic("light");
 			}
@@ -65,32 +76,28 @@ export function HexColorInput({ value, onChange, disabled, id }: HexColorInputPr
 		if (text.length === 0 || text.length === 6) return;
 		if (text.length === 3) {
 			const normalized = normalizeHex(`#${text}`);
-			if (normalized !== lastEmittedRef.current) {
-				lastEmittedRef.current = normalized;
-				setText(stripHash(normalized));
+			setText(stripHash(normalized));
+			if (normalized !== normalizeHex(value)) {
 				onChange(normalized);
 				haptic("light");
 			}
 			return;
 		}
-		setText(stripHash(lastEmittedRef.current));
+		// Invalid intermediate length: revert to last committed value
+		setText(stripHash(normalizeHex(value)));
 	};
 
 	const handleNativeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (disabled) return;
 		const normalized = normalizeHex(e.target.value);
-		if (normalized === lastEmittedRef.current) return;
-		lastEmittedRef.current = normalized;
-		setText(stripHash(normalized));
-		onChange(normalized);
-		haptic("selection");
+		if (normalized !== normalizeHex(value)) {
+			onChange(normalized);
+			haptic("selection");
+		}
 	};
 
 	return (
 		<div className="flex flex-col gap-2" data-slot="hex-color-input">
-			<label htmlFor={inputId} className="text-muted-foreground text-xs font-medium">
-				Ou code personnalisé
-			</label>
 			<div className="flex items-stretch gap-3">
 				<div className="border-border relative size-11 shrink-0 overflow-hidden rounded-md border">
 					<input
@@ -111,6 +118,7 @@ export function HexColorInput({ value, onChange, disabled, id }: HexColorInputPr
 					</span>
 					<input
 						id={inputId}
+						name={name}
 						type="text"
 						value={text}
 						onChange={(e) => handleTextChange(e.target.value)}
@@ -123,8 +131,8 @@ export function HexColorInput({ value, onChange, disabled, id }: HexColorInputPr
 						autoCorrect="off"
 						spellCheck={false}
 						maxLength={6}
-						aria-invalid={isPartial}
-						aria-describedby={`${inputId}-help`}
+						aria-invalid={ariaInvalid ?? isPartial}
+						aria-describedby={ariaDescribedBy ?? `${inputId}-help`}
 						className={cn(
 							"border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent py-2 pr-3 pl-7 font-mono text-base tracking-wider shadow-xs transition-[color,box-shadow,border-color] outline-none md:text-sm",
 							"hover:border-ring/70",

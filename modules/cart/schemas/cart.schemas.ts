@@ -6,7 +6,7 @@ import { MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 // ============================================================================
 
 export const addToCartSchema = z.object({
-	skuId: z.cuid2("ID SKU invalide"),
+	skuId: z.cuid("ID SKU invalide"),
 	quantity: z
 		.number()
 		.int()
@@ -23,7 +23,7 @@ export const addToCartSchema = z.object({
  * Schéma de validation pour la mise à jour d'un item
  */
 export const updateCartItemSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
+	cartItemId: z.cuid("ID de l'article invalide"),
 	quantity: z
 		.number()
 		.int()
@@ -35,7 +35,7 @@ export const updateCartItemSchema = z.object({
  * Schéma de validation pour la suppression d'un item
  */
 export const removeFromCartSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
+	cartItemId: z.cuid("ID de l'article invalide"),
 });
 
 // ============================================================================
@@ -48,7 +48,7 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  * Schema pour valider un SKU et son stock
  */
 export const validateSkuSchema = z.object({
-	skuId: z.cuid2(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
+	skuId: z.cuid(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
 	quantity: z
 		.number()
 		.int()
@@ -60,7 +60,7 @@ export const validateSkuSchema = z.object({
  * Schema pour récupérer les détails d'un SKU
  */
 export const getSkuDetailsSchema = z.object({
-	skuId: z.cuid2(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
+	skuId: z.cuid(CART_ERROR_MESSAGES.SKU_NOT_FOUND),
 });
 
 // ============================================================================
@@ -80,7 +80,11 @@ export const applyCartDiscountSchema = z.object({
 });
 
 /**
- * Schema pour definir les notes/instructions du panier
+ * Schema pour definir les notes/instructions du panier.
+ *
+ * @security Texte libre — JAMAIS rendu via `dangerouslySetInnerHTML`. Tous les
+ * consumers (admin order-detail, emails, exports) doivent utiliser un rendu
+ * texte (React JSX text node ou `textContent`). Sinon : injecter DOMPurify ici.
  */
 export const setCartNotesSchema = z.object({
 	notes: z.string().max(500, CART_ERROR_MESSAGES.CART_NOTES_TOO_LONG).optional().default(""),
@@ -94,10 +98,13 @@ export const setFulfillmentModeSchema = z.object({
 });
 
 /**
- * Schema pour configurer les options cadeau sur un item
+ * Schema pour configurer les options cadeau sur un item.
+ *
+ * @security `giftMessage` est du texte libre — mêmes contraintes que `setCartNotesSchema` :
+ * rendu texte seul côté consumers, jamais `dangerouslySetInnerHTML`.
  */
 export const setGiftOptionsSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
+	cartItemId: z.cuid("ID de l'article invalide"),
 	giftWrap: z.boolean().default(false),
 	giftMessage: z
 		.string()
@@ -111,7 +118,7 @@ export const setGiftOptionsSchema = z.object({
  */
 export const removeMultipleItemsSchema = z.object({
 	cartItemIds: z
-		.array(z.cuid2("ID de l'article invalide"))
+		.array(z.cuid("ID de l'article invalide"))
 		.min(1, "Au moins un article à supprimer")
 		.max(50, "Maximum 50 articles supprimables en une fois"),
 });
@@ -120,12 +127,12 @@ export const removeMultipleItemsSchema = z.object({
  * Schema pour réajouter les items d'une commande au panier
  */
 export const reorderFromOrderSchema = z.object({
-	orderId: z.cuid2("ID de commande invalide"),
+	orderId: z.cuid("ID de commande invalide"),
 });
 
 /**
  * Schema pour déplacer un item vers la wishlist
  */
 export const moveToWishlistSchema = z.object({
-	cartItemId: z.cuid2("ID de l'article invalide"),
+	cartItemId: z.cuid("ID de l'article invalide"),
 });

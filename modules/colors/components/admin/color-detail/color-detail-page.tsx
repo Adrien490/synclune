@@ -1,17 +1,24 @@
+import { Suspense } from "react";
+
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 
 import { ColorDetailHeader } from "./color-detail-header";
 import { ColorDetailInfoCard } from "./color-detail-info-card";
 import { ColorDetailPreviewCard } from "./color-detail-preview-card";
 import { ColorDetailSkusUsageCard } from "./color-detail-skus-usage-card";
-import { ColorDetailStatsCard } from "./color-detail-stats-card";
+import { ColorDetailStatsCardAsync } from "./color-detail-stats-card-async";
+import { ColorDetailStatsCardSkeleton } from "./color-detail-stats-card-skeleton";
 
 interface ColorDetailPageProps {
 	color: ColorDetailReturn;
-	distinctProductsCount: number;
+	/**
+	 * Pass a non-awaited promise so the page shell + main cards can stream
+	 * while the distinct-product count resolves in parallel via Suspense.
+	 */
+	distinctProductsCountPromise: Promise<number>;
 }
 
-export function ColorDetailPage({ color, distinctProductsCount }: ColorDetailPageProps) {
+export function ColorDetailPage({ color, distinctProductsCountPromise }: ColorDetailPageProps) {
 	return (
 		<div className="space-y-6">
 			<ColorDetailHeader color={color} />
@@ -24,11 +31,12 @@ export function ColorDetailPage({ color, distinctProductsCount }: ColorDetailPag
 				</div>
 
 				<div className="space-y-6">
-					<ColorDetailStatsCard
-						skusCount={color._count.skus}
-						productsCount={distinctProductsCount}
-						position={color.position}
-					/>
+					<Suspense fallback={<ColorDetailStatsCardSkeleton />}>
+						<ColorDetailStatsCardAsync
+							skusCount={color._count.skus}
+							productsCountPromise={distinctProductsCountPromise}
+						/>
+					</Suspense>
 				</div>
 			</div>
 		</div>

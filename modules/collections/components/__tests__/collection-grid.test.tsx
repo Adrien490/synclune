@@ -214,4 +214,51 @@ describe("CollectionGrid", () => {
 		await renderGrid(promise);
 		expect(screen.getByTestId("cursor-pagination")).toHaveAttribute("data-has-next", "true");
 	});
+
+	it("emits enriched ItemList JSON-LD with AggregateOffer when priceRange is set", async () => {
+		const utils = await import("@/modules/collections/utils/collection-images.utils");
+		(utils.extractPriceRange as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
+			min: 1500,
+			max: 4500,
+		});
+		(utils.extractCollectionImages as unknown as ReturnType<typeof vi.fn>).mockReturnValue([
+			{ url: "https://cdn/img.jpg", alt: "img" },
+		]);
+
+		const collections = [createCollection("1", "bagues", "Bagues")];
+		const promise = makePromise({ collections: collections as never, pagination: emptyPagination });
+		await renderGrid(promise);
+
+		const script = document.querySelector('script[type="application/ld+json"]');
+		expect(script).not.toBeNull();
+		const ld = JSON.parse(script!.innerHTML) as {
+			"@type": string;
+			itemListElement: Array<{
+				item?: {
+					"@type": string;
+					image?: string;
+					offers?: {
+						"@type": string;
+						priceCurrency: string;
+						lowPrice: string;
+						highPrice: string;
+						offerCount: number;
+						availability: string;
+					};
+				};
+			}>;
+		};
+		expect(ld["@type"]).toBe("ItemList");
+		const item = ld.itemListElement[0]!.item!;
+		expect(item["@type"]).toBe("CollectionPage");
+		expect(item.image).toBe("https://cdn/img.jpg");
+		expect(item.offers).toEqual({
+			"@type": "AggregateOffer",
+			priceCurrency: "EUR",
+			lowPrice: "15.00",
+			highPrice: "45.00",
+			offerCount: 3,
+			availability: "https://schema.org/InStock",
+		});
+	});
 });

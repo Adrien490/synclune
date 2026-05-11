@@ -44,26 +44,29 @@ export async function deleteAddress(
 
 		// Utiliser une transaction pour garantir l'intégrité
 		await prisma.$transaction(async (tx) => {
-			// Si adresse par défaut, assigner le défaut à une autre adresse si elle existe
-			if (existingAddress.isDefault) {
-				const otherAddress = await tx.address.findFirst({
-					where: { userId: user.id, id: { not: addressId } },
-					orderBy: { createdAt: "desc" },
-				});
+			// Pré-sélectionner l'éventuelle adresse à promouvoir (avant DELETE).
+			const otherAddress = existingAddress.isDefault
+				? await tx.address.findFirst({
+						where: { userId: user.id, id: { not: addressId } },
+						orderBy: { createdAt: "desc" },
+						select: { id: true },
+					})
+				: null;
 
-				// Si une autre adresse existe, la définir comme nouvelle adresse par défaut
-				if (otherAddress) {
-					await tx.address.update({
-						where: { id: otherAddress.id },
-						data: { isDefault: true },
-					});
-				}
-				// Sinon, l'utilisateur n'aura plus d'adresse par défaut (acceptable)
-			}
-
+			// 1. DELETE d'abord pour libérer le slot (userId, isDefault=true) :
+			// le partial unique index `Address_userId_isDefault_unique` est IMMEDIATE,
+			// promouvoir une autre adresse avant le DELETE violerait la contrainte.
 			await tx.address.delete({
 				where: { id: addressId },
 			});
+
+			// 2. Promouvoir la nouvelle adresse par défaut si applicable.
+			if (otherAddress) {
+				await tx.address.update({
+					where: { id: otherAddress.id },
+					data: { isDefault: true },
+				});
+			}
 		});
 
 		// Revalidation du cache avec tags

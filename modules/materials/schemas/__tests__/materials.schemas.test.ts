@@ -25,7 +25,6 @@ import {
 	createMaterialSchema,
 	updateMaterialSchema,
 	deleteMaterialSchema,
-	bulkDeleteMaterialsSchema,
 	toggleMaterialStatusSchema,
 	bulkToggleMaterialStatusSchema,
 	duplicateMaterialSchema,
@@ -172,27 +171,6 @@ describe("deleteMaterialSchema", () => {
 		const result = deleteMaterialSchema.safeParse({ id: VALID_CUID });
 
 		expect(result.success).toBe(true);
-	});
-});
-
-describe("bulkDeleteMaterialsSchema", () => {
-	it("should accept array of valid ids", () => {
-		const result = bulkDeleteMaterialsSchema.safeParse({ ids: [VALID_CUID] });
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty array", () => {
-		const result = bulkDeleteMaterialsSchema.safeParse({ ids: [] });
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject more than 200 ids", () => {
-		const ids = Array.from({ length: 201 }, () => VALID_CUID);
-		const result = bulkDeleteMaterialsSchema.safeParse({ ids });
-
-		expect(result.success).toBe(false);
 	});
 });
 

@@ -2,13 +2,12 @@ import * as Sentry from "@sentry/nextjs";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
-import { cacheProductTypes } from "../constants/cache";
+import { cacheProductTypeCounts, cacheProductTypeDetail } from "../constants/cache";
 
 import { GET_PRODUCT_TYPE_SELECT } from "../constants/product-type.constants";
 import { getProductTypeSchema } from "../schemas/product-type.schemas";
 import type { GetProductTypeParams, GetProductTypeReturn } from "../types/product-type.types";
 
-// Re-export pour compatibilité
 // ============================================================================
 // MAIN FUNCTIONS
 // ============================================================================
@@ -40,7 +39,7 @@ async function fetchProductType(
 	includeInactive: boolean,
 ): Promise<GetProductTypeReturn | null> {
 	"use cache";
-	cacheProductTypes();
+	cacheProductTypeDetail(slug);
 
 	try {
 		const productType = await prisma.productType.findUnique({
@@ -57,7 +56,7 @@ async function fetchProductType(
 			tags: { module: "product-types", operation: "getProductType" },
 			extra: { slug, includeInactive },
 		});
-		return null;
+		throw error;
 	}
 }
 
@@ -84,7 +83,7 @@ export async function getProductTypeDetailBySlug(
 
 async function fetchProductTypeDetail(slug: string) {
 	"use cache";
-	cacheProductTypes();
+	cacheProductTypeDetail(slug);
 
 	try {
 		return await prisma.productType.findUnique({
@@ -127,7 +126,7 @@ async function fetchProductTypeDetail(slug: string) {
 			tags: { module: "product-types", operation: "getProductTypeDetail" },
 			extra: { slug },
 		});
-		return null;
+		throw error;
 	}
 }
 
@@ -139,20 +138,33 @@ export async function getProductTypeProductCounts(productTypeId: string) {
 	const admin = await isAdmin();
 	if (!admin) return { public: 0, draft: 0, archived: 0 };
 
+	return fetchProductTypeProductCounts(productTypeId);
+}
+
+async function fetchProductTypeProductCounts(productTypeId: string) {
+	"use cache";
+	cacheProductTypeCounts(productTypeId);
+
 	try {
-		const [pub, draft, archived] = await Promise.all([
-			prisma.product.count({ where: { typeId: productTypeId, status: "PUBLIC", deletedAt: null } }),
-			prisma.product.count({ where: { typeId: productTypeId, status: "DRAFT", deletedAt: null } }),
-			prisma.product.count({
-				where: { typeId: productTypeId, status: "ARCHIVED", deletedAt: null },
-			}),
-		]);
-		return { public: pub, draft, archived };
+		const grouped = await prisma.product.groupBy({
+			by: ["status"],
+			where: { typeId: productTypeId, deletedAt: null },
+			_count: { _all: true },
+		});
+
+		const findCount = (status: "PUBLIC" | "DRAFT" | "ARCHIVED") =>
+			grouped.find((g) => g.status === status)?._count._all ?? 0;
+
+		return {
+			public: findCount("PUBLIC"),
+			draft: findCount("DRAFT"),
+			archived: findCount("ARCHIVED"),
+		};
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "product-types", operation: "getProductTypeProductCounts" },
 			extra: { productTypeId },
 		});
-		return { public: 0, draft: 0, archived: 0 };
+		throw error;
 	}
 }

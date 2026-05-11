@@ -17,6 +17,12 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/app/generated/prisma/browser", () => ({
 	Role: { USER: "USER", ADMIN: "ADMIN" },
+	AccountStatus: {
+		ACTIVE: "ACTIVE",
+		INACTIVE: "INACTIVE",
+		PENDING_DELETION: "PENDING_DELETION",
+		ANONYMIZED: "ANONYMIZED",
+	},
 }));
 
 const mockOnClearAll = vi.fn();

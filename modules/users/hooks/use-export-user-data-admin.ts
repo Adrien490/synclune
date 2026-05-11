@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useTransition } from "react";
+import { useActionState, useTransition } from "react";
 import { exportUserDataAdmin } from "@/modules/users/actions/admin/export-user-data-admin";
 import type { UserDataExport } from "@/modules/users/actions/export-user-data";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
@@ -14,42 +14,39 @@ interface UseExportUserDataAdminOptions {
 }
 
 /**
- * Hook admin pour exporter les données d'un utilisateur (RGPD)
+ * Hook admin pour exporter les données d'un utilisateur (RGPD).
+ *
+ * Le nom du fichier est dérivé de `data.profile.name` retourné par l'action
+ * serveur (pas d'état partagé `useRef` susceptible d'être écrasé par un
+ * second appel concurrent).
  */
 export function useExportUserDataAdmin(options?: UseExportUserDataAdminOptions) {
 	const [isPending, startTransition] = useTransition();
-	const userNameRef = useRef("");
 
 	const [, formAction, isActionPending] = useActionState(
-		async (_prev: ActionState | undefined, formData: FormData) =>
-			withCallbacks(
-				async (_p: ActionState | undefined, fd: FormData) =>
-					exportUserDataAdmin(fd.get("userId") as string),
-				createToastCallbacks({
-					loadingMessage: "Export des données en cours…",
-					onSuccess: (result) => {
-						if (result.data) {
-							const data = result.data as UserDataExport;
-							const safeName = userNameRef.current.replace(/\s+/g, "-").toLowerCase();
-							downloadJSON(
-								data,
-								`synclune-donnees-${safeName}-${new Date().toISOString().split("T")[0]}.json`,
-							);
-							options?.onSuccess?.(data);
-						}
-					},
-					onError: (result) => {
-						if (result.message) {
-							options?.onError?.(result.message);
-						}
-					},
-				}),
-			)(_prev, formData),
+		withCallbacks(
+			async (_prev: ActionState | undefined, formData: FormData) =>
+				exportUserDataAdmin(formData.get("userId") as string),
+			createToastCallbacks({
+				loadingMessage: "Export des données en cours…",
+				onSuccess: (result) => {
+					if (!result.data) return;
+					const data = result.data as UserDataExport;
+					const rawName = data.profile.name ?? "utilisateur";
+					const safeName = rawName.replace(/\s+/g, "-").toLowerCase();
+					const date = new Date().toISOString().split("T")[0];
+					downloadJSON(data, `synclune-donnees-${safeName}-${date}.json`);
+					options?.onSuccess?.(data);
+				},
+				onError: (result) => {
+					if (result.message) options?.onError?.(result.message);
+				},
+			}),
+		),
 		undefined,
 	);
 
-	const exportData = (userId: string, userName: string) => {
-		userNameRef.current = userName;
+	const exportData = (userId: string) => {
 		startTransition(() => {
 			const formData = new FormData();
 			formData.append("userId", userId);

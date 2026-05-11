@@ -83,6 +83,7 @@ async function processOrderAtomically(
 	orderUpdateData: Prisma.OrderUpdateInput,
 	guestSessionId: string | undefined,
 	flowLabel: string,
+	expectedAmountReceived?: number | null,
 ): Promise<OrderWithItems> {
 	// 1. Fetch order with items and SKUs
 	const order = await tx.order.findUnique({
@@ -115,6 +116,15 @@ async function processOrderAtomically(
 			service: "webhook",
 		});
 		return mapToOrderWithItems(order);
+	}
+
+	// 2b. Defense-in-depth: refuse to mark the order PAID if Stripe captured less
+	// than the order total. Guards against any client-side underbilling regression
+	// (audit P1.5 / P0.1, 2026-05-11).
+	if (typeof expectedAmountReceived === "number" && expectedAmountReceived < order.total) {
+		throw new Error(
+			`Amount mismatch for order ${orderId} (${flowLabel}): Stripe received ${expectedAmountReceived} but order.total is ${order.total}`,
+		);
 	}
 
 	// 3. Re-validate all items INSIDE the transaction to prevent race conditions
@@ -255,6 +265,7 @@ export async function processOrderTransaction(
 				},
 				session.metadata?.guestSessionId,
 				"CS flow",
+				session.amount_total,
 			);
 		},
 		{ timeout: 10000 },
@@ -284,6 +295,7 @@ export async function processOrderFromPaymentIntent(
 				},
 				paymentIntent.metadata.guestSessionId,
 				"PI flow",
+				paymentIntent.amount_received,
 			);
 		},
 		{ timeout: 10000 },

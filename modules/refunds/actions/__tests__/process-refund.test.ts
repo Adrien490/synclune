@@ -20,7 +20,7 @@ const {
 } = vi.hoisted(() => {
 	const mockTx = {
 		$queryRaw: vi.fn(),
-		refund: { update: vi.fn() },
+		refund: { update: vi.fn(), updateMany: vi.fn() },
 		productSku: { update: vi.fn() },
 		order: { update: vi.fn() },
 	};
@@ -34,7 +34,7 @@ const {
 		mockError: vi.fn(),
 		mockPrisma: {
 			$transaction: vi.fn(),
-			refund: { update: vi.fn() },
+			refund: { update: vi.fn(), updateMany: vi.fn() },
 			productSku: { findMany: vi.fn() },
 			user: { findUnique: vi.fn() },
 			orderNote: { create: vi.fn() },
@@ -232,6 +232,10 @@ describe("processRefund", () => {
 			name: "Marie Dupont",
 		});
 		mockPrisma.orderNote.create.mockResolvedValue({});
+		mockPrisma.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockTx.refund.updateMany.mockResolvedValue({ count: 1 });
+		mockTx.productSku.update.mockResolvedValue({});
+		mockTx.order.update.mockResolvedValue({});
 	});
 
 	it("should return auth error when not admin", async () => {
@@ -335,9 +339,9 @@ describe("processRefund", () => {
 
 		const result = await processRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				where: { id: "refund-1" },
+				where: { id: "refund-1", status: "APPROVED" },
 				data: expect.objectContaining({ status: "FAILED" }),
 			}),
 		);
@@ -361,7 +365,7 @@ describe("processRefund", () => {
 
 		const result = await processRefund(undefined, makeFormData());
 
-		expect(mockPrisma.refund.update).toHaveBeenCalledWith(
+		expect(mockPrisma.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ stripeRefundId: "re_pending_123" }),
 			}),
@@ -396,7 +400,7 @@ describe("processRefund", () => {
 
 		const result = await processRefund(undefined, makeFormData());
 
-		expect(mockTx.refund.update).toHaveBeenCalledWith(
+		expect(mockTx.refund.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
 					status: "COMPLETED",

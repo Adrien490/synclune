@@ -102,6 +102,10 @@ export function buildUserFilterConditions(filters: UserFilters): Prisma.UserWher
 		conditions.push(filters.hasImage ? { image: { not: null } } : { image: null });
 	}
 
+	if (filters.accountStatus !== undefined) {
+		conditions.push({ accountStatus: filters.accountStatus });
+	}
+
 	// minOrderCount: Prisma doesn't support aggregate filtering in WHERE.
 	// Filtering by _count happens post-query in fetchUsers if needed.
 

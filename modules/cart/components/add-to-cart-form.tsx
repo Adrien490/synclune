@@ -26,12 +26,7 @@ function AddToCartFormInner({ product, selectedSku }: AddToCartFormProps) {
 	const searchParams = useSearchParams();
 
 	// Validation des variantes pour message explicite
-	const {
-		validationErrors: _validationErrors,
-		requiresColor,
-		requiresMaterial,
-		requiresSize,
-	} = useVariantValidation({
+	const { requiresColor, requiresMaterial, requiresSize } = useVariantValidation({
 		product,
 		selection: {
 			color: searchParams.get("color"),

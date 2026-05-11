@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Copy, Mail, Share2 } from "lucide-react";
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 import {
 	DropdownMenu,
@@ -97,6 +97,18 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 	}
 
 	const [feedback, setFeedback] = useState<"shared" | "copied" | null>(null);
+	const feedbackTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(() => {
+		return () => {
+			if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+		};
+	}, []);
+
+	function scheduleFeedbackClear() {
+		if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+		feedbackTimeoutRef.current = setTimeout(() => setFeedback(null), 2000);
+	}
 
 	const iconSize = size === "sm" ? 16 : 20;
 
@@ -107,7 +119,7 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 		if (result === "shared" || result === "copied") {
 			triggerHaptic("success");
 			setFeedback(result);
-			setTimeout(() => setFeedback(null), 2000);
+			scheduleFeedbackClear();
 		}
 	}
 
@@ -117,7 +129,7 @@ export function ShareButton({ title, text, url, size = "lg", className, media }:
 			await navigator.clipboard.writeText(fullUrl);
 			triggerHaptic("success");
 			setFeedback("copied");
-			setTimeout(() => setFeedback(null), 2000);
+			scheduleFeedbackClear();
 		} catch {
 			// swallow; no toast infra wired here
 		}

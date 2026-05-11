@@ -13,8 +13,12 @@ import { COLORS_CACHE_TAGS } from "../constants/cache";
 // ============================================
 
 /**
- * Configure cache for the colors list
- * - Used by: filter selectors, admin forms
+ * Configure cache for the colors list.
+ *
+ * Used by both admin (sees inactive too) and storefront (filters by
+ * `isActive: true` on the consumer side). Profile `reference` is fine because
+ * every admin mutation invalidates `colors-list` via `getColorInvalidationTags`,
+ * so the 24h revalidate window is never the source of stale data.
  */
 export function cacheColors() {
 	cacheLife("reference");
@@ -33,20 +37,47 @@ export function cacheColorDetail(slug: string) {
 // INVALIDATION HELPER
 // ============================================
 
+interface ColorInvalidationOptions {
+	/** Slug of the modified color (current and/or previous if renamed). */
+	slug?: string;
+	/**
+	 * Slugs of products that own a SKU referencing this color. When provided,
+	 * cascade invalidates `products-list` + `product-${slug}` so storefront
+	 * pages don't display a stale name/hex after a color update.
+	 */
+	affectedProductSlugs?: readonly string[];
+}
+
 /**
  * Tags to invalidate when a color is modified.
  *
  * Automatically invalidates:
- * - The colors list
- * - The color detail (if slug provided)
+ * - The colors list (`colors-list`)
+ * - The color detail (if `slug` provided)
  * - The admin sidebar badges
+ * - Affected product pages + the products list (if `affectedProductSlugs`
+ *   provided) — the storefront product PDP embeds the color name/hex in the
+ *   SKU swatch, so a rename would otherwise stay stale up to 15 min (catalog
+ *   cache profile).
  *
- * @param slug - Slug of the modified color (optional)
+ * @param input - either a single slug (legacy signature) or an options bag.
  */
-export function getColorInvalidationTags(slug?: string): string[] {
-	const tags: string[] = [COLORS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
-	if (slug) {
-		tags.push(COLORS_CACHE_TAGS.DETAIL(slug));
+export function getColorInvalidationTags(input?: string | ColorInvalidationOptions): string[] {
+	const opts: ColorInvalidationOptions =
+		typeof input === "string" ? { slug: input } : (input ?? {});
+
+	const tags = new Set<string>([COLORS_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES]);
+
+	if (opts.slug) {
+		tags.add(COLORS_CACHE_TAGS.DETAIL(opts.slug));
 	}
-	return tags;
+
+	if (opts.affectedProductSlugs && opts.affectedProductSlugs.length > 0) {
+		tags.add(SHARED_CACHE_TAGS.PRODUCTS_LIST);
+		for (const productSlug of opts.affectedProductSlugs) {
+			tags.add(`product-${productSlug}`);
+		}
+	}
+
+	return Array.from(tags);
 }

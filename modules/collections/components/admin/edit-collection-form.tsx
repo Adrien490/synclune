@@ -49,6 +49,8 @@ export function EditCollectionForm({
 		},
 	});
 
+	const isPublic = collection.status === CollectionStatus.PUBLIC;
+
 	const [, action, isPending] = useActionState(
 		withCallbacks(
 			updateCollection,
@@ -93,32 +95,43 @@ export function EditCollectionForm({
 			</form.Subscribe>
 
 			{/* Name Field */}
-			<form.AppField
-				name="name"
-				validators={{
-					onChange: ({ value }) => {
-						if (!value || value.length < 1) {
-							return "Le nom est requis";
-						}
-						if (value.length > 100) {
-							return "Le nom ne peut pas dépasser 100 caractères";
-						}
-						return undefined;
-					},
-				}}
-			>
-				{(field) => (
-					<field.InputField
-						label="Nom"
-						type="text"
-						placeholder="ex: Nouveautés 2025, Collection Été"
-						disabled={isPending}
-						required
-						autoCapitalize="words"
-						enterKeyHint="next"
-					/>
+			<div className="space-y-1.5">
+				<form.AppField
+					name="name"
+					validators={{
+						onChange: ({ value }) => {
+							if (!value || value.length < 1) {
+								return "Le nom est requis";
+							}
+							if (value.length > 100) {
+								return "Le nom ne peut pas dépasser 100 caractères";
+							}
+							if (isPublic && value !== collection.name) {
+								return "Une collection publiée ne peut pas être renommée (SEO). Repassez-la en brouillon d'abord.";
+							}
+							return undefined;
+						},
+					}}
+				>
+					{(field) => (
+						<field.InputField
+							label="Nom"
+							type="text"
+							placeholder="ex: Nouveautés 2025, Collection Été"
+							disabled={isPending || isPublic}
+							required
+							autoCapitalize="words"
+							enterKeyHint="next"
+						/>
+					)}
+				</form.AppField>
+				{isPublic && (
+					<p className="text-muted-foreground text-xs">
+						Le nom est verrouillé tant que la collection est publiée pour préserver l&apos;URL et le
+						SEO.
+					</p>
 				)}
-			</form.AppField>
+			</div>
 
 			{/* Description Field */}
 			<form.AppField

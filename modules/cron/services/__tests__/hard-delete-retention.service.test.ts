@@ -77,7 +77,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		const result = await hardDeleteExpiredRecords();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			productsDeleted: BATCH_SIZE_LARGE,
 			reviewsDeleted: BATCH_SIZE_LARGE,
 			hasMore: true,
@@ -107,7 +107,7 @@ describe("hardDeleteExpiredRecords", () => {
 	it("returns zero counts and skips cache invalidation + UploadThing when no records eligible", async () => {
 		const result = await hardDeleteExpiredRecords();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			productsDeleted: 0,
 			reviewsDeleted: 0,
 			hasMore: false,
@@ -201,7 +201,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		const result = await hardDeleteExpiredRecords();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			productsDeleted: 5,
 			reviewsDeleted: 5,
 			hasMore: false,
@@ -228,7 +228,7 @@ describe("hardDeleteExpiredRecords", () => {
 
 		const result = await hardDeleteExpiredRecords();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			productsDeleted: 3,
 			reviewsDeleted: 3,
 			hasMore: false,

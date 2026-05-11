@@ -21,7 +21,7 @@ import { getReviewInvalidationTags } from "../constants/cache";
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
 import { createReviewSchema } from "../schemas/review.schemas";
 import { updateProductReviewStats } from "../services/review-stats.service";
-import { canUserReviewProduct } from "../data/can-user-review-product";
+import { checkReviewEligibility } from "../services/eligibility.service";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { logger } from "@/shared/lib/logger";
 
@@ -77,8 +77,8 @@ export async function createReview(
 		const sanitizedTitle = title ? sanitizeText(title) : null;
 		const sanitizedContent = sanitizeText(content);
 
-		// 5. Vérifier l'éligibilité de l'utilisateur
-		const eligibility = await canUserReviewProduct(userId, productId);
+		// 5. Vérifier l'éligibilité de l'utilisateur (fresh, pas de cache stale)
+		const eligibility = await checkReviewEligibility(prisma, userId, productId);
 
 		if (!eligibility.canReview) {
 			let message = "Vous ne pouvez pas laisser d'avis sur ce produit";

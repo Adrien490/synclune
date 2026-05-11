@@ -6,7 +6,7 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_SKU_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
-import { handleActionError, success } from "@/shared/lib/actions";
+import { handleActionError, safeFormGet, success } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -24,7 +24,7 @@ export async function refreshSkus(_prevState: unknown, formData: FormData): Prom
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_SKU_TOGGLE_STATUS_LIMIT);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const rawProductId = formData.get("productId") as string | null;
+		const rawProductId = safeFormGet(formData, "productId");
 
 		// Invalider les tags des SKUs
 		updateTag(PRODUCTS_CACHE_TAGS.SKUS_LIST);
@@ -33,8 +33,9 @@ export async function refreshSkus(_prevState: unknown, formData: FormData): Prom
 
 		// Si un productId valide est fourni, invalider aussi les SKUs de ce produit
 		const productId = optionalCuid2Schema.safeParse(rawProductId ?? undefined);
-		if (productId.success && productId.data) {
-			updateTag(PRODUCTS_CACHE_TAGS.SKUS(productId.data));
+		const validProductId = productId.success && productId.data ? productId.data : null;
+		if (validProductId) {
+			updateTag(PRODUCTS_CACHE_TAGS.SKUS(validProductId));
 		}
 
 		void logAudit({
@@ -42,8 +43,8 @@ export async function refreshSkus(_prevState: unknown, formData: FormData): Prom
 			adminName: adminUser.name ?? adminUser.email,
 			action: "sku.refresh",
 			targetType: "sku",
-			targetId: productId.success && productId.data ? productId.data : "all",
-			metadata: { productId: productId.success ? productId.data : null },
+			targetId: validProductId ?? "all-skus",
+			metadata: { productId: validProductId },
 		});
 
 		return success("Variantes rafraichies");

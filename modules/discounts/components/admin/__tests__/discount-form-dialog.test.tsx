@@ -1,6 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type * as DiscountConstantsModule from "@/modules/discounts/constants/discount.constants";
+
 // ============================================================================
 // HOISTED MOCKS
 // ============================================================================
@@ -23,12 +25,16 @@ vi.mock("@/modules/discounts/actions/update-discount", () => ({
 	updateDiscount: vi.fn(),
 }));
 
-vi.mock("@/modules/discounts/constants/discount.constants", () => ({
-	DISCOUNT_TYPE_LABELS: {
-		PERCENTAGE: "Pourcentage",
-		FIXED_AMOUNT: "Montant fixe",
-	},
-}));
+vi.mock("@/modules/discounts/constants/discount.constants", async (importOriginal) => {
+	const actual = await importOriginal<typeof DiscountConstantsModule>();
+	return {
+		...actual,
+		DISCOUNT_TYPE_LABELS: {
+			PERCENTAGE: "Pourcentage",
+			FIXED_AMOUNT: "Montant fixe",
+		},
+	};
+});
 
 vi.mock("@/app/generated/prisma/browser", () => ({
 	DiscountType: {

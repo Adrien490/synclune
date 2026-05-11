@@ -244,8 +244,10 @@ export const auth = betterAuth({
 				return; // Pas de nouvelle session, rien à faire
 			}
 
-			// Récupérer le cookie de session visiteur du panier
-			const cartSessionId = ctx.getCookie("cart_session");
+			// Récupérer le cookie de session visiteur du panier (validation UUID v4 stricte)
+			const rawCartSessionId = ctx.getCookie("cart_session");
+			const { isValidCartSessionId } = await import("@/modules/cart/lib/cart-session");
+			const cartSessionId = isValidCartSessionId(rawCartSessionId) ? rawCartSessionId : null;
 
 			// 🛒 MERGE DU PANIER (import dynamique pour éviter le cycle de dépendances)
 			if (cartSessionId) {

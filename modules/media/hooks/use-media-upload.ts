@@ -12,17 +12,14 @@ import {
 	isValidMediaType,
 } from "@/modules/media/utils/upload-helpers";
 import { compressImage, HeicDecodeError, isHeicFile } from "@/modules/media/utils/compress-image";
-import { deleteUploadThingFile } from "@/modules/media/actions/delete-uploadthing-file";
 import {
 	enqueue as enqueueOffline,
 	OfflineQueueFullError,
 	type OfflineUploadEndpoint,
 } from "@/modules/media/lib/offline-upload-queue";
-import {
-	computeEtaSeconds,
-	computeThroughput,
-	type ThroughputSample,
-} from "@/modules/media/utils/format-eta";
+import { useUploadEta } from "@/modules/media/hooks/use-upload-eta";
+import { useUploadCancellation } from "@/modules/media/hooks/use-upload-cancellation";
+import { useVideoThumbnailUpload } from "@/modules/media/hooks/use-video-thumbnail-upload";
 import { withRetry } from "@/shared/utils/with-retry";
 import { toast } from "@/shared/utils/toast";
 import type {
@@ -30,12 +27,10 @@ import type {
 	MediaUploadResult,
 	UploadProgress,
 	UseMediaUploadReturn,
-	VideoThumbnailResult,
 	FailedUpload,
 	FileProgress,
 	FileProgressState,
 } from "../types/hooks.types";
-import { generateVideoThumbnail, isThumbnailGenerationSupported } from "./use-video-thumbnail";
 
 interface UseMediaUploadOptionsExtended extends UseMediaUploadOptions {
 	/** Persist files in the offline IndexedDB queue when a network failure occurs (default: false) */
@@ -50,8 +45,6 @@ type CurrentBatchTracker = {
 	startBytes: number;
 	totalBytes: number;
 };
-
-const ETA_TICK_INTERVAL_MS = 500;
 
 function isLikelyNetworkError(err: unknown): boolean {
 	if (err instanceof TypeError) {
@@ -115,14 +108,11 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	const bytesTotalRef = useRef(0);
 	const currentBatchRef = useRef<CurrentBatchTracker | null>(null);
 
-	// Per-file cancellation (P1.5)
-	const cancelledNamesRef = useRef<Set<string>>(new Set());
-	const videoSubAbortRef = useRef<AbortController | null>(null);
-	const currentVideoNameRef = useRef<string | null>(null);
+	// Per-file cancellation + sub-abort vidéo — extrait dans `useUploadCancellation` (audit P1.4 split).
+	const cancellation = useUploadCancellation();
 
-	// Throughput sampling for ETA (P1.1)
-	const throughputSamplesRef = useRef<ThroughputSample[]>([]);
-	const etaTickIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+	// Throughput sampling + ETA ticker — extrait dans `useUploadEta` (audit P1.4 split).
+	const eta = useUploadEta();
 
 	const onProgressRef = useRef(onProgress);
 	// eslint-disable-next-line react-hooks/refs
@@ -146,14 +136,17 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		},
 	});
 
-	// Cleanup on unmount
+	// Génération + upload thumbnail vidéo + cleanup orphan — extrait dans `useVideoThumbnailUpload` (audit P1.4 split).
+	const videoThumbnail = useVideoThumbnailUpload({ startUpload });
+
+	// Cleanup on unmount (ETA ticker cleanup vit dans `useUploadEta`).
 	useEffect(() => {
 		return () => {
 			abortControllerRef.current?.abort();
-			videoSubAbortRef.current?.abort();
+			cancellation.abortAnyVideo();
 			if (doneTimeoutRef.current) clearTimeout(doneTimeoutRef.current);
-			if (etaTickIntervalRef.current) clearInterval(etaTickIntervalRef.current);
 		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const isOversized = (file: File): boolean => {
@@ -223,13 +216,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	 */
 	const updateBytesUploaded = (globalBytes: number, tracker: CurrentBatchTracker) => {
 		bytesUploadedRef.current = globalBytes;
-		throughputSamplesRef.current.push({
-			bytes: globalBytes,
-			timestamp: performance.now(),
-		});
-		if (throughputSamplesRef.current.length > 60) {
-			throughputSamplesRef.current = throughputSamplesRef.current.slice(-30);
-		}
+		eta.recordSample(globalBytes);
 
 		setProgress((prev) => {
 			if (!prev?.files) return prev;
@@ -263,31 +250,26 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	};
 
 	const startEtaTicker = () => {
-		if (etaTickIntervalRef.current) return;
-		etaTickIntervalRef.current = setInterval(() => {
-			const tracker = currentBatchRef.current;
-			if (!tracker) return;
-			const bytesPerSecond = computeThroughput(throughputSamplesRef.current);
-			const etaSeconds = computeEtaSeconds(
-				bytesUploadedRef.current,
-				bytesTotalRef.current,
-				bytesPerSecond,
-			);
-			setProgress((prev) => {
-				if (!prev) return prev;
-				if (prev.bytesPerSecond === bytesPerSecond && prev.etaSeconds === etaSeconds) return prev;
-				const next: UploadProgress = { ...prev, bytesPerSecond, etaSeconds };
-				onProgressRef.current?.(next);
-				return next;
-			});
-		}, ETA_TICK_INTERVAL_MS);
+		eta.start(
+			() => ({
+				bytesUploaded: bytesUploadedRef.current,
+				bytesTotal: bytesTotalRef.current,
+			}),
+			({ bytesPerSecond, etaSeconds }) => {
+				if (!currentBatchRef.current) return;
+				setProgress((prev) => {
+					if (!prev) return prev;
+					if (prev.bytesPerSecond === bytesPerSecond && prev.etaSeconds === etaSeconds) return prev;
+					const next: UploadProgress = { ...prev, bytesPerSecond, etaSeconds };
+					onProgressRef.current?.(next);
+					return next;
+				});
+			},
+		);
 	};
 
 	const stopEtaTicker = () => {
-		if (etaTickIntervalRef.current) {
-			clearInterval(etaTickIntervalRef.current);
-			etaTickIntervalRef.current = null;
-		}
+		eta.stop();
 	};
 
 	/**
@@ -325,7 +307,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			updateProgress({ phase: "compressing" });
 		}
 		for (const file of files) {
-			if (cancelledNamesRef.current.has(file.name)) {
+			if (cancellation.isCancelled(file.name)) {
 				markFileState(file.name, "failed", "Annulé");
 				continue;
 			}
@@ -356,7 +338,9 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 				if (isHeicFile(file)) {
 					prepared.push(file);
 				} else {
-					console.warn("[useMediaUpload] Compression échouée:", file.name, err);
+					if (process.env.NODE_ENV === "development") {
+						console.warn("[useMediaUpload] Compression échouée:", file.name, err);
+					}
 					prepared.push(file);
 				}
 			}
@@ -456,7 +440,9 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 					});
 					break;
 				}
-				console.warn("[useMediaUpload] enqueue offline échoué:", file.name, e);
+				if (process.env.NODE_ENV === "development") {
+					console.warn("[useMediaUpload] enqueue offline échoué:", file.name, e);
+				}
 			}
 		}
 		return persisted;
@@ -466,38 +452,10 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		videoFile: File,
 		signal: AbortSignal,
 	): Promise<MediaUploadResult | null> => {
-		let thumbnailUrl: string | undefined;
-		let blurDataUrl: string | undefined;
-		let thumbnailResult: VideoThumbnailResult | null = null;
-
-		if (isThumbnailGenerationSupported()) {
-			try {
-				thumbnailResult = await generateVideoThumbnail(videoFile, { signal });
-				blurDataUrl = thumbnailResult.blurDataUrl;
-
-				const thumbUploadResult = await withRetry(
-					() => startUpload([thumbnailResult!.thumbnailFile]),
-					{ maxAttempts: 3, baseDelay: 500, signal },
-				);
-
-				if (thumbUploadResult?.[0]?.serverData.url) {
-					thumbnailUrl = thumbUploadResult[0].serverData.url;
-				}
-
-				if (thumbnailResult.previewUrl) {
-					URL.revokeObjectURL(thumbnailResult.previewUrl);
-				}
-			} catch (error) {
-				if (thumbnailResult?.previewUrl) {
-					URL.revokeObjectURL(thumbnailResult.previewUrl);
-				}
-				if (!(error instanceof DOMException && error.name === "AbortError")) {
-					console.warn("[useMediaUpload] Echec generation/upload thumbnail:", error);
-				} else {
-					throw error;
-				}
-			}
-		}
+		const { thumbnailUrl, blurDataUrl } = await videoThumbnail.uploadThumbnailForVideo(
+			videoFile,
+			signal,
+		);
 
 		try {
 			const videoUploadResult = await withRetry(() => startUpload([videoFile]), {
@@ -520,16 +478,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 			return null;
 		} catch (error) {
 			if (thumbnailUrl) {
-				const orphanUrl = thumbnailUrl;
-				void (async () => {
-					try {
-						const formData = new FormData();
-						formData.append("fileUrl", orphanUrl);
-						await deleteUploadThingFile(undefined, formData);
-					} catch (cleanupError) {
-						console.warn("[useMediaUpload] Cleanup thumbnail orphelin échoué:", cleanupError);
-					}
-				})();
+				videoThumbnail.cleanupOrphanThumbnail(thumbnailUrl);
 			}
 			throw error;
 		}
@@ -606,14 +555,13 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 
 			const batchResults = await Promise.allSettled(
 				batch.map(async (file) => {
-					if (cancelledNamesRef.current.has(file.name)) {
+					if (cancellation.isCancelled(file.name)) {
 						markFileState(file.name, "failed", "Annulé");
 						return null;
 					}
 					// Per-video sub-abort enables cancelOne mid-flight (P1.5)
 					const subAbort = new AbortController();
-					videoSubAbortRef.current = subAbort;
-					currentVideoNameRef.current = file.name;
+					cancellation.bindVideo(file.name, subAbort);
 					const composite = new AbortController();
 					const onParentAbort = () => composite.abort();
 					const onSubAbort = () => composite.abort();
@@ -636,8 +584,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 						currentBatchRef.current = null;
 						signal.removeEventListener("abort", onParentAbort);
 						subAbort.signal.removeEventListener("abort", onSubAbort);
-						if (videoSubAbortRef.current === subAbort) videoSubAbortRef.current = null;
-						if (currentVideoNameRef.current === file.name) currentVideoNameRef.current = null;
+						cancellation.releaseVideo(file.name, subAbort);
 					}
 				}),
 			);
@@ -659,7 +606,9 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 					const message =
 						result.reason instanceof Error ? result.reason.message : "Échec du téléversement vidéo";
 					pushFailed(file, message);
-					console.warn("[useMediaUpload] Echec upload video:", result.reason);
+					if (process.env.NODE_ENV === "development") {
+						console.warn("[useMediaUpload] Echec upload video:", result.reason);
+					}
 				}
 			}
 		}
@@ -786,8 +735,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		cumulativeCompletedRef.current = 0;
 		bytesUploadedRef.current = 0;
 		bytesTotalRef.current = 0;
-		throughputSamplesRef.current = [];
-		cancelledNamesRef.current = new Set();
+		eta.reset();
+		cancellation.resetCancelled();
 
 		try {
 			while (queueRef.current.length > 0) {
@@ -875,7 +824,7 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 
 	const cancel = () => {
 		abortControllerRef.current?.abort();
-		videoSubAbortRef.current?.abort();
+		cancellation.abortAnyVideo();
 		abortControllerRef.current = null;
 		for (const entry of queueRef.current) {
 			entry.resolve([]);
@@ -887,8 +836,8 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		cumulativeCompletedRef.current = 0;
 		bytesUploadedRef.current = 0;
 		bytesTotalRef.current = 0;
-		throughputSamplesRef.current = [];
-		cancelledNamesRef.current = new Set();
+		eta.reset();
+		cancellation.resetCancelled();
 		stopEtaTicker();
 	};
 
@@ -900,14 +849,16 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 	 *   surfaces a toast and leaves the upload running
 	 */
 	const cancelOne = (fileName: string) => {
-		cancelledNamesRef.current.add(fileName);
+		cancellation.markCancelled(fileName);
 		markFileState(fileName, "failed", "Annulé");
-		if (currentVideoNameRef.current === fileName && videoSubAbortRef.current) {
-			videoSubAbortRef.current.abort();
+		if (cancellation.abortCurrentVideo(fileName)) {
 			return;
 		}
 		const tracker = currentBatchRef.current;
-		if (tracker?.mode === "image-batch" && tracker.files.some((f) => f.name === fileName)) {
+		const batchInfo = tracker
+			? { mode: tracker.mode, fileNames: new Set(tracker.files.map((f) => f.name)) }
+			: null;
+		if (cancellation.isInActiveImageBatch(fileName, batchInfo)) {
 			toast.info("Impossible d'annuler", {
 				description:
 					"Le fichier est en cours de téléversement avec d'autres. Annulez l'upload pour tout arrêter.",
@@ -919,13 +870,13 @@ export function useMediaUpload(options: UseMediaUploadOptionsExtended = {}): Use
 		const toRetry = failedFiles.map((f) => f.file);
 		if (toRetry.length === 0) return [];
 		setFailedFiles([]);
-		for (const f of toRetry) cancelledNamesRef.current.delete(f.name);
+		for (const f of toRetry) cancellation.clearCancelled(f.name);
 		return upload(toRetry);
 	};
 
 	const retrySingle = async (file: File): Promise<MediaUploadResult | null> => {
 		setFailedFiles((prev) => prev.filter((entry) => entry.file !== file));
-		cancelledNamesRef.current.delete(file.name);
+		cancellation.clearCancelled(file.name);
 		const results = await upload([file]);
 		return results[0] ?? null;
 	};

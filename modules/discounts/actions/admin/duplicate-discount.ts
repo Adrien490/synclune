@@ -117,7 +117,7 @@ export async function duplicateDiscount(
 			select: { id: true, code: true },
 		});
 
-		getDiscountInvalidationTags(duplicate.code).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(duplicate.id).forEach((tag) => updateTag(tag));
 
 		void logAudit({
 			adminId: adminUser.id,

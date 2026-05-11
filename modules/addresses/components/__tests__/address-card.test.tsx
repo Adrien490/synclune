@@ -87,22 +87,29 @@ describe("AddressCard", () => {
 			expect(screen.getByText("+33 6 12 34 56 78")).toBeInTheDocument();
 		});
 
-		it("formats 0X national numbers with spaces", () => {
-			render(<AddressCard address={createAddress({ phone: "0612345678" })} />);
+		it("formats 0X national numbers using the address country", () => {
+			render(<AddressCard address={createAddress({ phone: "0612345678", country: "FR" })} />);
 
-			expect(screen.getByText("06 12 34 56 78")).toBeInTheDocument();
+			// libphonenumber-js normalizes national input to international form
+			expect(screen.getByText("+33 6 12 34 56 78")).toBeInTheDocument();
 		});
 
-		it("returns unformatted phone for non-FR numbers", () => {
-			render(<AddressCard address={createAddress({ phone: "+4915112345678" })} />);
+		it("formats non-FR numbers using their international prefix", () => {
+			render(<AddressCard address={createAddress({ phone: "+4915112345678", country: "DE" })} />);
 
-			expect(screen.getByText("+4915112345678")).toBeInTheDocument();
+			expect(screen.getByText("+49 1511 2345678")).toBeInTheDocument();
 		});
 
-		it("formats landline numbers correctly", () => {
-			render(<AddressCard address={createAddress({ phone: "0145678901" })} />);
+		it("formats landline numbers using the address country", () => {
+			render(<AddressCard address={createAddress({ phone: "0145678901", country: "FR" })} />);
 
-			expect(screen.getByText("01 45 67 89 01")).toBeInTheDocument();
+			expect(screen.getByText("+33 1 45 67 89 01")).toBeInTheDocument();
+		});
+
+		it("falls back to the raw value when parsing fails", () => {
+			render(<AddressCard address={createAddress({ phone: "not-a-phone", country: "FR" })} />);
+
+			expect(screen.getByText("not-a-phone")).toBeInTheDocument();
 		});
 	});
 });

@@ -4,6 +4,7 @@ import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
+import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
 import type { RefundRecord } from "../types/webhook.types";
 
 // Re-export types for backwards compatibility
@@ -202,6 +203,7 @@ const REFUND_RECORD_SELECT = {
 	id: true,
 	status: true,
 	amount: true,
+	reason: true,
 	orderId: true,
 	order: {
 		select: {
@@ -263,22 +265,6 @@ export function mapStripeRefundStatus(stripeStatus: string | undefined | null): 
 	return statusMap[stripeStatus ?? "pending"] ?? RefundStatus.PENDING;
 }
 
-/** Valid state transitions for refund status */
-const VALID_REFUND_TRANSITIONS: Record<RefundStatus, RefundStatus[]> = {
-	[RefundStatus.PENDING]: [
-		RefundStatus.APPROVED,
-		RefundStatus.COMPLETED,
-		RefundStatus.REJECTED,
-		RefundStatus.FAILED,
-		RefundStatus.CANCELLED,
-	],
-	[RefundStatus.APPROVED]: [RefundStatus.COMPLETED, RefundStatus.FAILED, RefundStatus.CANCELLED],
-	[RefundStatus.COMPLETED]: [],
-	[RefundStatus.REJECTED]: [],
-	[RefundStatus.FAILED]: [RefundStatus.APPROVED, RefundStatus.COMPLETED],
-	[RefundStatus.CANCELLED]: [],
-};
-
 /**
  * Met à jour le statut d'un remboursement avec historique
  * Validates state transitions to prevent invalid status changes
@@ -299,15 +285,12 @@ export async function updateRefundStatus(
 			})
 		)?.status;
 
-	if (statusToValidate) {
-		const validTransitions = VALID_REFUND_TRANSITIONS[statusToValidate];
-		if (!validTransitions.includes(newStatus)) {
-			logger.warn(
-				`⚠️ [WEBHOOK] Invalid refund status transition: ${statusToValidate} -> ${newStatus} for refund ${refundId}, skipping`,
-				{ service: "webhook" },
-			);
-			return;
-		}
+	if (statusToValidate && !canTransition(statusToValidate, newStatus)) {
+		logger.warn(
+			`⚠️ [WEBHOOK] Invalid refund status transition: ${statusToValidate} -> ${newStatus} for refund ${refundId}, skipping`,
+			{ service: "webhook" },
+		);
+		return;
 	}
 
 	await prisma.refund.update({

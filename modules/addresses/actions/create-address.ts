@@ -41,7 +41,7 @@ export async function createAddress(
 			address2: safeFormGet(formData, "address2") ?? null,
 			postalCode: safeFormGet(formData, "postalCode"),
 			city: safeFormGet(formData, "city"),
-			country: safeFormGet(formData, "country") ?? "FR",
+			country: safeFormGet(formData, "country"),
 			phone: safeFormGet(formData, "phone"),
 		};
 

@@ -3,6 +3,13 @@
 import { FilterBadges } from "@/shared/components/filter-badges";
 import { type FilterDefinition } from "@/shared/hooks/use-filter";
 
+const ACCOUNT_STATUS_LABELS: Record<string, string> = {
+	ACTIVE: "Actif",
+	INACTIVE: "Inactif",
+	PENDING_DELETION: "Suppression en attente",
+	ANONYMIZED: "Anonymisé",
+};
+
 function formatUserFilter(filter: FilterDefinition) {
 	const filterKey = filter.key.replace("filter_", "");
 	const value = filter.value as string;
@@ -21,13 +28,6 @@ function formatUserFilter(filter: FilterDefinition) {
 		};
 	}
 
-	if (filterKey === "preferredLanguage") {
-		return {
-			label: "Langue",
-			displayValue: value.toUpperCase(),
-		};
-	}
-
 	if (filterKey === "hasOrders") {
 		return {
 			label: "Commandes",
@@ -35,31 +35,10 @@ function formatUserFilter(filter: FilterDefinition) {
 		};
 	}
 
-	if (filterKey === "createdAfter") {
+	if (filterKey === "accountStatus") {
 		return {
-			label: "Inscrit après",
-			displayValue: new Date(value).toLocaleDateString("fr-FR"),
-		};
-	}
-
-	if (filterKey === "createdBefore") {
-		return {
-			label: "Inscrit avant",
-			displayValue: new Date(value).toLocaleDateString("fr-FR"),
-		};
-	}
-
-	if (filterKey === "lastLoginAfter") {
-		return {
-			label: "Connexion après",
-			displayValue: new Date(value).toLocaleDateString("fr-FR"),
-		};
-	}
-
-	if (filterKey === "lastLoginBefore") {
-		return {
-			label: "Connexion avant",
-			displayValue: new Date(value).toLocaleDateString("fr-FR"),
+			label: "Statut",
+			displayValue: ACCOUNT_STATUS_LABELS[value] ?? value,
 		};
 	}
 

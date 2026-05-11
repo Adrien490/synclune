@@ -46,6 +46,18 @@ export function buildOrderSearchConditions(search: string): Prisma.OrderWhereInp
 	};
 }
 
+/**
+ * Builds the filter portion of an Order WHERE clause.
+ *
+ * Default behaviour : when no `status` filter is supplied, **PENDING orders are
+ * excluded**. PENDING orders are created the moment a user clicks "Procéder au
+ * paiement", before any payment is captured — most never convert (abandoned
+ * carts). Surfacing them in the default admin list would drown real orders in
+ * noise and inflate dashboard counts.
+ *
+ * To explicitly inspect abandoned carts, pass `status: "PENDING"` (or include
+ * it in an array). The exclusion only applies when the caller is silent.
+ */
 export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderWhereInput {
 	const conditions: Prisma.OrderWhereInput = {};
 
@@ -53,8 +65,6 @@ export function buildOrderFilterConditions(filters: OrderFilters): Prisma.OrderW
 		const statuses = Array.isArray(filters.status) ? filters.status : [filters.status];
 		conditions.status = statuses.length === 1 ? statuses[0] : { in: statuses };
 	} else {
-		// Par défaut, exclure les commandes PENDING (abandons de panier)
-		// Ces commandes sont créées au clic "Procéder au paiement" mais jamais payées
 		conditions.status = { not: "PENDING" };
 	}
 

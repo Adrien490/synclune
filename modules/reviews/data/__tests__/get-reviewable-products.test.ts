@@ -36,7 +36,6 @@ function createOrderItem(
 		productId?: string;
 		productTitle?: string;
 		productSlug?: string;
-		deletedAt?: Date | null;
 		imageUrl?: string;
 	} = {},
 ) {
@@ -51,7 +50,6 @@ function createOrderItem(
 				id: overrides.productId ?? "prod-1",
 				title: overrides.productTitle ?? "Bracelet Lune",
 				slug: overrides.productSlug ?? "bracelet-lune",
-				deletedAt: overrides.deletedAt ?? null,
 				skus: [
 					{
 						images: overrides.imageUrl
@@ -129,16 +127,23 @@ describe("getReviewableProducts", () => {
 		expect(result[0]!.productId).toBe("prod-2");
 	});
 
-	it("should exclude soft-deleted products", async () => {
+	it("should request only non soft-deleted products and SKUs via Prisma where", async () => {
 		mockGetSession.mockResolvedValue({ user: { id: VALID_USER_ID } });
-		mockPrisma.orderItem.findMany.mockResolvedValue([
-			createOrderItem({ id: "item-1", productId: "prod-1", deletedAt: new Date() }),
-		]);
+		mockPrisma.orderItem.findMany.mockResolvedValue([]);
 		mockPrisma.productReview.findMany.mockResolvedValue([]);
 
-		const result = await getReviewableProducts();
+		await getReviewableProducts();
 
-		expect(result).toHaveLength(0);
+		expect(mockPrisma.orderItem.findMany).toHaveBeenCalledWith(
+			expect.objectContaining({
+				where: expect.objectContaining({
+					sku: expect.objectContaining({
+						product: { deletedAt: null },
+						deletedAt: null,
+					}),
+				}),
+			}),
+		);
 	});
 
 	it("should return null productImage when no default sku images", async () => {

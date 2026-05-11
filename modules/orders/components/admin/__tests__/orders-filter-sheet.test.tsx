@@ -522,16 +522,16 @@ describe("OrdersFilterSheet", () => {
 	// Amount range inputs
 	// --------------------------------------------------------------------------
 
-	it("passes maxPrice=10000 to AmountRangeInputs", () => {
+	it("passes maxPrice=500000 (5 000€) to AmountRangeInputs", () => {
 		render(<OrdersFilterSheet />);
-		expect(screen.getByTestId("amount-range-inputs")).toHaveAttribute("data-maxprice", "10000");
+		expect(screen.getByTestId("amount-range-inputs")).toHaveAttribute("data-maxprice", "500000");
 	});
 
-	it("passes default price range [0, 10000] to AmountRangeInputs", () => {
+	it("passes default price range [0, 500000] to AmountRangeInputs", () => {
 		render(<OrdersFilterSheet />);
 		const el = screen.getByTestId("amount-range-inputs");
 		expect(el).toHaveAttribute("data-min", "0");
-		expect(el).toHaveAttribute("data-max", "10000");
+		expect(el).toHaveAttribute("data-max", "500000");
 	});
 
 	it("calls handleChange when price range changes", () => {
@@ -693,7 +693,7 @@ describe("OrdersFilterSheet", () => {
 			statuses: [],
 			paymentStatuses: [],
 			fulfillmentStatuses: [],
-			priceRange: [0, 10000],
+			priceRange: [0, 500000],
 			dateRange: { from: "", to: "" },
 			showDeleted: "active",
 		});

@@ -7,6 +7,7 @@ import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import { handleActionError, success, error, validateInput } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { getStoreSettings } from "@/modules/store-settings/data/get-store-settings";
 import { setFulfillmentModeSchema } from "../schemas/cart.schemas";
 import { CART_ERROR_MESSAGES } from "../constants/error-messages";
 
@@ -14,10 +15,7 @@ import { CART_ERROR_MESSAGES } from "../constants/error-messages";
  * Server Action pour definir le mode de fulfillment du panier
  *
  * - SHIPPING : livraison domicile (defaut)
- * - CLICK_AND_COLLECT : retrait boutique (si active)
- *
- * Feature gate : `CLICK_AND_COLLECT` rejete si boutique physique non operationnelle.
- * Gate via StoreSettings ou feature flag a ajouter quand infra logistique sera prete.
+ * - CLICK_AND_COLLECT : retrait boutique (gated par StoreSettings.clickAndCollectEnabled)
  *
  * Rate limiting via CART_LIMITS.METADATA
  */
@@ -42,8 +40,19 @@ export async function setFulfillmentMode(
 		if ("error" in validated) return validated.error;
 		const { fulfillmentType } = validated.data;
 
+		// Feature gate : CLICK_AND_COLLECT requiert que la logistique boutique soit opérationnelle.
+		if (fulfillmentType === "CLICK_AND_COLLECT") {
+			const settings = await getStoreSettings();
+			if (!settings?.clickAndCollectEnabled) {
+				return error("Le retrait en boutique n'est pas disponible pour le moment.");
+			}
+		}
+
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: { id: true },
 		});
 

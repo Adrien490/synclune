@@ -52,6 +52,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 		| "createdAt-descending";
 	const search = getFirstParam(params.search);
 	const filterIsActive = getFirstParam(params.filter_isActive);
+	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
 
 	// La promise de matériaux n'est PAS awaitée pour permettre le streaming
 	const materialsPromise = getMaterials({
@@ -120,15 +121,17 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 					<MaterialsMobileList
 						materialsPromise={materialsPromise}
 						perPage={perPage}
-						hasActiveFilters={
-							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
-						}
+						hasActiveFilters={hasActiveFilters}
 					/>
 				</Suspense>
 
 				{/* DataTable desktop */}
 				<Suspense fallback={<MaterialsDataTableSkeleton />}>
-					<MaterialsDataTable materialsPromise={materialsPromise} perPage={perPage} />
+					<MaterialsDataTable
+						materialsPromise={materialsPromise}
+						perPage={perPage}
+						hasActiveFilters={hasActiveFilters}
+					/>
 				</Suspense>
 			</div>
 

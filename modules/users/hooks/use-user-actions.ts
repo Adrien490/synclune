@@ -79,7 +79,7 @@ export function useUserActions({ user }: UseUserActionsParams): {
 					label: "Exporter données (RGPD)",
 					icon: Download,
 					disabled: isExportPending,
-					onSelect: () => exportData(user.id, displayName),
+					onSelect: () => exportData(user.id),
 				},
 				{
 					key: "logout",

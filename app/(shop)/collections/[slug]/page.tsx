@@ -26,14 +26,11 @@ export type CollectionSearchParams = {
 	sortBy?: string;
 } & Omit<ProductFiltersSearchParams, "collectionId" | "collectionSlug">;
 
-// Pre-genere les chemins des collections publiques au build time
-// Next.js 16 avec Cache Components requiert au moins un résultat
+// Pre-genere les chemins des collections publiques au build time.
+// Si zero collection PUBLIC : retourne [] et laisse Next.js generer dynamiquement
+// les pages a la premiere requete (cache "use cache" interne au fetcher).
 export async function generateStaticParams() {
 	const collections = await getPublicCollectionSlugs();
-	if (collections.length === 0) {
-		// Fallback pour satisfaire Next.js 16 - sera géré par notFound() au runtime
-		return [{ slug: "__placeholder__" }];
-	}
 	return collections.map((c) => ({ slug: c.slug }));
 }
 
@@ -83,12 +80,31 @@ export default async function CollectionPage({ params, searchParams }: Collectio
 	const featuredProduct = collection.products.find((pc) => pc.isFeatured);
 	const featuredImageUrl = featuredProduct?.product.skus[0]?.images[0]?.url ?? null;
 
+	// Mapper les produits pour le mainEntity ItemList JSON-LD (Product+Offer enrichi).
+	// Limite à 30 entries pour controler la taille de la balise script (Google indexe ~25 items).
+	const structuredProducts = collection.products
+		.filter((pc) => pc.product.skus[0])
+		.slice(0, 30)
+		.map((pc) => {
+			const sku = pc.product.skus[0]!;
+			const image = sku.images[0];
+			return {
+				slug: pc.product.slug,
+				title: pc.product.title,
+				priceInclTax: sku.priceInclTax,
+				imageUrl: image?.url,
+				imageAlt: image?.altText ?? undefined,
+				inStock: sku.inventory > 0,
+			};
+		});
+
 	// Générer les données structurées pour le SEO
 	const structuredData = generateCollectionStructuredData({
 		slug: collection.slug,
 		name: collection.name,
 		description: collection.description,
 		featuredImageUrl,
+		products: structuredProducts,
 	});
 
 	return (

@@ -43,8 +43,8 @@ export type SkuWithImages = GetProductSkuReturn & {
 export interface ParsedMedia {
 	url: string;
 	thumbnailUrl?: string | null;
-	blurDataUrl?: string;
-	altText?: string;
+	blurDataUrl?: string | null;
+	altText?: string | null;
 	mediaType?: "IMAGE" | "VIDEO";
 }
 

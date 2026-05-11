@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { VALID_PRODUCT_ID } from "@/test/factories";
+import * as cacheModule from "../../constants/cache";
 
 // ============================================================================
 // HOISTED MOCKS
@@ -49,6 +50,7 @@ vi.mock("../../utils/strip-deleted-response", () => ({
 vi.mock("../../constants/cache", () => ({
 	cacheProductReviews: vi.fn(),
 	cacheReviewsAdmin: vi.fn(),
+	cacheHomepageReviews: vi.fn(),
 }));
 vi.mock("../../constants/review.constants", () => ({
 	REVIEW_ADMIN_SELECT: { id: true },
@@ -149,6 +151,24 @@ describe("getReviews", () => {
 		expect(result.reviews).toEqual([]);
 		expect(result.totalCount).toBe(0);
 		expect(result.pagination.hasNextPage).toBe(false);
+	});
+
+	it("should tag cache with HOMEPAGE when public and no productId provided", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await getReviews({});
+
+		expect(cacheModule.cacheHomepageReviews).toHaveBeenCalled();
+		expect(cacheModule.cacheProductReviews).not.toHaveBeenCalled();
+	});
+
+	it("should tag cache with productId when public and productId provided", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		await getReviews({ productId: VALID_PRODUCT_ID });
+
+		expect(cacheModule.cacheProductReviews).toHaveBeenCalledWith(VALID_PRODUCT_ID);
+		expect(cacheModule.cacheHomepageReviews).not.toHaveBeenCalled();
 	});
 });
 

@@ -17,6 +17,7 @@ import {
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { toggleEmailVerifiedSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 
 /**
@@ -31,12 +32,13 @@ export async function toggleEmailVerified(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
-		if ("error" in rateCheck) return rateCheck.error;
-
+		// Vérification admin avant rate-limit
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		const rawData = { id: safeFormGet(formData, "id") };
 		const validation = validateInput(toggleEmailVerifiedSchema, rawData);
@@ -73,7 +75,7 @@ export async function toggleEmailVerified(
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: "user.toggleEmailVerified",
+			action: USER_AUDIT_ACTIONS.TOGGLE_EMAIL_VERIFIED,
 			targetType: "user",
 			targetId: userId,
 			metadata: {

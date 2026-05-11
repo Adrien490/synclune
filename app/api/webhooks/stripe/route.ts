@@ -5,8 +5,10 @@ import type Stripe from "stripe";
 import { stripe } from "@/shared/lib/stripe";
 import { Prisma, WebhookEventStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
-import { ANTI_REPLAY_WINDOW_SECONDS } from "@/modules/webhooks/constants/webhook.constants";
-import { MAX_WEBHOOK_RETRY_ATTEMPTS } from "@/modules/cron/constants/limits";
+import {
+	ANTI_REPLAY_WINDOW_SECONDS,
+	MAX_WEBHOOK_RETRY_ATTEMPTS,
+} from "@/modules/webhooks/constants/webhook.constants";
 import { dispatchEvent, isEventSupported } from "@/modules/webhooks/utils/event-registry";
 import { executePostWebhookTasks } from "@/modules/webhooks/utils/execute-post-tasks";
 import { sendWebhookFailedAlert } from "@/modules/webhooks/services/alert.service";

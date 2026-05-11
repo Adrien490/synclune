@@ -84,6 +84,7 @@ export function getProductInvalidationTags(productSlug: string, productId?: stri
 
 	if (productId) {
 		tags.push(PRODUCTS_CACHE_TAGS.SKUS(productId));
+		tags.push(PRODUCTS_CACHE_TAGS.COLLECTIONS(productId));
 	}
 
 	return tags;

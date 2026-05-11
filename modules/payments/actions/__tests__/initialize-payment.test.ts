@@ -105,10 +105,16 @@ vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
 	assertStoreOpen: mockAssertStoreOpen,
 }));
 
+const { mockLoggerError, mockLoggerInfo, mockLoggerWarn } = vi.hoisted(() => ({
+	mockLoggerError: vi.fn(),
+	mockLoggerInfo: vi.fn(),
+	mockLoggerWarn: vi.fn(),
+}));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: {
-		error: vi.fn(),
-		warn: vi.fn(),
+		error: mockLoggerError,
+		info: mockLoggerInfo,
+		warn: mockLoggerWarn,
 	},
 }));
 
@@ -288,14 +294,13 @@ describe("initializePayment", () => {
 			expect(mockCalculateShipping).toHaveBeenCalledWith("FR");
 		});
 
-		it("should fall back to 499 shipping when calculateShipping returns null", async () => {
+		it("returns a failure when default FR shipping is misconfigured", async () => {
+			// Audit P2.5: removed silent ?? 499 fallback — surface the misconfig instead.
 			mockCalculateShipping.mockReturnValue(null);
 
 			const result = await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			expect(result.success).toBe(true);
-			if (!result.success) return;
-			expect(result.shipping).toBe(499);
+			expect(result.success).toBe(false);
 		});
 	});
 
@@ -630,13 +635,18 @@ describe("initializePayment", () => {
 			expect(result.error).toBe("Une erreur est survenue lors de l'initialisation du paiement.");
 		});
 
-		it("should capture exception with Sentry on unexpected error", async () => {
+		it("should log exception on unexpected error (Sentry via logger.error)", async () => {
 			const boom = new Error("Stripe API down");
 			mockStripe.paymentIntents.create.mockRejectedValue(boom);
 
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			expect(mockSentryCaptureException).toHaveBeenCalledWith(boom);
+			// logger.error captures the error and forwards to Sentry internally.
+			expect(mockLoggerError).toHaveBeenCalledWith(
+				"Failed to initialize payment",
+				boom,
+				expect.objectContaining({ service: "checkout" }),
+			);
 		});
 	});
 
@@ -682,7 +692,7 @@ describe("initializePayment", () => {
 			expect(result.error).toBe("Une erreur est survenue lors de l'initialisation du paiement.");
 		});
 
-		it("should capture the missing client_secret error with Sentry", async () => {
+		it("should log the missing client_secret error", async () => {
 			mockStripe.paymentIntents.create.mockResolvedValue({
 				id: "pi_test_123",
 				client_secret: null,
@@ -690,7 +700,7 @@ describe("initializePayment", () => {
 
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			expect(mockSentryCaptureException).toHaveBeenCalled();
+			expect(mockLoggerError).toHaveBeenCalled();
 		});
 	});
 
@@ -709,13 +719,17 @@ describe("initializePayment", () => {
 			expect(result.error).toBe("Une erreur est survenue lors de l'initialisation du paiement.");
 		});
 
-		it("should capture DB error with Sentry", async () => {
+		it("should log DB error (Sentry via logger.error)", async () => {
 			const dbError = new Error("DB connection lost");
 			mockPrisma.user.findUnique.mockRejectedValue(dbError);
 
 			await initializePayment({ cartItems: VALID_CART_ITEMS });
 
-			expect(mockSentryCaptureException).toHaveBeenCalledWith(dbError);
+			expect(mockLoggerError).toHaveBeenCalledWith(
+				"Failed to initialize payment",
+				dbError,
+				expect.objectContaining({ service: "checkout" }),
+			);
 		});
 	});
 

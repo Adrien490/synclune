@@ -9,6 +9,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import {
+	error,
 	validateInput,
 	handleActionError,
 	success,
@@ -16,6 +17,7 @@ import {
 	safeFormGet,
 } from "@/shared/lib/actions";
 import { generateSlug } from "@/shared/utils/generate-slug";
+import { generateUniqueReadableName } from "@/shared/services/unique-name-generator.service";
 import type { ActionState } from "@/shared/types/server-action";
 
 import { duplicateCollectionSchema } from "../schemas/collection.schemas";
@@ -58,9 +60,25 @@ export async function duplicateCollection(
 			return notFound("Collection");
 		}
 
-		const newName = `Copie de ${sourceCollection.name}`;
-
 		const duplicated = await prisma.$transaction(async (tx) => {
+			// Genere un nom unique de type "Nom (copie)" / "Nom (copie 2)" pour eviter
+			// la collision avec une duplication precedente du meme nom.
+			const uniqueName = await generateUniqueReadableName(
+				sourceCollection.name,
+				async (candidate) => {
+					const found = await tx.collection.findFirst({
+						where: { name: candidate },
+						select: { id: true },
+					});
+					return Boolean(found);
+				},
+			);
+
+			if (!uniqueName.success || !uniqueName.name) {
+				throw new Error("UNIQUE_NAME_FAILED");
+			}
+
+			const newName = uniqueName.name;
 			const newSlug = await generateSlug(tx, "collection", newName);
 
 			const created = await tx.collection.create({
@@ -113,6 +131,11 @@ export async function duplicateCollection(
 			slug: duplicated.slug,
 		});
 	} catch (e) {
+		if (e instanceof Error && e.message === "UNIQUE_NAME_FAILED") {
+			return error(
+				"Impossible de générer un nom unique pour la duplication. Renommez d'abord la collection source.",
+			);
+		}
 		return handleActionError(e, "Une erreur est survenue lors de la duplication de la collection.");
 	}
 }

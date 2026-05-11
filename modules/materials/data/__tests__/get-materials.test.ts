@@ -63,7 +63,7 @@ vi.mock("../../constants/materials.constants", () => ({
 		isActive: true,
 		createdAt: true,
 		updatedAt: true,
-		_count: { select: { skus: { where: { isActive: true } } } },
+		_count: { select: { skus: true } },
 	},
 	GET_MATERIALS_DEFAULT_PER_PAGE: 20,
 	GET_MATERIALS_MAX_RESULTS_PER_PAGE: 200,
@@ -322,7 +322,7 @@ describe("getMaterials", () => {
 					isActive: true,
 					createdAt: true,
 					updatedAt: true,
-					_count: { select: { skus: { where: { isActive: true } } } },
+					_count: { select: { skus: true } },
 				},
 			}),
 		);

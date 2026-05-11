@@ -72,13 +72,13 @@ describe("refreshUsers", () => {
 		}));
 	});
 
-	it("should return rate limit error", async () => {
+	it("should return rate limit error before mutating cache", async () => {
 		mockEnforceRateLimit.mockResolvedValue({
 			error: { status: ActionStatus.ERROR, message: "Rate limit exceeded" },
 		});
 		const result = await refreshUsers(undefined, emptyFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockRequireAdminWithUser).not.toHaveBeenCalled();
+		expect(mockUpdateTag).not.toHaveBeenCalled();
 	});
 
 	it("should return auth error when not admin", async () => {

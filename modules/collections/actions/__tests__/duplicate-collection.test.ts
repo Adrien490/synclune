@@ -17,7 +17,7 @@ const {
 	mockGenerateSlug,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		collection: { findUnique: vi.fn(), create: vi.fn() },
+		collection: { findUnique: vi.fn(), findFirst: vi.fn(), create: vi.fn() },
 		productCollection: { createMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
@@ -51,6 +51,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
 	success: (message: string, data?: unknown) => ({ status: ActionStatus.SUCCESS, message, data }),
+	error: (message: string) => ({ status: ActionStatus.ERROR, message }),
 	notFound: (entity: string) => ({
 		status: ActionStatus.NOT_FOUND,
 		message: `${entity} introuvable`,
@@ -100,13 +101,14 @@ describe("duplicateCollection", () => {
 			message: msg,
 		}));
 		mockGetCollectionInvalidationTags.mockReturnValue(["collections-list"]);
-		mockGenerateSlug.mockResolvedValue("copie-de-collection-source");
+		mockGenerateSlug.mockResolvedValue("collection-source-copie");
 
 		mockPrisma.collection.findUnique.mockResolvedValue(makeSourceCollection());
+		mockPrisma.collection.findFirst.mockResolvedValue(null);
 		mockPrisma.collection.create.mockResolvedValue({
 			id: VALID_CUID_2,
-			name: "Copie de Collection Source",
-			slug: "copie-de-collection-source",
+			name: "Collection Source (copie)",
+			slug: "collection-source-copie",
 		});
 		mockPrisma.productCollection.createMany.mockResolvedValue({ count: 2 });
 		mockPrisma.$transaction.mockImplementation(
@@ -151,17 +153,34 @@ describe("duplicateCollection", () => {
 		expect(mockPrisma.collection.create).not.toHaveBeenCalled();
 	});
 
-	it("should create duplicate with 'Copie de' prefix and DRAFT status", async () => {
+	it("should create duplicate with '(copie)' suffix and DRAFT status", async () => {
 		await duplicateCollection(undefined, makeFormData());
 
 		expect(mockPrisma.collection.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					name: "Copie de Collection Source",
-					slug: "copie-de-collection-source",
+					name: "Collection Source (copie)",
+					slug: "collection-source-copie",
 					description: "Description source",
 					status: "DRAFT",
 				}),
+			}),
+		);
+	});
+
+	it("should generate '(copie 2)' when '(copie)' already exists", async () => {
+		mockPrisma.collection.findFirst.mockImplementation(
+			async ({ where }: { where: { name: string } }) => {
+				if (where.name === "Collection Source (copie)") return { id: "existing-1" };
+				return null;
+			},
+		);
+
+		await duplicateCollection(undefined, makeFormData());
+
+		expect(mockPrisma.collection.create).toHaveBeenCalledWith(
+			expect.objectContaining({
+				data: expect.objectContaining({ name: "Collection Source (copie 2)" }),
 			}),
 		);
 	});
@@ -188,7 +207,7 @@ describe("duplicateCollection", () => {
 	it("should invalidate cache and navbar menu", async () => {
 		await duplicateCollection(undefined, makeFormData());
 
-		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("copie-de-collection-source");
+		expect(mockGetCollectionInvalidationTags).toHaveBeenCalledWith("collection-source-copie");
 		expect(mockUpdateTag).toHaveBeenCalledWith("navbar-menu");
 	});
 
@@ -196,8 +215,8 @@ describe("duplicateCollection", () => {
 		const result = await duplicateCollection(undefined, makeFormData());
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("Copie de Collection Source");
-		expect((result as { data: { name: string } }).data.name).toBe("Copie de Collection Source");
+		expect(result.message).toContain("Collection Source (copie)");
+		expect((result as { data: { name: string } }).data.name).toBe("Collection Source (copie)");
 	});
 
 	it("should call handleActionError on unexpected exception", async () => {

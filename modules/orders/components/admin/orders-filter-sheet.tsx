@@ -38,7 +38,7 @@ interface FilterFormData {
 	showDeleted?: "all" | "active" | "deleted";
 }
 
-const MAX_PRICE = 10000; // 100€ in cents
+const MAX_PRICE = 500_000; // 5 000€ in cents — couvre la fourchette bijoux artisanaux haut-de-gamme
 const DEFAULT_PRICE_RANGE = [0, MAX_PRICE];
 
 function OrdersFilterSheetInner({ className }: OrdersFilterSheetProps) {

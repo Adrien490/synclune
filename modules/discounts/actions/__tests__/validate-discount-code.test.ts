@@ -15,6 +15,8 @@ const {
 	mockCalculateDiscountWithExclusion,
 	mockGetDiscountUsageCounts,
 	mockGetCart,
+	mockSentryCaptureException,
+	mockLoggerError,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		discount: {
@@ -29,6 +31,16 @@ const {
 	mockCalculateDiscountWithExclusion: vi.fn(),
 	mockGetDiscountUsageCounts: vi.fn(),
 	mockGetCart: vi.fn(),
+	mockSentryCaptureException: vi.fn(),
+	mockLoggerError: vi.fn(),
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	captureException: mockSentryCaptureException,
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: { error: mockLoggerError, info: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -471,5 +483,24 @@ describe("validateDiscountCode", () => {
 
 		expect(result.valid).toBe(false);
 		expect(result.error).toBe("Erreur lors de la validation du code");
+	});
+
+	it("should capture exception in Sentry with module + action tags", async () => {
+		const dbError = new Error("DB outage");
+		mockHeaders.mockRejectedValue(dbError);
+
+		await validateDiscountCode(VALID_CODE, VALID_SUBTOTAL);
+
+		expect(mockSentryCaptureException).toHaveBeenCalledWith(
+			dbError,
+			expect.objectContaining({
+				tags: { module: "discounts", action: "validateDiscountCode" },
+			}),
+		);
+		expect(mockLoggerError).toHaveBeenCalledWith(
+			"validateDiscountCode failed",
+			dbError,
+			expect.objectContaining({ service: "validateDiscountCode" }),
+		);
 	});
 });

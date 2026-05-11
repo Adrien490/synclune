@@ -938,132 +938,34 @@ describe("useUpdateTrackingForm", () => {
 // ============================================================================
 
 describe("useOrderNotes", () => {
+	// Reads are now delegated to the consumer via Suspense + `use(getOrderNotes(orderId))`.
+	// This hook exposes only add/remove mutations + their pending states.
 	beforeEach(() => {
 		vi.clearAllMocks();
 		mockAddOrderNote.mockResolvedValue(SUCCESS);
 		mockDeleteOrderNote.mockResolvedValue(SUCCESS);
-		mockGetOrderNotes.mockResolvedValue({ notes: [] });
 	});
 
-	it("returns expected shape on initial render", () => {
+	it("returns expected shape on initial render (mutations only)", () => {
 		const { result } = renderHook(() => useOrderNotes());
-		expect(Array.isArray(result.current.notes)).toBe(true);
-		expect(result.current.notes).toHaveLength(0);
-		expect(result.current.fetchError).toBeNull();
-		expect(typeof result.current.loadNotes).toBe("function");
-		expect(typeof result.current.reset).toBe("function");
 		expect(typeof result.current.add).toBe("function");
 		expect(typeof result.current.remove).toBe("function");
-		expect(typeof result.current.isPendingFetch).toBe("boolean");
 		expect(typeof result.current.isPendingAdd).toBe("boolean");
 		expect(typeof result.current.isPendingDelete).toBe("boolean");
 		expect(typeof result.current.isPending).toBe("boolean");
 	});
 
+	it("does NOT expose read APIs (notes/fetchError/loadNotes/reset)", () => {
+		const { result } = renderHook(() => useOrderNotes());
+		expect((result.current as Record<string, unknown>).notes).toBeUndefined();
+		expect((result.current as Record<string, unknown>).fetchError).toBeUndefined();
+		expect((result.current as Record<string, unknown>).loadNotes).toBeUndefined();
+		expect((result.current as Record<string, unknown>).reset).toBeUndefined();
+	});
+
 	it("isPending is false initially", () => {
 		const { result } = renderHook(() => useOrderNotes());
 		expect(result.current.isPending).toBe(false);
-	});
-
-	it("fetchError is null initially", () => {
-		const { result } = renderHook(() => useOrderNotes());
-		expect(result.current.fetchError).toBeNull();
-	});
-
-	it("notes is empty array initially", () => {
-		const { result } = renderHook(() => useOrderNotes());
-		expect(result.current.notes).toEqual([]);
-	});
-
-	it("reset clears notes and fetchError", async () => {
-		mockGetOrderNotes.mockResolvedValue({
-			notes: [{ id: "note-1", content: "Test note", createdAt: new Date() }],
-		});
-
-		const { result } = renderHook(() => useOrderNotes());
-
-		await act(async () => {
-			result.current.loadNotes("order-123");
-		});
-
-		expect(result.current.notes).toHaveLength(1);
-
-		act(() => {
-			result.current.reset();
-		});
-
-		expect(result.current.notes).toHaveLength(0);
-		expect(result.current.fetchError).toBeNull();
-	});
-
-	it("loadNotes sets fetchError when result contains an error", async () => {
-		mockGetOrderNotes.mockResolvedValue({ error: "Unauthorized" });
-
-		const { result } = renderHook(() => useOrderNotes());
-
-		await act(async () => {
-			result.current.loadNotes("order-123");
-		});
-
-		expect(result.current.fetchError).toBe("Unauthorized");
-		expect(result.current.notes).toHaveLength(0);
-	});
-
-	it("loadNotes populates notes on success", async () => {
-		const noteFixture = [
-			{ id: "note-1", content: "First note", createdAt: new Date() },
-			{ id: "note-2", content: "Second note", createdAt: new Date() },
-		];
-		mockGetOrderNotes.mockResolvedValue({ notes: noteFixture });
-
-		const { result } = renderHook(() => useOrderNotes());
-
-		await act(async () => {
-			result.current.loadNotes("order-123");
-		});
-
-		expect(result.current.notes).toHaveLength(2);
-		expect(result.current.fetchError).toBeNull();
-	});
-
-	it("loadNotes clears fetchError before fetching", async () => {
-		// First call produces an error
-		mockGetOrderNotes.mockResolvedValueOnce({ error: "Network error" });
-		// Second call succeeds
-		mockGetOrderNotes.mockResolvedValueOnce({ notes: [] });
-
-		const { result } = renderHook(() => useOrderNotes());
-
-		await act(async () => {
-			result.current.loadNotes("order-123");
-		});
-
-		expect(result.current.fetchError).toBe("Network error");
-
-		await act(async () => {
-			result.current.loadNotes("order-123");
-		});
-
-		// Error should be cleared before the second fetch resolves
-		expect(result.current.fetchError).toBeNull();
-	});
-
-	it("reset after a fetch error clears the error", async () => {
-		mockGetOrderNotes.mockResolvedValue({ error: "Server error" });
-
-		const { result } = renderHook(() => useOrderNotes());
-
-		await act(async () => {
-			result.current.loadNotes("order-123");
-		});
-
-		expect(result.current.fetchError).toBe("Server error");
-
-		act(() => {
-			result.current.reset();
-		});
-
-		expect(result.current.fetchError).toBeNull();
 	});
 
 	it("add calls addOrderNote with correct orderId and content", async () => {

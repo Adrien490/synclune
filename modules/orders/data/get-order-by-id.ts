@@ -1,8 +1,8 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { logger } from "@/shared/lib/logger";
 import { prisma, notDeleted } from "@/shared/lib/prisma";
-import { cacheOrdersDashboard } from "../constants/cache";
 import { type z } from "zod";
 import { GET_ORDER_SELECT } from "../constants/order.constants";
 import type { GetOrderReturn } from "../types/order.types";
@@ -43,7 +43,8 @@ export async function getOrderById(
 
 async function fetchOrderById(id: string): Promise<GetOrderReturn | null> {
 	"use cache";
-	cacheOrdersDashboard(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
+	cacheLife("user");
+	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 
 	try {
 		const order = await prisma.order.findFirst({

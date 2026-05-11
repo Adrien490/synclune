@@ -65,6 +65,25 @@ vi.mock("../../constants/cache", () => ({
 	getMaterialInvalidationTags: mockGetMaterialInvalidationTags,
 }));
 
+// Minimal stub for Prisma error class to test P2003 (FK Restrict) handling.
+// Hoisted so vi.mock can capture it before module import.
+const { MockPrismaClientKnownRequestError } = vi.hoisted(() => {
+	class MockPrismaClientKnownRequestError extends Error {
+		code: string;
+		constructor(message: string, code: string) {
+			super(message);
+			this.name = "PrismaClientKnownRequestError";
+			this.code = code;
+		}
+	}
+	return { MockPrismaClientKnownRequestError };
+});
+vi.mock("@/app/generated/prisma/client", () => ({
+	Prisma: {
+		PrismaClientKnownRequestError: MockPrismaClientKnownRequestError,
+	},
+}));
+
 import { deleteMaterial } from "../delete-material";
 
 // ============================================================================
@@ -176,5 +195,19 @@ describe("deleteMaterial", () => {
 		const result = await deleteMaterial(undefined, validFormData);
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
+	});
+
+	it("returns a friendly error when FK Restrict fires (race: SKU created during delete)", async () => {
+		// Concurrent INSERT into ProductSku between count() and delete() triggers
+		// P2003 (FK Restrict). Pre-check passed with count=0 but DB blocks the delete.
+		mockPrisma.material.delete.mockRejectedValue(
+			new MockPrismaClientKnownRequestError("FK violation", "P2003"),
+		);
+
+		const result = await deleteMaterial(undefined, validFormData);
+
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("variante");
+		expect(mockHandleActionError).not.toHaveBeenCalled();
 	});
 });

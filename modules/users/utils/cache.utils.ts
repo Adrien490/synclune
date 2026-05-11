@@ -67,12 +67,22 @@ export function getAdminAccountsListInvalidationTags(): string[] {
 
 /**
  * All cache tags to invalidate when an admin modifies a user
- * Covers: user data, session, sessions list
+ * Covers: user data, session, sessions list, order count
  */
 export function getUserFullInvalidationTags(userId: string): string[] {
 	return [
 		USERS_CACHE_TAGS.CURRENT_USER(userId),
 		SESSION_CACHE_TAGS.SESSION(userId),
 		SESSION_CACHE_TAGS.SESSIONS(userId),
+		USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId),
 	];
+}
+
+/**
+ * Tags à invalider lors de la modification de la liste des commandes d'un user.
+ * À appeler depuis chaque mutation orders qui change le compte de commandes
+ * (création, soft-delete, restore) pour rafraîchir la page détail admin.
+ */
+export function getUserOrdersCountInvalidationTags(userId: string): string[] {
+	return [USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId)];
 }

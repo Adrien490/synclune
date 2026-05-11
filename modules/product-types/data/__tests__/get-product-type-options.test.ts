@@ -27,6 +27,23 @@ vi.mock("../../constants/cache", () => ({
 		mockCacheLife("reference");
 		mockCacheTag("product-types-list");
 	},
+	cacheProductTypesAdmin: () => {
+		mockCacheLife("user");
+		mockCacheTag("product-types-list");
+	},
+	cacheProductTypesPublic: () => {
+		mockCacheLife("reference");
+		mockCacheTag("product-types-list");
+	},
+	cacheProductTypeDetail: (slug: string) => {
+		mockCacheLife("user");
+		mockCacheTag("product-types-list");
+		mockCacheTag(`product-type-${slug}`);
+	},
+	cacheProductTypeCounts: (id: string) => {
+		mockCacheLife("user");
+		mockCacheTag(`product-type-${id}-counts`);
+	},
 }));
 
 import { getProductTypeOptions } from "../get-product-type-options";
@@ -125,12 +142,10 @@ describe("getProductTypeOptions", () => {
 		expect(result).toEqual([]);
 	});
 
-	it("returns empty array on database error", async () => {
+	it("rethrows on database error (capture Sentry puis remontée Suspense)", async () => {
 		mockPrisma.productType.findMany.mockRejectedValue(new Error("DB connection failed"));
 
-		const result = await getProductTypeOptions();
-
-		expect(result).toEqual([]);
+		await expect(getProductTypeOptions()).rejects.toThrow("DB connection failed");
 	});
 
 	it("does not require authentication", async () => {

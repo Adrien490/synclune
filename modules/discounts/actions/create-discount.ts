@@ -89,7 +89,7 @@ export async function createDiscount(
 		});
 
 		// 6. Invalidation du cache
-		getDiscountInvalidationTags(discount.code).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
 
 		void logAudit({
 			adminId: adminUser.id,

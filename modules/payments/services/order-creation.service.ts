@@ -1,3 +1,4 @@
+import { DiscountType } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { BusinessError } from "@/shared/lib/actions";
 import { checkDiscountEligibility } from "@/modules/discounts/services/discount-eligibility.service";
@@ -12,6 +13,10 @@ import { DISCOUNT_ERROR_MESSAGES } from "@/modules/discounts/constants/discount.
 import { DEFAULT_CURRENCY } from "@/shared/constants/currency";
 import { getValidImageUrl } from "@/shared/lib/media-validation";
 import type { getSkuDetails } from "@/modules/cart/services/sku-validation.service";
+
+function isDiscountType(value: string): value is DiscountType {
+	return value === DiscountType.PERCENTAGE || value === DiscountType.FIXED_AMOUNT;
+}
 
 type SkuDetailsResult = Awaited<ReturnType<typeof getSkuDetails>>;
 
@@ -166,6 +171,11 @@ export async function createOrderInTransaction(
 
 				const discount = discountRows[0]!;
 
+				if (!isDiscountType(discount.type)) {
+					throw new BusinessError(`Type de réduction inconnu : ${discount.type}`);
+				}
+				const discountType = discount.type;
+
 				// Read usage counts directly in transaction to prevent stale cache reads
 				let usageCounts: { userCount: number; emailCount: number } | undefined;
 				if (discount.maxUsagePerUser) {
@@ -190,7 +200,7 @@ export async function createOrderInTransaction(
 					{
 						id: discount.id,
 						code: discount.code,
-						type: discount.type as "PERCENTAGE" | "FIXED_AMOUNT",
+						type: discountType,
 						value: discount.value,
 						minOrderAmount: discount.minOrderAmount,
 						maxUsageCount: discount.maxUsageCount,
@@ -227,7 +237,7 @@ export async function createOrderInTransaction(
 				}
 
 				discountAmount = calculateDiscountWithExclusion({
-					type: discount.type as "PERCENTAGE" | "FIXED_AMOUNT",
+					type: discountType,
 					value: discount.value,
 					cartItems: cartItemsForDiscount,
 					excludeSaleItems: true,

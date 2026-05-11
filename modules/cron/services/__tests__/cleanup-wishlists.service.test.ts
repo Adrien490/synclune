@@ -97,7 +97,7 @@ describe("cleanupExpiredWishlists", () => {
 
 		const result = await cleanupExpiredWishlists();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			deletedCount: 7,
 			orphanedItemsCount: 12,
 			hasMore: false,
@@ -111,7 +111,7 @@ describe("cleanupExpiredWishlists", () => {
 
 		const result = await cleanupExpiredWishlists();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			deletedCount: 0,
 			orphanedItemsCount: 0,
 			hasMore: false,
@@ -131,7 +131,7 @@ describe("cleanupExpiredWishlists", () => {
 
 		const result = await cleanupExpiredWishlists();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			deletedCount: 4,
 			orphanedItemsCount: 0,
 			hasMore: false,

@@ -35,7 +35,7 @@ const imageSchema = z
 			})
 			.optional()
 			.nullable(),
-		blurDataUrl: z.string().max(10000).optional().nullable(),
+		blurDataUrl: z.string().max(2048).optional().nullable(),
 		altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional().nullable(),
 		mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
 	})

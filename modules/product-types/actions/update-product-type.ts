@@ -42,9 +42,10 @@ export async function updateProductType(
 
 		const validatedData = validated.data;
 
-		// 5. Verifier que le type existe
+		// 5. Verifier que le type existe (slug nécessaire pour invalidation tag détail)
 		const existingType = await prisma.productType.findUnique({
 			where: { id: validatedData.id },
+			select: { id: true, label: true, slug: true, isSystem: true },
 		});
 
 		if (!existingType) {
@@ -100,8 +101,12 @@ export async function updateProductType(
 			metadata: { label: validatedData.label },
 		});
 
-		// 10. Invalider le cache des types de produits
-		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
+		// 10. Invalider le cache des types de produits (ancien + nouveau slug si changement)
+		const invalidationTags = new Set<string>([
+			...getProductTypeInvalidationTags(existingType.slug),
+			...getProductTypeInvalidationTags(slug),
+		]);
+		invalidationTags.forEach((tag) => updateTag(tag));
 
 		return success("Type de produit modifié avec succès");
 	} catch (e) {

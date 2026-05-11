@@ -36,13 +36,22 @@ export function getShippingRate(country: string): ShippingRate {
 }
 
 /**
+ * Type predicate — true when `country` is a supported shipping country.
+ * Internal helper widening SHIPPING_COUNTRIES to `readonly string[]` so the
+ * predicate can be expressed without an unsafe `as` cast.
+ */
+function isShippingCountry(country: string): country is ShippingCountry {
+	return (SHIPPING_COUNTRIES as readonly string[]).includes(country);
+}
+
+/**
  * Vérifie si un pays est éligible à la livraison
  *
  * @param country - Code pays ISO 3166-1 alpha-2
  * @returns true si le pays est couvert par nos tarifs de livraison
  */
 export function isShippingAvailable(country: string): country is AllowedShippingCountry {
-	return SHIPPING_COUNTRIES.includes(country as ShippingCountry);
+	return isShippingCountry(country);
 }
 
 // ============================================================================
@@ -147,6 +156,6 @@ export function getShippingInfo(
  * isCountrySupported("US"); // false
  * ```
  */
-export function isCountrySupported(countryCode: string): boolean {
-	return SHIPPING_COUNTRIES.includes(countryCode as ShippingCountry);
+export function isCountrySupported(countryCode: string): countryCode is ShippingCountry {
+	return isShippingCountry(countryCode);
 }

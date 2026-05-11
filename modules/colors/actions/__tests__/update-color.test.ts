@@ -21,6 +21,7 @@ const {
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		color: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+		productSku: { findMany: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -77,9 +78,15 @@ describe("updateColor", () => {
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockSanitizeText.mockImplementation((text: string) => text);
 		mockValidateInput.mockReturnValue({ data: { id: COLOR_ID, name: "Or Rose", hex: "#B76E79" } });
-		mockPrisma.color.findUnique.mockResolvedValue({ id: COLOR_ID, name: "Or", slug: "or" });
+		mockPrisma.color.findUnique.mockResolvedValue({
+			id: COLOR_ID,
+			name: "Or",
+			slug: "or",
+			hex: "#FFD700",
+		});
 		mockPrisma.color.findFirst.mockResolvedValue(null);
 		mockPrisma.color.update.mockResolvedValue({});
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockGenerateSlug.mockResolvedValue("or-rose");
 		mockGetColorInvalidationTags.mockReturnValue(["colors-list"]);
 

@@ -158,4 +158,44 @@ describe("updateCollection", () => {
 		expect(mockHandleActionError).toHaveBeenCalled();
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
+
+	it("should reject rename when collection is PUBLIC (SEO guard)", async () => {
+		mockPrisma.collection.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			name: "Old Collection",
+			slug: "old-collection",
+			status: "PUBLIC",
+		});
+		const result = await updateCollection(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toMatch(/publi[ée]e.*ne peut pas/i);
+		expect(mockPrisma.collection.update).not.toHaveBeenCalled();
+	});
+
+	it("should allow rename when collection is DRAFT", async () => {
+		mockPrisma.collection.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			name: "Old Collection",
+			slug: "old-collection",
+			status: "DRAFT",
+		});
+		const result = await updateCollection(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockGenerateSlug).toHaveBeenCalled();
+	});
+
+	it("should allow update when name unchanged on PUBLIC collection (description/status only)", async () => {
+		mockPrisma.collection.findUnique.mockResolvedValue({
+			id: VALID_CUID,
+			name: "Same Name",
+			slug: "same-name",
+			status: "PUBLIC",
+		});
+		mockValidateInput.mockReturnValue({
+			data: { id: VALID_CUID, name: "Same Name", description: "New desc", status: "PUBLIC" },
+		});
+		const result = await updateCollection(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockGenerateSlug).not.toHaveBeenCalled();
+	});
 });

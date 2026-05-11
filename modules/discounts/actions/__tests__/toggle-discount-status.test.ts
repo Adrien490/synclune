@@ -234,7 +234,7 @@ describe("toggleDiscountStatus", () => {
 
 		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
 			where: { id: "disc-123" },
-			data: { isActive: false, manuallyDeactivated: true },
+			data: { isActive: false },
 		});
 	});
 
@@ -245,7 +245,7 @@ describe("toggleDiscountStatus", () => {
 
 		expect(mockPrisma.discount.update).toHaveBeenCalledWith({
 			where: { id: "disc-123" },
-			data: { isActive: true, manuallyDeactivated: false },
+			data: { isActive: true },
 		});
 	});
 
@@ -272,13 +272,13 @@ describe("toggleDiscountStatus", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should invalidate cache tags after toggling status", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
 
 		await toggleDiscountStatus(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("PROMO20");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-PROMO20");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-123");
 	});
 
 	// ──────────────────────────────────────────────────────────────

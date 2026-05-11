@@ -136,13 +136,14 @@ describe("getAdminAccountsListInvalidationTags", () => {
 // ============================================================================
 
 describe("getUserFullInvalidationTags", () => {
-	it("returns CURRENT_USER, SESSION, and SESSIONS tags", () => {
+	it("returns CURRENT_USER, SESSION, SESSIONS, and USER_ORDERS_COUNT tags", () => {
 		const tags = getUserFullInvalidationTags("user-123");
 
 		expect(tags).toContain("user-user-123");
 		expect(tags).toContain("session-user-123");
 		expect(tags).toContain("sessions-user-user-123");
-		expect(tags).toHaveLength(3);
+		expect(tags).toContain("user-orders-count-user-123");
+		expect(tags).toHaveLength(4);
 	});
 
 	it("uses userId in all dynamic tags", () => {

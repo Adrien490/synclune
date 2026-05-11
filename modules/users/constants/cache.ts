@@ -17,6 +17,9 @@ export const USERS_CACHE_TAGS = {
 
 	/** Liste des comptes utilisateurs (admin dashboard) */
 	ACCOUNTS_LIST: "accounts-list",
+
+	/** Nombre de commandes d'un utilisateur (page détail admin) */
+	USER_ORDERS_COUNT: (userId: string) => `user-orders-count-${userId}`,
 } as const;
 
 // Re-exports pour retrocompatibilite
@@ -25,4 +28,5 @@ export {
 	cacheUserAccounts,
 	getCurrentUserInvalidationTags,
 	getUserFullInvalidationTags,
+	getUserOrdersCountInvalidationTags,
 } from "../utils/cache.utils";

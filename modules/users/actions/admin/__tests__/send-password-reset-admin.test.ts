@@ -143,7 +143,7 @@ describe("sendPasswordResetAdmin", () => {
 		const result = await sendPasswordResetAdmin("user-456");
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdminWithUser).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

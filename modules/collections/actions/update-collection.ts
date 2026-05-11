@@ -1,5 +1,6 @@
 "use server";
 
+import { CollectionStatus, Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -67,8 +68,13 @@ export async function updateCollection(
 				}
 			}
 
-			// Generer un nouveau slug si le nom a change
+			// Generer un nouveau slug si le nom a change.
+			// Une collection PUBLIC ne peut pas etre renommee : changer le slug
+			// casserait le SEO (backlinks indexes Google) sans 301 redirect.
 			const slugChanged = sanitizedName !== existingCollection.name;
+			if (slugChanged && existingCollection.status === CollectionStatus.PUBLIC) {
+				throw new Error("PUBLIC_RENAME_BLOCKED");
+			}
 			const generatedSlug = slugChanged
 				? await generateSlug(tx, "collection", sanitizedName)
 				: existingCollection.slug;
@@ -114,6 +120,19 @@ export async function updateCollection(
 				return notFound("Collection");
 			}
 			if (e.message === "NAME_EXISTS") {
+				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+			}
+			if (e.message === "PUBLIC_RENAME_BLOCKED") {
+				return error(
+					"Une collection publiée ne peut pas être renommée (cela casserait le SEO). Repassez-la en brouillon ou archivez-la d'abord.",
+				);
+			}
+		}
+		// Defense-in-depth : la contrainte DB UNIQUE sur Collection.name leve P2002
+		// si une race condition slip past le findFirst pre-check.
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			const target = (e.meta?.target as string[] | undefined) ?? [];
+			if (target.includes("name") || target.includes("Collection_name_key")) {
 				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
 			}
 		}

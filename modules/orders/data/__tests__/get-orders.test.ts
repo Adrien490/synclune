@@ -91,12 +91,7 @@ vi.mock("../../constants/order.constants", () => ({
 	},
 }));
 
-vi.mock("../../constants/cache", () => ({
-	cacheOrdersDashboard: vi.fn((tag?: string) => {
-		mockCacheLife("user");
-		if (tag) mockCacheTag(tag);
-	}),
-}));
+vi.mock("../../constants/cache", () => ({}));
 
 vi.mock("../../schemas/order.schemas", () => ({
 	getOrdersSchema: {

@@ -13,6 +13,7 @@ const {
 	mockCheckDiscountEligibility,
 	mockCalculateDiscount,
 	mockGetDiscountUsageCounts,
+	mockAssertStoreOpen,
 } = vi.hoisted(() => ({
 	mockCheckCartRateLimit: vi.fn(),
 	mockValidateInput: vi.fn(),
@@ -29,6 +30,7 @@ const {
 	mockCheckDiscountEligibility: vi.fn(),
 	mockCalculateDiscount: vi.fn(),
 	mockGetDiscountUsageCounts: vi.fn(),
+	mockAssertStoreOpen: vi.fn(),
 }));
 
 vi.mock("@/modules/cart/lib/cart-rate-limit", () => ({
@@ -70,6 +72,9 @@ vi.mock("@/modules/discounts/constants/discount.constants", () => ({
 vi.mock("../../schemas/cart.schemas", () => ({
 	applyCartDiscountSchema: {},
 }));
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
+}));
 
 import { applyCartDiscount } from "../apply-cart-discount";
 
@@ -97,6 +102,7 @@ function setupDefaults() {
 		maxUsagePerUser: null,
 	});
 	mockGetSession.mockResolvedValue({ user: { id: "user-1", email: "u@example.com" } });
+	mockAssertStoreOpen.mockResolvedValue(null);
 	mockCheckDiscountEligibility.mockReturnValue({ eligible: true });
 	mockCalculateDiscount.mockReturnValue(2000);
 	mockPrisma.cart.update.mockResolvedValue({});
@@ -123,6 +129,13 @@ describe("applyCartDiscount", () => {
 		});
 		const result = await applyCartDiscount(undefined, makeFormData());
 		expect(result).toEqual({ status: "error", message: "rate" });
+	});
+
+	it("returns error when store is closed (defense-in-depth guard)", async () => {
+		mockAssertStoreOpen.mockResolvedValue({ closed: true, message: "Boutique fermée." });
+		await applyCartDiscount(undefined, makeFormData());
+		expect(mockError).toHaveBeenCalledWith("Boutique fermée.");
+		expect(mockPrisma.cart.findFirst).not.toHaveBeenCalled();
 	});
 
 	it("returns validation error on invalid input", async () => {

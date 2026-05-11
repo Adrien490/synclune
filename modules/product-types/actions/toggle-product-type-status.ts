@@ -76,10 +76,10 @@ export async function toggleProductTypeStatus(
 			return success(`Type déjà ${isActive ? "activé" : "désactivé"}`);
 		}
 
-		// Recuperer le label pour l'audit log (post-update pour etre coherent)
+		// Recuperer label + slug pour audit log et invalidation détail granulaire
 		const updated = await prisma.productType.findUnique({
 			where: { id: productTypeId },
-			select: { label: true },
+			select: { label: true, slug: true },
 		});
 
 		void logAudit({
@@ -91,7 +91,7 @@ export async function toggleProductTypeStatus(
 			metadata: { label: updated?.label ?? "", isActive },
 		});
 
-		getProductTypeInvalidationTags().forEach((tag) => updateTag(tag));
+		getProductTypeInvalidationTags(updated?.slug).forEach((tag) => updateTag(tag));
 
 		return success(`Type ${isActive ? "activé" : "désactivé"} avec succès`);
 	} catch (e) {

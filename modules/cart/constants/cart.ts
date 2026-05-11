@@ -20,6 +20,10 @@ export const MAX_CART_ITEMS = 50;
 // SELECT DEFINITIONS
 // ============================================================================
 
+// `sku.priceInclTax` ici peut être stale jusqu'à 5min (cache profile "checkout").
+// Acceptable : (1) `priceAtAdd` (snapshot) reste la source de vérité prix dans le panier ;
+// (2) checkout final re-valide via `payments/services/order-creation.service.ts` ;
+// (3) `updateCartPrices` permet un refresh manuel UI.
 export const GET_CART_SELECT = {
 	id: true,
 	userId: true,

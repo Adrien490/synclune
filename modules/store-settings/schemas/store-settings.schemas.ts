@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isSafeStorefrontLink } from "@/shared/utils/is-safe-storefront-link";
+
 export const closeStoreSchema = z
 	.object({
 		closureMessage: z
@@ -66,8 +68,8 @@ export const updateAnnouncementSchema = z
 			.max(2048, "Le lien ne peut pas dépasser 2048 caractères")
 			.optional()
 			.default("")
-			.refine((val) => val === "" || val.startsWith("/") || val.startsWith("https://"), {
-				message: "Le lien doit commencer par / ou https://",
+			.refine((val) => val === "" || isSafeStorefrontLink(val), {
+				message: "Le lien doit commencer par / (chemin interne) ou https://",
 			})
 			.transform((val) => (val === "" ? null : val)),
 		startsAt: z

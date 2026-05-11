@@ -6,6 +6,7 @@ import { Role } from "@/app/generated/prisma/client";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import {
+	BusinessError,
 	error,
 	handleActionError,
 	parseFormIds,
@@ -19,6 +20,7 @@ import { notDeleted, prisma } from "@/shared/lib/prisma";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 import { bulkChangeUserRoleSchema } from "../../schemas/user-admin.schemas";
 
@@ -90,27 +92,39 @@ export async function bulkChangeUserRole(
 			);
 		}
 
-		// Demotion ADMIN→USER : protéger contre 0 admin restant
-		if (targetRole === Role.USER) {
-			const demoting = eligible.filter((u) => u.role === Role.ADMIN);
-			if (demoting.length > 0) {
-				const totalAdmins = await prisma.user.count({
-					where: { role: Role.ADMIN, ...notDeleted },
-				});
-				if (totalAdmins - demoting.length < 1) {
-					return error(
-						"Impossible de retirer le rôle administrateur : au moins un admin doit rester actif",
-					);
-				}
-			}
-		}
-
 		const eligibleIds = eligible.map((u) => u.id);
 
-		await prisma.user.updateMany({
-			where: { id: { in: eligibleIds } },
-			data: { role: targetRole },
-		});
+		// Demotion + admin count atomique (TOCTOU-safe).
+		// Le count des admins restants HORS de la batch se fait DANS la transaction
+		// pour eviter deux batchs concurrents qui passeraient chacun le check.
+		await prisma.$transaction(
+			async (tx) => {
+				if (targetRole === Role.USER) {
+					const demoting = eligible.filter((u) => u.role === Role.ADMIN);
+					if (demoting.length > 0) {
+						const remainingAdmins = await tx.user.count({
+							where: {
+								role: Role.ADMIN,
+								...notDeleted,
+								id: { notIn: eligibleIds },
+							},
+						});
+						if (remainingAdmins < 1) {
+							throw new BusinessError(
+								"Impossible de retirer le rôle administrateur : au moins un admin doit rester actif",
+								"LAST_ADMIN",
+							);
+						}
+					}
+				}
+
+				await tx.user.updateMany({
+					where: { id: { in: eligibleIds } },
+					data: { role: targetRole },
+				});
+			},
+			{ isolationLevel: "Serializable" },
+		);
 
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
@@ -123,7 +137,10 @@ export async function bulkChangeUserRole(
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: targetRole === Role.ADMIN ? "user.bulkPromote" : "user.bulkDemote",
+			action:
+				targetRole === Role.ADMIN
+					? USER_AUDIT_ACTIONS.BULK_PROMOTE
+					: USER_AUDIT_ACTIONS.BULK_DEMOTE,
 			targetType: "user",
 			targetId: eligibleIds.join(","),
 			metadata: {

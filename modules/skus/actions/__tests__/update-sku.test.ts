@@ -55,6 +55,7 @@ vi.mock("@/shared/lib/actions", () => ({
 	},
 	BusinessError: class extends Error {},
 	validateInput: vi.fn().mockReturnValue({ data: {} }),
+	validationError: (message: string) => ({ status: ActionStatus.VALIDATION_ERROR, message }),
 	handleActionError: mockHandleActionError,
 	success: mockSuccess,
 	error: mockError,
@@ -71,12 +72,17 @@ vi.mock("../../utils/cache.utils", () => ({
 vi.mock("../../utils/parse-media-from-form", () => ({
 	parsePrimaryImageFromForm: mockParsePrimaryImage,
 	parseGalleryMediaFromForm: mockParseGalleryMedia,
+	parsePrimaryImageFromFormStrict: mockParsePrimaryImage,
+	parseGalleryMediaFromFormStrict: mockParseGalleryMedia,
 }));
 vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
 	deleteUploadThingFilesFromUrls: vi.fn().mockResolvedValue({ deleted: 0, failed: 0 }),
 }));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
+}));
+vi.mock("@/modules/wishlist/services/notify-back-in-stock", () => ({
+	notifyBackInStock: vi.fn().mockResolvedValue(undefined),
 }));
 
 import { updateProductSku } from "../update-sku";
@@ -125,8 +131,16 @@ describe("updateProductSku", () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue({
 			id: VALID_CUID,
 			sku: "BRC-01",
+			isActive: true,
+			inventory: 5,
 			productId: "prod-1",
-			product: { id: "prod-1", title: "Bracelet", slug: "test" },
+			product: {
+				id: "prod-1",
+				title: "Bracelet",
+				slug: "test",
+				status: "DRAFT",
+				_count: { skus: 2 },
+			},
 			images: [],
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);

@@ -163,7 +163,7 @@ describe("suspendUser", () => {
 		const result = await suspendUser(undefined, validFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

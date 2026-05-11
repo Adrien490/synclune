@@ -1,9 +1,10 @@
+import { cacheLife, cacheTag } from "next/cache";
 import { getSession } from "@/modules/auth/lib/get-current-session";
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { type Prisma } from "@/app/generated/prisma/client";
 import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagination";
 import { prisma } from "@/shared/lib/prisma";
-import { cacheOrdersDashboard, ORDERS_CACHE_TAGS } from "../constants/cache";
+import { ORDERS_CACHE_TAGS } from "../constants/cache";
 import { z } from "zod";
 
 import {
@@ -60,7 +61,8 @@ async function fetchOrderItems(
 	userId?: string,
 ): Promise<GetOrderItemsReturn> {
 	"use cache: private";
-	cacheOrdersDashboard(ORDERS_CACHE_TAGS.LIST);
+	cacheLife("user");
+	cacheTag(ORDERS_CACHE_TAGS.LIST);
 
 	const sortOrder = params.sortOrder as Prisma.SortOrder;
 

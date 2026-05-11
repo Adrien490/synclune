@@ -26,8 +26,6 @@ import {
 	updateProductTypeSchema,
 	deleteProductTypeSchema,
 	toggleProductTypeStatusSchema,
-	bulkActivateProductTypesSchema,
-	bulkDeleteProductTypesSchema,
 	productTypeFiltersSchema,
 	getProductTypeSchema,
 	productTypeSortBySchema,
@@ -183,51 +181,6 @@ describe("toggleProductTypeStatusSchema", () => {
 	it("should require isActive boolean", () => {
 		const result = toggleProductTypeStatusSchema.safeParse({
 			productTypeId: VALID_CUID,
-		});
-
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("bulkActivateProductTypesSchema", () => {
-	it("should accept JSON-stringified array of ids", () => {
-		const result = bulkActivateProductTypesSchema.safeParse({
-			ids: JSON.stringify([VALID_CUID]),
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject empty array", () => {
-		const result = bulkActivateProductTypesSchema.safeParse({
-			ids: JSON.stringify([]),
-		});
-
-		expect(result.success).toBe(false);
-	});
-
-	it("should reject invalid JSON", () => {
-		const result = bulkActivateProductTypesSchema.safeParse({
-			ids: "not-json",
-		});
-
-		expect(result.success).toBe(false);
-	});
-});
-
-describe("bulkDeleteProductTypesSchema", () => {
-	it("should accept JSON-stringified array of ids", () => {
-		const result = bulkDeleteProductTypesSchema.safeParse({
-			ids: JSON.stringify([VALID_CUID]),
-		});
-
-		expect(result.success).toBe(true);
-	});
-
-	it("should reject more than 100 ids", () => {
-		const ids = Array.from({ length: 101 }, () => VALID_CUID);
-		const result = bulkDeleteProductTypesSchema.safeParse({
-			ids: JSON.stringify(ids),
 		});
 
 		expect(result.success).toBe(false);

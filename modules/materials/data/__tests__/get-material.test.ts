@@ -4,13 +4,20 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 // Hoisted mocks
 // ============================================================================
 
-const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag } = vi.hoisted(() => ({
-	mockPrisma: {
-		material: { findFirst: vi.fn() },
-	},
-	mockIsAdmin: vi.fn(),
-	mockCacheLife: vi.fn(),
-	mockCacheTag: vi.fn(),
+const { mockPrisma, mockIsAdmin, mockCacheLife, mockCacheTag, mockSentryCaptureException } =
+	vi.hoisted(() => ({
+		mockPrisma: {
+			material: { findFirst: vi.fn() },
+			productSku: { findMany: vi.fn() },
+		},
+		mockIsAdmin: vi.fn(),
+		mockCacheLife: vi.fn(),
+		mockCacheTag: vi.fn(),
+		mockSentryCaptureException: vi.fn(),
+	}));
+
+vi.mock("@sentry/nextjs", () => ({
+	captureException: mockSentryCaptureException,
 }));
 
 vi.mock("@/shared/lib/prisma", () => ({
@@ -57,7 +64,7 @@ vi.mock("../../constants/materials.constants", () => ({
 	],
 }));
 
-import { getMaterialBySlug } from "../get-material";
+import { getMaterialBySlug, getMaterialDistinctProductCount } from "../get-material";
 
 // ============================================================================
 // Factories
@@ -232,6 +239,76 @@ describe("getMaterialBySlug", () => {
 					createdAt: true,
 					updatedAt: true,
 				},
+			}),
+		);
+	});
+});
+
+// ============================================================================
+// Tests: getMaterialDistinctProductCount (cached fetcher)
+// ============================================================================
+
+describe("getMaterialDistinctProductCount", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
+	});
+
+	it("returns 0 for non-admin", async () => {
+		mockIsAdmin.mockResolvedValue(false);
+
+		const count = await getMaterialDistinctProductCount("mat-1");
+
+		expect(count).toBe(0);
+		expect(mockPrisma.productSku.findMany).not.toHaveBeenCalled();
+	});
+
+	it("returns distinct product count for admin", async () => {
+		mockIsAdmin.mockResolvedValue(true);
+		mockPrisma.productSku.findMany.mockResolvedValue([
+			{ productId: "p1" },
+			{ productId: "p2" },
+			{ productId: "p3" },
+		]);
+
+		const count = await getMaterialDistinctProductCount("mat-1");
+
+		expect(count).toBe(3);
+	});
+
+	it("filters by materialId + isActive and uses distinct", async () => {
+		mockIsAdmin.mockResolvedValue(true);
+
+		await getMaterialDistinctProductCount("mat-42");
+
+		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
+			where: { materialId: "mat-42", isActive: true },
+			select: { productId: true },
+			distinct: ["productId"],
+		});
+	});
+
+	it("registers cache life user and granular cache tag", async () => {
+		mockIsAdmin.mockResolvedValue(true);
+
+		await getMaterialDistinctProductCount("mat-42");
+
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
+		expect(mockCacheTag).toHaveBeenCalledWith("material-mat-42-product-count");
+	});
+
+	it("captures error via Sentry and returns 0 on DB failure", async () => {
+		mockIsAdmin.mockResolvedValue(true);
+		mockPrisma.productSku.findMany.mockRejectedValue(new Error("DB error"));
+
+		const count = await getMaterialDistinctProductCount("mat-1");
+
+		expect(count).toBe(0);
+		expect(mockSentryCaptureException).toHaveBeenCalledWith(
+			expect.any(Error),
+			expect.objectContaining({
+				tags: { module: "materials", operation: "getMaterialDistinctProductCount" },
+				extra: { materialId: "mat-1" },
 			}),
 		);
 	});

@@ -8,6 +8,8 @@ import {
 	MAX_PAGES_PER_RUN,
 	UPLOADTHING_LIST_LIMIT,
 } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
+import { paginateCursor } from "@/modules/cron/lib/paginate-cursor";
 
 /**
  * Cleans up orphaned UploadThing files not referenced in the database.
@@ -19,11 +21,7 @@ import {
  *
  * Runs monthly to limit orphan file accumulation.
  */
-export async function cleanupOrphanMedia(): Promise<{
-	filesScanned: number;
-	orphansDeleted: number;
-	errors: number;
-}> {
+export async function cleanupOrphanMedia(): Promise<CronResult> {
 	logger.info("Starting orphan media cleanup", { cronJob: "cleanup-orphan-media" });
 
 	let filesScanned = 0;
@@ -106,6 +104,9 @@ export async function cleanupOrphanMedia(): Promise<{
 	logger.info("Cleanup completed", { cronJob: "cleanup-orphan-media" });
 
 	return {
+		processed: orphansDeleted,
+		errored: errors,
+		skipped: Math.max(0, filesScanned - orphansDeleted - errors),
 		filesScanned,
 		orphansDeleted,
 		errors,
@@ -129,85 +130,77 @@ export async function cleanupOrphanMedia(): Promise<{
  */
 async function getAllReferencedFileKeys(deadline: number): Promise<Set<string>> {
 	const keys = new Set<string>();
+	const jobName = "cleanup-orphan-media";
 
-	// 1. SkuMedia (url and thumbnailUrl) - paginated
-	let skuCursor: string | undefined;
-
-	for (;;) {
-		if (Date.now() > deadline) {
-			logger.warn("Deadline reached during DB key scan, aborting safely", {
-				cronJob: "cleanup-orphan-media",
-			});
-			throw new Error("Deadline exceeded during DB key scan");
-		}
-		const batch = await prisma.skuMedia.findMany({
-			select: { id: true, url: true, thumbnailUrl: true },
-			take: DB_QUERY_BATCH_SIZE,
-			...(skuCursor && { skip: 1, cursor: { id: skuCursor } }),
-			orderBy: { id: "asc" },
-		});
-		for (const media of batch) {
-			const urlKey = extractFileKeyFromUrl(media.url);
-			if (urlKey) keys.add(urlKey);
-			if (media.thumbnailUrl) {
-				const thumbKey = extractFileKeyFromUrl(media.thumbnailUrl);
-				if (thumbKey) keys.add(thumbKey);
+	// 1. SkuMedia (url and thumbnailUrl)
+	await paginateCursor({
+		jobName,
+		step: "skuMedia-scan",
+		batchSize: DB_QUERY_BATCH_SIZE,
+		deadline,
+		fetch: (cursor, take) =>
+			prisma.skuMedia.findMany({
+				select: { id: true, url: true, thumbnailUrl: true },
+				take,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+				orderBy: { id: "asc" },
+			}),
+		onBatch: (batch) => {
+			for (const media of batch) {
+				const urlKey = extractFileKeyFromUrl(media.url);
+				if (urlKey) keys.add(urlKey);
+				if (media.thumbnailUrl) {
+					const thumbKey = extractFileKeyFromUrl(media.thumbnailUrl);
+					if (thumbKey) keys.add(thumbKey);
+				}
 			}
-		}
-		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		skuCursor = batch[batch.length - 1]!.id;
-	}
+		},
+	});
 
-	// 2. ReviewMedia - paginated
-	let reviewCursor: string | undefined;
-
-	for (;;) {
-		if (Date.now() > deadline) {
-			logger.warn("Deadline reached during DB key scan, aborting safely", {
-				cronJob: "cleanup-orphan-media",
-			});
-			throw new Error("Deadline exceeded during DB key scan");
-		}
-		const batch = await prisma.reviewMedia.findMany({
-			select: { id: true, url: true },
-			take: DB_QUERY_BATCH_SIZE,
-			...(reviewCursor && { skip: 1, cursor: { id: reviewCursor } }),
-			orderBy: { id: "asc" },
-		});
-		for (const media of batch) {
-			const key = extractFileKeyFromUrl(media.url);
-			if (key) keys.add(key);
-		}
-		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		reviewCursor = batch[batch.length - 1]!.id;
-	}
-
-	// 3. User avatars (only those with non-null image) - paginated
-	let userCursor: string | undefined;
-
-	for (;;) {
-		if (Date.now() > deadline) {
-			logger.warn("Deadline reached during DB key scan, aborting safely", {
-				cronJob: "cleanup-orphan-media",
-			});
-			throw new Error("Deadline exceeded during DB key scan");
-		}
-		const batch = await prisma.user.findMany({
-			where: { image: { not: null } },
-			select: { id: true, image: true },
-			take: DB_QUERY_BATCH_SIZE,
-			...(userCursor && { skip: 1, cursor: { id: userCursor } }),
-			orderBy: { id: "asc" },
-		});
-		for (const user of batch) {
-			if (user.image) {
-				const key = extractFileKeyFromUrl(user.image);
+	// 2. ReviewMedia
+	await paginateCursor({
+		jobName,
+		step: "reviewMedia-scan",
+		batchSize: DB_QUERY_BATCH_SIZE,
+		deadline,
+		fetch: (cursor, take) =>
+			prisma.reviewMedia.findMany({
+				select: { id: true, url: true },
+				take,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+				orderBy: { id: "asc" },
+			}),
+		onBatch: (batch) => {
+			for (const media of batch) {
+				const key = extractFileKeyFromUrl(media.url);
 				if (key) keys.add(key);
 			}
-		}
-		if (batch.length < DB_QUERY_BATCH_SIZE) break;
-		userCursor = batch[batch.length - 1]!.id;
-	}
+		},
+	});
+
+	// 3. User avatars (only those with non-null image)
+	await paginateCursor({
+		jobName,
+		step: "userAvatar-scan",
+		batchSize: DB_QUERY_BATCH_SIZE,
+		deadline,
+		fetch: (cursor, take) =>
+			prisma.user.findMany({
+				where: { image: { not: null } },
+				select: { id: true, image: true },
+				take,
+				...(cursor && { skip: 1, cursor: { id: cursor } }),
+				orderBy: { id: "asc" },
+			}),
+		onBatch: (batch) => {
+			for (const user of batch) {
+				if (user.image) {
+					const key = extractFileKeyFromUrl(user.image);
+					if (key) keys.add(key);
+				}
+			}
+		},
+	});
 
 	return keys;
 }

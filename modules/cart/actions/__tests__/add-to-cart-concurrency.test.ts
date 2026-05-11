@@ -16,6 +16,7 @@ const {
 	mockGetCartInvalidationTags,
 	mockGetCartExpirationDate,
 	mockGetOrCreateCartSessionId,
+	mockAssertStoreOpen,
 } = vi.hoisted(() => {
 	class MockBusinessError extends Error {
 		constructor(message: string) {
@@ -39,6 +40,7 @@ const {
 		mockGetCartInvalidationTags: vi.fn(),
 		mockGetCartExpirationDate: vi.fn(),
 		mockGetOrCreateCartSessionId: vi.fn(),
+		mockAssertStoreOpen: vi.fn(),
 	};
 });
 
@@ -87,6 +89,10 @@ vi.mock("../../constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
 }));
 
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
+}));
+
 import { addToCart } from "../add-to-cart";
 
 // ============================================================================
@@ -128,6 +134,7 @@ describe("addToCart - concurrency scenarios", () => {
 		});
 		mockPrisma.user.findUnique.mockResolvedValue({ id: "user-1" });
 		mockPrisma.cart.findFirst.mockResolvedValue(null);
+		mockAssertStoreOpen.mockResolvedValue(null);
 		mockGetCartInvalidationTags.mockReturnValue(["cart-tag"]);
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: "SUCCESS",

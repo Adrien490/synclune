@@ -25,7 +25,7 @@ export function CartPromoCodeForm() {
 		const next = !open;
 		setOpen(next);
 		if (next) {
-			setTimeout(() => inputRef.current?.focus(), 50);
+			requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
 		}
 	};
 

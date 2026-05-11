@@ -1,6 +1,7 @@
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
 
 /**
  * Cleans up expired guest wishlists.
@@ -8,11 +9,7 @@ import { CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
  * Deletes guest wishlists (no userId) past their expiresAt date.
  * WishlistItems are deleted in cascade by the database.
  */
-export async function cleanupExpiredWishlists(): Promise<{
-	deletedCount: number;
-	orphanedItemsCount: number;
-	hasMore: boolean;
-}> {
+export async function cleanupExpiredWishlists(): Promise<CronResult> {
 	const now = new Date();
 	let deletedCount = 0;
 	let orphanedItemsCount = 0;
@@ -75,6 +72,9 @@ export async function cleanupExpiredWishlists(): Promise<{
 	logger.info("Cleanup completed", { cronJob: "cleanup-wishlists" });
 
 	return {
+		processed: deletedCount + orphanedItemsCount,
+		errored: 0,
+		skipped: 0,
 		deletedCount,
 		orphanedItemsCount,
 		hasMore,

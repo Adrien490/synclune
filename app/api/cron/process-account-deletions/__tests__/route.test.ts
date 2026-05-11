@@ -173,7 +173,9 @@ describe("GET /api/cron/process-account-deletions", () => {
 		it("sends admin alert when result.errors > 0", async () => {
 			mockProcessAccountDeletions.mockResolvedValue({
 				processed: 5,
+				errored: 2,
 				errors: 2,
+				skipped: 0,
 				hasMore: false,
 			});
 
@@ -190,7 +192,9 @@ describe("GET /api/cron/process-account-deletions", () => {
 		it("includes processed and hasMore in the alert details", async () => {
 			mockProcessAccountDeletions.mockResolvedValue({
 				processed: 5,
+				errored: 1,
 				errors: 1,
+				skipped: 0,
 				hasMore: true,
 			});
 

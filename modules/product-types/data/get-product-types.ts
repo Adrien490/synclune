@@ -4,7 +4,7 @@ import { buildCursorPagination, processCursorResults } from "@/shared/lib/pagina
 import { prisma } from "@/shared/lib/prisma";
 import { getSortDirection } from "@/shared/utils/sort-direction";
 
-import { cacheProductTypes } from "../constants/cache";
+import { cacheProductTypesAdmin } from "../constants/cache";
 
 import {
 	GET_PRODUCT_TYPES_DEFAULT_PER_PAGE,
@@ -48,7 +48,7 @@ export async function getProductTypes(
  */
 async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProductTypesReturn> {
 	"use cache";
-	cacheProductTypes();
+	cacheProductTypesAdmin();
 
 	const take = Math.min(
 		Math.max(1, params.perPage || GET_PRODUCT_TYPES_DEFAULT_PER_PAGE),
@@ -57,12 +57,12 @@ async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProd
 
 	try {
 		const where = buildProductTypeWhereClause(params);
-		const direction = getSortDirection(params.sortBy);
+		const sortByCountDirection = getSortDirection(params.sortBy);
 
 		const orderBy: Prisma.ProductTypeOrderByWithRelationInput[] = params.sortBy.startsWith("label-")
-			? [{ label: direction }, { id: "asc" }]
+			? [{ label: sortByCountDirection }, { id: "asc" }]
 			: params.sortBy.startsWith("products-")
-				? [{ products: { _count: direction } }, { id: "asc" }]
+				? [{ products: { _count: sortByCountDirection } }, { id: "asc" }]
 				: [{ label: "asc" }, { id: "asc" }];
 
 		const cursorConfig = buildCursorPagination({
@@ -90,15 +90,7 @@ async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProd
 		Sentry.captureException(error, {
 			tags: { module: "product-types", operation: "getProductTypes" },
 		});
-
-		return {
-			productTypes: [],
-			pagination: {
-				nextCursor: null,
-				prevCursor: null,
-				hasNextPage: false,
-				hasPreviousPage: false,
-			},
-		};
+		// Rethrow → remonté par <Suspense> à error.tsx (vs faux empty state)
+		throw error;
 	}
 }

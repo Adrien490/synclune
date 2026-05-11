@@ -59,7 +59,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 0, errors: 0, hasMore: false });
+		expect(result).toMatchObject({ processed: 0, errors: 0, hasMore: false });
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -99,7 +99,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
+		expect(result).toMatchObject({ processed: 1, errors: 0, hasMore: false });
 		expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
 
 		const transactionFn = mockPrisma.$transaction.mock.calls[0]![0];
@@ -231,7 +231,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
+		expect(result).toMatchObject({ processed: 1, errors: 0, hasMore: false });
 	});
 
 	it("should skip Stripe deletion when no stripeCustomerId", async () => {
@@ -311,7 +311,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
+		expect(result).toMatchObject({ processed: 1, errors: 0, hasMore: false });
 	});
 
 	it("should not fail if review media deletion fails (non-blocking)", async () => {
@@ -330,7 +330,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 1, errors: 0, hasMore: false });
+		expect(result).toMatchObject({ processed: 1, errors: 0, hasMore: false });
 	});
 
 	it("should count errors when transaction fails", async () => {
@@ -346,7 +346,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 0, errors: 1, hasMore: false });
+		expect(result).toMatchObject({ processed: 0, errors: 1, hasMore: false });
 	});
 
 	it("should process multiple users and handle mixed success/failure", async () => {
@@ -364,7 +364,7 @@ describe("processAccountDeletions", () => {
 
 		const result = await processAccountDeletions();
 
-		expect(result).toEqual({ processed: 2, errors: 1, hasMore: false });
+		expect(result).toMatchObject({ processed: 2, errors: 1, hasMore: false });
 	});
 
 	it("should return hasMore=true when batch size limit is reached", async () => {

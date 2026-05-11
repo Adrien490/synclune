@@ -8,7 +8,9 @@ import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
 import { validateInput, success, error, notFound, handleActionError } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
-import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { SESSION_CACHE_TAGS, SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
+import { getUserFullInvalidationTags } from "../../constants/cache";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
 /**
@@ -19,14 +21,14 @@ import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
  */
 export async function invalidateUserSessions(userId: string): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.INVALIDATE_SESSIONS);
-		if ("error" in rateCheck) return rateCheck.error;
-
-		// 2. Vérification admin
+		// 1. Vérification admin (avant rate-limit)
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		// 2. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.INVALIDATE_SESSIONS);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2b. Validation du userId
 		const validation = validateInput(adminUserIdSchema, { userId });
@@ -52,14 +54,18 @@ export async function invalidateUserSessions(userId: string): Promise<ActionStat
 			where: { userId },
 		});
 
-		// 6. Revalider le cache
+		// 6. Revalider le cache (incl. la liste de sessions affichée détail admin)
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
+		updateTag(SESSION_CACHE_TAGS.SESSIONS(userId));
+		for (const tag of getUserFullInvalidationTags(userId)) {
+			updateTag(tag);
+		}
 
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: "user.invalidateSessions",
+			action: USER_AUDIT_ACTIONS.INVALIDATE_SESSIONS,
 			targetType: "user",
 			targetId: userId,
 			metadata: { sessionCount: result.count },

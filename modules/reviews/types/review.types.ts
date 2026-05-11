@@ -1,4 +1,4 @@
-import type { ReviewStatus } from "@/app/generated/prisma/client";
+import type { ReviewStatus } from "@/app/generated/prisma/browser";
 
 // ============================================================================
 // BASE TYPES

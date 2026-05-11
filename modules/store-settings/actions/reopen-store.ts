@@ -23,21 +23,9 @@ export async function reopenStore(_prevState: unknown, _formData: FormData): Pro
 		);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		const existing = await prisma.storeSettings.findUnique({
-			where: { id: STORE_SETTINGS_SINGLETON_ID },
-			select: { isClosed: true },
-		});
-
-		if (!existing) {
-			return error("Paramètres boutique introuvables");
-		}
-
-		if (!existing.isClosed) {
-			return error("La boutique est déjà ouverte");
-		}
-
-		await prisma.storeSettings.update({
-			where: { id: STORE_SETTINGS_SINGLETON_ID },
+		// Atomic check-and-set: WHERE isClosed=true guards against concurrent admin clicks.
+		const updated = await prisma.storeSettings.updateMany({
+			where: { id: STORE_SETTINGS_SINGLETON_ID, isClosed: true },
 			data: {
 				isClosed: false,
 				closureMessage: null,
@@ -46,6 +34,14 @@ export async function reopenStore(_prevState: unknown, _formData: FormData): Pro
 				reopensAt: null,
 			},
 		});
+
+		if (updated.count === 0) {
+			const existing = await prisma.storeSettings.findUnique({
+				where: { id: STORE_SETTINGS_SINGLETON_ID },
+				select: { id: true },
+			});
+			return error(existing ? "La boutique est déjà ouverte" : "Paramètres boutique introuvables");
+		}
 
 		getStoreSettingsInvalidationTags().forEach((tag) => updateTag(tag));
 

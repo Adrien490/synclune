@@ -13,8 +13,8 @@ export const DISCOUNT_CACHE_TAGS = {
 	/** Liste des codes promo */
 	LIST: "discounts-list",
 
-	/** Détail d'un code promo spécifique (par ID ou code) */
-	DETAIL: (idOrCode: string) => `discount-${idOrCode}`,
+	/** Détail d'un code promo spécifique (par ID) */
+	DETAIL: (id: string) => `discount-${id}`,
 
 	/** Compteur d'utilisation d'un code promo */
 	USAGE: (discountId: string) => `discount-usage-${discountId}`,
@@ -27,7 +27,7 @@ export const DISCOUNT_CACHE_TAGS = {
 /**
  * Configure le cache pour les codes promo (liste admin)
  * - Utilisé pour : /admin/marketing/codes-promo
- * - Profil "dashboard" : 1min stale, 30s revalidation (cohérence admin)
+ * - Profil "user" : 2min stale, 1min revalidation (cohérence admin)
  */
 export function cacheDiscounts() {
 	cacheLife("user");
@@ -35,13 +35,21 @@ export function cacheDiscounts() {
 }
 
 /**
- * Configure le cache pour un code promo spécifique
- * - Utilisé pour : validation checkout (public) + détail admin
- * - Profil "cart" : 5min stale, 1min revalidation, 30min expiration
+ * Configure le cache pour un code promo spécifique côté admin (édition)
+ * - Profil "user" : 2min stale, 1min revalidation
  */
-export function cacheDiscountDetail(idOrCode: string) {
+export function cacheDiscountDetailAdmin(id: string) {
+	cacheLife("user");
+	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(id));
+}
+
+/**
+ * Configure le cache pour un code promo récupéré par son code (validation checkout)
+ * - Profil "checkout" : 1min stale, 30s revalidation
+ */
+export function cacheDiscountDetail(code: string) {
 	cacheLife("checkout");
-	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode), DISCOUNT_CACHE_TAGS.LIST);
+	cacheTag(DISCOUNT_CACHE_TAGS.DETAIL(code));
 }
 
 // ============================================
@@ -53,14 +61,14 @@ export function cacheDiscountDetail(idOrCode: string) {
  *
  * Invalide automatiquement :
  * - La liste des codes promo
- * - Le détail du code promo (si idOrCode fourni)
+ * - Le détail du code promo (si id fourni)
  * - Les badges de la sidebar admin
  */
-export function getDiscountInvalidationTags(idOrCode?: string): string[] {
+export function getDiscountInvalidationTags(id?: string): string[] {
 	const tags: string[] = [DISCOUNT_CACHE_TAGS.LIST, SHARED_CACHE_TAGS.ADMIN_BADGES];
 
-	if (idOrCode) {
-		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(idOrCode));
+	if (id) {
+		tags.push(DISCOUNT_CACHE_TAGS.DETAIL(id));
 	}
 
 	return tags;

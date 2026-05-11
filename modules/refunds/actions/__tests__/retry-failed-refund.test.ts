@@ -249,6 +249,8 @@ describe("retryFailedRefund", () => {
 			data: {
 				status: "APPROVED",
 				failureReason: null,
+				stripeRefundId: null,
+				attemptCount: { increment: 1 },
 			},
 		});
 	});

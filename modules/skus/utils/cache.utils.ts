@@ -23,10 +23,11 @@ export function cacheProductSkus(productId: string) {
 
 /**
  * Configure le cache pour un SKU spécifique (par ID)
- * Utilisé pour les lookups d'édition admin où seul l'ID est disponible
+ * Utilisé pour les lookups d'édition admin où seul l'ID est disponible.
+ * Profil `user` (1min revalidate / 2min stale) — admin attend la fraîcheur.
  */
 export function cacheSkuDetailById(skuId: string) {
-	cacheLife("catalog");
+	cacheLife("user");
 	cacheTag(PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId), PRODUCTS_CACHE_TAGS.SKUS_LIST);
 }
 
@@ -93,6 +94,7 @@ export function getInventoryInvalidationTags(
 	const tags = [
 		PRODUCTS_CACHE_TAGS.DETAIL(productSlug),
 		PRODUCTS_CACHE_TAGS.SKUS(productId),
+		PRODUCTS_CACHE_TAGS.LIST,
 		SHARED_CACHE_TAGS.ADMIN_INVENTORY_LIST,
 		SHARED_CACHE_TAGS.ADMIN_BADGES,
 	];

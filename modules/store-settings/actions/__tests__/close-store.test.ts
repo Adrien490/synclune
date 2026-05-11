@@ -19,7 +19,7 @@ const {
 	mockLogAudit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		storeSettings: { findUnique: vi.fn(), update: vi.fn() },
+		storeSettings: { findUnique: vi.fn(), updateMany: vi.fn() },
 	},
 	mockRequireAdminWithUser: vi.fn(),
 	mockEnforceRateLimit: vi.fn(),
@@ -88,8 +88,8 @@ describe("closeStore", () => {
 		mockValidateInput.mockReturnValue({
 			data: { closureMessage: "Maintenance", reopensAt: null },
 		});
-		mockPrisma.storeSettings.findUnique.mockResolvedValue({ isClosed: false });
-		mockPrisma.storeSettings.update.mockResolvedValue({});
+		mockPrisma.storeSettings.findUnique.mockResolvedValue({ id: SINGLETON_ID });
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 1 });
 		mockGetStoreSettingsInvalidationTags.mockReturnValue(["store-status", "store-settings"]);
 		mockLogAudit.mockResolvedValue(undefined);
 
@@ -139,14 +139,15 @@ describe("closeStore", () => {
 
 	// ─── Idempotence ───────────────────────────────────────────────────────
 
-	it("rejects when store is already closed", async () => {
-		mockPrisma.storeSettings.findUnique.mockResolvedValue({ isClosed: true });
+	it("rejects when store is already closed (updateMany matches 0 rows)", async () => {
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.storeSettings.findUnique.mockResolvedValue({ id: SINGLETON_ID });
 		await closeStore(undefined, formData());
 		expect(mockError).toHaveBeenCalledWith("La boutique est déjà fermée");
-		expect(mockPrisma.storeSettings.update).not.toHaveBeenCalled();
 	});
 
 	it("returns error when singleton does not exist", async () => {
+		mockPrisma.storeSettings.updateMany.mockResolvedValue({ count: 0 });
 		mockPrisma.storeSettings.findUnique.mockResolvedValue(null);
 		await closeStore(undefined, formData());
 		expect(mockError).toHaveBeenCalledWith("Paramètres boutique introuvables");
@@ -154,14 +155,14 @@ describe("closeStore", () => {
 
 	// ─── Mutation ──────────────────────────────────────────────────────────
 
-	it("closes store with all required fields", async () => {
+	it("closes store atomically with check-and-set WHERE isClosed=false", async () => {
 		const reopensAt = new Date("2030-01-01T10:00:00Z");
 		mockValidateInput.mockReturnValue({
 			data: { closureMessage: "Vacances", reopensAt },
 		});
 		await closeStore(undefined, formData());
-		expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith({
-			where: { id: SINGLETON_ID },
+		expect(mockPrisma.storeSettings.updateMany).toHaveBeenCalledWith({
+			where: { id: SINGLETON_ID, isClosed: false },
 			data: {
 				isClosed: true,
 				closureMessage: "Vacances",
@@ -177,7 +178,7 @@ describe("closeStore", () => {
 			user: { id: "admin-1", name: null, email: "admin@test.com" },
 		});
 		await closeStore(undefined, formData());
-		expect(mockPrisma.storeSettings.update).toHaveBeenCalledWith(
+		expect(mockPrisma.storeSettings.updateMany).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({ closedBy: "admin@test.com" }),
 			}),
@@ -215,10 +216,32 @@ describe("closeStore", () => {
 		expect(result.message).toContain("fermée");
 	});
 
+	// ─── Concurrent admin race ─────────────────────────────────────────────
+
+	it("rejects 2nd concurrent close (only 1 of 2 mutations matches WHERE isClosed=false)", async () => {
+		// Simulate race : 1st call wins (count: 1), 2nd loses (count: 0)
+		mockPrisma.storeSettings.updateMany
+			.mockResolvedValueOnce({ count: 1 })
+			.mockResolvedValueOnce({ count: 0 });
+		mockPrisma.storeSettings.findUnique.mockResolvedValue({ id: SINGLETON_ID });
+
+		const [first, second] = await Promise.all([
+			closeStore(undefined, formData()),
+			closeStore(undefined, formData()),
+		]);
+
+		// One must succeed, the other must report "déjà fermée"
+		const successes = [first, second].filter((r) => r.status === ActionStatus.SUCCESS);
+		const errors = [first, second].filter((r) => r.status === ActionStatus.ERROR);
+		expect(successes).toHaveLength(1);
+		expect(errors).toHaveLength(1);
+		expect(mockError).toHaveBeenCalledWith("La boutique est déjà fermée");
+	});
+
 	// ─── Error handling ────────────────────────────────────────────────────
 
 	it("calls handleActionError on unexpected exception", async () => {
-		mockPrisma.storeSettings.update.mockRejectedValue(new Error("DB crash"));
+		mockPrisma.storeSettings.updateMany.mockRejectedValue(new Error("DB crash"));
 		const result = await closeStore(undefined, formData());
 		expect(mockHandleActionError).toHaveBeenCalledWith(
 			expect.any(Error),

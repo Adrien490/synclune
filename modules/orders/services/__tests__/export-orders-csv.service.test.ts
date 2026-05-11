@@ -181,4 +181,41 @@ describe("generateOrdersCsv", () => {
 		// First column (invoice number) should be empty
 		expect(dataRow.startsWith(";")).toBe(true);
 	});
+
+	// --------------------------------------------------------------------------
+	// CSV injection \u2014 formula prefixes (OWASP A03)
+	// --------------------------------------------------------------------------
+
+	describe("CSV injection \u2014 formula prefixes", () => {
+		it.each([
+			["=", "=SUM(A1:A10)"],
+			["+", "+1+1"],
+			["-", "-2+3"],
+			["@", "@SUM(A1)"],
+			["\t", "\tDROP"],
+			["\r", "\rEVIL"],
+		])("escapes leading '%s' with a leading apostrophe", (_prefix, payload) => {
+			const order = makeOrder({ customerName: payload });
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+			// Each field is delimited by `;` \u2014 the customerName cell must start with `'` then payload
+			expect(dataRow).toContain(`;'${payload}`);
+		});
+
+		it("escapes formula payloads even when other CSV special chars are present", () => {
+			const order = makeOrder({ customerName: '="cmd|/c calc"!A1' });
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+			// Formula prefix protected AND quoted because of the inner `"`
+			expect(dataRow).toContain(`"'=""cmd|/c calc""!A1"`);
+		});
+
+		it("does NOT prefix safe customer names starting with regular characters", () => {
+			const order = makeOrder({ customerName: "Alice Martin" });
+			const csv = generateOrdersCsv([order]);
+			const dataRow = csv.replace("\uFEFF", "").split("\n")[1]!;
+			expect(dataRow).toContain(";Alice Martin;");
+			expect(dataRow).not.toContain("'Alice Martin");
+		});
+	});
 });

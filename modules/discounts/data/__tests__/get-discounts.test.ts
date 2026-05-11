@@ -157,13 +157,17 @@ describe("getDiscounts", () => {
 		setupDefaults();
 	});
 
-	it("throws when validation fails", async () => {
+	it("returns empty result when validation fails (instead of throwing)", async () => {
 		mockSchema.safeParse.mockReturnValue({
 			success: false,
 			error: { issues: [{ message: "sortBy invalide" }] },
 		});
 
-		await expect(getDiscounts(makeValidParams() as never)).rejects.toThrow("Invalid parameters");
+		const result = await getDiscounts(makeValidParams() as never);
+
+		expect(result.discounts).toEqual([]);
+		expect(result.pagination).toEqual(emptyPagination);
+		expect(mockPrisma.discount.findMany).not.toHaveBeenCalled();
 	});
 
 	it("returns discounts for valid params (no auth required)", async () => {

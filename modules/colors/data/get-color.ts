@@ -1,5 +1,7 @@
 import { type Prisma } from "@/app/generated/prisma/client";
 import * as Sentry from "@sentry/nextjs";
+import { cacheLife, cacheTag } from "next/cache";
+
 import { isAdmin } from "@/modules/auth/utils/guards";
 import { prisma } from "@/shared/lib/prisma";
 
@@ -94,7 +96,6 @@ async function fetchColorDetail(slug: string) {
 				name: true,
 				hex: true,
 				isActive: true,
-				position: true,
 				createdAt: true,
 				updatedAt: true,
 				skus: {
@@ -145,6 +146,20 @@ async function fetchColorDetail(slug: string) {
 export async function getColorDistinctProductCount(colorId: string): Promise<number> {
 	const admin = await isAdmin();
 	if (!admin) return 0;
+
+	return fetchColorDistinctProductCount(colorId);
+}
+
+/**
+ * Cached fetcher for the admin "produits distincts" KPI on the color detail
+ * page. Profile `user` (2 min stale / 1 min revalidate) is appropriate since
+ * this is admin-only data that becomes stale after SKU mutations affecting
+ * this color (handled via cross-module tag invalidation when SKUs move).
+ */
+async function fetchColorDistinctProductCount(colorId: string): Promise<number> {
+	"use cache";
+	cacheLife("user");
+	cacheTag(`color-${colorId}-product-count`);
 
 	try {
 		const result = await prisma.productSku.findMany({

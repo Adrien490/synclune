@@ -145,7 +145,7 @@ describe("cleanupExpiredSessions", () => {
 	it("should handle zero of everything", async () => {
 		const result = await cleanupExpiredSessions();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			sessionsDeleted: 0,
 			verificationsDeleted: 0,
 			tokensCleared: 0,
@@ -170,7 +170,7 @@ describe("cleanupExpiredSessions", () => {
 
 		const result = await cleanupExpiredSessions();
 
-		expect(result).toEqual({
+		expect(result).toMatchObject({
 			sessionsDeleted: 15,
 			verificationsDeleted: 23,
 			tokensCleared: 15,

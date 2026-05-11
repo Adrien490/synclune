@@ -76,15 +76,12 @@ export async function bulkToggleDiscountsStatus(
 
 		await prisma.discount.updateMany({
 			where: { id: { in: eligibleIds } },
-			data: {
-				isActive: targetIsActive,
-				manuallyDeactivated: !targetIsActive,
-			},
+			data: { isActive: targetIsActive },
 		});
 
 		const tags = new Set<string>();
 		for (const d of eligible) {
-			getDiscountInvalidationTags(d.code).forEach((tag) => tags.add(tag));
+			getDiscountInvalidationTags(d.id).forEach((tag) => tags.add(tag));
 		}
 		tags.forEach((tag) => updateTag(tag));
 

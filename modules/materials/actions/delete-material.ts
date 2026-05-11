@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
@@ -43,7 +44,12 @@ export async function deleteMaterial(
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Check existence + SKU usage and delete atomically
+		// Check existence + SKU usage and delete atomically.
+		// La FK ProductSku.materialId est en ON DELETE RESTRICT (cf. migration
+		// 20260511103345_change_material_skus_restrict_and_add_isactive_index) :
+		// le delete lèverait P2003 si un SKU concurrent est créé entre le count
+		// et le delete. La pré-vérification reste pour produire un message UI
+		// lisible avant d'atteindre la contrainte DB.
 		const existingMaterial = await prisma.$transaction(async (tx) => {
 			const material = await tx.material.findUnique({
 				where: { id: validatedData.id },
@@ -91,6 +97,13 @@ export async function deleteMaterial(
 
 		return success("Matériau supprimé avec succès");
 	} catch (e) {
+		// P2003 : violation FK Restrict — un SKU a été créé en concurrence après
+		// la pré-vérification. Message aligné avec le BusinessError du pre-check.
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+			return error(
+				"Ce materiau est utilise par au moins une variante. Veuillez modifier ces variantes avant de supprimer le materiau.",
+			);
+		}
 		return handleActionError(e, "Impossible de supprimer le materiau");
 	}
 }

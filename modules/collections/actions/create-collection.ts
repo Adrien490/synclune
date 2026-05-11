@@ -1,5 +1,6 @@
 "use server";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { updateTag } from "next/cache";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import { logAudit } from "@/shared/lib/audit-log";
@@ -44,21 +45,11 @@ export async function createCollection(
 			? sanitizeText(validatedData.description)
 			: null;
 
-		// Transaction pour garantir l'atomicité (unicité du nom + création)
+		// Transaction pour garantir l'atomicite slug + create.
+		// Unicite du nom : assuree par la contrainte DB UNIQUE (Prisma P2002 catched ci-dessous).
 		const { slug, id } = await prisma.$transaction(async (tx) => {
-			// Vérifier l'unicité du nom
-			const existingName = await tx.collection.findFirst({
-				where: { name: sanitizedName },
-			});
-
-			if (existingName) {
-				throw new Error("NAME_EXISTS");
-			}
-
-			// Générer un slug unique automatiquement
 			const slug = await generateSlug(tx, "collection", sanitizedName);
 
-			// Créer la collection
 			const created = await tx.collection.create({
 				data: {
 					name: sanitizedName,
@@ -90,8 +81,11 @@ export async function createCollection(
 			collectionStatus: validatedData.status,
 		});
 	} catch (e) {
-		if (e instanceof Error && e.message === "NAME_EXISTS") {
-			return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+			const target = (e.meta?.target as string[] | undefined) ?? [];
+			if (target.includes("name") || target.includes("Collection_name_key")) {
+				return error("Ce nom de collection existe déjà. Veuillez en choisir un autre.");
+			}
 		}
 		return handleActionError(e, "Erreur lors de la création de la collection");
 	}

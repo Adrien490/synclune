@@ -10,6 +10,7 @@ import {
 	ImageDimensionsTooLargeError,
 	validateImageDimensions,
 } from "@/modules/media/services/validate-image-dimensions.service";
+import { stripImageMetadata } from "@/modules/media/services/strip-image-metadata.service";
 import { utapi } from "@/shared/lib/uploadthing";
 import { UPLOAD_LIMITS } from "@/modules/media/constants/upload-limits";
 
@@ -201,12 +202,21 @@ export const ourFileRouter = {
 			try {
 				const isImage = file.type.startsWith("image/");
 
-				// Pour les images: rejeter les image-bombs puis generer le blur placeholder
+				// Pour les images: rejeter les image-bombs, stripper EXIF/GPS (RGPD), puis generer le blur placeholder
 				if (isImage) {
 					await rejectImageBomb(file);
-					const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+					// RGPD: strip EXIF/GPS metadata avant exposition sur CDN public.
+					// Best-effort: si le strip échoue, on conserve l'URL d'origine.
+					const stripped = await stripImageMetadata({
+						ufsUrl: file.ufsUrl,
+						key: file.key,
+						name: file.name,
+						type: file.type,
+					});
+					const finalUrl = stripped?.url ?? file.ufsUrl;
+					const blurDataUrl = await generateBlurSafe(finalUrl);
 					return {
-						url: file.ufsUrl,
+						url: finalUrl,
 						thumbnailUrl: null,
 						blurDataUrl,
 						uploadedBy: metadata.userId,
@@ -282,12 +292,19 @@ export const ourFileRouter = {
 		})
 		.onUploadComplete(async ({ metadata, file }) => {
 			try {
-				// Rejeter les image-bombs puis generer le blur placeholder
+				// Rejeter les image-bombs, stripper EXIF/GPS (RGPD critique — photos clients iPhone), puis generer le blur
 				await rejectImageBomb(file);
-				const blurDataUrl = await generateBlurSafe(file.ufsUrl);
+				const stripped = await stripImageMetadata({
+					ufsUrl: file.ufsUrl,
+					key: file.key,
+					name: file.name,
+					type: file.type,
+				});
+				const finalUrl = stripped?.url ?? file.ufsUrl;
+				const blurDataUrl = await generateBlurSafe(finalUrl);
 
 				return {
-					url: file.ufsUrl,
+					url: finalUrl,
 					blurDataUrl,
 					uploadedBy: metadata.userId,
 				};

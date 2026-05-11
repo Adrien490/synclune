@@ -5,9 +5,10 @@ import { VALID_CUID, VALID_CUID_2 } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockEnforceRateLimit, mockGetReviews } = vi.hoisted(() => ({
+const { mockEnforceRateLimit, mockGetReviews, mockLoggerError } = vi.hoisted(() => ({
 	mockEnforceRateLimit: vi.fn(),
 	mockGetReviews: vi.fn(),
+	mockLoggerError: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
@@ -16,6 +17,15 @@ vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
 
 vi.mock("@/shared/lib/rate-limit-config", () => ({
 	REVIEW_LOAD_MORE_LIMIT: "review-load-more",
+}));
+
+vi.mock("@/shared/lib/logger", () => ({
+	logger: {
+		error: mockLoggerError,
+		info: vi.fn(),
+		warn: vi.fn(),
+		debug: vi.fn(),
+	},
 }));
 
 vi.mock("../../data/get-reviews", () => ({
@@ -166,6 +176,17 @@ describe("loadMoreReviews", () => {
 		expect(result.nextCursor).toBeNull();
 		expect(result.hasMore).toBe(false);
 		expect(result.error).toBe("Impossible de charger plus d'avis");
+	});
+
+	it("should log error to Sentry when getReviews throws", async () => {
+		const dbError = new Error("DB failure");
+		mockGetReviews.mockRejectedValue(dbError);
+
+		await loadMoreReviews(defaultParams);
+
+		expect(mockLoggerError).toHaveBeenCalledWith("Failed to load more reviews", dbError, {
+			action: "loadMoreReviews",
+		});
 	});
 
 	// ──────────────────────────────────────────────────────────────

@@ -19,6 +19,7 @@ import {
 	STRIPE_TIMEOUT_MS,
 	THRESHOLDS,
 } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails";
 
 /**
@@ -28,12 +29,7 @@ import { sendAdminCronFailedAlert } from "@/modules/emails/services/admin-emails
  * 3-5 business days to confirm. This cron polls Stripe to reconcile
  * statuses in case of webhook failure.
  */
-export async function syncAsyncPayments(): Promise<{
-	checked: number;
-	updated: number;
-	errors: number;
-	hasMore: boolean;
-} | null> {
+export async function syncAsyncPayments(): Promise<CronResult | null> {
 	logger.info("Starting async payment sync", { cronJob: "sync-async-payments" });
 
 	const stripe = getStripeClient();
@@ -181,6 +177,9 @@ export async function syncAsyncPayments(): Promise<{
 	logger.info("Sync completed", { cronJob: "sync-async-payments", updated, errors });
 
 	return {
+		processed: updated,
+		errored: errors,
+		skipped: Math.max(0, pendingOrders.length - updated - errors),
 		checked: pendingOrders.length,
 		updated,
 		errors,

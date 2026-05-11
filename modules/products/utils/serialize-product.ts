@@ -16,24 +16,30 @@ type ProductWithReviewStats = {
 };
 
 /**
- * Serialise un produit pour les Client Components (Decimal → number)
+ * Serialise un produit pour les Client Components (Decimal → number).
  *
- * Prisma type averageRating comme Decimal, mais les Client Components
- * ont besoin d'un number serialisable.
+ * Prisma type averageRating comme Decimal, mais les Client Components ont
+ * besoin d'un number serialisable. Le runtime renvoie un `number` ; côté
+ * types, on conserve la forme d'entrée `T` (alignée sur GET_PRODUCTS_SELECT
+ * Prisma) — c'est un compromis intentionnel pour éviter d'avoir à propager
+ * un type sérialisé sur toutes les data functions et leurs consumers.
  *
- * Générique sur la forme du produit (Product ou ProductCarouselItem) pour
- * rester utilisable depuis toutes les data functions.
+ * Si un consumer doit faire de l'arithmétique sur `averageRating`, il doit
+ * traiter la valeur comme un `number` (ce qu'elle est réellement) — typage
+ * Decimal est conservé uniquement pour la stabilité de la chaîne de types
+ * Prisma → data → component.
  */
 export function serializeProduct<T extends ProductWithReviewStats>(product: T): T {
 	if (!product.reviewStats) return product;
 
-	return {
+	const serialized: T = {
 		...product,
 		reviewStats: {
 			...product.reviewStats,
-			averageRating: decimalToNumber(product.reviewStats.averageRating) as unknown as Decimal,
+			averageRating: decimalToNumber(product.reviewStats.averageRating),
 		},
-	};
+	} as T;
+	return serialized;
 }
 
 /**

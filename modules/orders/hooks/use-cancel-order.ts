@@ -1,25 +1,15 @@
 "use client";
 
 import { cancelOrder } from "@/modules/orders/actions/cancel-order";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
-import { useActionState } from "react";
+import { useOrderAction } from "./use-order-action";
 
 interface UseCancelOrderOptions {
 	onSuccess?: () => void;
 }
 
 export function useCancelOrder(options?: UseCancelOrderOptions) {
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			cancelOrder,
-			createToastCallbacks({
-				loadingMessage: "Annulation de la commande…",
-				onSuccess: () => options?.onSuccess?.(),
-			}),
-		),
-		undefined,
-	);
-
-	return { state, action, isPending };
+	return useOrderAction(cancelOrder, {
+		loadingMessage: "Annulation de la commande…",
+		onSuccess: options?.onSuccess,
+	});
 }

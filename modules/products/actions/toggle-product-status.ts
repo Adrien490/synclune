@@ -17,6 +17,7 @@ import { toggleProductStatusSchema } from "../schemas/product.schemas";
 import { getCollectionInvalidationTags } from "@/modules/collections/utils/cache.utils";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 import { validateProductForPublication } from "../services/product-validation.service";
+import { canTransitionProductStatus } from "../services/product-status-validation.service";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 
@@ -98,6 +99,13 @@ export async function toggleProductStatus(
 			} else {
 				newStatus = "DRAFT";
 			}
+		}
+
+		// 5.4. Garde state machine : refuser les transitions invalides
+		if (!canTransitionProductStatus(existingProduct.status, newStatus)) {
+			return validationError(
+				`Transition de statut invalide : ${existingProduct.status} → ${newStatus}`,
+			);
 		}
 
 		// 5.5. Validation metier : Un produit PUBLIC doit avoir au moins 1 SKU actif avec stock

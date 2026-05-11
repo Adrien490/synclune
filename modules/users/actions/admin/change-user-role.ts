@@ -14,10 +14,12 @@ import {
 	notFound,
 	handleActionError,
 	safeFormGet,
+	BusinessError,
 } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { changeUserRoleSchema } from "../../schemas/user-admin.schemas";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { getUserFullInvalidationTags } from "../../constants/cache";
 
 export async function changeUserRole(
@@ -25,14 +27,15 @@ export async function changeUserRole(
 	formData: FormData,
 ): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
-		if ("error" in rateCheck) return rateCheck.error;
-
-		// 2. Verification des droits admin
+		// 1. Verification des droits admin (avant rate-limit pour eviter
+		// la consommation de bucket par un non-admin + leak 429 vs 403).
 		const auth = await requireAdminWithUser();
 		if ("error" in auth) return auth.error;
 		const { user: adminUser } = auth;
+
+		// 2. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SINGLE_OPERATIONS);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 3. Extraire et valider les donnees
 		const rawData = {
@@ -68,25 +71,31 @@ export async function changeUserRole(
 			return error(`Cet utilisateur a deja le role ${newRole}.`);
 		}
 
-		// 6. Si on retire le role admin, verifier qu'il reste au moins un admin
-		if (user.role === Role.ADMIN && newRole === Role.USER) {
-			const adminCount = await prisma.user.count({
-				where: {
-					role: Role.ADMIN,
-					...notDeleted,
-				},
-			});
+		// 6-7. Demotion + admin count atomique (TOCTOU-safe)
+		// Le count des admins restants se fait DANS la transaction pour eviter
+		// deux admins concurrents qui se demote/delete mutuellement → 0 admin.
+		await prisma.$transaction(
+			async (tx) => {
+				if (user.role === Role.ADMIN && newRole === Role.USER) {
+					const otherAdmins = await tx.user.count({
+						where: { role: Role.ADMIN, ...notDeleted, id: { not: userId } },
+					});
 
-			if (adminCount <= 1) {
-				return error("Impossible de retirer le dernier administrateur.");
-			}
-		}
+					if (otherAdmins < 1) {
+						throw new BusinessError(
+							"Impossible de retirer le dernier administrateur.",
+							"LAST_ADMIN",
+						);
+					}
+				}
 
-		// 7. Changer le role
-		await prisma.user.update({
-			where: { id: userId },
-			data: { role: newRole },
-		});
+				await tx.user.update({
+					where: { id: userId },
+					data: { role: newRole },
+				});
+			},
+			{ isolationLevel: "Serializable" },
+		);
 
 		// 8. Revalider le cache
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);
@@ -98,7 +107,7 @@ export async function changeUserRole(
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: "user.changeRole",
+			action: USER_AUDIT_ACTIONS.CHANGE_ROLE,
 			targetType: "user",
 			targetId: userId,
 			metadata: { previousRole: user.role, newRole },

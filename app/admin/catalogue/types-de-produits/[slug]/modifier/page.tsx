@@ -24,7 +24,9 @@ export default async function EditProductTypePage({ params }: EditProductTypePag
 
 	return (
 		<div className="space-y-4">
-			<h1 className="hidden text-2xl font-semibold md:block">{productType.label}</h1>
+			<h1 className="text-foreground sr-only text-xl font-semibold md:not-sr-only md:text-2xl">
+				{productType.label}
+			</h1>
 			<EditProductTypeForm
 				productType={{
 					id: productType.id,

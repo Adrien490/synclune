@@ -5,6 +5,13 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 // SELECT DEFINITIONS
 // ============================================================================
 
+/**
+ * Cap a la lecture des associations pour le detail admin. Au-dela, l'admin
+ * doit utiliser la gestion catalogue dediee. Voir GET_COLLECTION_PRODUCTS_LIMIT
+ * + UX hint dans collection-products-list.
+ */
+export const GET_COLLECTION_PRODUCTS_LIMIT = 100;
+
 export const GET_COLLECTION_SELECT = {
 	id: true,
 	slug: true,
@@ -65,14 +72,27 @@ export const GET_COLLECTION_SELECT = {
 				},
 			},
 		},
-		orderBy: { addedAt: "desc" },
+		orderBy: [{ isFeatured: "desc" }, { addedAt: "desc" }],
+		take: GET_COLLECTION_PRODUCTS_LIMIT,
+	},
+	_count: {
+		select: {
+			products: {
+				where: {
+					product: {
+						status: ProductStatus.PUBLIC,
+					},
+				},
+			},
+		},
 	},
 } as const satisfies Prisma.CollectionSelect;
 
 /**
- * Lightweight select for storefront collection pages (SEO metadata + OG image).
+ * Lightweight select for storefront collection pages (SEO metadata + OG image + JSON-LD).
  * Only loads what's needed: name, description, status, and minimal product data
- * for featured image extraction, product type keywords, and public product count.
+ * for featured image extraction, product type keywords, public product count,
+ * and ItemList Product+Offer JSON-LD (mainEntity).
  */
 export const GET_COLLECTION_STOREFRONT_SELECT = {
 	slug: true,
@@ -89,6 +109,7 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 			isFeatured: true,
 			product: {
 				select: {
+					slug: true,
 					title: true,
 					status: true,
 					type: {
@@ -100,6 +121,8 @@ export const GET_COLLECTION_STOREFRONT_SELECT = {
 						where: { isActive: true },
 						select: {
 							isDefault: true,
+							priceInclTax: true,
+							inventory: true,
 							images: {
 								select: {
 									url: true,

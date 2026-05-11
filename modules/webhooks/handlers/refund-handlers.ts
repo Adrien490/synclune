@@ -50,7 +50,9 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 						amount: true,
 						status: true,
 						stripeRefundId: true,
+						reason: true,
 					},
+					orderBy: { createdAt: "desc" },
 				},
 			},
 		});
@@ -94,9 +96,12 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 		tasks.push({ type: "INVALIDATE_CACHE", tags: cacheTags });
 
 		if (order.customerEmail) {
-			const stripeRefunds = charge.refunds?.data ?? [];
-			const latestRefund = stripeRefunds.length > 0 ? stripeRefunds[0] : undefined;
-			const reason = latestRefund?.reason ?? "OTHER";
+			// Read reason from local DB Refund (matches internal RefundReason enum
+			// keys used by REFUND_REASON_LABELS in refund-confirmed-email.tsx).
+			// Stripe.Refund.reason values (`requested_by_customer`, `fraudulent`...)
+			// would not match the enum and produce an empty label.
+			const latestLocalRefund = order.refunds[0];
+			const reason = latestLocalRefund?.reason ?? "OTHER";
 			const baseUrl = getBaseUrl();
 			const orderDetailsUrl = `${baseUrl}${ROUTES.ACCOUNT.ORDER_DETAIL(order.orderNumber)}`;
 
@@ -107,7 +112,7 @@ export async function handleChargeRefunded(charge: Stripe.Charge): Promise<Webho
 					orderNumber: order.orderNumber,
 					customerName: order.customerName || "Client",
 					refundAmount: totalRefundedOnStripe,
-					reason: reason.toUpperCase(),
+					reason,
 					orderDetailsUrl,
 				},
 			});
@@ -231,6 +236,7 @@ export async function handleRefundFailed(
 				customerEmail: refund.order.customerEmail ?? "Email non disponible",
 				amount: refund.amount,
 				reason: "other",
+				refundReason: refund.reason,
 				errorMessage: `Échec remboursement Stripe: ${failureReason}`,
 				stripePaymentIntentId: refund.order.stripePaymentIntentId ?? "",
 				dashboardUrl,

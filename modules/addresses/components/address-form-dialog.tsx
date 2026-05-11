@@ -12,16 +12,17 @@ import {
 } from "@/shared/components/responsive-dialog";
 import { RequiredFieldsNote } from "@/shared/components/required-fields-note";
 import { useCreateAddress } from "@/modules/addresses/hooks/use-create-address";
+import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
 import type { UserAddress } from "@/modules/addresses/types/user-addresses.types";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
+import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useTransition, Suspense, type ComponentProps } from "react";
+import { useEffect, useRef } from "react";
 
 import {
 	ADDRESS_DIALOG_ID,
@@ -34,17 +35,7 @@ interface AddressDialogData extends Record<string, unknown> {
 	address?: UserAddress;
 }
 
-const EMPTY_SUGGESTIONS: SearchAddressResult[] = [];
-
-interface AddressFormDialogProps {
-	addressSuggestions?: SearchAddressResult[];
-	addressSearchError?: boolean;
-}
-
-function AddressFormDialogInner({
-	addressSuggestions = EMPTY_SUGGESTIONS,
-	addressSearchError = false,
-}: AddressFormDialogProps) {
+function AddressFormDialogInner() {
 	const { isOpen, close, data } = useDialog<AddressDialogData>(ADDRESS_DIALOG_ID);
 	const discardDialog = useAlertDialog(DISCARD_ADDRESS_CHANGES_DIALOG_ID);
 	const address = data?.address;
@@ -66,8 +57,6 @@ function AddressFormDialogInner({
 				<AddressFormContent
 					key={address?.id ?? "new"}
 					address={address}
-					addressSuggestions={addressSuggestions}
-					addressSearchError={addressSearchError}
 					onClose={close}
 					isDirtyRef={isDirtyRef}
 				/>
@@ -80,38 +69,18 @@ function AddressFormDialogInner({
 	);
 }
 
-export function AddressFormDialog(props: ComponentProps<typeof AddressFormDialogInner>) {
-	return (
-		<Suspense fallback={null}>
-			<AddressFormDialogInner {...props} />
-		</Suspense>
-	);
+export function AddressFormDialog() {
+	return <AddressFormDialogInner />;
 }
 
 interface AddressFormContentProps {
 	address?: UserAddress;
-	addressSuggestions: SearchAddressResult[];
-	addressSearchError: boolean;
 	onClose: () => void;
 	isDirtyRef: React.RefObject<boolean>;
 }
 
-function AddressFormContent({
-	address,
-	addressSuggestions,
-	addressSearchError,
-	onClose,
-	isDirtyRef,
-}: AddressFormContentProps) {
+function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContentProps) {
 	const mode = address ? "edit" : "create";
-
-	// Next.js navigation hooks
-	const searchParams = useSearchParams();
-	const router = useRouter();
-	const pathname = usePathname();
-
-	// Transition pour la navigation
-	const [isPendingAddress, startAddressTransition] = useTransition();
 
 	// TanStack Form setup avec validation Zod - defaultValues basées sur l'address
 	const form = useAppForm({
@@ -132,6 +101,14 @@ function AddressFormContent({
 		},
 	});
 
+	// Live address autocomplete (account CRUD is FR-only — country field disabled).
+	const address1Value = useStore(form.store, (s) => s.values.address1);
+	const {
+		suggestions: addressSuggestions,
+		isSearching: isPendingAddress,
+		error: addressSearchErrorMessage,
+	} = useAddressAutocomplete(address1Value, "FR");
+
 	// Address hooks with success callback to close dialog
 	const createHook = useCreateAddress({
 		onSuccess: onClose,
@@ -147,7 +124,22 @@ function AddressFormContent({
 	const isDirty = useStore(form.store, (s) => s.isDirty);
 	useEffect(() => {
 		isDirtyRef.current = isDirty;
-	});
+	}, [isDirty, isDirtyRef]);
+
+	// WCAG 3.3.1 — focus the first invalid field after a server-side error.
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+	const previousState = useRef(state);
+	useEffect(() => {
+		if (
+			state &&
+			state !== previousState.current &&
+			state.status !== ActionStatus.SUCCESS &&
+			state.status !== ActionStatus.INITIAL
+		) {
+			focusFirstInvalid();
+		}
+		previousState.current = state;
+	}, [state, focusFirstInvalid]);
 
 	return (
 		<>
@@ -163,13 +155,15 @@ function AddressFormContent({
 			</ResponsiveDialogHeader>
 
 			<form
+				ref={formRef}
 				action={action}
 				className="flex min-h-0 flex-1 flex-col"
 				onSubmit={() => form.handleSubmit()}
+				onInvalidCapture={onInvalidCapture}
 			>
 				{/* Contenu scrollable */}
 				<div className="flex-1 space-y-6 overflow-y-auto pr-2">
-					{/* Success message */}
+					{/* Success message — shadcn Alert ships role="alert" + aria-live="polite" (WCAG 4.1.3) */}
 					{state?.status === ActionStatus.SUCCESS && state.message && (
 						<Alert className="bg-primary/10 border-primary/20">
 							<CircleCheck className="text-primary" aria-hidden="true" />
@@ -224,35 +218,7 @@ function AddressFormContent({
 						</div>
 
 						{/* Adresse avec autocomplétion */}
-						<form.AppField
-							name="address1"
-							asyncDebounceMs={300}
-							validators={{
-								onChangeAsync: async ({ value }) => {
-									// Mise à jour de l'URL avec debounce de 300ms pour l'autocomplétion
-									if (value.length >= 3) {
-										const params = new URLSearchParams(searchParams.toString());
-										params.set("q", value);
-
-										startAddressTransition(() => {
-											router.replace(`${pathname}?${params.toString()}`, {
-												scroll: false,
-											});
-										});
-									} else {
-										const params = new URLSearchParams(searchParams.toString());
-										params.delete("q");
-
-										startAddressTransition(() => {
-											router.replace(`${pathname}?${params.toString()}`, {
-												scroll: false,
-											});
-										});
-									}
-									return undefined;
-								},
-							}}
-						>
+						<form.AppField name="address1">
 							{(field) => (
 								<field.AutocompleteField<SearchAddressResult>
 									label="Adresse"
@@ -281,14 +247,10 @@ function AddressFormContent({
 									placeholder="Rechercher une adresse…"
 									isLoading={isPendingAddress}
 									disabled={isPending}
-									error={
-										addressSearchError
-											? "La recherche d'adresse est temporairement indisponible"
-											: undefined
-									}
+									error={addressSearchErrorMessage ?? undefined}
 									noResultsMessage="Aucune adresse trouvée"
 									minQueryLength={2}
-									debounceMs={0}
+									debounceMs={300}
 								/>
 							)}
 						</form.AppField>

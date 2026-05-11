@@ -101,35 +101,6 @@ export const bulkToggleProductTypeStatusSchema = z.object({
 	targetIsActive: z.boolean(),
 });
 
-const bulkIdsSchema = z
-	.string()
-	.transform((str): string[] => {
-		try {
-			const parsed: unknown = JSON.parse(str);
-			if (Array.isArray(parsed)) {
-				const items = parsed as unknown as unknown[];
-				return items.filter((id): id is string => typeof id === "string");
-			}
-			return [];
-		} catch {
-			return [];
-		}
-	})
-	.pipe(
-		z
-			.array(z.cuid2("ID invalide"))
-			.min(1, "Au moins un élément requis")
-			.max(100, "Maximum 100 éléments par opération"),
-	);
-
-export const bulkActivateProductTypesSchema = z.object({
-	ids: bulkIdsSchema,
-});
-
-export const bulkDeleteProductTypesSchema = z.object({
-	ids: bulkIdsSchema,
-});
-
 export const duplicateProductTypeSchema = z.object({
 	productTypeId: z.cuid2("ID de type de produit invalide"),
 });

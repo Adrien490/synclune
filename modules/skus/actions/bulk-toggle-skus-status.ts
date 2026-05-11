@@ -19,6 +19,7 @@ import { ADMIN_SKU_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { z } from "zod";
 
+import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
 
 const bulkToggleSkusStatusInputSchema = z.object({
@@ -73,6 +74,7 @@ export async function bulkToggleSkusStatus(
 				sku: true,
 				isActive: true,
 				isDefault: true,
+				inventory: true,
 				productId: true,
 				product: {
 					select: {
@@ -146,6 +148,18 @@ export async function bulkToggleSkusStatus(
 			);
 		}
 		tags.forEach((tag) => updateTag(tag));
+
+		// Back-in-stock notifications (fire-and-forget) when reactivating SKUs with
+		// inventory > 0. Idempotent via wishlist.backInStockNotifiedAt. Dedupe per product.
+		if (targetIsActive) {
+			const productsToNotify = new Set<string>();
+			for (const s of safeEligible) {
+				if (s.inventory > 0) productsToNotify.add(s.productId);
+			}
+			for (const productId of productsToNotify) {
+				void notifyBackInStock(productId);
+			}
+		}
 
 		void logAudit({
 			adminId: adminUser.id,

@@ -80,6 +80,23 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			},
 		});
 
+		// Cascade : si name/hex change, les pages produit qui montrent cette
+		// couleur (swatch + nom dans les SKUs) doivent être réinvalidées.
+		const nameOrHexChanged =
+			validatedData.name !== existingColor.name || validatedData.hex !== existingColor.hex;
+
+		const affectedProductSlugs: string[] = [];
+		if (nameOrHexChanged) {
+			const skus = await prisma.productSku.findMany({
+				where: { colorId: validatedData.id, deletedAt: null },
+				select: { product: { select: { slug: true } } },
+				distinct: ["productId"],
+			});
+			for (const s of skus) {
+				if (s.product.slug) affectedProductSlugs.push(s.product.slug);
+			}
+		}
+
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
@@ -92,10 +109,13 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			},
 		});
 
-		// Invalidate cache — use Set to avoid duplicate list/badges tags when slug changes
-		const tagSet = new Set(getColorInvalidationTags(existingColor.slug));
+		// Invalidate cache — use Set to dedupe tags across the previous + new
+		// slug invalidation pairs and the cross-module product cascade.
+		const tagSet = new Set(
+			getColorInvalidationTags({ slug: existingColor.slug, affectedProductSlugs }),
+		);
 		if (slug !== existingColor.slug) {
-			getColorInvalidationTags(slug).forEach((t) => tagSet.add(t));
+			getColorInvalidationTags({ slug, affectedProductSlugs }).forEach((t) => tagSet.add(t));
 		}
 		tagSet.forEach((tag) => updateTag(tag));
 

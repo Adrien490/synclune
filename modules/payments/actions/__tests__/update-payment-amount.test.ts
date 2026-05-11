@@ -7,6 +7,9 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const {
 	mockGetSession,
 	mockGetOrCreateCartSessionId,
+	mockGetCart,
+	mockGetSkuDetails,
+	mockAssertStoreOpen,
 	mockCheckRateLimit,
 	mockGetClientIp,
 	mockGetRateLimitIdentifier,
@@ -15,6 +18,8 @@ const {
 	mockStripePaymentIntentsUpdate,
 	mockCalculateShipping,
 	mockGetShippingInfo,
+	mockSentryStartSpan,
+	mockSentryCaptureException,
 	MockCircuitBreakerError,
 } = vi.hoisted(() => {
 	class MockCircuitBreakerError extends Error {
@@ -27,6 +32,9 @@ const {
 	return {
 		mockGetSession: vi.fn(),
 		mockGetOrCreateCartSessionId: vi.fn(),
+		mockGetCart: vi.fn(),
+		mockGetSkuDetails: vi.fn(),
+		mockAssertStoreOpen: vi.fn(),
 		mockCheckRateLimit: vi.fn(),
 		mockGetClientIp: vi.fn(),
 		mockGetRateLimitIdentifier: vi.fn(),
@@ -35,6 +43,8 @@ const {
 		mockStripePaymentIntentsUpdate: vi.fn(),
 		mockCalculateShipping: vi.fn(),
 		mockGetShippingInfo: vi.fn(),
+		mockSentryStartSpan: vi.fn(),
+		mockSentryCaptureException: vi.fn(),
 		MockCircuitBreakerError,
 	};
 });
@@ -49,6 +59,18 @@ vi.mock("@/modules/auth/lib/get-current-session", () => ({
 
 vi.mock("@/modules/cart/lib/cart-session", () => ({
 	getOrCreateCartSessionId: mockGetOrCreateCartSessionId,
+}));
+
+vi.mock("@/modules/cart/data/get-cart", () => ({
+	getCart: mockGetCart,
+}));
+
+vi.mock("@/modules/cart/services/sku-validation.service", () => ({
+	getSkuDetails: mockGetSkuDetails,
+}));
+
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
 }));
 
 vi.mock("@/shared/lib/rate-limit", () => ({
@@ -87,6 +109,16 @@ vi.mock("@/shared/constants/countries", () => ({
 	SHIPPING_COUNTRIES: ["FR", "BE", "DE", "MC", "IT", "ES"] as const,
 }));
 
+vi.mock("@/shared/constants/currency", () => ({
+	DEFAULT_CURRENCY: "EUR",
+	STRIPE_MIN_AMOUNT_EUR_CENTS: 50,
+}));
+
+vi.mock("@sentry/nextjs", () => ({
+	startSpan: mockSentryStartSpan,
+	captureException: mockSentryCaptureException,
+}));
+
 vi.mock("@/shared/lib/logger", () => ({
 	logger: {
 		error: vi.fn(),
@@ -103,10 +135,26 @@ import { updatePaymentAmount } from "../update-payment-amount";
 
 const VALID_PARAMS = {
 	paymentIntentId: "pi_test_abc123",
-	subtotal: 5000,
 	country: "FR",
 	postalCode: "75001",
 	discountAmount: 0,
+};
+
+const MOCK_CART_5000 = {
+	items: [
+		{
+			sku: { id: "sku-1" },
+			quantity: 2,
+			priceAtAdd: 2500,
+		},
+	],
+};
+
+const MOCK_SKU_RESULT_5000 = {
+	success: true as const,
+	data: {
+		sku: { id: "sku-1", priceInclTax: 2500 },
+	},
 };
 
 const MOCK_PI_USER = {
@@ -136,7 +184,7 @@ const MOCK_SHIPPING_INFO = {
 // ============================================================================
 
 function setupAuthenticatedUser(userId = "user-123") {
-	mockGetSession.mockResolvedValue({ user: { id: userId } });
+	mockGetSession.mockResolvedValue({ user: { id: userId, role: "USER" } });
 }
 
 function setupGuestUser(sessionId = "session-abc") {
@@ -159,8 +207,18 @@ function setupShipping(amount: number | null = 499) {
 	mockGetShippingInfo.mockReturnValue(amount !== null ? MOCK_SHIPPING_INFO : null);
 }
 
+function setupCart(cart = MOCK_CART_5000, skuResult = MOCK_SKU_RESULT_5000) {
+	mockGetCart.mockResolvedValue(cart);
+	mockGetSkuDetails.mockResolvedValue(skuResult);
+}
+
 function setupDefaults(userId = "user-123") {
+	// Sentry: run the callback directly with a stub span.
+	mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
+		fn({ setAttribute: vi.fn() }),
+	);
 	setupAuthenticatedUser(userId);
+	mockAssertStoreOpen.mockResolvedValue(null);
 	mockHeaders.mockResolvedValue(new Headers());
 	mockGetClientIp.mockResolvedValue("192.168.1.1");
 	mockGetRateLimitIdentifier.mockReturnValue(`user:${userId}`);
@@ -171,6 +229,7 @@ function setupDefaults(userId = "user-123") {
 	});
 	mockStripePaymentIntentsUpdate.mockResolvedValue({ id: "pi_test_abc123", amount: 5499 });
 	setupShipping(499);
+	setupCart();
 }
 
 // ============================================================================
@@ -191,19 +250,20 @@ describe("updatePaymentAmount", () => {
 			setupDefaults();
 		});
 
-		it("should return success with newTotal, shipping and shippingInfo", async () => {
+		it("returns success with newTotal, shipping and shippingInfo", async () => {
 			const result = await updatePaymentAmount(VALID_PARAMS);
 
 			expect(result.success).toBe(true);
 			if (result.success) {
 				expect(result.newTotal).toBe(5499); // 5000 - 0 + 499
+				expect(result.subtotal).toBe(5000);
 				expect(result.shipping).toBe(499);
 				expect(result.shippingUnavailable).toBe(false);
 				expect(result.shippingInfo).toEqual(MOCK_SHIPPING_INFO);
 			}
 		});
 
-		it("should call stripe.paymentIntents.update with correct amount", async () => {
+		it("calls stripe.paymentIntents.update with the correct amount", async () => {
 			await updatePaymentAmount(VALID_PARAMS);
 
 			expect(mockStripePaymentIntentsUpdate).toHaveBeenCalledWith("pi_test_abc123", {
@@ -211,8 +271,8 @@ describe("updatePaymentAmount", () => {
 			});
 		});
 
-		it("should apply discount when discountAmount is provided", async () => {
-			const params = { ...VALID_PARAMS, subtotal: 5000, discountAmount: 1000 };
+		it("applies discount when discountAmount is provided", async () => {
+			const params = { ...VALID_PARAMS, discountAmount: 1000 };
 
 			const result = await updatePaymentAmount(params);
 
@@ -225,23 +285,89 @@ describe("updatePaymentAmount", () => {
 			});
 		});
 
-		it("should not exceed minimum of 0 when discount+shipping results in negative", async () => {
-			// Normally guarded by discountAmount <= subtotal, but shipping could still push to 0
+		it("clamps to STRIPE_MIN_AMOUNT_EUR_CENTS when discount+shipping cancel out", async () => {
 			setupShipping(0);
-			const params = { ...VALID_PARAMS, subtotal: 1000, discountAmount: 1000 };
+			// Override cart to a 1000-cent total so discount of 1000 fully zeroes the subtotal.
+			setupCart(
+				{ items: [{ sku: { id: "sku-1" }, quantity: 1, priceAtAdd: 1000 }] },
+				{ success: true, data: { sku: { id: "sku-1", priceInclTax: 1000 } } },
+			);
+			const params = { ...VALID_PARAMS, discountAmount: 1000 };
 
 			const result = await updatePaymentAmount(params);
 
 			expect(result.success).toBe(true);
 			if (result.success) {
-				expect(result.newTotal).toBe(50); // Math.max(50, 1000 - 1000 + 0) — MIN_STRIPE_AMOUNT = 50
+				expect(result.newTotal).toBe(50); // STRIPE_MIN_AMOUNT_EUR_CENTS
 			}
 		});
 
-		it("should retrieve PI from Stripe to verify ownership", async () => {
+		it("retrieves the PI from Stripe to verify ownership", async () => {
 			await updatePaymentAmount(VALID_PARAMS);
 
 			expect(mockStripePaymentIntentsRetrieve).toHaveBeenCalledWith("pi_test_abc123");
+		});
+	});
+
+	// ──────────────────────────────────────────────────────────────
+	// Underbilling guard — PI already bound to an order (audit P0.1)
+	// ──────────────────────────────────────────────────────────────
+
+	describe("underbilling guard (audit P0.1)", () => {
+		beforeEach(() => {
+			setupDefaults();
+		});
+
+		it("refuses the update when PI metadata already carries an orderId", async () => {
+			mockStripePaymentIntentsRetrieve.mockResolvedValue({
+				id: "pi_test_abc123",
+				metadata: { userId: "user-123", guestSessionId: "", orderId: "order-bound" },
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error).toBe("Commande déjà initiée — actualisez la page.");
+			}
+			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
+		});
+	});
+
+	// ──────────────────────────────────────────────────────────────
+	// Store-closure guard
+	// ──────────────────────────────────────────────────────────────
+
+	describe("store closure guard (audit P1.3)", () => {
+		beforeEach(() => {
+			setupDefaults();
+		});
+
+		it("returns the closure message when the store is closed for non-admin users", async () => {
+			mockAssertStoreOpen.mockResolvedValue({ message: "Boutique fermée." });
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error).toBe("Boutique fermée.");
+			}
+			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
+		});
+
+		it("bypasses the closure guard for admins (live checkout testing)", async () => {
+			mockGetSession.mockResolvedValue({ user: { id: "admin-1", role: "ADMIN" } });
+			mockGetRateLimitIdentifier.mockReturnValue("user:admin-1");
+			mockAssertStoreOpen.mockResolvedValue({ message: "Boutique fermée." });
+			mockStripePaymentIntentsRetrieve.mockResolvedValue({
+				id: "pi_test_abc123",
+				metadata: { userId: "admin-1", guestSessionId: "" },
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(true);
+			expect(mockAssertStoreOpen).not.toHaveBeenCalled();
 		});
 	});
 
@@ -251,7 +377,11 @@ describe("updatePaymentAmount", () => {
 
 	describe("happy path (guest user)", () => {
 		beforeEach(() => {
+			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
+				fn({ setAttribute: vi.fn() }),
+			);
 			setupGuestUser("session-abc");
+			mockAssertStoreOpen.mockResolvedValue(null);
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("10.0.0.1");
 			mockGetRateLimitIdentifier.mockReturnValue("session:session-abc");
@@ -259,9 +389,10 @@ describe("updatePaymentAmount", () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue(MOCK_PI_GUEST);
 			mockStripePaymentIntentsUpdate.mockResolvedValue({ id: "pi_test_abc123", amount: 5499 });
 			setupShipping(499);
+			setupCart();
 		});
 
-		it("should return success for guest user with valid sessionId", async () => {
+		it("returns success for guest with matching sessionId", async () => {
 			const result = await updatePaymentAmount(VALID_PARAMS);
 
 			expect(result.success).toBe(true);
@@ -271,7 +402,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should update PI amount for guest user", async () => {
+		it("updates the PI amount for guest user", async () => {
 			await updatePaymentAmount(VALID_PARAMS);
 
 			expect(mockStripePaymentIntentsUpdate).toHaveBeenCalledWith("pi_test_abc123", {
@@ -285,7 +416,13 @@ describe("updatePaymentAmount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	describe("auth check", () => {
-		it("should return error when no userId and no sessionId", async () => {
+		beforeEach(() => {
+			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
+				fn({ setAttribute: vi.fn() }),
+			);
+		});
+
+		it("returns error when no userId and no sessionId", async () => {
 			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateCartSessionId.mockResolvedValue(null);
 
@@ -297,7 +434,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should not call Stripe when session is invalid", async () => {
+		it("does not call Stripe when session is invalid", async () => {
 			mockGetSession.mockResolvedValue(null);
 			mockGetOrCreateCartSessionId.mockResolvedValue(null);
 
@@ -314,13 +451,10 @@ describe("updatePaymentAmount", () => {
 
 	describe("rate limiting", () => {
 		beforeEach(() => {
-			setupAuthenticatedUser();
-			mockHeaders.mockResolvedValue(new Headers());
-			mockGetClientIp.mockResolvedValue("192.168.1.1");
-			mockGetRateLimitIdentifier.mockReturnValue("user:user-123");
+			setupDefaults();
 		});
 
-		it("should return rate limit error when limit exceeded", async () => {
+		it("returns the rate-limit error when the limit is exceeded", async () => {
 			setupRateLimit(false, "Trop de tentatives. Veuillez réessayer plus tard.");
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -331,7 +465,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return fallback error when rate limit has no error message", async () => {
+		it("uses a fallback message when the rate limiter omits one", async () => {
 			mockCheckRateLimit.mockResolvedValue({
 				success: false,
 				remaining: 0,
@@ -347,7 +481,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should not call Stripe when rate limited", async () => {
+		it("does not call Stripe when rate limited", async () => {
 			setupRateLimit(false, "Rate limited");
 
 			await updatePaymentAmount(VALID_PARAMS);
@@ -366,7 +500,7 @@ describe("updatePaymentAmount", () => {
 			setupDefaults();
 		});
 
-		it("should return validation error when paymentIntentId does not start with pi_", async () => {
+		it("rejects a paymentIntentId that does not start with pi_", async () => {
 			const params = { ...VALID_PARAMS, paymentIntentId: "ch_test_abc123" };
 
 			const result = await updatePaymentAmount(params);
@@ -377,18 +511,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return validation error for negative subtotal", async () => {
-			const params = { ...VALID_PARAMS, subtotal: -100 };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				expect(result.error).toBe("Le sous-total doit être positif");
-			}
-		});
-
-		it("should return validation error for invalid country", async () => {
+		it("rejects an invalid country code", async () => {
 			const params = { ...VALID_PARAMS, country: "US" };
 
 			const result = await updatePaymentAmount(params);
@@ -399,91 +522,90 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return validation error for negative discountAmount", async () => {
+		it("rejects a negative discountAmount", async () => {
 			const params = { ...VALID_PARAMS, discountAmount: -50 };
 
 			const result = await updatePaymentAmount(params);
 
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toBe("Le montant de réduction doit être positif");
+				expect(result.error).toBe("Le montant de réduction ne peut pas être négatif");
 			}
 		});
 
-		it("should accept zero subtotal as valid", async () => {
-			const params = { ...VALID_PARAMS, subtotal: 0, discountAmount: 0 };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(true);
-		});
-
-		it("should accept zero discountAmount as valid", async () => {
+		it("accepts zero discountAmount as valid", async () => {
 			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountAmount: 0 });
 
 			expect(result.success).toBe(true);
 		});
 
-		it("should accept empty string postalCode (uses default)", async () => {
-			const params = { ...VALID_PARAMS, postalCode: "" };
-
-			const result = await updatePaymentAmount(params);
+		it("accepts an empty postalCode (uses default)", async () => {
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, postalCode: "" });
 
 			expect(result.success).toBe(true);
 		});
 
-		it("should return error for missing params entirely", async () => {
+		it("returns an error when params are entirely missing", async () => {
 			const result = await updatePaymentAmount(null);
 
 			expect(result.success).toBe(false);
 		});
-
-		it("should not call Stripe when validation fails", async () => {
-			await updatePaymentAmount({ ...VALID_PARAMS, paymentIntentId: "invalid" });
-
-			expect(mockStripePaymentIntentsRetrieve).not.toHaveBeenCalled();
-			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
-		});
 	});
 
 	// ──────────────────────────────────────────────────────────────
-	// Discount vs subtotal validation
+	// Cart re-validation (audit P0.1)
 	// ──────────────────────────────────────────────────────────────
 
-	describe("discountAmount vs subtotal", () => {
+	describe("server-side cart re-validation (audit P0.1)", () => {
 		beforeEach(() => {
 			setupDefaults();
 		});
 
-		it("should return error when discountAmount exceeds subtotal", async () => {
-			const params = { ...VALID_PARAMS, subtotal: 1000, discountAmount: 1500 };
+		it("returns an error when the cart is empty", async () => {
+			setupCart({ items: [] }, MOCK_SKU_RESULT_5000);
 
-			const result = await updatePaymentAmount(params);
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error).toBe("Panier vide ou introuvable.");
+			}
+		});
+
+		it("returns an error when a SKU is unavailable", async () => {
+			mockGetSkuDetails.mockResolvedValue({ success: false, error: "Not found" });
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error).toBe("Certains articles ne sont plus disponibles.");
+			}
+		});
+
+		it("returns an error when the SKU price changed since cart add", async () => {
+			setupCart(MOCK_CART_5000, {
+				success: true,
+				data: { sku: { id: "sku-1", priceInclTax: 9999 } },
+			});
+
+			const result = await updatePaymentAmount(VALID_PARAMS);
+
+			expect(result.success).toBe(false);
+			if (!result.success) {
+				expect(result.error).toBe(
+					"Les prix de certains articles ont changé. Actualisez votre panier.",
+				);
+			}
+		});
+
+		it("returns an error when discountAmount exceeds the recomputed subtotal", async () => {
+			const result = await updatePaymentAmount({ ...VALID_PARAMS, discountAmount: 6000 });
 
 			expect(result.success).toBe(false);
 			if (!result.success) {
 				expect(result.error).toBe("Le montant de réduction ne peut pas dépasser le sous-total.");
 			}
-		});
-
-		it("should accept discountAmount equal to subtotal", async () => {
-			setupShipping(499);
-			const params = { ...VALID_PARAMS, subtotal: 1000, discountAmount: 1000 };
-
-			const result = await updatePaymentAmount(params);
-
-			expect(result.success).toBe(true);
-			if (result.success) {
-				expect(result.newTotal).toBe(499); // 0 + 499
-			}
-		});
-
-		it("should not retrieve PI when discountAmount exceeds subtotal", async () => {
-			const params = { ...VALID_PARAMS, subtotal: 500, discountAmount: 1000 };
-
-			await updatePaymentAmount(params);
-
-			expect(mockStripePaymentIntentsRetrieve).not.toHaveBeenCalled();
 		});
 	});
 
@@ -493,15 +615,11 @@ describe("updatePaymentAmount", () => {
 
 	describe("PI ownership", () => {
 		beforeEach(() => {
-			mockHeaders.mockResolvedValue(new Headers());
-			mockGetClientIp.mockResolvedValue("192.168.1.1");
-			setupRateLimit(true);
+			setupDefaults();
 			setupShipping(499);
 		});
 
-		it("should return error when PI userId does not match authenticated user", async () => {
-			setupAuthenticatedUser("user-123");
-			mockGetRateLimitIdentifier.mockReturnValue("user:user-123");
+		it("rejects when PI userId does not match the authenticated user", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
 				metadata: { userId: "user-999", guestSessionId: "" },
@@ -515,9 +633,18 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return error when PI guestSessionId does not match current sessionId", async () => {
+		it("rejects when PI guestSessionId does not match the current sessionId", async () => {
+			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
+				fn({ setAttribute: vi.fn() }),
+			);
 			setupGuestUser("session-abc");
+			mockAssertStoreOpen.mockResolvedValue(null);
+			mockHeaders.mockResolvedValue(new Headers());
+			mockGetClientIp.mockResolvedValue("10.0.0.1");
 			mockGetRateLimitIdentifier.mockReturnValue("session:session-abc");
+			setupRateLimit(true);
+			setupShipping(499);
+			setupCart();
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
 				metadata: { userId: "", guestSessionId: "session-xyz" },
@@ -531,9 +658,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return error when authenticated user tries to access guest PI", async () => {
-			setupAuthenticatedUser("user-123");
-			mockGetRateLimitIdentifier.mockReturnValue("user:user-123");
+		it("rejects when authenticated user tries to access a guest PI", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
 				metadata: { userId: "", guestSessionId: "session-abc" },
@@ -547,9 +672,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should not call stripe.paymentIntents.update on ownership mismatch", async () => {
-			setupAuthenticatedUser("user-123");
-			mockGetRateLimitIdentifier.mockReturnValue("user:user-123");
+		it("does not call stripe.paymentIntents.update on ownership mismatch", async () => {
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
 				metadata: { userId: "user-other", guestSessionId: "" },
@@ -571,7 +694,7 @@ describe("updatePaymentAmount", () => {
 			setupShipping(null);
 		});
 
-		it("should return success with shippingUnavailable=true when shipping is null", async () => {
+		it("returns success with shippingUnavailable=true when shipping is null", async () => {
 			const result = await updatePaymentAmount({ ...VALID_PARAMS, postalCode: "20000" });
 
 			expect(result.success).toBe(true);
@@ -581,24 +704,24 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should NOT call stripe.paymentIntents.update when shipping is unavailable", async () => {
+		it("does not call stripe.paymentIntents.update when shipping is unavailable", async () => {
 			await updatePaymentAmount({ ...VALID_PARAMS, postalCode: "20000" });
 
 			expect(mockStripePaymentIntentsUpdate).not.toHaveBeenCalled();
 		});
 
-		it("should still return newTotal calculated as subtotal - discount when shipping unavailable", async () => {
-			const params = { ...VALID_PARAMS, subtotal: 5000, discountAmount: 500, postalCode: "20000" };
+		it("still computes newTotal as subtotal - discount when shipping unavailable", async () => {
+			const params = { ...VALID_PARAMS, discountAmount: 500, postalCode: "20000" };
 
 			const result = await updatePaymentAmount(params);
 
 			expect(result.success).toBe(true);
 			if (result.success) {
-				expect(result.newTotal).toBe(4500); // Math.max(0, 5000 - 500 + 0)
+				expect(result.newTotal).toBe(4500); // 5000 - 500 + 0
 			}
 		});
 
-		it("should return shippingInfo as null when shipping is unavailable", async () => {
+		it("returns shippingInfo=null when shipping is unavailable", async () => {
 			const result = await updatePaymentAmount({ ...VALID_PARAMS, postalCode: "20000" });
 
 			expect(result.success).toBe(true);
@@ -609,20 +732,16 @@ describe("updatePaymentAmount", () => {
 	});
 
 	// ──────────────────────────────────────────────────────────────
-	// EU shipping
+	// EU country shipping
 	// ──────────────────────────────────────────────────────────────
 
 	describe("EU country shipping", () => {
 		beforeEach(() => {
 			setupDefaults();
-			mockStripePaymentIntentsRetrieve.mockResolvedValue({
-				id: "pi_test_abc123",
-				metadata: { userId: "user-123", guestSessionId: "" },
-			});
 			setupShipping(950);
 		});
 
-		it("should calculate shipping for EU country", async () => {
+		it("calculates shipping for EU country", async () => {
 			const params = { ...VALID_PARAMS, country: "BE" };
 
 			const result = await updatePaymentAmount(params);
@@ -644,7 +763,7 @@ describe("updatePaymentAmount", () => {
 			setupDefaults();
 		});
 
-		it("should return service unavailable error when CircuitBreakerError is thrown on retrieve", async () => {
+		it("returns service-unavailable when CircuitBreakerError is thrown on retrieve", async () => {
 			mockStripePaymentIntentsRetrieve.mockRejectedValue(new MockCircuitBreakerError("Stripe"));
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -655,7 +774,7 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return service unavailable error when CircuitBreakerError is thrown on update", async () => {
+		it("returns service-unavailable when CircuitBreakerError is thrown on update", async () => {
 			mockStripePaymentIntentsUpdate.mockRejectedValue(new MockCircuitBreakerError("Stripe"));
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -676,7 +795,7 @@ describe("updatePaymentAmount", () => {
 			setupDefaults();
 		});
 
-		it("should return generic error message on unexpected exception during retrieve", async () => {
+		it("returns a generic error on unexpected exception during retrieve", async () => {
 			mockStripePaymentIntentsRetrieve.mockRejectedValue(new Error("Network timeout"));
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
@@ -687,25 +806,13 @@ describe("updatePaymentAmount", () => {
 			}
 		});
 
-		it("should return generic error message on unexpected exception during update", async () => {
+		it("returns a generic error on unexpected exception during update", async () => {
 			mockStripePaymentIntentsUpdate.mockRejectedValue(new Error("Stripe API error"));
 
 			const result = await updatePaymentAmount(VALID_PARAMS);
 
 			expect(result.success).toBe(false);
 			if (!result.success) {
-				expect(result.error).toBe("Erreur lors de la mise à jour du montant.");
-			}
-		});
-
-		it("should return generic error and not service unavailable for non-CircuitBreaker errors", async () => {
-			mockStripePaymentIntentsRetrieve.mockRejectedValue(new Error("Some random error"));
-
-			const result = await updatePaymentAmount(VALID_PARAMS);
-
-			expect(result.success).toBe(false);
-			if (!result.success) {
-				expect(result.error).not.toBe("Service de paiement temporairement indisponible.");
 				expect(result.error).toBe("Erreur lors de la mise à jour du montant.");
 			}
 		});
@@ -716,9 +823,21 @@ describe("updatePaymentAmount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	describe("rate limit identifier", () => {
-		it("should use user-based identifier for authenticated users", async () => {
-			setupDefaults("user-456");
+		beforeEach(() => {
+			mockSentryStartSpan.mockImplementation((_opts: unknown, fn: (span: unknown) => unknown) =>
+				fn({ setAttribute: vi.fn() }),
+			);
+			mockAssertStoreOpen.mockResolvedValue(null);
+			setupShipping(499);
+			setupCart();
+		});
+
+		it("uses a user-based identifier for authenticated users", async () => {
+			setupAuthenticatedUser("user-456");
+			mockHeaders.mockResolvedValue(new Headers());
+			mockGetClientIp.mockResolvedValue("192.168.1.1");
 			mockGetRateLimitIdentifier.mockReturnValue("user:user-456");
+			setupRateLimit(true);
 			mockStripePaymentIntentsRetrieve.mockResolvedValue({
 				id: "pi_test_abc123",
 				metadata: { userId: "user-456", guestSessionId: "" },
@@ -729,11 +848,11 @@ describe("updatePaymentAmount", () => {
 			expect(mockCheckRateLimit).toHaveBeenCalledWith(
 				"update-amount:user:user-456",
 				expect.any(Object),
-				expect.any(String),
+				"192.168.1.1",
 			);
 		});
 
-		it("should use getRateLimitIdentifier for guest users", async () => {
+		it("uses getRateLimitIdentifier for guest users", async () => {
 			setupGuestUser("session-xyz");
 			mockHeaders.mockResolvedValue(new Headers());
 			mockGetClientIp.mockResolvedValue("10.0.0.5");
@@ -743,8 +862,6 @@ describe("updatePaymentAmount", () => {
 				id: "pi_test_abc123",
 				metadata: { userId: "", guestSessionId: "session-xyz" },
 			});
-			mockStripePaymentIntentsUpdate.mockResolvedValue({});
-			setupShipping(499);
 
 			await updatePaymentAmount(VALID_PARAMS);
 

@@ -257,9 +257,9 @@ describe("usePaymentIntent", () => {
 			await Promise.resolve();
 		});
 
+		// Subtotal is recomputed server-side (audit P0.1) — client no longer passes it.
 		expect(mockUpdatePaymentAmount).toHaveBeenCalledWith({
 			paymentIntentId: "pi_123",
-			subtotal: 10000,
 			country: "FR",
 			postalCode: "75001",
 			discountAmount: 500,

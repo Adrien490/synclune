@@ -9,7 +9,7 @@ import {
 	NUMERIC_POSTAL_CODE_COUNTRIES,
 	type ShippingCountry,
 } from "@/shared/constants/countries";
-import { useAddressAutocomplete } from "../hooks/use-address-autocomplete";
+import { useAddressAutocomplete } from "@/modules/addresses/hooks/use-address-autocomplete";
 import type { SearchAddressResult } from "@/modules/addresses/types/search-address.types";
 import { AddressSelector } from "./address-selector";
 import { CheckoutErrorSummary } from "./checkout-error-summary";

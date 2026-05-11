@@ -4,6 +4,7 @@ import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { cacheLife, cacheTag } from "next/cache";
 import { COLLECTIONS_CACHE_TAGS } from "@/modules/collections/constants/cache";
+import { PRODUCTS_CACHE_TAGS } from "../constants/cache";
 
 /**
  * Fetches collections associated with a specific product
@@ -23,8 +24,8 @@ export async function getAllCollections(): Promise<{ id: string; name: string }[
 
 async function fetchProductCollections(productId: string): Promise<{ id: string; name: string }[]> {
 	"use cache";
-	cacheLife("catalog");
-	cacheTag(COLLECTIONS_CACHE_TAGS.LIST);
+	cacheLife("reference");
+	cacheTag(PRODUCTS_CACHE_TAGS.COLLECTIONS(productId), COLLECTIONS_CACHE_TAGS.LIST);
 
 	try {
 		const productCollections = await prisma.productCollection.findMany({

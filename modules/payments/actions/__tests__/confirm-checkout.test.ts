@@ -143,12 +143,22 @@ vi.mock("@/shared/lib/sanitize", () => ({
 	sanitizeText: (text: string) => text,
 }));
 
+const { mockLoggerError, mockLoggerInfo, mockLoggerWarn, mockAssertStoreOpen } = vi.hoisted(() => ({
+	mockLoggerError: vi.fn(),
+	mockLoggerInfo: vi.fn(),
+	mockLoggerWarn: vi.fn(),
+	mockAssertStoreOpen: vi.fn().mockResolvedValue(null),
+}));
 vi.mock("@/shared/lib/logger", () => ({
 	logger: {
-		error: vi.fn(),
-		warn: vi.fn(),
-		info: vi.fn(),
+		error: mockLoggerError,
+		info: mockLoggerInfo,
+		warn: mockLoggerWarn,
 	},
+}));
+
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
 }));
 
 vi.mock("@sentry/nextjs", () => ({
@@ -1050,13 +1060,17 @@ describe("confirmCheckout", () => {
 			});
 		});
 
-		it("should call Sentry.captureException on unexpected errors", async () => {
+		it("should log unexpected errors via logger.error (Sentry routed internally)", async () => {
 			const error = new Error("Unexpected crash");
 			mockGetSession.mockRejectedValue(error);
 
 			await confirmCheckout(createValidData());
 
-			expect(mockSentryCaptureException).toHaveBeenCalledWith(error);
+			expect(mockLoggerError).toHaveBeenCalledWith(
+				"Failed to confirm checkout",
+				error,
+				expect.objectContaining({ service: "checkout" }),
+			);
 		});
 
 		it("should return error when createOrderInTransaction throws", async () => {

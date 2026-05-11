@@ -28,10 +28,11 @@ const OPEN_STATUS = {
 	closureMessage: null,
 	reopensAt: null,
 };
+// reopensAt in the FAR future to avoid the eventual-consistency fallback in the wrapper.
 const CLOSED_STATUS = {
 	isClosed: true,
 	closureMessage: "Maintenance en cours",
-	reopensAt: new Date("2026-04-01T10:00:00Z"),
+	reopensAt: new Date("2099-12-31T10:00:00Z"),
 };
 
 // ============================================================================
@@ -113,5 +114,32 @@ describe("getStoreStatus", () => {
 		mockPrisma.storeSettings.findUnique.mockResolvedValue(null);
 		await getStoreStatus();
 		expect(mockLogger.error).not.toHaveBeenCalled();
+	});
+
+	// ─── Eventual-consistency fallback (P1.3) ─────────────────────────────
+
+	it("treats store as open when reopensAt has passed (cron has not yet flipped DB)", async () => {
+		mockPrisma.storeSettings.findUnique.mockResolvedValue({
+			isClosed: true,
+			closureMessage: "Vacances",
+			reopensAt: new Date("2020-01-01T00:00:00Z"),
+		});
+		const result = await getStoreStatus();
+		expect(result).toEqual({
+			isClosed: false,
+			closureMessage: null,
+			reopensAt: null,
+		});
+	});
+
+	it("keeps store closed when reopensAt is null (manual reopen required)", async () => {
+		mockPrisma.storeSettings.findUnique.mockResolvedValue({
+			isClosed: true,
+			closureMessage: "Indéfini",
+			reopensAt: null,
+		});
+		const result = await getStoreStatus();
+		expect(result.isClosed).toBe(true);
+		expect(result.closureMessage).toBe("Indéfini");
 	});
 });

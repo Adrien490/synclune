@@ -4,9 +4,11 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { EMAIL_ADMIN } from "../constants/email.constants";
 import { renderAndSend } from "./send-email";
 import { EXTERNAL_URLS, getBaseUrl } from "@/shared/constants/urls";
+import type { RefundReason } from "@/app/generated/prisma/client";
+import { REFUND_REASON_LABELS as INTERNAL_REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
 import type { EmailResult, ShippingAddress, OrderItem } from "../types/email.types";
 
-const REFUND_REASON_LABELS: Record<"payment_failed" | "payment_canceled" | "other", string> = {
+const REFUND_FAILURE_LABELS: Record<"payment_failed" | "payment_canceled" | "other", string> = {
 	payment_failed: "Échec du paiement",
 	payment_canceled: "Paiement annulé",
 	other: "Autre raison",
@@ -67,6 +69,7 @@ export async function sendAdminRefundFailedAlert({
 	customerEmail,
 	amount,
 	reason,
+	refundReason,
 	errorMessage,
 	stripePaymentIntentId,
 	dashboardUrl,
@@ -75,23 +78,28 @@ export async function sendAdminRefundFailedAlert({
 	customerEmail: string;
 	amount: number;
 	reason: "payment_failed" | "payment_canceled" | "other";
+	refundReason?: RefundReason;
 	errorMessage: string;
 	stripePaymentIntentId: string;
 	dashboardUrl: string;
 }): Promise<EmailResult> {
 	const stripeDashboardUrl = `https://dashboard.stripe.com/payments/${stripePaymentIntentId}`;
-	const context = [
+	const contextLines = [
 		`Commande   : ${orderNumber}`,
 		`Client     : ${customerEmail}`,
 		`Montant    : ${formatEuro(amount)}`,
-		`Raison     : ${REFUND_REASON_LABELS[reason]}`,
-		`Payment ID : ${stripePaymentIntentId}`,
-	].join("\n");
+		`Type échec : ${REFUND_FAILURE_LABELS[reason]}`,
+	];
+	if (refundReason) {
+		contextLines.push(`Motif      : ${INTERNAL_REFUND_REASON_LABELS[refundReason]}`);
+	}
+	contextLines.push(`Payment ID : ${stripePaymentIntentId}`);
+	const context = contextLines.join("\n");
 	return renderAndSend(
 		AdminAlertEmail({
 			type: "refund",
 			context,
-			summary: `Le remboursement automatique a échoué. Raison: ${REFUND_REASON_LABELS[reason]}. Une intervention manuelle est requise pour rembourser le client ${customerEmail}.`,
+			summary: `Le remboursement automatique a échoué. Type: ${REFUND_FAILURE_LABELS[reason]}. Une intervention manuelle est requise pour rembourser le client ${customerEmail}.`,
 			stackTrace: errorMessage,
 			ctaUrl: dashboardUrl,
 			ctaLabel: "Voir la commande",

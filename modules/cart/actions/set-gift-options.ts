@@ -43,13 +43,13 @@ export async function setGiftOptions(
 		if ("error" in validated) return validated.error;
 		const { cartItemId, giftWrap, giftMessage } = validated.data;
 
-		// Ownership check
+		// Ownership check (incluant validation du cart parent non expiré)
 		const cartItem = await prisma.cartItem.findUnique({
 			where: { id: cartItemId },
 			select: {
 				id: true,
 				cartId: true,
-				cart: { select: { userId: true, sessionId: true } },
+				cart: { select: { userId: true, sessionId: true, expiresAt: true } },
 			},
 		});
 
@@ -61,6 +61,11 @@ export async function setGiftOptions(
 			? cartItem.cart.userId === userId
 			: cartItem.cart.sessionId === sessionId;
 		if (!isOwner) {
+			return forbidden();
+		}
+
+		// Reject if parent cart is expired (consistent with other cart reads)
+		if (cartItem.cart.expiresAt && cartItem.cart.expiresAt <= new Date()) {
 			return forbidden();
 		}
 

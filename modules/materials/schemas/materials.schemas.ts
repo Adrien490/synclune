@@ -86,13 +86,6 @@ export const deleteMaterialSchema = z.object({
 	id: z.cuid2("ID invalide"),
 });
 
-export const bulkDeleteMaterialsSchema = z.object({
-	ids: z
-		.array(z.cuid2("ID invalide"))
-		.min(1, "Aucun matériau sélectionné")
-		.max(200, "Maximum 200 matériaux par opération"),
-});
-
 export const toggleMaterialStatusSchema = z.object({
 	id: z.cuid2("ID invalide"),
 	isActive: z.boolean(),

@@ -20,7 +20,7 @@ import { sanitizeText } from "@/shared/lib/sanitize";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { ADMIN_DISCOUNT_LIMITS } from "@/shared/lib/rate-limit-config";
 
-import { getDiscountInvalidationTags, DISCOUNT_CACHE_TAGS } from "../constants/cache";
+import { getDiscountInvalidationTags } from "../constants/cache";
 import { isCodeAvailable } from "../services/discount-uniqueness.service";
 
 /**
@@ -96,9 +96,6 @@ export async function updateDiscount(
 
 		// Invalidate list, admin badges, id-based detail, and code-based detail
 		getDiscountInvalidationTags(id).forEach((tag) => updateTag(tag));
-		// Invalidate old code's cache (get-discount-by-code uses code as cache key)
-		updateTag(DISCOUNT_CACHE_TAGS.DETAIL(existing.code));
-
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,

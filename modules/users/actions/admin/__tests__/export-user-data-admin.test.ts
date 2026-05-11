@@ -119,7 +119,7 @@ describe("exportUserDataAdmin", () => {
 		const result = await exportUserDataAdmin("user-456");
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdminWithUser).not.toHaveBeenCalled();
+		expect(mockBuildUserDataExport).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

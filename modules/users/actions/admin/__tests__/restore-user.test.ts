@@ -161,7 +161,7 @@ describe("restoreUser", () => {
 		const result = await restoreUser(undefined, validFormData);
 
 		expect(result).toEqual(rateLimitError);
-		expect(mockRequireAdmin).not.toHaveBeenCalled();
+		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
 
 	// ──────────────────────────────────────────────────────────────

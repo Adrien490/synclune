@@ -14,8 +14,9 @@ import {
 } from "@/shared/lib/actions";
 import type { ActionState } from "@/shared/types/server-action";
 import { CART_ERROR_MESSAGES } from "@/modules/cart/constants/error-messages";
-import { getCartExpirationDate, getOrCreateCartSessionId } from "@/modules/cart/lib/cart-session";
+import { getCartExpirationDate } from "@/modules/cart/lib/cart-session";
 import { checkCartRateLimit } from "@/modules/cart/lib/cart-rate-limit";
+import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { addToCartSchema } from "../schemas/cart.schemas";
 import { MAX_CART_ITEMS, MAX_QUANTITY_PER_ORDER } from "../constants/cart";
 
@@ -42,33 +43,30 @@ export async function addToCart(
 
 		const validatedData = validated.data;
 
-		// 3. Rate limiting + récupération contexte
+		// 3. Rate limiting + récupération contexte.
+		// `validateUserExists: true` re-check l'user en DB AVANT de consommer le quota user.
+		// Edge case : compte supprimé pendant onglet ouvert → fallback guest sans brûler le slot.
+		// `createSessionIfMissing: true` garantit un sessionId pour les visiteurs (ou post-fallback).
 		const rateLimitResult = await checkCartRateLimit(CART_LIMITS.ADD, {
 			createSessionIfMissing: true,
+			validateUserExists: true,
 		});
 		if (!rateLimitResult.success) {
 			return rateLimitResult.errorState;
 		}
-		let { userId, sessionId } = rateLimitResult.context;
+		const { userId, sessionId } = rateLimitResult.context;
 
-		// 4. Vérifier que l'userId existe dans la base de données
-		// Si l'userId n'existe pas, traiter comme un utilisateur non connecté
-		if (userId) {
-			const userExists = await prisma.user.findUnique({
-				where: { id: userId },
-				select: { id: true },
-			});
-
-			if (!userExists) {
-				userId = undefined;
-				sessionId = await getOrCreateCartSessionId();
-			}
-		}
-
-		// 5. Vérifier que sessionId est bien défini pour les visiteurs
+		// 4. Vérifier que sessionId est bien défini pour les visiteurs
 		if (!userId && !sessionId) {
 			return error("Impossible de creer une session panier. Veuillez reessayer.");
 		}
+
+		// 5. Defense-in-depth : bloquer les ajouts panier quand la boutique est fermée.
+		// Le layout shop bloque déjà le rendering, mais une cart-sheet déjà montée ou
+		// un appel direct Server Action contourne ce gate. Aligne les actions cart sur
+		// les actions payments (initialize-payment / confirm-checkout / update-payment-amount).
+		const storeCheck = await assertStoreOpen();
+		if (storeCheck) return error(storeCheck.message);
 
 		// 6. Transaction: Trouver ou créer le panier, ajouter/mettre à jour l'item
 		const transactionResult = await prisma.$transaction(async (tx) => {

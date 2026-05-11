@@ -10,8 +10,6 @@ import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
-import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
-
 import { getProductTypeInvalidationTags } from "../utils/cache.utils";
 import { mergeProductTypesSchema } from "../schemas/product-type.schemas";
 
@@ -105,8 +103,10 @@ export async function mergeProductTypes(
 			},
 		});
 
-		const tagSet = new Set(getProductTypeInvalidationTags());
-		tagSet.add(PRODUCTS_CACHE_TAGS.LIST);
+		const tagSet = new Set<string>([
+			...getProductTypeInvalidationTags(merged.source.slug),
+			...getProductTypeInvalidationTags(merged.target.slug),
+		]);
 		tagSet.forEach((tag) => updateTag(tag));
 
 		const message =

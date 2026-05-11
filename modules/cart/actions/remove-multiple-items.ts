@@ -56,7 +56,10 @@ export async function removeMultipleItems(
 
 		// Recuperer le panier (ownership via userId/sessionId, no IDOR)
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: {
 				id: true,
 				items: {

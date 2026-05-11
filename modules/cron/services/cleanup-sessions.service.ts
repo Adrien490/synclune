@@ -1,6 +1,30 @@
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
+
+interface SessionCleanupBreakdown {
+	sessionsDeleted: number;
+	verificationsDeleted: number;
+	accessTokensCleared: number;
+	refreshTokensCleared: number;
+	hasMore: boolean;
+}
+
+function buildResult(b: SessionCleanupBreakdown): CronResult {
+	const tokensCleared = b.accessTokensCleared + b.refreshTokensCleared;
+	return {
+		processed: b.sessionsDeleted + b.verificationsDeleted + tokensCleared,
+		errored: 0,
+		skipped: 0,
+		sessionsDeleted: b.sessionsDeleted,
+		verificationsDeleted: b.verificationsDeleted,
+		accessTokensCleared: b.accessTokensCleared,
+		refreshTokensCleared: b.refreshTokensCleared,
+		tokensCleared,
+		hasMore: b.hasMore,
+	};
+}
 
 /**
  * Cleans up expired sessions and tokens.
@@ -13,12 +37,7 @@ import { BATCH_DEADLINE_MS, CLEANUP_DELETE_LIMIT } from "@/modules/cron/constant
  *
  * Uses deadline checking to avoid timeout across 4 sequential operations.
  */
-export async function cleanupExpiredSessions(): Promise<{
-	sessionsDeleted: number;
-	verificationsDeleted: number;
-	tokensCleared: number;
-	hasMore: boolean;
-}> {
+export async function cleanupExpiredSessions(): Promise<CronResult> {
 	const now = new Date();
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 
@@ -56,7 +75,13 @@ export async function cleanupExpiredSessions(): Promise<{
 		// 2. Delete expired verification tokens (bounded)
 		if (Date.now() > deadline) {
 			logger.warn("Approaching timeout, stopping after sessions", { cronJob: "cleanup-sessions" });
-			return { sessionsDeleted, verificationsDeleted, tokensCleared: 0, hasMore: true };
+			return buildResult({
+				sessionsDeleted,
+				verificationsDeleted: 0,
+				accessTokensCleared: 0,
+				refreshTokensCleared: 0,
+				hasMore: true,
+			});
 		}
 
 		const verificationsToDelete = await prisma.verification.findMany({
@@ -85,7 +110,13 @@ export async function cleanupExpiredSessions(): Promise<{
 			logger.warn("Approaching timeout, stopping after verifications", {
 				cronJob: "cleanup-sessions",
 			});
-			return { sessionsDeleted, verificationsDeleted, tokensCleared: 0, hasMore: true };
+			return buildResult({
+				sessionsDeleted,
+				verificationsDeleted,
+				accessTokensCleared: 0,
+				refreshTokensCleared: 0,
+				hasMore: true,
+			});
 		}
 
 		const expiredAccessTokens = await prisma.account.findMany({
@@ -113,12 +144,13 @@ export async function cleanupExpiredSessions(): Promise<{
 			logger.warn("Approaching timeout, stopping after access tokens", {
 				cronJob: "cleanup-sessions",
 			});
-			return {
+			return buildResult({
 				sessionsDeleted,
 				verificationsDeleted,
-				tokensCleared: accessTokensCleared,
+				accessTokensCleared,
+				refreshTokensCleared: 0,
 				hasMore: true,
-			};
+			});
 		}
 
 		const expiredRefreshTokens = await prisma.account.findMany({
@@ -141,8 +173,6 @@ export async function cleanupExpiredSessions(): Promise<{
 			hasMore = true;
 		}
 
-		const tokensCleared = accessTokensCleared + refreshTokensCleared;
-
 		logger.info("Cleared expired tokens", {
 			cronJob: "cleanup-sessions",
 			accessTokensCleared,
@@ -151,12 +181,13 @@ export async function cleanupExpiredSessions(): Promise<{
 
 		logger.info("Cleanup completed", { cronJob: "cleanup-sessions" });
 
-		return {
+		return buildResult({
 			sessionsDeleted,
 			verificationsDeleted,
-			tokensCleared,
+			accessTokensCleared,
+			refreshTokensCleared,
 			hasMore,
-		};
+		});
 	} catch (error) {
 		logger.error("Error during cleanup", error, { cronJob: "cleanup-sessions" });
 		throw error;

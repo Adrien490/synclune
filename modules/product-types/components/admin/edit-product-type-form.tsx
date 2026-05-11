@@ -51,7 +51,15 @@ export function EditProductTypeForm({
 	});
 
 	const isDirty = form.state.isDirty;
-	const allowNavigationRef = useRef<(() => void) | null>(null);
+	const allowNavigationLatestRef = useRef<(() => void) | null>(null);
+	const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	useEffect(
+		() => () => {
+			if (redirectTimeoutRef.current) clearTimeout(redirectTimeoutRef.current);
+		},
+		[],
+	);
 
 	const [, action, isPending] = useActionState(
 		withCallbacks(
@@ -61,10 +69,10 @@ export function EditProductTypeForm({
 				loadingMessage: "Mise à jour du type…",
 				onSuccess: () => {
 					haptic("success");
-					allowNavigationRef.current?.();
+					allowNavigationLatestRef.current?.();
 					onSuccess?.();
 					if (redirectOnSuccess) {
-						setTimeout(
+						redirectTimeoutRef.current = setTimeout(
 							() => withViewTransition(() => router.push("/admin/catalogue/types-de-produits")),
 							FORM_SUCCESS_REDIRECT_DELAY_MS,
 						);
@@ -80,10 +88,10 @@ export function EditProductTypeForm({
 	// natifs sont peu utiles sur mobile et entrent en conflit avec les gestes
 	// swipe-back iOS / Android — UX moins bonne que la perte de saisie).
 	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
-
-	useEffect(() => {
-		allowNavigationRef.current = allowNavigation;
-	}, [allowNavigation]);
+	// Assignment durant render OK pour refs (React 19 docs : pattern recommandé
+	// vs useEffect pour sync. La fonction est invoquée après submit hors render).
+	// eslint-disable-next-line react-hooks/refs
+	allowNavigationLatestRef.current = allowNavigation;
 
 	return (
 		<form

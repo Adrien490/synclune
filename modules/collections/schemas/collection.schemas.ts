@@ -107,6 +107,12 @@ export const updateCollectionStatusSchema = z.object({
 	status: z.nativeEnum(CollectionStatus),
 });
 
+export const toggleCollectionStatusSchema = z.object({
+	id: z.cuid2("ID invalide"),
+	currentStatus: z.nativeEnum(CollectionStatus),
+	targetStatus: z.nativeEnum(CollectionStatus).optional(),
+});
+
 export const deleteCollectionSchema = z.object({
 	id: z.cuid2("ID invalide"),
 });
@@ -133,12 +139,6 @@ export const setFeaturedProductSchema = z.object({
 
 export const duplicateCollectionSchema = z.object({
 	collectionId: z.cuid2("ID de collection invalide"),
-});
-
-export const toggleCollectionStatusSchema = z.object({
-	id: z.cuid2("ID invalide"),
-	currentStatus: z.nativeEnum(CollectionStatus),
-	targetStatus: z.enum([CollectionStatus.DRAFT, CollectionStatus.PUBLIC]).optional(),
 });
 
 export const addProductsToCollectionSchema = z.object({

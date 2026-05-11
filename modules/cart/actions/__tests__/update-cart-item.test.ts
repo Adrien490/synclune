@@ -16,6 +16,7 @@ const {
 	mockUpdateTag,
 	mockGetCartInvalidationTags,
 	mockGetCartExpirationDate,
+	mockAssertStoreOpen,
 } = vi.hoisted(() => {
 	class MockBusinessError extends Error {
 		constructor(message: string) {
@@ -39,6 +40,7 @@ const {
 		mockUpdateTag: vi.fn(),
 		mockGetCartInvalidationTags: vi.fn(),
 		mockGetCartExpirationDate: vi.fn(),
+		mockAssertStoreOpen: vi.fn(),
 	};
 });
 
@@ -99,6 +101,10 @@ vi.mock("../../constants/cart", () => ({
 	MAX_QUANTITY_PER_ORDER: 10,
 }));
 
+vi.mock("@/modules/store-settings/services/store-closure-guard", () => ({
+	assertStoreOpen: mockAssertStoreOpen,
+}));
+
 import { updateCartItem } from "../update-cart-item";
 
 // ============================================================================
@@ -157,6 +163,7 @@ function setupDefaults() {
 	});
 	mockValidateInput.mockReturnValue({ data: { cartItemId: "item-1", quantity: 2 } });
 	mockPrisma.cartItem.findUnique.mockResolvedValue(makeCartItem());
+	mockAssertStoreOpen.mockResolvedValue(null);
 
 	const { tx } = makeTxWithSku();
 	mockPrisma.$transaction.mockImplementation(async (fn: (tx: unknown) => unknown) => fn(tx));
@@ -176,6 +183,19 @@ describe("updateCartItem", () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		setupDefaults();
+	});
+
+	it("returns error when store is closed (defense-in-depth guard)", async () => {
+		mockAssertStoreOpen.mockResolvedValue({
+			closed: true,
+			message: "La boutique est fermée.",
+		});
+
+		await updateCartItem(undefined, makeFormData());
+
+		expect(mockError).toHaveBeenCalledWith("La boutique est fermée.");
+		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+		expect(mockPrisma.cartItem.findUnique).not.toHaveBeenCalled();
 	});
 
 	it("returns error when rate limited", async () => {

@@ -17,8 +17,11 @@
  * ```
  */
 export class BusinessError extends Error {
-	constructor(message: string) {
+	readonly code?: string;
+
+	constructor(message: string, code?: string) {
 		super(message);
 		this.name = "BusinessError";
+		this.code = code;
 	}
 }

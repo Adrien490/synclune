@@ -3,6 +3,7 @@ import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
+import type { CronResult } from "@/modules/cron/lib/cron-result";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
 import { REVIEWS_CACHE_TAGS } from "@/modules/reviews/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -19,11 +20,7 @@ import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
  * - Product (and ProductSku, SkuMedia, etc. via cascade)
  * - ProductReview, ReviewResponse, ReviewMedia (via cascade)
  */
-export async function hardDeleteExpiredRecords(): Promise<{
-	productsDeleted: number;
-	reviewsDeleted: number;
-	hasMore: boolean;
-}> {
+export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 	logger.info("Starting 10-year retention cleanup", { cronJob: "hard-delete-retention" });
 
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
@@ -117,8 +114,12 @@ export async function hardDeleteExpiredRecords(): Promise<{
 			{ cronJob: "hard-delete-retention" },
 		);
 		return {
+			processed: productsResult.count + reviewsResult.count,
+			errored: 0,
+			skipped: 0,
 			productsDeleted: productsResult.count,
 			reviewsDeleted: reviewsResult.count,
+			uploadthingSkipped: true,
 			hasMore,
 		};
 	}
@@ -158,6 +159,9 @@ export async function hardDeleteExpiredRecords(): Promise<{
 	logger.info("Retention cleanup completed", { cronJob: "hard-delete-retention" });
 
 	return {
+		processed: productsResult.count + reviewsResult.count,
+		errored: 0,
+		skipped: 0,
 		productsDeleted: productsResult.count,
 		reviewsDeleted: reviewsResult.count,
 		hasMore,

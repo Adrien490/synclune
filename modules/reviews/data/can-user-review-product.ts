@@ -1,14 +1,19 @@
 import { cacheReviewableProducts } from "../constants/cache";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
+import { checkReviewEligibility } from "../services/eligibility.service";
 import type { CanReviewResult } from "../types/review.types";
 
 /**
- * Vérifie si un utilisateur peut laisser un avis sur un produit
+ * Vérifie si un utilisateur peut laisser un avis sur un produit (lecture cachée UI).
  *
- * Conditions requises:
+ * Conditions requises (déléguées à `checkReviewEligibility`) :
  * 1. L'utilisateur n'a pas déjà laissé un avis sur ce produit
  * 2. L'utilisateur a commandé ce produit
  * 3. La commande a été livrée (DELIVERED)
+ *
+ * ⚠ Pour une mutation (Server Action), utiliser `checkReviewEligibility(prisma, ...)`
+ * directement afin d'éviter une décision d'autorisation basée sur cache stale.
+ * Voir audit reviews 2026-05-11 P1.8.
  *
  * @param userId - ID de l'utilisateur
  * @param productId - ID du produit
@@ -21,78 +26,5 @@ export async function canUserReviewProduct(
 	"use cache: private";
 	cacheReviewableProducts(userId);
 
-	// 1. Vérifier s'il a déjà laissé un avis
-	const existingReview = await prisma.productReview.findUnique({
-		where: {
-			userId_productId: { userId, productId },
-		},
-		select: { id: true, deletedAt: true },
-	});
-
-	if (existingReview && !existingReview.deletedAt) {
-		return {
-			canReview: false,
-			orderItemId: null,
-			reason: "already_reviewed",
-			existingReviewId: existingReview.id,
-		};
-	}
-
-	// 2. Trouver un OrderItem livré sans avis associé
-	const eligibleOrderItem = await prisma.orderItem.findFirst({
-		where: {
-			order: {
-				userId,
-				fulfillmentStatus: "DELIVERED",
-				...notDeleted,
-			},
-			sku: {
-				productId,
-				...notDeleted,
-			},
-			// Pas de review associée à cet OrderItem
-			review: null,
-		},
-		select: { id: true },
-		orderBy: {
-			order: { createdAt: "desc" },
-		},
-	});
-
-	if (!eligibleOrderItem) {
-		// Vérifier si c'est parce qu'il n'a pas acheté ou pas encore livré
-		const pendingOrder = await prisma.orderItem.findFirst({
-			where: {
-				order: {
-					userId,
-					fulfillmentStatus: { not: "DELIVERED" },
-					...notDeleted,
-				},
-				sku: {
-					productId,
-					...notDeleted,
-				},
-			},
-			select: { id: true },
-		});
-
-		if (pendingOrder) {
-			return {
-				canReview: false,
-				orderItemId: null,
-				reason: "order_not_delivered",
-			};
-		}
-
-		return {
-			canReview: false,
-			orderItemId: null,
-			reason: "no_purchase",
-		};
-	}
-
-	return {
-		canReview: true,
-		orderItemId: eligibleOrderItem.id,
-	};
+	return checkReviewEligibility(prisma, userId, productId);
 }

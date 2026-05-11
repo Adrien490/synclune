@@ -72,6 +72,11 @@ vi.mock("@/modules/payments/components/pay-button", () => ({
 	PayButton: () => <div data-testid="pay-button" />,
 }));
 
+// Bypass the Stripe-section chain (which transitively imports auth/Stripe init).
+vi.mock("@/modules/payments/components/checkout-stripe-section", () => ({
+	CheckoutStripeSection: () => <div data-testid="checkout-stripe-section" />,
+}));
+
 vi.mock("@/modules/addresses/data/search-address", () => ({
 	searchAddressForCheckout: vi.fn(),
 }));

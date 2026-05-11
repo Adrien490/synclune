@@ -100,6 +100,28 @@ describe("updateAnnouncementSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
+	it("rejects protocol-relative URLs (open redirect)", () => {
+		const result = updateAnnouncementSchema.safeParse({
+			message: "X",
+			link: "//evil.com",
+			startsAt: "",
+			endsAt: "",
+			isActive: false,
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("rejects triple-slash protocol-relative URLs", () => {
+		const result = updateAnnouncementSchema.safeParse({
+			message: "X",
+			link: "///path",
+			startsAt: "",
+			endsAt: "",
+			isActive: false,
+		});
+		expect(result.success).toBe(false);
+	});
+
 	it("accepts relative path link starting with /", () => {
 		const result = updateAnnouncementSchema.safeParse({
 			message: "X",

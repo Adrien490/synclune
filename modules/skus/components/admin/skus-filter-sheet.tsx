@@ -12,6 +12,15 @@ import { withViewTransition } from "@/shared/utils/view-transition";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useRef, useState, useTransition, Suspense, type ComponentProps } from "react";
 
+import { FilterCheckboxGroup, type CheckboxArrayField } from "./skus-filter/filter-checkbox-group";
+import {
+	SKU_ACTIVE_STATUS_OPTIONS,
+	SKU_FILTER_KEYS,
+	SKU_STOCK_STATUS_OPTIONS,
+	type SkuActiveFilter,
+	type SkusFilterFormData,
+} from "./skus-filter/skus-filter-options";
+
 interface SkusFilterSheetProps {
 	className?: string;
 	colorOptions: ColorOption[];
@@ -21,93 +30,56 @@ interface SkusFilterSheetProps {
 	hideTrigger?: boolean;
 }
 
-interface FilterFormData {
-	stockStatuses: string[];
-	colorIds: string[];
-	materialIds: string[];
-	isActive: "all" | "active" | "inactive";
+function readFiltersFromSearchParams(searchParams: URLSearchParams): SkusFilterFormData {
+	const stockStatuses: string[] = [];
+	const colorIds: string[] = [];
+	const materialIds: string[] = [];
+	let isActive: SkuActiveFilter = "all";
+
+	searchParams.forEach((value, key) => {
+		if (key === "filter_stockStatus" && value !== "all") {
+			stockStatuses.push(value);
+		} else if (key === "filter_colorId") {
+			colorIds.push(value);
+		} else if (key === "filter_materialId") {
+			materialIds.push(value);
+		} else if (key === "filter_isActive") {
+			if (value === "true") isActive = "active";
+			else if (value === "false") isActive = "inactive";
+		}
+	});
+
+	return {
+		stockStatuses: [...new Set(stockStatuses)],
+		colorIds: [...new Set(colorIds)],
+		materialIds: [...new Set(materialIds)],
+		isActive,
+	};
 }
 
-const STOCK_STATUS_OPTIONS = [
-	{ value: "in_stock", label: "En stock" },
-	{ value: "low_stock", label: "Stock faible" },
-	{ value: "out_of_stock", label: "Rupture" },
-] as const;
+function buildFilterUrl(searchParams: URLSearchParams, formData: SkusFilterFormData): string {
+	const params = new URLSearchParams(searchParams.toString());
+	SKU_FILTER_KEYS.forEach((key) => params.delete(key));
+	params.delete("cursor");
+	params.delete("direction");
 
-const ACTIVE_STATUS_OPTIONS = [
-	{ value: "all", label: "Toutes" },
-	{ value: "active", label: "Actives uniquement" },
-	{ value: "inactive", label: "Inactives uniquement" },
-] as const;
+	formData.stockStatuses.forEach((s) => params.append("filter_stockStatus", s));
+	formData.colorIds.forEach((id) => params.append("filter_colorId", id));
+	formData.materialIds.forEach((id) => params.append("filter_materialId", id));
 
-// ============================================================================
-// Sub-components
-// ============================================================================
+	if (formData.isActive === "active") params.set("filter_isActive", "true");
+	else if (formData.isActive === "inactive") params.set("filter_isActive", "false");
 
-interface CheckboxOption {
-	id: string;
-	name: string;
-	hex?: string;
+	return params.toString();
 }
 
-interface CheckboxArrayField {
-	state: { value: string[] };
-	pushValue: (value: string) => void;
-	removeValue: (index: number) => void;
+function countActiveFilters(searchParams: URLSearchParams): number {
+	let count = 0;
+	searchParams.forEach((value, key) => {
+		if ((SKU_FILTER_KEYS as readonly string[]).includes(key) && value !== "all") count += 1;
+	});
+	return count;
 }
-
-interface FilterCheckboxGroupProps {
-	legend: string;
-	options: CheckboxOption[];
-	field: CheckboxArrayField;
-	idPrefix: string;
-}
-
-function FilterCheckboxGroup({ legend, options, field, idPrefix }: FilterCheckboxGroupProps) {
-	return (
-		<fieldset className="space-y-3">
-			<legend className="text-foreground text-sm font-medium">{legend}</legend>
-			<div className="max-h-48 space-y-2 overflow-y-auto">
-				{options.map((option) => {
-					const isSelected = field.state.value.includes(option.id);
-					return (
-						<div key={option.id} className="flex items-center space-x-2">
-							<Checkbox
-								id={`${idPrefix}-${option.id}`}
-								checked={isSelected}
-								onCheckedChange={(checked) => {
-									if (checked && !isSelected) {
-										field.pushValue(option.id);
-									} else if (!checked && isSelected) {
-										const index = field.state.value.indexOf(option.id);
-										field.removeValue(index);
-									}
-								}}
-								className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-							/>
-							{option.hex && (
-								<span
-									className="border-border h-4 w-4 shrink-0 rounded-full border"
-									style={{ backgroundColor: option.hex }}
-								/>
-							)}
-							<Label
-								htmlFor={`${idPrefix}-${option.id}`}
-								className="flex-1 cursor-pointer text-sm font-normal"
-							>
-								{option.name}
-							</Label>
-						</div>
-					);
-				})}
-			</div>
-		</fieldset>
-	);
-}
-
-// ============================================================================
-// Main component
-// ============================================================================
 
 function SkusFilterSheetInner({
 	className,
@@ -137,92 +109,38 @@ function SkusFilterSheetInner({
 		}
 	};
 
-	// Initialiser les valeurs depuis l'URL
-	const initialValues = ((): FilterFormData => {
-		const stockStatuses: string[] = [];
-		const colorIds: string[] = [];
-		const materialIds: string[] = [];
-		let isActive: "all" | "active" | "inactive" = "all";
-
-		searchParams.forEach((value, key) => {
-			if (key === "filter_stockStatus" && value !== "all") {
-				stockStatuses.push(value);
-			} else if (key === "filter_colorId") {
-				colorIds.push(value);
-			} else if (key === "filter_materialId") {
-				materialIds.push(value);
-			} else if (key === "filter_isActive") {
-				if (value === "true") isActive = "active";
-				else if (value === "false") isActive = "inactive";
-			}
-		});
-
-		return {
-			stockStatuses: [...new Set(stockStatuses)],
-			colorIds: [...new Set(colorIds)],
-			materialIds: [...new Set(materialIds)],
-			isActive,
-		};
-	})();
+	const initialValues = readFiltersFromSearchParams(searchParams);
 
 	const form = useAppForm({
 		defaultValues: initialValues,
-		onSubmit: async ({ value }: { value: FilterFormData }) => {
+		onSubmit: async ({ value }: { value: SkusFilterFormData }) => {
 			applyFilters(value);
 		},
 	});
 
-	const FILTER_KEYS = [
-		"filter_stockStatus",
-		"filter_colorId",
-		"filter_materialId",
-		"filter_isActive",
-	] as const;
-
-	const applyFilters = (formData: FilterFormData) => {
-		const params = new URLSearchParams(searchParams.toString());
-		FILTER_KEYS.forEach((key) => params.delete(key));
-		params.delete("cursor");
-		params.delete("direction");
-
-		formData.stockStatuses.forEach((s) => params.append("filter_stockStatus", s));
-		formData.colorIds.forEach((id) => params.append("filter_colorId", id));
-		formData.materialIds.forEach((id) => params.append("filter_materialId", id));
-
-		if (formData.isActive === "active") params.set("filter_isActive", "true");
-		else if (formData.isActive === "inactive") params.set("filter_isActive", "false");
-
+	const applyFilters = (formData: SkusFilterFormData) => {
+		const query = buildFilterUrl(searchParams, formData);
 		startTransition(() => {
-			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
+			withViewTransition(() => router.push(`?${query}`, { scroll: false }));
 		});
 	};
 
 	const clearAllFilters = () => {
-		const defaultValues: FilterFormData = {
+		const defaultValues: SkusFilterFormData = {
 			stockStatuses: [],
 			colorIds: [],
 			materialIds: [],
 			isActive: "all",
 		};
 		form.reset(defaultValues);
-
-		const params = new URLSearchParams(searchParams.toString());
-		FILTER_KEYS.forEach((key) => params.delete(key));
-		params.delete("cursor");
-		params.delete("direction");
-
+		const query = buildFilterUrl(searchParams, defaultValues);
 		startTransition(() => {
-			withViewTransition(() => router.push(`?${params.toString()}`, { scroll: false }));
+			withViewTransition(() => router.push(`?${query}`, { scroll: false }));
 		});
 	};
 
-	const { hasActiveFilters, activeFiltersCount } = (() => {
-		let count = 0;
-		searchParams.forEach((value, key) => {
-			if ((FILTER_KEYS as readonly string[]).includes(key) && value !== "all") count += 1;
-		});
-		return { hasActiveFilters: count > 0, activeFiltersCount: count };
-	})();
+	const activeFiltersCount = countActiveFilters(searchParams);
+	const hasActiveFilters = activeFiltersCount > 0;
 
 	return (
 		<FilterSheetWrapper
@@ -251,12 +169,10 @@ function SkusFilterSheetInner({
 							<legend className="text-foreground text-sm font-medium">Statut de la variante</legend>
 							<RadioGroup
 								value={field.state.value}
-								onValueChange={(value) =>
-									field.handleChange(value as "all" | "active" | "inactive")
-								}
+								onValueChange={(value) => field.handleChange(value as SkuActiveFilter)}
 								className="space-y-2"
 							>
-								{ACTIVE_STATUS_OPTIONS.map(({ value, label }) => (
+								{SKU_ACTIVE_STATUS_OPTIONS.map(({ value, label }) => (
 									<div key={value} className="flex items-center space-x-2">
 										<RadioGroupItem value={value} id={`active-${value}`} />
 										<Label
@@ -280,7 +196,7 @@ function SkusFilterSheetInner({
 						<fieldset className="space-y-3">
 							<legend className="text-foreground text-sm font-medium">Statut du stock</legend>
 							<div className="space-y-2">
-								{STOCK_STATUS_OPTIONS.map(({ value, label }) => {
+								{SKU_STOCK_STATUS_OPTIONS.map(({ value, label }) => {
 									const isSelected = field.state.value.includes(value);
 									return (
 										<div key={value} className="flex items-center space-x-2">

@@ -9,6 +9,7 @@ import { dismissAnnouncement } from "@/shared/actions/dismiss-announcement";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
+import { isSafeStorefrontLink } from "@/shared/utils/is-safe-storefront-link";
 import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 const SWIPE_DISMISS_THRESHOLD = 30;
@@ -29,10 +30,6 @@ function formatRemaining(ms: number): string {
 	const s = total % 60;
 	const pad = (n: number) => String(n).padStart(2, "0");
 	return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-}
-
-function isSafeLink(href: string): boolean {
-	return href.startsWith("/") || href.startsWith("https://");
 }
 
 export function AnnouncementBar({ message, link, endsAt, hash }: AnnouncementBarProps) {
@@ -89,7 +86,7 @@ export function AnnouncementBar({ message, link, endsAt, hash }: AnnouncementBar
 	const { swipeOffset, isSwiping } = useSwipeToDismiss(barRef, isVisible, dismiss);
 	const countdownLabel = useCountdownLabel(endsAt, COUNTDOWN_DISPLAY_THRESHOLD_MS);
 
-	const safeLink = link && isSafeLink(link) ? link : null;
+	const safeLink = link && isSafeStorefrontLink(link) ? link : null;
 
 	const handleClose = () => {
 		triggerHaptic("light");

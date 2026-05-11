@@ -275,13 +275,13 @@ describe("deleteDiscount", () => {
 	// ──────────────────────────────────────────────────────────────
 
 	it("should invalidate cache tags after soft deletion", async () => {
-		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-PROMO20"]);
+		mockGetDiscountInvalidationTags.mockReturnValue(["discounts-list", "discount-disc-123"]);
 
 		await deleteDiscount(undefined, validFormData);
 
-		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("PROMO20");
+		expect(mockGetDiscountInvalidationTags).toHaveBeenCalledWith("disc-123");
 		expect(mockUpdateTag).toHaveBeenCalledWith("discounts-list");
-		expect(mockUpdateTag).toHaveBeenCalledWith("discount-PROMO20");
+		expect(mockUpdateTag).toHaveBeenCalledWith("discount-disc-123");
 	});
 
 	// ──────────────────────────────────────────────────────────────

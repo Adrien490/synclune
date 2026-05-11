@@ -1,9 +1,7 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
 import { duplicateProductType } from "@/modules/product-types/actions/duplicate-product-type";
-import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
+import { useActionStateWithToast } from "@/shared/hooks/use-action-state-with-toast";
 
 export interface DuplicateProductTypeSuccessData {
 	id: string;
@@ -28,42 +26,29 @@ interface UseDuplicateProductTypeOptions {
 }
 
 export const useDuplicateProductType = (options?: UseDuplicateProductTypeOptions) => {
-	const [isTransitionPending, startTransition] = useTransition();
-	const [state, action, isPending] = useActionState(
-		withCallbacks(
-			duplicateProductType,
-			createToastCallbacks({
-				loadingMessage: "Duplication du type…",
-				showSuccessToast: false,
-				onSuccess: (result: unknown) => {
-					if (
-						result &&
-						typeof result === "object" &&
-						"message" in result &&
-						typeof result.message === "string" &&
-						"data" in result &&
-						isDuplicateProductTypeSuccessData(result.data)
-					) {
-						options?.onSuccess?.(result.message, result.data);
-					}
-				},
-			}),
-		),
-		undefined,
+	const { state, action, isPending } = useActionStateWithToast<DuplicateProductTypeSuccessData>(
+		duplicateProductType,
+		{
+			loadingMessage: "Duplication du type…",
+			showSuccessToast: false,
+			extractData: (result) =>
+				isDuplicateProductTypeSuccessData(result.data) ? result.data : null,
+			onSuccess: (message, data) => {
+				if (data) options?.onSuccess?.(message, data);
+			},
+		},
 	);
 
 	const runDuplicate = (productTypeId: string) => {
-		startTransition(() => {
-			const formData = new FormData();
-			formData.append("productTypeId", productTypeId);
-			action(formData);
-		});
+		const formData = new FormData();
+		formData.append("productTypeId", productTypeId);
+		action(formData);
 	};
 
 	return {
 		state,
 		action,
-		isPending: isPending || isTransitionPending,
+		isPending,
 		duplicateProductType: runDuplicate,
 	};
 };

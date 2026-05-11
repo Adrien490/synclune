@@ -15,9 +15,12 @@ import { REFUND_ERROR_MESSAGES } from "../constants/refund.constants";
 import { ORDERS_CACHE_TAGS, REFUNDS_CACHE_TAGS } from "../constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { requestReturnSchema } from "../schemas/refund.schemas";
-
-/** 14-day withdrawal period in milliseconds (directive 2011/83/EU) */
-const WITHDRAWAL_PERIOD_MS = 14 * 24 * 60 * 60 * 1000;
+import {
+	WITHDRAWAL_PERIOD_DAYS,
+	MS_PER_DAY,
+	getReturnIneligibilityReason,
+} from "../services/return-eligibility.service";
+import { logAudit } from "@/shared/lib/audit-log";
 
 /**
  * Client-side return request (droit de retractation 14 jours)
@@ -99,7 +102,7 @@ export async function requestReturn(
 					},
 					refunds: {
 						where: { status: { in: [RefundStatus.PENDING, RefundStatus.APPROVED] } },
-						select: { id: true },
+						select: { id: true, status: true },
 					},
 				},
 			});
@@ -108,29 +111,15 @@ export async function requestReturn(
 				throw new Error("ORDER_NOT_FOUND");
 			}
 
-			// 5. Verify order is eligible for return
-			if (order.paymentStatus !== "PAID" && order.paymentStatus !== "PARTIALLY_REFUNDED") {
+			// 5. Verify order is eligible for return (single source of truth)
+			const ineligibility = getReturnIneligibilityReason(order);
+			if (ineligibility === "NOT_PAID" || ineligibility === "NOT_DELIVERED") {
 				throw new Error("RETURN_NOT_ELIGIBLE");
 			}
-
-			if (order.fulfillmentStatus !== "DELIVERED") {
-				throw new Error("RETURN_NOT_ELIGIBLE");
-			}
-
-			// 6. Check 14-day withdrawal deadline
-			// Reject if actualDelivery is null (cannot calculate deadline)
-			const deliveryDate = order.actualDelivery;
-			if (!deliveryDate) {
-				throw new Error("RETURN_NOT_ELIGIBLE");
-			}
-
-			const deadline = new Date(deliveryDate.getTime() + WITHDRAWAL_PERIOD_MS);
-			if (new Date() > deadline) {
+			if (ineligibility === "DEADLINE_EXCEEDED") {
 				throw new Error("RETURN_DEADLINE_EXCEEDED");
 			}
-
-			// 7. Check no existing PENDING or APPROVED refund for this order
-			if (order.refunds.length > 0) {
+			if (ineligibility === "ALREADY_REQUESTED") {
 				throw new Error("RETURN_ALREADY_REQUESTED");
 			}
 
@@ -171,7 +160,13 @@ export async function requestReturn(
 				select: { id: true },
 			});
 
-			return { refund, userId: order.userId };
+			return {
+				refund,
+				userId: order.userId,
+				totalAmount,
+				orderNumber: order.orderNumber,
+				deliveryDate: order.actualDelivery,
+			};
 		});
 
 		// 9. Invalidate caches
@@ -179,7 +174,29 @@ export async function requestReturn(
 		updateTag(REFUNDS_CACHE_TAGS.LIST);
 		updateTag(SHARED_CACHE_TAGS.ADMIN_BADGES);
 		updateTag(ORDERS_CACHE_TAGS.REFUNDS(orderId));
-		updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(result.userId!));
+		if (result.userId) {
+			updateTag(ORDERS_CACHE_TAGS.USER_ORDERS(result.userId));
+		}
+
+		// 10. Audit log : conformité droit rétractation 14j FR
+		const daysSinceDelivery = result.deliveryDate
+			? Math.floor((Date.now() - result.deliveryDate.getTime()) / MS_PER_DAY)
+			: null;
+		void logAudit({
+			adminId: user.id,
+			adminName: user.name ?? user.email,
+			action: "refund.requestReturn",
+			targetType: "refund",
+			targetId: result.refund.id,
+			metadata: {
+				orderNumber: result.orderNumber,
+				amount: result.totalAmount,
+				reason,
+				daysSinceDelivery,
+				withinWithdrawalPeriod:
+					daysSinceDelivery !== null && daysSinceDelivery <= WITHDRAWAL_PERIOD_DAYS,
+			},
+		});
 
 		return success(
 			"Votre demande de retour a été enregistrée. Nous la traiterons dans les plus brefs délais.",

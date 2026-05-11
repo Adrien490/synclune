@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { DiscountType } from "@/app/generated/prisma/client";
+import { DiscountType } from "@/app/generated/prisma/enums";
 import { cursorSchema, directionSchema } from "@/shared/constants/pagination";
 import { createPerPageSchema } from "@/shared/utils/pagination";
 import {
@@ -53,10 +53,6 @@ export const getDiscountSchema = z.object({
 	id: z.cuid2(),
 });
 
-export const getDiscountByCodeSchema = z.object({
-	code: discountCodeSchema,
-});
-
 // ============================================================================
 // GET LIST SCHEMA
 // ============================================================================
@@ -68,6 +64,14 @@ export const getDiscountsSchema = z.object({
 	sortBy: discountSortBySchema,
 	search: z.string().max(100).optional(),
 	filters: discountFiltersSchema.optional(),
+});
+
+// ============================================================================
+// GET BY CODE SCHEMA (public checkout cache lookup)
+// ============================================================================
+
+export const getDiscountByCodeSchema = z.object({
+	code: discountCodeSchema,
 });
 
 // ============================================================================

@@ -15,6 +15,7 @@ import {
 } from "@/shared/lib/actions";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { auth } from "@/modules/auth/lib/auth";
+import { USER_AUDIT_ACTIONS } from "../../constants/audit-actions";
 import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
 
 /**
@@ -24,14 +25,14 @@ import { adminUserIdSchema } from "../../schemas/user-admin.schemas";
  */
 export async function sendPasswordResetAdmin(userId: string): Promise<ActionState> {
 	try {
-		// 1. Rate limiting
-		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SEND_RESET);
-		if ("error" in rateCheck) return rateCheck.error;
-
-		// 2. Vérification admin
+		// 1. Vérification admin (avant rate-limit)
 		const adminCheck = await requireAdminWithUser();
 		if ("error" in adminCheck) return adminCheck.error;
 		const { user: adminUser } = adminCheck;
+
+		// 2. Rate limiting
+		const rateCheck = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.SEND_RESET);
+		if ("error" in rateCheck) return rateCheck.error;
 
 		// 2b. Validation du userId
 		const validation = validateInput(adminUserIdSchema, { userId });
@@ -91,7 +92,7 @@ export async function sendPasswordResetAdmin(userId: string): Promise<ActionStat
 		void logAudit({
 			adminId: adminUser.id,
 			adminName: adminUser.name ?? adminUser.email,
-			action: "user.sendPasswordReset",
+			action: USER_AUDIT_ACTIONS.SEND_PASSWORD_RESET,
 			targetType: "user",
 			targetId: userId,
 			metadata: { userEmail: user.email },

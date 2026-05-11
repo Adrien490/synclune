@@ -13,6 +13,7 @@ const {
 	mockUseStore,
 	mockClose,
 	mockDiscardOpen,
+	mockUseAddressAutocomplete,
 } = vi.hoisted(() => ({
 	mockUseDialog: vi.fn(),
 	mockUseAlertDialog: vi.fn(),
@@ -21,6 +22,7 @@ const {
 	mockUseStore: vi.fn(),
 	mockClose: vi.fn(),
 	mockDiscardOpen: vi.fn(),
+	mockUseAddressAutocomplete: vi.fn(),
 }));
 
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
@@ -39,10 +41,16 @@ vi.mock("../../hooks/use-update-address", () => ({
 	useUpdateAddress: mockUseUpdateAddress,
 }));
 
-vi.mock("next/navigation", () => ({
-	useSearchParams: () => new URLSearchParams(),
-	useRouter: () => ({ replace: vi.fn() }),
-	usePathname: () => "/compte/profil",
+vi.mock("@/modules/addresses/hooks/use-address-autocomplete", () => ({
+	useAddressAutocomplete: mockUseAddressAutocomplete,
+}));
+
+vi.mock("@/shared/hooks/use-focus-first-error", () => ({
+	useFocusFirstError: () => ({
+		formRef: { current: null },
+		focusFirstInvalid: vi.fn(),
+		onInvalidCapture: vi.fn(),
+	}),
 }));
 
 vi.mock("@tanstack/react-form", () => ({
@@ -210,6 +218,13 @@ function setupOpenDialog(address?: ReturnType<typeof createAddress>) {
 	});
 
 	mockUseStore.mockReturnValue(false);
+
+	mockUseAddressAutocomplete.mockReturnValue({
+		suggestions: [],
+		isSearching: false,
+		error: null,
+		retry: vi.fn(),
+	});
 }
 
 function setupClosedDialog() {
@@ -239,6 +254,13 @@ function setupClosedDialog() {
 	});
 
 	mockUseStore.mockReturnValue(false);
+
+	mockUseAddressAutocomplete.mockReturnValue({
+		suggestions: [],
+		isSearching: false,
+		error: null,
+		retry: vi.fn(),
+	});
 }
 
 // ============================================================================
@@ -403,14 +425,18 @@ describe("AddressFormDialog", () => {
 	});
 
 	describe("address search error", () => {
-		it("shows search unavailable error when addressSearchError is true", () => {
+		it("forwards autocomplete hook error to AutocompleteField", () => {
 			setupOpenDialog();
+			mockUseAddressAutocomplete.mockReturnValue({
+				suggestions: [],
+				isSearching: false,
+				error: "La recherche d'adresses a echoue. Reessayez.",
+				retry: vi.fn(),
+			});
 
-			render(<AddressFormDialog addressSearchError={true} />);
+			render(<AddressFormDialog />);
 
-			expect(
-				screen.getByText("La recherche d'adresse est temporairement indisponible"),
-			).toBeInTheDocument();
+			expect(screen.getByText("La recherche d'adresses a echoue. Reessayez.")).toBeInTheDocument();
 		});
 
 		it("does not show search error by default", () => {
@@ -418,9 +444,7 @@ describe("AddressFormDialog", () => {
 
 			render(<AddressFormDialog />);
 
-			expect(
-				screen.queryByText("La recherche d'adresse est temporairement indisponible"),
-			).toBeNull();
+			expect(screen.queryByText(/La recherche d'adresses a echoue/)).toBeNull();
 		});
 	});
 });

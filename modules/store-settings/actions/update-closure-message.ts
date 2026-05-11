@@ -34,6 +34,8 @@ export async function updateClosureMessage(
 
 		const { closureMessage } = validated.data;
 
+		// Atomic: only update when store is currently closed (race-safe vs concurrent reopen).
+		// Capture previous message via findUnique BEFORE updateMany for audit log delta.
 		const existing = await prisma.storeSettings.findUnique({
 			where: { id: STORE_SETTINGS_SINGLETON_ID },
 			select: { isClosed: true, closureMessage: true },
@@ -43,14 +45,14 @@ export async function updateClosureMessage(
 			return error("Paramètres boutique introuvables");
 		}
 
-		if (!existing.isClosed) {
-			return error("La boutique est ouverte, aucun message à modifier");
-		}
-
-		await prisma.storeSettings.update({
-			where: { id: STORE_SETTINGS_SINGLETON_ID },
+		const updated = await prisma.storeSettings.updateMany({
+			where: { id: STORE_SETTINGS_SINGLETON_ID, isClosed: true },
 			data: { closureMessage },
 		});
+
+		if (updated.count === 0) {
+			return error("La boutique est ouverte, aucun message à modifier");
+		}
 
 		getStoreSettingsInvalidationTags().forEach((tag) => updateTag(tag));
 

@@ -36,7 +36,7 @@ export function CloseStoreForm() {
 		undefined,
 	);
 
-	const { allowNavigation } = useUnsavedChanges(form.state.isDirty && !isPending);
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending);
 
 	return (
 		<form

@@ -55,12 +55,35 @@ export function CollectionGrid({ collectionsPromise, perPage }: CollectionGridPr
 		"@context": "https://schema.org",
 		"@type": "ItemList",
 		numberOfItems: collections.length,
-		itemListElement: collections.map((collection, index) => ({
-			"@type": "ListItem",
-			position: index + 1,
-			url: `${SITE_URL}/collections/${collection.slug}`,
-			name: collection.name,
-		})),
+		itemListElement: collections.map((collection, index) => {
+			const priceRange = extractPriceRange(collection.products);
+			const featuredImage = extractCollectionImages(collection.products)[0];
+			const productCount = collection._count.products;
+			const collectionUrl = `${SITE_URL}/collections/${collection.slug}`;
+			return {
+				"@type": "ListItem",
+				position: index + 1,
+				url: collectionUrl,
+				item: {
+					"@type": "CollectionPage",
+					name: collection.name,
+					url: collectionUrl,
+					...(collection.description && { description: collection.description }),
+					...(featuredImage && { image: featuredImage.url }),
+					...(priceRange && {
+						offers: {
+							"@type": "AggregateOffer",
+							priceCurrency: "EUR",
+							lowPrice: (priceRange.min / 100).toFixed(2),
+							highPrice: (priceRange.max / 100).toFixed(2),
+							offerCount: productCount,
+							availability:
+								productCount > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+						},
+					}),
+				},
+			};
+		}),
 	};
 
 	return (

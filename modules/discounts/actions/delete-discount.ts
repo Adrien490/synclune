@@ -66,7 +66,7 @@ export async function deleteDiscount(
 
 		await softDelete.discount(id);
 
-		getDiscountInvalidationTags(discount.code).forEach((tag) => updateTag(tag));
+		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
 
 		void logAudit({
 			adminId: adminUser.id,

@@ -111,18 +111,21 @@ describe("getProductInvalidationTags", () => {
 		expect(tags).toHaveLength(9);
 	});
 
-	it("includes SKUS tag when productId is provided", () => {
+	it("includes SKUS + COLLECTIONS tags when productId is provided", () => {
 		const tags = getProductInvalidationTags("bague-or", "prod-abc");
 
 		expect(tags).toContain("product-prod-abc-skus");
-		expect(tags).toHaveLength(10);
+		expect(tags).toContain("product-prod-abc-collections");
+		expect(tags).toHaveLength(11);
 	});
 
-	it("does not include SKUS tag when productId is undefined", () => {
+	it("does not include SKUS or COLLECTIONS tags when productId is undefined", () => {
 		const tags = getProductInvalidationTags("bague-or", undefined);
 
 		const skusTags = tags.filter((t) => t.endsWith("-skus"));
+		const collectionsTags = tags.filter((t) => t.endsWith("-collections"));
 		expect(skusTags).toHaveLength(0);
+		expect(collectionsTags).toHaveLength(0);
 	});
 
 	it("uses slug in DETAIL and RELATED_CONTEXTUAL tags", () => {

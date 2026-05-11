@@ -1,7 +1,7 @@
+import { Prisma } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
 import { logger } from "@/shared/lib/logger";
 import { updateTag } from "next/cache";
-import { generateInvoiceNumber } from "./invoice-number.service";
 import { getOrderInvalidationTags } from "../constants/cache";
 
 interface PersistInvoiceNumberResult {
@@ -10,38 +10,105 @@ interface PersistInvoiceNumberResult {
 }
 
 /**
- * Generates and persists an invoice number on first download (Article 286 CGI).
- * Returns the new invoice fields, or null if generation fails.
+ * P99 vs race window compromise: 5 attempts cover the practical concurrent-write
+ * window for invoice generation while keeping tail latency under control.
+ */
+const MAX_RETRIES = 5;
+
+/**
+ * 32-bit advisory lock key for invoice generation, derived from the current
+ * year (e.g. 1002026 for 2026). Keeps lock scope bounded to year + handles
+ * the empty-table case (1st invoice of year) that FOR UPDATE alone cannot.
+ */
+function invoiceAdvisoryLockKey(year: number): number {
+	return 1_000_000 + year;
+}
+
+/**
+ * Generates a sequential invoice number (format `F-YYYY-NNNNN`) AND persists it
+ * on the order, in a single atomic transaction (Article 286 CGI — séquentiel,
+ * immuable, sans trou).
+ *
+ * Concurrency strategy :
+ * - `pg_advisory_xact_lock(year)` Postgres advisory lock acquired first.
+ *   This handles the empty-table case at the start of a new year, where a
+ *   bare `SELECT ... FOR UPDATE LIMIT 1` would acquire no lock (no row matches).
+ * - SELECT highest existing invoice for the year inside the same tx.
+ * - UPDATE the order with the new number inside the same tx.
+ * - On P2002 unique violation (rare cross-tx collision), retry the full tx
+ *   up to MAX_RETRIES times.
+ *
+ * Returns the new invoice fields, or null if generation fails after retries.
  */
 export async function persistInvoiceNumber(
 	orderId: string,
 	userId: string | null,
 ): Promise<PersistInvoiceNumberResult | null> {
-	try {
-		const invoiceNumber = await generateInvoiceNumber();
-		const now = new Date();
+	for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+		try {
+			const result = await prisma.$transaction(async (tx) => {
+				const year = new Date().getFullYear();
+				const prefix = `F-${year}-`;
 
-		const updated = await prisma.order.update({
-			where: { id: orderId },
-			data: {
-				invoiceNumber,
-				invoiceStatus: "GENERATED",
-				invoiceGeneratedAt: now,
-			},
-			select: { invoiceNumber: true, invoiceGeneratedAt: true },
-		});
+				// Advisory lock — serializes invoice generation per year, even when
+				// no row exists yet (first invoice of the year).
+				await tx.$executeRaw(
+					Prisma.sql`SELECT pg_advisory_xact_lock(${invoiceAdvisoryLockKey(year)})`,
+				);
 
-		// Invalidate cache so the invoice number shows in admin
-		getOrderInvalidationTags(userId ?? undefined, orderId).forEach((tag) => updateTag(tag));
+				const lastRow = await tx.$queryRaw<Array<{ invoiceNumber: string | null }>>(
+					Prisma.sql`SELECT "invoiceNumber" FROM "Order"
+						WHERE "invoiceNumber" LIKE ${prefix + "%"}
+						ORDER BY "invoiceNumber" DESC
+						LIMIT 1`,
+				);
 
-		return {
-			invoiceNumber: updated.invoiceNumber!,
-			invoiceGeneratedAt: updated.invoiceGeneratedAt!,
-		};
-	} catch (e) {
-		// If invoice number generation fails (e.g. unique constraint race),
-		// caller will still serve the PDF with orderNumber as reference
-		logger.error("Failed to persist invoice number", e, { service: "persist-invoice-number" });
-		return null;
+				let nextSequence = 1;
+				const lastInvoiceNumber = lastRow[0]?.invoiceNumber;
+				if (lastInvoiceNumber) {
+					const lastSequence = parseInt(lastInvoiceNumber.slice(prefix.length), 10);
+					if (!isNaN(lastSequence)) {
+						nextSequence = lastSequence + 1;
+					}
+				}
+
+				const invoiceNumber = `${prefix}${String(nextSequence).padStart(5, "0")}`;
+				const now = new Date();
+
+				const updated = await tx.order.update({
+					where: { id: orderId },
+					data: {
+						invoiceNumber,
+						invoiceStatus: "GENERATED",
+						invoiceGeneratedAt: now,
+					},
+					select: { invoiceNumber: true, invoiceGeneratedAt: true },
+				});
+
+				return updated;
+			});
+
+			getOrderInvalidationTags(userId ?? undefined, orderId).forEach((tag) => updateTag(tag));
+
+			return {
+				invoiceNumber: result.invoiceNumber!,
+				invoiceGeneratedAt: result.invoiceGeneratedAt!,
+			};
+		} catch (e) {
+			if (
+				e instanceof Prisma.PrismaClientKnownRequestError &&
+				e.code === "P2002" &&
+				attempt < MAX_RETRIES - 1
+			) {
+				continue;
+			}
+			logger.error("Failed to persist invoice number", e, {
+				service: "persist-invoice-number",
+				attempt,
+			});
+			return null;
+		}
 	}
+
+	return null;
 }

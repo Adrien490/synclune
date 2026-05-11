@@ -69,9 +69,6 @@ vi.mock("@/shared/lib/actions", () => ({
 	error: mockError,
 	notFound: mockNotFound,
 }));
-vi.mock("@/modules/products/constants/cache", () => ({
-	PRODUCTS_CACHE_TAGS: { LIST: "products-list" },
-}));
 vi.mock("../../schemas/product-type.schemas", () => ({ mergeProductTypesSchema: {} }));
 vi.mock("../../utils/cache.utils", () => ({
 	getProductTypeInvalidationTags: mockGetProductTypeInvalidationTags,
@@ -121,7 +118,12 @@ describe("mergeProductTypes", () => {
 			cb(mockTx),
 		);
 
-		mockGetProductTypeInvalidationTags.mockReturnValue(["product-types-list"]);
+		// Mock simule la vraie cascade : list + cascade products + tag détail granulaire si slug fourni.
+		mockGetProductTypeInvalidationTags.mockImplementation((slug?: string) => {
+			const tags = ["product-types-list", "admin-badges", "navbar-menu", "products-list"];
+			if (slug) tags.push(`product-type-${slug}`);
+			return tags;
+		});
 
 		mockSuccess.mockImplementation((msg: string, data: unknown) => ({
 			status: ActionStatus.SUCCESS,
@@ -239,10 +241,12 @@ describe("mergeProductTypes", () => {
 		);
 	});
 
-	it("should invalidate product-types tags AND products-list tag", async () => {
+	it("should invalidate product-types tags AND products-list cascade AND both detail tags (source + target)", async () => {
 		await mergeProductTypes(undefined, validFormData);
 		expect(mockUpdateTag).toHaveBeenCalledWith("product-types-list");
 		expect(mockUpdateTag).toHaveBeenCalledWith("products-list");
+		expect(mockUpdateTag).toHaveBeenCalledWith("product-type-bague fantaisie");
+		expect(mockUpdateTag).toHaveBeenCalledWith("product-type-bague");
 	});
 
 	it("should return success with total count in message", async () => {

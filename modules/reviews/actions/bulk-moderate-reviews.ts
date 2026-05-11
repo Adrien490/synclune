@@ -21,7 +21,7 @@ import type { ActionState } from "@/shared/types/server-action";
 import { getReviewModerationTags } from "../constants/cache";
 import { REVIEW_ERROR_MESSAGES } from "../constants/review.constants";
 import { bulkModerateReviewsSchema } from "../schemas/review.schemas";
-import { updateProductReviewStats } from "../services/review-stats.service";
+import { recomputeProductReviewStatsBatch } from "../services/review-stats.service";
 
 /**
  * Masque ou republie en lot plusieurs avis.
@@ -83,9 +83,7 @@ export async function bulkModerateReviews(
 				data: { status: targetStatus },
 			});
 
-			for (const productId of productIdsToUpdate) {
-				await updateProductReviewStats(tx, productId);
-			}
+			await recomputeProductReviewStatsBatch(tx, productIdsToUpdate);
 		});
 
 		const tags = new Set<string>();
@@ -99,7 +97,7 @@ export async function bulkModerateReviews(
 			adminName: adminUser.name ?? adminUser.email,
 			action: targetStatus === ReviewStatus.HIDDEN ? "review.bulkHide" : "review.bulkPublish",
 			targetType: "review",
-			targetId: eligibleIds.join(","),
+			targetId: `bulk:${eligibleIds.length}`,
 			metadata: {
 				count: eligibleIds.length,
 				targetStatus,

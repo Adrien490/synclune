@@ -80,14 +80,14 @@ export async function reorderSkuMedia(
 				}
 			}
 
-			await Promise.all(
-				mediaIds.map((mediaId, index) =>
-					tx.skuMedia.update({
-						where: { id: mediaId },
-						data: { position: index },
-					}),
-				),
-			);
+			// Sequential await: Prisma interactive transactions run queries on a single
+			// connection. Promise.all does not parallelize and may introduce non-determinism.
+			for (let i = 0; i < mediaIds.length; i++) {
+				await tx.skuMedia.update({
+					where: { id: mediaIds[i]! },
+					data: { position: i },
+				});
+			}
 
 			return sku;
 		});

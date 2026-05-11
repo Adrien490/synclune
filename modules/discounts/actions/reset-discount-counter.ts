@@ -59,7 +59,7 @@ export async function resetDiscountCounter(
 		}
 
 		if (discount.usageCount === 0) {
-			return success(`Code "${discount.code}" déjà à zéro`);
+			return success(`Code "${discount.code}" : compteur déjà à zéro, aucune action nécessaire`);
 		}
 
 		await prisma.discount.update({

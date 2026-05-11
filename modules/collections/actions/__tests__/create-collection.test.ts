@@ -133,8 +133,14 @@ describe("createCollection", () => {
 		expect(result.status).toBe(ActionStatus.VALIDATION_ERROR);
 	});
 
-	it("should return error when name already exists", async () => {
-		mockPrisma.collection.findFirst.mockResolvedValue({ id: "existing" });
+	it("should return error when DB rejects duplicate name (P2002 on Collection.name)", async () => {
+		const { Prisma } = await import("@/app/generated/prisma/client");
+		const p2002 = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+			code: "P2002",
+			clientVersion: "test",
+			meta: { target: ["name"] },
+		});
+		mockPrisma.collection.create.mockRejectedValue(p2002);
 		const result = await createCollection(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("existe");

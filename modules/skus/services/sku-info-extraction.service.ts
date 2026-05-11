@@ -25,7 +25,11 @@ export function extractVariantInfo<
 	let totalStock = 0;
 
 	for (const sku of activeSkus) {
-		// Couleurs avec fallback sur le matériau pour différencier les variantes
+		// Couleurs avec fallback sur le matériau pour différencier les variantes.
+		// Règle métier : pour les produits sans couleur (ex. bijoux argent uniquement),
+		// on expose le matériau comme "couleur" pour piloter le sélecteur. Si ni l'un
+		// ni l'autre, le SKU n'apparaît pas dans availableColors.
+		// Cf. test "should use material name as color fallback when no color is set".
 		const materialName = sku.material?.name ?? undefined;
 
 		if (sku.color || materialName) {

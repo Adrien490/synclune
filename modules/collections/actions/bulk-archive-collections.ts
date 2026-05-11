@@ -14,7 +14,7 @@ import {
 	validateInput,
 } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
-import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -52,7 +52,7 @@ export async function bulkArchiveCollections(
 		const { collectionIds, targetStatus } = validation.data;
 
 		const collections = await prisma.collection.findMany({
-			where: { id: { in: collectionIds }, ...notDeleted },
+			where: { id: { in: collectionIds } },
 			select: { id: true, slug: true, name: true, status: true },
 		});
 

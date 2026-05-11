@@ -34,14 +34,13 @@ export async function deleteCollection(
 
 		const validatedData = validated.data;
 
-		// Verifier que la collection existe
+		// Verifier que la collection existe + capturer la liste des productIds avant
+		// le cascade delete des ProductCollection (audit trail post-mortem).
 		const existingCollection = await prisma.collection.findUnique({
 			where: { id: validatedData.id },
 			include: {
-				_count: {
-					select: {
-						products: true,
-					},
+				products: {
+					select: { productId: true },
 				},
 			},
 		});
@@ -52,7 +51,8 @@ export async function deleteCollection(
 
 		// Hard delete: collections have no legal retention obligation (unlike orders, payments).
 		// ProductCollection join entries are cascade-deleted; products themselves are preserved.
-		const productCount = existingCollection._count.products;
+		const productIds = existingCollection.products.map((pc) => pc.productId);
+		const productCount = productIds.length;
 
 		// Supprimer la collection
 		await prisma.collection.delete({
@@ -69,7 +69,7 @@ export async function deleteCollection(
 			action: "collection.delete",
 			targetType: "collection",
 			targetId: validatedData.id,
-			metadata: { name: existingCollection.name, productCount },
+			metadata: { name: existingCollection.name, productCount, productIds },
 		});
 
 		// Message different selon si la collection avait des produits

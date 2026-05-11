@@ -34,7 +34,8 @@ import { HexColorInput } from "../hex-color-input";
 // ============================================================================
 
 function getHexTextInput(): HTMLInputElement {
-	return screen.getByLabelText(/Ou code personnalisé/i) as HTMLInputElement;
+	// Single text input in the component (textbox role)
+	return screen.getByRole("textbox") as HTMLInputElement;
 }
 
 function getNativeColorInput(): HTMLInputElement {

@@ -39,6 +39,23 @@ vi.mock("../../constants/cache", () => ({
 		mockCacheLife("reference");
 		mockCacheTag("product-types-list");
 	},
+	cacheProductTypesAdmin: () => {
+		mockCacheLife("user");
+		mockCacheTag("product-types-list");
+	},
+	cacheProductTypesPublic: () => {
+		mockCacheLife("reference");
+		mockCacheTag("product-types-list");
+	},
+	cacheProductTypeDetail: (slug: string) => {
+		mockCacheLife("user");
+		mockCacheTag("product-types-list");
+		mockCacheTag(`product-type-${slug}`);
+	},
+	cacheProductTypeCounts: (id: string) => {
+		mockCacheLife("user");
+		mockCacheTag(`product-type-${id}-counts`);
+	},
 }));
 
 vi.mock("@/shared/lib/pagination", () => ({
@@ -160,10 +177,10 @@ describe("getProductTypes", () => {
 
 	// --- Cache ---
 
-	it("calls cacheLife with reference profile", async () => {
+	it("calls cacheLife with 'user' profile (admin listing — feedback rapide post-mutation)", async () => {
 		await getProductTypes({ sortBy: "label-ascending", direction: "forward" });
 
-		expect(mockCacheLife).toHaveBeenCalledWith("reference");
+		expect(mockCacheLife).toHaveBeenCalledWith("user");
 	});
 
 	it("calls cacheTag with the product-types list tag", async () => {
@@ -301,13 +318,13 @@ describe("getProductTypes", () => {
 
 	// --- Error handling ---
 
-	it("returns empty result on database error", async () => {
-		mockPrisma.productType.findMany.mockRejectedValue(new Error("DB connection failed"));
+	it("rethrows database error (capture Sentry puis remontée à error.tsx via Suspense)", async () => {
+		const dbError = new Error("DB connection failed");
+		mockPrisma.productType.findMany.mockRejectedValue(dbError);
 
-		const result = await getProductTypes({ sortBy: "label-ascending", direction: "forward" });
-
-		expect(result.productTypes).toEqual([]);
-		expect(result.pagination).toEqual(emptyPagination);
+		await expect(
+			getProductTypes({ sortBy: "label-ascending", direction: "forward" }),
+		).rejects.toThrow("DB connection failed");
 	});
 
 	it("uses GET_PRODUCT_TYPES_SELECT for the DB query", async () => {

@@ -36,7 +36,10 @@ export async function clearCart(
 
 		// 2. Recuperer le panier (ownership via userId/sessionId, no IDOR risk)
 		const cart = await prisma.cart.findFirst({
-			where: userId ? { userId } : { sessionId: sessionId! },
+			where: {
+				...(userId ? { userId } : { sessionId: sessionId! }),
+				OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }],
+			},
 			select: {
 				id: true,
 				items: {

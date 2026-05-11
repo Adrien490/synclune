@@ -52,7 +52,12 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 				>
 					<ItemContent className="min-w-0">
 						<ItemTitle className="w-full min-w-0">
-							<span className="truncate font-semibold">{displayName}</span>
+							<span
+								className="truncate font-semibold"
+								style={{ viewTransitionName: `user-name-${user.id}` }}
+							>
+								{displayName}
+							</span>
 							{user.emailVerified ? (
 								<CircleCheck
 									className="size-4 shrink-0 text-green-600"

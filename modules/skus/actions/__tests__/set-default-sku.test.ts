@@ -55,6 +55,11 @@ vi.mock("@/shared/lib/actions", () => ({
 	BusinessError: MockBusinessError,
 	validateInput: mockValidateInput,
 	handleActionError: mockHandleActionError,
+	success: (message: string, data?: unknown) => ({
+		status: ActionStatus.SUCCESS,
+		message,
+		data,
+	}),
 }));
 vi.mock("../../schemas/sku.schemas", () => ({ deleteProductSkuSchema: {} }));
 vi.mock("../../utils/cache.utils", () => ({

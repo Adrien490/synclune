@@ -11,7 +11,7 @@ import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
@@ -74,10 +74,7 @@ export function EditProductForm({
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
-	const originalImageUrls = useMemo(() => {
-		const defaultSku = product.skus[0];
-		return defaultSku?.images.map((img) => img.url) ?? [];
-	}, [product]);
+	const originalImageUrls = product.skus[0]?.images.map((img) => img.url) ?? [];
 
 	const { form, action, isPending } = useUpdateProductForm({
 		product,

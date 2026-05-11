@@ -5,6 +5,7 @@ import {
 	BulkSelectionRowCheckbox,
 	TableEmptyState,
 } from "@/shared/components/data-table";
+import { EmptyResetFiltersAction } from "@/shared/components/data-table/empty-reset-filters-action";
 import { TableScrollContainer } from "@/shared/components/table-scroll-container";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import {
@@ -26,9 +27,14 @@ import { CreateMaterialButton } from "@/modules/materials/components/admin/creat
 interface MaterialsDataTableProps {
 	materialsPromise: Promise<GetMaterialsReturn>;
 	perPage: number;
+	hasActiveFilters?: boolean;
 }
 
-export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataTableProps) {
+export function MaterialsDataTable({
+	materialsPromise,
+	perPage,
+	hasActiveFilters,
+}: MaterialsDataTableProps) {
 	const { materials, pagination } = use(materialsPromise);
 
 	if (materials.length === 0) {
@@ -37,8 +43,18 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 				className="hidden md:flex"
 				icon={Gem}
 				title="Aucun matériau trouvé"
-				description="Aucun matériau ne correspond aux critères de recherche."
-				actionElement={<CreateMaterialButton />}
+				description={
+					hasActiveFilters
+						? "Aucun matériau ne correspond aux critères de recherche."
+						: "Aucun matériau pour l'instant."
+				}
+				actionElement={
+					hasActiveFilters ? (
+						<EmptyResetFiltersAction href="/admin/catalogue/materiaux" />
+					) : (
+						<CreateMaterialButton />
+					)
+				}
 			/>
 		);
 	}
@@ -98,7 +114,7 @@ export function MaterialsDataTable({ materialsPromise, perPage }: MaterialsDataT
 							</TableHeader>
 							<TableBody>
 								{materials.map((material) => {
-									const skuCount = material._count.skus || 0;
+									const skuCount = material._count.skus;
 
 									return (
 										<TableRow key={material.id}>

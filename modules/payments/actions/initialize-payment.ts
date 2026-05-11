@@ -13,6 +13,7 @@ import type { ShippingCountry } from "@/shared/constants/countries";
 import { getOrCreateStripeCustomer } from "@/modules/payments/services/stripe-customer.service";
 import { assertStoreOpen } from "@/modules/store-settings/services/store-closure-guard";
 import { headers } from "next/headers";
+import { classifyStripeError } from "@/shared/lib/stripe-errors";
 import { logger } from "@/shared/lib/logger";
 import * as Sentry from "@sentry/nextjs";
 
@@ -100,8 +101,13 @@ export async function initializePayment(
 				0,
 			);
 
-			// Default shipping (France Standard)
-			const shipping = calculateShipping("FR" as ShippingCountry) ?? 499;
+			// Default shipping (France Standard).
+			// Throw explicitly if FR has no configured rate so admins notice the misconfiguration
+			// rather than silently undercharging the customer (audit P2.5).
+			const shipping = calculateShipping("FR" satisfies ShippingCountry);
+			if (shipping === null) {
+				throw new Error("Default FR shipping rate not configured");
+			}
 			const total = subtotal + shipping;
 
 			// Get or create Stripe customer
@@ -175,8 +181,20 @@ export async function initializePayment(
 					error: "Le service de paiement est temporairement indisponible.",
 				};
 			}
-			logger.error("Failed to initialize payment", e, { service: "checkout" });
-			Sentry.captureException(e);
+			const { kind, severity, code } = classifyStripeError(e);
+			if (severity === "info") {
+				logger.info("Stripe declined payment init (user)", {
+					service: "checkout",
+					stripeKind: kind,
+					stripeCode: code,
+				});
+			} else {
+				logger.error("Failed to initialize payment", e, {
+					service: "checkout",
+					stripeKind: kind,
+					stripeCode: code,
+				});
+			}
 			return {
 				success: false,
 				error: "Une erreur est survenue lors de l'initialisation du paiement.",
