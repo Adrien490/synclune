@@ -86,14 +86,14 @@ export function PolaroidDoodles() {
 				className="absolute -bottom-3 left-4 sm:-bottom-4 sm:left-6"
 			/>
 
-			{/* Star — bottom-right, gold, desktop only */}
+			{/* Star — bottom-right, gold, visible on all sizes (balances mobile decoration) */}
 			<Doodle
 				variant="star"
 				color="var(--color-glow-yellow)"
-				width={26}
-				height={26}
+				width={22}
+				height={22}
 				delay={1.0}
-				className="absolute -right-3 -bottom-4 hidden lg:block"
+				className="absolute -right-2 -bottom-3 sm:-right-3 sm:-bottom-4 sm:size-[26px]"
 			/>
 
 			{/* Arrow — between polaroid 1 and 2, desktop only */}

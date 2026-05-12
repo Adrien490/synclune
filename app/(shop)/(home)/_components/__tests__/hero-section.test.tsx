@@ -73,9 +73,6 @@ vi.mock("lucide-react", () => ({
 	Heart: (props: Record<string, unknown>) => (
 		<svg data-testid="heart-icon" aria-hidden={props["aria-hidden"] as boolean} />
 	),
-	ChevronDown: (props: Record<string, unknown>) => (
-		<svg data-testid="chevron-down-icon" aria-hidden={props["aria-hidden"] as boolean} />
-	),
 }));
 
 // Mock hero-decorations (dynamically imported, SSR:false)
@@ -181,7 +178,7 @@ describe("HeroSection", () => {
 		render(<HeroSection productsPromise={mockProductsPromise} />);
 
 		// HeroFloatingImagesAsync is an async server component inside Suspense.
-		// In a sync test environment, the Suspense fallback (null) renders instead.
+		// In a sync test environment, the HeroFloatingImagesSkeleton fallback renders.
 		// We verify the section still renders correctly without blocking.
 		const section = document.getElementById("hero-section");
 		expect(section).not.toBeNull();
@@ -200,5 +197,32 @@ describe("HeroSection", () => {
 		const srOnly = screen.getByText("avec amour");
 		expect(srOnly).toBeInTheDocument();
 		expect(srOnly.className).toContain("sr-only");
+	});
+
+	it("renders without crashing under prefers-reduced-motion", () => {
+		const matchMedia = vi.fn(
+			(query: string) =>
+				({
+					matches: query === "(prefers-reduced-motion: reduce)",
+					media: query,
+					onchange: null,
+					addListener: vi.fn(),
+					removeListener: vi.fn(),
+					addEventListener: vi.fn(),
+					removeEventListener: vi.fn(),
+					dispatchEvent: vi.fn(),
+				}) as unknown as MediaQueryList,
+		);
+		Object.defineProperty(window, "matchMedia", {
+			configurable: true,
+			writable: true,
+			value: matchMedia,
+		});
+
+		render(<HeroSection productsPromise={mockProductsPromise} />);
+
+		// Smoke check: section + h1 still render, no throw
+		expect(document.getElementById("hero-section")).not.toBeNull();
+		expect(screen.getByRole("heading", { level: 1 })).toBeInTheDocument();
 	});
 });

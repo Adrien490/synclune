@@ -1,4 +1,5 @@
 import { HeroFloatingImages } from "./floating-images";
+import { HeroFloatingImagesSkeleton } from "./hero-floating-images-skeleton";
 import { HeroRotatingWord } from "./hero-rotating-word";
 import { SectionTitle } from "@/shared/components/section-title";
 
@@ -38,7 +39,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
 			style={{ viewTransitionName: "shop-hero" }}
-			className="relative flex min-h-[calc(60svh-4rem)] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-5rem)] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen"
+			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-x-0 top-0 bottom-0 -z-10" aria-hidden="true">
@@ -63,7 +64,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			</div>
 
 			{/* Floating product images - Desktop only, streams in after products load */}
-			<Suspense fallback={null}>
+			<Suspense fallback={<HeroFloatingImagesSkeleton />}>
 				<HeroFloatingImagesAsync productsPromise={productsPromise} />
 			</Suspense>
 
@@ -98,9 +99,8 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 								{/* sr-only describes the decorative Heart icon for screen readers */}
 								<span className="sr-only">avec amour</span>
 								<Heart
-									size={22}
 									fill="currentColor"
-									className="text-primary inline-block align-[-0.15em]"
+									className="text-primary inline-block size-[1.1em] align-[-0.15em]"
 									aria-hidden="true"
 								/>
 							</p>

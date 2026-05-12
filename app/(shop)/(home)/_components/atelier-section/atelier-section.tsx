@@ -8,6 +8,7 @@ import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
 import { AtelierHapticBridge } from "./atelier-haptic-bridge";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
+import { POLAROIDS } from "./polaroid-config";
 import { PolaroidGallery } from "./polaroid-gallery";
 import { processSteps } from "./process-steps";
 import { SignatureReveal } from "./signature-reveal";
@@ -46,6 +47,29 @@ const howToSchema = {
 	})),
 };
 
+// ─── ItemList JSON-LD (Polaroid Gallery) ────────────────────────────────────
+// Note : contentUrl utilise IMAGES.ATELIER en attendant les vraies photos polaroid
+// (à mapper par id dès que les visuels seront livrés).
+const polaroidGallerySchema = {
+	"@context": "https://schema.org",
+	"@type": "ItemList",
+	"@id": `${SITE_URL}/#atelier-polaroid-gallery`,
+	name: "Galerie de l'atelier Synclune",
+	description: "Photos coulisses de l'atelier de création de bijoux artisanaux.",
+	numberOfItems: POLAROIDS.length,
+	itemListElement: POLAROIDS.map((p, i) => ({
+		"@type": "ListItem",
+		position: i + 1,
+		item: {
+			"@type": "ImageObject",
+			name: p.caption,
+			description: p.label,
+			contentUrl: IMAGES.ATELIER,
+			representativeOfPage: false,
+		},
+	})),
+};
+
 // ─── Section Component ──────────────────────────────────────────────────────
 
 /**
@@ -76,6 +100,16 @@ export async function AtelierSection() {
 				}}
 			/>
 
+			{/* ItemList JSON-LD Schema (polaroid gallery) — SAFE: serialized via safeJsonLd */}
+			{/* react-doctor-disable-next-line react/no-danger */}
+			<script
+				id="polaroid-gallery-schema"
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{
+					__html: safeJsonLd(polaroidGallerySchema),
+				}}
+			/>
+
 			<AtelierHapticBridge>
 				<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
 					{/* Header */}
@@ -102,6 +136,7 @@ export async function AtelierSection() {
 					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
 						<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
 							<PlaceholderImage
+								preserveAspect
 								className="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
 								label="L'atelier de création Synclune, où chaque bijou prend vie"
 							/>

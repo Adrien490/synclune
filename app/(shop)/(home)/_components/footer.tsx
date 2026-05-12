@@ -1,6 +1,7 @@
 import { Fade } from "@/shared/components/animations/fade";
 import { HandDrawnAccent } from "@/shared/components/animations/hand-drawn-accent";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
+import { CopyButton } from "@/shared/components/copy-button";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { CBIcon, MastercardIcon, VisaIcon } from "@/shared/components/icons/payment-icons";
 import { TikTokIcon } from "@/shared/components/icons/tiktok-icon";
@@ -8,12 +9,18 @@ import { Logo } from "@/shared/components/logo";
 import { BRAND } from "@/shared/constants/brand";
 import { footerNavItems, legalLinks } from "@/shared/constants/navigation";
 import { CONTAINER_CLASS, FOOTER_PADDING } from "@/shared/constants/spacing";
+import { SHIPPING_RATES } from "@/modules/orders/constants/shipping-rates";
 import { StripeWordmark } from "@/modules/payments/components/stripe-wordmark";
+import { formatShippingPrice } from "@/modules/orders/services/shipping.service";
 import { cacheLife, cacheTag } from "next/cache";
-import Link from "next/link";
+import { FooterLink } from "./footer-link";
+import { ManageCookiesButton } from "./manage-cookies-button";
 
 const REASSURANCE_ITEMS: { title: string; description: string }[] = [
-	{ title: "Livraison France : 4,99€", description: "Livraison UE : 9,50€" },
+	{
+		title: `Livraison France : ${formatShippingPrice(SHIPPING_RATES.FR.amount)}`,
+		description: `Livraison UE : ${formatShippingPrice(SHIPPING_RATES.EU.amount)}`,
+	},
 	{ title: "Retours sous 14 jours", description: "Échange ou remboursement" },
 	{ title: "Paiement sécurisé", description: "CB, Visa, Mastercard" },
 ];
@@ -48,6 +55,7 @@ export async function Footer() {
 		<footer
 			className="pwa-footer from-muted/20 via-background to-background relative overflow-hidden bg-linear-to-b"
 			aria-labelledby="footer-heading"
+			style={{ viewTransitionName: "shop-footer" }}
 		>
 			{/* Titre sr-only pour hiérarchie des headings */}
 			<h2 id="footer-heading" className="sr-only">
@@ -70,10 +78,10 @@ export async function Footer() {
 					disableOnTouch
 				>
 					{/* Navigation principale - Ordre: Logo, Navigation, Contact, Réseaux */}
-					<div className="mb-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
+					<div className="mb-8 grid gap-8 sm:mb-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
 						{/* Colonne 1: Logo + phrase perso */}
-						<div className="order-1 hidden space-y-4 sm:block">
-							<div className="mb-4">
+						<div className="order-1 space-y-4">
+							<div className="mb-4" style={{ viewTransitionName: "shop-logo-footer" }}>
 								<Logo href="/" size={40} quality={75} className="lg:[&_>_div]:size-12" />
 							</div>
 							<div className="max-w-xs space-y-2">
@@ -87,7 +95,7 @@ export async function Footer() {
 											height={12}
 											strokeWidth={1.5}
 											delay={0.8}
-											inView={false}
+											inView
 											className="absolute -bottom-1 left-[4.5ch]"
 										/>
 									</span>
@@ -108,12 +116,13 @@ export async function Footer() {
 							<ul className="space-y-2">
 								{footerNavItems.map((item) => (
 									<li key={item.href}>
-										<Link
+										<FooterLink
 											href={item.href}
+											haptic="selection"
 											className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
-										</Link>
+										</FooterLink>
 									</li>
 								))}
 							</ul>
@@ -129,13 +138,23 @@ export async function Footer() {
 							</h3>
 							<div className="space-y-3">
 								{/* Email - CTA principal avec style proéminent */}
-								<a
-									href={`mailto:${BRAND.contact.email}`}
-									className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
-									aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
-								>
-									{BRAND.contact.email}
-								</a>
+								<div className="flex flex-wrap items-center gap-1">
+									<FooterLink
+										href={`mailto:${BRAND.contact.email}`}
+										external
+										haptic="light"
+										className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
+										aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
+									>
+										{BRAND.contact.email}
+									</FooterLink>
+									<CopyButton
+										text={BRAND.contact.email}
+										label="Email"
+										size="icon"
+										className="text-muted-foreground hover:text-foreground size-9"
+									/>
+								</div>
 
 								<p className="text-muted-foreground px-3 text-sm/6 antialiased">
 									Atelier basé en {BRAND.contact.location.country}
@@ -153,10 +172,12 @@ export async function Footer() {
 							</h3>
 							<ul className="space-y-2">
 								<li>
-									<a
+									<FooterLink
 										href={BRAND.social.instagram.url}
+										external
 										target="_blank"
 										rel="noopener noreferrer"
+										haptic="light"
 										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
@@ -168,13 +189,15 @@ export async function Footer() {
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.instagram.handle}
 										</span>
-									</a>
+									</FooterLink>
 								</li>
 								<li>
-									<a
+									<FooterLink
 										href={BRAND.social.tiktok.url}
+										external
 										target="_blank"
 										rel="noopener noreferrer"
+										haptic="light"
 										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
@@ -186,19 +209,19 @@ export async function Footer() {
 										<span className="text-foreground text-sm/6 font-medium antialiased">
 											{BRAND.social.tiktok.handle}
 										</span>
-									</a>
+									</FooterLink>
 								</li>
 							</ul>
 						</nav>
 					</div>
 
 					{/* Reassurance - Baymard UX trust signals */}
-					<section aria-label="Engagements et garanties" className="mb-8">
+					<section aria-label="Engagements et garanties" className="mb-8 sm:mb-10">
 						<ul className="grid gap-3 sm:grid-cols-3">
 							{REASSURANCE_ITEMS.map((item) => (
 								<li
 									key={item.title}
-									className="bg-card/50 border-border/60 rounded-xl border px-5 py-4 shadow-sm"
+									className="bg-card/50 border-border/60 hover:border-border rounded-xl border px-5 py-4 shadow-sm hover:shadow-md motion-safe:transition-shadow motion-safe:duration-[var(--duration-normal)]"
 								>
 									<div className="text-sm">
 										<p className="text-foreground font-medium">{item.title}</p>
@@ -211,7 +234,7 @@ export async function Footer() {
 
 					{/* Paiement sécurisé */}
 					<section
-						className="border-border flex flex-col items-center gap-3 border-t pt-8"
+						className="border-border/60 flex flex-col items-center gap-3 border-t pt-8"
 						aria-labelledby="footer-payment-title"
 					>
 						<h3 id="footer-payment-title" className="sr-only">
@@ -219,23 +242,23 @@ export async function Footer() {
 						</h3>
 						<p className="text-muted-foreground flex items-center gap-2 text-sm">
 							<span>Sécurisé par</span>
-							<StripeWordmark className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]" />
+							<StripeWordmark className="text-muted-foreground" />
 						</p>
 						<ul className="flex items-center gap-4" aria-label="Moyens de paiement acceptés">
-							<li>
-								<VisaIcon aria-label="Visa accepté" className="text-muted-foreground" />
+							<li className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
+								<VisaIcon aria-label="Visa accepté" />
 							</li>
-							<li>
-								<MastercardIcon aria-label="Mastercard accepté" className="text-muted-foreground" />
+							<li className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
+								<MastercardIcon aria-label="Mastercard accepté" />
 							</li>
-							<li>
-								<CBIcon aria-label="Carte Bancaire acceptée" className="text-muted-foreground" />
+							<li className="text-muted-foreground hover:text-foreground motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]">
+								<CBIcon aria-label="Carte Bancaire acceptée" />
 							</li>
 						</ul>
 					</section>
 
 					{/* Copyright + Liens légaux */}
-					<div className="flex flex-col items-center gap-4 pt-6">
+					<div className="flex flex-col items-center gap-4 pt-8">
 						<p
 							className="text-muted-foreground text-center text-sm/6 antialiased"
 							suppressHydrationWarning
@@ -247,15 +270,17 @@ export async function Footer() {
 							className="flex flex-col items-center justify-center gap-x-2 sm:flex-row sm:flex-wrap"
 						>
 							{legalLinks.map((link) => (
-								<Link
+								<FooterLink
 									key={link.href}
 									href={link.href}
+									haptic="selection"
 									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
 									className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
 								>
 									{link.label}
-								</Link>
+								</FooterLink>
 							))}
+							<ManageCookiesButton className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start" />
 						</nav>
 					</div>
 				</Fade>

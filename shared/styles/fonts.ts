@@ -26,5 +26,5 @@ export const caveat = Caveat({
 	subsets: ["latin"],
 	display: "swap",
 	variable: "--font-cursive",
-	preload: false, // Avoid browser warnings — font loads via CSS when needed
+	preload: true, // Used in navbar logo (above-the-fold) + atelier signature reveal — preload to avoid FOIT
 });

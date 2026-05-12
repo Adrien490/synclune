@@ -465,7 +465,10 @@ function CarouselDots({ className, ...props }: React.ComponentProps<"div">) {
 								type="button"
 								aria-pressed={index === selectedIndex}
 								aria-label={`Aller à la diapositive ${index + 1}`}
-								onClick={() => api?.scrollTo(index)}
+								onClick={() => {
+									triggerHaptic("selection");
+									api?.scrollTo(index);
+								}}
 								className={cn(
 									// Touch target 44px (WCAG 2.5.5)
 									"relative flex size-11 shrink-0 items-center justify-center",

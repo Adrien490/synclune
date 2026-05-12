@@ -3,15 +3,24 @@ import { cn } from "@/shared/utils/cn";
 
 /**
  * Placeholder esthetique avec gradient pour les photos en attente
- * Ameliore : gradient plus visible, icone centrale, bordure subtile
- * @param className - Classes additionnelles pour aspect ratio responsive
- * @param label - Label accessible pour les lecteurs d'ecran (si fourni, le placeholder est annonce)
+ * @param className - Classes additionnelles (aspect, rounding, etc.)
+ * @param label - Label accessible pour les lecteurs d'ecran
+ * @param preserveAspect - Si true, retire aspect-square par defaut pour laisser un aspect parent prendre effet sans conflit Tailwind (anti-CLS)
  */
-export function PlaceholderImage({ className, label }: { className?: string; label?: string }) {
+export function PlaceholderImage({
+	className,
+	label,
+	preserveAspect = false,
+}: {
+	className?: string;
+	label?: string;
+	preserveAspect?: boolean;
+}) {
 	return (
 		<div
 			className={cn(
-				"from-secondary/40 via-muted/50 to-primary/30 border-border/30 relative flex aspect-square items-center justify-center overflow-hidden rounded-xl border bg-linear-to-br transition-opacity duration-500",
+				"from-secondary/40 via-muted/50 to-primary/30 border-border/30 relative flex items-center justify-center overflow-hidden rounded-xl border bg-linear-to-br transition-opacity duration-500",
+				!preserveAspect && "aspect-square",
 				className,
 			)}
 			role={label ? "img" : undefined}

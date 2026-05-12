@@ -12,9 +12,6 @@ vi.mock("@/shared/utils/cn", () => ({
 
 vi.mock("@/shared/components/animations", () => ({
 	Reveal: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-	Stagger: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-		<div className={className}>{children}</div>
-	),
 }));
 
 vi.mock("@/shared/components/animations/motion.config", () => ({
@@ -23,7 +20,6 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 			title: { duration: 0 },
 			grid: { y: 0 },
 		},
-		stagger: { slow: 0 },
 	},
 }));
 
@@ -134,5 +130,18 @@ describe("PolaroidGallery", () => {
 		frames.forEach((frame) => {
 			expect(frame.getAttribute("data-atelier-haptic")).toBe("polaroid");
 		});
+	});
+
+	it("renders polaroids directly inside the grid without a Stagger wrapper", () => {
+		render(<PolaroidGallery />);
+
+		const frames = screen.getAllByTestId("polaroid-frame");
+		const parent = frames[0]?.parentElement;
+		expect(parent).not.toBeNull();
+		// Grid container holds the 4 frames directly — no intermediary motion wrapper
+		expect(parent?.children).toHaveLength(4);
+		expect(parent?.className).toContain("grid");
+		expect(parent?.className).toContain("min-[340px]:grid-cols-2");
+		expect(parent?.className).toContain("lg:grid-cols-4");
 	});
 });

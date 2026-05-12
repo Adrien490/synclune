@@ -30,7 +30,7 @@ export function LatestCreationsSkeleton({ productsCount = 4 }: LatestCreationsSk
 			<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 				{/* Header skeleton */}
 				<header className="mb-8 text-center lg:mb-12">
-					{/* Titre skeleton - "Nouveaux bijoux" */}
+					{/* Titre skeleton - "Nouvelles créations" */}
 					<div className="bg-muted mx-auto h-10 w-64 rounded motion-safe:animate-pulse" />
 					{/* Sous-titre skeleton */}
 					<div className="bg-muted/50 mx-auto mt-4 h-7 w-full max-w-md rounded motion-safe:animate-pulse" />
@@ -49,7 +49,7 @@ export function LatestCreationsSkeleton({ productsCount = 4 }: LatestCreationsSk
 function LatestCreationsGridSkeleton({ productsCount = 4 }: LatestCreationsSkeletonProps = {}) {
 	return (
 		<>
-			<div className="mb-6 grid grid-cols-2 gap-3 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
+			<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8">
 				{Array.from({ length: productsCount }).map((_, i) => (
 					<div
 						key={i}

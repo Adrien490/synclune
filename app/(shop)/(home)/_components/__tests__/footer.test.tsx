@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
@@ -78,10 +78,48 @@ vi.mock("@/modules/payments/components/stripe-wordmark", () => ({
 	StripeWordmark: () => <span data-testid="stripe-wordmark">Stripe</span>,
 }));
 
+// Mock CopyButton (renders a button — keeps email region link count stable)
+vi.mock("@/shared/components/copy-button", () => ({
+	CopyButton: ({
+		text,
+		label,
+	}: {
+		text: string;
+		label: string;
+		size?: string;
+		className?: string;
+	}) => (
+		<button
+			type="button"
+			data-testid="copy-button"
+			data-text={text}
+			aria-label={`Copier ${label.toLowerCase()}`}
+		>
+			Copier
+		</button>
+	),
+}));
+
+// Mock haptic hook to spy on FooterLink interactions without touching navigator.vibrate
+const triggerHapticMock = vi.fn();
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => triggerHapticMock,
+	triggerHaptic: (...args: unknown[]) => triggerHapticMock(...args),
+}));
+
+// Mock cookie-consent provider so ManageCookiesButton can call resetConsent without a Provider
+const resetConsentMock = vi.fn();
+vi.mock("@/shared/providers/cookie-consent-store-provider", () => ({
+	useCookieConsentStore: (selector: (state: { resetConsent: () => void }) => unknown) =>
+		selector({ resetConsent: resetConsentMock }),
+}));
+
 import { Footer } from "../footer";
 
 afterEach(() => {
 	cleanup();
+	triggerHapticMock.mockClear();
+	resetConsentMock.mockClear();
 });
 
 // ---------------------------------------------------------------------------
@@ -147,7 +185,7 @@ describe("Footer", () => {
 
 	// --- Contact section ---
 
-	it("renders contact section with email and location", async () => {
+	it("renders contact section with email, copy-button and location", async () => {
 		await renderFooter();
 
 		const contactSection = screen.getByRole("region", { name: /contact/i });
@@ -159,6 +197,10 @@ describe("Footer", () => {
 			"aria-label",
 			"Envoyer un email à Synclune : contact@synclune.fr",
 		);
+
+		// Adjacent CopyButton allows copying email without launching mail app
+		const copyButton = within(contactSection).getByTestId("copy-button");
+		expect(copyButton).toHaveAttribute("data-text", "contact@synclune.fr");
 
 		expect(within(contactSection).getByText(/France/)).toBeInTheDocument();
 	});
@@ -191,7 +233,7 @@ describe("Footer", () => {
 
 	// --- Reassurance items ---
 
-	it("renders 3 reassurance items with trust signals", async () => {
+	it("renders 3 reassurance items with trust signals (shipping rates dynamic)", async () => {
 		await renderFooter();
 
 		const reassurance = screen.getByRole("region", { name: /engagements/i });
@@ -200,8 +242,9 @@ describe("Footer", () => {
 		const items = within(reassurance).getAllByRole("listitem");
 		expect(items).toHaveLength(3);
 
-		expect(screen.getByText("Livraison France : 4,99€")).toBeInTheDocument();
-		expect(screen.getByText("Livraison UE : 9,50€")).toBeInTheDocument();
+		// Prices come from SHIPPING_RATES via Intl.NumberFormat — tolerate NBSP between digits and €
+		expect(within(reassurance).getByText(/Livraison France\s*:\s*4,99\s*€/)).toBeInTheDocument();
+		expect(within(reassurance).getByText(/Livraison UE\s*:\s*9,50\s*€/)).toBeInTheDocument();
 
 		expect(screen.getByText("Retours sous 14 jours")).toBeInTheDocument();
 		expect(screen.getByText("Échange ou remboursement")).toBeInTheDocument();
@@ -288,5 +331,79 @@ describe("Footer", () => {
 		});
 		expect(paymentHeading).toBeInTheDocument();
 		expect(paymentHeading.className).toContain("sr-only");
+	});
+
+	// --- Manage cookies preferences (P0.3) ---
+
+	it("renders a 'Modifier mes préférences' button inside the legal nav", async () => {
+		await renderFooter();
+
+		const legalNav = screen.getByRole("navigation", { name: /liens légaux/i });
+		const manageButton = within(legalNav).getByRole("button", {
+			name: /modifier mes préférences cookies/i,
+		});
+		expect(manageButton).toBeInTheDocument();
+		expect(manageButton).toHaveTextContent("Modifier mes préférences");
+	});
+
+	it("calls resetConsent when 'Modifier mes préférences' is clicked", async () => {
+		await renderFooter();
+
+		const manageButton = screen.getByRole("button", {
+			name: /modifier mes préférences cookies/i,
+		});
+		fireEvent.click(manageButton);
+
+		expect(resetConsentMock).toHaveBeenCalledTimes(1);
+		expect(triggerHapticMock).toHaveBeenCalledWith("light");
+	});
+
+	// --- Haptic feedback (P0.2) ---
+
+	it("triggers selection haptic when a footer navigation link is clicked", async () => {
+		await renderFooter();
+
+		const navSection = screen.getByRole("navigation", { name: /navigation/i });
+		const firstLink = within(navSection).getAllByRole("link")[0];
+		expect(firstLink).toBeDefined();
+		fireEvent.click(firstLink!);
+
+		expect(triggerHapticMock).toHaveBeenCalledWith("selection");
+	});
+
+	it("triggers light haptic when a social link is clicked", async () => {
+		await renderFooter();
+
+		const socialNav = screen.getByRole("navigation", { name: /réseaux sociaux/i });
+		const instagram = within(socialNav).getAllByRole("link")[0];
+		expect(instagram).toBeDefined();
+		fireEvent.click(instagram!);
+
+		expect(triggerHapticMock).toHaveBeenCalledWith("light");
+	});
+
+	// --- viewTransitionName (P1.3) ---
+
+	it("sets viewTransitionName on the footer root and on the logo wrapper", async () => {
+		await renderFooter();
+
+		const footer = screen.getByRole("contentinfo");
+		expect(footer.style.viewTransitionName).toBe("shop-footer");
+
+		const logo = screen.getByTestId("logo");
+		const logoWrapper = logo.parentElement;
+		expect(logoWrapper?.style.viewTransitionName).toBe("shop-logo-footer");
+	});
+
+	// --- Logo visible on mobile (P1.1) ---
+
+	it("renders the Logo without the hidden-on-mobile class", async () => {
+		await renderFooter();
+
+		const logo = screen.getByTestId("logo");
+		// The logo column should no longer rely on `hidden sm:block`
+		const logoColumn = logo.closest("div.order-1");
+		expect(logoColumn).not.toBeNull();
+		expect(logoColumn?.className).not.toMatch(/\bhidden\b/);
 	});
 });

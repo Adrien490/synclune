@@ -14,6 +14,7 @@ vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: {
 		section: {
 			title: { y: 20, duration: 0.5 },
+			subtitle: { y: 10, delay: 0.1, duration: 0.6 },
 			cta: { y: 10, delay: 0.1, duration: 0.4 },
 			underline: { delay: 0.15 },
 		},
@@ -160,7 +161,7 @@ describe("LatestCreations", () => {
 		expect(screen.queryByTestId(/^product-card-/)).not.toBeInTheDocument();
 
 		// Fallback CTA targets /produits (full catalog)
-		const ctaLink = screen.getByText("Voir toute la boutique");
+		const ctaLink = screen.getByText("Voir tous les bijoux disponibles");
 		expect(ctaLink.closest("a")).toHaveAttribute("href", "/produits");
 	});
 

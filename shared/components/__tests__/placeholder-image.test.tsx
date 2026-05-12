@@ -108,4 +108,28 @@ describe("PlaceholderImage", () => {
 		const outerDiv = container.firstChild as HTMLElement;
 		expect(outerDiv.className).toContain("aspect-video");
 	});
+
+	// ─── preserveAspect ────────────────────────────────────────────────────
+
+	it("applies aspect-square by default", () => {
+		const { container } = render(<PlaceholderImage />);
+
+		const outerDiv = container.firstChild as HTMLElement;
+		expect(outerDiv.className).toContain("aspect-square");
+	});
+
+	it("omits aspect-square when preserveAspect is true (lets parent aspect take over without CLS conflict)", () => {
+		const { container } = render(<PlaceholderImage preserveAspect />);
+
+		const outerDiv = container.firstChild as HTMLElement;
+		expect(outerDiv.className).not.toContain("aspect-square");
+	});
+
+	it("preserveAspect still honors custom className aspect override", () => {
+		const { container } = render(<PlaceholderImage preserveAspect className="aspect-[4/3]" />);
+
+		const outerDiv = container.firstChild as HTMLElement;
+		expect(outerDiv.className).not.toContain("aspect-square");
+		expect(outerDiv.className).toContain("aspect-[4/3]");
+	});
 });

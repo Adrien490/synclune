@@ -78,6 +78,17 @@ describe("PolaroidDoodles", () => {
 		expect(starPaths).toHaveLength(2);
 	});
 
+	it("renders exactly 3 doodles visible on mobile (no hidden lg:block on bottom-right star)", () => {
+		const { container } = render(<PolaroidDoodles />);
+
+		const svgs = container.querySelectorAll("svg");
+		const visibleOnMobile = Array.from(svgs).filter(
+			(svg) => !svg.className.baseVal.includes("hidden lg:block"),
+		);
+		// 2 hearts + bottom-right star = 3 visible on mobile
+		expect(visibleOnMobile).toHaveLength(3);
+	});
+
 	it("all SVGs have pointer-events-none class", () => {
 		const { container } = render(<PolaroidDoodles />);
 

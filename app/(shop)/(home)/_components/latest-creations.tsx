@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -25,7 +27,7 @@ export async function LatestCreations({
 			style={{ viewTransitionName: "latest-creations" }}
 		>
 			<div className={`relative ${CONTAINER_CLASS}`}>
-				{/* Baymard UX: Full scope labels - "Nouveaux bijoux" au lieu de "Nouveautés" */}
+				{/* Baymard UX: Full scope labels — h2 "Nouvelles créations" reste explicite (vs "Nouveautés" générique) */}
 				<header className="mb-10 text-center lg:mb-14">
 					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
 						<SectionTitle id="latest-creations-title">Nouvelles créations</SectionTitle>
@@ -35,14 +37,20 @@ export async function LatestCreations({
 							className="mx-auto mt-2"
 						/>
 					</Fade>
-					<p
-						id="latest-creations-subtitle"
-						className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
+					<Fade
+						y={MOTION_CONFIG.section.subtitle.y}
+						delay={MOTION_CONFIG.section.subtitle.delay}
+						duration={MOTION_CONFIG.section.subtitle.duration}
 					>
-						{isEmpty
-							? "De nouveaux bijoux arrivent très bientôt dans l'atelier."
-							: "Tout juste sorties de l'atelier et réalisées avec amour !"}
-					</p>
+						<p
+							id="latest-creations-subtitle"
+							className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal"
+						>
+							{isEmpty
+								? "De nouveaux bijoux arrivent très bientôt dans l'atelier."
+								: "Tout juste sorties de l'atelier et réalisées avec amour !"}
+						</p>
+					</Fade>
 				</header>
 				{isEmpty ? (
 					<Fade
@@ -59,9 +67,14 @@ export async function LatestCreations({
 					</Fade>
 				) : (
 					<LatestCreationsHapticBridge>
-						<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 lg:mb-12 lg:grid-cols-4 lg:gap-8">
+						<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8">
 							{products.map((product, index) => (
-								<div key={product.id} data-latest-haptic="card" className="contents">
+								<div
+									key={product.id}
+									data-latest-haptic="card"
+									className="latest-card-enter-scroll"
+									style={{ "--card-index": index } as CSSProperties}
+								>
 									<CursorGlow>
 										<ProductCard product={product} index={index} sectionId="latest" />
 									</CursorGlow>
@@ -83,11 +96,11 @@ export async function LatestCreations({
 						hapticPattern="selection"
 						aria-describedby="latest-creations-cta-description"
 					>
-						{isEmpty ? "Voir toute la boutique" : "Voir tous les nouveaux bijoux"}
+						{isEmpty ? "Voir tous les bijoux disponibles" : "Voir tous les nouveaux bijoux"}
 					</SectionCtaLink>
 					<span id="latest-creations-cta-description" className="sr-only">
 						{isEmpty
-							? "Parcourir l'ensemble du catalogue Synclune"
+							? "Parcourir le catalogue des bijoux actuellement disponibles dans la boutique Synclune"
 							: "Découvrir tous les bijoux récemment créés dans la boutique Synclune"}
 					</span>
 				</Fade>

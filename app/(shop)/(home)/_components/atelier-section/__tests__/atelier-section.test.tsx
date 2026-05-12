@@ -136,7 +136,7 @@ describe("HowTo JSON-LD schema", () => {
 	it("renders a valid JSON-LD script tag", async () => {
 		await renderAtelierSection();
 
-		const script = document.querySelector('script[type="application/ld+json"]');
+		const script = document.querySelector('script#howto-schema[type="application/ld+json"]');
 		expect(script).not.toBeNull();
 
 		const schema = JSON.parse(script!.textContent!);
@@ -147,7 +147,7 @@ describe("HowTo JSON-LD schema", () => {
 	it("has correct metadata", async () => {
 		await renderAtelierSection();
 
-		const script = document.querySelector('script[type="application/ld+json"]');
+		const script = document.querySelector('script#howto-schema[type="application/ld+json"]');
 		const schema = JSON.parse(script!.textContent!);
 
 		expect(schema.inLanguage).toBe("fr-FR");
@@ -159,7 +159,7 @@ describe("HowTo JSON-LD schema", () => {
 	it("includes all process steps", async () => {
 		await renderAtelierSection();
 
-		const script = document.querySelector('script[type="application/ld+json"]');
+		const script = document.querySelector('script#howto-schema[type="application/ld+json"]');
 		const schema = JSON.parse(script!.textContent!);
 
 		expect(schema.step).toHaveLength(processSteps.length);
@@ -176,7 +176,7 @@ describe("HowTo JSON-LD schema", () => {
 	it("includes supplies and tools", async () => {
 		await renderAtelierSection();
 
-		const script = document.querySelector('script[type="application/ld+json"]');
+		const script = document.querySelector('script#howto-schema[type="application/ld+json"]');
 		const schema = JSON.parse(script!.textContent!);
 
 		expect(schema.supply.length).toBeGreaterThan(0);
@@ -188,10 +188,66 @@ describe("HowTo JSON-LD schema", () => {
 	it("escapes HTML entities to prevent XSS", async () => {
 		await renderAtelierSection();
 
-		const script = document.querySelector('script[type="application/ld+json"]');
+		const script = document.querySelector('script#howto-schema[type="application/ld+json"]');
 		expect(script!.innerHTML).not.toContain("<script");
 		// The replace(/</g, "\\u003c") should convert any < into the unicode escape
 		expect(script!.innerHTML).not.toMatch(/<(?!\/script>)/);
+	});
+});
+
+// ---------------------------------------------------------------------------
+// 1bis. ItemList JSON-LD Schema (polaroid gallery)
+// ---------------------------------------------------------------------------
+
+describe("ItemList JSON-LD schema (polaroid gallery)", () => {
+	it("renders a second JSON-LD script tag with @type ItemList", async () => {
+		await renderAtelierSection();
+
+		const scripts = document.querySelectorAll('script[type="application/ld+json"]');
+		expect(scripts.length).toBe(2);
+
+		const itemListScript = document.querySelector(
+			'script#polaroid-gallery-schema[type="application/ld+json"]',
+		);
+		expect(itemListScript).not.toBeNull();
+
+		const schema = JSON.parse(itemListScript!.textContent!);
+		expect(schema["@type"]).toBe("ItemList");
+		expect(schema["@context"]).toBe("https://schema.org");
+		expect(schema.numberOfItems).toBe(4);
+	});
+
+	it("each ListItem wraps an ImageObject with name, description, contentUrl", async () => {
+		await renderAtelierSection();
+
+		const itemListScript = document.querySelector(
+			'script#polaroid-gallery-schema[type="application/ld+json"]',
+		);
+		const schema = JSON.parse(itemListScript!.textContent!);
+
+		expect(schema.itemListElement).toHaveLength(4);
+		schema.itemListElement.forEach((entry: Record<string, unknown>, i: number) => {
+			expect(entry["@type"]).toBe("ListItem");
+			expect(entry.position).toBe(i + 1);
+			const item = entry.item as Record<string, unknown>;
+			expect(item["@type"]).toBe("ImageObject");
+			expect(typeof item.name).toBe("string");
+			expect((item.name as string).length).toBeGreaterThan(0);
+			expect(typeof item.description).toBe("string");
+			expect((item.description as string).length).toBeGreaterThan(0);
+			expect(typeof item.contentUrl).toBe("string");
+			expect((item.contentUrl as string).length).toBeGreaterThan(0);
+		});
+	});
+
+	it("escapes HTML entities in ItemList schema", async () => {
+		await renderAtelierSection();
+
+		const itemListScript = document.querySelector(
+			'script#polaroid-gallery-schema[type="application/ld+json"]',
+		);
+		expect(itemListScript!.innerHTML).not.toContain("<script");
+		expect(itemListScript!.innerHTML).not.toMatch(/<(?!\/script>)/);
 	});
 });
 

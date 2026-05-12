@@ -39,6 +39,7 @@ export function InstagramTeaser() {
 						<div className="relative mx-auto w-full max-w-md lg:max-w-none">
 							<div className="relative shadow-md">
 								<PlaceholderImage
+									preserveAspect
 									className="aspect-[4/5] rounded-2xl sm:aspect-[5/6]"
 									label="Aperçu de la galerie Instagram @synclune.bijoux : pièces colorées et détails d'atelier"
 								/>
