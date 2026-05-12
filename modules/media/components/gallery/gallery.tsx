@@ -28,7 +28,6 @@ import {
 import { useLightbox } from "@/shared/hooks";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import ScrollFade from "@/shared/components/scroll-fade";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
 import { GallerySlide } from "./slide";
 import { GalleryThumbnail } from "./thumbnail";
 
@@ -238,8 +237,7 @@ function GalleryContent({ product, title }: GalleryProps) {
 	const onSelect = useEffectEvent(() => {
 		if (!emblaApi) return;
 		const next = emblaApi.selectedScrollSnap();
-		// Wrap setCurrent dans View Transition pour morphing du dot actif (mobile)
-		withViewTransition(() => setCurrent(next));
+		setCurrent(next);
 		// Haptic only on swipe-triggered selects (buttons already emit "selection" on click)
 		if (isDraggingRef.current) {
 			haptic("light");
@@ -255,12 +253,13 @@ function GalleryContent({ product, title }: GalleryProps) {
 	useEffect(() => {
 		if (!emblaApi) return;
 
-		onSelect();
 		emblaApi.on("select", onSelect);
+		emblaApi.on("reInit", onSelect);
 		emblaApi.on("pointerDown", onPointerDown);
 
 		return () => {
 			emblaApi.off("select", onSelect);
+			emblaApi.off("reInit", onSelect);
 			emblaApi.off("pointerDown", onPointerDown);
 		};
 	}, [emblaApi]);
