@@ -13,6 +13,7 @@ export type AdminAlertType =
 	| "invoice"
 	| "order-processing"
 	| "refund"
+	| "stuck-orders"
 	| "webhook";
 
 interface AdminAlertEmailProps {
@@ -33,6 +34,7 @@ const HEADER_TEXT: Record<AdminAlertType, string> = {
 	invoice: "Échec génération facture",
 	"order-processing": "Échec traitement commande",
 	refund: "Échec du remboursement",
+	"stuck-orders": "Commandes en attente prolongée",
 	webhook: "Webhook Stripe en échec",
 };
 
@@ -43,6 +45,7 @@ const PREVIEW_TEXT: Record<AdminAlertType, string> = {
 	invoice: "Échec génération facture — conformité légale",
 	"order-processing": "Paiement reçu — échec traitement commande",
 	refund: "Échec remboursement — action manuelle",
+	"stuck-orders": "Commandes en attente — vérifier l'avancement",
 	webhook: "Webhook Stripe en échec",
 };
 
@@ -53,6 +56,7 @@ const URGENCY_LABEL: Record<AdminAlertType, string> = {
 	invoice: "Conformité légale — Action requise",
 	"order-processing": "URGENT — Paiement reçu, commande non traitée",
 	refund: "Action manuelle requise",
+	"stuck-orders": "Vérification recommandée",
 	webhook: "Action manuelle peut-être requise",
 };
 

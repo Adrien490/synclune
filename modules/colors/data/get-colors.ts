@@ -39,6 +39,7 @@ export async function getColors(params: GetColorsParamsInput): Promise<GetColors
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 
@@ -73,12 +74,15 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 			take,
 		});
 
-		const colors = await prisma.color.findMany({
-			where,
-			select: GET_COLORS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [colors, totalCount] = await Promise.all([
+			prisma.color.findMany({
+				where,
+				select: GET_COLORS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.color.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			colors,
@@ -87,7 +91,7 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 			params.cursor,
 		);
 
-		return { colors: items, pagination };
+		return { colors: items, pagination, totalCount };
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "colors", operation: "fetchColors" },
@@ -101,6 +105,7 @@ async function fetchColors(params: GetColorsParams): Promise<GetColorsReturn> {
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 }

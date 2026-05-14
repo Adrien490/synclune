@@ -13,6 +13,7 @@ import { ColorsMobileList } from "@/modules/colors/components/admin/colors-mobil
 import { ColorsMobileListSkeleton } from "@/modules/colors/components/admin/colors-mobile-list-skeleton";
 import { ColorsFilterBadges } from "@/modules/colors/components/admin/colors-filter-badges";
 import { ColorsFilterSheet } from "@/modules/colors/components/admin/colors-filter-sheet";
+import { ColorsSortBadge } from "@/modules/colors/components/admin/colors-sort-badge";
 import { CreateColorButton } from "@/modules/colors/components/admin/create-color-button";
 import dynamic from "next/dynamic";
 
@@ -114,6 +115,9 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 					<ColorsFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<ColorsSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<ColorsMobileListSkeleton />}>
 					<ColorsMobileList
@@ -122,6 +126,7 @@ export default async function ColorsAdminPage({ searchParams }: ColorsAdminPageP
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

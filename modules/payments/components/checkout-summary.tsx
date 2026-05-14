@@ -71,7 +71,10 @@ function SummaryContent({
 				{cart.items.map((item) => (
 					<div key={item.id} className="flex gap-3 text-sm">
 						{/* Image */}
-						<div className="bg-muted border-primary/10 relative size-16 shrink-0 overflow-hidden rounded-xl border">
+						<div
+							className="bg-muted border-primary/10 relative size-16 shrink-0 overflow-hidden rounded-xl border"
+							style={{ viewTransitionName: `checkout-item-${item.id}` }}
+						>
 							{item.sku.images[0] ? (
 								<Image
 									src={item.sku.images[0].url}
@@ -125,7 +128,6 @@ function SummaryContent({
 				<button
 					type="button"
 					onClick={onEditCart}
-					aria-label="Modifier mon panier"
 					className="text-foreground focus-visible:ring-ring inline-flex items-center gap-1 rounded-sm text-xs underline hover:no-underline focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 				>
 					Modifier mon panier
@@ -157,7 +159,11 @@ function SummaryContent({
 				<div className="flex items-center justify-between">
 					<span className="text-muted-foreground">Livraison</span>
 					<span className="text-base/6 font-medium tabular-nums">
-						{shippingUnavailable ? "Indisponible" : formatEuro(shipping)}
+						{shippingUnavailable ? (
+							<span className="text-muted-foreground text-sm italic">Sélectionne ton pays</span>
+						) : (
+							formatEuro(shipping)
+						)}
 					</span>
 				</div>
 				{shippingInfo && !shippingUnavailable && (
@@ -313,7 +319,7 @@ export function CheckoutSummary({
 
 				<CardHeader className="pb-4">
 					<CardTitle className="font-display text-lg/7 tracking-wide antialiased">
-						Votre commande
+						Ta commande
 					</CardTitle>
 				</CardHeader>
 

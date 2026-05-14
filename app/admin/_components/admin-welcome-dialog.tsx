@@ -168,6 +168,7 @@ export function AdminWelcomeDialog() {
 					aria-busy={isPending}
 					size="lg"
 					className="min-w-48"
+					data-vaul-no-drag
 				>
 					{isPending ? (
 						<>

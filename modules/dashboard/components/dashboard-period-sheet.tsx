@@ -104,7 +104,7 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 					</div>
 				</SheetHeader>
 
-				<div className="flex-1 gap-y-6 overflow-y-auto p-6">
+				<div className="flex-1 gap-y-6 overflow-y-auto overscroll-contain p-6">
 					<section className="space-y-3" aria-labelledby="period-section-period">
 						<h3
 							id="period-section-period"
@@ -112,7 +112,9 @@ export function DashboardPeriodSheet({ open, onOpenChange }: DashboardPeriodShee
 						>
 							Période d&apos;analyse
 						</h3>
-						<PeriodSelector variant="segmented" />
+						<div data-vaul-no-drag>
+							<PeriodSelector variant="segmented" />
+						</div>
 					</section>
 				</div>
 

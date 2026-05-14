@@ -68,6 +68,12 @@ export const GET_DISCOUNT_VALIDATION_SELECT = {
 export const GET_DISCOUNTS_DEFAULT_PER_PAGE = 20;
 export const GET_DISCOUNTS_MAX_RESULTS_PER_PAGE = 100;
 
+/**
+ * Cap des ids retournés par get-filtered-discount-ids pour le banner
+ * "Sélectionner les N filtrés" (parité produits).
+ */
+export const BULK_DISCOUNT_ACTION_LIMIT = 100;
+
 export const DISCOUNTS_SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
 	CREATED_ASC: "created-ascending",

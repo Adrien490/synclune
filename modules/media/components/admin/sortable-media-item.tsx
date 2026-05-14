@@ -15,12 +15,14 @@ import { cn } from "@/shared/utils/cn";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
 import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
+import { EditAltTextDialog } from "@/modules/media/components/admin/edit-alt-text-dialog";
 import {
 	ArrowDown,
 	ArrowUp,
 	Expand,
 	GripVertical,
 	EllipsisVertical,
+	FileText,
 	Play,
 	Star,
 	Trash2,
@@ -36,7 +38,6 @@ export interface SortableMediaItemProps {
 	isImageLoaded: boolean;
 	shouldReduceMotion: boolean | null;
 	isDraggingAny: boolean;
-	showLongPressHint: boolean;
 	onImageLoaded: (url: string) => void;
 	onOpenLightbox: (index: number) => void;
 	onOpenDeleteDialog: () => void;
@@ -46,6 +47,10 @@ export interface SortableMediaItemProps {
 	onMoveDown?: () => void;
 	/** Total number of items (to determine if we can move down) */
 	totalCount?: number;
+	/** Promote this item to first position (set as primary). Omitted when isPrimary or for videos. */
+	onSetAsPrimary?: () => void;
+	/** Update the media's alt text (description for SEO + screen readers). */
+	onUpdateAltText?: (altText: string) => void;
 }
 
 // Tap-vs-scroll threshold on the video element (px of movement between touchstart and touchend).
@@ -58,19 +63,21 @@ export function SortableMediaItem({
 	isImageLoaded,
 	shouldReduceMotion,
 	isDraggingAny,
-	showLongPressHint,
 	onImageLoaded,
 	onOpenLightbox,
 	onOpenDeleteDialog,
 	onMoveUp,
 	onMoveDown,
 	totalCount = 1,
+	onSetAsPrimary,
+	onUpdateAltText,
 }: SortableMediaItemProps) {
 	const canMoveUp = Boolean(index > 0 && onMoveUp);
 	const canMoveDown = Boolean(index < totalCount - 1 && onMoveDown);
 	const haptic = useHaptic();
 	const isTouchDevice = useIsTouchDevice();
 	const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
+	const [editAltOpen, setEditAltOpen] = useState(false);
 	const [isPressing, setIsPressing] = useState(false);
 	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
@@ -114,7 +121,7 @@ export function SortableMediaItem({
 	}, [isDragSource]);
 
 	const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-		if (event.pointerType !== "touch" || !isTouchDevice) return;
+		if (event.pointerType !== "touch") return;
 		clearPressTimer();
 		pressTimerRef.current = setTimeout(() => {
 			setIsPressing(true);
@@ -156,8 +163,31 @@ export function SortableMediaItem({
 		onMoveDown();
 	};
 
+	const handleSetAsPrimaryFromDrawer = () => {
+		if (!onSetAsPrimary) return;
+		haptic("medium");
+		closeMobileActions();
+		onSetAsPrimary();
+	};
+
+	const handleOpenEditAlt = () => {
+		haptic("light");
+		closeMobileActions();
+		setEditAltOpen(true);
+	};
+
 	const mobileActionItems = (
 		<div className="flex flex-col gap-1 pb-2">
+			{!isPrimary && onSetAsPrimary && (
+				<button
+					type="button"
+					onClick={handleSetAsPrimaryFromDrawer}
+					className="flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-amber-50 active:bg-amber-100 motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)] dark:hover:bg-amber-900/20"
+				>
+					<Star className="size-5 text-amber-600" fill="currentColor" aria-hidden="true" />
+					<span className="text-sm font-medium">Définir comme principale</span>
+				</button>
+			)}
 			<button
 				type="button"
 				onClick={handleOpenLightbox}
@@ -166,6 +196,16 @@ export function SortableMediaItem({
 				<Expand className="text-muted-foreground size-5" aria-hidden="true" />
 				<span className="text-sm font-medium">Agrandir</span>
 			</button>
+			{onUpdateAltText && (
+				<button
+					type="button"
+					onClick={handleOpenEditAlt}
+					className="hover:bg-muted/50 active:bg-muted flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
+				>
+					<FileText className="text-muted-foreground size-5" aria-hidden="true" />
+					<span className="text-sm font-medium">Modifier la description</span>
+				</button>
+			)}
 			{canMoveUp && (
 				<button
 					type="button"
@@ -233,7 +273,7 @@ export function SortableMediaItem({
 			}}
 			className={cn(
 				"group relative aspect-square shrink-0 overflow-hidden rounded-lg border-2",
-				"select-none [-webkit-touch-callout:none]",
+				"touch-manipulation select-none [-webkit-touch-callout:none]",
 				shouldReduceMotion
 					? ""
 					: "motion-safe:transition-[transform,border-color,opacity,box-shadow] motion-safe:duration-[var(--duration-normal)]",
@@ -245,6 +285,7 @@ export function SortableMediaItem({
 					: "border-border hover:border-primary/50",
 			)}
 			role="group"
+			aria-roledescription="élément réorganisable"
 			aria-label={`${isVideo ? "Vidéo" : "Image"} ${index + 1}${isPrimary ? " (principale)" : ""}`}
 		>
 			{/* Skeleton/Loading state — shown for images and video thumbnails while loading */}
@@ -341,12 +382,12 @@ export function SortableMediaItem({
 							}}
 							className={cn(
 								"absolute inset-0 flex cursor-pointer items-center justify-center",
-								"opacity-100 sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100",
+								"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100 opacity-100",
 								"motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)]",
 							)}
 							aria-label={`Lire la vidéo ${index + 1}`}
 						>
-							<div className="rounded-full bg-black/70 p-3 shadow-xl transition-colors hover:bg-black/90">
+							<div className="rounded-full bg-black/70 p-3 shadow-xl transition-colors hover:bg-black/90 active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]">
 								<Play className="size-6 text-white" fill="white" />
 							</div>
 						</button>
@@ -385,54 +426,74 @@ export function SortableMediaItem({
 				</div>
 			)}
 
-			{/* Drag handle — non-touch devices only, hover-reveal top-right (WCAG 2.5.5) */}
-			{!isTouchDevice && (
+			{/* Set-as-primary affordance — non-primary items only (videos receive undefined) */}
+			{!isPrimary && onSetAsPrimary && (
 				<button
 					type="button"
-					ref={handleRef}
-					aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
-					aria-describedby="drag-instructions"
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						haptic("medium");
+						onSetAsPrimary();
+					}}
 					className={cn(
-						"absolute top-2 right-2 z-20 flex cursor-grab active:cursor-grabbing",
-						"opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
-						"focus-visible:ring-primary rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-						shouldReduceMotion
-							? ""
-							: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
+						"absolute top-2 left-2 z-20 flex size-11 items-center justify-center rounded-full",
+						"bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md",
+						"can-hover:hover:bg-amber-600/90 active:scale-[0.98] active:bg-black/75",
+						"focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 focus-visible:outline-none",
+						"motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]",
+						"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100",
 					)}
+					aria-label={`Définir ${isVideo ? "la vidéo" : "l'image"} ${index + 1} comme principale`}
 				>
-					<div className="flex size-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
-						<GripVertical className="size-5 text-white" aria-hidden="true" />
-					</div>
+					<Star className="size-4 text-white" aria-hidden="true" />
 				</button>
 			)}
 
-			{/* Long-press hint — touch devices only */}
-			{isTouchDevice && showLongPressHint && (
+			{/* Drag handle — desktop hover-only via can-hover variant (CSS-driven, no hydration flash) */}
+			<button
+				type="button"
+				ref={handleRef}
+				aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
+				aria-describedby="drag-instructions"
+				className={cn(
+					"can-hover:flex absolute top-2 right-2 z-20 hidden cursor-grab active:scale-[0.98] active:cursor-grabbing",
+					"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100",
+					"can-hover:focus-visible:opacity-100",
+					"focus-visible:ring-primary rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+					shouldReduceMotion
+						? ""
+						: "motion-safe:transition-[opacity,transform] motion-safe:duration-[var(--duration-fast)]",
+				)}
+			>
+				<div className="flex size-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
+					<GripVertical className="size-5 text-white" aria-hidden="true" />
+				</div>
+			</button>
+
+			{/* GripVertical permanent — touch affordance hint, hidden on hover-capable devices and on the primary image (reduces 4-corner saturation on iPhone SE) */}
+			{!isPrimary && (
 				<div
-					className={cn(
-						"absolute top-2 left-2 z-30",
-						"animate-in fade-in-0 slide-in-from-top-2 duration-[var(--duration-slow)]",
-					)}
+					className="can-hover:hidden pointer-events-none absolute right-2 bottom-2 z-10 opacity-40"
 					aria-hidden="true"
 				>
-					<div className="rounded-md bg-black/90 px-2.5 py-1.5 text-xs whitespace-nowrap text-white shadow-lg">
-						Maintenez pour réordonner
+					<div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
+						<GripVertical className="size-3.5 text-white" />
 					</div>
 				</div>
 			)}
 
-			{/* Desktop actions — hover-reveal, non-touch only */}
-			{!isTouchDevice && (
-				<div
-					className={cn(
-						"absolute right-2 bottom-2 z-20 flex items-center gap-1.5",
-						"opacity-0 group-focus-within:opacity-100 group-hover:opacity-100",
-						shouldReduceMotion
-							? ""
-							: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
-					)}
-				>
+			{/* Desktop actions — hover-reveal via can-hover (CSS-driven, no hydration flash) */}
+			<div
+				className={cn(
+					"can-hover:flex absolute right-2 bottom-2 z-20 hidden items-center gap-1.5",
+					"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100",
+					shouldReduceMotion
+						? ""
+						: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
+				)}
+			>
+				{onUpdateAltText && (
 					<Tooltip>
 						<TooltipTrigger asChild>
 							<Button
@@ -442,64 +503,92 @@ export function SortableMediaItem({
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
-									handleOpenLightbox();
+									setEditAltOpen(true);
 								}}
-								className="size-9 rounded-full border-0 bg-black/70 hover:bg-black/90"
-								aria-label={`Agrandir le média ${index + 1}`}
+								className="size-9 rounded-full border-0 bg-black/70 hover:bg-black/90 active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]"
+								aria-label={`Modifier la description du média ${index + 1}`}
 							>
-								<Expand className="size-4 text-white" aria-hidden="true" />
+								<FileText className="size-4 text-white" aria-hidden="true" />
 							</Button>
 						</TooltipTrigger>
-						<TooltipContent>Agrandir</TooltipContent>
+						<TooltipContent>Modifier la description</TooltipContent>
 					</Tooltip>
-					<Tooltip>
-						<TooltipTrigger asChild>
-							<Button
-								type="button"
-								variant="secondary"
-								size="icon"
-								onClick={(e) => {
-									e.preventDefault();
-									e.stopPropagation();
-									handleOpenDeleteDialog();
-								}}
-								className="hover:bg-destructive size-9 rounded-full border-0 bg-black/70"
-								aria-label={`Supprimer le média ${index + 1}`}
-							>
-								<Trash2 className="size-4 text-white" aria-hidden="true" />
-							</Button>
-						</TooltipTrigger>
-						<TooltipContent>Supprimer</TooltipContent>
-					</Tooltip>
-				</div>
-			)}
+				)}
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleOpenLightbox();
+							}}
+							className="size-9 rounded-full border-0 bg-black/70 hover:bg-black/90 active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]"
+							aria-label={`Agrandir le média ${index + 1}`}
+						>
+							<Expand className="size-4 text-white" aria-hidden="true" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Agrandir</TooltipContent>
+				</Tooltip>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleOpenDeleteDialog();
+							}}
+							className="hover:bg-destructive size-9 rounded-full border-0 bg-black/70 active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]"
+							aria-label={`Supprimer le média ${index + 1}`}
+						>
+							<Trash2 className="size-4 text-white" aria-hidden="true" />
+						</Button>
+					</TooltipTrigger>
+					<TooltipContent>Supprimer</TooltipContent>
+				</Tooltip>
+			</div>
 
-			{/* Mobile actions — Drawer Vaul bottom-sheet, touch devices only */}
-			{isTouchDevice && (
-				<div className="absolute top-2 right-2 z-20">
-					<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
-						<DrawerTrigger asChild>
-							<Button
-								type="button"
-								variant="secondary"
-								size="icon"
-								onClick={() => haptic("light")}
-								className="size-11 rounded-full border-0 bg-black/40 backdrop-blur-md hover:bg-black/70"
-								aria-label={`Actions pour le média ${index + 1}`}
-							>
-								<EllipsisVertical className="size-5 text-white" />
-							</Button>
-						</DrawerTrigger>
-						<DrawerContent onOverlayClick={() => haptic("selection")} className="max-h-[60vh]">
-							<DrawerHeader>
-								<DrawerTitle>
-									Actions sur {isVideo ? "la vidéo" : "l'image"} {index + 1}
-								</DrawerTitle>
-							</DrawerHeader>
-							{mobileActionItems}
-						</DrawerContent>
-					</Drawer>
-				</div>
+			{/* Mobile actions — Drawer Vaul bottom-sheet, hidden on hover-capable devices via CSS */}
+			<div className="can-hover:hidden absolute top-2 right-2 z-20">
+				<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
+					<DrawerTrigger asChild>
+						<Button
+							type="button"
+							variant="secondary"
+							size="icon"
+							onClick={() => haptic("light")}
+							className="size-11 rounded-full border-0 bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md active:scale-[0.98] active:bg-black/75 motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]"
+							aria-label={`Actions pour le média ${index + 1}`}
+						>
+							<EllipsisVertical className="size-5 text-white" />
+						</Button>
+					</DrawerTrigger>
+					<DrawerContent onOverlayClick={() => haptic("selection")} className="max-h-[80vh]">
+						<DrawerHeader>
+							<DrawerTitle>
+								Actions sur {isVideo ? "la vidéo" : "l'image"} {index + 1}
+							</DrawerTitle>
+						</DrawerHeader>
+						{mobileActionItems}
+					</DrawerContent>
+				</Drawer>
+			</div>
+
+			{onUpdateAltText && (
+				<EditAltTextDialog
+					open={editAltOpen}
+					onOpenChange={setEditAltOpen}
+					currentAltText={media.altText}
+					mediaType={media.mediaType}
+					index={index}
+					onSave={onUpdateAltText}
+				/>
 			)}
 		</div>
 	);

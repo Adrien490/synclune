@@ -12,13 +12,27 @@ import { useAdminListBulkPendingStore } from "@/shared/stores/use-admin-list-bul
  * - `delete` → opacite-50 + ligne barree
  * - `status` → mini spinner pres du badge
  * - `attach-collection` → mini badge "ajout..." sous le titre
+ * - `publish` / `hide` → reviews : badge status fade-out
+ * - `feature` / `unfeature` → collections : badge "À la une" fade-out
+ * - `activate` / `deactivate` → colors/materials/product-types : badge isActive fade
  */
 export type AdminListPendingKind =
 	| "archive"
 	| "restore"
 	| "delete"
 	| "status"
-	| "attach-collection";
+	| "attach-collection"
+	| "publish"
+	| "hide"
+	| "feature"
+	| "unfeature"
+	| "activate"
+	| "deactivate"
+	| "promote"
+	| "demote"
+	| "approve"
+	| "reject"
+	| "cancel";
 
 interface AdminListPendingContextValue {
 	pendingIds: ReadonlySet<string>;

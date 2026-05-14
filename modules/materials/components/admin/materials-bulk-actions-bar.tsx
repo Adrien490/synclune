@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,6 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkToggleMaterialsStatus } from "../../actions/bulk-toggle-materials-status";
@@ -30,16 +31,34 @@ export function MaterialsBulkActionsBar({
 	presentation = "inline",
 }: MaterialsBulkActionsBarProps = {}) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const { submit, isPending } = useBulkActionWithToast(bulkToggleMaterialsStatus);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			pendingCtx?.clearPending();
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, pendingCtx]);
+
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
 		const fd = new FormData();
-		fd.set("ids", JSON.stringify(Array.from(selectedIds)));
+		fd.set("ids", JSON.stringify(ids));
 		fd.set("isActive", target === "activate" ? "true" : "false");
+		pendingCtx?.startPending(ids, target);
 		submit(fd);
 		setPendingAction(null);
 	}
@@ -62,7 +81,7 @@ export function MaterialsBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
-					Activer
+					Réintégrer à l'inventaire
 				</Button>
 				<Button
 					type="button"
@@ -72,7 +91,7 @@ export function MaterialsBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
-					Désactiver
+					Mettre en stock dormant
 				</Button>
 			</BulkSelectionToolbar>
 
@@ -88,13 +107,13 @@ export function MaterialsBulkActionsBar({
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActivate
-								? `Activer ${selectedCount} matériau${selectedCount > 1 ? "x" : ""} ?`
-								: `Désactiver ${selectedCount} matériau${selectedCount > 1 ? "x" : ""} ?`}
+								? `Réintégrer ${selectedCount} matière${selectedCount > 1 ? "s" : ""} aux matières premières ?`
+								: `Mettre ${selectedCount} matière${selectedCount > 1 ? "s" : ""} en stock dormant ?`}
 						</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
 							{isActivate
-								? `${selectedCount > 1 ? "Les matériaux activés seront" : "Le matériau activé sera"} disponible${selectedCount > 1 ? "s" : ""} pour les nouvelles variantes produits.`
-								: `${selectedCount > 1 ? "Les matériaux désactivés ne seront" : "Le matériau désactivé ne sera"} plus proposé${selectedCount > 1 ? "s" : ""} dans les nouvelles variantes.`}
+								? `${selectedCount > 1 ? "Les matières réintégrées seront" : "La matière réintégrée sera"} disponible${selectedCount > 1 ? "s" : ""} à l'atelier pour les nouvelles créations.`
+								: `${selectedCount > 1 ? "Les matières mises au repos ne seront" : "La matière mise au repos ne sera"} plus proposée${selectedCount > 1 ? "s" : ""} dans les nouveaux bijoux. Les pièces existantes restent intactes.`}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
@@ -106,7 +125,7 @@ export function MaterialsBulkActionsBar({
 							aria-busy={isPending || undefined}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-							{isActivate ? "Activer" : "Désactiver"}
+							{isActivate ? "Réintégrer" : "Mettre au repos"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>

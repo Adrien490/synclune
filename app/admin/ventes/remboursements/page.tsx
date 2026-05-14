@@ -12,6 +12,7 @@ import { RefundsMobileList } from "@/modules/refunds/components/admin/refunds-mo
 import { RefundsMobileListSkeleton } from "@/modules/refunds/components/admin/refunds-mobile-list-skeleton";
 import { RefreshRefundsButton } from "@/modules/refunds/components/admin/refresh-refunds-button";
 import { RefundsFilterSheet } from "@/modules/refunds/components/admin/refunds-filter-sheet";
+import { RefundsSortBadge } from "@/modules/refunds/components/admin/refunds-sort-badge";
 import { parseRefundParams, parseRefundFilters } from "./_utils/params";
 
 const RefundsBottomBar = dynamic(() =>
@@ -52,6 +53,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 	const params = await searchParams;
 
 	const { cursor, direction, perPage, sortBy, search } = parseRefundParams(params);
+	const filters = parseRefundFilters(params);
 
 	// La promise de remboursements n'est PAS awaitée pour permettre le streaming
 	const refundsPromise = getRefunds({
@@ -60,7 +62,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 		perPage,
 		sortBy,
 		search,
-		filters: parseRefundFilters(params),
+		filters,
 	});
 
 	return (
@@ -106,6 +108,9 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 					<RefundsFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<RefundsSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<RefundsMobileListSkeleton />}>
 					<RefundsMobileList
@@ -114,6 +119,7 @@ export default async function RefundsAdminPage({ searchParams }: RefundsAdminPag
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

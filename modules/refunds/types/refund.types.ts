@@ -49,6 +49,7 @@ export type GetRefundsParams = Omit<z.infer<typeof getRefundsSchema>, "direction
 export type GetRefundsReturn = {
 	refunds: Refund[];
 	pagination: PaginationInfo;
+	totalCount: number;
 };
 
 // ============================================================================

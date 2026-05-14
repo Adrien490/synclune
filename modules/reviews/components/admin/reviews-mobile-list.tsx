@@ -10,6 +10,7 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
 import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types";
 import { ReviewMobileItem } from "./review-mobile-item";
@@ -51,32 +52,34 @@ export function ReviewsMobileList({
 	const pageItemIds = adminReviews.map((r) => r.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "avis", plural: "avis" }} />
-				<AdminListLiveCount count={adminReviews.length} singular="avis" plural="avis" />
-				<ItemGroup aria-label="Avis clients" className="gap-2">
-					{adminReviews.map((review) => (
-						<div key={review.id} role="listitem">
-							<ReviewMobileItem review={review} />
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader itemsLabel={{ singular: "avis", plural: "avis" }} />
+					<AdminListLiveCount count={adminReviews.length} singular="avis" plural="avis" />
+					<ItemGroup aria-label="Avis clients" className="gap-2">
+						{adminReviews.map((review) => (
+							<div key={review.id} role="listitem">
+								<ReviewMobileItem review={review} />
+							</div>
+						))}
+					</ItemGroup>
 
-				{(pagination.hasNextPage || pagination.hasPreviousPage) && (
-					<CursorPagination
-						perPage={perPage}
-						hasNextPage={pagination.hasNextPage}
-						hasPreviousPage={pagination.hasPreviousPage}
-						currentPageSize={adminReviews.length}
-						nextCursor={pagination.nextCursor}
-						prevCursor={pagination.prevCursor}
-					/>
-				)}
-			</div>
-			<MobileSelectionBottomBar>
-				<ReviewsBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					{(pagination.hasNextPage || pagination.hasPreviousPage) && (
+						<CursorPagination
+							perPage={perPage}
+							hasNextPage={pagination.hasNextPage}
+							hasPreviousPage={pagination.hasPreviousPage}
+							currentPageSize={adminReviews.length}
+							nextCursor={pagination.nextCursor}
+							prevCursor={pagination.prevCursor}
+						/>
+					)}
+				</div>
+				<MobileSelectionBottomBar>
+					<ReviewsBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

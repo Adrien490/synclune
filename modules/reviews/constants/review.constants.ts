@@ -257,6 +257,18 @@ export const GET_REVIEWS_SORT_FIELDS = [
 	"updatedAt-asc",
 ] as const;
 
+/**
+ * Labels FR pour les tris affichés dans le sort-badge mobile.
+ */
+export const REVIEWS_SORT_LABELS: Record<(typeof GET_REVIEWS_SORT_FIELDS)[number], string> = {
+	"createdAt-desc": "Plus récents",
+	"createdAt-asc": "Plus anciens",
+	"rating-desc": "Meilleures notes",
+	"rating-asc": "Notes les plus basses",
+	"updatedAt-desc": "Récemment modifiés",
+	"updatedAt-asc": "Anciennement modifiés",
+};
+
 // ============================================
 // Dialog IDs
 // ============================================

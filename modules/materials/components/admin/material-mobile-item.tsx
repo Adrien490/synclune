@@ -1,6 +1,6 @@
 "use client";
 
-import { Gem } from "lucide-react";
+import { Gem, Loader2 } from "lucide-react";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
@@ -11,6 +11,9 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
+import { cn } from "@/shared/utils/cn";
 
 import { useMaterialActions } from "../../hooks/use-material-actions";
 
@@ -28,6 +31,10 @@ interface MaterialMobileItemProps {
 export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 	const skuCount = material._count.skus;
 	const statusLabel = material.isActive ? "● Actif" : "○ Inactif";
+	const pendingCtx = useAdminListPendingContextOptional();
+	const isPendingItem = pendingCtx?.isPending(material.id) ?? false;
+	const pendingKind = pendingCtx?.pendingKind ?? null;
+	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useMaterialActions({
 		materialId: material.id,
@@ -51,19 +58,42 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 				viewTransitionName: `material-card-${material.id}`,
 			}}
 		>
-			<Item variant="outline" size="sm" className="w-full gap-3">
+			<Item
+				variant="outline"
+				size="sm"
+				className={cn(
+					"w-full gap-3 motion-safe:transition-opacity",
+					isPendingItem && "opacity-60 dark:opacity-50",
+				)}
+				aria-busy={isPendingItem || undefined}
+			>
 				<ItemMedia variant="icon">
-					<Gem className="text-muted-foreground size-5" aria-hidden="true" />
+					<Gem
+						className="text-muted-foreground size-5"
+						aria-hidden="true"
+						style={{ viewTransitionName: `material-icon-${material.id}` }}
+					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{material.name}</span>
-						<Badge
-							variant={material.isActive ? "default" : "secondary"}
-							style={{ viewTransitionName: `material-status-${material.id}` }}
-						>
-							{statusLabel}
-						</Badge>
+						{isPendingItem ? (
+							<Badge
+								variant="secondary"
+								aria-live="polite"
+								style={{ viewTransitionName: `material-status-${material.id}` }}
+							>
+								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
+								{pendingLabel}
+							</Badge>
+						) : (
+							<Badge
+								variant={material.isActive ? "default" : "secondary"}
+								style={{ viewTransitionName: `material-status-${material.id}` }}
+							>
+								{statusLabel}
+							</Badge>
+						)}
 					</ItemTitle>
 					{material.description ? (
 						<ItemDescription className="line-clamp-1">{material.description}</ItemDescription>

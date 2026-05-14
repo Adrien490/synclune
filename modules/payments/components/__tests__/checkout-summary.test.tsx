@@ -349,12 +349,12 @@ describe("CheckoutSummary", () => {
 	});
 
 	describe("shipping unavailable", () => {
-		it("shows 'Indisponible' when shippingUnavailable is true", () => {
+		it("invites the user to select a country when shippingUnavailable is true", () => {
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} shippingUnavailable={true} />);
 
-			expect(screen.getAllByText("Indisponible").length).toBeGreaterThanOrEqual(1);
+			expect(screen.getAllByText("Sélectionne ton pays").length).toBeGreaterThanOrEqual(1);
 		});
 
 		it("shows shipping info when provided", () => {
@@ -468,12 +468,12 @@ describe("CheckoutSummary", () => {
 			expect(stickyCard).not.toBeNull();
 		});
 
-		it("renders the 'Votre commande' heading on desktop", () => {
+		it("renders the 'Ta commande' artisan heading on desktop", () => {
 			const cart = createCart([createCartItem()]);
 
 			render(<CheckoutSummary cart={cart} {...defaultProps} />);
 
-			expect(screen.getByText("Votre commande")).toBeInTheDocument();
+			expect(screen.getByText("Ta commande")).toBeInTheDocument();
 		});
 	});
 

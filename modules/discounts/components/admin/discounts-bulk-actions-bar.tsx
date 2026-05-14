@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,6 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkToggleDiscountsStatus } from "../../actions/bulk-toggle-discounts-status";
@@ -30,16 +31,34 @@ export function DiscountsBulkActionsBar({
 	presentation = "inline",
 }: DiscountsBulkActionsBarProps = {}) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const { submit, isPending } = useBulkActionWithToast(bulkToggleDiscountsStatus);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			pendingCtx?.clearPending();
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, pendingCtx]);
+
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
 		const fd = new FormData();
-		fd.set("discountIds", JSON.stringify(Array.from(selectedIds)));
+		fd.set("discountIds", JSON.stringify(ids));
 		fd.set("targetIsActive", target === "activate" ? "true" : "false");
+		pendingCtx?.startPending(ids, target);
 		submit(fd);
 		setPendingAction(null);
 	}
@@ -62,7 +81,7 @@ export function DiscountsBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
-					Activer
+					Allumer la promo
 				</Button>
 				<Button
 					type="button"
@@ -72,7 +91,7 @@ export function DiscountsBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
-					Désactiver
+					Ranger la promo
 				</Button>
 			</BulkSelectionToolbar>
 
@@ -88,13 +107,13 @@ export function DiscountsBulkActionsBar({
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActivate
-								? `Activer ${selectedCount} code${selectedCount > 1 ? "s" : ""} promo ?`
-								: `Désactiver ${selectedCount} code${selectedCount > 1 ? "s" : ""} promo ?`}
+								? `Allumer ${selectedCount} code${selectedCount > 1 ? "s" : ""} promo ?`
+								: `Ranger ${selectedCount} code${selectedCount > 1 ? "s" : ""} promo ?`}
 						</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
 							{isActivate
-								? `${selectedCount > 1 ? "Les codes activés seront" : "Le code activé sera"} de nouveau utilisable${selectedCount > 1 ? "s" : ""} par les clients.`
-								: `${selectedCount > 1 ? "Les codes désactivés ne seront" : "Le code désactivé ne sera"} plus utilisable${selectedCount > 1 ? "s" : ""} et ne ${selectedCount > 1 ? "seront pas" : "sera pas"} réactivé${selectedCount > 1 ? "s" : ""} automatiquement.`}
+								? `${selectedCount > 1 ? "Les codes allumés seront" : "Le code allumé sera"} de nouveau utilisable${selectedCount > 1 ? "s" : ""} par les clients à la caisse.`
+								: `${selectedCount > 1 ? "Les codes rangés ne seront" : "Le code rangé ne sera"} plus utilisable${selectedCount > 1 ? "s" : ""} et ne se réactive${selectedCount > 1 ? "ront" : "ra"} pas automatiquement.`}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
@@ -106,7 +125,7 @@ export function DiscountsBulkActionsBar({
 							aria-busy={isPending || undefined}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-							{isActivate ? "Activer" : "Désactiver"}
+							{isActivate ? "Allumer la promo" : "Ranger la promo"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>

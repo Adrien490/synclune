@@ -1,9 +1,13 @@
 "use client";
 
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, Loader2, Shield } from "lucide-react";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
+import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
+import { cn } from "@/shared/utils/cn";
 import { formatDateShort } from "@/shared/utils/dates";
 
 import { useUserActions } from "../../hooks/use-user-actions";
@@ -27,6 +31,11 @@ interface UserMobileItemProps {
 export function UserMobileItem({ user }: UserMobileItemProps) {
 	const displayName = user.name ?? "Utilisateur";
 	const orderCount = user._count.orders;
+	const pendingCtx = useAdminListPendingContextOptional();
+	const isPendingItem = pendingCtx?.isPending(user.id) ?? false;
+	const pendingKind = pendingCtx?.pendingKind ?? null;
+	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
+	const isAdmin = user.role === "ADMIN";
 
 	const { sections } = useUserActions({ user });
 
@@ -42,13 +51,19 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 					menuTitle: "Actions utilisateur",
 					menuDescription: displayName,
 					className: "text-left",
+					viewTransitionName: `user-card-${user.id}`,
 				}}
 			>
 				<Item
 					variant="outline"
 					size="sm"
-					className={user.deletedAt ? "w-full gap-3 opacity-50" : "w-full gap-3"}
+					className={cn(
+						"w-full gap-3 motion-safe:transition-opacity",
+						user.deletedAt && "opacity-50",
+						isPendingItem && "opacity-60 dark:opacity-50",
+					)}
 					aria-roledescription="carte client"
+					aria-busy={isPendingItem || undefined}
 				>
 					<ItemContent className="min-w-0">
 						<ItemTitle className="w-full min-w-0">
@@ -61,8 +76,27 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 							{user.emailVerified ? (
 								<CircleCheck
 									className="size-4 shrink-0 text-green-600"
-									aria-label="Email verifie"
+									aria-label="Email vérifié"
 								/>
+							) : null}
+							{isPendingItem ? (
+								<Badge
+									variant="secondary"
+									aria-live="polite"
+									style={{ viewTransitionName: `user-status-${user.id}` }}
+								>
+									<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
+									{pendingLabel}
+								</Badge>
+							) : isAdmin ? (
+								<Badge
+									variant="default"
+									className="gap-1"
+									style={{ viewTransitionName: `user-status-${user.id}` }}
+								>
+									<Shield className="size-3" aria-hidden="true" />
+									Admin
+								</Badge>
 							) : null}
 						</ItemTitle>
 						<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">

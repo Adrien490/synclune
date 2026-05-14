@@ -16,7 +16,7 @@ const {
 	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		user: { findMany: vi.fn() },
+		user: { findMany: vi.fn(), count: vi.fn() },
 	},
 	mockIsAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
@@ -144,6 +144,7 @@ function setupDefaults() {
 	mockBuildUserWhereClause.mockReturnValue({ deletedAt: null });
 	mockBuildCursorPagination.mockReturnValue({ take: 51 });
 	mockPrisma.user.findMany.mockResolvedValue([makeUser()]);
+	mockPrisma.user.count.mockResolvedValue(1);
 	mockProcessCursorResults.mockReturnValue({
 		items: [makeUser()],
 		pagination: makePagination(),
@@ -195,6 +196,7 @@ describe("getUsers", () => {
 		expect(result).toEqual({
 			users: [makeUser()],
 			pagination: makePagination(),
+			totalCount: 1,
 		});
 	});
 

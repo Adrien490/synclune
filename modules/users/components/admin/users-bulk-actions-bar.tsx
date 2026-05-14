@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Shield, ShieldOff } from "lucide-react";
 
 import { Role } from "@/app/generated/prisma/enums";
@@ -17,6 +17,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkChangeUserRole } from "../../actions/admin/bulk-change-user-role";
@@ -29,16 +30,34 @@ interface UsersBulkActionsBarProps {
 
 export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkActionsBarProps = {}) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const { submit, isPending } = useBulkActionWithToast(bulkChangeUserRole);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			pendingCtx?.clearPending();
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, pendingCtx]);
+
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
 		const fd = new FormData();
-		fd.set("ids", JSON.stringify(Array.from(selectedIds)));
+		fd.set("ids", JSON.stringify(ids));
 		fd.set("role", target === "promote" ? Role.ADMIN : Role.USER);
+		pendingCtx?.startPending(ids, target);
 		submit(fd);
 		setPendingAction(null);
 	}
@@ -49,7 +68,7 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 	return (
 		<>
 			<BulkSelectionToolbar
-				itemsLabel={{ singular: "utilisateur", plural: "utilisateurs" }}
+				itemsLabel={{ singular: "client", plural: "clients" }}
 				presentation={presentation}
 				aria-busy={isPending}
 			>
@@ -61,7 +80,7 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 					disabled={isPending || noSelection}
 				>
 					<Shield className="size-4" aria-hidden="true" />
-					Promouvoir admin
+					Promouvoir au comptoir
 				</Button>
 				<Button
 					type="button"
@@ -71,7 +90,7 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 					disabled={isPending || noSelection}
 				>
 					<ShieldOff className="size-4" aria-hidden="true" />
-					Rétrograder
+					Repasser visiteur
 				</Button>
 			</BulkSelectionToolbar>
 
@@ -87,13 +106,13 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isPromote
-								? `Promouvoir ${selectedCount} utilisateur${selectedCount > 1 ? "s" : ""} ?`
-								: `Rétrograder ${selectedCount} utilisateur${selectedCount > 1 ? "s" : ""} ?`}
+								? `Promouvoir ${selectedCount} client${selectedCount > 1 ? "s" : ""} au comptoir ?`
+								: `Repasser ${selectedCount} client${selectedCount > 1 ? "s" : ""} en visiteur ?`}
 						</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
 							{isPromote
-								? `${selectedCount > 1 ? "Les comptes sélectionnés obtiendront" : "Le compte sélectionné obtiendra"} les droits administrateur (accès complet à /admin). Cette opération est sensible : utilisez avec parcimonie.`
-								: `${selectedCount > 1 ? "Les comptes sélectionnés perdront" : "Le compte sélectionné perdra"} les droits administrateur. Au moins un administrateur restera actif. Votre propre compte sera automatiquement ignoré.`}
+								? `${selectedCount > 1 ? "Les comptes sélectionnés rejoindront" : "Le compte sélectionné rejoindra"} l'équipe atelier avec accès complet à /admin. Opération sensible : utilisez avec parcimonie.`
+								: `${selectedCount > 1 ? "Les comptes sélectionnés perdront" : "Le compte sélectionné perdra"} les droits atelier. Au moins un membre d'équipe restera actif. Votre propre compte est automatiquement préservé.`}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
@@ -105,7 +124,7 @@ export function UsersBulkActionsBar({ presentation = "inline" }: UsersBulkAction
 							aria-busy={isPending || undefined}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-							{isPromote ? "Promouvoir" : "Rétrograder"}
+							{isPromote ? "Promouvoir au comptoir" : "Repasser visiteur"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>

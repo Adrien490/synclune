@@ -95,13 +95,17 @@ export default function CheckoutLoading() {
 		<div
 			role="status"
 			aria-busy="true"
-			aria-label="Chargement du formulaire de commande"
-			className="relative min-h-screen overflow-hidden"
+			aria-label="L'atelier prépare ton paiement…"
+			className="relative min-h-dvh min-h-screen"
+			style={{ viewTransitionName: "shop-paiement" }}
 		>
 			{/* Decorative background */}
-			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
+			<div
+				className="from-primary/5 to-secondary/8 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
+				style={{ viewTransitionName: "none" }}
+			/>
 
-			<section className="py-4 sm:py-8 md:py-10">
+			<section className="py-4 pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 					{/* Title — hidden on mobile like the real page */}
 					<div className="mb-6 hidden sm:mb-8 sm:block">
@@ -111,7 +115,7 @@ export default function CheckoutLoading() {
 
 					<div className="grid gap-6 lg:grid-cols-[1fr_360px] lg:gap-8">
 						{/* Left column — Form */}
-						<div className="space-y-6">
+						<div className="space-y-6" style={{ viewTransitionName: "shop-paiement-form" }}>
 							{/* Contact */}
 							<div className="bg-card border-primary/10 rounded-2xl border px-6 py-5">
 								<section className="space-y-5">
@@ -190,7 +194,10 @@ export default function CheckoutLoading() {
 						</div>
 
 						{/* Right column — Summary */}
-						<div className="order-first lg:order-0">
+						<div
+							className="order-first lg:order-0"
+							style={{ viewTransitionName: "shop-paiement-summary" }}
+						>
 							{/* Mobile: collapsed card */}
 							<Card className="border-primary/10 rounded-2xl shadow-md md:hidden">
 								<CardHeader className="pb-0">
@@ -217,6 +224,14 @@ export default function CheckoutLoading() {
 					</div>
 				</div>
 			</section>
+
+			{/* Sticky PayButton placeholder (CLS-safe: matches the real fixed-bottom button on mobile) */}
+			<div
+				aria-hidden="true"
+				className="border-primary/10 bg-background/95 fixed inset-x-0 bottom-0 z-30 space-y-2 border-t px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_-8px_rgb(0_0_0_/_0.08)] backdrop-blur-md md:hidden"
+			>
+				<Skeleton className="h-12 w-full rounded-md" />
+			</div>
 		</div>
 	);
 }

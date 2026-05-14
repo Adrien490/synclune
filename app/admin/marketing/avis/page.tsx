@@ -17,6 +17,7 @@ import { ReviewsDataTableSkeleton } from "@/modules/reviews/components/admin/rev
 import { ReviewsFilterBadges } from "@/modules/reviews/components/admin/reviews-filter-badges";
 import { ReviewsMobileList } from "@/modules/reviews/components/admin/reviews-mobile-list";
 import { ReviewsMobileListSkeleton } from "@/modules/reviews/components/admin/reviews-mobile-list-skeleton";
+import { ReviewsSortBadge } from "@/modules/reviews/components/admin/reviews-sort-badge";
 import { REVIEW_STATUS_LABELS } from "@/modules/reviews/constants/review.constants";
 
 const ReviewsBottomBar = dynamic(() =>
@@ -212,6 +213,9 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 				{/* Badges de filtres actifs (visible mobile + desktop) */}
 				<ReviewsFilterBadges />
 			</Suspense>
+
+			{/* Sort badge mobile (visible si sortBy URL défini) */}
+			<ReviewsSortBadge />
 
 			{/* Liste mobile */}
 			<Suspense fallback={<ReviewsMobileListSkeleton />}>

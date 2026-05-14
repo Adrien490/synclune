@@ -125,6 +125,7 @@ export function BulkAttachCollectionSheet({
 							autoCorrect="off"
 							spellCheck={false}
 							aria-label="Rechercher une collection"
+							data-vaul-no-drag
 						/>
 					</div>
 
@@ -152,6 +153,7 @@ export function BulkAttachCollectionSheet({
 												triggerHaptic("selection");
 												setSelectedId(collection.id);
 											}}
+											data-vaul-no-drag
 											className={cn(
 												"flex min-h-11 w-full items-center justify-between rounded-md border px-3 py-2 text-left",
 												"focus-visible:ring-primary focus-visible:ring-2 focus-visible:outline-none",
@@ -176,12 +178,13 @@ export function BulkAttachCollectionSheet({
 					</ScrollArea>
 				</DrawerBody>
 
-				<DrawerFooter className="gap-2 pb-[env(safe-area-inset-bottom)]">
+				<DrawerFooter className="gap-2 pb-[env(safe-area-inset-bottom)]" data-vaul-no-drag>
 					<Button
 						type="button"
 						onClick={handleSubmit}
 						disabled={!selectedId || isPending || productIds.length === 0}
 						aria-busy={isPending || undefined}
+						data-vaul-no-drag
 					>
 						{isPending && (
 							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
@@ -193,6 +196,7 @@ export function BulkAttachCollectionSheet({
 						variant="outline"
 						onClick={() => handleOpenChange(false)}
 						disabled={isPending}
+						data-vaul-no-drag
 					>
 						Annuler
 					</Button>

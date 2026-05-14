@@ -14,7 +14,7 @@ const {
 	mockBuildMaterialWhereClause,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		material: { findMany: vi.fn() },
+		material: { findMany: vi.fn(), count: vi.fn() },
 	},
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
@@ -130,6 +130,7 @@ function setupDefaults() {
 		pagination: emptyPagination,
 	});
 	mockPrisma.material.findMany.mockResolvedValue([]);
+	mockPrisma.material.count.mockResolvedValue(0);
 }
 
 // ============================================================================
@@ -155,6 +156,7 @@ describe("getMaterials", () => {
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		});
 	});
 

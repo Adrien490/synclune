@@ -58,7 +58,10 @@ export type GetDiscountsParams = Omit<z.infer<typeof getDiscountsSchema>, "direc
 export type GetDiscountsReturn = {
 	discounts: Array<Prisma.DiscountGetPayload<{ select: typeof GET_DISCOUNTS_SELECT }>>;
 	pagination: PaginationInfo;
+	totalCount: number;
 };
+
+export type DiscountFilters = NonNullable<z.infer<typeof getDiscountsSchema>["filters"]>;
 
 // ============================================================================
 // VALIDATION TYPES

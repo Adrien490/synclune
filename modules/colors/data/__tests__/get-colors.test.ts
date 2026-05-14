@@ -14,7 +14,7 @@ const {
 	mockBuildColorWhereClause,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		color: { findMany: vi.fn() },
+		color: { findMany: vi.fn(), count: vi.fn() },
 	},
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
@@ -125,6 +125,7 @@ function setupDefaults() {
 		pagination: emptyPagination,
 	});
 	mockPrisma.color.findMany.mockResolvedValue([]);
+	mockPrisma.color.count.mockResolvedValue(0);
 }
 
 // ============================================================================

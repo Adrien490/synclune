@@ -47,6 +47,12 @@ export const GET_PRODUCT_TYPE_SELECT = {
 export const GET_PRODUCT_TYPES_DEFAULT_PER_PAGE = 20;
 export const GET_PRODUCT_TYPES_MAX_RESULTS_PER_PAGE = 200;
 
+/**
+ * Cap des ids retournés par get-filtered-product-type-ids pour le banner
+ * "Sélectionner les N filtrés" (parité produits, cf. BULK_PRODUCT_ACTION_LIMIT).
+ */
+export const BULK_PRODUCT_TYPE_ACTION_LIMIT = 100;
+
 // ============================================================================
 // SORT CONSTANTS
 // ============================================================================

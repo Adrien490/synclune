@@ -43,6 +43,12 @@ export const COLOR_SEARCH_MAX_LENGTH = 100;
 export const GET_COLORS_DEFAULT_PER_PAGE = 20;
 export const GET_COLORS_MAX_RESULTS_PER_PAGE = 200;
 
+/**
+ * Cap des ids retournés par get-filtered-color-ids pour le banner
+ * "Sélectionner les N filtrés" (parité produits, cf. BULK_PRODUCT_ACTION_LIMIT).
+ */
+export const BULK_COLOR_ACTION_LIMIT = 100;
+
 // ============================================================================
 // SORT CONSTANTS
 // ============================================================================

@@ -13,6 +13,7 @@ import { MaterialsMobileList } from "@/modules/materials/components/admin/materi
 import { MaterialsMobileListSkeleton } from "@/modules/materials/components/admin/materials-mobile-list-skeleton";
 import { MaterialsFilterBadges } from "@/modules/materials/components/admin/materials-filter-badges";
 import { MaterialsFilterSheet } from "@/modules/materials/components/admin/materials-filter-sheet";
+import { MaterialsSortBadge } from "@/modules/materials/components/admin/materials-sort-badge";
 import { CreateMaterialButton } from "@/modules/materials/components/admin/create-material-button";
 import dynamic from "next/dynamic";
 
@@ -53,6 +54,9 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 	const search = getFirstParam(params.search);
 	const filterIsActive = getFirstParam(params.filter_isActive);
 	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
+	const filters = {
+		isActive: filterIsActive ? filterIsActive === "true" : undefined,
+	};
 
 	// La promise de matériaux n'est PAS awaitée pour permettre le streaming
 	const materialsPromise = getMaterials({
@@ -61,9 +65,7 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 		perPage,
 		sortBy,
 		search,
-		filters: {
-			isActive: filterIsActive ? filterIsActive === "true" : undefined,
-		},
+		filters,
 	});
 
 	return (
@@ -116,12 +118,16 @@ export default async function MaterialsAdminPage({ searchParams }: MaterialsAdmi
 					<MaterialsFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<MaterialsSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<MaterialsMobileListSkeleton />}>
 					<MaterialsMobileList
 						materialsPromise={materialsPromise}
 						perPage={perPage}
 						hasActiveFilters={hasActiveFilters}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

@@ -15,7 +15,7 @@ const {
 	mockProcessCursorResults,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		refund: { findMany: vi.fn() },
+		refund: { findMany: vi.fn(), count: vi.fn() },
 	},
 	mockIsAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
@@ -157,6 +157,7 @@ function setupDefaults() {
 	mockGetSortDirection.mockReturnValue("desc");
 	mockBuildCursorPagination.mockReturnValue({ take: 11 });
 	mockPrisma.refund.findMany.mockResolvedValue([makeRefund()]);
+	mockPrisma.refund.count.mockResolvedValue(1);
 	mockProcessCursorResults.mockReturnValue({
 		items: [makeRefund()],
 		pagination: emptyPagination,

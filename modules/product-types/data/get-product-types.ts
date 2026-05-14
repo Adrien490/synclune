@@ -71,12 +71,15 @@ async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProd
 			take,
 		});
 
-		const productTypes = await prisma.productType.findMany({
-			where,
-			select: GET_PRODUCT_TYPES_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [productTypes, totalCount] = await Promise.all([
+			prisma.productType.findMany({
+				where,
+				select: GET_PRODUCT_TYPES_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.productType.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			productTypes,
@@ -85,7 +88,7 @@ async function fetchProductTypes(params: GetProductTypesParams): Promise<GetProd
 			params.cursor,
 		);
 
-		return { productTypes: items, pagination };
+		return { productTypes: items, pagination, totalCount };
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "product-types", operation: "getProductTypes" },

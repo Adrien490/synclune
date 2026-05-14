@@ -8,10 +8,8 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
-import {
-	useAdminListPendingContextOptional,
-	type AdminListPendingKind,
-} from "@/shared/contexts/admin-list-pending-context";
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { cn } from "@/shared/utils/cn";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
@@ -31,14 +29,6 @@ const STATUS_CONFIG: Record<
 	[ProductStatus.PUBLIC]: { label: "● Public", variant: "default" },
 	[ProductStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
 	[ProductStatus.ARCHIVED]: { label: "▣ Archivé", variant: "outline" },
-};
-
-const PENDING_LABEL: Record<AdminListPendingKind, string> = {
-	archive: "Archivage…",
-	restore: "Restauration…",
-	delete: "Suppression…",
-	status: "Mise à jour…",
-	"attach-collection": "Ajout à la collection…",
 };
 
 interface Sku {
@@ -89,7 +79,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 	const pendingCtx = useAdminListPendingContextOptional();
 	const isPendingItem = pendingCtx?.isPending(product.id) ?? false;
 	const pendingKind = pendingCtx?.pendingKind ?? null;
-	const pendingLabel = isPendingItem ? PENDING_LABEL[pendingKind ?? "status"] : null;
+	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const stockVariant = getStockVariant(stock);
 	const stockAriaLabel = getStockAriaLabel(stock);

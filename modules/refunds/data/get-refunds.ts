@@ -37,6 +37,7 @@ export async function getRefunds(params: GetRefundsParams): Promise<GetRefundsRe
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 
@@ -76,12 +77,15 @@ async function fetchRefunds(params: GetRefundsParams): Promise<GetRefundsReturn>
 			take,
 		});
 
-		const refunds = await prisma.refund.findMany({
-			where,
-			select: GET_REFUNDS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [refunds, totalCount] = await Promise.all([
+			prisma.refund.findMany({
+				where,
+				select: GET_REFUNDS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.refund.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			refunds,
@@ -90,7 +94,7 @@ async function fetchRefunds(params: GetRefundsParams): Promise<GetRefundsReturn>
 			params.cursor,
 		);
 
-		return { refunds: items, pagination };
+		return { refunds: items, pagination, totalCount };
 	} catch (error) {
 		const baseReturn = {
 			refunds: [],
@@ -100,6 +104,7 @@ async function fetchRefunds(params: GetRefundsParams): Promise<GetRefundsReturn>
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 			error:
 				process.env.NODE_ENV === "development"
 					? error instanceof Error

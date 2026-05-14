@@ -97,12 +97,15 @@ async function fetchOrders(
 			take,
 		});
 
-		const orders = await prisma.order.findMany({
-			where,
-			select: GET_ORDERS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [orders, totalCount] = await Promise.all([
+			prisma.order.findMany({
+				where,
+				select: GET_ORDERS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.order.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			orders,
@@ -114,6 +117,7 @@ async function fetchOrders(
 		return {
 			orders: items,
 			pagination,
+			totalCount,
 		};
 	} catch (error) {
 		const baseReturn = {
@@ -124,6 +128,7 @@ async function fetchOrders(
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 			error:
 				process.env.NODE_ENV === "development"
 					? error instanceof Error

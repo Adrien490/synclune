@@ -42,6 +42,7 @@ export async function getMaterials(params: GetMaterialsParamsInput): Promise<Get
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 
@@ -78,12 +79,15 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 			take,
 		});
 
-		const materials = await prisma.material.findMany({
-			where,
-			select: GET_MATERIALS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [materials, totalCount] = await Promise.all([
+			prisma.material.findMany({
+				where,
+				select: GET_MATERIALS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.material.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			materials,
@@ -92,7 +96,7 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 			params.cursor,
 		);
 
-		return { materials: items, pagination };
+		return { materials: items, pagination, totalCount };
 	} catch (e) {
 		Sentry.captureException(e, {
 			tags: { module: "materials", operation: "fetchMaterials" },
@@ -105,6 +109,7 @@ async function fetchMaterials(params: GetMaterialsParams): Promise<GetMaterialsR
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 }

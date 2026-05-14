@@ -28,6 +28,7 @@ export type GetProductTypesParams = z.output<typeof getProductTypesSchema>;
 export type GetProductTypesReturn = {
 	productTypes: Array<Prisma.ProductTypeGetPayload<{ select: typeof GET_PRODUCT_TYPES_SELECT }>>;
 	pagination: PaginationInfo;
+	totalCount: number;
 };
 
 // ============================================================================

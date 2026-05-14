@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CircleCheck, EyeOff, Loader2 } from "lucide-react";
 
 import { ReviewStatus } from "@/app/generated/prisma/browser";
@@ -17,6 +17,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkModerateReviews } from "../../actions/bulk-moderate-reviews";
@@ -31,16 +32,34 @@ export function ReviewsBulkActionsBar({
 	presentation = "inline",
 }: ReviewsBulkActionsBarProps = {}) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const { submit, isPending } = useBulkActionWithToast(bulkModerateReviews);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			pendingCtx?.clearPending();
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, pendingCtx]);
+
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
 		const fd = new FormData();
-		fd.set("reviewIds", JSON.stringify(Array.from(selectedIds)));
+		fd.set("reviewIds", JSON.stringify(ids));
 		fd.set("targetStatus", target);
+		pendingCtx?.startPending(ids, target === ReviewStatus.PUBLISHED ? "publish" : "hide");
 		submit(fd);
 		setPendingAction(null);
 	}
@@ -63,7 +82,7 @@ export function ReviewsBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<CircleCheck className="size-4" aria-hidden="true" />
-					Publier
+					Donner la voix
 				</Button>
 				<Button
 					type="button"
@@ -73,7 +92,7 @@ export function ReviewsBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<EyeOff className="size-4" aria-hidden="true" />
-					Masquer
+					Mettre en sourdine
 				</Button>
 			</BulkSelectionToolbar>
 
@@ -88,11 +107,13 @@ export function ReviewsBulkActionsBar({
 					<ResponsiveAlertDialogHeroIcon icon={isHide ? EyeOff : CircleCheck} />
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
-							{isHide ? `Masquer ${selectedCount} avis ?` : `Publier ${selectedCount} avis ?`}
+							{isHide
+								? `Mettre ${selectedCount} avis en sourdine ?`
+								: `Donner la voix à ${selectedCount} avis ?`}
 						</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
 							{isHide
-								? `${selectedCount > 1 ? "Les avis masqués ne seront" : "L'avis masqué ne sera"} plus visible${selectedCount > 1 ? "s" : ""} en boutique. Les notes moyennes seront recalculées.`
+								? `${selectedCount > 1 ? "Les avis mis en sourdine ne seront" : "L'avis mis en sourdine ne sera"} plus visible${selectedCount > 1 ? "s" : ""} en boutique. Les notes moyennes seront recalculées.`
 								: `${selectedCount > 1 ? "Les avis publiés seront" : "L'avis publié sera"} de nouveau visible${selectedCount > 1 ? "s" : ""} en boutique et compteront dans les notes moyennes.`}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
@@ -105,7 +126,7 @@ export function ReviewsBulkActionsBar({
 							aria-busy={isPending || undefined}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-							{isHide ? "Masquer" : "Publier"}
+							{isHide ? "Mettre en sourdine" : "Donner la voix"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>

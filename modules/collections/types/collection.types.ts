@@ -43,6 +43,7 @@ export type GetCollectionsParams = Omit<z.infer<typeof getCollectionsSchema>, "d
 export type GetCollectionsReturn = {
 	collections: Array<Prisma.CollectionGetPayload<{ select: typeof GET_COLLECTIONS_SELECT }>>;
 	pagination: PaginationInfo;
+	totalCount: number;
 };
 
 // ============================================================================

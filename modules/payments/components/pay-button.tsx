@@ -124,7 +124,7 @@ export function PayButton({
 			<Button
 				type="button"
 				size="lg"
-				className="min-h-11 w-full text-base shadow-md transition-shadow hover:shadow-lg"
+				className="min-h-11 w-full touch-manipulation text-base shadow-md hover:shadow-lg motion-safe:transition-[transform,box-shadow] motion-safe:duration-150 motion-safe:active:scale-[0.98]"
 				disabled={
 					disabled || !stripe || !elements || isProcessing || shippingUnavailable || !isOnline
 				}

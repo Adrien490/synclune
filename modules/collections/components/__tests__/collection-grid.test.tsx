@@ -137,7 +137,6 @@ const emptyPagination = {
 	hasPreviousPage: false,
 	nextCursor: null,
 	prevCursor: null,
-	totalCount: 0,
 };
 
 function createCollection(id: string, slug: string, name: string) {
@@ -151,8 +150,10 @@ function createCollection(id: string, slug: string, name: string) {
 	};
 }
 
-function makePromise(data: GetCollectionsReturn): Promise<GetCollectionsReturn> {
-	return Promise.resolve(data);
+function makePromise(
+	data: Omit<GetCollectionsReturn, "totalCount"> & { totalCount?: number },
+): Promise<GetCollectionsReturn> {
+	return Promise.resolve({ totalCount: data.collections.length, ...data });
 }
 
 async function renderGrid(promise: Promise<GetCollectionsReturn>, perPage = 12) {

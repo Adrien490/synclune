@@ -11,24 +11,36 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
-import type { GetProductTypesReturn } from "@/modules/product-types/types/product-type.types";
+import type {
+	GetProductTypesReturn,
+	GetProductTypesParams,
+	ProductTypeFilters,
+} from "@/modules/product-types/types/product-type.types";
 import { CreateProductTypeButton } from "./create-product-type-button";
 import { ProductTypeMobileItem } from "./product-type-mobile-item";
 import { ProductTypesBulkActionsBar } from "./product-types-bulk-actions-bar";
+import { ProductTypesCrossPageBanner } from "./product-types-cross-page-banner";
 
 interface ProductTypesMobileListProps {
 	productTypesPromise: Promise<GetProductTypesReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	filterParams?: {
+		search?: string;
+		sortBy?: GetProductTypesParams["sortBy"];
+		filters?: ProductTypeFilters;
+	};
 }
 
 export function ProductTypesMobileList({
 	productTypesPromise,
 	perPage,
 	hasActiveFilters,
+	filterParams,
 }: ProductTypesMobileListProps) {
-	const { productTypes, pagination } = use(productTypesPromise);
+	const { productTypes, pagination, totalCount } = use(productTypesPromise);
 
 	if (productTypes.length === 0) {
 		return (
@@ -56,34 +68,39 @@ export function ProductTypesMobileList({
 	const pageItemIds = productTypes.map((p) => p.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "type", plural: "types" }} />
-				<AdminListLiveCount
-					count={productTypes.length}
-					singular="type de bijou"
-					plural="types de bijoux"
-				/>
-				<ItemGroup aria-label="Types de bijoux" className="gap-2">
-					{productTypes.map((productType) => (
-						<div key={productType.id} role="listitem">
-							<ProductTypeMobileItem productType={productType} />
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader itemsLabel={{ singular: "type", plural: "types" }} />
+					{filterParams ? (
+						<ProductTypesCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
+					) : null}
+					<AdminListLiveCount
+						count={productTypes.length}
+						singular="type de bijou"
+						plural="types de bijoux"
+					/>
+					<ItemGroup aria-label="Types de bijoux" className="gap-2">
+						{productTypes.map((productType) => (
+							<div key={productType.id} role="listitem">
+								<ProductTypeMobileItem productType={productType} />
+							</div>
+						))}
+					</ItemGroup>
 
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={productTypes.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar>
-				<ProductTypesBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={productTypes.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
+				</div>
+				<MobileSelectionBottomBar>
+					<ProductTypesBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

@@ -18,14 +18,15 @@ async function CartAndSkuLoader() {
 	return (
 		<>
 			<CartSheet
+				key="cart-sheet"
 				cart={cart}
 				recommendations={
-					<Suspense fallback={null}>
+					<Suspense key="cart-sheet-recommendations" fallback={null}>
 						<CartSheetRecommendations />
 					</Suspense>
 				}
 			/>
-			<SkuSelectorDialog cart={cart} />
+			<SkuSelectorDialog key="sku-selector" cart={cart} />
 		</>
 	);
 }

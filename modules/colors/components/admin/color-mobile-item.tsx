@@ -1,5 +1,7 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import {
@@ -9,6 +11,9 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
+import { cn } from "@/shared/utils/cn";
 
 import { useColorActions } from "../../hooks/use-color-actions";
 
@@ -28,6 +33,10 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 	const skuCount = color._count.skus || 0;
 	const statusLabel = color.isActive ? "● Actif" : "○ Inactif";
 	const hexUpper = color.hex.toUpperCase();
+	const pendingCtx = useAdminListPendingContextOptional();
+	const isPendingItem = pendingCtx?.isPending(color.id) ?? false;
+	const pendingKind = pendingCtx?.pendingKind ?? null;
+	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useColorActions({
 		colorId: color.id,
@@ -51,11 +60,22 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 				viewTransitionName: `color-card-${color.id}`,
 			}}
 		>
-			<Item variant="outline" size="sm" className="w-full gap-3">
+			<Item
+				variant="outline"
+				size="sm"
+				className={cn(
+					"w-full gap-3 motion-safe:transition-opacity",
+					isPendingItem && "opacity-60 dark:opacity-50",
+				)}
+				aria-busy={isPendingItem || undefined}
+			>
 				<ItemMedia variant="icon">
 					<span
 						className="border-border size-8 rounded-full border"
-						style={{ backgroundColor: color.hex }}
+						style={{
+							backgroundColor: color.hex,
+							viewTransitionName: `color-swatch-${color.id}`,
+						}}
 						role="img"
 						aria-label={`Aperçu couleur ${hexUpper}`}
 					/>
@@ -63,12 +83,23 @@ export function ColorMobileItem({ color }: ColorMobileItemProps) {
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{color.name}</span>
-						<Badge
-							variant={color.isActive ? "default" : "secondary"}
-							style={{ viewTransitionName: `color-status-${color.id}` }}
-						>
-							{statusLabel}
-						</Badge>
+						{isPendingItem ? (
+							<Badge
+								variant="secondary"
+								aria-live="polite"
+								style={{ viewTransitionName: `color-status-${color.id}` }}
+							>
+								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
+								{pendingLabel}
+							</Badge>
+						) : (
+							<Badge
+								variant={color.isActive ? "default" : "secondary"}
+								style={{ viewTransitionName: `color-status-${color.id}` }}
+							>
+								{statusLabel}
+							</Badge>
+						)}
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="text-muted-foreground font-mono text-xs">{hexUpper}</span>

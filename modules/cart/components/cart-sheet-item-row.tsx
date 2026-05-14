@@ -226,7 +226,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 			</div>
 
 			{/* Actions - à droite de l'image, sous le prix */}
-			<div className="flex items-center justify-between gap-2">
+			<div className="flex items-center justify-between gap-2" data-vaul-no-drag>
 				{/* Quantité - à gauche (rendu uniquement si inventory > 1) */}
 				{item.sku.inventory === 1 && !hasIssue ? (
 					<span className="text-xs font-medium text-orange-800">Dernière pièce !</span>

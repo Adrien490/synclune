@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag } from "lucide-react";
+import { Loader2, Tag } from "lucide-react";
 
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
@@ -11,6 +11,9 @@ import {
 	ItemMedia,
 	ItemTitle,
 } from "@/shared/components/ui/item";
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
+import { cn } from "@/shared/utils/cn";
 
 import { useProductTypeActions } from "../../hooks/use-product-type-actions";
 
@@ -29,6 +32,12 @@ interface ProductTypeMobileItemProps {
 export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProps) {
 	const productsCount = productType._count.products || 0;
 	const statusLabel = productType.isActive ? "● Actif" : "○ Inactif";
+	const pendingCtx = useAdminListPendingContextOptional();
+	const isPendingItem = pendingCtx?.isPending(productType.id) ?? false;
+	const pendingKind = pendingCtx?.pendingKind ?? null;
+	// Items système ne sont jamais affectés par le bulk (filtrés serveur).
+	const showPending = isPendingItem && !productType.isSystem;
+	const pendingLabel = showPending ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 
 	const { sections } = useProductTypeActions({
 		productTypeId: productType.id,
@@ -53,20 +62,43 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 				viewTransitionName: `product-type-${productType.slug}`,
 			}}
 		>
-			<Item variant="outline" size="sm" className="w-full gap-3">
+			<Item
+				variant="outline"
+				size="sm"
+				className={cn(
+					"w-full gap-3 motion-safe:transition-opacity",
+					showPending && "opacity-60 dark:opacity-50",
+				)}
+				aria-busy={showPending || undefined}
+			>
 				<ItemMedia variant="icon">
-					<Tag className="text-muted-foreground size-5" aria-hidden="true" />
+					<Tag
+						className="text-muted-foreground size-5"
+						aria-hidden="true"
+						style={{ viewTransitionName: `product-type-icon-${productType.id}` }}
+					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0 flex-wrap">
 						<span className="truncate font-semibold">{productType.label}</span>
-						<Badge
-							variant={productType.isActive ? "default" : "secondary"}
-							style={{ viewTransitionName: `product-type-status-${productType.id}` }}
-						>
-							{statusLabel}
-						</Badge>
-						{productType.isSystem ? <Badge variant="outline">Systeme</Badge> : null}
+						{showPending ? (
+							<Badge
+								variant="secondary"
+								aria-live="polite"
+								style={{ viewTransitionName: `product-type-status-${productType.id}` }}
+							>
+								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
+								{pendingLabel}
+							</Badge>
+						) : (
+							<Badge
+								variant={productType.isActive ? "default" : "secondary"}
+								style={{ viewTransitionName: `product-type-status-${productType.id}` }}
+							>
+								{statusLabel}
+							</Badge>
+						)}
+						{productType.isSystem ? <Badge variant="outline">Système</Badge> : null}
 					</ItemTitle>
 					{productType.description ? (
 						<ItemDescription className="line-clamp-1">{productType.description}</ItemDescription>

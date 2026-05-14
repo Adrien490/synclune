@@ -15,6 +15,7 @@ import { CollectionsMobileList } from "@/modules/collections/components/admin/co
 import { CollectionsMobileListSkeleton } from "@/modules/collections/components/admin/collections-mobile-list-skeleton";
 import { CollectionsFilterBadges } from "@/modules/collections/components/admin/collections-filter-badges";
 import { CollectionsFilterSheet } from "@/modules/collections/components/admin/collections-filter-sheet";
+import { CollectionsSortBadge } from "@/modules/collections/components/admin/collections-sort-badge";
 import { CreateCollectionButton } from "@/modules/collections/components/admin/create-collection-button";
 import { RefreshCollectionsButton } from "@/modules/collections/components/admin/refresh-collections-button";
 import { CollectionsAdminDialogs } from "./_components/collections-admin-dialogs";
@@ -69,6 +70,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 		| "products-ascending"
 		| "products-descending";
 	const search = getFirstParam(params.search);
+	const filters = parseFilters(params);
 
 	// La promise de collections n'est PAS awaitée pour permettre le streaming
 	const collectionsPromise = getCollections({
@@ -77,7 +79,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 		perPage,
 		sortBy,
 		search,
-		filters: parseFilters(params),
+		filters,
 	});
 
 	return (
@@ -134,6 +136,9 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 					<CollectionsFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<CollectionsSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<CollectionsMobileListSkeleton />}>
 					<CollectionsMobileList
@@ -142,6 +147,7 @@ export default async function CollectionsAdminPage({ searchParams }: Collections
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

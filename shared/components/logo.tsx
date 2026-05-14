@@ -15,6 +15,8 @@ const ROUNDED_CLASSES = {
 
 interface LogoProps {
 	size?: number;
+	/** Optional larger size applied at `md` breakpoint (768px+). Avoids dual-render anti-pattern. */
+	sizeMd?: number;
 	href?: string;
 	className?: string;
 	preload?: boolean;
@@ -36,6 +38,7 @@ interface LogoProps {
 
 export function Logo({
 	size = 48,
+	sizeMd,
 	href,
 	className,
 	preload = false,
@@ -50,18 +53,19 @@ export function Logo({
 	ariaLabel,
 	enableTooltip = false,
 }: LogoProps) {
+	const effectiveMaxSize = sizeMd ?? size;
 	// Petits logos (≤40px) → quality 75 suffit ; sinon 90 (fidélité brand).
-	const effectiveQuality = quality ?? (size <= 40 ? 75 : 90);
+	const effectiveQuality = quality ?? (effectiveMaxSize <= 40 ? 75 : 90);
 
-	// Taille du texte proportionnelle à la taille du logo
+	// Taille du texte proportionnelle à la taille du logo (base la plus grande envisagée)
 	const textSizeClass =
-		size >= 64
+		effectiveMaxSize >= 64
 			? "text-3xl"
-			: size >= 56
+			: effectiveMaxSize >= 56
 				? "text-2xl"
-				: size >= 48
+				: effectiveMaxSize >= 48
 					? "text-xl"
-					: size >= 40
+					: effectiveMaxSize >= 40
 						? "text-lg"
 						: "text-base";
 
@@ -88,15 +92,21 @@ export function Logo({
 					"relative overflow-hidden",
 					ROUNDED_CLASSES[rounded],
 					shadow && "shadow-md transition-shadow duration-300 ease-out hover:shadow-lg",
+					sizeMd && "md:!h-(--logo-size-md) md:!w-(--logo-size-md)",
 				)}
-				style={{ width: size, height: size, viewTransitionName }}
+				style={{
+					width: size,
+					height: size,
+					viewTransitionName,
+					...(sizeMd ? ({ "--logo-size-md": `${sizeMd}px` } as React.CSSProperties) : undefined),
+				}}
 			>
 				<Image
 					src={BRAND.logo.url}
 					alt={showText ? "" : BRAND.logo.alt}
 					fill
 					className="object-contain"
-					sizes={sizes ?? `${size}px`}
+					sizes={sizes ?? (sizeMd ? `(min-width: 768px) ${sizeMd}px, ${size}px` : `${size}px`)}
 					preload={preload}
 					quality={effectiveQuality}
 					placeholder="blur"

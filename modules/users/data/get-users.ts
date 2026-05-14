@@ -103,12 +103,15 @@ async function fetchUsers(
 			take,
 		});
 
-		const users = await prisma.user.findMany({
-			where,
-			select: GET_USERS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [users, totalCount] = await Promise.all([
+			prisma.user.findMany({
+				where,
+				select: GET_USERS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.user.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			users,
@@ -120,6 +123,7 @@ async function fetchUsers(
 		return {
 			users: items,
 			pagination,
+			totalCount,
 		};
 	} catch (error) {
 		const baseReturn = {
@@ -130,6 +134,7 @@ async function fetchUsers(
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 			error:
 				process.env.NODE_ENV === "development"
 					? error instanceof Error

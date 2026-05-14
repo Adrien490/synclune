@@ -17,6 +17,7 @@ import { UsersMobileList } from "@/modules/users/components/admin/users-mobile-l
 import { UsersMobileListSkeleton } from "@/modules/users/components/admin/users-mobile-list-skeleton";
 import { UsersFilterBadges } from "@/modules/users/components/admin/users-filter-badges";
 import { UsersFilterSheet } from "@/modules/users/components/admin/users-filter-sheet";
+import { UsersSortBadge } from "@/modules/users/components/admin/users-sort-badge";
 import { UsersBottomBar } from "@/modules/users/components/admin/users-bottom-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { type Metadata } from "next";
@@ -101,6 +102,7 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 	const perPage = Number(getFirstParam(params.perPage)) || GET_USERS_DEFAULT_PER_PAGE;
 	const search = getFirstParam(params.search);
 	const { sortBy, sortOrder } = parseSortOption(getFirstParam(params.sortBy));
+	const filters = parseFilters(params);
 
 	// La promise d'utilisateurs n'est PAS awaitee pour permettre le streaming
 	const usersPromise = getUsers({
@@ -110,7 +112,7 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 		sortBy,
 		sortOrder,
 		search,
-		filters: parseFilters(params),
+		filters,
 	});
 
 	return (
@@ -157,6 +159,9 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 					<UsersFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<UsersSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<UsersMobileListSkeleton />}>
 					<UsersMobileList
@@ -165,6 +170,7 @@ export default async function UsersAdminPage({ searchParams }: UsersAdminPagePro
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
+						filterParams={{ search, sortBy, sortOrder, filters }}
 					/>
 				</Suspense>
 

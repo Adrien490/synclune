@@ -40,6 +40,7 @@ export async function getCollections(params: GetCollectionsParams): Promise<GetC
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 
@@ -76,12 +77,15 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 			take,
 		});
 
-		const collections = await prisma.collection.findMany({
-			where,
-			select: GET_COLLECTIONS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [collections, totalCount] = await Promise.all([
+			prisma.collection.findMany({
+				where,
+				select: GET_COLLECTIONS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.collection.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			collections,
@@ -90,7 +94,7 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 			params.cursor,
 		);
 
-		return { collections: items, pagination };
+		return { collections: items, pagination, totalCount };
 	} catch (err) {
 		logger.error("Failed to fetch collections", err, { service: "fetchCollections" });
 
@@ -102,6 +106,7 @@ async function fetchCollections(params: GetCollectionsParams): Promise<GetCollec
 				hasNextPage: false,
 				hasPreviousPage: false,
 			},
+			totalCount: 0,
 		};
 	}
 }

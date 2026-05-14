@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,6 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkToggleColorsStatus } from "../../actions/bulk-toggle-colors-status";
@@ -28,16 +29,34 @@ interface ColorsBulkActionsBarProps {
 
 export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActionsBarProps = {}) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const { submit, isPending } = useBulkActionWithToast(bulkToggleColorsStatus);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			pendingCtx?.clearPending();
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, pendingCtx]);
+
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
 		const fd = new FormData();
-		fd.set("colorIds", JSON.stringify(Array.from(selectedIds)));
+		fd.set("colorIds", JSON.stringify(ids));
 		fd.set("targetIsActive", target === "activate" ? "true" : "false");
+		pendingCtx?.startPending(ids, target);
 		submit(fd);
 		setPendingAction(null);
 	}
@@ -60,7 +79,7 @@ export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActi
 					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
-					Activer
+					Ajouter à la palette
 				</Button>
 				<Button
 					type="button"
@@ -70,7 +89,7 @@ export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActi
 					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
-					Désactiver
+					Retirer du nuancier
 				</Button>
 			</BulkSelectionToolbar>
 
@@ -86,13 +105,13 @@ export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActi
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActivate
-								? `Activer ${selectedCount} couleur${selectedCount > 1 ? "s" : ""} ?`
-								: `Désactiver ${selectedCount} couleur${selectedCount > 1 ? "s" : ""} ?`}
+								? `Ajouter ${selectedCount} nuance${selectedCount > 1 ? "s" : ""} à la palette d'atelier ?`
+								: `Retirer ${selectedCount} nuance${selectedCount > 1 ? "s" : ""} du nuancier ?`}
 						</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
 							{isActivate
-								? `${selectedCount > 1 ? "Les couleurs activées seront" : "La couleur activée sera"} disponible${selectedCount > 1 ? "s" : ""} pour les nouvelles variantes produits.`
-								: `${selectedCount > 1 ? "Les couleurs désactivées ne seront" : "La couleur désactivée ne sera"} plus proposée${selectedCount > 1 ? "s" : ""} dans les nouvelles variantes. Les variantes existantes restent inchangées.`}
+								? `${selectedCount > 1 ? "Les nuances réintégrées seront" : "La nuance réintégrée sera"} disponible${selectedCount > 1 ? "s" : ""} pour les nouvelles créations à l'atelier.`
+								: `${selectedCount > 1 ? "Les nuances retirées ne seront" : "La nuance retirée ne sera"} plus proposée${selectedCount > 1 ? "s" : ""} dans les nouveaux bijoux. Les bijoux existants conservent leur teinte.`}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
@@ -104,7 +123,7 @@ export function ColorsBulkActionsBar({ presentation = "inline" }: ColorsBulkActi
 							aria-busy={isPending || undefined}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-							{isActivate ? "Activer" : "Désactiver"}
+							{isActivate ? "Ajouter à la palette" : "Retirer du nuancier"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>

@@ -175,6 +175,12 @@ export const GET_ORDER_SELECT = {
 export const GET_ORDERS_DEFAULT_PER_PAGE = 10;
 export const GET_ORDERS_MAX_RESULTS_PER_PAGE = 100;
 
+/**
+ * Cap des ids retournés par get-filtered-order-ids pour le banner
+ * "Sélectionner les N filtrés" (parité produits).
+ */
+export const BULK_ORDER_ACTION_LIMIT = 100;
+
 export const SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
 	CREATED_ASC: "created-ascending",

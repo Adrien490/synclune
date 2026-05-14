@@ -15,6 +15,7 @@ import { OrdersDataTable } from "@/modules/orders/components/admin/orders-data-t
 import { OrdersDataTableSkeleton } from "@/modules/orders/components/admin/orders-data-table-skeleton";
 import { OrdersFilterBadges } from "@/modules/orders/components/admin/orders-filter-badges";
 import { OrdersFilterSheet } from "@/modules/orders/components/admin/orders-filter-sheet";
+import { OrdersSortBadge } from "@/modules/orders/components/admin/orders-sort-badge";
 import { RefreshOrdersButton } from "@/modules/orders/components/admin/refresh-orders-button";
 import { OrdersMobileList } from "@/modules/orders/components/admin/orders-mobile-list";
 import { OrdersMobileListSkeleton } from "@/modules/orders/components/admin/orders-mobile-list-skeleton";
@@ -60,6 +61,7 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 
 	// Parse and validate all search parameters safely
 	const { cursor, direction, perPage, sortBy, search } = parseOrderParams(params);
+	const filters = parseFilters(params);
 
 	// La promise de commandes n'est PAS awaitée pour permettre le streaming
 	const ordersPromise = getOrders({
@@ -68,7 +70,7 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 		perPage,
 		sortBy,
 		search,
-		filters: parseFilters(params),
+		filters,
 	});
 
 	return (
@@ -117,6 +119,9 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 					<OrdersFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<OrdersSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<OrdersMobileListSkeleton />}>
 					<OrdersMobileList
@@ -125,6 +130,7 @@ export default async function OrdersAdminPage({ searchParams }: OrdersAdminPageP
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

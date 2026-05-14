@@ -9,7 +9,7 @@ import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useReducedMotion } from "motion/react";
 import { Play } from "lucide-react";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLightbox } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
@@ -18,7 +18,6 @@ import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 
 import { lazy, Suspense } from "react";
-import { STORAGE_KEYS } from "@/shared/constants/storage-keys";
 import { UI_DELAYS } from "@/modules/media/constants/ui-interactions.constants";
 
 // Lazy loading - lightbox charge uniquement a l'ouverture
@@ -68,46 +67,8 @@ export function MediaUploadGrid({
 	// State for accessibility announcements (aria-live)
 	const [announcement, setAnnouncement] = useState<string>("");
 
-	// State for long-press mobile hint (first visit)
-	const [showLongPressHint, setShowLongPressHint] = useState(false);
-
 	// Track if dragging for child components
 	const [isDraggingAny, setIsDraggingAny] = useState(false);
-
-	// Condition to show the hint (only when there are at least 2 medias)
-	const hasMultipleMedia = media.length > 1;
-
-	// Show long-press hint for new users on mobile (once only) — P2.5
-	useEffect(() => {
-		if (typeof window === "undefined") return;
-		// Desktop drag-and-drop is discoverable via the alternative Up/Down buttons;
-		// the hint targets mobile users who need to discover the long-press gesture.
-		if (!isTouchDevice) return;
-		try {
-			const hasSeenHint = localStorage.getItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN);
-			if (hasSeenHint) return;
-		} catch {
-			// localStorage unavailable (private browsing, etc.)
-			return;
-		}
-
-		// Show the hint only if there are at least 2 medias
-		if (hasMultipleMedia) {
-			queueMicrotask(() => {
-				setShowLongPressHint(true);
-				triggerHaptic("selection");
-			});
-			const timer = setTimeout(() => {
-				setShowLongPressHint(false);
-				try {
-					localStorage.setItem(STORAGE_KEYS.MEDIA_UPLOAD_HINT_SEEN, "true");
-				} catch {
-					// Ignore write failure
-				}
-			}, UI_DELAYS.HINT_DISAPPEAR_MS);
-			return () => clearTimeout(timer);
-		}
-	}, [hasMultipleMedia, isTouchDevice]);
 
 	// Prepare slides for the lightbox
 	const slides: Slide[] = media.map((m) => {
@@ -232,6 +193,40 @@ export function MediaUploadGrid({
 		setAnnouncement(`Média déplacé en position ${index + 2}.`);
 	};
 
+	// Promote an image to first position (primary)
+	const handleSetAsPrimary = (index: number) => {
+		if (index === 0) return;
+		const target = media[index];
+		if (!target || target.mediaType === "VIDEO") {
+			triggerHaptic("error");
+			toast.error("Une vidéo ne peut pas être l'image principale.");
+			return;
+		}
+		const newMedia = arrayMove(media, index, 0);
+		triggerHaptic("medium");
+		onChange(newMedia);
+		setAnnouncement(`Image ${index + 1} définie comme image principale.`);
+		toast.success("Définie comme image principale");
+	};
+
+	// Update the alt text (description) of a single media item
+	const handleUpdateAltText = (index: number, altText: string) => {
+		const target = media[index];
+		if (!target) return;
+		const next = altText.trim();
+		if ((target.altText ?? "") === next) return;
+		const newMedia = media.map((m, i) =>
+			i === index ? { ...m, altText: next.length > 0 ? next : undefined } : m,
+		);
+		onChange(newMedia);
+		setAnnouncement(
+			next.length > 0
+				? `Description du média ${index + 1} mise à jour.`
+				: `Description du média ${index + 1} effacée.`,
+		);
+		toast.success("Description mise à jour");
+	};
+
 	const canAddMore = media.length < maxItems;
 
 	return (
@@ -270,7 +265,7 @@ export function MediaUploadGrid({
 				</div>
 
 				<div
-					className={`grid w-full grid-cols-2 gap-3 rounded-lg sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4 ${
+					className={`xs:gap-2.5 grid w-full grid-cols-2 gap-2 rounded-lg sm:grid-cols-3 sm:gap-3 lg:grid-cols-4 lg:gap-4 ${
 						isFileDropTarget && onFilesDropped
 							? "ring-primary bg-primary/5 ring-2 ring-offset-2 transition-colors"
 							: ""
@@ -311,13 +306,18 @@ export function MediaUploadGrid({
 								isImageLoaded={isImageLoaded}
 								shouldReduceMotion={shouldReduceMotion}
 								isDraggingAny={isDraggingAny}
-								showLongPressHint={showLongPressHint && index >= 1}
 								onImageLoaded={handleImageLoaded}
 								onOpenLightbox={openLightbox}
 								onOpenDeleteDialog={() => handleOpenDeleteDialog(index)}
 								onMoveUp={() => handleMoveUp(index)}
 								onMoveDown={() => handleMoveDown(index)}
 								totalCount={media.length}
+								onSetAsPrimary={
+									m.mediaType === "VIDEO" || index === 0
+										? undefined
+										: () => handleSetAsPrimary(index)
+								}
+								onUpdateAltText={(altText) => handleUpdateAltText(index, altText)}
 							/>
 						);
 					})}

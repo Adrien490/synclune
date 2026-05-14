@@ -14,7 +14,7 @@ const {
 	mockBuildProductTypeWhereClause,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		productType: { findMany: vi.fn() },
+		productType: { findMany: vi.fn(), count: vi.fn() },
 	},
 	mockCacheLife: vi.fn(),
 	mockCacheTag: vi.fn(),
@@ -152,6 +152,7 @@ function setupDefaults() {
 		pagination: emptyPagination,
 	});
 	mockPrisma.productType.findMany.mockResolvedValue([]);
+	mockPrisma.productType.count.mockResolvedValue(0);
 }
 
 // ============================================================================

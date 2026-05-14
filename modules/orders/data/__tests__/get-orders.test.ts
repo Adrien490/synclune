@@ -17,7 +17,7 @@ const {
 	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		order: { findMany: vi.fn() },
+		order: { findMany: vi.fn(), count: vi.fn() },
 	},
 	mockRequireAdmin: vi.fn(),
 	mockCacheLife: vi.fn(),
@@ -164,6 +164,7 @@ function setupDefaults() {
 	mockBuildCursorPagination.mockReturnValue({ take: 11 });
 	const orders = [makeOrder()];
 	mockPrisma.order.findMany.mockResolvedValue(orders);
+	mockPrisma.order.count.mockResolvedValue(orders.length);
 	mockProcessCursorResults.mockReturnValue({
 		items: orders,
 		pagination: makeEmptyPagination(),

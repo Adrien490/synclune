@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const {
 	mockFindMany,
+	mockCount,
 	mockCacheCollections,
 	mockBuildCollectionWhereClause,
 	mockSafeParse,
@@ -15,6 +16,7 @@ const {
 	mockGetCollectionsSelect,
 } = vi.hoisted(() => ({
 	mockFindMany: vi.fn(),
+	mockCount: vi.fn(),
 	mockCacheCollections: vi.fn(),
 	mockBuildCollectionWhereClause: vi.fn(),
 	mockSafeParse: vi.fn(),
@@ -26,7 +28,7 @@ const {
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: {
-		collection: { findMany: mockFindMany },
+		collection: { findMany: mockFindMany, count: mockCount },
 	},
 }));
 
@@ -99,6 +101,7 @@ function setupDefaults(params = makeValidParams()) {
 	mockGetSortDirection.mockReturnValue("asc");
 	mockBuildCursorPagination.mockReturnValue({ take: 21 });
 	mockFindMany.mockResolvedValue([]);
+	mockCount.mockResolvedValue(0);
 	mockProcessCursorResults.mockReturnValue({
 		items: [],
 		pagination: EMPTY_PAGINATION,
@@ -123,7 +126,7 @@ describe("getCollections", () => {
 			});
 
 			const result = await getCollections({} as never);
-			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION });
+			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION, totalCount: 0 });
 		});
 
 		it("calls fetchCollections with validated data", async () => {
@@ -364,10 +367,11 @@ describe("getCollections", () => {
 				hasPreviousPage: false,
 			};
 			mockProcessCursorResults.mockReturnValue({ items, pagination });
+			mockCount.mockResolvedValue(7);
 
 			const result = await getCollections(makeValidParams() as never);
 
-			expect(result).toEqual({ collections: items, pagination });
+			expect(result).toEqual({ collections: items, pagination, totalCount: 7 });
 		});
 	});
 
@@ -384,6 +388,7 @@ describe("getCollections", () => {
 			expect(result).toEqual({
 				collections: [],
 				pagination: EMPTY_PAGINATION,
+				totalCount: 0,
 			});
 		});
 
@@ -394,7 +399,7 @@ describe("getCollections", () => {
 			});
 
 			const result = await getCollections({} as never);
-			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION });
+			expect(result).toEqual({ collections: [], pagination: EMPTY_PAGINATION, totalCount: 0 });
 		});
 	});
 });

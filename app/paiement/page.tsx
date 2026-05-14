@@ -51,7 +51,7 @@ export default async function CheckoutPage() {
 	// Si le panier a des problèmes, rediriger vers le panier
 	if (validation.issues.length > 0) {
 		return (
-			<div className="min-h-screen">
+			<div className="min-h-dvh min-h-screen">
 				<section className="bg-background py-8 sm:py-10">
 					<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 						<div className="mb-6 sm:mb-8">
@@ -64,8 +64,8 @@ export default async function CheckoutPage() {
 							<AlertTitle>Un petit ajustement est nécessaire</AlertTitle>
 							<AlertDescription className="mt-2 space-y-4">
 								<p className="text-sm">
-									Certains articles de votre panier ne sont plus disponibles ou ont un stock
-									insuffisant.
+									Quelques bijoux de ton panier ne sont plus disponibles — l&apos;atelier est en
+									cours de réassort.
 								</p>
 
 								{/* Liste des problèmes */}
@@ -75,19 +75,19 @@ export default async function CheckoutPage() {
 											<span className="text-destructive mt-0.5">•</span>
 											<div>
 												<span className="font-medium">{issue.productTitle}</span>
-												<span className="text-muted-foreground"> - </span>
+												<span className="text-muted-foreground"> — </span>
 												<span>{issue.message}</span>
 											</div>
 										</li>
 									))}
 								</ul>
 
-								<div className="flex gap-2">
+								<div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
 									<Button asChild>
 										<Link href="/produits">Retour à la boutique</Link>
 									</Button>
 									<Button asChild variant="outline">
-										<Link href="/creations">Continuer mes achats</Link>
+										<Link href="/produits">Continuer mes achats</Link>
 									</Button>
 								</div>
 							</AlertDescription>
@@ -99,23 +99,41 @@ export default async function CheckoutPage() {
 	}
 
 	return (
-		<div className="relative min-h-screen">
-			{/* Decorative background */}
-			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
+		<div
+			className="relative min-h-dvh min-h-screen"
+			style={{ viewTransitionName: "shop-paiement" }}
+		>
+			{/* Decorative background — légèrement renforcé pour signature visuelle Synclune */}
+			<div
+				className="from-primary/5 to-secondary/8 fixed inset-0 -z-10 bg-linear-to-br via-transparent"
+				style={{ viewTransitionName: "none" }}
+			/>
 
-			<section className="py-4 sm:py-8 md:py-10">
+			<section className="py-4 pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-					<h1 className="font-display mb-6 text-2xl font-normal tracking-wide max-sm:sr-only sm:mb-8 sm:text-3xl">
-						Finaliser ma commande
-					</h1>
-					<div className="mb-6 hidden sm:mb-8 sm:block">
-						<HandDrawnUnderline
-							color="var(--primary)"
-							width={80}
-							strokeWidth={1.5}
-							inView={false}
-						/>
+					<div className="max-sm:sr-only sm:mb-6">
+						<h1 className="font-display text-2xl font-normal tracking-wide sm:text-3xl">
+							Finaliser ma commande
+						</h1>
+						<div className="mt-2 hidden sm:block">
+							<HandDrawnUnderline
+								color="var(--primary)"
+								width={80}
+								strokeWidth={1.5}
+								inView={false}
+							/>
+						</div>
+						<p className="font-cursive text-muted-foreground mt-3 hidden text-base italic sm:block">
+							Plus que quelques instants avant de recevoir tes bijoux.
+						</p>
 					</div>
+					{/* Mobile-only progress hint (above-fold reassurance) */}
+					<p
+						aria-hidden="true"
+						className="font-cursive text-muted-foreground mb-4 text-center text-base italic sm:hidden"
+					>
+						Étape finale — tu y es presque
+					</p>
 					<CheckoutForm cart={cart} session={session} addresses={addresses} />
 				</div>
 			</section>

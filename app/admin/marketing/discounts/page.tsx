@@ -15,6 +15,7 @@ import { DiscountsFilterBadges } from "@/modules/discounts/components/admin/disc
 import { DiscountsFilterSheet } from "@/modules/discounts/components/admin/discounts-filter-sheet";
 import { DiscountsMobileList } from "@/modules/discounts/components/admin/discounts-mobile-list";
 import { DiscountsMobileListSkeleton } from "@/modules/discounts/components/admin/discounts-mobile-list-skeleton";
+import { DiscountsSortBadge } from "@/modules/discounts/components/admin/discounts-sort-badge";
 import { CreateDiscountButton } from "@/modules/discounts/components/admin/create-discount-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import dynamic from "next/dynamic";
@@ -126,6 +127,9 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 					<DiscountsFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<DiscountsSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<DiscountsMobileListSkeleton />}>
 					<DiscountsMobileList
@@ -134,6 +138,7 @@ export default async function DiscountsAdminPage({ searchParams }: DiscountsAdmi
 						hasActiveFilters={
 							!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 						}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

@@ -256,6 +256,7 @@ describe("ProductCatalog", () => {
 			const mobileTitle = screen.getByTestId("catalog-mobile-title");
 			expect(mobileTitle.tagName).toBe("H1");
 			expect(mobileTitle.className).toContain("sm:hidden");
+			expect(mobileTitle.className).toContain("sr-only");
 		});
 	});
 

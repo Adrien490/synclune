@@ -179,6 +179,12 @@ export const REFUND_REASON_LABELS: Record<RefundReason, string> = {
 export const GET_REFUNDS_DEFAULT_PER_PAGE = 10;
 export const GET_REFUNDS_MAX_RESULTS_PER_PAGE = 100;
 
+/**
+ * Cap des ids retournés par get-filtered-refund-ids pour le banner
+ * "Sélectionner les N filtrés" (parité produits).
+ */
+export const BULK_REFUND_ACTION_LIMIT = 100;
+
 export const SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",
 	CREATED_ASC: "created-ascending",

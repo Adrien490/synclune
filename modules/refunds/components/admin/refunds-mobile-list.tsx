@@ -11,23 +11,35 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
-import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
+import type {
+	GetRefundsParams,
+	GetRefundsReturn,
+	RefundFilters,
+} from "@/modules/refunds/types/refund.types";
 
 import { RefundMobileItem } from "./refund-mobile-item";
 import { RefundsBulkActionsBar } from "./refunds-bulk-actions-bar";
+import { RefundsCrossPageBanner } from "./refunds-cross-page-banner";
 
 interface RefundsMobileListProps {
 	refundsPromise: Promise<GetRefundsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	filterParams?: {
+		search?: string;
+		sortBy?: GetRefundsParams["sortBy"];
+		filters?: RefundFilters;
+	};
 }
 
 export function RefundsMobileList({
 	refundsPromise,
 	perPage,
 	hasActiveFilters,
+	filterParams,
 }: RefundsMobileListProps) {
-	const { refunds, pagination } = use(refundsPromise);
+	const { refunds, pagination, totalCount } = use(refundsPromise);
 
 	if (refunds.length === 0) {
 		return (
@@ -53,50 +65,55 @@ export function RefundsMobileList({
 	const pageItemIds = refunds.map((r) => r.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader
-					itemsLabel={{ singular: "remboursement", plural: "remboursements" }}
-				/>
-				<AdminListLiveCount
-					count={refunds.length}
-					singular="remboursement"
-					plural="remboursements"
-				/>
-				<ItemGroup aria-label="Remboursements" className="gap-2">
-					{refunds.map((refund) => (
-						<div key={refund.id} role="listitem">
-							<RefundMobileItem
-								refund={{
-									id: refund.id,
-									status: refund.status as RefundStatus,
-									amount: refund.amount,
-									reason: refund.reason as RefundReason,
-									createdAt: refund.createdAt,
-									order: {
-										id: refund.order.id,
-										orderNumber: refund.order.orderNumber,
-										customerName: refund.order.customerName,
-										customerEmail: refund.order.customerEmail,
-									},
-								}}
-							/>
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader
+						itemsLabel={{ singular: "remboursement", plural: "remboursements" }}
+					/>
+					{filterParams ? (
+						<RefundsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
+					) : null}
+					<AdminListLiveCount
+						count={refunds.length}
+						singular="remboursement"
+						plural="remboursements"
+					/>
+					<ItemGroup aria-label="Remboursements" className="gap-2">
+						{refunds.map((refund) => (
+							<div key={refund.id} role="listitem">
+								<RefundMobileItem
+									refund={{
+										id: refund.id,
+										status: refund.status as RefundStatus,
+										amount: refund.amount,
+										reason: refund.reason as RefundReason,
+										createdAt: refund.createdAt,
+										order: {
+											id: refund.order.id,
+											orderNumber: refund.order.orderNumber,
+											customerName: refund.order.customerName,
+											customerEmail: refund.order.customerEmail,
+										},
+									}}
+								/>
+							</div>
+						))}
+					</ItemGroup>
 
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={refunds.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar>
-				<RefundsBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={refunds.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
+				</div>
+				<MobileSelectionBottomBar>
+					<RefundsBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

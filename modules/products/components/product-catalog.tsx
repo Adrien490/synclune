@@ -134,14 +134,10 @@ export function ProductCatalog({
 					id="product-container"
 					className="group/container mx-auto max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8"
 				>
-					{/* H1 mobile compact — visible uniquement <sm, le `PageHeader` desktop prend
-					    le relais à partir de sm. Évite le fail WCAG 2.4.6 (page sans titre visible).
-					    `pb-1` réserve l'espace du descendant Fraunces (cédille de « créations ») dans
-					    la boîte du h1 pour éviter qu'il soit recouvert par le sub-header sticky (z-30). */}
-					<h1
-						className="font-display text-foreground px-1 pb-1 text-xl font-normal tracking-normal sm:hidden"
-						data-testid="catalog-mobile-title"
-					>
+					{/* H1 mobile sr-only — la bottom bar fournit le contexte visuel ("Produits"),
+					    le h1 reste expose aux lecteurs d'ecran (WCAG 2.4.6). PageHeader desktop
+					    prend le relais a partir de sm. */}
+					<h1 className="sr-only sm:hidden" data-testid="catalog-mobile-title">
 						{pageTitle}
 					</h1>
 

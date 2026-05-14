@@ -32,6 +32,7 @@ const EMPTY_RESULT: GetDiscountsReturn = {
 		hasNextPage: false,
 		hasPreviousPage: false,
 	},
+	totalCount: 0,
 };
 
 /**
@@ -81,12 +82,15 @@ async function fetchDiscounts(params: GetDiscountsParams): Promise<GetDiscountsR
 			take,
 		});
 
-		const discounts = await prisma.discount.findMany({
-			where,
-			select: GET_DISCOUNTS_SELECT,
-			orderBy,
-			...cursorConfig,
-		});
+		const [discounts, totalCount] = await Promise.all([
+			prisma.discount.findMany({
+				where,
+				select: GET_DISCOUNTS_SELECT,
+				orderBy,
+				...cursorConfig,
+			}),
+			prisma.discount.count({ where }),
+		]);
 
 		const { items, pagination } = processCursorResults(
 			discounts,
@@ -95,7 +99,7 @@ async function fetchDiscounts(params: GetDiscountsParams): Promise<GetDiscountsR
 			params.cursor,
 		);
 
-		return { discounts: items, pagination };
+		return { discounts: items, pagination, totalCount };
 	} catch (error) {
 		if (error instanceof Error) {
 			logger.error("[get-discounts] Failed to fetch discounts", error);

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { StickyNote } from "lucide-react";
+import { Loader2, StickyNote } from "lucide-react";
 import { useState } from "react";
 
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
@@ -14,6 +14,8 @@ import {
 import { SwipeableCard } from "@/shared/components/swipeable-card";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
 import { Badge } from "@/shared/components/ui/badge";
+import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useLongPress } from "@/shared/hooks/use-long-press";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
@@ -45,29 +47,66 @@ type Order = {
 	invoiceNumber?: string | null;
 };
 
-function OrderCardContent({ order }: { order: Order }) {
+function OrderCardContent({
+	order,
+	isPendingItem,
+	pendingLabel,
+}: {
+	order: Order;
+	isPendingItem?: boolean;
+	pendingLabel?: string | null;
+}) {
 	return (
-		<Item variant="outline" size="sm" className="gap-3" aria-roledescription="carte commande">
+		<Item
+			variant="outline"
+			size="sm"
+			className={cn(
+				"gap-3 motion-safe:transition-opacity",
+				isPendingItem && "opacity-60 dark:opacity-50",
+			)}
+			aria-roledescription="carte commande"
+			aria-busy={isPendingItem ? true : undefined}
+		>
 			<ItemContent className="min-w-0">
 				<ItemTitle>
-					<span className="truncate font-semibold">{order.orderNumber}</span>
-					<Badge
-						variant={ORDER_STATUS_VARIANTS[order.status]}
-						style={{ viewTransitionName: `order-status-${order.id}` }}
+					<span
+						className="truncate font-semibold"
+						style={{ viewTransitionName: `order-number-${order.id}` }}
 					>
-						{ORDER_STATUS_LABELS[order.status]}
-					</Badge>
-					<Badge
-						variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
-						style={{ viewTransitionName: `order-payment-${order.id}` }}
-					>
-						{PAYMENT_STATUS_LABELS[order.paymentStatus]}
-					</Badge>
+						{order.orderNumber}
+					</span>
+					{isPendingItem ? (
+						<Badge
+							variant="secondary"
+							aria-live="polite"
+							style={{ viewTransitionName: `order-status-${order.id}` }}
+						>
+							<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
+							{pendingLabel}
+						</Badge>
+					) : (
+						<>
+							<Badge
+								variant={ORDER_STATUS_VARIANTS[order.status]}
+								style={{ viewTransitionName: `order-status-${order.id}` }}
+							>
+								{ORDER_STATUS_LABELS[order.status]}
+							</Badge>
+							<Badge
+								variant={PAYMENT_STATUS_VARIANTS[order.paymentStatus]}
+								style={{ viewTransitionName: `order-payment-${order.id}` }}
+							>
+								{PAYMENT_STATUS_LABELS[order.paymentStatus]}
+							</Badge>
+						</>
+					)}
 				</ItemTitle>
 				<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 					<span>{order.customerName ?? order.customerEmail}</span>
 					<span aria-hidden="true">·</span>
-					<span className="font-medium">{formatEuro(order.total)}</span>
+					<span className="font-medium" style={{ viewTransitionName: `order-total-${order.id}` }}>
+						{formatEuro(order.total)}
+					</span>
 					<span aria-hidden="true">·</span>
 					<span>{formatDateShort(order.createdAt)}</span>
 					<span aria-hidden="true">·</span>
@@ -93,6 +132,10 @@ function OrderCardContent({ order }: { order: Order }) {
  */
 export function OrdersMobileListItem({ order }: { order: Order }) {
 	const ctx = useBulkSelectionContextOptional();
+	const pendingCtx = useAdminListPendingContextOptional();
+	const isPendingItem = pendingCtx?.isPending(order.id) ?? false;
+	const pendingKind = pendingCtx?.pendingKind ?? null;
+	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
 	const [menuOpen, setMenuOpen] = useState(false);
 
@@ -121,7 +164,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 	if (ctx?.selectionMode) {
 		return (
 			<MobileSelectableCard id={order.id} itemLabel={`Commande ${order.orderNumber}`}>
-				<OrderCardContent order={order} />
+				<OrderCardContent order={order} isPendingItem={isPendingItem} pendingLabel={pendingLabel} />
 			</MobileSelectableCard>
 		);
 	}
@@ -141,13 +184,18 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 					href={`/admin/ventes/commandes/${order.id}`}
 					aria-label={`Commande ${order.orderNumber}`}
 					{...bind}
+					style={{ viewTransitionName: `order-card-${order.id}` }}
 					className={cn(
 						"focus-visible:ring-primary block w-full rounded-lg",
 						"focus-visible:ring-2 focus-visible:outline-none",
 						"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
 					)}
 				>
-					<OrderCardContent order={order} />
+					<OrderCardContent
+						order={order}
+						isPendingItem={isPendingItem}
+						pendingLabel={pendingLabel}
+					/>
 				</Link>
 			</SwipeableCard>
 

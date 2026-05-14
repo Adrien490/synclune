@@ -136,12 +136,16 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 					</p>
 				</div>
 
-				<SheetFooter className="border-primary/10 bg-background shrink-0 gap-2 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+				<SheetFooter
+					className="border-primary/10 bg-background shrink-0 gap-2 border-t px-6 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+					data-vaul-no-drag
+				>
 					<Button
 						type="button"
 						onClick={handleRefresh}
 						disabled={isPending}
 						className="h-14 w-full text-base"
+						data-vaul-no-drag
 					>
 						{isPending ? (
 							<Loader2 className="size-4 animate-spin" aria-hidden="true" />
@@ -157,6 +161,7 @@ export function DashboardRefreshSheet({ open, onOpenChange }: DashboardRefreshSh
 							onClick={handleClose}
 							disabled={isPending}
 							className="h-11 w-full text-base"
+							data-vaul-no-drag
 						>
 							Annuler
 						</Button>

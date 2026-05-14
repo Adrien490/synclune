@@ -34,6 +34,7 @@ export type GetOrdersParams = z.infer<typeof getOrdersSchema>;
 export type GetOrdersReturn = {
 	orders: Array<Prisma.OrderGetPayload<{ select: typeof GET_ORDERS_SELECT }>>;
 	pagination: PaginationInfo;
+	totalCount: number;
 };
 
 // ============================================================================

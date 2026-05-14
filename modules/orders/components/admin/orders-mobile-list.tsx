@@ -10,22 +10,34 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
-import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
+import type {
+	GetOrdersParams,
+	GetOrdersReturn,
+	OrderFilters,
+} from "@/modules/orders/types/order.types";
 import { OrdersMobileListItem } from "./orders-mobile-list-item";
 import { OrdersBulkActionsBar } from "./orders-bulk-actions-bar";
+import { OrdersCrossPageBanner } from "./orders-cross-page-banner";
 
 interface OrdersMobileListProps {
 	ordersPromise: Promise<GetOrdersReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	filterParams?: {
+		search?: string;
+		sortBy?: GetOrdersParams["sortBy"];
+		filters?: OrderFilters;
+	};
 }
 
 export function OrdersMobileList({
 	ordersPromise,
 	perPage,
 	hasActiveFilters,
+	filterParams,
 }: OrdersMobileListProps) {
-	const { orders, pagination } = use(ordersPromise);
+	const { orders, pagination, totalCount } = use(ordersPromise);
 
 	if (orders.length === 0) {
 		return (
@@ -51,30 +63,35 @@ export function OrdersMobileList({
 	const pageItemIds = orders.map((o) => o.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "commande", plural: "commandes" }} />
-				<AdminListLiveCount count={orders.length} singular="commande" plural="commandes" />
-				<ItemGroup aria-label="Commandes" className="gap-2">
-					{orders.map((order) => (
-						<div key={order.id} role="listitem">
-							<OrdersMobileListItem order={order} />
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader itemsLabel={{ singular: "commande", plural: "commandes" }} />
+					{filterParams ? (
+						<OrdersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
+					) : null}
+					<AdminListLiveCount count={orders.length} singular="commande" plural="commandes" />
+					<ItemGroup aria-label="Commandes" className="gap-2">
+						{orders.map((order) => (
+							<div key={order.id} role="listitem">
+								<OrdersMobileListItem order={order} />
+							</div>
+						))}
+					</ItemGroup>
 
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={orders.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar>
-				<OrdersBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={orders.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
+				</div>
+				<MobileSelectionBottomBar>
+					<OrdersBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

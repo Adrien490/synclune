@@ -101,4 +101,13 @@ export const THRESHOLDS = {
 
 	/** Time after which a PENDING refund without stripeRefundId is considered stale */
 	REFUND_STALE_PENDING_MS: 48 * 60 * 60 * 1000, // 48 hours
+
+	/** Orders left PENDING+UNPAID with no PaymentIntent (abandoned checkouts) past this age are auto-cancelled */
+	PENDING_ORDER_TIMEOUT_MS: 24 * 60 * 60 * 1000, // 24 hours
+
+	/** PROCESSING+PAID orders not yet shipped past this age trigger a stuck-orders alert */
+	STUCK_PROCESSING_MS: 7 * 24 * 60 * 60 * 1000, // 7 days
+
+	/** SHIPPED orders not yet DELIVERED past this age trigger a stuck-orders alert */
+	STUCK_SHIPPED_MS: 14 * 24 * 60 * 60 * 1000, // 14 days
 } as const;

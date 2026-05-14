@@ -24,6 +24,7 @@ import { ProductTypesMobileList } from "@/modules/product-types/components/admin
 import { ProductTypesMobileListSkeleton } from "@/modules/product-types/components/admin/product-types-mobile-list-skeleton";
 import { ProductTypesFilterBadges } from "@/modules/product-types/components/admin/product-types-filter-badges";
 import { ProductTypesFilterSheet } from "@/modules/product-types/components/admin/product-types-filter-sheet";
+import { ProductTypesSortBadge } from "@/modules/product-types/components/admin/product-types-sort-badge";
 import { RefreshProductTypesButton } from "@/modules/product-types/components/admin/refresh-product-types-button";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { parseFilters } from "./_utils/params";
@@ -68,6 +69,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 		| "products-ascending"
 		| "products-descending";
 	const search = getFirstParam(params.search);
+	const filters = parseFilters(params);
 
 	// La promise de types de produits n'est PAS awaitée pour permettre le streaming
 	const productTypesPromise = getProductTypes({
@@ -76,7 +78,7 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 		perPage,
 		sortBy,
 		search,
-		filters: parseFilters(params),
+		filters,
 	});
 
 	const hasActiveFilters = !!search || Object.keys(params).some((key) => key.startsWith("filter_"));
@@ -134,12 +136,16 @@ export default async function ProductTypesAdminPage({ searchParams }: ProductTyp
 					<ProductTypesFilterBadges />
 				</Suspense>
 
+				{/* Sort badge mobile (visible si sortBy URL défini) */}
+				<ProductTypesSortBadge />
+
 				{/* Liste mobile */}
 				<Suspense fallback={<ProductTypesMobileListSkeleton />}>
 					<ProductTypesMobileList
 						productTypesPromise={productTypesPromise}
 						perPage={perPage}
 						hasActiveFilters={hasActiveFilters}
+						filterParams={{ search, sortBy, filters }}
 					/>
 				</Suspense>
 

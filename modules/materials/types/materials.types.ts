@@ -18,7 +18,10 @@ export type GetMaterialsParams = z.output<typeof getMaterialsSchema>;
 export type GetMaterialsReturn = {
 	materials: Array<Prisma.MaterialGetPayload<{ select: typeof GET_MATERIALS_SELECT }>>;
 	pagination: PaginationInfo;
+	totalCount: number;
 };
+
+export type MaterialFilters = z.input<typeof getMaterialsSchema>["filters"];
 
 // ============================================================================
 // FUNCTION TYPES - SINGLE

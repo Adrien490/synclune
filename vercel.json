@@ -44,6 +44,14 @@
 		{
 			"path": "/api/cron/reconcile-refunds",
 			"schedule": "0 */6 * * *"
+		},
+		{
+			"path": "/api/cron/cleanup-pending-orders",
+			"schedule": "30 4 * * *"
+		},
+		{
+			"path": "/api/cron/alert-stuck-orders",
+			"schedule": "0 9 * * 1"
 		}
 	]
 }

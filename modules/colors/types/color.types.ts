@@ -43,6 +43,7 @@ export type Color = Prisma.ColorGetPayload<{
 export interface GetColorsReturn {
 	colors: Color[];
 	pagination: PaginationInfo;
+	totalCount: number;
 }
 
 // ============================================================================

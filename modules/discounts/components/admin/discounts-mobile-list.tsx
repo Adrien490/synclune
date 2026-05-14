@@ -10,24 +10,33 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 import type { GetDiscountsReturn } from "@/modules/discounts/data/get-discounts";
+import type { DiscountFilters, GetDiscountsParams } from "@/modules/discounts/types/discount.types";
 
 import { CreateDiscountButton } from "./create-discount-button";
 import { DiscountMobileItem } from "./discount-mobile-item";
 import { DiscountsBulkActionsBar } from "./discounts-bulk-actions-bar";
+import { DiscountsCrossPageBanner } from "./discounts-cross-page-banner";
 
 interface DiscountsMobileListProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	filterParams?: {
+		search?: string;
+		sortBy?: GetDiscountsParams["sortBy"];
+		filters?: DiscountFilters;
+	};
 }
 
 export function DiscountsMobileList({
 	discountsPromise,
 	perPage,
 	hasActiveFilters,
+	filterParams,
 }: DiscountsMobileListProps) {
-	const { discounts, pagination } = use(discountsPromise);
+	const { discounts, pagination, totalCount } = use(discountsPromise);
 
 	if (discounts.length === 0) {
 		return (
@@ -55,30 +64,35 @@ export function DiscountsMobileList({
 	const pageItemIds = discounts.map((d) => d.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "code promo", plural: "codes promo" }} />
-				<AdminListLiveCount count={discounts.length} singular="code promo" plural="codes promo" />
-				<ItemGroup aria-label="Codes promo" className="gap-2">
-					{discounts.map((discount) => (
-						<div key={discount.id} role="listitem">
-							<DiscountMobileItem discount={discount} />
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader itemsLabel={{ singular: "code promo", plural: "codes promo" }} />
+					{filterParams ? (
+						<DiscountsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
+					) : null}
+					<AdminListLiveCount count={discounts.length} singular="code promo" plural="codes promo" />
+					<ItemGroup aria-label="Codes promo" className="gap-2">
+						{discounts.map((discount) => (
+							<div key={discount.id} role="listitem">
+								<DiscountMobileItem discount={discount} />
+							</div>
+						))}
+					</ItemGroup>
 
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={discounts.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar>
-				<DiscountsBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={discounts.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
+				</div>
+				<MobileSelectionBottomBar>
+					<DiscountsBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

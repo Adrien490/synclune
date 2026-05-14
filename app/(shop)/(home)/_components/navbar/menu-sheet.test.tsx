@@ -176,12 +176,6 @@ vi.mock("@/shared/hooks/use-edge-swipe", () => ({
 	},
 }));
 
-// Mock withViewTransition — invoke callback synchronously and track calls
-const mockWithViewTransition = vi.fn((cb: () => void) => cb());
-vi.mock("@/shared/utils/with-view-transition", () => ({
-	withViewTransition: (cb: () => void) => mockWithViewTransition(cb),
-}));
-
 // Mock useDialog
 const mockOpen = vi.fn();
 const mockClose = vi.fn();
@@ -329,12 +323,11 @@ describe("MenuSheet", () => {
 			expect(mockHaptic).toHaveBeenCalledWith("light");
 		});
 
-		it("wraps the sheet close in withViewTransition (no-op when API absent)", () => {
+		it("closes the sheet directly without View Transition (avoids slide-out lag)", () => {
 			render(<MenuSheet {...baseProps} />);
 
 			// Simulate Vaul calling onOpenChange(false)
 			act(() => lastOnOpenChange?.(false));
-			expect(mockWithViewTransition).toHaveBeenCalledTimes(1);
 			expect(mockClose).toHaveBeenCalledTimes(1);
 		});
 	});

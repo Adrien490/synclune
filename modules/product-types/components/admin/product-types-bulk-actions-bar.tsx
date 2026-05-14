@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2, Power, PowerOff } from "lucide-react";
 
 import { BulkSelectionToolbar, useBulkSelectionContext } from "@/shared/components/data-table";
@@ -16,6 +16,7 @@ import {
 	ResponsiveAlertDialogTitle,
 } from "@/shared/components/ui/responsive-alert-dialog";
 import { Button } from "@/shared/components/ui/button";
+import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { useBulkActionWithToast } from "@/shared/hooks/use-bulk-action-with-toast";
 
 import { bulkToggleProductTypesStatus } from "../../actions/bulk-toggle-product-types-status";
@@ -30,16 +31,34 @@ export function ProductTypesBulkActionsBar({
 	presentation = "inline",
 }: ProductTypesBulkActionsBarProps = {}) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
 	const { submit, isPending } = useBulkActionWithToast(bulkToggleProductTypesStatus);
 	const noSelection = selectedCount === 0;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 
+	const wasPendingRef = useRef(false);
+	useEffect(() => {
+		if (wasPendingRef.current && !isPending) {
+			pendingCtx?.clearPending();
+		}
+		wasPendingRef.current = isPending;
+	}, [isPending, pendingCtx]);
+
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
 	function handleConfirm(target: BulkAction) {
+		const ids = Array.from(selectedIds);
 		const fd = new FormData();
-		fd.set("productTypeIds", JSON.stringify(Array.from(selectedIds)));
+		fd.set("productTypeIds", JSON.stringify(ids));
 		fd.set("targetIsActive", target === "activate" ? "true" : "false");
+		pendingCtx?.startPending(ids, target);
 		submit(fd);
 		setPendingAction(null);
 	}
@@ -62,7 +81,7 @@ export function ProductTypesBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<Power className="size-4" aria-hidden="true" />
-					Activer
+					Rouvrir la catégorie
 				</Button>
 				<Button
 					type="button"
@@ -72,7 +91,7 @@ export function ProductTypesBulkActionsBar({
 					disabled={isPending || noSelection}
 				>
 					<PowerOff className="size-4" aria-hidden="true" />
-					Désactiver
+					Mettre au repos
 				</Button>
 			</BulkSelectionToolbar>
 
@@ -88,13 +107,13 @@ export function ProductTypesBulkActionsBar({
 					<ResponsiveAlertDialogHeader>
 						<ResponsiveAlertDialogTitle>
 							{isActivate
-								? `Activer ${selectedCount} type${selectedCount > 1 ? "s" : ""} ?`
-								: `Désactiver ${selectedCount} type${selectedCount > 1 ? "s" : ""} ?`}
+								? `Rouvrir ${selectedCount} catégorie${selectedCount > 1 ? "s" : ""} d'œuvres ?`
+								: `Mettre ${selectedCount} catégorie${selectedCount > 1 ? "s" : ""} au repos ?`}
 						</ResponsiveAlertDialogTitle>
 						<ResponsiveAlertDialogDescription>
 							{isActivate
-								? `${selectedCount > 1 ? "Les types activés seront" : "Le type activé sera"} disponible${selectedCount > 1 ? "s" : ""} pour la création de produits.`
-								: `${selectedCount > 1 ? "Les types désactivés ne seront" : "Le type désactivé ne sera"} plus proposé${selectedCount > 1 ? "s" : ""} dans les nouveaux produits. Les types système (verrouillés) sont automatiquement ignorés.`}
+								? `${selectedCount > 1 ? "Les catégories rouvertes seront" : "La catégorie rouverte sera"} disponible${selectedCount > 1 ? "s" : ""} dans le catalogue d'atelier pour les nouvelles créations.`
+								: `${selectedCount > 1 ? "Les catégories endormies ne seront" : "La catégorie endormie ne sera"} plus proposée${selectedCount > 1 ? "s" : ""} dans les nouveaux bijoux. Les catégories système (verrouillées) sont automatiquement préservées.`}
 						</ResponsiveAlertDialogDescription>
 					</ResponsiveAlertDialogHeader>
 					<ResponsiveAlertDialogFooter>
@@ -106,7 +125,7 @@ export function ProductTypesBulkActionsBar({
 							aria-busy={isPending || undefined}
 						>
 							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-							{isActivate ? "Activer" : "Désactiver"}
+							{isActivate ? "Rouvrir la catégorie" : "Mettre au repos"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
 				</ResponsiveAlertDialogContent>

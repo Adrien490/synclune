@@ -11,9 +11,15 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
+import type {
+	CollectionFilters,
+	GetCollectionsParams,
+} from "@/modules/collections/types/collection.types";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
 import { CollectionsBulkActionsBar } from "./collections-bulk-actions-bar";
+import { CollectionsCrossPageBanner } from "./collections-cross-page-banner";
 import { CreateCollectionButton } from "./create-collection-button";
 import { CollectionMobileItem } from "./collection-mobile-item";
 
@@ -21,14 +27,20 @@ interface CollectionsMobileListProps {
 	collectionsPromise: Promise<GetCollectionsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	filterParams?: {
+		search?: string;
+		sortBy?: GetCollectionsParams["sortBy"];
+		filters?: CollectionFilters;
+	};
 }
 
 export function CollectionsMobileList({
 	collectionsPromise,
 	perPage,
 	hasActiveFilters,
+	filterParams,
 }: CollectionsMobileListProps) {
-	const { collections, pagination } = use(collectionsPromise);
+	const { collections, pagination, totalCount } = use(collectionsPromise);
 
 	if (collections.length === 0) {
 		return (
@@ -56,30 +68,39 @@ export function CollectionsMobileList({
 	const pageItemIds = collections.map((c) => c.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "collection", plural: "collections" }} />
-				<AdminListLiveCount count={collections.length} singular="collection" plural="collections" />
-				<ItemGroup aria-label="Collections" className="gap-2">
-					{collections.map((collection) => (
-						<div key={collection.id} role="listitem">
-							<CollectionMobileItem collection={collection} />
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader itemsLabel={{ singular: "collection", plural: "collections" }} />
+					{filterParams ? (
+						<CollectionsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
+					) : null}
+					<AdminListLiveCount
+						count={collections.length}
+						singular="collection"
+						plural="collections"
+					/>
+					<ItemGroup aria-label="Collections" className="gap-2">
+						{collections.map((collection) => (
+							<div key={collection.id} role="listitem">
+								<CollectionMobileItem collection={collection} />
+							</div>
+						))}
+					</ItemGroup>
 
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={collections.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar>
-				<CollectionsBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={collections.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
+				</div>
+				<MobileSelectionBottomBar>
+					<CollectionsBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

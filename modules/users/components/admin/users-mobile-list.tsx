@@ -11,19 +11,32 @@ import {
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
 import { ItemGroup } from "@/shared/components/ui/item";
+import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 
-import type { GetUsersReturn } from "@/modules/users/types/user.types";
+import type { GetUsersParams, GetUsersReturn, UserFilters } from "@/modules/users/types/user.types";
 import { UserMobileItem } from "./user-mobile-item";
 import { UsersBulkActionsBar } from "./users-bulk-actions-bar";
+import { UsersCrossPageBanner } from "./users-cross-page-banner";
 
 interface UsersMobileListProps {
 	usersPromise: Promise<GetUsersReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	filterParams?: {
+		search?: string;
+		sortBy?: GetUsersParams["sortBy"];
+		sortOrder?: GetUsersParams["sortOrder"];
+		filters?: UserFilters;
+	};
 }
 
-export function UsersMobileList({ usersPromise, perPage, hasActiveFilters }: UsersMobileListProps) {
-	const { users, pagination } = use(usersPromise);
+export function UsersMobileList({
+	usersPromise,
+	perPage,
+	hasActiveFilters,
+	filterParams,
+}: UsersMobileListProps) {
+	const { users, pagination, totalCount } = use(usersPromise);
 
 	if (users.length === 0) {
 		return (
@@ -47,30 +60,35 @@ export function UsersMobileList({ usersPromise, perPage, hasActiveFilters }: Use
 	const pageItemIds = users.map((u) => u.id);
 
 	return (
-		<BulkSelectionProvider pageItemIds={pageItemIds}>
-			<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
-				<MobileSelectionHeader itemsLabel={{ singular: "client", plural: "clients" }} />
-				<AdminListLiveCount count={users.length} singular="client" plural="clients" />
-				<ItemGroup aria-label="Clients" className="gap-2">
-					{users.map((user) => (
-						<div key={user.id} role="listitem">
-							<UserMobileItem user={user} />
-						</div>
-					))}
-				</ItemGroup>
+		<AdminListPendingProvider>
+			<BulkSelectionProvider pageItemIds={pageItemIds}>
+				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+					<MobileSelectionHeader itemsLabel={{ singular: "client", plural: "clients" }} />
+					{filterParams ? (
+						<UsersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
+					) : null}
+					<AdminListLiveCount count={users.length} singular="client" plural="clients" />
+					<ItemGroup aria-label="Clients" className="gap-2">
+						{users.map((user) => (
+							<div key={user.id} role="listitem">
+								<UserMobileItem user={user} />
+							</div>
+						))}
+					</ItemGroup>
 
-				<CursorPagination
-					perPage={perPage}
-					hasNextPage={pagination.hasNextPage}
-					hasPreviousPage={pagination.hasPreviousPage}
-					currentPageSize={users.length}
-					nextCursor={pagination.nextCursor}
-					prevCursor={pagination.prevCursor}
-				/>
-			</div>
-			<MobileSelectionBottomBar>
-				<UsersBulkActionsBar presentation="bottom-bar" />
-			</MobileSelectionBottomBar>
-		</BulkSelectionProvider>
+					<CursorPagination
+						perPage={perPage}
+						hasNextPage={pagination.hasNextPage}
+						hasPreviousPage={pagination.hasPreviousPage}
+						currentPageSize={users.length}
+						nextCursor={pagination.nextCursor}
+						prevCursor={pagination.prevCursor}
+					/>
+				</div>
+				<MobileSelectionBottomBar>
+					<UsersBulkActionsBar presentation="bottom-bar" />
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>
+		</AdminListPendingProvider>
 	);
 }

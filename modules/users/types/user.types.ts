@@ -29,4 +29,5 @@ export type GetUsersParams = z.infer<typeof getUsersSchema>;
 export type GetUsersReturn = {
 	users: Array<Prisma.UserGetPayload<{ select: typeof GET_USERS_SELECT }>>;
 	pagination: PaginationInfo;
+	totalCount: number;
 };

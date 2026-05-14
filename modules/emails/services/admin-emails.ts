@@ -323,6 +323,57 @@ export async function sendAdminDisputeAlert({
 }
 
 /**
+ * Alerte admin : Commandes en attente prolongee (stuck orders)
+ *
+ * Aggrege en un seul email les commandes PROCESSING > 7j et SHIPPED > 14j
+ * sans livraison confirmee. Envoye par le cron `alert-stuck-orders`.
+ */
+export async function sendAdminStuckOrdersAlert({
+	processingOrders,
+	shippedOrders,
+}: {
+	processingOrders: Array<{ orderNumber: string; ageDays: number; total: number; orderId: string }>;
+	shippedOrders: Array<{ orderNumber: string; ageDays: number; total: number; orderId: string }>;
+}): Promise<EmailResult> {
+	const dashboardUrl = `${getBaseUrl()}/admin/ventes/commandes`;
+	const totalStuck = processingOrders.length + shippedOrders.length;
+
+	const formatLine = (o: { orderNumber: string; ageDays: number; total: number }) =>
+		`  • ${o.orderNumber} — ${formatEuro(o.total)} — ${o.ageDays}j`;
+
+	const sections: string[] = [];
+	if (processingOrders.length > 0) {
+		sections.push(
+			`En préparation depuis plus de 7 jours (${processingOrders.length}) :`,
+			...processingOrders.map(formatLine),
+		);
+	}
+	if (shippedOrders.length > 0) {
+		if (sections.length > 0) sections.push("");
+		sections.push(
+			`Expédiées sans livraison depuis plus de 14 jours (${shippedOrders.length}) :`,
+			...shippedOrders.map(formatLine),
+		);
+	}
+	const context = sections.join("\n");
+
+	return renderAndSend(
+		AdminAlertEmail({
+			type: "stuck-orders",
+			context,
+			summary: `${totalStuck} commande(s) nécessitent une vérification. Pour les commandes en préparation, vérifiez l'avancement ou expédiez. Pour les commandes expédiées sans livraison, vérifiez le suivi transporteur ou contactez le client.`,
+			ctaUrl: dashboardUrl,
+			ctaLabel: "Voir les commandes",
+		}),
+		{
+			to: EMAIL_ADMIN,
+			subject: `[Admin] ${totalStuck} commande(s) en attente prolongée`,
+			tags: [{ name: "category", value: "admin" }],
+		},
+	);
+}
+
+/**
  * Alerte admin : Echec generation facture (Conformite legale)
  *
  * Preparatory code for automated invoice generation.

@@ -19,7 +19,6 @@ import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useEffect, useId, useLayoutEffect, useState } from "react";
 import { cn } from "@/shared/utils/cn";
-import { withViewTransition } from "@/shared/utils/with-view-transition";
 import { EdgeSwipeIndicator } from "./edge-swipe-indicator";
 import { MenuSheetFooter } from "./menu-sheet-footer";
 import { MenuSheetNav } from "./menu-sheet-nav";
@@ -142,7 +141,7 @@ export function MenuSheet({
 						openMenu();
 						return;
 					}
-					withViewTransition(() => closeMenu());
+					closeMenu();
 				}}
 				preventScrollRestoration
 				scrollLockTimeout={500}
@@ -162,7 +161,7 @@ export function MenuSheet({
 
 				<SheetContent
 					id={sheetId}
-					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! [view-transition-name:shop-nav-sheet] sm:w-80 sm:max-w-md"
+					className="bg-background/95 flex w-[min(88vw,340px)] flex-col border-r p-0! sm:w-80 sm:max-w-md"
 					onOverlayClick={() => haptic("light")}
 				>
 					<SheetHeader className="pt-[max(1rem,env(safe-area-inset-top))] pb-2 pl-5">

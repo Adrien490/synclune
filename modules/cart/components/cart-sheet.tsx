@@ -160,7 +160,7 @@ function CartSheetBody({
 					</div>
 
 					<div className="min-h-0 flex-1">
-						<ScrollFade axis="vertical" className="h-full" hideScrollbar={false}>
+						<ScrollFade axis="vertical" className="h-full overscroll-contain" hideScrollbar={false}>
 							<div className="space-y-3 px-6 py-4">
 								<AnimatePresence mode="popLayout" initial={false}>
 									{items.map((item) => (
