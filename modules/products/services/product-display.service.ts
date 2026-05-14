@@ -24,6 +24,7 @@ import {
 	getPrimarySkuForList,
 	type GetPrimarySkuOptions,
 } from "@/modules/skus/services/sku-selection.service";
+import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
 /** Validates hex color format at display time (defense in depth) */
@@ -76,7 +77,7 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				primaryImage.altText ??
-					`${productTitle} - ${sku.material?.name ?? sku.color?.name ?? "Image principale"}`,
+					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.color?.name ?? "Image principale"}`,
 			),
 			blurDataUrl: primaryImage.blurDataUrl ?? undefined,
 		};
@@ -91,7 +92,7 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				firstImage.altText ??
-					`${productTitle} - ${sku.material?.name ?? sku.color?.name ?? "Variante"}`,
+					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.color?.name ?? "Variante"}`,
 			),
 			blurDataUrl: firstImage.blurDataUrl ?? undefined,
 		};

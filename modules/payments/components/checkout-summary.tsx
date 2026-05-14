@@ -14,6 +14,7 @@ import type { GetCartReturn } from "@/modules/cart/data/get-cart";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { useSheet } from "@/shared/providers/sheet-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 import { ChevronDown, Info, Shield } from "lucide-react";
 import { VisaIcon, MastercardIcon, CBIcon } from "@/shared/components/icons/payment-icons";
@@ -102,9 +103,12 @@ function SummaryContent({
 							{item.sku.color && (
 								<p className="text-muted-foreground text-xs">Couleur: {item.sku.color.name}</p>
 							)}
-							{item.sku.material && (
-								<p className="text-muted-foreground text-xs">Matière: {item.sku.material.name}</p>
-							)}
+							{(() => {
+								const label = getSkuMaterialsLabel(item.sku.materials);
+								return label ? (
+									<p className="text-muted-foreground text-xs">Matière: {label}</p>
+								) : null;
+							})()}
 							<p className="text-muted-foreground mt-1 text-xs">Qté: {item.quantity}</p>
 						</div>
 

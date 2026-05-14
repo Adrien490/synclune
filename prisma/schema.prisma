@@ -223,12 +223,12 @@ model Color {
 }
 
 model Material {
-  id          String       @id @default(cuid())
-  slug        String       @unique
-  name        String       @unique @db.VarChar(100)
-  description String?      @db.Text
-  isActive    Boolean      @default(true)
-  skus        ProductSku[]
+  id           String               @id @default(cuid())
+  slug         String               @unique
+  name         String               @unique @db.VarChar(100)
+  description  String?              @db.Text
+  isActive     Boolean              @default(true)
+  skuMaterials ProductSkuMaterial[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -237,13 +237,36 @@ model Material {
   @@index([isActive])
 }
 
+/// Table de jointure explicite ProductSku <-> Material (many-to-many)
+/// Permet à une variante d'être composée de plusieurs matériaux.
+/// L'ordre (`position`) reflète la priorité : position=0 = matériau principal
+/// (utilisé pour SEO/care-tips, snapshot OrderItem joint dans l'ordre).
+model ProductSkuMaterial {
+  id         String     @id @default(cuid())
+  skuId      String
+  sku        ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  materialId String
+  // onDelete: Restrict — préserve la protection anti-orphans (audit 2026-05-11 P1.1)
+  material   Material   @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  position Int      @default(0)
+  addedAt  DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([skuId, materialId])
+  @@index([materialId]) // FK reverse lookup (filtre storefront + merge-materials)
+  @@index([skuId, position]) // récupération ordonnée des matériaux d'un SKU
+}
+
 // ============================================================================
 // CATALOGUE - COLLECTIONS
 // ============================================================================
 
 model Collection {
   id          String           @id @default(cuid())
-  name        String           @db.VarChar(100) @unique
+  name        String           @unique @db.VarChar(100)
   slug        String           @unique
   description String?          @db.Text
   status      CollectionStatus @default(DRAFT)
@@ -327,12 +350,11 @@ model ProductSku {
   colorId String?
   color   Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
 
-  materialId String?
-  // onDelete: Restrict — empêche la suppression d'un matériau référencé par un SKU
-  // (y compris soft-deleted). Aligné sur la pré-vérification applicative dans
-  // modules/materials/actions/delete-material.ts et ferme la race condition
-  // findUnique(_count) ↔ delete (cf. audit 2026-05-11 P1.1).
-  material   Material? @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  // Matériaux multi (M2M via ProductSkuMaterial). Un SKU peut être composé de
+  // plusieurs matériaux (ex: bague verre + acier). Ordre = priorité, le 1er
+  // (position=0) est le matériau « principal » utilisé pour SEO/care-tips.
+  // Cap applicatif : ARRAY_LIMITS.SKU_MATERIALS (3).
+  materials ProductSkuMaterial[]
 
   size String? @db.VarChar(50)
 
@@ -354,14 +376,15 @@ model ProductSku {
   updatedAt  DateTime    @updatedAt
   deletedAt  DateTime? // Soft delete pour preserver historique commandes
 
-  // Garantir unicite des combinaisons produit/couleur/taille/materiau (actifs uniquement)
-  // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL)
-  // Permet de recreer un SKU soft-deleted avec la meme combinaison
+  // Garantir unicite des combinaisons produit/couleur/taille (actifs uniquement)
+  // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL).
+  // Note 2026-05-14 : matériau retiré de l'index suite à la migration M2M
+  // (un SKU peut avoir plusieurs matériaux ; la « variant identity » se réduit
+  // à color × size). Permet de recréer un SKU soft-deleted avec la même combinaison.
   //
   // Contrainte DB: un seul SKU par defaut par produit (active SKUs uniquement)
   // Index unique partiel via migration 20260417 (WHERE "isDefault" = true AND "deletedAt" IS NULL)
   @@index([colorId])
-  @@index([materialId])
 }
 
 model SkuMedia {
@@ -1176,12 +1199,12 @@ model WebhookEvent {
 /// Contrainte DB: CHECK (id = 'store-settings-singleton') via migration 20260417
 /// Empeche techniquement toute insertion d'une 2e ligne avec un autre ID
 model StoreSettings {
-  id               String    @id @default("store-settings-singleton")
-  isClosed         Boolean   @default(false)
-  closureMessage   String?   @db.VarChar(500)
-  closedAt         DateTime?
-  reopensAt        DateTime?
-  closedBy         String?   @db.VarChar(255)
+  id             String    @id @default("store-settings-singleton")
+  isClosed       Boolean   @default(false)
+  closureMessage String?   @db.VarChar(500)
+  closedAt       DateTime?
+  reopensAt      DateTime?
+  closedBy       String?   @db.VarChar(255)
 
   // === ANNOUNCEMENT BAR (replaces dedicated AnnouncementBar table) ===
   announcementMessage  String?   @db.VarChar(200)

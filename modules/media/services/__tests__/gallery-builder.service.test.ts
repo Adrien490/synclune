@@ -49,7 +49,7 @@ function makeSku(
 		id,
 		isActive: true,
 		images,
-		material: { name: "Argent" },
+		materials: [{ materialId: "m-default", position: 0, material: { name: "Argent" } }],
 		color: { name: "Rose" },
 		size: null,
 		...overrides,
@@ -256,7 +256,7 @@ describe("buildGallery", () => {
 
 	it("generates alt text with product type and variant info", () => {
 		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
-			material: { name: "Or" },
+			materials: [{ materialId: "m-or", position: 0, material: { name: "Or" } }],
 			color: { name: "Rose" },
 		});
 		const product = makeProduct([sku]);
@@ -268,7 +268,7 @@ describe("buildGallery", () => {
 
 	it("avoids duplicate color/material in alt text", () => {
 		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
-			material: { name: "Or Rose" },
+			materials: [{ materialId: "m-or-rose", position: 0, material: { name: "Or Rose" } }],
 			color: { name: "Or Rose" }, // same as material
 		});
 		const product = makeProduct([sku]);
@@ -281,7 +281,7 @@ describe("buildGallery", () => {
 
 	it("includes size in alt text when present", () => {
 		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
-			material: { name: "Argent" },
+			materials: [{ materialId: "m-argent", position: 0, material: { name: "Argent" } }],
 			color: null,
 			size: "52",
 		});

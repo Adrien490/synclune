@@ -59,6 +59,15 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	safeFormGetJSON: <T>(formData: FormData, key: string): T | null => {
+		const v = formData.get(key);
+		if (typeof v !== "string") return null;
+		try {
+			return JSON.parse(v) as T;
+		} catch {
+			return null;
+		}
+	},
 	BusinessError: class extends Error {},
 	validateInput: vi.fn().mockReturnValue({ data: {} }),
 	validationError: (message: string) => ({ status: ActionStatus.VALIDATION_ERROR, message }),
@@ -122,7 +131,7 @@ describe("createProductSku", () => {
 				isActive: true,
 				isDefault: false,
 				colorId: "",
-				materialId: "",
+				materialIds: [],
 				size: "",
 				primaryImage: null,
 				galleryMedia: [],

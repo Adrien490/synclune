@@ -28,7 +28,7 @@ function makeProduct(overrides: Record<string, unknown> = {}) {
 					{ url: "https://cdn.example.com/img2.jpg", isPrimary: false, altText: null },
 				],
 				color: { name: "Or" },
-				material: { name: "Argent 925" },
+				materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
 				size: "M",
 			},
 		],
@@ -44,7 +44,7 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		inventory: 5,
 		images: [{ url: "https://cdn.example.com/img1.jpg", isPrimary: true, altText: "Vue face" }],
 		color: { name: "Or" },
-		material: { name: "Argent 925" },
+		materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
 		size: "M",
 		...overrides,
 	} as never;
@@ -82,7 +82,7 @@ describe("generateStructuredData", () => {
 						inventory: 3,
 						images: [],
 						color: null,
-						material: null,
+						materials: [],
 					},
 					{
 						sku: "SKU-2",
@@ -91,7 +91,7 @@ describe("generateStructuredData", () => {
 						inventory: 5,
 						images: [],
 						color: null,
-						material: null,
+						materials: [],
 					},
 				],
 			}),
@@ -114,7 +114,7 @@ describe("generateStructuredData", () => {
 						inventory: 3,
 						images: [],
 						color: null,
-						material: null,
+						materials: [],
 					},
 					{
 						sku: "SKU-2",
@@ -123,7 +123,7 @@ describe("generateStructuredData", () => {
 						inventory: 5,
 						images: [],
 						color: null,
-						material: null,
+						materials: [],
 					},
 				],
 			}),
@@ -242,7 +242,10 @@ describe("generateStructuredData", () => {
 	it("includes material and color from selected SKU", () => {
 		const result = generateStructuredData({
 			product: makeProduct(),
-			selectedSku: makeSku({ material: { name: "Argent 925" }, color: { name: "Or" } }),
+			selectedSku: makeSku({
+				materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
+				color: { name: "Or" },
+			}),
 		});
 
 		const productData = graph(result)[0];

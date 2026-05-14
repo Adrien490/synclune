@@ -6,14 +6,14 @@ describe("buildSkuUrl", () => {
 	const baseUrl = "/creations/bague-lune-argent";
 
 	it("returns the base URL when no SKU fields are set", () => {
-		expect(buildSkuUrl(baseUrl, { color: null, material: null, size: null })).toBe(baseUrl);
+		expect(buildSkuUrl(baseUrl, { color: null, materials: [], size: null })).toBe(baseUrl);
 	});
 
 	it("appends ?color when color.slug is present", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
 				color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" },
-				material: null,
+				materials: [],
 				size: null,
 			}),
 		).toBe(`${baseUrl}?color=or`);
@@ -23,14 +23,20 @@ describe("buildSkuUrl", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
 				color: null,
-				material: { id: "m", name: "Argent massif" },
+				materials: [
+					{
+						materialId: "m",
+						position: 0,
+						material: { id: "m", name: "Argent massif" },
+					},
+				],
 				size: null,
 			}),
 		).toBe(`${baseUrl}?material=argent-massif`);
 	});
 
 	it("appends ?size verbatim when size is set", () => {
-		expect(buildSkuUrl(baseUrl, { color: null, material: null, size: "52" })).toBe(
+		expect(buildSkuUrl(baseUrl, { color: null, materials: [], size: "52" })).toBe(
 			`${baseUrl}?size=52`,
 		);
 	});
@@ -39,7 +45,13 @@ describe("buildSkuUrl", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
 				color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" },
-				material: { id: "m", name: "Argent 925" },
+				materials: [
+					{
+						materialId: "m",
+						position: 0,
+						material: { id: "m", name: "Argent 925" },
+					},
+				],
 				size: "52",
 			}),
 		).toBe(`${baseUrl}?color=or&material=argent-925&size=52`);
@@ -50,7 +62,7 @@ describe("buildSkuUrl", () => {
 			buildSkuUrl(baseUrl, {
 				// @ts-expect-error — runtime tolerance for missing slug
 				color: { id: "c", name: "Or", hex: "#FFD700" },
-				material: null,
+				materials: [],
 				size: null,
 			}),
 		).toBe(baseUrl);

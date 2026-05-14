@@ -1,5 +1,10 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+
+const { mockEditOpen, mockHaptic } = vi.hoisted(() => ({
+	mockEditOpen: vi.fn(),
+	mockHaptic: vi.fn(),
+}));
 
 vi.mock("@/shared/components/ui/card", () => ({
 	Card: ({ children }: any) => <div>{children}</div>,
@@ -8,10 +13,19 @@ vi.mock("@/shared/components/ui/card", () => ({
 	CardContent: ({ children }: any) => <div>{children}</div>,
 }));
 
+vi.mock("@/shared/components/ui/button", () => ({
+	Button: ({ children, onClick, ...props }: any) => (
+		<button onClick={onClick} {...props}>
+			{children}
+		</button>
+	),
+}));
+
 vi.mock("lucide-react", () => ({
 	Phone: () => <svg aria-hidden="true" />,
 	User: () => <svg aria-hidden="true" />,
 	ExternalLink: () => <svg aria-hidden="true" />,
+	Pencil: () => <svg aria-hidden="true" />,
 }));
 
 vi.mock("next/link", () => ({
@@ -22,17 +36,43 @@ vi.mock("next/link", () => ({
 	),
 }));
 
+vi.mock("@/app/generated/prisma/browser", () => ({
+	InvoiceStatus: {
+		PENDING: "PENDING",
+		GENERATED: "GENERATED",
+	},
+}));
+
+vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
+	useAlertDialog: () => ({ open: mockEditOpen, close: vi.fn(), isOpen: false, data: null }),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
+}));
+
+vi.mock("../../edit-customer-info-dialog", () => ({
+	EDIT_CUSTOMER_INFO_DIALOG_ID: "edit-customer-info",
+}));
+
 import { OrderCustomerCard } from "../order-customer-card";
 
-afterEach(cleanup);
+afterEach(() => {
+	cleanup();
+	mockEditOpen.mockReset();
+	mockHaptic.mockReset();
+});
 
 function createOrder(overrides = {}) {
 	return {
 		id: "order-1",
+		orderNumber: "CMD-001",
 		customerName: "Marie Dupont",
 		customerEmail: "marie@example.com",
 		customerPhone: null,
 		userId: "user-1",
+		invoiceStatus: "PENDING",
 		...overrides,
 	} as any;
 }
@@ -71,5 +111,29 @@ describe("OrderCustomerCard", () => {
 	it("hides phone section when customerPhone is null", () => {
 		render(<OrderCustomerCard order={createOrder({ customerPhone: null })} />);
 		expect(screen.queryByText(/\+336/)).toBeNull();
+	});
+
+	it("shows Modifier button when invoiceStatus is not GENERATED", () => {
+		render(<OrderCustomerCard order={createOrder({ invoiceStatus: "PENDING" })} />);
+		expect(screen.getByRole("button", { name: /Modifier/i })).toBeInTheDocument();
+	});
+
+	it("hides Modifier button when invoice is GENERATED", () => {
+		render(<OrderCustomerCard order={createOrder({ invoiceStatus: "GENERATED" })} />);
+		expect(screen.queryByRole("button", { name: /Modifier/i })).toBeNull();
+	});
+
+	it("opens edit dialog with customer payload on Modifier click", () => {
+		render(<OrderCustomerCard order={createOrder()} />);
+		fireEvent.click(screen.getByRole("button", { name: /Modifier/i }));
+		expect(mockEditOpen).toHaveBeenCalledWith(
+			expect.objectContaining({
+				orderId: "order-1",
+				orderNumber: "CMD-001",
+				customerEmail: "marie@example.com",
+				customerName: "Marie Dupont",
+			}),
+		);
+		expect(mockHaptic).toHaveBeenCalledWith("light");
 	});
 });

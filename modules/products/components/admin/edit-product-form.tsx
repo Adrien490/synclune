@@ -33,7 +33,7 @@ const FIELD_LABELS: Record<string, string> = {
 	status: "Visibilité",
 	"defaultSku.media": "Médias",
 	"defaultSku.colorId": "Couleur",
-	"defaultSku.materialId": "Matériau",
+	"defaultSku.materialIds": "Matériaux",
 	"defaultSku.size": "Taille",
 	"defaultSku.priceInclTaxEuros": "Prix de vente",
 	"defaultSku.compareAtPriceEuros": "Prix comparé",
@@ -173,9 +173,10 @@ export function EditProductForm({
 					status: state.values.status,
 					isActive: state.values.defaultSku.isActive,
 					collectionIds: state.values.collectionIds,
+					materialIds: state.values.defaultSku.materialIds,
 				})}
 			>
-				{({ productId, skuId, media, status, isActive, collectionIds }) => {
+				{({ productId, skuId, media, status, isActive, collectionIds, materialIds }) => {
 					const currentUrls = new Set(media.map((m) => m.url));
 					const removedOriginal = originalImageUrls.filter((url) => !currentUrls.has(url));
 					const allDeleted = Array.from(new Set([...deletedImageUrls, ...removedOriginal]));
@@ -189,6 +190,11 @@ export function EditProductForm({
 							<input type="hidden" name="status" value={status} />
 							<input type="hidden" name="defaultSku.isActive" value={String(isActive)} />
 							<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
+							<input
+								type="hidden"
+								name="defaultSku.materialIds"
+								value={JSON.stringify(materialIds)}
+							/>
 							{allDeleted.length > 0 && (
 								<input type="hidden" name="deletedImageUrls" value={JSON.stringify(allDeleted)} />
 							)}

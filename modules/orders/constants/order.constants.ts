@@ -81,6 +81,7 @@ export const GET_ORDER_SELECT = {
 	billingPostalCode: true,
 	billingCity: true,
 	billingCountry: true,
+	billingPhone: true,
 	shippingMethod: true,
 	shippingCarrier: true,
 	shippingRateId: true,

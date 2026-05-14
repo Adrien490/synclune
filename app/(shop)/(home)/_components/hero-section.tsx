@@ -39,7 +39,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			aria-labelledby="hero-title"
 			aria-describedby="hero-subtitle"
 			style={{ viewTransitionName: "shop-hero" }}
-			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen"
+			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
 			<div className="absolute inset-x-0 top-0 bottom-0 -z-10" aria-hidden="true">
@@ -71,7 +71,7 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			<div className="relative z-10 container mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))] 2xl:max-w-7xl">
 				<div className="flex flex-col items-center">
 					{/* Centered content */}
-					<div className="flex flex-col items-center gap-y-5 sm:gap-y-7 md:gap-y-10">
+					<div className="flex flex-col items-center gap-y-5 sm:gap-y-7 md:gap-y-10 max-md:landscape:gap-y-3">
 						{/* Main title - "Des bijoux" is server-rendered for LCP */}
 						<div className="w-full space-y-4 text-center sm:space-y-6">
 							<SectionTitle

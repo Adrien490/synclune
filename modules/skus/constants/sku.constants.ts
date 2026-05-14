@@ -20,13 +20,20 @@ export const GET_PRODUCT_SKU_SELECT = {
 			slug: true,
 		},
 	},
-	materialId: true,
-	material: {
+	// Matériaux M2M ordonnés par priorité (1er = principal pour SEO/care-tips)
+	materials: {
 		select: {
-			id: true,
-			name: true,
-			slug: true,
+			materialId: true,
+			position: true,
+			material: {
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+				},
+			},
 		},
+		orderBy: { position: "asc" as const },
 	},
 	size: true,
 	createdAt: true,
@@ -80,12 +87,20 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			slug: true,
 		},
 	},
-	material: {
+	// Matériaux M2M ordonnés (1er = principal)
+	materials: {
 		select: {
-			id: true,
-			name: true,
-			slug: true,
+			materialId: true,
+			position: true,
+			material: {
+				select: {
+					id: true,
+					name: true,
+					slug: true,
+				},
+			},
 		},
+		orderBy: { position: "asc" as const },
 	},
 
 	// Images

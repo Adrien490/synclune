@@ -9,7 +9,11 @@ import type { GetProductReturn } from "../../types/product.types";
 
 function makeSku(
 	overrides: Partial<{
-		material: { id: string; name: string } | null;
+		materials: Array<{
+			materialId: string;
+			position: number;
+			material: { id: string; name: string };
+		}>;
 		size: string | null;
 		isActive: boolean;
 	}> = {},
@@ -24,7 +28,7 @@ function makeSku(
 		compareAtPrice: null,
 		size: null,
 		color: null,
-		material: null,
+		materials: [],
 		images: [],
 		...overrides,
 	} as unknown as GetProductReturn["skus"][0];
@@ -82,7 +86,13 @@ describe("generateHighlights", () => {
 
 	it("should include material highlight when first sku has material", () => {
 		const product = makeProduct({
-			skus: [makeSku({ material: { id: "mat-1", name: "Argent 925" } })],
+			skus: [
+				makeSku({
+					materials: [
+						{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Argent 925" } },
+					],
+				}),
+			],
 		});
 		const result = generateHighlights(product);
 		const material = result.find((h) => h.id === "material");
@@ -92,7 +102,7 @@ describe("generateHighlights", () => {
 	});
 
 	it("should not include material highlight when first sku has no material", () => {
-		const product = makeProduct({ skus: [makeSku({ material: null })] });
+		const product = makeProduct({ skus: [makeSku({ materials: [] })] });
 		const result = generateHighlights(product);
 		expect(result.find((h) => h.id === "material")).toBeUndefined();
 	});
@@ -160,7 +170,14 @@ describe("generateHighlights", () => {
 
 	it("should return highlights sorted by priority", () => {
 		const product = makeProduct({
-			skus: [makeSku({ material: { id: "mat-1", name: "Or 18k" }, size: "Taille ajustable" })],
+			skus: [
+				makeSku({
+					materials: [
+						{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Or 18k" } },
+					],
+					size: "Taille ajustable",
+				}),
+			],
 			collections: [makeCollection({ status: "PUBLIC" })],
 		});
 		const result = generateHighlights(product);
@@ -170,7 +187,14 @@ describe("generateHighlights", () => {
 
 	it("should return at most 5 highlights", () => {
 		const product = makeProduct({
-			skus: [makeSku({ material: { id: "mat-1", name: "Or 18k" }, size: "Taille ajustable" })],
+			skus: [
+				makeSku({
+					materials: [
+						{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Or 18k" } },
+					],
+					size: "Taille ajustable",
+				}),
+			],
 			collections: [makeCollection({ status: "PUBLIC" })],
 		});
 		const result = generateHighlights(product);

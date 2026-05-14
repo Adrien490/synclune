@@ -55,6 +55,21 @@ const ResendEmailDialog = dynamic(() =>
 		(mod) => mod.ResendEmailDialog,
 	),
 );
+const EditCustomerInfoDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/edit-customer-info-dialog").then(
+		(mod) => mod.EditCustomerInfoDialog,
+	),
+);
+const EditShippingAddressDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/edit-shipping-address-dialog").then(
+		(mod) => mod.EditShippingAddressDialog,
+	),
+);
+const EditBillingAddressDialog = dynamic(() =>
+	import("@/modules/orders/components/admin/edit-billing-address-dialog").then(
+		(mod) => mod.EditBillingAddressDialog,
+	),
+);
 import {
 	Breadcrumb,
 	BreadcrumbItem,
@@ -126,6 +141,9 @@ export default async function OrderDetailPage({ params }: { params: OrderDetailP
 			<MarkAsReturnedAlertDialog />
 			<OrderNotesDialog />
 			<ResendEmailDialog />
+			<EditCustomerInfoDialog />
+			<EditShippingAddressDialog />
+			<EditBillingAddressDialog />
 		</div>
 	);
 }

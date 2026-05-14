@@ -282,7 +282,7 @@ describe("getMaterialDistinctProductCount", () => {
 		await getMaterialDistinctProductCount("mat-42");
 
 		expect(mockPrisma.productSku.findMany).toHaveBeenCalledWith({
-			where: { materialId: "mat-42", isActive: true },
+			where: { isActive: true, materials: { some: { materialId: "mat-42" } } },
 			select: { productId: true },
 			distinct: ["productId"],
 		});

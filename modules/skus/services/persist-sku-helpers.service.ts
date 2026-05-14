@@ -29,7 +29,8 @@ export type SkuMediaInput = {
 
 export type NormalizedOptionalRefs = {
 	colorId: string | null;
-	materialId: string | null;
+	/** Matériaux M2M ordonnés (1er = principal). Vide = aucun matériau renseigné. */
+	materialIds: string[];
 	size: string | null;
 };
 
@@ -40,15 +41,17 @@ export type NormalizedOptionalRefs = {
 /**
  * Normalise les FK optionnelles + size en `null` (Zod transforme déjà empty string
  * en undefined, ce helper aplatit `undefined → null` pour Prisma).
+ *
+ * `materialIds` est dédupliqué (préserve l'ordre saisi : 1er = principal).
  */
 export function normalizeOptionalRefs(input: {
 	colorId?: string;
-	materialId?: string;
+	materialIds?: string[];
 	size?: string;
 }): NormalizedOptionalRefs {
 	return {
 		colorId: input.colorId ?? null,
-		materialId: input.materialId ?? null,
+		materialIds: input.materialIds ? Array.from(new Set(input.materialIds)) : [],
 		size: input.size ?? null,
 	};
 }
@@ -139,25 +142,30 @@ export async function assertColorExists(
 }
 
 /**
- * Vérifie l'existence d'un matériau dans la transaction. Throw BusinessError sinon.
+ * Vérifie l'existence des matériaux M2M dans la transaction. Throw BusinessError
+ * si au moins un ID est manquant en base.
  */
-export async function assertMaterialExists(
+export async function assertMaterialsExist(
 	tx: Prisma.TransactionClient,
-	materialId: string | null,
+	materialIds: string[],
 ): Promise<void> {
-	if (!materialId) return;
-	const material = await tx.material.findUnique({
-		where: { id: materialId },
+	if (materialIds.length === 0) return;
+	const materials = await tx.material.findMany({
+		where: { id: { in: materialIds } },
 		select: { id: true },
 	});
-	if (!material) {
-		throw new BusinessError("Le matériau spécifié n'existe pas.");
+	if (materials.length !== materialIds.length) {
+		throw new BusinessError("Un ou plusieurs matériaux spécifiés n'existent pas.");
 	}
 }
 
 /**
- * Vérifie l'unicité de la combinaison (productId, colorId, size, materialId) dans
- * la transaction. Si excludeSkuId fourni (cas update), l'exclut de la recherche.
+ * Vérifie l'unicité de la combinaison (productId, colorId, size) dans la
+ * transaction. Depuis la migration M2M matériaux (2026-05-14), `materialId` ne
+ * fait plus partie de la « variant identity » DB — les matériaux sont des
+ * attributs descriptifs M2M, pas une dimension de variante.
+ *
+ * Si excludeSkuId fourni (cas update), l'exclut de la recherche.
  *
  * Throw BusinessError avec détail des variantes en conflit si collision détectée.
  * La contrainte unique partial (deletedAt IS NULL, NULLS NOT DISTINCT) au niveau DB
@@ -168,7 +176,6 @@ export async function assertUniqueVariantCombination(
 	params: {
 		productId: string;
 		colorId: string | null;
-		materialId: string | null;
 		size: string | null;
 		excludeSkuId?: string;
 	},
@@ -178,7 +185,6 @@ export async function assertUniqueVariantCombination(
 			productId: params.productId,
 			colorId: params.colorId,
 			size: params.size,
-			materialId: params.materialId,
 			...(params.excludeSkuId ? { NOT: { id: params.excludeSkuId } } : {}),
 		},
 		select: {
@@ -191,7 +197,6 @@ export async function assertUniqueVariantCombination(
 		const variantDetails = [
 			params.colorId ? `couleur spécifiée` : null,
 			params.size ? `taille "${params.size}"` : null,
-			params.materialId ? `matériau spécifié` : null,
 		]
 			.filter(Boolean)
 			.join(", ");

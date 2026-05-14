@@ -110,7 +110,14 @@ async function fetchColorDetail(slug: string) {
 						priceInclTax: true,
 						isDefault: true,
 						inventory: true,
-						material: { select: { name: true, slug: true } },
+						materials: {
+							select: {
+								materialId: true,
+								position: true,
+								material: { select: { name: true, slug: true } },
+							},
+							orderBy: { position: "asc" },
+						},
 						product: {
 							select: {
 								id: true,

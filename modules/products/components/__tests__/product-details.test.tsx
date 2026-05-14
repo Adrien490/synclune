@@ -99,7 +99,13 @@ function makeProductSku(overrides: Partial<ProductSku> = {}): ProductSku {
 		id: "sku-1",
 		price: 4800,
 		compareAtPrice: null,
-		material: { id: "m1", name: "Argent 925", slug: "argent-925" },
+		materials: [
+			{
+				materialId: "m1",
+				position: 0,
+				material: { id: "m1", name: "Argent 925", slug: "argent-925" },
+			},
+		],
 		color: null,
 		size: null,
 		inventory: 10,
@@ -303,11 +309,13 @@ describe("ProductDetails", () => {
 				<ProductDetails
 					product={makeProduct()}
 					defaultSku={makeProductSku({
-						material: {
-							id: "m1",
-							name: "Or 18k",
-							slug: "or-18k",
-						} as unknown as ProductSku["material"],
+						materials: [
+							{
+								materialId: "m1",
+								position: 0,
+								material: { id: "m1", name: "Or 18k", slug: "or-18k" },
+							},
+						] as unknown as ProductSku["materials"],
 					})}
 				/>,
 			);
@@ -320,7 +328,7 @@ describe("ProductDetails", () => {
 			mockUseSelectedSku.mockReturnValue({ selectedSku: null });
 
 			render(
-				<ProductDetails product={makeProduct()} defaultSku={makeProductSku({ material: null })} />,
+				<ProductDetails product={makeProduct()} defaultSku={makeProductSku({ materials: [] })} />,
 			);
 
 			const careInfo = screen.getByTestId("product-care-info");

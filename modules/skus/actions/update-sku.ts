@@ -16,14 +16,19 @@ import {
 	parsePrimaryImageFromFormStrict,
 	parseGalleryMediaFromFormStrict,
 } from "../utils/parse-media-from-form";
-import { BusinessError, handleActionError, safeFormGet } from "@/shared/lib/actions";
+import {
+	BusinessError,
+	handleActionError,
+	safeFormGet,
+	safeFormGetJSON,
+} from "@/shared/lib/actions";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { logger } from "@/shared/lib/logger";
 import { notifyBackInStock } from "@/modules/wishlist/services/notify-back-in-stock";
 import { assertPublicProductKeepsActiveSku } from "../services/validate-public-active-sku.service";
 import {
 	assertColorExists,
-	assertMaterialExists,
+	assertMaterialsExist,
 	assertUniqueVariantCombination,
 	combineSkuMedia,
 	eurosToCents,
@@ -32,6 +37,7 @@ import {
 	toSkuMediaCreatePayload,
 	unsetOtherDefaultSkus,
 } from "../services/persist-sku-helpers.service";
+import { getSkuMaterialsLabel } from "../utils/sku-materials-label";
 
 /**
  * Server Action pour mettre à jour une variante de produit (Product SKU)
@@ -66,7 +72,8 @@ export async function updateProductSku(
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
 			colorId: safeFormGet(formData, "colorId") ?? "",
-			materialId: safeFormGet(formData, "materialId") ?? "",
+			// Matériaux M2M sérialisés en JSON (1er = principal)
+			materialIds: safeFormGetJSON<string[]>(formData, "materialIds") ?? [],
 			size: safeFormGet(formData, "size") ?? "",
 			primaryImage: primaryImage,
 			galleryMedia: galleryMedia,
@@ -87,7 +94,7 @@ export async function updateProductSku(
 		// 5. Normalize FKs + sizes (Zod schema already trimmed + empty → undefined)
 		const refs = normalizeOptionalRefs({
 			colorId: validatedData.colorId,
-			materialId: validatedData.materialId,
+			materialIds: validatedData.materialIds,
 			size: validatedData.size,
 		});
 
@@ -143,11 +150,10 @@ export async function updateProductSku(
 				}
 
 				await assertColorExists(tx, refs.colorId);
-				await assertMaterialExists(tx, refs.materialId);
+				await assertMaterialsExist(tx, refs.materialIds);
 				await assertUniqueVariantCombination(tx, {
 					productId: existingSku.productId,
 					colorId: refs.colorId,
-					materialId: refs.materialId,
 					size: refs.size,
 					excludeSkuId: validatedData.skuId,
 				});
@@ -169,13 +175,22 @@ export async function updateProductSku(
 						isActive: validatedData.isActive,
 						isDefault: validatedData.isDefault,
 						colorId: refs.colorId,
-						materialId: refs.materialId,
 						size: refs.size,
+						materials: {
+							deleteMany: {},
+							create: refs.materialIds.map((materialId, index) => ({
+								materialId,
+								position: index,
+							})),
+						},
 					},
 					include: {
 						product: { select: { title: true, slug: true } },
 						color: { select: { name: true } },
-						material: { select: { name: true } },
+						materials: {
+							include: { material: { select: { name: true } } },
+							orderBy: { position: "asc" },
+						},
 					},
 				});
 
@@ -212,7 +227,11 @@ export async function updateProductSku(
 		}
 
 		// 10. Build success message
-		const variantDetails = [productSku.color?.name, productSku.material?.name, productSku.size]
+		const variantDetails = [
+			productSku.color?.name,
+			getSkuMaterialsLabel(productSku.materials),
+			productSku.size,
+		]
 			.filter(Boolean)
 			.join(" - ");
 

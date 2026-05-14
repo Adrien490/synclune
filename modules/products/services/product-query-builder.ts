@@ -160,10 +160,14 @@ function buildPerWordRelatedConditions(word: string): Prisma.ProductWhereInput[]
 							},
 						},
 						{
-							material: {
-								name: {
-									contains: word,
-									mode: Prisma.QueryMode.insensitive,
+							materials: {
+								some: {
+									material: {
+										name: {
+											contains: word,
+											mode: Prisma.QueryMode.insensitive,
+										},
+									},
 								},
 							},
 						},
@@ -269,11 +273,21 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 		).filter(Boolean);
 		if (materials.length === 1) {
 			conditions.push({
-				skus: { some: { isActive: true, material: { slug: materials[0] } } },
+				skus: {
+					some: {
+						isActive: true,
+						materials: { some: { material: { slug: materials[0] } } },
+					},
+				},
 			});
 		} else if (materials.length > 1) {
 			conditions.push({
-				skus: { some: { isActive: true, material: { slug: { in: materials } } } },
+				skus: {
+					some: {
+						isActive: true,
+						materials: { some: { material: { slug: { in: materials } } } },
+					},
+				},
 			});
 		}
 	}

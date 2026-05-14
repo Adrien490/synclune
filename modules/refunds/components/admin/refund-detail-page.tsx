@@ -1,8 +1,10 @@
+import { ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
-import { ExternalLink, Receipt } from "lucide-react";
 
+import { CopyButton } from "@/shared/components/copy-button";
 import { Badge } from "@/shared/components/ui/badge";
-import { Separator } from "@/shared/components/ui/separator";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { formatDateShort } from "@/shared/utils/dates";
 import { formatEuro } from "@/shared/utils/format-euro";
 
@@ -13,7 +15,7 @@ import {
 } from "../../constants/refund.constants";
 import type { GetRefundReturn } from "../../types/refund.types";
 
-import { RefundActionsClient } from "./refund-actions-client";
+import { RefundDetailHeader } from "./refund-detail-header";
 
 interface RefundDetailPageProps {
 	refund: NonNullable<GetRefundReturn>;
@@ -21,71 +23,104 @@ interface RefundDetailPageProps {
 
 export function RefundDetailPage({ refund }: RefundDetailPageProps) {
 	return (
-		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-			<header className="space-y-2">
-				<div className="space-y-1">
-					<h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
-						<Receipt className="size-6" aria-hidden="true" />
-						Remboursement
-					</h1>
-					<p className="text-muted-foreground text-sm">
-						Commande{" "}
-						<Link
-							href={`/admin/ventes/commandes/${refund.order.id}`}
-							className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
-						>
-							{refund.order.orderNumber}
-							<ExternalLink className="size-3" aria-hidden="true" />
-						</Link>
-					</p>
+		<div className="space-y-6">
+			<RefundDetailHeader refund={refund} />
+
+			<div className="grid gap-6 lg:grid-cols-3 lg:items-start">
+				<div className="space-y-6 lg:col-span-2">
+					<Card style={{ viewTransitionName: "refund-detail-info" }}>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Info className="size-5" aria-hidden="true" />
+								Informations
+							</CardTitle>
+						</CardHeader>
+						<CardContent>
+							<dl className="grid gap-3 text-sm">
+								<div className="flex items-center justify-between gap-3">
+									<dt className="text-muted-foreground">Statut</dt>
+									<dd>
+										<Badge variant={REFUND_STATUS_VARIANTS[refund.status]}>
+											{REFUND_STATUS_LABELS[refund.status]}
+										</Badge>
+									</dd>
+								</div>
+								<div className="flex items-center justify-between gap-3">
+									<dt className="text-muted-foreground">Montant</dt>
+									<dd className="font-medium">{formatEuro(refund.amount)}</dd>
+								</div>
+								<div className="flex items-center justify-between gap-3">
+									<dt className="text-muted-foreground">Motif</dt>
+									<dd className="font-medium">{REFUND_REASON_LABELS[refund.reason]}</dd>
+								</div>
+								<div className="flex items-center justify-between gap-3">
+									<dt className="text-muted-foreground">Créé le</dt>
+									<dd>{formatDateShort(refund.createdAt)}</dd>
+								</div>
+								{refund.note ? (
+									<div className="border-t pt-3">
+										<dt className="text-muted-foreground mb-1">Note admin</dt>
+										<dd className="text-pretty whitespace-pre-wrap">{refund.note}</dd>
+									</div>
+								) : null}
+							</dl>
+						</CardContent>
+					</Card>
 				</div>
-			</header>
 
-			<Separator />
-
-			<section>
-				<dl className="grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-2 text-sm">
-					<dt className="text-muted-foreground">Commande</dt>
-					<dd className="font-medium">{refund.order.orderNumber}</dd>
-					<dt className="text-muted-foreground">Client</dt>
-					<dd className="truncate">{refund.order.customerName || refund.order.customerEmail}</dd>
-					<dt className="text-muted-foreground">Email</dt>
-					<dd className="truncate">{refund.order.customerEmail}</dd>
-					<dt className="text-muted-foreground">Motif</dt>
-					<dd>{REFUND_REASON_LABELS[refund.reason]}</dd>
-					<dt className="text-muted-foreground">Montant</dt>
-					<dd className="font-medium">{formatEuro(refund.amount)}</dd>
-					<dt className="text-muted-foreground">Statut</dt>
-					<dd>
-						<Badge
-							variant={REFUND_STATUS_VARIANTS[refund.status]}
-							style={{ viewTransitionName: `refund-status-${refund.id}` }}
-						>
-							{REFUND_STATUS_LABELS[refund.status]}
-						</Badge>
-					</dd>
-					<dt className="text-muted-foreground">Créé le</dt>
-					<dd>{formatDateShort(refund.createdAt)}</dd>
-					{refund.note ? (
-						<>
-							<dt className="text-muted-foreground">Note admin</dt>
-							<dd className="text-pretty whitespace-pre-wrap">{refund.note}</dd>
-						</>
-					) : null}
-				</dl>
-			</section>
-
-			<Separator />
-
-			<RefundActionsClient
-				refund={{
-					id: refund.id,
-					status: refund.status,
-					amount: refund.amount,
-					orderId: refund.order.id,
-					orderNumber: refund.order.orderNumber,
-				}}
-			/>
+				<div className="space-y-6">
+					<Card style={{ viewTransitionName: "refund-detail-customer" }}>
+						<CardHeader>
+							<CardTitle className="flex items-center gap-2">
+								<Info className="size-5" aria-hidden="true" />
+								Commande &amp; client
+							</CardTitle>
+						</CardHeader>
+						<CardContent className="space-y-3">
+							<dl className="grid gap-3 text-sm">
+								<div className="flex items-start justify-between gap-3">
+									<dt className="text-muted-foreground shrink-0 pt-1.5">N° commande</dt>
+									<dd className="flex min-w-0 items-start gap-1">
+										<span className="text-foreground/80 pt-1.5 font-mono text-xs break-all">
+											{refund.order.orderNumber}
+										</span>
+										<CopyButton
+											text={refund.order.orderNumber}
+											label="N° commande"
+											className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+										/>
+									</dd>
+								</div>
+								<div className="flex items-center justify-between gap-3">
+									<dt className="text-muted-foreground">Client</dt>
+									<dd className="truncate text-right font-medium">
+										{refund.order.customerName || refund.order.customerEmail}
+									</dd>
+								</div>
+								<div className="flex items-start justify-between gap-3">
+									<dt className="text-muted-foreground shrink-0 pt-1.5">Email</dt>
+									<dd className="flex min-w-0 items-start gap-1">
+										<span className="text-foreground/80 pt-1.5 text-xs break-all">
+											{refund.order.customerEmail}
+										</span>
+										<CopyButton
+											text={refund.order.customerEmail}
+											label="Email"
+											className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
+										/>
+									</dd>
+								</div>
+							</dl>
+							<Button asChild variant="outline" className="h-11 w-full justify-start gap-3">
+								<Link href={`/admin/ventes/commandes/${refund.order.id}`}>
+									<ExternalLink className="size-4" aria-hidden="true" />
+									Voir la commande
+								</Link>
+							</Button>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
 		</div>
 	);
 }

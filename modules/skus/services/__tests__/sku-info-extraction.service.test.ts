@@ -23,10 +23,16 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 			hex: "#B76E79",
 			name: "Or Rose",
 		},
-		material: {
-			id: "mat-1",
-			name: "Argent 925",
-		},
+		materials: [
+			{
+				materialId: "mat-1",
+				position: 0,
+				material: {
+					id: "mat-1",
+					name: "Argent 925",
+				},
+			},
+		],
 		images: [],
 		...overrides,
 	};
@@ -58,8 +64,15 @@ describe("extractVariantInfo", () => {
 	it("should extract materials from active SKUs", () => {
 		const product = {
 			skus: [
-				makeSku({ material: { id: "m1", name: "Argent 925" } }),
-				makeSku({ id: "sku-2", material: { id: "m2", name: "Or 18K" } }),
+				makeSku({
+					materials: [
+						{ materialId: "m1", position: 0, material: { id: "m1", name: "Argent 925" } },
+					],
+				}),
+				makeSku({
+					id: "sku-2",
+					materials: [{ materialId: "m2", position: 0, material: { id: "m2", name: "Or 18K" } }],
+				}),
 			],
 		};
 
@@ -146,7 +159,12 @@ describe("extractVariantInfo", () => {
 
 	it("should use material name as color fallback when no color is set", () => {
 		const product = {
-			skus: [makeSku({ color: null, material: { id: "m1", name: "Or 18K" } })],
+			skus: [
+				makeSku({
+					color: null,
+					materials: [{ materialId: "m1", position: 0, material: { id: "m1", name: "Or 18K" } }],
+				}),
+			],
 		};
 
 		const info = extractVariantInfo(product);

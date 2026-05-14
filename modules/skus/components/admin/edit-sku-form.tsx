@@ -28,7 +28,7 @@ interface EditProductVariantFormProps extends SkuFormSharedProps {
 
 const FIELD_LABELS: Record<string, string> = {
 	colorId: "Couleur",
-	materialId: "Matériau",
+	materialIds: "Matériaux",
 	size: "Taille",
 	isActive: "Disponibilité",
 	isDefault: "Variante par défaut",
@@ -159,9 +159,10 @@ export function EditProductVariantForm({
 					galleryMedia: state.values.galleryMedia,
 					isActive: state.values.isActive,
 					isDefault: state.values.isDefault,
+					materialIds: state.values.materialIds,
 				})}
 			>
-				{({ primaryImage, galleryMedia, isActive, isDefault }) => (
+				{({ primaryImage, galleryMedia, isActive, isDefault, materialIds }) => (
 					<>
 						{primaryImage ? (
 							<input type="hidden" name="primaryImage" value={JSON.stringify(primaryImage)} />
@@ -171,6 +172,7 @@ export function EditProductVariantForm({
 						) : null}
 						<input type="hidden" name="isActive" value={String(isActive)} />
 						<input type="hidden" name="isDefault" value={String(isDefault)} />
+						<input type="hidden" name="materialIds" value={JSON.stringify(materialIds)} />
 					</>
 				)}
 			</form.Subscribe>

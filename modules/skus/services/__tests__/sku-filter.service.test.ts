@@ -30,10 +30,16 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 			hex: "#B76E79",
 			name: "Or Rose",
 		},
-		material: {
-			id: "mat-1",
-			name: "Argent 925",
-		},
+		materials: [
+			{
+				materialId: "mat-1",
+				position: 0,
+				material: {
+					id: "mat-1",
+					name: "Argent 925",
+				},
+			},
+		],
 		images: [],
 		...overrides,
 	};
@@ -113,7 +119,7 @@ describe("matchMaterial", () => {
 	});
 
 	it("should return false when SKU has no material and a selector is provided", () => {
-		const sku = makeSku({ material: null });
+		const sku = makeSku({ materials: [] });
 
 		expect(matchMaterial(sku, { material: "Argent 925" })).toBe(false);
 	});

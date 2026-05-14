@@ -142,7 +142,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	// Priority 1: Selected SKU images
 	if (selectedSku?.images) {
 		const variantInfo = {
-			materialName: selectedSku.material?.name,
+			materialName: selectedSku.materials?.[0]?.material.name,
 			colorName: selectedSku.color?.name,
 			size: selectedSku.size,
 		};
@@ -156,7 +156,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	const defaultSku = product.skus[0];
 	if (defaultSku && defaultSku.id !== selectedSku?.id) {
 		const variantInfo = {
-			materialName: defaultSku.material?.name,
+			materialName: defaultSku.materials?.[0]?.material.name,
 			colorName: defaultSku.color?.name,
 			size: defaultSku.size,
 		};
@@ -173,7 +173,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 
 			const variantInfo = {
-				materialName: sku.material?.name,
+				materialName: sku.materials?.[0]?.material.name,
 				colorName: sku.color?.name,
 				size: sku.size,
 			};
@@ -209,7 +209,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 					product.title,
 					{
 						productType,
-						materialName: sku?.material?.name,
+						materialName: sku?.materials?.[0]?.material.name,
 						colorName: sku?.color?.name,
 						size: sku?.size,
 					},

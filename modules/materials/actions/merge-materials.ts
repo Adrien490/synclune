@@ -22,16 +22,17 @@ import { mergeMaterialsSchema } from "../schemas/materials.schemas";
 /**
  * Admin server action to merge two materials.
  *
- * Reassigns every ProductSku linked to `sourceId` to `targetId`, then deletes
- * the source material. Runs atomically in a single Prisma transaction.
+ * Reassigns every ProductSkuMaterial linked to `sourceId` to `targetId`, then
+ * deletes the source material. Runs atomically in a single Prisma transaction.
  *
- * Use case: catalogue cleanup (merge semantic duplicates like "Argent 925" and
+ * Use case: catalogue cleanup (merge semantic duplicates like "Argent 925" et
  * "Argent sterling" into a single canonical material).
  *
- * ProductSku has a partial unique index on (productId, colorId, size, materialId)
- * where deletedAt IS NULL — so the merge is rejected if any product already
- * owns an active SKU in both source and target material for the same color/size.
- * The admin must resolve the conflict (e.g. soft-delete one SKU) before merging.
+ * Depuis la migration M2M matériaux (2026-05-14), un SKU peut avoir plusieurs
+ * matériaux. La jointure `ProductSkuMaterial` a un unique partiel sur
+ * (skuId, materialId) — donc si un SKU contient déjà à la fois source et
+ * target, le simple `updateMany` casserait l'unicité. On supprime alors la
+ * ligne source (le target reste, l'utilisateur n'a pas besoin d'agir).
  */
 export async function mergeMaterials(
 	_prevState: ActionState | undefined,
@@ -67,45 +68,41 @@ export async function mergeMaterials(
 			if (!source) return { kind: "source-missing" as const };
 			if (!target) return { kind: "target-missing" as const };
 
-			// Detect partial-unique collisions before the updateMany:
-			// any (productId, colorId, size) that already exists in BOTH materials
-			// (active, non-deleted) would violate the unique index after reassign.
-			const [sourceSkus, targetSkus] = await Promise.all([
-				tx.productSku.findMany({
-					where: { materialId: sourceId, deletedAt: null },
-					select: {
-						productId: true,
-						colorId: true,
-						size: true,
-						product: { select: { title: true } },
-					},
-				}),
-				tx.productSku.findMany({
-					where: { materialId: targetId, deletedAt: null },
-					select: { productId: true, colorId: true, size: true },
-				}),
-			]);
+			// SKUs liés au matériau source via la jointure M2M
+			const sourceLinks = await tx.productSkuMaterial.findMany({
+				where: { materialId: sourceId },
+				select: { id: true, skuId: true, position: true },
+			});
 
-			const targetKeys = new Set(
-				targetSkus.map((s) => `${s.productId}::${s.colorId ?? ""}::${s.size ?? ""}`),
-			);
-			const conflicts = sourceSkus.filter((s) =>
-				targetKeys.has(`${s.productId}::${s.colorId ?? ""}::${s.size ?? ""}`),
+			// SKUs qui ont DÉJÀ le matériau cible — collision : on ne crée pas un
+			// doublon (skuId, materialId), on supprime simplement le lien source.
+			const targetSkuIds = new Set(
+				(
+					await tx.productSkuMaterial.findMany({
+						where: { materialId: targetId, skuId: { in: sourceLinks.map((l) => l.skuId) } },
+						select: { skuId: true },
+					})
+				).map((l) => l.skuId),
 			);
 
-			if (conflicts.length > 0) {
-				const names = Array.from(new Set(conflicts.map((c) => c.product.title))).slice(0, 5);
-				const more =
-					conflicts.length > names.length ? ` (+${conflicts.length - names.length})` : "";
-				throw new BusinessError(
-					`Impossible de fusionner : ${conflicts.length} variante${conflicts.length > 1 ? "s" : ""} en conflit sur ${names.join(", ")}${more}. Supprimez ou modifiez ces variantes avant de fusionner.`,
-				);
+			const linksToReassign = sourceLinks.filter((l) => !targetSkuIds.has(l.skuId));
+			const linksToDelete = sourceLinks.filter((l) => targetSkuIds.has(l.skuId));
+
+			// Réassigne les liens sans collision : on bascule materialId source → target
+			// (la position est conservée, donc l'ordre de priorité reste cohérent).
+			if (linksToReassign.length > 0) {
+				await tx.productSkuMaterial.updateMany({
+					where: { id: { in: linksToReassign.map((l) => l.id) } },
+					data: { materialId: targetId },
+				});
 			}
 
-			const reassigned = await tx.productSku.updateMany({
-				where: { materialId: sourceId },
-				data: { materialId: targetId },
-			});
+			// Supprime les liens en collision (le SKU a déjà target, on ne duplique pas)
+			if (linksToDelete.length > 0) {
+				await tx.productSkuMaterial.deleteMany({
+					where: { id: { in: linksToDelete.map((l) => l.id) } },
+				});
+			}
 
 			await tx.material.delete({ where: { id: sourceId } });
 
@@ -113,7 +110,7 @@ export async function mergeMaterials(
 				kind: "ok" as const,
 				source,
 				target,
-				reassignedCount: reassigned.count,
+				reassignedCount: linksToReassign.length,
 			};
 		});
 

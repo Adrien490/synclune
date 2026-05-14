@@ -43,13 +43,17 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 		const mq = window.matchMedia("(min-width: 768px)");
 		if (!mq.matches) return;
 
+		const container = containerRef.current;
+		if (!container) return;
+
 		let rafId = 0;
 		let clientX = 0;
 		let clientY = 0;
+		let listenerAttached = false;
 
 		function flush() {
 			rafId = 0;
-			const rect = containerRef.current?.getBoundingClientRect();
+			const rect = container?.getBoundingClientRect();
 			if (!rect) return;
 			if (
 				clientY < rect.top ||
@@ -72,17 +76,39 @@ export default function HeroFloatingImagesInner({ images }: HeroFloatingImagesPr
 			rafId = window.requestAnimationFrame(flush);
 		}
 
-		function onMqChange() {
-			if (!mq.matches) {
-				pointerX.set(0);
-				pointerY.set(0);
-			}
+		function attachListener() {
+			if (listenerAttached) return;
+			window.addEventListener("pointermove", onPointerMove, { passive: true });
+			listenerAttached = true;
 		}
 
-		window.addEventListener("pointermove", onPointerMove, { passive: true });
+		function detachListener() {
+			if (!listenerAttached) return;
+			window.removeEventListener("pointermove", onPointerMove);
+			listenerAttached = false;
+			pointerX.set(0);
+			pointerY.set(0);
+		}
+
+		// Gate the pointermove listener on viewport intersection: once the hero has
+		// scrolled off-screen, calculating bounding rects for every cursor move is wasted CPU.
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				if (entry?.isIntersecting) attachListener();
+				else detachListener();
+			},
+			{ rootMargin: "0px" },
+		);
+		observer.observe(container);
+
+		function onMqChange() {
+			if (!mq.matches) detachListener();
+		}
+
 		mq.addEventListener("change", onMqChange);
 		return () => {
-			window.removeEventListener("pointermove", onPointerMove);
+			observer.disconnect();
+			detachListener();
 			mq.removeEventListener("change", onMqChange);
 			if (rafId) window.cancelAnimationFrame(rafId);
 		};

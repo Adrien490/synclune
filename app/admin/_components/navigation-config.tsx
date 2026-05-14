@@ -22,11 +22,11 @@ import {
 // SHOP STATUS FLAG
 // ============================================================================
 
-// TODO: passer à true au lancement de la boutique (réactive Ventes, Clients,
-// Marketing et Contenu, et restaure l'onglet "Commandes" du bottom bar).
-// Cast `as boolean` pour défaire le narrowing TypeScript du littéral `false`,
-// sinon ESLint flag `SHOP_LIVE ? ... : []` comme always-falsy.
-const SHOP_LIVE = false as boolean;
+// Boutique en ligne : tous les groupes sont actifs (Ventes, Clients, Marketing,
+// Contenu). L'onglet "Commandes" est restauré dans le bottom bar mobile.
+// Cast `as boolean` pour défaire le narrowing TypeScript du littéral, sinon
+// ESLint flag `SHOP_LIVE ? ... : []` comme always-truthy.
+const SHOP_LIVE = true as boolean;
 
 // ============================================================================
 // TYPES

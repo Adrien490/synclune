@@ -56,15 +56,19 @@ describe("getMaterialOptions", () => {
 	});
 
 	it("returns active materials ordered by name", async () => {
-		const materials = [
-			makeMaterialOption({ id: "material-1", name: "Argent", slug: "argent" }),
-			makeMaterialOption({ id: "material-2", name: "Or", slug: "or" }),
+		const rawMaterials = [
+			{ id: "material-1", name: "Argent", slug: "argent", _count: { skuMaterials: 5 } },
+			{ id: "material-2", name: "Or", slug: "or", _count: { skuMaterials: 5 } },
 		];
-		mockPrisma.material.findMany.mockResolvedValue(materials);
+		mockPrisma.material.findMany.mockResolvedValue(rawMaterials);
 
 		const result = await getMaterialOptions();
 
-		expect(result).toEqual(materials);
+		// The function remaps _count.skuMaterials → _count.skus for public API
+		expect(result).toEqual([
+			{ id: "material-1", name: "Argent", slug: "argent", _count: { skus: 5 } },
+			{ id: "material-2", name: "Or", slug: "or", _count: { skus: 5 } },
+		]);
 	});
 
 	it("queries only active materials", async () => {
@@ -92,8 +96,8 @@ describe("getMaterialOptions", () => {
 					slug: true,
 					_count: {
 						select: {
-							skus: {
-								where: { isActive: true },
+							skuMaterials: {
+								where: { sku: { isActive: true } },
 							},
 						},
 					},
@@ -160,6 +164,6 @@ describe("getMaterialOptions", () => {
 		await getMaterialOptions();
 
 		const call = mockPrisma.material.findMany.mock.calls[0]![0];
-		expect(call.select._count.select.skus).toEqual({ where: { isActive: true } });
+		expect(call.select._count.select.skuMaterials).toEqual({ where: { sku: { isActive: true } } });
 	});
 });

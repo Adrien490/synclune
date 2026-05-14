@@ -10,6 +10,7 @@ import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provi
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 
 import type { CartItem } from "../types/cart.types";
 import {
@@ -49,10 +50,11 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 	const primaryImage = getCartItemPrimaryImage(item);
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 
+	const materialsLabel = getSkuMaterialsLabel(item.sku.materials);
 	const ariaLabelParts = [
 		item.sku.product.title,
 		item.sku.color?.name,
-		item.sku.material?.name,
+		materialsLabel,
 		`quantité ${item.quantity}`,
 		`${formatEuro(getCartItemSubtotal(item))}`,
 	].filter(Boolean);
@@ -145,20 +147,20 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 							</dd>
 						</div>
 					)}
-					{item.sku.material && (
+					{materialsLabel && (
 						<div className="inline-flex items-center">
 							{item.sku.color && (
 								<span aria-hidden="true" className="mr-1">
 									/
 								</span>
 							)}
-							<dt className="sr-only">Matiere</dt>
-							<dd>{item.sku.material.name}</dd>
+							<dt className="sr-only">Matière</dt>
+							<dd>{materialsLabel}</dd>
 						</div>
 					)}
 					{item.sku.size && (
 						<div className="inline-flex items-center">
-							{(item.sku.color ?? item.sku.material) && (
+							{(item.sku.color ?? materialsLabel) && (
 								<span aria-hidden="true" className="mr-1">
 									/
 								</span>

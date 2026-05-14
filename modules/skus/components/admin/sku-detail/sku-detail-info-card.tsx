@@ -71,16 +71,21 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							</dd>
 						</div>
 					) : null}
-					{sku.material ? (
-						<div className="flex items-center justify-between gap-3">
-							<dt className="text-muted-foreground">Matériau</dt>
-							<dd>
-								<Link
-									href={`/admin/catalogue/materiaux/${sku.material.slug}`}
-									className="hover:text-primary focus-visible:ring-ring rounded-md px-1 py-0.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
-								>
-									{sku.material.name}
-								</Link>
+					{sku.materials && sku.materials.length > 0 ? (
+						<div className="flex items-start justify-between gap-3">
+							<dt className="text-muted-foreground pt-0.5">
+								{sku.materials.length > 1 ? "Matériaux" : "Matériau"}
+							</dt>
+							<dd className="flex flex-wrap items-center justify-end gap-2">
+								{sku.materials.map(({ material }) => (
+									<Link
+										key={material.id}
+										href={`/admin/catalogue/materiaux/${material.slug}`}
+										className="hover:text-primary focus-visible:ring-ring rounded-md px-1 py-0.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+									>
+										{material.name}
+									</Link>
+								))}
 							</dd>
 						</div>
 					) : null}

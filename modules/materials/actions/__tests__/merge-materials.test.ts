@@ -22,9 +22,10 @@ const {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
 		},
-		productSku: {
+		productSkuMaterial: {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		$transaction: vi.fn(),
 	},
@@ -109,12 +110,30 @@ describe("mergeMaterials", () => {
 				return Promise.resolve(makeMaterial({ id: "material-source", slug: "argent-925" }));
 			if (where.id === "material-target")
 				return Promise.resolve(
-					makeMaterial({ id: "material-target", name: "Argent sterling", slug: "argent-sterling" }),
+					makeMaterial({
+						id: "material-target",
+						name: "Argent sterling",
+						slug: "argent-sterling",
+					}),
 				);
 			return Promise.resolve(null);
 		});
-		mockPrisma.productSku.findMany.mockResolvedValue([]);
-		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 3 });
+
+		// Default: 3 SKUs liés au source, aucun déjà lié au target → réassignation simple.
+		mockPrisma.productSkuMaterial.findMany.mockImplementation(
+			({ where }: { where: { materialId: string; skuId?: { in: string[] } } }) => {
+				if (where.materialId === "material-source") {
+					return Promise.resolve([
+						{ id: "link-1", skuId: "sku-1", position: 0 },
+						{ id: "link-2", skuId: "sku-2", position: 0 },
+						{ id: "link-3", skuId: "sku-3", position: 1 },
+					]);
+				}
+				return Promise.resolve([]);
+			},
+		);
+		mockPrisma.productSkuMaterial.updateMany.mockResolvedValue({ count: 3 });
+		mockPrisma.productSkuMaterial.deleteMany.mockResolvedValue({ count: 0 });
 		mockPrisma.material.delete.mockResolvedValue({ id: "material-source" });
 		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
 			fn(mockPrisma),
@@ -180,34 +199,39 @@ describe("mergeMaterials", () => {
 		expect(mockNotFound).toHaveBeenCalledWith("Matériau cible");
 	});
 
-	it("rejects merge when SKU collisions would violate unique index", async () => {
-		mockPrisma.productSku.findMany.mockImplementation(
-			({ where }: { where: { materialId: string } }) => {
+	it("silently drops collision links (when target already present on same SKU)", async () => {
+		// sku-1 a déjà target → collision : on supprime le lien source, pas d'erreur.
+		mockPrisma.productSkuMaterial.findMany.mockImplementation(
+			({ where }: { where: { materialId: string; skuId?: { in: string[] } } }) => {
 				if (where.materialId === "material-source") {
 					return Promise.resolve([
-						{
-							productId: "p1",
-							colorId: "c1",
-							size: "M",
-							product: { title: "Bague Aurore" },
-						},
+						{ id: "link-1", skuId: "sku-1", position: 0 },
+						{ id: "link-2", skuId: "sku-2", position: 0 },
 					]);
 				}
-				return Promise.resolve([{ productId: "p1", colorId: "c1", size: "M" }]);
+				return Promise.resolve([{ skuId: "sku-1" }]);
 			},
 		);
+		mockPrisma.productSkuMaterial.updateMany.mockResolvedValue({ count: 1 });
+		mockPrisma.productSkuMaterial.deleteMany.mockResolvedValue({ count: 1 });
+
 		const result = await mergeMaterials(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("conflit");
-		expect(result.message).toContain("Bague Aurore");
-		expect(mockPrisma.productSku.updateMany).not.toHaveBeenCalled();
-		expect(mockPrisma.material.delete).not.toHaveBeenCalled();
+
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.productSkuMaterial.deleteMany).toHaveBeenCalledWith({
+			where: { id: { in: ["link-1"] } },
+		});
+		expect(mockPrisma.productSkuMaterial.updateMany).toHaveBeenCalledWith({
+			where: { id: { in: ["link-2"] } },
+			data: { materialId: "material-target" },
+		});
+		expect(mockPrisma.material.delete).toHaveBeenCalledWith({ where: { id: "material-source" } });
 	});
 
-	it("reassigns SKUs and deletes source material on success", async () => {
+	it("reassigns SKU material links and deletes source material on success", async () => {
 		const result = await mergeMaterials(undefined, validFormData);
-		expect(mockPrisma.productSku.updateMany).toHaveBeenCalledWith({
-			where: { materialId: "material-source" },
+		expect(mockPrisma.productSkuMaterial.updateMany).toHaveBeenCalledWith({
+			where: { id: { in: ["link-1", "link-2", "link-3"] } },
 			data: { materialId: "material-target" },
 		});
 		expect(mockPrisma.material.delete).toHaveBeenCalledWith({ where: { id: "material-source" } });
@@ -228,7 +252,7 @@ describe("mergeMaterials", () => {
 	});
 
 	it("handles merge with no SKU reassigned (orphan source)", async () => {
-		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.productSkuMaterial.findMany.mockResolvedValue([]);
 		const result = await mergeMaterials(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("supprimé");

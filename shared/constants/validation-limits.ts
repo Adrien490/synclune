@@ -37,6 +37,8 @@ export const ARRAY_LIMITS = {
 	SKU_MEDIA: 6,
 	/** Médias galerie SKU (hors primaire) */
 	SKU_GALLERY_MEDIA: 5,
+	/** Matériaux par SKU (M2M ; 1er = principal pour SEO/care-tips) */
+	SKU_MATERIALS: 3,
 } as const;
 
 // ============================================================================

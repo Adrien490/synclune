@@ -63,7 +63,7 @@ vi.mock("../../constants/materials.constants", () => ({
 		isActive: true,
 		createdAt: true,
 		updatedAt: true,
-		_count: { select: { skus: true } },
+		_count: { select: { skuMaterials: true } },
 	},
 	GET_MATERIALS_DEFAULT_PER_PAGE: 20,
 	GET_MATERIALS_MAX_RESULTS_PER_PAGE: 200,
@@ -116,7 +116,7 @@ function makeMaterial(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		createdAt: new Date("2024-01-01"),
 		updatedAt: new Date("2024-01-01"),
-		_count: { skus: 5 },
+		_count: { skuMaterials: 5 },
 		...overrides,
 	};
 }
@@ -207,7 +207,7 @@ describe("getMaterials", () => {
 
 		expect(mockPrisma.material.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				orderBy: [{ skus: { _count: "asc" } }, { id: "asc" }],
+				orderBy: [{ skuMaterials: { _count: "asc" } }, { id: "asc" }],
 			}),
 		);
 	});
@@ -274,16 +274,17 @@ describe("getMaterials", () => {
 	// --- Result processing ---
 
 	it("returns materials from processCursorResults", async () => {
-		const materials = [makeMaterial()];
+		const rawMaterial = makeMaterial(); // has _count.skuMaterials = 5
 		mockProcessCursorResults.mockReturnValue({
-			items: materials,
+			items: [rawMaterial],
 			pagination: emptyPagination,
 		});
-		mockPrisma.material.findMany.mockResolvedValue(materials);
+		mockPrisma.material.findMany.mockResolvedValue([rawMaterial]);
 
 		const result = await getMaterials({ sortBy: "name-ascending", direction: "forward" });
 
-		expect(result.materials).toEqual(materials);
+		// The function remaps _count.skuMaterials → _count.skus before returning
+		expect(result.materials).toEqual([{ ...rawMaterial, _count: { skus: 5 } }]);
 	});
 
 	it("returns pagination from processCursorResults", async () => {
@@ -324,7 +325,7 @@ describe("getMaterials", () => {
 					isActive: true,
 					createdAt: true,
 					updatedAt: true,
-					_count: { select: { skus: true } },
+					_count: { select: { skuMaterials: true } },
 				},
 			}),
 		);

@@ -56,11 +56,18 @@ export async function fetchSkuForValidation(skuId: string) {
 					hex: true,
 				},
 			},
-			material: {
+			materials: {
 				select: {
-					id: true,
-					name: true,
+					materialId: true,
+					position: true,
+					material: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" },
 			},
 		},
 	});

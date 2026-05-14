@@ -4,11 +4,15 @@ import type { Prisma } from "@/app/generated/prisma/browser";
 // SELECT DEFINITIONS
 // ============================================================================
 
-// Affichage et tri alignés : on compte TOUS les SKUs (y compris soft-deleted)
-// pour que la colonne « Variantes » affiche la même valeur que celle utilisée
-// par orderBy { skus: { _count } }. Prisma ne supporte pas orderBy avec un
-// where partial sur le _count ; aligner le select sur le sort évite l'incohérence
-// (audit 2026-05-11 P1.3).
+// Affichage et tri alignés : on compte TOUS les liens skuMaterials (y compris
+// SKUs soft-deleted) pour que la colonne « Variantes » affiche la même valeur
+// que celle utilisée par orderBy { skuMaterials: { _count } }. Prisma ne
+// supporte pas orderBy avec un where partial sur le _count ; aligner le select
+// sur le sort évite l'incohérence (audit 2026-05-11 P1.3).
+//
+// Note 2026-05-14 : depuis la migration M2M matériaux, la relation s'appelle
+// `skuMaterials` (et non plus `skus`). Le shape est conservé via mapping côté
+// API pour ne pas casser l'UI (`_count.skus` reste exposé).
 export const GET_MATERIALS_SELECT = {
 	id: true,
 	name: true,
@@ -19,7 +23,7 @@ export const GET_MATERIALS_SELECT = {
 	updatedAt: true,
 	_count: {
 		select: {
-			skus: true,
+			skuMaterials: true,
 		},
 	},
 } as const satisfies Prisma.MaterialSelect;

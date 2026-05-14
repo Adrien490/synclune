@@ -31,27 +31,35 @@ export const buildFilterConditions = (
 		}
 	}
 
-	// MaterialId - filter by material ID (preferred)
+	// MaterialId - filter by material ID via M2M (preferred)
 	if (filters.materialId !== undefined) {
 		const materialIds = Array.isArray(filters.materialId)
 			? filters.materialId
 			: [filters.materialId];
 		if (materialIds.length === 1) {
-			conditions.push({ materialId: materialIds[0] });
+			conditions.push({
+				materials: { some: { materialId: materialIds[0] } },
+			});
 		} else if (materialIds.length > 1) {
-			conditions.push({ materialId: { in: materialIds } });
+			conditions.push({
+				materials: { some: { materialId: { in: materialIds } } },
+			});
 		}
 	}
 
-	// Material - filter by material.name (legacy)
+	// Material - filter by material.name via M2M (legacy)
 	if (filters.material !== undefined) {
 		const materials = Array.isArray(filters.material) ? filters.material : [filters.material];
 		if (materials.length === 1) {
 			conditions.push({
-				material: {
-					name: {
-						contains: materials[0],
-						mode: Prisma.QueryMode.insensitive,
+				materials: {
+					some: {
+						material: {
+							name: {
+								contains: materials[0],
+								mode: Prisma.QueryMode.insensitive,
+							},
+						},
 					},
 				},
 			});
@@ -59,10 +67,14 @@ export const buildFilterConditions = (
 			// Pour plusieurs matériaux, utiliser OR
 			const materialOrClause: Prisma.ProductSkuWhereInput = {
 				OR: materials.map((mat) => ({
-					material: {
-						name: {
-							contains: mat,
-							mode: Prisma.QueryMode.insensitive,
+					materials: {
+						some: {
+							material: {
+								name: {
+									contains: mat,
+									mode: Prisma.QueryMode.insensitive,
+								},
+							},
 						},
 					},
 				})),

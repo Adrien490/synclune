@@ -94,8 +94,10 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 				defaultSku?.color?.slug ??
 				(colors.length === 1 ? colors[0]!.slug : "");
 
+			// Matériau initial : matériau principal du defaultSku (1er de la liste M2M)
+			const defaultPrimaryMaterialName = defaultSku?.materials?.[0]?.material.name;
 			const initialMaterial =
-				(defaultSku?.material?.name ? slugify(defaultSku.material.name) : "") ||
+				(defaultPrimaryMaterialName ? slugify(defaultPrimaryMaterialName) : "") ||
 				(materials.length === 1 ? materials[0]!.slug : "") ||
 				"";
 

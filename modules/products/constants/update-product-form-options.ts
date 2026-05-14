@@ -17,7 +17,7 @@ export const editProductFormOpts = {
 			inventory: 0,
 			isActive: true,
 			colorId: "",
-			materialId: "",
+			materialIds: [] as string[],
 			size: "",
 			media: [] as Array<{
 				url: string;

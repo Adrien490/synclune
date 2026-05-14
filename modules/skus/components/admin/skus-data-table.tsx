@@ -18,6 +18,7 @@ import {
 } from "@/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
@@ -222,11 +223,14 @@ export async function ProductVariantsDataTable({
 												)}
 											</TableCell>
 											<TableCell>
-												{sku.material ? (
-													<span className="text-sm">{sku.material.name}</span>
-												) : (
-													<span className="text-muted-foreground text-sm">—</span>
-												)}
+												{(() => {
+													const label = getSkuMaterialsLabel(sku.materials);
+													return label ? (
+														<span className="text-sm">{label}</span>
+													) : (
+														<span className="text-muted-foreground text-sm">—</span>
+													);
+												})()}
 											</TableCell>
 											<TableCell>
 												{sku.size ? (

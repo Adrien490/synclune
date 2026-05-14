@@ -46,7 +46,11 @@ describe("buildWhereClause", () => {
 			{ sku: { contains: "bague", mode: "insensitive" } },
 			{ product: { title: { contains: "bague", mode: "insensitive" } } },
 			{ color: { name: { contains: "bague", mode: "insensitive" } } },
-			{ material: { name: { contains: "bague", mode: "insensitive" } } },
+			{
+				materials: {
+					some: { material: { name: { contains: "bague", mode: "insensitive" } } },
+				},
+			},
 		]);
 	});
 

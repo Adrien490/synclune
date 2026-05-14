@@ -25,18 +25,18 @@ export function extractVariantInfo<
 	let totalStock = 0;
 
 	for (const sku of activeSkus) {
-		// Couleurs avec fallback sur le matériau pour différencier les variantes.
+		// Couleurs avec fallback sur le matériau principal pour différencier les variantes.
 		// Règle métier : pour les produits sans couleur (ex. bijoux argent uniquement),
-		// on expose le matériau comme "couleur" pour piloter le sélecteur. Si ni l'un
-		// ni l'autre, le SKU n'apparaît pas dans availableColors.
+		// on expose le matériau principal (position=0) comme "couleur" pour piloter le sélecteur.
+		// Si ni l'un ni l'autre, le SKU n'apparaît pas dans availableColors.
 		// Cf. test "should use material name as color fallback when no color is set".
-		const materialName = sku.material?.name ?? undefined;
+		const primaryMaterialName = sku.materials?.[0]?.material.name ?? undefined;
 
-		if (sku.color || materialName) {
+		if (sku.color || primaryMaterialName) {
 			// Utiliser le slug comme clé principale (URL-friendly)
-			const materialSlug = materialName ? slugify(materialName) : "no-material";
+			const materialSlug = primaryMaterialName ? slugify(primaryMaterialName) : "no-material";
 			const colorKey = sku.color?.slug ?? sku.color?.id ?? materialSlug;
-			const colorName = sku.color?.name ?? materialName ?? "Standard";
+			const colorName = sku.color?.name ?? primaryMaterialName ?? "Standard";
 			const existing = colorMap.get(colorKey) ?? { name: colorName, count: 0 };
 			colorMap.set(colorKey, {
 				hex: sku.color?.hex ?? existing.hex,
@@ -46,8 +46,9 @@ export function extractVariantInfo<
 			});
 		}
 
-		// Matériaux
-		if (materialName) {
+		// Matériaux (un SKU peut en compter plusieurs ; chaque matériau augmente availableSkus)
+		for (const entry of sku.materials ?? []) {
+			const materialName = entry.material.name;
 			const mapKey = materialName.toLowerCase();
 			const existingMaterial = materialMap.get(mapKey) ?? {
 				name: materialName,

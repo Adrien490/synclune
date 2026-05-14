@@ -1,16 +1,26 @@
+import { Suspense } from "react";
+
 import type { MaterialDetailReturn } from "@/modules/materials/data/get-material";
 
 import { MaterialDetailHeader } from "./material-detail-header";
 import { MaterialDetailInfoCard } from "./material-detail-info-card";
 import { MaterialDetailSkusUsageCard } from "./material-detail-skus-usage-card";
-import { MaterialDetailStatsCard } from "./material-detail-stats-card";
+import { MaterialDetailStatsCardAsync } from "./material-detail-stats-card-async";
+import { MaterialDetailStatsCardSkeleton } from "./material-detail-stats-card-skeleton";
 
 interface MaterialDetailPageProps {
 	material: MaterialDetailReturn;
-	distinctProductsCount: number;
+	/**
+	 * Pass a non-awaited promise so the page shell + main cards can stream
+	 * while the distinct-product count resolves in parallel via Suspense.
+	 */
+	distinctProductsCountPromise: Promise<number>;
 }
 
-export function MaterialDetailPage({ material, distinctProductsCount }: MaterialDetailPageProps) {
+export function MaterialDetailPage({
+	material,
+	distinctProductsCountPromise,
+}: MaterialDetailPageProps) {
 	return (
 		<div className="space-y-6">
 			<MaterialDetailHeader material={material} />
@@ -22,10 +32,12 @@ export function MaterialDetailPage({ material, distinctProductsCount }: Material
 				</div>
 
 				<div className="space-y-6">
-					<MaterialDetailStatsCard
-						skusCount={material._count.skus}
-						productsCount={distinctProductsCount}
-					/>
+					<Suspense fallback={<MaterialDetailStatsCardSkeleton />}>
+						<MaterialDetailStatsCardAsync
+							skusCount={material._count.skus}
+							productsCountPromise={distinctProductsCountPromise}
+						/>
+					</Suspense>
 				</div>
 			</div>
 		</div>

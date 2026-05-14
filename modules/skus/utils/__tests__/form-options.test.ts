@@ -27,7 +27,9 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		isDefault: false,
 		isActive: true,
 		color: { id: "color-1", name: "Rose" },
-		materialId: "mat-1",
+		materials: [
+			{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Argent 925" } },
+		],
 		size: "52",
 		images: [],
 		...overrides,
@@ -97,9 +99,9 @@ describe("getUpdateProductSkuFormOpts", () => {
 		expect(result.defaultValues.colorId).toBe("");
 	});
 
-	it("falls back to empty string for missing materialId", () => {
-		const result = getUpdateProductSkuFormOpts(makeSku({ materialId: null }));
-		expect(result.defaultValues.materialId).toBe("");
+	it("falls back to empty array when SKU has no materials (M2M)", () => {
+		const result = getUpdateProductSkuFormOpts(makeSku({ materials: [] }));
+		expect(result.defaultValues.materialIds).toEqual([]);
 	});
 
 	it("falls back to empty string for missing size", () => {

@@ -11,6 +11,7 @@ import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 
 type Sku = GetProductSkusReturn["productSkus"][number];
 
@@ -115,12 +116,15 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 								</span>
 							</>
 						) : null}
-						{sku.material ? (
-							<>
-								<span aria-hidden="true">·</span>
-								<span>{sku.material.name}</span>
-							</>
-						) : null}
+						{(() => {
+							const label = getSkuMaterialsLabel(sku.materials);
+							return label ? (
+								<>
+									<span aria-hidden="true">·</span>
+									<span>{label}</span>
+								</>
+							) : null;
+						})()}
 						{sku.size ? (
 							<>
 								<span aria-hidden="true">·</span>

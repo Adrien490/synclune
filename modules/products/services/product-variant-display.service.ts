@@ -10,6 +10,7 @@
 
 import type { ProductFromList, ColorSwatch } from "@/modules/products/types/product-list.types";
 import { getPrimarySkuForList } from "@/modules/skus/services/sku-selection.service";
+import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 
 // ============================================================================
 // PRODUCT VARIANT DISPLAY SERVICE
@@ -26,7 +27,7 @@ export function getPrimaryColorForList(product: ProductFromList): {
 	const primarySku = getPrimarySkuForList(product);
 	if (!primarySku) return {};
 
-	const fallbackName = primarySku.material?.name ?? undefined;
+	const fallbackName = getPrimaryMaterialName(primarySku.materials) ?? undefined;
 
 	if (primarySku.color?.hex) {
 		return {
@@ -96,7 +97,9 @@ export function getVariantCountForList(product: ProductFromList): {
 
 	for (const sku of activeSkus) {
 		if (sku.color?.hex) uniqueColors.add(sku.color.hex);
-		if (sku.material?.name) uniqueMaterials.add(sku.material.name);
+		for (const entry of sku.materials ?? []) {
+			uniqueMaterials.add(entry.material.name);
+		}
 		if (sku.size) uniqueSizes.add(sku.size);
 		totalSkus++;
 	}
@@ -118,7 +121,9 @@ export function hasMultipleVariants(product: ProductFromList): boolean {
 	if (activeSkus.length <= 1) return false;
 
 	const uniqueColors = new Set(activeSkus.map((s) => s.color?.slug).filter(Boolean));
-	const uniqueMaterials = new Set(activeSkus.map((s) => s.material?.name).filter(Boolean));
+	const uniqueMaterials = new Set(
+		activeSkus.flatMap((s) => (s.materials ?? []).map((m) => m.material.name)),
+	);
 	const uniqueSizes = new Set(activeSkus.map((s) => s.size).filter(Boolean));
 
 	return uniqueColors.size > 1 || uniqueMaterials.size > 1 || uniqueSizes.size > 1;

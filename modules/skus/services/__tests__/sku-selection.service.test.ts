@@ -16,10 +16,16 @@ function makeSku(overrides: Partial<BaseSkuForList> = {}): BaseSkuForList {
 			hex: "#B76E79",
 			name: "Or Rose",
 		},
-		material: {
-			id: "mat-1",
-			name: "Argent 925",
-		},
+		materials: [
+			{
+				materialId: "mat-1",
+				position: 0,
+				material: {
+					id: "mat-1",
+					name: "Argent 925",
+				},
+			},
+		],
 		images: [],
 		...overrides,
 	};

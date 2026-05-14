@@ -88,11 +88,14 @@ const baseSkuFieldsSchema = z.object({
 		.optional()
 		.or(z.literal(""))
 		.transform((val) => (val === "" ? undefined : val)),
-	materialId: z
-		.string()
+	// Matériaux M2M : ordre = priorité (1er = principal pour SEO/care-tips)
+	materialIds: z
+		.array(z.cuid2({ message: "ID matériau invalide" }))
+		.max(ARRAY_LIMITS.SKU_MATERIALS, {
+			error: `Une variante ne peut avoir que ${ARRAY_LIMITS.SKU_MATERIALS} matériaux maximum`,
+		})
 		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
+		.default([]),
 	size: z
 		.string()
 		.max(TEXT_LIMITS.SKU_SIZE.max)

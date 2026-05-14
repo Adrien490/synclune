@@ -58,7 +58,8 @@ export default async function AdminMaterialDetailPage({
 		notFound();
 	}
 
-	const distinctProductsCount = await getMaterialDistinctProductCount(material.id);
+	// Non-awaited Promise — streams via <Suspense> inside MaterialDetailPage.
+	const distinctProductsCountPromise = getMaterialDistinctProductCount(material.id);
 
 	return (
 		<div className="space-y-6">
@@ -78,7 +79,10 @@ export default async function AdminMaterialDetailPage({
 				</BreadcrumbList>
 			</Breadcrumb>
 
-			<MaterialDetailPage material={material} distinctProductsCount={distinctProductsCount} />
+			<MaterialDetailPage
+				material={material}
+				distinctProductsCountPromise={distinctProductsCountPromise}
+			/>
 
 			<MaterialFormDialog />
 			<MaterialsAdminDialogs />

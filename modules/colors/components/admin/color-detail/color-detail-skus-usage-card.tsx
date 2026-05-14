@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
@@ -19,6 +20,9 @@ const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
 	currency: "EUR",
 });
 const formatPrice = (cents: number) => PRICE_FORMATTER.format(cents / 100);
+
+type SkuLike = ColorDetailReturn["skus"][number];
+const materialsLabelOf = (sku: SkuLike) => getSkuMaterialsLabel(sku.materials);
 
 export function ColorDetailSkusUsageCard({ color }: ColorDetailSkusUsageCardProps) {
 	const haptic = useHaptic();
@@ -84,10 +88,10 @@ export function ColorDetailSkusUsageCard({ color }: ColorDetailSkusUsageCardProp
 											</div>
 											<p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
 												<span className="font-mono">{sku.sku}</span>
-												{sku.material ? (
+												{materialsLabelOf(sku) ? (
 													<>
 														<span aria-hidden="true">·</span>
-														<span>{sku.material.name}</span>
+														<span>{materialsLabelOf(sku)}</span>
 													</>
 												) : null}
 												{sku.size ? (

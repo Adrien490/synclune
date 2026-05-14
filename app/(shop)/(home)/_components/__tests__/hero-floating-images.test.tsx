@@ -1,5 +1,43 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
+
+// jsdom does not implement IntersectionObserver — provide a minimal stub that
+// immediately reports the target as intersecting (the hero is at the top of
+// the page, so this matches the production behavior under test).
+beforeAll(() => {
+	class MockIntersectionObserver {
+		private callback: IntersectionObserverCallback;
+		constructor(callback: IntersectionObserverCallback) {
+			this.callback = callback;
+		}
+		observe(target: Element) {
+			this.callback(
+				[
+					{
+						isIntersecting: true,
+						target,
+						boundingClientRect: target.getBoundingClientRect(),
+						intersectionRatio: 1,
+						intersectionRect: target.getBoundingClientRect(),
+						rootBounds: null,
+						time: 0,
+					} as IntersectionObserverEntry,
+				],
+				this as unknown as IntersectionObserver,
+			);
+		}
+		unobserve() {}
+		disconnect() {}
+		takeRecords(): IntersectionObserverEntry[] {
+			return [];
+		}
+	}
+	Object.defineProperty(globalThis, "IntersectionObserver", {
+		writable: true,
+		configurable: true,
+		value: MockIntersectionObserver,
+	});
+});
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks

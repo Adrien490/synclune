@@ -85,6 +85,34 @@ vi.mock("@/modules/materials/components/material-form-dialog", () => ({
 	MaterialFormDialog: () => null,
 }));
 
+vi.mock("@/modules/materials/components/admin/material-multi-select-field", () => ({
+	MaterialMultiSelectField: ({
+		fieldName,
+		options,
+	}: {
+		fieldName?: string;
+		value?: string[];
+		onValueChange?: (ids: string[]) => void;
+		options: Array<{ id: string; name: string }>;
+	}) => (
+		<div data-testid={`field-${fieldName ?? "materialIds"}`}>
+			<label htmlFor={`select-${fieldName ?? "materialIds"}`}>
+				Matériau
+				<select id={`select-${fieldName ?? "materialIds"}`} aria-label="Matériau">
+					{options.map((opt) => (
+						<option key={opt.id} value={opt.id}>
+							{opt.name}
+						</option>
+					))}
+				</select>
+			</label>
+			<button type="button" aria-label="Créer un nouveau matériau">
+				+
+			</button>
+		</div>
+	),
+}));
+
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({
 		open: mockOpenDialog,
@@ -105,6 +133,12 @@ vi.mock("lucide-react", () => ({
 	Info: (props: Record<string, unknown>) => <svg data-testid="icon-info" {...props} />,
 	Package: (props: Record<string, unknown>) => <svg data-testid="icon-package" {...props} />,
 	Plus: (props: Record<string, unknown>) => <svg data-testid="icon-plus" {...props} />,
+	X: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
+	ChevronDown: (props: Record<string, unknown>) => (
+		<svg data-testid="icon-chevron-down" {...props} />
+	),
+	Check: (props: Record<string, unknown>) => <svg data-testid="icon-check" {...props} />,
+	Search: (props: Record<string, unknown>) => <svg data-testid="icon-search" {...props} />,
 }));
 
 // ============================================================================
@@ -130,7 +164,7 @@ const defaultMaterials = [
 function createMockForm(overrides?: Record<string, unknown>) {
 	const defaultValues = {
 		"initialSku.colorId": "",
-		"initialSku.materialId": "",
+		"initialSku.materialIds": [],
 		"initialSku.size": "",
 		"initialSku.priceInclTaxEuros": 0,
 		"initialSku.compareAtPriceEuros": undefined,
@@ -292,7 +326,7 @@ describe("CreateProductSidebarCards", () => {
 
 		it("renders material select field", () => {
 			setup();
-			expect(screen.getByTestId("field-initialSku.materialId")).toBeInTheDocument();
+			expect(screen.getByTestId("field-initialSku.materialIds")).toBeInTheDocument();
 		});
 
 		it("renders Matériau label", () => {

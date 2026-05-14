@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { useAddToCart } from "@/modules/cart/hooks/use-add-to-cart";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import { useSelectedSku } from "@/modules/skus/hooks/use-selected-sku";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { Button } from "@/shared/components/ui/button";
@@ -75,7 +76,8 @@ export function StickyCartCTADesktop({
 	// Résumé variant compact : "Rose · Taille M"
 	const variantSummaryParts: string[] = [];
 	if (currentSku.color?.name) variantSummaryParts.push(currentSku.color.name);
-	if (currentSku.material?.name) variantSummaryParts.push(currentSku.material.name);
+	const currentMaterialsLabel = getSkuMaterialsLabel(currentSku.materials);
+	if (currentMaterialsLabel) variantSummaryParts.push(currentMaterialsLabel);
 	if (currentSku.size) variantSummaryParts.push(`Taille ${currentSku.size}`);
 	const variantSummary = variantSummaryParts.join(" · ");
 

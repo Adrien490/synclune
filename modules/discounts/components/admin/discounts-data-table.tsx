@@ -17,17 +17,18 @@ import {
 } from "@/shared/components/ui/table";
 import { Badge } from "@/shared/components/ui/badge";
 import type { GetDiscountsReturn } from "@/modules/discounts/data/get-discounts";
-import { DISCOUNT_TYPE_LABELS } from "@/modules/discounts/constants/discount.constants";
-import { DiscountType } from "@/app/generated/prisma/client";
+import {
+	DISCOUNT_STATUS_BADGE_CONFIG,
+	DISCOUNT_TYPE_LABELS,
+	formatDiscountUsage,
+	formatDiscountValue,
+} from "@/modules/discounts/constants/discount.constants";
 import { Ticket } from "lucide-react";
+import Link from "next/link";
 import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsBulkActionsBar } from "./discounts-bulk-actions-bar";
 import { CreateDiscountButton } from "./create-discount-button";
-import { formatEuro } from "@/shared/utils/format-euro";
-import {
-	getDiscountStatus,
-	type DiscountStatus,
-} from "@/modules/discounts/services/discount-validation.service";
+import { getDiscountStatus } from "@/modules/discounts/services/discount-validation.service";
 
 interface DiscountsDataTableProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
@@ -36,31 +37,6 @@ interface DiscountsDataTableProps {
 
 export async function DiscountsDataTable({ discountsPromise, perPage }: DiscountsDataTableProps) {
 	const { discounts, pagination } = await discountsPromise;
-
-	const formatValue = (type: DiscountType, value: number) => {
-		if (type === DiscountType.PERCENTAGE) {
-			return `${value}%`;
-		}
-		return formatEuro(value);
-	};
-
-	const formatUsage = (usageCount: number, maxUsageCount: number | null) => {
-		if (maxUsageCount === null) {
-			return `${usageCount} / ∞`;
-		}
-		return `${usageCount} / ${maxUsageCount}`;
-	};
-
-	const STATUS_BADGE_CONFIG: Record<
-		DiscountStatus,
-		{ label: string; variant: "default" | "secondary" | "outline" | "success" }
-	> = {
-		active: { label: "Actif", variant: "success" },
-		inactive: { label: "Inactif", variant: "secondary" },
-		scheduled: { label: "Planifié", variant: "outline" },
-		expired: { label: "Expiré", variant: "secondary" },
-		exhausted: { label: "Épuisé", variant: "secondary" },
-	};
 
 	if (discounts.length === 0) {
 		return (
@@ -117,9 +93,18 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 											/>
 										</TableCell>
 										<TableCell>
-											<code className="bg-muted rounded px-2 py-1 text-sm font-semibold">
-												{discount.code}
-											</code>
+											<Link
+												href={`/admin/marketing/discounts/${discount.id}`}
+												className="focus-visible:ring-ring inline-block rounded outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+												aria-label={`Voir le détail du code promo ${discount.code}`}
+											>
+												<code
+													className="bg-muted hover:bg-muted/70 rounded px-2 py-1 text-sm font-semibold transition-colors"
+													style={{ viewTransitionName: `discount-code-${discount.id}` }}
+												>
+													{discount.code}
+												</code>
+											</Link>
 										</TableCell>
 										<TableCell>
 											<span className="text-muted-foreground text-sm">
@@ -128,18 +113,25 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 										</TableCell>
 										<TableCell>
 											<span className="text-sm font-medium">
-												{formatValue(discount.type, discount.value)}
+												{formatDiscountValue(discount.type, discount.value)}
 											</span>
 										</TableCell>
 										<TableCell className="text-center">
 											<span className="text-sm">
-												{formatUsage(discount.usageCount, discount.maxUsageCount)}
+												{formatDiscountUsage(discount.usageCount, discount.maxUsageCount)}
 											</span>
 										</TableCell>
 										<TableCell className="text-center">
 											{(() => {
-												const status = STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
-												return <Badge variant={status.variant}>{status.label}</Badge>;
+												const status = DISCOUNT_STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
+												return (
+													<Badge
+														variant={status.variant}
+														style={{ viewTransitionName: `discount-status-${discount.id}` }}
+													>
+														{status.label}
+													</Badge>
+												);
 											})()}
 										</TableCell>
 										<TableCell>

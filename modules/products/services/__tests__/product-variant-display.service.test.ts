@@ -31,7 +31,7 @@ function makeSku(overrides: Partial<SkuLike> = {}): SkuLike {
 		compareAtPrice: null,
 		size: null,
 		color: null,
-		material: null,
+		materials: [],
 		images: [],
 		...overrides,
 	} as unknown as SkuLike;
@@ -72,7 +72,9 @@ describe("getPrimaryColorForList", () => {
 	it("should fall back to material name when sku has no color hex", () => {
 		const sku = makeSku({
 			color: null,
-			material: { id: "mat-1", name: "Argent 925" },
+			materials: [
+				{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Argent 925" } },
+			],
 		});
 		mockGetPrimarySkuForList.mockReturnValue(sku);
 		const result = getPrimaryColorForList(makeProduct([sku]));
@@ -81,7 +83,7 @@ describe("getPrimaryColorForList", () => {
 	});
 
 	it("should return empty object when sku has neither color nor material", () => {
-		const sku = makeSku({ color: null, material: null });
+		const sku = makeSku({ color: null, materials: [] });
 		mockGetPrimarySkuForList.mockReturnValue(sku);
 		const result = getPrimaryColorForList(makeProduct([sku]));
 		expect(result).toEqual({});
@@ -90,7 +92,7 @@ describe("getPrimaryColorForList", () => {
 	it("should use material name as fallback name when color has no name", () => {
 		const sku = makeSku({
 			color: { id: "c1", slug: "or", hex: "#FFD700", name: "" } as unknown as SkuLike["color"],
-			material: { id: "mat-1", name: "Or 18k" },
+			materials: [{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Or 18k" } }],
 		});
 		mockGetPrimarySkuForList.mockReturnValue(sku);
 		const result = getPrimaryColorForList(makeProduct([sku]));
@@ -197,8 +199,14 @@ describe("getVariantCountForList", () => {
 
 	it("should count unique materials", () => {
 		const skus = [
-			makeSku({ material: { id: "m1", name: "Argent 925" }, inventory: 5 }),
-			makeSku({ material: { id: "m2", name: "Or 18k" }, inventory: 5 }),
+			makeSku({
+				materials: [{ materialId: "m1", position: 0, material: { id: "m1", name: "Argent 925" } }],
+				inventory: 5,
+			}),
+			makeSku({
+				materials: [{ materialId: "m2", position: 0, material: { id: "m2", name: "Or 18k" } }],
+				inventory: 5,
+			}),
 		];
 		const result = getVariantCountForList(makeProduct(skus));
 		expect(result.materials).toBe(2);

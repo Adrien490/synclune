@@ -147,10 +147,12 @@ export function FloatingImage({
 							style={{ backgroundColor: position.glowColor }}
 						/>
 
-						{/* Pointer-tracking spotlight — native 2026 pattern (Apple/Linear/Vercel) */}
+						{/* Pointer-tracking spotlight — native 2026 pattern (Apple/Linear/Vercel).
+            `mix-blend-screen` always brightens (vs `overlay` which can disappear on
+            mid-tone images and burn out on dark/light photographs). */}
 						<div
 							aria-hidden="true"
-							className="pointer-events-none absolute inset-0 z-20 opacity-0 mix-blend-overlay group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)] motion-reduce:hidden"
+							className="pointer-events-none absolute inset-0 z-20 opacity-0 mix-blend-screen group-hover:opacity-100 motion-safe:transition-opacity motion-safe:duration-[var(--duration-normal)] motion-reduce:hidden"
 							style={{
 								background:
 									"radial-gradient(160px circle at var(--mx) var(--my), rgb(255 255 255 / 0.22), transparent 65%)",

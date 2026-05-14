@@ -10,6 +10,7 @@ import {
 	fetchSkuForValidation,
 	fetchSkusForBatchValidation,
 } from "@/modules/cart/data/get-sku-for-validation";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 
 // Action: Valider un SKU et son stock
 export async function validateSkuAndStock(input: {
@@ -74,7 +75,7 @@ export async function validateSkuAndStock(input: {
 					priceInclTax: sku.priceInclTax,
 					compareAtPrice: sku.compareAtPrice,
 					isActive: sku.isActive,
-					material: sku.material?.name ?? undefined,
+					material: getSkuMaterialsLabel(sku.materials) ?? undefined,
 					colorId: sku.colorId ?? undefined,
 					color: sku.color
 						? {
@@ -159,7 +160,7 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 					priceInclTax: sku.priceInclTax,
 					compareAtPrice: sku.compareAtPrice,
 					isActive: sku.isActive,
-					material: sku.material?.name ?? undefined,
+					material: getSkuMaterialsLabel(sku.materials) ?? undefined,
 					colorId: sku.colorId ?? undefined,
 					color: sku.color
 						? {

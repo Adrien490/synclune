@@ -99,7 +99,14 @@ async function fetchSkuDetailById(skuId: string) {
 			createdAt: true,
 			updatedAt: true,
 			color: { select: { id: true, name: true, hex: true, slug: true } },
-			material: { select: { id: true, name: true, slug: true } },
+			materials: {
+				select: {
+					materialId: true,
+					position: true,
+					material: { select: { id: true, name: true, slug: true } },
+				},
+				orderBy: { position: "asc" },
+			},
 			images: {
 				select: {
 					id: true,

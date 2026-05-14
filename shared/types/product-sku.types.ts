@@ -51,10 +51,14 @@ export interface BaseSkuForList {
 		hex: string;
 		name: string;
 	} | null;
-	material: {
-		id: string;
-		name: string;
-	} | null;
+	materials: Array<{
+		materialId: string;
+		position: number;
+		material: {
+			id: string;
+			name: string;
+		};
+	}>;
 	images: Array<{
 		id: string;
 		url: string;

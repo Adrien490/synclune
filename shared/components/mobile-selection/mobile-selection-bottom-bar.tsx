@@ -52,7 +52,7 @@ export function MobileSelectionBottomBar({
 			zIndex="z-(--z-bar)"
 			height={112}
 			aria-label={ariaLabel}
-			className={cn("bottom-[env(safe-area-inset-bottom)] px-3 py-2 pb-2", className)}
+			className={cn("px-3 py-2", className)}
 		>
 			{children}
 		</BottomBar>

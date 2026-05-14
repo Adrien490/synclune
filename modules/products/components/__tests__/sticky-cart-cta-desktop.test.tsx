@@ -132,7 +132,7 @@ function createSku(overrides: Partial<ProductSku> = {}): ProductSku {
 		isActive: true,
 		isDefault: true,
 		color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" },
-		material: null,
+		materials: [],
 		size: null,
 		images: [],
 		...overrides,
@@ -280,7 +280,13 @@ describe("StickyCartCTADesktop", () => {
 		it("renders 'color · material · Taille X' when all variants are set", () => {
 			const sku = createSku({
 				color: { id: "c", slug: "rose", name: "Rose", hex: "#f7b2c5" } as any,
-				material: { id: "m", slug: "argent", name: "Argent" } as any,
+				materials: [
+					{
+						materialId: "m",
+						position: 0,
+						material: { id: "m", slug: "argent", name: "Argent" },
+					},
+				] as any,
 				size: "M" as any,
 			});
 			renderVisible({ defaultSku: sku });
@@ -290,7 +296,7 @@ describe("StickyCartCTADesktop", () => {
 		it("renders only available variant fields (e.g. color only)", () => {
 			const sku = createSku({
 				color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" } as any,
-				material: null,
+				materials: [],
 				size: null,
 			});
 			renderVisible({ defaultSku: sku });
@@ -298,7 +304,7 @@ describe("StickyCartCTADesktop", () => {
 		});
 
 		it("shows the product title", () => {
-			const sku = createSku({ color: null, material: null, size: null });
+			const sku = createSku({ color: null, materials: [], size: null });
 			const product = createProduct({ title: "Collier Étoile", skus: [sku] });
 			renderVisible({ defaultSku: sku, product });
 			expect(screen.getByText("Collier Étoile")).toBeInTheDocument();

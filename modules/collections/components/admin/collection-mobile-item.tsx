@@ -63,7 +63,7 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 			id={collection.id}
 			itemLabel={`Collection ${collection.name}`}
 			longPressProps={{
-				href: `/admin/catalogue/collections/${collection.slug}/modifier`,
+				href: `/admin/catalogue/collections/${collection.slug}`,
 				ariaLabel: `Collection ${collection.name}`,
 				sections,
 				menuTitle: "Actions collection",

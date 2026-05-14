@@ -3,6 +3,14 @@ import type { Metadata } from "next";
 
 import { UserDetailPage } from "@/modules/users/components/admin/user-detail-page";
 import { getUserDetailAdmin } from "@/modules/users/data/get-user-detail-admin";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 
 interface UserDetailRouteProps {
 	params: Promise<{ id: string }>;
@@ -31,11 +39,31 @@ export default async function UserDetailRoute({ params }: UserDetailRouteProps) 
 		notFound();
 	}
 
+	const displayName = data.user.name ?? data.user.email;
+
 	return (
-		<UserDetailPage
-			user={data.user}
-			orderCount={data.orderCount}
-			activeSessions={data.activeSessions}
-		/>
+		<div className="space-y-6">
+			<Breadcrumb className="hidden md:flex">
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/clients">Clients</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>{displayName}</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
+			<UserDetailPage
+				user={data.user}
+				orderCount={data.orderCount}
+				activeSessions={data.activeSessions}
+			/>
+		</div>
 	);
 }

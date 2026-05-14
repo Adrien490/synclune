@@ -101,8 +101,10 @@ export function SkuSelectorFormContent({
 		}
 		if (materials.length > 1) {
 			if (!selectedMaterial) return false;
-			const skuMaterialSlug = sku.material?.name ? slugify(sku.material.name) : null;
-			if (skuMaterialSlug !== selectedMaterial) return false;
+			const skuMaterialSlugs = (sku.materials ?? [])
+				.map((link) => (link.material.name ? slugify(link.material.name) : null))
+				.filter((s): s is string => s !== null);
+			if (!skuMaterialSlugs.includes(selectedMaterial)) return false;
 		}
 		if (requiresSize && sizes.length > 0) {
 			if (!selectedSize || sku.size !== selectedSize) return false;

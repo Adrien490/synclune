@@ -2,6 +2,7 @@ import { Info } from "lucide-react";
 
 import type { ColorDetailReturn } from "@/modules/colors/data/get-color";
 import { CopyButton } from "@/shared/components/copy-button";
+import { DescriptionCollapse } from "@/shared/components/description-collapse";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 
@@ -57,13 +58,16 @@ export function ColorDetailInfoCard({ color }: ColorDetailInfoCardProps) {
 							/>
 						</dd>
 					</div>
-					{color.description && (
-						<div className="border-border/60 mt-1 border-t pt-3">
-							<dt className="text-muted-foreground mb-1">Description</dt>
-							<dd className="text-foreground/80 text-sm leading-relaxed">{color.description}</dd>
-						</div>
-					)}
 				</dl>
+
+				{color.description ? (
+					<div className="mt-4 space-y-2 border-t pt-4">
+						<h3 className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+							Description
+						</h3>
+						<DescriptionCollapse text={color.description} />
+					</div>
+				) : null}
 
 				{!color.isActive ? (
 					<p className="border-muted bg-muted/30 text-muted-foreground mt-4 rounded-md border p-3 text-xs">

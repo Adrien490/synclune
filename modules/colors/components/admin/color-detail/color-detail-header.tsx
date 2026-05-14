@@ -32,7 +32,7 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 
 	return (
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-			<div className="min-w-0 space-y-2">
+			<div className="min-w-0">
 				<div className="flex flex-wrap items-center gap-3">
 					<span
 						className="border-border size-7 shrink-0 rounded-full border-2 shadow-sm"
@@ -43,15 +43,20 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 						{color.name}
 					</h1>
 				</div>
-				<div className="flex flex-wrap items-center gap-2">
-					<Badge variant={color.isActive ? "default" : "secondary"}>
+				<div className="text-muted-foreground mt-1 flex items-center gap-2 text-xs md:hidden">
+					<Badge
+						variant={color.isActive ? "default" : "secondary"}
+						className="shrink-0"
+						style={{ viewTransitionName: `color-status-${color.id}` }}
+					>
 						{color.isActive ? "Active" : "Inactive"}
 					</Badge>
+					<span aria-hidden="true">·</span>
+					<span className="truncate">
+						Créée {formatDistanceToNow(color.createdAt, { addSuffix: true, locale: fr })}
+					</span>
 				</div>
-				{color.description && (
-					<p className="text-muted-foreground max-w-prose text-sm italic">{color.description}</p>
-				)}
-				<p className="text-muted-foreground hidden text-sm md:block">
+				<p className="text-muted-foreground mt-1 hidden text-sm md:block">
 					Créée le {format(color.createdAt, "d MMMM yyyy 'à' HH'h'mm", { locale: fr })}
 					<span className="text-muted-foreground/70">
 						{" "}
@@ -64,7 +69,7 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 				<Button
 					asChild
 					size="sm"
-					className="min-h-11 flex-1 transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
+					className="min-h-11 flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98] sm:min-h-9 md:flex-none"
 				>
 					<Link
 						href={`/admin/catalogue/couleurs/${color.slug}/modifier`}
@@ -81,7 +86,7 @@ export function ColorDetailHeader({ color }: ColorDetailHeaderProps) {
 							variant="outline"
 							size="sm"
 							aria-label="Plus d'actions"
-							className="min-h-11 min-w-11 sm:min-h-9 sm:min-w-9"
+							className="min-h-11 min-w-11 touch-manipulation sm:min-h-9 sm:min-w-9"
 						>
 							<Ellipsis className="size-4" aria-hidden="true" />
 						</Button>

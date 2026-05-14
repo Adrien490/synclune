@@ -46,6 +46,9 @@ export async function updateProduct(
 
 		// 2. Extraction des donnees du FormData
 		const media = safeFormGetJSON<unknown[]>(formData, "defaultSku.media") ?? [];
+		// Matériaux M2M sérialisés en JSON (cohérent avec collectionIds)
+		const defaultSkuMaterialIds =
+			safeFormGetJSON<string[]>(formData, "defaultSku.materialIds") ?? [];
 
 		const rawData = {
 			productId: formData.get("productId"),
@@ -61,7 +64,7 @@ export async function updateProduct(
 				inventory: formData.get("defaultSku.inventory"),
 				isActive: formData.get("defaultSku.isActive"), // Zod fera la coercion
 				colorId: formData.get("defaultSku.colorId") ?? "",
-				materialId: formData.get("defaultSku.materialId") ?? "",
+				materialIds: defaultSkuMaterialIds,
 				size: formData.get("defaultSku.size") ?? "",
 				media,
 			},
@@ -136,7 +139,8 @@ export async function updateProduct(
 		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
 		const normalizedCollectionIds = validatedData.collectionIds;
 		const normalizedColorId = validatedData.defaultSku.colorId?.trim() ?? null;
-		const normalizedMaterialId = validatedData.defaultSku.materialId?.trim() ?? null;
+		// Dedupe (préserve l'ordre saisi, 1er = principal)
+		const normalizedMaterialIds = Array.from(new Set(validatedData.defaultSku.materialIds));
 		const normalizedSize = validatedData.defaultSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
 		const normalizedDescription = validatedData.description?.trim()
@@ -201,14 +205,14 @@ export async function updateProduct(
 				}
 			}
 
-			// Validate material if provided
-			if (normalizedMaterialId) {
-				const material = await tx.material.findUnique({
-					where: { id: normalizedMaterialId },
+			// Validate materials if provided (M2M)
+			if (normalizedMaterialIds.length > 0) {
+				const materials = await tx.material.findMany({
+					where: { id: { in: normalizedMaterialIds } },
 					select: { id: true },
 				});
-				if (!material) {
-					throw new Error("Le matériau spécifié n'existe pas.");
+				if (materials.length !== normalizedMaterialIds.length) {
+					throw new Error("Un ou plusieurs matériaux spécifiés n'existent pas.");
 				}
 			}
 
@@ -248,7 +252,7 @@ export async function updateProduct(
 				});
 			}
 
-			// Update SKU
+			// Update SKU + sync matériaux M2M (delete-all + create pour préserver l'ordre)
 			await tx.productSku.update({
 				where: { id: validatedData.defaultSku.skuId },
 				data: {
@@ -257,8 +261,14 @@ export async function updateProduct(
 					inventory: validatedData.defaultSku.inventory,
 					isActive: validatedData.defaultSku.isActive,
 					colorId: normalizedColorId,
-					materialId: normalizedMaterialId,
 					size: normalizedSize,
+					materials: {
+						deleteMany: {},
+						create: normalizedMaterialIds.map((materialId, index) => ({
+							materialId,
+							position: index,
+						})),
+					},
 				},
 			});
 

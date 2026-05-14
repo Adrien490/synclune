@@ -12,7 +12,7 @@ export const createProductSkuFormOpts = {
 		isDefault: false,
 		isActive: true,
 		colorId: "",
-		materialId: "",
+		materialIds: [] as string[],
 		size: "",
 		primaryImage: undefined as MediaData | undefined,
 		galleryMedia: [] as MediaData[],

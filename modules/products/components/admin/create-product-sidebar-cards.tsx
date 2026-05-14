@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
-import { MATERIAL_DIALOG_ID } from "@/modules/materials/components/material-form-dialog";
+import { MaterialMultiSelectField } from "@/modules/materials/components/admin/material-multi-select-field";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { Euro, Info, Package, Plus } from "lucide-react";
@@ -53,7 +53,6 @@ function VariantCard({
 	const router = useRouter();
 	const haptic = useHaptic();
 	const colorDialog = useDialog(COLOR_DIALOG_ID);
-	const materialDialog = useDialog(MATERIAL_DIALOG_ID);
 
 	return (
 		<Card
@@ -164,47 +163,14 @@ function VariantCard({
 					)}
 				</form.AppField>
 
-				<form.AppField
-					name="initialSku.materialId"
-					listeners={{ onChange: () => haptic("selection") }}
-				>
+				<form.AppField name="initialSku.materialIds">
 					{(field) => (
-						<div className="space-y-2">
-							<FieldLabel htmlFor={field.name} optional>
-								Matériau
-							</FieldLabel>
-							<div className="flex gap-2">
-								<div className="flex-1">
-									<field.SelectField
-										label=""
-										options={materials.map((m) => ({
-											value: m.id,
-											label: m.name,
-										}))}
-										placeholder="Sélectionner un matériau"
-										clearable
-									/>
-								</div>
-								<Button
-									type="button"
-									variant="outline"
-									size="icon"
-									className="min-h-11 min-w-11 shrink-0 sm:min-h-9 sm:min-w-9"
-									onClick={() => {
-										haptic("light");
-										materialDialog.open({
-											onCreated: (id: string) => {
-												field.handleChange(id);
-												router.refresh();
-											},
-										});
-									}}
-									aria-label="Créer un nouveau matériau"
-								>
-									<Plus className="size-4" />
-								</Button>
-							</div>
-						</div>
+						<MaterialMultiSelectField
+							fieldName={field.name}
+							value={field.state.value}
+							onValueChange={(ids) => field.handleChange(ids)}
+							options={materials}
+						/>
 					)}
 				</form.AppField>
 

@@ -62,10 +62,13 @@ export function extractVariantOptions(activeSkus: ActiveSku[]) {
 				});
 			}
 		}
-		if (sku.material?.name) {
-			const slug = slugify(sku.material.name);
+		// Matériaux M2M : un SKU peut en avoir plusieurs (cap 3, ordre = priorité)
+		for (const link of sku.materials ?? []) {
+			const name = link.material.name;
+			if (!name) continue;
+			const slug = slugify(name);
 			if (!uniqueMaterials.has(slug)) {
-				uniqueMaterials.set(slug, { slug, name: sku.material.name });
+				uniqueMaterials.set(slug, { slug, name });
 			}
 		}
 		if (sku.size) {
@@ -101,20 +104,25 @@ export function buildAvailabilityMaps(
 		if (sku.inventory <= 0) continue;
 
 		const skuColor = sku.color?.slug;
-		const skuMaterial = sku.material?.name ? slugify(sku.material.name) : null;
+		// M2M : un SKU « contient » un matériau si le slug est dans sa liste
+		const skuMaterialSlugs = (sku.materials ?? [])
+			.map((link) => (link.material.name ? slugify(link.material.name) : null))
+			.filter((s): s is string => s !== null);
 		const skuSize = sku.size;
+		const skuContainsSelectedMaterial =
+			!selectedMaterial || skuMaterialSlugs.includes(selectedMaterial);
 
 		// Color availability: matches selected material + size
 		if (skuColor && colorMap.has(skuColor) && !colorMap.get(skuColor)) {
-			const materialMatch = !selectedMaterial || skuMaterial === selectedMaterial;
 			const sizeMatch = !selectedSize || skuSize === selectedSize;
-			if (materialMatch && sizeMatch) {
+			if (skuContainsSelectedMaterial && sizeMatch) {
 				colorMap.set(skuColor, true);
 			}
 		}
 
-		// Material availability: matches selected color + size
-		if (skuMaterial && materialMap.has(skuMaterial) && !materialMap.get(skuMaterial)) {
+		// Material availability: chaque matériau du SKU est dispo si la couleur + taille sélectionnées correspondent
+		for (const skuMaterial of skuMaterialSlugs) {
+			if (!materialMap.has(skuMaterial) || materialMap.get(skuMaterial)) continue;
 			const colorMatch = !selectedColor || skuColor === selectedColor;
 			const sizeMatch = !selectedSize || skuSize === selectedSize;
 			if (colorMatch && sizeMatch) {
@@ -125,8 +133,7 @@ export function buildAvailabilityMaps(
 		// Size availability: matches selected color + material
 		if (skuSize && sizeMap.has(skuSize) && !sizeMap.get(skuSize)) {
 			const colorMatch = !selectedColor || skuColor === selectedColor;
-			const materialMatch = !selectedMaterial || skuMaterial === selectedMaterial;
-			if (colorMatch && materialMatch) {
+			if (colorMatch && skuContainsSelectedMaterial) {
 				sizeMap.set(skuSize, true);
 			}
 		}

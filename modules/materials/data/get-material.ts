@@ -87,7 +87,7 @@ async function fetchMaterialDetail(slug: string) {
 	cacheMaterialDetail(slug);
 
 	try {
-		return await prisma.material.findFirst({
+		const raw = await prisma.material.findFirst({
 			where: { slug },
 			select: {
 				id: true,
@@ -97,32 +97,37 @@ async function fetchMaterialDetail(slug: string) {
 				isActive: true,
 				createdAt: true,
 				updatedAt: true,
-				skus: {
-					where: { isActive: true },
+				// Liens M2M actifs avec SKU joint (preserve l'ancien shape `skus[]`)
+				skuMaterials: {
+					where: { sku: { isActive: true } },
 					take: 10,
-					orderBy: { product: { title: "asc" } },
+					orderBy: { sku: { product: { title: "asc" } } },
 					select: {
-						id: true,
-						sku: true,
-						size: true,
-						priceInclTax: true,
-						isDefault: true,
-						inventory: true,
-						color: { select: { name: true, hex: true, slug: true } },
-						product: {
+						sku: {
 							select: {
 								id: true,
-								slug: true,
-								title: true,
-								status: true,
-								skus: {
-									where: { isDefault: true },
-									take: 1,
+								sku: true,
+								size: true,
+								priceInclTax: true,
+								isDefault: true,
+								inventory: true,
+								color: { select: { name: true, hex: true, slug: true } },
+								product: {
 									select: {
-										images: {
-											where: { isPrimary: true },
+										id: true,
+										slug: true,
+										title: true,
+										status: true,
+										skus: {
+											where: { isDefault: true },
 											take: 1,
-											select: { url: true, blurDataUrl: true, altText: true },
+											select: {
+												images: {
+													where: { isPrimary: true },
+													take: 1,
+													select: { url: true, blurDataUrl: true, altText: true },
+												},
+											},
 										},
 									},
 								},
@@ -130,9 +135,20 @@ async function fetchMaterialDetail(slug: string) {
 						},
 					},
 				},
-				_count: { select: { skus: { where: { isActive: true } } } },
+				_count: { select: { skuMaterials: { where: { sku: { isActive: true } } } } },
 			},
 		});
+
+		if (!raw) return null;
+
+		// Remap pour préserver l'ancien shape consommé par l'UI :
+		// `_count.skus` + `skus[]` (au lieu de `_count.skuMaterials` + `skuMaterials[].sku`).
+		const { skuMaterials, _count, ...rest } = raw;
+		return {
+			...rest,
+			skus: skuMaterials.map((link) => link.sku),
+			_count: { skus: _count.skuMaterials },
+		};
 	} catch (error) {
 		logger.error("Failed to fetch material detail", error, { service: "fetchMaterialDetail" });
 		return null;
@@ -158,8 +174,12 @@ async function fetchMaterialDistinctProductCount(materialId: string): Promise<nu
 	cacheTag(`material-${materialId}-product-count`);
 
 	try {
+		// M2M : on cherche les SKUs actifs liés à ce matériau via la jointure
 		const result = await prisma.productSku.findMany({
-			where: { materialId, isActive: true },
+			where: {
+				isActive: true,
+				materials: { some: { materialId } },
+			},
 			select: { productId: true },
 			distinct: ["productId"],
 		});

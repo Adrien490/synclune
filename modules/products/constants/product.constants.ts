@@ -49,11 +49,18 @@ export const PRODUCT_CAROUSEL_SELECT = {
 					hex: true,
 				},
 			},
-			material: {
+			materials: {
 				select: {
-					id: true,
-					name: true,
+					materialId: true,
+					position: true,
+					material: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			size: true,
 			images: {
@@ -108,11 +115,18 @@ export const GET_PRODUCT_SELECT = {
 					hex: true,
 				},
 			},
-			material: {
+			materials: {
 				select: {
-					id: true,
-					name: true,
+					materialId: true,
+					position: true,
+					material: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			size: true,
 			priceInclTax: true,
@@ -212,11 +226,18 @@ export const GET_PRODUCTS_SELECT = {
 					position: "asc",
 				},
 			},
-			material: {
+			materials: {
 				select: {
-					id: true,
-					name: true,
+					materialId: true,
+					position: true,
+					material: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			color: {
 				select: {

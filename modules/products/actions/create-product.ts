@@ -47,6 +47,9 @@ export async function createProduct(
 		// 2. Extraction des donnees du FormData
 		// Parse media from form: initialSku.media is sent as JSON array
 		const media = safeFormGetJSON<unknown[]>(formData, "initialSku.media") ?? [];
+		// Matériaux M2M sérialisés en JSON (cohérent avec collectionIds)
+		const initialSkuMaterialIds =
+			safeFormGetJSON<string[]>(formData, "initialSku.materialIds") ?? [];
 
 		const rawData = {
 			title: formData.get("title"),
@@ -64,7 +67,7 @@ export async function createProduct(
 				isActive: formData.get("initialSku.isActive") ?? true,
 				isDefault: formData.get("initialSku.isDefault") ?? true,
 				colorId: formData.get("initialSku.colorId") ?? "",
-				materialId: formData.get("initialSku.materialId") ?? "",
+				materialIds: initialSkuMaterialIds,
 				size: formData.get("initialSku.size") ?? "",
 				media,
 			},
@@ -88,7 +91,9 @@ export async function createProduct(
 		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
 		const normalizedCollectionIds = validatedData.collectionIds;
 		const normalizedColorId = validatedData.initialSku.colorId?.trim() ?? null;
-		const normalizedMaterialId = validatedData.initialSku.materialId?.trim() ?? null;
+		// Dedupe matériaux (au cas où l'UI laisse passer un doublon) tout en
+		// préservant l'ordre saisi (1er = principal).
+		const normalizedMaterialIds = Array.from(new Set(validatedData.initialSku.materialIds));
 		const normalizedSize = validatedData.initialSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
 		const normalizedDescription = validatedData.description?.trim()
@@ -152,14 +157,14 @@ export async function createProduct(
 				}
 			}
 
-			// Validate material if provided
-			if (normalizedMaterialId) {
-				const material = await tx.material.findUnique({
-					where: { id: normalizedMaterialId },
+			// Validate materials if provided (M2M)
+			if (normalizedMaterialIds.length > 0) {
+				const materials = await tx.material.findMany({
+					where: { id: { in: normalizedMaterialIds } },
 					select: { id: true },
 				});
-				if (!material) {
-					throw new Error("Le matériau spécifié n'existe pas.");
+				if (materials.length !== normalizedMaterialIds.length) {
+					throw new Error("Un ou plusieurs matériaux spécifiés n'existent pas.");
 				}
 			}
 
@@ -207,15 +212,20 @@ export async function createProduct(
 				isActive: validatedData.initialSku.isActive,
 				isDefault: validatedData.initialSku.isDefault,
 				colorId: normalizedColorId,
-				materialId: normalizedMaterialId,
 				size: normalizedSize,
 			};
 
-			// Create initial SKU
+			// Create initial SKU + matériaux M2M (ordre saisi préservé via `position`)
 			const createdSku = await tx.productSku.create({
 				data: {
 					...skuData,
 					compareAtPrice: compareAtPriceCents,
+					materials: {
+						create: normalizedMaterialIds.map((materialId, index) => ({
+							materialId,
+							position: index,
+						})),
+					},
 				},
 			});
 

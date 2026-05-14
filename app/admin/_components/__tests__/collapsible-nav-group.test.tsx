@@ -173,9 +173,9 @@ describe("CollapsibleNavGroup", () => {
 			expect(items.length).toBe(5); // Produits, Collections, Types, Couleurs, Matériaux
 		});
 
-		it("returns null when group is hidden (shop-closed mode)", () => {
+		it("returns null when group label does not match any nav group", () => {
 			const { container } = render(
-				<CollapsibleNavGroup groupLabel="Ventes" groupId="ventes-group" />,
+				<CollapsibleNavGroup groupLabel="GroupeInexistant" groupId="ghost-group" />,
 			);
 			expect(container.innerHTML).toBe("");
 		});

@@ -159,7 +159,7 @@ interface FormOverrides {
 			blurDataUrl?: string;
 		}>;
 		colorId?: string;
-		materialId?: string;
+		materialIds?: string[];
 		size?: string;
 		priceInclTaxEuros?: number;
 		compareAtPriceEuros?: number;
@@ -188,7 +188,7 @@ function createMockForm(overrides: FormOverrides = {}) {
 	const defaultInitialSku = {
 		media: [],
 		colorId: "",
-		materialId: "",
+		materialIds: [],
 		size: "",
 		priceInclTaxEuros: 0,
 		compareAtPriceEuros: undefined,
@@ -338,7 +338,7 @@ describe("CreateProductForm", () => {
 
 			expect(screen.getByText("Variante")).toBeInTheDocument();
 			expect(screen.getByText("Couleur")).toBeInTheDocument();
-			expect(screen.getByText("Matériau")).toBeInTheDocument();
+			expect(screen.getByText("Matériaux")).toBeInTheDocument();
 		});
 
 		it("renders sr-only status for screen readers", () => {

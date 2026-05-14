@@ -1,4 +1,4 @@
-import { CalendarClock, PackageX, Receipt, RotateCcw } from "lucide-react";
+import { CalendarClock, Receipt, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/shared/components/ui/badge";
 import type { DashboardAlerts } from "@/modules/dashboard/data/get-alerts";
@@ -17,11 +17,11 @@ interface DashboardAlertsProps {
 
 /**
  * Actionable alerts banner for the dashboard.
- * Renders 4 types of alerts when relevant: pending refunds, low-stock SKUs,
+ * Renders 3 types of alerts when relevant: pending refunds,
  * VAT threshold proximity, URSSAF declaration deadline.
  */
 export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: DashboardAlertsProps) {
-	const { pendingRefunds, lowStockSkus } = alerts;
+	const { pendingRefunds } = alerts;
 
 	const vatAlert =
 		vatProgress && vatProgress.progress >= VAT_PROGRESS_ALERT_THRESHOLD ? vatProgress : null;
@@ -34,8 +34,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 			? urssafDeadline
 			: null;
 
-	const hasAlerts =
-		pendingRefunds > 0 || lowStockSkus > 0 || vatAlert !== null || urssafAlert !== null;
+	const hasAlerts = pendingRefunds > 0 || vatAlert !== null || urssafAlert !== null;
 
 	if (!hasAlerts) return null;
 
@@ -91,18 +90,6 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 					<RotateCcw className="text-warning size-4" aria-hidden="true" />
 					<span className="font-medium">
 						{pendingRefunds} remboursement{pendingRefunds > 1 ? "s" : ""} en attente
-					</span>
-				</Link>
-			)}
-
-			{lowStockSkus > 0 && (
-				<Link
-					href="/admin/catalogue/produits?filter_stockStatus=low_stock"
-					className="focus-visible:ring-ring text-muted-foreground hover:bg-accent inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2"
-				>
-					<PackageX className="size-4" aria-hidden="true" />
-					<span className="font-medium">
-						{lowStockSkus} SKU{lowStockSkus > 1 ? "s" : ""} stock bas
 					</span>
 				</Link>
 			)}

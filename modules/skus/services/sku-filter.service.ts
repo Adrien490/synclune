@@ -71,13 +71,14 @@ export function matchMaterial(
 	if (!material && !materialSlug) return true;
 
 	// Pas de matériau sur le SKU = pas de match
-	if (!sku.material) return false;
+	if (!sku.materials || sku.materials.length === 0) return false;
 
 	const targetMaterial = materialSlug ?? material;
 	if (!targetMaterial) return true;
 
-	// Comparaison normalisée via slugify
-	return slugify(sku.material.name) === slugify(targetMaterial);
+	// Comparaison normalisée via slugify (any of M2M materials matches)
+	const targetSlug = slugify(targetMaterial);
+	return sku.materials.some((m) => slugify(m.material.name) === targetSlug);
 }
 
 /**

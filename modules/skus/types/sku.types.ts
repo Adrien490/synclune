@@ -30,7 +30,6 @@ export type SkuWithImages = GetProductSkuReturn & {
 		isPrimary: boolean;
 	}>;
 	compareAtPrice: number | null;
-	materialId: string | null;
 };
 
 // ============================================================================

@@ -8,6 +8,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 import type { GetProductReturn, ProductSku } from "@/modules/products/types/product.types";
 
 const PREVIEW_LIMIT = 3;
@@ -15,7 +16,8 @@ const PREVIEW_LIMIT = 3;
 function buildVariantLabel(sku: ProductSku): string {
 	const parts: string[] = [];
 	if (sku.color?.name) parts.push(sku.color.name);
-	if (sku.material?.name) parts.push(sku.material.name);
+	const materialsLabel = getSkuMaterialsLabel(sku.materials);
+	if (materialsLabel) parts.push(materialsLabel);
 	if (sku.size) parts.push(sku.size);
 	return parts.join(" · ");
 }

@@ -32,7 +32,8 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			isDefault: sku.isDefault,
 			isActive: sku.isActive,
 			colorId: sku.color?.id ?? "",
-			materialId: sku.materialId ?? "",
+			// Matériaux M2M ordonnés (1er = principal). Préserve l'ordre saisi côté admin.
+			materialIds: sku.materials?.map((m) => m.materialId) ?? [],
 			size: sku.size ?? "",
 			primaryImage: primaryImage
 				? {

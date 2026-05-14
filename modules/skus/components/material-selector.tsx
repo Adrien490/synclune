@@ -38,8 +38,9 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 	const [isPending, startTransition] = useTransition();
 	const shouldReduceMotion = useReducedMotion();
 
-	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
-	const currentMaterial = searchParams.get("material") ?? defaultSku?.material?.name ?? null;
+	// Lire l'état depuis l'URL (source de vérité), fallback sur le matériau principal du defaultSku
+	const currentMaterial =
+		searchParams.get("material") ?? defaultSku?.materials?.[0]?.material.name ?? null;
 	const currentColor = searchParams.get("color");
 	const currentSize = searchParams.get("size");
 

@@ -3,6 +3,14 @@ import type { Metadata } from "next";
 
 import { RefundDetailPage } from "@/modules/refunds/components/admin/refund-detail-page";
 import { getRefundById } from "@/modules/refunds/data/get-refund";
+import {
+	Breadcrumb,
+	BreadcrumbItem,
+	BreadcrumbLink,
+	BreadcrumbList,
+	BreadcrumbPage,
+	BreadcrumbSeparator,
+} from "@/shared/components/ui/breadcrumb";
 
 import { RefundsAdminDialogs } from "../_components/refunds-admin-dialogs";
 
@@ -33,9 +41,26 @@ export default async function RefundDetailRoute({ params }: RefundDetailRoutePro
 	}
 
 	return (
-		<>
+		<div className="space-y-6">
+			<Breadcrumb className="hidden md:flex">
+				<BreadcrumbList>
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin">Admin</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbLink href="/admin/ventes/remboursements">Remboursements</BreadcrumbLink>
+					</BreadcrumbItem>
+					<BreadcrumbSeparator />
+					<BreadcrumbItem>
+						<BreadcrumbPage>{refund.order.orderNumber}</BreadcrumbPage>
+					</BreadcrumbItem>
+				</BreadcrumbList>
+			</Breadcrumb>
+
 			<RefundDetailPage refund={refund} />
+
 			<RefundsAdminDialogs />
-		</>
+		</div>
 	);
 }

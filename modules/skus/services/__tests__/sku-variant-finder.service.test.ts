@@ -23,10 +23,16 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 			hex: "#B76E79",
 			name: "Or Rose",
 		},
-		material: {
-			id: "mat-1",
-			name: "Argent 925",
-		},
+		materials: [
+			{
+				materialId: "mat-1",
+				position: 0,
+				material: {
+					id: "mat-1",
+					name: "Argent 925",
+				},
+			},
+		],
 		images: [],
 		...overrides,
 	};
@@ -96,8 +102,14 @@ describe("findSkuByVariants", () => {
 
 	it("should match by material", () => {
 		const skus = [
-			makeSku({ id: "sku-1", material: { id: "m1", name: "Argent 925" } }),
-			makeSku({ id: "sku-2", material: { id: "m2", name: "Or 18K" } }),
+			makeSku({
+				id: "sku-1",
+				materials: [{ materialId: "m1", position: 0, material: { id: "m1", name: "Argent 925" } }],
+			}),
+			makeSku({
+				id: "sku-2",
+				materials: [{ materialId: "m2", position: 0, material: { id: "m2", name: "Or 18K" } }],
+			}),
 		];
 
 		const result = findSkuByVariants({ skus }, { material: "Or 18K" });

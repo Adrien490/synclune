@@ -5,6 +5,7 @@
  * - Générer les points forts d'un produit (UX scanabilité)
  */
 
+import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 import type { GetProductReturn } from "../types/product.types";
 import type { ProductHighlight } from "../types/product-services.types";
 
@@ -22,7 +23,7 @@ export function generateHighlights(product: GetProductReturn): ProductHighlight[
 	const highlights: ProductHighlight[] = [];
 
 	// 1. Materiau principal (priorite haute - critere d'achat cle)
-	const primaryMaterial = product.skus[0]?.material?.name;
+	const primaryMaterial = getPrimaryMaterialName(product.skus[0]?.materials);
 	if (primaryMaterial) {
 		highlights.push({
 			id: "material",

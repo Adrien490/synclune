@@ -53,7 +53,13 @@ function createCartItem(
 				},
 			]) as CartItem["sku"]["images"],
 			color: { id: "color-1", name: "Or", hex: "#FFD700" },
-			material: { id: "mat-1", name: "Acier" },
+			materials: [
+				{
+					materialId: "mat-1",
+					position: 0,
+					material: { id: "mat-1", name: "Acier" },
+				},
+			],
 			size: null,
 		},
 	} as CartItem;

@@ -48,11 +48,18 @@ export const GET_ORDER_ITEMS_DEFAULT_SELECT = {
 					hex: true,
 				},
 			},
-			material: {
+			materials: {
 				select: {
-					id: true,
-					name: true,
+					materialId: true,
+					position: true,
+					material: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			size: true,
 		},

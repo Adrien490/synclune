@@ -127,7 +127,10 @@ describe("buildProductFilterConditions", () => {
 
 		expect(result).toContainEqual({
 			skus: {
-				some: { isActive: true, material: { slug: "or-18k" } },
+				some: {
+					isActive: true,
+					materials: { some: { material: { slug: "or-18k" } } },
+				},
 			},
 		});
 	});

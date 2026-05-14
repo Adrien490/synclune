@@ -1,6 +1,9 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 import { DiscountType } from "@/app/generated/prisma/browser";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
+import { formatEuro } from "@/shared/utils/format-euro";
+
+import type { DiscountStatus } from "../types/discount.types";
 
 // ============================================================================
 // SELECT DEFINITIONS - DISCOUNT DETAIL
@@ -110,6 +113,35 @@ export const DISCOUNT_TYPE_ICONS = {
 	[DiscountType.PERCENTAGE]: "%",
 	[DiscountType.FIXED_AMOUNT]: "€",
 } as const;
+
+// ============================================================================
+// STATUS BADGE CONFIG (mutualisé liste + détail)
+// ============================================================================
+
+export const DISCOUNT_STATUS_BADGE_CONFIG: Record<
+	DiscountStatus,
+	{ label: string; variant: "default" | "secondary" | "outline" | "success" }
+> = {
+	active: { label: "Actif", variant: "success" },
+	inactive: { label: "Inactif", variant: "secondary" },
+	scheduled: { label: "Planifié", variant: "outline" },
+	expired: { label: "Expiré", variant: "secondary" },
+	exhausted: { label: "Épuisé", variant: "secondary" },
+};
+
+// ============================================================================
+// VALUE FORMATTERS (mutualisés liste + détail)
+// ============================================================================
+
+export function formatDiscountValue(type: DiscountType, value: number): string {
+	if (type === DiscountType.PERCENTAGE) return `${value}%`;
+	return formatEuro(value);
+}
+
+export function formatDiscountUsage(usageCount: number, maxUsageCount: number | null): string {
+	if (maxUsageCount === null) return `${usageCount} / ∞`;
+	return `${usageCount} / ${maxUsageCount}`;
+}
 
 // ============================================================================
 // ERROR MESSAGES

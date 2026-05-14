@@ -45,10 +45,16 @@ function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 			hex: "#FFD700",
 			name: "Or",
 		},
-		material: {
-			id: "material-1",
-			name: "Argent 925",
-		},
+		materials: [
+			{
+				materialId: "material-1",
+				position: 0,
+				material: {
+					id: "material-1",
+					name: "Argent 925",
+				},
+			},
+		],
 		images: [
 			{
 				id: "img-1",
@@ -403,7 +409,13 @@ describe("getProductCardData", () => {
 						blurDataUrl: null,
 					},
 				],
-				material: { id: "m1", name: "Sterling Silver" },
+				materials: [
+					{
+						materialId: "m1",
+						position: 0,
+						material: { id: "m1", name: "Sterling Silver" },
+					},
+				],
 				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Gold" },
 			});
 			const product = createMockProduct({ title: "Ring" }, [sku]);

@@ -45,18 +45,17 @@ export async function deleteMaterial(
 		const validatedData = validated.data;
 
 		// Check existence + SKU usage and delete atomically.
-		// La FK ProductSku.materialId est en ON DELETE RESTRICT (cf. migration
-		// 20260511103345_change_material_skus_restrict_and_add_isactive_index) :
-		// le delete lèverait P2003 si un SKU concurrent est créé entre le count
-		// et le delete. La pré-vérification reste pour produire un message UI
-		// lisible avant d'atteindre la contrainte DB.
+		// La FK ProductSkuMaterial.materialId est en ON DELETE RESTRICT (cf. migration
+		// 20260514163156_add_sku_materials_m2m) : le delete lèverait P2003 si un
+		// SKU concurrent est créé entre le count et le delete. La pré-vérification
+		// reste pour produire un message UI lisible avant d'atteindre la contrainte DB.
 		const existingMaterial = await prisma.$transaction(async (tx) => {
 			const material = await tx.material.findUnique({
 				where: { id: validatedData.id },
 				include: {
 					_count: {
 						select: {
-							skus: true,
+							skuMaterials: true,
 						},
 					},
 				},
@@ -64,7 +63,7 @@ export async function deleteMaterial(
 
 			if (!material) return null;
 
-			const skuCount = material._count.skus;
+			const skuCount = material._count.skuMaterials;
 			if (skuCount > 0) {
 				throw new BusinessError(
 					`Ce materiau est utilise par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer le materiau.`,

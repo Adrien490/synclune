@@ -53,6 +53,15 @@ vi.mock("@/shared/lib/actions", () => ({
 		const v = formData.get(key);
 		return typeof v === "string" ? v : null;
 	},
+	safeFormGetJSON: <T>(formData: FormData, key: string): T | null => {
+		const v = formData.get(key);
+		if (typeof v !== "string") return null;
+		try {
+			return JSON.parse(v) as T;
+		} catch {
+			return null;
+		}
+	},
 	BusinessError: class extends Error {},
 	validateInput: vi.fn().mockReturnValue({ data: {} }),
 	validationError: (message: string) => ({ status: ActionStatus.VALIDATION_ERROR, message }),
@@ -118,7 +127,7 @@ describe("updateProductSku", () => {
 				isActive: true,
 				isDefault: false,
 				colorId: "",
-				materialId: "",
+				materialIds: [],
 				size: "",
 				primaryImage: null,
 				galleryMedia: [],
@@ -150,7 +159,7 @@ describe("updateProductSku", () => {
 			productId: "prod-1",
 			product: { title: "Bracelet", slug: "test" },
 			color: null,
-			material: null,
+			materials: [],
 			size: null,
 		});
 		mockPrisma.productSku.updateMany.mockResolvedValue({});
@@ -223,7 +232,7 @@ describe("updateProductSku", () => {
 				isActive: false,
 				isDefault: false,
 				colorId: "",
-				materialId: "",
+				materialIds: [],
 				size: "",
 				primaryImage: null,
 				galleryMedia: [],
@@ -258,7 +267,7 @@ describe("updateProductSku", () => {
 				isActive: false,
 				isDefault: false,
 				colorId: "",
-				materialId: "",
+				materialIds: [],
 				size: "",
 				primaryImage: null,
 				galleryMedia: [],
@@ -292,7 +301,7 @@ describe("updateProductSku", () => {
 				isActive: false,
 				isDefault: false,
 				colorId: "",
-				materialId: "",
+				materialIds: [],
 				size: "",
 				primaryImage: null,
 				galleryMedia: [],

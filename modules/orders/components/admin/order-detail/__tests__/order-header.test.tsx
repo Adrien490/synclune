@@ -1,8 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { OrderHeader } from "../order-header";
 
-const { mockPermissions, mockAlertDialogOpen, mockDialogOpen } = vi.hoisted(() => ({
+const { mockPermissions, mockAlertDialogOpen, mockHaptic, mockBaseSections } = vi.hoisted(() => ({
 	mockPermissions: {
 		canMarkAsPaid: false,
 		canMarkAsShipped: false,
@@ -15,7 +14,8 @@ const { mockPermissions, mockAlertDialogOpen, mockDialogOpen } = vi.hoisted(() =
 		canMarkAsReturned: false,
 	},
 	mockAlertDialogOpen: vi.fn(),
-	mockDialogOpen: vi.fn(),
+	mockHaptic: vi.fn(),
+	mockBaseSections: [] as unknown[],
 }));
 
 vi.mock("@/modules/orders/services/order-status-validation.service", () => ({
@@ -24,8 +24,9 @@ vi.mock("@/modules/orders/services/order-status-validation.service", () => ({
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
 	useAlertDialog: () => ({ open: mockAlertDialogOpen, close: vi.fn(), isOpen: false, data: null }),
 }));
-vi.mock("@/shared/providers/dialog-store-provider", () => ({
-	useDialog: () => ({ open: mockDialogOpen, close: vi.fn(), isOpen: false, data: null }),
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
+	triggerHaptic: mockHaptic,
 }));
 vi.mock("@/app/generated/prisma/browser", () => ({
 	OrderStatus: {
@@ -39,9 +40,6 @@ vi.mock("@/app/generated/prisma/browser", () => ({
 	FulfillmentStatus: { UNFULFILLED: "UNFULFILLED", RETURNED: "RETURNED", DELIVERED: "DELIVERED" },
 }));
 
-vi.mock("@/modules/orders/components/admin/cancel-order-alert-dialog", () => ({
-	CANCEL_ORDER_DIALOG_ID: "cancel",
-}));
 vi.mock("@/modules/orders/components/admin/mark-as-paid-alert-dialog", () => ({
 	MARK_AS_PAID_DIALOG_ID: "paid",
 }));
@@ -51,24 +49,9 @@ vi.mock("@/modules/orders/components/admin/mark-as-shipped-dialog", () => ({
 vi.mock("@/modules/orders/components/admin/mark-as-delivered-alert-dialog", () => ({
 	MARK_AS_DELIVERED_DIALOG_ID: "delivered",
 }));
-vi.mock("@/modules/orders/components/admin/update-tracking-dialog", () => ({
-	UPDATE_TRACKING_DIALOG_ID: "tracking",
-}));
-vi.mock("@/modules/orders/components/admin/order-notes-dialog", () => ({
-	ORDER_NOTES_DIALOG_ID: "notes",
-}));
-vi.mock("@/modules/orders/components/admin/resend-email-dialog", () => ({
-	RESEND_EMAIL_DIALOG_ID: "resend",
-}));
-vi.mock("@/modules/orders/components/admin/mark-as-returned-alert-dialog", () => ({
-	MARK_AS_RETURNED_DIALOG_ID: "returned",
-}));
-vi.mock("@/modules/orders/components/admin/revert-to-processing-dialog", () => ({
-	REVERT_TO_PROCESSING_DIALOG_ID: "revert",
-}));
-vi.mock("@/modules/orders/components/admin/order-detail/types", () => ({}));
-vi.mock("@/modules/orders/utils/carrier.utils", () => ({
-	getCarrierLabel: (c: string) => c,
+
+vi.mock("@/modules/orders/hooks/use-order-actions", () => ({
+	useOrderActions: () => ({ sections: mockBaseSections }),
 }));
 
 vi.mock("date-fns", () => ({
@@ -77,29 +60,15 @@ vi.mock("date-fns", () => ({
 }));
 vi.mock("date-fns/locale", () => ({ fr: {} }));
 
-vi.mock("next/link", () => ({
-	default: ({ children, href, ...props }: any) => (
-		<a href={href} {...props}>
-			{children}
-		</a>
-	),
-}));
-
 vi.mock("lucide-react", () => {
 	const stub = () => <svg />;
 	return {
 		CircleCheck: stub,
 		CreditCard: stub,
 		Download: stub,
-		Edit: stub,
-		Mail: stub,
 		Ellipsis: stub,
-		PackageX: stub,
-		RotateCcw: stub,
-		StickyNote: stub,
+		Loader2: stub,
 		Truck: stub,
-		Undo2: stub,
-		CircleX: stub,
 	};
 });
 
@@ -121,33 +90,105 @@ vi.mock("@/shared/components/ui/button", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/dropdown-menu", () => ({
-	DropdownMenu: ({ children }: any) => <div>{children}</div>,
-	DropdownMenuContent: ({ children }: any) => <div>{children}</div>,
-	DropdownMenuItem: ({ children, onClick, asChild: _asChild, ...props }: any) => (
-		<button onClick={onClick} {...props}>
-			{children}
-		</button>
+// Mock ResponsiveActionMenu to render the menu items inline so they're queryable
+vi.mock("@/shared/components/responsive-action-menu", () => ({
+	ResponsiveActionMenu: ({ children }: any) => <div>{children}</div>,
+	ResponsiveActionMenuTrigger: ({ children }: any) => <div>{children}</div>,
+	ResponsiveActionMenuContent: ({ sections }: any) => (
+		<div data-testid="action-menu-content">
+			{sections.map((section: any) =>
+				section.items.map((item: any) => (
+					<button key={item.key} data-testid={`menu-item-${item.key}`} onClick={item.onSelect}>
+						{item.label}
+					</button>
+				)),
+			)}
+		</div>
 	),
-	DropdownMenuSeparator: () => <hr />,
-	DropdownMenuTrigger: ({ children }: any) => <div>{children}</div>,
 }));
 
-vi.mock("@/modules/orders/utils/carrier.utils", () => ({}));
+import { OrderHeader } from "../order-header";
 
-function createOrder(overrides = {}) {
-	return {
-		id: "order-1",
-		orderNumber: "CMD-001",
-		status: "PENDING",
-		paymentStatus: "PENDING",
-		fulfillmentStatus: "UNFULFILLED",
-		trackingNumber: null,
-		trackingUrl: null,
-		shippingCarrier: null,
-		createdAt: new Date("2026-03-01T10:00:00Z"),
-		...overrides,
-	} as Parameters<typeof OrderHeader>[0]["order"];
+function makeBaseSections() {
+	return [
+		{
+			key: "info",
+			items: [
+				{ key: "view", label: "Voir les détails" },
+				{ key: "notes", label: "Notes internes", onSelect: vi.fn() },
+			],
+		},
+		{
+			key: "emails",
+			label: "Renvoyer un email",
+			items: [
+				{ key: "email-confirmation", label: "Confirmation de commande", onSelect: vi.fn() },
+				{
+					key: "email-shipping",
+					label: "Expédition",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canMarkAsShipped,
+				},
+			],
+		},
+		{
+			key: "fulfillment",
+			items: [
+				{
+					key: "mark-paid",
+					label: "Marquer comme payée",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canMarkAsPaid,
+				},
+				{
+					key: "mark-shipped",
+					label: "Marquer comme expédiée",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canMarkAsShipped,
+				},
+				{
+					key: "mark-delivered",
+					label: "Marquer comme livrée",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canMarkAsDelivered,
+				},
+				{
+					key: "mark-returned",
+					label: "Marquer comme retourné",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canMarkAsReturned,
+				},
+				{
+					key: "revert-processing",
+					label: "Annuler l'expédition",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canRevertToProcessing,
+				},
+			].filter((i) => !i.hidden),
+		},
+		{
+			key: "refund",
+			items: [
+				{
+					key: "refund",
+					label: "Créer un remboursement",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canRefund,
+				},
+			].filter((i) => !i.hidden),
+		},
+		{
+			key: "danger",
+			items: [
+				{
+					key: "cancel",
+					label: "Annuler la commande",
+					onSelect: vi.fn(),
+					hidden: !mockPermissions.canCancel,
+				},
+			].filter((i) => !i.hidden),
+		},
+	];
 }
 
 describe("OrderHeader", () => {
@@ -162,103 +203,138 @@ describe("OrderHeader", () => {
 		mockPermissions.canMarkAsProcessing = false;
 		mockPermissions.canMarkAsReturned = false;
 		mockAlertDialogOpen.mockReset();
-		mockDialogOpen.mockReset();
+		mockHaptic.mockReset();
+		// Rebuild base sections after each permission reset
+		mockBaseSections.length = 0;
+		mockBaseSections.push(...makeBaseSections());
 	});
 
 	afterEach(cleanup);
 
-	it("renders order number", () => {
+	function refreshSections() {
+		mockBaseSections.length = 0;
+		mockBaseSections.push(...makeBaseSections());
+	}
+
+	function createOrder(overrides = {}) {
+		return {
+			id: "order-1",
+			orderNumber: "CMD-001",
+			status: "PENDING",
+			paymentStatus: "PENDING",
+			fulfillmentStatus: "UNFULFILLED",
+			trackingNumber: null,
+			trackingUrl: null,
+			shippingCarrier: null,
+			invoiceNumber: null,
+			createdAt: new Date("2026-03-01T10:00:00Z"),
+			...overrides,
+		} as Parameters<typeof OrderHeader>[0]["order"];
+	}
+
+	it("renders order number in H1", () => {
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Commande CMD-001")).toBeInTheDocument();
+		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Commande CMD-001");
 	});
 
-	it("renders creation date", () => {
+	it("H1 is visible on mobile (no hidden md:block)", () => {
+		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		const h1 = screen.getByRole("heading", { level: 1 });
+		expect(h1.className).not.toMatch(/hidden md:block/);
+	});
+
+	it("renders creation date (desktop variant)", () => {
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
 		expect(screen.getByText(/1 mars 2026 à 10h00/)).toBeInTheDocument();
 	});
 
-	it('shows "Marquer payée" button when canMarkAsPaid', () => {
+	it('shows "Marquer payée" primary button when canMarkAsPaid', () => {
 		mockPermissions.canMarkAsPaid = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Marquer payée")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Marquer payée/i })).toBeInTheDocument();
 	});
 
 	it('hides "Marquer payée" button when not canMarkAsPaid', () => {
 		mockPermissions.canMarkAsPaid = false;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.queryByText("Marquer payée")).toBeNull();
+		expect(screen.queryByRole("button", { name: /Marquer payée/i })).toBeNull();
 	});
 
 	it('shows "Marquer expédiée" when canMarkAsShipped', () => {
 		mockPermissions.canMarkAsShipped = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Marquer expédiée")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Marquer expédiée/i })).toBeInTheDocument();
 	});
 
 	it('shows "Marquer livrée" when canMarkAsDelivered', () => {
 		mockPermissions.canMarkAsDelivered = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Marquer livrée")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Marquer livrée/i })).toBeInTheDocument();
 	});
 
-	it('shows "Notes" in dropdown', () => {
+	it("triggers haptic when clicking primary button", () => {
+		mockPermissions.canMarkAsPaid = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Notes")).toBeInTheDocument();
+		fireEvent.click(screen.getByRole("button", { name: /Marquer payée/i }));
+		expect(mockHaptic).toHaveBeenCalledWith("medium");
+		expect(mockAlertDialogOpen).toHaveBeenCalled();
 	});
 
-	it('shows notes count "Notes (3)" when notesCount > 0', () => {
+	it("renders Notes internes in menu (base label without count)", () => {
+		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		expect(screen.getByText("Notes internes")).toBeInTheDocument();
+	});
+
+	it("renders notes count Notes internes (3) when notesCount > 0", () => {
 		render(<OrderHeader order={createOrder()} notesCount={3} />);
-		expect(screen.getByText("Notes (3)")).toBeInTheDocument();
+		expect(screen.getByText("Notes internes (3)")).toBeInTheDocument();
 	});
 
-	it('shows "Renvoyer un email" in dropdown', () => {
+	it("renders Exporter en CSV item in menu", () => {
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Renvoyer un email")).toBeInTheDocument();
+		expect(screen.getByText("Exporter en CSV")).toBeInTheDocument();
 	});
 
-	it('shows "Modifier le suivi" when canUpdateTracking', () => {
-		mockPermissions.canUpdateTracking = true;
+	it("hides mark-paid from menu when primary button visible (no doublon)", () => {
+		mockPermissions.canMarkAsPaid = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Modifier le suivi")).toBeInTheDocument();
+		// primary button visible
+		expect(screen.getAllByRole("button", { name: /Marquer payée/i })).toHaveLength(1);
+		// menu item filtered out
+		expect(screen.queryByText("Marquer comme payée")).toBeNull();
 	});
 
 	it('shows "Créer un remboursement" when canRefund', () => {
 		mockPermissions.canRefund = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
 		expect(screen.getByText("Créer un remboursement")).toBeInTheDocument();
 	});
 
-	it('shows "Marquer retournée" when DELIVERED and not RETURNED', () => {
-		mockPermissions.canMarkAsReturned = true;
-		render(
-			<OrderHeader
-				order={createOrder({ status: "DELIVERED", fulfillmentStatus: "DELIVERED" })}
-				notesCount={0}
-			/>,
-		);
-		expect(screen.getByText("Marquer retournée")).toBeInTheDocument();
-	});
-
-	it('hides "Marquer retournée" when fulfillmentStatus is RETURNED', () => {
-		mockPermissions.canMarkAsReturned = false;
-		render(
-			<OrderHeader
-				order={createOrder({ status: "DELIVERED", fulfillmentStatus: "RETURNED" })}
-				notesCount={0}
-			/>,
-		);
-		expect(screen.queryByText("Marquer retournée")).toBeNull();
+	it('shows "Annuler la commande" when canCancel', () => {
+		mockPermissions.canCancel = true;
+		refreshSections();
+		render(<OrderHeader order={createOrder()} notesCount={0} />);
+		expect(screen.getByText("Annuler la commande")).toBeInTheDocument();
 	});
 
 	it('shows "Annuler l\'expédition" when canRevertToProcessing', () => {
 		mockPermissions.canRevertToProcessing = true;
+		refreshSections();
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
 		expect(screen.getByText("Annuler l'expédition")).toBeInTheDocument();
 	});
 
-	it('shows "Annuler la commande" when canCancel', () => {
-		mockPermissions.canCancel = true;
+	it("ellipsis trigger has WCAG-compliant touch target classes on mobile", () => {
 		render(<OrderHeader order={createOrder()} notesCount={0} />);
-		expect(screen.getByText("Annuler la commande")).toBeInTheDocument();
+		const trigger = screen.getByRole("button", { name: /Plus d'actions/i });
+		expect(trigger.className).toMatch(/min-h-11/);
+		expect(trigger.className).toMatch(/touch-manipulation/);
 	});
 });

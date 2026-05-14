@@ -96,7 +96,7 @@ function makeMaterial(overrides: Record<string, unknown> = {}) {
 		name: "Argent 925",
 		slug: "argent-925",
 		description: null,
-		_count: { skus: 0 },
+		_count: { skuMaterials: 0 },
 		...overrides,
 	};
 }
@@ -164,14 +164,14 @@ describe("deleteMaterial", () => {
 	});
 
 	it("should return error when material is used by skus (singular)", async () => {
-		mockPrisma.material.findUnique.mockResolvedValue(makeMaterial({ _count: { skus: 1 } }));
+		mockPrisma.material.findUnique.mockResolvedValue(makeMaterial({ _count: { skuMaterials: 1 } }));
 		const result = await deleteMaterial(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("1 variante");
 	});
 
 	it("should return error when material is used by multiple skus (plural)", async () => {
-		mockPrisma.material.findUnique.mockResolvedValue(makeMaterial({ _count: { skus: 6 } }));
+		mockPrisma.material.findUnique.mockResolvedValue(makeMaterial({ _count: { skuMaterials: 6 } }));
 		const result = await deleteMaterial(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("6 variantes");

@@ -58,7 +58,13 @@ function createSkuRow(overrides: Record<string, unknown> = {}) {
 			deletedAt: null,
 		},
 		color: { id: "color123", name: "Or", hex: "#FFD700" },
-		material: { id: "mat123", name: "Argent 925" },
+		materials: [
+			{
+				materialId: "mat123",
+				position: 0,
+				material: { id: "mat123", name: "Argent 925" },
+			},
+		],
 		images: [{ url: "https://img.test/1.jpg", altText: "Bracelet", isPrimary: true }],
 		...overrides,
 	};
@@ -194,7 +200,7 @@ describe("validateSkuAndStock", () => {
 
 	it("should handle SKU without optional fields (no color, material, size)", async () => {
 		mockFetchSkuForValidation.mockResolvedValue(
-			createSkuRow({ color: null, material: null, colorId: null, size: null }),
+			createSkuRow({ color: null, materials: [], colorId: null, size: null }),
 		);
 
 		const result = await validateSkuAndStock({ skuId: SKU_ID, quantity: 1 });

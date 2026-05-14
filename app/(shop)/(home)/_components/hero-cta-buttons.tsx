@@ -16,7 +16,7 @@ export function HeroCtaButtons() {
 				<Link
 					href="/produits"
 					onClick={() => triggerHaptic("light")}
-					className="flex items-center justify-center"
+					className="flex touch-manipulation items-center justify-center"
 				>
 					Découvrir la boutique
 				</Link>
@@ -30,7 +30,7 @@ export function HeroCtaButtons() {
 				<Link
 					href="/collections"
 					onClick={() => triggerHaptic("light")}
-					className="flex items-center justify-center"
+					className="flex touch-manipulation items-center justify-center"
 				>
 					Voir les collections
 				</Link>

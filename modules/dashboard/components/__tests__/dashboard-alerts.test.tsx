@@ -9,7 +9,6 @@ import type { DashboardAlerts } from "../../types/dashboard.types";
 
 vi.mock("lucide-react", () => ({
 	CalendarClock: () => <span data-testid="icon-calendar-clock" />,
-	PackageX: () => <span data-testid="icon-package-x" />,
 	Receipt: () => <span data-testid="icon-receipt" />,
 	RotateCcw: () => <span data-testid="icon-rotate-ccw" />,
 }));
@@ -90,35 +89,6 @@ describe("DashboardAlerts", () => {
 
 		const link = screen.getByText("1 remboursement en attente").closest("a");
 		expect(link).toHaveAttribute("href", "/admin/ventes/remboursements?filter_status=PENDING");
-	});
-
-	it("renders low stock alert", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ lowStockSkus: 7 })} />);
-
-		expect(screen.getByText("7 SKUs stock bas")).toBeInTheDocument();
-	});
-
-	it("renders singular SKU text for 1 low stock", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ lowStockSkus: 1 })} />);
-
-		expect(screen.getByText("1 SKU stock bas")).toBeInTheDocument();
-	});
-
-	it("renders all alerts when all counts > 0", () => {
-		render(
-			<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 2, lowStockSkus: 5 })} />,
-		);
-
-		expect(screen.getByText("2 remboursements en attente")).toBeInTheDocument();
-		expect(screen.getByText("5 SKUs stock bas")).toBeInTheDocument();
-	});
-
-	it("renders only relevant alerts", () => {
-		render(<DashboardAlertsComponent alerts={makeAlerts({ lowStockSkus: 3 })} />);
-
-		expect(screen.getByText("3 SKUs stock bas")).toBeInTheDocument();
-		expect(screen.queryByText(/litige/)).toBeNull();
-		expect(screen.queryByText(/remboursement/)).toBeNull();
 	});
 
 	it("has role=status with aria-label", () => {

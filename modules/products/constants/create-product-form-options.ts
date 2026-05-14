@@ -16,7 +16,7 @@ export const createProductFormOpts = {
 			isDefault: true,
 			isActive: true,
 			colorId: "",
-			materialId: "",
+			materialIds: [] as string[],
 			size: "",
 			media: [] as Array<{
 				url: string;

@@ -31,10 +31,12 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 				id: true,
 				name: true,
 				slug: true,
+				// _count.skuMaterials avec filtre nested `sku.isActive: true`
+				// = nombre de SKUs actifs utilisant ce matériau (M2M)
 				_count: {
 					select: {
-						skus: {
-							where: { isActive: true },
+						skuMaterials: {
+							where: { sku: { isActive: true } },
 						},
 					},
 				},
@@ -42,7 +44,14 @@ async function fetchMaterialOptions(): Promise<MaterialOption[]> {
 			orderBy: { name: "asc" },
 		});
 
-		return materials;
+		// Renvoyer le shape historique { _count: { skus: number } } pour ne pas
+		// casser les callers (UI affiche le nombre d'utilisations en filtre/select).
+		return materials.map((m) => ({
+			id: m.id,
+			name: m.name,
+			slug: m.slug,
+			_count: { skus: m._count.skuMaterials },
+		}));
 	} catch (e) {
 		Sentry.captureException(e, {
 			tags: { module: "materials", operation: "fetchMaterialOptions" },

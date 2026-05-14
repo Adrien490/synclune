@@ -34,7 +34,8 @@ export type UpdateProductSkuFormValues = {
 	isDefault: boolean;
 	isActive: boolean;
 	colorId: string;
-	materialId: string;
+	/** Matériaux M2M ordonnés (1er = principal). Vide = aucun matériau. */
+	materialIds: string[];
 	size: string;
 	primaryImage: MediaData | undefined;
 	galleryMedia: MediaData[];

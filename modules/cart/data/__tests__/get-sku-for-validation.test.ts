@@ -55,7 +55,13 @@ function createMockSkuForValidation(overrides: Record<string, unknown> = {}) {
 		},
 		images: [{ url: "https://cdn.example.com/img.jpg", altText: "Bracelet", isPrimary: true }],
 		color: { id: "color_123", name: "Or", hex: "#FFD700" },
-		material: { id: "mat_123", name: "Argent 925" },
+		materials: [
+			{
+				materialId: "mat_123",
+				position: 0,
+				material: { id: "mat_123", name: "Argent 925" },
+			},
+		],
 		...overrides,
 	};
 }
@@ -102,7 +108,7 @@ describe("fetchSkuForValidation", () => {
 		expect(result?.product).toBeDefined();
 		expect(result?.images).toBeInstanceOf(Array);
 		expect(result?.color).toBeDefined();
-		expect(result?.material).toBeDefined();
+		expect(result?.materials).toBeDefined();
 	});
 
 	it("returns null when SKU is not found", async () => {

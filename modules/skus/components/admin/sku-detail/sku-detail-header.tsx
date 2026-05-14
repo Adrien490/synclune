@@ -16,6 +16,7 @@ import { CopyButton } from "@/shared/components/copy-button";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
+import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 
 interface SkuDetailHeaderProps {
 	sku: SkuDetailReturn;
@@ -24,7 +25,8 @@ interface SkuDetailHeaderProps {
 function buildVariantLabel(sku: SkuDetailReturn): string {
 	const parts: string[] = [];
 	if (sku.color?.name) parts.push(sku.color.name);
-	if (sku.material?.name) parts.push(sku.material.name);
+	const materialsLabel = getSkuMaterialsLabel(sku.materials);
+	if (materialsLabel) parts.push(materialsLabel);
 	if (sku.size) parts.push(sku.size);
 	return parts.join(" · ");
 }

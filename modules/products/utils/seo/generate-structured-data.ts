@@ -2,6 +2,7 @@ import { SITE_URL } from "@/shared/constants/seo-config";
 import type { GetProductReturn } from "@/modules/products/types/product.types";
 import type { ProductSku } from "@/modules/products/types/product-services.types";
 import type { ProductReviewStatistics, ReviewPublic } from "@/modules/reviews/types/review.types";
+import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 
 interface StructuredDataOptions {
 	product: GetProductReturn;
@@ -232,8 +233,8 @@ export function generateStructuredData({
 		...(product.type && {
 			category: product.type.label,
 		}),
-		...(selectedSku?.material?.name && {
-			material: selectedSku.material.name,
+		...(getPrimaryMaterialName(selectedSku?.materials) && {
+			material: getPrimaryMaterialName(selectedSku?.materials),
 		}),
 		...(selectedSku?.color && {
 			color: selectedSku.color.name,

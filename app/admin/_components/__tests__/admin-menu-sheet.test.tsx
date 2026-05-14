@@ -199,13 +199,13 @@ describe("AdminMenuSheet", () => {
 			expect(screen.getByText("Tableau de bord")).toBeInTheDocument();
 		});
 
-		it("renders navigation groups (shop-closed mode)", () => {
+		it("renders navigation groups (shop-live mode)", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
 			expect(screen.getByText("Catalogue")).toBeInTheDocument();
 			expect(screen.getByText("Configuration")).toBeInTheDocument();
-			// Hidden in shop-closed mode (SHOP_LIVE=false)
-			expect(screen.queryByText("Ventes")).not.toBeInTheDocument();
-			expect(screen.queryByText("Marketing")).not.toBeInTheDocument();
+			// Visibles en mode boutique en ligne (SHOP_LIVE=true)
+			expect(screen.getByText("Ventes")).toBeInTheDocument();
+			expect(screen.getByText("Marketing")).toBeInTheDocument();
 		});
 
 		it('sets aria-label="Navigation administration" on nav', () => {
@@ -214,12 +214,12 @@ describe("AdminMenuSheet", () => {
 			expect(nav).toBeInTheDocument();
 		});
 
-		it("renders navigation items (shop-closed mode)", () => {
+		it("renders navigation items (shop-live mode)", () => {
 			render(<AdminMenuSheet user={defaultUser} />);
 			expect(screen.getByText("Produits")).toBeInTheDocument();
 			expect(screen.getByText("Boutique")).toBeInTheDocument();
-			// Hidden in shop-closed mode
-			expect(screen.queryByText("Commandes")).not.toBeInTheDocument();
+			// Visible en mode boutique en ligne
+			expect(screen.getByText("Commandes")).toBeInTheDocument();
 		});
 
 		it("marks active route with aria-current", () => {
