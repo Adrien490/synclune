@@ -66,12 +66,12 @@ export function ProductsBulkActionsBar({
 	collections = [],
 }: ProductsBulkActionsBarProps) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
-	const pending = useAdminListPendingContextOptional();
+	const pendingCtx = useAdminListPendingContextOptional();
 	const [pendingDialog, setPendingDialog] = useState<PendingDialog>(null);
 	const [attachOpen, setAttachOpen] = useState(false);
 	const [moreOpen, setMoreOpen] = useState(false);
 
-	const archive = useBulkActionWithToast<ArchiveSnapshot>(bulkArchiveProducts, {
+	const archiveAction = useBulkActionWithToast<ArchiveSnapshot>(bulkArchiveProducts, {
 		undo: {
 			buildUndoFormData: (snap) => {
 				const fd = new FormData();
@@ -85,19 +85,31 @@ export function ProductsBulkActionsBar({
 	const deleteAction = useBulkActionWithToast(bulkDeleteProducts);
 	const statusAction = useBulkActionWithToast(bulkChangeProductStatus);
 
-	const isPending = archive.isPending || deleteAction.isPending || statusAction.isPending;
+	const isPending = archiveAction.isPending || deleteAction.isPending || statusAction.isPending;
 	const isBottomBar = presentation === "bottom-bar";
 	const buttonSize = isBottomBar ? "default" : "sm";
 	const noSelection = selectedCount === 0;
 
-	// Clear pending state when the action lifecycle completes (success or error).
+	// Clear pending UI flag when the action lifecycle completes.
+	// Note: `BulkSelectionContext.selectedIds` is volontairement préservé après
+	// erreur (le hook `useBulkActionWithToast` ne `clear()` que sur SUCCESS) —
+	// permet à l'admin de retry sans re-sélectionner manuellement.
 	const wasPendingRef = useRef(false);
 	useEffect(() => {
 		if (wasPendingRef.current && !isPending) {
-			pending?.clearPending();
+			pendingCtx?.clearPending();
 		}
 		wasPendingRef.current = isPending;
-	}, [isPending, pending]);
+	}, [isPending, pendingCtx]);
+
+	// Évite un pending stale dans le context si l'admin navigue ailleurs pendant
+	// un bulk en cours (le composant unmount avant la transition isPending→false).
+	useEffect(() => {
+		return () => {
+			pendingCtx?.clearPending();
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	function confirmArchive() {
 		if (!pendingDialog || pendingDialog.kind !== "archive") return;
@@ -105,8 +117,8 @@ export function ProductsBulkActionsBar({
 		const fd = new FormData();
 		fd.set("productIds", JSON.stringify(ids));
 		fd.set("targetStatus", pendingDialog.target);
-		pending?.startPending(ids, pendingDialog.target === "ARCHIVED" ? "archive" : "restore");
-		archive.submit(fd, { ids, targetStatus: pendingDialog.target });
+		pendingCtx?.startPending(ids, pendingDialog.target === "ARCHIVED" ? "archive" : "restore");
+		archiveAction.submit(fd, { ids, targetStatus: pendingDialog.target });
 		setPendingDialog(null);
 	}
 
@@ -114,7 +126,7 @@ export function ProductsBulkActionsBar({
 		const ids = Array.from(selectedIds);
 		const fd = new FormData();
 		fd.set("productIds", JSON.stringify(ids));
-		pending?.startPending(ids, "delete");
+		pendingCtx?.startPending(ids, "delete");
 		deleteAction.submit(fd);
 		setPendingDialog(null);
 	}
@@ -125,7 +137,7 @@ export function ProductsBulkActionsBar({
 		const fd = new FormData();
 		fd.set("productIds", JSON.stringify(ids));
 		fd.set("targetStatus", pendingDialog.target);
-		pending?.startPending(ids, "status");
+		pendingCtx?.startPending(ids, "status");
 		statusAction.submit(fd);
 		setPendingDialog(null);
 	}
@@ -269,7 +281,9 @@ export function ProductsBulkActionsBar({
 							disabled={isPending}
 							aria-busy={isPending || undefined}
 						>
-							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+							{isPending && (
+								<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+							)}
 							{archiveTarget === "ARCHIVED" ? "Remiser" : "Réexposer"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
@@ -306,7 +320,9 @@ export function ProductsBulkActionsBar({
 							disabled={isPending}
 							aria-busy={isPending || undefined}
 						>
-							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+							{isPending && (
+								<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+							)}
 							{statusTarget === "PUBLIC" ? "Publier" : "Repasser en brouillon"}
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>
@@ -340,7 +356,9 @@ export function ProductsBulkActionsBar({
 							disabled={isPending}
 							aria-busy={isPending || undefined}
 						>
-							{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+							{isPending && (
+								<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+							)}
 							Supprimer définitivement
 						</ResponsiveAlertDialogAction>
 					</ResponsiveAlertDialogFooter>

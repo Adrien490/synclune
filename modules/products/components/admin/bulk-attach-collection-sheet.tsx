@@ -129,7 +129,7 @@ export function BulkAttachCollectionSheet({
 					</div>
 
 					<ScrollArea
-						className="max-h-[40dvh] overscroll-contain"
+						className="max-h-[min(60dvh,420px)] overscroll-contain"
 						aria-label="Collections disponibles"
 					>
 						{filtered.length === 0 ? (
@@ -183,7 +183,9 @@ export function BulkAttachCollectionSheet({
 						disabled={!selectedId || isPending || productIds.length === 0}
 						aria-busy={isPending || undefined}
 					>
-						{isPending && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
+						{isPending && (
+							<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+						)}
 						{isPending ? "Ajout en cours…" : "Lier à la collection"}
 					</Button>
 					<Button

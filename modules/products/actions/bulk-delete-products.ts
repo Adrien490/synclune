@@ -23,17 +23,8 @@ import { bulkDeleteProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 
 /**
- * Server Action — suppression en lot (soft-delete).
- *
- * Refuse PUBLIC pour safety : seuls les DRAFT et ARCHIVED sont supprimables
- * en bulk. Les SKUs sont soft-deleted en cascade, les CartItems et
- * WishlistItems referencant les SKUs sont purges (parite avec `deleteProduct`).
- * Les fichiers UploadThing sont preserves jusqu'au hard delete (retention 10 ans).
- *
- * Refuse aussi les produits avec OrderItems associes (conservation historique).
- *
- * formData :
- * - `productIds` : JSON array de cuid2 (1..100)
+ * Soft-delete en lot. Refuse PUBLIC (safety : archiver d'abord) et les produits
+ * avec OrderItems (conservation historique commande légal 10 ans).
  */
 export async function bulkDeleteProducts(
 	_: ActionState | undefined,

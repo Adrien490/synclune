@@ -23,16 +23,8 @@ import { bulkAttachCollectionProductsSchema } from "../schemas/product.schemas";
 import { getProductInvalidationTags } from "../utils/cache.utils";
 
 /**
- * Server Action — ajout en lot de produits a une collection.
- *
- * Cree les associations `productCollection` manquantes en une seule transaction
- * via `createMany({ skipDuplicates: true })`. Ne touche pas aux autres
- * collections deja attachees (additif uniquement, parite avec le pattern
- * "Manage collections" du detail produit).
- *
- * formData :
- * - `productIds`   : JSON array de cuid2 (1..100)
- * - `collectionId` : cuid2 (collection cible)
+ * Lie en lot des produits à une collection — additif uniquement (skipDuplicates).
+ * Les collections déjà attachées sur chaque produit restent intactes.
  */
 export async function bulkAttachCollectionProducts(
 	_: ActionState | undefined,

@@ -1,6 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+
+import { useAdminListBulkPendingStore } from "@/shared/stores/use-admin-list-bulk-pending-store";
 
 /**
  * Action en cours sur un sous-ensemble d'items d'une liste admin.
@@ -70,6 +72,14 @@ export function AdminListPendingProvider({ children }: AdminListPendingProviderP
 		startPending,
 		clearPending,
 	};
+
+	// Publie l'état global pour les contrôles hors-tree (ex. ProductsBottomBar).
+	useEffect(() => {
+		useAdminListBulkPendingStore.setState({ pendingKind });
+		return () => {
+			useAdminListBulkPendingStore.setState({ pendingKind: null });
+		};
+	}, [pendingKind]);
 
 	return (
 		<AdminListPendingContext.Provider value={value}>{children}</AdminListPendingContext.Provider>

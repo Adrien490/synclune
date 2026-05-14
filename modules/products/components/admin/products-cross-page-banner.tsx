@@ -5,12 +5,16 @@ import { useTransition } from "react";
 
 import { useBulkSelectionContext } from "@/shared/components/data-table";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { ActionStatus } from "@/shared/types/server-action";
 import { cn } from "@/shared/utils/cn";
 import { toast } from "@/shared/utils/toast";
 
-import { getFilteredProductIds } from "../../actions/get-filtered-product-ids";
-import type { ProductFilters } from "../../types/product.types";
-import type { SortField } from "../../types/product.types";
+import {
+	getFilteredProductIds,
+	type FilteredProductIdsData,
+} from "../../actions/get-filtered-product-ids";
+import { BULK_PRODUCT_ACTION_LIMIT } from "../../constants/product.constants";
+import type { ProductFilters, SortField } from "../../types/product.types";
 
 interface ProductsCrossPageBannerProps {
 	/** Nombre total de produits matching le filtre courant (toutes pages). */
@@ -47,7 +51,8 @@ export function ProductsCrossPageBanner({
 	const hasMore = totalCount > pageItemIds.length;
 	const isComplete = selectedCount >= totalCount;
 	const visible = selectionMode && pageState === "all" && hasMore && !isComplete;
-	const cappedTotal = Math.min(totalCount, 100);
+	const cappedTotal = Math.min(totalCount, BULK_PRODUCT_ACTION_LIMIT);
+	const isAtCap = totalCount > BULK_PRODUCT_ACTION_LIMIT;
 
 	const handleSelectAll = () => {
 		triggerHaptic("medium");
@@ -57,14 +62,15 @@ export function ProductsCrossPageBanner({
 				sortBy: filterParams.sortBy ?? "created-descending",
 				filters: filterParams.filters ?? {},
 			});
-			if ("error" in result) {
-				toast.error(result.error);
+			if (result.status !== ActionStatus.SUCCESS) {
+				toast.error(result.message);
 				return;
 			}
-			extendSelection(result.ids);
-			const verb = result.ids.length > 1 ? "ajoutés" : "ajouté";
+			const data = result.data as FilteredProductIdsData;
+			extendSelection(data.ids);
+			const verb = data.ids.length > 1 ? "ajoutés" : "ajouté";
 			toast.success(
-				`${result.ids.length} bijou${result.ids.length > 1 ? "x" : ""} ${verb} à la sélection`,
+				`${data.ids.length} bijou${data.ids.length > 1 ? "x" : ""} ${verb} à la sélection`,
 			);
 		});
 	};
@@ -74,7 +80,7 @@ export function ProductsCrossPageBanner({
 	return (
 		<div
 			className={cn(
-				"bg-primary/5 border-primary/20 flex items-center justify-between gap-2 rounded-md border px-3 py-2",
+				"bg-primary/5 border-primary/20 flex items-center justify-between gap-2 rounded-md border px-3 py-2 md:hidden",
 				"motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-1 motion-safe:duration-150",
 				className,
 			)}
@@ -100,9 +106,11 @@ export function ProductsCrossPageBanner({
 				)}
 				aria-busy={isFetching || undefined}
 			>
-				{isFetching ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : null}
+				{isFetching ? (
+					<Loader2 className="size-3.5 motion-safe:animate-spin" aria-hidden="true" />
+				) : null}
 				Sélectionner les {cappedTotal}
-				{totalCount > 100 ? " (max)" : ""}
+				{isAtCap ? " (max)" : ""}
 			</button>
 		</div>
 	);

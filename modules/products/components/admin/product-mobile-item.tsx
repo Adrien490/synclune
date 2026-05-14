@@ -112,8 +112,8 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 				variant="outline"
 				size="sm"
 				className={cn(
-					"w-full gap-3 motion-safe:transition-opacity motion-safe:duration-200",
-					isPendingItem && "opacity-60",
+					"w-full gap-3 motion-safe:transition-[opacity,background-color] motion-safe:duration-200",
+					isPendingItem && "dark:bg-muted/20 opacity-60 dark:opacity-50",
 				)}
 				aria-busy={isPendingItem || undefined}
 			>
@@ -148,7 +148,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 								aria-live="polite"
 								style={{ viewTransitionName: `product-status-${product.id}` }}
 							>
-								<Loader2 className="size-3 animate-spin" aria-hidden="true" />
+								<Loader2 className="size-3 motion-safe:animate-spin" aria-hidden="true" />
 								{pendingLabel}
 							</Badge>
 						) : (

@@ -31,22 +31,9 @@ const STATUS_VERB: Record<ProductStatus, { singular: string; plural: string }> =
 };
 
 /**
- * Server Action — changement de statut en lot (DRAFT/PUBLIC/ARCHIVED).
- *
- * Complement `bulkArchiveProducts` (qui ne couvre que PUBLIC↔ARCHIVED) en
- * supportant aussi les transitions vers/depuis DRAFT — cas "publier 5 brouillons"
- * ou "depublier 3 fiches en revision".
- *
- * Regles :
- * - Skip les produits dont le statut courant === targetStatus
- * - Skip les transitions invalides (selon `canTransitionProductStatus`)
- * - Pour `PUBLIC`, exige `validateProductForPublication` (≥1 SKU actif avec
- *   stock + image principale). Skip ceux qui echouent avec rapport detaille.
- * - Pour `ARCHIVED`, desactive les SKUs (parite avec `bulkArchiveProducts`).
- *
- * formData :
- * - `productIds`   : JSON array de cuid2 (1..100)
- * - `targetStatus` : "DRAFT" | "PUBLIC" | "ARCHIVED"
+ * Change le statut en lot vers DRAFT/PUBLIC/ARCHIVED. Complement de
+ * `bulkArchiveProducts` (qui ne couvre que PUBLIC↔ARCHIVED) pour les flows
+ * "publier N brouillons" / "depublier N fiches en revision".
  */
 export async function bulkChangeProductStatus(
 	_: ActionState | undefined,

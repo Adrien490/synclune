@@ -8,6 +8,7 @@ import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
 import { StickyActionBar, type StickyActionBarItem } from "@/shared/components/sticky-action-bar";
 import { getAdminDrawerIds } from "@/shared/constants/admin-drawer-ids";
 import { useActiveListControls, useToolbarDrawer } from "@/shared/hooks";
+import { useAdminListBulkPendingStore } from "@/shared/stores/use-admin-list-bulk-pending-store";
 
 import {
 	ADMIN_PRODUCTS_SORT_LABELS,
@@ -53,6 +54,8 @@ function ProductsBottomBarInner({
 	const { hasActiveSearch, searchValue, hasActiveSort, activeFilterCount } =
 		useActiveListControls();
 	const { refresh, isPending: isRefreshing } = useRefreshProducts();
+	const bulkPendingKind = useAdminListBulkPendingStore((s) => s.pendingKind);
+	const isBulkInFlight = bulkPendingKind !== null;
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -109,9 +112,13 @@ function ProductsBottomBarInner({
 			key: "refresh",
 			icon: RotateCw,
 			label: "Actualiser",
-			ariaLabel: isRefreshing ? "Actualisation en cours" : "Actualiser la liste",
+			ariaLabel: isBulkInFlight
+				? "Actualisation indisponible pendant une action groupée"
+				: isRefreshing
+					? "Actualisation en cours"
+					: "Actualiser la liste",
 			onClick: () => refresh(),
-			disabled: isRefreshing,
+			disabled: isRefreshing || isBulkInFlight,
 			haptic: "medium",
 			announcement: isRefreshing ? "Actualisation en cours" : undefined,
 		},
