@@ -34,23 +34,31 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 			<div className={cn("flex gap-8", hasProducts && "flex-row")}>
 				{/* Left zone: categories */}
 				<div className={cn(hasProducts ? "flex-1" : "w-full")}>
-					<MegaMenuColumn title="Catégories" items={productTypes} columns={2} />
+					<MegaMenuColumn
+						title="Catégories"
+						subtitle="Bijoux par type"
+						items={productTypes}
+						columns={2}
+					/>
 				</div>
 
 				{/* Right zone: featured products */}
 				{hasProducts && (
 					<div
-						className="border-border w-[320px] shrink-0 border-l pl-8"
+						className="border-border w-[360px] shrink-0 border-l pl-8"
 						role="region"
 						aria-labelledby={featuredHeadingId}
 					>
 						<h3
 							id={featuredHeadingId}
-							className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase"
+							className="text-foreground font-display mb-1 text-sm leading-tight font-medium"
 						>
 							Nouveautés
 						</h3>
-						<div className="grid grid-cols-3 gap-3">
+						<p className="text-muted-foreground font-display mb-3 text-xs italic">
+							Pièces récentes de l&apos;atelier
+						</p>
+						<div className="grid grid-cols-2 gap-4">
 							{featuredProducts.map((product, index) => (
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
@@ -62,23 +70,21 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 											"ease-out motion-safe:transition-all motion-safe:duration-[var(--duration-slow)]",
 											"hover:bg-accent/50",
 											"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
-											"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
 										)}
-										style={{ animationDelay: `${(index + 1) * 60}ms` }}
 									>
 										<div
 											className={cn(
 												"bg-muted relative aspect-square overflow-hidden rounded-lg",
 												"ease-out motion-safe:transition-[transform,box-shadow] motion-safe:duration-[var(--duration-slow)]",
 												"motion-safe:can-hover:group-hover/product:-translate-y-0.5",
-												"can-hover:group-hover/product:shadow-md",
+												"can-hover:group-hover/product:shadow-premium-rose",
 											)}
 										>
 											<Image
 												src={product.imageUrl}
 												alt=""
 												fill
-												sizes="(max-width: 1024px) 80px, 96px"
+												sizes="(max-width: 1024px) 140px, 160px"
 												priority={index === 0}
 												className="object-cover"
 												placeholder={product.blurDataUrl ? "blur" : "empty"}
@@ -100,7 +106,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 											)}
 										</div>
 										<div className="min-w-0">
-											<p className="text-foreground line-clamp-1 text-xs font-medium">
+											<p className="text-foreground line-clamp-1 text-sm font-medium">
 												{product.title}
 											</p>
 											<p className="text-muted-foreground text-xs">

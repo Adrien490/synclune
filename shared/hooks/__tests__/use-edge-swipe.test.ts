@@ -253,18 +253,18 @@ describe("useEdgeSwipe", () => {
 
 			const { unmount } = renderHook(() => useEdgeSwipe(vi.fn(), false));
 
-			// 3 listeners added: touchstart, touchmove, touchend
+			// 4 listeners added: touchstart, touchmove, touchend, touchcancel
 			const touchEvents = addSpy.mock.calls
 				.map(([event]) => event)
 				.filter((e) => e.startsWith("touch"));
-			expect(touchEvents).toEqual(["touchstart", "touchmove", "touchend"]);
+			expect(touchEvents).toEqual(["touchstart", "touchmove", "touchend", "touchcancel"]);
 
 			unmount();
 
 			const removedTouchEvents = removeSpy.mock.calls
 				.map(([event]) => event)
 				.filter((e) => (e as string).startsWith("touch"));
-			expect(removedTouchEvents).toEqual(["touchstart", "touchmove", "touchend"]);
+			expect(removedTouchEvents).toEqual(["touchstart", "touchmove", "touchend", "touchcancel"]);
 
 			addSpy.mockRestore();
 			removeSpy.mockRestore();

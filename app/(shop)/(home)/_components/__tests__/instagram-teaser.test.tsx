@@ -188,4 +188,45 @@ describe("InstagramTeaser", () => {
 			expect(icon).toHaveAttribute("aria-hidden", "true");
 		}
 	});
+
+	it("applies viewTransitionName on the visual wrapper for cross-route morph", () => {
+		const { container } = render(<InstagramTeaser />);
+
+		const visual = container.querySelector<HTMLElement>(
+			'[style*="view-transition-name"], [style*="viewTransitionName"]',
+		);
+		// Section + visual wrapper both have a viewTransitionName — find the visual one
+		const visuals = Array.from(
+			container.querySelectorAll<HTMLElement>('[style*="view-transition-name"]'),
+		);
+		const names = visuals.map((el) => el.style.viewTransitionName);
+		expect(names).toContain("instagram-teaser-visual");
+		expect(visual).not.toBeNull();
+	});
+
+	it("renders the handle badge as an aria-hidden pointer-only redundant link", () => {
+		const { container } = render(<InstagramTeaser />);
+
+		const badge = container.querySelector<HTMLAnchorElement>(
+			'a[aria-hidden="true"][tabindex="-1"]',
+		);
+		expect(badge).not.toBeNull();
+		expect(badge?.getAttribute("href")).toBe("https://www.instagram.com/synclune.bijoux/");
+		expect(badge?.getAttribute("target")).toBe("_blank");
+		expect(badge?.getAttribute("rel")).toBe("noopener noreferrer");
+		expect(badge?.textContent).toContain("@synclune.bijoux");
+	});
+
+	it("triggers selection haptic when handle badge is clicked", () => {
+		const { container } = render(<InstagramTeaser />);
+
+		const badge = container.querySelector<HTMLAnchorElement>(
+			'a[aria-hidden="true"][tabindex="-1"]',
+		);
+		expect(badge).not.toBeNull();
+		fireEvent.click(badge!);
+
+		expect(mockHaptic).toHaveBeenCalledTimes(1);
+		expect(mockHaptic).toHaveBeenCalledWith("selection");
+	});
 });

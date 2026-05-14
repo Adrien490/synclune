@@ -1,9 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { Pipette, X } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { normalizeHex } from "../utils/hex-normalizer";
+
+// EyeDropper API feature detect — Chrome 95+ / Edge 95+ desktop only.
+// useSyncExternalStore garantit la cohérence SSR (false) → CSR (true) sans
+// hydration mismatch et sans hook useEffect+useState (anti-pattern React 19).
+type EyeDropperWindow = Window & {
+	EyeDropper?: new () => { open: () => Promise<{ sRGBHex: string }> };
+};
+const noopSubscribe = () => () => {};
+const getEyeDropperSnapshot = () =>
+	typeof window !== "undefined" && "EyeDropper" in (window as EyeDropperWindow);
+const getEyeDropperServerSnapshot = () => false;
 
 type HexColorInputProps = {
 	value: string;
@@ -41,6 +53,11 @@ export function HexColorInput({
 	"aria-describedby": ariaDescribedBy,
 }: HexColorInputProps) {
 	const haptic = useHaptic();
+	const hasEyeDropper = useSyncExternalStore(
+		noopSubscribe,
+		getEyeDropperSnapshot,
+		getEyeDropperServerSnapshot,
+	);
 	// Local text state for the raw input being typed (allows partial input "F5").
 	// Sync with the controlled `value` prop using "Adjusting state during render"
 	// (React docs) — only resets when the parent updates the prop, not when
@@ -52,8 +69,6 @@ export function HexColorInput({
 		setLastSyncedValue(value);
 		setText(stripHash(normalizeHex(value)));
 	}
-
-	const isPartial = text.length > 0 && text.length !== 6;
 
 	const inputId = id ?? "hex-color-input";
 
@@ -96,9 +111,30 @@ export function HexColorInput({
 		}
 	};
 
+	const handleEyeDropper = async () => {
+		if (disabled || !hasEyeDropper) return;
+		try {
+			const eyeDropper = new (window as EyeDropperWindow).EyeDropper!();
+			const result = await eyeDropper.open();
+			const normalized = normalizeHex(result.sRGBHex);
+			if (normalized !== normalizeHex(value)) {
+				onChange(normalized);
+				haptic("success");
+			}
+		} catch {
+			// User cancelled (AbortError) — no-op
+		}
+	};
+
+	const handleClear = () => {
+		if (disabled) return;
+		setText("");
+		onChange("");
+	};
+
 	return (
 		<div className="flex flex-col gap-2" data-slot="hex-color-input">
-			<div className="flex items-stretch gap-3">
+			<div className="flex items-stretch gap-2">
 				<div className="border-border relative size-11 shrink-0 overflow-hidden rounded-md border">
 					<input
 						type="color"
@@ -109,6 +145,18 @@ export function HexColorInput({
 						className="absolute inset-0 size-full cursor-pointer appearance-none border-0 bg-transparent p-0 disabled:cursor-not-allowed [&::-moz-color-swatch]:rounded-none [&::-moz-color-swatch]:border-0 [&::-webkit-color-swatch]:rounded-none [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
 					/>
 				</div>
+				{hasEyeDropper && (
+					<button
+						type="button"
+						onClick={handleEyeDropper}
+						disabled={disabled}
+						aria-label="Piocher une couleur à l'écran"
+						title="Piocher une couleur à l'écran"
+						className="border-border bg-background hover:bg-muted focus-visible:ring-ring inline-flex size-11 shrink-0 items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+					>
+						<Pipette className="size-4" aria-hidden="true" />
+					</button>
+				)}
 				<div className="relative flex-1">
 					<span
 						className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 font-mono text-base select-none md:text-sm"
@@ -131,16 +179,27 @@ export function HexColorInput({
 						autoCorrect="off"
 						spellCheck={false}
 						maxLength={6}
-						aria-invalid={ariaInvalid ?? isPartial}
+						aria-invalid={ariaInvalid ?? false}
 						aria-describedby={ariaDescribedBy ?? `${inputId}-help`}
 						className={cn(
-							"border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent py-2 pr-3 pl-7 font-mono text-base tracking-wider shadow-xs transition-[color,box-shadow,border-color] outline-none md:text-sm",
+							"border-input min-h-11 w-full min-w-0 rounded-md border bg-transparent py-2 pl-7 font-mono text-base tracking-wider shadow-xs transition-[color,box-shadow,border-color] outline-none md:text-sm",
+							text.length > 0 ? "pr-9" : "pr-3",
 							"hover:border-ring/70",
 							"focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
 							"aria-invalid:border-destructive aria-invalid:ring-destructive/20",
 							"disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
 						)}
 					/>
+					{text.length > 0 && !disabled && (
+						<button
+							type="button"
+							onClick={handleClear}
+							aria-label="Effacer le code couleur"
+							className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-2 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+						>
+							<X className="size-3.5" aria-hidden="true" />
+						</button>
+					)}
 				</div>
 			</div>
 			<p id={`${inputId}-help`} className="text-muted-foreground text-xs">

@@ -131,6 +131,15 @@ describe("MegaMenuCollections", () => {
 		expect(heading?.textContent).toBe("Collections");
 	});
 
+	it("renders the heading with font-display and atelier subtitle", () => {
+		render(<MegaMenuCollections collections={collections} />);
+
+		const heading = screen.getByRole("heading", { level: 3, name: "Collections" });
+		expect(heading).toBeInTheDocument();
+		expect(heading.className).toMatch(/font-display/);
+		expect(screen.getByText("L'univers Synclune")).toBeInTheDocument();
+	});
+
 	it("marks active collection with aria-current='page'", () => {
 		mockPathname = "/collections/mariage";
 		render(<MegaMenuCollections collections={collections} />);

@@ -17,7 +17,7 @@ import { cn } from "@/shared/utils/cn";
 import { ChevronRight, ExternalLink, LayoutDashboard, LogOut, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getAllNavItems, navigationData } from "./navigation-config";
 
 interface AdminMenuSheetProps {
@@ -35,37 +35,11 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const [showLogout, setShowLogout] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const pathname = usePathname();
-	const navRef = useRef<HTMLElement>(null);
-	const searchInputRef = useRef<HTMLInputElement>(null);
 
 	// Close on navigation
 	useEffect(() => {
 		if (isOpen) closeMenu();
 	}, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
-	// Focus management : scroll vers l'élément actif (pattern iOS Settings).
-	// Pas d'autofocus search input — anti-pattern mobile (clavier virtuel
-	// s'ouvre à chaque tap Menu, intention nav ≠ recherche). Si l'utilisateur
-	// veut filtrer, il tape la search bar lui-même.
-	// Double rAF garantit que le drawer Vaul a fini son layout initial avant
-	// scrollIntoView (évite scroll mal-placé pendant l'animation slide-in).
-	useEffect(() => {
-		if (!isOpen || !navRef.current) return;
-
-		let cancelled = false;
-		const rafId = requestAnimationFrame(() => {
-			requestAnimationFrame(() => {
-				if (cancelled || !navRef.current) return;
-				const activeLink = navRef.current.querySelector<HTMLAnchorElement>('[aria-current="page"]');
-				activeLink?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-			});
-		});
-
-		return () => {
-			cancelled = true;
-			cancelAnimationFrame(rafId);
-		};
-	}, [isOpen]);
 
 	function handleLogoutClick() {
 		setSearchQuery("");
@@ -133,7 +107,6 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 							aria-hidden="true"
 						/>
 						<input
-							ref={searchInputRef}
 							type="search"
 							inputMode="search"
 							enterKeyHint="search"
@@ -158,7 +131,6 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				<div className="min-h-0 flex-1">
 					<ScrollFade axis="vertical" fadeFromClass="from-muted" className="overscroll-contain">
 						<nav
-							ref={navRef}
 							aria-label="Navigation administration"
 							className="px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
 						>

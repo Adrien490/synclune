@@ -128,20 +128,26 @@ describe("HexColorInput", () => {
 		expect(onChange).not.toHaveBeenCalled();
 	});
 
-	it("sets aria-invalid=true while text length is partial", async () => {
+	it("keeps aria-invalid=false while typing partial input (WCAG 3.3.1 — no premature error)", async () => {
 		render(<HexColorInput value="#000000" onChange={vi.fn()} />);
 		const input = getHexTextInput();
 		await userEvent.clear(input);
 		await userEvent.type(input, "FF");
-		expect(input).toHaveAttribute("aria-invalid", "true");
+		expect(input).toHaveAttribute("aria-invalid", "false");
 	});
 
-	it("clears aria-invalid once text reaches a valid length", async () => {
+	it("keeps aria-invalid=false once text reaches a valid length", async () => {
 		render(<HexColorInput value="#000000" onChange={vi.fn()} />);
 		const input = getHexTextInput();
 		await userEvent.clear(input);
 		await userEvent.type(input, "FF5733");
 		expect(input).toHaveAttribute("aria-invalid", "false");
+	});
+
+	it("forwards parent aria-invalid prop when provided (server-side error)", () => {
+		render(<HexColorInput value="#000000" onChange={vi.fn()} aria-invalid={true} />);
+		const input = getHexTextInput();
+		expect(input).toHaveAttribute("aria-invalid", "true");
 	});
 
 	it("reverts to last emitted value on blur with partial input", async () => {
@@ -216,5 +222,89 @@ describe("HexColorInput", () => {
 	it("respects a custom id prop", () => {
 		render(<HexColorInput value="#000000" onChange={vi.fn()} id="my-color" />);
 		expect(getHexTextInput().id).toBe("my-color");
+	});
+
+	describe("Clear button", () => {
+		it("does not render when text input is empty", () => {
+			render(<HexColorInput value="" onChange={vi.fn()} />);
+			expect(
+				screen.queryByRole("button", { name: /Effacer le code couleur/ }),
+			).not.toBeInTheDocument();
+		});
+
+		it("renders when text has content", () => {
+			render(<HexColorInput value="#FF5733" onChange={vi.fn()} />);
+			expect(screen.getByRole("button", { name: /Effacer le code couleur/ })).toBeInTheDocument();
+		});
+
+		it("clears text and emits empty onChange when clicked", () => {
+			const onChange = vi.fn();
+			render(<HexColorInput value="#FF5733" onChange={onChange} />);
+			const clearBtn = screen.getByRole("button", { name: /Effacer le code couleur/ });
+			fireEvent.click(clearBtn);
+			expect(onChange).toHaveBeenCalledWith("");
+			expect(getHexTextInput().value).toBe("");
+		});
+
+		it("does not render when disabled", () => {
+			render(<HexColorInput value="#FF5733" onChange={vi.fn()} disabled />);
+			expect(
+				screen.queryByRole("button", { name: /Effacer le code couleur/ }),
+			).not.toBeInTheDocument();
+		});
+	});
+
+	describe("EyeDropper API", () => {
+		afterEach(() => {
+			delete (window as unknown as { EyeDropper?: unknown }).EyeDropper;
+		});
+
+		it("does not render the pipette button when EyeDropper API is unavailable", () => {
+			render(<HexColorInput value="#000000" onChange={vi.fn()} />);
+			expect(
+				screen.queryByRole("button", { name: /Piocher une couleur à l'écran/ }),
+			).not.toBeInTheDocument();
+		});
+
+		it("renders the pipette button when EyeDropper API is available", () => {
+			class MockEyeDropper {
+				open = vi.fn().mockResolvedValue({ sRGBHex: "#aa00ff" });
+			}
+			(window as unknown as { EyeDropper: unknown }).EyeDropper = MockEyeDropper;
+			render(<HexColorInput value="#000000" onChange={vi.fn()} />);
+			expect(
+				screen.getByRole("button", { name: /Piocher une couleur à l'écran/ }),
+			).toBeInTheDocument();
+		});
+
+		it("opens EyeDropper and emits normalized hex + success haptic on success", async () => {
+			const openSpy = vi.fn().mockResolvedValue({ sRGBHex: "#aa00ff" });
+			class MockEyeDropper {
+				open = openSpy;
+			}
+			(window as unknown as { EyeDropper: unknown }).EyeDropper = MockEyeDropper;
+			const onChange = vi.fn();
+			render(<HexColorInput value="#000000" onChange={onChange} />);
+			const btn = screen.getByRole("button", { name: /Piocher une couleur à l'écran/ });
+			fireEvent.click(btn);
+			await vi.waitFor(() => {
+				expect(openSpy).toHaveBeenCalled();
+				expect(onChange).toHaveBeenCalledWith("#AA00FF");
+				expect(mockHaptic).toHaveBeenCalledWith("success");
+			});
+		});
+
+		it("ignores AbortError when user cancels EyeDropper", async () => {
+			class MockEyeDropper {
+				open = vi.fn().mockRejectedValue(new Error("AbortError"));
+			}
+			(window as unknown as { EyeDropper: unknown }).EyeDropper = MockEyeDropper;
+			const onChange = vi.fn();
+			render(<HexColorInput value="#000000" onChange={onChange} />);
+			const btn = screen.getByRole("button", { name: /Piocher une couleur à l'écran/ });
+			fireEvent.click(btn);
+			await new Promise((r) => setTimeout(r, 10));
+			expect(onChange).not.toHaveBeenCalled();
+		});
 	});
 });

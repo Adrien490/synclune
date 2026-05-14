@@ -66,6 +66,25 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			}
 		}
 
+		// Check hex uniqueness (skip if unchanged) — empêche les doublons
+		// visuellement identiques entre 2 couleurs distinctes côté storefront.
+		if (validatedData.hex !== existingColor.hex) {
+			const hexExists = await prisma.color.findFirst({
+				where: {
+					hex: validatedData.hex,
+					deletedAt: null,
+					NOT: { id: validatedData.id },
+				},
+				select: { name: true },
+			});
+
+			if (hexExists) {
+				return error(
+					`Cette couleur (${validatedData.hex}) existe déjà sous le nom « ${hexExists.name} ».`,
+				);
+			}
+		}
+
 		// Generate new slug if name changed
 		const slug =
 			validatedData.name !== existingColor.name

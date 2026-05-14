@@ -3,11 +3,11 @@ import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { InstagramIcon } from "@/shared/components/icons/instagram-icon";
 import { PlaceholderImage } from "@/shared/components/placeholder-image";
 import { SectionTitle } from "@/shared/components/section-title";
-import { BRAND } from "@/shared/constants/brand";
 import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { cn } from "@/shared/utils/cn";
 
 import { InstagramFollowButton } from "./instagram-follow-button";
+import { InstagramHandleBadge } from "./instagram-handle-badge";
 
 const HIGHLIGHTS = [
 	"Nouvelles créations en avant-première",
@@ -37,7 +37,10 @@ export function InstagramTeaser() {
 						once
 					>
 						<div className="relative mx-auto w-full max-w-md lg:max-w-none">
-							<div className="relative shadow-md">
+							<div
+								className="relative shadow-md"
+								style={{ viewTransitionName: "instagram-teaser-visual" }}
+							>
 								<PlaceholderImage
 									preserveAspect
 									className="aspect-[4/5] rounded-2xl sm:aspect-[5/6]"
@@ -48,13 +51,7 @@ export function InstagramTeaser() {
 									aria-hidden="true"
 									className="from-foreground/40 via-foreground/10 absolute inset-x-0 bottom-0 h-1/3 rounded-b-2xl bg-linear-to-t to-transparent"
 								/>
-								<div
-									aria-hidden="true"
-									className="bg-background/95 text-foreground absolute right-4 bottom-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium shadow-md backdrop-blur"
-								>
-									<InstagramIcon decorative size={16} />
-									{BRAND.social.instagram.handle}
-								</div>
+								<InstagramHandleBadge />
 							</div>
 						</div>
 					</Reveal>

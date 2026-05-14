@@ -1,5 +1,7 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
@@ -7,6 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useAppForm } from "@/shared/components/forms";
 import { createCollection } from "@/modules/collections/actions/create-collection";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
@@ -34,6 +37,7 @@ export function CreateCollectionForm({
 	className,
 }: CreateCollectionFormProps = {}) {
 	const router = useRouter();
+	const haptic = useHaptic();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
 	const form = useAppForm({
@@ -176,8 +180,17 @@ export function CreateCollectionForm({
 				<div className="flex justify-end">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
-							<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
-								{isPending ? "Création…" : "Créer"}
+							<Button
+								type="submit"
+								size="input"
+								disabled={!canSubmit || isPending}
+								onClick={() => haptic("medium")}
+								className="w-full sm:w-auto sm:min-w-56"
+							>
+								{isPending && (
+									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								)}
+								<span>{isPending ? "Création…" : "Créer"}</span>
 							</Button>
 						)}
 					</form.Subscribe>

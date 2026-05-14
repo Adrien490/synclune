@@ -31,7 +31,7 @@ export async function getNavbarMenuData() {
 
 	const [collectionsData, productTypesData] = await Promise.allSettled([
 		getCollections({
-			perPage: 4,
+			perPage: 3,
 			sortBy: "products-descending",
 			filters: { hasProducts: true, status: CollectionStatus.PUBLIC },
 		}),

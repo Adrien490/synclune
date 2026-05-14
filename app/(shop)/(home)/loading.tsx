@@ -3,6 +3,7 @@ import { AtelierSectionSkeleton } from "./_components/atelier-section";
 import { HeroReassuranceBannerSkeleton } from "./_components/hero-reassurance-banner-skeleton";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { HomeFaqSkeleton } from "./_components/home-faq-skeleton";
+import { InstagramTeaserSkeleton } from "./_components/instagram-teaser-skeleton";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
 
@@ -22,6 +23,7 @@ export default function HomeLoading() {
 			<CollectionsSectionSkeleton collectionsCount={6} />
 			<ReviewsSectionSkeleton />
 			<AtelierSectionSkeleton />
+			<InstagramTeaserSkeleton />
 			<HomeFaqSkeleton />
 		</div>
 	);

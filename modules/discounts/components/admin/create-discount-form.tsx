@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 
@@ -65,8 +66,17 @@ export function CreateDiscountForm({ className }: CreateDiscountFormProps) {
 				<div className="flex justify-end">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
-							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Création…" : "Créer"}
+							<Button
+								type="submit"
+								size="input"
+								disabled={!canSubmit || isPending}
+								onClick={() => haptic("medium")}
+								className="w-full sm:w-auto sm:min-w-56"
+							>
+								{isPending && (
+									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								)}
+								<span>{isPending ? "Création…" : "Créer"}</span>
 							</Button>
 						)}
 					</form.Subscribe>

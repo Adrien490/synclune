@@ -54,6 +54,20 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 			return error("Ce nom de couleur existe deja. Veuillez en choisir un autre.");
 		}
 
+		// Check hex uniqueness — empêche les doublons visuellement identiques
+		// (ex: "Doré" et "Or jaune 18K" partageant #D4AF37 produiraient des SKUs
+		// avec pastilles strictement identiques en boutique).
+		const existingHex = await prisma.color.findFirst({
+			where: { hex: validatedData.hex, deletedAt: null },
+			select: { name: true },
+		});
+
+		if (existingHex) {
+			return error(
+				`Cette couleur (${validatedData.hex}) existe déjà sous le nom « ${existingHex.name} ».`,
+			);
+		}
+
 		// Generate unique slug automatically
 		const slug = await generateSlug(prisma, "color", validatedData.name);
 

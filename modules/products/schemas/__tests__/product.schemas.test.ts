@@ -20,6 +20,7 @@ vi.mock("@/shared/lib/media-validation", () => ({
 import {
 	getProductSchema,
 	createProductSchema,
+	updateProductSchema,
 	deleteProductSchema,
 	toggleProductStatusSchema,
 	productFiltersSchema,
@@ -411,6 +412,154 @@ describe("createProductSchema", () => {
 		if (result.success) {
 			expect(result.data.collectionIds).toEqual([]);
 		}
+	});
+});
+
+// ============================================================================
+// updateProductSchema
+// ============================================================================
+
+describe("updateProductSchema", () => {
+	const validInput = {
+		productId: VALID_CUID,
+		title: "Bague en or rose",
+		status: "PUBLIC",
+		defaultSku: {
+			skuId: VALID_CUID,
+			priceInclTaxEuros: 99.99,
+			inventory: 10,
+			isActive: true,
+			media: [
+				{
+					url: VALID_IMAGE_URL,
+					mediaType: "IMAGE",
+				},
+			],
+		},
+	};
+
+	it("should accept valid product update data", () => {
+		const result = updateProductSchema.safeParse(validInput);
+		expect(result.success).toBe(true);
+	});
+
+	it("should reject when productId is missing", () => {
+		const { productId: _p, ...withoutId } = validInput;
+		const result = updateProductSchema.safeParse(withoutId);
+		expect(result.success).toBe(false);
+	});
+
+	it("should reject when defaultSku.skuId is missing", () => {
+		const { skuId: _s, ...skuWithoutId } = validInput.defaultSku;
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: skuWithoutId,
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("should reject when defaultSku media is empty (cross-field refinement)", () => {
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: {
+				...validInput.defaultSku,
+				media: [],
+			},
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const paths = result.error.issues.map((i) => i.path.join("."));
+			expect(paths.some((p) => p.includes("defaultSku.media"))).toBe(true);
+		}
+	});
+
+	it("should reject when first media is a video (cross-field refinement)", () => {
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: {
+				...validInput.defaultSku,
+				media: [
+					{
+						url: "https://utfs.io/f/test-video.mp4",
+						mediaType: "VIDEO",
+					},
+				],
+			},
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const paths = result.error.issues.map((i) => i.path.join("."));
+			expect(paths.some((p) => p.includes("defaultSku.media"))).toBe(true);
+		}
+	});
+
+	it("should reject when first media URL has a video extension and mediaType is omitted", () => {
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: {
+				...validInput.defaultSku,
+				media: [
+					{
+						url: "https://utfs.io/f/test-video.mp4",
+					},
+				],
+			},
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const paths = result.error.issues.map((i) => i.path.join("."));
+			expect(paths.some((p) => p.includes("defaultSku.media"))).toBe(true);
+		}
+	});
+
+	it("should accept when a video is positioned after an image", () => {
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: {
+				...validInput.defaultSku,
+				media: [
+					{ url: VALID_IMAGE_URL, mediaType: "IMAGE" },
+					{ url: "https://utfs.io/f/test-video.mp4", mediaType: "VIDEO" },
+				],
+			},
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it("should reject when compareAtPrice is less than price (cross-field refinement)", () => {
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: {
+				...validInput.defaultSku,
+				priceInclTaxEuros: 100,
+				compareAtPriceEuros: 50,
+			},
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const paths = result.error.issues.map((i) => i.path.join("."));
+			expect(paths.some((p) => p.includes("compareAtPriceEuros"))).toBe(true);
+		}
+	});
+
+	it("should reject when media URLs are not unique", () => {
+		const result = updateProductSchema.safeParse({
+			...validInput,
+			defaultSku: {
+				...validInput.defaultSku,
+				media: [
+					{ url: VALID_IMAGE_URL, mediaType: "IMAGE" },
+					{ url: VALID_IMAGE_URL, mediaType: "IMAGE" },
+				],
+			},
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it("should reject status when omitted (no default in update)", () => {
+		const { status: _st, ...withoutStatus } = validInput;
+		const result = updateProductSchema.safeParse(withoutStatus);
+		expect(result.success).toBe(false);
 	});
 });
 

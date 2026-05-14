@@ -130,10 +130,36 @@ describe("updateColor", () => {
 		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("existe deja"));
 	});
 
-	it("does not check name uniqueness when name unchanged", async () => {
+	it("does not check uniqueness when name and hex unchanged", async () => {
 		mockValidateInput.mockReturnValue({ data: { id: COLOR_ID, name: "Or", hex: "#FFD700" } });
 		await updateColor(undefined, createMockFormData({ id: COLOR_ID, name: "Or", hex: "#FFD700" }));
 		expect(mockPrisma.color.findFirst).not.toHaveBeenCalled();
+	});
+
+	it("returns error when hex already used by another color", async () => {
+		// name unchanged ("Or"), hex changing (#FFD700 → #B76E79). Skip name check,
+		// hex check fires and finds another color using #B76E79.
+		mockValidateInput.mockReturnValue({ data: { id: COLOR_ID, name: "Or", hex: "#B76E79" } });
+		mockPrisma.color.findFirst.mockResolvedValueOnce({ name: "Or rose 18K" });
+		const _result = await updateColor(
+			undefined,
+			createMockFormData({ id: COLOR_ID, name: "Or", hex: "#B76E79" }),
+		);
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("#B76E79"));
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("Or rose 18K"));
+		expect(mockPrisma.color.update).not.toHaveBeenCalled();
+	});
+
+	it("does not check hex uniqueness when hex unchanged", async () => {
+		// name change but hex same: only name check fires, not hex check.
+		mockValidateInput.mockReturnValue({
+			data: { id: COLOR_ID, name: "Or jaune 24K", hex: "#FFD700" },
+		});
+		await updateColor(
+			undefined,
+			createMockFormData({ id: COLOR_ID, name: "Or jaune 24K", hex: "#FFD700" }),
+		);
+		expect(mockPrisma.color.findFirst).toHaveBeenCalledTimes(1);
 	});
 
 	it("generates new slug when name changes", async () => {

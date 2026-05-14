@@ -3,6 +3,8 @@
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
+import { Loader2 } from "lucide-react";
+
 import { createColor } from "@/modules/colors/actions/create-color";
 import { ColorFormFields } from "@/modules/colors/components/admin/color-form-fields";
 import { ColorLibrarySheet } from "@/modules/colors/components/admin/color-library-sheet";
@@ -120,8 +122,17 @@ export function CreateColorForm({
 				<div className="flex justify-end">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
-							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement…" : "Créer"}
+							<Button
+								type="submit"
+								size="input"
+								disabled={!canSubmit || isPending}
+								onClick={() => haptic("medium")}
+								className="w-full sm:w-auto sm:min-w-56"
+							>
+								{isPending && (
+									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								)}
+								<span>{isPending ? "Enregistrement…" : "Créer"}</span>
 							</Button>
 						)}
 					</form.Subscribe>

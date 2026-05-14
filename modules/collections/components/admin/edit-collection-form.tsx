@@ -1,5 +1,7 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
+
 import { CollectionStatus } from "@/app/generated/prisma/enums";
 import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
 import { AdminFormFooter } from "@/shared/components/admin-form-footer";
@@ -7,6 +9,7 @@ import { Button } from "@/shared/components/ui/button";
 import { useAppForm } from "@/shared/components/forms";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
@@ -37,6 +40,7 @@ export function EditCollectionForm({
 	className,
 }: EditCollectionFormProps) {
 	const router = useRouter();
+	const haptic = useHaptic();
 	const isMobile = useIsMobile();
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 
@@ -173,8 +177,17 @@ export function EditCollectionForm({
 				<div className="flex justify-end">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
-							<Button type="submit" disabled={!canSubmit || isPending} className="min-w-35">
-								{isPending ? "Enregistrement…" : "Enregistrer"}
+							<Button
+								type="submit"
+								size="input"
+								disabled={!canSubmit || isPending}
+								onClick={() => haptic("medium")}
+								className="w-full sm:w-auto sm:min-w-56"
+							>
+								{isPending && (
+									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								)}
+								<span>{isPending ? "Enregistrement…" : "Enregistrer"}</span>
 							</Button>
 						)}
 					</form.Subscribe>

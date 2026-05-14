@@ -81,8 +81,14 @@ export async function Footer() {
 					<div className="mb-8 grid gap-8 sm:mb-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
 						{/* Colonne 1: Logo + phrase perso */}
 						<div className="order-1 space-y-4">
-							<div className="mb-4" style={{ viewTransitionName: "shop-logo-footer" }}>
-								<Logo href="/" size={40} quality={75} className="lg:[&_>_div]:size-12" />
+							<div className="mb-4">
+								<Logo
+									href="/"
+									size={40}
+									quality={75}
+									className="lg:[&_>_div]:size-12"
+									viewTransitionName="shop-logo-footer"
+								/>
 							</div>
 							<div className="max-w-xs space-y-2">
 								<p className="text-muted-foreground text-sm/6 antialiased">

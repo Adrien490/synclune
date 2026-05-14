@@ -3,7 +3,7 @@ import { CONTAINER_CLASS } from "@/shared/constants/spacing";
 
 export function HeroReassuranceBannerSkeleton() {
 	return (
-		<section aria-hidden="true" className="bg-muted/15 border-border/40 border-y">
+		<section aria-hidden="true" className="bg-muted/15 border-border/40 hidden border-y md:block">
 			<div className={CONTAINER_CLASS}>
 				<ul className="grid grid-cols-2 gap-x-3 gap-y-4 py-5 sm:py-6 md:grid-cols-4">
 					{Array.from({ length: 4 }).map((_, index) => (

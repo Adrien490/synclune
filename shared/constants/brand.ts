@@ -11,7 +11,9 @@ export const BRAND = {
 
 	logo: {
 		url: "/logo.webp",
-		alt: "Logo Synclune - Créations artisanales faites main",
+		alt: "Synclune — Créations artisanales faites main",
+		blurDataURL:
+			"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGZpbHRlciBpZD0iYiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMiIvPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVhMGMwIiBmaWx0ZXI9InVybCgjYikiLz48L3N2Zz4=",
 	},
 
 	social: {

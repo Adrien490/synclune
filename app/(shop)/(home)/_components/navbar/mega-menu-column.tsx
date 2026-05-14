@@ -37,6 +37,8 @@ const ITEM_ICON_MAP: Record<string, LucideIcon> = {
 interface MegaMenuColumnProps {
 	/** Column title displayed as section header */
 	title: string;
+	/** Optional subtitle rendered under the title (italic, atelier microcopy) */
+	subtitle?: string;
 	/** Navigation items to display in the column */
 	items: NavItemChild[];
 	/** Optional "View all" link at the bottom */
@@ -60,7 +62,13 @@ interface MegaMenuColumnProps {
  * - Optional multi-column grid layout
  * - Visual hierarchy: first item styled as primary CTA
  */
-export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuColumnProps) {
+export function MegaMenuColumn({
+	title,
+	subtitle,
+	items,
+	viewAllLink,
+	columns,
+}: MegaMenuColumnProps) {
 	const headingId = useId();
 	const pathname = usePathname();
 
@@ -75,10 +83,16 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 		<div role="region" aria-labelledby={headingId}>
 			<h3
 				id={headingId}
-				className="text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase"
+				className={cn(
+					"text-foreground font-display text-sm leading-tight font-medium",
+					subtitle ? "mb-1" : "mb-3",
+				)}
 			>
 				{title}
 			</h3>
+			{subtitle && (
+				<p className="text-muted-foreground font-display mb-3 text-xs italic">{subtitle}</p>
+			)}
 
 			{/* Primary CTA link with distinct styling */}
 			{primaryItem && (
@@ -93,7 +107,6 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 							"text-foreground",
 							"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 							"mb-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]",
-							"motion-safe:animate-[menu-item-in_0.25s_ease-out_both]",
 							pathname === primaryItem.href && "bg-accent font-medium",
 						)}
 					>
@@ -112,15 +125,11 @@ export function MegaMenuColumn({ title, items, viewAllLink, columns }: MegaMenuC
 					columns === 3 && "grid grid-cols-3 space-y-0 gap-x-4 gap-y-0.5",
 				)}
 			>
-				{restItems.map((item, index) => {
+				{restItems.map((item) => {
 					const isActive = pathname === item.href;
 					const Icon = item.iconKey ? (ITEM_ICON_MAP[item.iconKey] ?? Gem) : null;
 					return (
-						<li
-							key={item.href}
-							className="motion-safe:animate-[menu-item-in_0.25s_ease-out_both]"
-							style={{ animationDelay: `${(index + 1) * 40}ms` }}
-						>
+						<li key={item.href}>
 							<NavigationMenuLink asChild>
 								<Link
 									href={item.href}

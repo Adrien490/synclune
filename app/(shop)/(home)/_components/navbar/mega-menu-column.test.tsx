@@ -50,12 +50,25 @@ describe("MegaMenuColumn", () => {
 		expect(container.innerHTML).toBe("");
 	});
 
-	it("renders a heading with the title", () => {
+	it("renders a heading with the title and font-display", () => {
 		render(<MegaMenuColumn title="Créations" items={items} />);
 
 		const heading = screen.getByRole("heading", { name: "Créations" });
 		expect(heading).toBeInTheDocument();
 		expect(heading.tagName).toBe("H3");
+		expect(heading.className).toMatch(/font-display/);
+	});
+
+	it("renders a subtitle when provided", () => {
+		render(<MegaMenuColumn title="Créations" subtitle="Bijoux par type" items={items} />);
+
+		expect(screen.getByText("Bijoux par type")).toBeInTheDocument();
+	});
+
+	it("does not render a subtitle when not provided", () => {
+		const { container } = render(<MegaMenuColumn title="Créations" items={items} />);
+
+		expect(container.querySelector("p.italic")).toBeNull();
 	});
 
 	it("renders a region with aria-labelledby pointing to the heading", () => {

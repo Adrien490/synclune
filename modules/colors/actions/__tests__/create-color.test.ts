@@ -128,6 +128,18 @@ describe("createColor", () => {
 		expect(result.message).toContain("existe");
 	});
 
+	it("should return error when hex already exists (different name)", async () => {
+		// 1st call (name check) → null, 2nd call (hex check) → match
+		mockPrisma.color.findFirst
+			.mockResolvedValueOnce(null)
+			.mockResolvedValueOnce({ name: "Or jaune 18K" });
+		const result = await createColor(undefined, validFormData);
+		expect(result.status).toBe(ActionStatus.ERROR);
+		expect(result.message).toContain("#B76E79");
+		expect(result.message).toContain("Or jaune 18K");
+		expect(mockPrisma.color.create).not.toHaveBeenCalled();
+	});
+
 	it("should generate slug and create color", async () => {
 		const result = await createColor(undefined, validFormData);
 		expect(mockGenerateSlug).toHaveBeenCalled();

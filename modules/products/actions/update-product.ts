@@ -45,7 +45,7 @@ export async function updateProduct(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 2. Extraction des donnees du FormData
-		const media = safeFormGetJSON<unknown[]>(formData, "defaultSku.galleryMedia") ?? [];
+		const media = safeFormGetJSON<unknown[]>(formData, "defaultSku.media") ?? [];
 
 		const rawData = {
 			productId: formData.get("productId"),
@@ -150,11 +150,19 @@ export async function updateProduct(
 			: null;
 
 		// 8. Prepare images with isPrimary flag (first = primary)
-		// Note: La validation que le premier média est une IMAGE (pas VIDEO) est faite
-		// dans le schéma Zod (updateProductSchema.refine)
+		// La validation que le premier média est une IMAGE (pas VIDEO) est faite
+		// dans le schéma Zod (updateProductSchema.refine). On signale toute violation
+		// d'invariant pour détecter un éventuel bypass du schéma.
+		const firstMedia = validatedData.defaultSku.media[0];
+		if (firstMedia?.mediaType === "VIDEO") {
+			logger.warn("Schema invariant violated: first media is VIDEO post-validation", {
+				action: "updateProduct",
+				productId: validatedData.productId,
+				skuId: validatedData.defaultSku.skuId,
+			});
+		}
 		const allImages = validatedData.defaultSku.media.map((media, index) => ({
 			...media,
-			mediaType: index === 0 ? ("IMAGE" as const) : media.mediaType, // Force IMAGE for first
 			isPrimary: index === 0,
 			position: index,
 		}));

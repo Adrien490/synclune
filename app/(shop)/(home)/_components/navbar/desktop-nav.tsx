@@ -108,8 +108,9 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 								className={cn(
 									"fixed! right-0! left-0! w-screen!",
 									"top-(--navbar-height)!",
-									"mt-0! rounded-none! border-0! p-0!",
-									"bg-background border-border border-b shadow-md",
+									"mt-0! rounded-none! p-0!",
+									// Subtle rose hairline at the top — atelier signature, brand identity touch
+									"bg-background border-b-border border-x-0! border-t border-b border-t-[var(--color-glow-pink)] shadow-md",
 									"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-1 data-[state=open]:duration-[var(--duration-normal)]",
 									"data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-[var(--duration-fast)]",
 									"motion-reduce:animate-none",

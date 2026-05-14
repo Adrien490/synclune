@@ -49,7 +49,7 @@ describe("ColorFormFields", () => {
 
 	it("clicking a suggestion updates the hex and triggers haptic", () => {
 		render(<Harness />);
-		const goldButton = screen.getByRole("button", { name: /Or jaune \(#D4AF37\)/ });
+		const goldButton = screen.getByRole("button", { name: /^Sélectionner Or jaune \(#D4AF37\)/ });
 		fireEvent.click(goldButton);
 		expect(mockHaptic).toHaveBeenCalledWith("light");
 		expect(screen.getByText("#D4AF37")).toBeInTheDocument();
@@ -57,16 +57,16 @@ describe("ColorFormFields", () => {
 
 	it("disables suggestion buttons when isPending", () => {
 		render(<Harness isPending />);
-		const goldButton = screen.getByRole("button", { name: /Or jaune/ });
+		const goldButton = screen.getByRole("button", { name: /^Sélectionner Or jaune/ });
 		expect(goldButton).toBeDisabled();
 	});
 
 	it("aria-pressed reflects current selection", () => {
-		render(<Harness defaultValues={{ hex: "#D4AF37" }} />);
-		const goldButton = screen.getByRole("button", { name: /Or jaune/ });
+		render(<Harness defaultValues={{ name: "Test", hex: "#D4AF37" }} />);
+		const goldButton = screen.getByRole("button", { name: /^Sélectionner Or jaune/ });
 		expect(goldButton).toHaveAttribute("aria-pressed", "true");
 
-		const silverButton = screen.getByRole("button", { name: /Argent/ });
+		const silverButton = screen.getByRole("button", { name: /^Sélectionner Argent/ });
 		expect(silverButton).toHaveAttribute("aria-pressed", "false");
 	});
 
@@ -89,5 +89,69 @@ describe("ColorFormFields", () => {
 		render(<Harness defaultValues={{ hex: "#zz" }} />);
 		// Preview hex placeholder is the masked string when hex is invalid
 		expect(screen.getByText("#______")).toBeInTheDocument();
+	});
+
+	it("renders contrast warning for very light hex (≥0.85 luminance)", () => {
+		render(<Harness defaultValues={{ name: "Nacre", hex: "#FAFAFA" }} />);
+		expect(
+			screen.getByText(/Couleur claire — une bordure de contraste sera ajoutée en boutique/),
+		).toBeInTheDocument();
+	});
+
+	it("does not render contrast warning for medium luminance hex", () => {
+		render(<Harness defaultValues={{ name: "Or rose", hex: "#B76E79" }} />);
+		expect(screen.queryByText(/Couleur claire — une bordure de contraste/)).not.toBeInTheDocument();
+	});
+
+	it("renders aria-live preview update for screen readers", () => {
+		render(<Harness defaultValues={{ name: "Or jaune", hex: "#D4AF37" }} />);
+		const live = document.querySelector('[aria-live="polite"]');
+		expect(live).toBeInTheDocument();
+		expect(live?.textContent).toContain("Or jaune");
+		expect(live?.textContent).toContain("#D4AF37");
+	});
+
+	it("shows autosuggest name button when hex matches library and name empty", () => {
+		render(<Harness defaultValues={{ name: "", hex: "#D4AF37" }} />);
+		// COLOR_LIBRARY entry: "Or jaune 18K" #D4AF37
+		expect(
+			screen.getByRole("button", { name: /Utiliser « Or jaune 18K » comme nom/ }),
+		).toBeInTheDocument();
+	});
+
+	it("autosuggest button fills name field on click", () => {
+		render(<Harness defaultValues={{ name: "", hex: "#D4AF37" }} />);
+		const btn = screen.getByRole("button", { name: /Utiliser « Or jaune 18K » comme nom/ });
+		fireEvent.click(btn);
+		expect(mockHaptic).toHaveBeenCalledWith("light");
+		const nameInput = screen.getByLabelText(/Nom/, { selector: "input" }) as HTMLInputElement;
+		expect(nameInput.value).toBe("Or jaune 18K");
+	});
+
+	it("does not show autosuggest when name is already filled", () => {
+		render(<Harness defaultValues={{ name: "Mon or perso", hex: "#D4AF37" }} />);
+		expect(
+			screen.queryByRole("button", { name: /Utiliser « Or jaune 18K »/ }),
+		).not.toBeInTheDocument();
+	});
+
+	it("does not show autosuggest when hex does not match any library entry", () => {
+		render(<Harness defaultValues={{ name: "", hex: "#ABCDEF" }} />);
+		expect(screen.queryByRole("button", { name: /Utiliser « / })).not.toBeInTheDocument();
+	});
+
+	it("renders 3 storefront-size mini-previews under main swatch", () => {
+		render(<Harness defaultValues={{ name: "Or jaune", hex: "#D4AF37" }} />);
+		expect(screen.getByText(/Boutique :/)).toBeInTheDocument();
+	});
+
+	it("aligns inline suggestion hexes with library (Saphir #0F52BA, Émeraude #50C878)", () => {
+		render(<Harness />);
+		expect(
+			screen.getByRole("button", { name: /^Sélectionner Saphir \(#0F52BA\)/ }),
+		).toBeInTheDocument();
+		expect(
+			screen.getByRole("button", { name: /^Sélectionner Émeraude \(#50C878\)/ }),
+		).toBeInTheDocument();
 	});
 });

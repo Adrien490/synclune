@@ -44,10 +44,19 @@ vi.mock("@/shared/components/animations/hand-drawn-accent", () => ({
 
 // Mock Logo
 vi.mock("@/shared/components/logo", () => ({
-	Logo: ({ href }: { href: string; [key: string]: unknown }) => (
-		<a href={href} data-testid="logo">
-			Logo
-		</a>
+	Logo: ({
+		href,
+		viewTransitionName,
+	}: {
+		href: string;
+		viewTransitionName?: string;
+		[key: string]: unknown;
+	}) => (
+		<span style={{ viewTransitionName }}>
+			<a href={href} data-testid="logo">
+				Logo
+			</a>
+		</span>
 	),
 }));
 

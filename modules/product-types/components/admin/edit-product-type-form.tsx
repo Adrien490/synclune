@@ -1,5 +1,6 @@
 "use client";
 
+import { Loader2 } from "lucide-react";
 import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
@@ -166,8 +167,17 @@ export function EditProductTypeForm({
 				<div className="flex justify-end">
 					<form.Subscribe selector={(state) => [state.canSubmit]}>
 						{([canSubmit]) => (
-							<Button disabled={!canSubmit || isPending} type="submit">
-								{isPending ? "Enregistrement…" : "Enregistrer"}
+							<Button
+								type="submit"
+								size="input"
+								disabled={!canSubmit || isPending}
+								onClick={() => haptic("medium")}
+								className="w-full sm:w-auto sm:min-w-56"
+							>
+								{isPending && (
+									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+								)}
+								<span>{isPending ? "Enregistrement…" : "Enregistrer"}</span>
 							</Button>
 						)}
 					</form.Subscribe>

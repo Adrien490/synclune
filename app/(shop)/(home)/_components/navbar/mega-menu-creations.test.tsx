@@ -35,13 +35,16 @@ vi.mock("@/shared/components/ui/navigation-menu", () => ({
 vi.mock("./mega-menu-column", () => ({
 	MegaMenuColumn: ({
 		title,
+		subtitle,
 		items,
 	}: {
 		title: string;
+		subtitle?: string;
 		items: Array<{ href: string; label: string }>;
 	}) => (
 		<div data-testid="mega-menu-column">
 			<h3>{title}</h3>
+			{subtitle && <p data-testid="column-subtitle">{subtitle}</p>}
 			<ul>
 				{items.map((item) => (
 					<li key={item.href}>
@@ -122,10 +125,19 @@ describe("MegaMenuCreations", () => {
 		expect(screen.getByText("150 €")).toBeInTheDocument();
 	});
 
-	it("renders the Nouveautés section header", () => {
+	it("renders the Nouveautés section header with font-display + atelier subtitle", () => {
 		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={featuredProducts} />);
 
-		expect(screen.getByText("Nouveautés")).toBeInTheDocument();
+		const heading = screen.getByRole("heading", { level: 3, name: "Nouveautés" });
+		expect(heading).toBeInTheDocument();
+		expect(heading.className).toMatch(/font-display/);
+		expect(screen.getByText("Pièces récentes de l'atelier")).toBeInTheDocument();
+	});
+
+	it("passes 'Bijoux par type' subtitle to the Catégories column", () => {
+		render(<MegaMenuCreations productTypes={productTypes} featuredProducts={featuredProducts} />);
+
+		expect(screen.getByTestId("column-subtitle")).toHaveTextContent("Bijoux par type");
 	});
 
 	it("does not render featured section when no products", () => {

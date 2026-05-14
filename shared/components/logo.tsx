@@ -1,11 +1,10 @@
+"use client";
+
 import { BRAND } from "@/shared/constants/brand";
+import { triggerHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import Image from "next/image";
 import Link from "next/link";
-
-// Blur placeholder minimal (SVG 10x10 rose, proche du fond du logo)
-const BLUR_DATA_URL =
-	"data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PGZpbHRlciBpZD0iYiI+PGZlR2F1c3NpYW5CbHVyIHN0ZERldmlhdGlvbj0iMiIvPjwvZmlsdGVyPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjVhMGMwIiBmaWx0ZXI9InVybCgjYikiLz48L3N2Zz4=";
 
 const ROUNDED_CLASSES = {
 	full: "rounded-full",
@@ -23,9 +22,16 @@ interface LogoProps {
 	sizes?: string;
 	showText?: boolean;
 	textClassName?: string;
-	imageClassName?: string;
 	rounded?: keyof typeof ROUNDED_CLASSES;
 	shadow?: boolean;
+	/** View Transition name applied to the image wrapper for cross-page morphing. */
+	viewTransitionName?: string;
+	/** Haptic pattern triggered on tap. `false` opts out (e.g. checkout calme). */
+	haptic?: HapticPattern | false;
+	/** Override the generated aria-label (homepage/admin fallbacks otherwise). */
+	ariaLabel?: string;
+	/** Expose BRAND.tagline via native `title` attribute (desktop tooltip). */
+	enableTooltip?: boolean;
 }
 
 export function Logo({
@@ -33,14 +39,20 @@ export function Logo({
 	href,
 	className,
 	preload = false,
-	quality = 90,
+	quality,
 	sizes,
 	showText = false,
 	textClassName,
-	imageClassName,
 	rounded = "full",
 	shadow = false,
+	viewTransitionName,
+	haptic = "selection",
+	ariaLabel,
+	enableTooltip = false,
 }: LogoProps) {
+	// Petits logos (≤40px) → quality 75 suffit ; sinon 90 (fidélité brand).
+	const effectiveQuality = quality ?? (size <= 40 ? 75 : 90);
+
 	// Taille du texte proportionnelle à la taille du logo
 	const textSizeClass =
 		size >= 64
@@ -53,44 +65,49 @@ export function Logo({
 						? "text-lg"
 						: "text-base";
 
-	// Classes communes pour les liens (évite la duplication)
 	const linkClassName = cn(
 		"inline-flex items-center",
-		"min-w-11 min-h-11", // Touch target minimum 44px (WCAG)
+		"min-w-11 min-h-11", // Touch target minimum 44px (WCAG 2.5.5)
 		"focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2",
-		"rounded-full transition-transform duration-200",
-		"hover:scale-[1.02] active:scale-95",
-		"motion-reduce:transition-none motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
+		ROUNDED_CLASSES[rounded],
+		"motion-safe:transition-transform motion-safe:duration-150 motion-safe:ease-out",
+		"motion-safe:hover:scale-[1.02] motion-safe:active:scale-[0.98]",
 	);
 
+	const handleTap = () => {
+		if (haptic !== false) triggerHaptic(haptic);
+	};
+
 	const logoContent = (
-		<div className={cn("inline-flex items-center gap-3", className)}>
+		<div
+			className={cn("inline-flex items-center gap-3", className)}
+			title={enableTooltip ? BRAND.tagline : undefined}
+		>
 			<div
 				className={cn(
 					"relative overflow-hidden",
 					ROUNDED_CLASSES[rounded],
 					shadow && "shadow-md transition-shadow duration-300 ease-out hover:shadow-lg",
-					imageClassName,
 				)}
-				style={{ width: size, height: size }}
+				style={{ width: size, height: size, viewTransitionName }}
 			>
 				<Image
 					src={BRAND.logo.url}
 					alt={showText ? "" : BRAND.logo.alt}
 					fill
-					className="object-cover"
+					className="object-contain"
 					sizes={sizes ?? `${size}px`}
 					preload={preload}
-					quality={quality}
+					quality={effectiveQuality}
 					placeholder="blur"
-					blurDataURL={BLUR_DATA_URL}
+					blurDataURL={BRAND.logo.blurDataURL}
 					aria-hidden={showText ? true : undefined}
 				/>
 			</div>
 			{showText && (
 				<span
 					className={cn(
-						"font-display",
+						"font-cursive",
 						textSizeClass,
 						"text-foreground font-normal tracking-wide",
 						textClassName,
@@ -102,28 +119,32 @@ export function Logo({
 		</div>
 	);
 
-	// Homepage logo
 	if (href === "/") {
 		return (
-			<Link href={href} className={linkClassName} aria-label={`${BRAND.name} - Accueil`}>
+			<Link
+				href={href}
+				className={linkClassName}
+				aria-label={ariaLabel ?? `${BRAND.name} - Accueil`}
+				onClick={handleTap}
+			>
 				{logoContent}
 			</Link>
 		);
 	}
 
-	// Autres liens (sans Schema.org)
 	if (href) {
-		// Génère un label accessible basé sur la destination
-		const linkLabel =
-			href === "/admin" ? `${BRAND.name} - Administration` : `${BRAND.name} - Accueil`;
-
+		const fallbackLabel = href === "/admin" ? `${BRAND.name} - Administration` : BRAND.name;
 		return (
-			<Link href={href} className={linkClassName} aria-label={linkLabel}>
+			<Link
+				href={href}
+				className={linkClassName}
+				aria-label={ariaLabel ?? fallbackLabel}
+				onClick={handleTap}
+			>
 				{logoContent}
 			</Link>
 		);
 	}
 
-	// Logo statique (sans link)
 	return logoContent;
 }

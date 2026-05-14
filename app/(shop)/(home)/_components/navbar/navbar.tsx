@@ -31,7 +31,7 @@ export async function Navbar() {
 		getCartItemCount(),
 		getWishlistItemCount(),
 		getNavbarMenuData(),
-		getRecentProducts({ limit: 4 }),
+		getRecentProducts({ limit: 2 }),
 	]);
 
 	const { collectionsData, productTypesData } = menuData;
@@ -66,10 +66,10 @@ export async function Navbar() {
 	// Générer les items de navigation mobile en fonction de la session et statut admin
 	const mobileNavItems = getMobileNavItems(session, productTypes, menuCollections, userIsAdmin);
 
-	// Featured products for the mega menu (up to 3 recent products with images).
+	// Featured products for the mega menu (up to 2 recent products with images).
 	// "Nouveau" badge eligibility computed via isProductNew helper.
 	const featuredProducts = recentProducts
-		.slice(0, 3)
+		.slice(0, 2)
 		.map((p) => {
 			const { sku, image } = extractProductImage(p);
 			return {
@@ -148,7 +148,7 @@ export async function Navbar() {
 									shadow
 									sizes="64px"
 									showText
-									textClassName="font-cursive text-xl lg:text-2xl text-foreground truncate"
+									textClassName="text-xl lg:text-2xl text-foreground truncate"
 								/>
 							</div>
 
