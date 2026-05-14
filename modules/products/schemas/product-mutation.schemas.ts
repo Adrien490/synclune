@@ -279,3 +279,19 @@ export const updateProductCollectionsSchema = z.object({
 		})
 		.default([]),
 });
+
+export const bulkAttachCollectionProductsSchema = z.object({
+	productIds: z
+		.array(z.cuid2())
+		.min(1, "Au moins un produit est requis")
+		.max(100, "Maximum 100 produits par opération"),
+	collectionId: z.cuid2({ message: "ID collection invalide" }),
+});
+
+export const bulkChangeProductStatusSchema = z.object({
+	productIds: z
+		.array(z.cuid2())
+		.min(1, "Au moins un produit est requis")
+		.max(100, "Maximum 100 produits par opération"),
+	targetStatus: z.enum(["DRAFT", "PUBLIC", "ARCHIVED"]),
+});

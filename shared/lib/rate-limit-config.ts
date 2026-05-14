@@ -929,6 +929,14 @@ export const ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT: RateLimitConfig = {
 };
 
 /**
+ * Limite pour l'ajout en masse de produits à une collection (admin)
+ */
+export const ADMIN_PRODUCT_BULK_ATTACH_COLLECTION_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(5),
+};
+
+/**
  * Limite pour le rafraichissement du cache produits (admin)
  */
 export const ADMIN_PRODUCT_REFRESH_LIMIT: RateLimitConfig = {
@@ -949,6 +957,7 @@ export const ADMIN_PRODUCT_LIMITS = {
 	TOGGLE_STATUS: ADMIN_PRODUCT_TOGGLE_STATUS_LIMIT,
 	DUPLICATE: ADMIN_PRODUCT_DUPLICATE_LIMIT,
 	UPDATE_COLLECTIONS: ADMIN_PRODUCT_UPDATE_COLLECTIONS_LIMIT,
+	BULK_ATTACH_COLLECTION: ADMIN_PRODUCT_BULK_ATTACH_COLLECTION_LIMIT,
 	REFRESH: ADMIN_PRODUCT_REFRESH_LIMIT,
 } as const;
 

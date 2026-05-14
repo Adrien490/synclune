@@ -104,12 +104,15 @@ interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
 	perPage: number;
 	hasActiveFilters?: boolean;
+	/** Collections disponibles pour le bulk-attach (sheet "Lier à une collection"). */
+	collections?: Array<{ id: string; name: string }>;
 }
 
 export async function ProductsDataTable({
 	productsPromise,
 	perPage,
 	hasActiveFilters,
+	collections = [],
 }: ProductsDataTableProps) {
 	const { products, pagination } = await productsPromise;
 
@@ -136,7 +139,7 @@ export async function ProductsDataTable({
 		<Card className="hidden md:block">
 			<CardContent>
 				<BulkSelectionProvider pageItemIds={pageItemIds}>
-					<ProductsBulkActionsBar />
+					<ProductsBulkActionsBar collections={collections} />
 					<TableScrollContainer>
 						<Table
 							aria-label="Liste des bijoux"

@@ -3,9 +3,14 @@ import { Skeleton, SkeletonGroup } from "@/shared/components/ui/skeleton";
 
 export function ProductsMobileListSkeleton() {
 	return (
-		<div className="pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+			{/* Reserve l'espace du MobileSelectionHeader (bouton "Selectionner") pour eviter
+			    le jump 44px à l'apparition (CLS parite avec products-mobile-list runtime). */}
+			<div className="flex items-center justify-end">
+				<Skeleton shape="rounded" className="h-11 w-32" />
+			</div>
 			<SkeletonGroup label="Chargement des produits">
-				<ItemGroup>
+				<ItemGroup className="gap-2">
 					{Array.from({ length: 5 }).map((_, i) => (
 						<Item
 							key={i}

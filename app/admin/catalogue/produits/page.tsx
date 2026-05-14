@@ -26,6 +26,7 @@ import { ProductsBottomBar } from "@/modules/products/components/admin/products-
 import { ProductsMobileList } from "@/modules/products/components/admin/products-mobile-list";
 import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
 import { ProductsFilterSheet } from "@/modules/products/components/admin/products-filter-sheet";
+import { ProductsSortBadge } from "@/modules/products/components/admin/products-sort-badge";
 import { RefreshProductsButton } from "@/modules/products/components/admin/refresh-products-button";
 import { parseFilters } from "./_utils/params";
 
@@ -194,6 +195,9 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				</ButtonGroup>
 			</Toolbar>
 
+			{/* Indicateur tri actif (mobile) */}
+			<ProductsSortBadge />
+
 			{/* Badges de filtres actifs (visible mobile + desktop) */}
 			<ProductsFilterBadges
 				productTypes={productTypes}
@@ -210,6 +214,8 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 					hasActiveFilters={
 						!!search || Object.keys(params).some((key) => key.startsWith("filter_"))
 					}
+					collections={collections}
+					filterParams={{ search, sortBy, filters: parseFilters(params) }}
 				/>
 			</Suspense>
 
@@ -218,6 +224,7 @@ async function ProductsContent({ searchParams }: { searchParams: Promise<Product
 				productsPromise={Promise.resolve(productsData)}
 				perPage={perPage}
 				hasActiveFilters={!!search || Object.keys(params).some((key) => key.startsWith("filter_"))}
+				collections={collections}
 			/>
 		</div>
 	);

@@ -37,6 +37,15 @@ interface BulkSelectionContextValue {
 	 * Alias intuitif côté mobile pour `togglePage`.
 	 */
 	selectAllVisible: () => void;
+	/**
+	 * Etend la selection en ajoutant des ids hors page (cross-page filter
+	 * selection). N'efface pas l'existant — additif uniquement.
+	 *
+	 * Cas d'usage : banner « Selectionner les 60 produits filtres » qui fetch
+	 * via server action les ids matching la query courante puis les wire d'un
+	 * coup dans la selection. Idempotent (les ids deja presents sont ignores).
+	 */
+	extendSelection: (ids: ReadonlyArray<string>) => void;
 }
 
 const BulkSelectionContext = createContext<BulkSelectionContextValue | null>(null);
@@ -102,6 +111,16 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 		setSelectionMode(false);
 	};
 
+	const extendSelection = (ids: ReadonlyArray<string>) => {
+		if (ids.length === 0) return;
+		triggerHaptic("medium");
+		setSelectedIds((prev) => {
+			const next = new Set(prev);
+			ids.forEach((id) => next.add(id));
+			return next;
+		});
+	};
+
 	const isSelected = (id: string) => selectedIds.has(id);
 	const selectedOnPage = pageItemIds.filter((id) => selectedIds.has(id)).length;
 	const pageState: "none" | "some" | "all" =
@@ -121,6 +140,7 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 		enterSelectionMode,
 		exitSelectionMode,
 		selectAllVisible: togglePage,
+		extendSelection,
 	};
 
 	// Bridge vers `AdminMobileBottomBar` (portalisée au niveau du shell admin) :

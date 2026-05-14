@@ -88,6 +88,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 					size="sm"
 					onClick={enterSelectionMode}
 					className="min-h-11 gap-2 px-3"
+					style={{ viewTransitionName: "admin-list-selection-toggle" }}
 				>
 					<CheckSquare className="size-4" aria-hidden="true" />
 					Sélectionner
@@ -112,6 +113,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 				size="sm"
 				onClick={handleExit}
 				className="min-h-11 px-3"
+				style={{ viewTransitionName: "admin-list-selection-toggle" }}
 			>
 				Annuler
 			</Button>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, type ComponentProps } from "react";
-import { ArrowUpDown, Plus, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Plus, RotateCw, Search, SlidersHorizontal } from "lucide-react";
 
 import { AdminSearchDrawerTop } from "@/shared/components/admin-search-drawer-top";
 import { SortDrawer, type SortOption } from "@/shared/components/sort-drawer";
@@ -13,6 +13,7 @@ import {
 	ADMIN_PRODUCTS_SORT_LABELS,
 	GET_PRODUCTS_SORT_FIELDS,
 } from "../../constants/product.constants";
+import { useRefreshProducts } from "../../hooks/use-refresh-products";
 import { ProductsFilterSheet } from "./products-filter-sheet";
 
 import type { GetColorsReturn } from "@/modules/colors/data/get-colors";
@@ -51,6 +52,7 @@ function ProductsBottomBarInner({
 	const { isOpen, onOpenChange, open } = useToolbarDrawer<"sort" | "search" | "filter">();
 	const { hasActiveSearch, searchValue, hasActiveSort, activeFilterCount } =
 		useActiveListControls();
+	const { refresh, isPending: isRefreshing } = useRefreshProducts();
 
 	const items: StickyActionBarItem[] = [
 		{
@@ -102,6 +104,16 @@ function ProductsBottomBarInner({
 			controls: IDS.sort,
 			expanded: isOpen("sort"),
 			announcement: hasActiveSort ? "Tri actif" : undefined,
+		},
+		{
+			key: "refresh",
+			icon: RotateCw,
+			label: "Actualiser",
+			ariaLabel: isRefreshing ? "Actualisation en cours" : "Actualiser la liste",
+			onClick: () => refresh(),
+			disabled: isRefreshing,
+			haptic: "medium",
+			announcement: isRefreshing ? "Actualisation en cours" : undefined,
 		},
 	];
 

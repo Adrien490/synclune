@@ -18,6 +18,8 @@ export {
 	toggleProductStatusSchema,
 	bulkDeleteProductsSchema,
 	bulkArchiveProductsSchema,
+	bulkAttachCollectionProductsSchema,
+	bulkChangeProductStatusSchema,
 	updateProductCollectionsSchema,
 } from "./product-mutation.schemas";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { Loader2, Package } from "lucide-react";
 import Image from "next/image";
 
 import { ProductStatus } from "@/app/generated/prisma/enums";
@@ -8,6 +8,11 @@ import { ProductStatus } from "@/app/generated/prisma/enums";
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import { Badge } from "@/shared/components/ui/badge";
 import { Item, ItemContent, ItemDescription, ItemTitle } from "@/shared/components/ui/item";
+import {
+	useAdminListPendingContextOptional,
+	type AdminListPendingKind,
+} from "@/shared/contexts/admin-list-pending-context";
+import { cn } from "@/shared/utils/cn";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 import { useProductActions } from "../../hooks/use-product-actions";
@@ -26,6 +31,14 @@ const STATUS_CONFIG: Record<
 	[ProductStatus.PUBLIC]: { label: "● Public", variant: "default" },
 	[ProductStatus.DRAFT]: { label: "○ Brouillon", variant: "secondary" },
 	[ProductStatus.ARCHIVED]: { label: "▣ Archivé", variant: "outline" },
+};
+
+const PENDING_LABEL: Record<AdminListPendingKind, string> = {
+	archive: "Archivage…",
+	restore: "Restauration…",
+	delete: "Suppression…",
+	status: "Mise à jour…",
+	"attach-collection": "Ajout à la collection…",
 };
 
 interface Sku {
@@ -73,6 +86,11 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 		productStatus: product.status,
 	});
 
+	const pendingCtx = useAdminListPendingContextOptional();
+	const isPendingItem = pendingCtx?.isPending(product.id) ?? false;
+	const pendingKind = pendingCtx?.pendingKind ?? null;
+	const pendingLabel = isPendingItem ? PENDING_LABEL[pendingKind ?? "status"] : null;
+
 	const stockVariant = getStockVariant(stock);
 	const stockAriaLabel = getStockAriaLabel(stock);
 
@@ -90,7 +108,15 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 				viewTransitionName: `product-card-${product.id}`,
 			}}
 		>
-			<Item variant="outline" size="sm" className="w-full gap-3">
+			<Item
+				variant="outline"
+				size="sm"
+				className={cn(
+					"w-full gap-3 motion-safe:transition-opacity motion-safe:duration-200",
+					isPendingItem && "opacity-60",
+				)}
+				aria-busy={isPendingItem || undefined}
+			>
 				{primaryImage ? (
 					<Image
 						src={primaryImage.thumbnailUrl ?? primaryImage.url}
@@ -99,27 +125,44 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 						height={48}
 						sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 80px"
 						className="size-12 shrink-0 rounded-md border object-cover"
+						style={{ viewTransitionName: `product-image-${product.id}` }}
 						{...(primaryImage.blurDataUrl
 							? { placeholder: "blur", blurDataURL: primaryImage.blurDataUrl }
 							: {})}
 					/>
 				) : (
-					<div className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border">
+					<div
+						className="bg-muted flex size-12 shrink-0 items-center justify-center rounded-md border"
+						style={{ viewTransitionName: `product-image-${product.id}` }}
+					>
 						<Package className="text-muted-foreground size-5" aria-hidden="true" />
 					</div>
 				)}
 				<ItemContent className="min-w-0">
 					<ItemTitle className="w-full min-w-0">
 						<span className="truncate font-semibold">{product.title}</span>
-						<Badge
-							variant={statusConfig.variant}
-							style={{ viewTransitionName: `product-status-${product.id}` }}
-						>
-							{statusConfig.label}
-						</Badge>
+						{isPendingItem ? (
+							<Badge
+								variant="secondary"
+								className="gap-1"
+								aria-live="polite"
+								style={{ viewTransitionName: `product-status-${product.id}` }}
+							>
+								<Loader2 className="size-3 animate-spin" aria-hidden="true" />
+								{pendingLabel}
+							</Badge>
+						) : (
+							<Badge
+								variant={statusConfig.variant}
+								style={{ viewTransitionName: `product-status-${product.id}` }}
+							>
+								{statusConfig.label}
+							</Badge>
+						)}
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{priceDisplay}</span>
+						<span className="sr-only">, </span>
 						<span aria-hidden="true">·</span>
 						<Badge
 							variant={stockVariant}
@@ -128,12 +171,14 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 						>
 							{stock}
 						</Badge>
+						<span className="sr-only">, </span>
 						<span aria-hidden="true">·</span>
 						<span>
 							{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
 						</span>
 						{product.type ? (
 							<>
+								<span className="sr-only">, </span>
 								<span aria-hidden="true">·</span>
 								<span>{product.type.label}</span>
 							</>

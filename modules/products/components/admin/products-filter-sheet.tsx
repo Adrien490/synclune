@@ -16,6 +16,7 @@ import {
 	type ComponentProps,
 } from "react";
 import { useAppForm } from "@/shared/components/forms";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { ProductsFilterSections } from "./products-filter-sections";
 import {
 	ALL_FILTER_KEYS,
@@ -210,6 +211,7 @@ function ProductsFilterSheetInner({
 	};
 
 	const clearAllFilters = () => {
+		triggerHaptic("light");
 		form.reset({
 			statuses: [],
 			priceRange: DEFAULT_PRICE_RANGE,
