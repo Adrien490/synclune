@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useLinkStatus } from "next/link";
 import { useState, type ReactNode } from "react";
 
 import {
@@ -12,6 +11,8 @@ import {
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useLongPress } from "@/shared/hooks/use-long-press";
 import { cn } from "@/shared/utils/cn";
+
+import { LinkPendingOverlay } from "./link-pending-overlay";
 
 export interface LongPressMenuLinkProps {
 	/** Destination de la navigation au tap simple (Next.js `<Link>`). */
@@ -34,21 +35,12 @@ export interface LongPressMenuLinkProps {
 	prefetch?: boolean | null;
 	/** Nom de View Transition propagé sur le Link pour morph card → page détail. */
 	viewTransitionName?: string;
-}
-
-/**
- * Overlay rendu uniquement pendant la navigation (Next.js `useLinkStatus`).
- * Doit être un descendant direct du `<Link>` parent.
- */
-function LinkPendingOverlay() {
-	const { pending } = useLinkStatus();
-	if (!pending) return null;
-	return (
-		<span
-			aria-hidden="true"
-			className="bg-foreground/5 motion-safe:animate-in motion-safe:fade-in pointer-events-none absolute inset-0 rounded-[inherit] [animation-delay:120ms] [animation-fill-mode:backwards] motion-safe:duration-200"
-		/>
-	);
+	/**
+	 * Affordance visuelle optionnelle (ex: `<MoreVertical>` d'aide à la
+	 * discoverabilité du long-press). Rendue absolute dans le Link wrapper.
+	 * Doit être `pointer-events-none` côté consommateur — c'est purement visuel.
+	 */
+	affordance?: ReactNode;
 }
 
 /**
@@ -72,6 +64,7 @@ export function LongPressMenuLink({
 	disabled = false,
 	prefetch,
 	viewTransitionName,
+	affordance,
 }: LongPressMenuLinkProps) {
 	const [open, setOpen] = useState(false);
 	const haptic = useHaptic();
@@ -103,6 +96,7 @@ export function LongPressMenuLink({
 				)}
 			>
 				{children}
+				{affordance}
 				<LinkPendingOverlay />
 			</Link>
 

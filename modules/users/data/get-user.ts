@@ -63,7 +63,7 @@ export async function getUser(params?: Partial<GetUserParams>): Promise<GetUserR
  * @returns L'utilisateur ou null
  */
 export async function fetchUser(userId: string): Promise<GetUserReturn> {
-	"use cache";
+	"use cache: private";
 	cacheCurrentUser(userId);
 
 	try {

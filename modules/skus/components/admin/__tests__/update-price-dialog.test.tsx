@@ -5,9 +5,10 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockClose, mockUpdatePrice } = vi.hoisted(() => ({
+const { mockClose, mockUpdatePrice, mockPush } = vi.hoisted(() => ({
 	mockClose: vi.fn(),
 	mockUpdatePrice: vi.fn(),
+	mockPush: vi.fn(),
 }));
 
 let mockDialogState: {
@@ -27,6 +28,10 @@ let mockDialogState: {
 
 let mockIsPending = false;
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => mockDialogState,
 }));
@@ -36,6 +41,19 @@ vi.mock("@/modules/skus/hooks/use-update-sku-price", () => ({
 		updatePrice: mockUpdatePrice,
 		isPending: mockIsPending,
 	}),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => vi.fn(),
+	triggerHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (fn: () => void) => fn(),
+}));
+
+vi.mock("@/shared/components/admin-form-footer", () => ({
+	AdminFormFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
@@ -82,6 +100,14 @@ vi.mock("@/shared/components/ui/label", () => ({
 	Label: ({ children, htmlFor }: { children: React.ReactNode; htmlFor?: string }) => (
 		<label htmlFor={htmlFor}>{children}</label>
 	),
+}));
+
+vi.mock("lucide-react", () => ({
+	Loader2: () => <span data-testid="icon-loader" />,
+}));
+
+vi.mock("@/shared/utils/cn", () => ({
+	cn: (...classes: (string | undefined | false)[]) => classes.filter(Boolean).join(" "),
 }));
 
 import { UpdatePriceDialog } from "../update-price-dialog";
@@ -160,7 +186,8 @@ describe("UpdatePriceDialog", () => {
 
 		render(<UpdatePriceDialog />);
 
-		expect(screen.getByText("Bague Or - T52")).toBeInTheDocument();
+		const matches = screen.getAllByText("Bague Or - T52");
+		expect(matches.length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("renders price input", () => {
@@ -197,7 +224,7 @@ describe("UpdatePriceDialog", () => {
 		expect(screen.getByLabelText("Prix barré (optionnel)")).toBeInTheDocument();
 	});
 
-	it("renders cancel and save buttons", () => {
+	it("renders save submit button", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: {
@@ -211,7 +238,6 @@ describe("UpdatePriceDialog", () => {
 
 		render(<UpdatePriceDialog />);
 
-		expect(screen.getByText("Annuler")).toBeInTheDocument();
 		expect(screen.getByText("Enregistrer")).toBeInTheDocument();
 	});
 
@@ -235,7 +261,7 @@ describe("UpdatePriceDialog", () => {
 		expect(screen.getByText("Enregistrement…")).toBeInTheDocument();
 	});
 
-	it("disables buttons when pending", () => {
+	it("disables submit button when pending", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: {
@@ -250,7 +276,7 @@ describe("UpdatePriceDialog", () => {
 
 		render(<UpdatePriceDialog />);
 
-		expect(screen.getByText("Annuler")).toBeDisabled();
-		expect(screen.getByText("Enregistrement…")).toBeDisabled();
+		const submitBtn = screen.getByText("Enregistrement…").closest("button");
+		expect(submitBtn).toBeDisabled();
 	});
 });

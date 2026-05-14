@@ -73,16 +73,16 @@ describe("UploadProgress", () => {
 			expect(progressBar).toBeTruthy();
 
 			// Visible text (Unicode horizontal ellipsis)
-			expect(screen.getByText("Téléversement… 50%")).toBeTruthy();
+			expect(screen.getByText("Envoi… 50%")).toBeTruthy();
 		});
 
-		it("affiche le spinner et 'Traitement…' quand isProcessing=true à 100%", () => {
+		it("affiche le spinner et 'Optimisation à l'atelier…' quand isProcessing=true à 100%", () => {
 			const { container } = render(<UploadProgress progress={100} isProcessing />);
 
 			const status = screen.getByRole("status");
 			expect(status.getAttribute("aria-busy")).toBe("true");
 
-			expect(screen.getByText("Traitement…")).toBeTruthy();
+			expect(screen.getByText("Optimisation à l'atelier…")).toBeTruthy();
 
 			// LoaderCircle must be present (not Check icon)
 			container.querySelector('[aria-hidden="true"] + *');
@@ -170,21 +170,21 @@ describe("UploadProgress", () => {
 			render(<UploadProgress progress={50} />);
 
 			const srSpan = document.querySelector(".sr-only");
-			expect(srSpan?.textContent).toBe("Téléversement en cours, 50 pourcent");
+			expect(srSpan?.textContent).toBe("Envoi en cours, 50 pourcent");
 		});
 
 		it("contient 'Téléversement terminé' pour les lecteurs d'écran à la fin", () => {
 			render(<UploadProgress progress={100} isProcessing={false} />);
 
 			const srSpan = document.querySelector(".sr-only");
-			expect(srSpan?.textContent).toBe("Téléversement terminé");
+			expect(srSpan?.textContent).toBe("Envoi terminé");
 		});
 
 		it("contient 'Traitement du fichier en cours' pour les lecteurs d'écran pendant le traitement serveur", () => {
 			render(<UploadProgress progress={100} isProcessing />);
 
 			const srSpan = document.querySelector(".sr-only");
-			expect(srSpan?.textContent).toBe("Traitement du fichier en cours");
+			expect(srSpan?.textContent).toBe("Optimisation à l'atelier en cours");
 		});
 
 		it("inclut le nombre de fichiers en attente dans le texte sr-only", () => {
@@ -213,14 +213,14 @@ describe("UploadProgress", () => {
 			render(<UploadProgress progress={100} isProcessing={false} />);
 
 			const srSpan = document.querySelector(".sr-only");
-			expect(srSpan?.textContent).toBe("Téléversement terminé");
+			expect(srSpan?.textContent).toBe("Envoi terminé");
 		});
 
 		it("fallback sur 'Téléversement terminé' quand completedCount = 0", () => {
 			render(<UploadProgress progress={100} isProcessing={false} completedCount={0} />);
 
 			const srSpan = document.querySelector(".sr-only");
-			expect(srSpan?.textContent).toBe("Téléversement terminé");
+			expect(srSpan?.textContent).toBe("Envoi terminé");
 		});
 	});
 

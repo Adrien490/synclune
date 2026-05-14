@@ -223,6 +223,13 @@ export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPag
 					reviewsPromise={reviewsPromise}
 					perPage={perPage}
 					hasActiveFilters={!!search || !!params.status || !!params.rating || !!params.hasResponse}
+					filterParams={{
+						search,
+						sortBy,
+						status: statusFilter,
+						filterRating: ratingFilter,
+						hasResponse,
+					}}
 				/>
 			</Suspense>
 

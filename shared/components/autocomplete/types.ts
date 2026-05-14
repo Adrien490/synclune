@@ -1,3 +1,6 @@
+import type { ReactNode } from "react";
+import type { HapticPattern } from "@/shared/hooks/use-haptic";
+
 /**
  * Props pour le composant Autocomplete
  * @template T - Type des items a afficher dans la liste
@@ -25,7 +28,7 @@ export interface AutocompleteProps<T> {
 	getItemImage?: (item: T) => {
 		src: string;
 		alt: string;
-		blurDataUrl?: string | null;
+		blurDataURL?: string | null;
 	} | null;
 	/** Taille de l'image en pixels (defaut: 32) */
 	imageSize?: number;
@@ -43,6 +46,10 @@ export interface AutocompleteProps<T> {
 	inputClassName?: string;
 	/** Message affiche quand aucun resultat (defaut: "Aucun resultat trouve") */
 	noResultsMessage?: string;
+	/** Description affichee sous le message (defaut: "Essayez de modifier votre recherche") */
+	noResultsDescription?: string;
+	/** Slot rendu apres la description dans l'etat vide (ex: bouton "Saisir manuellement") */
+	emptyStateAction?: ReactNode;
 	/** Nombre minimum de caracteres pour lancer la recherche (defaut: 3) */
 	minQueryLength?: number;
 	/** Delai avant fermeture du dropdown sur blur en ms (defaut: 150) */
@@ -59,13 +66,24 @@ export interface AutocompleteProps<T> {
 	showResultsCount?: boolean;
 	/** Afficher l'etat vide quand aucun resultat (defaut: true) */
 	showEmptyState?: boolean;
+	/**
+	 * Pattern haptic sur selection (defaut: "selection").
+	 * Clear/Escape/Retry restent sur "light" si haptic !== false.
+	 * Passer `false` pour desactiver tous les retours haptiques.
+	 */
+	haptic?: HapticPattern | false;
 	/** ARIA: marks the input as invalid */
 	"aria-invalid"?: boolean;
 	/** ARIA: associates the input with an error message element */
 	"aria-describedby"?: string;
 	/** ARIA: marks the input as required */
-	"aria-required"?: boolean | "true" | "false";
-	/** Mobile virtual keyboard mode (defaut: "search") */
+	"aria-required"?: boolean;
+	/**
+	 * Attribut autoComplete natif du navigateur (defaut: "off").
+	 * Pour activer l'autofill OS sur un champ adresse : "street-address", "address-line1", etc.
+	 */
+	autoComplete?: string;
+	/** Mode clavier virtuel mobile (defaut: "search") */
 	inputMode?: "search" | "text" | "none" | "tel" | "url" | "email" | "numeric" | "decimal";
 	/** Mobile virtual keyboard action button (defaut: "search") */
 	enterKeyHint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send";

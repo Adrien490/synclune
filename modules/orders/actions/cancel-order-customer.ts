@@ -109,20 +109,19 @@ export async function cancelOrderCustomer(
 				});
 			}
 
-			// Release discount usages (free up promo codes)
+			// Release discount usages (free up promo codes).
+			// DiscountUsage @@unique([discountId, orderId]) → max 1 usage par discount/order,
+			// donc updateMany avec decrement 1 est correct (pas de double-decrement possible).
 			const discountUsages = await tx.discountUsage.findMany({
 				where: { orderId: id },
 				select: { id: true, discountId: true },
 			});
 
-			for (const usage of discountUsages) {
-				await tx.discount.update({
-					where: { id: usage.discountId },
+			if (discountUsages.length > 0) {
+				await tx.discount.updateMany({
+					where: { id: { in: discountUsages.map((u) => u.discountId) } },
 					data: { usageCount: { decrement: 1 } },
 				});
-			}
-
-			if (discountUsages.length > 0) {
 				await tx.discountUsage.deleteMany({ where: { orderId: id } });
 			}
 

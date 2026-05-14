@@ -1,6 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: vi.fn(),
@@ -33,10 +33,24 @@ import { BulkSelectionProvider, useBulkSelectionContext } from "@/shared/compone
 import { MobileSelectionBottomBar } from "../mobile-selection-bottom-bar";
 
 function EnterModeOnMount() {
-	const { enterSelectionMode } = useBulkSelectionContext();
+	const ctx = useBulkSelectionContext();
+	const enteredRef = useRef(false);
+	useEffect(() => {
+		if (!enteredRef.current) {
+			ctx.enterSelectionMode();
+			enteredRef.current = true;
+		}
+	});
+	return null;
+}
+
+function EnterModeAndSelect({ ids }: { ids: string[] }) {
+	const { enterSelectionMode, toggle } = useBulkSelectionContext();
 	useEffect(() => {
 		enterSelectionMode();
-	}, [enterSelectionMode]);
+		ids.forEach((id) => toggle(id));
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 	return null;
 }
 
@@ -72,10 +86,10 @@ describe("MobileSelectionBottomBar", () => {
 		expect(screen.queryByTestId("bottom-bar")).not.toBeInTheDocument();
 	});
 
-	it("renders children inside the bar when selection mode is ON and the page has items", () => {
+	it("renders children inside the bar when selection mode is ON and the page has items with selection", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a"]}>
-				<EnterModeOnMount />
+				<EnterModeAndSelect ids={["a"]} />
 				<MobileSelectionBottomBar>
 					<button data-testid="bulk-action">Supprimer</button>
 				</MobileSelectionBottomBar>
@@ -86,10 +100,10 @@ describe("MobileSelectionBottomBar", () => {
 		expect(screen.getByTestId("bulk-action")).toBeInTheDocument();
 	});
 
-	it("uses 'Actions groupées' as default aria-label and reports height 112", () => {
+	it("uses 'Actions groupées' as default aria-label and reports height 112 in action mode", () => {
 		render(
 			<BulkSelectionProvider pageItemIds={["a"]}>
-				<EnterModeOnMount />
+				<EnterModeAndSelect ids={["a"]} />
 				<MobileSelectionBottomBar>
 					<button>Action</button>
 				</MobileSelectionBottomBar>
@@ -99,6 +113,54 @@ describe("MobileSelectionBottomBar", () => {
 		const bar = screen.getByTestId("bottom-bar");
 		expect(bar).toHaveAttribute("aria-label", "Actions groupées");
 		expect(bar).toHaveAttribute("data-height", "112");
+	});
+
+	it("renders compact hint (64px) when selectionMode is ON but selectedCount is 0", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["a", "b"]}>
+				<EnterModeOnMount />
+				<MobileSelectionBottomBar>
+					<button data-testid="bulk-action">Supprimer</button>
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>,
+		);
+
+		const bar = screen.getByTestId("bottom-bar");
+		expect(bar).toHaveAttribute("data-height", "64");
+		expect(screen.getByText("Tape sur les éléments à sélectionner")).toBeInTheDocument();
+		expect(screen.queryByTestId("bulk-action")).not.toBeInTheDocument();
+	});
+
+	it("renders custom emptyHint in compact mode", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["a"]}>
+				<EnterModeOnMount />
+				<MobileSelectionBottomBar emptyHint="Tape sur les bijoux à sélectionner">
+					<button>Action</button>
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>,
+		);
+
+		expect(screen.getByText("Tape sur les bijoux à sélectionner")).toBeInTheDocument();
+	});
+
+	it("compact mode exposes a 'Annuler' button that exits selection mode", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["a"]}>
+				<EnterModeOnMount />
+				<MobileSelectionBottomBar>
+					<button>Action</button>
+				</MobileSelectionBottomBar>
+			</BulkSelectionProvider>,
+		);
+
+		const cancelBtn = screen.getByRole("button", { name: "Annuler" });
+		expect(cancelBtn).toBeInTheDocument();
+
+		fireEvent.click(cancelBtn);
+
+		// After exit, bottom-bar should disappear (selectionMode flips back to OFF)
+		expect(screen.queryByTestId("bottom-bar")).not.toBeInTheDocument();
 	});
 
 	it("forwards a custom aria-label", () => {

@@ -22,6 +22,7 @@ export default function AnnouncementsLoading() {
 						</Link>
 					</Button>
 				}
+				className="hidden md:block"
 			/>
 
 			{/* Mirrors Suspense fallback in page.tsx: <Skeleton className="h-96 w-full" /> */}

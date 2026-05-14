@@ -34,6 +34,8 @@ export function Autocomplete<T>({
 	className,
 	inputClassName,
 	noResultsMessage = AUTOCOMPLETE_DEFAULTS.noResultsMessage,
+	noResultsDescription = AUTOCOMPLETE_DEFAULTS.noResultsDescription,
+	emptyStateAction,
 	minQueryLength = AUTOCOMPLETE_DEFAULTS.minQueryLength,
 	blurDelay = AUTOCOMPLETE_DEFAULTS.blurDelay,
 	loadingSkeletonCount = AUTOCOMPLETE_DEFAULTS.loadingSkeletonCount,
@@ -42,9 +44,11 @@ export function Autocomplete<T>({
 	debounceMs = AUTOCOMPLETE_DEFAULTS.debounceMs,
 	showResultsCount = AUTOCOMPLETE_DEFAULTS.showResultsCount,
 	showEmptyState = AUTOCOMPLETE_DEFAULTS.showEmptyState,
+	haptic: hapticProp = "selection",
 	"aria-invalid": ariaInvalid,
 	"aria-describedby": ariaDescribedBy,
 	"aria-required": ariaRequired,
+	autoComplete = AUTOCOMPLETE_DEFAULTS.autoComplete,
 	inputMode = AUTOCOMPLETE_DEFAULTS.inputMode,
 	enterKeyHint = AUTOCOMPLETE_DEFAULTS.enterKeyHint,
 	autoCorrect = AUTOCOMPLETE_DEFAULTS.autoCorrect,
@@ -54,13 +58,16 @@ export function Autocomplete<T>({
 	const isMobileDetected = useIsMobile();
 	const mounted = useMounted();
 	const isMobile = mounted && isMobileDetected;
-	const haptic = useHaptic();
+	const triggerHaptic = useHaptic();
+
+	const hapticEnabled = hapticProp !== false;
+	const selectionPattern = hapticEnabled ? hapticProp : null;
 
 	// IDs uniques pour eviter les collisions
-	const id = useId();
-	const listboxId = `${id}-listbox`;
-	const hintId = `${id}-hint`;
-	const getItemId = (index: number) => `${id}-item-${index}`;
+	const reactId = useId();
+	const listboxId = `${reactId}-listbox`;
+	const hintId = `${reactId}-hint`;
+	const getItemId = (index: number) => `${reactId}-item-${index}`;
 
 	// Etats
 	const [isOpen, setIsOpen] = useState(false);
@@ -102,13 +109,13 @@ export function Autocomplete<T>({
 	// Scroll automatique vers l'item actif
 	useEffect(() => {
 		if (activeIndex >= 0 && showResults) {
-			const activeElement = document.getElementById(`${id}-item-${activeIndex}`);
+			const activeElement = document.getElementById(`${reactId}-item-${activeIndex}`);
 			activeElement?.scrollIntoView({
 				block: "nearest",
 				behavior: isMobile ? "instant" : "smooth",
 			});
 		}
-	}, [activeIndex, id, showResults, isMobile]);
+	}, [activeIndex, reactId, showResults, isMobile]);
 
 	// Cleanup timeouts on unmount
 	useEffect(() => {
@@ -171,7 +178,7 @@ export function Autocomplete<T>({
 		onChange("");
 		setIsOpen(false);
 		setActiveIndex(-1);
-		haptic("light");
+		if (hapticEnabled) triggerHaptic("light");
 
 		// Annuler tout debounce en cours
 		if (debounceRef.current) {
@@ -180,7 +187,7 @@ export function Autocomplete<T>({
 	};
 
 	const handleItemSelect = (item: T) => {
-		haptic("selection");
+		if (selectionPattern) triggerHaptic(selectionPattern);
 		onSelect(item);
 		setIsOpen(false);
 		setActiveIndex(-1);
@@ -195,7 +202,7 @@ export function Autocomplete<T>({
 		setIsOpen,
 		setActiveIndex,
 		onSelect: handleItemSelect,
-		onHaptic: haptic,
+		onHaptic: hapticEnabled ? triggerHaptic : undefined,
 	});
 
 	// Taille d'image adaptee mobile/desktop
@@ -212,6 +219,7 @@ export function Autocomplete<T>({
 				<div className="relative">
 					<Input
 						ref={inputRef}
+						id={name}
 						name={name}
 						type="text"
 						role="combobox"
@@ -241,7 +249,7 @@ export function Autocomplete<T>({
 						}
 						aria-invalid={ariaInvalid}
 						aria-required={ariaRequired}
-						autoComplete="off"
+						autoComplete={autoComplete}
 						inputMode={inputMode}
 						enterKeyHint={enterKeyHint}
 						autoCorrect={autoCorrect}
@@ -251,7 +259,7 @@ export function Autocomplete<T>({
 				</div>
 
 				{/* Hint pour minQueryLength */}
-				<AnimatePresence mode="wait">
+				<AnimatePresence mode="popLayout">
 					{showMinQueryHint && (
 						<m.p
 							id={hintId}
@@ -274,7 +282,7 @@ export function Autocomplete<T>({
 					itemCount={items.length}
 				/>
 
-				<AnimatePresence mode="wait">
+				<AnimatePresence mode="popLayout">
 					{showResults && (
 						<m.ul
 							id={listboxId}
@@ -295,6 +303,8 @@ export function Autocomplete<T>({
 								showResultsCount={showResultsCount}
 								showEmptyState={showEmptyState}
 								noResultsMessage={noResultsMessage}
+								noResultsDescription={noResultsDescription}
+								emptyStateAction={emptyStateAction}
 								onRetry={onRetry}
 								getItemLabel={getItemLabel}
 								getItemKey={getItemKey}
@@ -305,6 +315,7 @@ export function Autocomplete<T>({
 								onItemHover={setActiveIndex}
 								getItemId={getItemId}
 								loadingSkeletonCount={effectiveSkeletonCount}
+								hapticOnRetry={hapticEnabled ? "light" : false}
 							/>
 						</m.ul>
 					)}

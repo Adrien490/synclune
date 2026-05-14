@@ -1,5 +1,7 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
+import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
+
 // ============================================
 // CONFIGURATION
 // ============================================
@@ -234,6 +236,13 @@ export const GET_REVIEWS_DEFAULT_SORT_BY = "createdAt-desc";
  * Tri par défaut admin si aucun tri explicite fourni
  */
 export const GET_REVIEWS_ADMIN_FALLBACK_SORT_BY = "createdAt-desc";
+
+/**
+ * Plafond du nombre d'avis traités en une seule action bulk admin
+ * (moderate / restore) et limite de la sélection cross-page filtrée.
+ * Centralisé via shared/constants/admin-bulk pour cohérence inter-modules.
+ */
+export const BULK_REVIEW_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 /**
  * Nombre de résultats par page par défaut

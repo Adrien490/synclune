@@ -66,7 +66,7 @@ async function fetchOrders(
 	params: GetOrdersParams,
 	fuzzyIds?: string[] | null,
 ): Promise<GetOrdersReturn> {
-	"use cache";
+	"use cache: private";
 	cacheLife("user");
 	cacheTag(SHARED_CACHE_TAGS.ADMIN_ORDERS_LIST);
 

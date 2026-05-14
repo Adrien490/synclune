@@ -20,6 +20,16 @@ if (typeof window !== "undefined" && typeof window.matchMedia !== "function") {
 	});
 }
 
+// jsdom does not implement ResizeObserver — provide a no-op stub used by
+// dnd-kit and other libs that observe element size changes.
+if (typeof globalThis.ResizeObserver === "undefined") {
+	globalThis.ResizeObserver = class ResizeObserver {
+		observe() {}
+		unobserve() {}
+		disconnect() {}
+	};
+}
+
 // Global cleanup to prevent mock leaks between tests
 afterEach(() => {
 	vi.restoreAllMocks();

@@ -2,9 +2,11 @@
 
 import { ExternalLink, Pencil, Phone, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { InvoiceStatus } from "@/app/generated/prisma/browser";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { EDIT_CUSTOMER_INFO_DIALOG_ID } from "../edit-customer-info-dialog";
@@ -12,12 +14,18 @@ import type { OrderCustomerCardProps } from "./types";
 
 export function OrderCustomerCard({ order }: OrderCustomerCardProps) {
 	const haptic = useHaptic();
+	const isMobile = useIsMobile();
+	const router = useRouter();
 	const editDialog = useAlertDialog(EDIT_CUSTOMER_INFO_DIALOG_ID);
 
 	const canEdit = order.invoiceStatus !== InvoiceStatus.GENERATED;
 
 	const handleEdit = () => {
 		haptic("light");
+		if (isMobile) {
+			router.push(`/admin/ventes/commandes/${order.id}/client`);
+			return;
+		}
 		editDialog.open({
 			orderId: order.id,
 			orderNumber: order.orderNumber,

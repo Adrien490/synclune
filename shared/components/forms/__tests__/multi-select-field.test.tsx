@@ -29,14 +29,14 @@ vi.mock("../field-label", () => ({
 vi.mock("@/shared/components/multi-select", () => ({
 	MultiSelect: ({
 		options,
-		defaultValue,
+		value,
 		onValueChange,
 		placeholder,
 		disabled: _disabled,
 		"aria-invalid": ariaInvalid,
 		"aria-required": ariaRequired,
 	}: any) => {
-		const selected: string[] = defaultValue ?? [];
+		const selected: string[] = value ?? [];
 
 		const toggle = (value: string) => {
 			const next = selected.includes(value)

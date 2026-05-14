@@ -6,7 +6,7 @@ import { useAppForm } from "@/shared/components/forms";
 export type DiscountFormValues = {
 	code: string;
 	type: DiscountType;
-	value: number;
+	value: number | null;
 	minOrderAmount: number | null;
 	maxUsageCount: number | null;
 	maxUsagePerUser: number | null;
@@ -33,7 +33,7 @@ export function getDiscountFormDefaults(seed?: DiscountFormSeed | null): Discoun
 		return {
 			code: "",
 			type: "PERCENTAGE" as DiscountType,
-			value: 0,
+			value: null,
 			minOrderAmount: null,
 			maxUsageCount: null,
 			maxUsagePerUser: null,

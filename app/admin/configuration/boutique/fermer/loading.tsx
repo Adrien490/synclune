@@ -40,6 +40,7 @@ export default function CloseStoreLoading() {
 				variant="compact"
 				title="Fermer la boutique"
 				description="Cette action interrompt immédiatement les commandes."
+				className="hidden md:block"
 			/>
 
 			<div className="mx-auto max-w-2xl space-y-4 sm:space-y-6">
@@ -56,10 +57,10 @@ export default function CloseStoreLoading() {
 					<Skeleton className="h-4 w-72" />
 				</div>
 
-				{/* Sticky footer mirror (1 button, mobile sticky aligned with AdminFormFooter) */}
-				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] mt-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+				{/* Sticky footer — mirror AdminFormFooter */}
+				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] mt-2 px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
 					<div className="flex md:justify-end">
-						<Skeleton className="h-11 w-full md:w-44" />
+						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-56" />
 					</div>
 				</div>
 			</div>

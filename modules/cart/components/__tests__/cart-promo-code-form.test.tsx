@@ -1,10 +1,14 @@
 import { cleanup, render, screen, fireEvent, act } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { mockApplyAction, mockApplyState } = vi.hoisted(() => ({
-	mockApplyAction: vi.fn(),
-	mockApplyState: { current: { isPending: false } },
-}));
+const { mockApplyAction, mockApplyState, mockRemoveAction, mockRemoveState, mockHaptic } =
+	vi.hoisted(() => ({
+		mockApplyAction: vi.fn(),
+		mockApplyState: { current: { isPending: false } },
+		mockRemoveAction: vi.fn(),
+		mockRemoveState: { current: { isPending: false } },
+		mockHaptic: vi.fn(),
+	}));
 
 vi.mock("../../hooks/use-apply-cart-discount", () => ({
 	useApplyCartDiscount: () => ({
@@ -12,6 +16,18 @@ vi.mock("../../hooks/use-apply-cart-discount", () => ({
 		state: undefined,
 		isPending: mockApplyState.current.isPending,
 	}),
+}));
+
+vi.mock("../../hooks/use-remove-cart-discount", () => ({
+	useRemoveCartDiscount: () => ({
+		action: mockRemoveAction,
+		state: undefined,
+		isPending: mockRemoveState.current.isPending,
+	}),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockHaptic,
 }));
 
 vi.mock("@/shared/components/ui/button", () => ({
@@ -49,6 +65,7 @@ vi.mock("@/shared/components/ui/input", () => ({
 vi.mock("lucide-react", () => ({
 	LoaderCircle: () => <svg data-testid="loader-icon" />,
 	Tag: () => <svg data-testid="tag-icon" />,
+	X: () => <svg data-testid="x-icon" />,
 }));
 
 import { CartPromoCodeForm } from "../cart-promo-code-form";
@@ -57,6 +74,7 @@ afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
 	mockApplyState.current.isPending = false;
+	mockRemoveState.current.isPending = false;
 });
 
 describe("CartPromoCodeForm", () => {
@@ -106,5 +124,41 @@ describe("CartPromoCodeForm", () => {
 		});
 		expect(document.activeElement).toBe(screen.getByPlaceholderText(/^code$/i));
 		vi.useRealTimers();
+	});
+
+	describe("when a discount code is applied", () => {
+		it("renders the applied chip with code and amount instead of the toggle", () => {
+			render(<CartPromoCodeForm appliedDiscountCode="SUMMER20" discountAmount={500} />);
+			expect(screen.queryByRole("button", { name: /j'ai un code promo/i })).not.toBeInTheDocument();
+			expect(screen.getByText("SUMMER20")).toBeInTheDocument();
+			expect(screen.getByText(/−5,00\s*€/)).toBeInTheDocument();
+		});
+
+		it("hides the discounted amount when discountAmount is zero or null", () => {
+			render(<CartPromoCodeForm appliedDiscountCode="FREESHIP" discountAmount={null} />);
+			expect(screen.getByText("FREESHIP")).toBeInTheDocument();
+			expect(screen.queryByText(/−/)).not.toBeInTheDocument();
+		});
+
+		it("renders a remove button with accessible label", () => {
+			render(<CartPromoCodeForm appliedDiscountCode="SUMMER20" discountAmount={500} />);
+			const removeButton = screen.getByRole("button", {
+				name: /retirer le code promo summer20/i,
+			});
+			expect(removeButton).toBeInTheDocument();
+			expect(removeButton).toHaveAttribute("type", "submit");
+		});
+
+		it("triggers haptic feedback when the remove button is clicked", () => {
+			render(<CartPromoCodeForm appliedDiscountCode="SUMMER20" discountAmount={500} />);
+			fireEvent.click(screen.getByRole("button", { name: /retirer le code promo summer20/i }));
+			expect(mockHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it("shows a loader inside the Remove button while removing", () => {
+			mockRemoveState.current.isPending = true;
+			render(<CartPromoCodeForm appliedDiscountCode="SUMMER20" discountAmount={500} />);
+			expect(screen.getByTestId("loader-icon")).toBeInTheDocument();
+		});
 	});
 });

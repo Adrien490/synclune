@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,39 +23,24 @@ export interface FilteredColorIdsData {
 export async function getFilteredColorIds(
 	params: Pick<GetColorsParams, "search" | "sortBy" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
-
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLOR_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const where = buildColorWhereClause({
-			...params,
-			cursor: undefined,
-			direction: "forward",
-			perPage: BULK_COLOR_ACTION_LIMIT,
-		});
-
-		const [rows, totalCount] = await Promise.all([
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_COLOR_LIMITS.REFRESH,
+		cap: BULK_COLOR_ACTION_LIMIT,
+		emptyMessage: "Aucune couleur ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les couleurs filtrées",
+		buildWhere: () =>
+			buildColorWhereClause({
+				...params,
+				cursor: undefined,
+				direction: "forward",
+				perPage: BULK_COLOR_ACTION_LIMIT,
+			}),
+		fetchIds: (where) =>
 			prisma.color.findMany({
 				where,
 				select: { id: true },
 				take: BULK_COLOR_ACTION_LIMIT,
 			}),
-			prisma.color.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucune couleur ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_COLOR_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les couleurs filtrées");
-	}
+		fetchCount: (where) => prisma.color.count({ where }),
+	});
 }

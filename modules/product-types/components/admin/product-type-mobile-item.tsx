@@ -79,8 +79,8 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					/>
 				</ItemMedia>
 				<ItemContent className="min-w-0">
-					<ItemTitle className="w-full min-w-0 flex-wrap">
-						<span className="truncate font-semibold">{productType.label}</span>
+					<ItemTitle className="w-full min-w-0 flex-wrap gap-y-1">
+						<span className="min-w-0 flex-1 truncate font-semibold">{productType.label}</span>
 						{showPending ? (
 							<Badge
 								variant="secondary"

@@ -10,6 +10,7 @@ import { useReducedMotion } from "motion/react";
 import { Play } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { useLightbox } from "@/shared/hooks";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useIsTouchDevice } from "@/shared/hooks/use-touch-device";
@@ -158,8 +159,25 @@ export function MediaUploadGrid({
 					);
 					return;
 				}
+				const removedMedia = media[index];
+				const snapshot = media;
 				triggerHaptic("success");
 				withViewTransition(() => onChange(newMedia));
+				// Undo affordance — uniquement en mode skipUtapiDelete (différé),
+				// sinon le fichier est déjà supprimé sur UploadThing et l'undo serait trompeur.
+				if (skipUtapiDelete && removedMedia) {
+					const isVideo = removedMedia.mediaType === "VIDEO";
+					toast.success(`${isVideo ? "Vidéo" : "Image"} retirée de l'atelier`, {
+						action: {
+							label: "Annuler",
+							onClick: () => {
+								triggerHaptic("light");
+								withViewTransition(() => onChange(snapshot));
+								setAnnouncement(`${isVideo ? "Vidéo" : "Image"} restaurée.`);
+							},
+						},
+					});
+				}
 			},
 		});
 	};
@@ -345,6 +363,8 @@ export function MediaUploadGrid({
 												fill
 												className="object-cover"
 												sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
+												placeholder="blur"
+												blurDataURL={IMAGE_BLUR_FALLBACK}
 											/>
 										) : (
 											<div className="bg-muted flex h-full w-full items-center justify-center">
@@ -364,6 +384,8 @@ export function MediaUploadGrid({
 										fill
 										className="object-cover"
 										sizes="(max-width: 640px) 45vw, (max-width: 1024px) 30vw, 23vw"
+										placeholder="blur"
+										blurDataURL={IMAGE_BLUR_FALLBACK}
 									/>
 								)}
 							</div>

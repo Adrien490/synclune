@@ -1,10 +1,12 @@
 "use client";
 
 import { ArrowRight, Package } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 import { ADJUST_STOCK_DIALOG_ID } from "@/modules/skus/components/admin/adjust-stock-dialog";
@@ -16,6 +18,20 @@ interface SkuDetailStockCardProps {
 
 export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 	const adjustStockDialog = useDialog(ADJUST_STOCK_DIALOG_ID);
+	const isMobile = useIsMobile();
+	const router = useRouter();
+
+	const handleAdjustStock = () => {
+		if (isMobile) {
+			router.push(`/admin/catalogue/produits/${sku.product.slug}/variantes/${sku.id}/stock`);
+		} else {
+			adjustStockDialog.open({
+				skuId: sku.id,
+				skuName: sku.sku,
+				currentStock: sku.inventory,
+			});
+		}
+	};
 	const stockVariant = getStockVariant(sku.inventory);
 	const orderItemsCount = sku._count.orderItems;
 
@@ -58,13 +74,7 @@ export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 					type="button"
 					variant="outline"
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
-					onClick={() =>
-						adjustStockDialog.open({
-							skuId: sku.id,
-							skuName: sku.sku,
-							currentStock: sku.inventory,
-						})
-					}
+					onClick={handleAdjustStock}
 				>
 					Ajuster le stock
 					<ArrowRight className="size-4" aria-hidden="true" />

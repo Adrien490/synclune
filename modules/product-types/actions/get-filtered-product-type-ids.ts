@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_TYPE_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -29,40 +27,25 @@ export interface FilteredProductTypeIdsData {
 export async function getFilteredProductTypeIds(
 	params: Pick<GetProductTypesParams, "search" | "sortBy" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
-
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_TYPE_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const where = buildProductTypeWhereClause({
-			...params,
-			cursor: undefined,
-			direction: "forward",
-			perPage: BULK_PRODUCT_TYPE_ACTION_LIMIT,
-			filters: params.filters ?? {},
-		});
-
-		const [rows, totalCount] = await Promise.all([
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_PRODUCT_TYPE_LIMITS.REFRESH,
+		cap: BULK_PRODUCT_TYPE_ACTION_LIMIT,
+		emptyMessage: "Aucun type de bijou ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les types filtrés",
+		buildWhere: () =>
+			buildProductTypeWhereClause({
+				...params,
+				cursor: undefined,
+				direction: "forward",
+				perPage: BULK_PRODUCT_TYPE_ACTION_LIMIT,
+				filters: params.filters ?? {},
+			}),
+		fetchIds: (where) =>
 			prisma.productType.findMany({
 				where,
 				select: { id: true },
 				take: BULK_PRODUCT_TYPE_ACTION_LIMIT,
 			}),
-			prisma.productType.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucun type de bijou ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_PRODUCT_TYPE_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les types filtrés");
-	}
+		fetchCount: (where) => prisma.productType.count({ where }),
+	});
 }

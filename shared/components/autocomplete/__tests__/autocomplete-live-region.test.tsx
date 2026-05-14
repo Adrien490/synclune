@@ -34,7 +34,7 @@ describe("AutocompleteLiveRegion", () => {
 		expect(span).toHaveAttribute("aria-live", "polite");
 	});
 
-	it("has aria-atomic='true'", () => {
+	it("does NOT set aria-atomic (avoids re-announcing full text on rapid transitions)", () => {
 		const { container } = render(
 			<AutocompleteLiveRegion
 				isLoading={false}
@@ -45,7 +45,7 @@ describe("AutocompleteLiveRegion", () => {
 		);
 
 		const span = container.firstChild as HTMLElement;
-		expect(span).toHaveAttribute("aria-atomic", "true");
+		expect(span).not.toHaveAttribute("aria-atomic");
 	});
 
 	// ─── Loading state ─────────────────────────────────────────────────────

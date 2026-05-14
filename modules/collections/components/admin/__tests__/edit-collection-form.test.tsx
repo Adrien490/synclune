@@ -160,10 +160,25 @@ vi.mock("@/shared/components/forms", () => ({
 		),
 		Subscribe: ({
 			children,
+			selector,
 		}: {
-			children: (values: unknown[]) => React.ReactNode;
-			selector: (state: Record<string, unknown>) => unknown[];
-		}) => <>{children([true, defaultValues.status ?? "DRAFT"])}</>,
+			children: (values: unknown) => React.ReactNode;
+			selector?: (state: Record<string, unknown>) => unknown;
+		}) => {
+			// Build a minimal state for selectors: tuple-style and object-style.
+			const fakeState = {
+				values: { status: defaultValues.status ?? "DRAFT" },
+				submissionAttempts: 0,
+				fieldMeta: {},
+				canSubmit: true,
+			};
+			const selected = selector?.(fakeState as unknown as Record<string, unknown>) ?? [
+				true,
+				defaultValues.status ?? "DRAFT",
+			];
+			return <>{children(selected)}</>;
+		},
+		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	})),
 }));
 
@@ -295,10 +310,10 @@ describe("EditCollectionForm", () => {
 
 	// ─── Pending state ────────────────────────────────────────────────────────
 
-	it("shows 'Enregistrement…' when isPending is true", () => {
+	it("shows 'Mise à jour…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<EditCollectionForm collection={createCollection()} />);
-		expect(screen.getByText("Enregistrement…")).toBeInTheDocument();
+		expect(screen.getByText("Mise à jour…")).toBeInTheDocument();
 	});
 
 	// ─── Props ────────────────────────────────────────────────────────────────

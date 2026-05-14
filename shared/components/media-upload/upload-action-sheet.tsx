@@ -139,7 +139,7 @@ export function UploadActionSheet({
 						{sheetDescription && <DrawerDescription>{sheetDescription}</DrawerDescription>}
 					</DrawerHeader>
 
-					<div className="flex flex-col gap-2 pb-2">
+					<div className="flex flex-col gap-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
 						{showCamera && (
 							<button
 								type="button"
@@ -150,7 +150,7 @@ export function UploadActionSheet({
 									<Camera className="size-5" aria-hidden="true" />
 								</span>
 								<span className="flex flex-col">
-									<span className="text-sm font-medium">Prendre une photo</span>
+									<span className="text-sm font-medium">Capturer un cliché</span>
 									<span className="text-muted-foreground text-xs">Ouvre l&apos;appareil photo</span>
 								</span>
 							</button>
@@ -165,9 +165,9 @@ export function UploadActionSheet({
 								<ImageIcon className="size-5" aria-hidden="true" />
 							</span>
 							<span className="flex flex-col">
-								<span className="text-sm font-medium">Depuis Photos</span>
+								<span className="text-sm font-medium">Depuis la pellicule</span>
 								<span className="text-muted-foreground text-xs">
-									Sélectionner dans votre galerie
+									Choisir un cliché de votre galerie
 								</span>
 							</span>
 						</button>
@@ -181,8 +181,10 @@ export function UploadActionSheet({
 								<FolderOpen className="size-5" aria-hidden="true" />
 							</span>
 							<span className="flex flex-col">
-								<span className="text-sm font-medium">Parcourir les fichiers</span>
-								<span className="text-muted-foreground text-xs">Documents, téléchargements…</span>
+								<span className="text-sm font-medium">Parcourir mes fichiers</span>
+								<span className="text-muted-foreground text-xs">
+									Depuis vos dossiers personnels
+								</span>
 							</span>
 						</button>
 

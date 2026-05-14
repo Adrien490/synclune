@@ -12,7 +12,7 @@ export function AutocompleteLiveRegion({
 	itemCount,
 }: AutocompleteLiveRegionProps) {
 	return (
-		<span className="sr-only" aria-live="polite" aria-atomic="true">
+		<span className="sr-only" aria-live="polite">
 			{isLoading
 				? "Recherche en cours"
 				: hasResults

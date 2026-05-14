@@ -35,6 +35,12 @@ interface BulkSelectionContextValue {
 	 * (mêmes items + ajouts), sinon désélectionne uniquement ceux de la page
 	 * (le reste de `selectedIds` cross-page reste intact). **Idempotent / toggle**.
 	 * Alias intuitif côté mobile pour `togglePage`.
+	 *
+	 * **Note UX :** ne déclenche pas de toast (asymétrie volontaire vs
+	 * `extendSelection` qui toast son count). Le count est visible dans le
+	 * header sticky + aria-live, le toast serait du bruit ici (action 1-tap
+	 * local). `extendSelection` toast car l'admin a explicitement demandé un
+	 * fetch cross-page et le résultat (peut-être capé) mérite confirmation.
 	 */
 	selectAllVisible: () => void;
 	/**

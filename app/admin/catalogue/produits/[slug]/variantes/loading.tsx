@@ -1,6 +1,7 @@
 import { SkusDataTableSkeleton } from "@/modules/skus/components/admin/skus-data-table-skeleton";
 import { SkusMobileListSkeleton } from "@/modules/skus/components/admin/skus-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
+import { StickyActionBarSkeleton } from "@/shared/components/sticky-action-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import {
 	Breadcrumb,
@@ -48,6 +49,8 @@ export default function ProductVariantsLoading() {
 				}
 				className="hidden md:block"
 			/>
+
+			<StickyActionBarSkeleton itemCount={3} />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 

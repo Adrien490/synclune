@@ -1,19 +1,7 @@
-import { ArrowLeft, Package, RotateCcw } from "lucide-react";
-
-import { Button } from "@/shared/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/shared/components/ui/card";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { Card, CardContent, CardHeader } from "@/shared/components/ui/card";
 import { Separator } from "@/shared/components/ui/separator";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 
-/**
- * Loading skeleton pour la page de creation de remboursement
- */
 export default function NewRefundLoading() {
 	return (
 		<div
@@ -24,29 +12,26 @@ export default function NewRefundLoading() {
 		>
 			<span className="sr-only">Chargement du formulaire de remboursement…</span>
 
-			{/* Header */}
-			<div className="flex items-center gap-4">
-				<Button variant="ghost" size="sm" disabled>
-					<ArrowLeft className="size-4" />
-					Retour
-				</Button>
-				<div>
-					<h1 className="text-2xl font-semibold tracking-tight">Nouveau remboursement</h1>
-					<Skeleton className="mt-1 h-4 w-48" />
+			{/* Header (desktop only — AdminMobileHeader covers mobile) */}
+			<div className="hidden items-center gap-4 md:flex">
+				<Skeleton className="h-9 w-24 rounded-md" />
+				<div className="space-y-1">
+					<Skeleton className="h-8 w-56" />
+					<Skeleton className="h-4 w-72" />
 				</div>
 			</div>
 
 			<div className="grid gap-6 lg:grid-cols-3">
-				{/* Left column - Items selection */}
+				{/* Left column — Items selection */}
 				<div className="space-y-6 lg:col-span-2">
 					<Card>
 						<CardHeader className="flex flex-row items-center justify-between">
-							<div>
-								<CardTitle className="flex items-center gap-2">
-									<Package className="size-5" />
-									Articles a rembourser
-								</CardTitle>
-								<CardDescription>Selectionnez les articles et quantites</CardDescription>
+							<div className="space-y-1">
+								<div className="flex items-center gap-2">
+									<Skeleton className="size-5 rounded" />
+									<Skeleton className="h-5 w-48" />
+								</div>
+								<Skeleton className="h-4 w-56" />
 							</div>
 							<Skeleton className="h-9 w-32" />
 						</CardHeader>
@@ -56,7 +41,7 @@ export default function NewRefundLoading() {
 									<div key={i} className="flex items-start gap-4 rounded-lg border p-4">
 										<Skeleton className="mt-1 size-4" />
 										<Skeleton className="size-16 rounded-md" />
-										<div className="flex-1 gap-y-2">
+										<div className="flex-1 space-y-2">
 											<Skeleton className="h-5 w-48" />
 											<Skeleton className="h-4 w-32" />
 											<div className="flex items-center gap-4">
@@ -72,12 +57,12 @@ export default function NewRefundLoading() {
 					</Card>
 				</div>
 
-				{/* Right column - Summary */}
+				{/* Right column — Summary */}
 				<div className="space-y-6">
 					{/* Reason */}
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-base">Motif du remboursement</CardTitle>
+							<Skeleton className="h-5 w-44" />
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<Skeleton className="h-10 w-full" />
@@ -88,7 +73,7 @@ export default function NewRefundLoading() {
 					{/* Note */}
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-base">Note (optionnel)</CardTitle>
+							<Skeleton className="h-5 w-40" />
 						</CardHeader>
 						<CardContent>
 							<Skeleton className="h-20 w-full" />
@@ -98,7 +83,7 @@ export default function NewRefundLoading() {
 					{/* Summary */}
 					<Card>
 						<CardHeader>
-							<CardTitle className="text-base">Recapitulatif</CardTitle>
+							<Skeleton className="h-5 w-32" />
 						</CardHeader>
 						<CardContent className="space-y-3">
 							<div className="flex justify-between">
@@ -121,11 +106,10 @@ export default function NewRefundLoading() {
 						</CardContent>
 					</Card>
 
-					{/* Submit */}
-					<Button className="w-full" disabled>
-						<RotateCcw className="size-4" />
-						Creer la demande
-					</Button>
+					{/* Sticky footer — mirror AdminFormFooter */}
+					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
+						<Skeleton className="h-11 w-full" />
+					</div>
 				</div>
 			</div>
 		</div>

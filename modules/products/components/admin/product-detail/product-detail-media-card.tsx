@@ -87,7 +87,7 @@ export function ProductDetailMediaCard({ product }: ProductDetailMediaCardProps)
 								fill
 								sizes="(max-width: 768px) 100vw, (max-width: 1024px) 66vw, 600px"
 								className="object-cover"
-								priority
+								preload
 								{...(primary.blurDataUrl
 									? { placeholder: "blur" as const, blurDataURL: primary.blurDataUrl }
 									: {})}

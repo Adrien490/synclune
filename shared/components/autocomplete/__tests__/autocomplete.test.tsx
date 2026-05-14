@@ -237,9 +237,14 @@ describe("Autocomplete", () => {
 			expect(getInput()).toHaveAttribute("aria-expanded", "false");
 		});
 
-		it("sets autocomplete='off' to suppress browser native autocomplete", () => {
+		it("sets autocomplete='off' by default", () => {
 			renderAutocomplete();
 			expect(getInput()).toHaveAttribute("autocomplete", "off");
+		});
+
+		it("forwards custom autoComplete prop (enables browser autofill on address fields)", () => {
+			renderAutocomplete({ autoComplete: "street-address" });
+			expect(getInput()).toHaveAttribute("autocomplete", "street-address");
 		});
 
 		it("forwards aria-invalid to the input", () => {
@@ -270,6 +275,11 @@ describe("Autocomplete", () => {
 		it("passes the name prop to the input", () => {
 			renderAutocomplete({ name: "my-search" });
 			expect(getInput()).toHaveAttribute("name", "my-search");
+		});
+
+		it("sets id={name} on the input so a parent <label htmlFor={name}> binds correctly", () => {
+			renderAutocomplete({ name: "shipping.addressLine1" });
+			expect(getInput()).toHaveAttribute("id", "shipping.addressLine1");
 		});
 
 		it("passes the placeholder prop to the input", () => {
@@ -942,6 +952,90 @@ describe("Autocomplete", () => {
 			fireEvent.keyDown(getInput(), { key: "Tab" });
 			expect(mockHaptic).not.toHaveBeenCalled();
 		});
+
+		it("uses custom haptic pattern on item select when haptic prop is overridden", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS, haptic: "medium" });
+			fireEvent.focus(getInput());
+			fireEvent.click(screen.getAllByRole("option")[0]!);
+			expect(mockHaptic).toHaveBeenCalledWith("medium");
+		});
+
+		it("disables ALL haptic feedback when haptic={false}", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS, haptic: false });
+			fireEvent.focus(getInput());
+			fireEvent.click(screen.getAllByRole("option")[0]!);
+			expect(mockHaptic).not.toHaveBeenCalled();
+		});
+
+		it("does not trigger clear haptic when haptic={false}", () => {
+			renderAutocomplete({ value: "ab", showClearButton: true, haptic: false });
+			fireEvent.click(screen.getByRole("button", { name: /Effacer/i }));
+			expect(mockHaptic).not.toHaveBeenCalled();
+		});
+
+		it("does not trigger escape haptic when haptic={false}", () => {
+			renderAutocomplete({ value: "ba", items: TEST_ITEMS, haptic: false });
+			fireEvent.focus(getInput());
+			fireEvent.keyDown(getInput(), { key: "Escape" });
+			expect(mockHaptic).not.toHaveBeenCalled();
+		});
+
+		it("does not trigger retry haptic when haptic={false}", () => {
+			const onRetry = vi.fn();
+			renderAutocomplete({
+				value: "ba",
+				items: [],
+				error: "Erreur",
+				onRetry,
+				haptic: false,
+			});
+			fireEvent.focus(getInput());
+			fireEvent.click(screen.getByRole("button", { name: /Réessayer/i }));
+			expect(mockHaptic).not.toHaveBeenCalled();
+			expect(onRetry).toHaveBeenCalledTimes(1);
+		});
+	});
+
+	// --------------------------------------------------------------------------
+	// Empty state CTA + custom description
+	// --------------------------------------------------------------------------
+
+	describe("empty state CTA + description", () => {
+		it("renders custom noResultsDescription in empty state", () => {
+			renderAutocomplete({
+				value: "ba",
+				items: [],
+				showEmptyState: true,
+				noResultsDescription: "Essayez avec un autre nom de rue",
+			});
+			fireEvent.focus(getInput());
+			expect(screen.getByTestId("empty-description")).toHaveTextContent(
+				"Essayez avec un autre nom de rue",
+			);
+		});
+
+		it("renders emptyStateAction slot inside the empty state", () => {
+			renderAutocomplete({
+				value: "ba",
+				items: [],
+				showEmptyState: true,
+				emptyStateAction: <button data-testid="manual-entry-cta">Saisir manuellement</button>,
+			});
+			fireEvent.focus(getInput());
+			expect(screen.getByTestId("manual-entry-cta")).toBeInTheDocument();
+			expect(screen.getByText("Saisir manuellement")).toBeInTheDocument();
+		});
+
+		it("does not render emptyStateAction when showEmptyState=false", () => {
+			renderAutocomplete({
+				value: "ba",
+				items: [],
+				showEmptyState: false,
+				emptyStateAction: <button data-testid="manual-entry-cta">Saisir manuellement</button>,
+			});
+			fireEvent.focus(getInput());
+			expect(screen.queryByTestId("manual-entry-cta")).not.toBeInTheDocument();
+		});
 	});
 
 	// --------------------------------------------------------------------------
@@ -1022,10 +1116,10 @@ describe("AutocompleteLiveRegion", () => {
 		);
 	});
 
-	it("has aria-atomic='true'", () => {
+	it("does NOT set aria-atomic (avoids re-announcing full text on rapid transitions)", () => {
 		renderRegion({});
 		const el = document.querySelector("[aria-live]");
-		expect(el).toHaveAttribute("aria-atomic", "true");
+		expect(el).not.toHaveAttribute("aria-atomic");
 	});
 
 	it("has sr-only class for visual hiding", () => {

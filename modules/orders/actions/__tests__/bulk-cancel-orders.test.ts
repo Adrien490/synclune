@@ -322,7 +322,7 @@ describe("bulkCancelOrders", () => {
 			data: { usageCount: { decrement: 1 } },
 		});
 		expect(mockPrisma.discountUsage.deleteMany).toHaveBeenCalledWith({
-			where: { orderId: makeOrder().id },
+			where: { orderId: { in: [makeOrder().id] } },
 		});
 	});
 

@@ -51,7 +51,7 @@ export function ProductTypesMobileList({
 					description={
 						hasActiveFilters
 							? "Aucun type de bijou ne correspond aux critères de recherche."
-							: "Aucun type de bijou pour l'instant."
+							: "Aucune famille de bijoux à l'atelier pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? (
@@ -68,9 +68,9 @@ export function ProductTypesMobileList({
 	const pageItemIds = productTypes.map((p) => p.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "type", plural: "types" }} />
 					{filterParams ? (
 						<ProductTypesCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
@@ -80,7 +80,7 @@ export function ProductTypesMobileList({
 						singular="type de bijou"
 						plural="types de bijoux"
 					/>
-					<ItemGroup aria-label="Types de bijoux" className="gap-2">
+					<ItemGroup role="list" aria-label="Types de bijoux" className="gap-2">
 						{productTypes.map((productType) => (
 							<div key={productType.id} role="listitem">
 								<ProductTypeMobileItem productType={productType} />
@@ -97,10 +97,10 @@ export function ProductTypesMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les familles de bijoux">
 					<ProductTypesBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

@@ -222,7 +222,7 @@ export function ReviewMediaUpload({
 	));
 
 	return (
-		<div className={cn("space-y-3", className)} aria-busy={isUploading} aria-live="polite">
+		<div className={cn("space-y-3", className)} aria-busy={isUploading}>
 			{media.length > 0 && (
 				<>
 					{isMobile ? (
@@ -276,9 +276,9 @@ export function ReviewMediaUpload({
 					disabled={disabled}
 					onFilesSelected={handleFilesSelected}
 					triggerLabel="Ajouter des photos"
-					triggerDescription={`${remaining} photo${remaining > 1 ? "s" : ""} restante${remaining > 1 ? "s" : ""} (max 4 Mo)`}
+					triggerDescription={`${remaining} cliché${remaining > 1 ? "s" : ""} restant${remaining > 1 ? "s" : ""} (max 4 Mo)`}
 					sheetTitle="Ajouter une photo"
-					sheetDescription="Prenez votre bijou en photo ou choisissez depuis votre galerie"
+					sheetDescription="Capturez votre bijou ou choisissez un cliché de votre galerie"
 					showCamera
 					desktopFallback={
 						<NativeReviewDropzone

@@ -94,6 +94,13 @@ const nextConfig: NextConfig = {
 		qualities: [60, 65, 70, 75, 80, 85, 90],
 		minimumCacheTTL: 2678400,
 		formats: ["image/avif", "image/webp"],
+		localPatterns: [
+			{ pathname: "/logo.webp", search: "" },
+			{ pathname: "/logo.jpg", search: "" },
+			{ pathname: "/adri-lele.jpg", search: "" },
+			{ pathname: "/icons/**", search: "" },
+			{ pathname: "/splash/**", search: "" },
+		],
 		remotePatterns: [
 			{ protocol: "https", hostname: "*.ufs.sh", pathname: "/f/**" },
 			{ protocol: "https", hostname: "utfs.io", pathname: "/f/**" },

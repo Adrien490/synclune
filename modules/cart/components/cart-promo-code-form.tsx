@@ -4,22 +4,32 @@ import { useId, useRef, useState } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useApplyCartDiscount } from "../hooks/use-apply-cart-discount";
-import { LoaderCircle, Tag } from "lucide-react";
+import { useRemoveCartDiscount } from "../hooks/use-remove-cart-discount";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { formatEuro } from "@/shared/utils/format-euro";
+import { LoaderCircle, Tag, X } from "lucide-react";
+
+interface CartPromoCodeFormProps {
+	appliedDiscountCode?: string | null;
+	discountAmount?: number | null;
+}
 
 /**
  * Disclosure "J'ai un code promo" dans le footer du cart-sheet.
  *
- * Collapsible pour éviter la friction visuelle : bouton toggle,
- * puis input + apply. Haptic auto via wrapper toast sur success/error.
- *
- * NB : l'état "code appliqué" n'est pas affiché ici car GET_CART_SELECT
- * ne retourne pas `appliedDiscountCode` actuellement — évolution future.
+ * - Aucun code appliqué : bouton toggle + input.
+ * - Code appliqué : chip "Code XYZ — -Y €" avec bouton retirer.
  */
-export function CartPromoCodeForm() {
+export function CartPromoCodeForm({
+	appliedDiscountCode = null,
+	discountAmount = null,
+}: CartPromoCodeFormProps) {
 	const [open, setOpen] = useState(false);
-	const { action, isPending } = useApplyCartDiscount();
+	const { action: applyAction, isPending: isApplying } = useApplyCartDiscount();
+	const { action: removeAction, isPending: isRemoving } = useRemoveCartDiscount();
 	const inputRef = useRef<HTMLInputElement>(null);
 	const panelId = useId();
+	const haptic = useHaptic();
 
 	const handleToggle = () => {
 		const next = !open;
@@ -28,6 +38,50 @@ export function CartPromoCodeForm() {
 			requestAnimationFrame(() => inputRef.current?.focus({ preventScroll: true }));
 		}
 	};
+
+	const handleRemoveClick = () => {
+		haptic("selection");
+	};
+
+	// État "code appliqué" : chip + bouton retirer
+	if (appliedDiscountCode) {
+		return (
+			<div className="w-full">
+				<form action={removeAction} className="flex items-center justify-between gap-2">
+					<div
+						className="border-primary/30 bg-primary/5 text-primary inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
+						aria-live="polite"
+					>
+						<Tag className="size-3.5" aria-hidden="true" />
+						<span>
+							Code <span className="font-semibold">{appliedDiscountCode}</span>
+							{discountAmount !== null && discountAmount > 0
+								? ` — −${formatEuro(discountAmount)}`
+								: ""}
+						</span>
+					</div>
+					<Button
+						type="submit"
+						variant="ghost"
+						size="sm"
+						disabled={isRemoving}
+						onClick={handleRemoveClick}
+						className="text-muted-foreground hover:text-foreground h-8"
+						aria-label={`Retirer le code promo ${appliedDiscountCode}`}
+					>
+						{isRemoving ? (
+							<LoaderCircle className="size-3.5 animate-spin" aria-hidden="true" />
+						) : (
+							<>
+								<X className="size-3.5" aria-hidden="true" />
+								<span>Retirer</span>
+							</>
+						)}
+					</Button>
+				</form>
+			</div>
+		);
+	}
 
 	return (
 		<div className="w-full">
@@ -45,7 +99,7 @@ export function CartPromoCodeForm() {
 			) : (
 				<form
 					id={panelId}
-					action={action}
+					action={applyAction}
 					className="flex items-stretch gap-2"
 					aria-label="Appliquer un code promo"
 				>
@@ -59,11 +113,11 @@ export function CartPromoCodeForm() {
 						spellCheck={false}
 						aria-label="Code promo"
 						maxLength={30}
-						disabled={isPending}
+						disabled={isApplying}
 						className="h-11 flex-1 uppercase"
 					/>
-					<Button type="submit" disabled={isPending} className="h-11 min-w-24">
-						{isPending ? (
+					<Button type="submit" disabled={isApplying} className="h-11 min-w-24">
+						{isApplying ? (
 							<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
 						) : (
 							"Appliquer"
@@ -73,7 +127,7 @@ export function CartPromoCodeForm() {
 						type="button"
 						variant="ghost"
 						onClick={() => setOpen(false)}
-						disabled={isPending}
+						disabled={isApplying}
 						className="h-11"
 						aria-label="Fermer le formulaire de code promo"
 					>

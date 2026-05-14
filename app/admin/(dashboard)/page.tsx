@@ -3,8 +3,15 @@ import { Suspense } from "react";
 import { type Metadata } from "next";
 import * as Sentry from "@sentry/nextjs";
 
+import {
+	HandDrawnAccent,
+	HandDrawnUnderline,
+} from "@/shared/components/animations/hand-drawn-accent";
+
 import { DashboardKpis } from "@/modules/dashboard/components/dashboard-kpis";
 import { DashboardAlerts } from "@/modules/dashboard/components/dashboard-alerts";
+import { DashboardGreeting } from "@/modules/dashboard/components/dashboard-greeting";
+import { DashboardAmbientBackground } from "@/modules/dashboard/components/dashboard-ambient-background";
 import { ChartError } from "@/modules/dashboard/components/chart-error";
 import { LazyRevenueChart } from "@/modules/dashboard/components/revenue-chart-lazy";
 import { RecentOrdersList } from "@/modules/dashboard/components/recent-orders-list";
@@ -12,6 +19,8 @@ import { TopProductsList } from "@/modules/dashboard/components/top-products-lis
 import { RefreshDashboardButton } from "@/modules/dashboard/components/refresh-dashboard-button";
 import { PeriodSelector } from "@/modules/dashboard/components/period-selector";
 import { ExportRevenueButton } from "@/modules/dashboard/components/export-revenue-button";
+import { DashboardMobileActions } from "@/modules/dashboard/components/dashboard-mobile-actions";
+import { DashboardFreshness } from "@/modules/dashboard/components/dashboard-freshness";
 import { VatProgressCard } from "@/modules/dashboard/components/vat-progress-card";
 
 import {
@@ -30,6 +39,7 @@ import { fetchDashboardVatProgress } from "@/modules/dashboard/data/get-vat-prog
 import { getNextUrssafDeadline } from "@/modules/dashboard/services/urssaf-deadline.service";
 
 import {
+	DASHBOARD_PERIODS,
 	getComparisonLabel,
 	parseComparisonMode,
 	parsePeriod,
@@ -54,28 +64,41 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 	const comparisonMode = parseComparisonMode(params.comparison);
 
 	return (
-		<section aria-label="Tableau de bord">
+		<section aria-label="Tableau de bord" className="relative isolate">
+			<DashboardAmbientBackground />
 			<PageHeader
 				variant="compact"
 				title="Ton atelier"
-				description="Voici ce qui se passe aujourd'hui"
 				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
 				actions={
-					<div className="flex items-center gap-2">
-						<PeriodSelector />
-						<ExportRevenueButton period={period} />
-						<RefreshDashboardButton />
-					</div>
+					<>
+						<div className="hidden w-full items-center gap-2 md:flex md:w-auto md:justify-end">
+							<PeriodSelector />
+							<ExportRevenueButton period={period} />
+							<RefreshDashboardButton />
+						</div>
+						<DashboardMobileActions period={period} className="md:hidden" />
+					</>
 				}
 			/>
+
+			<Suspense fallback={<DashboardGreetingFallback />}>
+				<DashboardGreeting period={period} comparisonMode={comparisonMode} />
+			</Suspense>
 
 			<div className="space-y-8">
 				<Suspense>
 					<AlertsWrapper />
 				</Suspense>
 
+				<DashboardFreshness className="md:hidden" />
+
 				<section aria-labelledby="dashboard-section-performance" className="space-y-4">
-					<SectionHeading id="dashboard-section-performance" label="Performance ventes" />
+					<SectionHeading
+						id="dashboard-section-performance"
+						label="Performance ventes"
+						accent="star"
+					/>
 					<Suspense
 						fallback={
 							<KpisSkeleton count={4} compactCount={4} ariaLabel="Chargement des indicateurs" />
@@ -86,14 +109,18 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				</section>
 
 				<section aria-labelledby="dashboard-section-compliance" className="space-y-4">
-					<SectionHeading id="dashboard-section-compliance" label="Conformité fiscale" />
+					<SectionHeading
+						id="dashboard-section-compliance"
+						label="Conformité fiscale"
+						accent="circle"
+					/>
 					<Suspense fallback={<VatProgressSkeleton />}>
 						<VatProgressWrapper />
 					</Suspense>
 				</section>
 
 				<section aria-labelledby="dashboard-section-trends" className="space-y-4">
-					<SectionHeading id="dashboard-section-trends" label="Tendances" />
+					<SectionHeading id="dashboard-section-trends" label="Tendances" accent="arrow" />
 					<Suspense
 						fallback={
 							<ChartSkeleton
@@ -107,7 +134,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 				</section>
 
 				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
-					<SectionHeading id="dashboard-section-activity" label="Activité" />
+					<SectionHeading id="dashboard-section-activity" label="Activité" accent="heart" />
 					<div className="grid gap-6 lg:grid-cols-2">
 						<Suspense
 							fallback={
@@ -119,7 +146,7 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 						<Suspense
 							fallback={<ListSkeleton itemCount={5} ariaLabel="Chargement du top produits" />}
 						>
-							<TopProductsWrapper period={period} />
+							<TopProductsWrapper period={period} periodLabel={DASHBOARD_PERIODS[period].label} />
 						</Suspense>
 					</div>
 				</section>
@@ -128,15 +155,64 @@ export default async function AdminDashboardPage({ searchParams }: AdminDashboar
 	);
 }
 
-function SectionHeading({ id, label }: { id: string; label: string }) {
+type SectionAccent = "star" | "circle" | "arrow" | "heart";
+
+const ACCENT_COLOR_MAP: Record<SectionAccent, string> = {
+	star: "var(--secondary)",
+	circle: "var(--primary)",
+	arrow: "var(--secondary)",
+	heart: "var(--primary)",
+};
+
+const ACCENT_DIMENSIONS: Record<SectionAccent, { width: number; height: number }> = {
+	star: { width: 22, height: 22 },
+	circle: { width: 22, height: 21 },
+	arrow: { width: 28, height: 14 },
+	heart: { width: 22, height: 22 },
+};
+
+function SectionHeading({
+	id,
+	label,
+	accent,
+}: {
+	id: string;
+	label: string;
+	accent: SectionAccent;
+}) {
+	const { width, height } = ACCENT_DIMENSIONS[accent];
 	return (
-		<h2
-			id={id}
-			className="text-muted-foreground font-display text-sm font-normal tracking-tight italic"
-		>
-			{label}
-		</h2>
+		<div className="flex flex-col items-start gap-1">
+			<div className="flex items-center gap-2">
+				<HandDrawnAccent
+					variant={accent}
+					color={ACCENT_COLOR_MAP[accent]}
+					width={width}
+					height={height}
+					strokeWidth={1.5}
+					inView
+				/>
+				<h2
+					id={id}
+					className="font-display text-foreground/85 sm:text-muted-foreground text-lg font-normal tracking-tight sm:text-base sm:italic"
+				>
+					{label}
+				</h2>
+			</div>
+			<HandDrawnUnderline
+				color="var(--secondary)"
+				width={80}
+				height={14}
+				strokeWidth={2}
+				className="mt-0 ml-7 opacity-70"
+				inView
+			/>
+		</div>
 	);
+}
+
+function DashboardGreetingFallback() {
+	return <div aria-hidden="true" className="-mt-2 mb-6 h-6 sm:h-7" />;
 }
 
 function VatProgressSkeleton() {
@@ -251,7 +327,13 @@ async function RecentOrdersWrapper() {
 	return <RecentOrdersList listData={listData} />;
 }
 
-async function TopProductsWrapper({ period }: { period: DashboardPeriod }) {
+async function TopProductsWrapper({
+	period,
+	periodLabel,
+}: {
+	period: DashboardPeriod;
+	periodLabel?: string;
+}) {
 	let listData;
 	try {
 		listData = await fetchDashboardTopProducts(period);
@@ -264,5 +346,5 @@ async function TopProductsWrapper({ period }: { period: DashboardPeriod }) {
 			/>
 		);
 	}
-	return <TopProductsList listData={listData} />;
+	return <TopProductsList listData={listData} periodLabel={periodLabel} />;
 }

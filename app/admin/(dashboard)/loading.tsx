@@ -1,4 +1,5 @@
 import { PageHeader } from "@/shared/components/page-header";
+import { Skeleton } from "@/shared/components/ui/skeleton";
 import {
 	KpisSkeleton,
 	ChartSkeleton,
@@ -9,7 +10,7 @@ function SectionHeading({ id, label }: { id: string; label: string }) {
 	return (
 		<h2
 			id={id}
-			className="text-muted-foreground font-display text-sm font-normal tracking-tight italic"
+			className="font-display text-foreground/85 sm:text-muted-foreground text-base font-normal tracking-tight sm:text-sm sm:italic"
 		>
 			{label}
 		</h2>
@@ -26,6 +27,13 @@ export default function DashboardLoading() {
 				title="Ton atelier"
 				description="Voici ce qui se passe aujourd'hui"
 				titleClassName="font-cursive text-3xl sm:text-4xl lg:text-5xl tracking-wide"
+				actions={
+					<div className="flex w-full items-center gap-2 md:hidden" aria-hidden="true">
+						<Skeleton shape="rounded" className="h-11 flex-1" />
+						<Skeleton shape="rounded" className="size-11" />
+						<Skeleton shape="rounded" className="size-11" />
+					</div>
+				}
 			/>
 
 			<div className="space-y-8">
@@ -39,8 +47,9 @@ export default function DashboardLoading() {
 
 				<section aria-labelledby="dashboard-section-compliance" className="space-y-4">
 					<SectionHeading id="dashboard-section-compliance" label="Conformité fiscale" />
-					<div
-						className="bg-muted/40 h-32 animate-pulse rounded-xl"
+					<Skeleton
+						shape="rounded"
+						className="h-32 w-full"
 						aria-label="Chargement du suivi de seuil TVA"
 					/>
 				</section>
@@ -54,8 +63,11 @@ export default function DashboardLoading() {
 				</section>
 
 				<section aria-labelledby="dashboard-section-activity" className="space-y-4">
-					<SectionHeading id="dashboard-section-activity" label="Commandes récentes" />
-					<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />
+					<SectionHeading id="dashboard-section-activity" label="Activité" />
+					<div className="grid gap-6 lg:grid-cols-2">
+						<ListSkeleton itemCount={5} ariaLabel="Chargement des commandes récentes" />
+						<ListSkeleton itemCount={5} ariaLabel="Chargement du top produits" />
+					</div>
 				</section>
 			</div>
 		</section>

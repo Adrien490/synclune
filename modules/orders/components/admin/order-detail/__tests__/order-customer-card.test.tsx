@@ -1,9 +1,18 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-const { mockEditOpen, mockHaptic } = vi.hoisted(() => ({
+const { mockEditOpen, mockHaptic, mockPush } = vi.hoisted(() => ({
 	mockEditOpen: vi.fn(),
 	mockHaptic: vi.fn(),
+	mockPush: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
 }));
 
 vi.mock("@/shared/components/ui/card", () => ({

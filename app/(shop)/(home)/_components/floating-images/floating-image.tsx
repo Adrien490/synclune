@@ -167,8 +167,7 @@ export function FloatingImage({
 							alt={image.alt}
 							width={position.width}
 							height={position.height}
-							loading={isPriority ? undefined : "lazy"}
-							priority={isPriority}
+							loading={isPriority ? "eager" : "lazy"}
 							fetchPriority={isPriority ? "high" : "auto"}
 							className="relative aspect-4/5 w-full object-cover"
 							sizes={position.sizes}

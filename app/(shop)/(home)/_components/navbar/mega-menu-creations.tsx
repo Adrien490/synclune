@@ -59,7 +59,7 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 							Pièces récentes de l&apos;atelier
 						</p>
 						<div className="grid grid-cols-2 gap-4">
-							{featuredProducts.map((product, index) => (
+							{featuredProducts.map((product) => (
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
 										href={ROUTES.SHOP.PRODUCT(product.slug)}
@@ -85,7 +85,6 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 												alt=""
 												fill
 												sizes="(max-width: 1024px) 140px, 160px"
-												priority={index === 0}
 												className="object-cover"
 												placeholder={product.blurDataUrl ? "blur" : "empty"}
 												blurDataURL={product.blurDataUrl ?? undefined}

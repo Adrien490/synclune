@@ -98,7 +98,7 @@ export function ProductsMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les bijoux à sélectionner">
 					<ProductsBulkActionsBar presentation="bottom-bar" collections={collections} />
 				</MobileSelectionBottomBar>
 			</AdminListPendingProvider>

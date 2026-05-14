@@ -6,19 +6,27 @@ import { createMockFormData } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAuth, mockValidateInput, mockSuccess, mockError, mockBuildUrl } = vi.hoisted(() => ({
-	mockAuth: {
-		api: {
-			sendVerificationEmail: vi.fn(),
+const { mockAuth, mockValidateInput, mockSuccess, mockError, mockBuildUrl, mockEnforceRateLimit } =
+	vi.hoisted(() => ({
+		mockAuth: {
+			api: {
+				sendVerificationEmail: vi.fn(),
+			},
 		},
-	},
-	mockValidateInput: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
-	mockBuildUrl: vi.fn(),
-}));
+		mockValidateInput: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+		mockBuildUrl: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+	}));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	AUTH_LIMITS: { EMAIL_VERIFICATION: "auth-email-verification" },
+}));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -54,6 +62,7 @@ describe("resendVerificationEmail", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.sendVerificationEmail.mockResolvedValue(undefined);
 		mockBuildUrl.mockReturnValue("https://synclune.fr/verifier-email");

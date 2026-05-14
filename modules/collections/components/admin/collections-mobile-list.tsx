@@ -51,7 +51,7 @@ export function CollectionsMobileList({
 					description={
 						hasActiveFilters
 							? "Aucune collection ne correspond aux critères de recherche."
-							: "Aucune collection pour l'instant."
+							: "Aucune vitrine à composer pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? (
@@ -68,9 +68,9 @@ export function CollectionsMobileList({
 	const pageItemIds = collections.map((c) => c.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "collection", plural: "collections" }} />
 					{filterParams ? (
 						<CollectionsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
@@ -80,7 +80,7 @@ export function CollectionsMobileList({
 						singular="collection"
 						plural="collections"
 					/>
-					<ItemGroup aria-label="Collections" className="gap-2">
+					<ItemGroup role="list" aria-label="Collections" className="gap-2">
 						{collections.map((collection) => (
 							<div key={collection.id} role="listitem">
 								<CollectionMobileItem collection={collection} />
@@ -97,10 +97,10 @@ export function CollectionsMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les vitrines à composer">
 					<CollectionsBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

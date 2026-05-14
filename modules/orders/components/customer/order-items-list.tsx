@@ -2,6 +2,8 @@ import { formatEuro } from "@/shared/utils/format-euro";
 import { ShoppingBag } from "lucide-react";
 import Image from "next/image";
 
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
+
 interface OrderItem {
 	id: string;
 	productId: string | null;
@@ -47,6 +49,8 @@ export function OrderItemsList({ items }: OrderItemsListProps) {
 											className="object-cover"
 											sizes="80px"
 											quality={80}
+											placeholder="blur"
+											blurDataURL={IMAGE_BLUR_FALLBACK}
 										/>
 									) : (
 										<div className="text-muted-foreground flex h-full items-center justify-center">

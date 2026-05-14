@@ -10,6 +10,9 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 
 vi.mock("lucide-react", () => ({
 	Check: (props: Record<string, unknown>) => <svg data-testid="check-icon" {...props} />,
+	MoreVertical: (props: Record<string, unknown>) => (
+		<svg data-testid="more-vertical-icon" {...props} />
+	),
 }));
 
 // Flatten LongPressMenuLink to a plain anchor for assertion ergonomics — its own
@@ -20,14 +23,17 @@ vi.mock("@/shared/components/long-press-menu-link", () => ({
 		ariaLabel,
 		children,
 		className,
+		affordance,
 	}: {
 		href: string;
 		ariaLabel: string;
 		children: React.ReactNode;
 		className?: string;
+		affordance?: React.ReactNode;
 	}) => (
 		<a href={href} aria-label={ariaLabel} className={className}>
 			{children}
+			{affordance}
 		</a>
 	),
 }));
@@ -149,6 +155,55 @@ describe("MobileSelectableCard", () => {
 		);
 
 		expect(screen.getByTestId("card-content")).toBeInTheDocument();
+	});
+
+	it("renders a discoverability affordance (MoreVertical) by default in OFF mode", () => {
+		render(
+			<MobileSelectableCard
+				id="p-1"
+				itemLabel="Produit Anneau doré"
+				longPressProps={longPressProps}
+			>
+				<span>Card content</span>
+			</MobileSelectableCard>,
+		);
+
+		const affordance = screen.getByTestId("more-vertical-icon");
+		expect(affordance).toBeInTheDocument();
+		expect(affordance).toHaveAttribute("aria-hidden", "true");
+		expect(affordance.getAttribute("class") ?? "").toContain("pointer-events-none");
+	});
+
+	it("omits the affordance when showAffordance is false", () => {
+		render(
+			<MobileSelectableCard
+				id="p-1"
+				itemLabel="Produit Anneau doré"
+				longPressProps={longPressProps}
+				showAffordance={false}
+			>
+				<span>Card content</span>
+			</MobileSelectableCard>,
+		);
+
+		expect(screen.queryByTestId("more-vertical-icon")).not.toBeInTheDocument();
+	});
+
+	it("hides the affordance in selection mode (checkbox replaces it)", () => {
+		render(
+			<BulkSelectionProvider pageItemIds={["p-1"]}>
+				<EnterModeOnMount />
+				<MobileSelectableCard
+					id="p-1"
+					itemLabel="Produit Anneau doré"
+					longPressProps={longPressProps}
+				>
+					<span>Card content</span>
+				</MobileSelectableCard>
+			</BulkSelectionProvider>,
+		);
+
+		expect(screen.queryByTestId("more-vertical-icon")).not.toBeInTheDocument();
 	});
 
 	it("triggers haptic 'selection' on toggle in selection mode (Mail iOS parity)", () => {

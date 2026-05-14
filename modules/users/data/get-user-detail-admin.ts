@@ -49,7 +49,7 @@ export async function getUserDetailAdmin(userId: string): Promise<GetUserDetailA
  * incompatibles avec la directive `"use cache"`.
  */
 async function _fetchUserDetailAdmin(userId: string): Promise<GetUserDetailAdminReturn | null> {
-	"use cache";
+	"use cache: private";
 	cacheLife("user");
 	cacheCurrentUser(userId);
 	cacheTag(USERS_CACHE_TAGS.USER_ORDERS_COUNT(userId));

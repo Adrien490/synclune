@@ -1,10 +1,12 @@
 "use client";
 
 import { ExternalLink, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { getCarrierLabel, type Carrier } from "@/modules/orders/utils/carrier.utils";
 import { UPDATE_TRACKING_DIALOG_ID } from "../update-tracking-dialog";
@@ -13,15 +15,21 @@ import type { OrderShippingCardProps } from "./types";
 
 export function OrderShippingCard({ order, canUpdateTracking }: OrderShippingCardProps) {
 	const updateTrackingDialog = useAlertDialog(UPDATE_TRACKING_DIALOG_ID);
+	const isMobile = useIsMobile();
+	const router = useRouter();
 
 	const handleUpdateTracking = () => {
-		updateTrackingDialog.open({
-			orderId: order.id,
-			orderNumber: order.orderNumber,
-			trackingNumber: order.trackingNumber ?? undefined,
-			trackingUrl: order.trackingUrl ?? undefined,
-			carrier: order.shippingCarrier as Carrier,
-		});
+		if (isMobile) {
+			router.push(`/admin/ventes/commandes/${order.id}/suivi`);
+		} else {
+			updateTrackingDialog.open({
+				orderId: order.id,
+				orderNumber: order.orderNumber,
+				trackingNumber: order.trackingNumber ?? undefined,
+				trackingUrl: order.trackingUrl ?? undefined,
+				carrier: order.shippingCarrier as Carrier,
+			});
+		}
 	};
 
 	return (

@@ -103,8 +103,8 @@ function MaterialsBottomBarInner() {
 			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Nom, slug…"
-				ariaLabel="Rechercher un matériau"
+				placeholder="Une matière à l'atelier…"
+				ariaLabel="Rechercher une matière à l'atelier"
 				id={IDS.search}
 			/>
 		</>

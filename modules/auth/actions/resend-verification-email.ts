@@ -1,8 +1,10 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
 import { buildUrl, ROUTES } from "@/shared/constants/urls";
+import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { resendVerificationEmailSchema } from "../schemas/auth.schemas";
 
@@ -11,6 +13,9 @@ export const resendVerificationEmail = async (
 	formData: FormData,
 ): Promise<ActionState> => {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.EMAIL_VERIFICATION);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// Validation des données
 		const rawData = {
 			email: safeFormGet(formData, "email"),

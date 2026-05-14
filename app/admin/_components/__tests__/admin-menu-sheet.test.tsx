@@ -81,15 +81,23 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		children,
 		open,
 		onOpenChange,
+		handleOnly,
+		scrollLockTimeout,
 	}: {
 		children: React.ReactNode;
 		open: boolean;
 		direction?: string;
 		onOpenChange?: (v: boolean) => void;
 		preventScrollRestoration?: boolean;
+		handleOnly?: boolean;
+		scrollLockTimeout?: number;
 	}) =>
 		open ? (
-			<div data-testid="sheet">
+			<div
+				data-testid="sheet"
+				data-handle-only={handleOnly ? "true" : "false"}
+				data-scroll-lock-timeout={scrollLockTimeout ?? ""}
+			>
 				<button type="button" data-testid="sheet-dismiss" onClick={() => onOpenChange?.(false)}>
 					dismiss
 				</button>
@@ -99,13 +107,15 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetContent: ({
 		children,
 		className,
+		id,
 		onOverlayClick,
 	}: {
 		children: React.ReactNode;
 		className?: string;
+		id?: string;
 		onOverlayClick?: (e: React.MouseEvent) => void;
 	}) => (
-		<div data-testid="sheet-content" className={className}>
+		<div data-testid="sheet-content" data-slot="sheet-content" id={id} className={className}>
 			<div data-testid="sheet-overlay" onClick={(e) => onOverlayClick?.(e)} aria-hidden="true" />
 			{children}
 		</div>
@@ -263,15 +273,45 @@ describe("AdminMenuSheet", () => {
 		it("shows logout button", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
-			expect(screen.getByText("Deconnexion")).toBeInTheDocument();
+			expect(screen.getByText("Déconnexion")).toBeInTheDocument();
 		});
 
 		it("closes menu on logout click", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
 
-			fireEvent.click(screen.getByText("Deconnexion"));
+			fireEvent.click(screen.getByText("Déconnexion"));
 			expect(mockCloseMenu).toHaveBeenCalled();
+		});
+
+		it('triggers "medium" haptic on logout click (destructive action)', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByText("Déconnexion"));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+		});
+
+		it("defers the logout dialog until after the sheet has finished closing", () => {
+			mockIsOpen.current = true;
+			const { rerender } = render(<AdminMenuSheet user={defaultUser} />);
+
+			fireEvent.click(screen.getByText("Déconnexion"));
+			expect(mockCloseMenu).toHaveBeenCalled();
+			// Dialog ne s'ouvre PAS immédiatement (tant que la sheet est ouverte)
+			expect(screen.queryByTestId("logout-dialog")).not.toBeInTheDocument();
+
+			// Simule la fermeture effective de la sheet par Vaul
+			mockIsOpen.current = false;
+			rerender(<AdminMenuSheet user={defaultUser} />);
+			// Toujours pas visible : le timer fallback n'a pas encore tiré
+			expect(screen.queryByTestId("logout-dialog")).not.toBeInTheDocument();
+
+			// Fallback timer (VAUL_EXIT_DURATION_MS = 450)
+			vi.advanceTimersByTime(450);
+			rerender(<AdminMenuSheet user={defaultUser} />);
+			expect(screen.getByTestId("logout-dialog")).toBeInTheDocument();
 		});
 	});
 
@@ -358,6 +398,135 @@ describe("AdminMenuSheet", () => {
 
 			fireEvent.click(screen.getByTestId("sheet-overlay"));
 			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+	});
+
+	describe("vaul gestures", () => {
+		it("activates handleOnly on the bottom Sheet (forces drag-handle to close the long nav list)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const sheet = screen.getByTestId("sheet");
+			expect(sheet).toHaveAttribute("data-handle-only", "true");
+		});
+
+		it("passes scrollLockTimeout=500 to Sheet (P1.3 — drag-to-close reactivity after scroll)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const sheet = screen.getByTestId("sheet");
+			expect(sheet).toHaveAttribute("data-scroll-lock-timeout", "500");
+		});
+	});
+
+	describe("sheet content id (P0 — aria-controls target)", () => {
+		it("renders SheetContent with the stable id used by the bottom-bar trigger", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const content = screen.getByTestId("sheet-content");
+			expect(content).toHaveAttribute("id", "admin-menu-sheet-content");
+			expect(content).toHaveAttribute("data-slot", "sheet-content");
+		});
+	});
+
+	describe("opening live region (P1.3)", () => {
+		it("announces 'Menu ouvert, N options de navigation' on open", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const statusNodes = screen.getAllByRole("status");
+			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
+			expect(opening).toBeDefined();
+			expect(opening?.textContent).toMatch(/Menu ouvert, \d+ options? de navigation/);
+			expect(opening).toHaveAttribute("aria-live", "polite");
+		});
+
+		it("hides the opening live region while searching", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "command" } });
+
+			const statusNodes = screen.queryAllByRole("status");
+			const opening = statusNodes.find((n) => n.textContent.includes("Menu ouvert"));
+			expect(opening).toBeUndefined();
+		});
+	});
+
+	describe("search live region enriched (P1.3)", () => {
+		it("uses 'résultats de navigation' qualifier in the count region", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "command" } });
+
+			const statusNodes = screen.getAllByRole("status");
+			const liveCount = statusNodes.find((n) => /\d+ résultats? de navigation/.test(n.textContent));
+			expect(liveCount).toBeDefined();
+			expect(liveCount).toHaveAttribute("aria-live", "polite");
+		});
+
+		it("wraps the search query in French chevrons in the empty live region", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "zzzz" } });
+
+			const statusNodes = screen.getAllByRole("status");
+			const empty = statusNodes.find((n) => /Aucun résultat pour « zzzz »/.test(n.textContent));
+			expect(empty).toBeDefined();
+		});
+	});
+
+	describe("nav item haptic feedback (P1.2)", () => {
+		it('fires "selection" haptic when clicking the dashboard link', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByRole("link", { name: /Tableau de bord/i }));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it('fires "selection" haptic when clicking a group navigation link', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByRole("link", { name: /Produits/i }));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+
+		it('fires "selection" haptic when clicking "Voir le site"', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByLabelText("Voir le site (nouvel onglet)"));
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+		});
+	});
+
+	describe("tactile classes (P1.2)", () => {
+		it("applies touch-manipulation + motion-safe scale on group nav links", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const link = screen.getByRole("link", { name: /Produits/i });
+			expect(link.className).toContain("touch-manipulation");
+			expect(link.className).toContain("motion-safe:active:scale-[0.97]");
+		});
+
+		it("applies tactile classes on the dashboard link", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const link = screen.getByRole("link", { name: /Tableau de bord/i });
+			expect(link.className).toContain("touch-manipulation");
+			expect(link.className).toContain("motion-safe:active:scale-[0.97]");
+		});
+
+		it("applies tactile classes on the logout button", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const btn = screen.getByText("Déconnexion").closest("button")!;
+			expect(btn.className).toContain("touch-manipulation");
+			expect(btn.className).toContain("motion-safe:active:scale-[0.97]");
 		});
 	});
 });

@@ -10,6 +10,11 @@ import { getPeriodBoundaries } from "../services/period-boundaries.service";
 
 interface ExportRevenueButtonProps {
 	period: DashboardPeriod;
+	/**
+	 * `responsive` (default) = `size="sm"` with label `Exporter` revealed at `sm:`.
+	 * `icon` = always icon-only with `size-11` (44px WCAG target) for mobile action bars.
+	 */
+	mode?: "responsive" | "icon";
 }
 
 function buildExportUrl(period: DashboardPeriod): string {
@@ -53,8 +58,9 @@ async function downloadCsv(url: string): Promise<void> {
 	URL.revokeObjectURL(blobUrl);
 }
 
-export function ExportRevenueButton({ period }: ExportRevenueButtonProps) {
+export function ExportRevenueButton({ period, mode = "responsive" }: ExportRevenueButtonProps) {
 	const [isExporting, setIsExporting] = useState(false);
+	const isIconMode = mode === "icon";
 
 	async function handleClick() {
 		if (isExporting) return;
@@ -82,20 +88,20 @@ export function ExportRevenueButton({ period }: ExportRevenueButtonProps) {
 	return (
 		<Button
 			variant="outline"
-			size="sm"
+			size={isIconMode ? "icon" : "sm"}
 			onClick={handleClick}
 			disabled={isExporting}
 			aria-label="Exporter le livre de recettes au format CSV"
 			data-pending={isExporting || undefined}
 			aria-busy={isExporting || undefined}
-			className="gap-2"
+			className={isIconMode ? "size-11 shrink-0" : "gap-2"}
 		>
 			{isExporting ? (
 				<LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
 			) : (
 				<Download className="size-4" aria-hidden="true" />
 			)}
-			<span className="hidden sm:inline">Exporter</span>
+			{!isIconMode && <span className="hidden sm:inline">Exporter</span>}
 		</Button>
 	);
 }

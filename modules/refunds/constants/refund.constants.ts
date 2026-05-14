@@ -1,5 +1,6 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 import { RefundReason, RefundStatus } from "@/app/generated/prisma/enums";
+import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
 import type { BadgeVariant } from "@/shared/types/badge.types";
 
 // ============================================================================
@@ -183,7 +184,7 @@ export const GET_REFUNDS_MAX_RESULTS_PER_PAGE = 100;
  * Cap des ids retournés par get-filtered-refund-ids pour le banner
  * "Sélectionner les N filtrés" (parité produits).
  */
-export const BULK_REFUND_ACTION_LIMIT = 100;
+export const BULK_REFUND_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 export const SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",

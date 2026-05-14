@@ -16,36 +16,34 @@ export const metadata: Metadata = {
 	title: "Paiement annulé | Synclune",
 	description: "Votre paiement a été annulé. Votre panier est toujours disponible.",
 	robots: {
-		index: false, // Ne pas indexer les pages de paiement
+		index: false,
 		follow: false,
 	},
 };
 
 interface CheckoutCancelPageProps {
 	searchParams: Promise<{
-		order_id?: string;
 		reason?: string;
 	}>;
 }
 
 /**
- * 🔴 CORRECTION : Page d'annulation de paiement avec messages d'erreur spécifiques
- * Affichée quand l'utilisateur annule le paiement Stripe ou rencontre une erreur
+ * Page d'annulation de paiement.
  *
- * Paramètres URL supportés :
- * - order_id : ID de la commande annulée
- * - reason : Raison de l'annulation (card_declined, expired_card, insufficient_funds, etc.)
+ * Avec Stripe Checkout Sessions (embedded), les erreurs liées à la carte sont
+ * gérées entièrement dans l'iframe — l'utilisateur ne quitte pas /paiement.
+ * On atterrit ici uniquement pour : annulation explicite, session expirée,
+ * ou erreur serveur lors de la vérification de retour.
  */
 export default async function CheckoutCancelPage({ searchParams }: CheckoutCancelPageProps) {
 	const params = await searchParams;
-	const orderId = params.order_id;
 	const reason = params.reason;
 
 	const errorInfo = getCheckoutCancelMessage(reason);
 	const ErrorIcon = errorInfo.icon;
+
 	return (
 		<div className="relative min-h-screen">
-			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
@@ -59,91 +57,38 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 							</div>
 							<CardTitle className="font-display text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
 							<CardDescription className="text-base">
-								Votre commande n'a pas été finalisée
+								Votre commande n&apos;a pas été finalisée
 							</CardDescription>
 						</CardHeader>
 
 						<CardContent className="space-y-6">
-							{/* 🔴 CORRECTION : Message d'erreur spécifique */}
 							<Alert variant={reason && reason !== "canceled" ? "destructive" : "default"}>
 								<Info className="size-4" />
 								<AlertDescription>{errorInfo.description}</AlertDescription>
 							</Alert>
 
-							{/* 🔴 CORRECTION : Afficher l'ID de commande si disponible */}
-							{orderId && (
-								<Alert>
-									<Info className="size-4" />
-									<AlertDescription>
-										Référence de commande : <span className="tabular-nums">{orderId}</span>
-									</AlertDescription>
-								</Alert>
-							)}
-
-							{/* 🔴 CORRECTION : Informations et conseils spécifiques */}
 							<div className="text-muted-foreground space-y-3 text-sm">
 								<p>
 									Votre panier est toujours disponible avec tous vos articles sélectionnés. Vous
 									pouvez reprendre votre commande à tout moment.
 								</p>
 
-								{/* Conseils spécifiques selon le type d'erreur */}
-								{reason === "card_declined" && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											<strong>Que faire ?</strong> Vérifiez que votre carte est activée pour les
-											paiements en ligne, ou contactez votre banque si le problème persiste.
-										</span>
-									</aside>
-								)}
-
-								{reason === "insufficient_funds" && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											<strong>Que faire ?</strong> Vérifiez votre solde ou utilisez une autre carte
-											bancaire.
-										</span>
-									</aside>
-								)}
-
-								{reason === "authentication_failed" && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											<strong>Que faire ?</strong> Assurez-vous d'avoir accès à votre application
-											bancaire ou SMS pour valider l'authentification 3D Secure.
-										</span>
-									</aside>
-								)}
-
-								{(!reason || reason === "canceled") && (
-									<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
-										<span className="mt-0.5" aria-hidden="true">
-											💡
-										</span>
-										<span>
-											Si vous avez rencontré un problème lors du paiement, n'hésite pas à me
-											contacter !
-										</span>
-									</aside>
-								)}
+								<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
+									<span className="mt-0.5" aria-hidden="true">
+										💡
+									</span>
+									<span>
+										Si vous avez rencontré un problème lors du paiement, n&apos;hésite pas à me
+										contacter — je reprends la main avec toi.
+									</span>
+								</aside>
 							</div>
 
-							{/* Reassurance message */}
 							<p className="text-muted-foreground text-center text-sm">
 								Votre panier et vos informations ont été sauvegardés. Vous pouvez réessayer
 								immédiatement.
 							</p>
 
-							{/* Actions */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
 								<Button asChild size="lg" className="flex-1">
 									<Link href="/paiement">
@@ -152,7 +97,7 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 									</Link>
 								</Button>
 								<Button asChild variant="outline" size="lg" className="flex-1">
-									<Link href="mailto:contact@synclune.fr">M'écrire</Link>
+									<Link href="mailto:contact@synclune.fr">M&apos;écrire</Link>
 								</Button>
 							</div>
 						</CardContent>

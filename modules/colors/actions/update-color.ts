@@ -72,7 +72,6 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 			const hexExists = await prisma.color.findFirst({
 				where: {
 					hex: validatedData.hex,
-					deletedAt: null,
 					NOT: { id: validatedData.id },
 				},
 				select: { name: true },

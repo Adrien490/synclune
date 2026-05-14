@@ -15,12 +15,28 @@ const SheetContext = React.createContext<{ direction: SheetDirection }>({
 	direction: "right",
 });
 
+/**
+ * Vaul Sheet wrapper avec défauts Synclune.
+ *
+ * Modes de fermeture (cf. `.claude/plans/audit-mes-modales-swipeable-linked-badger.md`) :
+ *
+ * 1. **Permissif (défaut)** — Swipe-from-anywhere ferme la sheet. Convient aux
+ *    contenus courts / lectures simples.
+ * 2. **Strict (`handleOnly={true}`)** — Seule la `SheetHandle` visible permet
+ *    de fermer la sheet. Convient au contenu scrollable interactif où chaque
+ *    touch compte (filtres avec sliders/accordéons/search, long nav).
+ * 3. **Saisie clavier (`repositionInputs={true}`)** — Vaul repositionne l'input
+ *    focusé au-dessus du clavier mobile (au lieu de scroller). Auto-activé si
+ *    `snapPoints` est défini.
+ */
 function Sheet({
 	direction = "right",
 	open,
 	onOpenChange,
 	scrollLockTimeout = 800,
 	closeThreshold = 0.15,
+	handleOnly,
+	repositionInputs,
 	...props
 }: React.ComponentProps<typeof SheetPrimitive.Root> & {
 	direction?: SheetDirection;
@@ -39,6 +55,20 @@ function Sheet({
 	 * @default 0.15
 	 */
 	closeThreshold?: number;
+	/**
+	 * Si `true`, seule `<SheetHandle>` (la poignée visible) permet de drag/
+	 * fermer la sheet. Le reste du contenu n'écoute pas les gestes
+	 * swipe-to-close. À activer pour les sheets bottom à contenu scrollable
+	 * interactif (filtres, listes longues avec search).
+	 * @default false
+	 */
+	handleOnly?: boolean;
+	/**
+	 * Si `true`, Vaul repositionne l'input focusé au-dessus du clavier mobile
+	 * (au lieu de scroller la page). Active pour les sheets avec saisie texte
+	 * (search input, formulaire). Auto-activé si `snapPoints` est défini.
+	 */
+	repositionInputs?: boolean;
 }) {
 	// Gère uniquement le bouton retour du navigateur (mobile)
 	// Les autres fermetures (X, overlay, etc.) passent directement par onOpenChange
@@ -66,6 +96,8 @@ function Sheet({
 					onOpenChange={onOpenChange}
 					scrollLockTimeout={scrollLockTimeout}
 					closeThreshold={closeThreshold}
+					handleOnly={handleOnly}
+					repositionInputs={repositionInputs}
 					noBodyStyles
 					{...props}
 				/>

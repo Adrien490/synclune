@@ -2,17 +2,35 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { z } from "zod";
 import { stripe } from "@/shared/lib/stripe";
+import { prisma } from "@/shared/lib/prisma";
 
-const piSearchParamsSchema = z.object({
-	payment_intent: z.string().min(1),
-	redirect_status: z.string().min(1),
-	order_id: z.string().cuid(),
-});
-
-const sessionSearchParamsSchema = z.object({
+const searchParamsSchema = z.object({
 	session_id: z.string().min(1),
-	order_id: z.string().cuid().optional(),
 });
+
+/**
+ * Cherche l'Order créée par le webhook `checkout.session.completed`.
+ * Le webhook fire en parallèle de la redirection Stripe → race possible où
+ * l'utilisateur arrive ici AVANT que le webhook n'ait commit l'Order.
+ * On retry 3× espacés de 500 ms (1,5 s max) avant de fallback `pending=true`.
+ */
+async function findOrderWithRetry(
+	sessionId: string,
+	attempts = 3,
+	delayMs = 500,
+): Promise<{ id: string; orderNumber: string } | null> {
+	for (let i = 0; i < attempts; i++) {
+		const order = await prisma.order.findUnique({
+			where: { stripeCheckoutSessionId: sessionId },
+			select: { id: true, orderNumber: true },
+		});
+		if (order) return order;
+		if (i < attempts - 1) {
+			await new Promise((resolve) => setTimeout(resolve, delayMs));
+		}
+	}
+	return null;
+}
 
 export const metadata: Metadata = {
 	title: "Vérification du paiement | Synclune",
@@ -23,80 +41,49 @@ export const metadata: Metadata = {
 };
 
 interface CheckoutReturnPageProps {
-	searchParams: Promise<{
-		payment_intent?: string;
-		redirect_status?: string;
-		session_id?: string;
-		order_id?: string;
-	}>;
+	searchParams: Promise<{ session_id?: string }>;
 }
 
 /**
- * Payment return page — handles both PI flow and legacy Checkout Session flow.
- * Verifies payment status and redirects to the appropriate page.
+ * Page de retour Stripe Checkout (mode embedded).
+ *
+ * Stripe redirige ici après le paiement via `return_url=…/paiement/retour?session_id={CHECKOUT_SESSION_ID}`.
+ * On rapatrie la Session, on lit son `payment_status`, et on redirige selon
+ * l'état réel (paid → confirmation, unpaid pour async SEPA → "en cours", expired/no_payment → annulation).
  */
 export default async function CheckoutReturnPage({ searchParams }: CheckoutReturnPageProps) {
 	const params = await searchParams;
-
-	// === New PI flow ===
-	const piValidation = piSearchParamsSchema.safeParse(params);
-	if (piValidation.success) {
-		const {
-			payment_intent: piId,
-			redirect_status: redirectStatus,
-			order_id: orderId,
-		} = piValidation.data;
-
-		let redirectUrl: string;
-
-		try {
-			const pi = await stripe.paymentIntents.retrieve(piId);
-			const orderNumber = pi.metadata.orderNumber;
-
-			if (redirectStatus === "succeeded" || pi.status === "succeeded") {
-				redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`;
-			} else if (pi.status === "processing" || pi.status === "requires_action") {
-				// Async payment in progress (SEPA, Klarna, etc.)
-				redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`;
-			} else if (redirectStatus === "failed" || pi.status === "canceled") {
-				redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=payment_failed`;
-			} else {
-				redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
-			}
-		} catch {
-			redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
-		}
-
-		redirect(redirectUrl);
-	}
-
-	// === Legacy Checkout Session flow ===
-	const sessionValidation = sessionSearchParamsSchema.safeParse(params);
-	if (!sessionValidation.success) {
+	const validation = searchParamsSchema.safeParse(params);
+	if (!validation.success) {
 		redirect("/");
 	}
 
-	const { session_id: sessionId, order_id: orderId } = sessionValidation.data;
+	const { session_id: sessionId } = validation.data;
 
-	let redirectUrl: string;
+	let redirectUrl = "/paiement/annulation?reason=processing_error";
 
 	try {
 		const session = await stripe.checkout.sessions.retrieve(sessionId);
-		const orderNumber = session.metadata?.orderNumber;
 
 		if (session.payment_status === "paid") {
-			redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}`;
-		} else if (session.status === "open") {
-			redirectUrl = `/paiement?retry=true&order_id=${orderId}`;
+			// Le webhook crée l'Order de manière asynchrone. On poll brièvement avant
+			// de tomber sur le fallback pending=true (qui redirigerait sans order_id).
+			const order = await findOrderWithRetry(sessionId);
+			redirectUrl = order
+				? `/paiement/confirmation?order_id=${order.id}&order_number=${order.orderNumber}`
+				: `/paiement/confirmation?session_id=${sessionId}&pending=true`;
 		} else if (session.payment_status === "unpaid" && session.status === "complete") {
-			redirectUrl = `/paiement/confirmation?order_id=${orderId}&order_number=${orderNumber}&pending=true`;
+			// Paiement asynchrone en attente de confirmation (SEPA Direct Debit, virement).
+			redirectUrl = `/paiement/confirmation?session_id=${sessionId}&pending=true`;
+		} else if (session.status === "open") {
+			redirectUrl = `/paiement?retry=true`;
 		} else if (session.status === "expired") {
-			redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=expired`;
+			redirectUrl = `/paiement/annulation?reason=expired`;
 		} else {
-			redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
+			redirectUrl = `/paiement/annulation?reason=processing_error`;
 		}
 	} catch {
-		redirectUrl = `/paiement/annulation?order_id=${orderId}&reason=processing_error`;
+		redirectUrl = `/paiement/annulation?reason=processing_error`;
 	}
 
 	redirect(redirectUrl);

@@ -146,6 +146,8 @@ export function FilterSheetWrapper({
 			open={controlledOpen}
 			onOpenChange={controlledOnOpenChange}
 			snapPoints={effectiveSnapPoints}
+			handleOnly={useBottomSheet}
+			repositionInputs={useBottomSheet}
 		>
 			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
 
@@ -229,7 +231,7 @@ export function FilterSheetWrapper({
 					)}
 				</SheetHeader>
 
-				<ScrollArea className="min-h-0 flex-1 overscroll-contain">
+				<ScrollArea className="min-h-0 flex-1 overscroll-contain" data-vaul-no-drag>
 					<div
 						className={cn(
 							"px-6 py-4 transition-opacity duration-200",

@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,43 +23,26 @@ export interface FilteredOrderIdsData {
 export async function getFilteredOrderIds(
 	params: Pick<GetOrdersParams, "search" | "sortBy" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
-
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_ORDER_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const fullParams: GetOrdersParams = {
-			cursor: undefined,
-			direction: "forward",
-			perPage: BULK_ORDER_ACTION_LIMIT,
-			search: params.search,
-			sortBy: params.sortBy,
-			filters: params.filters,
-		};
-
-		const where = buildOrderWhereClause(fullParams);
-
-		const [rows, totalCount] = await Promise.all([
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_ORDER_LIMITS.REFRESH,
+		cap: BULK_ORDER_ACTION_LIMIT,
+		emptyMessage: "Aucune commande ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les commandes filtrées",
+		buildWhere: () =>
+			buildOrderWhereClause({
+				cursor: undefined,
+				direction: "forward",
+				perPage: BULK_ORDER_ACTION_LIMIT,
+				search: params.search,
+				sortBy: params.sortBy,
+				filters: params.filters,
+			}),
+		fetchIds: (where) =>
 			prisma.order.findMany({
 				where,
 				select: { id: true },
 				take: BULK_ORDER_ACTION_LIMIT,
 			}),
-			prisma.order.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucune commande ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_ORDER_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les commandes filtrées");
-	}
+		fetchCount: (where) => prisma.order.count({ where }),
+	});
 }

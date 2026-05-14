@@ -1,6 +1,7 @@
 import { ProductsDataTableSkeleton } from "@/modules/products/components/admin/products-data-table-skeleton";
 import { ProductsMobileListSkeleton } from "@/modules/products/components/admin/products-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
+import { StickyActionBarSkeleton } from "@/shared/components/sticky-action-bar";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 import { Button } from "@/shared/components/ui/button";
 
@@ -15,6 +16,8 @@ export default function ProductsListLoading() {
 				actions={<Button disabled>Nouveau produit</Button>}
 				className="hidden md:block"
 			/>
+
+			<StickyActionBarSkeleton itemCount={4} />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 

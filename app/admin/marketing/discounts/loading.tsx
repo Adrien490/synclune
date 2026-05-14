@@ -1,16 +1,18 @@
 import { DiscountsDataTableSkeleton } from "@/modules/discounts/components/admin/discounts-data-table-skeleton";
 import { DiscountsMobileListSkeleton } from "@/modules/discounts/components/admin/discounts-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
-import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
+import { StickyActionBarSkeleton } from "@/shared/components/sticky-action-bar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
+import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 
-/**
- * Loading state for discounts management page.
- * Aligned with page.tsx: PageHeader + Toolbar + FilterBadges + MobileList + DataTable.
- */
 export default function DiscountsLoading() {
 	return (
-		<div role="status" aria-busy="true" aria-label="Chargement des codes promo">
+		<div
+			role="status"
+			aria-busy="true"
+			aria-label="Chargement des codes promo"
+			className="space-y-6"
+		>
 			<span className="sr-only">Chargement des codes promo…</span>
 
 			<PageHeader
@@ -20,18 +22,14 @@ export default function DiscountsLoading() {
 				className="hidden md:block"
 			/>
 
-			<div className="space-y-6">
-				<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />
+			<StickyActionBarSkeleton itemCount={4} />
 
-				{/* Filter badges placeholder */}
-				<div className="min-h-[1px]" aria-hidden="true" />
+			<ToolbarSkeleton selectCount={1} buttonCount={1} className="hidden md:flex" />
 
-				<DiscountsMobileListSkeleton />
+			<div className="min-h-[1px]" aria-hidden="true" />
 
-				<div className="hidden md:block">
-					<DiscountsDataTableSkeleton />
-				</div>
-			</div>
+			<DiscountsMobileListSkeleton />
+			<DiscountsDataTableSkeleton />
 		</div>
 	);
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Check } from "lucide-react";
+import { Check, MoreVertical } from "lucide-react";
 import { m, useReducedMotion } from "motion/react";
 
 import { useBulkSelectionContextOptional } from "@/shared/components/data-table";
@@ -12,7 +12,7 @@ import {
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
-type LongPressProps = Omit<LongPressMenuLinkProps, "children">;
+type LongPressProps = Omit<LongPressMenuLinkProps, "children" | "affordance">;
 
 interface MobileSelectableCardProps {
 	/** ID stable de l'item (pour `toggle`/`isSelected`). */
@@ -26,6 +26,13 @@ interface MobileSelectableCardProps {
 	 * dont les items sont inertes — Reviews — ou ont leur propre wrapper interactif).
 	 */
 	longPressProps?: LongPressProps;
+	/**
+	 * Affiche un MoreVertical discret en haut-droite de la card pour signaler
+	 * la disponibilité du long-press menu (découvrabilité). Caché en
+	 * `selectionMode` (la checkbox prend le relais visuel). Default `true`.
+	 * Ignoré si `longPressProps` est omis (pas de menu à signaler).
+	 */
+	showAffordance?: boolean;
 	children: ReactNode;
 }
 
@@ -42,6 +49,12 @@ interface MobileSelectableCardProps {
  *   Children sont `aria-hidden` pour que VoiceOver ne lise que l'`aria-label` court.
  *   État sélectionné : ring + bg primary + check-circle filled. Pattern Mail iOS.
  *
+ * **Note design — long-press en mode ON :** intentionnellement désactivé en mode
+ * sélection (le `<button role="checkbox">` capture le tap exclusif). Parité iOS
+ * Mail : une fois en sélection, tap = toggle, pas de menu d'actions. L'admin
+ * sort du mode (Annuler / back-button / Escape / swipe-right) pour retrouver le
+ * menu long-press.
+ *
  * Si aucun `BulkSelectionProvider` n'est trouvé en parent (composant utilisé hors
  * admin), comportement = mode OFF.
  */
@@ -49,6 +62,7 @@ export function MobileSelectableCard({
 	id,
 	itemLabel,
 	longPressProps,
+	showAffordance = true,
 	children,
 }: MobileSelectableCardProps) {
 	const ctx = useBulkSelectionContextOptional();
@@ -58,7 +72,19 @@ export function MobileSelectableCard({
 
 	if (!selectionMode || !ctx) {
 		return longPressProps ? (
-			<LongPressMenuLink {...longPressProps}>{children}</LongPressMenuLink>
+			<LongPressMenuLink
+				{...longPressProps}
+				affordance={
+					showAffordance ? (
+						<MoreVertical
+							aria-hidden="true"
+							className="text-muted-foreground/40 pointer-events-none absolute top-2 right-2 size-4 motion-safe:transition-opacity"
+						/>
+					) : undefined
+				}
+			>
+				{children}
+			</LongPressMenuLink>
 		) : (
 			<>{children}</>
 		);

@@ -106,3 +106,70 @@ export async function fetchSkusForBatchValidation(skuIds: string[]) {
 		},
 	});
 }
+
+/**
+ * Fetches multiple SKUs with full details in a single query (checkout session creation).
+ *
+ * Identical select to `fetchSkuForValidation` but batched, replacing N parallel
+ * `findUnique` calls. Same cache profile and tags so invalidation behaves identically.
+ */
+export async function fetchSkusForCheckoutValidation(skuIds: string[]) {
+	"use cache";
+	cacheLife("checkout");
+	for (const skuId of skuIds) {
+		cacheTag(PRODUCTS_CACHE_TAGS.SKU_STOCK(skuId), PRODUCTS_CACHE_TAGS.SKU_DETAIL_BY_ID(skuId));
+	}
+
+	return prisma.productSku.findMany({
+		where: { id: { in: skuIds } },
+		select: {
+			id: true,
+			sku: true,
+			priceInclTax: true,
+			compareAtPrice: true,
+			inventory: true,
+			isActive: true,
+			colorId: true,
+			size: true,
+			deletedAt: true,
+			product: {
+				select: {
+					id: true,
+					title: true,
+					slug: true,
+					status: true,
+					description: true,
+					deletedAt: true,
+				},
+			},
+			images: {
+				orderBy: { createdAt: "asc" },
+				select: {
+					url: true,
+					altText: true,
+					isPrimary: true,
+				},
+			},
+			color: {
+				select: {
+					id: true,
+					name: true,
+					hex: true,
+				},
+			},
+			materials: {
+				select: {
+					materialId: true,
+					position: true,
+					material: {
+						select: {
+							id: true,
+							name: true,
+						},
+					},
+				},
+				orderBy: { position: "asc" },
+			},
+		},
+	});
+}

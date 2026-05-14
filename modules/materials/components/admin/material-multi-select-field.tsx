@@ -58,16 +58,19 @@ export function MaterialMultiSelectField({
 
 	const isAtCap = value.length >= maxSelected;
 
-	// Filtre les options : si on est au cap, on ne propose que celles déjà cochées
-	// (sinon l'UX laisserait cocher une 4e option avant de la rejeter).
-	const filteredOptions = isAtCap
-		? options.filter((m) => value.includes(m.id)).map((m) => ({ value: m.id, label: m.name }))
-		: options.map((m) => ({ value: m.id, label: m.name }));
+	// Au cap : grise (disabled) les options non sélectionnées plutôt que de les retirer.
+	// L'utilisateur voit toujours le catalogue complet, comprend pourquoi il ne peut plus
+	// cocher, et peut décocher une option existante pour libérer un slot.
+	const mappedOptions = options.map((m) => ({
+		value: m.id,
+		label: m.name,
+		disabled: isAtCap && !value.includes(m.id),
+	}));
 
 	const handleValueChange = (ids: string[]) => {
-		// Filet de sécurité côté client : tronque à la cap si l'utilisateur force une 4e
+		// Filet de sécurité côté client : tronque à la cap si jamais une race condition
+		// laissait passer une N+1ᵉ sélection.
 		const capped = ids.length > maxSelected ? ids.slice(0, maxSelected) : ids;
-		haptic("selection");
 		onValueChange(capped);
 	};
 
@@ -82,8 +85,8 @@ export function MaterialMultiSelectField({
 				<div className="flex-1">
 					<MultiSelect
 						id={fieldName}
-						options={filteredOptions}
-						defaultValue={value}
+						options={mappedOptions}
+						value={value}
 						onValueChange={handleValueChange}
 						placeholder="Sélectionner un ou plusieurs matériaux"
 					/>

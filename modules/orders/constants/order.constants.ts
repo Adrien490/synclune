@@ -1,4 +1,5 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
+import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
 import type { ReadonlyValues } from "@/shared/types/sort.types";
 
 // ============================================================================
@@ -180,7 +181,7 @@ export const GET_ORDERS_MAX_RESULTS_PER_PAGE = 100;
  * Cap des ids retournés par get-filtered-order-ids pour le banner
  * "Sélectionner les N filtrés" (parité produits).
  */
-export const BULK_ORDER_ACTION_LIMIT = 100;
+export const BULK_ORDER_ACTION_LIMIT = BULK_SELECTION_MAX;
 
 export const SORT_OPTIONS = {
 	CREATED_DESC: "created-descending",

@@ -84,6 +84,7 @@ function OrdersBottomBarInner() {
 			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
+				title="Filtrer les commandes"
 				placeholder="Numéro, email, client…"
 				ariaLabel="Rechercher une commande par numéro, email ou client"
 				id={IDS.search}

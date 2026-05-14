@@ -19,6 +19,7 @@ import { useUpdateAddress } from "@/modules/addresses/hooks/use-update-address";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { ActionStatus } from "@/shared/types/server-action";
 import { CircleCheck, CircleX } from "lucide-react";
 import { useStore } from "@tanstack/react-form";
@@ -108,6 +109,12 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 		isSearching: isPendingAddress,
 		error: addressSearchErrorMessage,
 	} = useAddressAutocomplete(address1Value, "FR");
+
+	const triggerHaptic = useHaptic();
+	const handleManualEntry = () => {
+		triggerHaptic("light");
+		document.querySelector<HTMLInputElement>('input[name="postalCode"]')?.focus();
+	};
 
 	// Address hooks with success callback to close dialog
 	const createHook = useCreateAddress({
@@ -249,6 +256,20 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 									disabled={isPending}
 									error={addressSearchErrorMessage ?? undefined}
 									noResultsMessage="Aucune adresse trouvée"
+									noResultsDescription="Essayez avec un autre nom de rue ou de ville"
+									emptyStateAction={
+										<Button
+											type="button"
+											variant="outline"
+											size="sm"
+											className="min-h-11"
+											onClick={handleManualEntry}
+											disabled={isPending}
+										>
+											Saisir manuellement
+										</Button>
+									}
+									autoComplete="street-address"
 									minQueryLength={2}
 									debounceMs={300}
 								/>

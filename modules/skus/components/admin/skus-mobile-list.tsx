@@ -87,7 +87,7 @@ export function SkusMobileList({
 					prevCursor={pagination.prevCursor}
 				/>
 			</div>
-			<MobileSelectionBottomBar>
+			<MobileSelectionBottomBar emptyHint="Tape sur les variantes à sélectionner">
 				<SkusBulkActionsBar presentation="bottom-bar" />
 			</MobileSelectionBottomBar>
 		</BulkSelectionProvider>

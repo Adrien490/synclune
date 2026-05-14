@@ -4,16 +4,24 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // ---------------------------------------------------------------------------
 // Hoisted mock functions
 // ---------------------------------------------------------------------------
-const { mockGetOrderPermissions, mockUseAlertDialog, mockUseDialog, mockResend } = vi.hoisted(
-	() => {
+const { mockGetOrderPermissions, mockUseAlertDialog, mockUseDialog, mockResend, mockPush } =
+	vi.hoisted(() => {
 		return {
 			mockGetOrderPermissions: vi.fn(),
 			mockUseAlertDialog: vi.fn(),
 			mockUseDialog: vi.fn(),
 			mockResend: vi.fn(),
+			mockPush: vi.fn(),
 		};
-	},
-);
+	});
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
 
 // ---------------------------------------------------------------------------
 // Mocks - must be declared before component import

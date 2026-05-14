@@ -42,7 +42,9 @@ export async function deleteAddress(
 			return error(ADDRESS_ERROR_MESSAGES.NOT_FOUND);
 		}
 
-		// Utiliser une transaction pour garantir l'intégrité
+		// Hard-delete RGPD-safe : Order dénormalise les addresses (shippingFirstName,
+		// shippingAddress1, billing*…) en VARCHAR snapshot. La rétention 10 ans
+		// (Art. L123-22) est portée par Order.deletedAt, pas par Address.
 		await prisma.$transaction(async (tx) => {
 			// Pré-sélectionner l'éventuelle adresse à promouvoir (avant DELETE).
 			const otherAddress = existingAddress.isDefault

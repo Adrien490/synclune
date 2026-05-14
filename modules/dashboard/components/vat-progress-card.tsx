@@ -7,6 +7,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/
 import { Info } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
+import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import type { CSSProperties } from "react";
 import type { GetVatProgressReturn } from "@/modules/dashboard/data/get-vat-progress";
 
 interface VatProgressCardProps {
@@ -43,6 +45,7 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 			)}
 			role="region"
 			aria-label={`Seuil TVA franchise ${year}`}
+			style={{ viewTransitionName: "vat-progress-card" } as CSSProperties}
 		>
 			<CardHeader className="flex flex-row items-center justify-between pb-2">
 				<div className="flex items-center gap-1.5">
@@ -53,7 +56,8 @@ export function VatProgressCard({ data }: VatProgressCardProps) {
 						<TooltipTrigger asChild>
 							<button
 								type="button"
-								className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
+								onClick={() => triggerHaptic("selection")}
+								className="text-muted-foreground/60 hover:text-muted-foreground focus-visible:ring-ring -m-3 inline-flex size-11 cursor-help touch-manipulation items-center justify-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none"
 								aria-label="Info: Seuil TVA franchise"
 							>
 								<Info className="size-3.5" aria-hidden="true" />

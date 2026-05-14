@@ -90,7 +90,13 @@ export function BulkAttachCollectionSheet({
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={handleOpenChange} direction="bottom">
+		<Drawer
+			open={open}
+			onOpenChange={handleOpenChange}
+			direction="bottom"
+			handleOnly
+			repositionInputs
+		>
 			<DrawerContent>
 				<DrawerHeader>
 					<div className="flex items-center gap-2">
@@ -132,6 +138,7 @@ export function BulkAttachCollectionSheet({
 					<ScrollArea
 						className="max-h-[min(60dvh,420px)] overscroll-contain"
 						aria-label="Collections disponibles"
+						data-vaul-no-drag
 					>
 						{filtered.length === 0 ? (
 							<div className="text-muted-foreground py-8 text-center text-sm">

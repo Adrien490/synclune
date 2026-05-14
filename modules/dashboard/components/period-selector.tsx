@@ -72,7 +72,7 @@ function PeriodSelectorInner({ fullWidth, variant = "select" }: PeriodSelectorPr
 							<TabsTrigger
 								key={key}
 								value={key}
-								className="min-h-9 px-1.5 text-xs"
+								className="min-h-11 px-1.5 text-xs sm:min-h-9"
 								aria-label={DASHBOARD_PERIODS[key].label}
 							>
 								{DASHBOARD_PERIODS_SHORT[key]}

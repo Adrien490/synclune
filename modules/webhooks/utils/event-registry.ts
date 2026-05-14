@@ -1,17 +1,10 @@
 import type Stripe from "stripe";
 import type { WebhookHandlerResult, SupportedStripeEvent } from "../types/webhook.types";
 
-// Import handlers
 import {
 	handleCheckoutSessionCompleted,
 	handleCheckoutSessionExpired,
 } from "../handlers/checkout-handlers";
-import {
-	handlePaymentSuccess,
-	handlePaymentFailure,
-	handlePaymentCanceled,
-	handleInvoicePaymentFailed,
-} from "../handlers/payment-handlers";
 import {
 	handleChargeRefunded,
 	handleRefundUpdated,
@@ -25,18 +18,8 @@ import { handleDisputeCreated, handleDisputeClosed } from "../handlers/dispute-h
 
 type EventHandler = (event: Stripe.Event) => Promise<WebhookHandlerResult | null>;
 
-/**
- * Type helpers pour extraire les données d'événements Stripe
- * NOTE: Stripe SDK ne fournit pas de type narrowing basé sur event.type
- * Ces assertions sont nécessaires et sûres car Stripe garantit le type par événement
- * @see https://stripe.com/docs/api/events/types
- */
 function getCheckoutSession(event: Stripe.Event): Stripe.Checkout.Session {
 	return event.data.object as Stripe.Checkout.Session;
-}
-
-function getPaymentIntent(event: Stripe.Event): Stripe.PaymentIntent {
-	return event.data.object as Stripe.PaymentIntent;
 }
 
 function getCharge(event: Stripe.Event): Stripe.Charge {
@@ -51,30 +34,17 @@ function getDispute(event: Stripe.Event): Stripe.Dispute {
 	return event.data.object as Stripe.Dispute;
 }
 
-function getInvoice(event: Stripe.Event): Stripe.Invoice {
-	return event.data.object as Stripe.Invoice;
-}
-
 /**
- * Registry des handlers par type d'événement
- * Chaque handler reçoit l'événement Stripe et retourne optionnellement des tâches post-webhook
- * Les extracteurs (getCheckoutSession, etc.) documentent le type attendu par événement
+ * Registry des handlers par type d'événement Stripe.
+ *
+ * Migration Checkout Sessions (mai 2026) : les handlers `payment_intent.*` ont
+ * été supprimés. La création d'Order passe désormais exclusivement par les
+ * webhooks `checkout.session.*`.
  */
 const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	// === CHECKOUT ===
 	"checkout.session.completed": async (e) => handleCheckoutSessionCompleted(getCheckoutSession(e)),
 	"checkout.session.expired": async (e) => handleCheckoutSessionExpired(getCheckoutSession(e)),
-
-	// === PAYMENT INTENT ===
-	"payment_intent.succeeded": async (e) => handlePaymentSuccess(getPaymentIntent(e)),
-	"payment_intent.payment_failed": async (e) => handlePaymentFailure(getPaymentIntent(e)),
-	"payment_intent.canceled": async (e) => handlePaymentCanceled(getPaymentIntent(e)),
-
-	// === REFUND ===
-	"charge.refunded": async (e) => handleChargeRefunded(getCharge(e)),
-	"refund.created": async (e) => handleRefundUpdated(getRefund(e)),
-	"refund.updated": async (e) => handleRefundUpdated(getRefund(e)),
-	"refund.failed": async (e) => handleRefundFailed(getRefund(e)),
 
 	// === ASYNC PAYMENT (SEPA, Sofort, etc.) ===
 	"checkout.session.async_payment_succeeded": async (e) =>
@@ -82,21 +52,22 @@ const eventHandlers: Record<SupportedStripeEvent, EventHandler> = {
 	"checkout.session.async_payment_failed": async (e) =>
 		handleAsyncPaymentFailed(getCheckoutSession(e)),
 
+	// === REFUND ===
+	"charge.refunded": async (e) => handleChargeRefunded(getCharge(e)),
+	"refund.created": async (e) => handleRefundUpdated(getRefund(e)),
+	"refund.updated": async (e) => handleRefundUpdated(getRefund(e)),
+	"refund.failed": async (e) => handleRefundFailed(getRefund(e)),
+
 	// === DISPUTE (chargebacks) ===
 	"charge.dispute.created": async (e) => handleDisputeCreated(getDispute(e)),
 	"charge.dispute.closed": async (e) => handleDisputeClosed(getDispute(e)),
-
-	// === INVOICE ===
-	"invoice.payment_failed": async (e) => handleInvoicePaymentFailed(getInvoice(e)),
 };
 
 /**
  * Dispatch un événement au handler approprié
- * @returns Le résultat du handler avec les tâches post-webhook, ou un résultat "skipped" si non géré
  */
 export async function dispatchEvent(event: Stripe.Event): Promise<WebhookHandlerResult | null> {
 	const handler = eventHandlers[event.type as SupportedStripeEvent];
-
 	return handler(event);
 }
 

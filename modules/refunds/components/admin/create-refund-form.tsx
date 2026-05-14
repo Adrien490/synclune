@@ -1,7 +1,21 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useStore } from "@tanstack/react-form-nextjs";
+import { ArrowLeft, Package, RotateCcw } from "lucide-react";
+
 import { type RefundReason } from "@/app/generated/prisma/browser";
+import { REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
 import type { OrderForRefund } from "@/modules/refunds/data/get-order-for-refund";
+import {
+	useCreateRefundForm,
+	getDefaultRestock,
+	getAvailableQuantity,
+} from "@/modules/refunds/hooks/use-create-refund-form";
+import { canSubmitRefund } from "@/modules/refunds/services/refund-calculation.service";
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
 import { ErrorSummary, type ErrorSummaryField } from "@/shared/components/forms/error-summary";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -11,6 +25,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/shared/components/ui/card";
+import { Kbd } from "@/shared/components/ui/kbd";
 import {
 	Select,
 	SelectContent,
@@ -20,42 +35,44 @@ import {
 } from "@/shared/components/ui/select";
 import { Separator } from "@/shared/components/ui/separator";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
-import { useStore } from "@tanstack/react-form-nextjs";
-import { ArrowLeft, Package, RotateCcw } from "lucide-react";
+import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
+import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
+import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { REFUND_REASON_LABELS } from "@/modules/refunds/constants/refund.constants";
-import { canSubmitRefund } from "@/modules/refunds/services/refund-calculation.service";
-import {
-	useCreateRefundForm,
-	getDefaultRestock,
-	getAvailableQuantity,
-} from "@/modules/refunds/hooks/use-create-refund-form";
-import { RefundItemRow } from "./refund-item-row";
+import { withViewTransition } from "@/shared/utils/with-view-transition";
 
-// ============================================================================
-// TYPES
-// ============================================================================
+import { RefundItemRow } from "./refund-item-row";
 
 interface CreateRefundFormProps {
 	order: OrderForRefund;
 }
 
-// ============================================================================
-// COMPONENT
-// ============================================================================
+const LIST_PATH = "/admin/ventes/remboursements";
+
+const FIELD_LABELS: Record<string, string> = {
+	"refund-items": "Bijoux à rembourser",
+	reason: "Motif",
+	note: "Note",
+};
+
+function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
+	withViewTransition(() => router.push(path));
+}
 
 export function CreateRefundForm({ order }: CreateRefundFormProps) {
 	const router = useRouter();
-	const { formRef, onInvalidCapture } = useFocusFirstError();
+	const haptic = useHaptic();
+	const isMobile = useIsMobile();
+	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
+	const allowNavigationRef = useRef<(() => void) | null>(null);
+	const orderDetailPath = `/admin/ventes/commandes/${order.id}`;
 
-	// Calculer le montant déjà remboursé
 	const alreadyRefunded = order.refunds.reduce((sum, r) => sum + r.amount, 0);
 	const maxRefundable = order.total - alreadyRefunded;
 
-	// Hook du formulaire
 	const { form, action, isPending, reason, items, selectedItems, totalAmount, itemsForAction } =
 		useCreateRefundForm({
 			orderId: order.id,
@@ -63,27 +80,29 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			subtotal: order.subtotal,
 			discountAmount: order.discountAmount,
 			onSuccess: () => {
-				router.push("/admin/ventes/remboursements");
+				haptic("success");
+				allowNavigationRef.current?.();
+				navigateWithTransition(router, LIST_PATH);
 			},
 		});
 
-	// Watch note from store
 	const note = useStore(form.store, (s) => s.values.note);
 	const submissionAttempts = useStore(form.store, (s) => s.submissionAttempts);
 	const fieldMeta = useStore(form.store, (s) => s.fieldMeta);
+	const isDirty = useStore(form.store, (s) => s.isDirty);
 
 	const fieldErrors: ErrorSummaryField[] = [];
 	if (submissionAttempts > 0) {
 		if (selectedItems.length === 0) {
 			fieldErrors.push({
 				name: "refund-items",
-				label: "Articles à rembourser",
-				message: "Sélectionnez au moins un article",
+				label: FIELD_LABELS["refund-items"]!,
+				message: "Sélectionne au moins un bijou",
 			});
 		} else if (totalAmount > maxRefundable) {
 			fieldErrors.push({
 				name: "refund-items",
-				label: "Articles à rembourser",
+				label: FIELD_LABELS["refund-items"]!,
 				message: "Le montant dépasse le maximum remboursable",
 			});
 		}
@@ -93,29 +112,71 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 			if (typeof message === "string" && message.length > 0) {
 				fieldErrors.push({
 					name,
-					label: name === "reason" ? "Motif" : name === "note" ? "Note" : name,
+					label: FIELD_LABELS[name] ?? name,
 					message,
 				});
 			}
 		}
 	}
 
-	// Handler pour changer le motif (met à jour le restock par défaut, pas de useEffect)
+	const { allowNavigation } = useUnsavedChanges(isDirty, !isPending && !isMobile);
+
+	useEffect(() => {
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
+
+	useEffect(() => {
+		if (isMobile) return;
+		const handler = (event: KeyboardEvent) => {
+			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
+			if (!isSaveShortcut) return;
+			event.preventDefault();
+			if (isPending) return;
+			haptic("medium");
+			formRef.current?.requestSubmit();
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [isMobile, isPending, formRef, haptic]);
+
+	useEffect(() => {
+		if (isMobile) return;
+		const handler = (event: KeyboardEvent) => {
+			if (event.key !== "Escape" || isPending) return;
+			const target = event.target as HTMLElement | null;
+			if (
+				target?.closest(
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+				)
+			) {
+				return;
+			}
+			if (
+				isDirty &&
+				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
+			) {
+				return;
+			}
+			event.preventDefault();
+			haptic("light");
+			allowNavigation();
+			navigateWithTransition(router, orderDetailPath);
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [isMobile, isPending, isDirty, haptic, router, allowNavigation, orderDetailPath]);
+
 	const handleReasonChange = (value: RefundReason) => {
+		haptic("selection");
 		form.setFieldValue("reason", value);
-		// Mettre à jour le restock par défaut pour tous les items
 		const defaultRestock = getDefaultRestock(value);
 		const currentItems = form.getFieldValue("items");
 		form.setFieldValue(
 			"items",
-			currentItems.map((item) => ({
-				...item,
-				restock: defaultRestock,
-			})),
+			currentItems.map((item) => ({ ...item, restock: defaultRestock })),
 		);
 	};
 
-	// Handlers
 	const handleItemToggle = (orderItemId: string, checked: boolean) => {
 		const currentItems = form.getFieldValue("items");
 		const orderItem = order.items.find((oi) => oi.id === orderItemId);
@@ -160,31 +221,55 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 		);
 	};
 
-	const handleSelectAll = () => {
+	// Smart toggle : si tous les items disponibles sont sélectionnés → tout désélectionner
+	const refundableItems = order.items.filter((oi) => getAvailableQuantity(oi) > 0);
+	const allSelected =
+		refundableItems.length > 0 &&
+		refundableItems.every((oi) => {
+			const state = items.find((i) => i.orderItemId === oi.id);
+			return state?.selected;
+		});
+
+	const handleSelectToggle = () => {
+		haptic("selection");
 		const currentItems = form.getFieldValue("items");
-		form.setFieldValue(
-			"items",
-			currentItems.map((item) => {
-				const orderItem = order.items.find((oi) => oi.id === item.orderItemId);
-				const available = orderItem ? getAvailableQuantity(orderItem) : 0;
-				return {
-					...item,
-					selected: available > 0,
-					quantity: available,
-				};
-			}),
-		);
+		if (allSelected) {
+			form.setFieldValue(
+				"items",
+				currentItems.map((item) => ({ ...item, selected: false, quantity: 0 })),
+			);
+		} else {
+			form.setFieldValue(
+				"items",
+				currentItems.map((item) => {
+					const orderItem = order.items.find((oi) => oi.id === item.orderItemId);
+					const available = orderItem ? getAvailableQuantity(orderItem) : 0;
+					return {
+						...item,
+						selected: available > 0,
+						quantity: available,
+					};
+				}),
+			);
+		}
 	};
 
 	const canSubmit = canSubmitRefund(selectedItems, totalAmount, maxRefundable);
+	const restockByDefault = getDefaultRestock(reason);
 
 	return (
 		<div className="space-y-6">
 			{/* Header */}
 			<div className="flex items-center gap-4">
-				<Button variant="ghost" size="sm" asChild>
-					<Link href={`/admin/ventes/commandes/${order.id}`}>
-						<ArrowLeft className="size-4" />
+				<Button
+					variant="ghost"
+					size="sm"
+					asChild
+					onClick={() => haptic("light")}
+					className="touch-manipulation"
+				>
+					<Link href={orderDetailPath}>
+						<ArrowLeft className="size-4" aria-hidden="true" />
 						Retour
 					</Link>
 				</Button>
@@ -196,29 +281,74 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 				</div>
 			</div>
 
-			<form ref={formRef} action={action} onInvalidCapture={onInvalidCapture} className="space-y-6">
+			{/* Mobile sticky récap chip */}
+			{selectedItems.length > 0 && (
+				<div
+					className="bg-background/95 sticky top-[calc(var(--admin-mobile-header-height,56px)+env(safe-area-inset-top))] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-2 backdrop-blur-md lg:hidden"
+					style={{ viewTransitionName: "refund-mini-recap" }}
+				>
+					<div
+						className={cn(
+							"bg-muted flex items-center justify-between rounded-md px-3 py-2 text-sm",
+							totalAmount > maxRefundable && "bg-destructive/10 text-destructive",
+						)}
+						aria-live="polite"
+					>
+						<span>
+							{selectedItems.length} bijou{selectedItems.length > 1 ? "x" : ""} sélectionné
+							{selectedItems.length > 1 ? "s" : ""}
+						</span>
+						<span className="font-semibold tabular-nums">{formatEuro(totalAmount)}</span>
+					</div>
+				</div>
+			)}
+
+			<form
+				ref={formRef}
+				action={action}
+				aria-label="Formulaire de remboursement"
+				onInvalidCapture={onInvalidCapture}
+				onSubmit={(event) => {
+					if (!canSubmit) {
+						event.preventDefault();
+						focusFirstInvalid();
+					}
+				}}
+				className="space-y-6"
+			>
 				{/* Hidden fields */}
 				<input type="hidden" name="orderId" value={order.id} />
 				<input type="hidden" name="reason" value={reason} />
 				<input type="hidden" name="note" value={note} />
 				<input type="hidden" name="items" value={JSON.stringify(itemsForAction)} />
 
-				<ErrorSummary fieldErrors={fieldErrors} />
+				{fieldErrors.length > 0 && (
+					<ErrorSummary
+						fieldErrors={fieldErrors}
+						ariaLive={totalAmount > maxRefundable ? "assertive" : "polite"}
+					/>
+				)}
 
-				<div className="grid gap-6 lg:grid-cols-3">
+				<fieldset disabled={isPending} className="grid gap-6 lg:grid-cols-3">
 					{/* Left column - Items selection */}
 					<div className="space-y-6 lg:col-span-2">
-						<Card>
-							<CardHeader className="flex flex-row items-center justify-between">
+						<Card style={{ viewTransitionName: "refund-items-card" }}>
+							<CardHeader className="flex flex-row items-center justify-between gap-3">
 								<div id="refund-items">
-									<CardTitle className="flex items-center gap-2">
-										<Package className="size-5" />
-										Articles à rembourser
+									<CardTitle className="font-display flex items-center gap-2 italic">
+										<Package className="size-5" aria-hidden="true" />
+										Bijoux à rembourser
 									</CardTitle>
-									<CardDescription>Sélectionnez les articles et quantités</CardDescription>
+									<CardDescription>Choisis ce qui retourne à l&apos;atelier.</CardDescription>
 								</div>
-								<Button type="button" variant="outline" size="sm" onClick={handleSelectAll}>
-									Tout sélectionner
+								<Button
+									type="button"
+									variant="outline"
+									size="sm"
+									onClick={handleSelectToggle}
+									className="touch-manipulation active:scale-[0.98] motion-safe:transition-transform"
+								>
+									{allSelected ? "Tout désélectionner" : "Tout sélectionner"}
 								</Button>
 							</CardHeader>
 							<CardContent>
@@ -239,12 +369,30 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 						</Card>
 					</div>
 
-					{/* Right column - Summary */}
+					{/* Right column - Sidebar (Reason + Note + Recap) */}
 					<div className="space-y-6">
-						{/* Reason */}
-						<Card>
+						<Card style={{ viewTransitionName: "refund-reason-card" }}>
 							<CardHeader>
-								<CardTitle className="text-base">Motif du remboursement</CardTitle>
+								<div className="flex items-center justify-between gap-2">
+									<CardTitle className="font-display text-base italic">
+										Motif du remboursement
+									</CardTitle>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<button
+												type="button"
+												aria-label="En savoir plus sur le restockage par motif"
+												className="text-muted-foreground hover:text-foreground text-xs underline underline-offset-4"
+											>
+												Restockage ?
+											</button>
+										</TooltipTrigger>
+										<TooltipContent side="bottom" className="max-w-xs">
+											Le motif détermine si le stock est restauré par défaut. Tu peux ajuster
+											manuellement par bijou ci-contre.
+										</TooltipContent>
+									</Tooltip>
+								</div>
 							</CardHeader>
 							<CardContent className="space-y-4">
 								<Select
@@ -264,24 +412,27 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 									</SelectContent>
 								</Select>
 
-								<div className="text-muted-foreground bg-muted/50 rounded p-2 text-xs">
-									{getDefaultRestock(reason) ? (
-										<span className="text-emerald-600">
-											Stock restauré par défaut (article récupéré)
-										</span>
-									) : (
-										<span className="text-amber-600">
-											Stock non restauré par défaut (article perdu/cassé)
-										</span>
+								<div
+									className={cn(
+										"rounded p-2 text-xs",
+										restockByDefault
+											? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+											: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
 									)}
+								>
+									{restockByDefault
+										? "Stock restauré par défaut (bijou récupéré)."
+										: "Stock non restauré par défaut (bijou perdu ou cassé)."}
 								</div>
 							</CardContent>
 						</Card>
 
-						{/* Note */}
 						<Card>
 							<CardHeader>
-								<CardTitle className="text-base">Note (optionnel)</CardTitle>
+								<CardTitle className="font-display text-base italic">
+									Note{" "}
+									<span className="text-muted-foreground text-xs font-normal">(optionnel)</span>
+								</CardTitle>
 							</CardHeader>
 							<CardContent>
 								<Textarea
@@ -294,54 +445,89 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 							</CardContent>
 						</Card>
 
-						{/* Summary */}
-						<Card>
+						<Card style={{ viewTransitionName: "refund-summary-card" }}>
 							<CardHeader>
-								<CardTitle className="text-base">Récapitulatif</CardTitle>
+								<CardTitle className="font-display text-base italic">Récapitulatif</CardTitle>
 							</CardHeader>
 							<CardContent className="space-y-3">
 								<div className="flex justify-between text-sm">
-									<span className="text-muted-foreground">Articles sélectionnés</span>
-									<span>{selectedItems.length}</span>
+									<span className="text-muted-foreground">Bijoux sélectionnés</span>
+									<span className="tabular-nums">{selectedItems.length}</span>
 								</div>
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">Montant du remboursement</span>
-									<span className="font-medium">{formatEuro(totalAmount)}</span>
+									<span
+										className={cn(
+											"font-medium tabular-nums motion-safe:transition-colors",
+											totalAmount > maxRefundable && "text-destructive",
+										)}
+										aria-live="polite"
+									>
+										{formatEuro(totalAmount)}
+									</span>
 								</div>
 								<Separator />
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">Déjà remboursé</span>
-									<span>{formatEuro(alreadyRefunded)}</span>
+									<span className="tabular-nums">{formatEuro(alreadyRefunded)}</span>
 								</div>
 								<div className="flex justify-between text-sm">
 									<span className="text-muted-foreground">Max remboursable</span>
-									<span>{formatEuro(maxRefundable)}</span>
+									<span className="tabular-nums">{formatEuro(maxRefundable)}</span>
 								</div>
 								{totalAmount > maxRefundable && (
 									<p className="text-destructive text-xs">
-										Le montant dépasse le maximum remboursable
+										Le montant dépasse le maximum remboursable.
 									</p>
 								)}
 							</CardContent>
 						</Card>
 
-						{/* Submit */}
-						<Button type="submit" className="w-full" disabled={!canSubmit || isPending}>
-							{isPending ? (
-								"Création en cours…"
-							) : (
-								<>
-									<RotateCcw className="size-4" />
-									Créer la demande ({formatEuro(totalAmount)})
-								</>
-							)}
-						</Button>
-
 						<p className="text-muted-foreground text-center text-xs">
-							Le remboursement sera créé en statut "En attente" et devra être approuvé puis traité.
+							On préviendra Adrien et le client : remboursement traité sous 48h.
 						</p>
 					</div>
-				</div>
+				</fieldset>
+
+				<AdminFormFooter pending={isPending}>
+					<div className="flex justify-end">
+						<Button
+							type="submit"
+							size="input"
+							disabled={!canSubmit || isPending}
+							onClick={() => haptic("medium")}
+							className={cn(
+								"w-full sm:w-auto sm:min-w-56",
+								canSubmit &&
+									!isPending &&
+									"data-[disabled=false]:shadow-[0_0_24px_var(--color-glow-pink,theme(colors.pink.300))] motion-safe:transition-shadow",
+							)}
+						>
+							{isPending ? (
+								<>
+									<RotateCcw className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									<span>Création…</span>
+								</>
+							) : (
+								<>
+									<RotateCcw className="size-4" aria-hidden="true" />
+									<span>
+										Créer la demande
+										{selectedItems.length > 0 ? ` · ${formatEuro(totalAmount)}` : ""}
+									</span>
+								</>
+							)}
+							{!isPending && (
+								<Kbd
+									aria-hidden="true"
+									className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
+								>
+									⌘S
+								</Kbd>
+							)}
+						</Button>
+					</div>
+				</AdminFormFooter>
 			</form>
 		</div>
 	);

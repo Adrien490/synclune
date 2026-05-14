@@ -51,7 +51,7 @@ export function MaterialsMobileList({
 					description={
 						hasActiveFilters
 							? "Aucun matériau ne correspond aux critères de recherche."
-							: "Aucun matériau pour l'instant."
+							: "Aucune matière à l'établi pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? (
@@ -68,15 +68,15 @@ export function MaterialsMobileList({
 	const pageItemIds = materials.map((m) => m.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "matériau", plural: "matériaux" }} />
 					{filterParams ? (
 						<MaterialsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={materials.length} singular="matériau" plural="matériaux" />
-					<ItemGroup aria-label="Materiaux" className="gap-2">
+					<ItemGroup role="list" aria-label="Materiaux" className="gap-2">
 						{materials.map((material) => (
 							<div key={material.id} role="listitem">
 								<MaterialMobileItem material={material} />
@@ -93,10 +93,10 @@ export function MaterialsMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les matières à l'établi">
 					<MaterialsBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

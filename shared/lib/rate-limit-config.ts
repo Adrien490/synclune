@@ -1530,10 +1530,20 @@ const ADMIN_REVIEW_RESTORE_LIMIT: RateLimitConfig = {
 	windowMs: minutes(5),
 };
 
+/**
+ * Limite pour le rafraichissement du cache avis (admin) — utilisé par le
+ * banner cross-page "Sélectionner les N filtrés".
+ */
+export const ADMIN_REVIEW_REFRESH_LIMIT: RateLimitConfig = {
+	limit: 10,
+	windowMs: minutes(1),
+};
+
 export const ADMIN_REVIEW_LIMITS = {
 	RESPONSE: ADMIN_REVIEW_RESPONSE_LIMIT,
 	MODERATE: ADMIN_REVIEW_MODERATE_LIMIT,
 	RESTORE: ADMIN_REVIEW_RESTORE_LIMIT,
+	REFRESH: ADMIN_REVIEW_REFRESH_LIMIT,
 } as const;
 
 // ========================================

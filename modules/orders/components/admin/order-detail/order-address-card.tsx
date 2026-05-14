@@ -1,11 +1,13 @@
 "use client";
 
 import { MapPin, Pencil, Phone, ReceiptText } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { FulfillmentStatus, InvoiceStatus } from "@/app/generated/prisma/browser";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { CopyButton } from "@/shared/components/copy-button";
 import { COUNTRY_NAMES } from "@/shared/constants/countries";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { EDIT_BILLING_ADDRESS_DIALOG_ID } from "../edit-billing-address-dialog";
@@ -18,6 +20,8 @@ function getCountryLabel(code: string): string {
 
 export function OrderAddressCard({ order }: OrderAddressCardProps) {
 	const haptic = useHaptic();
+	const isMobile = useIsMobile();
+	const router = useRouter();
 	const editShippingDialog = useAlertDialog(EDIT_SHIPPING_ADDRESS_DIALOG_ID);
 	const editBillingDialog = useAlertDialog(EDIT_BILLING_ADDRESS_DIALOG_ID);
 
@@ -40,6 +44,10 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 
 	const handleEditShipping = () => {
 		haptic("light");
+		if (isMobile) {
+			router.push(`/admin/ventes/commandes/${order.id}/adresse-livraison`);
+			return;
+		}
 		editShippingDialog.open({
 			orderId: order.id,
 			orderNumber: order.orderNumber,
@@ -55,6 +63,10 @@ export function OrderAddressCard({ order }: OrderAddressCardProps) {
 
 	const handleEditBilling = () => {
 		haptic("light");
+		if (isMobile) {
+			router.push(`/admin/ventes/commandes/${order.id}/adresse-facturation`);
+			return;
+		}
 		editBillingDialog.open({
 			orderId: order.id,
 			orderNumber: order.orderNumber,

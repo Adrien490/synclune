@@ -6,12 +6,13 @@ import {
 	EmptyTitle,
 } from "@/shared/components/ui/empty";
 import { Skeleton } from "@/shared/components/ui/skeleton";
-import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useHaptic, type HapticPattern } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { m } from "motion/react";
 import { AlertCircleIcon, SearchIcon } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import Image from "next/image";
+import type { ReactNode } from "react";
 import { AUTOCOMPLETE_ANIMATIONS } from "./constants";
 
 interface AutocompleteListContentProps<T> {
@@ -23,6 +24,8 @@ interface AutocompleteListContentProps<T> {
 	showResultsCount: boolean;
 	showEmptyState: boolean;
 	noResultsMessage: string;
+	noResultsDescription: string;
+	emptyStateAction?: ReactNode;
 	onRetry?: () => void;
 	getItemLabel: (item: T) => string;
 	getItemKey?: (item: T) => string;
@@ -30,13 +33,14 @@ interface AutocompleteListContentProps<T> {
 	getItemImage?: (item: T) => {
 		src: string;
 		alt: string;
-		blurDataUrl?: string | null;
+		blurDataURL?: string | null;
 	} | null;
 	effectiveImageSize: number;
 	onItemSelect: (item: T) => void;
 	onItemHover: (index: number) => void;
 	getItemId: (index: number) => string;
 	loadingSkeletonCount: number;
+	hapticOnRetry: HapticPattern | false;
 }
 
 export function AutocompleteListContent<T>({
@@ -48,6 +52,8 @@ export function AutocompleteListContent<T>({
 	showResultsCount,
 	showEmptyState,
 	noResultsMessage,
+	noResultsDescription,
+	emptyStateAction,
 	onRetry,
 	getItemLabel,
 	getItemKey,
@@ -58,9 +64,10 @@ export function AutocompleteListContent<T>({
 	onItemHover,
 	getItemId,
 	loadingSkeletonCount,
+	hapticOnRetry,
 }: AutocompleteListContentProps<T>) {
 	if (error) {
-		return <AutocompleteErrorState error={error} onRetry={onRetry} />;
+		return <AutocompleteErrorState error={error} onRetry={onRetry} hapticOnRetry={hapticOnRetry} />;
 	}
 
 	if (isLoading) {
@@ -99,7 +106,13 @@ export function AutocompleteListContent<T>({
 	}
 
 	if (showEmptyState) {
-		return <AutocompleteEmptyState noResultsMessage={noResultsMessage} />;
+		return (
+			<AutocompleteEmptyState
+				noResultsMessage={noResultsMessage}
+				noResultsDescription={noResultsDescription}
+				action={emptyStateAction}
+			/>
+		);
 	}
 
 	return null;
@@ -159,7 +172,15 @@ function AutocompleteLoadingSkeletons({
 	);
 }
 
-function AutocompleteEmptyState({ noResultsMessage }: { noResultsMessage: string }) {
+function AutocompleteEmptyState({
+	noResultsMessage,
+	noResultsDescription,
+	action,
+}: {
+	noResultsMessage: string;
+	noResultsDescription: string;
+	action?: ReactNode;
+}) {
 	return (
 		<li className="w-full">
 			<Empty>
@@ -168,14 +189,23 @@ function AutocompleteEmptyState({ noResultsMessage }: { noResultsMessage: string
 						<SearchIcon className="size-6" strokeWidth={1.5} />
 					</EmptyMedia>
 					<EmptyTitle>{noResultsMessage}</EmptyTitle>
-					<EmptyDescription>Essayez de modifier votre recherche</EmptyDescription>
+					<EmptyDescription>{noResultsDescription}</EmptyDescription>
+					{action}
 				</EmptyHeader>
 			</Empty>
 		</li>
 	);
 }
 
-function AutocompleteErrorState({ error, onRetry }: { error: string; onRetry?: () => void }) {
+function AutocompleteErrorState({
+	error,
+	onRetry,
+	hapticOnRetry,
+}: {
+	error: string;
+	onRetry?: () => void;
+	hapticOnRetry: HapticPattern | false;
+}) {
 	const haptic = useHaptic();
 	return (
 		<li className="w-full">
@@ -190,7 +220,7 @@ function AutocompleteErrorState({ error, onRetry }: { error: string; onRetry?: (
 							variant="ghost"
 							size="sm"
 							onClick={() => {
-								haptic("light");
+								if (hapticOnRetry !== false) haptic(hapticOnRetry);
 								onRetry();
 							}}
 							className="min-h-11"
@@ -218,7 +248,7 @@ interface AutocompleteItemProps<T> {
 	getItemImage?: (item: T) => {
 		src: string;
 		alt: string;
-		blurDataUrl?: string | null;
+		blurDataURL?: string | null;
 	} | null;
 	effectiveImageSize: number;
 	onSelect: (item: T) => void;
@@ -279,9 +309,10 @@ function AutocompleteItem<T>({
 							fill
 							sizes={`${effectiveImageSize}px`}
 							quality={80}
+							loading="lazy"
 							className="object-cover"
-							placeholder={imageData.blurDataUrl ? "blur" : "empty"}
-							blurDataURL={imageData.blurDataUrl ?? undefined}
+							placeholder={imageData.blurDataURL ? "blur" : "empty"}
+							blurDataURL={imageData.blurDataURL ?? undefined}
 						/>
 					</div>
 				)}

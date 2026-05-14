@@ -1,6 +1,7 @@
 import { CollectionsDataTableSkeleton } from "@/modules/collections/components/admin/collections-data-table-skeleton";
 import { CollectionsMobileListSkeleton } from "@/modules/collections/components/admin/collections-mobile-list-skeleton";
 import { PageHeader } from "@/shared/components/page-header";
+import { StickyActionBarSkeleton } from "@/shared/components/sticky-action-bar";
 import { Skeleton } from "@/shared/components/ui/skeleton";
 import { ToolbarSkeleton } from "@/shared/components/toolbar-skeleton";
 
@@ -20,6 +21,8 @@ export default function CollectionsManagementLoading() {
 				actions={<Skeleton className="h-10 w-48" />}
 				className="hidden md:block"
 			/>
+
+			<StickyActionBarSkeleton itemCount={4} />
 
 			<ToolbarSkeleton selectCount={1} buttonCount={2} className="hidden md:flex" />
 

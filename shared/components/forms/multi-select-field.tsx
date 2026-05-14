@@ -33,8 +33,9 @@ export const MultiSelectField = ({
 			)}
 
 			<MultiSelect
+				id={field.name}
 				options={options}
-				defaultValue={field.state.value}
+				value={field.state.value}
 				onValueChange={(values) => field.handleChange(values)}
 				placeholder={placeholder}
 				disabled={disabled}

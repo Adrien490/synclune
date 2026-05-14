@@ -138,6 +138,7 @@ export function EditProductMediaCard({
 										uploadProgress={uploadProgress}
 										isAtLimit={isAtLimit}
 										maxMediaCount={maxMediaCount}
+										currentCount={currentCount}
 										handleUpload={handleUpload}
 										onCancel={onCancel}
 										onCancelOne={onCancelOne}
@@ -185,6 +186,8 @@ export function EditProductMediaCard({
 															isMediaUploading={isMediaUploading}
 															uploadProgress={uploadProgress}
 															handleUpload={handleUpload}
+															maxMediaCount={maxMediaCount}
+															currentCount={currentCount}
 														/>
 													)
 										}

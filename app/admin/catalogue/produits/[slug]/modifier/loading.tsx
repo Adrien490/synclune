@@ -124,10 +124,10 @@ export default function EditProductLoadingPage() {
 					</div>
 				</div>
 
-				{/* Sticky footer (mirrors EditProductForm submit bar) */}
-				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-4 border-t px-4 py-3 backdrop-blur-md md:bottom-0 md:-mx-6 md:px-6">
+				{/* Sticky footer — mirror AdminFormFooter */}
+				<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:bg-transparent md:p-0 md:pb-0 md:backdrop-blur-none">
 					<div className="flex justify-end">
-						<Skeleton className="h-11 w-full sm:w-56" />
+						<Skeleton className="h-11 w-full sm:w-auto sm:min-w-56" />
 					</div>
 				</div>
 			</div>

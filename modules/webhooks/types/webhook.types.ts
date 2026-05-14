@@ -71,20 +71,21 @@ export interface WebhookHandlerResult {
 }
 
 /**
- * Types d'événements Stripe supportés
+ * Types d'événements Stripe supportés.
+ *
+ * Migration Checkout Sessions (mai 2026) : les events `payment_intent.*` ne
+ * sont plus traités côté Synclune — la création d'Order passe exclusivement par
+ * `checkout.session.completed` / `async_payment_succeeded`. Les refunds restent
+ * sur les events `charge.refunded` / `refund.*` (opèrent sur le PI sous-jacent).
  */
 export type SupportedStripeEvent =
 	| "checkout.session.completed"
 	| "checkout.session.expired"
-	| "payment_intent.succeeded"
-	| "payment_intent.payment_failed"
-	| "payment_intent.canceled"
+	| "checkout.session.async_payment_succeeded"
+	| "checkout.session.async_payment_failed"
 	| "charge.refunded"
 	| "refund.created"
 	| "refund.updated"
 	| "refund.failed"
-	| "checkout.session.async_payment_succeeded"
-	| "checkout.session.async_payment_failed"
 	| "charge.dispute.created"
-	| "charge.dispute.closed"
-	| "invoice.payment_failed";
+	| "charge.dispute.closed";

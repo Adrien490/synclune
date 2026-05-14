@@ -1,140 +1,49 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Button } from "@/shared/components/ui/button";
 import {
 	ResponsiveDialog,
 	ResponsiveDialogContent,
 	ResponsiveDialogDescription,
-	ResponsiveDialogFooter,
 	ResponsiveDialogHeader,
 	ResponsiveDialogTitle,
 } from "@/shared/components/responsive-dialog";
-import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
-import { useUpdateSkuPrice } from "@/modules/skus/hooks/use-update-sku-price";
+
+import { UpdatePriceForm } from "@/modules/skus/components/admin/update-price-form";
 
 export const UPDATE_PRICE_DIALOG_ID = "update-sku-price";
 
 type UpdatePriceDialogData = {
 	skuId: string;
 	skuName: string;
-	currentPrice: number; // en centimes
+	currentPrice: number;
 	currentCompareAtPrice: number | null;
 	[key: string]: unknown;
 };
 
 export function UpdatePriceDialog() {
 	const { isOpen, data, close } = useDialog<UpdatePriceDialogData>(UPDATE_PRICE_DIALOG_ID);
-	const [price, setPrice] = useState("");
-	const [compareAtPrice, setCompareAtPrice] = useState("");
-
-	const { updatePrice, isPending } = useUpdateSkuPrice({
-		onSuccess: () => {
-			close();
-		},
-	});
-
-	// Reset values when dialog opens
-	useEffect(() => {
-		if (isOpen && data) {
-			queueMicrotask(() => {
-				setPrice((data.currentPrice / 100).toFixed(2));
-				setCompareAtPrice(
-					data.currentCompareAtPrice ? (data.currentCompareAtPrice / 100).toFixed(2) : "",
-				);
-			});
-		}
-	}, [isOpen, data]);
-
-	const handleSubmit = (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!data) return;
-
-		const priceInEuros = parseFloat(price);
-		const compareAtPriceInEuros = compareAtPrice ? parseFloat(compareAtPrice) : null;
-
-		if (isNaN(priceInEuros) || priceInEuros <= 0) return;
-
-		// Le hook et l'action attendent des euros (conversion en centimes côté serveur)
-		updatePrice(data.skuId, data.skuName, priceInEuros, compareAtPriceInEuros);
-	};
-
-	const priceValue = parseFloat(price) || 0;
-	const compareAtPriceValue = parseFloat(compareAtPrice) || 0;
-	const isValid = priceValue > 0 && (!compareAtPrice || compareAtPriceValue > priceValue);
 
 	return (
 		<ResponsiveDialog open={isOpen} onOpenChange={(open) => !open && close()}>
 			<ResponsiveDialogContent className="sm:max-w-100">
-				<form onSubmit={handleSubmit}>
-					<ResponsiveDialogHeader>
-						<ResponsiveDialogTitle>Modifier le prix</ResponsiveDialogTitle>
-						<ResponsiveDialogDescription>
-							Variante: <span className="font-semibold">{data?.skuName}</span>
-						</ResponsiveDialogDescription>
-					</ResponsiveDialogHeader>
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Modifier le prix</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
+						Variante : <span className="font-semibold">{data?.skuName}</span>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
-					<div className="space-y-4 py-6">
-						<div>
-							<Label htmlFor="price" className="text-sm font-medium">
-								Prix final (€)
-							</Label>
-							<div className="relative mt-2">
-								<Input
-									id="price"
-									type="number"
-									step="0.01"
-									min="0.01"
-									value={price}
-									onChange={(e) => setPrice(e.target.value)}
-									className="pr-8 text-lg font-semibold"
-									disabled={isPending}
-								/>
-								<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">
-									€
-								</span>
-							</div>
-						</div>
-
-						<div>
-							<Label htmlFor="compareAtPrice" className="text-sm font-medium">
-								Prix barré (optionnel)
-							</Label>
-							<div className="relative mt-2">
-								<Input
-									id="compareAtPrice"
-									type="number"
-									step="0.01"
-									min="0"
-									value={compareAtPrice}
-									onChange={(e) => setCompareAtPrice(e.target.value)}
-									placeholder="Laisser vide pour aucun"
-									className="pr-8"
-									disabled={isPending}
-								/>
-								<span className="text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2">
-									€
-								</span>
-							</div>
-							{compareAtPrice && compareAtPriceValue <= priceValue && (
-								<p className="text-destructive mt-1 text-sm">
-									Le prix barré doit être supérieur au prix de vente
-								</p>
-							)}
-						</div>
-					</div>
-
-					<ResponsiveDialogFooter>
-						<Button type="button" variant="outline" onClick={close} disabled={isPending}>
-							Annuler
-						</Button>
-						<Button type="submit" disabled={!isValid || isPending}>
-							{isPending ? "Enregistrement…" : "Enregistrer"}
-						</Button>
-					</ResponsiveDialogFooter>
-				</form>
+				{data && (
+					<UpdatePriceForm
+						key={`${data.skuId}-${isOpen}`}
+						skuId={data.skuId}
+						skuName={data.skuName}
+						currentPrice={data.currentPrice}
+						currentCompareAtPrice={data.currentCompareAtPrice}
+						onSuccess={close}
+					/>
+				)}
 			</ResponsiveDialogContent>
 		</ResponsiveDialog>
 	);

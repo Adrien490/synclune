@@ -1,5 +1,6 @@
 import { use } from "react";
 import { type RefundReason, type RefundStatus } from "@/app/generated/prisma/client";
+import Link from "next/link";
 import { ReceiptText } from "lucide-react";
 import { AdminListLiveCount } from "@/shared/components/admin-list-live-count";
 import { CursorPagination } from "@/shared/components/cursor-pagination";
@@ -10,6 +11,7 @@ import {
 	MobileSelectionBottomBar,
 	MobileSelectionHeader,
 } from "@/shared/components/mobile-selection";
+import { Button } from "@/shared/components/ui/button";
 import { ItemGroup } from "@/shared/components/ui/item";
 import { AdminListPendingProvider } from "@/shared/contexts/admin-list-pending-context";
 import type {
@@ -50,12 +52,16 @@ export function RefundsMobileList({
 					description={
 						hasActiveFilters
 							? "Aucun remboursement ne correspond aux critères de recherche."
-							: "Aucun remboursement pour l'instant."
+							: "Aucun remboursement à régler pour le moment."
 					}
 					actionElement={
 						hasActiveFilters ? (
 							<EmptyResetFiltersAction href="/admin/ventes/remboursements" />
-						) : undefined
+						) : (
+							<Button asChild className="min-h-11 shadow-[0_0_24px_var(--color-glow-pink)]">
+								<Link href="/admin/ventes/remboursements/nouveau">Nouveau remboursement</Link>
+							</Button>
+						)
 					}
 				/>
 			</div>
@@ -65,9 +71,9 @@ export function RefundsMobileList({
 	const pageItemIds = refunds.map((r) => r.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader
 						itemsLabel={{ singular: "remboursement", plural: "remboursements" }}
 					/>
@@ -79,7 +85,7 @@ export function RefundsMobileList({
 						singular="remboursement"
 						plural="remboursements"
 					/>
-					<ItemGroup aria-label="Remboursements" className="gap-2">
+					<ItemGroup role="list" aria-label="Remboursements" className="gap-2">
 						{refunds.map((refund) => (
 							<div key={refund.id} role="listitem">
 								<RefundMobileItem
@@ -110,10 +116,10 @@ export function RefundsMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les remboursements à régler">
 					<RefundsBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

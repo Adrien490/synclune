@@ -7,13 +7,45 @@ import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
 
+/**
+ * Vaul Drawer wrapper avec défauts Synclune.
+ *
+ * Modes de fermeture (cf. `.claude/plans/audit-mes-modales-swipeable-linked-badger.md`) :
+ *
+ * 1. **Permissif (défaut)** — Swipe-from-anywhere ferme le drawer. Convient aux
+ *    listes courtes / menus simples (SortDrawer, ResponsiveActionMenu).
+ * 2. **Strict (`handleOnly={true}`)** — Seule la `DrawerHandle` visible permet
+ *    de fermer. Convient au contenu scrollable interactif où chaque touch
+ *    compte (cart, filtres, bulk actions, long nav). Évite les fermetures
+ *    accidentelles quand l'utilisateur scrolle / interagit.
+ * 3. **Saisie clavier (`repositionInputs={true}`)** — Vaul repositionne l'input
+ *    focusé au-dessus du clavier mobile au lieu de scroller (Vaul l'active
+ *    auto si `snapPoints` est défini, sinon explicite). Convient aux drawers
+ *    avec search/text input.
+ */
 function Drawer({
 	open,
 	onOpenChange,
 	scrollLockTimeout = 800,
 	closeThreshold = 0.15,
+	handleOnly,
+	repositionInputs,
 	...props
-}: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+}: React.ComponentProps<typeof DrawerPrimitive.Root> & {
+	/**
+	 * Si `true`, seul `<DrawerHandle>` (la poignée visible en haut) permet de
+	 * drag/fermer le drawer. Le reste du contenu n'écoute pas les gestes
+	 * swipe-to-close. Active pour les drawers avec contenu interactif scrollable.
+	 * @default false
+	 */
+	handleOnly?: boolean;
+	/**
+	 * Si `true`, Vaul repositionne l'input focusé au-dessus du clavier mobile
+	 * (au lieu de scroller la page). Active pour les drawers avec saisie texte
+	 * (search input, formulaire). Auto-activé si `snapPoints` est défini.
+	 */
+	repositionInputs?: boolean;
+}) {
 	const { handleClose } = useBackButtonClose({
 		isOpen: open ?? false,
 		onClose: () => onOpenChange?.(false),
@@ -47,6 +79,8 @@ function Drawer({
 				onOpenChange={wrappedOnOpenChange}
 				scrollLockTimeout={scrollLockTimeout}
 				closeThreshold={closeThreshold}
+				handleOnly={handleOnly}
+				repositionInputs={repositionInputs}
 				{...props}
 			/>
 		</VaulNestedProvider>

@@ -144,7 +144,7 @@ vi.mock("next/image", () => {
 			alt,
 			fill: _f,
 			sizes: _sz,
-			priority: _p,
+			preload: _pr,
 			...props
 		}: Record<string, unknown> & { src: string; alt: string }) =>
 			createElement("img", { src, alt, ...props }),

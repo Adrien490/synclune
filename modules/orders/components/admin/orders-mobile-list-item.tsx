@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Loader2, StickyNote } from "lucide-react";
 import { useState } from "react";
 
 import type { OrderStatus, PaymentStatus, FulfillmentStatus } from "@/app/generated/prisma/browser";
 import { useBulkSelectionContextOptional } from "@/shared/components/data-table";
+import { LinkPendingOverlay } from "@/shared/components/long-press-menu-link";
 import { MobileSelectableCard } from "@/shared/components/mobile-selection";
 import {
 	ResponsiveActionMenu,
@@ -18,7 +20,6 @@ import { ADMIN_PENDING_LABELS } from "@/shared/constants/admin-pending-labels";
 import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list-pending-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { useLongPress } from "@/shared/hooks/use-long-press";
-import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
@@ -29,7 +30,6 @@ import {
 	PAYMENT_STATUS_VARIANTS,
 } from "@/modules/orders/constants/status-display";
 import { useOrderActions } from "@/modules/orders/hooks/use-order-actions";
-import { ORDER_NOTES_DIALOG_ID } from "./order-notes-dialog";
 
 type Order = {
 	id: string;
@@ -136,7 +136,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 	const isPendingItem = pendingCtx?.isPending(order.id) ?? false;
 	const pendingKind = pendingCtx?.pendingKind ?? null;
 	const pendingLabel = isPendingItem ? ADMIN_PENDING_LABELS[pendingKind ?? "status"] : null;
-	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
+	const router = useRouter();
 	const [menuOpen, setMenuOpen] = useState(false);
 
 	const { sections } = useOrderActions({
@@ -158,7 +158,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 	});
 
 	const openNotes = () => {
-		notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber });
+		router.push(`/admin/ventes/commandes/${order.id}/notes`);
 	};
 
 	if (ctx?.selectionMode) {
@@ -183,10 +183,11 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 				<Link
 					href={`/admin/ventes/commandes/${order.id}`}
 					aria-label={`Commande ${order.orderNumber}`}
+					prefetch={null}
 					{...bind}
-					style={{ viewTransitionName: `order-card-${order.id}` }}
+					style={{ ...bind.style, viewTransitionName: `order-card-${order.id}` }}
 					className={cn(
-						"focus-visible:ring-primary block w-full rounded-lg",
+						"focus-visible:ring-primary relative block w-full rounded-lg",
 						"focus-visible:ring-2 focus-visible:outline-none",
 						"transform-gpu active:scale-[0.98] motion-safe:transition-transform motion-safe:duration-150",
 					)}
@@ -196,6 +197,7 @@ export function OrdersMobileListItem({ order }: { order: Order }) {
 						isPendingItem={isPendingItem}
 						pendingLabel={pendingLabel}
 					/>
+					<LinkPendingOverlay />
 				</Link>
 			</SwipeableCard>
 

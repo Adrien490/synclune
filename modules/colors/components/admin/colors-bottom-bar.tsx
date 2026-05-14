@@ -103,8 +103,8 @@ function ColorsBottomBarInner() {
 			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Nom, slug, hex…"
-				ariaLabel="Rechercher une couleur"
+				placeholder="Une teinte de l'atelier…"
+				ariaLabel="Rechercher une teinte de l'atelier"
 				id={IDS.search}
 			/>
 		</>

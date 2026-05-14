@@ -70,6 +70,7 @@ vi.mock("@/shared/components/ui/item", () => ({
 
 vi.mock("lucide-react", () => ({
 	Package: () => <svg data-testid="icon-package" />,
+	MoreVertical: () => <svg data-testid="icon-more-vertical" />,
 }));
 
 import { SkuMobileItem } from "../sku-mobile-item";

@@ -6,13 +6,14 @@ const { mockGetProductCardData } = vi.hoisted(() => ({
 	mockGetProductCardData: vi.fn(),
 }));
 
-// Mock next/image — expose priority via data-attribute for test assertions
+// Mock next/image — expose loading + fetchPriority via data-attributes (Next 16 multi-LCP pattern)
 vi.mock("next/image", () => ({
 	default: ({
 		src,
 		alt,
 		fill: _fill,
-		priority,
+		loading,
+		fetchPriority,
 		placeholder: _placeholder,
 		blurDataURL: _blurDataURL,
 		quality: _quality,
@@ -23,7 +24,8 @@ vi.mock("next/image", () => ({
 		src: string;
 		alt: string;
 		fill?: boolean;
-		priority?: boolean;
+		loading?: string;
+		fetchPriority?: string;
 		placeholder?: string;
 		blurDataURL?: string;
 		quality?: number;
@@ -37,7 +39,8 @@ vi.mock("next/image", () => ({
 			alt={alt}
 			className={className}
 			data-sizes={sizes}
-			data-priority={priority ? "true" : undefined}
+			data-loading={loading}
+			data-fetch-priority={fetchPriority}
 			data-vt={style?.viewTransitionName}
 		/>
 	),
@@ -606,28 +609,31 @@ describe("ProductCard", () => {
 		});
 	});
 
-	describe("preload policy (priority prop)", () => {
-		it("sets priority=true for above-fold cards (index < 4)", () => {
+	describe("eager loading policy (Next 16 multi-LCP pattern)", () => {
+		it("sets loading=eager + fetchPriority=high for above-fold cards (index < 4)", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} index={0} />);
 			const img = container.querySelector("img[src*='image.jpg']");
-			expect(img).toHaveAttribute("data-priority", "true");
+			expect(img).toHaveAttribute("data-loading", "eager");
+			expect(img).toHaveAttribute("data-fetch-priority", "high");
 		});
 
-		it("does not set priority for below-fold cards (index >= 4)", () => {
+		it("sets loading=lazy + fetchPriority=auto for below-fold cards (index >= 4)", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(<ProductCard product={createProduct()} index={4} />);
 			const img = container.querySelector("img[src*='image.jpg']");
-			expect(img).not.toHaveAttribute("data-priority");
+			expect(img).toHaveAttribute("data-loading", "lazy");
+			expect(img).toHaveAttribute("data-fetch-priority", "auto");
 		});
 
-		it("disablePreload overrides index=0 (no priority)", () => {
+		it("disablePreload overrides index=0 (lazy + auto)", () => {
 			mockGetProductCardData.mockReturnValue(createCardData());
 			const { container } = render(
 				<ProductCard product={createProduct()} index={0} disablePreload />,
 			);
 			const img = container.querySelector("img[src*='image.jpg']");
-			expect(img).not.toHaveAttribute("data-priority");
+			expect(img).toHaveAttribute("data-loading", "lazy");
+			expect(img).toHaveAttribute("data-fetch-priority", "auto");
 		});
 	});
 });

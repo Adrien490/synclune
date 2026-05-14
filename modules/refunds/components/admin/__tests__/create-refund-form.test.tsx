@@ -332,9 +332,9 @@ describe("CreateRefundForm", () => {
 
 	// ─── Order items ──────────────────────────────────────────────────────────
 
-	it("renders section title 'Articles à rembourser'", () => {
+	it("renders section title 'Bijoux à rembourser'", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("Articles à rembourser")).toBeInTheDocument();
+		expect(screen.getByText("Bijoux à rembourser")).toBeInTheDocument();
 	});
 
 	it("renders a RefundItemRow for each order item", () => {
@@ -376,7 +376,7 @@ describe("CreateRefundForm", () => {
 
 	it("renders the 'Note (optionnel)' section", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("Note (optionnel)")).toBeInTheDocument();
+		expect(screen.getByText("(optionnel)")).toBeInTheDocument();
 	});
 
 	// ─── Summary ──────────────────────────────────────────────────────────────
@@ -409,10 +409,10 @@ describe("CreateRefundForm", () => {
 		expect(screen.getByText(/Créer la demande/)).toBeInTheDocument();
 	});
 
-	it("shows 'Création en cours…' when isPending is true", () => {
+	it("shows 'Création…' when isPending is true", () => {
 		mockIsPending.value = true;
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("Création en cours…")).toBeInTheDocument();
+		expect(screen.getByText("Création…")).toBeInTheDocument();
 	});
 
 	// ─── Already refunded ─────────────────────────────────────────────────────
@@ -670,8 +670,8 @@ describe("CreateRefundForm", () => {
 	it("disables submit button when isPending is true regardless of canSubmit", () => {
 		mockIsPending.value = true;
 		render(<CreateRefundForm order={createMockOrder()} />);
-		// When pending, button shows "Création en cours…" and is disabled
-		const pendingBtn = screen.getByRole("button", { name: "Création en cours…" });
+		// When pending, button shows "Création…" and is disabled
+		const pendingBtn = screen.getByRole("button", { name: "Création…" });
 		expect(pendingBtn).toBeDisabled();
 	});
 
@@ -715,9 +715,9 @@ describe("CreateRefundForm", () => {
 	it("shows selected items count of 0 when no items are selected", () => {
 		mockFormState.selectedItems = [];
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("Articles sélectionnés")).toBeInTheDocument();
+		expect(screen.getByText("Bijoux sélectionnés")).toBeInTheDocument();
 		// Count is shown next to the label
-		const summarySection = screen.getByText("Articles sélectionnés").closest("div");
+		const summarySection = screen.getByText("Bijoux sélectionnés").closest("div");
 		expect(summarySection?.textContent).toContain("0");
 	});
 
@@ -727,7 +727,7 @@ describe("CreateRefundForm", () => {
 			{ orderItemId: "item-2", selected: true, quantity: 2, restock: false },
 		];
 		render(<CreateRefundForm order={createMockOrder()} />);
-		const summarySection = screen.getByText("Articles sélectionnés").closest("div");
+		const summarySection = screen.getByText("Bijoux sélectionnés").closest("div");
 		expect(summarySection?.textContent).toContain("2");
 	});
 
@@ -795,29 +795,35 @@ describe("CreateRefundForm", () => {
 
 	// ─── Submit button amount label ───────────────────────────────────────────
 
-	it("shows 0.00 € in submit button label when totalAmount is 0", () => {
+	it("shows base 'Créer la demande' label when totalAmount is 0", () => {
 		mockFormState.totalAmount = 0;
+		mockFormState.selectedItems = [];
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText(/Créer la demande \(0\.00 €\)/)).toBeInTheDocument();
+		const submitBtn = screen.getByRole("button", { name: /Créer la demande/ });
+		expect(submitBtn.textContent ?? "").not.toContain("·");
 	});
 
-	it("shows formatted amount in submit button label", () => {
+	it("shows formatted amount in submit button label when items are selected", () => {
 		mockFormState.totalAmount = 7500;
+		mockFormState.selectedItems = [
+			{ orderItemId: "item-1", selected: true, quantity: 1, restock: true },
+		];
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText(/Créer la demande \(75\.00 €\)/)).toBeInTheDocument();
+		const submitBtn = screen.getByRole("button", { name: /Créer la demande/ });
+		expect(submitBtn.textContent ?? "").toMatch(/75[.,]00\s*€/);
 	});
 
 	// ─── Pending information text ─────────────────────────────────────────────
 
 	it("renders the informational note about refund approval process", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText(/Le remboursement sera créé en statut/)).toBeInTheDocument();
+		expect(screen.getByText(/remboursement traité sous 48h/)).toBeInTheDocument();
 	});
 
 	// ─── Form section descriptions ────────────────────────────────────────────
 
 	it("renders the items card description", () => {
 		render(<CreateRefundForm order={createMockOrder()} />);
-		expect(screen.getByText("Sélectionnez les articles et quantités")).toBeInTheDocument();
+		expect(screen.getByText("Choisis ce qui retourne à l'atelier.")).toBeInTheDocument();
 	});
 });

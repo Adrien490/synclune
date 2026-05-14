@@ -1,5 +1,7 @@
 import type { Prisma } from "@/app/generated/prisma/browser";
 
+import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
+
 // ============================================================================
 // SELECT DEFINITIONS - USER DETAIL
 // ============================================================================
@@ -50,7 +52,7 @@ export const GET_USERS_MAX_RESULTS_PER_PAGE = 200;
  * Cap des ids retournés par get-filtered-user-ids pour le banner
  * "Sélectionner les N filtrés" (parité produits).
  */
-export const BULK_USER_ACTION_LIMIT = 100;
+export const BULK_USER_ACTION_LIMIT = BULK_SELECTION_MAX;
 export const GET_USERS_DEFAULT_SORT_BY = "createdAt";
 export const GET_USERS_DEFAULT_SORT_ORDER = "desc";
 

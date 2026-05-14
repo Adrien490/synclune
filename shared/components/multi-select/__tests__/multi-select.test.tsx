@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
 
@@ -11,7 +11,9 @@ vi.mock("@/shared/utils/cn", () => ({
 }));
 
 vi.mock("lucide-react", () => ({
+	Check: () => <svg data-testid="icon-check" />,
 	ChevronDown: () => <svg data-testid="icon-chevron-down" />,
+	Search: () => <svg data-testid="icon-search" />,
 	X: () => <svg data-testid="icon-x" />,
 }));
 
@@ -23,27 +25,12 @@ vi.mock("@/shared/components/ui/badge", () => ({
 	),
 }));
 
-vi.mock("@/shared/components/ui/button", () => ({
-	Button: ({ children, onClick, disabled, role, className, type = "button", ...props }: any) => (
-		<button
-			type={type}
-			onClick={onClick}
-			disabled={disabled}
-			role={role}
-			className={className}
-			{...props}
-		>
-			{children}
-		</button>
-	),
-}));
-
 vi.mock("@/shared/components/ui/checkbox", () => ({
-	Checkbox: ({ checked, onCheckedChange, "aria-label": ariaLabel }: any) => (
+	Checkbox: ({ checked, onCheckedChange, disabled }: any) => (
 		<input
 			type="checkbox"
 			checked={checked === true}
-			aria-label={ariaLabel}
+			disabled={disabled}
 			onChange={(e) => onCheckedChange?.(e.target.checked)}
 			data-testid="checkbox"
 		/>
@@ -56,18 +43,46 @@ vi.mock("@/shared/components/ui/popover", () => ({
 			{children}
 		</div>
 	),
-	PopoverContent: ({ children, role, className, "aria-label": ariaLabel }: any) => (
-		<div data-testid="popover-content" role={role} aria-label={ariaLabel} className={className}>
+	PopoverContent: ({ children, className }: any) => (
+		<div data-testid="popover-content" className={className}>
 			{children}
 		</div>
 	),
 	PopoverTrigger: ({ children }: any) => <div data-testid="popover-trigger">{children}</div>,
 }));
 
+vi.mock("@/shared/components/ui/drawer", () => ({
+	Drawer: ({ children, open }: any) => (
+		<div data-testid="drawer" data-open={String(open)}>
+			{children}
+		</div>
+	),
+	DrawerTrigger: ({ children }: any) => <div data-testid="drawer-trigger">{children}</div>,
+	DrawerContent: ({ children }: any) => <div data-testid="drawer-content">{children}</div>,
+	DrawerHeader: ({ children }: any) => <div data-testid="drawer-header">{children}</div>,
+	DrawerTitle: ({ children }: any) => <h2 data-testid="drawer-title">{children}</h2>,
+	DrawerDescription: ({ children }: any) => <p data-testid="drawer-description">{children}</p>,
+	DrawerBody: ({ children, className, style }: any) => (
+		<div data-testid="drawer-body" className={className} style={style}>
+			{children}
+		</div>
+	),
+}));
+
 vi.mock("@/shared/components/ui/separator", () => ({
 	Separator: ({ orientation }: any) => (
 		<hr data-testid="separator" data-orientation={orientation} />
 	),
+}));
+
+const mockTriggerHaptic = vi.fn();
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => mockTriggerHaptic,
+}));
+
+const mockIsMobile = { value: false };
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.value,
 }));
 
 import { MultiSelect } from "../multi-select";
@@ -78,28 +93,40 @@ const OPTIONS = [
 	{ value: "c", label: "Gamma" },
 ];
 
+const MANY_OPTIONS = Array.from({ length: 12 }, (_, i) => ({
+	value: `opt-${i}`,
+	label: `Option ${i}`,
+}));
+
+beforeEach(() => {
+	mockTriggerHaptic.mockClear();
+	mockIsMobile.value = false;
+});
+
 afterEach(cleanup);
 
-describe("MultiSelect", () => {
+describe("MultiSelect — rendering", () => {
 	it("renders placeholder when no selection", () => {
-		render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} placeholder="Choisir" />);
+		render(
+			<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} placeholder="Choisir" />,
+		);
 		expect(screen.getByText("Choisir")).toBeTruthy();
 	});
 
 	it("uses default placeholder", () => {
-		render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
 		expect(screen.getByText("Sélectionner")).toBeTruthy();
 	});
 
 	it("renders trigger as combobox", () => {
-		render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
 		const trigger = screen.getByRole("combobox");
 		expect(trigger.getAttribute("aria-haspopup")).toBe("listbox");
 		expect(trigger.getAttribute("aria-expanded")).toBe("false");
 	});
 
 	it("renders one badge per selected value", () => {
-		render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} defaultValue={["a", "b"]} />);
+		render(<MultiSelect options={OPTIONS} value={["a", "b"]} onValueChange={vi.fn()} />);
 		const badges = screen.getAllByTestId("badge");
 		expect(badges).toHaveLength(2);
 		expect(badges[0]!.textContent).toContain("Alpha");
@@ -107,63 +134,231 @@ describe("MultiSelect", () => {
 	});
 
 	it("renders one checkbox per option in the listbox", () => {
-		render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} />);
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
 		expect(screen.getAllByTestId("checkbox")).toHaveLength(3);
 	});
 
+	it("renders empty state when there are no options", () => {
+		render(<MultiSelect options={[]} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByText("Aucune option disponible")).toBeTruthy();
+	});
+
+	it("propagates aria-describedby to trigger", () => {
+		render(
+			<MultiSelect
+				options={OPTIONS}
+				value={[]}
+				onValueChange={vi.fn()}
+				aria-describedby="external-desc"
+			/>,
+		);
+		expect(screen.getByRole("combobox").getAttribute("aria-describedby")).toBe("external-desc");
+	});
+
+	it("propagates id to trigger for FieldLabel binding", () => {
+		render(<MultiSelect id="my-field" options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByRole("combobox").id).toBe("my-field");
+	});
+
+	it("renders Check icon next to selected option", () => {
+		render(<MultiSelect options={OPTIONS} value={["a"]} onValueChange={vi.fn()} />);
+		const checks = screen.getAllByTestId("icon-check");
+		expect(checks.length).toBe(1);
+	});
+});
+
+describe("MultiSelect — interactions", () => {
 	it("calls onValueChange with the new value when toggling an option", () => {
 		const onValueChange = vi.fn();
-		render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} />);
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={onValueChange} />);
 		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
 		expect(onValueChange).toHaveBeenCalledWith(["a"]);
 	});
 
 	it("removes a value when toggled off", () => {
 		const onValueChange = vi.fn();
-		render(
-			<MultiSelect options={OPTIONS} onValueChange={onValueChange} defaultValue={["a", "b"]} />,
-		);
+		render(<MultiSelect options={OPTIONS} value={["a", "b"]} onValueChange={onValueChange} />);
 		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
 		expect(onValueChange).toHaveBeenCalledWith(["b"]);
 	});
 
 	it("removes a value via badge X button", () => {
 		const onValueChange = vi.fn();
-		render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} defaultValue={["a"]} />);
+		render(<MultiSelect options={OPTIONS} value={["a"]} onValueChange={onValueChange} />);
 		fireEvent.click(screen.getByLabelText("Retirer Alpha"));
 		expect(onValueChange).toHaveBeenCalledWith([]);
 	});
 
 	it("clears the entire selection via the trigger X button", () => {
 		const onValueChange = vi.fn();
-		render(
-			<MultiSelect options={OPTIONS} onValueChange={onValueChange} defaultValue={["a", "b"]} />,
-		);
+		render(<MultiSelect options={OPTIONS} value={["a", "b"]} onValueChange={onValueChange} />);
 		fireEvent.click(screen.getByLabelText("Effacer les 2 options sélectionnées"));
 		expect(onValueChange).toHaveBeenCalledWith([]);
 	});
+});
 
-	it("renders empty state when there are no options", () => {
-		render(<MultiSelect options={[]} onValueChange={vi.fn()} />);
-		expect(screen.getByText("Aucune option disponible")).toBeTruthy();
+describe("MultiSelect — disabled state", () => {
+	it("marks trigger as aria-disabled when disabled", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} disabled />);
+		expect(screen.getByRole("combobox").getAttribute("aria-disabled")).toBe("true");
 	});
 
-	it("disables the trigger when disabled", () => {
-		render(<MultiSelect options={OPTIONS} onValueChange={vi.fn()} disabled />);
-		expect((screen.getByRole("combobox") as HTMLButtonElement).disabled).toBe(true);
-	});
-
-	it("does not call onValueChange when disabled", () => {
+	it("does not call onValueChange when component is disabled", () => {
 		const onValueChange = vi.fn();
-		render(<MultiSelect options={OPTIONS} onValueChange={onValueChange} disabled />);
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={onValueChange} disabled />);
 		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
 		expect(onValueChange).not.toHaveBeenCalled();
 	});
 
-	it("propagates aria-describedby to trigger", () => {
+	it("does not call onValueChange when an individual option is disabled", () => {
+		const onValueChange = vi.fn();
+		const opts = [
+			{ value: "a", label: "Alpha" },
+			{ value: "b", label: "Beta", disabled: true },
+		];
+		render(<MultiSelect options={opts} value={[]} onValueChange={onValueChange} />);
+		fireEvent.click(screen.getAllByTestId("checkbox")[1]!);
+		expect(onValueChange).not.toHaveBeenCalled();
+	});
+
+	it("renders disabled checkbox for disabled option", () => {
+		const opts = [
+			{ value: "a", label: "Alpha" },
+			{ value: "b", label: "Beta", disabled: true },
+		];
+		render(<MultiSelect options={opts} value={[]} onValueChange={vi.fn()} />);
+		expect((screen.getAllByTestId("checkbox")[1] as HTMLInputElement).disabled).toBe(true);
+	});
+});
+
+describe("MultiSelect — search", () => {
+	it("does not render search input when options.length <= searchThreshold", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.queryByRole("searchbox")).toBeNull();
+	});
+
+	it("renders search input when options.length > searchThreshold (default 8)", () => {
+		render(<MultiSelect options={MANY_OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByRole("searchbox")).toBeTruthy();
+	});
+
+	it("filters options based on search query", () => {
+		render(<MultiSelect options={MANY_OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		fireEvent.change(screen.getByRole("searchbox"), { target: { value: "Option 1" } });
+		// "Option 1", "Option 10", "Option 11" → 3 matches
+		expect(screen.getAllByTestId("checkbox")).toHaveLength(3);
+	});
+
+	it("shows 'aucun résultat' empty state on no match", () => {
+		render(<MultiSelect options={MANY_OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		fireEvent.change(screen.getByRole("searchbox"), { target: { value: "zzzzz" } });
+		expect(screen.getByText(/Aucun résultat pour/)).toBeTruthy();
+	});
+
+	it("respects custom searchThreshold prop", () => {
 		render(
-			<MultiSelect options={OPTIONS} onValueChange={vi.fn()} aria-describedby="external-desc" />,
+			<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} searchThreshold={2} />,
 		);
-		expect(screen.getByRole("combobox").getAttribute("aria-describedby")).toBe("external-desc");
+		expect(screen.getByRole("searchbox")).toBeTruthy();
+	});
+});
+
+describe("MultiSelect — haptic", () => {
+	it("triggers haptic 'selection' on toggle by default", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
+	});
+
+	it("triggers haptic 'medium' on clear", () => {
+		render(<MultiSelect options={OPTIONS} value={["a", "b"]} onValueChange={vi.fn()} />);
+		fireEvent.click(screen.getByLabelText("Effacer les 2 options sélectionnées"));
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	it("respects custom haptic pattern prop", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} haptic="light" />);
+		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+	});
+
+	it("disables haptic when haptic prop is false", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} haptic={false} />);
+		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
+		expect(mockTriggerHaptic).not.toHaveBeenCalled();
+	});
+});
+
+describe("MultiSelect — a11y live region", () => {
+	const findLiveRegion = (container: HTMLElement) =>
+		container.querySelector('[aria-live="polite"]') as HTMLElement | null;
+
+	it("renders a polite aria-live region", () => {
+		const { container } = render(
+			<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />,
+		);
+		const liveRegion = findLiveRegion(container);
+		expect(liveRegion).toBeTruthy();
+		expect(liveRegion?.getAttribute("aria-atomic")).toBe("true");
+	});
+
+	it("announces selection on toggle", () => {
+		const { container } = render(
+			<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />,
+		);
+		fireEvent.click(screen.getAllByTestId("checkbox")[0]!);
+		expect(findLiveRegion(container)?.textContent).toContain("Alpha sélectionné");
+	});
+
+	it("announces clear", () => {
+		const { container } = render(
+			<MultiSelect options={OPTIONS} value={["a"]} onValueChange={vi.fn()} />,
+		);
+		fireEvent.click(screen.getByLabelText("Effacer les 1 options sélectionnées"));
+		expect(findLiveRegion(container)?.textContent).toContain("Sélection vidée");
+	});
+});
+
+describe("MultiSelect — responsive", () => {
+	it("renders Popover on desktop", () => {
+		mockIsMobile.value = false;
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByTestId("popover")).toBeTruthy();
+		expect(screen.queryByTestId("drawer")).toBeNull();
+	});
+
+	it("renders Drawer on mobile", () => {
+		mockIsMobile.value = true;
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByTestId("drawer")).toBeTruthy();
+		expect(screen.queryByTestId("popover")).toBeNull();
+	});
+
+	it("DrawerTitle reflects placeholder on mobile", () => {
+		mockIsMobile.value = true;
+		render(
+			<MultiSelect
+				options={OPTIONS}
+				value={[]}
+				onValueChange={vi.fn()}
+				placeholder="Choisir des couleurs"
+			/>,
+		);
+		expect(screen.getByTestId("drawer-title").textContent).toBe("Choisir des couleurs");
+	});
+});
+
+describe("MultiSelect — listbox", () => {
+	it("listbox has aria-multiselectable=true", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const listbox = screen.getByRole("listbox");
+		expect(listbox.getAttribute("aria-multiselectable")).toBe("true");
+	});
+
+	it("listbox is referenced by trigger aria-controls", () => {
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		const trigger = screen.getByRole("combobox");
+		const listbox = screen.getByRole("listbox");
+		expect(trigger.getAttribute("aria-controls")).toBe(listbox.id);
 	});
 });

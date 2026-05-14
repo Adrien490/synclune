@@ -144,11 +144,8 @@ export function CreateProductInfoCard({
 											value: c.id,
 											label: c.name,
 										}))}
-										defaultValue={field.state.value}
-										onValueChange={(values) => {
-											haptic("selection");
-											field.handleChange(values);
-										}}
+										value={field.state.value}
+										onValueChange={(values) => field.handleChange(values)}
 										placeholder="Sélectionner des collections"
 										aria-describedby="collections-hint"
 									/>

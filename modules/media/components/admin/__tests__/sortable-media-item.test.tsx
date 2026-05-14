@@ -489,14 +489,16 @@ describe("SortableMediaItem", () => {
 			);
 		});
 
-		it("hides the permanent GripVertical hint on the primary image (saturation reduction)", () => {
-			const { container, rerender } = renderItem({ isPrimary: true, index: 0 });
+		it("hides inline reorder chevrons on the primary image (no reorder away from position 0 needed)", () => {
+			const { rerender } = renderItem({
+				isPrimary: true,
+				index: 0,
+				onMoveDown: vi.fn(),
+				totalCount: 3,
+			});
 
-			// Mobile GripVertical (size-3.5) should not exist on primary
-			const gripIcons = container.querySelectorAll(".lucide-grip-vertical");
-			// Desktop drag handle still present (size-5), so we check by container:
-			// the permanent indicator div has class "opacity-40"
-			expect(container.querySelector(".opacity-40")).not.toBeInTheDocument();
+			// Primary item: no inline reorder chevrons (only set-as-primary makes no sense, no move-down needed)
+			expect(screen.queryByLabelText(/Déplacer l'image 1/)).toBeNull();
 
 			rerender(
 				<SortableMediaItem
@@ -509,12 +511,14 @@ describe("SortableMediaItem", () => {
 					onImageLoaded={vi.fn()}
 					onOpenLightbox={vi.fn()}
 					onOpenDeleteDialog={vi.fn()}
+					onMoveUp={vi.fn()}
+					onMoveDown={vi.fn()}
 					totalCount={3}
 				/>,
 			);
-			expect(container.querySelector(".opacity-40")).toBeInTheDocument();
-			// silence the unused var lint:
-			expect(gripIcons.length).toBeGreaterThanOrEqual(0);
+			// Non-primary with onMoveUp/onMoveDown → inline chevrons rendered (mobile reorder fast-path)
+			expect(screen.getByLabelText("Déplacer l'image 2 vers le haut")).toBeInTheDocument();
+			expect(screen.getByLabelText("Déplacer l'image 2 vers le bas")).toBeInTheDocument();
 		});
 	});
 

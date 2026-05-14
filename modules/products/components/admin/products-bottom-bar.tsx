@@ -132,8 +132,8 @@ function ProductsBottomBarInner({
 			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Rechercher par titre…"
-				ariaLabel="Rechercher un produit par titre"
+				placeholder="Un bijou par titre…"
+				ariaLabel="Rechercher un bijou par titre"
 				id={IDS.search}
 			/>
 		</>

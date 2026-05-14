@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,44 +23,27 @@ export interface FilteredUserIdsData {
 export async function getFilteredUserIds(
 	params: Pick<GetUsersParams, "search" | "sortBy" | "sortOrder" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
-
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_USER_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const fullParams: GetUsersParams = {
-			cursor: undefined,
-			direction: "forward",
-			perPage: BULK_USER_ACTION_LIMIT,
-			search: params.search,
-			sortBy: params.sortBy,
-			sortOrder: params.sortOrder,
-			filters: params.filters,
-		};
-
-		const where = buildUserWhereClause(fullParams);
-
-		const [rows, totalCount] = await Promise.all([
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_USER_LIMITS.REFRESH,
+		cap: BULK_USER_ACTION_LIMIT,
+		emptyMessage: "Aucun client ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les clients filtrés",
+		buildWhere: () =>
+			buildUserWhereClause({
+				cursor: undefined,
+				direction: "forward",
+				perPage: BULK_USER_ACTION_LIMIT,
+				search: params.search,
+				sortBy: params.sortBy,
+				sortOrder: params.sortOrder,
+				filters: params.filters,
+			}),
+		fetchIds: (where) =>
 			prisma.user.findMany({
 				where,
 				select: { id: true },
 				take: BULK_USER_ACTION_LIMIT,
 			}),
-			prisma.user.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucun client ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_USER_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les clients filtrés");
-	}
+		fetchCount: (where) => prisma.user.count({ where }),
+	});
 }

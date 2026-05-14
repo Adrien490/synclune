@@ -47,7 +47,7 @@ export function StoreClosurePage({ status }: StoreClosurePageProps) {
 							width={96}
 							height={96}
 							className="mx-auto rounded-full"
-							priority
+							preload
 						/>
 
 						<h1 className="font-display text-foreground text-3xl font-semibold md:text-4xl">

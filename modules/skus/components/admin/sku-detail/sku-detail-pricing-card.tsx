@@ -1,10 +1,12 @@
 "use client";
 
 import { ArrowRight, DollarSign } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { UPDATE_PRICE_DIALOG_ID } from "@/modules/skus/components/admin/update-price-dialog";
 import type { SkuDetailReturn } from "@/modules/skus/data/get-sku";
@@ -22,6 +24,21 @@ const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCent
 
 export function SkuDetailPricingCard({ sku }: SkuDetailPricingCardProps) {
 	const updatePriceDialog = useDialog(UPDATE_PRICE_DIALOG_ID);
+	const isMobile = useIsMobile();
+	const router = useRouter();
+
+	const handleUpdatePrice = () => {
+		if (isMobile) {
+			router.push(`/admin/catalogue/produits/${sku.product.slug}/variantes/${sku.id}/prix`);
+		} else {
+			updatePriceDialog.open({
+				skuId: sku.id,
+				skuName: sku.sku,
+				currentPrice: sku.priceInclTax,
+				currentCompareAtPrice: sku.compareAtPrice,
+			});
+		}
+	};
 
 	const hasValidCompare = sku.compareAtPrice !== null && sku.compareAtPrice > sku.priceInclTax;
 	const discountPercent = hasValidCompare
@@ -58,14 +75,7 @@ export function SkuDetailPricingCard({ sku }: SkuDetailPricingCardProps) {
 					type="button"
 					variant="outline"
 					className="w-full transition-transform duration-150 active:scale-[0.98]"
-					onClick={() =>
-						updatePriceDialog.open({
-							skuId: sku.id,
-							skuName: sku.sku,
-							currentPrice: sku.priceInclTax,
-							currentCompareAtPrice: sku.compareAtPrice,
-						})
-					}
+					onClick={handleUpdatePrice}
 				>
 					Modifier le prix
 					<ArrowRight className="size-4" aria-hidden="true" />

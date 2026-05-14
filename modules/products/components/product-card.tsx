@@ -25,7 +25,7 @@ const ratingFormatter = new Intl.NumberFormat("fr-FR", {
 
 interface ProductCardProps {
 	product: ProductCarouselItem;
-	/** Index dans la liste (pour priority images above-fold) */
+	/** Index dans la liste (pour eager loading + fetchPriority above-fold) */
 	index?: number;
 	/** Indique si le produit est dans la wishlist */
 	isInWishlist?: boolean;
@@ -273,7 +273,8 @@ export function ProductCard({
 						style={{ viewTransitionName: productViewTransitionName }}
 						placeholder={primaryImage.blurDataUrl ? "blur" : "empty"}
 						blurDataURL={primaryImage.blurDataUrl ?? undefined}
-						priority={isAboveFold}
+						loading={isAboveFold ? "eager" : "lazy"}
+						fetchPriority={isAboveFold ? "high" : "auto"}
 						sizes={IMAGE_SIZES.PRODUCT_CARD}
 					/>
 					{secondaryImage && (

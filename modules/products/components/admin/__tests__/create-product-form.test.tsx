@@ -434,7 +434,7 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			const statusElements = screen.getAllByRole("status");
-			expect(statusElements.some((el) => /Téléversement/.test(String(el.textContent)))).toBe(true);
+			expect(statusElements.some((el) => /Envoi/.test(String(el.textContent)))).toBe(true);
 		});
 
 		it("shows thumbnail generation phase text", () => {
@@ -450,7 +450,10 @@ describe("CreateProductForm", () => {
 			});
 			render(<CreateProductForm {...defaultProps} />);
 
-			expect(screen.getAllByText(/Génération des miniatures/).length).toBeGreaterThan(0);
+			const statusElements = screen.getAllByRole("status");
+			expect(
+				statusElements.some((el) => /Préparation des aperçus/.test(String(el.textContent))),
+			).toBe(true);
 		});
 	});
 

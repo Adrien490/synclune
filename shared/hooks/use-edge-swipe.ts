@@ -5,23 +5,47 @@ import { useEffect, useEffectEvent } from "react";
 /** Horizontal distance (px) that fully arms the swipe; also the trigger threshold. */
 const SWIPE_THRESHOLD_PX = 30;
 
+interface UseEdgeSwipeOptions {
+	/** Bord déclencheur (mobile-native). @default "left" */
+	side?: "left" | "right";
+	/** Largeur max (px) en-dessous de laquelle le hook est actif. @default 1024 */
+	maxWidth?: number;
+	/**
+	 * Callback fired during the drag with a 0–1 value (|dx| / threshold).
+	 * Called with 0 when the gesture is cancelled or completed. Lets callers
+	 * render a rubber-band preview (cf. EdgeSwipeIndicator).
+	 */
+	onProgress?: (progress: number) => void;
+}
+
 /**
- * Detect swipe-from-left-edge to trigger an action (mobile native UX pattern).
+ * Detect swipe-from-edge to trigger an action (mobile native UX pattern).
  *
- * @param onOpen - Callback when a valid edge swipe is detected
- * @param isOpen - Whether the target is already open (skips tracking when true)
- * @param maxWidth - Media query breakpoint in px — disabled above this width (default 1024)
- * @param onProgress - Optional callback fired during the drag with a 0–1 value (dx / threshold).
- *                     Called with 0 when the gesture is cancelled or completed. Lets callers
- *                     render a rubber-band preview (cf. EdgeSwipeIndicator).
+ * - `side: "left"` (default) : swipe from left edge → trigger (drawer/menu open).
+ * - `side: "right"` : swipe from right edge vers la gauche → trigger
+ *   (utile pour exit gestures, ex: sortir du mode sélection).
+ *
+ * @param onTrigger - Callback when a valid edge swipe is detected
+ * @param isActive - When `true`, the hook is **disabled** (gesture skipped) —
+ *                   typique pour "skip when target already open" ou "skip hors mode".
+ *                   Note : sémantique invariante des deux côtés (active = disabled).
+ * @param options   - side / maxWidth / onProgress
  */
 export function useEdgeSwipe(
-	onOpen: () => void,
-	isOpen: boolean,
-	maxWidth = 1024,
-	onProgress?: (progress: number) => void,
+	onTrigger: () => void,
+	isActive: boolean,
+	maxWidthOrOptions: number | UseEdgeSwipeOptions = 1024,
+	onProgressArg?: (progress: number) => void,
 ) {
-	const onOpenStable = useEffectEvent(onOpen);
+	// Backward-compat overload : ancienne signature `(fn, isOpen, maxWidth, onProgress)`.
+	const opts: UseEdgeSwipeOptions =
+		typeof maxWidthOrOptions === "number"
+			? { maxWidth: maxWidthOrOptions, onProgress: onProgressArg }
+			: maxWidthOrOptions;
+
+	const { side = "left", maxWidth = 1024, onProgress } = opts;
+
+	const onTriggerStable = useEffectEvent(onTrigger);
 	const onProgressStable = useEffectEvent((progress: number) => {
 		onProgress?.(progress);
 	});
@@ -44,11 +68,12 @@ export function useEdgeSwipe(
 		}
 
 		function onTouchStart(e: TouchEvent) {
-			if (isOpen || mql.matches) return;
+			if (isActive || mql.matches) return;
 			const touch = e.touches[0];
 			if (!touch) return;
-			// Only track touches starting within 20px of the left edge
-			if (touch.clientX <= 20) {
+			const winWidth = window.innerWidth;
+			const startsAtEdge = side === "left" ? touch.clientX <= 20 : touch.clientX >= winWidth - 20;
+			if (startsAtEdge) {
 				startX = touch.clientX;
 				startY = touch.clientY;
 				tracking = true;
@@ -59,7 +84,9 @@ export function useEdgeSwipe(
 			if (!tracking) return;
 			const touch = e.touches[0];
 			if (!touch) return;
-			const dx = touch.clientX - startX;
+			// Progress direction : left → dx positif ; right → dx négatif (vers la gauche)
+			const rawDx = touch.clientX - startX;
+			const dx = side === "left" ? rawDx : -rawDx;
 			const dy = Math.abs(touch.clientY - startY);
 
 			// Cancel if vertical movement dominates (user is scrolling)
@@ -71,12 +98,11 @@ export function useEdgeSwipe(
 
 			emitProgress(Math.min(1, Math.max(0, dx / SWIPE_THRESHOLD_PX)));
 
-			// Trigger open when horizontal swipe exceeds threshold.
-			// Lowered from 50 → 30 for snappier native feel (iOS/Android drawer parity).
+			// Trigger when horizontal swipe exceeds threshold (snappy native feel).
 			if (dx > SWIPE_THRESHOLD_PX) {
 				tracking = false;
 				emitProgress(0);
-				onOpenStable();
+				onTriggerStable();
 			}
 		}
 
@@ -96,5 +122,5 @@ export function useEdgeSwipe(
 			document.removeEventListener("touchend", onTouchEnd);
 			document.removeEventListener("touchcancel", onTouchEnd);
 		};
-	}, [isOpen, maxWidth]);
+	}, [isActive, maxWidth, side]);
 }

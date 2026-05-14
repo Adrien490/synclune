@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
 import { useCachedProducts } from "./use-cached-products";
 
 /**
@@ -49,6 +50,8 @@ export function CachedProducts() {
 									fill
 									className="object-cover"
 									sizes="(max-width: 448px) 50vw, 224px"
+									placeholder="blur"
+									blurDataURL={IMAGE_BLUR_FALLBACK}
 								/>
 							</div>
 						) : (

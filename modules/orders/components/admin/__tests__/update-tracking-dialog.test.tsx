@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { UpdateTrackingDialog } from "../update-tracking-dialog";
 
-const { mockDialog, mockFormStore, mockFormHook } = vi.hoisted(() => ({
+const { mockDialog, mockFormStore, mockFormHook, mockPush } = vi.hoisted(() => ({
 	mockDialog: {
 		isOpen: false,
 		data: null as any,
@@ -22,6 +22,24 @@ const { mockDialog, mockFormStore, mockFormHook } = vi.hoisted(() => ({
 		isPending: false,
 		action: vi.fn(),
 	},
+	mockPush: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => vi.fn(),
+	triggerHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (fn: () => void) => fn(),
+}));
+
+vi.mock("@/shared/components/admin-form-footer", () => ({
+	AdminFormFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock("@/shared/providers/alert-dialog-store-provider", () => ({
@@ -110,8 +128,43 @@ vi.mock("@/shared/components/required-fields-note", () => ({
 
 vi.mock("lucide-react", () => {
 	const stub = () => <svg />;
-	return { Link2: stub, Mail: stub, Truck: stub };
+	return {
+		CheckCircle2: stub,
+		ExternalLink: stub,
+		Link2: stub,
+		Loader2: stub,
+		Mail: stub,
+		Truck: stub,
+	};
 });
+
+vi.mock("@/shared/components/copy-button", () => ({
+	CopyButton: () => <button type="button" data-testid="copy-button" />,
+}));
+
+vi.mock("@/shared/components/ui/kbd", () => ({
+	Kbd: ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>,
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
+
+vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
+	useUnsavedChanges: () => ({ allowNavigation: vi.fn() }),
+}));
+
+vi.mock("@/shared/hooks/use-focus-first-error", () => ({
+	useFocusFirstError: () => ({
+		formRef: { current: null },
+		focusFirstInvalid: vi.fn(),
+		onInvalidCapture: vi.fn(),
+	}),
+}));
+
+vi.mock("@/shared/utils/cn", () => ({
+	cn: (...classes: (string | undefined | false)[]) => classes.filter(Boolean).join(" "),
+}));
 
 function openDialog(
 	orderId = "order-1",
@@ -151,7 +204,7 @@ describe("UpdateTrackingDialog", () => {
 		mockDialog.isOpen = true;
 		mockDialog.data = null;
 		render(<UpdateTrackingDialog />);
-		expect(screen.queryByText("Modifier le suivi")).toBeNull();
+		expect(screen.queryByLabelText(/Numéro de suivi/)).toBeNull();
 	});
 
 	it('shows title "Modifier le suivi" when open with data', () => {
@@ -163,7 +216,8 @@ describe("UpdateTrackingDialog", () => {
 	it("shows order number in description", () => {
 		openDialog("order-1", "CMD-042");
 		render(<UpdateTrackingDialog />);
-		expect(screen.getByText("CMD-042")).toBeInTheDocument();
+		const matches = screen.getAllByText("CMD-042");
+		expect(matches.length).toBeGreaterThanOrEqual(1);
 	});
 
 	// --- Form fields rendering ---
@@ -171,7 +225,7 @@ describe("UpdateTrackingDialog", () => {
 	it("renders tracking number input with correct placeholder", () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const input = screen.getByPlaceholderText("Ex: 8N00234567890");
+		const input = screen.getByPlaceholderText("Ex : 8N00234567890");
 		expect(input).toBeInTheDocument();
 		expect(input).toHaveAttribute("id", "trackingNumber");
 	});
@@ -208,10 +262,10 @@ describe("UpdateTrackingDialog", () => {
 		expect(screen.getByLabelText(/URL personnalisée/)).toBeInTheDocument();
 	});
 
-	it('renders send email checkbox with label "Envoyer un email au client"', () => {
+	it('renders send email checkbox with label "Prévenir le client par email"', () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		expect(screen.getByLabelText(/Envoyer un email au client/)).toBeInTheDocument();
+		expect(screen.getByLabelText(/Prévenir le client par email/)).toBeInTheDocument();
 	});
 
 	it("renders required fields note", () => {
@@ -300,7 +354,7 @@ describe("UpdateTrackingDialog", () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
 		expect(
-			screen.getByText("Saisissez l'URL de suivi manuellement pour ce transporteur"),
+			screen.getByText("Saisissez l'URL de suivi manuellement pour ce transporteur."),
 		).toBeInTheDocument();
 	});
 
@@ -310,17 +364,16 @@ describe("UpdateTrackingDialog", () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
 		expect(
-			screen.queryByText("Saisissez l'URL de suivi manuellement pour ce transporteur"),
+			screen.queryByText("Saisissez l'URL de suivi manuellement pour ce transporteur."),
 		).toBeNull();
 	});
 
-	// --- Auto-detection hint (UpdateTracking-specific: skipped when === initialTrackingNumber) ---
+	// --- Auto-detection hint ---
 
 	it("shows auto-detection hint when trackingNumber >= 8 chars, auto mode, different from initial, carrier not autre", () => {
 		mockFormStore.trackingNumber = "8N00234567890";
 		mockFormStore.customUrlMode = false;
 		mockFormStore.carrier = "colissimo";
-		// dialog data has no initialTrackingNumber so it will be undefined (different from value)
 		openDialog("order-1", "CMD-001");
 		render(<UpdateTrackingDialog />);
 		expect(screen.getByText(/Détecté automatiquement.*Colissimo/)).toBeInTheDocument();
@@ -332,7 +385,6 @@ describe("UpdateTrackingDialog", () => {
 		mockFormStore.carrier = "colissimo";
 		openDialog("order-1", "CMD-001", { trackingNumber: "8N00234567890" });
 		render(<UpdateTrackingDialog />);
-		// The hint condition requires value !== initialTrackingNumber
 		expect(screen.queryByText(/Détecté automatiquement/)).toBeNull();
 	});
 
@@ -363,25 +415,26 @@ describe("UpdateTrackingDialog", () => {
 
 	// --- Submit button state ---
 
-	it('shows "Mettre à jour" when not pending', () => {
+	it('shows "Enregistrer le suivi" when not pending', () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		expect(screen.getByText("Mettre à jour")).toBeInTheDocument();
+		expect(screen.getByText("Enregistrer le suivi")).toBeInTheDocument();
 	});
 
-	it('shows "Mise à jour…" when isPending is true', () => {
+	it('shows "Envoi…" when isPending is true and sendEmail is true', () => {
 		mockFormHook.isPending = true;
+		mockFormStore.sendEmail = true;
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		expect(screen.getByText("Mise à jour…")).toBeInTheDocument();
-		expect(screen.queryByText("Mettre à jour")).toBeNull();
+		expect(screen.getByText("Envoi…")).toBeInTheDocument();
+		expect(screen.queryByText("Enregistrer le suivi")).toBeNull();
 	});
 
 	it("submit button is disabled when trackingNumber is empty", () => {
 		mockFormStore.trackingNumber = "";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const submitBtn = screen.getByText("Mettre à jour").closest("button");
+		const submitBtn = screen.getByText("Enregistrer le suivi").closest("button");
 		expect(submitBtn).toBeDisabled();
 	});
 
@@ -389,7 +442,7 @@ describe("UpdateTrackingDialog", () => {
 		mockFormStore.trackingNumber = "   ";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const submitBtn = screen.getByText("Mettre à jour").closest("button");
+		const submitBtn = screen.getByText("Enregistrer le suivi").closest("button");
 		expect(submitBtn).toBeDisabled();
 	});
 
@@ -397,16 +450,17 @@ describe("UpdateTrackingDialog", () => {
 		mockFormStore.trackingNumber = "8N00234567890";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const submitBtn = screen.getByText("Mettre à jour").closest("button");
+		const submitBtn = screen.getByText("Enregistrer le suivi").closest("button");
 		expect(submitBtn).not.toBeDisabled();
 	});
 
 	it("submit button is disabled when isPending even with valid trackingNumber", () => {
 		mockFormHook.isPending = true;
+		mockFormStore.sendEmail = true;
 		mockFormStore.trackingNumber = "8N00234567890";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const submitBtn = screen.getByText("Mise à jour…").closest("button");
+		const submitBtn = screen.getByText("Envoi…").closest("button");
 		expect(submitBtn).toBeDisabled();
 	});
 
@@ -416,16 +470,8 @@ describe("UpdateTrackingDialog", () => {
 		mockFormHook.isPending = true;
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const input = screen.getByPlaceholderText("Ex: 8N00234567890");
+		const input = screen.getByPlaceholderText("Ex : 8N00234567890");
 		expect(input).toBeDisabled();
-	});
-
-	it("cancel button is disabled when isPending", () => {
-		mockFormHook.isPending = true;
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const cancelBtn = screen.getByText("Annuler").closest("button");
-		expect(cancelBtn).toBeDisabled();
 	});
 
 	it("custom URL checkbox is disabled when isPending", () => {
@@ -440,7 +486,7 @@ describe("UpdateTrackingDialog", () => {
 		mockFormHook.isPending = true;
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const checkbox = screen.getByRole("checkbox", { name: /Envoyer un email au client/ });
+		const checkbox = screen.getByRole("checkbox", { name: /Prévenir le client par email/ });
 		expect(checkbox).toBeDisabled();
 	});
 
@@ -451,7 +497,7 @@ describe("UpdateTrackingDialog", () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
 		const checkbox = screen.getByRole("checkbox", {
-			name: /Envoyer un email au client/,
+			name: /Prévenir le client par email/,
 		}) as HTMLInputElement;
 		expect(checkbox.checked).toBe(true);
 	});
@@ -461,7 +507,7 @@ describe("UpdateTrackingDialog", () => {
 		openDialog();
 		render(<UpdateTrackingDialog />);
 		const checkbox = screen.getByRole("checkbox", {
-			name: /Envoyer un email au client/,
+			name: /Prévenir le client par email/,
 		}) as HTMLInputElement;
 		expect(checkbox.checked).toBe(false);
 	});
@@ -483,7 +529,7 @@ describe("UpdateTrackingDialog", () => {
 		mockFormStore.trackingNumber = "";
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const input = screen.getByPlaceholderText("Ex: 8N00234567890");
+		const input = screen.getByPlaceholderText("Ex : 8N00234567890");
 		await user.type(input, "A");
 		expect(mockFormHook.setFieldValue).toHaveBeenCalledWith("trackingNumber", expect.any(String));
 	});
@@ -493,7 +539,7 @@ describe("UpdateTrackingDialog", () => {
 		mockFormStore.sendEmail = true;
 		openDialog();
 		render(<UpdateTrackingDialog />);
-		const checkbox = screen.getByRole("checkbox", { name: /Envoyer un email au client/ });
+		const checkbox = screen.getByRole("checkbox", { name: /Prévenir le client par email/ });
 		await user.click(checkbox);
 		expect(mockFormHook.setFieldValue).toHaveBeenCalledWith("sendEmail", false);
 	});
@@ -506,15 +552,6 @@ describe("UpdateTrackingDialog", () => {
 		const checkbox = screen.getByRole("checkbox", { name: /URL personnalisée/ });
 		await user.click(checkbox);
 		expect(mockFormHook.setFieldValue).toHaveBeenCalledWith("customUrlMode", true);
-	});
-
-	it("calls dialog.close when cancel button is clicked", async () => {
-		const user = userEvent.setup();
-		openDialog();
-		render(<UpdateTrackingDialog />);
-		const cancelBtn = screen.getByText("Annuler");
-		await user.click(cancelBtn);
-		expect(mockDialog.close).toHaveBeenCalled();
 	});
 
 	it("calls setFieldValue with trackingUrl when URL input changes in editable mode", async () => {

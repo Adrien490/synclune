@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_MATERIAL_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,39 +23,24 @@ export interface FilteredMaterialIdsData {
 export async function getFilteredMaterialIds(
 	params: Pick<GetMaterialsParams, "search" | "sortBy" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
-
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_MATERIAL_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const where = buildMaterialWhereClause({
-			...params,
-			cursor: undefined,
-			direction: "forward",
-			perPage: BULK_MATERIAL_ACTION_LIMIT,
-		});
-
-		const [rows, totalCount] = await Promise.all([
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_MATERIAL_LIMITS.REFRESH,
+		cap: BULK_MATERIAL_ACTION_LIMIT,
+		emptyMessage: "Aucun matériau ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les matériaux filtrés",
+		buildWhere: () =>
+			buildMaterialWhereClause({
+				...params,
+				cursor: undefined,
+				direction: "forward",
+				perPage: BULK_MATERIAL_ACTION_LIMIT,
+			}),
+		fetchIds: (where) =>
 			prisma.material.findMany({
 				where,
 				select: { id: true },
 				take: BULK_MATERIAL_ACTION_LIMIT,
 			}),
-			prisma.material.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucun matériau ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_MATERIAL_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les matériaux filtrés");
-	}
+		fetchCount: (where) => prisma.material.count({ where }),
+	});
 }

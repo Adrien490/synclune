@@ -12,7 +12,8 @@ vi.mock("next/image", () => ({
 		fill,
 		className,
 		sizes,
-		priority,
+		loading,
+		fetchPriority,
 		placeholder,
 		blurDataURL,
 		quality,
@@ -22,7 +23,8 @@ vi.mock("next/image", () => ({
 		fill?: boolean;
 		className?: string;
 		sizes?: string;
-		priority?: boolean;
+		loading?: string;
+		fetchPriority?: string;
 		placeholder?: string;
 		blurDataURL?: string;
 		quality?: number;
@@ -34,7 +36,8 @@ vi.mock("next/image", () => ({
 			data-fill={fill ? "true" : undefined}
 			className={className}
 			data-sizes={sizes}
-			data-priority={priority ? "true" : undefined}
+			data-loading={loading}
+			data-fetch-priority={fetchPriority}
 			data-placeholder={placeholder}
 			data-blur-url={blurDataURL}
 			data-quality={quality}
@@ -120,14 +123,18 @@ describe("CollectionImageItem", () => {
 		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-quality", "75");
 	});
 
-	it("sets priority=true when isAboveFold is true", () => {
+	it("sets loading=eager + fetchPriority=high when isAboveFold is true", () => {
 		renderItem({ isAboveFold: true });
-		expect(screen.getByTestId("collection-image")).toHaveAttribute("data-priority", "true");
+		const img = screen.getByTestId("collection-image");
+		expect(img).toHaveAttribute("data-loading", "eager");
+		expect(img).toHaveAttribute("data-fetch-priority", "high");
 	});
 
-	it("does not set priority when isAboveFold is false", () => {
+	it("sets loading=lazy + fetchPriority=auto when isAboveFold is false", () => {
 		renderItem({ isAboveFold: false });
-		expect(screen.getByTestId("collection-image")).not.toHaveAttribute("data-priority");
+		const img = screen.getByTestId("collection-image");
+		expect(img).toHaveAttribute("data-loading", "lazy");
+		expect(img).toHaveAttribute("data-fetch-priority", "auto");
 	});
 
 	it("passes the sizes prop to the image", () => {

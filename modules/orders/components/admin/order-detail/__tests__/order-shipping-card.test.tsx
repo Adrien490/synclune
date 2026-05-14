@@ -1,6 +1,14 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: vi.fn() }),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
+
 vi.mock("@/shared/components/ui/card", () => ({
 	Card: ({ children }: any) => <div>{children}</div>,
 	CardHeader: ({ children }: any) => <div>{children}</div>,

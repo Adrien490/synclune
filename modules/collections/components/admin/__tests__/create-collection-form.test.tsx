@@ -77,6 +77,8 @@ vi.mock("@/shared/components/forms", () => ({
 	useAppForm: vi.fn(({ defaultValues }: { defaultValues: Record<string, unknown> }) => ({
 		reset: vi.fn(),
 		handleSubmit: vi.fn(),
+		state: { isDirty: false, canSubmit: mockCanSubmit.value },
+		setFieldValue: vi.fn(),
 		AppField: ({
 			name,
 			children,
@@ -157,15 +159,18 @@ vi.mock("@/shared/components/forms", () => ({
 			children,
 			selector,
 		}: {
-			children: (values: unknown[]) => React.ReactNode;
-			selector: (state: Record<string, unknown>) => unknown[];
+			children: (values: unknown) => React.ReactNode;
+			selector: (state: Record<string, unknown>) => unknown;
 		}) => {
 			const fakeState = {
 				canSubmit: mockCanSubmit.value,
 				values: { ...defaultValues },
+				submissionAttempts: 0,
+				fieldMeta: {},
 			};
 			return <>{children(selector(fakeState))}</>;
 		},
+		AppForm: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 	})),
 }));
 
@@ -244,9 +249,9 @@ describe("CreateCollectionForm", () => {
 		expect(screen.getByTestId("select-status")).toBeInTheDocument();
 	});
 
-	it("renders the submit button with 'Créer' label", () => {
+	it("renders the submit button with 'Créer la collection' label", () => {
 		render(<CreateCollectionForm />);
-		expect(screen.getByRole("button", { name: "Créer" })).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Créer la collection/ })).toBeInTheDocument();
 	});
 
 	// ─── Status options ───────────────────────────────────────────────────────
@@ -320,7 +325,7 @@ describe("CreateCollectionForm", () => {
 	it("disables the submit button when canSubmit is false", () => {
 		mockCanSubmit.value = false;
 		render(<CreateCollectionForm />);
-		expect(screen.getByRole("button", { name: "Créer" })).toBeDisabled();
+		expect(screen.getByRole("button", { name: /Créer la collection/ })).toBeDisabled();
 	});
 
 	// ─── Hidden status input ───────────────────────────────────────────────────

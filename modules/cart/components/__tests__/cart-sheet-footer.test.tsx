@@ -191,4 +191,34 @@ describe("CartSheetFooter", () => {
 		render(<CartSheetFooter {...createProps()} />);
 		expect(screen.getByTestId("sheet-footer")).toBeInTheDocument();
 	});
+
+	it("renders the shipping fees hint with the rate from SHIPPING_RATES.FR", () => {
+		render(<CartSheetFooter {...createProps()} />);
+		// SHIPPING_RATES.FR.amount === 499 (4.99 €). The mocked formatEuro returns "4.99 €".
+		expect(
+			screen.getByText(/Frais postaux dès 4\.99 € — calculés à l'étape suivante/),
+		).toBeInTheDocument();
+	});
+
+	it("does not render the discount line when no discount is applied", () => {
+		render(<CartSheetFooter {...createProps()} />);
+		expect(screen.queryByText(/^Réduction/)).not.toBeInTheDocument();
+	});
+
+	it("renders the discount line with the applied code label", () => {
+		render(
+			<CartSheetFooter
+				{...createProps({ appliedDiscountCode: "SUMMER20", discountAmount: 500 })}
+			/>,
+		);
+		expect(screen.getByText("Réduction (SUMMER20)")).toBeInTheDocument();
+		expect(screen.getByText(/−5\.00 €/)).toBeInTheDocument();
+	});
+
+	it("does not render the discount line when discountAmount is zero", () => {
+		render(
+			<CartSheetFooter {...createProps({ appliedDiscountCode: "EMPTY", discountAmount: 0 })} />,
+		);
+		expect(screen.queryByText(/^Réduction/)).not.toBeInTheDocument();
+	});
 });

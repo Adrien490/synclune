@@ -110,6 +110,12 @@ export async function bulkCancelOrders(
 		}> = [];
 
 		await prisma.$transaction(async (tx) => {
+			// Agrège les decrements par discountId pour batcher en fin de transaction.
+			// Plusieurs orders peuvent partager le même discount → on doit décrémenter
+			// par le count total, pas par 1 (sinon perte d'usages).
+			const discountDecrements = new Map<string, number>();
+			const ordersWithUsages: string[] = [];
+
 			for (const order of orders) {
 				await tx.order.update({
 					where: { id: order.id },
@@ -129,14 +135,14 @@ export async function bulkCancelOrders(
 				});
 
 				for (const usage of usages) {
-					await tx.discount.update({
-						where: { id: usage.discountId },
-						data: { usageCount: { decrement: 1 } },
-					});
+					discountDecrements.set(
+						usage.discountId,
+						(discountDecrements.get(usage.discountId) ?? 0) + 1,
+					);
 				}
 
 				if (usages.length > 0) {
-					await tx.discountUsage.deleteMany({ where: { orderId: order.id } });
+					ordersWithUsages.push(order.id);
 				}
 
 				await createOrderAuditTx(tx, {
@@ -165,6 +171,21 @@ export async function bulkCancelOrders(
 					customerName: order.customerName,
 					shippingFirstName: order.shippingFirstName,
 					total: order.total,
+				});
+			}
+
+			// Batch decrement usageCount par discountId puis cleanup discount usages.
+			// Si N orders annulés partagent le même discount, decrement par N.
+			for (const [discountId, count] of discountDecrements) {
+				await tx.discount.update({
+					where: { id: discountId },
+					data: { usageCount: { decrement: count } },
+				});
+			}
+
+			if (ordersWithUsages.length > 0) {
+				await tx.discountUsage.deleteMany({
+					where: { orderId: { in: ordersWithUsages } },
 				});
 			}
 		});

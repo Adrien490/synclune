@@ -92,13 +92,37 @@ export function PendingUploadsGrid({
 
 	useEffect(() => {
 		const controller = new AbortController();
-		const toProcess = files
-			.map((file, index) => ({ file, key: `${file.name}-${file.lastModified}-${index}` }))
-			.filter(({ file, key }) => file.type.startsWith("video/") && !videoPreviews.has(key));
+		const currentKeys = new Set(
+			files.map((file, index) => `${file.name}-${file.lastModified}-${index}`),
+		);
 
-		if (toProcess.length === 0) return;
-
+		// Async chain : purge des entries obsolètes (G3) + extraction des metadata des nouvelles videos.
+		// Le purge est fusionné dans la même chaîne pour éviter setState synchrone en effect
+		// (react-hooks/set-state-in-effect) et garantir une seule mise à jour par cycle.
 		void (async () => {
+			// Phase 1: purge stale entries
+			setVideoPreviews((prev) => {
+				if (prev.size === 0) return prev;
+				let hasStale = false;
+				for (const key of prev.keys()) {
+					if (!currentKeys.has(key)) {
+						hasStale = true;
+						break;
+					}
+				}
+				if (!hasStale) return prev;
+				const next = new Map<string, VideoMetadataPreview>();
+				for (const [key, value] of prev) {
+					if (currentKeys.has(key)) next.set(key, value);
+				}
+				return next;
+			});
+
+			// Phase 2: extract metadata for new videos
+			const toProcess = files
+				.map((file, index) => ({ file, key: `${file.name}-${file.lastModified}-${index}` }))
+				.filter(({ file, key }) => file.type.startsWith("video/") && !videoPreviews.has(key));
+
 			for (const { file, key } of toProcess) {
 				if (controller.signal.aborted) return;
 				const metadata = await getVideoMetadata(file, controller.signal);

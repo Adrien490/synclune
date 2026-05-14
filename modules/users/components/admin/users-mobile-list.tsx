@@ -47,7 +47,7 @@ export function UsersMobileList({
 					description={
 						hasActiveFilters
 							? "Aucun client ne correspond aux critères de recherche."
-							: "Aucun client pour l'instant."
+							: "Aucun client à fidéliser pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? <EmptyResetFiltersAction href="/admin/clients" /> : undefined
@@ -60,15 +60,15 @@ export function UsersMobileList({
 	const pageItemIds = users.map((u) => u.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "client", plural: "clients" }} />
 					{filterParams ? (
 						<UsersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={users.length} singular="client" plural="clients" />
-					<ItemGroup aria-label="Clients" className="gap-2">
+					<ItemGroup role="list" aria-label="Clients" className="gap-2">
 						{users.map((user) => (
 							<div key={user.id} role="listitem">
 								<UserMobileItem user={user} />
@@ -85,10 +85,10 @@ export function UsersMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les clients à fidéliser">
 					<UsersBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

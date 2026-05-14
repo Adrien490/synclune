@@ -5,8 +5,9 @@ import { render, screen, cleanup } from "@testing-library/react";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockClose } = vi.hoisted(() => ({
+const { mockClose, mockPush } = vi.hoisted(() => ({
 	mockClose: vi.fn(),
+	mockPush: vi.fn(),
 }));
 
 let mockDialogState: {
@@ -21,6 +22,7 @@ let mockDialogState: {
 
 let mockFormState = {
 	form: {
+		store: {},
 		reset: vi.fn(),
 		setFieldValue: vi.fn(),
 		Field: ({
@@ -43,12 +45,45 @@ let mockFormState = {
 	isValid: false,
 };
 
+vi.mock("next/navigation", () => ({
+	useRouter: () => ({ push: mockPush }),
+}));
+
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => mockDialogState,
 }));
 
 vi.mock("@/modules/skus/hooks/use-adjust-stock-form", () => ({
 	useAdjustStockForm: () => mockFormState,
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	useHaptic: () => vi.fn(),
+	triggerHaptic: vi.fn(),
+}));
+
+vi.mock("@/shared/utils/with-view-transition", () => ({
+	withViewTransition: (fn: () => void) => fn(),
+}));
+
+vi.mock("@/shared/components/admin-form-footer", () => ({
+	AdminFormFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}));
+
+vi.mock("@tanstack/react-form-nextjs", () => ({
+	useStore: () => false,
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => false,
+}));
+
+vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
+	useUnsavedChanges: () => ({ allowNavigation: vi.fn() }),
+}));
+
+vi.mock("@/shared/components/ui/kbd", () => ({
+	Kbd: ({ children }: { children: React.ReactNode }) => <kbd>{children}</kbd>,
 }));
 
 vi.mock("@/shared/components/responsive-dialog", () => ({
@@ -110,6 +145,7 @@ vi.mock("@/shared/components/ui/label", () => ({
 
 vi.mock("lucide-react", () => ({
 	ArrowRight: () => <span data-testid="icon-arrow-right" />,
+	Loader2: () => <span data-testid="icon-loader" />,
 	Minus: () => <span data-testid="icon-minus" />,
 	Package: ({ className }: { className?: string }) => (
 		<span data-testid="icon-package" className={className} />
@@ -133,6 +169,7 @@ describe("AdjustStockDialog", () => {
 		vi.clearAllMocks();
 		mockFormState = {
 			form: {
+				store: {},
 				reset: vi.fn(),
 				setFieldValue: vi.fn(),
 				Field: ({
@@ -174,7 +211,7 @@ describe("AdjustStockDialog", () => {
 
 		render(<AdjustStockDialog />);
 
-		expect(screen.queryByText("Ajuster le stock")).not.toBeInTheDocument();
+		expect(screen.queryByLabelText("Diminuer de 1")).not.toBeInTheDocument();
 	});
 
 	// ─── Open state ───────────────────────────────────────────────────────────
@@ -200,7 +237,8 @@ describe("AdjustStockDialog", () => {
 
 		render(<AdjustStockDialog />);
 
-		expect(screen.getByText("Ajuster le stock")).toBeInTheDocument();
+		// Title + submit button label both render "Ajuster le stock"
+		expect(screen.getAllByText("Ajuster le stock").length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("displays sku name in description", () => {
@@ -212,7 +250,9 @@ describe("AdjustStockDialog", () => {
 
 		render(<AdjustStockDialog />);
 
-		expect(screen.getByText("Bague Or - T52")).toBeInTheDocument();
+		// skuName appears in both header description and form body
+		const matches = screen.getAllByText("Bague Or - T52");
+		expect(matches.length).toBeGreaterThanOrEqual(1);
 	});
 
 	it("shows current stock value", () => {
@@ -242,7 +282,7 @@ describe("AdjustStockDialog", () => {
 		expect(screen.getByLabelText("Augmenter de 1")).toBeInTheDocument();
 	});
 
-	it("renders cancel and confirm buttons", () => {
+	it("renders submit button", () => {
 		mockDialogState = {
 			isOpen: true,
 			data: { skuId: "sku_1", skuName: "Bague Or - T52", currentStock: 10 },
@@ -251,8 +291,7 @@ describe("AdjustStockDialog", () => {
 
 		render(<AdjustStockDialog />);
 
-		expect(screen.getByText("Annuler")).toBeInTheDocument();
-		expect(screen.getByText("Confirmer")).toBeInTheDocument();
+		expect(screen.getByRole("button", { name: /Ajuster le stock/ })).toBeInTheDocument();
 	});
 
 	// ─── Pending state ────────────────────────────────────────────────────────

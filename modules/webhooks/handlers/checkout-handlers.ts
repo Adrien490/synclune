@@ -1,127 +1,97 @@
 import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
-import type { WebhookHandlerResult } from "../types/webhook.types";
-import {
-	extractShippingInfo,
-	processOrderTransaction,
-	buildPostCheckoutTasks,
-	cancelExpiredOrder,
-} from "../services/checkout.service";
-import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/admin-emails";
-import { prisma } from "@/shared/lib/prisma";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
+import { sendAdminOrderProcessingFailedAlert } from "@/modules/emails/services/admin-emails";
+import { prisma } from "@/shared/lib/prisma";
+
+import type { WebhookHandlerResult } from "../types/webhook.types";
 import { SYSTEM_AUTHOR_ID } from "../constants/webhook.constants";
 import { captureWebhookError } from "../utils/capture-webhook-error";
+import {
+	buildPostCheckoutTasks,
+	cancelExpiredOrder,
+	createOrderFromCheckoutSession,
+	retrieveCheckoutSessionForOrder,
+} from "../services/checkout.service";
 
 /**
- * Gère la complétion d'une session checkout
- * C'est le handler principal qui traite les paiements réussis
+ * Webhook `checkout.session.completed`.
+ *
+ * Avec la migration vers Checkout Sessions API, c'est l'unique point d'entrée
+ * de création d'un Order Synclune (auparavant l'Order était créé en amont). On
+ * recharge la Session avec ses expansions pour disposer du payment_intent et
+ * des shipping details, puis on délègue à `createOrderFromCheckoutSession`.
  */
 export async function handleCheckoutSessionCompleted(
 	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult | null> {
-	// Validation payment_status AVANT tout traitement
-	// Pour les paiements asynchrones (SEPA, etc.), payment_status peut être 'unpaid'
+	// Pour les paiements asynchrones (SEPA, etc.), la session arrive d'abord
+	// avec `payment_status: "unpaid"`. On attend le hook `async_payment_succeeded`.
 	if (session.payment_status === "unpaid") {
 		logger.info(
-			`⏳ [WEBHOOK] Session ${session.id} payment_status is 'unpaid', waiting for async payment confirmation`,
+			`⏳ [WEBHOOK] Session ${session.id} payment_status is 'unpaid', waiting for async confirmation`,
 			{ service: "webhook" },
 		);
 		return null;
 	}
 
-	// Récupérer l'ID de commande depuis les metadata
-	// Priorité: metadata.orderId (standard) puis client_reference_id (fallback legacy)
-	// Les deux sont définis lors de la création de la session checkout pour compatibilité
-	const orderId = session.metadata?.orderId ?? session.client_reference_id;
-
-	if (!orderId) {
-		logger.error("❌ [WEBHOOK] No order ID found in checkout session", undefined, {
-			service: "webhook",
-		});
-		throw new Error("No order ID found in checkout session metadata");
-	}
-
 	try {
-		// 1. Extraire les informations de livraison depuis Stripe
-		const { shippingCost, shippingMethod, shippingRateId } = await extractShippingInfo(session);
-		logger.info(
-			`📦 [WEBHOOK] Shipping extracted for order ${orderId}: ${shippingCost / 100}€ (${shippingMethod})`,
-			{ service: "webhook" },
-		);
+		const fullSession = await retrieveCheckoutSessionForOrder(session.id);
+		const order = await createOrderFromCheckoutSession(fullSession);
+		const tasks = buildPostCheckoutTasks(order, fullSession);
 
-		// 2. Traiter la commande dans une transaction atomique
-		const order = await processOrderTransaction(orderId, session, shippingCost, shippingRateId);
-
-		// 3. Construire les tâches post-webhook (emails, cache)
-		const tasks = buildPostCheckoutTasks(order, session);
-
-		// 4. Anti-fraud: detect email mismatch between Stripe and order
-		const stripeEmail = session.customer_email ?? session.customer_details?.email;
-		if (stripeEmail) {
-			const dbOrder = await prisma.order.findUnique({
-				where: { id: orderId },
-				select: { customerEmail: true },
+		// Anti-fraud : email Stripe vs email connu pour l'utilisateur authentifié.
+		const stripeEmail = fullSession.customer_details?.email ?? fullSession.customer_email;
+		if (stripeEmail && order.userId) {
+			const user = await prisma.user.findUnique({
+				where: { id: order.userId },
+				select: { email: true },
 			});
-			if (
-				dbOrder?.customerEmail &&
-				stripeEmail.toLowerCase() !== dbOrder.customerEmail.toLowerCase()
-			) {
-				logger.warn(`[WEBHOOK] Email mismatch detected for order ${orderId}`, {
+			if (user?.email && user.email.toLowerCase() !== stripeEmail.toLowerCase()) {
+				logger.warn(`[WEBHOOK] Email mismatch detected for order ${order.id}`, {
 					service: "webhook",
 				});
-				// Create an admin OrderNote for visibility
 				await prisma.orderNote.create({
 					data: {
-						orderId,
+						orderId: order.id,
 						content:
-							`[ALERTE EMAIL] Email Stripe (${stripeEmail}) ne correspond pas a l'email commande (${dbOrder.customerEmail}). ` +
-							`Verifier la legitimite de cette commande.`,
+							`[ALERTE EMAIL] Email Stripe (${stripeEmail}) ne correspond pas à l'email du compte (${user.email}). ` +
+							`Vérifier la légitimité de cette commande.`,
 						authorId: SYSTEM_AUTHOR_ID,
 						authorName: "Systeme (webhook Stripe)",
 					},
 				});
-				// Add cache invalidation for order notes
-				tasks.push({
-					type: "INVALIDATE_CACHE",
-					tags: [ORDERS_CACHE_TAGS.NOTES(orderId)],
-				});
+				tasks.push({ type: "INVALIDATE_CACHE", tags: [ORDERS_CACHE_TAGS.NOTES(order.id)] });
 			}
 		}
 
 		return { success: true, tasks };
 	} catch (error) {
-		logger.error("❌ [WEBHOOK] Error handling checkout session completed:", error, {
+		logger.error("❌ [WEBHOOK] Error handling checkout.session.completed:", error, {
 			service: "webhook",
 		});
 		const piId =
 			typeof session.payment_intent === "string"
 				? session.payment_intent
-				: session.payment_intent?.id;
+				: (session.payment_intent?.id ?? undefined);
 		captureWebhookError(error, {
 			handler: "handleCheckoutSessionCompleted",
 			eventType: "checkout.session.completed",
-			orderId,
 			checkoutSessionId: session.id,
 			paymentIntentId: piId,
 		});
-		// Send immediate admin alert — payment was received but order processing failed
+
+		// Notif admin : Stripe a encaissé un paiement mais on a échoué à créer l'Order.
 		try {
-			const order = await prisma.order.findFirst({
-				where: { id: orderId },
-				select: { orderNumber: true, customerEmail: true, total: true },
+			await sendAdminOrderProcessingFailedAlert({
+				orderNumber: "(non créée)",
+				customerEmail: session.customer_details?.email ?? session.customer_email ?? "",
+				total: session.amount_total ?? 0,
+				errorMessage: error instanceof Error ? error.message : String(error),
+				paymentIntentId: piId ?? "(inconnu)",
 			});
-			if (order && piId) {
-				await sendAdminOrderProcessingFailedAlert({
-					orderNumber: order.orderNumber,
-					customerEmail: order.customerEmail,
-					total: order.total,
-					errorMessage: error instanceof Error ? error.message : String(error),
-					paymentIntentId: piId,
-				});
-			}
 		} catch (alertError) {
 			logger.error("Failed to send order processing failed alert", alertError, {
 				service: "webhook",
@@ -132,28 +102,20 @@ export async function handleCheckoutSessionCompleted(
 }
 
 /**
- * Gère l'expiration d'une session de checkout
- * Marque la commande comme annulée après expiration sans paiement
+ * Webhook `checkout.session.expired`.
+ *
+ * Avec le nouveau flow (Order créé seulement au paiement réussi), il n'y a en
+ * général aucun Order à canceller — la session expirée signifie simplement que
+ * le client a abandonné avant paiement. `cancelExpiredOrder` reste appelé pour
+ * gérer les éventuelles Orders rétrocompatibles encore liées à une Session.
  */
 export async function handleCheckoutSessionExpired(
 	session: Stripe.Checkout.Session,
 ): Promise<WebhookHandlerResult> {
-	const orderId = session.metadata?.orderId ?? session.client_reference_id;
-
-	if (!orderId) {
-		logger.error("❌ [WEBHOOK] No order ID found in expired checkout session", undefined, {
-			service: "webhook",
-		});
-		throw new Error("No order ID found in expired checkout session metadata");
-	}
-
-	logger.info(
-		`⏰ [WEBHOOK] Processing expired checkout session: ${session.id}, order: ${orderId}`,
-		{ service: "webhook" },
-	);
+	logger.info(`⏰ [WEBHOOK] Checkout session expired: ${session.id}`, { service: "webhook" });
 
 	try {
-		await cancelExpiredOrder(orderId);
+		await cancelExpiredOrder(session.id);
 
 		return {
 			success: true,
@@ -170,15 +132,12 @@ export async function handleCheckoutSessionExpired(
 			],
 		};
 	} catch (error) {
-		logger.error(
-			`❌ [WEBHOOK] Error handling expired checkout session for order ${orderId}:`,
-			error,
-			{ service: "webhook" },
-		);
+		logger.error(`❌ [WEBHOOK] Error handling expired session ${session.id}:`, error, {
+			service: "webhook",
+		});
 		captureWebhookError(error, {
 			handler: "handleCheckoutSessionExpired",
 			eventType: "checkout.session.expired",
-			orderId,
 			checkoutSessionId: session.id,
 		});
 		throw error;

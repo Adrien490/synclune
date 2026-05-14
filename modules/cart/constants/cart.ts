@@ -31,6 +31,8 @@ export const GET_CART_SELECT = {
 	expiresAt: true,
 	createdAt: true,
 	updatedAt: true,
+	appliedDiscountCode: true,
+	discountAmountCache: true,
 	items: {
 		where: {
 			sku: {

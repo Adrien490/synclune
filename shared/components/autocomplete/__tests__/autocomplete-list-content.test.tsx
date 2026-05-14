@@ -159,6 +159,7 @@ const defaultProps = {
 	showResultsCount: false,
 	showEmptyState: false,
 	noResultsMessage: "Aucun résultat trouvé",
+	noResultsDescription: "Essayez de modifier votre recherche",
 	onRetry: undefined,
 	getItemLabel: (item: TestItem) => item.name,
 	getItemKey: (item: TestItem) => item.id,
@@ -167,6 +168,7 @@ const defaultProps = {
 	onItemHover: vi.fn(),
 	getItemId: (index: number) => `item-${index}`,
 	loadingSkeletonCount: 3,
+	hapticOnRetry: "light" as const,
 };
 
 const mockItems: TestItem[] = [
@@ -308,6 +310,39 @@ describe("AutocompleteListContent", () => {
 		expect(screen.getByTestId("search-icon")).toBeInTheDocument();
 	});
 
+	it("renders noResultsDescription text in empty state", () => {
+		render(
+			<AutocompleteListContent
+				{...defaultProps}
+				showEmptyState={true}
+				noResultsDescription="Essayez avec un autre nom de rue"
+			/>,
+		);
+
+		expect(screen.getByTestId("empty-description")).toHaveTextContent(
+			"Essayez avec un autre nom de rue",
+		);
+	});
+
+	it("renders emptyStateAction slot when provided", () => {
+		render(
+			<AutocompleteListContent
+				{...defaultProps}
+				showEmptyState={true}
+				emptyStateAction={<button data-testid="custom-cta">Saisir manuellement</button>}
+			/>,
+		);
+
+		expect(screen.getByTestId("custom-cta")).toBeInTheDocument();
+		expect(screen.getByText("Saisir manuellement")).toBeInTheDocument();
+	});
+
+	it("does not render emptyStateAction when not provided", () => {
+		render(<AutocompleteListContent {...defaultProps} showEmptyState={true} />);
+
+		expect(screen.queryByTestId("custom-cta")).toBeNull();
+	});
+
 	// ─── Error takes priority ──────────────────────────────────────────────
 
 	it("renders error state instead of loading when both error and isLoading are set", () => {
@@ -348,6 +383,21 @@ describe("AutocompleteListContent", () => {
 		render(<AutocompleteListContent {...defaultProps} error="Erreur" onRetry={onRetry} />);
 		fireEvent.click(screen.getByTestId("retry-button"));
 		expect(mockHaptic).toHaveBeenCalledWith("light");
+		expect(onRetry).toHaveBeenCalledTimes(1);
+	});
+
+	it("retry button does NOT trigger haptic when hapticOnRetry=false", () => {
+		const onRetry = vi.fn();
+		render(
+			<AutocompleteListContent
+				{...defaultProps}
+				error="Erreur"
+				onRetry={onRetry}
+				hapticOnRetry={false}
+			/>,
+		);
+		fireEvent.click(screen.getByTestId("retry-button"));
+		expect(mockHaptic).not.toHaveBeenCalled();
 		expect(onRetry).toHaveBeenCalledTimes(1);
 	});
 

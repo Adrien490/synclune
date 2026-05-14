@@ -19,6 +19,17 @@ import {
 } from "lucide-react";
 
 // ============================================================================
+// CONSTANTS (shared between sheet content + bottom-bar trigger)
+// ============================================================================
+
+/**
+ * DOM id de la SheetContent admin. Référencé par le bouton Menu du
+ * bottom-bar via `aria-controls` pour relier le trigger à son content
+ * (WCAG 4.1.2). ID statique car la sheet est unique au DOM admin.
+ */
+export const ADMIN_MENU_SHEET_CONTENT_ID = "admin-menu-sheet-content";
+
+// ============================================================================
 // SHOP STATUS FLAG
 // ============================================================================
 

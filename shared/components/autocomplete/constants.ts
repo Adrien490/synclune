@@ -12,6 +12,8 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	placeholder: "Rechercher...",
 	/** Message quand aucun resultat */
 	noResultsMessage: "Aucun résultat trouvé",
+	/** Description sous le message d'absence de resultats */
+	noResultsDescription: "Essayez de modifier votre recherche",
 	/** Nombre minimum de caracteres pour lancer la recherche */
 	minQueryLength: 2,
 	/** Delai avant fermeture sur blur desktop (ms) */
@@ -32,6 +34,8 @@ export const AUTOCOMPLETE_DEFAULTS = {
 	showResultsCount: false,
 	/** Afficher l'etat vide quand aucun resultat */
 	showEmptyState: true,
+	/** Attribut autoComplete navigateur (defaut "off" - composant gere ses propres suggestions) */
+	autoComplete: "off",
 	/** Mode clavier virtuel mobile (search context par defaut) */
 	inputMode: "search",
 	/** Action du bouton Enter du clavier virtuel */

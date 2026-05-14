@@ -26,6 +26,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import type Stripe from "stripe";
 
+import { IMAGE_BLUR_FALLBACK } from "@/shared/constants/images";
+
 function extractReceiptUrl(charge: Stripe.PaymentIntent["latest_charge"]): string | null {
 	if (charge && typeof charge !== "string") {
 		return charge.receipt_url ?? null;
@@ -159,6 +161,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 															sizes="56px"
 															quality={70}
 															className="object-cover"
+															placeholder="blur"
+															blurDataURL={IMAGE_BLUR_FALLBACK}
 														/>
 													) : (
 														<div className="text-muted-foreground flex h-full w-full items-center justify-center text-xs">

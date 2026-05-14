@@ -79,6 +79,23 @@ export function SortableMediaItem({
 	const [mobileActionsOpen, setMobileActionsOpen] = useState(false);
 	const [editAltOpen, setEditAltOpen] = useState(false);
 	const [isPressing, setIsPressing] = useState(false);
+	const mobileTriggerRef = useRef<HTMLButtonElement>(null);
+	const wasMobileActionsOpenRef = useRef(false);
+
+	// Restaure le focus sur le trigger EllipsisVertical après fermeture du drawer Actions —
+	// Vaul ne le fait pas par défaut, le focus retourne au body (perte de contexte clavier).
+	useEffect(() => {
+		if (mobileActionsOpen) {
+			wasMobileActionsOpenRef.current = true;
+			return;
+		}
+		if (!wasMobileActionsOpenRef.current) return;
+		wasMobileActionsOpenRef.current = false;
+		const id = requestAnimationFrame(() => {
+			mobileTriggerRef.current?.focus({ preventScroll: true });
+		});
+		return () => cancelAnimationFrame(id);
+	}, [mobileActionsOpen]);
 	const { ref, handleRef, isDragSource } = useSortable({
 		id: media.url,
 		index,
@@ -471,15 +488,55 @@ export function SortableMediaItem({
 				</div>
 			</button>
 
-			{/* GripVertical permanent — touch affordance hint, hidden on hover-capable devices and on the primary image (reduces 4-corner saturation on iPhone SE) */}
-			{!isPrimary && (
+			{/* Mobile inline reorder chevrons — alternative rapide au drawer Actions
+			    (1 tap = 1 mouvement vs ouvrir-EllipsisVertical → Déplacer). Hidden sur hover-capable. */}
+			{!isPrimary && (canMoveUp || canMoveDown) && (
 				<div
-					className="can-hover:hidden pointer-events-none absolute right-2 bottom-2 z-10 opacity-40"
-					aria-hidden="true"
+					className="can-hover:hidden absolute right-2 bottom-2 z-10 flex items-center gap-1.5"
+					aria-hidden="false"
 				>
-					<div className="rounded-full bg-black/45 p-1.5 backdrop-blur-sm">
-						<GripVertical className="size-3.5 text-white" />
-					</div>
+					{canMoveUp && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleMoveUp();
+							}}
+							aria-label={`Déplacer ${isVideo ? "la vidéo" : "l'image"} ${index + 1} vers le haut`}
+							className={cn(
+								"flex size-9 items-center justify-center rounded-full",
+								"bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md",
+								"active:scale-[0.95] active:bg-black/75",
+								"focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none",
+								"motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]",
+								"after:absolute after:-inset-1 after:content-['']",
+							)}
+						>
+							<ArrowUp className="size-4 text-white" aria-hidden="true" />
+						</button>
+					)}
+					{canMoveDown && (
+						<button
+							type="button"
+							onClick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleMoveDown();
+							}}
+							aria-label={`Déplacer ${isVideo ? "la vidéo" : "l'image"} ${index + 1} vers le bas`}
+							className={cn(
+								"flex size-9 items-center justify-center rounded-full",
+								"bg-black/55 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ring-1 ring-white/20 backdrop-blur-md",
+								"active:scale-[0.95] active:bg-black/75",
+								"focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:outline-none",
+								"motion-safe:transition-[colors,transform] motion-safe:duration-[var(--duration-fast)]",
+								"after:absolute after:-inset-1 after:content-['']",
+							)}
+						>
+							<ArrowDown className="size-4 text-white" aria-hidden="true" />
+						</button>
+					)}
 				</div>
 			)}
 
@@ -559,6 +616,7 @@ export function SortableMediaItem({
 				<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
 					<DrawerTrigger asChild>
 						<Button
+							ref={mobileTriggerRef}
 							type="button"
 							variant="secondary"
 							size="icon"

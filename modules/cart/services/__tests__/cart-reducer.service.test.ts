@@ -33,6 +33,8 @@ function createCart(
 		expiresAt: new Date(),
 		createdAt: new Date(),
 		updatedAt: new Date(),
+		appliedDiscountCode: null,
+		discountAmountCache: null,
 		items,
 	} as NonNullable<GetCartReturn>;
 }

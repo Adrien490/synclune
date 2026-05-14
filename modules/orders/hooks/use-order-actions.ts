@@ -17,9 +17,12 @@ import {
 	Undo2,
 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+
 import { OrderStatus, PaymentStatus, type FulfillmentStatus } from "@/app/generated/prisma/browser";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 
@@ -62,7 +65,17 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 	const revertToProcessingDialog = useAlertDialog(REVERT_TO_PROCESSING_DIALOG_ID);
 	const markAsReturnedDialog = useAlertDialog(MARK_AS_RETURNED_DIALOG_ID);
 	const notesDialog = useDialog(ORDER_NOTES_DIALOG_ID);
+	const router = useRouter();
+	const isMobile = useIsMobile();
 	const selectActionItem = useBulkSelectionActionItem(order.id);
+
+	const openNotes = () => {
+		if (isMobile) {
+			router.push(`/admin/ventes/commandes/${order.id}/notes`);
+		} else {
+			notesDialog.open({ orderId: order.id, orderNumber: order.orderNumber });
+		}
+	};
 
 	const { resend: resendEmail, isPending: isResendingEmail } = useResendOrderEmail();
 
@@ -105,7 +118,7 @@ export function useOrderActions({ order }: UseOrderActionsParams): {
 					label: "Notes internes",
 					icon: StickyNote,
 					closesMenu: false,
-					onSelect: () => notesDialog.open(open({})),
+					onSelect: openNotes,
 				},
 			],
 		},

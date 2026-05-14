@@ -66,7 +66,8 @@ export function CollectionImageItem({
 					: undefined
 			}
 			sizes={sizes}
-			priority={isAboveFold}
+			loading={isAboveFold ? "eager" : "lazy"}
+			fetchPriority={isAboveFold ? "high" : "auto"}
 			placeholder={image.blurDataUrl ? "blur" : "empty"}
 			blurDataURL={image.blurDataUrl ?? undefined}
 			quality={index === 0 ? COLLECTION_IMAGE_QUALITY : SECONDARY_IMAGE_QUALITY}

@@ -33,6 +33,25 @@ vi.mock("@/shared/components/media-upload/media-upload-grid", () => ({
 	}) => <div data-testid="media-upload-grid" data-count={media.length} />,
 }));
 
+// `PendingUploadsGrid` imports @dnd-kit/react which uses ResizeObserver (missing in JSDOM).
+// Mock to avoid environment setup overhead — the pending mode is exercised elsewhere.
+vi.mock("@/shared/components/media-upload/pending-uploads-grid", () => ({
+	PendingUploadsGrid: ({
+		files,
+		onConfirm,
+		onCancel,
+	}: {
+		files: File[];
+		onConfirm: () => void;
+		onCancel: () => void;
+	}) => (
+		<div data-testid="pending-uploads-grid" data-count={files.length}>
+			<button onClick={onConfirm}>Confirmer</button>
+			<button onClick={onCancel}>Annuler</button>
+		</div>
+	),
+}));
+
 vi.mock("@/shared/components/media-upload/upload-progress", () => ({
 	UploadProgress: ({
 		progress,
@@ -264,7 +283,9 @@ describe("CreateProductMediaCard", () => {
 		it("shows upload hint text in empty state", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
-			expect(screen.getByText("Ajoutez jusqu'à 10 images et vidéos")).toBeInTheDocument();
+			expect(
+				screen.getByText("Confiez jusqu'à 10 clichés de votre bijou à l'atelier"),
+			).toBeInTheDocument();
 		});
 
 		it("renders ImagePlus icon in empty state", () => {

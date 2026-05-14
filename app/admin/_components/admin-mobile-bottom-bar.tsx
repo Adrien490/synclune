@@ -19,9 +19,13 @@ import { useAdminListSelectionStore } from "@/shared/stores/use-admin-list-selec
 import { useHasOverlay } from "@/shared/stores/use-overlay-stack-store";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { CheckSquare, Menu } from "lucide-react";
 import { cn } from "@/shared/utils/cn";
-import { getQuickAccessItems, type NavItem } from "./navigation-config";
+import {
+	ADMIN_MENU_SHEET_CONTENT_ID,
+	getQuickAccessItems,
+	type NavItem,
+} from "./navigation-config";
 
 interface AdminMobileBottomBarProps {
 	badges?: Record<string, number>;
@@ -32,7 +36,13 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 	const pathname = usePathname();
 	const { isOpen: isMenuOpen, open: openMenu, close: closeMenu } = useDialog("admin-menu-sheet");
 	const hasOverlay = useHasOverlay();
-	const inSelectionMode = useAdminListSelectionStore((s) => s.control?.selectionMode === true);
+	const selectionControl = useAdminListSelectionStore((s) => s.control);
+	const inSelectionMode = selectionControl?.selectionMode === true;
+	// Tab thumb-friendly « Sélection » : visible uniquement sur une liste admin
+	// avec des items et hors mode sélection actif. Quand le mode s'active, la
+	// bottom-bar globale se cache (isHidden) et MobileSelectionBottomBar prend
+	// le relais — pas d'empilement.
+	const showSelectionTab = selectionControl?.pageHasItems === true && !inSelectionMode;
 
 	const isHidden = isMenuOpen || hasOverlay || inSelectionMode;
 	const tabs = getQuickAccessItems();
@@ -76,7 +86,27 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 			<div className={bottomBarContainerClass}>
 				{tabs.map(renderTab)}
 
-				{/* Onglet Menu — ouvre le bottom sheet de navigation */}
+				{/* Tab « Sélection » thumb-friendly — apparaît uniquement sur une liste
+				 * admin avec items et hors mode sélection actif. Bridge consommé via
+				 * useAdminListSelectionStore (provider auto-register au mount). */}
+				{showSelectionTab && (
+					<button
+						type="button"
+						className={bottomBarItemClass}
+						onClick={() => {
+							triggerHaptic("selection");
+							selectionControl?.enter();
+						}}
+						aria-label="Activer le mode sélection"
+					>
+						<CheckSquare className={bottomBarIconClass} aria-hidden="true" />
+						<span className={bottomBarLabelClass}>Sélection</span>
+					</button>
+				)}
+
+				{/* Onglet Menu — ouvre le bottom sheet de navigation.
+				 * aria-label reste stable : l'état ouvert/fermé est porté par aria-expanded
+				 * (cf. audit menu-sheet storefront 2026-05-14, parité a11y trigger ↔ sheet). */}
 				<button
 					type="button"
 					className={cn(bottomBarItemClass, isMenuOpen && bottomBarActiveItemClass)}
@@ -87,7 +117,8 @@ export function AdminMobileBottomBar({ badges }: AdminMobileBottomBarProps) {
 					}}
 					aria-haspopup="dialog"
 					aria-expanded={isMenuOpen}
-					aria-label={isMenuOpen ? "Fermer le menu de navigation" : "Ouvrir le menu de navigation"}
+					aria-controls={ADMIN_MENU_SHEET_CONTENT_ID}
+					aria-label="Menu de navigation"
 				>
 					{isMenuOpen && <BottomBarActivePill groupId="admin-nav" />}
 					<Menu className={bottomBarIconClass} aria-hidden="true" />

@@ -47,7 +47,7 @@ export function DiscountsMobileList({
 					description={
 						hasActiveFilters
 							? "Aucun code promo ne correspond aux critères de recherche."
-							: "Aucun code promo pour l'instant."
+							: "Aucun code à activer pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? (
@@ -64,15 +64,15 @@ export function DiscountsMobileList({
 	const pageItemIds = discounts.map((d) => d.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "code promo", plural: "codes promo" }} />
 					{filterParams ? (
 						<DiscountsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={discounts.length} singular="code promo" plural="codes promo" />
-					<ItemGroup aria-label="Codes promo" className="gap-2">
+					<ItemGroup role="list" aria-label="Codes promo" className="gap-2">
 						{discounts.map((discount) => (
 							<div key={discount.id} role="listitem">
 								<DiscountMobileItem discount={discount} />
@@ -89,10 +89,10 @@ export function DiscountsMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les codes à activer">
 					<DiscountsBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

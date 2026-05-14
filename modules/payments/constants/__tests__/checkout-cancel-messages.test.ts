@@ -2,15 +2,8 @@ import { describe, expect, it } from "vitest";
 import { CHECKOUT_CANCEL_MESSAGES, getCheckoutCancelMessage } from "../checkout-cancel-messages";
 
 describe("CHECKOUT_CANCEL_MESSAGES", () => {
-	it("has entries for all known Stripe error codes", () => {
-		const expectedCodes = [
-			"card_declined",
-			"expired_card",
-			"insufficient_funds",
-			"authentication_failed",
-			"processing_error",
-			"canceled",
-		];
+	it("has entries for the 3 motifs servable post Checkout-Sessions migration", () => {
+		const expectedCodes = ["processing_error", "expired", "canceled"];
 		for (const code of expectedCodes) {
 			expect(CHECKOUT_CANCEL_MESSAGES[code]).toBeDefined();
 		}
@@ -29,8 +22,8 @@ describe("CHECKOUT_CANCEL_MESSAGES", () => {
 
 describe("getCheckoutCancelMessage", () => {
 	it("returns the correct message for a known code", () => {
-		const result = getCheckoutCancelMessage("card_declined");
-		expect(result.title).toBe("Carte refusée");
+		const result = getCheckoutCancelMessage("expired");
+		expect(result.title).toBe("Session expirée");
 	});
 
 	it("returns 'canceled' message for an unknown code", () => {

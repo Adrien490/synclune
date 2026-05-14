@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { requestPasswordResetSchema } from "../schemas/auth.schemas";
 
@@ -10,6 +12,9 @@ export const requestPasswordReset = async (
 	formData: FormData,
 ): Promise<ActionState> => {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.PASSWORD_RESET);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// Validation des données
 		const rawData = {
 			email: safeFormGet(formData, "email"),

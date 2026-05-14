@@ -105,8 +105,8 @@ function CollectionsBottomBarInner() {
 			<AdminSearchDrawerTop
 				open={isOpen("search")}
 				onOpenChange={onOpenChange("search")}
-				placeholder="Nom, slug, description…"
-				ariaLabel="Rechercher une collection"
+				placeholder="Une collection exposée…"
+				ariaLabel="Rechercher une collection exposée"
 				id={IDS.search}
 			/>
 		</>

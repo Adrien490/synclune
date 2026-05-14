@@ -11,15 +11,15 @@ const DETAIL_ROUTE_PATTERNS = [
 	// Catalogue — detail + edit + create (5 resources)
 	/^\/admin\/catalogue\/(collections|couleurs|materiaux|produits|types-de-produits)\/[^/]+(\/modifier)?$/,
 	/^\/admin\/catalogue\/(collections|couleurs|materiaux|produits|types-de-produits)\/nouveau$/,
-	// Catalogue — SKU variantes (detail + edit + create)
-	/^\/admin\/catalogue\/produits\/[^/]+\/variantes\/(nouveau|[^/]+(\/modifier)?)$/,
+	// Catalogue — SKU variantes (detail + edit + create + inline forms stock/prix)
+	/^\/admin\/catalogue\/produits\/[^/]+\/variantes\/(nouveau|[^/]+(\/(modifier|stock|prix))?)$/,
 	// Clients
 	/^\/admin\/clients\/[^/]+$/,
 	// Marketing — avis (detail) + discounts (edit + create)
 	/^\/admin\/marketing\/avis\/[^/]+$/,
 	/^\/admin\/marketing\/discounts\/(nouveau|[^/]+\/modifier)$/,
-	// Ventes — commandes (detail) + remboursements (detail + create)
-	/^\/admin\/ventes\/commandes\/[^/]+$/,
+	// Ventes — commandes (detail + inline forms notes/suivi/adresses/client)
+	/^\/admin\/ventes\/commandes\/[^/]+(\/(notes|suivi|adresse-livraison|adresse-facturation|client))?$/,
 	/^\/admin\/ventes\/remboursements\/(nouveau|[^/]+)$/,
 	// Configuration — destructive actions
 	/^\/admin\/configuration\/boutique\/fermer$/,

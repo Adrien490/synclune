@@ -14,6 +14,7 @@ const {
 	mockUnauthorized,
 	mockRedirect,
 	mockUnstableRethrow,
+	mockEnforceRateLimit,
 } = vi.hoisted(() => ({
 	mockAuth: {
 		api: {
@@ -27,9 +28,16 @@ const {
 	mockUnauthorized: vi.fn(),
 	mockRedirect: vi.fn(),
 	mockUnstableRethrow: vi.fn(),
+	mockEnforceRateLimit: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	AUTH_LIMITS: { LOGIN: "auth-login" },
+}));
 vi.mock("next/headers", () => ({ headers: mockHeaders }));
 vi.mock("next/navigation", () => ({
 	redirect: mockRedirect,
@@ -74,6 +82,7 @@ describe("signInEmail", () => {
 
 		mockHeaders.mockResolvedValue(new Headers());
 		mockAuth.api.getSession.mockResolvedValue(null);
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.signInEmail.mockResolvedValue({ user: { id: "user-1" } });
 		// Default: unstable_rethrow no-op (non-redirect errors)

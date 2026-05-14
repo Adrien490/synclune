@@ -46,6 +46,10 @@ vi.mock("next/image", () => ({
 vi.mock("lucide-react", () => ({
 	Package: () => <svg data-testid="icon-package" />,
 	Check: (props: Record<string, unknown>) => <svg data-testid="icon-check" {...props} />,
+	Loader2: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
+	MoreVertical: (props: Record<string, unknown>) => (
+		<svg data-testid="icon-more-vertical" {...props} />
+	),
 }));
 
 // Import après mocks

@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLLECTION_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,39 +23,24 @@ export interface FilteredCollectionIdsData {
 export async function getFilteredCollectionIds(
 	params: Pick<GetCollectionsParams, "search" | "sortBy" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
-
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_COLLECTION_LIMITS.REFRESH);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const where = buildCollectionWhereClause({
-			...params,
-			cursor: undefined,
-			direction: undefined,
-			perPage: BULK_COLLECTION_ACTION_LIMIT,
-		});
-
-		const [rows, totalCount] = await Promise.all([
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_COLLECTION_LIMITS.REFRESH,
+		cap: BULK_COLLECTION_ACTION_LIMIT,
+		emptyMessage: "Aucune collection ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les collections filtrées",
+		buildWhere: () =>
+			buildCollectionWhereClause({
+				...params,
+				cursor: undefined,
+				direction: undefined,
+				perPage: BULK_COLLECTION_ACTION_LIMIT,
+			}),
+		fetchIds: (where) =>
 			prisma.collection.findMany({
 				where,
 				select: { id: true },
 				take: BULK_COLLECTION_ACTION_LIMIT,
 			}),
-			prisma.collection.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucune collection ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_COLLECTION_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les collections filtrées");
-	}
+		fetchCount: (where) => prisma.collection.count({ where }),
+	});
 }

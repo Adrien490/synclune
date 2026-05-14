@@ -14,13 +14,23 @@
 // IDS DES TARIFS STRIPE
 // ==============================================================================
 
-const STRIPE_SHIPPING_RATE_IDS = {
+export const STRIPE_SHIPPING_RATE_IDS = {
 	/** Livraison France Métropolitaine (hors Corse) — 4,99€, 2-3 jours ouvrés */
 	FRANCE: "shr_1SYOf8KjFZ5SF8XKdI4fL8wL",
 	/** Livraison Union Européenne — 9,50€, 4-7 jours ouvrés */
 	EUROPE: "shr_1SYOgiKjFZ5SF8XKfg5lytq7",
 	// Corse (référence future) : shr_1SYOfyKjFZ5SF8XKMD1lNXvK
 } as const;
+
+/**
+ * IDs des shipping rates Stripe disponibles pour `shipping_options` dans
+ * `stripe.checkout.sessions.create`. Stripe filtre automatiquement les rates
+ * en fonction du pays sélectionné par le client dans l'iframe Checkout.
+ */
+export const STRIPE_SHIPPING_OPTIONS = [
+	{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.FRANCE },
+	{ shipping_rate: STRIPE_SHIPPING_RATE_IDS.EUROPE },
+] as const;
 
 // ==============================================================================
 // MAPPING DES IDS VERS LES NOMS LISIBLES

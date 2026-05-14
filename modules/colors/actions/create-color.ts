@@ -58,7 +58,7 @@ export async function createColor(_prevState: unknown, formData: FormData): Prom
 		// (ex: "Doré" et "Or jaune 18K" partageant #D4AF37 produiraient des SKUs
 		// avec pastilles strictement identiques en boutique).
 		const existingHex = await prisma.color.findFirst({
-			where: { hex: validatedData.hex, deletedAt: null },
+			where: { hex: validatedData.hex },
 			select: { name: true },
 		});
 

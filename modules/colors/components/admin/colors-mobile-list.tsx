@@ -51,7 +51,7 @@ export function ColorsMobileList({
 					description={
 						hasActiveFilters
 							? "Aucune couleur ne correspond aux critères de recherche."
-							: "Aucune couleur pour l'instant."
+							: "Aucune teinte à la palette pour l'instant."
 					}
 					actionElement={
 						hasActiveFilters ? (
@@ -68,15 +68,15 @@ export function ColorsMobileList({
 	const pageItemIds = colors.map((c) => c.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "couleur", plural: "couleurs" }} />
 					{filterParams ? (
 						<ColorsCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={colors.length} singular="couleur" plural="couleurs" />
-					<ItemGroup aria-label="Couleurs" className="gap-2">
+					<ItemGroup role="list" aria-label="Couleurs" className="gap-2">
 						{colors.map((color) => (
 							<div key={color.id} role="listitem">
 								<ColorMobileItem color={color} />
@@ -93,10 +93,10 @@ export function ColorsMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les teintes de la palette">
 					<ColorsBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

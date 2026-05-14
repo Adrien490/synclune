@@ -48,7 +48,7 @@ export function OrdersMobileList({
 					description={
 						hasActiveFilters
 							? "Aucune commande ne correspond aux critères de recherche."
-							: "Aucune commande pour l'instant."
+							: "Aucune commande à l'atelier pour le moment."
 					}
 					actionElement={
 						hasActiveFilters ? (
@@ -63,15 +63,15 @@ export function OrdersMobileList({
 	const pageItemIds = orders.map((o) => o.id);
 
 	return (
-		<AdminListPendingProvider>
-			<BulkSelectionProvider pageItemIds={pageItemIds}>
-				<div className="space-y-4 pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
+		<BulkSelectionProvider pageItemIds={pageItemIds}>
+			<AdminListPendingProvider>
+				<div className="space-y-4 overscroll-contain pb-[calc(var(--bottom-bar-height,5rem)+1rem)] md:hidden md:pb-0">
 					<MobileSelectionHeader itemsLabel={{ singular: "commande", plural: "commandes" }} />
 					{filterParams ? (
 						<OrdersCrossPageBanner totalCount={totalCount} filterParams={filterParams} />
 					) : null}
 					<AdminListLiveCount count={orders.length} singular="commande" plural="commandes" />
-					<ItemGroup aria-label="Commandes" className="gap-2">
+					<ItemGroup role="list" aria-label="Commandes" className="gap-2">
 						{orders.map((order) => (
 							<div key={order.id} role="listitem">
 								<OrdersMobileListItem order={order} />
@@ -88,10 +88,10 @@ export function OrdersMobileList({
 						prevCursor={pagination.prevCursor}
 					/>
 				</div>
-				<MobileSelectionBottomBar>
+				<MobileSelectionBottomBar emptyHint="Tape sur les commandes à traiter">
 					<OrdersBulkActionsBar presentation="bottom-bar" />
 				</MobileSelectionBottomBar>
-			</BulkSelectionProvider>
-		</AdminListPendingProvider>
+			</AdminListPendingProvider>
+		</BulkSelectionProvider>
 	);
 }

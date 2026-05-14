@@ -115,7 +115,7 @@ export function AdminWelcomeDialog() {
 							fill
 							sizes="(max-width: 640px) 160px, 192px"
 							className="object-cover object-[center_30%]"
-							priority
+							preload
 						/>
 					</PolaroidFrame>
 				</m.div>

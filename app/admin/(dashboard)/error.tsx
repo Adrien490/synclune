@@ -2,6 +2,7 @@
 
 import { Button } from "@/shared/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
+import { BarChart3 } from "lucide-react";
 import { useEffect } from "react";
 
 export default function DashboardError({
@@ -17,9 +18,7 @@ export default function DashboardError({
 
 	return (
 		<div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
-			<p className="text-muted-foreground/30 text-6xl" aria-hidden="true">
-				📊
-			</p>
+			<BarChart3 className="text-muted-foreground/30 size-16" aria-hidden="true" />
 			<h2 className="font-display text-foreground text-xl font-normal">
 				Le tableau de bord n'a pas pu charger
 			</h2>

@@ -81,13 +81,11 @@ vi.mock("next/image", () => ({
 	default: ({
 		src,
 		alt,
-		priority,
 		fetchPriority,
 		loading,
 	}: {
 		src: string;
 		alt: string;
-		priority?: boolean;
 		fetchPriority?: string;
 		loading?: string;
 		[key: string]: unknown;
@@ -98,7 +96,6 @@ vi.mock("next/image", () => ({
 			src={src}
 			alt={alt}
 			data-testid="floating-img"
-			data-priority={priority ? "true" : "false"}
 			data-fetch-priority={fetchPriority}
 			data-loading={loading}
 		/>
@@ -196,16 +193,14 @@ describe("HeroFloatingImagesInner", () => {
 		expect(wrapper?.className).toContain("md:block");
 	});
 
-	it("marks only the first image as priority/fetchPriority=high (LCP optimization)", () => {
+	it("marks only the first image as eager + fetchPriority=high (LCP optimization)", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
 		const images = container.querySelectorAll("[data-testid='floating-img']");
-		expect(images[0]?.getAttribute("data-priority")).toBe("true");
 		expect(images[0]?.getAttribute("data-fetch-priority")).toBe("high");
-		expect(images[0]?.getAttribute("data-loading")).not.toBe("lazy");
+		expect(images[0]?.getAttribute("data-loading")).toBe("eager");
 
 		for (let i = 1; i < images.length; i++) {
-			expect(images[i]?.getAttribute("data-priority")).toBe("false");
 			expect(images[i]?.getAttribute("data-fetch-priority")).toBe("auto");
 			expect(images[i]?.getAttribute("data-loading")).toBe("lazy");
 		}

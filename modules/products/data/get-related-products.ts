@@ -90,7 +90,7 @@ async function fetchPersonalizedRelatedProducts(
 	userId: string,
 	limit: number,
 ): Promise<ProductCarouselItem[]> {
-	"use cache";
+	"use cache: private";
 	cacheLife("catalog");
 	cacheTag(PRODUCTS_CACHE_TAGS.RELATED_USER(userId));
 

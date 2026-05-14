@@ -114,6 +114,7 @@ export function MobileSelectionHeader({ itemsLabel, className }: MobileSelection
 				onClick={handleExit}
 				className="min-h-11 px-3"
 				style={{ viewTransitionName: "admin-list-selection-toggle" }}
+				aria-keyshortcuts="Escape"
 			>
 				Annuler
 			</Button>

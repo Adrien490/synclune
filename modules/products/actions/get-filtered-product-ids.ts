@@ -1,8 +1,6 @@
 "use server";
 
-import { requireAdmin } from "@/modules/auth/lib/require-auth";
-import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
-import { error, handleActionError, success } from "@/shared/lib/actions";
+import { runCrossPageIdsAction } from "@/shared/lib/actions/run-cross-page-ids-action";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_PRODUCT_REFRESH_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
@@ -25,52 +23,42 @@ export interface FilteredProductIdsData {
  * Hydrate uniquement les ids pour le banner "Sélectionner les N filtrés".
  * Bypass `getProducts` (qui charge skus+images+collections, ~5 MB) — ici on
  * paye ~10 KB en chargeant `select: { id: true }` + un `count` exact.
+ *
+ * Spécificité products : `buildSearchConditions` est asynchrone pour les
+ * recherches ≥ 3 chars (embeddings full-text). Le helper `runCrossPageIdsAction`
+ * supporte une `buildWhere` async et l'exécute **après** auth + rate-limit.
  */
 export async function getFilteredProductIds(
 	params: Pick<GetProductsParams, "search" | "sortBy" | "filters">,
 ): Promise<ActionState> {
-	try {
-		const admin = await requireAdmin();
-		if ("error" in admin) return admin.error;
+	return runCrossPageIdsAction({
+		rateLimitConfig: ADMIN_PRODUCT_REFRESH_LIMIT,
+		cap: BULK_PRODUCT_ACTION_LIMIT,
+		emptyMessage: "Aucun produit ne correspond aux filtres actuels",
+		errorFallback: "Impossible de charger les produits filtrés",
+		buildWhere: async () => {
+			const searchResult = params.search
+				? params.search.trim().length < 3
+					? buildExactSearchConditions(params.search)
+					: await buildSearchConditions(params.search)
+				: undefined;
 
-		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_PRODUCT_REFRESH_LIMIT);
-		if ("error" in rateLimit) return rateLimit.error;
-
-		const searchResult = params.search
-			? params.search.trim().length < 3
-				? buildExactSearchConditions(params.search)
-				: await buildSearchConditions(params.search)
-			: undefined;
-
-		const where = buildProductWhereClause(
-			{
-				...params,
-				cursor: undefined,
-				direction: undefined,
-				perPage: BULK_PRODUCT_ACTION_LIMIT,
-			},
-			searchResult,
-		);
-
-		const [rows, totalCount] = await Promise.all([
+			return buildProductWhereClause(
+				{
+					...params,
+					cursor: undefined,
+					direction: undefined,
+					perPage: BULK_PRODUCT_ACTION_LIMIT,
+				},
+				searchResult,
+			);
+		},
+		fetchIds: (where) =>
 			prisma.product.findMany({
 				where,
 				select: { id: true },
 				take: BULK_PRODUCT_ACTION_LIMIT,
 			}),
-			prisma.product.count({ where }),
-		]);
-
-		if (rows.length === 0) {
-			return error("Aucun produit ne correspond aux filtres actuels");
-		}
-
-		return success("Sélection cross-page récupérée", {
-			ids: rows.map((r) => r.id),
-			totalCount,
-			cappedAt: BULK_PRODUCT_ACTION_LIMIT,
-		});
-	} catch (e) {
-		return handleActionError(e, "Impossible de charger les produits filtrés");
-	}
+		fetchCount: (where) => prisma.product.count({ where }),
+	});
 }

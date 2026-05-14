@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@/modules/auth/lib/auth";
+import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { error, success, validateInput, safeFormGet } from "@/shared/lib/actions";
+import { AUTH_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 import { resetPasswordSchema } from "../schemas/auth.schemas";
 import { checkPasswordBreached } from "../services/hibp.service";
@@ -11,6 +13,9 @@ export const resetPassword = async (
 	formData: FormData,
 ): Promise<ActionState> => {
 	try {
+		const rateLimit = await enforceRateLimitForCurrentUser(AUTH_LIMITS.PASSWORD_CHANGE);
+		if ("error" in rateLimit) return rateLimit.error;
+
 		// Validation des données
 		const rawData = {
 			password: safeFormGet(formData, "password"),

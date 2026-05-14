@@ -1,25 +1,26 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef } from "react";
 
 import { CollectionStatus } from "@/app/generated/prisma/enums";
-import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
-import { AdminFormFooter } from "@/shared/components/admin-form-footer";
-import { Button } from "@/shared/components/ui/button";
-import { useAppForm } from "@/shared/components/forms";
 import { updateCollection } from "@/modules/collections/actions/update-collection";
+import { COLLECTION_STATUS_LABELS } from "@/modules/collections/constants/collection-status.constants";
+import type { EditableCollection } from "@/modules/collections/types/editable-collection.types";
+import { AdminFormFooter } from "@/shared/components/admin-form-footer";
+import { useAppForm } from "@/shared/components/forms";
+import { ErrorSummary } from "@/shared/components/forms/error-summary";
+import { Button } from "@/shared/components/ui/button";
+import { Kbd } from "@/shared/components/ui/kbd";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
 import { cn } from "@/shared/utils/cn";
-import { useRouter } from "next/navigation";
-import { useActionState } from "react";
-import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { createToastCallbacks } from "@/shared/utils/create-toast-callbacks";
-import { FORM_SUCCESS_REDIRECT_DELAY_MS } from "@/shared/constants/ui-delays";
+import { withCallbacks } from "@/shared/utils/with-callbacks";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
-import type { EditableCollection } from "@/modules/collections/types/editable-collection.types";
 
 export type { EditableCollection };
 
@@ -31,6 +32,18 @@ interface EditCollectionFormProps {
 	redirectOnSuccess?: boolean;
 	/** Classes CSS additionnelles */
 	className?: string;
+}
+
+const LIST_PATH = "/admin/catalogue/collections";
+
+const FIELD_LABELS: Record<string, string> = {
+	name: "Nom",
+	description: "Description",
+	status: "Statut",
+};
+
+function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
+	withViewTransition(() => router.push(path));
 }
 
 export function EditCollectionForm({
@@ -54,36 +67,84 @@ export function EditCollectionForm({
 	});
 
 	const isPublic = collection.status === CollectionStatus.PUBLIC;
+	const allowNavigationRef = useRef<(() => void) | null>(null);
 
 	const [, action, isPending] = useActionState(
 		withCallbacks(
 			updateCollection,
+
 			createToastCallbacks({
 				loadingMessage: "Mise à jour de la collection…",
-				onSuccess: (_result) => {
+				successAction: redirectOnSuccess
+					? {
+							label: "Voir les collections",
+							onClick: () => navigateWithTransition(router, LIST_PATH),
+						}
+					: undefined,
+				onSuccess: () => {
+					haptic("success");
+					allowNavigationRef.current?.();
 					onSuccess?.();
-					if (redirectOnSuccess) {
-						setTimeout(
-							() => withViewTransition(() => router.push("/admin/catalogue/collections")),
-							FORM_SUCCESS_REDIRECT_DELAY_MS,
-						);
-					}
 				},
+				onError: () => haptic("error"),
 			}),
 		),
 		undefined,
 	);
 
-	// Mobile : pas de garde unsaved-changes (les confirms beforeunload/popstate
-	// natifs sont peu utiles sur mobile et entrent en conflit avec les gestes
-	// swipe-back iOS / Android — UX moins bonne que la perte de saisie).
-	useUnsavedChanges(form.state.isDirty, !isPending && !isMobile);
+	const { allowNavigation } = useUnsavedChanges(form.state.isDirty, !isPending && !isMobile);
+
+	useEffect(() => {
+		allowNavigationRef.current = allowNavigation;
+	}, [allowNavigation]);
+
+	useEffect(() => {
+		if (isMobile) return;
+		const handler = (event: KeyboardEvent) => {
+			const isSaveShortcut = (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "s";
+			if (!isSaveShortcut) return;
+			event.preventDefault();
+			if (isPending || !form.state.canSubmit) return;
+			haptic("medium");
+			formRef.current?.requestSubmit();
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [isMobile, isPending, form, formRef, haptic]);
+
+	useEffect(() => {
+		if (isMobile) return;
+		const handler = (event: KeyboardEvent) => {
+			if (event.key !== "Escape" || isPending) return;
+			const target = event.target as HTMLElement | null;
+			if (
+				target?.closest(
+					"[data-slot='dialog-content'],[data-slot='sheet-content'],[data-slot='popover-content'],[role='dialog']",
+				)
+			) {
+				return;
+			}
+			if (
+				form.state.isDirty &&
+				!window.confirm("Les modifications non enregistrées seront perdues. Continuer ?")
+			) {
+				return;
+			}
+			event.preventDefault();
+			haptic("light");
+			allowNavigation();
+			navigateWithTransition(router, LIST_PATH);
+		};
+		window.addEventListener("keydown", handler);
+		return () => window.removeEventListener("keydown", handler);
+	}, [isMobile, isPending, form, haptic, router, allowNavigation]);
 
 	return (
 		<form
 			ref={formRef}
 			action={action}
-			className={cn("space-y-4", className)}
+			aria-label="Formulaire de modification de collection"
+			className={cn("space-y-6", className)}
 			onInvalidCapture={onInvalidCapture}
 			onSubmit={() => {
 				void form.handleSubmit();
@@ -92,107 +153,138 @@ export function EditCollectionForm({
 				}
 			}}
 		>
-			{/* Hidden fields */}
 			<input type="hidden" name="id" value={collection.id} />
-			<form.Subscribe selector={(state) => [state.values.status]}>
-				{([status]) => <input type="hidden" name="status" value={status as string} />}
+			<form.Subscribe selector={(state) => ({ status: state.values.status })}>
+				{({ status }) => <input type="hidden" name="status" value={status} />}
 			</form.Subscribe>
 
-			{/* Name Field */}
-			<div className="space-y-1.5">
+			<form.Subscribe
+				selector={(state) => ({
+					submissionAttempts: state.submissionAttempts,
+					fieldMeta: state.fieldMeta,
+				})}
+			>
+				{({ submissionAttempts, fieldMeta }) => {
+					if (!submissionAttempts) return null;
+					const fieldErrors = Object.entries(
+						fieldMeta as Record<string, { errors?: Array<string | undefined> }>,
+					)
+						.map(([name, meta]) => {
+							const first = meta.errors?.find((e): e is string => Boolean(e));
+							return first ? { name, label: FIELD_LABELS[name] ?? name, message: first } : null;
+						})
+						.filter(
+							(item): item is { name: string; label: string; message: string } => item !== null,
+						);
+					if (fieldErrors.length < 2) return null;
+					return <ErrorSummary fieldErrors={fieldErrors} />;
+				}}
+			</form.Subscribe>
+
+			<fieldset disabled={isPending} className="space-y-6">
+				<div className="space-y-1.5">
+					<form.AppField
+						name="name"
+						validators={{
+							onChange: ({ value }) => {
+								if (!value || value.length < 1) {
+									return "Le nom est requis";
+								}
+								if (value.length > 100) {
+									return "Le nom ne peut pas dépasser 100 caractères";
+								}
+								if (isPublic && value !== collection.name) {
+									return "Une collection publiée ne peut pas être renommée (SEO). Repassez-la en brouillon d'abord.";
+								}
+								return undefined;
+							},
+						}}
+					>
+						{(field) => (
+							<field.InputField
+								label="Nom"
+								type="text"
+								placeholder="ex: Nouveautés 2025, Collection Été"
+								disabled={isPending || isPublic}
+								required
+								autoCapitalize="words"
+								enterKeyHint="next"
+							/>
+						)}
+					</form.AppField>
+					{isPublic && (
+						<p className="text-muted-foreground text-xs">
+							Le nom est verrouillé tant que la collection est publiée pour préserver l&apos;URL et
+							le SEO.
+						</p>
+					)}
+				</div>
+
 				<form.AppField
-					name="name"
+					name="description"
 					validators={{
 						onChange: ({ value }) => {
-							if (!value || value.length < 1) {
-								return "Le nom est requis";
-							}
-							if (value.length > 100) {
-								return "Le nom ne peut pas dépasser 100 caractères";
-							}
-							if (isPublic && value !== collection.name) {
-								return "Une collection publiée ne peut pas être renommée (SEO). Repassez-la en brouillon d'abord.";
+							if (value && value.length > 1000) {
+								return "La description ne peut pas dépasser 1000 caractères";
 							}
 							return undefined;
 						},
 					}}
 				>
 					{(field) => (
-						<field.InputField
-							label="Nom"
-							type="text"
-							placeholder="ex: Nouveautés 2025, Collection Été"
-							disabled={isPending || isPublic}
-							required
-							autoCapitalize="words"
-							enterKeyHint="next"
+						<field.TextareaField
+							label="Description"
+							placeholder="Décrivez cette collection…"
+							disabled={isPending}
+							rows={4}
 						/>
 					)}
 				</form.AppField>
-				{isPublic && (
-					<p className="text-muted-foreground text-xs">
-						Le nom est verrouillé tant que la collection est publiée pour préserver l&apos;URL et le
-						SEO.
-					</p>
-				)}
-			</div>
 
-			{/* Description Field */}
-			<form.AppField
-				name="description"
-				validators={{
-					onChange: ({ value }) => {
-						if (value && value.length > 1000) {
-							return "La description ne peut pas dépasser 1000 caractères";
-						}
-						return undefined;
-					},
-				}}
-			>
-				{(field) => (
-					<field.TextareaField
-						label="Description"
-						placeholder="Décrivez cette collection…"
-						disabled={isPending}
-						rows={4}
-					/>
-				)}
-			</form.AppField>
+				<form.AppField name="status">
+					{(field) => (
+						<field.SelectField
+							label="Statut"
+							options={Object.values(CollectionStatus).map((s) => ({
+								value: s,
+								label: COLLECTION_STATUS_LABELS[s],
+							}))}
+							disabled={isPending}
+						/>
+					)}
+				</form.AppField>
+			</fieldset>
 
-			{/* Status Field */}
-			<form.AppField name="status">
-				{(field) => (
-					<field.SelectField
-						label="Statut"
-						options={Object.values(CollectionStatus).map((s) => ({
-							value: s,
-							label: COLLECTION_STATUS_LABELS[s],
-						}))}
-						disabled={isPending}
-					/>
-				)}
-			</form.AppField>
-
-			<AdminFormFooter pending={isPending}>
-				<div className="flex justify-end">
-					<form.Subscribe selector={(state) => [state.canSubmit]}>
+			<form.AppForm>
+				<AdminFormFooter pending={isPending}>
+					<form.Subscribe selector={(state) => [state.canSubmit] as const}>
 						{([canSubmit]) => (
-							<Button
-								type="submit"
-								size="input"
-								disabled={!canSubmit || isPending}
-								onClick={() => haptic("medium")}
-								className="w-full sm:w-auto sm:min-w-56"
-							>
-								{isPending && (
-									<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
-								)}
-								<span>{isPending ? "Enregistrement…" : "Enregistrer"}</span>
-							</Button>
+							<div className="flex justify-end">
+								<Button
+									type="submit"
+									size="input"
+									disabled={!canSubmit || isPending}
+									onClick={() => haptic("medium")}
+									className="w-full sm:w-auto sm:min-w-56"
+								>
+									{isPending && (
+										<Loader2 className="size-4 motion-safe:animate-spin" aria-hidden="true" />
+									)}
+									<span>{isPending ? "Mise à jour…" : "Enregistrer"}</span>
+									{!isPending && (
+										<Kbd
+											aria-hidden="true"
+											className="ml-1 hidden bg-white/15 text-white/80 lg:inline-flex"
+										>
+											⌘S
+										</Kbd>
+									)}
+								</Button>
+							</div>
 						)}
 					</form.Subscribe>
-				</div>
-			</AdminFormFooter>
+				</AdminFormFooter>
+			</form.AppForm>
 		</form>
 	);
 }

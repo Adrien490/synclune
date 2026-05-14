@@ -98,30 +98,30 @@ export function UploadProgress({
 	const completedText =
 		completedCount !== undefined && completedCount > 0
 			? `${completedCount} fichier${completedCount > 1 ? "s" : ""} envoyé${completedCount > 1 ? "s" : ""}`
-			: "Téléversement terminé";
+			: "Envoi terminé";
 	const srText = isComplete
 		? completedText
 		: isCompressing
-			? "Compression des fichiers en cours"
+			? "Optimisation des clichés en cours"
 			: isThumbnailing
-				? "Génération des miniatures vidéo en cours"
+				? "Préparation des aperçus vidéo en cours"
 				: isFinalizing
-					? "Finalisation en cours"
+					? "Polissage final à l'atelier en cours"
 					: isServerProcessing
-						? "Traitement du fichier en cours"
-						: `Téléversement en cours, ${progress} pourcent${queueText}`;
+						? "Optimisation à l'atelier en cours"
+						: `Envoi en cours, ${progress} pourcent${queueText}`;
 
 	const phaseLabel = isComplete
 		? "Terminé"
 		: isCompressing
-			? "Compression…"
+			? "Optimisation…"
 			: isThumbnailing
-				? "Génération des miniatures…"
+				? "Préparation des aperçus…"
 				: isFinalizing
-					? "Finalisation…"
+					? "Polissage à l'atelier…"
 					: isServerProcessing
-						? "Traitement…"
-						: `Téléversement… ${progress}%`;
+						? "Optimisation à l'atelier…"
+						: `Envoi… ${progress}%`;
 
 	const etaLabel = !isComplete && phase === "uploading" ? formatEtaLabel(etaSeconds ?? null) : null;
 	const speedLabel =
@@ -160,8 +160,18 @@ export function UploadProgress({
 					)}
 					aria-hidden="true"
 				>
-					{isComplete ? "OK" : isServerProcessing ? "Traitement…" : `${progress}%`}
+					{isComplete ? "OK" : isServerProcessing ? "Optimisation…" : `${progress}%`}
 				</span>
+
+				{currentFileName && !isComplete && (
+					<p
+						className="text-muted-foreground max-w-[10rem] truncate text-center text-[10px]"
+						aria-hidden="true"
+						title={currentFileName}
+					>
+						{currentFileName}
+					</p>
+				)}
 			</div>
 		);
 	}
@@ -191,14 +201,17 @@ export function UploadProgress({
 
 			<div className="w-full space-y-2 sm:space-y-1.5">
 				<Progress
-					value={progress}
+					value={isServerProcessing ? undefined : progress}
 					aria-valuemin={0}
 					aria-valuemax={100}
-					aria-valuenow={progress}
-					aria-label="Progression du téléversement"
+					aria-valuenow={isServerProcessing ? undefined : progress}
+					aria-label={isServerProcessing ? "Optimisation à l'atelier" : "Progression de l'envoi"}
 					className={cn(
 						"h-2 sm:h-1.5",
 						isComplete && "[&>[data-slot=progress-indicator]]:bg-emerald-500",
+						isServerProcessing &&
+							!shouldReduceMotion &&
+							"[&>[data-slot=progress-indicator]]:w-1/3 [&>[data-slot=progress-indicator]]:motion-safe:animate-[progress-indeterminate_1.4s_ease-in-out_infinite]",
 					)}
 				/>
 				<AnimatePresence mode="wait" initial={false}>
@@ -269,7 +282,7 @@ export function UploadProgress({
 					size="sm"
 					onClick={handleCancel}
 					className="h-11 min-w-11 gap-1.5 px-3"
-					aria-label="Annuler l'upload"
+					aria-label="Annuler l'envoi"
 				>
 					<X className="size-4" aria-hidden="true" />
 					<span className="text-xs">Annuler</span>

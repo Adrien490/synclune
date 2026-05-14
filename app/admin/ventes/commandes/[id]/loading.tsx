@@ -48,8 +48,8 @@ export default function OrderDetailLoading() {
 						<Skeleton className="h-4 w-72" />
 					</div>
 					<div className="bg-background/95 sticky bottom-[calc(var(--bottom-bar-height,56px)+env(safe-area-inset-bottom))] z-10 -mx-[var(--admin-main-x,1.5rem)] flex items-center gap-2 border-t px-[var(--admin-main-x,1.5rem)] py-3 backdrop-blur-md md:static md:m-0 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
-						<Skeleton className="h-9 flex-1 md:w-32 md:flex-none" />
-						<Skeleton className="size-9 shrink-0" />
+						<Skeleton className="h-11 flex-1 sm:h-9 md:w-28 md:flex-none" />
+						<Skeleton className="size-11 shrink-0 sm:size-9" />
 					</div>
 				</div>
 

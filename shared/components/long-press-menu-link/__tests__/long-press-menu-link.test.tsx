@@ -326,6 +326,22 @@ describe("LongPressMenuLink", () => {
 		expect(screen.queryByRole("menuitem", { name: "Dupliquer" })).not.toBeInTheDocument();
 	});
 
+	it("renders the optional affordance slot inside the Link wrapper", () => {
+		render(
+			<LongPressMenuLink
+				href="/admin/items/1"
+				ariaLabel="Item 1"
+				sections={SECTIONS}
+				menuTitle="Actions"
+				affordance={<span data-testid="custom-affordance">…</span>}
+			>
+				<span>card</span>
+			</LongPressMenuLink>,
+		);
+		const link = screen.getByRole("link", { name: "Item 1" });
+		expect(link).toContainElement(screen.getByTestId("custom-affordance"));
+	});
+
 	it("injects touch-action: manipulation + user-select: none on the Link", () => {
 		render(
 			<LongPressMenuLink

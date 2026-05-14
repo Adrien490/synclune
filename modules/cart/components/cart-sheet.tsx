@@ -67,6 +67,8 @@ interface CartSheetBodyProps {
 	close: () => void;
 	recommendations?: React.ReactNode;
 	shouldReduceMotion: boolean | null;
+	appliedDiscountCode: string | null;
+	discountAmount: number | null;
 }
 
 function CartSheetBody({
@@ -81,6 +83,8 @@ function CartSheetBody({
 	shouldReduceMotion,
 	totalItems,
 	subtotal,
+	appliedDiscountCode,
+	discountAmount,
 }: CartSheetBodyProps) {
 	// Defer SR announcements so rapid +/- taps don't spam VoiceOver
 	const announceItems = useDeferredValue(totalItems);
@@ -155,7 +159,7 @@ function CartSheetBody({
 						</div>
 					)}
 
-					<div className="shrink-0">
+					<div className="shrink-0" data-vaul-no-drag>
 						<CartPriceChangeAlert items={items} />
 					</div>
 
@@ -190,6 +194,8 @@ function CartSheetBody({
 					isPending={isPending}
 					hasStockIssues={hasStockIssues}
 					onClose={close}
+					appliedDiscountCode={appliedDiscountCode}
+					discountAmount={discountAmount}
 				/>
 			)}
 		</>
@@ -266,13 +272,15 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		close,
 		recommendations: isMobile ? undefined : recommendations,
 		shouldReduceMotion,
+		appliedDiscountCode: optimisticCart?.appliedDiscountCode ?? null,
+		discountAmount: optimisticCart?.discountAmountCache ?? null,
 	};
 
 	return (
 		<CartCloseContext.Provider value={close}>
 			<CartOptimisticContext.Provider value={cartOptimisticValue}>
 				{isMobile ? (
-					<Drawer open={isOpen} onOpenChange={handleOpenChange}>
+					<Drawer open={isOpen} onOpenChange={handleOpenChange} handleOnly>
 						<DrawerContent
 							className="group/sheet mt-0 flex h-[var(--vvh,100dvh)] max-h-[var(--vvh,100dvh)] flex-col gap-0 rounded-t-none px-0 pt-[env(safe-area-inset-top)]"
 							data-pending={isPending ? "" : undefined}

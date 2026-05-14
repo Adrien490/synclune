@@ -6,18 +6,27 @@ import { createMockFormData } from "@/test/factories";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockAuth, mockValidateInput, mockSuccess, mockError } = vi.hoisted(() => ({
-	mockAuth: {
-		api: {
-			requestPasswordReset: vi.fn(),
+const { mockAuth, mockValidateInput, mockSuccess, mockError, mockEnforceRateLimit } = vi.hoisted(
+	() => ({
+		mockAuth: {
+			api: {
+				requestPasswordReset: vi.fn(),
+			},
 		},
-	},
-	mockValidateInput: vi.fn(),
-	mockSuccess: vi.fn(),
-	mockError: vi.fn(),
-}));
+		mockValidateInput: vi.fn(),
+		mockSuccess: vi.fn(),
+		mockError: vi.fn(),
+		mockEnforceRateLimit: vi.fn(),
+	}),
+);
 
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: mockAuth }));
+vi.mock("@/modules/auth/lib/rate-limit-helpers", () => ({
+	enforceRateLimitForCurrentUser: mockEnforceRateLimit,
+}));
+vi.mock("@/shared/lib/rate-limit-config", () => ({
+	AUTH_LIMITS: { PASSWORD_RESET: "auth-password-reset" },
+}));
 vi.mock("@/shared/lib/actions", () => ({
 	safeFormGet: (formData: FormData, key: string) => {
 		const v = formData.get(key);
@@ -51,6 +60,7 @@ describe("requestPasswordReset", () => {
 	beforeEach(() => {
 		vi.resetAllMocks();
 
+		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockValidateInput.mockReturnValue({ data: { ...validatedData } });
 		mockAuth.api.requestPasswordReset.mockResolvedValue({});
 

@@ -9,8 +9,60 @@ import { validateSkuSchema, getSkuDetailsSchema } from "@/modules/cart/schemas/c
 import {
 	fetchSkuForValidation,
 	fetchSkusForBatchValidation,
+	fetchSkusForCheckoutValidation,
 } from "@/modules/cart/data/get-sku-for-validation";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
+
+type FetchedSku = Awaited<ReturnType<typeof fetchSkuForValidation>>;
+
+function buildSkuDetailsSuccess(sku: NonNullable<FetchedSku>): SkuDetailsResult {
+	return {
+		success: true,
+		data: {
+			sku: {
+				id: sku.id,
+				sku: sku.sku,
+				priceInclTax: sku.priceInclTax,
+				compareAtPrice: sku.compareAtPrice,
+				isActive: sku.isActive,
+				material: getSkuMaterialsLabel(sku.materials) ?? undefined,
+				colorId: sku.colorId ?? undefined,
+				color: sku.color
+					? {
+							id: sku.color.id,
+							name: sku.color.name,
+							hex: sku.color.hex,
+						}
+					: undefined,
+				size: sku.size ?? undefined,
+				product: {
+					id: sku.product.id,
+					title: sku.product.title,
+					slug: sku.product.slug,
+					description: sku.product.description ?? null,
+				},
+				images: sku.images.map((img) => ({
+					url: img.url,
+					altText: img.altText ?? undefined,
+					isPrimary: img.isPrimary,
+				})),
+			},
+		},
+	};
+}
+
+function checkSkuDetailsErrors(sku: NonNullable<FetchedSku>): SkuDetailsResult | null {
+	if (sku.deletedAt || sku.product.deletedAt) {
+		return { success: false, error: CART_ERROR_MESSAGES.PRODUCT_DELETED };
+	}
+	if (!sku.isActive) {
+		return { success: false, error: CART_ERROR_MESSAGES.SKU_INACTIVE };
+	}
+	if (sku.product.status !== "PUBLIC") {
+		return { success: false, error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC };
+	}
+	return null;
+}
 
 // Action: Valider un SKU et son stock
 export async function validateSkuAndStock(input: {
@@ -117,73 +169,18 @@ export async function validateSkuAndStock(input: {
 // Action: Récupérer les détails complets d'un SKU pour l'affichage
 export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetailsResult> {
 	try {
-		// Validation des inputs
 		const validatedInput = getSkuDetailsSchema.parse(input);
 
 		const sku = await fetchSkuForValidation(validatedInput.skuId);
 
 		if (!sku) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.SKU_NOT_FOUND,
-			};
+			return { success: false, error: CART_ERROR_MESSAGES.SKU_NOT_FOUND };
 		}
 
-		// Verify soft-delete and status guards
-		if (sku.deletedAt || sku.product.deletedAt) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.PRODUCT_DELETED,
-			};
-		}
+		const guardError = checkSkuDetailsErrors(sku);
+		if (guardError) return guardError;
 
-		if (!sku.isActive) {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.SKU_INACTIVE,
-			};
-		}
-
-		if (sku.product.status !== "PUBLIC") {
-			return {
-				success: false,
-				error: CART_ERROR_MESSAGES.PRODUCT_NOT_PUBLIC,
-			};
-		}
-
-		return {
-			success: true,
-			data: {
-				sku: {
-					id: sku.id,
-					sku: sku.sku,
-					priceInclTax: sku.priceInclTax,
-					compareAtPrice: sku.compareAtPrice,
-					isActive: sku.isActive,
-					material: getSkuMaterialsLabel(sku.materials) ?? undefined,
-					colorId: sku.colorId ?? undefined,
-					color: sku.color
-						? {
-								id: sku.color.id,
-								name: sku.color.name,
-								hex: sku.color.hex,
-							}
-						: undefined,
-					size: sku.size ?? undefined,
-					product: {
-						id: sku.product.id,
-						title: sku.product.title,
-						slug: sku.product.slug,
-						description: sku.product.description ?? null,
-					},
-					images: sku.images.map((img) => ({
-						url: img.url,
-						altText: img.altText ?? undefined,
-						isPrimary: img.isPrimary,
-					})),
-				},
-			},
-		};
+		return buildSkuDetailsSuccess(sku);
 	} catch (error) {
 		if (error instanceof z.ZodError) {
 			return {
@@ -197,6 +194,36 @@ export async function getSkuDetails(input: { skuId: string }): Promise<SkuDetail
 			error: CART_ERROR_MESSAGES.GENERAL_ERROR,
 		};
 	}
+}
+
+/**
+ * Batched version of `getSkuDetails`: one DB query for N SKUs.
+ *
+ * Used by checkout session creation where 1 cart can have 10+ SKUs.
+ * Returns a Map keyed by skuId. SKUs missing from the DB or failing guards
+ * (deleted, inactive, draft) are present with `success: false`.
+ */
+export async function getSkusDetailsBatch(
+	skuIds: string[],
+): Promise<Map<string, SkuDetailsResult>> {
+	const results = new Map<string, SkuDetailsResult>();
+	if (skuIds.length === 0) return results;
+
+	const skus = await fetchSkusForCheckoutValidation(skuIds);
+	const skuById = new Map(skus.map((s) => [s.id, s]));
+
+	for (const skuId of skuIds) {
+		const sku = skuById.get(skuId);
+		if (!sku) {
+			results.set(skuId, { success: false, error: CART_ERROR_MESSAGES.SKU_NOT_FOUND });
+			continue;
+		}
+
+		const guardError = checkSkuDetailsErrors(sku);
+		results.set(skuId, guardError ?? buildSkuDetailsSuccess(sku));
+	}
+
+	return results;
 }
 
 // Action: Valider plusieurs SKUs d'un coup (pour validation du panier complet)

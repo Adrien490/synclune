@@ -10,6 +10,7 @@ export default function StoreSettingsLoading() {
 				variant="compact"
 				title="Paramètres boutique"
 				description="Gérez l'ouverture, la fermeture et la programmation de la boutique"
+				className="hidden md:block"
 			/>
 
 			<div className="mx-auto max-w-2xl">

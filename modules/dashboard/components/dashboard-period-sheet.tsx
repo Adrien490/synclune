@@ -23,7 +23,7 @@ interface DashboardPeriodSheetProps {
 	onOpenChange: (open: boolean) => void;
 }
 
-const MOBILE_SNAP_POINTS: (number | string)[] = [0.5, 0.92];
+const MOBILE_SNAP_POINTS: (number | string)[] = [0.5];
 
 /**
  * Bottom-sheet (mobile) / right-sheet (desktop) grouping the dashboard

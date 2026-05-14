@@ -6,8 +6,16 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // ============================================================================
 
 vi.mock("@/shared/components/ui/sheet", () => ({
-	Sheet: ({ children, open }: any) =>
-		open !== false ? <div data-testid="sheet">{children}</div> : null,
+	Sheet: ({ children, open, handleOnly, repositionInputs }: any) =>
+		open !== false ? (
+			<div
+				data-testid="sheet"
+				data-handle-only={handleOnly ? "true" : "false"}
+				data-reposition-inputs={repositionInputs ? "true" : "false"}
+			>
+				{children}
+			</div>
+		) : null,
 	SheetTrigger: ({ children }: any) => <div data-testid="sheet-trigger">{children}</div>,
 	SheetContent: ({ children, onKeyDown, ...props }: any) => (
 		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
@@ -32,8 +40,11 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 
 // useIsMobile lit window.matchMedia (absent en jsdom) — mock-le pour contrôler
 // la branche mobile/desktop du wrapper directement dans les tests.
+const { mockUseIsMobile } = vi.hoisted(() => ({
+	mockUseIsMobile: vi.fn(() => false), // default : desktop
+}));
 vi.mock("@/shared/hooks/use-mobile", () => ({
-	useIsMobile: () => false, // default : desktop
+	useIsMobile: mockUseIsMobile,
 }));
 
 // useHaptic est SSR-safe mais on mock pour tracer les appels dans les tests.
@@ -90,7 +101,11 @@ vi.mock("@/shared/components/ui/button-group", () => ({
 }));
 
 vi.mock("@/shared/components/ui/scroll-area", () => ({
-	ScrollArea: ({ children }: any) => <div data-testid="scroll-area">{children}</div>,
+	ScrollArea: ({ children, ...props }: any) => (
+		<div data-testid="scroll-area" {...props}>
+			{children}
+		</div>
+	),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -648,6 +663,34 @@ describe("FilterSheetWrapper", () => {
 			expect(content).toBeInTheDocument();
 			// onOverlayClick is a function prop — not inspectable via DOM; rely on
 			// the implementation forwarding it (integration-level test).
+		});
+	});
+
+	// ============================================================================
+	// Vaul gestures — handleOnly + repositionInputs forwarded conditionally
+	// ============================================================================
+
+	describe("vaul gestures (handleOnly / repositionInputs)", () => {
+		it("does NOT activate handleOnly in desktop right-side sheet (swipe N/A)", () => {
+			mockUseIsMobile.mockReturnValue(false);
+			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
+			const sheet = screen.getByTestId("sheet");
+			expect(sheet).toHaveAttribute("data-handle-only", "false");
+			expect(sheet).toHaveAttribute("data-reposition-inputs", "false");
+		});
+
+		it("activates handleOnly + repositionInputs in mobile bottom-sheet (prevents accidental close on internal scroll/keyboard)", () => {
+			mockUseIsMobile.mockReturnValue(true);
+			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
+			const sheet = screen.getByTestId("sheet");
+			expect(sheet).toHaveAttribute("data-handle-only", "true");
+			expect(sheet).toHaveAttribute("data-reposition-inputs", "true");
+		});
+
+		it("ScrollArea content region carries data-vaul-no-drag (defensive belt for future handleOnly toggling)", () => {
+			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
+			const scrollArea = screen.getByTestId("scroll-area");
+			expect(scrollArea).toHaveAttribute("data-vaul-no-drag");
 		});
 	});
 });
