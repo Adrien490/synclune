@@ -163,16 +163,18 @@ function GalleryContent({ product, title }: GalleryProps) {
 		color: colorSlug,
 		material: materialSlug,
 		size,
+		variant: colorCombo,
 	} = parseGalleryParams({
 		color: searchParams.get("color") ?? undefined,
 		material: searchParams.get("material") ?? undefined,
 		size: searchParams.get("size") ?? undefined,
+		variant: searchParams.get("variant") ?? undefined,
 	});
 
 	// Build image list based on selected variants
 	const images: ProductMedia[] = buildGallery({
 		product,
-		selectedVariants: { colorSlug, materialSlug, size },
+		selectedVariants: { colorCombo, colorSlug, materialSlug, size },
 	});
 
 	const slides = buildLightboxSlides(images, prefersReduced);

@@ -77,8 +77,8 @@ function createMockOriginalSku(overrides: Record<string, unknown> = {}) {
 	return {
 		sku: "BRC-LUNE-OR-M",
 		productId: "prod-1",
-		colorId: "color-1",
-		materialId: "material-1",
+		colors: [{ colorId: "color-1", position: 0 }],
+		materials: [{ materialId: "material-1", position: 0 }],
 		size: "M",
 		priceInclTax: 4999,
 		compareAtPrice: null,
@@ -180,11 +180,14 @@ describe("duplicateSku", () => {
 		);
 	});
 
-	it("should copy original SKU attributes to duplicate", async () => {
+	it("should copy original SKU attributes to duplicate (M2M colors/materials, size, price)", async () => {
 		mockPrisma.productSku.findUnique.mockResolvedValue(
 			createMockOriginalSku({
-				colorId: "color-1",
-				materialId: "material-1",
+				colors: [
+					{ colorId: "color-1", position: 0 },
+					{ colorId: "color-2", position: 1 },
+				],
+				materials: [{ materialId: "material-1", position: 0 }],
 				size: "M",
 				priceInclTax: 4999,
 			}),
@@ -193,10 +196,17 @@ describe("duplicateSku", () => {
 		expect(mockPrisma.productSku.create).toHaveBeenCalledWith(
 			expect.objectContaining({
 				data: expect.objectContaining({
-					colorId: "color-1",
-					materialId: "material-1",
 					size: "M",
 					priceInclTax: 4999,
+					colors: {
+						create: [
+							{ colorId: "color-1", position: 0 },
+							{ colorId: "color-2", position: 1 },
+						],
+					},
+					materials: {
+						create: [{ materialId: "material-1", position: 0 }],
+					},
 				}),
 			}),
 		);

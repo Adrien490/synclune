@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import type { ActionMenuSection } from "@/shared/components/responsive-action-menu";
 import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-action-item";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { toast } from "@/shared/utils/toast";
@@ -56,6 +57,7 @@ export function useSkuActions({
 }: UseSkuActionsParams): { sections: ActionMenuSection[] } {
 	const router = useRouter();
 	const haptic = useHaptic();
+	const isMobile = useIsMobile();
 	const selectActionItem = useBulkSelectionActionItem(skuId);
 	const deleteDialog = useAlertDialog(DELETE_PRODUCT_SKU_DIALOG_ID);
 	const adjustStockDialog = useDialog(ADJUST_STOCK_DIALOG_ID);
@@ -110,7 +112,10 @@ export function useSkuActions({
 					label: "Ajuster le stock",
 					icon: Package,
 					closesMenu: false,
-					onSelect: () => adjustStockDialog.open({ skuId, skuName, currentStock: inventory }),
+					onSelect: () =>
+						isMobile
+							? router.push(`/admin/catalogue/produits/${productSlug}/variantes/${skuId}/stock`)
+							: adjustStockDialog.open({ skuId, skuName, currentStock: inventory }),
 				},
 				{
 					key: "update-price",
@@ -118,12 +123,14 @@ export function useSkuActions({
 					icon: DollarSign,
 					closesMenu: false,
 					onSelect: () =>
-						updatePriceDialog.open({
-							skuId,
-							skuName,
-							currentPrice: priceInclTax,
-							currentCompareAtPrice: compareAtPrice,
-						}),
+						isMobile
+							? router.push(`/admin/catalogue/produits/${productSlug}/variantes/${skuId}/prix`)
+							: updatePriceDialog.open({
+									skuId,
+									skuName,
+									currentPrice: priceInclTax,
+									currentCompareAtPrice: compareAtPrice,
+								}),
 				},
 				{
 					key: "duplicate",

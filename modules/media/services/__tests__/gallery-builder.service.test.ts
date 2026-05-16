@@ -50,7 +50,7 @@ function makeSku(
 		isActive: true,
 		images,
 		materials: [{ materialId: "m-default", position: 0, material: { name: "Argent" } }],
-		color: { name: "Rose" },
+		colors: [{ colorId: "c-rose", position: 0, color: { name: "Rose" } }],
 		size: null,
 		...overrides,
 	};
@@ -257,7 +257,7 @@ describe("buildGallery", () => {
 	it("generates alt text with product type and variant info", () => {
 		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
 			materials: [{ materialId: "m-or", position: 0, material: { name: "Or" } }],
-			color: { name: "Rose" },
+			colors: [{ colorId: "c-rose", position: 0, color: { name: "Rose" } }],
 		});
 		const product = makeProduct([sku]);
 
@@ -269,7 +269,7 @@ describe("buildGallery", () => {
 	it("avoids duplicate color/material in alt text", () => {
 		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
 			materials: [{ materialId: "m-or-rose", position: 0, material: { name: "Or Rose" } }],
-			color: { name: "Or Rose" }, // same as material
+			colors: [{ colorId: "c-or-rose", position: 0, color: { name: "Or Rose" } }], // same as material
 		});
 		const product = makeProduct([sku]);
 
@@ -282,7 +282,7 @@ describe("buildGallery", () => {
 	it("includes size in alt text when present", () => {
 		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")], {
 			materials: [{ materialId: "m-argent", position: 0, material: { name: "Argent" } }],
-			color: null,
+			colors: [],
 			size: "52",
 		});
 		const product = makeProduct([sku]);
@@ -355,6 +355,7 @@ describe("buildGallery", () => {
 		});
 
 		expect(findSkuByVariants).toHaveBeenCalledWith(product, {
+			colorCombo: undefined,
 			colorSlug: undefined,
 			materialSlug: "or-rose",
 			size: undefined,
@@ -373,9 +374,90 @@ describe("buildGallery", () => {
 		});
 
 		expect(findSkuByVariants).toHaveBeenCalledWith(product, {
+			colorCombo: undefined,
 			colorSlug: undefined,
 			materialSlug: undefined,
 			size: "52",
 		});
+	});
+
+	// ---- M2M color combo (?variant=<comboKey>) ----
+
+	it("passes colorCombo to findSkuByVariants", () => {
+		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")]);
+		const product = makeProduct([sku]);
+
+		vi.mocked(findSkuByVariants).mockReturnValue(null);
+
+		buildGallery({
+			product: product as never,
+			selectedVariants: { colorCombo: "argent__or-rose" },
+		});
+
+		expect(findSkuByVariants).toHaveBeenCalledWith(product, {
+			colorCombo: "argent__or-rose",
+			colorSlug: undefined,
+			materialSlug: undefined,
+			size: undefined,
+		});
+	});
+
+	it("uses SKU matched via colorCombo as priority 1 images", () => {
+		const selectedSku = makeSku("sku-combo", [
+			makeImage("img-1", "https://utfs.io/f/combo-a.jpg"),
+			makeImage("img-2", "https://utfs.io/f/combo-b.jpg"),
+		]);
+		const defaultSku = makeSku("sku-default", [
+			makeImage("img-3", "https://utfs.io/f/default.jpg"),
+		]);
+		const product = makeProduct([defaultSku, selectedSku]);
+
+		vi.mocked(findSkuByVariants).mockReturnValue(selectedSku as never);
+
+		const result = buildGallery({
+			product: product as never,
+			selectedVariants: { colorCombo: "argent__or-rose" },
+		});
+
+		expect(result[0]!.source).toBe("selected");
+		expect(result[0]!.skuId).toBe("sku-combo");
+		expect(result[0]!.url).toBe("https://utfs.io/f/combo-a.jpg");
+	});
+
+	it("forwards both colorCombo and colorSlug to findSkuByVariants (combo wins via matchColor)", () => {
+		const sku = makeSku("sku-1", [makeImage("img-1", "https://utfs.io/f/a.jpg")]);
+		const product = makeProduct([sku]);
+
+		vi.mocked(findSkuByVariants).mockReturnValue(null);
+
+		buildGallery({
+			product: product as never,
+			selectedVariants: { colorCombo: "argent__or-rose", colorSlug: "or-rose" },
+		});
+
+		expect(findSkuByVariants).toHaveBeenCalledWith(product, {
+			colorCombo: "argent__or-rose",
+			colorSlug: "or-rose",
+			materialSlug: undefined,
+			size: undefined,
+		});
+	});
+
+	it("falls back to default SKU images when colorCombo matches no SKU", () => {
+		const defaultSku = makeSku("sku-default", [
+			makeImage("img-1", "https://utfs.io/f/default.jpg"),
+		]);
+		const product = makeProduct([defaultSku]);
+
+		vi.mocked(findSkuByVariants).mockReturnValue(null);
+
+		const result = buildGallery({
+			product: product as never,
+			selectedVariants: { colorCombo: "unknown__combo" },
+		});
+
+		expect(result).toHaveLength(1);
+		expect(result[0]!.source).toBe("default");
+		expect(result[0]!.skuId).toBe("sku-default");
 	});
 });

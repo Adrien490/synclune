@@ -11,7 +11,7 @@ export default function CheckoutSuccessLoading() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la confirmation de commande"
-			className="relative min-h-screen"
+			className="relative min-h-dvh min-h-screen"
 		>
 			<span className="sr-only">Chargement de la confirmation…</span>
 			{/* Decorative background (matches page) */}

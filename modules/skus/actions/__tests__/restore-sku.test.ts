@@ -21,7 +21,12 @@ const {
 	}
 	return {
 		mockPrisma: {
-			productSku: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
+			productSku: {
+				findUnique: vi.fn(),
+				findFirst: vi.fn(),
+				findMany: vi.fn(),
+				update: vi.fn(),
+			},
 			$transaction: vi.fn(),
 		},
 		mockRequireAdmin: vi.fn(),
@@ -69,8 +74,7 @@ function createDeletedSku(overrides: Record<string, unknown> = {}) {
 		id: VALID_CUID,
 		sku: "BRC-001",
 		productId: "prod-1",
-		colorId: "col-1",
-		materialId: "mat-1",
+		colors: [{ colorId: "col-1" }],
 		size: "M",
 		deletedAt: new Date("2026-04-01"),
 		product: { slug: "bracelet", deletedAt: null },
@@ -97,6 +101,8 @@ describe("restoreSku", () => {
 		);
 		mockPrisma.productSku.findUnique.mockResolvedValue(createDeletedSku());
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
+		// Variant uniqueness check (M2M migration) — empty = no active conflict
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.update.mockResolvedValue({
 			id: VALID_CUID,
 			sku: "BRC-001",
@@ -182,7 +188,9 @@ describe("restoreSku", () => {
 					...mockPrisma,
 					productSku: {
 						...mockPrisma.productSku,
-						findFirst: vi.fn().mockResolvedValue({ sku: "BRC-002" }),
+						findMany: vi
+							.fn()
+							.mockResolvedValue([{ sku: "BRC-002", colors: [{ colorId: "col-1" }] }]),
 					},
 				}),
 		);

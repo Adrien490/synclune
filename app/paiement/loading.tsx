@@ -3,8 +3,9 @@ import { Skeleton } from "@/shared/components/ui/skeleton";
 
 /**
  * Skeleton aligné avec la page réelle (Stripe Embedded Checkout, ui_mode: embedded_page).
- * La vraie page rend un seul container `max-w-3xl` + iframe Stripe d'environ
- * 620-720px de hauteur — on réserve `min-h-[680px]` pour éviter le CLS au mount.
+ * Le iframe Stripe avec email + adresse + téléphone + carte fait ~860px sur mobile
+ * (champs empilés) et ~760px sur desktop (firstName/lastName sur la même ligne).
+ * On réserve ces hauteurs pour éviter le CLS au mount.
  */
 export default function CheckoutLoading() {
 	return (
@@ -46,7 +47,7 @@ export default function CheckoutLoading() {
 					</div>
 
 					{/* Stripe Embedded Checkout iframe placeholder (CLS-safe) */}
-					<Skeleton className="bg-card min-h-[680px] w-full rounded-xl border" />
+					<Skeleton className="bg-card min-h-[860px] w-full rounded-xl border sm:min-h-[760px]" />
 				</div>
 			</section>
 		</div>

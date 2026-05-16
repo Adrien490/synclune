@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Finaliser ma commande | Synclune",
-	description: "Finalisez votre commande de bijoux artisanaux faits main. Livraison en France.",
+	description: "Finalise ta commande de bijoux artisanaux faits main. Livraison en France.",
 	robots: {
 		index: false,
 		follow: true,
@@ -66,7 +66,7 @@ export default async function CheckoutPage() {
 								</ul>
 								<div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
 									<Button asChild>
-										<Link href="/produits">Retour à la boutique</Link>
+										<Link href="/produits">Modifier mon panier</Link>
 									</Button>
 									<Button asChild variant="outline">
 										<Link href="/produits">Continuer mes achats</Link>

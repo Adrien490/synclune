@@ -27,7 +27,7 @@ vi.mock("../../constants/cache", () => ({
 }));
 
 // Must be imported after mocks
-import { getOrderForConfirmation } from "../get-order-for-confirmation";
+import { getOrderForConfirmation, getOrderBySessionId } from "../get-order-for-confirmation";
 
 // ============================================================================
 // Factories
@@ -191,6 +191,89 @@ describe("getOrderForConfirmation", () => {
 			mockPrisma.order.findFirst.mockRejectedValue(new Error("Prisma timeout"));
 
 			await expect(getOrderForConfirmation(VALID_ORDER_ID, VALID_ORDER_NUMBER)).resolves.toBeNull();
+		});
+	});
+});
+
+describe("getOrderBySessionId", () => {
+	const VALID_SESSION_ID = "cs_test_a1b2c3d4e5f6g7h8i9j0";
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockPrisma.order.findFirst.mockResolvedValue(makeConfirmationOrder());
+	});
+
+	describe("input validation", () => {
+		it("returns null when sessionId is empty", async () => {
+			const result = await getOrderBySessionId("");
+
+			expect(result).toBeNull();
+			expect(mockPrisma.order.findFirst).not.toHaveBeenCalled();
+		});
+
+		it("proceeds to DB query when sessionId is valid", async () => {
+			await getOrderBySessionId(VALID_SESSION_ID);
+
+			expect(mockPrisma.order.findFirst).toHaveBeenCalledOnce();
+		});
+	});
+
+	describe("database query", () => {
+		it("queries by stripeCheckoutSessionId", async () => {
+			await getOrderBySessionId(VALID_SESSION_ID);
+
+			expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({
+						stripeCheckoutSessionId: VALID_SESSION_ID,
+					}),
+				}),
+			);
+		});
+
+		it("applies the notDeleted filter", async () => {
+			await getOrderBySessionId(VALID_SESSION_ID);
+
+			expect(mockPrisma.order.findFirst).toHaveBeenCalledWith(
+				expect.objectContaining({
+					where: expect.objectContaining({ deletedAt: null }),
+				}),
+			);
+		});
+	});
+
+	describe("return values", () => {
+		it("returns the order when sessionId matches an Order", async () => {
+			const order = makeConfirmationOrder();
+			mockPrisma.order.findFirst.mockResolvedValue(order);
+
+			const result = await getOrderBySessionId(VALID_SESSION_ID);
+
+			expect(result).toEqual(order);
+		});
+
+		it("returns null when no Order exists yet (webhook lag, async SEPA)", async () => {
+			mockPrisma.order.findFirst.mockResolvedValue(null);
+
+			const result = await getOrderBySessionId(VALID_SESSION_ID);
+
+			expect(result).toBeNull();
+		});
+	});
+
+	describe("error handling", () => {
+		it("returns null when the DB throws an error", async () => {
+			mockPrisma.order.findFirst.mockRejectedValue(new Error("DB connection failed"));
+
+			const result = await getOrderBySessionId(VALID_SESSION_ID);
+
+			expect(result).toBeNull();
+		});
+
+		it("does not propagate DB exceptions", async () => {
+			mockPrisma.order.findFirst.mockRejectedValue(new Error("Prisma timeout"));
+
+			await expect(getOrderBySessionId(VALID_SESSION_ID)).resolves.toBeNull();
 		});
 	});
 });

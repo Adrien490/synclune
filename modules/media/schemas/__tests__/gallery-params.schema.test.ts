@@ -76,4 +76,56 @@ describe("parseGalleryParams", () => {
 		const result = parseGalleryParams({ color: "" });
 		expect(result.color).toBeUndefined();
 	});
+
+	// --- variant (M2M combo key) ---
+
+	it("returns valid mono-slug variant unchanged", () => {
+		const result = parseGalleryParams({ variant: "or-rose" });
+		expect(result.variant).toBe("or-rose");
+	});
+
+	it("returns valid bi-color combo unchanged", () => {
+		const result = parseGalleryParams({ variant: "argent__or-rose" });
+		expect(result.variant).toBe("argent__or-rose");
+	});
+
+	it("returns valid tri-color combo unchanged", () => {
+		const result = parseGalleryParams({ variant: "argent__or-blanc__or-rose" });
+		expect(result.variant).toBe("argent__or-blanc__or-rose");
+	});
+
+	it("returns undefined for variant with uppercase letters", () => {
+		const result = parseGalleryParams({ variant: "Argent__Or-Rose" });
+		expect(result.variant).toBeUndefined();
+	});
+
+	it("returns undefined for variant with trailing separator", () => {
+		const result = parseGalleryParams({ variant: "or-rose__" });
+		expect(result.variant).toBeUndefined();
+	});
+
+	it("returns undefined for variant with leading separator", () => {
+		const result = parseGalleryParams({ variant: "__or-rose" });
+		expect(result.variant).toBeUndefined();
+	});
+
+	it("returns undefined for variant with triple-underscore separator", () => {
+		const result = parseGalleryParams({ variant: "argent___or-rose" });
+		expect(result.variant).toBeUndefined();
+	});
+
+	it("returns undefined for variant with special characters", () => {
+		const result = parseGalleryParams({ variant: "or-rose<script>" });
+		expect(result.variant).toBeUndefined();
+	});
+
+	it("returns undefined for variant exceeding 150 characters", () => {
+		const result = parseGalleryParams({ variant: "a".repeat(151) });
+		expect(result.variant).toBeUndefined();
+	});
+
+	it("returns undefined for empty variant string", () => {
+		const result = parseGalleryParams({ variant: "" });
+		expect(result.variant).toBeUndefined();
+	});
 });

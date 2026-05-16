@@ -20,7 +20,13 @@ const {
 	mockGetSkuInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		productSku: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
+		productSku: {
+			findUnique: vi.fn(),
+			findFirst: vi.fn(),
+			findMany: vi.fn(),
+			update: vi.fn(),
+			updateMany: vi.fn(),
+		},
 		skuMedia: { deleteMany: vi.fn(), create: vi.fn(), createMany: vi.fn() },
 		color: { findUnique: vi.fn() },
 		material: { findMany: vi.fn() },
@@ -147,12 +153,14 @@ describe("updateProductSku", () => {
 			images: [],
 		});
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
+		// Used by assertUniqueVariantCombination (M2M migration) — empty = no collision
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.update.mockResolvedValue({
 			id: VALID_CUID,
 			sku: "BRC-01",
 			productId: "prod-1",
 			product: { title: "Bracelet", slug: "test" },
-			color: null,
+			colors: [],
 			materials: [],
 			size: null,
 		});

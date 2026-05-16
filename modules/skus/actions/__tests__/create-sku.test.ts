@@ -26,6 +26,7 @@ const {
 		productSku: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),
+			findMany: vi.fn(),
 			create: vi.fn(),
 			updateMany: vi.fn(),
 		},
@@ -139,6 +140,8 @@ describe("createProductSku", () => {
 		mockPrisma.color.findUnique.mockResolvedValue(null);
 		mockPrisma.material.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
+		// Used by assertUniqueVariantCombination (M2M migration) — empty = no collision
+		mockPrisma.productSku.findMany.mockResolvedValue([]);
 		// Used by generateUniqueTechnicalName to check uniqueness of generated SKU code
 		mockPrisma.productSku.findUnique.mockResolvedValue(null);
 		mockPrisma.productSku.create.mockResolvedValue({

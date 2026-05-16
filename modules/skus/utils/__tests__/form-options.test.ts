@@ -26,7 +26,7 @@ function makeSku(overrides: Record<string, unknown> = {}) {
 		inventory: 10,
 		isDefault: false,
 		isActive: true,
-		color: { id: "color-1", name: "Rose" },
+		colors: [{ colorId: "color-1", position: 0, color: { id: "color-1", name: "Rose" } }],
 		materials: [
 			{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Argent 925" } },
 		],

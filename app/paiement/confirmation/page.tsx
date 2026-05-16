@@ -4,7 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Fade } from "@/shared/components/animations/fade";
 import { Stagger } from "@/shared/components/animations/stagger";
 import { SuccessIcon } from "./_components/success-icon";
-import { getOrderForConfirmation } from "@/modules/orders/data/get-order-for-confirmation";
+import {
+	getOrderBySessionId,
+	getOrderForConfirmation,
+	type OrderForConfirmation,
+} from "@/modules/orders/data/get-order-for-confirmation";
 import { getShippingInfo } from "@/modules/orders/services/shipping.service";
 import type { ShippingCountry } from "@/shared/constants/countries";
 import { formatEuro } from "@/shared/utils/format-euro";
@@ -35,9 +39,14 @@ function extractReceiptUrl(charge: Stripe.PaymentIntent["latest_charge"]): strin
 	return null;
 }
 
+interface PendingPlaceholder {
+	totalAmount: number | null;
+	sessionRef: string;
+}
+
 export const metadata: Metadata = {
 	title: "Commande confirmée | Synclune",
-	description: "Votre commande a été confirmée avec succès. Merci pour votre confiance !",
+	description: "Ta commande a été confirmée avec succès. Merci pour ta confiance !",
 	robots: {
 		index: false,
 		follow: false,
@@ -48,6 +57,7 @@ interface CheckoutSuccessPageProps {
 	searchParams: Promise<{
 		order_id?: string;
 		order_number?: string;
+		session_id?: string;
 		pending?: string;
 	}>;
 }
@@ -56,41 +66,54 @@ interface CheckoutSuccessPageProps {
  * Page de confirmation de commande réussie
  * Affichée après le paiement Stripe réussi
  *
- * SÉCURISÉ : Nécessite order_id + order_number (double vérification)
- * Accepte paymentStatus PENDING car le webhook peut ne pas avoir encore process
+ * SÉCURISÉ : Trois branches d'entrée possibles :
+ * 1) `order_id + order_number` → lookup standard double vérification (chemin nominal)
+ * 2) `session_id + pending=true` + Order créée → lookup par sessionId (webhook arrivé entre retour et confirm)
+ * 3) `session_id + pending=true` + Order absente → placeholder Stripe Session (paiement async SEPA, webhook en retard)
  */
 export default async function CheckoutSuccessPage({ searchParams }: CheckoutSuccessPageProps) {
 	const params = await searchParams;
 	const orderId = params.order_id;
 	const orderNumber = params.order_number;
+	const sessionId = params.session_id;
 	const isPending = params.pending === "true";
 
-	// Both params required for secure lookup
-	if (!orderId || !orderNumber) {
+	let order: OrderForConfirmation | null = null;
+	let pendingPlaceholder: PendingPlaceholder | null = null;
+	const session = await getSession();
+
+	if (orderId && orderNumber) {
+		order = await getOrderForConfirmation(orderId, orderNumber);
+	} else if (sessionId && isPending) {
+		order = await getOrderBySessionId(sessionId);
+		if (!order) {
+			try {
+				const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+				pendingPlaceholder = {
+					totalAmount: stripeSession.amount_total ?? null,
+					sessionRef: sessionId.slice(-8).toUpperCase(),
+				};
+			} catch {
+				redirect("/");
+			}
+		}
+	}
+
+	if (!order && !pendingPlaceholder) {
 		redirect("/");
 	}
 
-	// Fetch order and session in parallel
-	const [order, session] = await Promise.all([
-		getOrderForConfirmation(orderId, orderNumber),
-		getSession(),
-	]);
-
-	// Accept both PENDING and PAID: Stripe already confirmed payment on the return page,
-	// but the webhook may not have processed yet (race condition)
-	if (!order) {
-		redirect("/");
-	}
-
-	// Delivery estimate based on shipping country
-	const shippingInfo = getShippingInfo(
-		((order.shippingCountry as ShippingCountry | null) ?? "FR") as ShippingCountry,
-		order.shippingPostalCode,
-	);
+	// Delivery estimate based on shipping country (only when order is known)
+	const shippingInfo = order
+		? getShippingInfo(
+				((order.shippingCountry as ShippingCountry | null) ?? "FR") as ShippingCountry,
+				order.shippingPostalCode,
+			)
+		: null;
 
 	// Fetch Stripe receipt URL (best-effort, non-blocking)
 	let receiptUrl: string | null = null;
-	if (order.stripePaymentIntentId && !isPending) {
+	if (order?.stripePaymentIntentId && !isPending) {
 		try {
 			const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId, {
 				expand: ["latest_charge"],
@@ -101,33 +124,39 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 		}
 	}
 
+	const displayOrderNumber = order?.orderNumber ?? null;
+	const displaySessionRef = pendingPlaceholder?.sessionRef ?? null;
+
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh min-h-screen">
 			{/* Decorative background */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<h1 className="sr-only">Confirmation de commande</h1>
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					{/* Message de succès principal */}
-					<Card
-						style={{ viewTransitionName: "checkout-pay-cta" }}
-						className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md"
-					>
+					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<SuccessIcon />
 							<Fade y={10} delay={0.15}>
 								<CardTitle className="font-display text-2xl sm:text-3xl">
-									Merci pour votre confiance ! <span aria-hidden="true">✨</span>
+									Merci pour ta confiance ! <span aria-hidden="true">✨</span>
 								</CardTitle>
 							</Fade>
 							<Fade y={10} delay={0.25}>
 								<div className="space-y-2">
 									<p className="text-muted-foreground text-sm">
 										{isPending
-											? "Votre commande a été enregistrée"
-											: "Votre paiement a été accepté avec succès"}
+											? "Ta commande a été enregistrée"
+											: "Ton paiement a été accepté avec succès"}
 									</p>
-									<p className="text-lg font-semibold">Commande #{order.orderNumber}</p>
+									{displayOrderNumber ? (
+										<p className="text-lg font-semibold">Commande #{displayOrderNumber}</p>
+									) : displaySessionRef ? (
+										<p className="text-muted-foreground text-sm">
+											Référence : <span className="font-medium">{displaySessionRef}</span>
+										</p>
+									) : null}
 								</div>
 							</Fade>
 						</CardHeader>
@@ -139,14 +168,14 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									<Clock />
 									<AlertTitle>Paiement en cours de traitement</AlertTitle>
 									<AlertDescription>
-										Votre paiement est en cours de traitement. Vous recevrez un email de
-										confirmation dès que le paiement sera validé.
+										Ton paiement est en cours de traitement. Tu recevras un email de confirmation
+										dès que le paiement sera validé.
 									</AlertDescription>
 								</Alert>
 							)}
 
-							{/* Articles commandés */}
-							{order.items.length > 0 && (
+							{/* Articles commandés — visible uniquement si Order présente */}
+							{order && order.items.length > 0 && (
 								<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
 									<h3 className="text-base font-semibold">Articles commandés</h3>
 									<div className="space-y-3">
@@ -191,52 +220,70 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 							)}
 
 							{/* Récapitulatif montants */}
-							<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
-								<h3 className="text-base font-semibold">Récapitulatif</h3>
-								<div className="space-y-2 text-sm">
-									<div className="flex justify-between">
-										<span className="text-muted-foreground">Sous-total</span>
-										<span>{formatEuro(order.subtotal)}</span>
-									</div>
-									{order.discountAmount > 0 && (
-										<div className="flex justify-between text-green-600">
-											<span>Réduction</span>
-											<span>-{formatEuro(order.discountAmount)}</span>
-										</div>
-									)}
-									<div className="space-y-1">
+							{order ? (
+								<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
+									<h3 className="text-base font-semibold">Récapitulatif</h3>
+									<div className="space-y-2 text-sm">
 										<div className="flex justify-between">
-											<span className="text-muted-foreground">Livraison</span>
-											<span>{formatEuro(order.shippingCost)}</span>
+											<span className="text-muted-foreground">Sous-total</span>
+											<span>{formatEuro(order.subtotal)}</span>
 										</div>
-										{shippingInfo && (
-											<div className="text-muted-foreground flex items-center gap-1 pl-0.5 text-xs">
-												<TruckIcon className="size-3" />
-												Délai estimé : {shippingInfo.estimatedDays}
+										{order.discountAmount > 0 && (
+											<div className="flex justify-between text-green-600">
+												<span>Réduction</span>
+												<span>-{formatEuro(order.discountAmount)}</span>
 											</div>
 										)}
+										<div className="space-y-1">
+											<div className="flex justify-between">
+												<span className="text-muted-foreground">Livraison</span>
+												<span>{formatEuro(order.shippingCost)}</span>
+											</div>
+											{shippingInfo && (
+												<div className="text-muted-foreground flex items-center gap-1 pl-0.5 text-xs">
+													<TruckIcon className="size-3" />
+													Délai estimé : {shippingInfo.estimatedDays}
+												</div>
+											)}
+										</div>
+										<div className="flex justify-between border-t pt-2 text-base font-semibold">
+											<span>Total</span>
+											<span>{formatEuro(order.total)}</span>
+										</div>
 									</div>
-									<div className="flex justify-between border-t pt-2 text-base font-semibold">
+								</div>
+							) : pendingPlaceholder?.totalAmount !== null &&
+							  pendingPlaceholder?.totalAmount !== undefined ? (
+								<div className="bg-muted/50 border-primary/5 space-y-3 rounded-xl border p-4">
+									<h3 className="text-base font-semibold">Récapitulatif</h3>
+									<div className="flex justify-between text-base font-semibold">
 										<span>Total</span>
-										<span>{formatEuro(order.total)}</span>
+										<span className="tabular-nums">
+											{formatEuro(pendingPlaceholder.totalAmount / 100)}
+										</span>
+									</div>
+									<p className="text-muted-foreground text-xs">
+										Le détail complet apparaîtra ici dès que le paiement sera validé.
+									</p>
+								</div>
+							) : null}
+
+							{/* Adresse de livraison — visible uniquement si Order présente */}
+							{order && (
+								<div className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4">
+									<h3 className="text-base font-semibold">Adresse de livraison</h3>
+									<div className="text-muted-foreground text-sm">
+										<p className="text-foreground font-medium">
+											{order.shippingFirstName} {order.shippingLastName}
+										</p>
+										<p>{order.shippingAddress1}</p>
+										{order.shippingAddress2 && <p>{order.shippingAddress2}</p>}
+										<p>
+											{order.shippingPostalCode} {order.shippingCity}
+										</p>
 									</div>
 								</div>
-							</div>
-
-							{/* Adresse de livraison */}
-							<div className="bg-muted/50 border-primary/5 space-y-2 rounded-xl border p-4">
-								<h3 className="text-base font-semibold">Adresse de livraison</h3>
-								<div className="text-muted-foreground text-sm">
-									<p className="text-foreground font-medium">
-										{order.shippingFirstName} {order.shippingLastName}
-									</p>
-									<p>{order.shippingAddress1}</p>
-									{order.shippingAddress2 && <p>{order.shippingAddress2}</p>}
-									<p>
-										{order.shippingPostalCode} {order.shippingCity}
-									</p>
-								</div>
-							</div>
+							)}
 
 							{/* Receipt link */}
 							{receiptUrl && (
@@ -261,7 +308,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 									Merci du fond du cœur <span aria-hidden="true">💕</span>
 								</AlertTitle>
 								<AlertDescription>
-									Je vais préparer votre commande avec le plus grand soin ! Chaque bijou est emballé
+									Je vais préparer ta commande avec le plus grand soin ! Chaque bijou est emballé
 									avec amour dans mon atelier.
 								</AlertDescription>
 							</Alert>
@@ -281,8 +328,8 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										<div>
 											<p className="font-medium">Email de confirmation</p>
 											<p className="text-muted-foreground text-sm">
-												Vous allez recevoir un email récapitulatif dans les prochaines minutes.
-												Pensez à vérifier vos spams si vous ne le recevez pas.
+												Tu vas recevoir un email récapitulatif dans les prochaines minutes. Pense à
+												vérifier tes spams si tu ne le reçois pas.
 											</p>
 										</div>
 									</div>
@@ -292,10 +339,9 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											<span className="text-primary text-sm font-semibold">2</span>
 										</div>
 										<div>
-											<p className="font-medium">Je prépare votre commande</p>
+											<p className="font-medium">Je prépare ta commande</p>
 											<p className="text-muted-foreground text-sm">
-												Votre bijou sera préparé avec soin et expédié dans les prochains jours
-												ouvrés.
+												Ton bijou sera préparé avec soin et expédié dans les prochains jours ouvrés.
 											</p>
 										</div>
 									</div>
@@ -307,8 +353,7 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 										<div>
 											<p className="font-medium">Suivi de livraison</p>
 											<p className="text-muted-foreground text-sm">
-												Vous recevrez un email avec le numéro de suivi dès que votre colis sera
-												expédié.
+												Tu recevras un email avec le numéro de suivi dès que ton colis sera expédié.
 											</p>
 										</div>
 									</div>
@@ -323,12 +368,10 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 											<UserPlus className="text-primary size-5" />
 										</div>
 										<div className="space-y-2">
-											<h3 className="font-semibold">
-												Créez votre compte pour suivre votre commande
-											</h3>
+											<h3 className="font-semibold">Crée ton compte pour suivre ta commande</h3>
 											<p className="text-muted-foreground text-sm">
-												Accédez au suivi de votre commande, enregistrez vos adresses et simplifiez
-												vos prochains achats.
+												Accède au suivi de ta commande, enregistre tes adresses et simplifie tes
+												prochains achats.
 											</p>
 											<Button asChild variant="outline" size="sm">
 												<Link href="/inscription">
@@ -343,21 +386,14 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 							{/* Actions */}
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">
-								{session ? (
+								{session && order ? (
 									<Button asChild size="lg" className="flex-1">
 										<Link href={`/commandes/${order.orderNumber}`}>
 											<Package className="mr-2 size-4" />
 											Suivre ma commande
 										</Link>
 									</Button>
-								) : (
-									<Button asChild size="lg" className="flex-1">
-										<Link href="/">
-											<Package className="mr-2 size-4" />
-											Retour à l'accueil
-										</Link>
-									</Button>
-								)}
+								) : null}
 								<Button asChild variant="outline" size="lg" className="flex-1">
 									<Link href="/produits">Continuer mes achats</Link>
 								</Button>
@@ -367,9 +403,9 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 
 					{/* Message de support */}
 					<div className="mt-8 space-y-2 text-center">
-						<p className="text-muted-foreground text-sm">Une question sur votre commande ?</p>
+						<p className="text-muted-foreground text-sm">Une question sur ta commande ?</p>
 						<Button asChild variant="link">
-							<Link href="mailto:contact@synclune.fr">Écrivez-moi</Link>
+							<Link href="mailto:contact@synclune.fr">Écris-moi</Link>
 						</Button>
 					</div>
 				</div>

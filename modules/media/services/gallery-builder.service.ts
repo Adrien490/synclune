@@ -56,6 +56,7 @@ function buildAltText(
 interface BuildGalleryOptions {
 	product: GetProductReturn;
 	selectedVariants: {
+		colorCombo?: string;
 		colorSlug?: string;
 		materialSlug?: string;
 		size?: string;
@@ -73,12 +74,14 @@ interface BuildGalleryOptions {
  * @returns Array of ProductMedia objects ordered by priority
  */
 export function buildGallery({ product, selectedVariants }: BuildGalleryOptions): ProductMedia[] {
-	const { colorSlug, materialSlug, size } = selectedVariants;
+	const { colorCombo, colorSlug, materialSlug, size } = selectedVariants;
 
-	// Find the SKU matching the selected variants
+	// Find the SKU matching the selected variants. `colorCombo` (M2M comboKey)
+	// prime sur `colorSlug` legacy via matchColor (sku-filter.service.ts).
 	const selectedSku =
-		colorSlug || materialSlug || size
+		colorCombo || colorSlug || materialSlug || size
 			? findSkuByVariants(product, {
+					colorCombo: colorCombo ?? undefined,
 					colorSlug: colorSlug ?? undefined,
 					materialSlug: materialSlug ?? undefined,
 					size: size ?? undefined,

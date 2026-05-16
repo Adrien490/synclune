@@ -12,19 +12,19 @@ export default function CheckoutReturnLoading() {
 			role="status"
 			aria-live="polite"
 			aria-busy="true"
-			className="flex min-h-screen items-center justify-center px-4"
+			className="flex min-h-dvh min-h-screen items-center justify-center px-4"
 		>
 			<div className="max-w-sm space-y-5 text-center">
 				<Spinner className="mx-auto size-10" />
 				<div className="space-y-2">
 					<p className="text-foreground text-base font-medium">
-						Vérification de votre paiement
+						Vérification de ton paiement
 						<span aria-hidden="true" className="motion-safe:animate-pulse">
 							…
 						</span>
 					</p>
 					<p className="text-muted-foreground text-sm">
-						Merci de ne pas fermer cette page. Cela ne prend que quelques secondes.
+						Merci de ne pas fermer cette page — quelques secondes seulement.
 					</p>
 				</div>
 				<p className="text-muted-foreground inline-flex items-center justify-center gap-1.5 text-xs">

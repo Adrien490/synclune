@@ -14,7 +14,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
 	title: "Paiement annulé | Synclune",
-	description: "Votre paiement a été annulé. Votre panier est toujours disponible.",
+	description: "Ton paiement a été annulé. Ton panier est toujours disponible.",
 	robots: {
 		index: false,
 		follow: false,
@@ -43,21 +43,18 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 	const ErrorIcon = errorInfo.icon;
 
 	return (
-		<div className="relative min-h-screen">
+		<div className="relative min-h-dvh min-h-screen">
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 			<section className="py-8 sm:py-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-					<Card
-						style={{ viewTransitionName: "checkout-pay-cta" }}
-						className="border-primary/10 rounded-2xl shadow-md"
-					>
+					<Card className="border-primary/10 rounded-2xl shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
 							<div className="bg-muted/80 mx-auto flex size-18 items-center justify-center rounded-full">
 								<ErrorIcon className="text-muted-foreground size-10" />
 							</div>
 							<CardTitle className="font-display text-2xl sm:text-3xl">{errorInfo.title}</CardTitle>
 							<CardDescription className="text-base">
-								Votre commande n&apos;a pas été finalisée
+								Ta commande n&apos;a pas été finalisée
 							</CardDescription>
 						</CardHeader>
 
@@ -69,8 +66,8 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 
 							<div className="text-muted-foreground space-y-3 text-sm">
 								<p>
-									Votre panier est toujours disponible avec tous vos articles sélectionnés. Vous
-									pouvez reprendre votre commande à tout moment.
+									Ton panier est toujours disponible avec tous tes articles sélectionnés. Tu peux
+									reprendre ta commande à tout moment.
 								</p>
 
 								<aside role="note" aria-label="Conseil" className="flex items-start gap-2">
@@ -78,15 +75,14 @@ export default async function CheckoutCancelPage({ searchParams }: CheckoutCance
 										💡
 									</span>
 									<span>
-										Si vous avez rencontré un problème lors du paiement, n&apos;hésite pas à me
-										contacter — je reprends la main avec toi.
+										Si tu as rencontré un souci lors du paiement, n&apos;hésite pas à m&apos;écrire
+										— je reprends la main avec toi.
 									</span>
 								</aside>
 							</div>
 
 							<p className="text-muted-foreground text-center text-sm">
-								Votre panier et vos informations ont été sauvegardés. Vous pouvez réessayer
-								immédiatement.
+								Ton panier et tes informations sont sauvegardés. Tu peux réessayer dès maintenant.
 							</p>
 
 							<div className="flex flex-col gap-3 pt-4 sm:flex-row">

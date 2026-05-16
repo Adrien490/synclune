@@ -34,10 +34,10 @@ describe("buildFilterConditions", () => {
 		expect(result).toContainEqual({ productId: { in: ["p1", "p2"] } });
 	});
 
-	it("should filter by single colorId", () => {
+	it("should filter by single colorId via M2M ProductSkuColor", () => {
 		const result = buildFilterConditions({ colorId: "c1" } as ProductSkuFilters);
 
-		expect(result).toContainEqual({ colorId: "c1" });
+		expect(result).toContainEqual({ colors: { some: { colorId: "c1" } } });
 	});
 
 	it("should filter by isActive true", () => {
