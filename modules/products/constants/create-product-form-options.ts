@@ -15,7 +15,7 @@ export const createProductFormOpts = {
 			inventory: 1,
 			isDefault: true,
 			isActive: true,
-			colorId: "",
+			colorIds: [] as string[],
 			materialIds: [] as string[],
 			size: "",
 			media: [] as Array<{

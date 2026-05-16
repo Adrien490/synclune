@@ -57,16 +57,20 @@ export function getPrimarySkuForList<
 	const { preferredColorSlug, preferOnSale } = options ?? {};
 
 	// 1. Si couleur préférée spécifiée, prioriser cette couleur (Baymard pattern)
+	// M2M tolérant : un SKU « contient » preferredColorSlug si une de ses couleurs match.
 	if (preferredColorSlug) {
 		// 1a. SKU de la couleur préférée en stock
 		const colorSkuInStock = product.skus.find(
-			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug && sku.inventory > 0,
+			(sku) =>
+				sku.isActive &&
+				sku.colors.some((c) => c.color.slug === preferredColorSlug) &&
+				sku.inventory > 0,
 		);
 		if (colorSkuInStock) return colorSkuInStock;
 
 		// 1b. SKU de la couleur préférée (même hors stock)
 		const colorSku = product.skus.find(
-			(sku) => sku.isActive && sku.color?.slug === preferredColorSlug,
+			(sku) => sku.isActive && sku.colors.some((c) => c.color.slug === preferredColorSlug),
 		);
 		if (colorSku) return colorSku;
 	}

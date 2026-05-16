@@ -30,18 +30,9 @@ vi.mock("@/shared/components/placeholder-image", () => ({
 }));
 
 vi.mock("@/shared/components/polaroid-frame", () => ({
-	PolaroidFrame: ({
-		children,
-		caption,
-		...rest
-	}: {
-		children: React.ReactNode;
-		caption: string;
-		[key: string]: unknown;
-	}) => {
-		const haptic = rest["data-atelier-haptic"] as string | undefined;
+	PolaroidFrame: ({ children, caption }: { children: React.ReactNode; caption: string }) => {
 		return (
-			<div data-testid="polaroid-frame" data-caption={caption} data-atelier-haptic={haptic}>
+			<div data-testid="polaroid-frame" data-caption={caption}>
 				{children}
 			</div>
 		);
@@ -120,16 +111,6 @@ describe("PolaroidGallery", () => {
 		expect(captions).toContain("Mes petits trésors");
 		expect(captions).toContain("L'inspiration du jour");
 		expect(captions).toContain("Mon coin créatif");
-	});
-
-	it("each polaroid frame is tagged for haptic event delegation", () => {
-		render(<PolaroidGallery />);
-
-		const frames = screen.getAllByTestId("polaroid-frame");
-		expect(frames).toHaveLength(4);
-		frames.forEach((frame) => {
-			expect(frame.getAttribute("data-atelier-haptic")).toBe("polaroid");
-		});
 	});
 
 	it("renders polaroids directly inside the grid without a Stagger wrapper", () => {

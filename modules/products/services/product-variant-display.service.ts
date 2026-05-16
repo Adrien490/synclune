@@ -29,10 +29,11 @@ export function getPrimaryColorForList(product: ProductFromList): {
 
 	const fallbackName = getPrimaryMaterialName(primarySku.materials) ?? undefined;
 
-	if (primarySku.color?.hex) {
+	const primaryColor = primarySku.colors?.[0]?.color;
+	if (primaryColor?.hex) {
 		return {
-			hex: primarySku.color.hex,
-			name: primarySku.color.name || fallbackName,
+			hex: primaryColor.hex,
+			name: primaryColor.name || fallbackName,
 		};
 	}
 
@@ -56,23 +57,25 @@ export function getPrimaryColorForList(product: ProductFromList): {
  * Rejeté car cela masquerait des couleurs partiellement disponibles.
  */
 export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
-	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.color);
+	const activeSkus = product.skus.filter((sku) => sku.isActive && (sku.colors?.length ?? 0) > 0);
 	const colorMap = new Map<string, ColorSwatch>();
 
 	for (const sku of activeSkus) {
-		if (!sku.color?.slug || !sku.color.hex) continue;
-
-		const existing = colorMap.get(sku.color.slug);
-		// Logique permissive : inStock = true si au moins une variante de cette couleur a du stock
-		// Voir JSDoc ci-dessus pour la justification de ce comportement
-		const inStock = existing?.inStock === true || sku.inventory > 0;
-
-		colorMap.set(sku.color.slug, {
-			slug: sku.color.slug,
-			hex: sku.color.hex,
-			name: sku.color.name,
-			inStock,
-		});
+		// M2M : on agrège chaque couleur unique vue dans les SKUs.
+		for (const link of sku.colors ?? []) {
+			const c = link.color;
+			if (!c.slug || !c.hex) continue;
+			const existing = colorMap.get(c.slug);
+			// Logique permissive : inStock = true si au moins un SKU actif portant
+			// cette couleur a du stock (cohérent JSDoc ci-dessus).
+			const inStock = existing?.inStock === true || sku.inventory > 0;
+			colorMap.set(c.slug, {
+				slug: c.slug,
+				hex: c.hex,
+				name: c.name,
+				inStock,
+			});
+		}
 	}
 
 	return Array.from(colorMap.values());
@@ -96,7 +99,9 @@ export function getVariantCountForList(product: ProductFromList): {
 	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.inventory > 0);
 
 	for (const sku of activeSkus) {
-		if (sku.color?.hex) uniqueColors.add(sku.color.hex);
+		for (const link of sku.colors ?? []) {
+			if (link.color.hex) uniqueColors.add(link.color.hex);
+		}
 		for (const entry of sku.materials ?? []) {
 			uniqueMaterials.add(entry.material.name);
 		}
@@ -120,7 +125,9 @@ export function hasMultipleVariants(product: ProductFromList): boolean {
 	const activeSkus = product.skus.filter((sku) => sku.isActive);
 	if (activeSkus.length <= 1) return false;
 
-	const uniqueColors = new Set(activeSkus.map((s) => s.color?.slug).filter(Boolean));
+	const uniqueColors = new Set(
+		activeSkus.flatMap((s) => (s.colors ?? []).map((c) => c.color.slug).filter(Boolean)),
+	);
 	const uniqueMaterials = new Set(
 		activeSkus.flatMap((s) => (s.materials ?? []).map((m) => m.material.name)),
 	);

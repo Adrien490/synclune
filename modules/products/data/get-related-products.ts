@@ -203,7 +203,7 @@ async function fetchContextualRelatedProducts(
 				skus: {
 					where: { isActive: true },
 					select: {
-						colorId: true,
+						colors: { select: { colorId: true } },
 					},
 				},
 			},
@@ -213,9 +213,10 @@ async function fetchContextualRelatedProducts(
 			return fetchPublicRelatedProducts(limit);
 		}
 
-		const currentColorIds = currentProduct.skus
-			.map((sku) => sku.colorId)
-			.filter((id): id is string => id !== null);
+		// M2M : on aplatit les colorIds de TOUS les SKUs actifs (déduplication via Set).
+		const currentColorIds = Array.from(
+			new Set(currentProduct.skus.flatMap((sku) => sku.colors.map((c) => c.colorId))),
+		);
 
 		const relatedProducts: ProductCarouselItem[] = [];
 		const addedProductIds = new Set<string>();
@@ -286,7 +287,7 @@ async function fetchContextualRelatedProducts(
 						})
 					: Promise.resolve([]),
 
-				// STRATÉGIE 3 : Couleurs similaires
+				// STRATÉGIE 3 : Couleurs similaires (M2M tolérant via ProductSkuColor)
 				currentColorIds.length > 0
 					? prisma.product.findMany({
 							where: {
@@ -295,7 +296,7 @@ async function fetchContextualRelatedProducts(
 									some: {
 										isActive: true,
 										inventory: { gt: 0 },
-										colorId: { in: currentColorIds },
+										colors: { some: { colorId: { in: currentColorIds } } },
 									},
 								},
 								typeId: currentProduct.typeId ? { not: currentProduct.typeId } : undefined,

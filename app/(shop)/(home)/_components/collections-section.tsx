@@ -153,9 +153,7 @@ export async function CollectionsSection() {
 						once
 						className="text-center"
 					>
-						<SectionCtaLink href="/collections" hapticPattern="selection">
-							Explorer les collections
-						</SectionCtaLink>
+						<SectionCtaLink href="/collections">Explorer les collections</SectionCtaLink>
 					</Fade>
 				</div>
 			</div>

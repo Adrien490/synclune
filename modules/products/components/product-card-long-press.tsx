@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Heart, Share2, Eye } from "lucide-react";
 import { AnimatePresence, m, useReducedMotion } from "motion/react";
 
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useLongPress } from "@/shared/hooks";
 import { cn } from "@/shared/utils/cn";
 
@@ -19,7 +18,7 @@ interface ProductCardLongPressProps {
 /**
  * Client wrapper adding a long-press quick-action overlay on a product card.
  *
- * - 500ms hold → haptic feedback + reveal action menu (Favoris, Partager, Voir)
+ * - 500ms hold → reveal action menu (Favoris, Partager, Voir)
  * - Dismissed on tap outside or after action
  * - Visual press feedback via scale + shadow
  * - Respects prefers-reduced-motion
@@ -32,10 +31,12 @@ export function ProductCardLongPress({
 	children,
 }: ProductCardLongPressProps) {
 	const [isOpen, setIsOpen] = useState(false);
-	const haptic = useHaptic();
 	const prefersReducedMotion = useReducedMotion();
 
-	const { bind, isPressing } = useLongPress(() => setIsOpen(true), { trackPressing: true });
+	const { bind, isPressing } = useLongPress(() => setIsOpen(true), {
+		trackPressing: true,
+		haptic: false,
+	});
 
 	const handleShare = async () => {
 		setIsOpen(false);
@@ -60,7 +61,6 @@ export function ProductCardLongPress({
 
 	const handleWishlist = () => {
 		setIsOpen(false);
-		haptic("light");
 		onWishlist?.();
 	};
 

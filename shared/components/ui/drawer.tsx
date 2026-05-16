@@ -3,6 +3,7 @@
 import { useIsInsideVaul, VaulNestedProvider } from "@/shared/components/ui/vaul-nested-context";
 import { cn } from "@/shared/utils/cn";
 import { useBackButtonClose } from "@/shared/hooks/use-back-button-close";
+import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useRegisterOverlay } from "@/shared/hooks/use-register-overlay";
 import * as React from "react";
 import { Drawer as DrawerPrimitive } from "vaul";
@@ -107,17 +108,35 @@ function DrawerClose({ ...props }: React.ComponentProps<typeof DrawerPrimitive.C
 function DrawerHandle({
 	className,
 	"aria-label": ariaLabel = "Glisser pour fermer",
+	onPointerDown,
 	...props
 }: React.ComponentProps<typeof DrawerPrimitive.Handle>) {
+	const triggerHaptic = useHaptic();
+
+	const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+		// Haptic léger au début du drag (parité shop/admin "selection"-style).
+		// Fire-once par pointerdown — Vaul propage l'événement même si handleOnly,
+		// donc on garde la sémantique drag = feedback tactile à la prise.
+		if (event.pointerType === "touch") triggerHaptic("light");
+		onPointerDown?.(event);
+	};
+
 	return (
 		<DrawerPrimitive.Handle
 			data-slot="drawer-handle"
 			aria-label={ariaLabel}
+			onPointerDown={handlePointerDown}
 			className={cn(
-				"bg-primary/20 mx-auto mt-4 h-1.5 w-25 shrink-0 rounded-full",
+				// Visuel agrandi pour repère pouce : 8×128 (vs 6×100 avant)
+				// Contraste renforcé (/35 vs /20) — affordance évidente sur fond clair/sombre
+				"bg-primary/35 mx-auto mt-5 mb-1 h-2 w-32 shrink-0 rounded-full",
 				"cursor-grab active:cursor-grabbing",
-				// Zone tactile étendue (44px min pour accessibilité)
-				"before:absolute before:-inset-x-4 before:-inset-y-5 before:content-['']",
+				// Affordance pressé — scale composé safely avec le translateY de Vaul
+				"motion-safe:transition-transform motion-safe:duration-150 motion-safe:active:scale-[0.97]",
+				// Anneau de focus clavier — visible quand l'utilisateur tab vers la poignée
+				"focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
+				// Zone tactile étendue ~64×192px (vs ~46×132 avant) — confortable pour pouce
+				"before:absolute before:-inset-x-8 before:-inset-y-7 before:content-['']",
 				"relative",
 				className,
 			)}

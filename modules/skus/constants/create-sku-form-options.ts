@@ -11,10 +11,10 @@ export const createProductSkuFormOpts = {
 		inventory: null as number | null,
 		isDefault: false,
 		isActive: true,
-		colorId: "",
+		colorIds: [] as string[],
 		materialIds: [] as string[],
 		size: "",
-		primaryImage: undefined as MediaData | undefined,
-		galleryMedia: [] as MediaData[],
+		/** Médias unifiés (1er = principal, ordre = position). Cap : ARRAY_LIMITS.SKU_MEDIA. */
+		media: [] as MediaData[],
 	},
 };

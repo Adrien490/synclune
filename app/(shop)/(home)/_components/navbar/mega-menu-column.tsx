@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { LoadingIndicator } from "@/shared/components/navigation";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import {
 	ArrowRight,
@@ -99,7 +98,6 @@ export function MegaMenuColumn({
 				<NavigationMenuLink asChild>
 					<Link
 						href={primaryItem.href}
-						onClick={() => triggerHaptic("selection")}
 						aria-current={pathname === primaryItem.href ? "page" : undefined}
 						className={cn(
 							"relative flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
@@ -133,7 +131,6 @@ export function MegaMenuColumn({
 							<NavigationMenuLink asChild>
 								<Link
 									href={item.href}
-									onClick={() => triggerHaptic("light")}
 									aria-current={isActive ? "page" : undefined}
 									className={cn(
 										"relative flex min-h-11 items-center gap-2.5 rounded-sm px-3 py-2.5 text-sm",
@@ -167,7 +164,6 @@ export function MegaMenuColumn({
 					<NavigationMenuLink asChild>
 						<Link
 							href={viewAllLink.href}
-							onClick={() => triggerHaptic("selection")}
 							aria-current={pathname === viewAllLink.href ? "page" : undefined}
 							className={cn(
 								"relative inline-flex min-h-11 flex-row! items-center gap-2 rounded-sm px-3 py-2.5 text-sm font-medium",

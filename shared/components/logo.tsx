@@ -28,7 +28,7 @@ interface LogoProps {
 	shadow?: boolean;
 	/** View Transition name applied to the image wrapper for cross-page morphing. */
 	viewTransitionName?: string;
-	/** Haptic pattern triggered on tap. `false` opts out (e.g. checkout calme). */
+	/** Haptic pattern triggered on tap. Defaults to `false` (nav passive vers home). */
 	haptic?: HapticPattern | false;
 	/** Override the generated aria-label (homepage/admin fallbacks otherwise). */
 	ariaLabel?: string;
@@ -49,7 +49,7 @@ export function Logo({
 	rounded = "full",
 	shadow = false,
 	viewTransitionName,
-	haptic = "selection",
+	haptic = false,
 	ariaLabel,
 	enableTooltip = false,
 }: LogoProps) {

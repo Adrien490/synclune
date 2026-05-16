@@ -42,6 +42,14 @@ interface ResponsiveDialogProps {
 	children: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	/**
+	 * Mobile Vaul Drawer : si `true`, seule la `DrawerHandle` permet le
+	 * drag-to-close ; le contenu reste scrollable et tappable sans risque de
+	 * fermeture accidentelle. Default `true` (safe-by-default pour les forms
+	 * et dialogues admin qui constituent la majorité des consommateurs).
+	 * Passer `false` pour récupérer le drag-from-anywhere si désiré.
+	 */
+	handleOnly?: boolean;
 }
 
 /**
@@ -51,16 +59,23 @@ interface ResponsiveDialogProps {
  * Pattern parallèle à `ResponsiveAlertDialog` pour les overlays non-destructifs
  * (forms admin, dialogs de gestion). Sur mobile, les enfants sont
  * auto-scrollables via un wrap interne ; le DrawerContent reste overflow-hidden
- * pour préserver le swipe-to-close et le drag-handle natifs.
+ * pour préserver le drag-handle natif. Drag-to-close via la poignée uniquement
+ * par défaut (`handleOnly={true}`) — évite les fermetures accidentelles
+ * pendant scroll/tap sur formulaire.
  */
-function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProps) {
+function ResponsiveDialog({
+	children,
+	open,
+	onOpenChange,
+	handleOnly = true,
+}: ResponsiveDialogProps) {
 	const isMobile = useIsMobile();
 	const value = React.useMemo(() => ({ isMobile }), [isMobile]);
 
 	return (
 		<Ctx.Provider value={value}>
 			{isMobile ? (
-				<Drawer open={open} onOpenChange={onOpenChange}>
+				<Drawer open={open} onOpenChange={onOpenChange} handleOnly={handleOnly}>
 					{children}
 				</Drawer>
 			) : (
@@ -103,7 +118,10 @@ function ResponsiveDialogContent({
 				style={overlayStyle}
 				{...(props as React.ComponentProps<typeof DrawerContent>)}
 			>
-				<div className="-mx-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2 [scrollbar-gutter:stable]">
+				<div
+					className="-mx-4 flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain px-4 pb-2 [scrollbar-gutter:stable]"
+					data-vaul-no-drag
+				>
 					{children}
 				</div>
 			</DrawerContent>

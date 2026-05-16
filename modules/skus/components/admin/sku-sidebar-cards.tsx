@@ -1,150 +1,69 @@
 "use client";
 
-import { FieldLabel } from "@/shared/components/forms";
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-group";
-import { Euro, Package } from "lucide-react";
-import type { SkuFormInstance } from "./sku-form-types";
+import { PricingCard } from "@/modules/products/components/admin/shared/pricing-card";
+import { StatusCard } from "@/modules/products/components/admin/shared/status-card";
+import { StockCard } from "@/modules/products/components/admin/shared/stock-card";
+import { VariantCard } from "@/modules/products/components/admin/shared/variant-card";
+
+import type { SkuFormInstance, SkuFormSharedProps } from "./sku-form-types";
 
 interface SkuSidebarCardsProps {
 	form: SkuFormInstance;
+	colors: SkuFormSharedProps["colors"];
+	materials: SkuFormSharedProps["materials"];
+	/** Préfixe pour les viewTransitionName (default "sku-create"). */
+	viewTransitionPrefix?: "sku-create" | "sku-edit";
 }
 
-const MOBILE_SECTION_TITLE =
-	"text-muted-foreground text-sm font-semibold tracking-wide uppercase lg:text-foreground lg:text-base lg:font-semibold lg:normal-case lg:tracking-normal";
-
-const COMPARE_AT_PRICE_ERROR = "Le prix comparé doit être supérieur ou égal au prix de vente";
-
-type CompareAtValidatorArgs = {
-	value: number | null | undefined;
-	fieldApi: {
-		form: { getFieldValue: (name: "priceInclTaxEuros") => number | null | undefined };
-	};
-};
-
-function validateCompareAtPrice({ value, fieldApi }: CompareAtValidatorArgs) {
-	if (!value) return undefined;
-	const price = fieldApi.form.getFieldValue("priceInclTaxEuros");
-	return price && value < price ? COMPARE_AT_PRICE_ERROR : undefined;
-}
-
-export function SkuSidebarCards({ form }: SkuSidebarCardsProps) {
+export function SkuSidebarCards({
+	form,
+	colors,
+	materials,
+	viewTransitionPrefix = "sku-create",
+}: SkuSidebarCardsProps) {
 	return (
 		<div className="space-y-6">
-			<PricingCard form={form} />
-			<StockCard form={form} />
+			<VariantCard
+				form={form}
+				colors={colors}
+				materials={materials}
+				colorIdsFieldName="colorIds"
+				materialsFieldName="materialIds"
+				sizeFieldName="size"
+				ariaLabel="Variante"
+				tooltipText="Couleur, matériau et taille distinguent cette variante des autres variantes du même produit."
+				viewTransitionName={`${viewTransitionPrefix}-variant`}
+			/>
+			<PricingCard
+				form={form}
+				priceFieldName="priceInclTaxEuros"
+				compareAtPriceFieldName="compareAtPriceEuros"
+				hintIdPrefix={`${viewTransitionPrefix}-price`}
+				viewTransitionName={`${viewTransitionPrefix}-pricing`}
+			/>
+			<StockCard
+				form={form}
+				inventoryFieldName="inventory"
+				hintIdPrefix={`${viewTransitionPrefix}-stock`}
+				hint="Laissez vide ou 0 si la variante est en rupture"
+				viewTransitionName={`${viewTransitionPrefix}-stock`}
+			/>
+			<StatusCard
+				form={form}
+				cardAriaLabel="Statut de la variante"
+				radioFieldName="isActive"
+				radioLabel="Disponibilité"
+				radioOptions={[
+					{ value: "true", label: "Actif" },
+					{ value: "false", label: "Inactif" },
+				]}
+				radioHint="Une variante inactive n'est pas achetable même si le produit est public"
+				isDefaultFieldName="isDefault"
+				isDefaultLabel="Variante par défaut"
+				isDefaultCheckboxLabel="Affichée en premier sur la fiche produit"
+				isDefaultHint="Une seule variante par produit peut être marquée par défaut"
+				viewTransitionName={`${viewTransitionPrefix}-status`}
+			/>
 		</div>
-	);
-}
-
-function PricingCard({ form }: { form: SkuFormInstance }) {
-	return (
-		<Card
-			role="region"
-			aria-label="Tarification"
-			style={{ viewTransitionName: "sku-pricing" }}
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
-		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Tarification</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-4 px-0 sm:px-0 lg:px-6">
-				<form.AppField
-					name="priceInclTaxEuros"
-					validators={{
-						onChange: ({ value }: { value: number | null }) =>
-							!value || value <= 0 ? "Le prix doit être supérieur à 0" : undefined,
-					}}
-				>
-					{(field) => (
-						<div className="space-y-2">
-							<FieldLabel required>Prix de vente final</FieldLabel>
-							<field.InputGroupField
-								type="number"
-								step="0.01"
-								required
-								enterKeyHint="next"
-								aria-describedby="sku-price-sale-hint"
-							>
-								<InputGroupAddon>
-									<Euro className="size-4" />
-								</InputGroupAddon>
-							</field.InputGroupField>
-							<p id="sku-price-sale-hint" className="text-muted-foreground text-xs">
-								Le prix que paiera le client
-							</p>
-						</div>
-					)}
-				</form.AppField>
-
-				<form.AppField
-					name="compareAtPriceEuros"
-					validators={{
-						onChangeListenTo: ["priceInclTaxEuros"],
-						onChange: validateCompareAtPrice,
-						onBlur: validateCompareAtPrice,
-					}}
-				>
-					{(field) => (
-						<div className="space-y-2">
-							<FieldLabel optional>Ancien prix (affiché barré)</FieldLabel>
-							<field.InputGroupField
-								type="number"
-								step="0.01"
-								enterKeyHint="done"
-								aria-describedby="sku-price-compare-hint"
-							>
-								<InputGroupAddon>
-									<Euro className="size-4" />
-								</InputGroupAddon>
-							</field.InputGroupField>
-							<p id="sku-price-compare-hint" className="text-muted-foreground text-xs">
-								Sera affiché barré à côté du prix actuel (ex:{" "}
-								<span className="line-through">45€</span> → 39€)
-							</p>
-						</div>
-					)}
-				</form.AppField>
-			</CardContent>
-		</Card>
-	);
-}
-
-function StockCard({ form }: { form: SkuFormInstance }) {
-	return (
-		<Card
-			role="region"
-			aria-label="Stock"
-			style={{ viewTransitionName: "sku-stock" }}
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
-		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className={MOBILE_SECTION_TITLE}>Stock</CardTitle>
-			</CardHeader>
-			<CardContent className="px-0 sm:px-0 lg:px-6">
-				<form.AppField name="inventory">
-					{(field) => (
-						<div className="space-y-2">
-							<FieldLabel optional>Quantité en stock</FieldLabel>
-							<field.InputGroupField
-								type="number"
-								min={0}
-								inputMode="numeric"
-								enterKeyHint="done"
-								aria-describedby="sku-stock-hint"
-							>
-								<InputGroupAddon align="inline-end">
-									<Package className="text-muted-foreground size-4" />
-									<InputGroupText className="text-muted-foreground text-xs">unités</InputGroupText>
-								</InputGroupAddon>
-							</field.InputGroupField>
-							<p id="sku-stock-hint" className="text-muted-foreground text-xs">
-								Laissez vide ou 0 si la variante est en rupture
-							</p>
-						</div>
-					)}
-				</form.AppField>
-			</CardContent>
-		</Card>
 	);
 }

@@ -7,7 +7,6 @@ import type { NavItemChild, MegaMenuProduct } from "@/shared/constants/navigatio
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { formatPrice } from "@/modules/products/utils/format-price";
 import { ROUTES } from "@/shared/constants/urls";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { MegaMenuColumn } from "./mega-menu-column";
 
@@ -63,7 +62,6 @@ export function MegaMenuCreations({ productTypes, featuredProducts }: MegaMenuCr
 								<NavigationMenuLink key={product.slug} asChild>
 									<Link
 										href={ROUTES.SHOP.PRODUCT(product.slug)}
-										onClick={() => triggerHaptic("light")}
 										className={cn(
 											"group/product flex flex-col gap-2",
 											"rounded-lg p-1.5",

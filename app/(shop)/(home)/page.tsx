@@ -16,7 +16,6 @@ import { HeroReassuranceBanner } from "./_components/hero-reassurance-banner";
 import { HeroSection } from "./_components/hero-section";
 import { HeroSectionSkeleton } from "./_components/hero-section-skeleton";
 import { HomeFaq } from "./_components/home-faq";
-import { InstagramTeaser } from "./_components/instagram-teaser";
 import { LatestCreationsSkeleton } from "./_components/latest-creations-skeleton";
 import { ReviewsSection } from "./_components/reviews-section";
 import { ReviewsSectionSkeleton } from "./_components/reviews-section-skeleton";
@@ -114,10 +113,7 @@ export default async function Page() {
 				<AtelierSection />
 			</Suspense>
 
-			{/* 6. Instagram - Social proof + main acquisition channel for an artisan creator */}
-			<InstagramTeaser />
-
-			{/* 7. FAQ - Long-tail SEO + last-mile reassurance */}
+			{/* 6. FAQ - Long-tail SEO + last-mile reassurance */}
 			<HomeFaq />
 
 			<ScrollToTop />

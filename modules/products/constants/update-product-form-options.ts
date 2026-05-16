@@ -16,7 +16,7 @@ export const editProductFormOpts = {
 			compareAtPriceEuros: undefined as number | undefined,
 			inventory: 0,
 			isActive: true,
-			colorId: "",
+			colorIds: [] as string[],
 			materialIds: [] as string[],
 			size: "",
 			media: [] as Array<{

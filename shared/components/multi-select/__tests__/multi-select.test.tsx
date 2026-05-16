@@ -52,8 +52,12 @@ vi.mock("@/shared/components/ui/popover", () => ({
 }));
 
 vi.mock("@/shared/components/ui/drawer", () => ({
-	Drawer: ({ children, open }: any) => (
-		<div data-testid="drawer" data-open={String(open)}>
+	Drawer: ({ children, open, handleOnly }: any) => (
+		<div
+			data-testid="drawer"
+			data-open={String(open)}
+			data-handle-only={String(Boolean(handleOnly))}
+		>
 			{children}
 		</div>
 	),
@@ -62,8 +66,13 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 	DrawerHeader: ({ children }: any) => <div data-testid="drawer-header">{children}</div>,
 	DrawerTitle: ({ children }: any) => <h2 data-testid="drawer-title">{children}</h2>,
 	DrawerDescription: ({ children }: any) => <p data-testid="drawer-description">{children}</p>,
-	DrawerBody: ({ children, className, style }: any) => (
-		<div data-testid="drawer-body" className={className} style={style}>
+	DrawerBody: ({ children, className, style, ...rest }: any) => (
+		<div
+			data-testid="drawer-body"
+			className={className}
+			style={style}
+			data-vaul-no-drag={rest["data-vaul-no-drag"] !== undefined ? "" : undefined}
+		>
 			{children}
 		</div>
 	),
@@ -345,6 +354,18 @@ describe("MultiSelect — responsive", () => {
 			/>,
 		);
 		expect(screen.getByTestId("drawer-title").textContent).toBe("Choisir des couleurs");
+	});
+
+	it("mobile Drawer uses handleOnly to prevent scroll/drag conflict", () => {
+		mockIsMobile.value = true;
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByTestId("drawer").getAttribute("data-handle-only")).toBe("true");
+	});
+
+	it("mobile DrawerBody is flagged data-vaul-no-drag", () => {
+		mockIsMobile.value = true;
+		render(<MultiSelect options={OPTIONS} value={[]} onValueChange={vi.fn()} />);
+		expect(screen.getByTestId("drawer-body").hasAttribute("data-vaul-no-drag")).toBe(true);
 	});
 });
 

@@ -12,7 +12,7 @@ interface SkuDetailInfoCardProps {
 
 export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 	return (
-		<Card style={{ viewTransitionName: "sku-attributes" }}>
+		<Card style={{ viewTransitionName: "sku-edit-variant" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Info className="size-5" aria-hidden="true" />
@@ -53,21 +53,26 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							</dd>
 						</div>
 					) : null}
-					{sku.color ? (
-						<div className="flex items-center justify-between gap-3">
-							<dt className="text-muted-foreground">Couleur</dt>
-							<dd>
-								<Link
-									href={`/admin/catalogue/couleurs/${sku.color.slug}`}
-									className="hover:text-primary focus-visible:ring-ring inline-flex items-center gap-2 rounded-md px-1 py-0.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
-								>
-									<span
-										className="border-border size-3 shrink-0 rounded-full border"
-										style={{ backgroundColor: sku.color.hex }}
-										aria-hidden="true"
-									/>
-									{sku.color.name}
-								</Link>
+					{sku.colors && sku.colors.length > 0 ? (
+						<div className="flex items-start justify-between gap-3">
+							<dt className="text-muted-foreground pt-0.5">
+								{sku.colors.length > 1 ? "Couleurs" : "Couleur"}
+							</dt>
+							<dd className="flex flex-wrap items-center justify-end gap-2">
+								{sku.colors.map(({ color }) => (
+									<Link
+										key={color.id}
+										href={`/admin/catalogue/couleurs/${color.slug}`}
+										className="hover:text-primary focus-visible:ring-ring inline-flex items-center gap-2 rounded-md px-1 py-0.5 text-sm font-medium transition-colors outline-none focus-visible:ring-2"
+									>
+										<span
+											className="border-border size-3 shrink-0 rounded-full border"
+											style={{ backgroundColor: color.hex }}
+											aria-hidden="true"
+										/>
+										{color.name}
+									</Link>
+								))}
 							</dd>
 						</div>
 					) : null}

@@ -42,7 +42,6 @@ function createMockSkuForValidation(overrides: Record<string, unknown> = {}) {
 		compareAtPrice: null,
 		inventory: 10,
 		isActive: true,
-		colorId: "color_123",
 		size: "M",
 		deletedAt: null,
 		product: {
@@ -54,7 +53,13 @@ function createMockSkuForValidation(overrides: Record<string, unknown> = {}) {
 			deletedAt: null,
 		},
 		images: [{ url: "https://cdn.example.com/img.jpg", altText: "Bracelet", isPrimary: true }],
-		color: { id: "color_123", name: "Or", hex: "#FFD700" },
+		colors: [
+			{
+				colorId: "color_123",
+				position: 0,
+				color: { id: "color_123", name: "Or", hex: "#FFD700" },
+			},
+		],
 		materials: [
 			{
 				materialId: "mat_123",
@@ -107,7 +112,7 @@ describe("fetchSkuForValidation", () => {
 		expect(result?.id).toBe(VALID_SKU_ID);
 		expect(result?.product).toBeDefined();
 		expect(result?.images).toBeInstanceOf(Array);
-		expect(result?.color).toBeDefined();
+		expect(result?.colors).toBeDefined();
 		expect(result?.materials).toBeDefined();
 	});
 
@@ -119,7 +124,7 @@ describe("fetchSkuForValidation", () => {
 		expect(result).toBeNull();
 	});
 
-	it("selects id, sku, priceInclTax, compareAtPrice, inventory, isActive, colorId, size, deletedAt", async () => {
+	it("selects id, sku, priceInclTax, compareAtPrice, inventory, isActive, size, deletedAt", async () => {
 		await fetchSkuForValidation(VALID_SKU_ID);
 
 		const callArg = mockFindUnique.mock.calls[0]![0];
@@ -130,7 +135,6 @@ describe("fetchSkuForValidation", () => {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			colorId: true,
 			size: true,
 			deletedAt: true,
 		});

@@ -33,7 +33,6 @@ export function PolaroidGallery() {
 								washiColor={p.washiColor}
 								washiPosition={p.washiPosition}
 								vintage={p.vintage}
-								data-atelier-haptic="polaroid"
 								className={cn(
 									p.scatterClass,
 									"polaroid-scatter",

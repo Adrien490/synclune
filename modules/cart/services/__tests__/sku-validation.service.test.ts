@@ -47,7 +47,6 @@ function createSkuRow(overrides: Record<string, unknown> = {}) {
 		inventory: 10,
 		isActive: true,
 		size: "M",
-		colorId: "color123",
 		deletedAt: null,
 		product: {
 			id: PROD_ID,
@@ -57,7 +56,13 @@ function createSkuRow(overrides: Record<string, unknown> = {}) {
 			status: "PUBLIC",
 			deletedAt: null,
 		},
-		color: { id: "color123", name: "Or", hex: "#FFD700" },
+		colors: [
+			{
+				colorId: "color123",
+				position: 0,
+				color: { id: "color123", name: "Or", hex: "#FFD700" },
+			},
+		],
 		materials: [
 			{
 				materialId: "mat123",
@@ -101,7 +106,7 @@ describe("validateSkuAndStock", () => {
 		expect(result.success).toBe(true);
 		expect(result.data?.sku.id).toBe(SKU_ID);
 		expect(result.data?.sku.product.title).toBe("Bracelet Lune");
-		expect(result.data?.sku.color).toEqual({ id: "color123", name: "Or", hex: "#FFD700" });
+		expect(result.data?.sku.colors).toEqual([{ id: "color123", name: "Or", hex: "#FFD700" }]);
 		expect(result.data?.sku.material).toBe("Argent 925");
 		expect(result.data?.sku.images).toHaveLength(1);
 	});
@@ -198,18 +203,17 @@ describe("validateSkuAndStock", () => {
 		expect(result.error).toBe(CART_ERROR_MESSAGES.GENERAL_ERROR);
 	});
 
-	it("should handle SKU without optional fields (no color, material, size)", async () => {
+	it("should handle SKU without optional fields (no colors, material, size)", async () => {
 		mockFetchSkuForValidation.mockResolvedValue(
-			createSkuRow({ color: null, materials: [], colorId: null, size: null }),
+			createSkuRow({ colors: [], materials: [], size: null }),
 		);
 
 		const result = await validateSkuAndStock({ skuId: SKU_ID, quantity: 1 });
 
 		expect(result.success).toBe(true);
-		expect(result.data?.sku.color).toBeUndefined();
+		expect(result.data?.sku.colors).toEqual([]);
 		expect(result.data?.sku.material).toBeUndefined();
 		expect(result.data?.sku.size).toBeUndefined();
-		expect(result.data?.sku.colorId).toBeUndefined();
 	});
 });
 

@@ -12,13 +12,21 @@ export const GET_PRODUCT_SKU_SELECT = {
 	inventory: true,
 	isActive: true,
 	isDefault: true,
-	color: {
+	// Couleurs M2M ordonnées par priorité (1re = principale pour vignette + snapshot)
+	colors: {
 		select: {
-			id: true,
-			name: true,
-			hex: true,
-			slug: true,
+			colorId: true,
+			position: true,
+			color: {
+				select: {
+					id: true,
+					name: true,
+					hex: true,
+					slug: true,
+				},
+			},
 		},
+		orderBy: { position: "asc" as const },
 	},
 	// Matériaux M2M ordonnés par priorité (1er = principal pour SEO/care-tips)
 	materials: {
@@ -79,13 +87,21 @@ export const GET_PRODUCT_SKUS_DEFAULT_SELECT = {
 			status: true,
 		},
 	},
-	color: {
+	// Couleurs M2M ordonnées par priorité (1re = principale pour vignette + snapshot)
+	colors: {
 		select: {
-			id: true,
-			name: true,
-			hex: true,
-			slug: true,
+			colorId: true,
+			position: true,
+			color: {
+				select: {
+					id: true,
+					name: true,
+					hex: true,
+					slug: true,
+				},
+			},
 		},
+		orderBy: { position: "asc" as const },
 	},
 	// Matériaux M2M ordonnés (1er = principal)
 	materials: {

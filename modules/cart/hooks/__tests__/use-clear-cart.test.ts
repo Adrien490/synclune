@@ -94,14 +94,14 @@ describe("useClearCart", () => {
 			expect(mockToast.dismiss).toHaveBeenCalledWith("toast-id-1");
 		});
 
-		it("shows success toast with result message", async () => {
+		it("does not show success toast (panier vide est sa propre confirmation visuelle)", async () => {
 			const { result } = renderHook(() => useClearCart());
 
 			await act(async () => {
 				result.current.action(makeFormData());
 			});
 
-			expect(mockToast.success).toHaveBeenCalledWith("Panier vide");
+			expect(mockToast.success).not.toHaveBeenCalled();
 		});
 
 		it("shows error toast on failure", async () => {

@@ -3,25 +3,23 @@
  */
 
 import type { SkuWithImages } from "../data/get-sku";
-import type { UpdateProductSkuFormValues } from "../types/sku-form.types";
+import type { MediaData, UpdateProductSkuFormValues } from "../types/sku-form.types";
 
 /**
- * Génère les options du formulaire d'édition de SKU avec les valeurs pré-remplies
+ * Génère les options du formulaire d'édition de SKU avec les valeurs pré-remplies.
+ *
+ * Les images sont déjà triées par `position asc` côté data layer (getSkuById).
+ * On préserve cet ordre dans le tableau unifié `media[]` (1er item = principal,
+ * matche `isPrimary: true` en base).
  */
 export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
-	// Trouver l'image principale
-	const primaryImage = sku.images.find((img) => img.isPrimary);
-
-	// Récupérer les images de galerie (non-primary)
-	const galleryMedia = sku.images
-		.filter((img) => !img.isPrimary)
-		.map((img) => ({
-			url: img.url,
-			thumbnailUrl: img.thumbnailUrl ?? undefined,
-			blurDataUrl: img.blurDataUrl ?? undefined,
-			altText: img.altText ?? undefined,
-			mediaType: img.mediaType,
-		}));
+	const media: MediaData[] = sku.images.map((img) => ({
+		url: img.url,
+		thumbnailUrl: img.thumbnailUrl ?? undefined,
+		blurDataUrl: img.blurDataUrl ?? undefined,
+		altText: img.altText ?? undefined,
+		mediaType: img.mediaType,
+	}));
 
 	return {
 		defaultValues: {
@@ -31,20 +29,12 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			inventory: sku.inventory,
 			isDefault: sku.isDefault,
 			isActive: sku.isActive,
-			colorId: sku.color?.id ?? "",
+			// Couleurs M2M ordonnées (1re = principale). Préserve l'ordre saisi côté admin.
+			colorIds: sku.colors.map((c) => c.colorId),
 			// Matériaux M2M ordonnés (1er = principal). Préserve l'ordre saisi côté admin.
-			materialIds: sku.materials?.map((m) => m.materialId) ?? [],
+			materialIds: sku.materials.map((m) => m.materialId),
 			size: sku.size ?? "",
-			primaryImage: primaryImage
-				? {
-						url: primaryImage.url,
-						thumbnailUrl: primaryImage.thumbnailUrl ?? undefined,
-						blurDataUrl: primaryImage.blurDataUrl ?? undefined,
-						altText: primaryImage.altText ?? undefined,
-						mediaType: primaryImage.mediaType,
-					}
-				: undefined,
-			galleryMedia,
+			media,
 		} satisfies UpdateProductSkuFormValues,
 	};
 }

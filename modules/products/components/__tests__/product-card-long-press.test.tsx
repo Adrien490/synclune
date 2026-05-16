@@ -104,14 +104,14 @@ describe("ProductCardLongPress", () => {
 			expect(menu).toHaveAttribute("aria-label", "Actions rapides pour Bague Lune");
 		});
 
-		it("triggers medium haptic on long-press", () => {
+		it("does not trigger any haptic on long-press (haptics disabled on product card)", () => {
 			render(
 				<ProductCardLongPress productTitle="B" productUrl="/creations/b">
 					<div>Card</div>
 				</ProductCardLongPress>,
 			);
 			triggerLongPress();
-			expect(mockHaptic).toHaveBeenCalledWith("medium");
+			expect(mockHaptic).not.toHaveBeenCalled();
 		});
 	});
 
@@ -160,7 +160,7 @@ describe("ProductCardLongPress", () => {
 	});
 
 	describe("wishlist interaction", () => {
-		it("calls onWishlist and fires light haptic on click", () => {
+		it("calls onWishlist on click (haptics disabled on product card)", () => {
 			const onWishlist = vi.fn();
 			render(
 				<ProductCardLongPress productTitle="B" productUrl="/creations/b" onWishlist={onWishlist}>
@@ -172,7 +172,7 @@ describe("ProductCardLongPress", () => {
 			fireEvent.click(button);
 
 			expect(onWishlist).toHaveBeenCalledTimes(1);
-			expect(mockHaptic).toHaveBeenCalledWith("light");
+			expect(mockHaptic).not.toHaveBeenCalled();
 		});
 
 		it("closes the menu after wishlist click", () => {

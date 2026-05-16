@@ -108,8 +108,12 @@ export async function updateColor(_prevState: unknown, formData: FormData): Prom
 
 		const affectedProductSlugs: string[] = [];
 		if (nameOrHexChanged) {
+			// M2M : on cherche les SKUs actifs liés à cette couleur via la jointure
 			const skus = await prisma.productSku.findMany({
-				where: { colorId: validatedData.id, deletedAt: null },
+				where: {
+					deletedAt: null,
+					colors: { some: { colorId: validatedData.id } },
+				},
 				select: { product: { select: { slug: true } } },
 				distinct: ["productId"],
 			});

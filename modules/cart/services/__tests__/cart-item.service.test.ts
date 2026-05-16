@@ -52,7 +52,13 @@ function createCartItem(
 					isPrimary: true,
 				},
 			]) as CartItem["sku"]["images"],
-			color: { id: "color-1", name: "Or", hex: "#FFD700" },
+			colors: [
+				{
+					colorId: "color-1",
+					position: 0,
+					color: { id: "color-1", name: "Or", hex: "#FFD700" },
+				},
+			],
 			materials: [
 				{
 					materialId: "mat-1",

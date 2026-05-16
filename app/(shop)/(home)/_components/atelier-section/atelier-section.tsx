@@ -6,7 +6,6 @@ import { IMAGES } from "@/shared/constants/images";
 import { SITE_URL } from "@/shared/constants/seo-config";
 import { SECTION_SPACING } from "@/shared/constants/spacing";
 import { cacheLife, cacheTag } from "next/cache";
-import { AtelierHapticBridge } from "./atelier-haptic-bridge";
 import { CreativeProcessTimeline } from "./creative-process-timeline";
 import { POLAROIDS } from "./polaroid-config";
 import { PolaroidGallery } from "./polaroid-gallery";
@@ -110,87 +109,85 @@ export async function AtelierSection() {
 				}}
 			/>
 
-			<AtelierHapticBridge>
-				<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
-					{/* Header */}
-					<header className="mb-10 text-center lg:mb-14">
-						<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
-							<SectionTitle id="atelier-section-title">Mon atelier</SectionTitle>
-							<HandDrawnUnderline
-								color="var(--secondary)"
-								delay={MOTION_CONFIG.section.underline.delay}
-								className="mx-auto mt-2"
-							/>
-						</Fade>
-						<Fade
-							y={MOTION_CONFIG.section.subtitle.y}
-							delay={MOTION_CONFIG.section.subtitle.delay}
-							duration={MOTION_CONFIG.section.subtitle.duration}
-						>
-							<p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal text-balance">
-								Là où chaque bijou prend vie, un geste à la fois.
-							</p>
-						</Fade>
-					</header>
-
-					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
-						<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
-							<PlaceholderImage
-								preserveAspect
-								className="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
-								label="L'atelier de création Synclune, où chaque bijou prend vie"
-							/>
-						</div>
+			<div className="relative mx-auto max-w-6xl pr-[max(1rem,env(safe-area-inset-right))] pl-[max(1rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))] sm:pl-[max(1.5rem,env(safe-area-inset-left))] lg:pr-[max(2rem,env(safe-area-inset-right))] lg:pl-[max(2rem,env(safe-area-inset-left))]">
+				{/* Header */}
+				<header className="mb-10 text-center lg:mb-14">
+					<Fade y={MOTION_CONFIG.section.title.y} duration={MOTION_CONFIG.section.title.duration}>
+						<SectionTitle id="atelier-section-title">Mon atelier</SectionTitle>
+						<HandDrawnUnderline
+							color="var(--secondary)"
+							delay={MOTION_CONFIG.section.underline.delay}
+							className="mx-auto mt-2"
+						/>
 					</Fade>
-
-					{/* Confession text with progressive reveal */}
 					<Fade
 						y={MOTION_CONFIG.section.subtitle.y}
 						delay={MOTION_CONFIG.section.subtitle.delay}
 						duration={MOTION_CONFIG.section.subtitle.duration}
-						inView
-						once
 					>
-						<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
-							<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
-								<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
-							</p>
-
-							<div className="text-muted-foreground space-y-4 text-base leading-relaxed text-balance sm:space-y-6 sm:text-lg">
-								<Fade inView once y={15} delay={0}>
-									<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
-								</Fade>
-								<Fade inView once y={15} delay={0.2}>
-									<p>
-										Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà,
-										dans mon petit atelier ! C'était pas prévu à la base.
-									</p>
-								</Fade>
-								<Fade inView once y={15} delay={0.4}>
-									<p>
-										Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
-										assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de
-										dix).
-									</p>
-								</Fade>
-							</div>
-
-							{/* Signature with ink-flow reveal */}
-							<SignatureReveal />
-						</div>
+						<p className="text-muted-foreground mx-auto mt-5 max-w-2xl text-lg/8 tracking-normal text-balance">
+							Là où chaque bijou prend vie, un geste à la fois.
+						</p>
 					</Fade>
+				</header>
 
-					{/* Creative process timeline */}
-					<div className="mt-10 sm:mt-16">
-						<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
-							<CreativeProcessTimeline />
-						</Fade>
+				<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
+					<div className="mx-auto mb-10 max-w-4xl sm:mb-14">
+						<PlaceholderImage
+							preserveAspect
+							className="aspect-[4/3] rounded-2xl sm:aspect-[16/7]"
+							label="L'atelier de création Synclune, où chaque bijou prend vie"
+						/>
 					</div>
+				</Fade>
 
-					{/* Polaroid gallery */}
-					<PolaroidGallery />
+				{/* Confession text with progressive reveal */}
+				<Fade
+					y={MOTION_CONFIG.section.subtitle.y}
+					delay={MOTION_CONFIG.section.subtitle.delay}
+					duration={MOTION_CONFIG.section.subtitle.duration}
+					inView
+					once
+				>
+					<div className="confession-glow mx-auto max-w-3xl space-y-4 text-center sm:space-y-6">
+						<p className="text-foreground text-2xl font-light tracking-tight sm:text-3xl md:text-4xl">
+							<SplitText stagger={0.08}>Je vais vous faire une confidence.</SplitText>
+						</p>
+
+						<div className="text-muted-foreground space-y-4 text-base leading-relaxed text-balance sm:space-y-6 sm:text-lg">
+							<Fade inView once y={15} delay={0}>
+								<p>Quand j'ai commencé à créer des bijoux, c'était juste pour moi.</p>
+							</Fade>
+							<Fade inView once y={15} delay={0.2}>
+								<p>
+									Et puis, des amies ont voulu les mêmes. Puis des amies d'amies. Et me voilà, dans
+									mon petit atelier ! C'était pas prévu à la base.
+								</p>
+							</Fade>
+							<Fade inView once y={15} delay={0.4}>
+								<p>
+									Chaque bijou que vous voyez ici, j'ai choisi ses couleurs, peint ses motifs,
+									assemblé chaque perle. Il n'existe qu'en quelques exemplaires (parfois moins de
+									dix).
+								</p>
+							</Fade>
+						</div>
+
+						{/* Signature with ink-flow reveal */}
+						<SignatureReveal />
+					</div>
+				</Fade>
+
+				{/* Creative process timeline */}
+				<div className="mt-10 sm:mt-16">
+					<Fade inView once y={20} duration={MOTION_CONFIG.section.content.duration}>
+						<CreativeProcessTimeline />
+					</Fade>
 				</div>
-			</AtelierHapticBridge>
+
+				{/* Polaroid gallery */}
+				<PolaroidGallery />
+			</div>
 		</section>
 	);
 }

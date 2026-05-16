@@ -143,7 +143,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	if (selectedSku?.images) {
 		const variantInfo = {
 			materialName: selectedSku.materials?.[0]?.material.name,
-			colorName: selectedSku.color?.name,
+			colorName: selectedSku.colors?.map((c) => c.color.name).join(" + "),
 			size: selectedSku.size,
 		};
 		for (const skuImage of selectedSku.images) {
@@ -157,7 +157,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	if (defaultSku && defaultSku.id !== selectedSku?.id) {
 		const variantInfo = {
 			materialName: defaultSku.materials?.[0]?.material.name,
-			colorName: defaultSku.color?.name,
+			colorName: defaultSku.colors?.map((c) => c.color.name).join(" + "),
 			size: defaultSku.size,
 		};
 		for (const skuImage of defaultSku.images) {
@@ -174,7 +174,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 
 			const variantInfo = {
 				materialName: sku.materials?.[0]?.material.name,
-				colorName: sku.color?.name,
+				colorName: sku.colors?.map((c) => c.color.name).join(" + "),
 				size: sku.size,
 			};
 			for (const skuImage of sku.images) {
@@ -210,7 +210,7 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 					{
 						productType,
 						materialName: sku?.materials?.[0]?.material.name,
-						colorName: sku?.color?.name,
+						colorName: sku?.colors?.map((c) => c.color.name).join(" + "),
 						size: sku?.size,
 					},
 					index,

@@ -24,12 +24,18 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 		priceInclTax: 2000,
 		compareAtPrice: null,
 		size: null,
-		color: {
-			id: "color-1",
-			slug: "or-rose",
-			hex: "#B76E79",
-			name: "Or Rose",
-		},
+		colors: [
+			{
+				colorId: "color-1",
+				position: 0,
+				color: {
+					id: "color-1",
+					slug: "or-rose",
+					hex: "#B76E79",
+					name: "Or Rose",
+				},
+			},
+		],
 		materials: [
 			{
 				materialId: "mat-1",
@@ -87,7 +93,7 @@ describe("matchColor", () => {
 	});
 
 	it("should return false when SKU has no color and a selector is provided", () => {
-		const sku = makeSku({ color: null });
+		const sku = makeSku({ colors: [] });
 
 		expect(matchColor(sku, { colorSlug: "or-rose" })).toBe(false);
 	});
@@ -216,11 +222,23 @@ describe("filterCompatibleSkus", () => {
 			skus: [
 				makeSku({
 					id: "sku-1",
-					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					colors: [
+						{
+							colorId: "c1",
+							position: 0,
+							color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+						},
+					],
 				}),
 				makeSku({
 					id: "sku-2",
-					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					colors: [
+						{
+							colorId: "c2",
+							position: 0,
+							color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+						},
+					],
 				}),
 			],
 		};

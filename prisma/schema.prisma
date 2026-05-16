@@ -208,13 +208,13 @@ model ProductType {
 }
 
 model Color {
-  id          String       @id @default(cuid())
-  slug        String       @unique
-  name        String       @unique @db.VarChar(100)
-  hex         String       @db.VarChar(7)
-  description String?      @db.Text // Notes créatrice (or rose 18K mat, hypoallergénique, etc.)
-  isActive    Boolean      @default(true) // Coherence avec Material
-  skus        ProductSku[]
+  id          String            @id @default(cuid())
+  slug        String            @unique
+  name        String            @unique @db.VarChar(100)
+  hex         String            @db.VarChar(7)
+  description String?           @db.Text // Notes créatrice (or rose 18K mat, hypoallergénique, etc.)
+  isActive    Boolean           @default(true) // Coherence avec Material
+  skuColors   ProductSkuColor[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -235,6 +235,30 @@ model Material {
 
   // Filtre fréquent sur getMaterialOptions (where isActive: true) + listing admin
   @@index([isActive])
+}
+
+/// Table de jointure explicite ProductSku <-> Color (many-to-many)
+/// Permet à une variante d'être composée de plusieurs couleurs (bague bicolore
+/// or rose + argent, dégradé tricolore, etc.).
+/// L'ordre (`position`) reflète la priorité : position=0 = couleur principale
+/// (utilisée pour vignette listing/PDP, snapshot OrderItem joint dans l'ordre).
+model ProductSkuColor {
+  id      String     @id @default(cuid())
+  skuId   String
+  sku     ProductSku @relation(fields: [skuId], references: [id], onDelete: Cascade)
+  colorId String
+  // onDelete: Restrict — préserve la protection anti-orphans (parité matériaux)
+  color   Color      @relation(fields: [colorId], references: [id], onDelete: Restrict)
+
+  position Int      @default(0)
+  addedAt  DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([skuId, colorId])
+  @@index([colorId]) // FK reverse lookup (filtre storefront + merge-colors)
+  @@index([skuId, position]) // récupération ordonnée des couleurs d'un SKU
 }
 
 /// Table de jointure explicite ProductSku <-> Material (many-to-many)
@@ -347,8 +371,12 @@ model ProductSku {
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  colorId String?
-  color   Color?  @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  // Couleurs multi (M2M via ProductSkuColor). Un SKU peut être composé de
+  // plusieurs couleurs (ex: bague bicolore or rose + argent). Ordre = priorité,
+  // la 1re (position=0) est la couleur « principale » utilisée pour la vignette
+  // listing/PDP et le snapshot OrderItem.
+  // Cap applicatif : ARRAY_LIMITS.SKU_COLORS (3).
+  colors ProductSkuColor[]
 
   // Matériaux multi (M2M via ProductSkuMaterial). Un SKU peut être composé de
   // plusieurs matériaux (ex: bague verre + acier). Ordre = priorité, le 1er
@@ -376,15 +404,15 @@ model ProductSku {
   updatedAt  DateTime    @updatedAt
   deletedAt  DateTime? // Soft delete pour preserver historique commandes
 
-  // Garantir unicite des combinaisons produit/couleur/taille (actifs uniquement)
+  // Garantir unicite des combinaisons produit/taille (actifs uniquement)
   // Index unique partiel gere via migration SQL brute (WHERE "deletedAt" IS NULL).
-  // Note 2026-05-14 : matériau retiré de l'index suite à la migration M2M
-  // (un SKU peut avoir plusieurs matériaux ; la « variant identity » se réduit
-  // à color × size). Permet de recréer un SKU soft-deleted avec la même combinaison.
+  // Note 2026-05-15 : couleur retirée de l'index suite à la migration M2M
+  // ProductSkuColor (un SKU peut avoir plusieurs couleurs ; la « variant identity »
+  // active se réduit à productId × size, comme pour les matériaux).
+  // Permet de recréer un SKU soft-deleted avec la même taille.
   //
   // Contrainte DB: un seul SKU par defaut par produit (active SKUs uniquement)
   // Index unique partiel via migration 20260417 (WHERE "isDefault" = true AND "deletedAt" IS NULL)
-  @@index([colorId])
 }
 
 model SkuMedia {

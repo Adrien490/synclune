@@ -4,13 +4,7 @@ import { updateTag } from "next/cache";
 
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
-import {
-	validateInput,
-	handleActionError,
-	success,
-	notFound,
-	BusinessError,
-} from "@/shared/lib/actions";
+import { validateInput, handleActionError, success, notFound } from "@/shared/lib/actions";
 import { logAudit } from "@/shared/lib/audit-log";
 import { prisma } from "@/shared/lib/prisma";
 import { ADMIN_COLOR_LIMITS } from "@/shared/lib/rate-limit-config";
@@ -22,16 +16,17 @@ import { mergeColorsSchema } from "../schemas/color.schemas";
 /**
  * Admin server action to merge two colors.
  *
- * Reassigns every ProductSku linked to `sourceId` to `targetId`, then deletes
- * the source color. Runs atomically in a single Prisma transaction.
+ * Réassigne tous les liens `ProductSkuColor` du source vers le target, puis
+ * supprime la couleur source. Runs atomically in a single Prisma transaction.
  *
  * Use case: catalogue cleanup (merge semantic duplicates like "Bleu ciel" and
  * "Bleu clair" into a single canonical color).
  *
- * ProductSku has a partial unique index on (productId, colorId, size, materialId)
- * where deletedAt IS NULL — so the merge is rejected if any product already
- * owns an active SKU in both source and target color for the same size/material.
- * The admin must resolve the conflict (e.g. soft-delete one SKU) before merging.
+ * Depuis la migration M2M couleurs (2026-05-15), un SKU peut avoir plusieurs
+ * couleurs. La jointure `ProductSkuColor` a un unique partiel sur
+ * (skuId, colorId) — donc si un SKU contient déjà à la fois source et target,
+ * le simple `updateMany` casserait l'unicité. On supprime alors la ligne source
+ * (le target reste, l'utilisateur n'a pas besoin d'agir).
  */
 export async function mergeColors(
 	_prevState: ActionState | undefined,
@@ -67,45 +62,41 @@ export async function mergeColors(
 			if (!source) return { kind: "source-missing" as const };
 			if (!target) return { kind: "target-missing" as const };
 
-			// Detect partial-unique collisions before the updateMany:
-			// any (productId, size, materialId) that already exists in BOTH colors
-			// (active, non-deleted) would violate the unique index after reassign.
-			const [sourceSkus, targetSkus] = await Promise.all([
-				tx.productSku.findMany({
-					where: { colorId: sourceId, deletedAt: null },
-					select: {
-						productId: true,
-						size: true,
-						materialId: true,
-						product: { select: { title: true } },
-					},
-				}),
-				tx.productSku.findMany({
-					where: { colorId: targetId, deletedAt: null },
-					select: { productId: true, size: true, materialId: true },
-				}),
-			]);
+			// SKUs liés à la couleur source via la jointure M2M
+			const sourceLinks = await tx.productSkuColor.findMany({
+				where: { colorId: sourceId },
+				select: { id: true, skuId: true, position: true },
+			});
 
-			const targetKeys = new Set(
-				targetSkus.map((s) => `${s.productId}::${s.size ?? ""}::${s.materialId ?? ""}`),
-			);
-			const conflicts = sourceSkus.filter((s) =>
-				targetKeys.has(`${s.productId}::${s.size ?? ""}::${s.materialId ?? ""}`),
+			// SKUs qui ont DÉJÀ la couleur cible — collision : on ne crée pas un
+			// doublon (skuId, colorId), on supprime simplement le lien source.
+			const targetSkuIds = new Set(
+				(
+					await tx.productSkuColor.findMany({
+						where: { colorId: targetId, skuId: { in: sourceLinks.map((l) => l.skuId) } },
+						select: { skuId: true },
+					})
+				).map((l) => l.skuId),
 			);
 
-			if (conflicts.length > 0) {
-				const names = Array.from(new Set(conflicts.map((c) => c.product.title))).slice(0, 5);
-				const more =
-					conflicts.length > names.length ? ` (+${conflicts.length - names.length})` : "";
-				throw new BusinessError(
-					`Impossible de fusionner : ${conflicts.length} variante${conflicts.length > 1 ? "s" : ""} en conflit sur ${names.join(", ")}${more}. Supprimez ou modifiez ces variantes avant de fusionner.`,
-				);
+			const linksToReassign = sourceLinks.filter((l) => !targetSkuIds.has(l.skuId));
+			const linksToDelete = sourceLinks.filter((l) => targetSkuIds.has(l.skuId));
+
+			// Réassigne les liens sans collision : on bascule colorId source → target
+			// (la position est conservée, donc l'ordre de priorité reste cohérent).
+			if (linksToReassign.length > 0) {
+				await tx.productSkuColor.updateMany({
+					where: { id: { in: linksToReassign.map((l) => l.id) } },
+					data: { colorId: targetId },
+				});
 			}
 
-			const reassigned = await tx.productSku.updateMany({
-				where: { colorId: sourceId },
-				data: { colorId: targetId },
-			});
+			// Supprime les liens en collision (le SKU a déjà target, on ne duplique pas)
+			if (linksToDelete.length > 0) {
+				await tx.productSkuColor.deleteMany({
+					where: { id: { in: linksToDelete.map((l) => l.id) } },
+				});
+			}
 
 			await tx.color.delete({ where: { id: sourceId } });
 
@@ -113,7 +104,7 @@ export async function mergeColors(
 				kind: "ok" as const,
 				source,
 				target,
-				reassignedCount: reassigned.count,
+				reassignedCount: linksToReassign.length,
 			};
 		});
 

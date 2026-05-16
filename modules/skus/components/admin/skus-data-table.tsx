@@ -19,6 +19,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
+import {
+	getColorHexes,
+	getColorNames,
+	getSkuColorsDisplayLabel,
+} from "@/modules/skus/utils/sku-colors-label";
+import { buildSwatchStyle, getSwatchAriaLabel } from "@/modules/colors/utils/swatch-style";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
@@ -201,26 +207,34 @@ export async function ProductVariantsDataTable({
 												</div>
 											</TableCell>
 											<TableCell>
-												{sku.color ? (
-													<div className="flex items-center gap-2">
-														<Tooltip>
-															<TooltipTrigger asChild>
-																<span
-																	className="border-border size-4 cursor-help rounded-full border-2 shadow-sm"
-																	style={{ backgroundColor: sku.color.hex }}
-																	aria-label={`Couleur : ${sku.color.name}`}
-																/>
-															</TooltipTrigger>
-															<TooltipContent>
-																<p>{sku.color.name}</p>
-																<p className="text-muted-foreground text-xs">{sku.color.hex}</p>
-															</TooltipContent>
-														</Tooltip>
-														<span className="text-sm">{sku.color.name}</span>
-													</div>
-												) : (
-													<span className="text-muted-foreground text-sm">—</span>
-												)}
+												{(() => {
+													const hexes = getColorHexes(sku.colors);
+													const names = getColorNames(sku.colors);
+													const label = getSkuColorsDisplayLabel(sku.colors);
+													if (!label) {
+														return <span className="text-muted-foreground text-sm">—</span>;
+													}
+													return (
+														<div className="flex items-center gap-2">
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<span
+																		className="border-border size-4 cursor-help rounded-full border-2 shadow-sm"
+																		style={buildSwatchStyle(hexes)}
+																		aria-label={`Couleur${names.length > 1 ? "s" : ""} : ${getSwatchAriaLabel(names)}`}
+																	/>
+																</TooltipTrigger>
+																<TooltipContent>
+																	<p>{label}</p>
+																	<p className="text-muted-foreground text-xs">
+																		{hexes.join(" / ")}
+																	</p>
+																</TooltipContent>
+															</Tooltip>
+															<span className="text-sm">{label}</span>
+														</div>
+													);
+												})()}
 											</TableCell>
 											<TableCell>
 												{(() => {

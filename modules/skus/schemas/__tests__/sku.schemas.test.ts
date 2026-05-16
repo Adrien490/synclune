@@ -5,6 +5,7 @@ vi.mock("@/shared/lib/media-validation", () => ({
 	isAllowedMediaDomain: (url: string) => {
 		return url.includes("utfs.io") || url.includes("ufs.sh") || url.includes("synclune.fr");
 	},
+	ALLOWED_MEDIA_DOMAINS: ["utfs.io", "ufs.sh", "synclune.fr"],
 }));
 
 import {
@@ -29,11 +30,13 @@ import {
 const VALID_CUID = "clh1z2x3y4w5v6u7t8s9r0q1p";
 const VALID_PRODUCT_URL = "https://utfs.io/f/test-image.jpg";
 
-/** A minimal valid primaryImage for SKU schemas */
-const validPrimaryImage = {
-	url: VALID_PRODUCT_URL,
-	mediaType: "IMAGE" as const,
-};
+/** A minimal valid media array (premier item = principal) for SKU schemas */
+const validMedia = [
+	{
+		url: VALID_PRODUCT_URL,
+		mediaType: "IMAGE" as const,
+	},
+];
 
 /** A valid JSON array of cuid2 IDs for bulk schemas */
 const validIdsJson = JSON.stringify([VALID_CUID]);
@@ -75,7 +78,7 @@ describe("createProductSkuSchema", () => {
 	const validInput = {
 		productId: VALID_CUID,
 		priceInclTaxEuros: 49.99,
-		primaryImage: validPrimaryImage,
+		media: validMedia,
 	};
 
 	it("should accept valid create SKU data", () => {
@@ -180,36 +183,39 @@ describe("createProductSkuSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("should reject primaryImage with video URL when mediaType is VIDEO (cross-field refinement)", () => {
+	it("should reject when first media is a VIDEO (cross-field refinement)", () => {
 		const result = createProductSkuSchema.safeParse({
 			...validInput,
-			primaryImage: {
-				url: "https://utfs.io/f/test-video.mp4",
-				mediaType: "VIDEO",
-			},
+			media: [
+				{
+					url: "https://utfs.io/f/test-video.mp4",
+					mediaType: "VIDEO",
+				},
+			],
 		});
 		expect(result.success).toBe(false);
 		if (!result.success) {
 			const paths = result.error.issues.map((i) => i.path.join("."));
-			expect(paths.some((p) => p.includes("primaryImage"))).toBe(true);
+			expect(paths.some((p) => p.includes("media"))).toBe(true);
 		}
 	});
 
-	it("should reject primaryImage URL from unauthorized domain", () => {
+	it("should reject media URL from unauthorized domain", () => {
 		const result = createProductSkuSchema.safeParse({
 			...validInput,
-			primaryImage: {
-				url: "https://evil.com/image.jpg",
-				mediaType: "IMAGE",
-			},
+			media: [
+				{
+					url: "https://evil.com/image.jpg",
+					mediaType: "IMAGE",
+				},
+			],
 		});
 		expect(result.success).toBe(false);
 	});
 
-	it("should accept no primaryImage (it is optional)", () => {
-		const { primaryImage: _pi, ...withoutPrimaryImage } = validInput;
-		const result = createProductSkuSchema.safeParse(withoutPrimaryImage);
-		expect(result.success).toBe(true);
+	it("should reject when media is empty (au moins une image requise)", () => {
+		const result = createProductSkuSchema.safeParse({ ...validInput, media: [] });
+		expect(result.success).toBe(false);
 	});
 
 	it("should reject compareAtPrice less than price (cross-field refinement)", () => {
@@ -609,7 +615,7 @@ describe("updateProductSkuSchema", () => {
 	const validInput = {
 		skuId: VALID_CUID,
 		priceInclTaxEuros: 79.99,
-		primaryImage: validPrimaryImage,
+		media: validMedia,
 	};
 
 	it("should accept valid update SKU data", () => {
@@ -638,13 +644,15 @@ describe("updateProductSkuSchema", () => {
 		expect(result.success).toBe(false);
 	});
 
-	it("should reject video as primary image (cross-field refinement)", () => {
+	it("should reject video as first media (cross-field refinement)", () => {
 		const result = updateProductSkuSchema.safeParse({
 			...validInput,
-			primaryImage: {
-				url: "https://utfs.io/f/test.mp4",
-				mediaType: "VIDEO",
-			},
+			media: [
+				{
+					url: "https://utfs.io/f/test.mp4",
+					mediaType: "VIDEO",
+				},
+			],
 		});
 		expect(result.success).toBe(false);
 	});

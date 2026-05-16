@@ -47,6 +47,8 @@ export async function createProduct(
 		// 2. Extraction des donnees du FormData
 		// Parse media from form: initialSku.media is sent as JSON array
 		const media = safeFormGetJSON<unknown[]>(formData, "initialSku.media") ?? [];
+		// Couleurs M2M sérialisées en JSON (1re = principale)
+		const initialSkuColorIds = safeFormGetJSON<string[]>(formData, "initialSku.colorIds") ?? [];
 		// Matériaux M2M sérialisés en JSON (cohérent avec collectionIds)
 		const initialSkuMaterialIds =
 			safeFormGetJSON<string[]>(formData, "initialSku.materialIds") ?? [];
@@ -66,7 +68,7 @@ export async function createProduct(
 				// Car z.coerce.boolean(null) = false, ce qui n'est pas le comportement voulu
 				isActive: formData.get("initialSku.isActive") ?? true,
 				isDefault: formData.get("initialSku.isDefault") ?? true,
-				colorId: formData.get("initialSku.colorId") ?? "",
+				colorIds: initialSkuColorIds,
 				materialIds: initialSkuMaterialIds,
 				size: formData.get("initialSku.size") ?? "",
 				media,
@@ -90,9 +92,9 @@ export async function createProduct(
 		// 4. Normalize empty strings to null for optional foreign keys
 		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
 		const normalizedCollectionIds = validatedData.collectionIds;
-		const normalizedColorId = validatedData.initialSku.colorId?.trim() ?? null;
-		// Dedupe matériaux (au cas où l'UI laisse passer un doublon) tout en
-		// préservant l'ordre saisi (1er = principal).
+		// Dedupe couleurs et matériaux (au cas où l'UI laisse passer un doublon)
+		// tout en préservant l'ordre saisi (1er = principal).
+		const normalizedColorIds = Array.from(new Set(validatedData.initialSku.colorIds));
 		const normalizedMaterialIds = Array.from(new Set(validatedData.initialSku.materialIds));
 		const normalizedSize = validatedData.initialSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
@@ -147,13 +149,14 @@ export async function createProduct(
 				fetchedCollectionSlugs = collections.map((c) => c.slug);
 			}
 
-			if (normalizedColorId) {
-				const color = await tx.color.findUnique({
-					where: { id: normalizedColorId },
+			// Validate colors if provided (M2M)
+			if (normalizedColorIds.length > 0) {
+				const colors = await tx.color.findMany({
+					where: { id: { in: normalizedColorIds } },
 					select: { id: true },
 				});
-				if (!color) {
-					throw new Error("La couleur spécifiée n'existe pas.");
+				if (colors.length !== normalizedColorIds.length) {
+					throw new Error("Une ou plusieurs couleurs spécifiées n'existent pas.");
 				}
 			}
 
@@ -211,15 +214,20 @@ export async function createProduct(
 				inventory: validatedData.initialSku.inventory,
 				isActive: validatedData.initialSku.isActive,
 				isDefault: validatedData.initialSku.isDefault,
-				colorId: normalizedColorId,
 				size: normalizedSize,
 			};
 
-			// Create initial SKU + matériaux M2M (ordre saisi préservé via `position`)
+			// Create initial SKU + couleurs + matériaux M2M (ordre saisi préservé via `position`)
 			const createdSku = await tx.productSku.create({
 				data: {
 					...skuData,
 					compareAtPrice: compareAtPriceCents,
+					colors: {
+						create: normalizedColorIds.map((colorId, index) => ({
+							colorId,
+							position: index,
+						})),
+					},
 					materials: {
 						create: normalizedMaterialIds.map((materialId, index) => ({
 							materialId,

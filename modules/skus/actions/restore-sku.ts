@@ -23,8 +23,10 @@ import { getSkuInvalidationTags } from "../utils/cache.utils";
  * Pre-conditions:
  * - Le SKU existe et est soft-deleted
  * - Son produit parent n'est pas lui-meme soft-deleted
- * - La combinaison (productId, colorId, size, materialId) n'est pas deja prise par un SKU actif
- *   (contrainte partial unique index au niveau base)
+ * - La combinaison (productId, ensemble exact de colorIds, size) n'est pas
+ *   déjà prise par un SKU actif (validation applicative depuis migration M2M
+ *   couleurs 2026-05-15 : la « variant identity » n'est plus enforced par un
+ *   index unique partial DB).
  */
 export async function restoreSku(
 	_: ActionState | undefined,
@@ -51,10 +53,9 @@ export async function restoreSku(
 					id: true,
 					sku: true,
 					productId: true,
-					colorId: true,
-					materialId: true,
 					size: true,
 					deletedAt: true,
+					colors: { select: { colorId: true } },
 					product: { select: { slug: true, deletedAt: true } },
 				},
 			});
@@ -71,16 +72,25 @@ export async function restoreSku(
 				);
 			}
 
-			const conflict = await tx.productSku.findFirst({
+			// Validation applicative de l'unicité (productId, set colorIds, size).
+			// Cf. assertUniqueVariantCombination dans persist-sku-helpers.service.ts.
+			const candidates = await tx.productSku.findMany({
 				where: {
 					productId: existing.productId,
-					colorId: existing.colorId,
-					materialId: existing.materialId,
 					size: existing.size,
 					deletedAt: null,
 					NOT: { id: skuId },
 				},
-				select: { sku: true },
+				select: {
+					sku: true,
+					colors: { select: { colorId: true } },
+				},
+			});
+
+			const targetSet = new Set(existing.colors.map((c) => c.colorId));
+			const conflict = candidates.find((s) => {
+				if (s.colors.length !== targetSet.size) return false;
+				return s.colors.every((c) => targetSet.has(c.colorId));
 			});
 			if (conflict) {
 				throw new BusinessError(

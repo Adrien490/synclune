@@ -5,24 +5,23 @@ import { ErrorSummary } from "@/shared/components/forms/error-summary";
 import { Button } from "@/shared/components/ui/button";
 import { Kbd } from "@/shared/components/ui/kbd";
 import { useCreateProductSkuForm } from "@/modules/skus/hooks/use-create-sku-form";
-import { useUploadThing } from "@/modules/media/utils/uploadthing";
+import { useMediaFieldUpload } from "@/modules/products/hooks/use-media-field-upload";
 import { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
 import { useFocusFirstError } from "@/shared/hooks/use-focus-first-error";
 import { useHaptic } from "@/shared/hooks/use-haptic";
 import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useUnsavedChanges } from "@/shared/hooks/use-unsaved-changes";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "@/shared/utils/toast";
 import { withViewTransition } from "@/shared/utils/with-view-transition";
 import type { SkuFormSharedProps } from "./sku-form-types";
-import { SkuInfoCard } from "./sku-info-card";
 import { SkuMediaCard } from "./sku-media-card";
 import { SkuSidebarCards } from "./sku-sidebar-cards";
 
 const FIELD_LABELS: Record<string, string> = {
-	colorId: "Couleur",
+	colorIds: "Couleurs",
 	materialIds: "Matériaux",
 	size: "Taille",
 	isActive: "Disponibilité",
@@ -30,8 +29,7 @@ const FIELD_LABELS: Record<string, string> = {
 	priceInclTaxEuros: "Prix de vente",
 	compareAtPriceEuros: "Prix comparé",
 	inventory: "Stock",
-	primaryImage: "Image principale",
-	galleryMedia: "Galerie",
+	media: "Médias",
 };
 
 function navigateWithTransition(router: ReturnType<typeof useRouter>, path: string) {
@@ -49,12 +47,22 @@ export function CreateProductVariantForm({
 	const isMobile = useIsMobile();
 	const variantsListPath = `/admin/catalogue/produits/${productSlug}/variantes`;
 
-	const primaryUpload = useUploadThing("catalogMedia");
-	const galleryUpload = useMediaUpload({
+	const {
+		upload: uploadMedia,
+		isUploading: isMediaUploading,
+		progress: uploadProgress,
+		cancel: cancelMediaUpload,
+		cancelOne: cancelOneMediaUpload,
+		failedFiles: failedMediaUploads,
+		retryFailed: retryFailedMediaUploads,
+		retrySingle: retrySingleMediaUpload,
+		clearFailed: clearFailedMediaUploads,
+	} = useMediaUpload({
 		enableOfflineQueue: true,
 		offlineContextKey: `create-sku-${product.id}`,
 	});
 
+	const [deletedImageUrls, setDeletedImageUrls] = useState<string[]>([]);
 	const { formRef, focusFirstInvalid, onInvalidCapture } = useFocusFirstError();
 	const allowNavigationRef = useRef<(() => void) | null>(null);
 
@@ -76,7 +84,6 @@ export function CreateProductVariantForm({
 		form.setFieldValue("productId", product.id);
 	}, [product.id, form]);
 
-	const isMediaUploading = primaryUpload.isUploading || galleryUpload.isUploading;
 	const { allowNavigation } = useUnsavedChanges(
 		form.state.isDirty || isMediaUploading,
 		!isPending,
@@ -131,6 +138,12 @@ export function CreateProductVariantForm({
 		return () => window.removeEventListener("keydown", handler);
 	}, [isMobile, isPending, form, haptic, router, allowNavigation, variantsListPath]);
 
+	const { handleUpload } = useMediaFieldUpload({
+		uploadMedia,
+		getAltText: () => product.title || undefined,
+		isUploading: isMediaUploading,
+	});
+
 	return (
 		<form
 			ref={formRef}
@@ -149,27 +162,28 @@ export function CreateProductVariantForm({
 
 			<form.Subscribe
 				selector={(state) => ({
-					primaryImage: state.values.primaryImage,
-					galleryMedia: state.values.galleryMedia,
+					media: state.values.media,
 					isActive: state.values.isActive,
 					isDefault: state.values.isDefault,
+					colorIds: state.values.colorIds,
 					materialIds: state.values.materialIds,
 				})}
 			>
-				{({ primaryImage, galleryMedia, isActive, isDefault, materialIds }) => (
+				{({ media, isActive, isDefault, colorIds, materialIds }) => (
 					<>
-						{primaryImage ? (
-							<input type="hidden" name="primaryImage" value={JSON.stringify(primaryImage)} />
-						) : null}
-						{galleryMedia.length > 0 ? (
-							<input type="hidden" name="galleryMedia" value={JSON.stringify(galleryMedia)} />
+						{media.length > 0 ? (
+							<input type="hidden" name="media" value={JSON.stringify(media)} />
 						) : null}
 						<input type="hidden" name="isActive" value={String(isActive)} />
 						<input type="hidden" name="isDefault" value={String(isDefault)} />
+						<input type="hidden" name="colorIds" value={JSON.stringify(colorIds)} />
 						<input type="hidden" name="materialIds" value={JSON.stringify(materialIds)} />
 					</>
 				)}
 			</form.Subscribe>
+			{deletedImageUrls.length > 0 && (
+				<input type="hidden" name="deletedImageUrls" value={JSON.stringify(deletedImageUrls)} />
+			)}
 
 			<form.Subscribe
 				selector={(state) => ({
@@ -201,15 +215,34 @@ export function CreateProductVariantForm({
 				<div className="space-y-6 lg:col-span-2">
 					<SkuMediaCard
 						form={form}
-						productTitle={product.title}
-						primaryUpload={primaryUpload}
-						galleryUpload={galleryUpload}
+						isMediaUploading={isMediaUploading}
+						uploadProgress={uploadProgress}
+						handleUpload={handleUpload}
+						setDeletedImageUrls={setDeletedImageUrls}
+						failedFiles={failedMediaUploads}
+						onCancel={cancelMediaUpload}
+						onCancelOne={cancelOneMediaUpload}
+						onRetry={() => {
+							void retryFailedMediaUploads();
+						}}
+						onRetryOne={(file) => {
+							void retrySingleMediaUpload(file);
+						}}
+						onDismissErrors={clearFailedMediaUploads}
 						offlineContextKey={`create-sku-${product.id}`}
+						onReplayOffline={async (files) => {
+							await uploadMedia(files);
+						}}
+						viewTransitionPrefix="sku-create"
 					/>
-					<SkuInfoCard form={form} colors={colors} materials={materials} />
 				</div>
 
-				<SkuSidebarCards form={form} />
+				<SkuSidebarCards
+					form={form}
+					colors={colors}
+					materials={materials}
+					viewTransitionPrefix="sku-create"
+				/>
 			</fieldset>
 
 			<form.AppForm>

@@ -34,10 +34,14 @@ export type GetColorsParamsInput = z.input<typeof getColorsSchema>;
 /** Filtres pour getColors */
 export type ColorFilters = z.infer<typeof colorFiltersSchema>;
 
-/** Couleur avec count de SKUs */
-export type Color = Prisma.ColorGetPayload<{
-	select: typeof GET_COLORS_SELECT;
-}>;
+/**
+ * Le shape retourné par `getColors` est volontairement remappé pour préserver
+ * l'API publique stable (`_count.skus`) côté consumers UI, malgré le rename
+ * interne de la relation Prisma en `skuColors` (M2M depuis 2026-05-15).
+ */
+export type Color = Omit<Prisma.ColorGetPayload<{ select: typeof GET_COLORS_SELECT }>, "_count"> & {
+	_count: { skus: number };
+};
 
 /** Retour de getColors */
 export interface GetColorsReturn {

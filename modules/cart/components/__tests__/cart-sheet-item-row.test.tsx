@@ -231,7 +231,7 @@ function createCartItem(overrides: Partial<Record<string, unknown>> = {}): CartI
 					thumbnailUrl: null,
 				},
 			],
-			color: null,
+			colors: [],
 			material: null,
 			size: null,
 			product: {
@@ -308,7 +308,13 @@ describe("CartSheetItemRow", () => {
 		const item = createCartItem({
 			sku: {
 				...(createCartItem().sku as Record<string, unknown>),
-				color: { name: "Or", hex: "#FFD700" },
+				colors: [
+					{
+						colorId: "color-or",
+						position: 0,
+						color: { id: "color-or", name: "Or", hex: "#FFD700" },
+					},
+				],
 			},
 		});
 		render(<CartSheetItemRow item={item} />);

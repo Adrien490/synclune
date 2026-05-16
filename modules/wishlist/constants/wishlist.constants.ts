@@ -56,13 +56,20 @@ export const GET_WISHLIST_SELECT = {
 							inventory: true,
 							isActive: true,
 							isDefault: true,
-							color: {
+							colors: {
 								select: {
-									id: true,
-									slug: true,
-									name: true,
-									hex: true,
+									colorId: true,
+									position: true,
+									color: {
+										select: {
+											id: true,
+											slug: true,
+											name: true,
+											hex: true,
+										},
+									},
 								},
+								orderBy: { position: "asc" as const },
 							},
 							materials: {
 								select: {

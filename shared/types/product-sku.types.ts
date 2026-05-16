@@ -45,12 +45,17 @@ export interface BaseSkuForList {
 	inventory: number;
 	priceInclTax: number;
 	compareAtPrice: number | null;
-	color: {
-		id: string;
-		slug: string;
-		hex: string;
-		name: string;
-	} | null;
+	/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur renseignée. */
+	colors: Array<{
+		colorId: string;
+		position: number;
+		color: {
+			id: string;
+			slug: string;
+			hex: string;
+			name: string;
+		};
+	}>;
 	materials: Array<{
 		materialId: string;
 		position: number;

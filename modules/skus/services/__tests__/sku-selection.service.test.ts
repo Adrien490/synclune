@@ -10,12 +10,18 @@ function makeSku(overrides: Partial<BaseSkuForList> = {}): BaseSkuForList {
 		inventory: 5,
 		priceInclTax: 2000,
 		compareAtPrice: null,
-		color: {
-			id: "color-1",
-			slug: "or-rose",
-			hex: "#B76E79",
-			name: "Or Rose",
-		},
+		colors: [
+			{
+				colorId: "color-1",
+				position: 0,
+				color: {
+					id: "color-1",
+					slug: "or-rose",
+					hex: "#B76E79",
+					name: "Or Rose",
+				},
+			},
+		],
 		materials: [
 			{
 				materialId: "mat-1",
@@ -57,11 +63,23 @@ describe("getPrimarySkuForList", () => {
 		const skus = [
 			makeSku({
 				isDefault: true,
-				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
 			}),
 			makeSku({
 				isDefault: false,
-				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			}),
 		];
 
@@ -75,12 +93,24 @@ describe("getPrimarySkuForList", () => {
 			makeSku({
 				isDefault: true,
 				inventory: 10,
-				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
 			}),
 			makeSku({
 				isDefault: false,
 				inventory: 0,
-				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			}),
 		];
 
@@ -93,11 +123,23 @@ describe("getPrimarySkuForList", () => {
 		const skus = [
 			makeSku({
 				inventory: 0,
-				color: { id: "c1", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			}),
 			makeSku({
 				inventory: 3,
-				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			}),
 		];
 
@@ -187,13 +229,25 @@ describe("getPrimarySkuForList", () => {
 				isDefault: false,
 				inventory: 5,
 				compareAtPrice: 3000,
-				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
 			}),
 			makeSku({
 				isDefault: false,
 				inventory: 5,
 				compareAtPrice: null,
-				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			}),
 		];
 

@@ -106,12 +106,6 @@ vi.mock("../../parallax-image", () => ({
 	ParallaxImage: ({ alt }: { alt: string }) => <img data-testid="parallax-image" alt={alt} />,
 }));
 
-vi.mock("../atelier-haptic-bridge", () => ({
-	AtelierHapticBridge: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="atelier-haptic-bridge">{children}</div>
-	),
-}));
-
 import { processSteps } from "../process-steps";
 
 afterEach(() => {
@@ -291,12 +285,6 @@ describe("AtelierSection structure", () => {
 		await renderAtelierSection();
 
 		expect(screen.getByText(/chaque bijou prend vie, un geste à la fois/i)).toBeInTheDocument();
-	});
-
-	it("wraps content in the haptic bridge", async () => {
-		await renderAtelierSection();
-
-		expect(screen.getByTestId("atelier-haptic-bridge")).toBeInTheDocument();
 	});
 
 	it("renders timeline and polaroid gallery", async () => {

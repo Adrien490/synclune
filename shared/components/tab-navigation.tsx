@@ -8,7 +8,6 @@ import { Button } from "@/shared/components/ui/button";
 import {
 	Drawer,
 	DrawerContent,
-	DrawerHandle,
 	DrawerHeader,
 	DrawerTitle,
 	DrawerBody,
@@ -134,7 +133,6 @@ export function TabNavigation({
 
 						<Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
 							<DrawerContent>
-								<DrawerHandle />
 								<DrawerHeader>
 									<DrawerTitle>{panelTitle ?? "Parcourir par type"}</DrawerTitle>
 								</DrawerHeader>

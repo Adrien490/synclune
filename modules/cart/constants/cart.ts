@@ -76,12 +76,19 @@ export const GET_CART_SELECT = {
 							isPrimary: true,
 						},
 					},
-					color: {
+					colors: {
 						select: {
-							id: true,
-							name: true,
-							hex: true,
+							colorId: true,
+							position: true,
+							color: {
+								select: {
+									id: true,
+									name: true,
+									hex: true,
+								},
+							},
 						},
+						orderBy: { position: "asc" as const },
 					},
 					materials: {
 						select: {

@@ -143,7 +143,7 @@ export function StickyCartCTA({
 							</div>
 							{/* Nom du SKU tronqué */}
 							<p className="text-muted-foreground truncate text-xs">
-								{currentSku.color?.name ?? product.title}
+								{currentSku.colors?.map((c) => c.color.name).join(" + ") || product.title}
 							</p>
 						</div>
 

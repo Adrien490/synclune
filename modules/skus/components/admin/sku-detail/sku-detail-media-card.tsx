@@ -65,7 +65,7 @@ export function SkuDetailMediaCard({ sku }: SkuDetailMediaCardProps) {
 	const editHref = `/admin/catalogue/produits/${sku.product.slug}/variantes/${sku.id}/modifier`;
 
 	return (
-		<Card style={{ viewTransitionName: "sku-media" }}>
+		<Card style={{ viewTransitionName: "sku-edit-media" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Images className="size-5" aria-hidden="true" />

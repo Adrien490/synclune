@@ -6,6 +6,15 @@ import { BULK_SELECTION_MAX } from "@/shared/constants/admin-bulk";
 // SELECT DEFINITIONS
 // ============================================================================
 
+// Affichage et tri alignés : on compte TOUS les liens skuColors (y compris SKUs
+// soft-deleted) pour que la colonne « Variantes » affiche la même valeur que
+// celle utilisée par orderBy { skuColors: { _count } }. Prisma ne supporte pas
+// orderBy avec un where partial sur le _count ; aligner le select sur le sort
+// évite l'incohérence (parité matériaux audit 2026-05-11 P1.3).
+//
+// Note 2026-05-15 : depuis la migration M2M couleurs, la relation s'appelle
+// `skuColors` (et non plus `skus`). Le shape est conservé via mapping côté API
+// pour ne pas casser l'UI (`_count.skus` reste exposé).
 export const GET_COLORS_SELECT = {
 	id: true,
 	name: true,
@@ -17,7 +26,7 @@ export const GET_COLORS_SELECT = {
 	updatedAt: true,
 	_count: {
 		select: {
-			skus: true,
+			skuColors: true,
 		},
 	},
 } as const satisfies Prisma.ColorSelect;

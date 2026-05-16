@@ -33,21 +33,27 @@ export function matchColor(
 	// Aucune sélection = match par défaut
 	if (!colorSlug && !colorHex && !colorId) return true;
 
-	// Priorité 1: Slug de couleur (recommandé, URL-friendly)
+	// Pas de couleur sur le SKU = pas de match (M2M peut être vide)
+	if (!sku.colors || sku.colors.length === 0) return false;
+
+	// Priorité 1: Slug de couleur (recommandé, URL-friendly).
+	// M2M tolérant : match si AU MOINS UNE des couleurs du SKU correspond.
 	if (colorSlug) {
-		return sku.color?.slug === colorSlug;
+		return sku.colors.some((link) => link.color.slug === colorSlug);
 	}
 
 	// Priorité 2: Hex code (legacy pour rétrocompatibilité)
-	// Normaliser avant comparaison pour éviter les mismatches "#FF00FF" vs "ff00ff"
 	if (colorHex) {
 		const normalize = (hex: string) => hex.toLowerCase().replace(/^#/, "");
-		return sku.color?.hex ? normalize(sku.color.hex) === normalize(colorHex) : false;
+		const target = normalize(colorHex);
+		return sku.colors.some((link) =>
+			link.color.hex ? normalize(link.color.hex) === target : false,
+		);
 	}
 
 	// Priorité 3: ID (legacy)
 	if (colorId) {
-		return sku.color?.id === colorId;
+		return sku.colors.some((link) => link.color.id === colorId);
 	}
 
 	return true;

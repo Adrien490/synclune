@@ -42,18 +42,19 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 		.filter(Boolean)
 		.flatMap((word) => SEARCH_SYNONYMS.get(word.toLowerCase()) ?? []);
 
-	// Collect unique colors
+	// Collect unique colors (M2M : aplatit toutes les couleurs des SKUs)
 	const seen = new Set<string>();
-	const colors = product.skus.reduce<NonNullable<(typeof product.skus)[number]["color"]>[]>(
-		(acc, s) => {
-			if (s.color && !seen.has(s.color.slug)) {
-				seen.add(s.color.slug);
-				acc.push(s.color);
+	type SwatchEntry = { slug: string; name: string; hex: string };
+	const colors = product.skus.reduce<SwatchEntry[]>((acc, s) => {
+		for (const link of s.colors) {
+			const c = link.color;
+			if (!seen.has(c.slug)) {
+				seen.add(c.slug);
+				acc.push(c);
 			}
-			return acc;
-		},
-		[],
-	);
+		}
+		return acc;
+	}, []);
 
 	const extraColors = colors.length > MAX_COLOR_SWATCHES ? colors.length - MAX_COLOR_SWATCHES : 0;
 

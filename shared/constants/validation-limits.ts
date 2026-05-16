@@ -39,6 +39,8 @@ export const ARRAY_LIMITS = {
 	SKU_GALLERY_MEDIA: 5,
 	/** Matériaux par SKU (M2M ; 1er = principal pour SEO/care-tips) */
 	SKU_MATERIALS: 3,
+	/** Couleurs par SKU (M2M ; 1er = principal pour vignette listing/snapshot facture) */
+	SKU_COLORS: 3,
 } as const;
 
 // ============================================================================

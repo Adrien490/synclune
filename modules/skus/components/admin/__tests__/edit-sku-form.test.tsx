@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockUseUpdateProductSkuForm, mockUseUploadThing, mockUseMediaUpload, mockUseRouter } =
+const { mockUseUpdateProductSkuForm, mockUseMediaUpload, mockUseMediaFieldUpload, mockUseRouter } =
 	vi.hoisted(() => ({
 		mockUseUpdateProductSkuForm: vi.fn(),
-		mockUseUploadThing: vi.fn(),
 		mockUseMediaUpload: vi.fn(),
+		mockUseMediaFieldUpload: vi.fn(),
 		mockUseRouter: vi.fn(),
 	}));
 
@@ -17,13 +17,12 @@ vi.mock("@/modules/skus/hooks/use-update-sku-form", () => ({
 	useUpdateProductSkuForm: mockUseUpdateProductSkuForm,
 }));
 
-vi.mock("@/modules/media/utils/uploadthing", () => ({
-	useUploadThing: mockUseUploadThing,
-	UploadDropzone: () => <div data-testid="upload-dropzone" />,
-}));
-
 vi.mock("@/modules/media/hooks/use-media-upload", () => ({
 	useMediaUpload: mockUseMediaUpload,
+}));
+
+vi.mock("@/modules/products/hooks/use-media-field-upload", () => ({
+	useMediaFieldUpload: mockUseMediaFieldUpload,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -44,10 +43,6 @@ vi.mock("@/modules/colors/components/color-form-dialog", () => ({
 
 vi.mock("@/modules/materials/components/material-form-dialog", () => ({
 	MATERIAL_DIALOG_ID: "material-form",
-}));
-
-vi.mock("../sku-info-card", () => ({
-	SkuInfoCard: () => <div data-testid="sku-info-card" />,
 }));
 
 vi.mock("../sku-sidebar-cards", () => ({
@@ -128,12 +123,11 @@ function createMockForm(overrides: FormStateOverrides = {}) {
 	const formState = {
 		values: {
 			skuId: "sku-1",
-			primaryImage: undefined,
-			galleryMedia: [],
+			media: [],
 			isActive: true,
 			isDefault: false,
 			colorId: "",
-			materialId: "",
+			materialIds: [],
 			size: "",
 			priceInclTaxEuros: 50,
 			compareAtPriceEuros: undefined,
@@ -182,14 +176,20 @@ describe("EditProductVariantForm", () => {
 			...hookOverrides,
 		});
 
-		mockUseUploadThing.mockReturnValue({
-			startUpload: vi.fn().mockResolvedValue([]),
-			isUploading: false,
-		});
-
 		mockUseMediaUpload.mockReturnValue({
 			upload: vi.fn().mockResolvedValue([]),
 			isUploading: false,
+			progress: null,
+			cancel: vi.fn(),
+			cancelOne: vi.fn(),
+			failedFiles: [],
+			retryFailed: vi.fn(),
+			retrySingle: vi.fn(),
+			clearFailed: vi.fn(),
+		});
+
+		mockUseMediaFieldUpload.mockReturnValue({
+			handleUpload: vi.fn(),
 		});
 
 		mockUseRouter.mockReturnValue({ push: vi.fn(), refresh: vi.fn() });
@@ -229,7 +229,6 @@ describe("EditProductVariantForm", () => {
 		setup();
 		render(<EditProductVariantForm {...defaultProps} />);
 
-		expect(screen.getByTestId("sku-info-card")).toBeInTheDocument();
 		expect(screen.getByTestId("sku-sidebar-cards")).toBeInTheDocument();
 		expect(screen.getByTestId("sku-media-card")).toBeInTheDocument();
 	});
@@ -262,6 +261,13 @@ describe("EditProductVariantForm", () => {
 		mockUseMediaUpload.mockReturnValue({
 			upload: vi.fn(),
 			isUploading: true,
+			progress: null,
+			cancel: vi.fn(),
+			cancelOne: vi.fn(),
+			failedFiles: [],
+			retryFailed: vi.fn(),
+			retrySingle: vi.fn(),
+			clearFailed: vi.fn(),
 		});
 		render(<EditProductVariantForm {...defaultProps} />);
 

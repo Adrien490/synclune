@@ -55,8 +55,7 @@ export default function CheckoutError({
 					}
 					description={
 						<p className="text-muted-foreground text-lg md:text-xl">
-							Une erreur est survenue pendant le processus de paiement. Votre carte n&apos;a pas été
-							débitée.
+							Un petit imprévu a interrompu le paiement. Ta carte n&apos;a pas été débitée.
 						</p>
 					}
 					actions={

@@ -47,8 +47,10 @@ vi.mock("@/shared/components/ui/button", () => ({
 }));
 
 vi.mock("@/shared/components/ui/drawer", () => ({
-	Drawer: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="drawer">{children}</div>
+	Drawer: ({ children, handleOnly }: { children: React.ReactNode; handleOnly?: boolean }) => (
+		<div data-testid="drawer" data-handle-only={String(Boolean(handleOnly))}>
+			{children}
+		</div>
 	),
 	DrawerContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="drawer-content">{children}</div>
@@ -254,25 +256,22 @@ describe("SortableMediaItem", () => {
 			expect(screen.getByRole("group")).toHaveAttribute("aria-label", "Image 1 (principale)");
 		});
 
-		it("drag handle has aria-label", () => {
-			renderItem({ index: 1 });
-
-			const handle = screen.getByLabelText("Réorganiser l'image 2");
-			expect(handle).toBeInTheDocument();
-		});
-
-		it("drag handle has aria-describedby referencing instructions", () => {
+		it("parent tile exposes cursor-grab on hover-capable devices (the whole tile is the drag handle)", () => {
 			renderItem();
 
-			const handle = screen.getByLabelText(/Réorganiser/);
-			expect(handle).toHaveAttribute("aria-describedby", "drag-instructions");
+			expect(screen.getByRole("group")).toHaveClass("can-hover:cursor-grab");
 		});
 
-		it("drag handle uses cursor-grab class", () => {
+		it("keyboard sortable instructions live region is referenced from the grid (drag-instructions id)", () => {
+			// The sr-only #drag-instructions live region is rendered by MediaUploadGrid (parent).
+			// SortableMediaItem itself no longer carries a focusable drag handle: the parent
+			// tile is tabbable (tabIndex=0) and aria-roledescription announces the sortable
+			// semantics. This test guards the new contract.
 			renderItem();
 
-			const handle = screen.getByLabelText(/Réorganiser/);
-			expect(handle).toHaveClass("cursor-grab");
+			const group = screen.getByRole("group");
+			expect(group).toHaveAttribute("tabIndex", "0");
+			expect(group).toHaveAttribute("aria-roledescription", "élément réorganisable");
 		});
 	});
 
@@ -346,20 +345,22 @@ describe("SortableMediaItem", () => {
 	// regardless of useIsTouchDevice (CSS chooses via @media can-hover)
 	// -----------------------------------------------------------------------
 	describe("hydration safety (CSS can-hover variant)", () => {
-		it("renders mobile drawer trigger AND desktop drag handle when isTouchDevice is false (SSR-like)", () => {
+		it("renders mobile drawer trigger AND the decorative grip cue when isTouchDevice is false (SSR-like)", () => {
 			mockUseIsTouchDevice.mockReturnValue(false);
-			renderItem();
+			const { container } = renderItem();
 
 			expect(screen.getByLabelText(/Actions pour le média/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/Réorganiser/)).toBeInTheDocument();
+			// Grip is a decorative <div aria-hidden> with cursor-grab — both desktop & mobile
+			// markup are always in the DOM; CSS @media can-hover toggles visibility.
+			expect(container.querySelector("div[aria-hidden='true'].cursor-grab")).toBeInTheDocument();
 		});
 
-		it("renders mobile drawer trigger AND desktop drag handle when isTouchDevice is true", () => {
+		it("renders mobile drawer trigger AND the decorative grip cue when isTouchDevice is true", () => {
 			mockUseIsTouchDevice.mockReturnValue(true);
-			renderItem();
+			const { container } = renderItem();
 
 			expect(screen.getByLabelText(/Actions pour le média/)).toBeInTheDocument();
-			expect(screen.getByLabelText(/Réorganiser/)).toBeInTheDocument();
+			expect(container.querySelector("div[aria-hidden='true'].cursor-grab")).toBeInTheDocument();
 		});
 
 		it("no longer renders the legacy long-press hint", () => {
@@ -554,6 +555,13 @@ describe("SortableMediaItem", () => {
 			fireEvent.click(playBtn);
 
 			expect(onLightbox).toHaveBeenCalledWith(1);
+		});
+	});
+
+	describe("mobile actions drawer", () => {
+		it("activates handleOnly to avoid drag-from-content closing the drawer", () => {
+			renderItem();
+			expect(screen.getByTestId("drawer").getAttribute("data-handle-only")).toBe("true");
 		});
 	});
 });

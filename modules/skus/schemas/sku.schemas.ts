@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { isAllowedMediaDomain } from "@/shared/lib/media-validation";
 import { VIDEO_EXTENSIONS } from "@/modules/media/constants/media-limits.constants";
+import { imageSchema } from "@/modules/products/schemas/product-media.schemas";
 import { TEXT_LIMITS, ARRAY_LIMITS, PRICE_LIMITS } from "@/shared/constants/validation-limits";
 
 // ============================================================================
@@ -16,42 +16,12 @@ export const getProductSkuSchema = z.object({
 // ============================================================================
 
 /**
- * Schema pour un media (image ou video)
- * Accepte null pour permettre la suppression explicite
- */
-const imageSchema = z
-	.object({
-		url: z
-			.string()
-			.url({ message: "L'URL du media doit être valide" })
-			.refine(isAllowedMediaDomain, {
-				message: "L'URL du média doit provenir d'un domaine autorisé (UploadThing)",
-			}),
-		thumbnailUrl: z
-			.string()
-			.url()
-			.refine((url) => !url || isAllowedMediaDomain(url), {
-				message: "L'URL de la miniature doit provenir d'un domaine autorisé",
-			})
-			.optional()
-			.nullable(),
-		blurDataUrl: z.string().max(2048).optional().nullable(),
-		altText: z.string().max(TEXT_LIMITS.MEDIA_ALT_TEXT.max).optional().nullable(),
-		mediaType: z.enum(["IMAGE", "VIDEO"]).optional(),
-	})
-	.nullable();
-
-/**
- * Verifie si une URL est une video basee sur son extension
- */
-function isVideoUrl(url: string): boolean {
-	const lowerUrl = url.toLowerCase();
-	return VIDEO_EXTENSIONS.some((ext) => lowerUrl.endsWith(ext));
-}
-
-/**
  * Schema de base partagé entre create et update
- * Contient tous les champs communs aux deux operations
+ * Contient tous les champs communs aux deux operations.
+ *
+ * Les médias sont un tableau unifié `media[]` aligné sur le formulaire produit
+ * (premier item = principal, drag-reorder côté UI). Le serveur calcule
+ * `isPrimary`/`position` à partir de l'ordre du tableau.
  */
 const baseSkuFieldsSchema = z.object({
 	// Prix en euros (sera converti en centimes cote serveur)
@@ -82,12 +52,14 @@ const baseSkuFieldsSchema = z.object({
 	isActive: z.coerce.boolean().default(true),
 	isDefault: z.coerce.boolean().default(false),
 
-	// Optional fields (IDs/size vides seront traites comme undefined)
-	colorId: z
-		.string()
+	// Couleurs M2M : ordre = priorité (1re = principale pour vignette + snapshot facture)
+	colorIds: z
+		.array(z.cuid2({ message: "ID couleur invalide" }))
+		.max(ARRAY_LIMITS.SKU_COLORS, {
+			error: `Une variante ne peut avoir que ${ARRAY_LIMITS.SKU_COLORS} couleurs maximum`,
+		})
 		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
+		.default([]),
 	// Matériaux M2M : ordre = priorité (1er = principal pour SEO/care-tips)
 	materialIds: z
 		.array(z.cuid2({ message: "ID matériau invalide" }))
@@ -103,43 +75,55 @@ const baseSkuFieldsSchema = z.object({
 		.or(z.literal(""))
 		.transform((val) => (val === "" ? undefined : val)),
 
-	// Medias (images et videos)
-	primaryImage: imageSchema.optional(),
-	galleryMedia: z
+	// Medias unifiés (images + vidéos). Premier item = principal côté UI/serveur.
+	media: z
 		.array(imageSchema)
-		.max(ARRAY_LIMITS.SKU_GALLERY_MEDIA, {
-			error: `Maximum ${ARRAY_LIMITS.SKU_GALLERY_MEDIA} médias dans la galerie`,
+		.max(ARRAY_LIMITS.SKU_MEDIA, { message: `Maximum ${ARRAY_LIMITS.SKU_MEDIA} médias` })
+		.refine((m) => new Set(m.map((x) => x.url)).size === m.length, {
+			message: "Les URLs de médias doivent être uniques",
 		})
-		.default([])
-		.transform((arr) => arr.filter((item): item is NonNullable<typeof item> => item !== null)),
+		.default([]),
 });
 
 /**
- * Refinement: verifier que le media principal n'est PAS une video
- * Gere les cas: undefined, null, ou objet image
+ * Refinement: vérifier qu'au moins 1 média est présent.
  */
-function refinePrimaryImageNotVideo(data: {
-	primaryImage?: { url: string; mediaType?: "IMAGE" | "VIDEO" } | null;
+function refineMediaMinOne(data: { media: unknown[] }) {
+	return data.media.length > 0;
+}
+
+/**
+ * Refinement: vérifier que le premier media (= image principale) n'est PAS une vidéo.
+ */
+function refineFirstMediaNotVideo(data: {
+	media: Array<{ url: string; mediaType?: "IMAGE" | "VIDEO" }>;
 }) {
-	if (!data.primaryImage) return true; // undefined ou null = OK
-	const mediaType = data.primaryImage.mediaType;
+	const first = data.media[0];
+	if (!first) return true; // empty handled by refineMediaMinOne
+	const mediaType = first.mediaType;
 	if (!mediaType) {
-		return !isVideoUrl(data.primaryImage.url);
+		const url = first.url.toLowerCase();
+		return !VIDEO_EXTENSIONS.some((ext) => url.endsWith(ext));
 	}
 	return mediaType === "IMAGE";
 }
 
 /**
- * Refinement: verifier que compareAtPrice >= priceInclTax si present
+ * Refinement: vérifier que compareAtPrice >= priceInclTax si present
  */
 function refineCompareAtPrice(data: { compareAtPriceEuros?: number; priceInclTaxEuros: number }) {
 	if (!data.compareAtPriceEuros) return true;
 	return data.compareAtPriceEuros >= data.priceInclTaxEuros;
 }
 
-const PRIMARY_IMAGE_ERROR = {
-	message: "Le media principal ne peut pas être une video. Veuillez sélectionner une image.",
-	path: ["primaryImage"],
+const MEDIA_REQUIRED_ERROR = {
+	message: "Au moins une image est requise",
+	path: ["media"],
+};
+
+const FIRST_MEDIA_NOT_VIDEO_ERROR = {
+	message: "Le premier média doit être une image, pas une vidéo.",
+	path: ["media"],
 };
 
 const COMPARE_PRICE_ERROR = {
@@ -159,7 +143,8 @@ export const createProductSkuSchema = baseSkuFieldsSchema
 		// SKU - optional, sera auto-genere si non fourni
 		sku: z.string().max(50).optional().or(z.literal("")),
 	})
-	.refine(refinePrimaryImageNotVideo, PRIMARY_IMAGE_ERROR)
+	.refine(refineMediaMinOne, MEDIA_REQUIRED_ERROR)
+	.refine(refineFirstMediaNotVideo, FIRST_MEDIA_NOT_VIDEO_ERROR)
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
 
 export const deleteProductSkuSchema = z.object({
@@ -233,7 +218,8 @@ export const updateProductSkuSchema = baseSkuFieldsSchema
 		// SKU ID (required - on modifie un SKU existant)
 		skuId: z.cuid2({ message: "ID variante invalide" }),
 	})
-	.refine(refinePrimaryImageNotVideo, PRIMARY_IMAGE_ERROR)
+	.refine(refineMediaMinOne, MEDIA_REQUIRED_ERROR)
+	.refine(refineFirstMediaNotVideo, FIRST_MEDIA_NOT_VIDEO_ERROR)
 	.refine(refineCompareAtPrice, COMPARE_PRICE_ERROR);
 
 // ============================================================================

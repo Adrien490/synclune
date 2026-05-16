@@ -78,12 +78,12 @@ function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerP
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange}>
+		<Drawer open={open} onOpenChange={onOpenChange} handleOnly>
 			<DrawerContent id={id}>
 				<DrawerHeader>
 					<DrawerTitle>Filtrer les commandes</DrawerTitle>
 				</DrawerHeader>
-				<DrawerBody>
+				<DrawerBody className="overscroll-contain" data-vaul-no-drag>
 					<div role="listbox" aria-label="Filtrer les commandes" className="flex flex-col gap-1">
 						{FILTER_OPTIONS.map((option) => {
 							const isSelected = optimisticFilter === option.value;

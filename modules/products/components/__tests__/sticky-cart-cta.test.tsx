@@ -135,7 +135,9 @@ function createSku(overrides: Partial<ProductSku> = {}): ProductSku {
 		inventory: 5,
 		isActive: true,
 		isDefault: true,
-		color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" },
+		colors: [
+			{ colorId: "c-1", position: 0, color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" } },
+		],
 		material: null,
 		size: null,
 		images: [],
@@ -385,14 +387,20 @@ describe("StickyCartCTA", () => {
 	describe("SKU label", () => {
 		it("shows the color name when SKU has a color", () => {
 			const sku = createSku({
-				color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" },
+				colors: [
+					{
+						colorId: "c-1",
+						position: 0,
+						color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" },
+					},
+				],
 			});
 			renderVisible({ defaultSku: sku });
 			expect(screen.getByText("Or")).toBeInTheDocument();
 		});
 
 		it("shows the product title when SKU has no color", () => {
-			const sku = createSku({ color: null });
+			const sku = createSku({ colors: [] });
 			const product = createProduct({ title: "Bague Lune Or", skus: [sku] });
 			renderVisible({ defaultSku: sku, product });
 			expect(screen.getByText("Bague Lune Or")).toBeInTheDocument();

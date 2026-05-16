@@ -56,47 +56,37 @@ describe("getUpdateProductSkuFormOpts", () => {
 		expect(result.defaultValues.compareAtPriceEuros).toBeUndefined();
 	});
 
-	it("extracts primary image correctly", () => {
+	it("merges images into a single ordered media[] (1er = principal)", () => {
 		const primary = makeSkuImage({ isPrimary: true, url: "https://utfs.io/f/primary.jpg" });
-		const result = getUpdateProductSkuFormOpts(makeSku({ images: [primary] }));
+		const gallery1 = makeSkuImage({ isPrimary: false, url: "https://utfs.io/f/g1.jpg" });
+		const result = getUpdateProductSkuFormOpts(makeSku({ images: [primary, gallery1] }));
 
-		expect(result.defaultValues.primaryImage).toBeDefined();
-		expect(result.defaultValues.primaryImage!.url).toBe("https://utfs.io/f/primary.jpg");
+		expect(result.defaultValues.media).toHaveLength(2);
+		expect(result.defaultValues.media[0]!.url).toBe("https://utfs.io/f/primary.jpg");
+		expect(result.defaultValues.media[1]!.url).toBe("https://utfs.io/f/g1.jpg");
 	});
 
-	it("sets primaryImage to undefined when no primary image exists", () => {
-		const gallery = makeSkuImage({ isPrimary: false });
-		const result = getUpdateProductSkuFormOpts(makeSku({ images: [gallery] }));
-
-		expect(result.defaultValues.primaryImage).toBeUndefined();
+	it("returns empty media[] when sku has no images", () => {
+		const result = getUpdateProductSkuFormOpts(makeSku({ images: [] }));
+		expect(result.defaultValues.media).toEqual([]);
 	});
 
-	it("only includes non-primary images in galleryMedia", () => {
-		const primary = makeSkuImage({ isPrimary: true, id: "primary" });
-		const gallery1 = makeSkuImage({ isPrimary: false, id: "gallery-1" });
-		const gallery2 = makeSkuImage({ isPrimary: false, id: "gallery-2" });
-		const result = getUpdateProductSkuFormOpts(makeSku({ images: [primary, gallery1, gallery2] }));
-
-		expect(result.defaultValues.galleryMedia).toHaveLength(2);
-	});
-
-	it("converts null to undefined in gallery media fields", () => {
-		const gallery = makeSkuImage({
-			isPrimary: false,
+	it("converts null to undefined in media fields", () => {
+		const img = makeSkuImage({
 			thumbnailUrl: null,
 			blurDataUrl: null,
 			altText: null,
 		});
-		const result = getUpdateProductSkuFormOpts(makeSku({ images: [gallery] }));
+		const result = getUpdateProductSkuFormOpts(makeSku({ images: [img] }));
 
-		expect(result.defaultValues.galleryMedia[0]!.thumbnailUrl).toBeUndefined();
-		expect(result.defaultValues.galleryMedia[0]!.blurDataUrl).toBeUndefined();
-		expect(result.defaultValues.galleryMedia[0]!.altText).toBeUndefined();
+		expect(result.defaultValues.media[0]!.thumbnailUrl).toBeUndefined();
+		expect(result.defaultValues.media[0]!.blurDataUrl).toBeUndefined();
+		expect(result.defaultValues.media[0]!.altText).toBeUndefined();
 	});
 
-	it("falls back to empty string for missing colorId", () => {
-		const result = getUpdateProductSkuFormOpts(makeSku({ color: null }));
-		expect(result.defaultValues.colorId).toBe("");
+	it("falls back to empty array when SKU has no colors (M2M)", () => {
+		const result = getUpdateProductSkuFormOpts(makeSku({ colors: [] }));
+		expect(result.defaultValues.colorIds).toEqual([]);
 	});
 
 	it("falls back to empty array when SKU has no materials (M2M)", () => {

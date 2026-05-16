@@ -12,6 +12,8 @@ import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
+import { getColorHexes, getSkuColorsDisplayLabel } from "@/modules/skus/utils/sku-colors-label";
+import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 
 type Sku = GetProductSkusReturn["productSkus"][number];
 
@@ -103,19 +105,23 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{formatPrice(sku.priceInclTax)}</span>
-						{sku.color ? (
-							<>
-								<span aria-hidden="true">·</span>
-								<span className="inline-flex items-center gap-1">
-									<span
-										className="border-border size-3 rounded-full border"
-										style={{ backgroundColor: sku.color.hex }}
-										aria-hidden="true"
-									/>
-									{sku.color.name}
-								</span>
-							</>
-						) : null}
+						{(() => {
+							const colorsLabel = getSkuColorsDisplayLabel(sku.colors);
+							if (!colorsLabel) return null;
+							return (
+								<>
+									<span aria-hidden="true">·</span>
+									<span className="inline-flex items-center gap-1">
+										<span
+											className="border-border size-3 rounded-full border"
+											style={buildSwatchStyle(getColorHexes(sku.colors))}
+											aria-hidden="true"
+										/>
+										{colorsLabel}
+									</span>
+								</>
+							);
+						})()}
 						{(() => {
 							const label = getSkuMaterialsLabel(sku.materials);
 							return label ? (

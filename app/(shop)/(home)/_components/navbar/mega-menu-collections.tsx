@@ -7,7 +7,6 @@ import type { NavItemChild } from "@/shared/constants/navigation";
 import { NavigationMenuLink } from "@/shared/components/ui/navigation-menu";
 import { CollectionImagesGrid } from "@/modules/collections/components/collection-images-grid";
 import { ROUTES } from "@/shared/constants/urls";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 import { ArrowRight, Gem } from "lucide-react";
 
@@ -44,7 +43,6 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 			<NavigationMenuLink asChild>
 				<Link
 					href={ROUTES.SHOP.COLLECTIONS}
-					onClick={() => triggerHaptic("selection")}
 					aria-current={isViewAllActive ? "page" : undefined}
 					className={cn(
 						"flex min-h-11 flex-row! items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium",
@@ -69,7 +67,6 @@ export function MegaMenuCollections({ collections }: MegaMenuCollectionsProps) {
 						<NavigationMenuLink key={collection.href} asChild>
 							<Link
 								href={collection.href}
-								onClick={() => triggerHaptic("light")}
 								aria-current={isActive ? "page" : undefined}
 								className={cn(
 									"group/card bg-card flex flex-col! overflow-hidden rounded-xl",

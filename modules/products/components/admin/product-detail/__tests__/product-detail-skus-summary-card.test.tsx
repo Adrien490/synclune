@@ -5,6 +5,7 @@ vi.mock("lucide-react", () => ({
 	AlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
 	ArrowRight: () => <svg data-testid="icon-arrow-right" />,
 	LayoutList: () => <svg data-testid="icon-layout-list" />,
+	Plus: () => <svg data-testid="icon-plus" />,
 	Star: ({ "aria-label": ariaLabel }: { "aria-label"?: string }) => (
 		<svg data-testid="icon-star" aria-label={ariaLabel} />
 	),

@@ -274,7 +274,9 @@ describe("CreateProductMediaCard", () => {
 			const form = createMediaForm();
 			render(<CreateProductMediaCard form={form as never} {...defaultProps} />);
 			expect(
-				screen.getByText("La première image sera l'image principale. Maintenez pour réordonner."),
+				screen.getByText(
+					"La première image sera l'image principale. Glissez-déposez pour réorganiser.",
+				),
 			).toBeInTheDocument();
 		});
 	});

@@ -9,14 +9,15 @@
 /**
  * Média dans un formulaire SKU.
  *
- * Relation avec ParsedMedia (sku.types.ts) : même structure, mais les champs
- * optionnels sont ici required-but-undefined (stricte compatibilité TanStack Form)
- * et thumbnailUrl est non-nullable (les uploads ne produisent jamais null).
- * ParsedMedia est l'équivalent côté serveur pour le parsing des FormData JSON.
+ * Aligné sur `MediaArrayFieldValue` côté produit pour partage des composants
+ * media-array-card. Relation avec ParsedMedia (sku.types.ts) : même structure,
+ * mais les champs optionnels sont ici required-but-undefined (stricte
+ * compatibilité TanStack Form) et thumbnailUrl autorise null (les uploads de
+ * vidéos retournent null si la miniature échoue).
  */
 export type MediaData = {
 	url: string;
-	thumbnailUrl: string | undefined;
+	thumbnailUrl: string | null | undefined;
 	blurDataUrl: string | undefined;
 	altText: string | undefined;
 	mediaType: "IMAGE" | "VIDEO";
@@ -33,10 +34,11 @@ export type UpdateProductSkuFormValues = {
 	inventory: number;
 	isDefault: boolean;
 	isActive: boolean;
-	colorId: string;
+	/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur. */
+	colorIds: string[];
 	/** Matériaux M2M ordonnés (1er = principal). Vide = aucun matériau. */
 	materialIds: string[];
 	size: string;
-	primaryImage: MediaData | undefined;
-	galleryMedia: MediaData[];
+	/** Médias unifiés (1er = principal, ordre = position). Cap : ARRAY_LIMITS.SKU_MEDIA. */
+	media: MediaData[];
 };

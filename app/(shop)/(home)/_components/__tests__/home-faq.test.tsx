@@ -1,11 +1,9 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoisted mocks
 // ---------------------------------------------------------------------------
-
-const mockHaptic = vi.fn();
 
 vi.mock("@/shared/utils/cn", () => ({
 	cn: (...args: unknown[]) => args.filter(Boolean).join(" "),
@@ -125,10 +123,6 @@ vi.mock("@/shared/utils/safe-json-ld", () => ({
 	safeJsonLd: (data: unknown) => JSON.stringify(data),
 }));
 
-vi.mock("@/shared/hooks/use-haptic", () => ({
-	useHaptic: () => mockHaptic,
-}));
-
 vi.mock("next/link", () => ({
 	default: ({
 		children,
@@ -241,23 +235,6 @@ describe("HomeFaq", () => {
 			"mailto:contact@synclune.fr?subject=Une%20question%20sur%20Synclune",
 		);
 		expect(cta.getAttribute("aria-describedby")).toBe("home-faq-cta-description");
-	});
-
-	it("triggers selection haptic when an accordion item is opened", () => {
-		render(<HomeFaq />);
-
-		fireEvent.click(screen.getByTestId("accordion-mock-toggle"));
-
-		expect(mockHaptic).toHaveBeenCalledTimes(1);
-		expect(mockHaptic).toHaveBeenCalledWith("selection");
-	});
-
-	it("does not trigger haptic when the accordion is fully closed (empty value)", () => {
-		render(<HomeFaq />);
-
-		fireEvent.click(screen.getByTestId("accordion-mock-close"));
-
-		expect(mockHaptic).not.toHaveBeenCalled();
 	});
 
 	it("renders mailto link inside personnalisation answer", () => {

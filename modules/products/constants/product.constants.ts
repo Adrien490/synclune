@@ -43,13 +43,20 @@ export const PRODUCT_CAROUSEL_SELECT = {
 			inventory: true,
 			isActive: true,
 			isDefault: true,
-			color: {
+			colors: {
 				select: {
-					id: true,
-					slug: true,
-					name: true,
-					hex: true,
+					colorId: true,
+					position: true,
+					color: {
+						select: {
+							id: true,
+							slug: true,
+							name: true,
+							hex: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			materials: {
 				select: {
@@ -109,13 +116,20 @@ export const GET_PRODUCT_SELECT = {
 		select: {
 			id: true,
 			sku: true,
-			color: {
+			colors: {
 				select: {
-					id: true,
-					slug: true,
-					name: true,
-					hex: true,
+					colorId: true,
+					position: true,
+					color: {
+						select: {
+							id: true,
+							slug: true,
+							name: true,
+							hex: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			materials: {
 				select: {
@@ -241,13 +255,20 @@ export const GET_PRODUCTS_SELECT = {
 				},
 				orderBy: { position: "asc" as const },
 			},
-			color: {
+			colors: {
 				select: {
-					id: true,
-					slug: true,
-					name: true,
-					hex: true,
+					colorId: true,
+					position: true,
+					color: {
+						select: {
+							id: true,
+							slug: true,
+							name: true,
+							hex: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" as const },
 			},
 			size: true,
 		},
@@ -298,7 +319,14 @@ export const QUICK_SEARCH_SELECT = {
 			compareAtPrice: true,
 			inventory: true,
 			isDefault: true,
-			color: { select: { slug: true, name: true, hex: true } },
+			colors: {
+				select: {
+					colorId: true,
+					position: true,
+					color: { select: { slug: true, name: true, hex: true } },
+				},
+				orderBy: { position: "asc" as const },
+			},
 			images: {
 				where: { isPrimary: true },
 				take: 1,

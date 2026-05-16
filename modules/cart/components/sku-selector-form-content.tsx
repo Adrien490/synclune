@@ -97,7 +97,9 @@ export function SkuSelectorFormContent({
 	const selectedSku = activeSkus.find((sku) => {
 		if (sku.inventory <= 0) return false;
 		if (colors.length > 1) {
-			if (!selectedColor || sku.color?.slug !== selectedColor) return false;
+			if (!selectedColor) return false;
+			const skuColorSlugs = (sku.colors ?? []).map((link) => link.color.slug);
+			if (!skuColorSlugs.includes(selectedColor)) return false;
 		}
 		if (materials.length > 1) {
 			if (!selectedMaterial) return false;

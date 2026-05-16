@@ -92,12 +92,12 @@ function DiscountsFilterDrawerInner({ open, onOpenChange, id }: DiscountsFilterD
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange}>
+		<Drawer open={open} onOpenChange={onOpenChange} handleOnly>
 			<DrawerContent id={id}>
 				<DrawerHeader>
 					<DrawerTitle>Filtrer les codes promo</DrawerTitle>
 				</DrawerHeader>
-				<DrawerBody>
+				<DrawerBody className="overscroll-contain" data-vaul-no-drag>
 					<div
 						role="listbox"
 						aria-label="Filtrer les codes promo"

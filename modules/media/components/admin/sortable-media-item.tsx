@@ -96,7 +96,12 @@ export function SortableMediaItem({
 		});
 		return () => cancelAnimationFrame(id);
 	}, [mobileActionsOpen]);
-	const { ref, handleRef, isDragSource } = useSortable({
+	// `handleRef` is intentionally not bound — leaving `sortable.handle` undefined makes the
+	// entire `ref` element the drag source, so drag activates from anywhere on the tile (via
+	// PointerSensor: distance on desktop, long-press on touch). The grip icon stays as a
+	// visual cue. Child buttons keep their click handlers — quick taps fire before the
+	// activation delay engages.
+	const { ref, isDragSource } = useSortable({
 		id: media.url,
 		index,
 		transition: shouldReduceMotion ? null : { duration: 200, easing: "ease" },
@@ -194,7 +199,7 @@ export function SortableMediaItem({
 	};
 
 	const mobileActionItems = (
-		<div className="flex flex-col gap-1 pb-2">
+		<div className="flex flex-col gap-1 overflow-y-auto overscroll-contain pb-2" data-vaul-no-drag>
 			{!isPrimary && onSetAsPrimary && (
 				<button
 					type="button"
@@ -291,6 +296,9 @@ export function SortableMediaItem({
 			className={cn(
 				"group relative aspect-square shrink-0 overflow-hidden rounded-lg border-2",
 				"touch-manipulation select-none [-webkit-touch-callout:none]",
+				// Drag affordance: grab cursor on desktop hover, grabbing while pressed/dragging.
+				"can-hover:cursor-grab data-[pressing]:cursor-grabbing",
+				isDragSource && "cursor-grabbing",
 				shouldReduceMotion
 					? ""
 					: "motion-safe:transition-[transform,border-color,opacity,box-shadow] motion-safe:duration-[var(--duration-normal)]",
@@ -467,26 +475,22 @@ export function SortableMediaItem({
 				</button>
 			)}
 
-			{/* Drag handle — desktop hover-only via can-hover variant (CSS-driven, no hydration flash) */}
-			<button
-				type="button"
-				ref={handleRef}
-				aria-label={`Réorganiser ${isVideo ? "la vidéo" : "l'image"} ${index + 1}`}
-				aria-describedby="drag-instructions"
+			{/* Drag affordance — visual cue only (the entire tile is the drag handle). Hidden on
+			    touch devices where the EllipsisVertical drawer + inline chevrons cover reorder UX. */}
+			<div
+				aria-hidden="true"
 				className={cn(
-					"can-hover:flex absolute top-2 right-2 z-20 hidden cursor-grab active:scale-[0.98] active:cursor-grabbing",
+					"can-hover:flex pointer-events-none absolute top-2 right-2 z-20 hidden cursor-grab",
 					"can-hover:opacity-0 can-hover:group-focus-within:opacity-100 can-hover:group-hover:opacity-100",
-					"can-hover:focus-visible:opacity-100",
-					"focus-visible:ring-primary rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
 					shouldReduceMotion
 						? ""
-						: "motion-safe:transition-[opacity,transform] motion-safe:duration-[var(--duration-fast)]",
+						: "motion-safe:transition-opacity motion-safe:duration-[var(--duration-fast)]",
 				)}
 			>
-				<div className="flex size-11 items-center justify-center rounded-full bg-black/70 shadow-lg hover:bg-black/90">
+				<div className="flex size-11 items-center justify-center rounded-full bg-black/70 shadow-lg">
 					<GripVertical className="size-5 text-white" aria-hidden="true" />
 				</div>
-			</button>
+			</div>
 
 			{/* Mobile inline reorder chevrons — alternative rapide au drawer Actions
 			    (1 tap = 1 mouvement vs ouvrir-EllipsisVertical → Déplacer). Hidden sur hover-capable. */}
@@ -613,7 +617,7 @@ export function SortableMediaItem({
 
 			{/* Mobile actions — Drawer Vaul bottom-sheet, hidden on hover-capable devices via CSS */}
 			<div className="can-hover:hidden absolute top-2 right-2 z-20">
-				<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
+				<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen} handleOnly>
 					<DrawerTrigger asChild>
 						<Button
 							ref={mobileTriggerRef}

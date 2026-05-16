@@ -23,6 +23,8 @@ export interface MultiSelectOption {
 	value: string;
 	label: string;
 	disabled?: boolean;
+	/** Élément visuel optionnel rendu avant le label (ex: pastille couleur, icône). */
+	prefix?: React.ReactNode;
 }
 
 export interface MultiSelectProps extends Omit<
@@ -266,6 +268,7 @@ export const MultiSelect = ({
 									onCheckedChange={() => toggle(option.value)}
 									className="pointer-events-none"
 								/>
+								{option.prefix}
 								<span className="flex-1 truncate text-sm">{option.label}</span>
 								{isSelected && (
 									<Check className="text-primary size-4 shrink-0" aria-hidden="true" />
@@ -288,7 +291,12 @@ export const MultiSelect = ({
 		return (
 			<>
 				{ariaLiveRegion}
-				<Drawer open={isOpen} onOpenChange={handleOpenChange} repositionInputs={showSearch}>
+				<Drawer
+					open={isOpen}
+					onOpenChange={handleOpenChange}
+					repositionInputs={showSearch}
+					handleOnly
+				>
 					<DrawerTrigger asChild>{trigger}</DrawerTrigger>
 					<DrawerContent>
 						<DrawerHeader>
@@ -299,10 +307,15 @@ export const MultiSelect = ({
 									: `${options.length} option${options.length > 1 ? "s" : ""} disponible${options.length > 1 ? "s" : ""}`}
 							</DrawerDescription>
 						</DrawerHeader>
-						{showSearch && <div className="pb-2">{searchInput}</div>}
+						{showSearch && (
+							<div className="pb-2" data-vaul-no-drag>
+								{searchInput}
+							</div>
+						)}
 						<DrawerBody
 							style={{ maxHeight: `min(60vh, ${maxHeight + 80}px)` }}
 							className="overscroll-contain"
+							data-vaul-no-drag
 						>
 							{optionsList}
 						</DrawerBody>

@@ -10,6 +10,12 @@ import { useAlertDialogStore } from "@/shared/providers/alert-dialog-store-provi
 import { CartItemQuantitySelector } from "./cart-item-quantity-selector";
 import { CartItemRemoveButton } from "./cart-item-remove-button";
 import { REMOVE_CART_ITEM_DIALOG_ID } from "./remove-cart-item-alert-dialog";
+import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
+import {
+	getSkuColorsDisplayLabel,
+	getColorHexes,
+	getColorNames,
+} from "@/modules/skus/utils/sku-colors-label";
 import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
 
 import type { CartItem } from "../types/cart.types";
@@ -51,9 +57,12 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 	const openAlertDialog = useAlertDialogStore((state) => state.openAlertDialog);
 
 	const materialsLabel = getSkuMaterialsLabel(item.sku.materials);
+	const colorsLabel = getSkuColorsDisplayLabel(item.sku.colors);
+	const colorHexes = getColorHexes(item.sku.colors);
+	const colorNames = getColorNames(item.sku.colors);
 	const ariaLabelParts = [
 		item.sku.product.title,
-		item.sku.color?.name,
+		colorsLabel,
 		materialsLabel,
 		`quantité ${item.quantity}`,
 		`${formatEuro(getCartItemSubtotal(item))}`,
@@ -134,22 +143,22 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 
 				{/* Attributs */}
 				<dl className="text-muted-foreground flex flex-wrap gap-x-1 text-xs">
-					{item.sku.color && (
+					{colorsLabel && (
 						<div className="inline-flex items-center gap-1">
-							<dt className="sr-only">Couleur</dt>
+							<dt className="sr-only">{colorNames.length > 1 ? "Couleurs" : "Couleur"}</dt>
 							<dd className="inline-flex items-center gap-1">
 								<span
 									className="border-border inline-block size-2.5 rounded-full border"
-									style={{ backgroundColor: item.sku.color.hex }}
+									style={buildSwatchStyle(colorHexes)}
 									aria-hidden="true"
 								/>
-								{item.sku.color.name}
+								{colorsLabel}
 							</dd>
 						</div>
 					)}
 					{materialsLabel && (
 						<div className="inline-flex items-center">
-							{item.sku.color && (
+							{colorsLabel && (
 								<span aria-hidden="true" className="mr-1">
 									/
 								</span>
@@ -160,7 +169,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					)}
 					{item.sku.size && (
 						<div className="inline-flex items-center">
-							{(item.sku.color ?? materialsLabel) && (
+							{(colorsLabel ?? materialsLabel) && (
 								<span aria-hidden="true" className="mr-1">
 									/
 								</span>

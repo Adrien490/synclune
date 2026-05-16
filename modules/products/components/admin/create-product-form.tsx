@@ -32,7 +32,7 @@ const FIELD_LABELS: Record<string, string> = {
 	collectionIds: "Collections",
 	status: "Visibilité",
 	"initialSku.media": "Médias",
-	"initialSku.colorId": "Couleur",
+	"initialSku.colorIds": "Couleurs",
 	"initialSku.materialIds": "Matériaux",
 	"initialSku.size": "Taille",
 	"initialSku.priceInclTaxEuros": "Prix de vente",
@@ -172,16 +172,18 @@ export function CreateProductForm({
 					media: state.values.initialSku.media,
 					status: state.values.status,
 					collectionIds: state.values.collectionIds,
+					colorIds: state.values.initialSku.colorIds,
 					materialIds: state.values.initialSku.materialIds,
 				})}
 			>
-				{({ media, status, collectionIds, materialIds }) => (
+				{({ media, status, collectionIds, colorIds, materialIds }) => (
 					<>
 						{media.length > 0 ? (
 							<input type="hidden" name="initialSku.media" value={JSON.stringify(media)} />
 						) : null}
 						<input type="hidden" name="status" value={status} />
 						<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
+						<input type="hidden" name="initialSku.colorIds" value={JSON.stringify(colorIds)} />
 						<input
 							type="hidden"
 							name="initialSku.materialIds"

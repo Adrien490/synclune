@@ -46,6 +46,8 @@ export async function updateProduct(
 
 		// 2. Extraction des donnees du FormData
 		const media = safeFormGetJSON<unknown[]>(formData, "defaultSku.media") ?? [];
+		// Couleurs M2M sérialisées en JSON (1re = principale)
+		const defaultSkuColorIds = safeFormGetJSON<string[]>(formData, "defaultSku.colorIds") ?? [];
 		// Matériaux M2M sérialisés en JSON (cohérent avec collectionIds)
 		const defaultSkuMaterialIds =
 			safeFormGetJSON<string[]>(formData, "defaultSku.materialIds") ?? [];
@@ -63,7 +65,7 @@ export async function updateProduct(
 				compareAtPriceEuros: formData.get("defaultSku.compareAtPriceEuros"),
 				inventory: formData.get("defaultSku.inventory"),
 				isActive: formData.get("defaultSku.isActive"), // Zod fera la coercion
-				colorId: formData.get("defaultSku.colorId") ?? "",
+				colorIds: defaultSkuColorIds,
 				materialIds: defaultSkuMaterialIds,
 				size: formData.get("defaultSku.size") ?? "",
 				media,
@@ -138,8 +140,8 @@ export async function updateProduct(
 		// 6. Normalize empty strings to null for optional foreign keys
 		const normalizedTypeId = validatedData.typeId?.trim() ?? null;
 		const normalizedCollectionIds = validatedData.collectionIds;
-		const normalizedColorId = validatedData.defaultSku.colorId?.trim() ?? null;
 		// Dedupe (préserve l'ordre saisi, 1er = principal)
+		const normalizedColorIds = Array.from(new Set(validatedData.defaultSku.colorIds));
 		const normalizedMaterialIds = Array.from(new Set(validatedData.defaultSku.materialIds));
 		const normalizedSize = validatedData.defaultSku.size?.trim() ?? null;
 		// Sanitisation XSS de la description
@@ -195,13 +197,14 @@ export async function updateProduct(
 				}
 			}
 
-			if (normalizedColorId) {
-				const color = await tx.color.findUnique({
-					where: { id: normalizedColorId },
+			// Validate colors if provided (M2M)
+			if (normalizedColorIds.length > 0) {
+				const colors = await tx.color.findMany({
+					where: { id: { in: normalizedColorIds } },
 					select: { id: true },
 				});
-				if (!color) {
-					throw new Error("La couleur spécifiée n'existe pas.");
+				if (colors.length !== normalizedColorIds.length) {
+					throw new Error("Une ou plusieurs couleurs spécifiées n'existent pas.");
 				}
 			}
 
@@ -252,7 +255,7 @@ export async function updateProduct(
 				});
 			}
 
-			// Update SKU + sync matériaux M2M (delete-all + create pour préserver l'ordre)
+			// Update SKU + sync couleurs & matériaux M2M (delete-all + create pour préserver l'ordre)
 			await tx.productSku.update({
 				where: { id: validatedData.defaultSku.skuId },
 				data: {
@@ -260,8 +263,14 @@ export async function updateProduct(
 					compareAtPrice: compareAtPriceCents,
 					inventory: validatedData.defaultSku.inventory,
 					isActive: validatedData.defaultSku.isActive,
-					colorId: normalizedColorId,
 					size: normalizedSize,
+					colors: {
+						deleteMany: {},
+						create: normalizedColorIds.map((colorId, index) => ({
+							colorId,
+							position: index,
+						})),
+					},
 					materials: {
 						deleteMany: {},
 						create: normalizedMaterialIds.map((materialId, index) => ({

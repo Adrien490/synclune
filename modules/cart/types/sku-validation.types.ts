@@ -12,12 +12,12 @@ interface SkuData {
 	compareAtPrice: number | null; // Prix barre (null si pas en solde)
 	isActive: boolean;
 	material?: string;
-	colorId?: string;
-	color?: {
+	/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur renseignée. */
+	colors: Array<{
 		id: string;
 		name: string;
 		hex: string;
-	};
+	}>;
 	size?: string;
 	product: {
 		id: string;

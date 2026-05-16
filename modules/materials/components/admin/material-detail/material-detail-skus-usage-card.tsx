@@ -84,16 +84,27 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 											</div>
 											<p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
 												<span className="font-mono">{sku.sku}</span>
-												{sku.color ? (
+												{sku.colors && sku.colors.length > 0 ? (
 													<>
 														<span aria-hidden="true">·</span>
 														<span className="inline-flex items-center gap-1">
 															<span
 																className="border-border size-3 rounded-full border"
-																style={{ backgroundColor: sku.color.hex }}
+																style={
+																	sku.colors.length === 1
+																		? { backgroundColor: sku.colors[0]!.color.hex }
+																		: {
+																				background: `linear-gradient(135deg, ${sku.colors
+																					.map((c, i) => {
+																						const pct = (100 / sku.colors!.length) * (i + 1);
+																						return `${c.color.hex} ${pct - 100 / sku.colors!.length}% ${pct}%`;
+																					})
+																					.join(", ")})`,
+																			}
+																}
 																aria-hidden="true"
 															/>
-															{sku.color.name}
+															{sku.colors.map((c) => c.color.name).join(" + ")}
 														</span>
 													</>
 												) : null}

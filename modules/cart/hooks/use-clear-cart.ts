@@ -7,7 +7,8 @@ import { withCallbacks } from "@/shared/utils/with-callbacks";
 
 /**
  * Hook pour vider intégralement le panier (reset items + discount + notes).
- * Toasts success/error auto (haptics intégrés via wrapper toast).
+ * Toast d'erreur uniquement — le toast de succès « N articles supprimés » est
+ * volontairement supprimé (le panier vide est sa propre confirmation visuelle).
  */
 export function useClearCart(onSuccess?: () => void) {
 	const [state, action, isPending] = useActionState(
@@ -15,7 +16,7 @@ export function useClearCart(onSuccess?: () => void) {
 			clearCart,
 			createToastCallbacks({
 				loadingMessage: "Vidage du panier…",
-				showSuccessToast: true,
+				showSuccessToast: false,
 				showErrorToast: true,
 				onSuccess: () => onSuccess?.(),
 			}),

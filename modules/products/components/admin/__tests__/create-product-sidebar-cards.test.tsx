@@ -359,7 +359,7 @@ describe("CreateProductSidebarCards", () => {
 			setup();
 			expect(
 				screen.getByRole("button", {
-					name: "Plus d'informations sur les attributs de la variante",
+					name: "Plus d'informations sur la variante",
 				}),
 			).toBeInTheDocument();
 		});

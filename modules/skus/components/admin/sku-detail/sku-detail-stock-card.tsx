@@ -36,7 +36,7 @@ export function SkuDetailStockCard({ sku }: SkuDetailStockCardProps) {
 	const orderItemsCount = sku._count.orderItems;
 
 	return (
-		<Card style={{ viewTransitionName: "sku-stock" }}>
+		<Card style={{ viewTransitionName: "sku-edit-stock" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<Package className="size-5" aria-hidden="true" />

@@ -8,7 +8,6 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/shared/components/ui/accordion";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 
 interface HomeFaqAccordionItem {
 	id: string;
@@ -24,8 +23,6 @@ interface HomeFaqAccordionProps {
 const EXPAND_ANIMATION_MS = 320;
 
 export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
-	const haptic = useHaptic();
-
 	return (
 		<Accordion
 			type="single"
@@ -34,7 +31,6 @@ export function HomeFaqAccordion({ items }: HomeFaqAccordionProps) {
 			aria-label="Liste des questions fréquentes"
 			onValueChange={(value) => {
 				if (!value) return;
-				haptic("selection");
 				const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 				window.setTimeout(() => {
 					document.getElementById(value)?.scrollIntoView({

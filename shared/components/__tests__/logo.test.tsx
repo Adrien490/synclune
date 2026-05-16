@@ -165,21 +165,21 @@ describe("Logo", () => {
 	// G11 — Nouveaux tests post-audit
 	// =========================================================================
 
-	it("triggers haptic on tap when href is provided (default 'selection')", () => {
+	it("does not trigger haptic by default (nav passive vers home)", () => {
 		render(<Logo href="/" />);
+
+		fireEvent.click(screen.getByRole("link"));
+
+		expect(triggerHapticMock).not.toHaveBeenCalled();
+	});
+
+	it("triggers haptic when explicitly opted in via prop", () => {
+		render(<Logo href="/" haptic="selection" />);
 
 		fireEvent.click(screen.getByRole("link"));
 
 		expect(triggerHapticMock).toHaveBeenCalledTimes(1);
 		expect(triggerHapticMock).toHaveBeenCalledWith("selection");
-	});
-
-	it("opts out of haptic when haptic={false}", () => {
-		render(<Logo href="/" haptic={false} />);
-
-		fireEvent.click(screen.getByRole("link"));
-
-		expect(triggerHapticMock).not.toHaveBeenCalled();
 	});
 
 	it("uses custom ariaLabel when provided (overrides default fallback)", () => {

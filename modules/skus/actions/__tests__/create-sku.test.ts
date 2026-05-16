@@ -15,22 +15,21 @@ const {
 	mockSuccess,
 	mockError,
 	mockDetectMediaType,
-	mockParsePrimaryImage,
-	mockParseGalleryMedia,
+	mockParseMedia,
 	mockSafeParse,
 	mockGetSkuInvalidationTags,
 } = vi.hoisted(() => ({
 	mockPrisma: {
 		product: { findUnique: vi.fn() },
 		color: { findUnique: vi.fn() },
-		material: { findUnique: vi.fn() },
+		material: { findMany: vi.fn() },
 		productSku: {
 			findFirst: vi.fn(),
 			findUnique: vi.fn(),
 			create: vi.fn(),
 			updateMany: vi.fn(),
 		},
-		skuMedia: { create: vi.fn() },
+		skuMedia: { create: vi.fn(), createMany: vi.fn() },
 		$transaction: vi.fn(),
 	},
 	mockRequireAdmin: vi.fn(),
@@ -40,8 +39,7 @@ const {
 	mockSuccess: vi.fn(),
 	mockError: vi.fn(),
 	mockDetectMediaType: vi.fn(),
-	mockParsePrimaryImage: vi.fn(),
-	mockParseGalleryMedia: vi.fn(),
+	mockParseMedia: vi.fn(),
 	mockSafeParse: vi.fn(),
 	mockGetSkuInvalidationTags: vi.fn(),
 }));
@@ -85,10 +83,8 @@ vi.mock("../../utils/cache.utils", () => ({
 	getSkuInvalidationTags: mockGetSkuInvalidationTags,
 }));
 vi.mock("../../utils/parse-media-from-form", () => ({
-	parsePrimaryImageFromForm: mockParsePrimaryImage,
-	parseGalleryMediaFromForm: mockParseGalleryMedia,
-	parsePrimaryImageFromFormStrict: mockParsePrimaryImage,
-	parseGalleryMediaFromFormStrict: mockParseGalleryMedia,
+	parseMediaFromForm: mockParseMedia,
+	parseMediaFromFormStrict: mockParseMedia,
 }));
 
 import { createProductSku } from "../create-sku";
@@ -116,8 +112,7 @@ describe("createProductSku", () => {
 		mockRequireAdmin.mockResolvedValue({ user: { id: "admin-1", name: "Admin" } });
 		mockEnforceRateLimit.mockResolvedValue({ success: true });
 		mockGetSkuInvalidationTags.mockReturnValue(["skus-list"]);
-		mockParsePrimaryImage.mockReturnValue(null);
-		mockParseGalleryMedia.mockReturnValue([]);
+		mockParseMedia.mockReturnValue([]);
 		mockDetectMediaType.mockReturnValue("IMAGE");
 
 		// Re-setup safeParse mock after resetAllMocks
@@ -133,8 +128,7 @@ describe("createProductSku", () => {
 				colorId: "",
 				materialIds: [],
 				size: "",
-				primaryImage: null,
-				galleryMedia: [],
+				media: [],
 			},
 		});
 
@@ -143,7 +137,7 @@ describe("createProductSku", () => {
 		);
 		mockPrisma.product.findUnique.mockResolvedValue({ id: VALID_CUID, slug: "test" });
 		mockPrisma.color.findUnique.mockResolvedValue(null);
-		mockPrisma.material.findUnique.mockResolvedValue(null);
+		mockPrisma.material.findMany.mockResolvedValue([]);
 		mockPrisma.productSku.findFirst.mockResolvedValue(null);
 		// Used by generateUniqueTechnicalName to check uniqueness of generated SKU code
 		mockPrisma.productSku.findUnique.mockResolvedValue(null);
@@ -154,7 +148,7 @@ describe("createProductSku", () => {
 			product: { slug: "test" },
 		});
 		mockPrisma.productSku.updateMany.mockResolvedValue({});
-		mockPrisma.skuMedia.create.mockResolvedValue({});
+		mockPrisma.skuMedia.createMany.mockResolvedValue({ count: 0 });
 
 		mockSuccess.mockImplementation((msg: string, data?: unknown) => ({
 			status: ActionStatus.SUCCESS,

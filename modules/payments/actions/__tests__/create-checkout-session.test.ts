@@ -30,6 +30,7 @@ vi.mock("next/headers", () => ({
 }));
 vi.mock("@sentry/nextjs", () => ({
 	startSpan: async <T>(_: unknown, fn: () => Promise<T>) => fn(),
+	addBreadcrumb: vi.fn(),
 }));
 vi.mock("@/modules/auth/lib/get-current-session", () => ({
 	getSession: mockGetSession,

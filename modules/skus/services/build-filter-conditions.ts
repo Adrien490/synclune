@@ -21,13 +21,18 @@ export const buildFilterConditions = (
 		}
 	}
 
-	// ColorId - logique intégrée
+	// ColorId — filter by colorId via M2M ProductSkuColor (tolérant : un SKU bicolore
+	// matche si au moins une de ses couleurs correspond au filtre).
 	if (filters.colorId !== undefined) {
 		const colorIds = Array.isArray(filters.colorId) ? filters.colorId : [filters.colorId];
 		if (colorIds.length === 1) {
-			conditions.push({ colorId: colorIds[0] });
+			conditions.push({
+				colors: { some: { colorId: colorIds[0] } },
+			});
 		} else if (colorIds.length > 1) {
-			conditions.push({ colorId: { in: colorIds } });
+			conditions.push({
+				colors: { some: { colorId: { in: colorIds } } },
+			});
 		}
 	}
 

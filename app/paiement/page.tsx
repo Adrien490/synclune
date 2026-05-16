@@ -7,6 +7,7 @@ import { TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CheckoutEmbed } from "@/modules/payments/components/checkout-embed";
+import { CheckoutMobileTrustHint } from "./_components/checkout-mobile-trust-hint";
 
 import type { Metadata } from "next";
 
@@ -35,7 +36,7 @@ export default async function CheckoutPage() {
 
 	if (validation.issues.length > 0) {
 		return (
-			<div className="min-h-dvh min-h-screen">
+			<div className="min-h-dvh min-h-screen" style={{ viewTransitionName: "shop-paiement" }}>
 				<section className="bg-background py-8 sm:py-10">
 					<div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
 						<div className="mb-6 sm:mb-8">
@@ -89,7 +90,7 @@ export default async function CheckoutPage() {
 				style={{ viewTransitionName: "none" }}
 			/>
 
-			<section className="py-4 pb-[calc(theme(spacing.32)+env(safe-area-inset-bottom))] sm:py-8 md:py-10 md:pb-10">
+			<section className="py-4 pb-8 sm:py-8 md:py-10 md:pb-10">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					<div className="max-sm:sr-only sm:mb-6">
 						<h1 className="font-display text-2xl font-normal tracking-wide sm:text-3xl">
@@ -107,12 +108,10 @@ export default async function CheckoutPage() {
 							Plus que quelques instants avant de recevoir tes bijoux.
 						</p>
 					</div>
-					<p
-						aria-hidden="true"
-						className="font-cursive text-muted-foreground mb-4 text-center text-base italic sm:hidden"
-					>
+					<p className="font-cursive text-muted-foreground mb-4 text-center text-base italic sm:hidden">
 						Étape finale — tu y es presque
 					</p>
+					<CheckoutMobileTrustHint />
 					<CheckoutEmbed cartKey={cart.id} />
 				</div>
 			</section>

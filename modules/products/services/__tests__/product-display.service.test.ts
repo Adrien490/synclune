@@ -39,12 +39,18 @@ function createMockSku(overrides: Partial<SkuFromList> = {}): SkuFromList {
 		priceInclTax: 2500,
 		compareAtPrice: null,
 		size: null,
-		color: {
-			id: "color-1",
-			slug: "gold",
-			hex: "#FFD700",
-			name: "Or",
-		},
+		colors: [
+			{
+				colorId: "color-1",
+				position: 0,
+				color: {
+					id: "color-1",
+					slug: "gold",
+					hex: "#FFD700",
+					name: "Or",
+				},
+			},
+		],
 		materials: [
 			{
 				materialId: "material-1",
@@ -228,12 +234,24 @@ describe("getProductCardData", () => {
 		it("should extract unique colors from active SKUs", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
 				isDefault: false,
-				color: { id: "c2", slug: "silver", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "silver", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
 
@@ -257,7 +275,13 @@ describe("getProductCardData", () => {
 		it("should mark color as out of stock when inventory is 0", () => {
 			const sku = createMockSku({
 				inventory: 0,
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku]);
 
@@ -271,13 +295,25 @@ describe("getProductCardData", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
 				inventory: 0,
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
 				inventory: 5,
 				isDefault: false,
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
 
@@ -297,17 +333,35 @@ describe("getProductCardData", () => {
 		it("should filter out invalid hex colors", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
 				isDefault: false,
-				color: { id: "c2", slug: "malicious", hex: "javascript:alert(1)", name: "Invalid" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "malicious", hex: "javascript:alert(1)", name: "Invalid" },
+					},
+				],
 			});
 			const sku3 = createMockSku({
 				id: "sku-3",
 				isDefault: false,
-				color: { id: "c3", slug: "empty", hex: "", name: "Empty" },
+				colors: [
+					{
+						colorId: "c3",
+						position: 0,
+						color: { id: "c3", slug: "empty", hex: "", name: "Empty" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku1, sku2, sku3]);
 
@@ -319,7 +373,13 @@ describe("getProductCardData", () => {
 
 		it("should accept lowercase hex colors", () => {
 			const sku = createMockSku({
-				color: { id: "c1", slug: "gold", hex: "#ffd700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#ffd700", name: "Or" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku]);
 
@@ -332,12 +392,18 @@ describe("getProductCardData", () => {
 		it("should ignore SKUs without color", () => {
 			const sku1 = createMockSku({
 				id: "sku-1",
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const sku2 = createMockSku({
 				id: "sku-2",
 				isDefault: false,
-				color: null,
+				colors: [],
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
 
@@ -416,7 +482,13 @@ describe("getProductCardData", () => {
 						material: { id: "m1", name: "Sterling Silver" },
 					},
 				],
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Gold" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Gold" },
+					},
+				],
 			});
 			const product = createMockProduct({ title: "Ring" }, [sku]);
 
@@ -530,13 +602,25 @@ describe("getProductCardData", () => {
 				id: "sku-gold",
 				isDefault: true,
 				priceInclTax: 2000,
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const sku2 = createMockSku({
 				id: "sku-silver",
 				isDefault: false,
 				priceInclTax: 1800,
-				color: { id: "c2", slug: "silver", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "silver", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku1, sku2]);
 
@@ -550,7 +634,13 @@ describe("getProductCardData", () => {
 			const sku1 = createMockSku({
 				id: "sku-gold",
 				isDefault: true,
-				color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "gold", hex: "#FFD700", name: "Or" },
+					},
+				],
 			});
 			const product = createMockProduct({}, [sku1]);
 

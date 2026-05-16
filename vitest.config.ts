@@ -15,7 +15,7 @@ export default defineConfig({
 	test: {
 		pool: "threads",
 		include: ["**/*.test.{ts,tsx}"],
-		exclude: ["node_modules", ".next"],
+		exclude: ["node_modules", ".next", ".claude/worktrees/**"],
 		environment: "jsdom",
 		setupFiles: ["./test/setup.ts"],
 		coverage: {

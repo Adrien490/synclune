@@ -25,23 +25,32 @@ export function extractVariantInfo<
 	let totalStock = 0;
 
 	for (const sku of activeSkus) {
-		// Couleurs avec fallback sur le matériau principal pour différencier les variantes.
-		// Règle métier : pour les produits sans couleur (ex. bijoux argent uniquement),
-		// on expose le matériau principal (position=0) comme "couleur" pour piloter le sélecteur.
-		// Si ni l'un ni l'autre, le SKU n'apparaît pas dans availableColors.
-		// Cf. test "should use material name as color fallback when no color is set".
+		// Couleurs M2M : on agrège chaque couleur unique vue dans les SKUs.
+		// Fallback métier : si AUCUNE couleur n'est rattachée à un SKU mais qu'il a un
+		// matériau principal (ex. bijoux argent uniquement), on expose le matériau
+		// principal (position=0) comme "couleur" pour piloter le sélecteur.
+		const skuColors = sku.colors ?? [];
 		const primaryMaterialName = sku.materials?.[0]?.material.name ?? undefined;
 
-		if (sku.color || primaryMaterialName) {
-			// Utiliser le slug comme clé principale (URL-friendly)
-			const materialSlug = primaryMaterialName ? slugify(primaryMaterialName) : "no-material";
-			const colorKey = sku.color?.slug ?? sku.color?.id ?? materialSlug;
-			const colorName = sku.color?.name ?? primaryMaterialName ?? "Standard";
-			const existing = colorMap.get(colorKey) ?? { name: colorName, count: 0 };
-			colorMap.set(colorKey, {
-				hex: sku.color?.hex ?? existing.hex,
-				slug: sku.color?.slug ?? colorKey, // Toujours un slug
-				name: colorName,
+		if (skuColors.length > 0) {
+			for (const link of skuColors) {
+				const c = link.color;
+				const colorKey = c.slug ?? c.id;
+				const existing = colorMap.get(colorKey) ?? { name: c.name, count: 0 };
+				colorMap.set(colorKey, {
+					hex: c.hex ?? existing.hex,
+					slug: c.slug ?? colorKey,
+					name: c.name,
+					count: existing.count + 1,
+				});
+			}
+		} else if (primaryMaterialName) {
+			const materialSlug = slugify(primaryMaterialName);
+			const existing = colorMap.get(materialSlug) ?? { name: primaryMaterialName, count: 0 };
+			colorMap.set(materialSlug, {
+				hex: existing.hex,
+				slug: materialSlug,
+				name: primaryMaterialName,
 				count: existing.count + 1,
 			});
 		}

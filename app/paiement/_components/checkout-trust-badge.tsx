@@ -16,7 +16,7 @@ export function CheckoutTrustBadge() {
 			<span aria-hidden="true" className="text-border">
 				·
 			</span>
-			<StripeWordmark className="h-3 w-auto opacity-60" />
+			<StripeWordmark className="h-3 w-auto opacity-80" />
 		</div>
 	);
 }

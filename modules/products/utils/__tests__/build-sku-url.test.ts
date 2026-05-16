@@ -6,13 +6,19 @@ describe("buildSkuUrl", () => {
 	const baseUrl = "/creations/bague-lune-argent";
 
 	it("returns the base URL when no SKU fields are set", () => {
-		expect(buildSkuUrl(baseUrl, { color: null, materials: [], size: null })).toBe(baseUrl);
+		expect(buildSkuUrl(baseUrl, { colors: [], materials: [], size: null })).toBe(baseUrl);
 	});
 
-	it("appends ?color when color.slug is present", () => {
+	it("appends ?color when first color slug is present", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
-				color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" },
+				colors: [
+					{
+						colorId: "c",
+						position: 0,
+						color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" },
+					},
+				],
 				materials: [],
 				size: null,
 			}),
@@ -22,7 +28,7 @@ describe("buildSkuUrl", () => {
 	it("slugifies material name and appends as ?material", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
-				color: null,
+				colors: [],
 				materials: [
 					{
 						materialId: "m",
@@ -36,7 +42,7 @@ describe("buildSkuUrl", () => {
 	});
 
 	it("appends ?size verbatim when size is set", () => {
-		expect(buildSkuUrl(baseUrl, { color: null, materials: [], size: "52" })).toBe(
+		expect(buildSkuUrl(baseUrl, { colors: [], materials: [], size: "52" })).toBe(
 			`${baseUrl}?size=52`,
 		);
 	});
@@ -44,7 +50,13 @@ describe("buildSkuUrl", () => {
 	it("combines color, material and size in order", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
-				color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" },
+				colors: [
+					{
+						colorId: "c",
+						position: 0,
+						color: { id: "c", slug: "or", name: "Or", hex: "#FFD700" },
+					},
+				],
 				materials: [
 					{
 						materialId: "m",
@@ -57,14 +69,24 @@ describe("buildSkuUrl", () => {
 		).toBe(`${baseUrl}?color=or&material=argent-925&size=52`);
 	});
 
-	it("ignores color when slug is missing", () => {
+	it("uses the primary color when SKU is bicolore", () => {
 		expect(
 			buildSkuUrl(baseUrl, {
-				// @ts-expect-error — runtime tolerance for missing slug
-				color: { id: "c", name: "Or", hex: "#FFD700" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", name: "Or rose", hex: "#E5C9B3" },
+					},
+					{
+						colorId: "c2",
+						position: 1,
+						color: { id: "c2", slug: "argent", name: "Argent", hex: "#C0C0C0" },
+					},
+				],
 				materials: [],
 				size: null,
 			}),
-		).toBe(baseUrl);
+		).toBe(`${baseUrl}?color=or-rose`);
 	});
 });

@@ -73,9 +73,10 @@ export function StickyCartCTADesktop({
 		exit: prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -100 },
 	};
 
-	// Résumé variant compact : "Rose · Taille M"
+	// Résumé variant compact : "Rose + Argent · Taille M"
 	const variantSummaryParts: string[] = [];
-	if (currentSku.color?.name) variantSummaryParts.push(currentSku.color.name);
+	const currentColorsLabel = currentSku.colors?.map((c) => c.color.name).join(" + ");
+	if (currentColorsLabel) variantSummaryParts.push(currentColorsLabel);
 	const currentMaterialsLabel = getSkuMaterialsLabel(currentSku.materials);
 	if (currentMaterialsLabel) variantSummaryParts.push(currentMaterialsLabel);
 	if (currentSku.size) variantSummaryParts.push(`Taille ${currentSku.size}`);

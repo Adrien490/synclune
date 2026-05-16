@@ -17,12 +17,18 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 		priceInclTax: 2000,
 		compareAtPrice: null,
 		size: null,
-		color: {
-			id: "color-1",
-			slug: "or-rose",
-			hex: "#B76E79",
-			name: "Or Rose",
-		},
+		colors: [
+			{
+				colorId: "color-1",
+				position: 0,
+				color: {
+					id: "color-1",
+					slug: "or-rose",
+					hex: "#B76E79",
+					name: "Or Rose",
+				},
+			},
+		],
 		materials: [
 			{
 				materialId: "mat-1",
@@ -42,10 +48,24 @@ describe("extractVariantInfo", () => {
 	it("should extract colors from active SKUs", () => {
 		const product = {
 			skus: [
-				makeSku({ color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
+				makeSku({
+					colors: [
+						{
+							colorId: "c1",
+							position: 0,
+							color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+						},
+					],
+				}),
 				makeSku({
 					id: "sku-2",
-					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					colors: [
+						{
+							colorId: "c2",
+							position: 0,
+							color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+						},
+					],
 				}),
 			],
 		};
@@ -161,7 +181,7 @@ describe("extractVariantInfo", () => {
 		const product = {
 			skus: [
 				makeSku({
-					color: null,
+					colors: [],
 					materials: [{ materialId: "m1", position: 0, material: { id: "m1", name: "Or 18K" } }],
 				}),
 			],
@@ -179,16 +199,34 @@ describe("extractVariantInfo", () => {
 			skus: [
 				makeSku({
 					id: "sku-1",
-					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					colors: [
+						{
+							colorId: "c1",
+							position: 0,
+							color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+						},
+					],
 				}),
 				makeSku({
 					id: "sku-2",
-					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					colors: [
+						{
+							colorId: "c1",
+							position: 0,
+							color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+						},
+					],
 					size: "M",
 				}),
 				makeSku({
 					id: "sku-3",
-					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					colors: [
+						{
+							colorId: "c2",
+							position: 0,
+							color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+						},
+					],
 				}),
 			],
 		};

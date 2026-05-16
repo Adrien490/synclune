@@ -1461,7 +1461,16 @@ async function main(): Promise<void> {
 
 						return {
 							sku: skuCode,
-							colorId: colorMap.get(skuData.colorSlug)!,
+							// Couleurs M2M : une seule couleur seed (position 0 = principale).
+							// Pour des bijoux bicolores, ajouter d'autres entries à position 1, 2…
+							colors: {
+								create: [
+									{
+										colorId: colorMap.get(skuData.colorSlug)!,
+										position: 0,
+									},
+								],
+							},
 							// Matériaux M2M : un seul matériau seed (position 0 = principal).
 							// Pour des bijoux bi-matière, ajouter d'autres entries à position 1, 2…
 							materials: {
@@ -1612,7 +1621,10 @@ async function main(): Promise<void> {
 			skus: {
 				where: { isActive: true, inventory: { gt: 0 } },
 				include: {
-					color: { select: { name: true } },
+					colors: {
+						select: { color: { select: { name: true } }, position: true },
+						orderBy: { position: "asc" },
+					},
 					materials: {
 						select: { material: { select: { name: true } }, position: true },
 						orderBy: { position: "asc" },
@@ -1671,7 +1683,7 @@ async function main(): Promise<void> {
 				productDescription: product.description,
 				productImageUrl: sku.images[0]?.url ?? null,
 				skuSku: sku.sku,
-				skuColor: sku.color?.name ?? null,
+				skuColor: sku.colors.length > 0 ? sku.colors.map((c) => c.color.name).join(" · ") : null,
 				skuMaterial: sku.materials?.[0]?.material.name ?? null,
 				skuSize: sku.size ?? null,
 				skuImageUrl: sku.images[0]?.url ?? null,

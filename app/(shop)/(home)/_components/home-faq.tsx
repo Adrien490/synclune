@@ -191,7 +191,6 @@ export function HomeFaq() {
 				>
 					<SectionCtaLink
 						href={`mailto:${BRAND.contact.email}?subject=Une%20question%20sur%20Synclune`}
-						hapticPattern="selection"
 						aria-describedby="home-faq-cta-description"
 					>
 						Une autre question ? Écrivez-moi

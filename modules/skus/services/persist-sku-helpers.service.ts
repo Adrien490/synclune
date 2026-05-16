@@ -28,7 +28,8 @@ export type SkuMediaInput = {
 };
 
 export type NormalizedOptionalRefs = {
-	colorId: string | null;
+	/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur renseignée. */
+	colorIds: string[];
 	/** Matériaux M2M ordonnés (1er = principal). Vide = aucun matériau renseigné. */
 	materialIds: string[];
 	size: string | null;
@@ -42,15 +43,15 @@ export type NormalizedOptionalRefs = {
  * Normalise les FK optionnelles + size en `null` (Zod transforme déjà empty string
  * en undefined, ce helper aplatit `undefined → null` pour Prisma).
  *
- * `materialIds` est dédupliqué (préserve l'ordre saisi : 1er = principal).
+ * `colorIds` et `materialIds` sont dédupliqués (préserve l'ordre saisi : 1er = principal).
  */
 export function normalizeOptionalRefs(input: {
-	colorId?: string;
+	colorIds?: string[];
 	materialIds?: string[];
 	size?: string;
 }): NormalizedOptionalRefs {
 	return {
-		colorId: input.colorId ?? null,
+		colorIds: input.colorIds ? Array.from(new Set(input.colorIds)) : [],
 		materialIds: input.materialIds ? Array.from(new Set(input.materialIds)) : [],
 		size: input.size ?? null,
 	};
@@ -72,35 +73,28 @@ export function optionalEurosToCents(euros: number | undefined): number | null {
 }
 
 // ============================================================================
-// MEDIA COMBINATION
+// MEDIA NORMALIZATION
 // ============================================================================
 
 /**
- * Fusionne primaryImage + galleryMedia en tableau ordonné position-aware.
- * primary=true à position 0, gallery à partir de position 1.
+ * Normalise un tableau unifié `media[]` issu du formulaire en SkuMediaInput[]
+ * prêts pour persistance : premier item = principal (isPrimary, position 0),
+ * suivants en galerie ordonnée (position 1..n).
+ *
+ * Le mediaType du premier item est forcé à IMAGE — le schema Zod l'a déjà
+ * validé (refineFirstMediaNotVideo) mais on garde le filet pour les chemins
+ * non-validés (jamais en pratique côté actions).
  */
-export function combineSkuMedia(
-	primary: ParsedMedia | undefined | null,
-	gallery: ParsedMedia[],
-): SkuMediaInput[] {
-	const all: SkuMediaInput[] = [];
-	if (primary) {
-		all.push({
-			...primary,
-			// Force IMAGE type for primary media (validated by Zod schema)
-			mediaType: "IMAGE",
-			isPrimary: true,
-			position: 0,
-		});
-	}
-	all.push(
-		...gallery.map((media, index) => ({
-			...media,
-			isPrimary: false,
-			position: index + 1,
-		})),
-	);
-	return all;
+export function normalizeMediaForPersistence(media: ParsedMedia[]): SkuMediaInput[] {
+	return media.map((m, index) => ({
+		url: m.url,
+		thumbnailUrl: m.thumbnailUrl,
+		blurDataUrl: m.blurDataUrl,
+		altText: m.altText,
+		mediaType: index === 0 ? "IMAGE" : m.mediaType,
+		isPrimary: index === 0,
+		position: index,
+	}));
 }
 
 /**
@@ -125,19 +119,20 @@ export function toSkuMediaCreatePayload(skuId: string, media: SkuMediaInput[]) {
 // ============================================================================
 
 /**
- * Vérifie l'existence d'une couleur dans la transaction. Throw BusinessError sinon.
+ * Vérifie l'existence des couleurs M2M dans la transaction. Throw BusinessError
+ * si au moins un ID est manquant en base.
  */
-export async function assertColorExists(
+export async function assertColorsExist(
 	tx: Prisma.TransactionClient,
-	colorId: string | null,
+	colorIds: string[],
 ): Promise<void> {
-	if (!colorId) return;
-	const color = await tx.color.findUnique({
-		where: { id: colorId },
+	if (colorIds.length === 0) return;
+	const colors = await tx.color.findMany({
+		where: { id: { in: colorIds } },
 		select: { id: true },
 	});
-	if (!color) {
-		throw new BusinessError("La couleur spécifiée n'existe pas.");
+	if (colors.length !== colorIds.length) {
+		throw new BusinessError("Une ou plusieurs couleurs spécifiées n'existent pas.");
 	}
 }
 
@@ -160,49 +155,58 @@ export async function assertMaterialsExist(
 }
 
 /**
- * Vérifie l'unicité de la combinaison (productId, colorId, size) dans la
- * transaction. Depuis la migration M2M matériaux (2026-05-14), `materialId` ne
- * fait plus partie de la « variant identity » DB — les matériaux sont des
- * attributs descriptifs M2M, pas une dimension de variante.
+ * Vérifie l'unicité de la combinaison (productId, ensemble exact de colorIds, size)
+ * dans la transaction. Depuis la migration M2M couleurs (2026-05-15), `colorId` n'est
+ * plus un discriminateur DB unique — la « variant identity » se compose désormais
+ * de l'ensemble de couleurs (en jeu) + taille, validée au niveau applicatif.
+ *
+ * On considère que deux SKUs sont identiques quand ils partagent EXACTEMENT le même
+ * set de couleurs (ordre indifférent) ET la même taille pour le même produit.
  *
  * Si excludeSkuId fourni (cas update), l'exclut de la recherche.
- *
- * Throw BusinessError avec détail des variantes en conflit si collision détectée.
- * La contrainte unique partial (deletedAt IS NULL, NULLS NOT DISTINCT) au niveau DB
- * sert de filet de sécurité ultime via P2002.
  */
 export async function assertUniqueVariantCombination(
 	tx: Prisma.TransactionClient,
 	params: {
 		productId: string;
-		colorId: string | null;
+		colorIds: string[];
 		size: string | null;
 		excludeSkuId?: string;
 	},
 ): Promise<void> {
-	const existingCombination = await tx.productSku.findFirst({
+	// Récupère tous les SKUs actifs du produit avec la même taille
+	const candidateSkus = await tx.productSku.findMany({
 		where: {
 			productId: params.productId,
-			colorId: params.colorId,
 			size: params.size,
+			deletedAt: null,
 			...(params.excludeSkuId ? { NOT: { id: params.excludeSkuId } } : {}),
 		},
 		select: {
 			id: true,
 			sku: true,
+			colors: { select: { colorId: true } },
 		},
 	});
 
-	if (existingCombination) {
+	const targetSet = new Set(params.colorIds);
+	const collision = candidateSkus.find((s) => {
+		if (s.colors.length !== targetSet.size) return false;
+		return s.colors.every((c) => targetSet.has(c.colorId));
+	});
+
+	if (collision) {
 		const variantDetails = [
-			params.colorId ? `couleur spécifiée` : null,
+			params.colorIds.length > 0
+				? `${params.colorIds.length === 1 ? "couleur" : "couleurs"} spécifiée${params.colorIds.length > 1 ? "s" : ""}`
+				: null,
 			params.size ? `taille "${params.size}"` : null,
 		]
 			.filter(Boolean)
 			.join(", ");
 
 		throw new BusinessError(
-			`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${existingCombination.sku}). Veuillez modifier au moins une variante.`,
+			`Cette combinaison de variantes${variantDetails ? ` (${variantDetails})` : ""} existe déjà pour ce produit (Réf: ${collision.sku}). Veuillez modifier au moins une variante.`,
 		);
 	}
 }

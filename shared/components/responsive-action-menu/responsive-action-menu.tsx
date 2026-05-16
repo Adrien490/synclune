@@ -86,7 +86,17 @@ export type ActionMenuSection = {
 	items: ActionMenuItem[];
 };
 
-type Ctx = { isMobile: boolean };
+type Ctx = {
+	isMobile: boolean;
+	/**
+	 * Direct setter for the controlled `open` prop. Used by mobile `href` rows
+	 * to close the drawer without going through Vaul's `onOpenChange` →
+	 * `useBackButtonClose.handleClose` → `history.back()` path, which would
+	 * otherwise race against Next.js `<Link>` `router.push` and cancel the
+	 * navigation.
+	 */
+	requestClose: () => void;
+};
 const ResponsiveActionMenuContext = React.createContext<Ctx | null>(null);
 
 function useMenuCtx() {
@@ -144,9 +154,12 @@ interface ResponsiveActionMenuProps {
  */
 export function ResponsiveActionMenu({ open, onOpenChange, children }: ResponsiveActionMenuProps) {
 	const isMobile = useIsMobile();
-	const ctx: Ctx = { isMobile };
-
 	const previousFocusRef = React.useRef<HTMLElement | null>(null);
+
+	const ctx: Ctx = {
+		isMobile,
+		requestClose: () => onOpenChange?.(false),
+	};
 
 	const handleOpenChange = (next: boolean) => {
 		if (next) {
@@ -361,6 +374,7 @@ function DesktopActionItem({ item }: { item: ActionMenuItem }) {
 }
 
 function MobileActionRow({ item }: { item: ActionMenuItem }) {
+	const { requestClose } = useMenuCtx();
 	const Icon = item.icon;
 	const isDestructive = item.variant === "destructive";
 	const isInert = item.disabled === true || item.pending === true;
@@ -421,7 +435,13 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 	const closesMenu = item.closesMenu !== false;
 
 	if (item.href) {
-		const link = (
+		// `Link` is NOT wrapped in `<DrawerClose asChild>` — that path triggers
+		// Vaul's `onOpenChange` → `useBackButtonClose.handleClose` → `history.back()`
+		// which races synchronously against `Link.linkClicked`'s `router.push`
+		// (queued in `startTransition`) and cancels the navigation. We close the
+		// drawer via the controlled `open` prop instead, which updates the prop
+		// silently (no Vaul `onOpenChange` round-trip, no `history.back()`).
+		return (
 			<Link
 				href={item.href}
 				target={item.external ? "_blank" : undefined}
@@ -435,6 +455,7 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 						return;
 					}
 					triggerHaptic(hapticPattern);
+					if (closesMenu) requestClose();
 				}}
 				className={cn("block w-full", focusClasses)}
 				role="menuitem"
@@ -442,7 +463,6 @@ function MobileActionRow({ item }: { item: ActionMenuItem }) {
 				{body}
 			</Link>
 		);
-		return closesMenu ? <DrawerClose asChild>{link}</DrawerClose> : link;
 	}
 
 	const button = (

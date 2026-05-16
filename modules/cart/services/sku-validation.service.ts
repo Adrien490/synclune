@@ -26,14 +26,11 @@ function buildSkuDetailsSuccess(sku: NonNullable<FetchedSku>): SkuDetailsResult 
 				compareAtPrice: sku.compareAtPrice,
 				isActive: sku.isActive,
 				material: getSkuMaterialsLabel(sku.materials) ?? undefined,
-				colorId: sku.colorId ?? undefined,
-				color: sku.color
-					? {
-							id: sku.color.id,
-							name: sku.color.name,
-							hex: sku.color.hex,
-						}
-					: undefined,
+				colors: sku.colors.map((c) => ({
+					id: c.color.id,
+					name: c.color.name,
+					hex: c.color.hex,
+				})),
 				size: sku.size ?? undefined,
 				product: {
 					id: sku.product.id,
@@ -128,14 +125,11 @@ export async function validateSkuAndStock(input: {
 					compareAtPrice: sku.compareAtPrice,
 					isActive: sku.isActive,
 					material: getSkuMaterialsLabel(sku.materials) ?? undefined,
-					colorId: sku.colorId ?? undefined,
-					color: sku.color
-						? {
-								id: sku.color.id,
-								name: sku.color.name,
-								hex: sku.color.hex,
-							}
-						: undefined,
+					colors: sku.colors.map((c) => ({
+						id: c.color.id,
+						name: c.color.name,
+						hex: c.color.hex,
+					})),
 					size: sku.size ?? undefined,
 					product: {
 						id: sku.product.id,

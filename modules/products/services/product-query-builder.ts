@@ -142,21 +142,25 @@ function buildPerWordRelatedConditions(word: string): Prisma.ProductWhereInput[]
 							},
 						},
 						{
-							color: {
-								OR: [
-									{
-										name: {
-											contains: word,
-											mode: Prisma.QueryMode.insensitive,
-										},
+							colors: {
+								some: {
+									color: {
+										OR: [
+											{
+												name: {
+													contains: word,
+													mode: Prisma.QueryMode.insensitive,
+												},
+											},
+											{
+												hex: {
+													contains: word,
+													mode: Prisma.QueryMode.insensitive,
+												},
+											},
+										],
 									},
-									{
-										hex: {
-											contains: word,
-											mode: Prisma.QueryMode.insensitive,
-										},
-									},
-								],
+								},
 							},
 						},
 						{
@@ -256,13 +260,25 @@ export function buildProductFilterConditions(filters: ProductFilters): Prisma.Pr
 
 	if (filters.color !== undefined) {
 		const colors = (Array.isArray(filters.color) ? filters.color : [filters.color]).filter(Boolean);
+		// Filtre M2M tolérant : un produit match si au moins un de ses SKU actifs
+		// contient au moins une des couleurs sélectionnées.
 		if (colors.length === 1) {
 			conditions.push({
-				skus: { some: { isActive: true, color: { slug: colors[0] } } },
+				skus: {
+					some: {
+						isActive: true,
+						colors: { some: { color: { slug: colors[0] } } },
+					},
+				},
 			});
 		} else if (colors.length > 1) {
 			conditions.push({
-				skus: { some: { isActive: true, color: { slug: { in: colors } } } },
+				skus: {
+					some: {
+						isActive: true,
+						colors: { some: { color: { slug: { in: colors } } } },
+					},
+				},
 			});
 		}
 	}

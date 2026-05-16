@@ -26,7 +26,12 @@ export type QuickSearchProduct = {
 		compareAtPrice: number | null;
 		inventory: number;
 		isDefault: boolean;
-		color: { slug: string; name: string; hex: string } | null;
+		/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur renseignée. */
+		colors: Array<{
+			colorId: string;
+			position: number;
+			color: { slug: string; name: string; hex: string };
+		}>;
 		images: Array<{ url: string; blurDataUrl: string | null; altText: string | null }>;
 	}>;
 };

@@ -56,13 +56,15 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 	Drawer: ({
 		open,
 		onOpenChange,
+		handleOnly,
 		children,
 	}: {
 		open: boolean;
 		onOpenChange: (open: boolean) => void;
+		handleOnly?: boolean;
 		children: React.ReactNode;
 	}) => (
-		<div data-testid="drawer" data-open={open}>
+		<div data-testid="drawer" data-open={open} data-handle-only={String(Boolean(handleOnly))}>
 			{open && children}
 			<button data-testid="close-drawer" onClick={() => onOpenChange(false)}>
 				Fermer
@@ -78,8 +80,13 @@ vi.mock("@/shared/components/ui/drawer", () => ({
 	DrawerTitle: ({ children }: { children: React.ReactNode }) => (
 		<h2 data-testid="drawer-title">{children}</h2>
 	),
-	DrawerBody: ({ children }: { children: React.ReactNode }) => (
-		<div data-testid="drawer-body">{children}</div>
+	DrawerBody: ({ children, ...rest }: { children: React.ReactNode } & Record<string, unknown>) => (
+		<div
+			data-testid="drawer-body"
+			data-vaul-no-drag={rest["data-vaul-no-drag"] !== undefined ? "" : undefined}
+		>
+			{children}
+		</div>
 	),
 }));
 
@@ -169,6 +176,16 @@ describe("DiscountsFilterDrawer", () => {
 		it("does not render content when drawer is closed", () => {
 			renderDrawer(false);
 			expect(screen.queryByTestId("drawer-title")).not.toBeInTheDocument();
+		});
+
+		it("activates handleOnly to prevent scroll/drag conflict", () => {
+			renderDrawer();
+			expect(screen.getByTestId("drawer").getAttribute("data-handle-only")).toBe("true");
+		});
+
+		it("flags DrawerBody data-vaul-no-drag", () => {
+			renderDrawer();
+			expect(screen.getByTestId("drawer-body").hasAttribute("data-vaul-no-drag")).toBe(true);
 		});
 	});
 

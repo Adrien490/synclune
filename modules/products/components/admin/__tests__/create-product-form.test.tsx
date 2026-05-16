@@ -467,7 +467,9 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(
-				screen.getByText("La première image sera l'image principale. Maintenez pour réordonner."),
+				screen.getByText(
+					"La première image sera l'image principale. Glissez-déposez pour réorganiser.",
+				),
 			).toBeInTheDocument();
 		});
 	});
@@ -623,7 +625,7 @@ describe("CreateProductForm", () => {
 
 			expect(
 				screen.getByRole("button", {
-					name: "Plus d'informations sur les attributs de la variante",
+					name: "Plus d'informations sur la variante",
 				}),
 			).toBeInTheDocument();
 		});
@@ -703,7 +705,9 @@ describe("CreateProductForm", () => {
 			render(<CreateProductForm {...defaultProps} />);
 
 			expect(
-				screen.getByText("La première image sera l'image principale. Maintenez pour réordonner."),
+				screen.getByText(
+					"La première image sera l'image principale. Glissez-déposez pour réorganiser.",
+				),
 			).toBeInTheDocument();
 		});
 

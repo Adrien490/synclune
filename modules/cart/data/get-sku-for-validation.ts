@@ -28,7 +28,6 @@ export async function fetchSkuForValidation(skuId: string) {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			colorId: true,
 			size: true,
 			deletedAt: true,
 			product: {
@@ -49,12 +48,19 @@ export async function fetchSkuForValidation(skuId: string) {
 					isPrimary: true,
 				},
 			},
-			color: {
+			colors: {
 				select: {
-					id: true,
-					name: true,
-					hex: true,
+					colorId: true,
+					position: true,
+					color: {
+						select: {
+							id: true,
+							name: true,
+							hex: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" },
 			},
 			materials: {
 				select: {
@@ -129,7 +135,6 @@ export async function fetchSkusForCheckoutValidation(skuIds: string[]) {
 			compareAtPrice: true,
 			inventory: true,
 			isActive: true,
-			colorId: true,
 			size: true,
 			deletedAt: true,
 			product: {
@@ -150,12 +155,19 @@ export async function fetchSkusForCheckoutValidation(skuIds: string[]) {
 					isPrimary: true,
 				},
 			},
-			color: {
+			colors: {
 				select: {
-					id: true,
-					name: true,
-					hex: true,
+					colorId: true,
+					position: true,
+					color: {
+						select: {
+							id: true,
+							name: true,
+							hex: true,
+						},
+					},
 				},
+				orderBy: { position: "asc" },
 			},
 			materials: {
 				select: {

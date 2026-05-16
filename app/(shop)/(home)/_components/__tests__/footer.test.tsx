@@ -367,30 +367,6 @@ describe("Footer", () => {
 		expect(triggerHapticMock).toHaveBeenCalledWith("light");
 	});
 
-	// --- Haptic feedback (P0.2) ---
-
-	it("triggers selection haptic when a footer navigation link is clicked", async () => {
-		await renderFooter();
-
-		const navSection = screen.getByRole("navigation", { name: /navigation/i });
-		const firstLink = within(navSection).getAllByRole("link")[0];
-		expect(firstLink).toBeDefined();
-		fireEvent.click(firstLink!);
-
-		expect(triggerHapticMock).toHaveBeenCalledWith("selection");
-	});
-
-	it("triggers light haptic when a social link is clicked", async () => {
-		await renderFooter();
-
-		const socialNav = screen.getByRole("navigation", { name: /réseaux sociaux/i });
-		const instagram = within(socialNav).getAllByRole("link")[0];
-		expect(instagram).toBeDefined();
-		fireEvent.click(instagram!);
-
-		expect(triggerHapticMock).toHaveBeenCalledWith("light");
-	});
-
 	// --- viewTransitionName (P1.3) ---
 
 	it("sets viewTransitionName on the footer root and on the logo wrapper", async () => {

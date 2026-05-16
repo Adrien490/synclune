@@ -4,7 +4,6 @@ import Link from "next/link";
 
 import { MAX_COLOR_SWATCHES } from "@/modules/products/constants/product-texts.constants";
 import type { ColorSwatch } from "@/modules/products/types/product-list.types";
-import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { cn } from "@/shared/utils/cn";
 
 interface ProductCardColorSwatchesProps {
@@ -27,7 +26,6 @@ export function ProductCardColorSwatches({
 				<li key={color.slug}>
 					<Link
 						href={`${productUrl}?color=${color.slug}`}
-						onClick={() => triggerHaptic("selection")}
 						className={cn(
 							"focus-ring border-foreground/15 relative block size-7 shrink-0 rounded-full border sm:size-8",
 							"motion-safe:can-hover:hover:scale-110 motion-safe:can-hover:hover:-translate-y-0.5 motion-safe:transition-transform motion-safe:duration-[var(--duration-fast)]",
@@ -52,7 +50,6 @@ export function ProductCardColorSwatches({
 				<li>
 					<Link
 						href={productUrl}
-						onClick={() => triggerHaptic("light")}
 						className="text-muted-foreground relative z-30 flex min-h-11 min-w-11 items-center justify-center text-xs"
 						aria-label={`Voir les ${colors.length} couleurs disponibles pour ${title}`}
 					>

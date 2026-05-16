@@ -43,9 +43,8 @@ beforeAll(() => {
 // Hoisted mocks
 // ---------------------------------------------------------------------------
 
-const { useReducedMotionMock, triggerHapticMock } = vi.hoisted(() => ({
+const { useReducedMotionMock } = vi.hoisted(() => ({
 	useReducedMotionMock: vi.fn<() => boolean | null>(() => false),
-	triggerHapticMock: vi.fn(),
 }));
 
 vi.mock("@/shared/utils/cn", () => ({
@@ -118,10 +117,6 @@ vi.mock("next/link", () => ({
 			{children}
 		</a>
 	),
-}));
-
-vi.mock("@/shared/hooks/use-haptic", () => ({
-	useHaptic: () => triggerHapticMock,
 }));
 
 vi.mock("@/shared/hooks", () => ({
@@ -224,16 +219,6 @@ describe("HeroFloatingImagesInner", () => {
 		}
 	});
 
-	it("triggers haptic light on link click", () => {
-		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
-
-		const firstLink = container.querySelector("a[href='/creations/product-0']");
-		expect(firstLink).not.toBeNull();
-		fireEvent.click(firstLink!);
-
-		expect(triggerHapticMock).toHaveBeenCalledWith("light");
-	});
-
 	it("updates spotlight CSS vars --mx/--my on pointer move", () => {
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 
@@ -259,7 +244,7 @@ describe("HeroFloatingImagesInner", () => {
 		expect(firstLink!.style.getPropertyValue("--my")).toBe("50%");
 	});
 
-	it("does not trigger haptic or update spotlight vars under reduced motion", () => {
+	it("does not update spotlight vars under reduced motion", () => {
 		useReducedMotionMock.mockReturnValue(true);
 		const { container } = render(<HeroFloatingImagesInner images={makeImages(4)} />);
 

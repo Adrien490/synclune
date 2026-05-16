@@ -32,7 +32,7 @@ const FIELD_LABELS: Record<string, string> = {
 	collectionIds: "Collections",
 	status: "Visibilité",
 	"defaultSku.media": "Médias",
-	"defaultSku.colorId": "Couleur",
+	"defaultSku.colorIds": "Couleurs",
 	"defaultSku.materialIds": "Matériaux",
 	"defaultSku.size": "Taille",
 	"defaultSku.priceInclTaxEuros": "Prix de vente",
@@ -173,10 +173,11 @@ export function EditProductForm({
 					status: state.values.status,
 					isActive: state.values.defaultSku.isActive,
 					collectionIds: state.values.collectionIds,
+					colorIds: state.values.defaultSku.colorIds,
 					materialIds: state.values.defaultSku.materialIds,
 				})}
 			>
-				{({ productId, skuId, media, status, isActive, collectionIds, materialIds }) => {
+				{({ productId, skuId, media, status, isActive, collectionIds, colorIds, materialIds }) => {
 					const currentUrls = new Set(media.map((m) => m.url));
 					const removedOriginal = originalImageUrls.filter((url) => !currentUrls.has(url));
 					const allDeleted = Array.from(new Set([...deletedImageUrls, ...removedOriginal]));
@@ -190,6 +191,7 @@ export function EditProductForm({
 							<input type="hidden" name="status" value={status} />
 							<input type="hidden" name="defaultSku.isActive" value={String(isActive)} />
 							<input type="hidden" name="collectionIds" value={JSON.stringify(collectionIds)} />
+							<input type="hidden" name="defaultSku.colorIds" value={JSON.stringify(colorIds)} />
 							<input
 								type="hidden"
 								name="defaultSku.materialIds"

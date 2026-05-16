@@ -44,7 +44,7 @@ function makeResult(
 						compareAtPrice: null,
 						inventory: 5,
 						isDefault: true,
-						color: null,
+						colors: [],
 						images: [],
 					},
 				],

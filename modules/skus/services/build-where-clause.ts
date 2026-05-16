@@ -31,10 +31,14 @@ export const buildWhereClause = (params: GetProductSkusInput): Prisma.ProductSku
 				},
 			},
 			{
-				color: {
-					name: {
-						contains: searchTerm,
-						mode: Prisma.QueryMode.insensitive,
+				colors: {
+					some: {
+						color: {
+							name: {
+								contains: searchTerm,
+								mode: Prisma.QueryMode.insensitive,
+							},
+						},
 					},
 				},
 			},

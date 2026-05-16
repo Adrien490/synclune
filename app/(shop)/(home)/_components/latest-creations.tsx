@@ -7,7 +7,6 @@ import { CONTAINER_CLASS, SECTION_SPACING } from "@/shared/constants/spacing";
 import { CursorGlow } from "@/modules/products/components/cursor-glow";
 import { ProductCard } from "@/modules/products/components/product-card";
 import type { GetProductsReturn } from "@/modules/products/data/get-products";
-import { LatestCreationsHapticBridge } from "./latest-creations-haptic-bridge";
 import { SectionCtaLink } from "./section-cta-link";
 
 export async function LatestCreations({
@@ -66,22 +65,19 @@ export async function LatestCreations({
 						</p>
 					</Fade>
 				) : (
-					<LatestCreationsHapticBridge>
-						<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8">
-							{products.map((product, index) => (
-								<div
-									key={product.id}
-									data-latest-haptic="card"
-									className="latest-card-enter-scroll"
-									style={{ "--card-index": index } as CSSProperties}
-								>
-									<CursorGlow>
-										<ProductCard product={product} index={index} sectionId="latest" />
-									</CursorGlow>
-								</div>
-							))}
-						</div>
-					</LatestCreationsHapticBridge>
+					<div className="mb-6 grid grid-cols-2 gap-4 sm:mb-8 sm:gap-6 md:grid-cols-4 lg:mb-12 lg:gap-8">
+						{products.map((product, index) => (
+							<div
+								key={product.id}
+								className="latest-card-enter-scroll"
+								style={{ "--card-index": index } as CSSProperties}
+							>
+								<CursorGlow>
+									<ProductCard product={product} index={index} sectionId="latest" />
+								</CursorGlow>
+							</div>
+						))}
+					</div>
 				)}
 				<Fade
 					y={MOTION_CONFIG.section.cta.y}
@@ -93,7 +89,6 @@ export async function LatestCreations({
 				>
 					<SectionCtaLink
 						href={isEmpty ? "/produits" : "/produits?sortBy=created-descending"}
-						hapticPattern="selection"
 						aria-describedby="latest-creations-cta-description"
 					>
 						{isEmpty ? "Voir tous les bijoux disponibles" : "Voir tous les nouveaux bijoux"}

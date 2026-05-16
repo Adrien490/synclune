@@ -20,8 +20,19 @@ import type { ProductFromList } from "../../types/product-list.types";
 // ============================================================================
 
 type SkuLike = ProductFromList["skus"][0];
+type ColorEntry = { id: string; slug: string; hex: string; name: string };
 
-function makeSku(overrides: Partial<SkuLike> = {}): SkuLike {
+interface MakeSkuOverrides extends Partial<Omit<SkuLike, "colors">> {
+	/** Legacy single-color shape : transformé en colors[] M2M par le helper. */
+	color?: ColorEntry | null;
+	colors?: SkuLike["colors"];
+}
+
+function makeSku(overrides: MakeSkuOverrides = {}): SkuLike {
+	const { color, colors, ...rest } = overrides;
+	const finalColors: SkuLike["colors"] =
+		colors ??
+		(color ? [{ colorId: color.id, position: 0, color }] : ([] as unknown as SkuLike["colors"]));
 	return {
 		id: "sku-1",
 		isActive: true,
@@ -30,14 +41,14 @@ function makeSku(overrides: Partial<SkuLike> = {}): SkuLike {
 		priceInclTax: 5000,
 		compareAtPrice: null,
 		size: null,
-		color: null,
+		colors: finalColors,
 		materials: [],
 		images: [],
-		...overrides,
+		...rest,
 	} as unknown as SkuLike;
 }
 
-function makeColor(slug: string, hex: string, name: string) {
+function makeColor(slug: string, hex: string, name: string): ColorEntry {
 	return { id: `color-${slug}`, slug, hex, name };
 }
 
@@ -91,7 +102,9 @@ describe("getPrimaryColorForList", () => {
 
 	it("should use material name as fallback name when color has no name", () => {
 		const sku = makeSku({
-			color: { id: "c1", slug: "or", hex: "#FFD700", name: "" } as unknown as SkuLike["color"],
+			colors: [
+				{ colorId: "c1", position: 0, color: { id: "c1", slug: "or", hex: "#FFD700", name: "" } },
+			] as unknown as SkuLike["colors"],
 			materials: [{ materialId: "mat-1", position: 0, material: { id: "mat-1", name: "Or 18k" } }],
 		});
 		mockGetPrimarySkuForList.mockReturnValue(sku);

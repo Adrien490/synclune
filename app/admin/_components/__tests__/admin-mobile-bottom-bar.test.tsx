@@ -160,49 +160,22 @@ afterEach(() => {
 // TESTS
 // ============================================================================
 
-describe("AdminMobileBottomBar - tab Sélection", () => {
-	it("ne rend pas le tab Sélection quand aucun BulkSelectionProvider monté (control === null)", () => {
-		setStoreSelector(null);
-
-		render(<AdminMobileBottomBar />);
-
-		expect(screen.queryByLabelText("Activer le mode sélection")).not.toBeInTheDocument();
-	});
-
-	it("ne rend pas le tab Sélection quand la liste est vide (pageHasItems === false)", () => {
-		setStoreSelector(makeControl({ pageHasItems: false }));
-
-		render(<AdminMobileBottomBar />);
-
-		expect(screen.queryByLabelText("Activer le mode sélection")).not.toBeInTheDocument();
-	});
-
-	it("ne rend pas le tab Sélection quand le mode sélection est déjà actif (la bottom-bar globale est cachée de toute façon)", () => {
-		setStoreSelector(makeControl({ selectionMode: true }));
-
-		render(<AdminMobileBottomBar />);
-
-		expect(screen.queryByLabelText("Activer le mode sélection")).not.toBeInTheDocument();
-	});
-
-	it("rend le tab Sélection quand pageHasItems && !selectionMode", () => {
+describe("AdminMobileBottomBar - mode sélection (tab Sélection retiré)", () => {
+	it("ne rend plus le tab Sélection même quand pageHasItems && !selectionMode", () => {
 		setStoreSelector(makeControl());
 
 		render(<AdminMobileBottomBar />);
 
-		expect(screen.getByLabelText("Activer le mode sélection")).toBeInTheDocument();
-		expect(screen.getByText("Sélection")).toBeInTheDocument();
+		expect(screen.queryByLabelText("Activer le mode sélection")).not.toBeInTheDocument();
+		expect(screen.queryByText("Sélection")).not.toBeInTheDocument();
 	});
 
-	it("déclenche haptic « selection » + control.enter() au clic sur le tab", () => {
+	it("n'expose plus de bouton qui appelle control.enter() depuis la bottom-bar", () => {
 		setStoreSelector(makeControl());
 
 		render(<AdminMobileBottomBar />);
 
-		fireEvent.click(screen.getByLabelText("Activer le mode sélection"));
-
-		expect(mockTriggerHaptic).toHaveBeenCalledWith("selection");
-		expect(mockEnter).toHaveBeenCalledTimes(1);
+		expect(mockEnter).not.toHaveBeenCalled();
 	});
 
 	it("cache la bottom-bar globale (isHidden) quand le mode sélection est actif", () => {

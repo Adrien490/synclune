@@ -124,7 +124,6 @@ export async function Footer() {
 									<li key={item.href}>
 										<FooterLink
 											href={item.href}
-											haptic="selection"
 											className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										>
 											{item.label}
@@ -148,7 +147,6 @@ export async function Footer() {
 									<FooterLink
 										href={`mailto:${BRAND.contact.email}`}
 										external
-										haptic="light"
 										className="text-foreground hover:bg-accent wrap-break-words focus-visible:outline-ring inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm/6 font-medium antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Envoyer un email à ${BRAND.name} : ${BRAND.contact.email}`}
 									>
@@ -183,7 +181,6 @@ export async function Footer() {
 										external
 										target="_blank"
 										rel="noopener noreferrer"
-										haptic="light"
 										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur Instagram (nouvelle fenêtre)`}
 									>
@@ -203,7 +200,6 @@ export async function Footer() {
 										external
 										target="_blank"
 										rel="noopener noreferrer"
-										haptic="light"
 										className="group hover:bg-accent focus-visible:outline-ring inline-flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)]"
 										aria-label={`Suivre ${BRAND.name} sur TikTok (nouvelle fenêtre)`}
 									>
@@ -279,7 +275,6 @@ export async function Footer() {
 								<FooterLink
 									key={link.href}
 									href={link.href}
-									haptic="selection"
 									aria-label={"ariaLabel" in link ? link.ariaLabel : undefined}
 									className="text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-ring inline-flex min-h-11 items-center justify-center rounded-lg px-3 py-2 text-sm antialiased focus-visible:outline-2 focus-visible:outline-offset-2 motion-safe:transition-colors motion-safe:duration-[var(--duration-normal)] sm:justify-start"
 								>

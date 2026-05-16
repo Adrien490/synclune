@@ -18,6 +18,7 @@ const eslintConfig = [
 			"public/sw*",
 			"public/swe-worker*",
 			"eslint-plugin-local/**",
+			".claude/worktrees/**",
 		],
 	},
 	...nextConfig,

@@ -150,7 +150,13 @@ describe("SkuMobileItem", () => {
 		render(
 			<SkuMobileItem
 				sku={createSku({
-					color: { id: "c-1", name: "Or", hex: "#FFD700", slug: "or" },
+					colors: [
+						{
+							colorId: "c-1",
+							position: 0,
+							color: { id: "c-1", name: "Or", hex: "#FFD700", slug: "or" },
+						},
+					],
 				})}
 				productSlug="bague-lune"
 			/>,

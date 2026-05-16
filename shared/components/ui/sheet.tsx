@@ -124,10 +124,12 @@ function SheetHandle({ className, ...props }: React.ComponentProps<typeof SheetP
 		<SheetPrimitive.Handle
 			data-slot="sheet-handle"
 			className={cn(
-				"bg-muted-foreground/30 relative mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full",
+				// Visuel agrandi pour repère pouce : 8×56 (vs 6×40 avant)
+				// Contraste renforcé (/45 vs /30) — affordance évidente
+				"bg-muted-foreground/45 relative mx-auto mt-3 mb-1 h-2 w-14 shrink-0 rounded-full",
 				"cursor-grab active:cursor-grabbing",
-				// Zone tactile étendue 44px min (Apple HIG / WCAG 2.5.5)
-				"before:absolute before:-inset-x-6 before:-inset-y-4 before:content-['']",
+				// Zone tactile étendue ~56×144px (vs ~36×88 avant) — confortable pour pouce
+				"before:absolute before:-inset-x-10 before:-inset-y-6 before:content-['']",
 				className,
 			)}
 			{...props}

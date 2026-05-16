@@ -53,13 +53,13 @@ export function extractVariantOptions(activeSkus: ActiveSku[]) {
 	const uniqueSizes = new Set<string>();
 
 	for (const sku of activeSkus) {
-		if (sku.color?.slug && sku.color.hex) {
-			if (!uniqueColors.has(sku.color.slug)) {
-				uniqueColors.set(sku.color.slug, {
-					slug: sku.color.slug,
-					hex: sku.color.hex,
-					name: sku.color.name,
-				});
+		// Couleurs M2M : on agrège chaque couleur unique (la pastille split est gérée
+		// ailleurs ; ici on liste les teintes disponibles à filtrer).
+		for (const link of sku.colors ?? []) {
+			const c = link.color;
+			if (!c.slug || !c.hex) continue;
+			if (!uniqueColors.has(c.slug)) {
+				uniqueColors.set(c.slug, { slug: c.slug, hex: c.hex, name: c.name });
 			}
 		}
 		// Matériaux M2M : un SKU peut en avoir plusieurs (cap 3, ordre = priorité)
@@ -103,37 +103,39 @@ export function buildAvailabilityMaps(
 	for (const sku of activeSkus) {
 		if (sku.inventory <= 0) continue;
 
-		const skuColor = sku.color?.slug;
-		// M2M : un SKU « contient » un matériau si le slug est dans sa liste
+		// M2M : un SKU « contient » une couleur si son slug est dans sa liste
+		const skuColorSlugs = (sku.colors ?? [])
+			.map((link) => link.color.slug)
+			.filter((s): s is string => Boolean(s));
 		const skuMaterialSlugs = (sku.materials ?? [])
 			.map((link) => (link.material.name ? slugify(link.material.name) : null))
 			.filter((s): s is string => s !== null);
 		const skuSize = sku.size;
+		const skuContainsSelectedColor = !selectedColor || skuColorSlugs.includes(selectedColor);
 		const skuContainsSelectedMaterial =
 			!selectedMaterial || skuMaterialSlugs.includes(selectedMaterial);
 
-		// Color availability: matches selected material + size
-		if (skuColor && colorMap.has(skuColor) && !colorMap.get(skuColor)) {
+		// Color availability: chaque couleur du SKU est dispo si matériau + taille sélectionnés correspondent
+		for (const skuColor of skuColorSlugs) {
+			if (!colorMap.has(skuColor) || colorMap.get(skuColor)) continue;
 			const sizeMatch = !selectedSize || skuSize === selectedSize;
 			if (skuContainsSelectedMaterial && sizeMatch) {
 				colorMap.set(skuColor, true);
 			}
 		}
 
-		// Material availability: chaque matériau du SKU est dispo si la couleur + taille sélectionnées correspondent
+		// Material availability: chaque matériau du SKU est dispo si couleur + taille sélectionnés correspondent
 		for (const skuMaterial of skuMaterialSlugs) {
 			if (!materialMap.has(skuMaterial) || materialMap.get(skuMaterial)) continue;
-			const colorMatch = !selectedColor || skuColor === selectedColor;
 			const sizeMatch = !selectedSize || skuSize === selectedSize;
-			if (colorMatch && sizeMatch) {
+			if (skuContainsSelectedColor && sizeMatch) {
 				materialMap.set(skuMaterial, true);
 			}
 		}
 
 		// Size availability: matches selected color + material
 		if (skuSize && sizeMap.has(skuSize) && !sizeMap.get(skuSize)) {
-			const colorMatch = !selectedColor || skuColor === selectedColor;
-			if (colorMatch && skuContainsSelectedMaterial) {
+			if (skuContainsSelectedColor && skuContainsSelectedMaterial) {
 				sizeMap.set(skuSize, true);
 			}
 		}
@@ -152,7 +154,8 @@ export function getImageForColor(
 ): ImageSelection {
 	if (selectedColor) {
 		const skuWithColor = activeSkus.find(
-			(sku) => sku.color?.slug === selectedColor && sku.images.length > 0,
+			(sku) =>
+				(sku.colors ?? []).some((c) => c.color.slug === selectedColor) && sku.images.length > 0,
 		);
 		if (skuWithColor?.images.length) {
 			const img = skuWithColor.images.find((i) => i.isPrimary) ?? skuWithColor.images[0];

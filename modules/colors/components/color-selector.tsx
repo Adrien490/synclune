@@ -43,8 +43,10 @@ function ColorSelectorInner({
 	const [isPending, startTransition] = useTransition();
 	const shouldReduceMotion = useReducedMotion();
 
-	// Lire l'état depuis l'URL (source de vérité), fallback sur defaultSku
-	const currentColor = searchParams.get("color") ?? defaultSku?.color?.slug ?? null;
+	// Lire l'état depuis l'URL (source de vérité), fallback sur la 1re couleur
+	// du defaultSku (M2M : position=0 = couleur principale, slug pertinent pour
+	// présélectionner le sélecteur même sur les SKUs bicolores).
+	const currentColor = searchParams.get("color") ?? defaultSku?.colors?.[0]?.color.slug ?? null;
 	const currentMaterial = searchParams.get("material");
 	const currentSize = searchParams.get("size");
 

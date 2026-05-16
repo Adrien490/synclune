@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 import { FLOAT_VARIANTS } from "./float-variants";
 import type { FloatingImageProps } from "./types";
 
@@ -29,7 +28,6 @@ export function FloatingImage({
 }: FloatingImageProps) {
 	const ref = useRef<HTMLDivElement>(null);
 	const isInView = useInView(ref, { margin: "50px" });
-	const triggerHaptic = useHaptic();
 
 	// Scroll-driven parallax: bidirectional for depth
 	const parallaxY = useTransform(
@@ -61,10 +59,6 @@ export function FloatingImage({
 		const y = ((event.clientY - rect.top) / rect.height) * 100;
 		event.currentTarget.style.setProperty("--mx", `${x}%`);
 		event.currentTarget.style.setProperty("--my", `${y}%`);
-	}
-
-	function handleClick() {
-		triggerHaptic("light");
 	}
 
 	return (
@@ -131,7 +125,6 @@ export function FloatingImage({
 						tabIndex={-1}
 						prefetch
 						onPointerMove={handlePointerMove}
-						onClick={handleClick}
 						className="group focus-visible:ring-primary focus-visible:ring-offset-background relative block overflow-hidden rounded-2xl border border-white/20 shadow-[0_8px_30px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-sm hover:shadow-[0_8px_30px_var(--img-glow),0_0_60px_var(--img-glow)] hover:ring-1 hover:ring-white/30 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none motion-safe:transition-shadow motion-safe:duration-[var(--duration-slow)]"
 						style={
 							{

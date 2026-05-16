@@ -1,66 +1,46 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import type { useMediaUpload } from "@/modules/media/hooks/use-media-upload";
-import type { useUploadThing } from "@/modules/media/utils/uploadthing";
+import { MediaArrayCard } from "@/modules/products/components/admin/shared/media-array-card";
+import type { FailedUpload } from "@/modules/media/types/hooks.types";
+import type { UploadProgressShape } from "@/modules/products/components/admin/product-media-card-shared";
+import type { MediaField } from "@/modules/products/hooks/use-media-field-upload";
+
 import type { SkuFormInstance } from "./sku-form-types";
-import { SkuGalleryField } from "./sku-gallery-field";
-import { SkuPrimaryImageField } from "./sku-primary-image-field";
 
 interface SkuMediaCardProps {
 	form: SkuFormInstance;
-	productTitle: string;
-	primaryUpload: ReturnType<typeof useUploadThing>;
-	galleryUpload: ReturnType<typeof useMediaUpload>;
+	isMediaUploading: boolean;
+	uploadProgress: UploadProgressShape | null;
+	handleUpload: (files: File[], field: MediaField) => void;
+	setDeletedImageUrls: React.Dispatch<React.SetStateAction<string[]>>;
+	failedFiles: FailedUpload[];
+	onCancel: () => void;
+	onCancelOne?: (fileName: string) => void;
+	onRetry: () => void;
+	onRetryOne?: (file: File) => void;
+	onDismissErrors: () => void;
 	/** Routing key matching the parent's enableOfflineQueue context */
 	offlineContextKey?: string;
+	/** Drain offline queue + upload via parent's handleUpload */
+	onReplayOffline?: (files: File[]) => void | Promise<void>;
+	/** "sku-create" pour le formulaire de création, "sku-edit" pour l'édition. */
+	viewTransitionPrefix?: "sku-create" | "sku-edit";
+	/** True pour les forms d'édition (action serveur diffe et supprime côté UploadThing). */
+	skipUtapiDelete?: boolean;
 }
 
 export function SkuMediaCard({
-	form,
-	productTitle,
-	primaryUpload,
-	galleryUpload,
-	offlineContextKey,
+	viewTransitionPrefix = "sku-create",
+	skipUtapiDelete = false,
+	...props
 }: SkuMediaCardProps) {
 	return (
-		<Card
-			role="region"
-			aria-label="Médias de la variante"
-			className="lg:bg-card gap-3 rounded-none border-0 bg-transparent py-0 shadow-none lg:gap-6 lg:rounded-xl lg:border lg:py-6 lg:shadow-md"
-			style={{ viewTransitionName: "sku-media" }}
-		>
-			<CardHeader className="px-0 sm:px-0 lg:px-6">
-				<CardTitle className="text-muted-foreground lg:text-foreground text-sm font-semibold tracking-wide uppercase lg:text-base lg:font-semibold lg:tracking-normal lg:normal-case">
-					Médias
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-6 px-0 sm:px-0 lg:px-6">
-				<form.Field name="primaryImage">
-					{(field) => (
-						<SkuPrimaryImageField
-							value={field.state.value}
-							onChange={(value) => field.handleChange(value)}
-							productName={productTitle}
-							startUpload={primaryUpload.startUpload}
-							isUploading={primaryUpload.isUploading}
-						/>
-					)}
-				</form.Field>
-
-				<form.Field name="galleryMedia" mode="array">
-					{(field) => (
-						<SkuGalleryField
-							value={field.state.value}
-							setValue={(value) => field.setValue(value)}
-							pushValue={(value) => field.pushValue(value)}
-							productName={productTitle}
-							galleryUpload={galleryUpload}
-							offlineContextKey={offlineContextKey}
-						/>
-					)}
-				</form.Field>
-			</CardContent>
-		</Card>
+		<MediaArrayCard
+			{...props}
+			fieldName="media"
+			viewTransitionName={`${viewTransitionPrefix}-media`}
+			ariaLabel="Médias de la variante"
+			skipUtapiDelete={skipUtapiDelete}
+		/>
 	);
 }

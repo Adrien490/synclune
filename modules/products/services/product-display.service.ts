@@ -77,7 +77,7 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				primaryImage.altText ??
-					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.color?.name ?? "Image principale"}`,
+					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors?.[0]?.color.name ?? "Image principale"}`,
 			),
 			blurDataUrl: primaryImage.blurDataUrl ?? undefined,
 		};
@@ -92,7 +92,7 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				firstImage.altText ??
-					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.color?.name ?? "Variante"}`,
+					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors?.[0]?.color.name ?? "Variante"}`,
 			),
 			blurDataUrl: firstImage.blurDataUrl ?? undefined,
 		};
@@ -204,14 +204,18 @@ export function getProductCardData(
 		totalInventory += sku.inventory;
 		if (sku.inventory > 0) availableSkus++;
 
-		// Couleurs (hex validated at display time to prevent style injection)
-		if (sku.color?.slug && sku.color.hex && HEX_PATTERN.test(sku.color.hex)) {
-			const existing = colorMap.get(sku.color.slug);
+		// Couleurs M2M : on agrège chaque couleur unique vue dans les SKUs.
+		// `inStock` = la couleur est présente sur au moins un SKU en stock (au moins
+		// 1 unité). Hex validated at display time to prevent style injection.
+		for (const link of sku.colors ?? []) {
+			const c = link.color;
+			if (!c.slug || !c.hex || !HEX_PATTERN.test(c.hex)) continue;
+			const existing = colorMap.get(c.slug);
 			const inStock = existing?.inStock === true || sku.inventory > 0;
-			colorMap.set(sku.color.slug, {
-				slug: sku.color.slug,
-				hex: sku.color.hex,
-				name: sku.color.name,
+			colorMap.set(c.slug, {
+				slug: c.slug,
+				hex: c.hex,
+				name: c.name,
 				inStock,
 			});
 		}

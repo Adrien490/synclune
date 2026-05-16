@@ -156,7 +156,7 @@ export function ReviewsSection({ reviewsPromise, reviewStatsPromise }: ReviewsSe
 						once
 						className="text-center"
 					>
-						<SectionCtaLink href="/produits?sortBy=rating-descending" hapticPattern="selection">
+						<SectionCtaLink href="/produits?sortBy=rating-descending">
 							Voir les créations les mieux notées
 						</SectionCtaLink>
 					</Fade>

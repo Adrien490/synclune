@@ -111,7 +111,14 @@ async function fetchMaterialDetail(slug: string) {
 								priceInclTax: true,
 								isDefault: true,
 								inventory: true,
-								color: { select: { name: true, hex: true, slug: true } },
+								colors: {
+									select: {
+										colorId: true,
+										position: true,
+										color: { select: { name: true, hex: true, slug: true } },
+									},
+									orderBy: { position: "asc" },
+								},
 								product: {
 									select: {
 										id: true,

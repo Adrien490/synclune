@@ -47,17 +47,23 @@ export async function duplicateSku(
 
 		// 3-5. Transaction atomique : lecture + génération nom + création
 		const { original, duplicate } = await prisma.$transaction(async (tx) => {
-			// 3. Récupérer le SKU original avec ses médias
+			// 3. Récupérer le SKU original avec ses médias + M2M colors/materials
 			const original = await tx.productSku.findUnique({
 				where: { id: skuId },
 				select: {
 					sku: true,
 					productId: true,
-					colorId: true,
-					materialId: true,
 					size: true,
 					priceInclTax: true,
 					compareAtPrice: true,
+					colors: {
+						select: { colorId: true, position: true },
+						orderBy: { position: "asc" },
+					},
+					materials: {
+						select: { materialId: true, position: true },
+						orderBy: { position: "asc" },
+					},
 					images: {
 						select: {
 							url: true,
@@ -93,22 +99,32 @@ export async function duplicateSku(
 
 			const newSku = skuResult.name!;
 
-			// 5. Créer la copie du SKU
+			// 5. Créer la copie du SKU (couleurs + matériaux M2M dupliqués)
 			const duplicate = await tx.productSku.create({
 				data: {
 					sku: newSku,
 					productId: original.productId,
-					colorId: original.colorId,
-					materialId: original.materialId,
 					size: original.size,
 					priceInclTax: original.priceInclTax,
 					compareAtPrice: original.compareAtPrice,
 					inventory: 0, // Reset à 0
 					isActive: false, // Désactivé par défaut
 					isDefault: false, // Jamais par défaut
+					colors: {
+						create: original.colors.map((c) => ({
+							colorId: c.colorId,
+							position: c.position,
+						})),
+					},
+					materials: {
+						create: original.materials.map((m) => ({
+							materialId: m.materialId,
+							position: m.position,
+						})),
+					},
 					// Dupliquer les images
 					images: {
-						create: original.images.map((img, _index) => ({
+						create: original.images.map((img) => ({
 							url: img.url,
 							altText: img.altText,
 							isPrimary: img.isPrimary,

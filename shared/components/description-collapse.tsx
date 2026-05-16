@@ -3,7 +3,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/shared/components/ui/button";
-import { useHaptic } from "@/shared/hooks/use-haptic";
 
 interface DescriptionCollapseProps {
 	text: string;
@@ -12,7 +11,6 @@ interface DescriptionCollapseProps {
 }
 
 export function DescriptionCollapse({ text, lines = 8, className }: DescriptionCollapseProps) {
-	const haptic = useHaptic();
 	const paragraphRef = useRef<HTMLParagraphElement | null>(null);
 	const [expanded, setExpanded] = useState(false);
 	const [isOverflowing, setIsOverflowing] = useState(false);
@@ -58,10 +56,7 @@ export function DescriptionCollapse({ text, lines = 8, className }: DescriptionC
 					className="h-auto px-0"
 					aria-expanded={expanded}
 					aria-controls={id}
-					onClick={() => {
-						haptic("light");
-						setExpanded((prev) => !prev);
-					}}
+					onClick={() => setExpanded((prev) => !prev)}
 				>
 					{expanded ? "Voir moins" : "Voir plus"}
 				</Button>

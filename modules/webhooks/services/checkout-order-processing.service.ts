@@ -183,7 +183,10 @@ export async function createOrderFromCheckoutSession(
 									sku: true,
 									priceInclTax: true,
 									compareAtPrice: true,
-									color: { select: { id: true, name: true, hex: true } },
+									colors: {
+										orderBy: { position: "asc" as const },
+										select: { color: { select: { id: true, name: true, hex: true } } },
+									},
 									materials: {
 										orderBy: { position: "asc" as const },
 										select: { material: { select: { id: true, name: true } } },
@@ -455,7 +458,10 @@ export async function createOrderFromCheckoutSession(
 						productTitle: product.title,
 						productDescription: product.description ?? null,
 						productImageUrl: imageUrl,
-						skuColor: sku.color?.name ?? null,
+						// Snapshot M2M : couleurs joinées " · " (parité matériaux, lisibles
+						// facture/email/admin sans changement DB côté OrderItem).
+						skuColor:
+							sku.colors.length > 0 ? sku.colors.map((c) => c.color.name).join(" · ") : null,
 						skuMaterial: materialLabel,
 						skuSize: sku.size ?? null,
 						skuImageUrl: imageUrl,

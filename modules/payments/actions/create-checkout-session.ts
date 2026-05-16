@@ -237,6 +237,17 @@ export async function createCheckoutSession(): Promise<
 				throw new Error("Checkout Session created without client_secret");
 			}
 
+			Sentry.addBreadcrumb({
+				category: "checkout",
+				message: "session-created",
+				level: "info",
+				data: {
+					sessionId: checkoutSession.id,
+					hasDiscount: Boolean(discountCode),
+					itemCount: lineItems.length,
+				},
+			});
+
 			return {
 				success: true,
 				clientSecret: checkoutSession.client_secret,

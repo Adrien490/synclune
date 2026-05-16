@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 
+import { Prisma } from "@/app/generated/prisma/client";
 import { enforceRateLimitForCurrentUser } from "@/modules/auth/lib/rate-limit-helpers";
 import { requireAdminWithUser } from "@/modules/auth/lib/require-auth";
 import {
@@ -40,14 +41,18 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 		if ("error" in validated) return validated.error;
 		const validatedData = validated.data;
 
-		// Check existence + SKU usage and delete atomically
+		// Check existence + SKU usage and delete atomically.
+		// La FK ProductSkuColor.colorId est en ON DELETE RESTRICT (cf. migration
+		// 20260515181712_add_sku_colors_m2m) : le delete lèverait P2003 si un SKU
+		// concurrent est créé entre le count et le delete. La pré-vérification reste
+		// pour produire un message UI lisible avant d'atteindre la contrainte DB.
 		const existingColor = await prisma.$transaction(async (tx) => {
 			const color = await tx.color.findUnique({
 				where: { id: validatedData.id },
 				include: {
 					_count: {
 						select: {
-							skus: true,
+							skuColors: true,
 						},
 					},
 				},
@@ -55,7 +60,7 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 
 			if (!color) return null;
 
-			const skuCount = color._count.skus;
+			const skuCount = color._count.skuColors;
 			if (skuCount > 0) {
 				throw new BusinessError(
 					`Cette couleur est utilisee par ${skuCount} variante${skuCount > 1 ? "s" : ""}. Veuillez modifier ces variantes avant de supprimer la couleur.`,
@@ -88,6 +93,13 @@ export async function deleteColor(_prevState: unknown, formData: FormData): Prom
 
 		return success("Couleur supprimée avec succès");
 	} catch (e) {
+		// P2003 : violation FK Restrict — un SKU a été créé en concurrence après
+		// la pré-vérification. Message aligné avec le BusinessError du pre-check.
+		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2003") {
+			return error(
+				"Cette couleur est utilisee par au moins une variante. Veuillez modifier ces variantes avant de supprimer la couleur.",
+			);
+		}
 		return handleActionError(e, "Impossible de supprimer la couleur");
 	}
 }

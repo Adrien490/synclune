@@ -17,12 +17,18 @@ function makeSku(overrides: Partial<BaseProductSku> = {}): BaseProductSku {
 		priceInclTax: 2000,
 		compareAtPrice: null,
 		size: null,
-		color: {
-			id: "color-1",
-			slug: "or-rose",
-			hex: "#B76E79",
-			name: "Or Rose",
-		},
+		colors: [
+			{
+				colorId: "color-1",
+				position: 0,
+				color: {
+					id: "color-1",
+					slug: "or-rose",
+					hex: "#B76E79",
+					name: "Or Rose",
+				},
+			},
+		],
 		materials: [
 			{
 				materialId: "mat-1",
@@ -43,12 +49,24 @@ describe("findSkuByVariants", () => {
 		const skus = [
 			makeSku({
 				id: "sku-1",
-				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
 				size: "S",
 			}),
 			makeSku({
 				id: "sku-2",
-				color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				colors: [
+					{
+						colorId: "c2",
+						position: 0,
+						color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+					},
+				],
 				size: "M",
 			}),
 		];
@@ -63,12 +81,24 @@ describe("findSkuByVariants", () => {
 			makeSku({
 				id: "sku-1",
 				isActive: false,
-				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
 			}),
 			makeSku({
 				id: "sku-2",
 				isActive: true,
-				color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
 			}),
 		];
 
@@ -79,7 +109,15 @@ describe("findSkuByVariants", () => {
 
 	it("should return null when no SKU matches", () => {
 		const skus = [
-			makeSku({ color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" } }),
+			makeSku({
+				colors: [
+					{
+						colorId: "c1",
+						position: 0,
+						color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+					},
+				],
+			}),
 		];
 
 		const result = findSkuByVariants({ skus }, { colorSlug: "bleu" });

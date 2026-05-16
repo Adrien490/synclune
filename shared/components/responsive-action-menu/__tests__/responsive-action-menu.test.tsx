@@ -8,6 +8,10 @@ const mockUseIsMobile = vi.fn(() => false);
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
 	triggerHaptic: (...args: unknown[]) => mockTriggerHaptic(...args),
+	useHaptic:
+		() =>
+		(...args: unknown[]) =>
+			mockTriggerHaptic(...args),
 }));
 
 vi.mock("@/shared/hooks/use-mobile", () => ({
@@ -575,6 +579,82 @@ describe("ResponsiveActionMenu — mobile", () => {
 		fireEvent.click(screen.getByRole("menuitem", { name: /Supprimer/ }));
 		expect(onSelect).toHaveBeenCalledTimes(1);
 		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	it("href row is NOT wrapped in DrawerClose (prevents history.back ↔ router.push race)", () => {
+		const sections: ActionMenuSection[] = [
+			{
+				key: "x",
+				items: [{ key: "view", label: "Voir", icon: Eye, href: "/creations/test" }],
+			},
+		];
+
+		render(
+			<ResponsiveActionMenu open onOpenChange={() => {}}>
+				<ResponsiveActionMenuTrigger asChild>
+					<button type="button">Actions</button>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions" sections={sections} />
+			</ResponsiveActionMenu>,
+		);
+
+		const item = screen.getByRole("menuitem", { name: /Voir/ });
+		expect(item).not.toHaveAttribute("data-slot", "drawer-close");
+		expect(item.tagName).toBe("A");
+		expect(item).toHaveAttribute("href", "/creations/test");
+	});
+
+	it("href row closes the menu via the controlled `onOpenChange` prop (no Vaul round-trip)", () => {
+		const onOpenChange = vi.fn();
+		const sections: ActionMenuSection[] = [
+			{
+				key: "x",
+				items: [{ key: "view", label: "Voir", icon: Eye, href: "/creations/test" }],
+			},
+		];
+
+		render(
+			<ResponsiveActionMenu open onOpenChange={onOpenChange}>
+				<ResponsiveActionMenuTrigger asChild>
+					<button type="button">Actions</button>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions" sections={sections} />
+			</ResponsiveActionMenu>,
+		);
+
+		fireEvent.click(screen.getByRole("menuitem", { name: /Voir/ }));
+		expect(onOpenChange).toHaveBeenCalledWith(false);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+	});
+
+	it("href row with closesMenu=false does NOT call onOpenChange", () => {
+		const onOpenChange = vi.fn();
+		const sections: ActionMenuSection[] = [
+			{
+				key: "x",
+				items: [
+					{
+						key: "view",
+						label: "Voir",
+						icon: Eye,
+						href: "/creations/test",
+						closesMenu: false,
+					},
+				],
+			},
+		];
+
+		render(
+			<ResponsiveActionMenu open onOpenChange={onOpenChange}>
+				<ResponsiveActionMenuTrigger asChild>
+					<button type="button">Actions</button>
+				</ResponsiveActionMenuTrigger>
+				<ResponsiveActionMenuContent title="Actions" sections={sections} />
+			</ResponsiveActionMenu>,
+		);
+
+		fireEvent.click(screen.getByRole("menuitem", { name: /Voir/ }));
+		expect(onOpenChange).not.toHaveBeenCalled();
 	});
 
 	it("guards disabled href items (preventDefault + tabIndex=-1)", () => {

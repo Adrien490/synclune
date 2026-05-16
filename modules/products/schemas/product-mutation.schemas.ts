@@ -43,12 +43,14 @@ const baseSkuFields = {
 	// Boolean fields: normalized in server action before validation
 	isActive: z.coerce.boolean().default(true),
 
-	// Optional fields (IDs/size vides seront traites comme undefined)
-	colorId: z
-		.string()
+	// Couleurs M2M : ordre = priorité (1re = principale pour vignette + snapshot facture)
+	colorIds: z
+		.array(z.cuid2({ message: "ID couleur invalide" }))
+		.max(ARRAY_LIMITS.SKU_COLORS, {
+			error: `Une variante ne peut avoir que ${ARRAY_LIMITS.SKU_COLORS} couleurs maximum`,
+		})
 		.optional()
-		.or(z.literal(""))
-		.transform((val) => (val === "" ? undefined : val)),
+		.default([]),
 	// Matériaux M2M : ordre = priorité (1er = principal pour SEO/care-tips)
 	materialIds: z
 		.array(z.cuid2({ message: "ID matériau invalide" }))

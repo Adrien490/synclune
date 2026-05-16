@@ -58,11 +58,21 @@ vi.mock("@/shared/components/ui/drawer", () => {
 			children,
 			open: _open,
 			onOpenChange: _onChange,
+			handleOnly,
 		}: {
 			children: unknown;
 			open?: boolean;
 			onOpenChange?: (v: boolean) => void;
-		}) => createElement("div", { "data-testid": "drawer-root" }, children),
+			handleOnly?: boolean;
+		}) =>
+			createElement(
+				"div",
+				{
+					"data-testid": "drawer-root",
+					"data-handle-only": String(Boolean(handleOnly)),
+				},
+				children,
+			),
 		DrawerContent: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
 			createElement("div", { "data-testid": "drawer-content", ...props }, children),
 		DrawerHeader: ({ children, ...props }: Record<string, unknown> & { children?: unknown }) =>
@@ -209,5 +219,25 @@ describe("ResponsiveDialog (mobile)", () => {
 
 		const content = screen.getByTestId("drawer-content");
 		expect(content.className).toContain("max-w-lg");
+	});
+
+	it("defaults handleOnly=true on mobile Drawer (safe-by-default for forms)", () => {
+		render(<FullDialog />);
+		expect(screen.getByTestId("drawer-root").getAttribute("data-handle-only")).toBe("true");
+	});
+
+	it("allows opting out of handleOnly via prop", () => {
+		render(
+			<ResponsiveDialog handleOnly={false}>
+				<ResponsiveDialogContent>Content</ResponsiveDialogContent>
+			</ResponsiveDialog>,
+		);
+		expect(screen.getByTestId("drawer-root").getAttribute("data-handle-only")).toBe("false");
+	});
+
+	it("flags inner scroll wrap data-vaul-no-drag to keep drag isolated to handle", () => {
+		render(<FullDialog />);
+		const scrollWrap = screen.getByTestId("drawer-content").firstElementChild as HTMLElement;
+		expect(scrollWrap.hasAttribute("data-vaul-no-drag")).toBe(true);
 	});
 });

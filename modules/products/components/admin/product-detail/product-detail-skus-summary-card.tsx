@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, ArrowRight, LayoutList, Star } from "lucide-react";
+import { AlertTriangle, ArrowRight, LayoutList, Plus, Star } from "lucide-react";
 import Link from "next/link";
 
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
@@ -15,7 +15,8 @@ const PREVIEW_LIMIT = 3;
 
 function buildVariantLabel(sku: ProductSku): string {
 	const parts: string[] = [];
-	if (sku.color?.name) parts.push(sku.color.name);
+	const colorsLabel = sku.colors?.map((c) => c.color.name).join(" + ");
+	if (colorsLabel) parts.push(colorsLabel);
 	const materialsLabel = getSkuMaterialsLabel(sku.materials);
 	if (materialsLabel) parts.push(materialsLabel);
 	if (sku.size) parts.push(sku.size);
@@ -141,19 +142,33 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 					</p>
 				) : null}
 
-				<Button
-					asChild
-					variant="outline"
-					className="w-full touch-manipulation transition-transform duration-150 active:scale-[0.98]"
-				>
-					<Link
-						href={`/admin/catalogue/produits/${product.slug}/variantes`}
-						onClick={() => haptic("light")}
+				<div className="flex flex-col gap-2 sm:flex-row">
+					<Button
+						asChild
+						className="flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98]"
 					>
-						Gérer les variantes
-						<ArrowRight className="size-4" aria-hidden="true" />
-					</Link>
-				</Button>
+						<Link
+							href={`/admin/catalogue/produits/${product.slug}/variantes/nouveau`}
+							onClick={() => haptic("light")}
+						>
+							<Plus className="size-4" aria-hidden="true" />
+							Nouvelle variante
+						</Link>
+					</Button>
+					<Button
+						asChild
+						variant="outline"
+						className="flex-1 touch-manipulation transition-transform duration-150 active:scale-[0.98]"
+					>
+						<Link
+							href={`/admin/catalogue/produits/${product.slug}/variantes`}
+							onClick={() => haptic("light")}
+						>
+							Gérer les variantes
+							<ArrowRight className="size-4" aria-hidden="true" />
+						</Link>
+					</Button>
+				</div>
 			</CardContent>
 		</Card>
 	);

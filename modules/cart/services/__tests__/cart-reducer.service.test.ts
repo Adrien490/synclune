@@ -20,7 +20,7 @@ function createCart(
 			isActive: true,
 			product: { id: "prod-1", title: "Bracelet", slug: "bracelet", status: "PUBLIC" },
 			images: [],
-			color: null,
+			colors: [],
 			materials: [],
 			size: null,
 		},

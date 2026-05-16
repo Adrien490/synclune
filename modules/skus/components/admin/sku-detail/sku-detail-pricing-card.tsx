@@ -46,7 +46,7 @@ export function SkuDetailPricingCard({ sku }: SkuDetailPricingCardProps) {
 		: null;
 
 	return (
-		<Card style={{ viewTransitionName: "sku-pricing" }}>
+		<Card style={{ viewTransitionName: "sku-edit-pricing" }}>
 			<CardHeader>
 				<CardTitle className="flex items-center gap-2">
 					<DollarSign className="size-5" aria-hidden="true" />

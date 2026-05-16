@@ -12,10 +12,7 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { validationError } from "@/shared/lib/actions";
 import { createProductSkuSchema } from "../schemas/sku.schemas";
 import { getSkuInvalidationTags } from "../utils/cache.utils";
-import {
-	parsePrimaryImageFromFormStrict,
-	parseGalleryMediaFromFormStrict,
-} from "../utils/parse-media-from-form";
+import { parseMediaFromFormStrict } from "../utils/parse-media-from-form";
 import {
 	BusinessError,
 	handleActionError,
@@ -25,16 +22,17 @@ import {
 import { generateUniqueTechnicalName } from "@/shared/services/unique-name-generator.service";
 import { generateSkuCode } from "../services/sku-generation.service";
 import {
-	assertColorExists,
+	assertColorsExist,
 	assertMaterialsExist,
 	assertUniqueVariantCombination,
-	combineSkuMedia,
 	eurosToCents,
+	normalizeMediaForPersistence,
 	normalizeOptionalRefs,
 	optionalEurosToCents,
 	toSkuMediaCreatePayload,
 	unsetOtherDefaultSkus,
 } from "../services/persist-sku-helpers.service";
+import { getSkuColorsLabel } from "../utils/sku-colors-label";
 import { getSkuMaterialsLabel } from "../utils/sku-materials-label";
 
 /**
@@ -56,9 +54,8 @@ export async function createProductSku(
 		if ("error" in rateLimit) return rateLimit.error;
 
 		// 3. Extraction des donnees du FormData
-		// Parse images from JSON strings (sent as hidden inputs)
-		const primaryImage = parsePrimaryImageFromFormStrict(formData);
-		const galleryMedia = parseGalleryMediaFromFormStrict(formData);
+		// Parse medias from JSON string (sent as hidden input) — tableau unifié.
+		const media = parseMediaFromFormStrict(formData);
 
 		const rawData = {
 			productId: safeFormGet(formData, "productId"),
@@ -70,12 +67,12 @@ export async function createProductSku(
 			inventory: Number(formData.get("inventory")) || 0,
 			isActive: formData.get("isActive") === "true",
 			isDefault: formData.get("isDefault") === "true",
-			colorId: safeFormGet(formData, "colorId") ?? "",
+			// Couleurs M2M sérialisées en JSON (cohérent avec materialIds + collectionIds)
+			colorIds: safeFormGetJSON<string[]>(formData, "colorIds") ?? [],
 			// Matériaux M2M sérialisés en JSON (cohérent avec collectionIds dans le form produit)
 			materialIds: safeFormGetJSON<string[]>(formData, "materialIds") ?? [],
 			size: safeFormGet(formData, "size") ?? "",
-			primaryImage: primaryImage,
-			galleryMedia: galleryMedia,
+			media,
 		};
 
 		// 4. Validation avec Zod
@@ -92,7 +89,7 @@ export async function createProductSku(
 
 		// 5. Normalize FKs + sizes (Zod schema already trimmed + empty → undefined)
 		const refs = normalizeOptionalRefs({
-			colorId: validatedData.colorId,
+			colorIds: validatedData.colorIds,
 			materialIds: validatedData.materialIds,
 			size: validatedData.size,
 		});
@@ -101,8 +98,8 @@ export async function createProductSku(
 		const priceInclTaxCents = eurosToCents(validatedData.priceInclTaxEuros);
 		const compareAtPriceCents = optionalEurosToCents(validatedData.compareAtPriceEuros);
 
-		// 7. Combine primary media + gallery into ordered array
-		const allMedia = combineSkuMedia(validatedData.primaryImage, validatedData.galleryMedia);
+		// 7. Normalize media for persistence (premier item = principal, isPrimary/position auto)
+		const allMedia = normalizeMediaForPersistence(validatedData.media);
 
 		// 8. Create product SKU in transaction
 		const productSku = await prisma.$transaction(async (tx) => {
@@ -114,11 +111,11 @@ export async function createProductSku(
 				throw new BusinessError("Le produit spécifié n'existe pas.");
 			}
 
-			await assertColorExists(tx, refs.colorId);
+			await assertColorsExist(tx, refs.colorIds);
 			await assertMaterialsExist(tx, refs.materialIds);
 			await assertUniqueVariantCombination(tx, {
 				productId: validatedData.productId,
-				colorId: refs.colorId,
+				colorIds: refs.colorIds,
 				size: refs.size,
 			});
 
@@ -159,8 +156,13 @@ export async function createProductSku(
 					inventory: validatedData.inventory,
 					isActive: validatedData.isActive,
 					isDefault: validatedData.isDefault,
-					colorId: refs.colorId,
 					size: refs.size,
+					colors: {
+						create: refs.colorIds.map((colorId, index) => ({
+							colorId,
+							position: index,
+						})),
+					},
 					materials: {
 						create: refs.materialIds.map((materialId, index) => ({
 							materialId,
@@ -170,7 +172,10 @@ export async function createProductSku(
 				},
 				include: {
 					product: { select: { title: true, slug: true } },
-					color: { select: { name: true } },
+					colors: {
+						include: { color: { select: { name: true } } },
+						orderBy: { position: "asc" },
+					},
 					materials: {
 						include: { material: { select: { name: true } } },
 						orderBy: { position: "asc" },
@@ -189,7 +194,7 @@ export async function createProductSku(
 
 		// 9. Build success message
 		const variantDetails = [
-			productSku.color?.name,
+			getSkuColorsLabel(productSku.colors),
 			getSkuMaterialsLabel(productSku.materials),
 			productSku.size,
 		]

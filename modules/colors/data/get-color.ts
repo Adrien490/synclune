@@ -88,7 +88,7 @@ async function fetchColorDetail(slug: string) {
 	cacheColorDetail(slug);
 
 	try {
-		return await prisma.color.findFirst({
+		const raw = await prisma.color.findFirst({
 			where: { slug },
 			select: {
 				id: true,
@@ -99,39 +99,44 @@ async function fetchColorDetail(slug: string) {
 				isActive: true,
 				createdAt: true,
 				updatedAt: true,
-				skus: {
-					where: { isActive: true },
+				// Liens M2M actifs avec SKU joint (préserve l'ancien shape `skus[]`)
+				skuColors: {
+					where: { sku: { isActive: true } },
 					take: 10,
-					orderBy: { product: { title: "asc" } },
+					orderBy: { sku: { product: { title: "asc" } } },
 					select: {
-						id: true,
-						sku: true,
-						size: true,
-						priceInclTax: true,
-						isDefault: true,
-						inventory: true,
-						materials: {
-							select: {
-								materialId: true,
-								position: true,
-								material: { select: { name: true, slug: true } },
-							},
-							orderBy: { position: "asc" },
-						},
-						product: {
+						sku: {
 							select: {
 								id: true,
-								slug: true,
-								title: true,
-								status: true,
-								skus: {
-									where: { isDefault: true },
-									take: 1,
+								sku: true,
+								size: true,
+								priceInclTax: true,
+								isDefault: true,
+								inventory: true,
+								materials: {
 									select: {
-										images: {
-											where: { isPrimary: true },
+										materialId: true,
+										position: true,
+										material: { select: { name: true, slug: true } },
+									},
+									orderBy: { position: "asc" },
+								},
+								product: {
+									select: {
+										id: true,
+										slug: true,
+										title: true,
+										status: true,
+										skus: {
+											where: { isDefault: true },
 											take: 1,
-											select: { url: true, blurDataUrl: true, altText: true },
+											select: {
+												images: {
+													where: { isPrimary: true },
+													take: 1,
+													select: { url: true, blurDataUrl: true, altText: true },
+												},
+											},
 										},
 									},
 								},
@@ -139,9 +144,20 @@ async function fetchColorDetail(slug: string) {
 						},
 					},
 				},
-				_count: { select: { skus: { where: { isActive: true } } } },
+				_count: { select: { skuColors: { where: { sku: { isActive: true } } } } },
 			},
 		});
+
+		if (!raw) return null;
+
+		// Remap pour préserver l'ancien shape consommé par l'UI :
+		// `_count.skus` + `skus[]` (au lieu de `_count.skuColors` + `skuColors[].sku`).
+		const { skuColors, _count, ...rest } = raw;
+		return {
+			...rest,
+			skus: skuColors.map((link) => link.sku),
+			_count: { skus: _count.skuColors },
+		};
 	} catch (error) {
 		Sentry.captureException(error, {
 			tags: { module: "colors", operation: "fetchColorDetail" },
@@ -170,8 +186,12 @@ async function fetchColorDistinctProductCount(colorId: string): Promise<number> 
 	cacheTag(`color-${colorId}-product-count`);
 
 	try {
+		// M2M : on cherche les SKUs actifs liés à cette couleur via la jointure
 		const result = await prisma.productSku.findMany({
-			where: { colorId, isActive: true },
+			where: {
+				isActive: true,
+				colors: { some: { colorId } },
+			},
 			select: { productId: true },
 			distinct: ["productId"],
 		});
