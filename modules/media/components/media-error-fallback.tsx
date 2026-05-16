@@ -20,7 +20,7 @@ export function MediaErrorFallback({ type, size = "default", onRetry }: MediaErr
 	return (
 		<div className="bg-muted flex h-full w-full items-center justify-center" role="alert">
 			<div className="space-y-2 p-4 text-center">
-				<p className={cn("text-muted-foreground font-medium", isSmall ? "text-[10px]" : "text-sm")}>
+				<p className={cn("text-muted-foreground font-medium", isSmall ? "text-2xs" : "text-sm")}>
 					{isSmall
 						? "Erreur"
 						: `Impossible de charger ${type === "video" ? "la vidéo" : "l'image"}`}

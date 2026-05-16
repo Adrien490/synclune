@@ -42,12 +42,12 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
 						<span className="text-foreground truncate font-medium">{userName}</span>
 						<Badge
 							variant="outline"
-							className="text-muted-foreground h-5 shrink-0 gap-1 px-1.5 py-0 text-[10px]"
+							className="text-muted-foreground text-2xs h-5 shrink-0 gap-1 px-1.5 py-0"
 						>
 							<BadgeCheck className="size-3" aria-hidden="true" />
 							Achat vérifié
 						</Badge>
-						{isNew && <Badge className="h-5 shrink-0 px-1.5 py-0 text-[10px]">Nouveau</Badge>}
+						{isNew && <Badge className="text-2xs h-5 shrink-0 px-1.5 py-0">Nouveau</Badge>}
 					</div>
 					<div className="mt-0.5 flex items-center gap-2">
 						<RatingStars rating={review.rating} size="sm" />

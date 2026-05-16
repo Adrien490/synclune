@@ -204,7 +204,7 @@ export function SortableMediaItem({
 				<button
 					type="button"
 					onClick={handleSetAsPrimaryFromDrawer}
-					className="flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-amber-50 active:bg-amber-100 motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)] dark:hover:bg-amber-900/20"
+					className="flex min-h-14 w-full items-center gap-3 rounded-lg px-4 py-3 text-left hover:bg-amber-50 active:bg-amber-100 motion-safe:transition-colors motion-safe:duration-[var(--duration-fast)]"
 				>
 					<Star className="size-5 text-amber-600" fill="currentColor" aria-hidden="true" />
 					<span className="text-sm font-medium">Définir comme principale</span>
@@ -617,7 +617,7 @@ export function SortableMediaItem({
 
 			{/* Mobile actions — Drawer Vaul bottom-sheet, hidden on hover-capable devices via CSS */}
 			<div className="can-hover:hidden absolute top-2 right-2 z-20">
-				<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen} handleOnly>
+				<Drawer open={mobileActionsOpen} onOpenChange={setMobileActionsOpen}>
 					<DrawerTrigger asChild>
 						<Button
 							ref={mobileTriggerRef}

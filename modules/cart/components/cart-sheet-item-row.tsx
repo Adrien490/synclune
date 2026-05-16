@@ -125,7 +125,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 					)
 				) : (
 					<div className="text-muted-foreground flex h-full w-full items-center justify-center">
-						<span className="text-[10px]">Pas d&apos;image</span>
+						<span className="text-2xs">Pas d&apos;image</span>
 					</div>
 				)}
 			</Link>
@@ -204,7 +204,7 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 							</span>
 							<Badge
 								variant="secondary"
-								className="bg-accent/20 px-1 py-0 text-[10px]"
+								className="bg-accent/20 text-2xs px-1 py-0"
 								aria-label={`Reduction de ${discountPercent} pourcent`}
 							>
 								-{discountPercent}%
@@ -221,12 +221,12 @@ export function CartSheetItemRow({ item, onClose, isMobile = false }: CartSheetI
 				{hasIssue ? (
 					<div className="flex gap-1">
 						{isOutOfStock && (
-							<Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
+							<Badge variant="destructive" className="text-2xs px-1.5 py-0">
 								Rupture
 							</Badge>
 						)}
 						{isInactive && (
-							<Badge variant="destructive" className="px-1.5 py-0 text-[10px]">
+							<Badge variant="destructive" className="text-2xs px-1.5 py-0">
 								Indisponible
 							</Badge>
 						)}

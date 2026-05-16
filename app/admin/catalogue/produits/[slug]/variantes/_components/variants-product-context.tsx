@@ -75,7 +75,7 @@ export function VariantsProductContext({ product }: VariantsProductContextProps)
 				</div>
 			)}
 			<div className="min-w-0 flex-1">
-				<p className="text-muted-foreground text-[10px] leading-none font-medium tracking-wider uppercase">
+				<p className="text-muted-foreground text-2xs leading-none font-medium tracking-wider uppercase">
 					Produit
 				</p>
 				<p className="mt-1 truncate text-sm font-semibold">{product.title}</p>

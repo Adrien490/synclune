@@ -365,7 +365,7 @@ function PendingUploadItem({
 			<div className="pointer-events-none absolute right-1 bottom-1 left-1 flex items-center justify-between gap-1">
 				{videoDuration ? (
 					<span
-						className="bg-background/90 text-foreground rounded px-1 text-[10px] tabular-nums shadow-sm"
+						className="bg-background/90 text-foreground text-2xs rounded px-1 tabular-nums shadow-sm"
 						aria-hidden="true"
 					>
 						{videoDuration}
@@ -374,7 +374,7 @@ function PendingUploadItem({
 					<span />
 				)}
 				<span
-					className="bg-background/90 text-foreground rounded px-1 text-[10px] tabular-nums shadow-sm"
+					className="bg-background/90 text-foreground text-2xs rounded px-1 tabular-nums shadow-sm"
 					aria-hidden="true"
 				>
 					{formatFileSize(file.size)}

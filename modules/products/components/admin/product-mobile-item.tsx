@@ -101,10 +101,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn(
-					"w-full gap-3 motion-safe:transition-opacity",
-					isPendingItem && "opacity-60 dark:opacity-50",
-				)}
+				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
 				aria-roledescription="carte produit"
 				aria-busy={isPendingItem || undefined}
 			>

@@ -165,7 +165,7 @@ export function UploadProgress({
 
 				{currentFileName && !isComplete && (
 					<p
-						className="text-muted-foreground max-w-[10rem] truncate text-center text-[10px]"
+						className="text-muted-foreground text-2xs max-w-[10rem] truncate text-center"
 						aria-hidden="true"
 						title={currentFileName}
 					>

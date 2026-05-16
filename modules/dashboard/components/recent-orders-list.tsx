@@ -103,7 +103,7 @@ export function RecentOrdersList({ listData }: RecentOrdersListProps) {
 													</span>
 													<Badge
 														variant={ORDER_STATUS_VARIANTS[order.status]}
-														className="text-[10px]"
+														className="text-2xs"
 														style={
 															{ viewTransitionName: `order-status-${order.id}` } as CSSProperties
 														}

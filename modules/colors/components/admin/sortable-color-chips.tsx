@@ -72,7 +72,6 @@ export function SortableColorChips({ chips, onReorder, onRemove }: SortableColor
 			</span>
 			<ul
 				className="flex flex-wrap gap-1.5"
-				role="list"
 				aria-label="Palette ordonnée — la première teinte est la principale"
 				aria-describedby="color-chips-drag-instructions"
 			>
@@ -132,7 +131,7 @@ function SortableColorChipItem({ chip, index, isPrimary, onRemove }: SortableCol
 			/>
 			<span className="max-w-[10rem] truncate">{chip.name}</span>
 			{isPrimary && (
-				<Badge variant="secondary" className="gap-1 px-1.5 py-0 text-[10px] font-medium">
+				<Badge variant="secondary" className="text-2xs gap-1 px-1.5 py-0 font-medium">
 					<Star className="size-2.5 fill-current" aria-hidden="true" />
 					Principale
 				</Badge>

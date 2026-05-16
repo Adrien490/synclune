@@ -46,7 +46,7 @@ export function VideoPlayBadge({ size, className, showLabel = false }: VideoPlay
 				</svg>
 			</div>
 			{showLabel && (
-				<span className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white">
+				<span className="text-2xs absolute bottom-1 left-1/2 -translate-x-1/2 rounded bg-black/60 px-1.5 py-0.5 font-medium text-white">
 					Vidéo
 				</span>
 			)}

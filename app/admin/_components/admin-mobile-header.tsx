@@ -86,7 +86,7 @@ export function AdminMobileHeader() {
 
 				<div className="min-w-0 flex-1">
 					{showParent && (
-						<p className="text-muted-foreground mb-0.5 truncate text-[10px] leading-none font-medium tracking-wider uppercase">
+						<p className="text-muted-foreground text-2xs mb-0.5 truncate leading-none font-medium tracking-wider uppercase">
 							{parentLabel}
 						</p>
 					)}

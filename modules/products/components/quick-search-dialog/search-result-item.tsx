@@ -120,7 +120,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 								<span className="text-muted-foreground/50 text-xs line-through">
 									{formatEuro(defaultSku.compareAtPrice)}
 								</span>
-								<span className="bg-destructive/10 text-destructive rounded-full px-1.5 py-0.5 text-[10px] font-medium">
+								<span className="bg-destructive/10 text-destructive text-2xs rounded-full px-1.5 py-0.5 font-medium">
 									-{Math.round((1 - defaultSku.priceInclTax / defaultSku.compareAtPrice) * 100)}%
 								</span>
 							</>
@@ -147,7 +147,7 @@ export function SearchResultItem({ product, query, onSelect }: SearchResultItemP
 							/>
 						))}
 						{extraColors > 0 && (
-							<span className="text-muted-foreground/60 text-[10px]" aria-hidden="true">
+							<span className="text-muted-foreground/60 text-2xs" aria-hidden="true">
 								+{extraColors}
 							</span>
 						)}

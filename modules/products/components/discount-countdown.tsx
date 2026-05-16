@@ -52,7 +52,7 @@ export function DiscountCountdown({ endDate, maxDaysToShow = 7 }: DiscountCountd
 	return (
 		<Badge
 			variant="outline"
-			className="gap-1.5 border-dashed border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased dark:border-amber-500 dark:bg-amber-950 dark:text-amber-200"
+			className="gap-1.5 border-dashed border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased"
 			role="timer"
 			aria-live="off"
 			aria-label={`Fin de l'offre dans ${label}`}

@@ -49,10 +49,7 @@ export function DiscountMobileItem({ discount }: DiscountMobileItemProps) {
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn(
-					"gap-3 motion-safe:transition-opacity",
-					isPendingItem && "opacity-60 dark:opacity-50",
-				)}
+				className={cn("gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
 				aria-roledescription="carte code promo"
 				aria-busy={isPendingItem || undefined}
 			>

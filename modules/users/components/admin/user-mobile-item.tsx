@@ -60,7 +60,7 @@ export function UserMobileItem({ user }: UserMobileItemProps) {
 					className={cn(
 						"w-full gap-3 motion-safe:transition-opacity",
 						user.deletedAt && "opacity-50",
-						isPendingItem && "opacity-60 dark:opacity-50",
+						isPendingItem && "opacity-60",
 					)}
 					aria-roledescription="carte client"
 					aria-busy={isPendingItem || undefined}

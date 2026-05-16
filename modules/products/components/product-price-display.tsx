@@ -157,7 +157,7 @@ export function ProductPriceDisplay({
 				{stockStatus === "low_stock" && (
 					<Badge
 						variant="outline"
-						className="gap-1.5 border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased shadow-sm dark:border-amber-500 dark:bg-amber-950 dark:text-amber-200"
+						className="gap-1.5 border-amber-600 bg-amber-100 text-xs/5 tracking-normal text-amber-800 antialiased shadow-sm"
 						role="status"
 						aria-label={`Attention, plus que ${inventory} exemplaires en stock`}
 					>

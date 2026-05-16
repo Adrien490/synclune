@@ -45,7 +45,7 @@ export function AdminMenuQuickAccess({ items, pathname, badges }: AdminMenuQuick
 								/>
 								{badgeCount != null && badgeCount > 0 && (
 									<span
-										className="bg-primary text-primary-foreground absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+										className="bg-primary text-primary-foreground text-2xs absolute -top-1.5 -right-2.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 font-bold"
 										aria-label={`${badgeCount} en attente`}
 									>
 										{badgeCount > 99 ? "99+" : badgeCount}

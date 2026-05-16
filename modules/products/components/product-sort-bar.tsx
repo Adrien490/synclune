@@ -251,7 +251,7 @@ function ProductSortBarInner({ sortOptions, className }: ProductSortBarProps) {
 						<span className="truncate">Filtrer</span>
 						{hasActiveFilters && (
 							<span
-								className="bg-primary text-primary-foreground inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+								className="bg-primary text-primary-foreground text-2xs inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 font-bold"
 								aria-hidden="true"
 							>
 								{activeFiltersCount}

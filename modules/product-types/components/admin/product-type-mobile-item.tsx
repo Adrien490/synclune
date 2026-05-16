@@ -65,10 +65,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn(
-					"w-full gap-3 motion-safe:transition-opacity",
-					showPending && "opacity-60 dark:opacity-50",
-				)}
+				className={cn("w-full gap-3 motion-safe:transition-opacity", showPending && "opacity-60")}
 				aria-roledescription="carte type de produit"
 				aria-busy={showPending || undefined}
 			>

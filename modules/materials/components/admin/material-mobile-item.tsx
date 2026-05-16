@@ -61,10 +61,7 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 			<Item
 				variant="outline"
 				size="sm"
-				className={cn(
-					"w-full gap-3 motion-safe:transition-opacity",
-					isPendingItem && "opacity-60 dark:opacity-50",
-				)}
+				className={cn("w-full gap-3 motion-safe:transition-opacity", isPendingItem && "opacity-60")}
 				aria-roledescription="carte matériau"
 				aria-busy={isPendingItem || undefined}
 			>

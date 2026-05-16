@@ -266,7 +266,7 @@ export function StickyActionBar({
 						item.badgeCount && item.badgeCount > 0 ? (
 							<>
 								<span
-									className="bg-primary text-primary-foreground inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 text-[10px] font-bold"
+									className="bg-primary text-primary-foreground text-2xs inline-flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full px-1 font-bold"
 									aria-hidden="true"
 								>
 									{item.badgeCount > 99 ? "99+" : item.badgeCount}

@@ -58,7 +58,7 @@ export const bottomBarBadgeClass = cn(
 	"min-w-4 h-4 px-1",
 	"rounded-full",
 	"bg-destructive text-destructive-foreground",
-	"text-[10px] font-semibold leading-none",
+	"text-2xs font-semibold leading-none",
 	"flex items-center justify-center",
 	"ring-2 ring-background",
 	"forced-colors:outline forced-colors:outline-1 forced-colors:outline-[CanvasText]",

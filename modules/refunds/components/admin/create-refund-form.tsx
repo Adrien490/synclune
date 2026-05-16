@@ -416,8 +416,8 @@ export function CreateRefundForm({ order }: CreateRefundFormProps) {
 									className={cn(
 										"rounded p-2 text-xs",
 										restockByDefault
-											? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
-											: "bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400",
+											? "bg-emerald-50 text-emerald-700"
+											: "bg-amber-50 text-amber-700",
 									)}
 								>
 									{restockByDefault

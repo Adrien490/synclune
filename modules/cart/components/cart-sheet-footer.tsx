@@ -58,7 +58,7 @@ export function CartSheetFooter({
 				</div>
 				{/* Réduction appliquée — visible quand un code promo est actif */}
 				{discountAmount !== null && discountAmount > 0 && (
-					<div className="flex items-center justify-between text-sm text-green-700 dark:text-green-500">
+					<div className="flex items-center justify-between text-sm text-green-700">
 						<span>Réduction{appliedDiscountCode ? ` (${appliedDiscountCode})` : ""}</span>
 						<span className="tabular-nums">−{formatEuro(discountAmount)}</span>
 					</div>

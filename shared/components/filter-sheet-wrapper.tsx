@@ -146,7 +146,6 @@ export function FilterSheetWrapper({
 			open={controlledOpen}
 			onOpenChange={controlledOnOpenChange}
 			snapPoints={effectiveSnapPoints}
-			handleOnly={useBottomSheet}
 			repositionInputs={useBottomSheet}
 		>
 			{!hideTrigger && <SheetTrigger asChild>{trigger ?? defaultTrigger}</SheetTrigger>}
@@ -263,7 +262,7 @@ export function FilterSheetWrapper({
 					>
 						{isPending && <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />}
 						{applyButtonText}
-						<Kbd className="text-muted-foreground/60 ml-1.5 hidden text-[10px] font-normal lg:inline">
+						<Kbd className="text-muted-foreground/60 text-2xs ml-1.5 hidden font-normal lg:inline">
 							⌘↵
 						</Kbd>
 					</Button>
