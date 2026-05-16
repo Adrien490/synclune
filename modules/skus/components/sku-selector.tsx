@@ -53,6 +53,18 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 	// SKU selectionne pour le message de disponibilite
 	const { selectedSku } = useSelectedSku({ product, defaultSku });
 
+	// Préfixe le message de disponibilité par la combinaison sélectionnée (M2M)
+	// pour que les lecteurs d'écran annoncent « Variante Or rose et Argent en stock »
+	// plutôt qu'un « En stock » contextuellement pauvre.
+	const getSelectedVariantPrefix = () => {
+		if (!selectedSku) return "";
+		const combo = variantInfo.availableCombos.find((c) =>
+			c.colors.every((color) => selectedSku.colors.some((sc) => sc.colorId === color.id)),
+		);
+		if (!combo) return "";
+		return `Variante ${combo.ariaLabel} — `;
+	};
+
 	// Message de disponibilite pour ARIA live region
 	const getAvailabilityMessage = () => {
 		if (!selectedSku) {
@@ -61,13 +73,14 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 			}
 			return "Selectionnez vos options pour voir la disponibilite";
 		}
+		const prefix = getSelectedVariantPrefix();
 		if (selectedSku.inventory === 0 || !selectedSku.isActive) {
-			return "Cette combinaison est en rupture de stock";
+			return `${prefix}cette combinaison est en rupture de stock`;
 		}
 		if (selectedSku.inventory <= 3) {
-			return `Plus que ${selectedSku.inventory} en stock`;
+			return `${prefix}plus que ${selectedSku.inventory} en stock`;
 		}
-		return "En stock";
+		return `${prefix}en stock`;
 	};
 
 	// Description dynamique selon les selecteurs affiches
@@ -109,9 +122,10 @@ function VariantSelectorInner({ product, defaultSku }: VariantSelectorProps) {
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-6">
-				{/* Sélecteur de couleur autonome */}
+				{/* Sélecteur de couleur autonome (mode combos M2M si disponible) */}
 				<ColorSelector
 					colors={variantInfo.availableColors}
+					combos={variantInfo.availableCombos}
 					product={product}
 					showMaterialLabel={variantInfo.availableMaterials.length <= 1}
 					defaultSku={defaultSku}

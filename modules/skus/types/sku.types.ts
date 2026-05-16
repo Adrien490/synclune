@@ -72,6 +72,12 @@ export interface VariantSelectors {
 	colorId?: string;
 	colorSlug?: string;
 	colorHex?: string;
+	/**
+	 * Clé canonique d'une combinaison M2M (slugs triés alphabétiquement, séparés
+	 * par "__"). Si présente, prime sur `colorSlug` et impose un set égalité strict
+	 * sur les couleurs du SKU — permet de cibler une variante bicolore via URL.
+	 */
+	colorCombo?: string;
 	material?: string;
 	materialSlug?: string;
 	size?: string;

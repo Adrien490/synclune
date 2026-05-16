@@ -4,6 +4,7 @@ import { Hr, Link, Section, Text } from "react-email";
 import { LEGAL_URLS } from "@/shared/constants/legal-urls";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailCard } from "./_components/email-card";
+import { EmailColorSwatch, parseSkuColorHexes } from "./_components/email-color-swatch";
 import { EmailCTA } from "./_components/email-cta";
 import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
@@ -92,8 +93,20 @@ export const OrderConfirmationEmail = ({
 									className={EMAIL_CLASSES.text.secondary}
 									style={{ ...EMAIL_STYLES.text.small, marginTop: "4px" }}
 								>
-									{[item.skuSize, item.skuColor, item.skuMaterial].filter(Boolean).join(" · ")} ×{" "}
-									{item.quantity}
+									{(() => {
+										const hexes = parseSkuColorHexes(item.skuColorHexes);
+										const text = [item.skuSize, item.skuColor, item.skuMaterial]
+											.filter(Boolean)
+											.join(" · ");
+										return (
+											<>
+												{hexes.length > 0 && (
+													<EmailColorSwatch hexes={hexes} ariaLabel={item.skuColor ?? undefined} />
+												)}
+												{text} × {item.quantity}
+											</>
+										);
+									})()}
 								</Text>
 							</>
 						}

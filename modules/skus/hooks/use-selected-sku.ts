@@ -47,6 +47,9 @@ export function useSelectedSku({
 
 	const selectedSku = ((): ProductSku | null => {
 		const urlVariants = {
+			// `variant` (combo M2M) prime sur `color` legacy si présent. Le service
+			// matchColor applique colorCombo en priorité (set égalité strict).
+			colorCombo: searchParams.get("variant") ?? undefined,
 			colorSlug: searchParams.get("color") ?? undefined,
 			materialSlug: searchParams.get("material") ?? undefined,
 			size: searchParams.get("size") ?? undefined,

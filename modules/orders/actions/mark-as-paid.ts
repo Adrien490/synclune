@@ -88,6 +88,7 @@ export async function markAsPaid(
 							quantity: true,
 							productTitle: true,
 							skuColor: true,
+							skuColorHexes: true,
 							skuMaterial: true,
 							skuSize: true,
 							price: true,
@@ -195,6 +196,7 @@ export async function markAsPaid(
 					items: order.items.map((item) => ({
 						productTitle: item.productTitle,
 						skuColor: item.skuColor,
+						skuColorHexes: item.skuColorHexes,
 						skuMaterial: item.skuMaterial,
 						skuSize: item.skuSize,
 						quantity: item.quantity,

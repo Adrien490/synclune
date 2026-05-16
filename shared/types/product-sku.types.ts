@@ -30,6 +30,19 @@ export type ColorSwatch = {
 	hex: string;
 	name: string;
 	inStock: boolean;
+	/**
+	 * Hex codes ordonnés par position (présent si la pastille représente une
+	 * combinaison M2M ; absent ou de longueur 1 pour une couleur mono).
+	 */
+	hexes?: string[];
+	/**
+	 * Clé canonique de la combinaison (slugs triés alphabétiquement, séparés
+	 * par "__"). Présent uniquement pour les combos multi-couleur ; permet
+	 * `?variant=or-rose__argent` côté URL.
+	 */
+	comboKey?: string;
+	/** Noms ordonnés par position (parité hexes), utilisés pour aria-label. */
+	names?: string[];
 };
 
 // ============================================================================
@@ -111,6 +124,7 @@ export type ProductVariantInfo = {
 		name: string;
 		availableSkus: number;
 	}>;
+	availableCombos: ColorCombo[];
 	availableMaterials: Array<{
 		name: string;
 		availableSkus: number;
@@ -124,4 +138,35 @@ export type ProductVariantInfo = {
 		max: number;
 	};
 	totalStock: number;
+};
+
+// ============================================================================
+// COLOR COMBO (M2M ProductSkuColor — combinaison de teintes par SKU)
+// ============================================================================
+
+/**
+ * Représentation d'une combinaison de couleurs portée par un ou plusieurs SKUs.
+ *
+ * Convention :
+ * - `hexes` et `names` sont ordonnés par `position` (1ère = principale).
+ * - `comboKey` est stable (slugs triés alphabétiquement, séparateur "__") pour
+ *   permettre la déduplication entre SKUs et le routage URL `?variant=`.
+ */
+export type ColorCombo = {
+	comboKey: string;
+	colors: Array<{
+		id: string;
+		slug: string;
+		hex: string;
+		name: string;
+		position: number;
+	}>;
+	hexes: string[];
+	names: string[];
+	/** Libellé d'affichage joint par " + " (ex. "Or rose + Argent"). */
+	label: string;
+	/** Libellé accessible joint par " et " (ex. "Or rose et Argent"). */
+	ariaLabel: string;
+	inStock: boolean;
+	skuCount: number;
 };

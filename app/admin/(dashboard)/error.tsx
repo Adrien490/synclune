@@ -23,9 +23,9 @@ export default function DashboardError({
 				Le tableau de bord n'a pas pu charger
 			</h2>
 			<p className="text-muted-foreground text-sm">
-				Une erreur inattendue est survenue. L'erreur a ete signalee automatiquement.
+				Une erreur inattendue est survenue. L'erreur a été signalée automatiquement.
 			</p>
-			<Button onClick={reset}>Reessayer</Button>
+			<Button onClick={reset}>Réessayer</Button>
 		</div>
 	);
 }

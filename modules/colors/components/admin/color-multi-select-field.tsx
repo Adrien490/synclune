@@ -4,6 +4,7 @@ import { Info, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { COLOR_DIALOG_ID } from "@/modules/colors/components/color-form-dialog";
+import { SortableColorChips } from "@/modules/colors/components/admin/sortable-color-chips";
 import { isLightColor } from "@/modules/colors/utils/color-contrast.utils";
 import { FieldLabel } from "@/shared/components/forms";
 import { MultiSelect } from "@/shared/components/multi-select/multi-select";
@@ -60,7 +61,10 @@ export function ColorMultiSelectField({
 	const haptic = useHaptic();
 	const colorDialog = useDialog(COLOR_DIALOG_ID);
 
-	const isAtCap = value.length >= maxSelected;
+	// Filet de sécurité : TanStack Form peut transmettre `undefined` en mount initial
+	// si le defaultValue n'a pas encore été hydraté côté formulaire. On normalise.
+	const safeValue = Array.isArray(value) ? value : [];
+	const isAtCap = safeValue.length >= maxSelected;
 
 	// Préfixe pastille hex inline ; ring de contraste si la couleur est très claire
 	// (sinon invisible sur fond blanc du select). Au cap : grise les options non
@@ -68,7 +72,7 @@ export function ColorMultiSelectField({
 	const mappedOptions = options.map((c) => ({
 		value: c.id,
 		label: c.name,
-		disabled: isAtCap && !value.includes(c.id),
+		disabled: isAtCap && !safeValue.includes(c.id),
 		prefix: (
 			<span
 				aria-hidden="true"
@@ -89,6 +93,21 @@ export function ColorMultiSelectField({
 		onValueChange(capped);
 	};
 
+	// Chips réordonnables : on hydrate les ids sélectionnés depuis options pour
+	// retrouver name+hex. Si une couleur a été archivée entre-temps, on la skip.
+	const selectedChips = safeValue
+		.map((id) => options.find((o) => o.id === id))
+		.filter((c): c is ColorOptionItem => c !== undefined)
+		.map((c) => ({ id: c.id, name: c.name, hex: c.hex }));
+
+	const handleReorder = (next: { id: string }[]) => {
+		onValueChange(next.map((c) => c.id));
+	};
+
+	const handleRemove = (id: string) => {
+		onValueChange(safeValue.filter((v) => v !== id));
+	};
+
 	return (
 		<div className="space-y-2">
 			{showLabel && (
@@ -101,9 +120,9 @@ export function ColorMultiSelectField({
 					<MultiSelect
 						id={fieldName}
 						options={mappedOptions}
-						value={value}
+						value={safeValue}
 						onValueChange={handleValueChange}
-						placeholder="Sélectionner une ou plusieurs couleurs"
+						placeholder="Pose tes premières teintes"
 					/>
 				</div>
 				<Button
@@ -117,8 +136,8 @@ export function ColorMultiSelectField({
 							onCreated: (id: string) => {
 								// Ajoute la nouvelle couleur à la sélection (en fin = priorité plus basse)
 								// sauf si on est déjà au cap.
-								if (value.length < maxSelected) {
-									onValueChange([...value, id]);
+								if (safeValue.length < maxSelected) {
+									onValueChange([...safeValue, id]);
 								}
 								router.refresh();
 							},
@@ -130,13 +149,19 @@ export function ColorMultiSelectField({
 					<Plus className="size-4" aria-hidden="true" />
 				</Button>
 			</div>
+			<SortableColorChips chips={selectedChips} onReorder={handleReorder} onRemove={handleRemove} />
 			<p className="text-muted-foreground flex items-start gap-1 text-xs">
 				<Info className="mt-0.5 size-3 shrink-0" aria-hidden="true" />
 				<span>
-					{value.length}/{maxSelected} — la première teinte est la principale (vignette boutique et
-					facture).
+					{safeValue.length}/{maxSelected} — la première teinte est la principale (vignette boutique
+					et facture).
 				</span>
 			</p>
+			{isAtCap && (
+				<p className="text-muted-foreground/80 pl-4 text-xs italic" role="status">
+					Désélectionne une teinte pour libérer une place dans la palette.
+				</p>
+			)}
 		</div>
 	);
 }

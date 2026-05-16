@@ -462,6 +462,9 @@ export async function createOrderFromCheckoutSession(
 						// facture/email/admin sans changement DB côté OrderItem).
 						skuColor:
 							sku.colors.length > 0 ? sku.colors.map((c) => c.color.name).join(" · ") : null,
+						// Snapshot CSV des hex (ordre = position) pour rendu pastille email.
+						skuColorHexes:
+							sku.colors.length > 0 ? sku.colors.map((c) => c.color.hex).join(",") : null,
 						skuMaterial: materialLabel,
 						skuSize: sku.size ?? null,
 						skuImageUrl: imageUrl,
@@ -555,6 +558,7 @@ type OrderWithItemsRow = {
 	items: Array<{
 		productTitle: string | null;
 		skuColor: string | null;
+		skuColorHexes: string | null;
 		skuMaterial: string | null;
 		skuSize: string | null;
 		quantity: number;
@@ -586,6 +590,7 @@ function mapOrderToOrderWithItems(order: OrderWithItemsRow): OrderWithItems {
 		items: order.items.map((item) => ({
 			productTitle: item.productTitle,
 			skuColor: item.skuColor,
+			skuColorHexes: item.skuColorHexes,
 			skuMaterial: item.skuMaterial,
 			skuSize: item.skuSize,
 			quantity: item.quantity,

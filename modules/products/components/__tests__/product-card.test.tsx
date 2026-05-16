@@ -380,7 +380,7 @@ describe("ProductCard", () => {
 				}),
 			);
 			render(<ProductCard product={createProduct()} />);
-			const list = screen.getByRole("list", { name: /couleurs disponibles/i });
+			const list = screen.getByRole("list", { name: /variantes disponibles/i });
 			expect(list).toBeInTheDocument();
 		});
 
@@ -391,13 +391,13 @@ describe("ProductCard", () => {
 				}),
 			);
 			render(<ProductCard product={createProduct()} />);
-			expect(screen.queryByRole("list", { name: /couleurs disponibles/i })).toBeNull();
+			expect(screen.queryByRole("list", { name: /variantes disponibles/i })).toBeNull();
 		});
 
 		it("does not render color swatches when no colors are present", () => {
 			mockGetProductCardData.mockReturnValue(createCardData({ colors: [] }));
 			render(<ProductCard product={createProduct()} />);
-			expect(screen.queryByRole("list", { name: /couleurs disponibles/i })).toBeNull();
+			expect(screen.queryByRole("list", { name: /variantes disponibles/i })).toBeNull();
 		});
 
 		it("color swatch links point to the product page with ?color= query param", () => {

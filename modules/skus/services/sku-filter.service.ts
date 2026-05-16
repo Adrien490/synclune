@@ -9,8 +9,27 @@
 import { slugify } from "@/shared/utils/generate-slug";
 import type { BaseProductSku } from "@/shared/types/product-sku.types";
 import type { VariantSelectors } from "../types/sku.types";
+import { buildComboKey } from "./sku-info-extraction.service";
 
 export type { VariantSelectors } from "../types/sku.types";
+
+/**
+ * Vérifie si un SKU porte EXACTEMENT la combinaison de couleurs ciblée par
+ * `comboKey` (set égalité, ordre indifférent).
+ *
+ * Utilisé par le sélecteur PDP pour cibler une variante M2M précise via
+ * `?variant=or-rose__argent` — strict, contrairement au matchColor « any-of »
+ * legacy qui matche dès qu'une couleur du SKU correspond.
+ */
+export function matchColorCombo(sku: BaseProductSku, comboKey: string): boolean {
+	const skuColors = sku.colors ?? [];
+	if (skuColors.length === 0) return comboKey === "";
+
+	const slugs = skuColors.map((link) => link.color.slug).filter(Boolean);
+	if (slugs.length === 0) return false;
+
+	return buildComboKey(slugs) === comboKey;
+}
 
 // ============================================================================
 // MATCHING FUNCTIONS
@@ -26,9 +45,12 @@ export type { VariantSelectors } from "../types/sku.types";
  */
 export function matchColor(
 	sku: BaseProductSku,
-	selectors: Pick<VariantSelectors, "colorSlug" | "colorHex" | "colorId">,
+	selectors: Pick<VariantSelectors, "colorSlug" | "colorHex" | "colorId" | "colorCombo">,
 ): boolean {
-	const { colorSlug, colorHex, colorId } = selectors;
+	const { colorSlug, colorHex, colorId, colorCombo } = selectors;
+
+	// Priorité absolue : combo strict (set égalité)
+	if (colorCombo) return matchColorCombo(sku, colorCombo);
 
 	// Aucune sélection = match par défaut
 	if (!colorSlug && !colorHex && !colorId) return true;

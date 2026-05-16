@@ -3,6 +3,7 @@ import type { AdminShippingAddress, OrderItem } from "@/modules/emails/types/ema
 import { Hr, Section, Text } from "react-email";
 import { EMAIL_CLASSES, EMAIL_COLORS, EMAIL_STYLES } from "./email-colors";
 import { EmailCard } from "./_components/email-card";
+import { EmailColorSwatch, parseSkuColorHexes } from "./_components/email-color-swatch";
 import { EmailCTA } from "./_components/email-cta";
 import { EmailHeading } from "./_components/email-heading";
 import { EmailLayout } from "./_components/email-layout";
@@ -177,7 +178,20 @@ export const AdminNewOrderEmail = ({
 								)}
 								{item.skuColor && (
 									<Text className={EMAIL_CLASSES.text.secondary} style={EMAIL_STYLES.text.small}>
-										Couleur: {item.skuColor}
+										{(() => {
+											const hexes = parseSkuColorHexes(item.skuColorHexes);
+											return (
+												<>
+													{hexes.length > 0 && (
+														<EmailColorSwatch
+															hexes={hexes}
+															ariaLabel={item.skuColor ?? undefined}
+														/>
+													)}
+													Couleur: {item.skuColor}
+												</>
+											);
+										})()}
 									</Text>
 								)}
 								{item.skuMaterial && (

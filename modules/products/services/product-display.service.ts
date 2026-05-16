@@ -24,6 +24,7 @@ import {
 	getPrimarySkuForList,
 	type GetPrimarySkuOptions,
 } from "@/modules/skus/services/sku-selection.service";
+import { buildComboKey } from "@/modules/skus/services/sku-info-extraction.service";
 import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
 
@@ -196,6 +197,8 @@ export function getProductCardData(
 	let totalInventory = 0;
 	let availableSkus = 0;
 	const colorMap = new Map<string, ColorSwatch>();
+	const comboMap = new Map<string, ColorSwatch>();
+	let hasMultiColorSku = false;
 
 	for (const sku of skus) {
 		if (!sku.isActive) continue;
@@ -218,6 +221,35 @@ export function getProductCardData(
 				name: c.name,
 				inStock,
 			});
+		}
+
+		// Combos M2M : on accumule chaque combinaison de couleurs portée par les
+		// SKUs actifs. Une carte produit avec au moins un SKU multi-couleur passe
+		// en mode combos (pastille split-gradient + lien `?variant=`).
+		const skuColors = sku.colors ?? [];
+		if (skuColors.length > 1) hasMultiColorSku = true;
+		if (skuColors.length > 0) {
+			const ordered = [...skuColors].sort((a, b) => a.position - b.position);
+			const validLinks = ordered.filter(
+				(link) => link.color.slug && link.color.hex && HEX_PATTERN.test(link.color.hex),
+			);
+			if (validLinks.length > 0) {
+				const slugs = validLinks.map((link) => link.color.slug);
+				const hexes = validLinks.map((link) => link.color.hex);
+				const names = validLinks.map((link) => link.color.name);
+				const comboKey = buildComboKey(slugs);
+				const existing = comboMap.get(comboKey);
+				const inStock = existing?.inStock === true || sku.inventory > 0;
+				comboMap.set(comboKey, {
+					slug: comboKey,
+					hex: hexes[0]!,
+					name: names.join(" + "),
+					inStock,
+					hexes,
+					comboKey,
+					names,
+				});
+			}
 		}
 	}
 
@@ -261,6 +293,11 @@ export function getProductCardData(
 	// Secondary image for hover effect (different from primary)
 	const secondaryImage = getSecondaryImage(defaultSku, activeSkus, product.title, primaryImage.id);
 
+	// Si au moins un SKU multi-couleur existe, la carte présente des combos
+	// (pastilles split-gradient, lien `?variant=`). Sinon, mode legacy avec
+	// 1 pastille par couleur mono et lien `?color=`.
+	const colors = hasMultiColorSku ? Array.from(comboMap.values()) : Array.from(colorMap.values());
+
 	return {
 		defaultSku,
 		price,
@@ -268,7 +305,7 @@ export function getProductCardData(
 		stockInfo,
 		primaryImage,
 		secondaryImage,
-		colors: Array.from(colorMap.values()),
+		colors,
 		hasValidSku: defaultSku !== null && defaultSku.isActive,
 	};
 }

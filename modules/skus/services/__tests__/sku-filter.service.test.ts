@@ -8,6 +8,7 @@ import type { BaseProductSku } from "@/shared/types/product-sku.types";
 import type { VariantSelectors } from "../../types/sku.types";
 import {
 	matchColor,
+	matchColorCombo,
 	matchMaterial,
 	matchSize,
 	matchSkuVariants,
@@ -96,6 +97,69 @@ describe("matchColor", () => {
 		const sku = makeSku({ colors: [] });
 
 		expect(matchColor(sku, { colorSlug: "or-rose" })).toBe(false);
+	});
+
+	it("should defer to matchColorCombo when colorCombo is provided", () => {
+		const sku = makeSku({
+			colors: [
+				{
+					colorId: "c1",
+					position: 0,
+					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				},
+				{
+					colorId: "c2",
+					position: 1,
+					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				},
+			],
+		});
+
+		// colorCombo strict : la paire complète doit matcher
+		expect(matchColor(sku, { colorCombo: "argent__or-rose" })).toBe(true);
+		// colorCombo seul "or-rose" ne matche pas un SKU bi-couleur
+		expect(matchColor(sku, { colorCombo: "or-rose" })).toBe(false);
+		// colorCombo prend la priorité sur colorSlug (sinon le SKU bicolore matcherait "or-rose")
+		expect(matchColor(sku, { colorCombo: "or-rose", colorSlug: "or-rose" })).toBe(false);
+	});
+});
+
+// ============================================================================
+// matchColorCombo
+// ============================================================================
+
+describe("matchColorCombo", () => {
+	function makeBiColorSku(): BaseProductSku {
+		return makeSku({
+			colors: [
+				{
+					colorId: "c1",
+					position: 0,
+					color: { id: "c1", slug: "or-rose", hex: "#B76E79", name: "Or Rose" },
+				},
+				{
+					colorId: "c2",
+					position: 1,
+					color: { id: "c2", slug: "argent", hex: "#C0C0C0", name: "Argent" },
+				},
+			],
+		});
+	}
+
+	it("matches strictly when the set of slugs equals the combo key", () => {
+		expect(matchColorCombo(makeBiColorSku(), "argent__or-rose")).toBe(true);
+		expect(matchColorCombo(makeBiColorSku(), "or-rose")).toBe(false);
+		expect(matchColorCombo(makeBiColorSku(), "argent__or-blanc")).toBe(false);
+	});
+
+	it("is order-independent (slug-set equality)", () => {
+		const sku = makeBiColorSku();
+		// Le service buildComboKey trie déjà alphabétiquement avant comparaison
+		expect(matchColorCombo(sku, "argent__or-rose")).toBe(true);
+	});
+
+	it("returns false when the SKU has no colors", () => {
+		expect(matchColorCombo(makeSku({ colors: [] }), "or-rose")).toBe(false);
 	});
 });
 

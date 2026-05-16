@@ -58,6 +58,7 @@ function makeProduct(
 function makeVariantInfo(overrides: Partial<ProductVariantInfo> = {}): ProductVariantInfo {
 	return {
 		availableColors: [],
+		availableCombos: [],
 		availableMaterials: [],
 		availableSizes: [],
 		priceRange: { min: 1000, max: 1000 },

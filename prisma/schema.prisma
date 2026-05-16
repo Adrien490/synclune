@@ -794,11 +794,13 @@ model OrderItem {
   productDescription String? @db.Text
   productImageUrl    String? @db.VarChar(2048)
 
-  skuSku      String? @db.VarChar(100) // Snapshot du code SKU au moment de la commande
-  skuColor    String? @db.VarChar(100)
-  skuMaterial String? @db.VarChar(100)
-  skuSize     String? @db.VarChar(50)
-  skuImageUrl String? @db.VarChar(2048)
+  skuSku       String? @db.VarChar(100) // Snapshot du code SKU au moment de la commande
+  skuColor     String? @db.VarChar(100)
+  /// Snapshot des hex codes (CSV "#B76E79,#C0C0C0", ordre = position) pour rendu pastille email/facture.
+  skuColorHexes String? @db.VarChar(200)
+  skuMaterial  String? @db.VarChar(100)
+  skuSize      String? @db.VarChar(50)
+  skuImageUrl  String? @db.VarChar(2048)
 
   // Prix et quantite
   price    Int // Prix unitaire FINAL sans TVA en centimes (micro-entreprise exoneree)

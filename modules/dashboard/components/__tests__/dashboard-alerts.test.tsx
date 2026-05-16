@@ -56,7 +56,6 @@ afterEach(cleanup);
 function makeAlerts(overrides: Partial<DashboardAlerts> = {}): DashboardAlerts {
 	return {
 		pendingRefunds: 0,
-		lowStockSkus: 0,
 		...overrides,
 	};
 }

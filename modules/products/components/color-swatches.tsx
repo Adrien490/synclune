@@ -233,29 +233,21 @@ export function ColorSwatches({
 			)}
 			aria-label={`${colors.length} couleur${colors.length > 1 ? "s" : ""} disponible${colors.length > 1 ? "s" : ""}`}
 		>
-			{visibleColors.map((color, index) =>
-				isTouchDevice ? (
-					<span
-						key={color.slug}
-						className={interactive ? "shrink-0 snap-start" : undefined}
-						title={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-					>
-						{renderSwatch(color, index)}
-					</span>
-				) : (
-					<Tooltip key={color.slug}>
-						<TooltipTrigger asChild>
-							<span className={interactive ? "shrink-0 snap-start" : undefined}>
-								{renderSwatch(color, index)}
-							</span>
-						</TooltipTrigger>
-						<TooltipContent side="top" className="text-xs">
-							{color.name}
-							{!color.inStock && " (rupture)"}
-						</TooltipContent>
-					</Tooltip>
-				),
-			)}
+			{visibleColors.map((color, index) => (
+				// Radix Tooltip gère longpress natif sur touch et hover sur desktop —
+				// remplace l'attribut `title` HTML invisible mobile + inaccessible TalkBack.
+				<Tooltip key={color.slug} delayDuration={isTouchDevice ? 0 : 300}>
+					<TooltipTrigger asChild>
+						<span className={interactive ? "shrink-0 snap-start" : undefined}>
+							{renderSwatch(color, index)}
+						</span>
+					</TooltipTrigger>
+					<TooltipContent side="top" className="text-xs">
+						{color.name}
+						{!color.inStock && " (rupture)"}
+					</TooltipContent>
+				</Tooltip>
+			))}
 
 			{/* Badge +N avec Popover pour voir/sélectionner les couleurs masquées */}
 			{remainingCount > 0 && (
@@ -288,26 +280,17 @@ export function ColorSwatches({
 							{remainingCount > 1 ? "s" : ""}
 						</p>
 						<div className="flex flex-wrap gap-3">
-							{hiddenColors.map((color, index) =>
-								isTouchDevice ? (
-									<span
-										key={color.slug}
-										title={`${color.name}${!color.inStock ? " (rupture)" : ""}`}
-									>
+							{hiddenColors.map((color, index) => (
+								<Tooltip key={color.slug} delayDuration={isTouchDevice ? 0 : 300}>
+									<TooltipTrigger asChild>
 										{renderSwatch(color, maxVisible + index, true)}
-									</span>
-								) : (
-									<Tooltip key={color.slug}>
-										<TooltipTrigger asChild>
-											{renderSwatch(color, maxVisible + index, true)}
-										</TooltipTrigger>
-										<TooltipContent side="top" className="text-xs">
-											{color.name}
-											{!color.inStock && " (rupture)"}
-										</TooltipContent>
-									</Tooltip>
-								),
-							)}
+									</TooltipTrigger>
+									<TooltipContent side="top" className="text-xs">
+										{color.name}
+										{!color.inStock && " (rupture)"}
+									</TooltipContent>
+								</Tooltip>
+							))}
 						</div>
 					</PopoverContent>
 				</Popover>
