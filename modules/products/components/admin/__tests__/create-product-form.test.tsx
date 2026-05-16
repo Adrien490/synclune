@@ -108,6 +108,30 @@ vi.mock("@/shared/components/multi-select", () => ({
 	MultiSelect: () => <div data-testid="multi-select" />,
 }));
 
+vi.mock("@/modules/colors/components/admin/color-multi-select-field", () => ({
+	ColorMultiSelectField: () => (
+		<div data-testid="color-multi-select-field">
+			<label htmlFor="mock-color-select">Couleur</label>
+			<input id="mock-color-select" type="text" readOnly />
+			<button type="button" aria-label="Créer une nouvelle couleur">
+				+
+			</button>
+		</div>
+	),
+}));
+
+vi.mock("@/modules/materials/components/admin/material-multi-select-field", () => ({
+	MaterialMultiSelectField: () => (
+		<div data-testid="material-multi-select-field">
+			<label htmlFor="mock-material-select">Matériau</label>
+			<input id="mock-material-select" type="text" readOnly />
+			<button type="button" aria-label="Créer un nouveau matériau">
+				+
+			</button>
+		</div>
+	),
+}));
+
 vi.mock("@/shared/components/ui/alert", () => ({
 	Alert: ({ children, ...props }: { children: React.ReactNode }) => (
 		<div data-testid="form-alert" {...props}>
@@ -338,7 +362,7 @@ describe("CreateProductForm", () => {
 
 			expect(screen.getByText("Variante")).toBeInTheDocument();
 			expect(screen.getByText("Couleur")).toBeInTheDocument();
-			expect(screen.getByText("Matériaux")).toBeInTheDocument();
+			expect(screen.getByText("Matériau")).toBeInTheDocument();
 		});
 
 		it("renders sr-only status for screen readers", () => {

@@ -192,6 +192,11 @@ describe("ProductMobileItem", () => {
 		expect(screen.getByText(/^45,00\s*€$/)).toBeInTheDocument();
 	});
 
+	it("expose aria-roledescription=carte produit pour annonces SR", () => {
+		const { container } = render(<ProductMobileItem product={baseProduct} />);
+		expect(container.querySelector('[aria-roledescription="carte produit"]')).toBeInTheDocument();
+	});
+
 	it("rend les 3 statuts (DRAFT/PUBLIC/ARCHIVED)", () => {
 		const { rerender } = render(
 			<ProductMobileItem product={{ ...baseProduct, status: ProductStatus.DRAFT }} />,

@@ -102,9 +102,10 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 				variant="outline"
 				size="sm"
 				className={cn(
-					"w-full gap-3 motion-safe:transition-[opacity,background-color] motion-safe:duration-200",
-					isPendingItem && "dark:bg-muted/20 opacity-60 dark:opacity-50",
+					"w-full gap-3 motion-safe:transition-opacity",
+					isPendingItem && "opacity-60 dark:opacity-50",
 				)}
+				aria-roledescription="carte produit"
 				aria-busy={isPendingItem || undefined}
 			>
 				{primaryImage ? (

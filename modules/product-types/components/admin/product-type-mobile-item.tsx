@@ -69,6 +69,7 @@ export function ProductTypeMobileItem({ productType }: ProductTypeMobileItemProp
 					"w-full gap-3 motion-safe:transition-opacity",
 					showPending && "opacity-60 dark:opacity-50",
 				)}
+				aria-roledescription="carte type de produit"
 				aria-busy={showPending || undefined}
 			>
 				<ItemMedia variant="icon">

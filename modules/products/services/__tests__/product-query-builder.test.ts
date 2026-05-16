@@ -106,7 +106,12 @@ describe("buildProductFilterConditions", () => {
 		const result = buildProductFilterConditions({ color: "or" });
 
 		expect(result).toContainEqual({
-			skus: { some: { isActive: true, color: { slug: "or" } } },
+			skus: {
+				some: {
+					isActive: true,
+					colors: { some: { color: { slug: "or" } } },
+				},
+			},
 		});
 	});
 
@@ -117,7 +122,10 @@ describe("buildProductFilterConditions", () => {
 
 		expect(result).toContainEqual({
 			skus: {
-				some: { isActive: true, color: { slug: { in: ["or", "argent"] } } },
+				some: {
+					isActive: true,
+					colors: { some: { color: { slug: { in: ["or", "argent"] } } } },
+				},
 			},
 		});
 	});

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui
 import { Separator } from "@/shared/components/ui/separator";
 import { formatDateShort } from "@/shared/utils/dates";
 
+import { REVIEW_ANONYMOUS_AUTHOR_LABEL } from "../../constants/review.constants";
 import type { ReviewAdmin } from "../../types/review.types";
 
 import { ReviewDetailHeader } from "./review-detail-header";
@@ -30,7 +31,7 @@ export function ReviewDetailPage({ review }: ReviewDetailPageProps) {
 						</CardHeader>
 						<CardContent className="space-y-4">
 							<div className="space-y-1">
-								<p className="font-medium">{review.user.name ?? "Anonyme"}</p>
+								<p className="font-medium">{review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}</p>
 								<p className="text-muted-foreground text-sm break-all">{review.user.email}</p>
 							</div>
 							<Separator />

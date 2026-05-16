@@ -7,6 +7,7 @@ import { useBulkSelectionActionItem } from "@/shared/hooks/use-bulk-selection-ac
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 
 import { TOGGLE_REVIEW_STATUS_DIALOG_ID } from "../components/admin/toggle-review-status-alert-dialog";
+import { REVIEW_ANONYMOUS_AUTHOR_LABEL } from "../constants/review.constants";
 import type { ReviewAdmin } from "../types/review.types";
 
 interface UseReviewActionsParams {
@@ -53,7 +54,7 @@ export function useReviewActions({ review }: UseReviewActionsParams): {
 					onSelect: () =>
 						toggleDialog.open({
 							reviewId: review.id,
-							authorName: review.user.name ?? "Anonyme",
+							authorName: review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL,
 							productTitle: review.product.title,
 							isPublished,
 						}),

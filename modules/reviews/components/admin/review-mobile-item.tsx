@@ -12,7 +12,10 @@ import { useAdminListPendingContextOptional } from "@/shared/contexts/admin-list
 import { cn } from "@/shared/utils/cn";
 import { formatDateShort } from "@/shared/utils/dates";
 
-import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
+import {
+	REVIEW_ANONYMOUS_AUTHOR_LABEL,
+	REVIEW_STATUS_LABELS,
+} from "../../constants/review.constants";
 import { useReviewActions } from "../../hooks/use-review-actions";
 import type { ReviewAdmin } from "../../types/review.types";
 
@@ -90,7 +93,7 @@ export function ReviewMobileItem({ review }: ReviewMobileItemProps) {
 						)}
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-						<span>{review.user.name ?? "Anonyme"}</span>
+						<span>{review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}</span>
 						<span aria-hidden="true">·</span>
 						<span style={{ viewTransitionName: `review-rating-${review.id}` }}>
 							<RatingStars rating={review.rating} size="sm" />

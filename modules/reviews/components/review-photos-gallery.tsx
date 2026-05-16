@@ -8,6 +8,7 @@ import { useLightbox } from "@/shared/hooks";
 // Lazy loading - lightbox charge uniquement a l'ouverture
 const MediaLightbox = lazy(() => import("@/modules/media/components/media-lightbox"));
 
+import { REVIEW_ANONYMOUS_AUTHOR_LABEL } from "../constants/review.constants";
 import type { ReviewPublic } from "../types/review.types";
 
 interface PhotoWithReview {
@@ -80,7 +81,7 @@ export function ReviewPhotosGallery({ reviews }: ReviewPhotosGalleryProps) {
 							key={photo.id}
 							type="button"
 							onClick={() => openAtIndex(index)}
-							aria-label={`Photo ${index + 1} de l'avis de ${photo.userName ?? "Anonyme"}`}
+							aria-label={`Photo ${index + 1} de l'avis de ${photo.userName ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}`}
 							className="group focus-visible:ring-ring relative size-20 flex-shrink-0 cursor-zoom-in overflow-hidden rounded-lg focus-visible:ring-2 focus-visible:ring-offset-2"
 						>
 							<Image

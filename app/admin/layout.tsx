@@ -94,7 +94,7 @@ function AdminContentSkeleton() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement du contenu"
-			className="space-y-6 p-6 pt-[calc(var(--admin-header-height,3.5rem)+env(safe-area-inset-top,0px)+1rem)] md:pt-6"
+			className="space-y-6 px-6 pt-[calc(var(--admin-header-height,3.5rem)+env(safe-area-inset-top,0px)+1rem)] pb-[calc(var(--bottom-bar-height,56px)+1rem)] md:pt-6 md:pb-6"
 		>
 			<Skeleton shape="text" className="h-8 w-64" />
 			<div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

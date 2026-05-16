@@ -253,7 +253,11 @@ describe("getRelatedProducts", () => {
 			id: "current-1",
 			typeId: "type-1",
 			collections: [{ collectionId: "col-1" }],
-			skus: [{ colorId: "color-1" }, { colorId: "color-2" }, { colorId: null }],
+			skus: [
+				{ colors: [{ colorId: "color-1" }, { colorId: "color-2" }] },
+				{ colors: [{ colorId: "color-1" }] },
+				{ colors: [] },
+			],
 		};
 
 		beforeEach(() => {

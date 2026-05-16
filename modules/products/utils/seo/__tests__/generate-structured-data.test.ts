@@ -244,7 +244,7 @@ describe("generateStructuredData", () => {
 			product: makeProduct(),
 			selectedSku: makeSku({
 				materials: [{ materialId: "mat-1", position: 0, material: { name: "Argent 925" } }],
-				color: { name: "Or" },
+				colors: [{ colorId: "color-1", position: 0, color: { name: "Or" } }],
 			}),
 		});
 

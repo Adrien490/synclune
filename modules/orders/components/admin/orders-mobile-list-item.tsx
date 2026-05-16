@@ -65,7 +65,7 @@ function OrderCardContent({
 				isPendingItem && "opacity-60 dark:opacity-50",
 			)}
 			aria-roledescription="carte commande"
-			aria-busy={isPendingItem ? true : undefined}
+			aria-busy={isPendingItem || undefined}
 		>
 			<ItemContent className="min-w-0">
 				<ItemTitle>

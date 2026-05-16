@@ -223,6 +223,12 @@ export const REVIEW_STATUS_LABELS = {
 	HIDDEN: "Masqué",
 } as const;
 
+/**
+ * Libellé affiché lorsqu'un avis n'a pas de nom d'auteur associé.
+ * Centralisé pour cohérence FR sur storefront + admin (carte, dialog, exports).
+ */
+export const REVIEW_ANONYMOUS_AUTHOR_LABEL = "Anonyme";
+
 // ============================================
 // Constantes unifiées (pattern get-products.ts)
 // ============================================

@@ -6,6 +6,7 @@ import { RelativeDate } from "@/modules/reviews/components/relative-date";
 import { ReviewCardGallery } from "./review-card-gallery";
 import { ExpandableReviewContent } from "./expandable-review-content";
 
+import { REVIEW_ANONYMOUS_AUTHOR_LABEL } from "../constants/review.constants";
 import type { ReviewHomepage } from "../types/review.types";
 
 interface HomepageReviewCardProps {
@@ -20,7 +21,7 @@ interface HomepageReviewCardProps {
  */
 export function HomepageReviewCard({ review, className }: HomepageReviewCardProps) {
 	const productImage = review.product.skus[0]?.images[0] ?? null;
-	const userName = review.user.name ?? "Anonyme";
+	const userName = review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL;
 
 	return (
 		<article

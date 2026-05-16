@@ -56,7 +56,11 @@ vi.mock("@/shared/components/ui/badge", () => ({
 }));
 
 vi.mock("@/shared/components/ui/item", () => ({
-	Item: ({ children }: { children: React.ReactNode }) => <div data-testid="item">{children}</div>,
+	Item: ({ children, ...rest }: { children: React.ReactNode } & Record<string, unknown>) => (
+		<div data-testid="item" {...rest}>
+			{children}
+		</div>
+	),
 	ItemContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="item-content">{children}</div>
 	),
@@ -68,9 +72,21 @@ vi.mock("@/shared/components/ui/item", () => ({
 	),
 }));
 
+const pendingContextMock = vi.hoisted(() => ({
+	current: null as null | {
+		isPending: (id: string) => boolean;
+		pendingKind: string | null;
+	},
+}));
+
+vi.mock("@/shared/contexts/admin-list-pending-context", () => ({
+	useAdminListPendingContextOptional: () => pendingContextMock.current,
+}));
+
 vi.mock("lucide-react", () => ({
 	Package: () => <svg data-testid="icon-package" />,
 	MoreVertical: () => <svg data-testid="icon-more-vertical" />,
+	Loader2: (props: Record<string, unknown>) => <svg data-testid="icon-loader" {...props} />,
 }));
 
 import { SkuMobileItem } from "../sku-mobile-item";
@@ -105,7 +121,10 @@ function createSku(overrides: Partial<Sku> = {}): Sku {
 	} as Sku;
 }
 
-afterEach(cleanup);
+afterEach(() => {
+	pendingContextMock.current = null;
+	cleanup();
+});
 
 describe("SkuMobileItem", () => {
 	it("renders the SKU code in description (not as title)", () => {
@@ -235,7 +254,7 @@ describe("SkuMobileItem", () => {
 				productSlug="produit-x"
 			/>,
 		);
-		const link = screen.getByLabelText("Variante M");
+		const link = screen.getByLabelText("Variante : M");
 		expect(link.tagName).toBe("A");
 		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/produit-x/variantes/sku-42");
 	});
@@ -247,6 +266,23 @@ describe("SkuMobileItem", () => {
 				productSlug="bague-lune"
 			/>,
 		);
-		expect(screen.getByLabelText("Variante Variante principale")).toBeInTheDocument();
+		expect(screen.getByLabelText("Variante : Variante principale")).toBeInTheDocument();
+	});
+
+	it("expose aria-roledescription=carte variante sur le wrapper Item", () => {
+		render(<SkuMobileItem sku={createSku()} productSlug="bague-lune" />);
+		expect(screen.getByTestId("item")).toHaveAttribute("aria-roledescription", "carte variante");
+	});
+
+	it("remplace le badge stock par un badge pending quand bulk action en cours", () => {
+		pendingContextMock.current = {
+			isPending: (id: string) => id === "sku-1",
+			pendingKind: "status",
+		};
+		render(<SkuMobileItem sku={createSku({ inventory: 7 })} productSlug="bague-lune" />);
+
+		expect(screen.queryByLabelText("7 en stock")).not.toBeInTheDocument();
+		expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
+		expect(screen.getByTestId("item")).toHaveAttribute("aria-busy", "true");
 	});
 });

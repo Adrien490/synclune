@@ -22,9 +22,10 @@ const {
 			findUnique: vi.fn(),
 			delete: vi.fn(),
 		},
-		productSku: {
+		productSkuColor: {
 			findMany: vi.fn(),
 			updateMany: vi.fn(),
+			deleteMany: vi.fn(),
 		},
 		$transaction: vi.fn(),
 	},
@@ -111,8 +112,20 @@ describe("mergeColors", () => {
 				return Promise.resolve(makeColor({ id: "color-target", name: "Bleu", slug: "bleu" }));
 			return Promise.resolve(null);
 		});
-		mockPrisma.productSku.findMany.mockResolvedValue([]);
-		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 3 });
+		mockPrisma.productSkuColor.findMany.mockImplementation(
+			({ where }: { where: { colorId: string } }) => {
+				if (where.colorId === "color-source") {
+					return Promise.resolve([
+						{ id: "link-1", skuId: "sku-1", position: 0 },
+						{ id: "link-2", skuId: "sku-2", position: 0 },
+						{ id: "link-3", skuId: "sku-3", position: 0 },
+					]);
+				}
+				return Promise.resolve([]);
+			},
+		);
+		mockPrisma.productSkuColor.updateMany.mockResolvedValue({ count: 3 });
+		mockPrisma.productSkuColor.deleteMany.mockResolvedValue({ count: 0 });
 		mockPrisma.color.delete.mockResolvedValue({ id: "color-source" });
 		mockPrisma.$transaction.mockImplementation((fn: (tx: typeof mockPrisma) => Promise<unknown>) =>
 			fn(mockPrisma),
@@ -178,33 +191,36 @@ describe("mergeColors", () => {
 	});
 
 	it("rejects merge when SKU collisions would violate unique index", async () => {
-		mockPrisma.productSku.findMany.mockImplementation(
-			({ where }: { where: { colorId: string } }) => {
+		// M2M migration : les collisions ne lèvent plus d'erreur, les liens source
+		// en collision avec un lien target existant sont supprimés (le target reste).
+		mockPrisma.productSkuColor.findMany.mockImplementation(
+			({ where }: { where: { colorId: string; skuId?: { in: string[] } } }) => {
 				if (where.colorId === "color-source") {
 					return Promise.resolve([
-						{
-							productId: "p1",
-							size: "M",
-							materialId: "m1",
-							product: { title: "Collier Lune" },
-						},
+						{ id: "link-1", skuId: "sku-1", position: 0 },
+						{ id: "link-2", skuId: "sku-2", position: 1 },
 					]);
 				}
-				return Promise.resolve([{ productId: "p1", size: "M", materialId: "m1" }]);
+				// target déjà présent sur sku-1 → collision
+				return Promise.resolve([{ skuId: "sku-1" }]);
 			},
 		);
 		const result = await mergeColors(undefined, validFormData);
-		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("conflit");
-		expect(result.message).toContain("Collier Lune");
-		expect(mockPrisma.productSku.updateMany).not.toHaveBeenCalled();
-		expect(mockPrisma.color.delete).not.toHaveBeenCalled();
+		expect(result.status).toBe(ActionStatus.SUCCESS);
+		expect(mockPrisma.productSkuColor.deleteMany).toHaveBeenCalledWith({
+			where: { id: { in: ["link-1"] } },
+		});
+		expect(mockPrisma.productSkuColor.updateMany).toHaveBeenCalledWith({
+			where: { id: { in: ["link-2"] } },
+			data: { colorId: "color-target" },
+		});
+		expect(mockPrisma.color.delete).toHaveBeenCalled();
 	});
 
 	it("reassigns SKUs and deletes source color on success", async () => {
 		const result = await mergeColors(undefined, validFormData);
-		expect(mockPrisma.productSku.updateMany).toHaveBeenCalledWith({
-			where: { colorId: "color-source" },
+		expect(mockPrisma.productSkuColor.updateMany).toHaveBeenCalledWith({
+			where: { id: { in: ["link-1", "link-2", "link-3"] } },
 			data: { colorId: "color-target" },
 		});
 		expect(mockPrisma.color.delete).toHaveBeenCalledWith({ where: { id: "color-source" } });
@@ -225,7 +241,8 @@ describe("mergeColors", () => {
 	});
 
 	it("handles merge with no SKU reassigned (orphan source)", async () => {
-		mockPrisma.productSku.updateMany.mockResolvedValue({ count: 0 });
+		mockPrisma.productSkuColor.findMany.mockResolvedValue([]);
+		mockPrisma.productSkuColor.updateMany.mockResolvedValue({ count: 0 });
 		const result = await mergeColors(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.SUCCESS);
 		expect(result.message).toContain("supprimée");

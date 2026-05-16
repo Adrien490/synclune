@@ -113,6 +113,34 @@ vi.mock("@/modules/materials/components/admin/material-multi-select-field", () =
 	),
 }));
 
+vi.mock("@/modules/colors/components/admin/color-multi-select-field", () => ({
+	ColorMultiSelectField: ({
+		fieldName,
+		options,
+	}: {
+		fieldName?: string;
+		value?: string[];
+		onValueChange?: (ids: string[]) => void;
+		options: Array<{ id: string; name: string; hex: string }>;
+	}) => (
+		<div data-testid={`field-${fieldName ?? "colorIds"}`}>
+			<label htmlFor={`select-${fieldName ?? "colorIds"}`}>
+				Couleur
+				<select id={`select-${fieldName ?? "colorIds"}`} aria-label="Couleur">
+					{options.map((opt) => (
+						<option key={opt.id} value={opt.id}>
+							{opt.name}
+						</option>
+					))}
+				</select>
+			</label>
+			<button type="button" aria-label="Créer une nouvelle couleur">
+				+
+			</button>
+		</div>
+	),
+}));
+
 vi.mock("@/shared/providers/dialog-store-provider", () => ({
 	useDialog: () => ({
 		open: mockOpenDialog,
@@ -163,7 +191,7 @@ const defaultMaterials = [
 
 function createMockForm(overrides?: Record<string, unknown>) {
 	const defaultValues = {
-		"initialSku.colorId": "",
+		"initialSku.colorIds": [],
 		"initialSku.materialIds": [],
 		"initialSku.size": "",
 		"initialSku.priceInclTaxEuros": 0,
@@ -303,7 +331,7 @@ describe("CreateProductSidebarCards", () => {
 	describe("VariantCard", () => {
 		it("renders color select field", () => {
 			setup();
-			expect(screen.getByTestId("field-initialSku.colorId")).toBeInTheDocument();
+			expect(screen.getByTestId("field-initialSku.colorIds")).toBeInTheDocument();
 		});
 
 		it("renders Couleur label", () => {

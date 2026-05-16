@@ -9,7 +9,6 @@ import type { DashboardAlerts } from "../../types/dashboard.types";
 
 vi.mock("lucide-react", () => ({
 	CalendarClock: () => <span data-testid="icon-calendar-clock" />,
-	Receipt: () => <span data-testid="icon-receipt" />,
 	RotateCcw: () => <span data-testid="icon-rotate-ccw" />,
 }));
 
@@ -26,22 +25,6 @@ vi.mock("next/link", () => ({
 		<a href={href} className={className}>
 			{children}
 		</a>
-	),
-}));
-
-vi.mock("@/shared/components/ui/badge", () => ({
-	Badge: ({
-		children,
-		variant,
-		className,
-	}: {
-		children: React.ReactNode;
-		variant?: string;
-		className?: string;
-	}) => (
-		<span data-testid="badge" data-variant={variant} className={className}>
-			{children}
-		</span>
 	),
 }));
 
@@ -94,53 +77,7 @@ describe("DashboardAlerts", () => {
 		render(<DashboardAlertsComponent alerts={makeAlerts({ pendingRefunds: 1 })} />);
 
 		const container = screen.getByRole("status");
-		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant votre attention");
-	});
-
-	describe("VAT threshold alert", () => {
-		it("does not render VAT alert below 80%", () => {
-			const { container } = render(
-				<DashboardAlertsComponent
-					alerts={makeAlerts()}
-					vatProgress={{ ytdRevenue: 1000000, threshold: 3750000, progress: 50, year: 2026 }}
-				/>,
-			);
-
-			expect(container.firstChild).toBeNull();
-		});
-
-		it("renders VAT alert when progress >= 80%", () => {
-			render(
-				<DashboardAlertsComponent
-					alerts={makeAlerts()}
-					vatProgress={{ ytdRevenue: 3100000, threshold: 3750000, progress: 82.6, year: 2026 }}
-				/>,
-			);
-
-			expect(screen.getByText(/Seuil TVA 2026 atteint à 83 %/)).toBeInTheDocument();
-		});
-
-		it("renders Bascule TVA badge when progress >= 100%", () => {
-			render(
-				<DashboardAlertsComponent
-					alerts={makeAlerts()}
-					vatProgress={{ ytdRevenue: 4000000, threshold: 3750000, progress: 106.7, year: 2026 }}
-				/>,
-			);
-
-			expect(screen.getByText("Bascule TVA")).toBeInTheDocument();
-		});
-
-		it("renders VAT alert as non-interactive (no anchor)", () => {
-			render(
-				<DashboardAlertsComponent
-					alerts={makeAlerts()}
-					vatProgress={{ ytdRevenue: 3100000, threshold: 3750000, progress: 82.6, year: 2026 }}
-				/>,
-			);
-
-			expect(screen.getByText(/Seuil TVA/).closest("a")).toBeNull();
-		});
+		expect(container).toHaveAttribute("aria-label", "Alertes nécessitant ton attention");
 	});
 
 	describe("URSSAF deadline alert", () => {

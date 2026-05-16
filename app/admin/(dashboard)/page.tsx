@@ -49,7 +49,7 @@ import type {
 
 export const metadata: Metadata = {
 	title: "Tableau de bord - Administration",
-	description: "Vue d'ensemble de votre boutique",
+	description: "Vue d'ensemble de ta boutique",
 };
 
 type AdminDashboardPageProps = {
@@ -202,23 +202,14 @@ async function KpisWrapper({
 
 async function AlertsWrapper() {
 	let alerts;
-	let vatProgress;
 	try {
-		[alerts, vatProgress] = await Promise.all([
-			fetchDashboardAlerts(),
-			fetchDashboardVatProgress().catch((error) => {
-				Sentry.captureException(error);
-				return null;
-			}),
-		]);
+		alerts = await fetchDashboardAlerts();
 	} catch (error) {
 		Sentry.captureException(error);
 		return null;
 	}
 	const urssafDeadline = getNextUrssafDeadline();
-	return (
-		<DashboardAlerts alerts={alerts} vatProgress={vatProgress} urssafDeadline={urssafDeadline} />
-	);
+	return <DashboardAlerts alerts={alerts} urssafDeadline={urssafDeadline} />;
 }
 
 async function VatProgressWrapper() {

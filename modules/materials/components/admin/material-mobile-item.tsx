@@ -65,6 +65,7 @@ export function MaterialMobileItem({ material }: MaterialMobileItemProps) {
 					"w-full gap-3 motion-safe:transition-opacity",
 					isPendingItem && "opacity-60 dark:opacity-50",
 				)}
+				aria-roledescription="carte matériau"
 				aria-busy={isPendingItem || undefined}
 			>
 				<ItemMedia variant="icon">

@@ -17,7 +17,7 @@ export default function DashboardError({
 	}, [error]);
 
 	return (
-		<div className="flex min-h-[40vh] flex-col items-center justify-center gap-4 text-center">
+		<div className="flex min-h-[40dvh] flex-col items-center justify-center gap-4 text-center">
 			<BarChart3 className="text-muted-foreground/30 size-16" aria-hidden="true" />
 			<h2 className="font-display text-foreground text-xl font-normal">
 				Le tableau de bord n'a pas pu charger

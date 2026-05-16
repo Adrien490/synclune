@@ -8,6 +8,7 @@ import { RatingStars } from "@/shared/components/rating-stars";
 import { ReviewCardGallery } from "./review-card-gallery";
 import { ExpandableReviewContent } from "./expandable-review-content";
 
+import { REVIEW_ANONYMOUS_AUTHOR_LABEL } from "../constants/review.constants";
 import type { ReviewPublic } from "../types/review.types";
 
 interface ReviewCardProps {
@@ -21,7 +22,7 @@ interface ReviewCardProps {
  */
 export function ReviewCard({ review, className }: ReviewCardProps) {
 	const hasMedia = review.medias.length > 0;
-	const userName = review.user.name ?? "Anonyme";
+	const userName = review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL;
 	const reviewIso = new Date(review.createdAt).toISOString();
 	const isNew = isRecent(review.createdAt, 7);
 

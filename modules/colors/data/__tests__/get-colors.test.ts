@@ -111,7 +111,7 @@ function makeColor(overrides: Record<string, unknown> = {}) {
 		isActive: true,
 		createdAt: new Date("2024-01-01"),
 		updatedAt: new Date("2024-01-01"),
-		_count: { skus: 3 },
+		_count: { skuColors: 3 },
 		...overrides,
 	};
 }
@@ -203,7 +203,7 @@ describe("getColors", () => {
 
 		expect(mockPrisma.color.findMany).toHaveBeenCalledWith(
 			expect.objectContaining({
-				orderBy: [{ skus: { _count: "asc" } }, { id: "asc" }],
+				orderBy: [{ skuColors: { _count: "asc" } }, { id: "asc" }],
 			}),
 		);
 	});
@@ -276,7 +276,8 @@ describe("getColors", () => {
 
 		const result = await getColors({ sortBy: "name-ascending", direction: "forward" });
 
-		expect(result.colors).toEqual(colors);
+		// L'action remap _count.skuColors → _count.skus pour stabilité API publique
+		expect(result.colors).toEqual([{ ...colors[0], _count: { skus: 3 } }]);
 	});
 
 	it("returns pagination from processCursorResults", async () => {

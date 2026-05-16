@@ -77,7 +77,7 @@ function makeColor(overrides: Record<string, unknown> = {}) {
 		name: "Or Rose",
 		slug: "or-rose",
 		hex: "#B76E79",
-		_count: { skus: 0 },
+		_count: { skuColors: 0 },
 		...overrides,
 	};
 }
@@ -145,14 +145,14 @@ describe("deleteColor", () => {
 	});
 
 	it("should return error when color is used by skus (singular)", async () => {
-		mockPrisma.color.findUnique.mockResolvedValue(makeColor({ _count: { skus: 1 } }));
+		mockPrisma.color.findUnique.mockResolvedValue(makeColor({ _count: { skuColors: 1 } }));
 		const result = await deleteColor(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("1 variante");
 	});
 
 	it("should return error when color is used by multiple skus (plural)", async () => {
-		mockPrisma.color.findUnique.mockResolvedValue(makeColor({ _count: { skus: 4 } }));
+		mockPrisma.color.findUnique.mockResolvedValue(makeColor({ _count: { skuColors: 4 } }));
 		const result = await deleteColor(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(result.message).toContain("4 variantes");

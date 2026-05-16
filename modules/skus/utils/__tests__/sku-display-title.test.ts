@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getSkuDisplayTitle } from "../sku-display-title";
+import { getSkuDisplayTitle, getSkuDisplayTitleSpoken } from "../sku-display-title";
 
 const orRose = { color: { name: "Or rose" } };
 const argent = { color: { name: "Argent" } };
@@ -38,5 +38,35 @@ describe("getSkuDisplayTitle", () => {
 	it("retourne 'Variante sans attribut' si aucun attribut et !isDefault", () => {
 		expect(getSkuDisplayTitle({})).toBe("Variante sans attribut");
 		expect(getSkuDisplayTitle({ isDefault: false })).toBe("Variante sans attribut");
+	});
+
+	it("ignore les couleurs avec name vide (DB défensive)", () => {
+		expect(getSkuDisplayTitle({ colors: [{ color: { name: "" } }], size: "52mm" })).toBe("52mm");
+	});
+});
+
+describe("getSkuDisplayTitleSpoken", () => {
+	it("remplace ' · ' par ', ' entre dimensions", () => {
+		expect(getSkuDisplayTitleSpoken({ colors: [orRose], materials: [verre], size: "52mm" })).toBe(
+			"Or rose, Verre, 52mm",
+		);
+	});
+
+	it("remplace ' + ' par ' et ' entre couleurs bicolores", () => {
+		expect(getSkuDisplayTitleSpoken({ colors: [orRose, argent] })).toBe("Or rose et Argent");
+	});
+
+	it("combine les deux substitutions", () => {
+		expect(
+			getSkuDisplayTitleSpoken({
+				colors: [orRose, argent],
+				materials: [verre, acier],
+				size: "52mm",
+			}),
+		).toBe("Or rose et Argent, Verre, Acier, 52mm");
+	});
+
+	it("retourne le fallback isDefault tel quel", () => {
+		expect(getSkuDisplayTitleSpoken({ isDefault: true })).toBe("Variante principale");
 	});
 });

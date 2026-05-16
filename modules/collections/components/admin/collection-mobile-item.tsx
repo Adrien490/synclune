@@ -79,6 +79,7 @@ export function CollectionMobileItem({ collection }: CollectionMobileItemProps) 
 					"w-full gap-3 motion-safe:transition-opacity",
 					isPendingItem && "opacity-60 dark:opacity-50",
 				)}
+				aria-roledescription="carte collection"
 				aria-busy={isPendingItem || undefined}
 			>
 				{cover ? (

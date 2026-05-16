@@ -1,8 +1,5 @@
-import { CalendarClock, Receipt, RotateCcw } from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
+import { CalendarClock, RotateCcw } from "lucide-react";
 import type { DashboardAlerts } from "@/modules/dashboard/data/get-alerts";
-import type { GetVatProgressReturn } from "@/modules/dashboard/data/get-vat-progress";
-import { VAT_PROGRESS_ALERT_THRESHOLD } from "@/modules/dashboard/data/get-vat-progress";
 import {
 	URSSAF_ALERT_THRESHOLD_DAYS,
 	type UrssafDeadline,
@@ -11,21 +8,17 @@ import { DashboardAlertLink } from "./dashboard-alert-link";
 
 interface DashboardAlertsProps {
 	alerts: DashboardAlerts;
-	vatProgress?: GetVatProgressReturn | null;
 	urssafDeadline?: UrssafDeadline | null;
 }
 
 /**
  * Actionable alerts banner for the dashboard.
- * Renders 3 types of alerts when relevant: pending refunds,
- * VAT threshold proximity, URSSAF declaration deadline.
+ * Renders 2 types of alerts when relevant: pending refunds,
+ * URSSAF declaration deadline. VAT threshold is surfaced by
+ * VatProgressCard in the "Conformité fiscale" section.
  */
-export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: DashboardAlertsProps) {
+export function DashboardAlerts({ alerts, urssafDeadline }: DashboardAlertsProps) {
 	const { pendingRefunds } = alerts;
-
-	const vatAlert =
-		vatProgress && vatProgress.progress >= VAT_PROGRESS_ALERT_THRESHOLD ? vatProgress : null;
-	const vatExceeded = vatAlert ? vatAlert.progress >= 100 : false;
 
 	const urssafAlert =
 		urssafDeadline &&
@@ -34,7 +27,7 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 			? urssafDeadline
 			: null;
 
-	const hasAlerts = pendingRefunds > 0 || vatAlert !== null || urssafAlert !== null;
+	const hasAlerts = pendingRefunds > 0 || urssafAlert !== null;
 
 	if (!hasAlerts) return null;
 
@@ -42,31 +35,8 @@ export function DashboardAlerts({ alerts, vatProgress, urssafDeadline }: Dashboa
 		<div
 			className="flex flex-wrap gap-3"
 			role="status"
-			aria-label="Alertes nécessitant votre attention"
+			aria-label="Alertes nécessitant ton attention"
 		>
-			{vatAlert && (
-				<div
-					className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-						vatExceeded
-							? "border-destructive/30 bg-destructive/5"
-							: "border-warning/30 bg-warning/5"
-					}`}
-				>
-					<Receipt
-						className={vatExceeded ? "text-destructive size-4" : "text-warning size-4"}
-						aria-hidden="true"
-					/>
-					<span className="font-medium">
-						Seuil TVA {vatAlert.year} atteint à {vatAlert.progress.toFixed(0)} %
-					</span>
-					{vatExceeded && (
-						<Badge variant="destructive" className="text-xs">
-							Bascule TVA
-						</Badge>
-					)}
-				</div>
-			)}
-
 			{urssafAlert && (
 				<DashboardAlertLink
 					href="https://www.autoentrepreneur.urssaf.fr"

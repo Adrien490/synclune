@@ -24,7 +24,10 @@ import Link from "next/link";
 import { RatingStars } from "@/shared/components/rating-stars";
 
 import type { GetReviewsReturn, ReviewAdmin } from "../../types/review.types";
-import { REVIEW_STATUS_LABELS } from "../../constants/review.constants";
+import {
+	REVIEW_ANONYMOUS_AUTHOR_LABEL,
+	REVIEW_STATUS_LABELS,
+} from "../../constants/review.constants";
 import { ReviewRowActions } from "./review-row-actions";
 import { ReviewsBulkActionsBar } from "./reviews-bulk-actions-bar";
 
@@ -86,7 +89,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 										<TableCell>
 											<BulkSelectionRowCheckbox
 												id={review.id}
-												itemLabel={`Avis de ${review.user.name ?? "Anonyme"} sur ${review.product.title}`}
+												itemLabel={`Avis de ${review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL} sur ${review.product.title}`}
 											/>
 										</TableCell>
 										{/* Produit */}
@@ -104,7 +107,7 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 										<TableCell>
 											<div className="min-w-0">
 												<p className="truncate text-sm font-medium">
-													{review.user.name ?? "Anonyme"}
+													{review.user.name ?? REVIEW_ANONYMOUS_AUTHOR_LABEL}
 												</p>
 												<p className="text-muted-foreground truncate text-sm">
 													{review.user.email}
