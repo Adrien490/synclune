@@ -5,7 +5,7 @@ import * as React from "react";
 const VaulNestedContext = React.createContext(false);
 
 export function useIsInsideVaul() {
-	return React.useContext(VaulNestedContext);
+	return React.use(VaulNestedContext);
 }
 
 export function VaulNestedProvider({ children }: { children: React.ReactNode }) {

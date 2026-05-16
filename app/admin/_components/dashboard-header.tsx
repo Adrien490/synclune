@@ -20,7 +20,6 @@ export function DashboardHeader() {
 	return (
 		<header
 			className="border-border relative hidden h-14 shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:flex md:h-16"
-			role="banner"
 			aria-label="En-tête du tableau de bord"
 		>
 			<div className="flex min-w-0 flex-1 items-center gap-2 px-4">

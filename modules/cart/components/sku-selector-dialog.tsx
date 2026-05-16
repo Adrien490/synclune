@@ -89,14 +89,14 @@ export function SkuSelectorDialog({ cart }: SkuSelectorDialogProps) {
 					: null;
 
 			// Priority: validPreselectedColor > default SKU primary color > auto-select if unique
-			const defaultPrimaryColorSlug = defaultSku?.colors?.[0]?.color.slug;
+			const defaultPrimaryColorSlug = defaultSku?.colors[0]?.color.slug;
 			const initialColor =
 				validPreselectedColor ??
 				defaultPrimaryColorSlug ??
 				(colors.length === 1 ? colors[0]!.slug : "");
 
 			// Matériau initial : matériau principal du defaultSku (1er de la liste M2M)
-			const defaultPrimaryMaterialName = defaultSku?.materials?.[0]?.material.name;
+			const defaultPrimaryMaterialName = defaultSku?.materials[0]?.material.name;
 			const initialMaterial =
 				(defaultPrimaryMaterialName ? slugify(defaultPrimaryMaterialName) : "") ||
 				(materials.length === 1 ? materials[0]!.slug : "") ||

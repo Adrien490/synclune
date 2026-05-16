@@ -130,7 +130,7 @@ export function ProductDetails({
 			)}
 
 			{/* 8. Entretien et livraison (reste en bas) */}
-			<ProductCareInfo primaryMaterial={currentSku.materials?.[0]?.material.name} />
+			<ProductCareInfo primaryMaterial={currentSku.materials[0]?.material.name} />
 		</div>
 	);
 }

@@ -22,7 +22,7 @@ export type { VariantSelectors } from "../types/sku.types";
  * legacy qui matche dès qu'une couleur du SKU correspond.
  */
 export function matchColorCombo(sku: BaseProductSku, comboKey: string): boolean {
-	const skuColors = sku.colors ?? [];
+	const skuColors = sku.colors;
 	if (skuColors.length === 0) return comboKey === "";
 
 	const slugs = skuColors.map((link) => link.color.slug).filter(Boolean);
@@ -56,7 +56,7 @@ export function matchColor(
 	if (!colorSlug && !colorHex && !colorId) return true;
 
 	// Pas de couleur sur le SKU = pas de match (M2M peut être vide)
-	if (!sku.colors || sku.colors.length === 0) return false;
+	if (sku.colors.length === 0) return false;
 
 	// Priorité 1: Slug de couleur (recommandé, URL-friendly).
 	// M2M tolérant : match si AU MOINS UNE des couleurs du SKU correspond.
@@ -99,7 +99,7 @@ export function matchMaterial(
 	if (!material && !materialSlug) return true;
 
 	// Pas de matériau sur le SKU = pas de match
-	if (!sku.materials || sku.materials.length === 0) return false;
+	if (sku.materials.length === 0) return false;
 
 	const targetMaterial = materialSlug ?? material;
 	if (!targetMaterial) return true;

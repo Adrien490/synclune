@@ -236,7 +236,7 @@ export function generateStructuredData({
 		...(getPrimaryMaterialName(selectedSku?.materials) && {
 			material: getPrimaryMaterialName(selectedSku?.materials),
 		}),
-		...(selectedSku?.colors?.length && {
+		...(selectedSku?.colors.length && {
 			color: selectedSku.colors.map((c) => c.color.name).join(" · "),
 		}),
 		...(product.collections.length > 0 && {

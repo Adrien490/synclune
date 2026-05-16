@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, use, useEffect, useState, type ReactNode } from "react";
 
 import { useAdminListBulkPendingStore } from "@/shared/stores/use-admin-list-bulk-pending-store";
 
@@ -101,7 +101,7 @@ export function AdminListPendingProvider({ children }: AdminListPendingProviderP
 }
 
 export function useAdminListPendingContext(): AdminListPendingContextValue {
-	const ctx = useContext(AdminListPendingContext);
+	const ctx = use(AdminListPendingContext);
 	if (!ctx) {
 		throw new Error("useAdminListPendingContext must be used inside <AdminListPendingProvider>");
 	}
@@ -112,5 +112,5 @@ export function useAdminListPendingContext(): AdminListPendingContextValue {
  * Hook safe — retourne null si pas de provider parent.
  */
 export function useAdminListPendingContextOptional(): AdminListPendingContextValue | null {
-	return useContext(AdminListPendingContext);
+	return use(AdminListPendingContext);
 }

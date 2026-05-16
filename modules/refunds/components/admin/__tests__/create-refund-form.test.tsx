@@ -800,7 +800,7 @@ describe("CreateRefundForm", () => {
 		mockFormState.selectedItems = [];
 		render(<CreateRefundForm order={createMockOrder()} />);
 		const submitBtn = screen.getByRole("button", { name: /Créer la demande/ });
-		expect(submitBtn.textContent ?? "").not.toContain("·");
+		expect(submitBtn.textContent).not.toContain("·");
 	});
 
 	it("shows formatted amount in submit button label when items are selected", () => {
@@ -810,7 +810,7 @@ describe("CreateRefundForm", () => {
 		];
 		render(<CreateRefundForm order={createMockOrder()} />);
 		const submitBtn = screen.getByRole("button", { name: /Créer la demande/ });
-		expect(submitBtn.textContent ?? "").toMatch(/75[.,]00\s*€/);
+		expect(submitBtn.textContent).toMatch(/75[.,]00\s*€/);
 	});
 
 	// ─── Pending information text ─────────────────────────────────────────────

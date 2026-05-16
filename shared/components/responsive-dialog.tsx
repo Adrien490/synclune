@@ -28,7 +28,7 @@ type ResponsiveCtx = { isMobile: boolean };
 const Ctx = React.createContext<ResponsiveCtx | null>(null);
 
 function useResponsive(component: string): ResponsiveCtx {
-	const ctx = React.useContext(Ctx);
+	const ctx = React.use(Ctx);
 	if (!ctx) {
 		throw new Error(
 			`${component} must be used inside <ResponsiveDialog>. ` +
@@ -42,14 +42,6 @@ interface ResponsiveDialogProps {
 	children: React.ReactNode;
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
-	/**
-	 * Mobile Vaul Drawer : si `true`, seule la `DrawerHandle` permet le
-	 * drag-to-close ; le contenu reste scrollable et tappable sans risque de
-	 * fermeture accidentelle. Default `true` (safe-by-default pour les forms
-	 * et dialogues admin qui constituent la majorité des consommateurs).
-	 * Passer `false` pour récupérer le drag-from-anywhere si désiré.
-	 */
-	handleOnly?: boolean;
 }
 
 /**
@@ -59,23 +51,16 @@ interface ResponsiveDialogProps {
  * Pattern parallèle à `ResponsiveAlertDialog` pour les overlays non-destructifs
  * (forms admin, dialogs de gestion). Sur mobile, les enfants sont
  * auto-scrollables via un wrap interne ; le DrawerContent reste overflow-hidden
- * pour préserver le drag-handle natif. Drag-to-close via la poignée uniquement
- * par défaut (`handleOnly={true}`) — évite les fermetures accidentelles
- * pendant scroll/tap sur formulaire.
+ * pour préserver le drag-handle natif.
  */
-function ResponsiveDialog({
-	children,
-	open,
-	onOpenChange,
-	handleOnly = true,
-}: ResponsiveDialogProps) {
+function ResponsiveDialog({ children, open, onOpenChange }: ResponsiveDialogProps) {
 	const isMobile = useIsMobile();
 	const value = React.useMemo(() => ({ isMobile }), [isMobile]);
 
 	return (
 		<Ctx.Provider value={value}>
 			{isMobile ? (
-				<Drawer open={open} onOpenChange={onOpenChange} handleOnly={handleOnly}>
+				<Drawer open={open} onOpenChange={onOpenChange}>
 					{children}
 				</Drawer>
 			) : (

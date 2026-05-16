@@ -36,7 +36,7 @@ export function extractColorCombos<
 	const combos = new Map<string, ColorCombo>();
 
 	for (const sku of activeSkus) {
-		const skuColors = sku.colors ?? [];
+		const skuColors = sku.colors;
 		if (skuColors.length === 0) continue;
 
 		const orderedColors = [...skuColors].sort((a, b) => a.position - b.position);
@@ -111,17 +111,17 @@ export function extractVariantInfo<
 		// restent visibles dans le sélecteur Matériau séparé — la couleur de fallback
 		// reste un identifiant *unique* de variante côté UX (cohérent avec « 1ère
 		// teinte = principale » de la convention M2M).
-		const skuColors = sku.colors ?? [];
-		const primaryMaterialName = sku.materials?.[0]?.material.name ?? undefined;
+		const skuColors = sku.colors;
+		const primaryMaterialName = sku.materials[0]?.material.name;
 
 		if (skuColors.length > 0) {
 			for (const link of skuColors) {
 				const c = link.color;
-				const colorKey = c.slug ?? c.id;
+				const colorKey = c.slug;
 				const existing = colorMap.get(colorKey) ?? { name: c.name, count: 0 };
 				colorMap.set(colorKey, {
-					hex: c.hex ?? existing.hex,
-					slug: c.slug ?? colorKey,
+					hex: c.hex,
+					slug: c.slug,
 					name: c.name,
 					count: existing.count + 1,
 				});
@@ -138,7 +138,7 @@ export function extractVariantInfo<
 		}
 
 		// Matériaux (un SKU peut en compter plusieurs ; chaque matériau augmente availableSkus)
-		for (const entry of sku.materials ?? []) {
+		for (const entry of sku.materials) {
 			const materialName = entry.material.name;
 			const mapKey = materialName.toLowerCase();
 			const existingMaterial = materialMap.get(mapKey) ?? {

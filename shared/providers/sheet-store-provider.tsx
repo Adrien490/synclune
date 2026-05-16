@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, createContext, useContext, useEffect, useState } from "react";
+import { Suspense, createContext, use, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useStore } from "zustand";
 
@@ -35,7 +35,7 @@ export const SheetStoreProvider = ({ children }: SheetStoreProviderProps) => {
 };
 
 export const useSheetStore = <T,>(selector: (store: SheetStore) => T): T => {
-	const sheetStoreContext = useContext(SheetStoreContext);
+	const sheetStoreContext = use(SheetStoreContext);
 
 	if (!sheetStoreContext) {
 		throw new Error(`useSheetStore must be used within SheetStoreProvider`);

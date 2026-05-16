@@ -28,6 +28,8 @@ vi.mock("lucide-react", async (importOriginal) => {
 			<svg data-testid="icon-external-link" {...props} />
 		),
 		LogOut: (props: Record<string, unknown>) => <svg data-testid="icon-logout" {...props} />,
+		SearchX: (props: Record<string, unknown>) => <svg data-testid="icon-search-x" {...props} />,
+		X: (props: Record<string, unknown>) => <svg data-testid="icon-x" {...props} />,
 	};
 });
 
@@ -39,13 +41,15 @@ vi.mock("next/link", () => ({
 	default: ({
 		children,
 		href,
+		prefetch,
 		...props
 	}: {
 		children: React.ReactNode;
 		href: string;
+		prefetch?: boolean | null;
 		[key: string]: unknown;
 	}) => (
-		<a href={href} {...props}>
+		<a href={href} data-prefetch={prefetch === undefined ? undefined : String(prefetch)} {...props}>
 			{children}
 		</a>
 	),
@@ -81,7 +85,6 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		children,
 		open,
 		onOpenChange,
-		handleOnly,
 		scrollLockTimeout,
 	}: {
 		children: React.ReactNode;
@@ -89,15 +92,10 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 		direction?: string;
 		onOpenChange?: (v: boolean) => void;
 		preventScrollRestoration?: boolean;
-		handleOnly?: boolean;
 		scrollLockTimeout?: number;
 	}) =>
 		open ? (
-			<div
-				data-testid="sheet"
-				data-handle-only={handleOnly ? "true" : "false"}
-				data-scroll-lock-timeout={scrollLockTimeout ?? ""}
-			>
+			<div data-testid="sheet" data-scroll-lock-timeout={scrollLockTimeout ?? ""}>
 				<button type="button" data-testid="sheet-dismiss" onClick={() => onOpenChange?.(false)}>
 					dismiss
 				</button>
@@ -402,13 +400,6 @@ describe("AdminMenuSheet", () => {
 	});
 
 	describe("vaul gestures", () => {
-		it("activates handleOnly on the bottom Sheet (forces drag-handle to close the long nav list)", () => {
-			mockIsOpen.current = true;
-			render(<AdminMenuSheet user={defaultUser} />);
-			const sheet = screen.getByTestId("sheet");
-			expect(sheet).toHaveAttribute("data-handle-only", "true");
-		});
-
 		it("passes scrollLockTimeout=500 to Sheet (P1.3 — drag-to-close reactivity after scroll)", () => {
 			mockIsOpen.current = true;
 			render(<AdminMenuSheet user={defaultUser} />);
@@ -527,6 +518,88 @@ describe("AdminMenuSheet", () => {
 			const btn = screen.getByText("Déconnexion").closest("button")!;
 			expect(btn.className).toContain("touch-manipulation");
 			expect(btn.className).toContain("motion-safe:active:scale-[0.97]");
+		});
+
+		it("applies tap-highlight neutralizer on NAV_ITEM_TACTILE_CLASS (2026-05-16 G6)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const link = screen.getByRole("link", { name: /Tableau de bord/i });
+			expect(link.className).toContain("[-webkit-tap-highlight-color:transparent]");
+		});
+	});
+
+	describe("search clear button (2026-05-16 G3)", () => {
+		beforeEach(() => {
+			mockIsOpen.current = true;
+		});
+
+		it("hides clear button when query is empty", () => {
+			render(<AdminMenuSheet user={defaultUser} />);
+			expect(screen.queryByLabelText("Effacer la recherche")).not.toBeInTheDocument();
+		});
+
+		it("shows clear button once the query is non-empty", () => {
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "comm" } });
+			expect(screen.getByLabelText("Effacer la recherche")).toBeInTheDocument();
+		});
+
+		it("clears the query, fires light haptic and refocuses the input on click", () => {
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation") as HTMLInputElement;
+			fireEvent.change(input, { target: { value: "comm" } });
+			mockTriggerHaptic.mockClear();
+
+			fireEvent.click(screen.getByLabelText("Effacer la recherche"));
+
+			expect(input.value).toBe("");
+			expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+			expect(document.activeElement).toBe(input);
+		});
+	});
+
+	describe("empty state visual (2026-05-16 G4)", () => {
+		it("renders a SearchX icon when no results match the query", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const input = screen.getByLabelText("Filtrer les pages de navigation");
+			fireEvent.change(input, { target: { value: "zzzzzz" } });
+
+			expect(screen.getByTestId("icon-search-x")).toBeInTheDocument();
+		});
+	});
+
+	describe("controlled prefetch (2026-05-16 G5)", () => {
+		it("passes prefetch={null} on the Dashboard link (no viewport prefetch)", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const dashboard = screen.getByRole("link", { name: /Tableau de bord/i });
+			expect(dashboard).toHaveAttribute("data-prefetch", "null");
+		});
+
+		it("passes prefetch={null} on group navigation links", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const products = screen.getByRole("link", { name: /Produits/i });
+			expect(products).toHaveAttribute("data-prefetch", "null");
+		});
+
+		it('passes prefetch={false} on the "Voir le site" external link', () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const external = screen.getByLabelText("Voir le site (nouvel onglet)");
+			expect(external).toHaveAttribute("data-prefetch", "false");
+		});
+	});
+
+	describe("logout destructive feedback (2026-05-16 G7)", () => {
+		it("uses active:bg-destructive/10 (not active:bg-accent) on the logout button", () => {
+			mockIsOpen.current = true;
+			render(<AdminMenuSheet user={defaultUser} />);
+			const btn = screen.getByText("Déconnexion").closest("button")!;
+			expect(btn.className).toContain("active:bg-destructive/10");
+			expect(btn.className).not.toContain("active:bg-accent");
 		});
 	});
 });

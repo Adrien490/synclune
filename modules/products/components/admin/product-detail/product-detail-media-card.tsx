@@ -25,7 +25,7 @@ interface ProductDetailMediaCardProps {
 function pickGalleryImages(product: GetProductReturn): ProductImage[] {
 	const defaultSku = product.skus.find((sku) => sku.isDefault) ?? product.skus[0];
 	if (!defaultSku) return [];
-	const sorted = [...defaultSku.images].sort((a, b) => {
+	const sorted = defaultSku.images.toSorted((a, b) => {
 		if (a.isPrimary && !b.isPrimary) return -1;
 		if (!a.isPrimary && b.isPrimary) return 1;
 		return 0;

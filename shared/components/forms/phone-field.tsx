@@ -6,7 +6,7 @@ import { inputBaseStyles } from "@/shared/components/ui/input";
 import { useFieldContext } from "@/shared/lib/form-context";
 import { cn } from "@/shared/utils/cn";
 import type { Country } from "react-phone-number-input";
-import { forwardRef } from "react";
+import type { Ref } from "react";
 import PhoneInputWithFlags from "./phone-input-lazy";
 
 interface PhoneFieldProps {
@@ -22,24 +22,25 @@ interface PhoneFieldProps {
 	enterKeyHint?: "done" | "next" | "go" | "search" | "send";
 }
 
-const CustomInput = forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-	({ className, ...props }, ref) => {
-		return (
-			<input
-				ref={ref}
-				type="tel"
-				inputMode="tel"
-				autoComplete="tel"
-				autoCapitalize="off"
-				autoCorrect="off"
-				data-slot="input"
-				className={cn(inputBaseStyles, "rounded-l-none border-l-0", className)}
-				{...props}
-			/>
-		);
-	},
-);
-CustomInput.displayName = "CustomInput";
+function CustomInput({
+	className,
+	ref,
+	...props
+}: React.ComponentProps<"input"> & { ref?: Ref<HTMLInputElement> }) {
+	return (
+		<input
+			ref={ref}
+			type="tel"
+			inputMode="tel"
+			autoComplete="tel"
+			autoCapitalize="off"
+			autoCorrect="off"
+			data-slot="input"
+			className={cn(inputBaseStyles, "rounded-l-none border-l-0", className)}
+			{...props}
+		/>
+	);
+}
 
 /**
  * Champ de saisie de numéro de téléphone international avec sélecteur de pays.

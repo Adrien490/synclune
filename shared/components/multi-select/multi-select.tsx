@@ -291,12 +291,7 @@ export const MultiSelect = ({
 		return (
 			<>
 				{ariaLiveRegion}
-				<Drawer
-					open={isOpen}
-					onOpenChange={handleOpenChange}
-					repositionInputs={showSearch}
-					handleOnly
-				>
+				<Drawer open={isOpen} onOpenChange={handleOpenChange} repositionInputs={showSearch}>
 					<DrawerTrigger asChild>{trigger}</DrawerTrigger>
 					<DrawerContent>
 						<DrawerHeader>

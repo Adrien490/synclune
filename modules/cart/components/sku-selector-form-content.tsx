@@ -98,12 +98,12 @@ export function SkuSelectorFormContent({
 		if (sku.inventory <= 0) return false;
 		if (colors.length > 1) {
 			if (!selectedColor) return false;
-			const skuColorSlugs = (sku.colors ?? []).map((link) => link.color.slug);
+			const skuColorSlugs = sku.colors.map((link) => link.color.slug);
 			if (!skuColorSlugs.includes(selectedColor)) return false;
 		}
 		if (materials.length > 1) {
 			if (!selectedMaterial) return false;
-			const skuMaterialSlugs = (sku.materials ?? [])
+			const skuMaterialSlugs = sku.materials
 				.map((link) => (link.material.name ? slugify(link.material.name) : null))
 				.filter((s): s is string => s !== null);
 			if (!skuMaterialSlugs.includes(selectedMaterial)) return false;

@@ -144,7 +144,7 @@ export function CameraCaptureDialog({
 					</DialogDescription>
 				</DialogHeader>
 
-				<div className="relative aspect-[3/4] w-full overflow-hidden bg-black">
+				<div className="relative aspect-[3/4] w-full overflow-hidden bg-zinc-950">
 					{error ? (
 						<div className="absolute inset-0 flex items-center justify-center p-6">
 							<ErrorPanel error={error} onRetry={() => void start()} />

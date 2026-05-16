@@ -100,7 +100,7 @@ type Ctx = {
 const ResponsiveActionMenuContext = React.createContext<Ctx | null>(null);
 
 function useMenuCtx() {
-	const ctx = React.useContext(ResponsiveActionMenuContext);
+	const ctx = React.use(ResponsiveActionMenuContext);
 	if (!ctx) {
 		throw new Error(
 			"ResponsiveActionMenu subcomponents must be nested within <ResponsiveActionMenu>",

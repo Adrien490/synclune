@@ -97,7 +97,8 @@ describe("ProductInfo", () => {
 	it("renders the product title", () => {
 		render(<ProductInfo product={makeProduct()} />);
 
-		expect(screen.getByText("Collier Étoile")).toBeInTheDocument();
+		// Le titre apparait dans deux endroits : h1 sr-only mobile + p[itemprop=name] visuel
+		expect(screen.getAllByText("Collier Étoile").length).toBeGreaterThan(0);
 	});
 
 	it("renders the product type badge when a type is provided", () => {
@@ -148,5 +149,18 @@ describe("ProductInfo", () => {
 
 		const shareBtns = screen.getAllByTestId("share-btn");
 		expect(shareBtns.length).toBeGreaterThan(0);
+	});
+
+	it("exposes a sr-only h1 with the product title (mobile-first indexing fallback)", () => {
+		render(<ProductInfo product={makeProduct()} />);
+
+		const heading = screen.getByRole("heading", { level: 1, name: "Collier Étoile" });
+		expect(heading).toHaveClass("sr-only");
+	});
+
+	it("renders the « Fait main en France » trust badge above-the-fold", () => {
+		render(<ProductInfo product={makeProduct()} />);
+
+		expect(screen.getByText("Fait main en France")).toBeInTheDocument();
 	});
 });

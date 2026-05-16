@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useStore } from "@tanstack/react-form";
 import { CheckCircle2, ExternalLink, Link2, Loader2, Mail } from "lucide-react";

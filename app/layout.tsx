@@ -1,4 +1,3 @@
-import { AdminWelcomeDialogGate } from "@/app/_components/admin-welcome-dialog-gate";
 import { FlyToCartOverlay } from "@/modules/cart/components/fly-to-cart-overlay";
 import { UploadThingSSR } from "@/modules/media/components/uploadthing-ssr";
 import { IconSprite } from "@/shared/components/icons/icon-sprite";
@@ -51,9 +50,6 @@ export default function RootLayout({
 											{children}
 											<FlyToCartOverlay />
 											<UnsavedChangesDialog />
-											<Suspense fallback={null}>
-												<AdminWelcomeDialogGate />
-											</Suspense>
 										</AlertDialogStoreProvider>
 									</SheetStoreProvider>
 								</DialogStoreProvider>

@@ -224,11 +224,11 @@ function ProductFilterSheetInner({
 	const { hasActiveFilters, activeFiltersCount } = countActiveFilters(searchParams);
 
 	// Sort colors and materials by count (descending)
-	const sortedColors = [...colors].sort((a, b) => b._count.skus - a._count.skus);
-	const sortedMaterials = [...materials].sort(
+	const sortedColors = colors.toSorted((a, b) => b._count.skus - a._count.skus);
+	const sortedMaterials = materials.toSorted(
 		(a, b) => (b._count?.skus ?? 0) - (a._count?.skus ?? 0),
 	);
-	const sortedProductTypes = [...productTypes].sort(
+	const sortedProductTypes = productTypes.toSorted(
 		(a, b) => (b._count?.products ?? 0) - (a._count?.products ?? 0),
 	);
 

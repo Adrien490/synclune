@@ -1,3 +1,5 @@
+import { Hand } from "lucide-react";
+
 import { Badge } from "@/shared/components/ui/badge";
 import { HandDrawnAccent } from "@/shared/components/animations";
 import { ShareButton } from "@/modules/products/components/share-button";
@@ -27,6 +29,9 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 			{/* Titre avec boutons share + wishlist */}
 			<div className="flex items-start justify-between gap-4">
 				<div className="flex-1 gap-y-2">
+					{/* h1 sr-only mobile : PageHeader (h1 desktop) est `hidden sm:block`, donc absent du DOM mobile.
+					    Mobile-first indexing Google + lecteurs d'écran iOS/Android attendent un h1. */}
+					<h1 className="sr-only sm:hidden">{product.title}</h1>
 					<p className="text-foreground text-3xl/10 font-medium tracking-normal" itemProp="name">
 						{product.title}
 					</p>
@@ -37,6 +42,10 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 						height={22}
 						className="opacity-70"
 					/>
+					<p className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs sm:text-sm">
+						<Hand className="size-3.5 shrink-0" aria-hidden="true" strokeWidth={1.6} />
+						<span>Fait main en France</span>
+					</p>
 					{/* Badge note cliquable - scrolle vers les avis (mobile) */}
 					{reviewStats && (
 						<div className="sm:hidden">

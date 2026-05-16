@@ -78,7 +78,7 @@ function OrdersFilterDrawerInner({ open, onOpenChange, id }: OrdersFilterDrawerP
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange} handleOnly>
+		<Drawer open={open} onOpenChange={onOpenChange}>
 			<DrawerContent id={id}>
 				<DrawerHeader>
 					<DrawerTitle>Filtrer les commandes</DrawerTitle>

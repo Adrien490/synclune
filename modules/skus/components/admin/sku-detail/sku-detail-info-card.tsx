@@ -53,7 +53,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							</dd>
 						</div>
 					) : null}
-					{sku.colors && sku.colors.length > 0 ? (
+					{sku.colors.length > 0 ? (
 						<div className="flex items-start justify-between gap-3">
 							<dt className="text-muted-foreground pt-0.5">
 								{sku.colors.length > 1 ? "Couleurs" : "Couleur"}
@@ -76,7 +76,7 @@ export function SkuDetailInfoCard({ sku }: SkuDetailInfoCardProps) {
 							</dd>
 						</div>
 					) : null}
-					{sku.materials && sku.materials.length > 0 ? (
+					{sku.materials.length > 0 ? (
 						<div className="flex items-start justify-between gap-3">
 							<dt className="text-muted-foreground pt-0.5">
 								{sku.materials.length > 1 ? "Matériaux" : "Matériau"}

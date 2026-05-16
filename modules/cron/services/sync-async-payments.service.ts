@@ -57,7 +57,7 @@ export async function syncAsyncPayments(): Promise<CronResult | null> {
 	const deadline = Date.now() + BATCH_DEADLINE_MS;
 	const tagsToInvalidate = new Set<string>();
 
-	scan: while (true) {
+	scan: for (;;) {
 		if (Date.now() > deadline) {
 			logger.warn("Approaching timeout, stopping batch early", {
 				cronJob: "sync-async-payments",

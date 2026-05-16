@@ -28,16 +28,18 @@ interface ReviewableProductCardProps {
  * Carte d'un produit à évaluer
  * Affiche le produit avec un CTA pour laisser un avis
  */
+const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
+	day: "numeric",
+	month: "long",
+	year: "numeric",
+});
+
 export function ReviewableProductCard({ product, className }: ReviewableProductCardProps) {
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 
 	const formatDate = (date: Date | null) => {
 		if (!date) return "Non disponible";
-		return new Intl.DateTimeFormat("fr-FR", {
-			day: "numeric",
-			month: "long",
-			year: "numeric",
-		}).format(new Date(date));
+		return dateFormatter.format(new Date(date));
 	};
 
 	// Génération ID unique pour aria-labelledby

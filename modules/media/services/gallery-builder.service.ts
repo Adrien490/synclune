@@ -145,8 +145,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	// Priority 1: Selected SKU images
 	if (selectedSku?.images) {
 		const variantInfo = {
-			materialName: selectedSku.materials?.[0]?.material.name,
-			colorName: selectedSku.colors?.map((c) => c.color.name).join(" + "),
+			materialName: selectedSku.materials[0]?.material.name,
+			colorName: selectedSku.colors.map((c) => c.color.name).join(" + "),
 			size: selectedSku.size,
 		};
 		for (const skuImage of selectedSku.images) {
@@ -159,8 +159,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 	const defaultSku = product.skus[0];
 	if (defaultSku && defaultSku.id !== selectedSku?.id) {
 		const variantInfo = {
-			materialName: defaultSku.materials?.[0]?.material.name,
-			colorName: defaultSku.colors?.map((c) => c.color.name).join(" + "),
+			materialName: defaultSku.materials[0]?.material.name,
+			colorName: defaultSku.colors.map((c) => c.color.name).join(" + "),
 			size: defaultSku.size,
 		};
 		for (const skuImage of defaultSku.images) {
@@ -176,8 +176,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 			if (gallery.length >= MAX_GALLERY_IMAGES) break;
 
 			const variantInfo = {
-				materialName: sku.materials?.[0]?.material.name,
-				colorName: sku.colors?.map((c) => c.color.name).join(" + "),
+				materialName: sku.materials[0]?.material.name,
+				colorName: sku.colors.map((c) => c.color.name).join(" + "),
 				size: sku.size,
 			};
 			for (const skuImage of sku.images) {
@@ -212,8 +212,8 @@ export function buildGallery({ product, selectedVariants }: BuildGalleryOptions)
 					product.title,
 					{
 						productType,
-						materialName: sku?.materials?.[0]?.material.name,
-						colorName: sku?.colors?.map((c) => c.color.name).join(" + "),
+						materialName: sku?.materials[0]?.material.name,
+						colorName: sku?.colors.map((c) => c.color.name).join(" + "),
 						size: sku?.size,
 					},
 					index,

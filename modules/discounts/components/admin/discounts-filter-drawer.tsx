@@ -92,7 +92,7 @@ function DiscountsFilterDrawerInner({ open, onOpenChange, id }: DiscountsFilterD
 	};
 
 	return (
-		<Drawer open={open} onOpenChange={onOpenChange} handleOnly>
+		<Drawer open={open} onOpenChange={onOpenChange}>
 			<DrawerContent id={id}>
 				<DrawerHeader>
 					<DrawerTitle>Filtrer les codes promo</DrawerTitle>

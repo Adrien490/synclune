@@ -44,7 +44,7 @@ type SidebarContextProps = {
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 function useSidebar() {
-	const context = React.useContext(SidebarContext);
+	const context = React.use(SidebarContext);
 	if (!context) {
 		throw new Error("useSidebar must be used within a SidebarProvider.");
 	}
@@ -310,7 +310,6 @@ function SidebarInset({ className, ...props }: React.ComponentProps<"main">) {
 		<main
 			id="main-content"
 			tabIndex={-1}
-			role="main"
 			data-slot="sidebar-inset"
 			className={cn(
 				"bg-background relative flex w-full flex-1 flex-col",

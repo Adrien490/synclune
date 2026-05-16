@@ -108,11 +108,13 @@ interface ProductsDataTableProps {
 	collections?: Array<{ id: string; name: string }>;
 }
 
+const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
+
 export async function ProductsDataTable({
 	productsPromise,
 	perPage,
 	hasActiveFilters,
-	collections = [],
+	collections = EMPTY_COLLECTIONS,
 }: ProductsDataTableProps) {
 	const { products, pagination } = await productsPromise;
 

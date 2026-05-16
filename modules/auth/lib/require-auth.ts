@@ -22,7 +22,6 @@ const REQUIRE_AUTH_USER_SELECT = {
 	image: true,
 	emailVerified: true,
 	stripeCustomerId: true,
-	welcomeShownAt: true,
 } as const;
 
 type RequireAuthUser = Prisma.UserGetPayload<{

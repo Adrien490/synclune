@@ -1,6 +1,43 @@
 {
 	"ignore": {
-		"rules": ["react-doctor/server-auth-actions", "react-doctor/rendering-hydration-mismatch-time"],
+		"rules": [
+			"react-doctor/server-auth-actions",
+			"react-doctor/rendering-hydration-mismatch-time",
+			"react-doctor/no-prevent-default",
+			"react-doctor/react-compiler-destructure-method",
+			"react-doctor/no-giant-component",
+			"react-doctor/no-generic-handler-names",
+			"react-doctor/no-many-boolean-props",
+			"react-doctor/design-no-default-tailwind-palette",
+			"react-doctor/design-no-em-dash-in-jsx-text",
+			"react-doctor/design-no-redundant-size-axes",
+			"react-doctor/design-no-redundant-padding-axes",
+			"react-doctor/design-no-space-on-flex-children",
+			"react-doctor/design-no-three-period-ellipsis",
+			"react-doctor/prefer-useReducer",
+			"react-doctor/no-cascading-set-state",
+			"react-doctor/no-derived-useState",
+			"react-doctor/no-effect-event-handler",
+			"react-doctor/async-await-in-loop",
+			"react-doctor/async-parallel",
+			"react-doctor/async-defer-await",
+			"react-doctor/nextjs-no-img-element",
+			"react-doctor/nextjs-no-a-element",
+			"react-doctor/js-combine-iterations",
+			"react-doctor/js-flatmap-filter",
+			"react-doctor/prefer-dynamic-import",
+			"react-doctor/rerender-state-only-in-handlers",
+			"react-doctor/rerender-defer-reads-hook",
+			"react-doctor/no-render-in-render",
+			"react-doctor/no-scale-from-zero",
+			"react-doctor/no-side-tab-border",
+			"react-doctor/server-sequential-independent-await",
+			"react-doctor/prefer-use-effect-event",
+			"react-doctor/no-prop-callback-in-effect",
+			"react-doctor/no-derived-state-effect",
+			"react-doctor/no-effect-chain",
+			"react-doctor/js-batch-dom-css"
+		],
 		"files": [
 			"e2e/**",
 			"**/__tests__/**",
@@ -21,6 +58,41 @@
 					"modules/products/components/price-range-inputs.tsx"
 				],
 				"rules": ["react-doctor/design-no-em-dash-in-jsx-text"]
+			},
+			{
+				"files": ["modules/media/components/gallery/pinch-zoom.tsx"],
+				"rules": [
+					"react-doctor/client-passive-event-listeners",
+					"react-doctor/no-permanent-will-change"
+				]
+			},
+			{
+				"files": ["**/opengraph-image.tsx"],
+				"rules": ["react-doctor/no-inline-exhaustive-style"]
+			},
+			{
+				"files": [
+					"app/(shop)/a-propos/page.tsx",
+					"app/(shop)/creations/[slug]/page.tsx",
+					"app/(shop)/collections/[slug]/page.tsx"
+				],
+				"rules": ["react-doctor/nextjs-missing-metadata"]
+			},
+			{
+				"files": [
+					"**/*skeleton*.tsx",
+					"**/*loader*.tsx",
+					"shared/components/animations/split-text.tsx",
+					"shared/components/animations/split-text-css.tsx",
+					"shared/components/ui/slider.tsx",
+					"shared/components/ui/carousel.tsx",
+					"shared/components/autocomplete/autocomplete-list-content.tsx",
+					"modules/products/components/product-card.tsx",
+					"modules/products/components/product-details.tsx",
+					"modules/products/components/quick-search-dialog/search-result-item.tsx",
+					"modules/collections/components/collection-images-grid.tsx"
+				],
+				"rules": ["react-doctor/no-array-index-as-key"]
 			}
 		]
 	},

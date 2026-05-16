@@ -29,7 +29,7 @@ export function getPrimaryColorForList(product: ProductFromList): {
 
 	const fallbackName = getPrimaryMaterialName(primarySku.materials) ?? undefined;
 
-	const primaryColor = primarySku.colors?.[0]?.color;
+	const primaryColor = primarySku.colors[0]?.color;
 	if (primaryColor?.hex) {
 		return {
 			hex: primaryColor.hex,
@@ -57,12 +57,12 @@ export function getPrimaryColorForList(product: ProductFromList): {
  * Rejeté car cela masquerait des couleurs partiellement disponibles.
  */
 export function getAvailableColorsForList(product: ProductFromList): ColorSwatch[] {
-	const activeSkus = product.skus.filter((sku) => sku.isActive && (sku.colors?.length ?? 0) > 0);
+	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.colors.length > 0);
 	const colorMap = new Map<string, ColorSwatch>();
 
 	for (const sku of activeSkus) {
 		// M2M : on agrège chaque couleur unique vue dans les SKUs.
-		for (const link of sku.colors ?? []) {
+		for (const link of sku.colors) {
 			const c = link.color;
 			if (!c.slug || !c.hex) continue;
 			const existing = colorMap.get(c.slug);
@@ -99,10 +99,10 @@ export function getVariantCountForList(product: ProductFromList): {
 	const activeSkus = product.skus.filter((sku) => sku.isActive && sku.inventory > 0);
 
 	for (const sku of activeSkus) {
-		for (const link of sku.colors ?? []) {
+		for (const link of sku.colors) {
 			if (link.color.hex) uniqueColors.add(link.color.hex);
 		}
-		for (const entry of sku.materials ?? []) {
+		for (const entry of sku.materials) {
 			uniqueMaterials.add(entry.material.name);
 		}
 		if (sku.size) uniqueSizes.add(sku.size);
@@ -126,10 +126,10 @@ export function hasMultipleVariants(product: ProductFromList): boolean {
 	if (activeSkus.length <= 1) return false;
 
 	const uniqueColors = new Set(
-		activeSkus.flatMap((s) => (s.colors ?? []).map((c) => c.color.slug).filter(Boolean)),
+		activeSkus.flatMap((s) => s.colors.map((c) => c.color.slug).filter(Boolean)),
 	);
 	const uniqueMaterials = new Set(
-		activeSkus.flatMap((s) => (s.materials ?? []).map((m) => m.material.name)),
+		activeSkus.flatMap((s) => s.materials.map((m) => m.material.name)),
 	);
 	const uniqueSizes = new Set(activeSkus.map((s) => s.size).filter(Boolean));
 

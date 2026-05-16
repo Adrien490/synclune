@@ -15,7 +15,7 @@ const PREVIEW_LIMIT = 3;
 
 function buildVariantLabel(sku: ProductSku): string {
 	const parts: string[] = [];
-	const colorsLabel = sku.colors?.map((c) => c.color.name).join(" + ");
+	const colorsLabel = sku.colors.map((c) => c.color.name).join(" + ");
 	if (colorsLabel) parts.push(colorsLabel);
 	const materialsLabel = getSkuMaterialsLabel(sku.materials);
 	if (materialsLabel) parts.push(materialsLabel);
@@ -46,7 +46,7 @@ export function ProductDetailSkusSummaryCard({ product }: ProductDetailSkusSumma
 	const maxPrice = prices.length > 0 ? Math.max(...prices) : null;
 	const outOfStockCount = skus.filter((sku) => sku.inventory === 0).length;
 
-	const sortedSkus = [...skus].sort((a, b) => {
+	const sortedSkus = skus.toSorted((a, b) => {
 		if (a.isDefault && !b.isDefault) return -1;
 		if (!a.isDefault && b.isDefault) return 1;
 		return 0;

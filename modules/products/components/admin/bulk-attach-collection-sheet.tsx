@@ -90,13 +90,7 @@ export function BulkAttachCollectionSheet({
 	};
 
 	return (
-		<Drawer
-			open={open}
-			onOpenChange={handleOpenChange}
-			direction="bottom"
-			handleOnly
-			repositionInputs
-		>
+		<Drawer open={open} onOpenChange={handleOpenChange} direction="bottom" repositionInputs>
 			<DrawerContent>
 				<DrawerHeader>
 					<div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, use, useState } from "react";
 import { useStore } from "zustand";
 
 import { createAlertDialogStore } from "@/shared/stores/alert-dialog-store";
@@ -23,7 +23,7 @@ export const AlertDialogStoreProvider = ({ children }: AlertDialogStoreProviderP
 };
 
 export const useAlertDialogStore = <T,>(selector: (store: AlertDialogStore) => T): T => {
-	const alertDialogStoreContext = useContext(AlertDialogStoreContext);
+	const alertDialogStoreContext = use(AlertDialogStoreContext);
 
 	if (!alertDialogStoreContext) {
 		throw new Error(`useAlertDialogStore must be used within AlertDialogStoreProvider`);

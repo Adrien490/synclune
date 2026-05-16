@@ -55,7 +55,7 @@ export function extractVariantOptions(activeSkus: ActiveSku[]) {
 	for (const sku of activeSkus) {
 		// Couleurs M2M : on agrège chaque couleur unique (la pastille split est gérée
 		// ailleurs ; ici on liste les teintes disponibles à filtrer).
-		for (const link of sku.colors ?? []) {
+		for (const link of sku.colors) {
 			const c = link.color;
 			if (!c.slug || !c.hex) continue;
 			if (!uniqueColors.has(c.slug)) {
@@ -63,7 +63,7 @@ export function extractVariantOptions(activeSkus: ActiveSku[]) {
 			}
 		}
 		// Matériaux M2M : un SKU peut en avoir plusieurs (cap 3, ordre = priorité)
-		for (const link of sku.materials ?? []) {
+		for (const link of sku.materials) {
 			const name = link.material.name;
 			if (!name) continue;
 			const slug = slugify(name);
@@ -104,10 +104,10 @@ export function buildAvailabilityMaps(
 		if (sku.inventory <= 0) continue;
 
 		// M2M : un SKU « contient » une couleur si son slug est dans sa liste
-		const skuColorSlugs = (sku.colors ?? [])
+		const skuColorSlugs = sku.colors
 			.map((link) => link.color.slug)
 			.filter((s): s is string => Boolean(s));
-		const skuMaterialSlugs = (sku.materials ?? [])
+		const skuMaterialSlugs = sku.materials
 			.map((link) => (link.material.name ? slugify(link.material.name) : null))
 			.filter((s): s is string => s !== null);
 		const skuSize = sku.size;
@@ -154,8 +154,7 @@ export function getImageForColor(
 ): ImageSelection {
 	if (selectedColor) {
 		const skuWithColor = activeSkus.find(
-			(sku) =>
-				(sku.colors ?? []).some((c) => c.color.slug === selectedColor) && sku.images.length > 0,
+			(sku) => sku.colors.some((c) => c.color.slug === selectedColor) && sku.images.length > 0,
 		);
 		if (skuWithColor?.images.length) {
 			const img = skuWithColor.images.find((i) => i.isPrimary) ?? skuWithColor.images[0];

@@ -61,9 +61,11 @@ interface ArchiveSnapshot {
 	targetStatus: ArchiveTarget;
 }
 
+const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
+
 export function ProductsBulkActionsBar({
 	presentation = "inline",
-	collections = [],
+	collections = EMPTY_COLLECTIONS,
 }: ProductsBulkActionsBarProps) {
 	const { selectedIds, selectedCount } = useBulkSelectionContext();
 	const pendingCtx = useAdminListPendingContextOptional();

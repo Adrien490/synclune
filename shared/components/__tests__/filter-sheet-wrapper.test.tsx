@@ -6,13 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // ============================================================================
 
 vi.mock("@/shared/components/ui/sheet", () => ({
-	Sheet: ({ children, open, handleOnly, repositionInputs }: any) =>
+	Sheet: ({ children, open, repositionInputs }: any) =>
 		open !== false ? (
-			<div
-				data-testid="sheet"
-				data-handle-only={handleOnly ? "true" : "false"}
-				data-reposition-inputs={repositionInputs ? "true" : "false"}
-			>
+			<div data-testid="sheet" data-reposition-inputs={repositionInputs ? "true" : "false"}>
 				{children}
 			</div>
 		) : null,
@@ -667,27 +663,25 @@ describe("FilterSheetWrapper", () => {
 	});
 
 	// ============================================================================
-	// Vaul gestures — handleOnly + repositionInputs forwarded conditionally
+	// Vaul gestures — repositionInputs forwarded conditionally
 	// ============================================================================
 
-	describe("vaul gestures (handleOnly / repositionInputs)", () => {
-		it("does NOT activate handleOnly in desktop right-side sheet (swipe N/A)", () => {
+	describe("vaul gestures (repositionInputs)", () => {
+		it("does NOT activate repositionInputs in desktop right-side sheet (no mobile keyboard)", () => {
 			mockUseIsMobile.mockReturnValue(false);
 			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
 			const sheet = screen.getByTestId("sheet");
-			expect(sheet).toHaveAttribute("data-handle-only", "false");
 			expect(sheet).toHaveAttribute("data-reposition-inputs", "false");
 		});
 
-		it("activates handleOnly + repositionInputs in mobile bottom-sheet (prevents accidental close on internal scroll/keyboard)", () => {
+		it("activates repositionInputs in mobile bottom-sheet (keyboard repositions focused input)", () => {
 			mockUseIsMobile.mockReturnValue(true);
 			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
 			const sheet = screen.getByTestId("sheet");
-			expect(sheet).toHaveAttribute("data-handle-only", "true");
 			expect(sheet).toHaveAttribute("data-reposition-inputs", "true");
 		});
 
-		it("ScrollArea content region carries data-vaul-no-drag (defensive belt for future handleOnly toggling)", () => {
+		it("ScrollArea content region carries data-vaul-no-drag (defensive isolation of internal scroll)", () => {
 			render(<FilterSheetWrapper>content</FilterSheetWrapper>);
 			const scrollArea = screen.getByTestId("scroll-area");
 			expect(scrollArea).toHaveAttribute("data-vaul-no-drag");

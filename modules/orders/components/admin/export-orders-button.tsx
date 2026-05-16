@@ -23,6 +23,8 @@ import { Download, LoaderCircle } from "lucide-react";
 import { useReducer } from "react";
 import { toast } from "@/shared/utils/toast";
 
+const MONTH_FORMATTER = new Intl.DateTimeFormat("fr-FR", { month: "long" });
+
 type PeriodType = "all" | "year" | "month" | "custom";
 
 type ExportState = {
@@ -216,9 +218,7 @@ export function ExportOrdersButton() {
 								<SelectContent>
 									{Array.from({ length: 12 }, (_, i) => {
 										const m = String(i + 1);
-										const label = new Intl.DateTimeFormat("fr-FR", { month: "long" }).format(
-											new Date(2024, i),
-										);
+										const label = MONTH_FORMATTER.format(new Date(2024, i));
 										return (
 											<SelectItem key={m} value={m}>
 												{label.charAt(0).toUpperCase() + label.slice(1)}

@@ -78,7 +78,7 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				primaryImage.altText ??
-					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors?.[0]?.color.name ?? "Image principale"}`,
+					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? "Image principale"}`,
 			),
 			blurDataUrl: primaryImage.blurDataUrl ?? undefined,
 		};
@@ -93,7 +93,7 @@ function extractImageFromSku(sku: SkuFromList, productTitle: string): ExtractedI
 			mediaType: "IMAGE",
 			alt: truncateAltText(
 				firstImage.altText ??
-					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors?.[0]?.color.name ?? "Variante"}`,
+					`${productTitle} - ${getPrimaryMaterialName(sku.materials) ?? sku.colors[0]?.color.name ?? "Variante"}`,
 			),
 			blurDataUrl: firstImage.blurDataUrl ?? undefined,
 		};
@@ -210,7 +210,7 @@ export function getProductCardData(
 		// Couleurs M2M : on agrège chaque couleur unique vue dans les SKUs.
 		// `inStock` = la couleur est présente sur au moins un SKU en stock (au moins
 		// 1 unité). Hex validated at display time to prevent style injection.
-		for (const link of sku.colors ?? []) {
+		for (const link of sku.colors) {
 			const c = link.color;
 			if (!c.slug || !c.hex || !HEX_PATTERN.test(c.hex)) continue;
 			const existing = colorMap.get(c.slug);
@@ -226,7 +226,7 @@ export function getProductCardData(
 		// Combos M2M : on accumule chaque combinaison de couleurs portée par les
 		// SKUs actifs. Une carte produit avec au moins un SKU multi-couleur passe
 		// en mode combos (pastille split-gradient + lien `?variant=`).
-		const skuColors = sku.colors ?? [];
+		const skuColors = sku.colors;
 		if (skuColors.length > 1) hasMultiColorSku = true;
 		if (skuColors.length > 0) {
 			const ordered = [...skuColors].sort((a, b) => a.position - b.position);

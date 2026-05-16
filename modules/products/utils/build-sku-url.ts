@@ -19,7 +19,7 @@ export function buildSkuUrl(
 	sku: Pick<SkuFromList, "colors" | "materials" | "size">,
 ): string {
 	const params = new URLSearchParams();
-	const primaryColorSlug = sku.colors?.[0]?.color.slug;
+	const primaryColorSlug = sku.colors[0]?.color.slug;
 	if (primaryColorSlug) params.set("color", primaryColorSlug);
 	const primaryMaterial = getPrimaryMaterialName(sku.materials);
 	if (primaryMaterial) params.set("material", slugify(primaryMaterial));

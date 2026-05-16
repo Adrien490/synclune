@@ -47,10 +47,8 @@ vi.mock("@/shared/components/ui/button", () => ({
 }));
 
 vi.mock("@/shared/components/ui/drawer", () => ({
-	Drawer: ({ children, handleOnly }: { children: React.ReactNode; handleOnly?: boolean }) => (
-		<div data-testid="drawer" data-handle-only={String(Boolean(handleOnly))}>
-			{children}
-		</div>
+	Drawer: ({ children }: { children: React.ReactNode }) => (
+		<div data-testid="drawer">{children}</div>
 	),
 	DrawerContent: ({ children }: { children: React.ReactNode }) => (
 		<div data-testid="drawer-content">{children}</div>
@@ -555,13 +553,6 @@ describe("SortableMediaItem", () => {
 			fireEvent.click(playBtn);
 
 			expect(onLightbox).toHaveBeenCalledWith(1);
-		});
-	});
-
-	describe("mobile actions drawer", () => {
-		it("activates handleOnly to avoid drag-from-content closing the drawer", () => {
-			renderItem();
-			expect(screen.getByTestId("drawer").getAttribute("data-handle-only")).toBe("true");
 		});
 	});
 });

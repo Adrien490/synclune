@@ -87,15 +87,20 @@ export default async function CheckoutSuccessPage({ searchParams }: CheckoutSucc
 	} else if (sessionId && isPending) {
 		order = await getOrderBySessionId(sessionId);
 		if (!order) {
+			let stripeSession: Awaited<ReturnType<typeof stripe.checkout.sessions.retrieve>> | null =
+				null;
 			try {
-				const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
-				pendingPlaceholder = {
-					totalAmount: stripeSession.amount_total ?? null,
-					sessionRef: sessionId.slice(-8).toUpperCase(),
-				};
+				stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
 			} catch {
+				stripeSession = null;
+			}
+			if (!stripeSession) {
 				redirect("/");
 			}
+			pendingPlaceholder = {
+				totalAmount: stripeSession.amount_total ?? null,
+				sessionRef: sessionId.slice(-8).toUpperCase(),
+			};
 		}
 	}
 

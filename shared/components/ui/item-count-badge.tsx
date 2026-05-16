@@ -77,7 +77,7 @@ export function ItemCountBadge({
 		setPrevCount(count);
 		if (!prefersReducedMotion) {
 			setShouldPulse(true);
-			setPulseKey(pulseKey + 1);
+			setPulseKey((prev) => prev + 1);
 		}
 	}
 

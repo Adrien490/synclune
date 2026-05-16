@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, use, useState } from "react";
 import { useStore } from "zustand";
 
 import { createDialogStore } from "@/shared/stores/dialog-store";
@@ -17,7 +17,7 @@ export const DialogStoreProvider = ({ children }: DialogStoreProviderProps) => {
 };
 
 const useDialogStore = <T,>(selector: (store: DialogStore) => T): T => {
-	const dialogStoreContext = useContext(DialogStoreContext);
+	const dialogStoreContext = use(DialogStoreContext);
 
 	if (!dialogStoreContext) {
 		throw new Error(`useDialogStore must be used within DialogStoreProvider`);

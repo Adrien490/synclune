@@ -197,7 +197,7 @@ function SheetContent({
 	 */
 	registerOverlay?: boolean;
 }) {
-	const { direction } = React.useContext(SheetContext);
+	const { direction } = React.use(SheetContext);
 
 	return (
 		<SheetPortal>

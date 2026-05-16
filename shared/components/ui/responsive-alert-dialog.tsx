@@ -24,7 +24,7 @@ type ResponsiveCtx = {
 const Ctx = React.createContext<ResponsiveCtx | null>(null);
 
 function useResponsiveAlert(component: string): ResponsiveCtx {
-	const ctx = React.useContext(Ctx);
+	const ctx = React.use(Ctx);
 	if (!ctx) {
 		throw new Error(
 			`${component} must be used inside <ResponsiveAlertDialog>. ` +

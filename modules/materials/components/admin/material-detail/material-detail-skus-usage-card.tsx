@@ -84,7 +84,7 @@ export function MaterialDetailSkusUsageCard({ material }: MaterialDetailSkusUsag
 											</div>
 											<p className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
 												<span className="font-mono">{sku.sku}</span>
-												{sku.colors && sku.colors.length > 0 ? (
+												{sku.colors.length > 0 ? (
 													<>
 														<span aria-hidden="true">·</span>
 														<span className="inline-flex items-center gap-1">

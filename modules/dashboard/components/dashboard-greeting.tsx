@@ -9,12 +9,14 @@ interface DashboardGreetingProps {
 	comparisonMode: ComparisonMode;
 }
 
+const parisHourFormatter = new Intl.DateTimeFormat("en-US", {
+	hour: "numeric",
+	hour12: false,
+	timeZone: "Europe/Paris",
+});
+
 function getHourInParis(): number {
-	const parts = new Intl.DateTimeFormat("en-US", {
-		hour: "numeric",
-		hour12: false,
-		timeZone: "Europe/Paris",
-	}).formatToParts(new Date());
+	const parts = parisHourFormatter.formatToParts(new Date());
 	const hourPart = parts.find((p) => p.type === "hour");
 	return hourPart ? parseInt(hourPart.value, 10) : 12;
 }

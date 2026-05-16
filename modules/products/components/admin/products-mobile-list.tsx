@@ -36,11 +36,13 @@ interface ProductsMobileListProps {
 	};
 }
 
+const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
+
 export function ProductsMobileList({
 	productsPromise,
 	perPage,
 	hasActiveFilters,
-	collections = [],
+	collections = EMPTY_COLLECTIONS,
 	filterParams,
 }: ProductsMobileListProps) {
 	const { products, pagination, totalCount } = use(productsPromise);

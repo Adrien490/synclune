@@ -101,11 +101,7 @@ export function PriceRangeInputs({ value, onChange, maxPrice }: PriceRangeInputs
 	};
 
 	return (
-		<fieldset
-			className="m-0 space-y-3 border-0 p-0"
-			role="group"
-			aria-labelledby="price-filter-label"
-		>
+		<fieldset className="m-0 space-y-3 border-0 p-0" aria-labelledby="price-filter-label">
 			<legend id="price-filter-label" className="text-foreground text-sm font-medium">
 				Prix (€)
 			</legend>

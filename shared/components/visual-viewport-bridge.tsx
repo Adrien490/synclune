@@ -69,8 +69,8 @@ function install() {
 	if (installed || typeof window === "undefined" || !window.visualViewport) return;
 	installed = true;
 	const vv = window.visualViewport;
-	vv.addEventListener("resize", update);
-	vv.addEventListener("scroll", update);
+	vv.addEventListener("resize", update, { passive: true });
+	vv.addEventListener("scroll", update, { passive: true });
 	currentState = readState();
 	applySideEffects(currentState);
 }

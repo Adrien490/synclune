@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, use, useState, useEffect } from "react";
 import { useStore } from "zustand";
 
 import {
@@ -39,7 +39,7 @@ export const CookieConsentStoreProvider = ({ children }: CookieConsentStoreProvi
 };
 
 export const useCookieConsentStore = <T,>(selector: (store: CookieConsentStore) => T): T => {
-	const cookieConsentStoreContext = useContext(CookieConsentStoreContext);
+	const cookieConsentStoreContext = use(CookieConsentStoreContext);
 
 	if (!cookieConsentStoreContext) {
 		throw new Error(`useCookieConsentStore must be used within CookieConsentStoreProvider`);

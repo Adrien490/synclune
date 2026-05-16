@@ -75,7 +75,7 @@ export function StickyCartCTADesktop({
 
 	// Résumé variant compact : "Rose + Argent · Taille M"
 	const variantSummaryParts: string[] = [];
-	const currentColorsLabel = currentSku.colors?.map((c) => c.color.name).join(" + ");
+	const currentColorsLabel = currentSku.colors.map((c) => c.color.name).join(" + ");
 	if (currentColorsLabel) variantSummaryParts.push(currentColorsLabel);
 	const currentMaterialsLabel = getSkuMaterialsLabel(currentSku.materials);
 	if (currentMaterialsLabel) variantSummaryParts.push(currentMaterialsLabel);

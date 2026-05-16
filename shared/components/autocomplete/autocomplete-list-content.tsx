@@ -84,7 +84,7 @@ export function AutocompleteListContent<T>({
 	if (hasResults) {
 		return (
 			<>
-				{showResultsCount && <AutocompleteResultsCount count={items.length} />}
+				{showResultsCount ? <AutocompleteResultsCount count={items.length} /> : null}
 				{items.map((item, index) => (
 					<AutocompleteItem
 						key={getItemKey?.(item) ?? `${getItemLabel(item)}-${index}`}

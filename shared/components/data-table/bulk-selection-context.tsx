@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, use, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
@@ -170,7 +170,7 @@ export function BulkSelectionProvider({ pageItemIds, children }: BulkSelectionPr
 }
 
 export function useBulkSelectionContext(): BulkSelectionContextValue {
-	const ctx = useContext(BulkSelectionContext);
+	const ctx = use(BulkSelectionContext);
 	if (!ctx) {
 		throw new Error("useBulkSelectionContext must be used inside <BulkSelectionProvider>");
 	}
@@ -182,5 +182,5 @@ export function useBulkSelectionContext(): BulkSelectionContextValue {
  * réutilisés en dehors du contexte bulk).
  */
 export function useBulkSelectionContextOptional(): BulkSelectionContextValue | null {
-	return useContext(BulkSelectionContext);
+	return use(BulkSelectionContext);
 }

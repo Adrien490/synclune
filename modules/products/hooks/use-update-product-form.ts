@@ -83,9 +83,9 @@ export const useUpdateProductForm = (options: UseUpdateProductFormOptions) => {
 				inventory: defaultSku?.inventory ?? 0,
 				isActive: String(defaultSku?.isActive ?? true),
 				// Couleurs M2M ordonnées (1re = principale)
-				colorIds: defaultSku?.colors?.map((c) => c.colorId) ?? [],
+				colorIds: defaultSku?.colors.map((c) => c.colorId) ?? [],
 				// Matériaux M2M ordonnés (1er = principal)
-				materialIds: defaultSku?.materials?.map((m) => m.materialId) ?? [],
+				materialIds: defaultSku?.materials.map((m) => m.materialId) ?? [],
 				size: defaultSku?.size ?? "",
 				media: allMedia,
 			},

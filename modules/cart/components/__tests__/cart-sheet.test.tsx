@@ -107,18 +107,12 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 vi.mock("@/shared/components/ui/drawer", () => ({
 	Drawer: ({
 		children,
-		handleOnly,
 		repositionInputs,
 	}: {
 		children: React.ReactNode;
-		handleOnly?: boolean;
 		repositionInputs?: boolean;
 	}) => (
-		<div
-			data-testid="drawer"
-			data-handle-only={handleOnly ? "true" : "false"}
-			data-reposition-inputs={repositionInputs ? "true" : "false"}
-		>
+		<div data-testid="drawer" data-reposition-inputs={repositionInputs ? "true" : "false"}>
 			{children}
 		</div>
 	),
@@ -592,13 +586,6 @@ describe("CartSheet", () => {
 			render(<CartSheet cart={null} />);
 			expect(screen.getByTestId("drawer")).toBeInTheDocument();
 			expect(screen.getByText("Votre panier est vide !")).toBeInTheDocument();
-		});
-
-		it("activates Vaul handleOnly on mobile Drawer (forces drag-handle to close, prevents accidental close on item interactions)", () => {
-			mockIsMobile.value = true;
-			render(<CartSheet cart={createCart([createCartItem()])} />);
-			const drawer = screen.getByTestId("drawer");
-			expect(drawer).toHaveAttribute("data-handle-only", "true");
 		});
 	});
 });

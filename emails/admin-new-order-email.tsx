@@ -183,10 +183,7 @@ export const AdminNewOrderEmail = ({
 											return (
 												<>
 													{hexes.length > 0 && (
-														<EmailColorSwatch
-															hexes={hexes}
-															ariaLabel={item.skuColor ?? undefined}
-														/>
+														<EmailColorSwatch hexes={hexes} ariaLabel={item.skuColor} />
 													)}
 													Couleur: {item.skuColor}
 												</>

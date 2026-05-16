@@ -23,7 +23,7 @@ interface SkuDetailMediaCardProps {
 }
 
 function sortGalleryImages(images: SkuImage[]): SkuImage[] {
-	return [...images].sort((a, b) => {
+	return images.toSorted((a, b) => {
 		if (a.isPrimary && !b.isPrimary) return -1;
 		if (!a.isPrimary && b.isPrimary) return 1;
 		return 0;

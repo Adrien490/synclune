@@ -61,7 +61,6 @@ export function AdminMobileHeader() {
 					? "bg-background/80 border-border shadow-lg shadow-black/8 backdrop-blur-xl"
 					: "border-transparent bg-transparent",
 			)}
-			role="banner"
 			aria-label="En-tête mobile administration"
 		>
 			<div className="flex w-full items-center gap-2 px-[var(--admin-main-x,1.5rem)]">

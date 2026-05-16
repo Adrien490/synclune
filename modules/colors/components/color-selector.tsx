@@ -96,7 +96,7 @@ function ColorCombosSelector({
 	const shouldReduceMotion = useReducedMotion();
 
 	const defaultComboKey =
-		defaultSku && (defaultSku.colors?.length ?? 0) > 0
+		defaultSku && defaultSku.colors.length > 0
 			? buildComboKey(defaultSku.colors.map((c) => c.color.slug))
 			: null;
 
@@ -292,7 +292,7 @@ function ColorFlatSelector({
 	const [isPending, startTransition] = useTransition();
 	const shouldReduceMotion = useReducedMotion();
 
-	const currentColor = searchParams.get("color") ?? defaultSku?.colors?.[0]?.color.slug ?? null;
+	const currentColor = searchParams.get("color") ?? defaultSku?.colors[0]?.color.slug ?? null;
 	const currentMaterial = searchParams.get("material");
 	const currentSize = searchParams.get("size");
 

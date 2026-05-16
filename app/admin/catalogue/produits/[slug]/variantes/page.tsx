@@ -105,8 +105,7 @@ export default async function ProductVariantsPage({
 	params,
 	searchParams,
 }: ProductVariantsPageProps) {
-	const { slug } = await params;
-	const searchParamsData = await searchParams;
+	const [{ slug }, searchParamsData] = await Promise.all([params, searchParams]);
 
 	// Parse and validate all search parameters safely
 	const { cursor, direction, perPage, sortBy, search } = parseProductSkuParams(searchParamsData);

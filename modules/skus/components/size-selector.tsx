@@ -116,7 +116,7 @@ function SizeSelectorInner({
 				</legend>
 				<div className="flex items-center gap-2">
 					<SizeGuideDialog productTypeSlug={productTypeSlug} />
-					{optimisticSize && (
+					{optimisticSize ? (
 						<Button
 							variant="ghost"
 							size="sm"
@@ -126,7 +126,7 @@ function SizeSelectorInner({
 						>
 							Réinitialiser
 						</Button>
-					)}
+					) : null}
 				</div>
 			</div>
 			<div

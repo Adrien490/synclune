@@ -163,6 +163,7 @@ export const GET_PRODUCT_SELECT = {
 				orderBy: {
 					position: "asc" as const,
 				},
+				take: 50,
 			},
 		},
 		orderBy: [{ isDefault: "desc" as const }, { priceInclTax: "asc" as const }],

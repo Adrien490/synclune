@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, use, useRef, useState, type ReactNode } from "react";
 
 /**
  * Configuration d'un guard de navigation
@@ -178,7 +178,7 @@ export function NavigationGuardProvider({ children }: NavigationGuardProviderPro
  * Hook pour accéder au contexte de navigation guard
  */
 export function useNavigationGuard() {
-	const context = useContext(NavigationGuardContext);
+	const context = use(NavigationGuardContext);
 	if (!context) {
 		throw new Error("useNavigationGuard must be used within NavigationGuardProvider");
 	}
@@ -190,5 +190,5 @@ export function useNavigationGuard() {
  * (ne throw pas si le provider n'est pas présent)
  */
 export function useNavigationGuardOptional() {
-	return useContext(NavigationGuardContext);
+	return use(NavigationGuardContext);
 }

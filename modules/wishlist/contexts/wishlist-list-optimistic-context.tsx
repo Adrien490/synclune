@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, use } from "react";
 
 export interface WishlistListOptimisticContextValue {
 	/**
@@ -18,5 +18,5 @@ export const WishlistListOptimisticContext =
  * Retourne null si utilisé en dehors du contexte (comportement safe)
  */
 export function useWishlistListOptimistic() {
-	return useContext(WishlistListOptimisticContext);
+	return use(WishlistListOptimisticContext);
 }

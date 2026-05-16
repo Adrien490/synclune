@@ -40,7 +40,7 @@ function MaterialSelectorInner({ materials, product, defaultSku }: MaterialSelec
 
 	// Lire l'état depuis l'URL (source de vérité), fallback sur le matériau principal du defaultSku
 	const currentMaterial =
-		searchParams.get("material") ?? defaultSku?.materials?.[0]?.material.name ?? null;
+		searchParams.get("material") ?? defaultSku?.materials[0]?.material.name ?? null;
 	const currentColor = searchParams.get("color");
 	const currentSize = searchParams.get("size");
 

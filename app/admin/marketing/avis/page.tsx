@@ -41,8 +41,8 @@ interface ReviewsAdminPageProps {
 }
 
 export default async function ReviewsAdminPage({ searchParams }: ReviewsAdminPageProps) {
-	const params = await searchParams;
-	const [stats, globalStats] = await Promise.all([
+	const [params, stats, globalStats] = await Promise.all([
+		searchParams,
 		getReviewCountsByStatus(),
 		getGlobalReviewStats(),
 	]);

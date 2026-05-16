@@ -167,8 +167,8 @@ export async function createCheckoutSession(): Promise<
 			if (userEmail && !stripeCustomerId) {
 				const customerResult = await getOrCreateStripeCustomer(stripeCustomerId, {
 					email: userEmail,
-					firstName: session?.user.name?.split(" ")[0] ?? "",
-					lastName: session?.user.name?.split(" ").slice(1).join(" ") ?? "",
+					firstName: session?.user.name.split(" ")[0] ?? "",
+					lastName: session?.user.name.split(" ").slice(1).join(" ") ?? "",
 					address: { addressLine1: "", postalCode: "", city: "" },
 					userId,
 				});

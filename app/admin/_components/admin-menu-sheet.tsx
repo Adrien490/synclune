@@ -14,10 +14,18 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
 import { isRouteActive } from "@/shared/lib/navigation";
 import { useDialog } from "@/shared/providers/dialog-store-provider";
 import { cn } from "@/shared/utils/cn";
-import { ChevronRight, ExternalLink, LayoutDashboard, LogOut, Search } from "lucide-react";
+import {
+	ChevronRight,
+	ExternalLink,
+	LayoutDashboard,
+	LogOut,
+	Search,
+	SearchX,
+	X,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ADMIN_MENU_SHEET_CONTENT_ID, getAllNavItems, navigationData } from "./navigation-config";
 
 interface AdminMenuSheetProps {
@@ -44,7 +52,8 @@ const VAUL_EXIT_DURATION_MS = 450;
  * touch-manipulation supprime le 300 ms delay tap mobile, scale active
  * fournit le feedback visuel (parité admin-menu-quick-access.tsx:33).
  */
-const NAV_ITEM_TACTILE_CLASS = "touch-manipulation motion-safe:active:scale-[0.97]";
+const NAV_ITEM_TACTILE_CLASS =
+	"touch-manipulation motion-safe:active:scale-[0.97] [-webkit-tap-highlight-color:transparent]";
 
 function handleNavClick() {
 	triggerHaptic("selection");
@@ -55,6 +64,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 	const [showLogout, setShowLogout] = useState(false);
 	const [pendingLogout, setPendingLogout] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
+	const searchInputRef = useRef<HTMLInputElement>(null);
 	const pathname = usePathname();
 
 	// Close on navigation
@@ -132,8 +142,10 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 				open={isOpen}
 				onOpenChange={handleOpenChange}
 				preventScrollRestoration
-				handleOnly
 				scrollLockTimeout={500}
+				// Sur iOS Safari, la search input prend le focus → clavier remonte sans
+				// repositionner le contenu Vaul : input masqué. repositionInputs corrige.
+				repositionInputs
 			>
 				<SheetContent
 					id={ADMIN_MENU_SHEET_CONTENT_ID}
@@ -171,6 +183,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 								aria-hidden="true"
 							/>
 							<input
+								ref={searchInputRef}
 								type="search"
 								inputMode="search"
 								enterKeyHint="search"
@@ -181,11 +194,32 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 								aria-label="Filtrer les pages de navigation"
 								className={cn(
 									"bg-background/80 border-border/60 placeholder:text-muted-foreground/50",
-									"flex h-11 w-full rounded-xl border py-2 pr-3 pl-9 text-sm",
+									"flex h-11 w-full rounded-xl border py-2 pl-9 text-sm",
+									// pr-11 quand le bouton clear est visible, pr-3 sinon — évite que
+									// le texte de la requête passe sous l'icône.
+									searchQuery.length > 0 ? "pr-11" : "pr-3",
 									"focus-visible:ring-primary/30 focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:outline-none",
 									"motion-safe:transition-colors",
 								)}
 							/>
+							{searchQuery.length > 0 && (
+								<button
+									type="button"
+									onClick={() => {
+										triggerHaptic("light");
+										setSearchQuery("");
+										searchInputRef.current?.focus();
+									}}
+									aria-label="Effacer la recherche"
+									className={cn(
+										"text-muted-foreground/70 hover:text-foreground absolute top-1/2 right-2 inline-flex size-7 -translate-y-1/2 items-center justify-center rounded-full",
+										"touch-manipulation [-webkit-tap-highlight-color:transparent] motion-safe:active:scale-[0.92]",
+										"focus-visible:ring-primary/40 focus-visible:ring-2 focus-visible:outline-none",
+									)}
+								>
+									<X className="size-4" aria-hidden="true" />
+								</button>
+							)}
 						</div>
 					</div>
 
@@ -212,9 +246,12 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 												: `${filteredItems.length} résultat${filteredItems.length > 1 ? "s" : ""} de navigation`}
 										</div>
 										{filteredItems.length === 0 ? (
-											<p className="text-muted-foreground px-4 py-6 text-center text-sm">
-												Aucun résultat pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;
-											</p>
+											<div className="flex flex-col items-center gap-3 px-4 py-8">
+												<SearchX className="text-muted-foreground/40 size-8" aria-hidden="true" />
+												<p className="text-muted-foreground text-center text-sm">
+													Aucun résultat pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;
+												</p>
+											</div>
 										) : (
 											filteredItems.map((item, i) => {
 												const isActive = isRouteActive(pathname, item.url);
@@ -225,6 +262,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 													<Link
 														key={item.id}
 														href={item.url}
+														prefetch={null}
 														onClick={handleNavClick}
 														className={cn(
 															"flex items-center gap-3 px-4 py-3 transition-colors",
@@ -287,6 +325,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 										>
 											<Link
 												href="/admin"
+												prefetch={null}
 												onClick={handleNavClick}
 												className={cn(
 													"flex items-center gap-3 px-4 py-3.5 transition-colors",
@@ -340,6 +379,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 															<Link
 																key={item.id}
 																href={item.url}
+																prefetch={null}
 																onClick={handleNavClick}
 																className={cn(
 																	"flex items-center gap-3 px-4 py-3 transition-colors",
@@ -388,6 +428,7 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 										<div className="bg-background mt-1 overflow-hidden rounded-xl border">
 											<Link
 												href="/"
+												prefetch={false}
 												target="_blank"
 												rel="noopener noreferrer"
 												onClick={handleNavClick}
@@ -411,7 +452,9 @@ export function AdminMenuSheet({ user, badges }: AdminMenuSheetProps) {
 												type="button"
 												onClick={handleLogoutClick}
 												className={cn(
-													"active:bg-accent flex w-full items-center gap-3 px-4 py-3 transition-colors",
+													// active:bg-destructive/10 (vs nav links en active:bg-accent) — feedback
+													// visuel cohérent avec la sémantique destructive (icône+label text-destructive).
+													"active:bg-destructive/10 flex w-full items-center gap-3 px-4 py-3 transition-colors",
 													NAV_ITEM_TACTILE_CLASS,
 												)}
 											>

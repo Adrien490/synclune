@@ -16,13 +16,13 @@ interface UserReviewCardProps {
 	className?: string;
 }
 
-const formatDate = (date: Date) => {
-	return new Intl.DateTimeFormat("fr-FR", {
-		day: "numeric",
-		month: "long",
-		year: "numeric",
-	}).format(new Date(date));
-};
+const dateFormatter = new Intl.DateTimeFormat("fr-FR", {
+	day: "numeric",
+	month: "long",
+	year: "numeric",
+});
+
+const formatDate = (date: Date) => dateFormatter.format(new Date(date));
 
 /**
  * Carte d'avis pour l'espace client "Mes avis"

@@ -13,15 +13,15 @@ interface StoreClosurePageProps {
 	status: StoreStatus;
 }
 
+const reopensAtFormatter = new Intl.DateTimeFormat("fr-FR", {
+	dateStyle: "long",
+	timeStyle: "short",
+});
+
 export function StoreClosurePage({ status }: StoreClosurePageProps) {
 	const reopensAtDate = status.reopensAt ? new Date(status.reopensAt) : null;
 
-	const formattedReopensAt = reopensAtDate
-		? new Intl.DateTimeFormat("fr-FR", {
-				dateStyle: "long",
-				timeStyle: "short",
-			}).format(reopensAtDate)
-		: null;
+	const formattedReopensAt = reopensAtDate ? reopensAtFormatter.format(reopensAtDate) : null;
 
 	return (
 		<>

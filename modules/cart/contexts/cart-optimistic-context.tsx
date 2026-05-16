@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, use } from "react";
 
 export type CartOptimisticAction =
 	| { type: "remove"; itemId: string }
@@ -15,7 +15,7 @@ export interface CartOptimisticContextValue {
 export const CartOptimisticContext = createContext<CartOptimisticContextValue | null>(null);
 
 export function useCartOptimistic() {
-	const context = useContext(CartOptimisticContext);
+	const context = use(CartOptimisticContext);
 	if (!context) {
 		throw new Error("useCartOptimistic must be used within CartOptimisticProvider");
 	}
@@ -27,5 +27,5 @@ export function useCartOptimistic() {
  * Utile pour les composants qui peuvent être utilisés en dehors du CartSheet
  */
 export function useCartOptimisticSafe() {
-	return useContext(CartOptimisticContext);
+	return use(CartOptimisticContext);
 }
