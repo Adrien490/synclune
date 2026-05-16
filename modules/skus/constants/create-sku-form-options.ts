@@ -10,7 +10,9 @@ export const createProductSkuFormOpts = {
 		compareAtPriceEuros: undefined as number | undefined,
 		inventory: null as number | null,
 		isDefault: false,
-		isActive: true,
+		// "true"/"false" string pour matcher RadioGroupField (useFieldContext<string>).
+		// Sans ça le radio « Actif » n'apparaît pas coché à la création.
+		isActive: "true" as "true" | "false",
 		colorIds: [] as string[],
 		materialIds: [] as string[],
 		size: "",

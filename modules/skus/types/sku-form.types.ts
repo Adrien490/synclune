@@ -33,7 +33,10 @@ export type UpdateProductSkuFormValues = {
 	compareAtPriceEuros: number | undefined;
 	inventory: number;
 	isDefault: boolean;
-	isActive: boolean;
+	// String "true" | "false" pour matcher les options du RadioGroupField
+	// (useFieldContext<string>). La conversion vers boolean est faite dans
+	// l'action via `formData.get("isActive") === "true"`.
+	isActive: "true" | "false";
 	/** Couleurs M2M ordonnées (1re = principale). Vide = aucune couleur. */
 	colorIds: string[];
 	/** Matériaux M2M ordonnés (1er = principal). Vide = aucun matériau. */

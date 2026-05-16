@@ -28,7 +28,8 @@ export function getUpdateProductSkuFormOpts(sku: SkuWithImages) {
 			compareAtPriceEuros: sku.compareAtPrice ? sku.compareAtPrice / 100 : undefined,
 			inventory: sku.inventory,
 			isDefault: sku.isDefault,
-			isActive: sku.isActive,
+			// String pour le RadioGroupField (cf. UpdateProductSkuFormValues.isActive).
+			isActive: sku.isActive ? "true" : "false",
 			// Couleurs M2M ordonnées (1re = principale). Préserve l'ordre saisi côté admin.
 			colorIds: sku.colors.map((c) => c.colorId),
 			// Matériaux M2M ordonnés (1er = principal). Préserve l'ordre saisi côté admin.

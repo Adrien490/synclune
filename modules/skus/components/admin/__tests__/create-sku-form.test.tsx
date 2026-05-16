@@ -106,7 +106,7 @@ function createMockForm(overrides: FormStateOverrides = {}) {
 		values: {
 			productId: "",
 			media: [],
-			isActive: true,
+			isActive: "true",
 			isDefault: false,
 			colorId: "",
 			materialIds: [],

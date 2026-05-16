@@ -105,6 +105,12 @@ describe("getUpdateProductSkuFormOpts", () => {
 		);
 		expect(result.defaultValues.inventory).toBe(42);
 		expect(result.defaultValues.isDefault).toBe(true);
-		expect(result.defaultValues.isActive).toBe(false);
+		// isActive est converti en string pour matcher le RadioGroupField
+		expect(result.defaultValues.isActive).toBe("false");
+	});
+
+	it("converts isActive boolean true → string 'true'", () => {
+		const result = getUpdateProductSkuFormOpts(makeSku({ isActive: true }));
+		expect(result.defaultValues.isActive).toBe("true");
 	});
 });
