@@ -117,6 +117,21 @@ describe("ProductMobileItem", () => {
 		expect(screen.getByText("Bagues")).toBeInTheDocument();
 	});
 
+	it("affiche « Variante unique » quand le produit n'a que la variante principale", () => {
+		const single = {
+			...baseProduct,
+			skus: [{ priceInclTax: 4500, inventory: 10, images: [] }],
+		};
+		render(<ProductMobileItem product={single} />);
+		expect(screen.getByText("Variante unique")).toBeInTheDocument();
+	});
+
+	it("affiche « Variante unique » quand le produit n'a aucune variante", () => {
+		const empty = { ...baseProduct, skus: [] };
+		render(<ProductMobileItem product={empty} />);
+		expect(screen.getByText("Variante unique")).toBeInTheDocument();
+	});
+
 	it("affiche le badge stock en variant destructive si rupture", () => {
 		const outOfStock = {
 			...baseProduct,

@@ -108,9 +108,46 @@ function createSku(overrides: Partial<Sku> = {}): Sku {
 afterEach(cleanup);
 
 describe("SkuMobileItem", () => {
-	it("renders the SKU code", () => {
+	it("renders the SKU code in description (not as title)", () => {
 		render(<SkuMobileItem sku={createSku({ sku: "REF-999" })} productSlug="bague-lune" />);
 		expect(screen.getByText("REF-999")).toBeInTheDocument();
+	});
+
+	it("renders composed title from color · material · size", () => {
+		render(
+			<SkuMobileItem
+				sku={createSku({
+					colors: [
+						{
+							colorId: "c-1",
+							position: 0,
+							color: { id: "c-1", name: "Or rose", hex: "#FFD700", slug: "or-rose" },
+						},
+					],
+					materials: [
+						{
+							materialId: "m-1",
+							position: 0,
+							material: { id: "m-1", name: "Argent", slug: "argent" },
+						},
+					],
+					size: "52mm",
+				})}
+				productSlug="bague-lune"
+			/>,
+		);
+		expect(screen.getByText("Or rose · Argent · 52mm")).toBeInTheDocument();
+	});
+
+	it("renders 'Variante principale' fallback when default sku has no attributes", () => {
+		render(
+			<SkuMobileItem
+				sku={createSku({ isDefault: true, size: null, sku: "REF-MAIN" })}
+				productSlug="bague-lune"
+			/>,
+		);
+		expect(screen.getByText("Variante principale")).toBeInTheDocument();
+		expect(screen.getByText("REF-MAIN")).toBeInTheDocument();
 	});
 
 	it("renders the formatted price", () => {
@@ -193,17 +230,23 @@ describe("SkuMobileItem", () => {
 
 	it("navigue vers la page détail variante au tap (Link href)", () => {
 		render(
-			<SkuMobileItem sku={createSku({ id: "sku-42", sku: "REF-42" })} productSlug="produit-x" />,
+			<SkuMobileItem
+				sku={createSku({ id: "sku-42", sku: "REF-42", size: "M" })}
+				productSlug="produit-x"
+			/>,
 		);
-		const link = screen.getByLabelText("Variante REF-42");
+		const link = screen.getByLabelText("Variante M");
 		expect(link.tagName).toBe("A");
 		expect(link).toHaveAttribute("href", "/admin/catalogue/produits/produit-x/variantes/sku-42");
 	});
 
-	it("exposes accessible aria-label on the link", () => {
+	it("exposes accessible aria-label from composed title", () => {
 		render(
-			<SkuMobileItem sku={createSku({ id: "sku-99", sku: "REF-99" })} productSlug="bague-lune" />,
+			<SkuMobileItem
+				sku={createSku({ id: "sku-99", sku: "REF-99", isDefault: true })}
+				productSlug="bague-lune"
+			/>,
 		);
-		expect(screen.getByLabelText("Variante REF-99")).toBeInTheDocument();
+		expect(screen.getByLabelText("Variante Variante principale")).toBeInTheDocument();
 	});
 });

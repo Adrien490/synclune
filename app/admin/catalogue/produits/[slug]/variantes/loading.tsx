@@ -37,6 +37,16 @@ export default function ProductVariantsLoading() {
 				</BreadcrumbList>
 			</Breadcrumb>
 
+			{/* Mobile-only product context placeholder — mirrors VariantsProductContext */}
+			<div className="bg-card flex items-center gap-3 rounded-lg border p-3 md:hidden">
+				<Skeleton className="size-12 shrink-0 rounded-md" />
+				<div className="min-w-0 flex-1 space-y-1.5">
+					<Skeleton className="h-2 w-12" />
+					<Skeleton className="h-4 w-40" />
+					<Skeleton className="h-3 w-32" />
+				</div>
+			</div>
+
 			<PageHeader
 				variant="compact"
 				title="Variantes du produit"

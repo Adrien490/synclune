@@ -164,7 +164,7 @@ export function ProductMobileItem({ product }: ProductMobileItemProps) {
 						<span className="sr-only">, </span>
 						<span aria-hidden="true">·</span>
 						<span>
-							{product.skus.length} variante{product.skus.length > 1 ? "s" : ""}
+							{product.skus.length <= 1 ? "Variante unique" : `${product.skus.length} variantes`}
 						</span>
 						{product.type ? (
 							<>

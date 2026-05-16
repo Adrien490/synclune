@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
 import { SkusAdminDialogs } from "./_components/skus-admin-dialogs";
+import { VariantsProductContext } from "./_components/variants-product-context";
 import { Button } from "@/shared/components/ui/button";
 import {
 	Breadcrumb,
@@ -175,6 +176,9 @@ export default async function ProductVariantsPage({
 					</BreadcrumbItem>
 				</BreadcrumbList>
 			</Breadcrumb>
+
+			{/* Rappel contextuel produit (mobile-only) — clarifie sur quel produit on est */}
+			<VariantsProductContext product={product} />
 
 			<PageHeader
 				variant="compact"

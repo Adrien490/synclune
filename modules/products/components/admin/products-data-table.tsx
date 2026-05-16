@@ -202,22 +202,31 @@ export async function ProductsDataTable({
 												</Badge>
 											</TableCell>
 											<TableCell className="text-center">
-												{skusCount > 0 ? (
-													<Link
-														href={`/admin/catalogue/produits/${product.slug}/variantes`}
-														className="text-sm font-medium hover:underline"
-														aria-label={`${skusCount} variante${skusCount > 1 ? "s" : ""} - Cliquer pour gerer`}
-														title="Gerer les variantes"
-													>
-														{skusCount}
-													</Link>
-												) : (
+												{skusCount === 0 ? (
 													<span
 														className="text-muted-foreground text-sm"
 														aria-label="Aucune variante"
 													>
 														—
 													</span>
+												) : skusCount === 1 ? (
+													<Link
+														href={`/admin/catalogue/produits/${product.slug}/variantes`}
+														className="text-muted-foreground text-xs hover:underline"
+														aria-label="Produit sans variante — Voir la variante principale"
+														title="Voir la variante principale"
+													>
+														Variante unique
+													</Link>
+												) : (
+													<Link
+														href={`/admin/catalogue/produits/${product.slug}/variantes`}
+														className="text-sm font-medium hover:underline"
+														aria-label={`${skusCount} variantes - Cliquer pour gerer`}
+														title="Gerer les variantes"
+													>
+														{skusCount}
+													</Link>
 												)}
 											</TableCell>
 											<TableCell className="text-right">

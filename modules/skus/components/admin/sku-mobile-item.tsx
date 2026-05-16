@@ -11,8 +11,8 @@ import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { useSkuActions } from "@/modules/skus/hooks/use-sku-actions";
 import type { GetProductSkusReturn } from "@/modules/skus/types/skus.types";
-import { getSkuMaterialsLabel } from "@/modules/skus/utils/sku-materials-label";
-import { getColorHexes, getSkuColorsDisplayLabel } from "@/modules/skus/utils/sku-colors-label";
+import { getSkuDisplayTitle } from "@/modules/skus/utils/sku-display-title";
+import { getColorHexes } from "@/modules/skus/utils/sku-colors-label";
 import { buildSwatchStyle } from "@/modules/colors/utils/swatch-style";
 
 type Sku = GetProductSkusReturn["productSkus"][number];
@@ -32,6 +32,8 @@ const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCent
 export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	const primaryImage = sku.images.find((img) => img.isPrimary) ?? sku.images[0] ?? null;
 	const stockVariant = getStockVariant(sku.inventory);
+	const displayTitle = getSkuDisplayTitle(sku);
+	const colorHexes = getColorHexes(sku.colors);
 
 	const { sections } = useSkuActions({
 		skuId: sku.id,
@@ -47,13 +49,13 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 	return (
 		<MobileSelectableCard
 			id={sku.id}
-			itemLabel={`Variante ${sku.sku}`}
+			itemLabel={`Variante ${displayTitle}`}
 			longPressProps={{
 				href: `/admin/catalogue/produits/${productSlug}/variantes/${sku.id}`,
-				ariaLabel: `Variante ${sku.sku}`,
+				ariaLabel: `Variante ${displayTitle}`,
 				sections,
 				menuTitle: "Actions variante",
-				menuDescription: sku.sku,
+				menuDescription: displayTitle,
 				className: "text-left",
 				viewTransitionName: `sku-card-${sku.id}`,
 			}}
@@ -91,8 +93,15 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</div>
 				)}
 				<ItemContent className="min-w-0">
-					<ItemTitle className="w-full min-w-0 flex-wrap">
-						<span className="truncate font-semibold">{sku.sku}</span>
+					<ItemTitle className="w-full min-w-0 flex-wrap items-center">
+						{colorHexes.length > 0 ? (
+							<span
+								className="border-border inline-block size-3 shrink-0 rounded-full border"
+								style={buildSwatchStyle(colorHexes)}
+								aria-hidden="true"
+							/>
+						) : null}
+						<span className="truncate font-semibold">{displayTitle}</span>
 						{sku.isDefault ? <Badge variant="secondary">Par défaut</Badge> : null}
 						{!sku.isActive ? <Badge variant="outline">Inactif</Badge> : null}
 						<Badge
@@ -105,38 +114,8 @@ export function SkuMobileItem({ sku, productSlug }: SkuMobileItemProps) {
 					</ItemTitle>
 					<ItemDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
 						<span className="font-medium">{formatPrice(sku.priceInclTax)}</span>
-						{(() => {
-							const colorsLabel = getSkuColorsDisplayLabel(sku.colors);
-							if (!colorsLabel) return null;
-							return (
-								<>
-									<span aria-hidden="true">·</span>
-									<span className="inline-flex items-center gap-1">
-										<span
-											className="border-border size-3 rounded-full border"
-											style={buildSwatchStyle(getColorHexes(sku.colors))}
-											aria-hidden="true"
-										/>
-										{colorsLabel}
-									</span>
-								</>
-							);
-						})()}
-						{(() => {
-							const label = getSkuMaterialsLabel(sku.materials);
-							return label ? (
-								<>
-									<span aria-hidden="true">·</span>
-									<span>{label}</span>
-								</>
-							) : null;
-						})()}
-						{sku.size ? (
-							<>
-								<span aria-hidden="true">·</span>
-								<span>{sku.size}</span>
-							</>
-						) : null}
+						<span aria-hidden="true">·</span>
+						<span className="text-muted-foreground font-mono text-xs tabular-nums">{sku.sku}</span>
 					</ItemDescription>
 				</ItemContent>
 			</Item>
