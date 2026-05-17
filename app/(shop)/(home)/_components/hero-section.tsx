@@ -42,9 +42,9 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 			className="relative flex min-h-[calc(60svh-var(--navbar-height,4rem))] items-center mask-b-from-90% mask-b-to-100% pt-[calc(var(--navbar-height,4rem)+1rem)] pb-10 sm:min-h-[calc(90svh-var(--navbar-height,5rem))] sm:mask-b-from-92% sm:pt-[calc(var(--navbar-height,5rem)+1.5rem)] sm:pb-16 md:pt-[calc(var(--navbar-height,5rem)+3rem)] md:pb-24 lg:min-h-screen max-md:landscape:min-h-[calc(100svh-var(--navbar-height,4rem))]"
 		>
 			{/* Particle background - dynamically imported (decorative) */}
-			<div className="absolute inset-x-0 top-0 bottom-0 -z-10" aria-hidden="true">
+			<div className="absolute inset-0 -z-10" aria-hidden="true">
 				{/* Single instance — component handles responsive internally
-            (desktop: count particles, mobile: ceil(count/2) with reduced blur) */}
+            (desktop: count particles, mobile: ceil(count * mobileCountRatio) with reduced blur) */}
 				<ParticleBackground
 					shape={["heart", "pearl", "drop", "diamond", "circle"]}
 					colors={[
@@ -55,10 +55,11 @@ export function HeroSection({ productsPromise }: { productsPromise: Promise<GetP
 					]}
 					count={10}
 					size={[25, 90]}
-					opacity={[0.5, 0.85]}
-					blur={[4, 12]}
+					opacity={[0.25, 0.55]}
+					blur={[8, 24]}
 					animationStyle="drift"
 					depthParallax={true}
+					mobileCountRatio={0.4}
 				/>
 				<div className="bg-background/10 absolute inset-0" />
 			</div>

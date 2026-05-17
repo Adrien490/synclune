@@ -49,6 +49,7 @@ vi.mock("motion/react", () => {
 
 vi.mock("@/shared/components/animations/motion.config", () => ({
 	MOTION_CONFIG: {
+		duration: { slower: 0.5 },
 		easing: { easeInOut: [0.25, 0.1, 0.25, 1] },
 	},
 }));

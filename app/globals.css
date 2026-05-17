@@ -61,7 +61,7 @@ main#main-content {
 	transform-origin: right center;
 	transition-property: transform;
 	transition-duration: 350ms;
-	transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+	transition-timing-function: var(--ease-spring);
 }
 
 @media (max-width: 1023px) and (prefers-reduced-motion: no-preference) {
@@ -79,8 +79,8 @@ main#main-content {
    ========================================== */
 [data-hide-on-keyboard] {
 	transition:
-		transform 200ms cubic-bezier(0.32, 0.72, 0, 1),
-		opacity 200ms ease-out;
+		transform var(--duration-normal) var(--ease-spring),
+		opacity var(--duration-normal) ease-out;
 }
 html[data-keyboard="open"] [data-hide-on-keyboard] {
 	transform: translateY(100%);
@@ -120,23 +120,6 @@ html[data-keyboard="open"] [data-hide-on-keyboard] {
 	/* Micro-typographie : badges, item-count, sticky bar labels. */
 	--text-2xs: 0.625rem;
 	--text-2xs--line-height: 0.875rem;
-
-	/* ==========================================
-	   FLUID TYPOGRAPHY (clamp-based)
-	   Range: 375px → 1024px viewport
-	   ========================================== */
-	/* 3rem (48px) → 4.5rem (72px) — hero headings */
-	--font-size-fluid-hero: clamp(3rem, 2.13rem + 3.7vw, 4.5rem);
-	--font-size-fluid-hero--line-height: 1.1;
-	/* 1.875rem (30px) → 3rem (48px) — section headings */
-	--font-size-fluid-section: clamp(1.875rem, 1.23rem + 2.77vw, 3rem);
-	--font-size-fluid-section--line-height: 1.2;
-	/* 1.5rem (24px) → 1.875rem (30px) — small section headings */
-	--font-size-fluid-section-sm: clamp(1.5rem, 1.28rem + 0.92vw, 1.875rem);
-	--font-size-fluid-section-sm--line-height: 1.5;
-	/* 1.5rem (24px) → 2.25rem (36px) — page headings */
-	--font-size-fluid-page: clamp(1.5rem, 1.07rem + 1.85vw, 2.25rem);
-	--font-size-fluid-page--line-height: 1.2;
 
 	/* ==========================================
 	   DURÉES D'ANIMATION STANDARDISÉES

@@ -237,6 +237,8 @@ export function StickyActionBar({
 				"border-border/50 border-b",
 				// Compense le padding horizontal du <main> admin pour l'effet full-bleed.
 				"-mx-[var(--admin-main-x,1.5rem)]",
+				// Mount entry — slide-down + fade, motion-safe gated
+				"motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-top-2 motion-safe:duration-300 motion-safe:ease-out",
 				className,
 			)}
 		>

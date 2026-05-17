@@ -4,6 +4,7 @@ import { m, useInView, useReducedMotion } from "motion/react";
 import { useRef } from "react";
 
 import { cn } from "@/shared/utils/cn";
+import { MOTION_CONFIG } from "./motion.config";
 
 export interface HandDrawnAccentProps {
 	/**
@@ -188,12 +189,12 @@ export function HandDrawnAccent({
 					pathLength: {
 						duration,
 						delay,
-						ease: "easeOut",
+						ease: MOTION_CONFIG.easing.easeOut,
 					},
 					fillOpacity: {
 						duration: duration * 0.5,
 						delay: delay + duration * 0.5,
-						ease: "easeIn",
+						ease: MOTION_CONFIG.easing.easeIn,
 					},
 				}}
 			/>

@@ -14,8 +14,8 @@ import {
 	bottomBarActiveItemClass,
 	bottomBarIconClass,
 	bottomBarLabelClass,
-	bottomBarBadgeClass,
 } from "@/shared/components/bottom-bar";
+import { CountBadge } from "@/shared/components/ui/count-badge";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useSheetStore } from "@/shared/providers/sheet-store-provider";
 import { ROUTES } from "@/shared/constants/urls";
@@ -53,6 +53,7 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 	const pathname = usePathname();
 	const cartCount = useBadgeCountsStore((state) => state.cartCount);
 	const wishlistCount = useBadgeCountsStore((state) => state.wishlistCount);
+	const cartBump = useBadgeCountsStore((state) => state.cartBump);
 	const openSheet = useSheetStore((state) => state.open);
 
 	// Delay mount until after hydration to avoid createPortal SSR mismatch.
@@ -120,8 +121,12 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			icon: Heart,
 			isActive: isRouteActive(pathname, ROUTES.ACCOUNT.FAVORITES),
 			type: "link" as const,
-			badge: wishlistCount,
-			badgeAriaLabel: (n: number) => `${n} favori${n > 1 ? "s" : ""}`,
+			badge: {
+				count: wishlistCount,
+				type: "dot" as const,
+				singular: "favori",
+				plural: "favoris",
+			},
 		},
 		{
 			id: "cart",
@@ -130,8 +135,14 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 			icon: ShoppingBag,
 			isActive: false,
 			type: "button" as const,
-			badge: cartCount,
-			badgeAriaLabel: (n: number) => `${n} article${n > 1 ? "s" : ""} dans le panier`,
+			badge: {
+				count: cartCount,
+				type: "count" as const,
+				singular: "article dans le panier",
+				plural: "articles dans le panier",
+				bumpKey: cartBump?.key,
+				bumpDelta: cartBump?.delta,
+			},
 			onClick: () => openSheet("cart"),
 		},
 		{
@@ -156,10 +167,17 @@ export function ShopMobileBottomNav({ isAuthenticated }: ShopMobileBottomNavProp
 					const iconEl = (
 						<span className="relative">
 							<tab.icon className={bottomBarIconClass} aria-hidden="true" />
-							{"badge" in tab && tab.badge != null && tab.badge > 0 && (
-								<span className={bottomBarBadgeClass} aria-label={tab.badgeAriaLabel(tab.badge)}>
-									{tab.badge > 99 ? "99+" : tab.badge}
-								</span>
+							{"badge" in tab && tab.badge && (
+								<CountBadge
+									count={tab.badge.count}
+									size="sm"
+									type={tab.badge.type}
+									singularLabel={tab.badge.singular}
+									pluralLabel={tab.badge.plural}
+									bumpKey={"bumpKey" in tab.badge ? tab.badge.bumpKey : undefined}
+									bumpDelta={"bumpDelta" in tab.badge ? tab.badge.bumpDelta : undefined}
+									silentLiveRegion
+								/>
 							)}
 						</span>
 					);

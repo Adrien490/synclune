@@ -189,7 +189,7 @@ function FieldError({
 		<div
 			data-slot="field-error"
 			className={cn(
-				"grid motion-safe:[transition:grid-template-rows_200ms_ease-out]",
+				"grid motion-safe:[transition:grid-template-rows_var(--duration-normal)_ease-out]",
 				hasError ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
 				className,
 			)}

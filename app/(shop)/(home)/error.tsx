@@ -1,7 +1,7 @@
 "use client";
 
 import { NotFoundContent } from "@/app/_components/not-found-content";
-import { ParticleBackground } from "@/shared/components/animations";
+import { ParticleBackgroundError, RICH_ERROR_SHAPES } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
@@ -20,13 +20,7 @@ export default function HomeError({
 
 	return (
 		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-[60vh] items-center justify-center bg-linear-to-br px-4">
-			<ParticleBackground
-				count={6}
-				shape={["heart", "diamond", "circle"]}
-				animationStyle="drift"
-				opacity={[0.15, 0.35]}
-				blur={[8, 24]}
-			/>
+			<ParticleBackgroundError count={6} shape={RICH_ERROR_SHAPES} />
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={

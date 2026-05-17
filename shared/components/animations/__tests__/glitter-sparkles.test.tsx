@@ -90,33 +90,33 @@ describe("GlitterSparkles", () => {
 		expect(mobileContainer).toBeInTheDocument();
 	});
 
-	it("returns null when disableOnMobile=true and device is touch", () => {
+	it("returns null when disableOnTouch=true and device is touch", () => {
 		mockIsTouchDevice.value = true;
-		const { container } = render(<GlitterSparkles disableOnMobile />);
+		const { container } = render(<GlitterSparkles disableOnTouch />);
 		expect(container.firstChild).toBeNull();
 	});
 
-	it("does not appear in DOM at all when disableOnMobile=true and device is touch", () => {
+	it("does not appear in DOM at all when disableOnTouch=true and device is touch", () => {
 		mockIsTouchDevice.value = true;
-		render(<GlitterSparkles disableOnMobile />);
+		render(<GlitterSparkles disableOnTouch />);
 		expect(screen.queryByTestId("glitter-sparkles")).not.toBeInTheDocument();
 	});
 
-	it("renders normally when disableOnMobile=false and device is touch", () => {
+	it("renders normally when disableOnTouch=false and device is touch", () => {
 		mockIsTouchDevice.value = true;
-		render(<GlitterSparkles disableOnMobile={false} />);
+		render(<GlitterSparkles disableOnTouch={false} />);
 		expect(screen.getByTestId("glitter-sparkles")).toBeInTheDocument();
 	});
 
-	it("renders normally when disableOnMobile=true but device is not touch", () => {
+	it("renders normally when disableOnTouch=true but device is not touch", () => {
 		mockIsTouchDevice.value = false;
-		render(<GlitterSparkles disableOnMobile />);
+		render(<GlitterSparkles disableOnTouch />);
 		expect(screen.getByTestId("glitter-sparkles")).toBeInTheDocument();
 	});
 
-	it("renders normally when disableOnMobile defaults to false on touch device", () => {
+	it("renders normally when disableOnTouch defaults to false on touch device", () => {
 		mockIsTouchDevice.value = true;
-		// disableOnMobile defaults to false — should still render
+		// disableOnTouch defaults to false — should still render
 		render(<GlitterSparkles />);
 		expect(screen.getByTestId("glitter-sparkles")).toBeInTheDocument();
 	});

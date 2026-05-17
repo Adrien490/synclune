@@ -640,6 +640,78 @@ describe("ParticleBackground parallax", () => {
 		vi.mocked(useIsTouchDevice as ReturnType<typeof vi.fn>).mockReturnValue(false);
 	});
 
+	it("does not update cursor MotionValues when interactive=false", () => {
+		const { container } = render(<ParticleBackground count={2} />);
+		const root = container.firstElementChild as HTMLElement;
+
+		// useParticleParallax allocates 4 MotionValues: mouseX, mouseY, cursorX, cursorY
+		const cursorXMv = motionValues[2]!;
+		const cursorYMv = motionValues[3]!;
+		expect(cursorXMv.initial).toBe(0.5);
+		expect(cursorYMv.initial).toBe(0.5);
+
+		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
+			left: 0,
+			top: 0,
+			width: 200,
+			height: 200,
+			right: 200,
+			bottom: 200,
+			x: 0,
+			y: 0,
+			toJSON: () => ({}),
+		} as DOMRect);
+
+		act(() => {
+			window.dispatchEvent(new Event("scroll"));
+		});
+		act(() => {
+			root.dispatchEvent(
+				new MouseEvent("mousemove", { clientX: 150, clientY: 100, bubbles: true }),
+			);
+		});
+
+		// mouseX/mouseY DO update (basic parallax always on desktop)
+		expect(motionValues[0]!.setFn).toHaveBeenCalled();
+
+		// But cursorX/cursorY should stay at their initial 0.5 (no repulsion → no cursor tracking)
+		expect(cursorXMv.value).toBe(0.5);
+		expect(cursorYMv.value).toBe(0.5);
+	});
+
+	it("updates cursor MotionValues when interactive=true on desktop", () => {
+		const { container } = render(<ParticleBackground count={2} interactive />);
+		const root = container.firstElementChild as HTMLElement;
+
+		const cursorXMv = motionValues[2]!;
+		const cursorYMv = motionValues[3]!;
+
+		vi.spyOn(root, "getBoundingClientRect").mockReturnValue({
+			left: 0,
+			top: 0,
+			width: 200,
+			height: 200,
+			right: 200,
+			bottom: 200,
+			x: 0,
+			y: 0,
+			toJSON: () => ({}),
+		} as DOMRect);
+
+		act(() => {
+			window.dispatchEvent(new Event("scroll"));
+		});
+		act(() => {
+			root.dispatchEvent(
+				new MouseEvent("mousemove", { clientX: 150, clientY: 100, bubbles: true }),
+			);
+		});
+
+		// cursorX = 150/200 = 0.75, cursorY = 100/200 = 0.5
+		expect(cursorXMv.setFn).toHaveBeenCalledWith(0.75);
+		expect(cursorYMv.setFn).toHaveBeenCalledWith(0.5);
+	});
+
 	it("marks rect as stale on scroll and refreshes on next mousemove", () => {
 		const { container } = render(<ParticleBackground count={2} />);
 		const root = container.firstElementChild as HTMLElement;

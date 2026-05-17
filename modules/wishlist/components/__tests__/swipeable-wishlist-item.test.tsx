@@ -170,7 +170,9 @@ describe("SwipeableWishlistItem", () => {
 		);
 
 		const slidingContainer = screen.getByTestId("child").parentElement!;
-		expect(slidingContainer).toHaveStyle({ transition: "transform 200ms ease-out" });
+		expect(slidingContainer).toHaveStyle({
+			transition: "transform var(--duration-normal) ease-out",
+		});
 	});
 
 	it("has touch-pan-y class for scroll coexistence", () => {

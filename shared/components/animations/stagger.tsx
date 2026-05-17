@@ -29,6 +29,7 @@ export function Stagger({
 	className,
 	stagger = MOTION_CONFIG.stagger.normal,
 	delay = 0,
+	duration = MOTION_CONFIG.duration.normal,
 	y = 20,
 	inView = false,
 	once = true,
@@ -64,7 +65,7 @@ export function Stagger({
 					opacity: 1,
 					y: 0,
 					transition: {
-						duration: MOTION_CONFIG.duration.normal,
+						duration,
 						ease: MOTION_CONFIG.easing.easeOut,
 					},
 				},

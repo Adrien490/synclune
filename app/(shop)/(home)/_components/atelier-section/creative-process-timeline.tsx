@@ -50,7 +50,7 @@ export function CreativeProcessTimeline() {
 								)}
 							>
 								<StepIllustration stepId={step.id} />
-								{isLast(index) && <GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />}
+								{isLast(index) && <GlitterSparkles count={8} sizeRange={[1, 3]} disableOnTouch />}
 							</div>
 
 							{/* Title + description */}
@@ -110,7 +110,7 @@ export function CreativeProcessTimeline() {
 								<StepIllustration stepId={step.id} />
 								{isLast(index) && (
 									<div className="hidden sm:block">
-										<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnMobile />
+										<GlitterSparkles count={8} sizeRange={[1, 3]} disableOnTouch />
 									</div>
 								)}
 							</div>

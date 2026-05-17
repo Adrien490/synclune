@@ -59,7 +59,7 @@ export function ProductDetails({
 			{/* 1. Prix (Baymard: visible en premier) — wrapper stable aria-live pour que les
 			    lecteurs d'écran annoncent le changement malgré le remount AnimatePresence */}
 			<div aria-live="polite" aria-atomic="false">
-				<AnimatePresence mode="wait">
+				<AnimatePresence mode="popLayout">
 					<m.div
 						key={`price-${currentSku.id || "no-sku"}`}
 						variants={fadeVariants}
@@ -94,7 +94,7 @@ export function ProductDetails({
 
 			{/* 5. Caractéristiques principales — wrapper stable aria-live */}
 			<div aria-live="polite" aria-atomic="false">
-				<AnimatePresence mode="wait">
+				<AnimatePresence mode="popLayout">
 					<m.div
 						key={`chars-${currentSku.id || "no-sku"}`}
 						variants={fadeVariants}

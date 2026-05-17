@@ -52,7 +52,10 @@ export function SplitText({ children, stagger = 0.08, className }: SplitTextProp
 					transition={
 						prefersReducedMotion
 							? { duration: 0 }
-							: { duration: 0.5, ease: MOTION_CONFIG.easing.easeInOut }
+							: {
+									duration: MOTION_CONFIG.duration.slower,
+									ease: MOTION_CONFIG.easing.easeInOut,
+								}
 					}
 					className="inline-block"
 					aria-hidden="true"

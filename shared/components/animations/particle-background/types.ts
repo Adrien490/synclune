@@ -41,7 +41,7 @@ export interface ParticleBackgroundProps {
 	 */
 	blur?: number | [number, number];
 	/** Forme(s) des particules - une forme ou un tableau pour mixer (défaut: "circle") */
-	shape?: ParticleShape | ParticleShape[];
+	shape?: ParticleShape | readonly ParticleShape[];
 	/** Classes additionnelles */
 	className?: string;
 	/** Style d'animation (défaut: "float") */

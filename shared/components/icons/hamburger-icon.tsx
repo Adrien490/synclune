@@ -26,7 +26,7 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
 			/>
 			{/* Middle bar → fades out */}
 			<line
@@ -37,7 +37,7 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				className="motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+				className="motion-safe:transition-opacity motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
 				opacity={isOpen ? 0 : 1}
 			/>
 			{/* Bottom bar → bottom-left to top-right diagonal */}
@@ -49,7 +49,7 @@ export function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
 				stroke="currentColor"
 				strokeWidth="1.5"
 				strokeLinecap="round"
-				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+				className="motion-safe:transition-all motion-safe:duration-300 motion-safe:ease-[var(--ease-premium)]"
 			/>
 		</svg>
 	);

@@ -28,6 +28,7 @@ vi.mock("@/app/_components/not-found-content", () => ({
 vi.mock("@/shared/components/animations", () => ({
 	ParticleBackground: () => null,
 	ParticleBackgroundError: () => null,
+	RICH_ERROR_SHAPES: ["heart", "diamond", "circle"] as const,
 }));
 
 vi.mock("next/link", () => ({

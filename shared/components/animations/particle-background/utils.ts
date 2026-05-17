@@ -26,7 +26,7 @@ export function generateParticles(
 	colors: string[],
 	blur: number | [number, number],
 	depthParallax: boolean,
-	shapes: ParticleShape[] = ["circle"],
+	shapes: readonly ParticleShape[] = ["circle"],
 	baseDuration: number = DEFAULT_DURATION,
 ): Particle[] {
 	// Normalize tuples so min <= max

@@ -338,7 +338,7 @@
 	}
 
 	.animate-glitter-twinkle {
-		animation: glitter-twinkle var(--sparkle-duration, 3s) cubic-bezier(0.25, 0.1, 0.25, 1)
+		animation: glitter-twinkle var(--sparkle-duration, 3s) var(--ease-premium)
 			var(--sparkle-delay, 0s) infinite;
 		will-change: transform, opacity;
 	}

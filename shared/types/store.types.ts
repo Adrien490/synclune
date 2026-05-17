@@ -131,9 +131,22 @@ export type CookieConsentStore = CookieConsentState & CookieConsentActions;
 // BADGE COUNTS STORE TYPES
 // =============================================================================
 
+/**
+ * Bump descriptor — pulse temporaire publié à chaque mutation optimistic.
+ * `key` est un timestamp/séquence qui change à chaque mutation pour forcer
+ * le remount des animations consumer-side ; `delta` est utilisé par le flash
+ * "+N" qui flotte au-dessus du badge.
+ */
+export interface BadgeBump {
+	delta: number;
+	key: number;
+}
+
 interface BadgeCountsState {
 	wishlistCount: number;
 	cartCount: number;
+	wishlistBump: BadgeBump | null;
+	cartBump: BadgeBump | null;
 }
 
 interface BadgeCountsActions {

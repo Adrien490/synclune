@@ -247,7 +247,7 @@ export function QuickSearchDialog({
 				aria-busy={isPending}
 				style={{
 					transform: dragOffset !== 0 ? `translateY(${dragOffset}px)` : undefined,
-					transition: isDragging ? "none" : "transform 200ms cubic-bezier(0.32, 0.72, 0, 1)",
+					transition: isDragging ? "none" : "transform var(--duration-normal) var(--ease-spring)",
 				}}
 				className={cn(
 					"group/search",

@@ -1,5 +1,5 @@
 import { NotFoundContent } from "@/app/_components/not-found-content";
-import { ParticleBackgroundError } from "@/shared/components/animations";
+import { ParticleBackgroundError, RICH_ERROR_SHAPES } from "@/shared/components/animations";
 import { Button } from "@/shared/components/ui/button";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default function NotFound() {
 	return (
 		<main className="from-background via-primary/5 to-secondary/10 relative flex min-h-screen items-center justify-center bg-linear-to-br px-4">
-			<ParticleBackgroundError count={8} shape={["heart", "diamond", "circle"]} />
+			<ParticleBackgroundError count={8} shape={RICH_ERROR_SHAPES} />
 			<div className="relative z-10 mx-auto max-w-2xl space-y-8 text-center">
 				<NotFoundContent
 					emoji={

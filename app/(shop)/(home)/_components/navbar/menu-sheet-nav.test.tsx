@@ -23,11 +23,11 @@ vi.mock("@/shared/components/ui/sheet", () => ({
 	SheetClose: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
-// Mock Badge
-vi.mock("@/shared/components/ui/badge", () => ({
-	Badge: ({ children }: { children: React.ReactNode }) => (
-		<span data-testid="badge">{children}</span>
-	),
+// Mock CountBadge — favorites link uses the SSOT CountBadge with type="count"
+// and variant="inline" in the menu sheet flow.
+vi.mock("@/shared/components/ui/count-badge", () => ({
+	CountBadge: ({ count }: { count: number }) =>
+		count > 0 ? <span data-testid="count-badge">{count}</span> : null,
 }));
 
 // Mock LogoutAlertDialog
@@ -208,7 +208,7 @@ describe("MenuSheetNav", () => {
 				/>,
 			);
 
-			const badge = screen.getByTestId("badge");
+			const badge = screen.getByTestId("count-badge");
 			expect(badge.textContent).toBe("2");
 		});
 

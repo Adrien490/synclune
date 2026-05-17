@@ -167,8 +167,8 @@ export function PullToRefresh() {
 			style={{
 				transform: `translate3d(-50%, ${translateY}px, 0)`,
 				transition: prefersReducedMotion
-					? "opacity 150ms ease"
-					: "transform 200ms cubic-bezier(0.22, 1, 0.36, 1), opacity 150ms ease",
+					? "opacity var(--duration-fast) ease"
+					: "transform var(--duration-normal) var(--ease-smooth-out), opacity var(--duration-fast) ease",
 			}}
 		>
 			<div

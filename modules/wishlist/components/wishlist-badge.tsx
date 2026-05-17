@@ -1,24 +1,20 @@
 "use client";
 
-import { ItemCountBadge } from "@/shared/components/ui/item-count-badge";
+import { CountBadge } from "@/shared/components/ui/count-badge";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 
 /**
- * Badge wishlist - Client Component avec optimistic UI
+ * Badge wishlist — Client Component avec optimistic UI.
  *
- * Lit le count depuis le store Zustand pour affichage instantané.
- * Le store est hydraté par BadgeCountsStoreProvider avec la valeur serveur,
- * puis mis à jour de façon optimistic par useWishlistToggle.
+ * Variant `dot` (point coloré sans nombre) volontaire : le nombre exact de
+ * favoris est moins actionable que le panier ; un point réduit la charge
+ * cognitive et différencie visuellement les deux icônes côte à côte dans le
+ * header. Le compteur reste annoncé aux lecteurs d'écran via la live region.
  */
 export function WishlistBadge() {
 	const count = useBadgeCountsStore((state) => state.wishlistCount);
 
 	return (
-		<ItemCountBadge
-			count={count}
-			singularLabel="article dans votre wishlist"
-			pluralLabel="articles dans votre wishlist"
-			size="sm"
-		/>
+		<CountBadge count={count} size="sm" type="dot" singularLabel="favori" pluralLabel="favoris" />
 	);
 }

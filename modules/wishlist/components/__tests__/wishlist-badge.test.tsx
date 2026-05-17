@@ -5,41 +5,42 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // HOISTED MOCKS
 // ============================================================================
 
-const { mockWishlistCount } = vi.hoisted(() => ({
-	mockWishlistCount: { value: 0 },
+const { mockState } = vi.hoisted(() => ({
+	mockState: {
+		wishlistCount: 0,
+	},
 }));
 
 // ============================================================================
-// MODULE MOCKS
+// MODULE MOCKS — mock CountBadge to spy on the props passed by the wrapper.
+// CountBadge internals are covered by its own test suite.
 // ============================================================================
 
 vi.mock("@/shared/stores/badge-counts-store", () => ({
-	useBadgeCountsStore: vi.fn((selector: (state: { wishlistCount: number }) => unknown) =>
-		selector({ wishlistCount: mockWishlistCount.value }),
+	useBadgeCountsStore: vi.fn((selector: (state: typeof mockState) => unknown) =>
+		selector(mockState),
 	),
 }));
 
-vi.mock("@/shared/components/ui/item-count-badge", () => ({
-	ItemCountBadge: ({
-		count,
-		singularLabel,
-		pluralLabel,
-	}: {
+vi.mock("@/shared/components/ui/count-badge", () => ({
+	CountBadge: (props: {
 		count: number;
+		size?: string;
+		type?: string;
+		variant?: string;
 		singularLabel: string;
 		pluralLabel: string;
-		size?: string;
-	}) => {
-		if (!count || count <= 0) return null;
-		return (
-			<div data-testid="item-count-badge">
-				<span aria-live="polite" aria-atomic="true" className="sr-only">
-					{count === 1 ? `1 ${singularLabel}` : `${count} ${pluralLabel}`}
-				</span>
-				<span data-testid="badge-count">{count > 99 ? "99+" : count}</span>
-			</div>
-		);
-	},
+	}) => (
+		<div
+			data-testid="count-badge"
+			data-count={props.count}
+			data-size={props.size}
+			data-type={props.type ?? "count"}
+			data-variant={props.variant ?? "raised"}
+			data-singular={props.singularLabel}
+			data-plural={props.pluralLabel}
+		/>
+	),
 }));
 
 // ============================================================================
@@ -48,14 +49,10 @@ vi.mock("@/shared/components/ui/item-count-badge", () => ({
 
 import { WishlistBadge } from "../wishlist-badge";
 
-// ============================================================================
-// HELPERS
-// ============================================================================
-
 afterEach(() => {
 	cleanup();
 	vi.clearAllMocks();
-	mockWishlistCount.value = 0;
+	mockState.wishlistCount = 0;
 });
 
 // ============================================================================
@@ -63,45 +60,39 @@ afterEach(() => {
 // ============================================================================
 
 describe("WishlistBadge", () => {
-	it("renders nothing when wishlist count is zero", () => {
-		mockWishlistCount.value = 0;
-		const { container } = render(<WishlistBadge />);
-		expect(container.firstChild).toBeNull();
-	});
-
-	it("renders the badge when wishlist count is positive", () => {
-		mockWishlistCount.value = 2;
+	it("forwards the wishlist count to CountBadge", () => {
+		mockState.wishlistCount = 7;
 		render(<WishlistBadge />);
-		expect(screen.getByTestId("item-count-badge")).toBeInTheDocument();
+		const badge = screen.getByTestId("count-badge");
+		expect(badge.dataset["count"]).toBe("7");
 	});
 
-	it("displays the correct count", () => {
-		mockWishlistCount.value = 7;
+	it("uses type=dot to reduce cognitive load alongside the cart counter", () => {
+		mockState.wishlistCount = 3;
 		render(<WishlistBadge />);
-		expect(screen.getByTestId("badge-count").textContent).toBe("7");
+		const badge = screen.getByTestId("count-badge");
+		expect(badge.dataset["type"]).toBe("dot");
 	});
 
-	it("caps display at 99+ when count exceeds 99", () => {
-		mockWishlistCount.value = 120;
+	it("uses size=sm for the wishlist dot", () => {
+		mockState.wishlistCount = 1;
 		render(<WishlistBadge />);
-		expect(screen.getByTestId("badge-count").textContent).toBe("99+");
+		const badge = screen.getByTestId("count-badge");
+		expect(badge.dataset["size"]).toBe("sm");
 	});
 
-	it("provides accessible aria-live announcement for singular count", () => {
-		mockWishlistCount.value = 1;
+	it("passes French singular/plural labels (favori/favoris)", () => {
+		mockState.wishlistCount = 1;
 		render(<WishlistBadge />);
-		expect(screen.getByText("1 article dans votre wishlist")).toBeInTheDocument();
+		const badge = screen.getByTestId("count-badge");
+		expect(badge.dataset["singular"]).toBe("favori");
+		expect(badge.dataset["plural"]).toBe("favoris");
 	});
 
-	it("provides accessible aria-live announcement for plural count", () => {
-		mockWishlistCount.value = 3;
+	it("renders even at count 0 (CountBadge owns hide-on-empty logic)", () => {
+		mockState.wishlistCount = 0;
 		render(<WishlistBadge />);
-		expect(screen.getByText("3 articles dans votre wishlist")).toBeInTheDocument();
-	});
-
-	it("renders nothing for a negative count", () => {
-		mockWishlistCount.value = -1;
-		const { container } = render(<WishlistBadge />);
-		expect(container.firstChild).toBeNull();
+		const badge = screen.getByTestId("count-badge");
+		expect(badge.dataset["count"]).toBe("0");
 	});
 });

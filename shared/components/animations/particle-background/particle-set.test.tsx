@@ -400,6 +400,46 @@ describe("repulsion", () => {
 		// Same magnitude for symmetric positions
 		expect(Math.abs(x)).toBeCloseTo(Math.abs(y), 5);
 	});
+
+	it("combines repulsion + scrollParallax additively on Y axis", () => {
+		const p = makeParticle({ x: 50, y: 50, depthFactor: 0 }); // strength = 1
+		const { combinedY } = renderAnimatedParticle(p, {
+			interactive: true,
+			scrollParallax: true,
+		});
+
+		// Cursor at (0.5, 0.4): dy = 0.5 - 0.4 = 0.1, dist=0.1 < 0.15 → repulsion pushes down (+Y)
+		// scrollYProgress=1 → scroll offset = (1 - 0.5) * 2 * 40 * 1 = 40
+		const y = combinedY([0, 1, 0.5, 0.4]);
+		// repulsion = (0.1/0.1) * (1 - 0.1/0.15)² * 30 = (1/9) * 30 ≈ 3.333
+		// scroll = 40, total ≈ 43.333
+		expect(y).toBeCloseTo(40 + REPULSION_STRENGTH / 9, 5);
+	});
+
+	it("applies no repulsion when repulsionRadius=0", () => {
+		transformFns = [];
+		render(
+			<ParticleSet
+				particles={[makeParticle({ x: 50, y: 50, depthFactor: 0 })]}
+				isInView={true}
+				reducedMotion={false}
+				animationStyle="float"
+				mouseX={makeMv(0)}
+				mouseY={makeMv(0)}
+				scrollYProgress={makeMv(0)}
+				cursorX={makeMv(0.4)}
+				cursorY={makeMv(0.5)}
+				interactive={true}
+				repulsionRadius={0}
+			/>,
+		);
+
+		const combinedX = transformFns.find((t) => t.inputCount === 3)!.fn;
+		// Cursor at (0.4, 0.5): dist=0.1, but radius=0 → dist <= radius is false → no offset
+		const x = combinedX([0, 0.4, 0.5]);
+		expect(x).toBeCloseTo(0, 10);
+		expect(Number.isFinite(x)).toBe(true);
+	});
 });
 
 // ─── AnimatedParticle: mouse parallax depth scaling ──────────────────

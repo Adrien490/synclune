@@ -113,7 +113,10 @@ export function AnnouncementBar({ message, link, endsAt, hash }: AnnouncementBar
 									transform: `translateY(${swipeOffset}px)`,
 									opacity: Math.max(0, 1 + swipeOffset / SWIPE_DISMISS_THRESHOLD),
 									...(!isSwiping && !prefersReducedMotion
-										? { transition: "transform 150ms ease-out, opacity 150ms ease-out" }
+										? {
+												transition:
+													"transform var(--duration-fast) ease-out, opacity var(--duration-fast) ease-out",
+											}
 										: {}),
 								}
 							: {}),

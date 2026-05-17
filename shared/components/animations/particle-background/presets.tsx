@@ -1,5 +1,12 @@
 import { ParticleBackground } from "./particle-background";
-import type { ParticleBackgroundProps } from "./types";
+import type { ParticleBackgroundProps, ParticleShape } from "./types";
+
+/** Triplet de formes utilise sur les pages d'erreur "riches" (404 racine + shop error). */
+export const RICH_ERROR_SHAPES = [
+	"heart",
+	"diamond",
+	"circle",
+] as const satisfies readonly ParticleShape[];
 
 /** Props acceptees par ParticleBackgroundError : tout sauf les tokens visuels verrouilles par le preset. */
 type ParticleBackgroundErrorProps = Omit<

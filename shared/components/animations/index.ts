@@ -16,4 +16,8 @@ export { SplitTextCSS } from "./split-text-css";
 
 export { HandDrawnAccent, HandDrawnUnderline } from "./hand-drawn-accent";
 
-export { ParticleBackground, ParticleBackgroundError } from "./particle-background/index";
+export {
+	ParticleBackground,
+	ParticleBackgroundError,
+	RICH_ERROR_SHAPES,
+} from "./particle-background/index";

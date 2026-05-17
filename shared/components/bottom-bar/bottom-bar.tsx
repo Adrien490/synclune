@@ -43,15 +43,15 @@ export const bottomBarIconClass = "size-5";
 export const bottomBarLabelClass = "text-xs font-medium truncate max-w-full";
 
 /**
- * Badge class for count indicators on bottom-bar items
- * (e.g. cart count, unread notifications).
+ * Alert-style badge class for **destructive-tone** indicators on bottom-bar items
+ * (e.g. admin "orders pending" alert that requires action).
  *
- * Positioned absolutely over the icon's top-right corner.
- * Includes a background-colored outline to stay visible in forced-colors /
- * prefers-contrast: more modes.
+ * For neutral counters (cart, wishlist) prefer `<CountBadge>` from
+ * `shared/components/ui/count-badge` which uses the brand `bg-primary` and
+ * supports dot/inline variants + flash "+N" + AnimatePresence exit.
  *
- * Usage:
- *   <span className={bottomBarBadgeClass} aria-live="polite">{count}</span>
+ * Positioned absolutely over the icon's top-right corner. Includes a
+ * background-colored outline to stay visible in forced-colors / prefers-contrast.
  */
 export const bottomBarBadgeClass = cn(
 	"absolute -top-1 -right-1",
@@ -174,7 +174,9 @@ interface BottomBarProps {
  *   minimal footprint indicator.
  * - For iOS/Android-native feel, call `triggerHaptic("selection")` from
  *   `@/shared/hooks/use-haptic` on tab click.
- * - Use {@link bottomBarBadgeClass} for count badges on icon items.
+ * - Use `<CountBadge>` (shared/components/ui/count-badge) for neutral counters
+ *   on icon items; use {@link bottomBarBadgeClass} only for destructive-tone
+ *   alerts that demand action (e.g. admin orders pending).
  */
 export function BottomBar({
 	children,

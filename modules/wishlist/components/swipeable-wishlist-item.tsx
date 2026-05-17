@@ -93,7 +93,7 @@ export function SwipeableWishlistItem({ productId, children }: SwipeableWishlist
 			<div
 				style={{
 					transform: `translateX(${swipeOffset}px)`,
-					transition: isSwiping ? "none" : "transform 200ms ease-out",
+					transition: isSwiping ? "none" : "transform var(--duration-normal) ease-out",
 				}}
 			>
 				{children}

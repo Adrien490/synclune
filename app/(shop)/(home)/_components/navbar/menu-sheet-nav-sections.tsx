@@ -2,7 +2,7 @@
 
 import type { CollectionImage } from "@/modules/collections/types/collection.types";
 import type { NavbarSessionData } from "@/shared/types/session.types";
-import { Badge } from "@/shared/components/ui/badge";
+import { CountBadge } from "@/shared/components/ui/count-badge";
 import { SheetClose } from "@/shared/components/ui/sheet";
 import { MAX_COLLECTIONS_IN_MENU } from "@/shared/constants/navigation";
 import { ROUTES } from "@/shared/constants/urls";
@@ -318,11 +318,15 @@ export function AccountSection({
 						className="justify-between"
 					>
 						{favoritesItem.label}
-						{wishlistCount > 0 && (
-							<Badge variant="secondary" className="px-1.5 py-0 text-xs">
-								{wishlistCount}
-							</Badge>
-						)}
+						<CountBadge
+							count={wishlistCount}
+							size="sm"
+							variant="inline"
+							positionClassName="inline-flex"
+							singularLabel="favori"
+							pluralLabel="favoris"
+							silentLiveRegion
+						/>
 					</NavLink>
 				)}
 

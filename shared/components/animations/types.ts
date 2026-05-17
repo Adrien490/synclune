@@ -16,24 +16,6 @@ export interface FadeProps {
 }
 
 /**
- * Props for Slide component
- */
-export interface SlideProps {
-	children: ReactNode;
-	className?: string;
-	direction?: SlideDirection;
-	distance?: number;
-	delay?: number;
-	duration?: number;
-	/** Active animation au scroll avec whileInView */
-	inView?: boolean;
-	/** N'anime qu'une fois au scroll (défaut: true si inView) */
-	once?: boolean;
-	/** Désactiver l'animation sur appareils tactiles (mobile/tablette) pour performance */
-	disableOnTouch?: boolean;
-}
-
-/**
  * Props for Reveal component (whileInView)
  */
 export interface RevealProps {
@@ -59,6 +41,8 @@ export interface StaggerProps {
 	className?: string;
 	stagger?: number;
 	delay?: number;
+	/** Durée d'animation pour chaque enfant en secondes (défaut: normal) */
+	duration?: number;
 	y?: number;
 	/** Enable scroll-triggered animation with whileInView */
 	inView?: boolean;
@@ -72,11 +56,6 @@ export interface StaggerProps {
 	/** Data attributes (e.g., data-carousel-scroll) */
 	[key: `data-${string}`]: string | undefined;
 }
-
-/**
- * Direction type for slide animations
- */
-type SlideDirection = "up" | "down" | "left" | "right";
 
 /**
  * Viewport amount type for reveal animations

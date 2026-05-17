@@ -21,7 +21,7 @@ interface GlitterSparklesProps {
 	/** Intensité de l'effet glow (0-1, défaut: 0.8) */
 	glowIntensity?: number;
 	/** Désactiver complètement sur appareils tactiles (mobile/tablette) pour performance */
-	disableOnMobile?: boolean;
+	disableOnTouch?: boolean;
 }
 
 // ============================================================================
@@ -151,7 +151,7 @@ const GlitterSparklesBase = ({
 	count,
 	sizeRange = [DEFAULT_CONFIG.SIZE_MIN, DEFAULT_CONFIG.SIZE_MAX],
 	glowIntensity = 0.8,
-	disableOnMobile = false,
+	disableOnTouch = false,
 }: GlitterSparklesProps) => {
 	const containerRef = useRef<HTMLDivElement>(null);
 	const isTouchDevice = useIsTouchDevice();
@@ -167,7 +167,7 @@ const GlitterSparklesBase = ({
 	}
 
 	// Désactiver sur mobile/tactile pour améliorer les performances (INP/TBT)
-	if (disableOnMobile && isTouchDevice) {
+	if (disableOnTouch && isTouchDevice) {
 		return null;
 	}
 
@@ -214,7 +214,7 @@ const GlitterSparklesBase = ({
  * - 25 particules desktop, 12 sur mobile
  * - Respecte prefers-reduced-motion (via JS useReducedMotion + CSS fallback)
  * - Couleurs liées au thème via CSS variables
- * - Option disableOnMobile pour performances sur appareils tactiles
+ * - Option disableOnTouch pour performances sur appareils tactiles
  * - Animations CSS compositor-only (zéro repaint, auto-pause hors onglet)
  * - Démontage hors viewport via useInView (once: false)
  *
@@ -222,7 +222,7 @@ const GlitterSparklesBase = ({
  * ```tsx
  * <GlitterSparkles />
  * <GlitterSparkles count={30} sizeRange={[3, 8]} glowIntensity={1} />
- * <GlitterSparkles disableOnMobile /> // Améliore INP/TBT sur mobile
+ * <GlitterSparkles disableOnTouch /> // Améliore INP/TBT sur mobile
  * ```
  */
 export { GlitterSparklesBase as GlitterSparkles };
