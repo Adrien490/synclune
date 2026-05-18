@@ -153,45 +153,43 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 				: null;
 		lastProductIdRef.current = productId;
 
-		// Utilise la ref pour lire l'état actuel (évite closure stale)
-		const currentState = isInWishlistRef.current;
-		const newState = !currentState;
-
-		// Side effects synchrones HORS transition : urgent priority pour rendu immédiat.
-		// Placés dans startTransition, setHearts (dans le listener FlyHeartToBadgeLayer)
-		// serait flaggé transition update et batché avec la transition du formAction,
-		// retardant l'animation jusqu'à la réponse serveur.
-		triggerHaptic(newState ? "medium" : "light");
-
-		if (newState) {
-			incrementWishlist();
-
-			// Signature visuelle Synclune : mini-heart vole du bouton vers WishlistBadge.
-			// Le layer global FlyHeartToBadgeLayer écoute cet event. No-op si pas monté
-			// ou si prefers-reduced-motion (géré par le layer).
-			const triggerRect = getTriggerRect?.();
-			if (triggerRect && typeof window !== "undefined") {
-				const detail: FlyHeartEventDetail = {
-					fromRect: {
-						top: triggerRect.top,
-						left: triggerRect.left,
-						width: triggerRect.width,
-						height: triggerRect.height,
-					},
-				};
-				window.dispatchEvent(new CustomEvent(FLY_HEART_EVENT, { detail }));
-			}
-		} else {
-			decrementWishlist();
-			// Notifier la liste parente pour suppression visuelle immédiate
-			if (productId && wishlistListOptimistic) {
-				wishlistListOptimistic.onItemRemoved(productId);
-			}
-		}
-
 		startTransition(() => {
-			// setOptimistic requiert un contexte transition (React 19).
+			// Utilise la ref pour lire l'état actuel (évite closure stale)
+			const currentState = isInWishlistRef.current;
+			const newState = !currentState;
+
+			triggerHaptic(newState ? "medium" : "light");
+
+			// Mise à jour optimistic de l'icône coeur
 			setOptimisticIsInWishlist(newState);
+
+			// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
+			if (newState) {
+				incrementWishlist();
+
+				// Signature visuelle Synclune : mini-heart vole du bouton vers WishlistBadge.
+				// Le layer global FlyHeartToBadgeLayer écoute cet event. No-op si pas monté
+				// ou si prefers-reduced-motion (géré par le layer).
+				const triggerRect = getTriggerRect?.();
+				if (triggerRect && typeof window !== "undefined") {
+					const detail: FlyHeartEventDetail = {
+						fromRect: {
+							top: triggerRect.top,
+							left: triggerRect.left,
+							width: triggerRect.width,
+							height: triggerRect.height,
+						},
+					};
+					window.dispatchEvent(new CustomEvent(FLY_HEART_EVENT, { detail }));
+				}
+			} else {
+				decrementWishlist();
+				// Notifier la liste parente pour suppression visuelle immédiate
+				if (productId && wishlistListOptimistic) {
+					wishlistListOptimistic.onItemRemoved(productId);
+				}
+			}
+
 			formAction(formData);
 		});
 	};
