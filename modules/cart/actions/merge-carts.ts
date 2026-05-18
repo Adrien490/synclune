@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { handleActionError } from "@/shared/lib/actions";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { ActionStatus } from "@/shared/types/server-action";
@@ -164,52 +165,55 @@ export async function mergeCarts(userId: string, sessionId: string): Promise<Mer
 		let mergedCount = 0;
 		let conflictCount = 0;
 
-		await prisma.$transaction(async (tx) => {
-			for (const guestItem of guestCart.items) {
-				// Skip inactive products or items truncated by MAX_CART_ITEMS
-				if (
-					!guestItem.sku.isActive ||
-					guestItem.sku.product.status !== "PUBLIC" ||
-					!validatedSkuIds.has(guestItem.skuId)
-				) {
-					continue;
+		await prisma.$transaction(
+			async (tx) => {
+				for (const guestItem of guestCart.items) {
+					// Skip inactive products or items truncated by MAX_CART_ITEMS
+					if (
+						!guestItem.sku.isActive ||
+						guestItem.sku.product.status !== "PUBLIC" ||
+						!validatedSkuIds.has(guestItem.skuId)
+					) {
+						continue;
+					}
+
+					const validation = validationResults.get(guestItem.skuId);
+					if (!validation?.isValid) {
+						continue; // Stock insuffisant ou SKU invalide
+					}
+
+					const existingItem = userItemsMap.get(guestItem.skuId);
+
+					if (existingItem) {
+						// Stratégie MAX : garde la quantité la plus élevée
+						const maxQuantity = Math.max(existingItem.quantity, guestItem.quantity);
+
+						await tx.cartItem.update({
+							where: { id: existingItem.id },
+							data: { quantity: maxQuantity },
+						});
+						conflictCount++;
+					} else {
+						// Pas de conflit : ajouter directement
+						await tx.cartItem.create({
+							data: {
+								cartId: targetCart.id,
+								skuId: guestItem.skuId,
+								quantity: guestItem.quantity,
+								// Trade-off: priceAtAdd comes from a cached read (up to 5min stale).
+								// Acceptable because checkout final re-validates all prices.
+								priceAtAdd: guestItem.priceAtAdd,
+							},
+						});
+						mergedCount++;
+					}
 				}
 
-				const validation = validationResults.get(guestItem.skuId);
-				if (!validation?.isValid) {
-					continue; // Stock insuffisant ou SKU invalide
-				}
-
-				const existingItem = userItemsMap.get(guestItem.skuId);
-
-				if (existingItem) {
-					// Stratégie MAX : garde la quantité la plus élevée
-					const maxQuantity = Math.max(existingItem.quantity, guestItem.quantity);
-
-					await tx.cartItem.update({
-						where: { id: existingItem.id },
-						data: { quantity: maxQuantity },
-					});
-					conflictCount++;
-				} else {
-					// Pas de conflit : ajouter directement
-					await tx.cartItem.create({
-						data: {
-							cartId: targetCart.id,
-							skuId: guestItem.skuId,
-							quantity: guestItem.quantity,
-							// Trade-off: priceAtAdd comes from a cached read (up to 5min stale).
-							// Acceptable because checkout final re-validates all prices.
-							priceAtAdd: guestItem.priceAtAdd,
-						},
-					});
-					mergedCount++;
-				}
-			}
-
-			// 6. Supprimer le panier visiteur (dans la même transaction)
-			await tx.cart.delete({ where: { id: guestCart.id } });
-		});
+				// 6. Supprimer le panier visiteur (dans la même transaction)
+				await tx.cart.delete({ where: { id: guestCart.id } });
+			},
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		// 7. Invalider les caches
 		const guestTags = getCartInvalidationTags(undefined, sessionId);

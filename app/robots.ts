@@ -25,9 +25,6 @@ export default function robots(): MetadataRoute.Robots {
 					"/reinitialiser-mot-de-passe",
 					"/renvoyer-verification",
 					"/paiement/",
-					// SEO: Bloquer les URLs avec query strings (filtres)
-					"/produits?",
-					"/collections?",
 				],
 			},
 		],

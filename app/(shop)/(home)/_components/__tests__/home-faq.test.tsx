@@ -204,11 +204,11 @@ describe("HomeFaq", () => {
 		expect(items).toHaveLength(6);
 		expect(items.map((i) => i.getAttribute("data-value"))).toEqual([
 			"fait-main",
-			"delai",
 			"entretien",
-			"personnalisation",
-			"retours",
 			"editions-limitees",
+			"delai",
+			"retours",
+			"personnalisation",
 		]);
 
 		const triggers = screen.getAllByTestId("accordion-trigger");

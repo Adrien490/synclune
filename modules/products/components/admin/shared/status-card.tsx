@@ -14,7 +14,7 @@ type RadioOption = { value: string; label: string };
  * pour les variantes (admin SKU form).
  */
 export interface StatusCardProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit SKU). Union typing would create generic explosion; caller is responsible for field name validity.
 	form: any;
 
 	/** Titre de la card (default "Statut"). */

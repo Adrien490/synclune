@@ -31,7 +31,7 @@ export default function GlobalError({
 							Une erreur critique est survenue
 						</h1>
 						<p className="text-muted-foreground text-lg md:text-xl">
-							L&apos;application a rencontre un probleme inattendu. L&apos;erreur a ete signalee
+							L&apos;application a rencontré un problème inattendu. L&apos;erreur a été signalée
 							automatiquement.
 						</p>
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
@@ -40,14 +40,14 @@ export default function GlobalError({
 								onClick={reset}
 								className="bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring inline-flex h-11 items-center justify-center rounded-md px-8 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 							>
-								Reessayer
+								Réessayer
 							</button>
 							{/* eslint-disable-next-line @next/next/no-html-link-for-pages -- global-error renders outside the Next router context */}
 							<a
 								href="/"
 								className="border-input bg-background hover:bg-accent hover:text-accent-foreground focus-visible:ring-ring inline-flex h-11 items-center justify-center rounded-md border px-8 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
 							>
-								Retour a l&apos;accueil
+								Retour à l&apos;accueil
 							</a>
 						</div>
 					</div>

@@ -9,72 +9,8 @@ import { type MetadataRoute } from "next";
  * Inclut toutes les pages importantes du site : pages statiques, produits, collections, types
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-	// Fixed date for static pages — only update when content actually changes
-	const staticLastModified = new Date(process.env.DEPLOY_DATE ?? "2026-03-01");
-
-	// Pages statiques avec leurs priorités et fréquences de mise à jour
-	const staticPages: MetadataRoute.Sitemap = [
-		{
-			url: SITE_URL,
-			lastModified: staticLastModified,
-			changeFrequency: "weekly",
-			priority: 1.0,
-		},
-		{
-			url: `${SITE_URL}/produits`,
-			lastModified: staticLastModified,
-			changeFrequency: "daily",
-			priority: 0.9,
-		},
-		{
-			url: `${SITE_URL}/collections`,
-			lastModified: staticLastModified,
-			changeFrequency: "weekly",
-			priority: 0.8,
-		},
-		{
-			url: `${SITE_URL}/cgv`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-		{
-			url: `${SITE_URL}/confidentialite`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-		{
-			url: `${SITE_URL}/mentions-legales`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-		{
-			url: `${SITE_URL}/informations-legales`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-		{
-			url: `${SITE_URL}/accessibilite`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-		{
-			url: `${SITE_URL}/cookies`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-		{
-			url: `${SITE_URL}/retractation`,
-			lastModified: staticLastModified,
-			changeFrequency: "monthly",
-			priority: 0.3,
-		},
-	];
+	// Date figée pour pages légales (rarement modifiées)
+	const legalLastModified = new Date(process.env.DEPLOY_DATE ?? "2026-03-01");
 
 	// Récupérer tous les produits publics (pagination pour respecter la limite de 200)
 	const allProducts: Array<{ slug: string; updatedAt: Date }> = [];
@@ -137,6 +73,92 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 		changeFrequency: "daily",
 		priority: 0.8,
 	}));
+
+	// lastModified dynamique pour pages-index (home, /produits, /collections) :
+	// signale à Google une re-indexation quand le catalogue change réellement.
+	const latestProductUpdate = allProducts.reduce(
+		(max, p) => (p.updatedAt > max ? p.updatedAt : max),
+		new Date(0),
+	);
+	const latestCollectionUpdate = allCollections.reduce(
+		(max, c) => (c.updatedAt > max ? c.updatedAt : max),
+		new Date(0),
+	);
+	const homeLastModified =
+		latestProductUpdate.getTime() > latestCollectionUpdate.getTime()
+			? latestProductUpdate
+			: latestCollectionUpdate;
+	const fallbackLastModified = homeLastModified.getTime() === 0 ? legalLastModified : null;
+
+	// Pages statiques avec leurs priorités et fréquences de mise à jour
+	const staticPages: MetadataRoute.Sitemap = [
+		{
+			url: SITE_URL,
+			lastModified: fallbackLastModified ?? homeLastModified,
+			changeFrequency: "weekly",
+			priority: 1.0,
+		},
+		{
+			url: `${SITE_URL}/produits`,
+			lastModified: fallbackLastModified ?? latestProductUpdate,
+			changeFrequency: "daily",
+			priority: 0.9,
+		},
+		{
+			url: `${SITE_URL}/collections`,
+			lastModified: fallbackLastModified ?? latestCollectionUpdate,
+			changeFrequency: "weekly",
+			priority: 0.8,
+		},
+		{
+			url: `${SITE_URL}/cgv`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/confidentialite`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/mentions-legales`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/informations-legales`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/accessibilite`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/cookies`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/retractation`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.3,
+		},
+		{
+			url: `${SITE_URL}/aide`,
+			lastModified: legalLastModified,
+			changeFrequency: "monthly",
+			priority: 0.5,
+		},
+	];
 
 	// Combiner toutes les pages
 	return [...staticPages, ...productPages, ...collectionPages, ...productTypePages];

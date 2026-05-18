@@ -68,43 +68,22 @@ export function MaterialsDataTable({
 					<MaterialsBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							role="table"
-							aria-label="Liste des matériaux"
 							caption="Liste des matériaux"
-							className="min-w-full table-fixed"
+							striped
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
-									<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
+									<TableHead className="w-[4%]">
 										<BulkSelectionHeaderCheckbox itemsLabel="matériaux" />
 										<span className="sr-only">Sélection</span>
 									</TableHead>
-									<TableHead key="name" scope="col" role="columnheader" className="w-[23%]">
-										Nom
-									</TableHead>
-									<TableHead key="description" scope="col" role="columnheader" className="w-[28%]">
-										Description
-									</TableHead>
+									<TableHead className="w-[23%]">Nom</TableHead>
+									<TableHead className="w-[28%]">Description</TableHead>
+									<TableHead className="w-[10%] text-center">Statut</TableHead>
+									<TableHead className="w-[10%] text-center">Variantes</TableHead>
 									<TableHead
-										key="status"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Statut
-									</TableHead>
-									<TableHead
-										key="skus"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Variantes
-									</TableHead>
-									<TableHead
-										key="actions"
-										scope="col"
-										role="columnheader"
 										className="w-[8%] text-right"
 										aria-label="Actions disponibles pour chaque matériau"
 									>

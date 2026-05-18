@@ -708,7 +708,7 @@ describe("mergeWishlists", () => {
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toBe("Non autorise");
+		expect(result.message).toBe("Non autorisé");
 	});
 
 	it("should return error when user not found", async () => {

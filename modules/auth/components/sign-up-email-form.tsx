@@ -51,6 +51,7 @@ export function SignUpEmailForm() {
 			email: "",
 			password: "",
 			name: "",
+			acceptTerms: false,
 		},
 	});
 
@@ -171,6 +172,7 @@ export function SignUpEmailForm() {
 									autoComplete="new-password"
 									enterKeyHint="done"
 									disabled={isPending}
+									description="8 caractères minimum. Utilisez majuscules, chiffres et symboles pour un mot de passe robuste."
 									required
 								/>
 								<form.Subscribe selector={(state) => state.values.password}>
@@ -181,27 +183,45 @@ export function SignUpEmailForm() {
 					</form.AppField>
 				</div>
 
-				<p className="text-muted-foreground text-xs">
-					En vous inscrivant, vous acceptez les{" "}
-					<Link
-						href="/cgv"
-						className="underline hover:no-underline"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						conditions générales
-					</Link>{" "}
-					et la{" "}
-					<Link
-						href="/confidentialite"
-						className="underline hover:no-underline"
-						target="_blank"
-						rel="noopener noreferrer"
-					>
-						politique de confidentialité
-					</Link>
-					.
-				</p>
+				<form.AppField
+					name="acceptTerms"
+					validators={{
+						onChange: ({ value }: { value: boolean }) =>
+							value === true
+								? undefined
+								: "Vous devez accepter les CGV et la politique de confidentialité",
+					}}
+				>
+					{(field) => (
+						<field.CheckboxField
+							required
+							disabled={isPending}
+							aria-label="Accepter les conditions générales et la politique de confidentialité"
+							label={
+								<>
+									J'accepte les{" "}
+									<Link
+										href="/cgv"
+										className="underline hover:no-underline"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										conditions générales
+									</Link>{" "}
+									et la{" "}
+									<Link
+										href="/confidentialite"
+										className="underline hover:no-underline"
+										target="_blank"
+										rel="noopener noreferrer"
+									>
+										politique de confidentialité
+									</Link>
+								</>
+							}
+						/>
+					)}
+				</form.AppField>
 
 				<form.Subscribe selector={(state) => [state.canSubmit]}>
 					{([canSubmit]) => (

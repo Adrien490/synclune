@@ -49,6 +49,19 @@ vi.mock("@/shared/components/forms", () => ({
 						/>
 					</div>
 				),
+				CheckboxField: (props: any) => (
+					<div data-testid={`field-${name}`}>
+						<label htmlFor={name}>{props.label}</label>
+						<input
+							id={name}
+							name={name}
+							type="checkbox"
+							disabled={props.disabled}
+							required={props.required}
+							aria-label={props["aria-label"]}
+						/>
+					</div>
+				),
 			};
 			return <div>{children(field)}</div>;
 		},
@@ -219,6 +232,22 @@ describe("SignUpEmailForm", () => {
 		render(<SignUpEmailForm />);
 		const link = screen.getByRole("link", { name: /politique de confidentialité/i });
 		expect(link.getAttribute("href")).toBe("/confidentialite");
+	});
+
+	// ─── Consent checkbox (RGPD Art. 7) ───────────────────────────────────────
+
+	it("renders acceptTerms checkbox field marked as required", () => {
+		render(<SignUpEmailForm />);
+		const checkbox = screen.getByRole("checkbox");
+		expect(checkbox).toBeInTheDocument();
+		expect(checkbox).toHaveAttribute("name", "acceptTerms");
+		expect(checkbox).toBeRequired();
+	});
+
+	it("acceptTerms checkbox is disabled when isPending is true", () => {
+		mockIsPending.value = true;
+		render(<SignUpEmailForm />);
+		expect(screen.getByRole("checkbox")).toBeDisabled();
 	});
 
 	// ─── Field disabled states ────────────────────────────────────────────────

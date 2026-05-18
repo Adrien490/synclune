@@ -206,7 +206,7 @@ describe("anonymizeUserImmediately", () => {
 		});
 		const result = await anonymizeUserImmediately(undefined, createFormData());
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("deja anonymise"));
+		expect(mockError).toHaveBeenCalledWith(expect.stringContaining("déjà anonymisé"));
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 

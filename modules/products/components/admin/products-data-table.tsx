@@ -2,7 +2,7 @@
 import Link from "next/link";
 
 // External packages
-import { Package } from "lucide-react";
+import { Archive, FileEdit, Globe, Package, type LucideIcon } from "lucide-react";
 
 // Generated types
 import { ProductStatus } from "@/app/generated/prisma/client";
@@ -26,79 +26,33 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/shared/components/ui/table";
+import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 
 // Module imports
+import {
+	PRODUCT_STATUS_LABELS,
+	PRODUCT_STATUS_VARIANTS,
+} from "@/modules/products/constants/product-status-display";
 import { type GetProductsReturn } from "@/modules/products/data/get-products";
-import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
+import { calculatePriceInfo } from "@/modules/products/services/product-pricing.service";
+import {
+	formatPriceRangeAriaLabel,
+	formatPriceRangeDisplay,
+} from "@/modules/products/utils/format-price-range";
+import { getProductTotalStock } from "@/modules/products/utils/get-product-total-stock";
 
 // Local components
 import { ProductImageCell } from "./product-image-cell";
 import { ProductRowActions } from "./product-row-actions";
 import { ProductsBulkActionsBar } from "./products-bulk-actions-bar";
 
-// =============================================================================
-// Constants
-// =============================================================================
-
-// Singleton pour le formatage des prix (évite de recréer Intl.NumberFormat à chaque appel)
-const PRICE_FORMATTER = new Intl.NumberFormat("fr-FR", {
-	style: "currency",
-	currency: "EUR",
-});
-
-const formatPrice = (priceInCents: number) => PRICE_FORMATTER.format(priceInCents / 100);
-
-// Labels et styles pour les badges de statut
-const STATUS_CONFIG: Record<
-	ProductStatus,
-	{ label: string; variant: "default" | "secondary" | "destructive" | "outline" }
-> = {
-	[ProductStatus.PUBLIC]: { label: "Public", variant: "default" },
-	[ProductStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
-	[ProductStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
+const PRODUCT_STATUS_ICONS: Record<ProductStatus, LucideIcon> = {
+	[ProductStatus.PUBLIC]: Globe,
+	[ProductStatus.DRAFT]: FileEdit,
+	[ProductStatus.ARCHIVED]: Archive,
 };
 
-// =============================================================================
-// Helpers
-// =============================================================================
-
-type ProductWithSkus = { skus: Array<{ priceInclTax: number; inventory: number }> };
-
-const getTotalStock = (product: ProductWithSkus) => {
-	return product.skus.reduce((sum, sku) => sum + (sku.inventory || 0), 0);
-};
-
-const getPriceRange = (product: ProductWithSkus) => {
-	if (product.skus.length === 0) return null;
-
-	const prices = product.skus.map((sku) => sku.priceInclTax);
-	const minPrice = Math.min(...prices);
-	const maxPrice = Math.max(...prices);
-
-	return { minPrice, maxPrice };
-};
-
-const formatPriceDisplay = (priceData: { minPrice: number; maxPrice: number } | null) => {
-	if (!priceData) return "—";
-	const { minPrice, maxPrice } = priceData;
-	if (minPrice === maxPrice) {
-		return formatPrice(minPrice);
-	}
-	return `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`;
-};
-
-const formatPriceAriaLabel = (priceData: { minPrice: number; maxPrice: number } | null) => {
-	if (!priceData) return "Prix non défini";
-	const { minPrice, maxPrice } = priceData;
-	if (minPrice === maxPrice) {
-		return `Prix : ${formatPrice(minPrice)}`;
-	}
-	return `Prix : de ${formatPrice(minPrice)} à ${formatPrice(maxPrice)}`;
-};
-
-// =============================================================================
-// Component
-// =============================================================================
+const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
 
 interface ProductsDataTableProps {
 	productsPromise: Promise<GetProductsReturn>;
@@ -107,8 +61,6 @@ interface ProductsDataTableProps {
 	/** Collections disponibles pour le bulk-attach (sheet "Lier à une collection"). */
 	collections?: Array<{ id: string; name: string }>;
 }
-
-const EMPTY_COLLECTIONS: Array<{ id: string; name: string }> = [];
 
 export async function ProductsDataTable({
 	productsPromise,
@@ -144,10 +96,10 @@ export async function ProductsDataTable({
 					<ProductsBulkActionsBar collections={collections} />
 					<TableScrollContainer>
 						<Table
-							aria-label="Liste des bijoux"
+							caption="Liste des bijoux"
 							striped
 							noRegion
-							className="min-w-full table-fixed"
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
@@ -171,9 +123,9 @@ export async function ProductsDataTable({
 							</TableHeader>
 							<TableBody>
 								{products.map((product) => {
-									const totalStock = getTotalStock(product);
+									const totalStock = getProductTotalStock(product.skus);
 									const skusCount = product._count.skus || 0;
-									const priceRange = getPriceRange(product);
+									const priceInfo = calculatePriceInfo(product.skus);
 
 									return (
 										<TableRow key={product.id}>
@@ -199,9 +151,20 @@ export async function ProductsDataTable({
 												</div>
 											</TableCell>
 											<TableCell>
-												<Badge variant={STATUS_CONFIG[product.status].variant}>
-													{STATUS_CONFIG[product.status].label}
-												</Badge>
+												{(() => {
+													const label = PRODUCT_STATUS_LABELS[product.status];
+													const Icon = PRODUCT_STATUS_ICONS[product.status];
+													return (
+														<Badge
+															variant={PRODUCT_STATUS_VARIANTS[product.status]}
+															role="status"
+															aria-label={`Statut : ${label}`}
+														>
+															<Icon aria-hidden="true" />
+															{label}
+														</Badge>
+													);
+												})()}
 											</TableCell>
 											<TableCell className="text-center">
 												{skusCount === 0 ? (
@@ -215,8 +178,8 @@ export async function ProductsDataTable({
 													<Link
 														href={`/admin/catalogue/produits/${product.slug}/variantes`}
 														className="text-muted-foreground text-xs hover:underline"
-														aria-label="Produit sans variante — Voir la variante principale"
-														title="Voir la variante principale"
+														aria-label="Une seule variante — Voir la variante"
+														title="Voir la variante"
 													>
 														Variante unique
 													</Link>
@@ -234,40 +197,19 @@ export async function ProductsDataTable({
 											<TableCell className="text-right">
 												<span
 													className="text-sm font-medium"
-													title={formatPriceDisplay(priceRange)}
-													aria-label={formatPriceAriaLabel(priceRange)}
+													title={formatPriceRangeDisplay(priceInfo)}
+													aria-label={formatPriceRangeAriaLabel(priceInfo)}
 												>
-													{formatPriceDisplay(priceRange)}
+													{formatPriceRangeDisplay(priceInfo)}
 												</span>
 											</TableCell>
 											<TableCell className="text-center">
 												<Link
 													href={`/admin/catalogue/produits/${product.slug}/variantes`}
 													title="Gérer le stock des variantes"
-													aria-label={
-														totalStock === 0
-															? "Stock épuisé - Gérer les variantes"
-															: totalStock <= STOCK_THRESHOLDS.CRITICAL
-																? `Stock critique : ${totalStock} - Gérer les variantes`
-																: totalStock <= STOCK_THRESHOLDS.LOW
-																	? `Stock faible : ${totalStock} - Gérer les variantes`
-																	: `${totalStock} en stock - Gérer les variantes`
-													}
+													aria-label={`${getStockAriaLabel(totalStock)} — Gérer les variantes`}
 												>
-													<Badge
-														variant={
-															totalStock === 0
-																? "destructive"
-																: totalStock <= STOCK_THRESHOLDS.CRITICAL
-																	? "destructive"
-																	: totalStock <= STOCK_THRESHOLDS.LOW
-																		? "warning"
-																		: "success"
-														}
-														className="cursor-pointer hover:opacity-80"
-													>
-														{totalStock}
-													</Badge>
+													<Badge variant={getStockVariant(totalStock)}>{totalStock}</Badge>
 												</Link>
 											</TableCell>
 											<TableCell className="text-right">

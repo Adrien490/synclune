@@ -435,7 +435,7 @@ export function QuickSearchDialog({
 											size="sm"
 											onClick={() => handleLiveSearch(searchQuery)}
 										>
-											Reessayer
+											Réessayer
 										</Button>
 									</div>
 								) : searchResults ? (

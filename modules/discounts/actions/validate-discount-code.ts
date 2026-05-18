@@ -135,7 +135,7 @@ export async function validateDiscountCode(
 		const ip = (await getClientIp(headersList)) ?? "unknown";
 		const rateCheck = await enforceRateLimit(`ip:${ip}`, PAYMENT_LIMITS.VALIDATE_DISCOUNT, ip);
 		if ("error" in rateCheck)
-			return { valid: false, error: "Trop de tentatives. Veuillez reessayer plus tard." };
+			return { valid: false, error: "Trop de tentatives. Veuillez réessayer plus tard." };
 
 		// Read userId from session server-side (never trust client-provided value)
 		const session = await getSession();

@@ -25,7 +25,7 @@ import {
 	getSkuColorsDisplayLabel,
 } from "@/modules/skus/utils/sku-colors-label";
 import { buildSwatchStyle, getSwatchAriaLabel } from "@/modules/colors/utils/swatch-style";
-import { STOCK_THRESHOLDS } from "@/shared/constants/cache-tags";
+import { getStockAriaLabel, getStockVariant } from "@/shared/utils/stock-variant";
 import { getVideoMimeType } from "@/modules/media/utils/media-utils";
 import { Package } from "lucide-react";
 import Image from "next/image";
@@ -85,47 +85,25 @@ export async function ProductVariantsDataTable({
 					<SkusBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							role="table"
-							aria-label="Liste des variantes du produit"
 							caption="Liste des variantes"
-							className="min-w-full table-fixed"
+							striped
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
-									<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
+									<TableHead className="w-[4%]">
 										<BulkSelectionHeaderCheckbox itemsLabel="variantes" />
 										<span className="sr-only">Sélection</span>
 									</TableHead>
-									<TableHead key="image" scope="col" role="columnheader" className="w-[8%]">
-										Image
-									</TableHead>
-									<TableHead key="sku" scope="col" role="columnheader" className="w-[16%]">
-										Référence
-									</TableHead>
-									<TableHead key="color" scope="col" role="columnheader" className="w-[12%]">
-										Couleur
-									</TableHead>
-									<TableHead key="material" scope="col" role="columnheader" className="w-[12%]">
-										Matériau
-									</TableHead>
-									<TableHead key="size" scope="col" role="columnheader" className="w-[8%]">
-										Taille
-									</TableHead>
-									<TableHead key="price" scope="col" role="columnheader" className="w-[12%]">
-										Prix
-									</TableHead>
+									<TableHead className="w-[8%]">Image</TableHead>
+									<TableHead className="w-[16%]">Référence</TableHead>
+									<TableHead className="w-[12%]">Couleur</TableHead>
+									<TableHead className="w-[12%]">Matériau</TableHead>
+									<TableHead className="w-[8%]">Taille</TableHead>
+									<TableHead className="w-[12%]">Prix</TableHead>
+									<TableHead className="w-[10%] text-center">Stock</TableHead>
 									<TableHead
-										key="stock"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Stock
-									</TableHead>
-									<TableHead
-										key="actions"
-										scope="col"
-										role="columnheader"
 										className="w-[8%] text-right"
 										aria-label="Actions disponibles pour chaque variante"
 									>
@@ -260,20 +238,8 @@ export async function ProductVariantsDataTable({
 											</TableCell>
 											<TableCell className="text-center">
 												<Badge
-													variant={
-														availableStock === 0
-															? "destructive"
-															: availableStock <= STOCK_THRESHOLDS.LOW
-																? "warning"
-																: "success"
-													}
-													aria-label={
-														availableStock === 0
-															? "Stock épuisé"
-															: availableStock <= STOCK_THRESHOLDS.LOW
-																? `Stock faible : ${availableStock} disponible(s)`
-																: `${availableStock} en stock`
-													}
+													variant={getStockVariant(availableStock)}
+													aria-label={getStockAriaLabel(availableStock)}
 												>
 													{availableStock}
 												</Badge>

@@ -62,11 +62,11 @@ export async function changeUserRole(
 		}
 
 		if (user.deletedAt) {
-			return error("Impossible de changer le role d'un utilisateur supprime.");
+			return error("Impossible de changer le rôle d'un utilisateur supprimé.");
 		}
 
 		if (user.role === newRole) {
-			return error(`Cet utilisateur a deja le role ${newRole}.`);
+			return error(`Cet utilisateur a déjà le rôle ${newRole}.`);
 		}
 
 		// 6-7. Demotion + admin count atomique (TOCTOU-safe)

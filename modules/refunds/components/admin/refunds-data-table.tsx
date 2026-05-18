@@ -26,10 +26,28 @@ import type { GetRefundsReturn } from "@/modules/refunds/types/refund.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 import { Button } from "@/shared/components/ui/button";
-import { ReceiptText } from "lucide-react";
+import {
+	AlertCircle,
+	BadgeCheck,
+	CheckCircle,
+	CircleOff,
+	Clock,
+	ReceiptText,
+	XCircle,
+	type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { RefundRowActions } from "./refund-row-actions";
 import { RefundsBulkActionsBar } from "./refunds-bulk-actions-bar";
+
+const REFUND_STATUS_ICONS: Record<RefundStatus, LucideIcon> = {
+	[RefundStatus.PENDING]: Clock,
+	[RefundStatus.APPROVED]: CheckCircle,
+	[RefundStatus.COMPLETED]: BadgeCheck,
+	[RefundStatus.REJECTED]: XCircle,
+	[RefundStatus.FAILED]: AlertCircle,
+	[RefundStatus.CANCELLED]: CircleOff,
+};
 
 interface RefundsDataTableProps {
 	refundsPromise: Promise<GetRefundsReturn>;
@@ -65,10 +83,10 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 					<RefundsBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							aria-label="Liste des remboursements"
 							caption="Liste des remboursements"
 							striped
-							className="min-w-full table-fixed"
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
@@ -143,9 +161,21 @@ export async function RefundsDataTable({ refundsPromise, perPage }: RefundsDataT
 												</span>
 											</TableCell>
 											<TableCell>
-												<Badge variant={REFUND_STATUS_VARIANTS[refund.status as RefundStatus]}>
-													{REFUND_STATUS_LABELS[refund.status as RefundStatus]}
-												</Badge>
+												{(() => {
+													const status = refund.status as RefundStatus;
+													const label = REFUND_STATUS_LABELS[status];
+													const Icon = REFUND_STATUS_ICONS[status];
+													return (
+														<Badge
+															variant={REFUND_STATUS_VARIANTS[status]}
+															role="status"
+															aria-label={`Statut : ${label}`}
+														>
+															<Icon aria-hidden="true" />
+															{label}
+														</Badge>
+													);
+												})()}
 											</TableCell>
 											<TableCell className="text-right">
 												<span className="text-sm font-bold">{formatEuro(refund.amount)}</span>

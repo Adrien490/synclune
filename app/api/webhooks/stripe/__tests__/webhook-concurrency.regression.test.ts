@@ -1,3 +1,22 @@
+/**
+ * @regression webhooks-audit-2026-05-17
+ *
+ * Bug : 2 webhooks Stripe concurrents (re-livraison + livraison normale)
+ * pouvaient slipper la race-guard upsert dans `route.ts`. La 1ère thread
+ * faisait `findUnique → null`, la 2e idem ; toutes deux entraient dans
+ * l'upsert qui hit la branche UPDATE → traitement dupliqué (P2002 ignoré).
+ *
+ * Fix : (a) race-guard `existingEvent === null && webhookRecord.attempts >= 1
+ * → return duplicate` ajouté après upsert. (b) Le mock Prisma DOIT throw une
+ * vraie subclass `Prisma.PrismaClientKnownRequestError` via `vi.hoisted` +
+ * `vi.mock("@/app/generated/prisma/client", () => ({ Prisma: { ... } }))`.
+ * Un `Object.assign(new Error(), { code: "P2002" })` n'est PAS `instanceof
+ * PrismaClientKnownRequestError` → la branche outer-catch n'est jamais hit
+ * et le test passe "green for the wrong reason".
+ *
+ * Garde-fou : ne PAS revenir à un mock-by-shape pour l'erreur P2002 — il
+ * doit rester une subclass réelle pour exécuter la branche outer-catch.
+ */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ============================================================================

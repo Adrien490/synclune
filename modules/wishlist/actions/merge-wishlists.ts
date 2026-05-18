@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { getWishlistInvalidationTags } from "@/modules/wishlist/constants/cache";
 import { success, error, handleActionError, enforceRateLimit } from "@/shared/lib/actions";
 import { Prisma } from "@/app/generated/prisma/client";
@@ -140,19 +141,22 @@ export async function mergeWishlists(
 		const skippedCount = guestWishlist.items.length - itemsToAdd.length;
 
 		// 5. Fusionner les items dans une transaction atomique
-		await prisma.$transaction(async (tx) => {
-			if (itemsToAdd.length > 0) {
-				await tx.wishlistItem.createMany({
-					data: itemsToAdd.map((item) => ({
-						wishlistId: targetWishlist.id,
-						productId: item.productId,
-					})),
-				});
-			}
+		await prisma.$transaction(
+			async (tx) => {
+				if (itemsToAdd.length > 0) {
+					await tx.wishlistItem.createMany({
+						data: itemsToAdd.map((item) => ({
+							wishlistId: targetWishlist.id,
+							productId: item.productId,
+						})),
+					});
+				}
 
-			// 6. Supprimer la wishlist visiteur (dans la meme transaction)
-			await tx.wishlist.delete({ where: { id: guestWishlist.id } });
-		});
+				// 6. Supprimer la wishlist visiteur (dans la meme transaction)
+				await tx.wishlist.delete({ where: { id: guestWishlist.id } });
+			},
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		const addedCount = itemsToAdd.length;
 
@@ -163,8 +167,8 @@ export async function mergeWishlists(
 
 		return success(
 			addedCount > 0
-				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajoute${addedCount > 1 ? "s" : ""} a vos favoris`
-				: "Tous les favoris etaient deja dans votre liste",
+				? `${addedCount} favori${addedCount > 1 ? "s" : ""} ajouté${addedCount > 1 ? "s" : ""} à vos favoris`
+				: "Tous les favoris étaient déjà dans votre liste",
 			{
 				addedItems: addedCount,
 				skippedItems: skippedCount,

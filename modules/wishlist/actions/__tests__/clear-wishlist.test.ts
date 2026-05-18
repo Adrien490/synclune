@@ -100,7 +100,7 @@ describe("clearWishlist", () => {
 		const result = await clearWishlist(undefined, undefined);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("deja vide");
+		expect(result.message).toContain("déjà vide");
 		expect(mockPrisma.wishlist.findFirst).not.toHaveBeenCalled();
 	});
 
@@ -111,7 +111,7 @@ describe("clearWishlist", () => {
 		const result = await clearWishlist(undefined, undefined);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("deja vide");
+		expect(result.message).toContain("déjà vide");
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 
@@ -125,7 +125,7 @@ describe("clearWishlist", () => {
 		const result = await clearWishlist(undefined, undefined);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toContain("deja vide");
+		expect(result.message).toContain("déjà vide");
 		expect(mockPrisma.$transaction).not.toHaveBeenCalled();
 	});
 

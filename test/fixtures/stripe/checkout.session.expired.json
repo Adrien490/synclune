@@ -1,0 +1,27 @@
+{
+	"id": "evt_test_checkout_expired",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "checkout.session.expired",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "cs_test_expired_1",
+			"object": "checkout.session",
+			"mode": "payment",
+			"status": "expired",
+			"payment_status": "unpaid",
+			"amount_total": 10500,
+			"currency": "eur",
+			"customer": null,
+			"customer_email": "buyer@example.test",
+			"customer_details": null,
+			"client_reference_id": null,
+			"metadata": { "cartId": "cart_test_expired" },
+			"payment_intent": null
+		}
+	}
+}

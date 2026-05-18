@@ -63,7 +63,7 @@ export async function createCollection(
 		getCollectionInvalidationTags(slug).forEach((tag) => updateTag(tag));
 		updateTag(SHARED_CACHE_TAGS.NAVBAR_MENU);
 
-		return success("Collection créée avec succès", {
+		return success(`Collection « ${sanitizedName} » créée`, {
 			id,
 			name: sanitizedName,
 			collectionStatus: validatedData.status,

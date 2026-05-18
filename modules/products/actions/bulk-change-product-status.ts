@@ -15,6 +15,7 @@ import {
 	validateInput,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { ADMIN_PRODUCT_BULK_STATUS_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -115,19 +116,22 @@ export async function bulkChangeProductStatus(
 
 		const eligibleIds = eligible.map((p) => p.id);
 
-		await prisma.$transaction(async (tx) => {
-			await tx.product.updateMany({
-				where: { id: { in: eligibleIds } },
-				data: { status: targetStatus },
-			});
-
-			if (targetStatus === ProductStatus.ARCHIVED) {
-				await tx.productSku.updateMany({
-					where: { productId: { in: eligibleIds } },
-					data: { isActive: false },
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.product.updateMany({
+					where: { id: { in: eligibleIds } },
+					data: { status: targetStatus },
 				});
-			}
-		});
+
+				if (targetStatus === ProductStatus.ARCHIVED) {
+					await tx.productSku.updateMany({
+						where: { productId: { in: eligibleIds } },
+						data: { isActive: false },
+					});
+				}
+			},
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		const tags = new Set<string>();
 		for (const p of eligible) {

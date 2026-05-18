@@ -7,7 +7,7 @@ Synclune - E-commerce bijoux artisanaux (Next.js 16, React 19, TypeScript, Prism
 - **Storefront** (`/boutique`) - Produits, panier, paiement
 - **Admin** (`/admin`) - Catalogue, commandes, analytics
 - **Stripe** - Paiements, webhooks, remboursements
-- **Emails** - React Email + Resend (24 templates)
+- **Emails** - React Email + Resend (26 templates)
 - **PWA** - Serwist (service worker, offline page)
 
 ## Commands
@@ -74,7 +74,7 @@ shared/                      # Cross-cutting concerns
 ├── providers/               # Root providers, dialog/sheet/store providers
 ├── schemas/                 # Shared Zod schemas (address, email, pagination, media, phone)
 ├── services/                # Shared business logic (unique name generator)
-├── stores/                  # Zustand stores (5 stores)
+├── stores/                  # Zustand stores (8 stores)
 ├── styles/                  # Global styles, fonts
 ├── types/                   # Shared types (server actions, sessions, pagination, errors)
 └── utils/                   # Formatting, slug, date, currency, password strength, seeded random
@@ -85,7 +85,7 @@ shared/                      # Cross-cutting concerns
 - **Auth**: Better Auth (email, Google, GitHub)
 - **Database**: PostgreSQL (Neon) + Prisma 7
 - **Forms**: TanStack Form + `useAppForm` hook
-- **State**: Zustand (5 stores: dialogs, alert dialogs, sheets, cookie consent, badge counts)
+- **State**: Zustand (8 stores: dialog, alert-dialog, sheet, cookie-consent, badge-counts, overlay-stack, admin-list-selection, admin-list-bulk-pending)
 - **UI**: shadcn/ui + Tailwind + Motion (v12, `motion/react`)
 - **Uploads**: UploadThing
 - **Monitoring**: Sentry (error tracking, tunnel via `/monitoring`)
@@ -139,7 +139,15 @@ export async function createSomething(
 - `handleActionError()`, `BusinessError` - Error handling
 - `enforceRateLimit()` - Rate limiting
 
-**Note**: Some actions use `.safeParse()` directly instead of `validateInput()`. Both patterns are valid.
+**Validation patterns** — deux patterns coexistent légitimement :
+
+- **`validateInput(schema, data)`** : pattern par défaut pour les Server Actions qui retournent `ActionState` avec un message d'erreur simple. Le wrapper retourne `{ data } | { error: ActionState }` — usage en `if ("error" in validation) return validation.error`.
+- **`schema.safeParse(data)` direct** : à conserver uniquement quand l'action :
+  1. Retourne un type custom (pas `ActionState`) — ex: `quick-search.ts` retourne `QuickSearchResult`, `validate-discount-code.ts` retourne `ValidateDiscountCodeReturn`.
+  2. A besoin du `path` Zod pour enrichir le message d'erreur — ex: `reviews/*` et `skus/{create,update}` retournent `validationError("${path}: ${message}")` pour cibler le champ fautif côté UI.
+  3. Branche sur le `path` pour appliquer une logique custom (retry, fallback) — ex: `validate-discount-code.ts` retry sans `userId` si seul ce champ est invalide.
+
+Toute nouvelle action `ActionState` simple doit utiliser `validateInput()`. Ajouter un cas safeParse direct requiert une raison documentée (path-aware ou retour custom).
 
 ## Caching
 
@@ -290,16 +298,21 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ### Cron Jobs (`api/cron/`)
 
-10 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/` (or domain modules for transactional services).
+14 Vercel cron jobs defined in `vercel.json`. Logic in `modules/cron/services/` (or domain modules for transactional services).
 
 | Job                         | Schedule           |
 | --------------------------- | ------------------ |
+| `reopen-store`              | Every 15 min       |
+| `retry-webhooks`            | Every 30 min       |
+| `sync-async-payments`       | Every 4h           |
+| `reconcile-refunds`         | Every 6h           |
 | `cleanup-wishlists`         | Daily 2:30         |
 | `cleanup-sessions`          | Daily 3:00         |
+| `cleanup-carts`             | Daily 3:30         |
+| `cleanup-pending-orders`    | Daily 4:30         |
 | `process-account-deletions` | Daily 5:00         |
-| `sync-async-payments`       | Every 4h           |
-| `reopen-store`              | Every 15 min       |
-| `cleanup-newsletter`        | Weekly Sunday 6:00 |
+| `send-review-requests`      | Daily 10:00        |
+| `alert-stuck-orders`        | Weekly Monday 9:00 |
 | `cleanup-webhook-events`    | Monthly 1st 7:00   |
 | `hard-delete-retention`     | Monthly 1st 8:00   |
 | `cleanup-orphan-media`      | Monthly 1st 9:00   |
@@ -312,7 +325,7 @@ Stripe webhook handlers with signature verification + idempotency. Logic in `mod
 
 ## Emails
 
-33 transactional email templates in `emails/` using React Email + Resend.
+26 transactional email templates in `emails/` using React Email + Resend.
 
 Templates: order confirmation, shipping, delivery, cancellation, return, payment failed, refund (approved/confirmed), review request/response, newsletter (confirmation/welcome), password (reset/changed), verification, customization (request/confirmation), tracking update, admin notifications (new order, invoice failed, refund failed, webhook failed).
 
@@ -332,6 +345,32 @@ await softDelete.order(orderId);
 
 **Key enums**: `ProductStatus`, `OrderStatus`, `PaymentStatus`, `RefundStatus`, `FulfillmentStatus`
 
+### Migrations & rollback
+
+Chaque nouvelle migration **doit** ajouter un `down.sql` paire dans le même dossier (`prisma/migrations/<timestamp>_<name>/down.sql`) pour permettre un rollback rapide en cas d'incident production. Exemple : `prisma/migrations/20251124_add_inventory_non_negative_constraint/down.sql`.
+
+Pas de rétroactif sur les migrations existantes (risque trop élevé). En cas de besoin de rollback historique : restore Neon PITR.
+
+### Transactions longues — timeouts explicites
+
+Les defaults Prisma `$transaction` sont 5s timeout + 2s maxWait. Pour les transactions bulk (delete/update N records), tx avec `FOR UPDATE` lock, ou opérations dépendant d'I/O externes (Stripe, etc.), utiliser les constantes :
+
+```typescript
+import { prisma, TX_TIMEOUT_LONG, TX_MAX_WAIT_LONG } from "@/shared/lib/prisma";
+
+await prisma.$transaction(
+	async (tx) => {
+		/* ... */
+	},
+	{
+		timeout: TX_TIMEOUT_LONG, // 30s
+		maxWait: TX_MAX_WAIT_LONG, // 10s
+	},
+);
+```
+
+Sans override : risque P2024 timeout + rollback partiel.
+
 ## Forms
 
 TanStack Form avec `useAppForm`. Voir `shared/components/forms/` pour les composants de formulaire.
@@ -348,7 +387,7 @@ const form = useAppForm<MyInput>({
 
 ## Security
 
-- **Rate limiting**: Arcjet + in-memory per-action
+- **Rate limiting**: in-memory per-action via `shared/lib/rate-limit.ts` (sliding window, 100 req/min IP global + per-action limits). Single-instance Node.js : sur Vercel serverless chaque instance a son propre Map, reset au cold-start → protection best-effort contre abus simples, **insuffisant pour DDoS sérieux**. Pour cohérence cross-instance : Upstash Redis ou Arcjet (non installés à ce jour).
 - **Validation**: Zod server-side
 - **RGPD**: Soft deletes, consent tracking, data export
 - **Webhooks**: Stripe signature verification + idempotency + 5-minute anti-replay window
@@ -363,6 +402,8 @@ const form = useAppForm<MyInput>({
 | ------------------- | --------------------------------------- | ------------------------ | ----------- |
 | **Critical path**   | Pre-commit (si modules touchés) + CI PR | `pnpm test:critical`     | < 10s       |
 | **Full unit suite** | CI PR + push main                       | `pnpm test:coverage`     | ~2 min      |
+| **Integration DB**  | Opt-in (`INTEGRATION_DATABASE_URL`)     | `pnpm test:integration`  | ~30s        |
+| **Contract Stripe** | Inclus dans full unit suite             | (incluse)                | < 5s        |
 | **E2E smoke**       | CI PR + push main                       | `pnpm e2e --grep @smoke` | ~3 min      |
 | **E2E complet**     | CI PR + push main (sharded ×4)          | `pnpm e2e`               | ~15 min     |
 
@@ -382,8 +423,12 @@ Les modules `cart`, `orders`, `payments`, `webhooks`, `auth`, `discounts`, `refu
 ### Conventions de tests
 
 - Fichiers : `<nom>.test.ts(x)` à côté du code ou dans `__tests__/`.
+- **Régression locked** : suffixe `<sujet>.regression.test.ts(x)` + JSDoc `@regression <slug>` en tête (cf `docs/QA.md § Regression playbook`). 2 régressions actives à 2026-05-18 : `webhook-concurrency.regression.test.ts` (P2002 race) + `link-history-back.regression.test.tsx` (Vaul `<DrawerClose asChild>` annule navigation `<Link>`).
+- **Integration DB** : suffixe `<nom>.integration.test.ts`, runner séparé (`vitest.integration.config.ts`), DB dédiée via `INTEGRATION_DATABASE_URL`. Import du client via `@/test/integration/prisma-client` UNIQUEMENT (jamais `@/shared/lib/prisma` → refus si URL contient "prod"/"production"). Skip silencieux si env vide.
+- **Contract Stripe** : `test/contract/stripe-events.test.ts` charge chaque fixture `test/fixtures/stripe/*.json` et vérifie shape + routing via `event-registry.dispatchEvent`. Si Stripe modifie un payload : regénérer via `stripe trigger <type> --print-json`.
 - Tags E2E : `@smoke` (flow minimal), `@critical` (paiement/auth).
-- Mocks DB : **interdit** sur les tests d'intégration orders/payments (incident historique — divergence mock/prod).
+- Mocks DB : **interdit** sur les tests d'intégration orders/payments (incident historique — divergence mock/prod). Préférer `.integration.test.ts` quand la logique tient sur le comportement DB réel (FOR UPDATE, transactions, contraintes).
+- Mock erreurs Prisma : **subclass réelle obligatoire** (`vi.mock("@/app/generated/prisma/client", () => ({ Prisma: { PrismaClientKnownRequestError: <fakeClass> } }))`). Un `Object.assign(new Error(), { code: "P2002" })` n'est PAS `instanceof` correct → test "green for the wrong reason" (incident webhooks-audit-2026-05-17).
 
 ## Conventions
 

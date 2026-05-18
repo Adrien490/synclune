@@ -180,7 +180,7 @@ describe("Footer", () => {
 		expect(navHeading.tagName).toBe("H3");
 
 		const links = within(navSection).getAllByRole("link");
-		expect(links).toHaveLength(3);
+		expect(links).toHaveLength(4);
 
 		expect(links[0]).toHaveAttribute("href", "/produits");
 		expect(links[0]).toHaveTextContent("Les créations");
@@ -188,8 +188,11 @@ describe("Footer", () => {
 		expect(links[1]).toHaveAttribute("href", "/collections");
 		expect(links[1]).toHaveTextContent("Les collections");
 
-		expect(links[2]).toHaveAttribute("href", "/commandes");
-		expect(links[2]).toHaveTextContent("Mon compte");
+		expect(links[2]).toHaveAttribute("href", "/aide");
+		expect(links[2]).toHaveTextContent("Aide et FAQ");
+
+		expect(links[3]).toHaveAttribute("href", "/commandes");
+		expect(links[3]).toHaveTextContent("Mon compte");
 	});
 
 	// --- Contact section ---

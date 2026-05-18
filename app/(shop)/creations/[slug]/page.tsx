@@ -114,12 +114,17 @@ export default async function ProductPage({
 	let selectedSku = product.skus[0]!;
 
 	if (Object.values(urlVariants).some((v) => v)) {
-		const exactSku = findSkuByVariants(product, urlVariants);
+		// Cast: findSkuByVariants retourne BaseProductSku (forme minimale partagée
+		// avec les services skus), mais l'objet sous-jacent est bien product.skus[N]
+		// qui inclut Color.description + Material.description via GET_PRODUCT_SELECT.
+		const exactSku = findSkuByVariants(product, urlVariants) as typeof selectedSku | null;
 		if (exactSku) {
 			selectedSku = exactSku;
 		} else {
 			// Sinon, prendre le premier SKU compatible
-			const compatibleSkus = filterCompatibleSkus(product, urlVariants);
+			const compatibleSkus = filterCompatibleSkus(product, urlVariants) as Array<
+				typeof selectedSku
+			>;
 			if (compatibleSkus.length > 0) {
 				selectedSku = compatibleSkus[0]!;
 			}

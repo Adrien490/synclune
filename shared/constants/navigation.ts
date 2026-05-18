@@ -204,6 +204,7 @@ export function getDesktopNavItems(data: MegaMenuData): NavItemWithChildren[] {
 export const footerNavItems = [
 	{ href: ROUTES.SHOP.PRODUCTS, label: "Les créations" },
 	{ href: ROUTES.SHOP.COLLECTIONS, label: "Les collections" },
+	{ href: ROUTES.SHOP.HELP, label: "Aide et FAQ" },
 	{ href: ROUTES.ACCOUNT.ROOT, label: "Mon compte" },
 ] as const;
 

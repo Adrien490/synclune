@@ -69,43 +69,22 @@ export async function ProductTypesDataTable({
 					<ProductTypesBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							role="table"
-							aria-label="Liste des types de produits"
 							caption="Liste des types de produits"
-							className="min-w-full table-fixed"
+							striped
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
-									<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
+									<TableHead className="w-[4%]">
 										<BulkSelectionHeaderCheckbox itemsLabel="types" />
 										<span className="sr-only">Sélection</span>
 									</TableHead>
-									<TableHead key="label" scope="col" role="columnheader" className="w-[20%]">
-										Label
-									</TableHead>
-									<TableHead key="description" scope="col" role="columnheader" className="w-[28%]">
-										Description
-									</TableHead>
+									<TableHead className="w-[20%]">Label</TableHead>
+									<TableHead className="w-[28%]">Description</TableHead>
+									<TableHead className="w-[12%] text-center">Produits</TableHead>
+									<TableHead className="w-[10%] text-center">Actif</TableHead>
 									<TableHead
-										key="products"
-										scope="col"
-										role="columnheader"
-										className="w-[12%] text-center"
-									>
-										Produits
-									</TableHead>
-									<TableHead
-										key="active"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Actif
-									</TableHead>
-									<TableHead
-										key="actions"
-										scope="col"
-										role="columnheader"
 										className="w-[8%] text-right"
 										aria-label="Actions disponibles pour chaque type de produit"
 									>

@@ -297,7 +297,7 @@ describe("createDiscount", () => {
 		const result = await createDiscount(undefined, validFormData);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(mockSuccess).toHaveBeenCalledWith('Code promo "PROMO20" créé avec succès', {
+		expect(mockSuccess).toHaveBeenCalledWith("Code promo « PROMO20 » créé", {
 			id: "disc-new",
 		});
 	});

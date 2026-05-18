@@ -11,8 +11,8 @@ import {
 	success,
 	error,
 	notFound,
-	validationError,
 	safeFormGet,
+	validateInput,
 } from "@/shared/lib/actions";
 import { deleteProductSkuSchema } from "../schemas/sku.schemas";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
@@ -44,13 +44,10 @@ export async function deleteProductSku(
 		};
 
 		// 4. Validation avec Zod
-		const result = deleteProductSkuSchema.safeParse(rawData);
+		const validation = validateInput(deleteProductSkuSchema, rawData);
+		if ("error" in validation) return validation.error;
 
-		if (!result.success) {
-			return validationError(result.error.issues[0]?.message ?? "Données invalides.");
-		}
-
-		const { skuId: validatedSkuId } = result.data;
+		const { skuId: validatedSkuId } = validation.data;
 
 		// 5. Verifier que le SKU existe et recuperer toutes les infos necessaires en UNE requete
 		// Optimisation: Consolider les counts pour eviter les N+1 queries
@@ -106,7 +103,7 @@ export async function deleteProductSku(
 		// 6. Verifier qu'il y a au moins 2 SKUs pour le produit
 		if (existingSku.product._count.skus <= 1) {
 			return error(
-				"Impossible de supprimer la derniere variante d'un produit. Un produit doit avoir au moins une variante.",
+				"Impossible de supprimer la dernière variante d'un produit. Un produit doit avoir au moins une variante.",
 			);
 		}
 
@@ -139,7 +136,7 @@ export async function deleteProductSku(
 
 			if (activeSkusCount <= 1) {
 				return error(
-					"Impossible de supprimer la derniere variante active d'un produit PUBLIC. Veuillez creer une autre variante active ou mettre le produit en DRAFT.",
+					"Impossible de supprimer la dernière variante active d'un produit PUBLIC. Veuillez créer une autre variante active ou mettre le produit en DRAFT.",
 				);
 			}
 		}

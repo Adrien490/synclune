@@ -10,6 +10,8 @@ interface HTMLInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 	label?: string;
 	/** Marque le champ comme optionnel avec "(Optionnel)" */
 	optional?: boolean;
+	/** Texte d'aide affiché sous le champ (relié via aria-describedby) */
+	description?: string;
 }
 
 /**
@@ -52,6 +54,7 @@ export const InputField = ({
 	placeholder,
 	required,
 	optional,
+	description,
 	type,
 	min,
 	step,
@@ -89,6 +92,11 @@ export const InputField = ({
 		(typeof fieldValue === "number" && isNaN(fieldValue));
 	const displayValue = type === "number" ? (isEmpty ? "" : fieldValue) : (fieldValue ?? "");
 
+	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
+
 	return (
 		<Field data-invalid={field.state.meta.errors.length > 0}>
 			{label && (
@@ -107,8 +115,8 @@ export const InputField = ({
 				value={value ?? displayValue}
 				onChange={handleChange}
 				onBlur={field.handleBlur}
-				aria-invalid={field.state.meta.errors.length > 0}
-				aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+				aria-invalid={hasError}
+				aria-describedby={describedBy}
 				aria-required={required}
 				// Props mobile PWA
 				inputMode={inputMode}
@@ -122,6 +130,11 @@ export const InputField = ({
 				className={className}
 				{...rest}
 			/>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

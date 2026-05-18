@@ -223,7 +223,7 @@ describe("suspendUser", () => {
 
 		const result = await suspendUser(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est supprime. Restaurez-le d'abord.");
+		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est supprimé. Restaurez-le d'abord.");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 
@@ -232,7 +232,7 @@ describe("suspendUser", () => {
 
 		const result = await suspendUser(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est deja suspendu.");
+		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est déjà suspendu.");
 		expect(result.status).toBe(ActionStatus.ERROR);
 	});
 

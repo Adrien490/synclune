@@ -53,11 +53,11 @@ export async function suspendUser(_prevState: unknown, formData: FormData): Prom
 		}
 
 		if (user.deletedAt) {
-			return error("Cet utilisateur est supprime. Restaurez-le d'abord.");
+			return error("Cet utilisateur est supprimé. Restaurez-le d'abord.");
 		}
 
 		if (user.suspendedAt) {
-			return error("Cet utilisateur est deja suspendu.");
+			return error("Cet utilisateur est déjà suspendu.");
 		}
 
 		// 6. Suspendre l'utilisateur ET invalider ses sessions

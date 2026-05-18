@@ -599,7 +599,7 @@ describe("QuickSearchDialog", () => {
 			mockIsSearching.current = false;
 			mockSearchResults.current = { type: "error" };
 			render(<QuickSearchDialog {...defaultProps} />);
-			expect(screen.getByRole("button", { name: /reessayer/i })).toBeInTheDocument();
+			expect(screen.getByRole("button", { name: /réessayer/i })).toBeInTheDocument();
 		});
 
 		it("calls handleLiveSearch with searchQuery when retry is clicked", () => {
@@ -607,7 +607,7 @@ describe("QuickSearchDialog", () => {
 			mockSearchResults.current = { type: "error" };
 			mockSearchQuery.current = "bague";
 			render(<QuickSearchDialog {...defaultProps} />);
-			fireEvent.click(screen.getByRole("button", { name: /reessayer/i }));
+			fireEvent.click(screen.getByRole("button", { name: /réessayer/i }));
 			expect(mockHandleLiveSearch).toHaveBeenCalledWith("bague");
 		});
 

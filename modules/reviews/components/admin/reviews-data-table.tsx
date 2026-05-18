@@ -61,10 +61,10 @@ export async function ReviewsDataTable({ reviewsPromise, perPage = 20 }: Reviews
 					<ReviewsBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							aria-label="Liste des avis produits"
 							caption="Liste des avis"
 							striped
-							className="min-w-full table-fixed"
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>

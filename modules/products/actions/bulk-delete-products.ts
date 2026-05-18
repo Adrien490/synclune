@@ -15,6 +15,7 @@ import {
 	validateInput,
 } from "@/shared/lib/actions";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { ADMIN_PRODUCT_BULK_DELETE_LIMIT } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -90,22 +91,25 @@ export async function bulkDeleteProducts(
 		});
 
 		const now = new Date();
-		await prisma.$transaction(async (tx) => {
-			await tx.cartItem.deleteMany({
-				where: { sku: { productId: { in: deletableIds } } },
-			});
-			await tx.wishlistItem.deleteMany({
-				where: { productId: { in: deletableIds } },
-			});
-			await tx.productSku.updateMany({
-				where: { productId: { in: deletableIds } },
-				data: { deletedAt: now },
-			});
-			await tx.product.updateMany({
-				where: { id: { in: deletableIds } },
-				data: { deletedAt: now, status: ProductStatus.ARCHIVED },
-			});
-		});
+		await prisma.$transaction(
+			async (tx) => {
+				await tx.cartItem.deleteMany({
+					where: { sku: { productId: { in: deletableIds } } },
+				});
+				await tx.wishlistItem.deleteMany({
+					where: { productId: { in: deletableIds } },
+				});
+				await tx.productSku.updateMany({
+					where: { productId: { in: deletableIds } },
+					data: { deletedAt: now },
+				});
+				await tx.product.updateMany({
+					where: { id: { in: deletableIds } },
+					data: { deletedAt: now, status: ProductStatus.ARCHIVED },
+				});
+			},
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		for (const { cart } of affectedCarts) {
 			const cartTags = getCartInvalidationTags(

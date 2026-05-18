@@ -16,6 +16,7 @@ import {
 } from "@/shared/lib/actions";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { ADMIN_USER_LIMITS } from "@/shared/lib/rate-limit-config";
 import type { ActionState } from "@/shared/types/server-action";
 
@@ -121,7 +122,11 @@ export async function bulkChangeUserRole(
 					data: { role: targetRole },
 				});
 			},
-			{ isolationLevel: "Serializable" },
+			{
+				isolationLevel: "Serializable",
+				timeout: TX_TIMEOUT_LONG,
+				maxWait: TX_MAX_WAIT_LONG,
+			},
 		);
 
 		updateTag(SHARED_CACHE_TAGS.ADMIN_CUSTOMERS_LIST);

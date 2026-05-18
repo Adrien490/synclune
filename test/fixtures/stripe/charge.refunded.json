@@ -1,0 +1,42 @@
+{
+	"id": "evt_test_charge_refunded",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "charge.refunded",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "ch_test_refunded",
+			"object": "charge",
+			"amount": 10500,
+			"amount_captured": 10500,
+			"amount_refunded": 10500,
+			"currency": "eur",
+			"refunded": true,
+			"status": "succeeded",
+			"payment_intent": "pi_test_refunded",
+			"customer": "cus_test_refunded",
+			"metadata": { "orderId": "order_test_refund" },
+			"refunds": {
+				"object": "list",
+				"data": [
+					{
+						"id": "re_test_full_refund",
+						"object": "refund",
+						"amount": 10500,
+						"currency": "eur",
+						"charge": "ch_test_refunded",
+						"payment_intent": "pi_test_refunded",
+						"reason": "requested_by_customer",
+						"status": "succeeded",
+						"metadata": {}
+					}
+				],
+				"has_more": false
+			}
+		}
+	}
+}

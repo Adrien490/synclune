@@ -15,7 +15,12 @@ export default defineConfig({
 	test: {
 		pool: "threads",
 		include: ["**/*.test.{ts,tsx}"],
-		exclude: ["node_modules", ".next", ".claude/worktrees/**"],
+		exclude: [
+			"node_modules",
+			".next",
+			".claude/worktrees/**",
+			"**/*.integration.test.ts", // ran by `pnpm test:integration` against a dedicated DB
+		],
 		environment: "jsdom",
 		setupFiles: ["./test/setup.ts"],
 		coverage: {

@@ -2,6 +2,7 @@
 
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { getCartInvalidationTags, CART_CACHE_TAGS } from "@/modules/cart/constants/cache";
 import { CART_LIMITS } from "@/shared/lib/rate-limit-config";
 import {
@@ -124,57 +125,60 @@ export async function reorderFromOrder(
 		let truncatedCount = 0;
 		let slotsConsumed = 0;
 
-		await prisma.$transaction(async (tx) => {
-			for (const orderItem of eligibleItems) {
-				const sku = orderItem.sku;
-				const existing = existingBySku.get(orderItem.skuId);
-				const requested = orderItem.quantity;
-				const capByStock = Math.min(requested, sku.inventory);
-				const capByLimit = Math.min(capByStock, MAX_QUANTITY_PER_ORDER);
+		await prisma.$transaction(
+			async (tx) => {
+				for (const orderItem of eligibleItems) {
+					const sku = orderItem.sku;
+					const existing = existingBySku.get(orderItem.skuId);
+					const requested = orderItem.quantity;
+					const capByStock = Math.min(requested, sku.inventory);
+					const capByLimit = Math.min(capByStock, MAX_QUANTITY_PER_ORDER);
 
-				if (existing) {
-					// Merge MAX strategy, borne stock + limits
-					const merged = Math.min(
-						Math.max(existing.quantity, capByLimit),
-						sku.inventory,
-						MAX_QUANTITY_PER_ORDER,
-					);
-					if (merged !== existing.quantity) {
-						await tx.cartItem.update({
-							where: { id: existing.id },
-							data: { quantity: merged },
+					if (existing) {
+						// Merge MAX strategy, borne stock + limits
+						const merged = Math.min(
+							Math.max(existing.quantity, capByLimit),
+							sku.inventory,
+							MAX_QUANTITY_PER_ORDER,
+						);
+						if (merged !== existing.quantity) {
+							await tx.cartItem.update({
+								where: { id: existing.id },
+								data: { quantity: merged },
+							});
+						}
+						reorderedCount++;
+					} else {
+						// Check cart items limit
+						if (slotsConsumed >= availableSlots) {
+							truncatedCount++;
+							continue;
+						}
+						if (capByLimit <= 0) {
+							skippedCount++;
+							continue;
+						}
+						await tx.cartItem.create({
+							data: {
+								cartId: cart.id,
+								skuId: orderItem.skuId,
+								quantity: capByLimit,
+								priceAtAdd: sku.priceInclTax,
+							},
 						});
+						slotsConsumed++;
+						reorderedCount++;
 					}
-					reorderedCount++;
-				} else {
-					// Check cart items limit
-					if (slotsConsumed >= availableSlots) {
-						truncatedCount++;
-						continue;
-					}
-					if (capByLimit <= 0) {
-						skippedCount++;
-						continue;
-					}
-					await tx.cartItem.create({
-						data: {
-							cartId: cart.id,
-							skuId: orderItem.skuId,
-							quantity: capByLimit,
-							priceAtAdd: sku.priceInclTax,
-						},
-					});
-					slotsConsumed++;
-					reorderedCount++;
 				}
-			}
 
-			// Touch cart
-			await tx.cart.update({
-				where: { id: cart.id },
-				data: { updatedAt: new Date() },
-			});
-		});
+				// Touch cart
+				await tx.cart.update({
+					where: { id: cart.id },
+					data: { updatedAt: new Date() },
+				});
+			},
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		// Cache invalidation
 		const tags = getCartInvalidationTags(userId, sessionId ?? undefined);

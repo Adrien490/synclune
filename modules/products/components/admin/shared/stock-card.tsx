@@ -9,7 +9,7 @@ import { InputGroupAddon, InputGroupText } from "@/shared/components/ui/input-gr
 import { MOBILE_SECTION_TITLE } from "./shared-styles";
 
 export interface StockCardProps {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Shared across multiple form instances (Create/Edit Product, Create/Edit SKU). Union typing would create generic explosion; caller is responsible for field name validity.
 	form: any;
 	/** Nom du champ TanStack pour l'inventaire (e.g. "initialSku.inventory"). */
 	inventoryFieldName: string;

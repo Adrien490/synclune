@@ -302,6 +302,16 @@ describe("POST /api/webhooks/stripe - signature validation", () => {
 // 3. Anti-replay check
 // ============================================================================
 
+/**
+ * @regression webhooks-audit-2026-05-17 (anti-replay 5min)
+ *
+ * Bug : sans anti-replay window, un attaquant pouvait re-livrer un event Stripe
+ * intercepté plusieurs minutes plus tard (signature valide indéfiniment). Le
+ * fix borne l'event.created à 5 minutes max via ANTI_REPLAY_WINDOW_SECONDS.
+ *
+ * Garde-fou : ne PAS retirer le check `event.created < NOW - 300s` du route
+ * handler — Stripe recommande explicitement cette fenêtre dans sa doc webhook.
+ */
 describe("POST /api/webhooks/stripe - anti-replay check", () => {
 	it("should return 400 when event is older than ANTI_REPLAY_WINDOW_SECONDS", async () => {
 		const oldEvent = makeStripeEvent({

@@ -1,6 +1,7 @@
 import { updateTag } from "next/cache";
 import { AccountStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import {
 	deleteUploadThingFileFromUrl,
@@ -81,7 +82,7 @@ export async function processAccountDeletions(): Promise<CronResult> {
 				async (tx) => {
 					await anonymizeUserInTransaction(tx, user.id);
 				},
-				{ timeout: 15_000 },
+				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 			);
 
 			// Send deletion confirmation email AFTER successful transaction

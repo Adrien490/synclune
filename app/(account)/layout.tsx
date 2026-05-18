@@ -5,7 +5,6 @@ import { getSession } from "@/modules/auth/lib/get-current-session";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
-import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { PullToRefresh } from "@/shared/components/pull-to-refresh";
@@ -67,7 +66,6 @@ export default async function AccountLayout({ children }: { children: React.Reac
 				<SentryUserBridgeWithAuth />
 			</Suspense>
 			<CookieBanner />
-			<ConditionalAnalytics />
 		</>
 	);
 }

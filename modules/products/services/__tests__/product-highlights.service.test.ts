@@ -12,7 +12,12 @@ function makeSku(
 		materials: Array<{
 			materialId: string;
 			position: number;
-			material: { id: string; name: string };
+			material: { id: string; name: string; description?: string | null };
+		}>;
+		colors: Array<{
+			colorId: string;
+			position: number;
+			color: { id: string; slug: string; name: string; hex: string; description?: string | null };
 		}>;
 		size: string | null;
 		isActive: boolean;
@@ -27,7 +32,7 @@ function makeSku(
 		priceInclTax: 5000,
 		compareAtPrice: null,
 		size: null,
-		color: null,
+		colors: [],
 		materials: [],
 		images: [],
 		...overrides,
@@ -111,6 +116,106 @@ describe("generateHighlights", () => {
 		const product = makeProduct({ skus: [] });
 		const result = generateHighlights(product);
 		expect(result.find((h) => h.id === "material")).toBeUndefined();
+	});
+
+	it("should use Material.description from DB when present", () => {
+		const product = makeProduct({
+			skus: [
+				makeSku({
+					materials: [
+						{
+							materialId: "mat-1",
+							position: 0,
+							material: {
+								id: "mat-1",
+								name: "Argent 925",
+								description: "Argent massif certifié, hypoallergénique",
+							},
+						},
+					],
+				}),
+			],
+		});
+		const result = generateHighlights(product);
+		const material = result.find((h) => h.id === "material");
+		expect(material?.description).toBe("Argent massif certifié, hypoallergénique");
+	});
+
+	it("should fall back to default material description when DB description is null", () => {
+		const product = makeProduct({
+			skus: [
+				makeSku({
+					materials: [
+						{
+							materialId: "mat-1",
+							position: 0,
+							material: { id: "mat-1", name: "Argent 925", description: null },
+						},
+					],
+				}),
+			],
+		});
+		const result = generateHighlights(product);
+		const material = result.find((h) => h.id === "material");
+		expect(material?.description).toBe("Matériau de qualité sélectionné avec soin");
+	});
+
+	it("should include color highlight when default sku has a color with description", () => {
+		const product = makeProduct({
+			skus: [
+				makeSku({
+					colors: [
+						{
+							colorId: "col-1",
+							position: 0,
+							color: {
+								id: "col-1",
+								slug: "rose-poudre",
+								name: "Rose poudré",
+								hex: "#F5B0C1",
+								description: "Finition mate, tonalité chaude rappelant les soirées d'été",
+							},
+						},
+					],
+				}),
+			],
+		});
+		const result = generateHighlights(product);
+		const color = result.find((h) => h.id === "color");
+		expect(color).toBeDefined();
+		expect(color?.label).toBe("Rose poudré");
+		expect(color?.description).toBe("Finition mate, tonalité chaude rappelant les soirées d'été");
+		expect(color?.priority).toBe(1.5);
+	});
+
+	it("should not include color highlight when color has no description", () => {
+		const product = makeProduct({
+			skus: [
+				makeSku({
+					colors: [
+						{
+							colorId: "col-1",
+							position: 0,
+							color: {
+								id: "col-1",
+								slug: "rose-poudre",
+								name: "Rose poudré",
+								hex: "#F5B0C1",
+								description: null,
+							},
+						},
+					],
+				}),
+			],
+		});
+		const result = generateHighlights(product);
+		expect(result.find((h) => h.id === "color")).toBeUndefined();
+	});
+
+	it("should not include color highlight when sku has no colors", () => {
+		const product = makeProduct({ skus: [makeSku({ colors: [] })] });
+		const result = generateHighlights(product);
+		expect(result.find((h) => h.id === "color")).toBeUndefined();
 	});
 
 	it("should include adjustable highlight when any sku has ajustable size", () => {

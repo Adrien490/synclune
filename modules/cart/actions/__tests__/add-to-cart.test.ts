@@ -237,7 +237,7 @@ describe("addToCart", () => {
 
 		await addToCart(undefined, makeFormData());
 		expect(mockError).toHaveBeenCalledWith(
-			"Impossible de creer une session panier. Veuillez reessayer.",
+			"Impossible de créer une session panier. Veuillez réessayer.",
 		);
 	});
 

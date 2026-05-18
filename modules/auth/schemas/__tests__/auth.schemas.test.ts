@@ -202,6 +202,7 @@ describe("signUpEmailSchema", () => {
 		email: "newuser@example.com",
 		password: "SecurePass1XYZ",
 		name: "Alice",
+		acceptTerms: "true",
 	};
 
 	it("accepts valid signup data", () => {
@@ -234,6 +235,18 @@ describe("signUpEmailSchema", () => {
 			email: "bad-email",
 		});
 		expect(result.success).toBe(false);
+	});
+
+	it("rejects when acceptTerms is not 'true' (RGPD Art. 7 explicit consent)", () => {
+		const result = signUpEmailSchema.safeParse({
+			...validInput,
+			acceptTerms: "false",
+		});
+		expect(result.success).toBe(false);
+		if (!result.success) {
+			const paths = result.error.issues.map((i) => i.path.join("."));
+			expect(paths).toContain("acceptTerms");
+		}
 	});
 });
 

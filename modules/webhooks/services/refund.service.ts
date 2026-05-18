@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { PaymentStatus, RefundStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { sendAdminRefundFailedAlert } from "@/modules/emails/services/admin-emails";
 import { getBaseUrl, ROUTES } from "@/shared/constants/urls";
 import { canTransition } from "@/modules/refunds/services/refund-state-machine.service";
@@ -152,7 +153,7 @@ export async function syncStripeRefunds(
 					}
 				}
 			},
-			{ timeout: 10000 },
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 	}
 }
@@ -170,31 +171,34 @@ export async function updateOrderPaymentStatus(
 	const isFullyRefunded = totalRefunded >= orderTotal;
 	const isPartiallyRefunded = totalRefunded > 0 && totalRefunded < orderTotal;
 
-	await prisma.$transaction(async (tx) => {
-		// Lock the order row to serialize concurrent refund webhook processing
-		await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
+	await prisma.$transaction(
+		async (tx) => {
+			// Lock the order row to serialize concurrent refund webhook processing
+			await tx.$queryRaw`SELECT id FROM "Order" WHERE id = ${orderId} FOR UPDATE`;
 
-		const order = await tx.order.findUniqueOrThrow({
-			where: { id: orderId },
-			select: { paymentStatus: true },
-		});
+			const order = await tx.order.findUniqueOrThrow({
+				where: { id: orderId },
+				select: { paymentStatus: true },
+			});
 
-		if (isFullyRefunded && order.paymentStatus !== PaymentStatus.REFUNDED) {
-			await tx.order.update({
-				where: { id: orderId },
-				data: { paymentStatus: PaymentStatus.REFUNDED },
-			});
-		} else if (
-			isPartiallyRefunded &&
-			order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED &&
-			order.paymentStatus !== PaymentStatus.REFUNDED
-		) {
-			await tx.order.update({
-				where: { id: orderId },
-				data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
-			});
-		}
-	});
+			if (isFullyRefunded && order.paymentStatus !== PaymentStatus.REFUNDED) {
+				await tx.order.update({
+					where: { id: orderId },
+					data: { paymentStatus: PaymentStatus.REFUNDED },
+				});
+			} else if (
+				isPartiallyRefunded &&
+				order.paymentStatus !== PaymentStatus.PARTIALLY_REFUNDED &&
+				order.paymentStatus !== PaymentStatus.REFUNDED
+			) {
+				await tx.order.update({
+					where: { id: orderId },
+					data: { paymentStatus: PaymentStatus.PARTIALLY_REFUNDED },
+				});
+			}
+		},
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 
 	return { isFullyRefunded, isPartiallyRefunded };
 }

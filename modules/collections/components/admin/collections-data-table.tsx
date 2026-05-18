@@ -19,20 +19,32 @@ import {
 } from "@/shared/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/components/ui/tooltip";
 import type { GetCollectionsReturn } from "@/modules/collections/data/get-collections";
-import { TriangleAlert, FolderOpen, Star } from "lucide-react";
+import {
+	Archive,
+	FileEdit,
+	FolderOpen,
+	Globe,
+	Star,
+	TriangleAlert,
+	type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { CollectionRowActions } from "./collection-row-actions";
 import { CollectionsBulkActionsBar } from "./collections-bulk-actions-bar";
 import { CreateCollectionButton } from "./create-collection-button";
 
-// Labels et styles pour les badges de statut
+// Labels, icônes et styles pour les badges de statut
 const STATUS_CONFIG: Record<
 	CollectionStatus,
-	{ label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+	{
+		label: string;
+		variant: "default" | "secondary" | "destructive" | "outline";
+		Icon: LucideIcon;
+	}
 > = {
-	[CollectionStatus.PUBLIC]: { label: "Public", variant: "default" },
-	[CollectionStatus.DRAFT]: { label: "Brouillon", variant: "secondary" },
-	[CollectionStatus.ARCHIVED]: { label: "Archivé", variant: "outline" },
+	[CollectionStatus.PUBLIC]: { label: "Public", variant: "default", Icon: Globe },
+	[CollectionStatus.DRAFT]: { label: "Brouillon", variant: "secondary", Icon: FileEdit },
+	[CollectionStatus.ARCHIVED]: { label: "Archivé", variant: "outline", Icon: Archive },
 };
 
 interface CollectionsDataTableProps {
@@ -74,38 +86,22 @@ export async function CollectionsDataTable({
 					<CollectionsBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							role="table"
-							aria-label="Liste des collections"
 							caption="Liste des collections"
-							className="min-w-full table-fixed"
+							striped
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
-									<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
+									<TableHead className="w-[4%]">
 										<BulkSelectionHeaderCheckbox itemsLabel="collections" />
 										<span className="sr-only">Sélection</span>
 									</TableHead>
-									<TableHead key="name" scope="col" role="columnheader" className="w-[23%]">
-										Nom
-									</TableHead>
-									<TableHead key="status" scope="col" role="columnheader" className="w-[12%]">
-										Statut
-									</TableHead>
-									<TableHead key="description" scope="col" role="columnheader" className="w-[23%]">
-										Description
-									</TableHead>
+									<TableHead className="w-[23%]">Nom</TableHead>
+									<TableHead className="w-[12%]">Statut</TableHead>
+									<TableHead className="w-[23%]">Description</TableHead>
+									<TableHead className="w-[10%] text-center">Produits</TableHead>
 									<TableHead
-										key="products"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Produits
-									</TableHead>
-									<TableHead
-										key="actions"
-										scope="col"
-										role="columnheader"
 										className="w-[8%] text-right"
 										aria-label="Actions disponibles pour chaque collection"
 									>
@@ -151,9 +147,19 @@ export async function CollectionsDataTable({
 											</TableCell>
 											<TableCell>
 												<div className="flex items-center gap-2">
-													<Badge variant={STATUS_CONFIG[collection.status].variant}>
-														{STATUS_CONFIG[collection.status].label}
-													</Badge>
+													{(() => {
+														const { label, variant, Icon } = STATUS_CONFIG[collection.status];
+														return (
+															<Badge
+																variant={variant}
+																role="status"
+																aria-label={`Statut : ${label}`}
+															>
+																<Icon aria-hidden="true" />
+																{label}
+															</Badge>
+														);
+													})()}
 													{/* Warning si PUBLIC mais aucun produit visible */}
 													{collection.status === CollectionStatus.PUBLIC && productsCount === 0 && (
 														<Tooltip>

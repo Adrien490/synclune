@@ -126,6 +126,7 @@ export const GET_PRODUCT_SELECT = {
 							slug: true,
 							name: true,
 							hex: true,
+							description: true,
 						},
 					},
 				},
@@ -139,6 +140,7 @@ export const GET_PRODUCT_SELECT = {
 						select: {
 							id: true,
 							name: true,
+							description: true,
 						},
 					},
 				},

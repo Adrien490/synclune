@@ -5,7 +5,8 @@ import {
 	HistorySource,
 	OrderAction,
 } from "@/app/generated/prisma/client";
-import { prisma, notDeleted } from "@/shared/lib/prisma";
+import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { PRODUCTS_CACHE_TAGS } from "@/modules/products/constants/cache";
@@ -79,63 +80,66 @@ export async function cleanupPendingOrders(): Promise<CronResult> {
 		}
 
 		try {
-			await prisma.$transaction(async (tx) => {
-				const fresh = await tx.order.findUnique({
-					where: { id: order.id, ...notDeleted },
-					select: { status: true, paymentStatus: true, stripePaymentIntentId: true },
-				});
-				if (
-					!fresh ||
-					fresh.status !== OrderStatus.PENDING ||
-					fresh.paymentStatus !== PaymentStatus.PENDING ||
-					fresh.stripePaymentIntentId !== null
-				) {
-					return;
-				}
-
-				await tx.order.update({
-					where: { id: order.id },
-					data: { status: OrderStatus.CANCELLED },
-				});
-
-				for (const item of order.items) {
-					await tx.productSku.update({
-						where: { id: item.skuId },
-						data: { inventory: { increment: item.quantity } },
+			await prisma.$transaction(
+				async (tx) => {
+					const fresh = await tx.order.findUnique({
+						where: { id: order.id, ...notDeleted },
+						select: { status: true, paymentStatus: true, stripePaymentIntentId: true },
 					});
-					tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(item.skuId));
-				}
+					if (
+						!fresh ||
+						fresh.status !== OrderStatus.PENDING ||
+						fresh.paymentStatus !== PaymentStatus.PENDING ||
+						fresh.stripePaymentIntentId !== null
+					) {
+						return;
+					}
 
-				const usages = await tx.discountUsage.findMany({
-					where: { orderId: order.id },
-					select: { id: true, discountId: true },
-				});
-				for (const usage of usages) {
-					await tx.discount.update({
-						where: { id: usage.discountId },
-						data: { usageCount: { decrement: 1 } },
+					await tx.order.update({
+						where: { id: order.id },
+						data: { status: OrderStatus.CANCELLED },
 					});
-				}
-				if (usages.length > 0) {
-					await tx.discountUsage.deleteMany({ where: { orderId: order.id } });
-				}
 
-				await createOrderAuditTx(tx, {
-					orderId: order.id,
-					action: OrderAction.CANCELLED,
-					previousStatus: OrderStatus.PENDING,
-					newStatus: OrderStatus.CANCELLED,
-					note: "Auto-annulation : panier abandonné (>24h sans paiement)",
-					authorName: "Système",
-					source: HistorySource.SYSTEM,
-					metadata: {
-						reason: "abandoned_checkout",
-						itemsCount: order.items.length,
-						releasedDiscountsCount: usages.length,
-						ageHours: Math.floor((Date.now() - order.createdAt.getTime()) / (60 * 60 * 1000)),
-					},
-				});
-			});
+					for (const item of order.items) {
+						await tx.productSku.update({
+							where: { id: item.skuId },
+							data: { inventory: { increment: item.quantity } },
+						});
+						tagsToInvalidate.add(PRODUCTS_CACHE_TAGS.SKU_STOCK(item.skuId));
+					}
+
+					const usages = await tx.discountUsage.findMany({
+						where: { orderId: order.id },
+						select: { id: true, discountId: true },
+					});
+					for (const usage of usages) {
+						await tx.discount.update({
+							where: { id: usage.discountId },
+							data: { usageCount: { decrement: 1 } },
+						});
+					}
+					if (usages.length > 0) {
+						await tx.discountUsage.deleteMany({ where: { orderId: order.id } });
+					}
+
+					await createOrderAuditTx(tx, {
+						orderId: order.id,
+						action: OrderAction.CANCELLED,
+						previousStatus: OrderStatus.PENDING,
+						newStatus: OrderStatus.CANCELLED,
+						note: "Auto-annulation : panier abandonné (>24h sans paiement)",
+						authorName: "Système",
+						source: HistorySource.SYSTEM,
+						metadata: {
+							reason: "abandoned_checkout",
+							itemsCount: order.items.length,
+							releasedDiscountsCount: usages.length,
+							ageHours: Math.floor((Date.now() - order.createdAt.getTime()) / (60 * 60 * 1000)),
+						},
+					});
+				},
+				{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+			);
 
 			processed++;
 		} catch (error) {

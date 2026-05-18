@@ -15,6 +15,8 @@ interface PasswordInputFieldProps extends Omit<
 > {
 	/** Label affiché au-dessus du champ */
 	label?: string;
+	/** Texte d'aide affiché sous le champ (relié via aria-describedby) */
+	description?: string;
 }
 
 /**
@@ -40,12 +42,18 @@ export const PasswordInputField = ({
 	label,
 	placeholder,
 	required,
+	description,
 	className,
 	autoComplete,
 	...rest
 }: PasswordInputFieldProps) => {
 	const field = useFieldContext<string>();
 	const [showPassword, setShowPassword] = useState(false);
+
+	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		field.handleChange(e.target.value);
@@ -86,14 +94,19 @@ export const PasswordInputField = ({
 				value={field.state.value}
 				onChange={handleChange}
 				onBlur={field.handleBlur}
-				aria-invalid={field.state.meta.errors.length > 0}
-				aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+				aria-invalid={hasError}
+				aria-describedby={describedBy}
 				aria-required={required}
 				autoComplete={autoComplete}
 				className={cn("pr-10", className)}
 				endIcon={toggleButton}
 				{...rest}
 			/>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

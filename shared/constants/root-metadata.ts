@@ -32,10 +32,6 @@ export const rootMetadata: Metadata = {
 	metadataBase: new URL(SITE_URL),
 	alternates: {
 		canonical: "/",
-		languages: {
-			fr: "/",
-			"x-default": "/",
-		},
 	},
 	openGraph: {
 		type: "website",

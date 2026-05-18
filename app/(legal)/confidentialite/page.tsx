@@ -282,14 +282,12 @@ export default async function PrivacyPolicyPage() {
 									<strong>Droit d'accès :</strong> obtenir une copie de vos données
 								</li>
 								<li>
-									<strong>Droit de rectification :</strong> corriger des données inexactes. Pour
-									modifier votre adresse email, contactez-nous à{" "}
-									<a
-										href={`mailto:${process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}`}
-										className="underline"
-									>
-										{process.env.RESEND_CONTACT_EMAIL ?? "contact@synclune.fr"}
-									</a>
+									<strong>Droit de rectification :</strong> corriger des données inexactes. Modifiez
+									votre nom, email et adresses depuis votre{" "}
+									<Link href="/compte/parametres" className="underline">
+										espace personnel
+									</Link>
+									.
 								</li>
 								<li>
 									<strong>Droit à l'effacement :</strong> supprimer vos données (sauf obligations

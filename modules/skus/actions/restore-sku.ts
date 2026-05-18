@@ -91,7 +91,7 @@ export async function restoreSku(
 			});
 			if (conflict) {
 				throw new BusinessError(
-					`Restauration impossible: une variante active utilise deja cette combinaison (Ref: ${conflict.sku}).`,
+					`Restauration impossible : une variante active utilise déjà cette combinaison (Ref : ${conflict.sku}).`,
 				);
 			}
 

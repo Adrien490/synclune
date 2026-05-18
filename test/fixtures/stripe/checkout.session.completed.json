@@ -1,0 +1,52 @@
+{
+	"id": "evt_test_checkout_completed",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "checkout.session.completed",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "cs_test_a1b2c3d4e5",
+			"object": "checkout.session",
+			"mode": "payment",
+			"status": "complete",
+			"payment_status": "paid",
+			"amount_total": 10500,
+			"currency": "eur",
+			"customer": "cus_test_xxx",
+			"customer_email": null,
+			"customer_details": {
+				"email": "buyer@example.test",
+				"name": "Jane Doe",
+				"phone": "+33600000000",
+				"address": {
+					"line1": "1 rue de Test",
+					"line2": null,
+					"postal_code": "75001",
+					"city": "Paris",
+					"country": "FR",
+					"state": null
+				}
+			},
+			"collected_information": null,
+			"client_reference_id": null,
+			"metadata": {
+				"cartId": "cart_test_1",
+				"discountCode": null
+			},
+			"payment_intent": "pi_test_xxx",
+			"shipping_cost": {
+				"amount_total": 500,
+				"shipping_rate": "shr_test_colissimo"
+			},
+			"total_details": {
+				"amount_shipping": 500,
+				"amount_discount": 0,
+				"amount_tax": 0
+			}
+		}
+	}
+}

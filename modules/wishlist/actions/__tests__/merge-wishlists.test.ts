@@ -147,7 +147,7 @@ describe("mergeWishlists", () => {
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toMatch(/Non autorise/i);
+		expect(result.message).toMatch(/Non autorisé/i);
 		expect(mockGetGuestWishlistForMerge).not.toHaveBeenCalled();
 	});
 
@@ -169,7 +169,7 @@ describe("mergeWishlists", () => {
 		const result = await mergeWishlists(VALID_USER_ID, VICTIM_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toMatch(/Non autorise/i);
+		expect(result.message).toMatch(/Non autorisé/i);
 		expect(mockGetGuestWishlistForMerge).not.toHaveBeenCalled();
 		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
 	});
@@ -442,7 +442,7 @@ describe("mergeWishlists", () => {
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toMatch(/^1 favori ajoute/);
+		expect(result.message).toMatch(/^1 favori ajouté/);
 	});
 
 	it("returns a plural success message when multiple items are added", async () => {
@@ -453,17 +453,17 @@ describe("mergeWishlists", () => {
 
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
-		expect(result.message).toMatch(/^2 favoris ajoutes/);
+		expect(result.message).toMatch(/^2 favoris ajoutés/);
 	});
 
-	it("returns 'tous deja dans votre liste' message when nothing was added", async () => {
+	it("returns 'tous déjà dans votre liste' message when nothing was added", async () => {
 		mockGetGuestWishlistForMerge.mockResolvedValue(buildGuestWishlist([{ productId: "p-1" }]));
 		mockGetUserWishlistForMerge.mockResolvedValue(buildUserWishlist(["p-1"]));
 
 		const result = await mergeWishlists(VALID_USER_ID, VALID_SESSION_ID);
 
 		expect(result.status).toBe(ActionStatus.SUCCESS);
-		expect(result.message).toMatch(/deja dans votre liste/i);
+		expect(result.message).toMatch(/déjà dans votre liste/i);
 	});
 
 	// --------------------------------------------------------------------

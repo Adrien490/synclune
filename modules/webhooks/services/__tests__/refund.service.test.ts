@@ -72,6 +72,8 @@ vi.mock("@/app/generated/prisma/client", () => ({
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
 	notDeleted: { deletedAt: null },
+	TX_TIMEOUT_LONG: 10_000,
+	TX_MAX_WAIT_LONG: 5_000,
 }));
 
 vi.mock("@/modules/emails/services/refund-emails", () => ({

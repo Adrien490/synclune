@@ -55,10 +55,10 @@ export function UsersDataTable({ usersPromise, perPage, resetHref }: UsersDataTa
 					<UsersBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							aria-label="Liste des clients"
-							caption="Liste des utilisateurs"
+							caption="Liste des clients"
 							striped
-							className="min-w-full table-fixed"
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>

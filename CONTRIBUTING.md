@@ -107,14 +107,50 @@ refactor/short-description
 
 ### Commit messages
 
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
+All commits must follow [Conventional Commits](https://www.conventionalcommits.org/). The format is enforced by **commitlint** (see `commitlint.config.ts`) via the husky `commit-msg` hook and the CI quality job.
+
+**Format**: `type(scope): subject` — subject ≤ 100 chars, scope optional but recommended.
+
+**Allowed types** (`type-enum`):
+
+| Type       | When to use                                                  |
+| ---------- | ------------------------------------------------------------ |
+| `feat`     | New feature visible to users                                 |
+| `fix`      | Bug fix                                                      |
+| `perf`     | Performance improvement (no behavior change)                 |
+| `refactor` | Code change that doesn't add features or fix bugs            |
+| `style`    | Formatting, whitespace, missing semis (no code logic change) |
+| `test`     | Adding or fixing tests                                       |
+| `docs`     | Documentation only                                           |
+| `build`    | Build system, dependencies, package.json scripts             |
+| `ci`       | CI configuration (GitHub Actions, workflows)                 |
+| `chore`    | Maintenance tasks (no production code change)                |
+| `revert`   | Revert a previous commit                                     |
+
+**Allowed scopes** — module name (e.g. `cart`, `auth`, `webhooks`) OR cross-cutting (`a11y`, `admin`, `api`, `deps`, `perf`, `prisma`, `ui`, etc.). See `commitlint.config.ts` for the full list.
+
+**Examples**:
 
 ```
-feat: add wishlist sharing
-fix: cart total calculation with discounts
-refactor: extract checkout service
-docs: update caching strategy
+feat(cart): add undo toast after item removal
+fix(stripe): handle webhook idempotency race on concurrent retries
+perf(media): defer thumbnail generation to worker queue
+refactor(auth): extract session validation to require-auth
+chore(deps): bump prisma to 7.10
+docs(refunds): document atomic restock service exception
+test(webhooks): cover P2002 duplicate webhook event branch
+ci(quality): block merge on lint warnings
+revert: feat(cart) sticky CTA mobile (caused mid-scroll jitter)
 ```
+
+**Common anti-patterns to avoid**:
+
+- `Update cart.ts` — no type, no scope, vague subject
+- `wip` / `fix stuff` / `h` — meaningless; rebase or amend before pushing
+- `feat: add stuff` — no scope, vague subject
+- `feat(Cart):` — scope must be `kebab-case`
+
+If you bypass the local hook with `--no-verify`, the CI will reject the commit. Either fix the message via `git commit --amend` or use the husky hook (it's there for a reason).
 
 ### Merge strategy
 
@@ -131,11 +167,11 @@ Husky + lint-staged runs automatically on commit:
 
 The `main` branch is protected with the following rules:
 
-- **Required status checks**: `quality`, `tests`, `e2e-smoke` must pass before merge
+- **Required status checks**: `commitlint`, `quality`, `tests`, `e2e-smoke` must pass before merge
 - **Required reviews**: At least 1 approving review
 - **Force push**: Disabled on `main`
 - **Up-to-date branches**: Required before merging
-- **Squash merge**: Default merge strategy for clean linear history
+- **Squash merge**: Default merge strategy for clean linear history (PR title becomes the commit message — must also be Conventional)
 
 ## Testing
 

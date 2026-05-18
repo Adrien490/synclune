@@ -57,13 +57,13 @@ describe("ShopError", () => {
 	it("renders error heading", () => {
 		render(<ShopError error={error} reset={reset} />);
 		expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-			/quelque chose s'est mal passe/i,
+			/quelque chose s'est mal passé/i,
 		);
 	});
 
 	it("renders retry button that calls reset", async () => {
 		render(<ShopError error={error} reset={reset} />);
-		await userEvent.click(screen.getByRole("button", { name: /reessayer/i }));
+		await userEvent.click(screen.getByRole("button", { name: /réessayer/i }));
 		expect(reset).toHaveBeenCalledOnce();
 	});
 

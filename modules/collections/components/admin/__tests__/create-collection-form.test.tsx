@@ -398,7 +398,7 @@ describe("CreateCollectionForm", () => {
 
 		capturedToastCallbacks.current?.onSuccess?.({
 			data: { id: "col-42", name: "Été 2026", collectionStatus: "DRAFT" },
-			message: "Collection créée avec succès",
+			message: "Collection « Été 2026 » créée",
 		});
 
 		expect(onCreated).toHaveBeenCalledWith("col-42");
@@ -410,7 +410,7 @@ describe("CreateCollectionForm", () => {
 
 		capturedToastCallbacks.current?.onSuccess?.({
 			data: { collectionStatus: "DRAFT" },
-			message: "Collection créée avec succès",
+			message: "Collection « Été 2026 » créée",
 		});
 
 		expect(onCreated).not.toHaveBeenCalled();

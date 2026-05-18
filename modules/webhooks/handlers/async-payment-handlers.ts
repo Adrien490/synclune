@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { PaymentStatus } from "@/app/generated/prisma/client";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { ORDERS_CACHE_TAGS } from "@/modules/orders/constants/cache";
 import { DISCOUNT_CACHE_TAGS } from "@/modules/discounts/constants/cache";
 import { SHARED_CACHE_TAGS } from "@/shared/constants/cache-tags";
@@ -127,7 +128,7 @@ export async function handleAsyncPaymentFailed(
 					releasedDiscountIds: discountUsages.map((u) => u.discountId),
 				};
 			},
-			{ timeout: 10000 },
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
 		);
 
 		if (txResult.skipped) {

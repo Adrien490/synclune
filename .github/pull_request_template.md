@@ -20,6 +20,16 @@
 - [ ] Manual testing (`pnpm dev`)
 - [ ] No tests needed (justify below)
 
+## QA risque revenu (si la PR touche cart / orders / payments / webhooks / refunds / discounts / auth)
+
+- [ ] Critical path tests (`pnpm test:critical`)
+- [ ] E2E critical (`pnpm e2e --grep @critical`)
+- [ ] Stripe CLI relay testé localement (`stripe listen --forward-to localhost:3000/api/webhooks/stripe`)
+- [ ] axe-core 0 violation serious/critical sur pages touchées
+- [ ] Mobile réel testé (Safari iOS + Chrome Android)
+- [ ] Fixture Stripe `test/fixtures/stripe/<event>.json` à jour si un handler webhook a été modifié
+- [ ] Régression : si un bug locked (cf `docs/QA.md § Regression playbook`) est dans la zone touchée, le test `*.regression.test.*` correspondant passe toujours
+
 ## Checklist
 
 - [ ] Module layers pattern respected (data / services / actions)

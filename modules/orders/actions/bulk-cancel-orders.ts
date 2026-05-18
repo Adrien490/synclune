@@ -16,6 +16,7 @@ import {
 } from "@/shared/lib/actions";
 import { logger } from "@/shared/lib/logger";
 import { notDeleted, prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { ADMIN_ORDER_LIMITS } from "@/shared/lib/rate-limit-config";
 import { sanitizeText } from "@/shared/lib/sanitize";
 import { ROUTES, buildUrl } from "@/shared/constants/urls";
@@ -108,86 +109,89 @@ export async function bulkCancelOrders(
 			total: number;
 		}> = [];
 
-		await prisma.$transaction(async (tx) => {
-			// Agrège les decrements par discountId pour batcher en fin de transaction.
-			// Plusieurs orders peuvent partager le même discount → on doit décrémenter
-			// par le count total, pas par 1 (sinon perte d'usages).
-			const discountDecrements = new Map<string, number>();
-			const ordersWithUsages: string[] = [];
+		await prisma.$transaction(
+			async (tx) => {
+				// Agrège les decrements par discountId pour batcher en fin de transaction.
+				// Plusieurs orders peuvent partager le même discount → on doit décrémenter
+				// par le count total, pas par 1 (sinon perte d'usages).
+				const discountDecrements = new Map<string, number>();
+				const ordersWithUsages: string[] = [];
 
-			for (const order of orders) {
-				await tx.order.update({
-					where: { id: order.id },
-					data: { status: OrderStatus.CANCELLED },
-				});
+				for (const order of orders) {
+					await tx.order.update({
+						where: { id: order.id },
+						data: { status: OrderStatus.CANCELLED },
+					});
 
-				for (const item of order.items) {
-					await tx.productSku.update({
-						where: { id: item.skuId },
-						data: { inventory: { increment: item.quantity } },
+					for (const item of order.items) {
+						await tx.productSku.update({
+							where: { id: item.skuId },
+							data: { inventory: { increment: item.quantity } },
+						});
+					}
+
+					const usages = await tx.discountUsage.findMany({
+						where: { orderId: order.id },
+						select: { id: true, discountId: true },
+					});
+
+					for (const usage of usages) {
+						discountDecrements.set(
+							usage.discountId,
+							(discountDecrements.get(usage.discountId) ?? 0) + 1,
+						);
+					}
+
+					if (usages.length > 0) {
+						ordersWithUsages.push(order.id);
+					}
+
+					await createOrderAuditTx(tx, {
+						orderId: order.id,
+						action: "CANCELLED",
+						previousStatus: order.status,
+						newStatus: OrderStatus.CANCELLED,
+						previousPaymentStatus: order.paymentStatus,
+						newPaymentStatus: order.paymentStatus,
+						note: reason ?? "Annulation en lot",
+						authorId: adminUser.id,
+						authorName: adminUser.name ?? "Admin",
+						source: HistorySource.ADMIN,
+						metadata: {
+							stockRestored: true,
+							itemsCount: order.items.length,
+							bulkOperation: true,
+						},
+					});
+
+					cancelledOrders.push({
+						id: order.id,
+						orderNumber: order.orderNumber,
+						userId: order.userId,
+						customerEmail: order.customerEmail,
+						customerName: order.customerName,
+						shippingFirstName: order.shippingFirstName,
+						total: order.total,
 					});
 				}
 
-				const usages = await tx.discountUsage.findMany({
-					where: { orderId: order.id },
-					select: { id: true, discountId: true },
-				});
-
-				for (const usage of usages) {
-					discountDecrements.set(
-						usage.discountId,
-						(discountDecrements.get(usage.discountId) ?? 0) + 1,
-					);
+				// Batch decrement usageCount par discountId puis cleanup discount usages.
+				// Si N orders annulés partagent le même discount, decrement par N.
+				for (const [discountId, count] of discountDecrements) {
+					await tx.discount.update({
+						where: { id: discountId },
+						data: { usageCount: { decrement: count } },
+					});
 				}
 
-				if (usages.length > 0) {
-					ordersWithUsages.push(order.id);
+				if (ordersWithUsages.length > 0) {
+					await tx.discountUsage.deleteMany({
+						where: { orderId: { in: ordersWithUsages } },
+					});
 				}
-
-				await createOrderAuditTx(tx, {
-					orderId: order.id,
-					action: "CANCELLED",
-					previousStatus: order.status,
-					newStatus: OrderStatus.CANCELLED,
-					previousPaymentStatus: order.paymentStatus,
-					newPaymentStatus: order.paymentStatus,
-					note: reason ?? "Annulation en lot",
-					authorId: adminUser.id,
-					authorName: adminUser.name ?? "Admin",
-					source: HistorySource.ADMIN,
-					metadata: {
-						stockRestored: true,
-						itemsCount: order.items.length,
-						bulkOperation: true,
-					},
-				});
-
-				cancelledOrders.push({
-					id: order.id,
-					orderNumber: order.orderNumber,
-					userId: order.userId,
-					customerEmail: order.customerEmail,
-					customerName: order.customerName,
-					shippingFirstName: order.shippingFirstName,
-					total: order.total,
-				});
-			}
-
-			// Batch decrement usageCount par discountId puis cleanup discount usages.
-			// Si N orders annulés partagent le même discount, decrement par N.
-			for (const [discountId, count] of discountDecrements) {
-				await tx.discount.update({
-					where: { id: discountId },
-					data: { usageCount: { decrement: count } },
-				});
-			}
-
-			if (ordersWithUsages.length > 0) {
-				await tx.discountUsage.deleteMany({
-					where: { orderId: { in: ordersWithUsages } },
-				});
-			}
-		});
+			},
+			{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+		);
 
 		const tags = new Set<string>();
 		for (const o of cancelledOrders) {

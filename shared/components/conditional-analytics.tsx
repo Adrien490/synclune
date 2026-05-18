@@ -1,13 +1,14 @@
 "use client";
 
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { useCookieConsentStore } from "@/shared/providers/cookie-consent-store-provider";
 
 /**
- * Composant wrapper pour Vercel Analytics avec respect du consentement RGPD
+ * Composant wrapper pour Vercel Analytics + Speed Insights avec respect du consentement RGPD
  *
- * Analytics ne se charge QUE si l'utilisateur a explicitement accepté les cookies.
- * Conforme RGPD : pas de tracking sans consentement.
+ * Ne se chargent QUE si l'utilisateur a explicitement accepté les cookies.
+ * Conforme RGPD/ePrivacy : pas de tracking préalable au consentement.
  */
 export function ConditionalAnalytics() {
 	const accepted = useCookieConsentStore((state) => state.accepted);
@@ -17,5 +18,10 @@ export function ConditionalAnalytics() {
 		return null;
 	}
 
-	return <Analytics />;
+	return (
+		<>
+			<Analytics />
+			<SpeedInsights />
+		</>
+	);
 }

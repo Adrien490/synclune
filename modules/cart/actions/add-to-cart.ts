@@ -58,7 +58,7 @@ export async function addToCart(
 
 		// 4. Vérifier que sessionId est bien défini pour les visiteurs
 		if (!userId && !sessionId) {
-			return error("Impossible de creer une session panier. Veuillez reessayer.");
+			return error("Impossible de créer une session panier. Veuillez réessayer.");
 		}
 
 		// 5. Defense-in-depth : bloquer les ajouts panier quand la boutique est fermée.

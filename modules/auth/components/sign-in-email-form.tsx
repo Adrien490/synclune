@@ -120,6 +120,7 @@ export function SignInEmailForm({ callbackURL }: { callbackURL: string }) {
 									autoCorrect="off"
 									spellCheck={false}
 									disabled={isPending}
+									description="Utilisez l'adresse email associée à votre compte Synclune."
 									required
 								/>
 							)}

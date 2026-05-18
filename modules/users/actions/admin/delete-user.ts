@@ -54,7 +54,7 @@ export async function deleteUser(_prevState: unknown, formData: FormData): Promi
 		}
 
 		if (user.deletedAt) {
-			return error("Cet utilisateur est deja supprime.");
+			return error("Cet utilisateur est déjà supprimé.");
 		}
 
 		// 5b-6. Soft delete + admin count atomique (TOCTOU-safe)

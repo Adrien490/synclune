@@ -5,13 +5,13 @@
  * - Générer les points forts d'un produit (UX scanabilité)
  */
 
-import { getPrimaryMaterialName } from "@/modules/skus/utils/sku-materials-label";
 import type { GetProductReturn } from "../types/product.types";
 import type { ProductHighlight } from "../types/product-services.types";
 
 export type { ProductHighlight } from "../types/product-services.types";
 
 const MAX_COLLECTION_NAME_LENGTH = 20;
+const DEFAULT_MATERIAL_DESCRIPTION = "Matériau de qualité sélectionné avec soin";
 
 /**
  * Genere les highlights produit depuis les donnees existantes
@@ -23,13 +23,24 @@ export function generateHighlights(product: GetProductReturn): ProductHighlight[
 	const highlights: ProductHighlight[] = [];
 
 	// 1. Materiau principal (priorite haute - critere d'achat cle)
-	const primaryMaterial = getPrimaryMaterialName(product.skus[0]?.materials);
-	if (primaryMaterial) {
+	const primaryMaterial = product.skus[0]?.materials[0]?.material;
+	if (primaryMaterial?.name) {
 		highlights.push({
 			id: "material",
-			label: primaryMaterial,
-			description: "Matériau de qualité sélectionné avec soin",
+			label: primaryMaterial.name,
+			description: primaryMaterial.description ?? DEFAULT_MATERIAL_DESCRIPTION,
 			priority: 1,
+		});
+	}
+
+	// 1.5. Couleur principale du SKU par défaut (contenu unique SEO si description peuplée)
+	const primaryColor = product.skus[0]?.colors[0]?.color;
+	if (primaryColor?.name && primaryColor.description) {
+		highlights.push({
+			id: "color",
+			label: primaryColor.name,
+			description: primaryColor.description,
+			priority: 1.5,
 		});
 	}
 

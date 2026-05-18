@@ -140,6 +140,19 @@ describe("createCheckoutSession", () => {
 		expect(params.custom_text?.terms_of_service_acceptance?.message).toMatch(/14 jours/);
 	});
 
+	/**
+	 * @regression checkout-idempotency
+	 *
+	 * Bug : sans idempotencyKey lié à `cart.id + cart.updatedAt`, un user qui
+	 * cliquait 2× rapidement sur "Payer" pouvait créer 2 Checkout Sessions
+	 * Stripe distinctes pour le même panier → risque de 2 charges si les deux
+	 * étaient complétées. Stripe garantit qu'un même idempotencyKey retourne
+	 * TOUJOURS la même session sur 24h.
+	 *
+	 * Garde-fou : la clé DOIT inclure `cart.updatedAt` pour permettre de
+	 * regénérer une session si le panier change (sinon clé figée indéfiniment).
+	 * Format actuel : `checkout-cart-{id}-{updatedAtMs}`.
+	 */
 	it("passes an idempotencyKey derived from cart id + updatedAt", async () => {
 		await createCheckoutSession();
 		const [, options] = mockStripeCreate.mock.calls[0]!;
@@ -171,5 +184,70 @@ describe("createCheckoutSession", () => {
 		const [params] = mockStripeCreate.mock.calls[0]!;
 		expect(params.customer).toBe("cus_existing");
 		expect(params.customer_email).toBeUndefined();
+	});
+
+	it("returns same clientSecret on idempotent retry (Stripe replays the same session)", async () => {
+		// Stripe garantit qu'avec un même idempotencyKey, on récupère la même session
+		// donc le même client_secret. On simule deux appels successifs sans changer le
+		// panier — l'idempotencyKey doit être identique et le clientSecret aussi.
+		const first = await createCheckoutSession();
+		const second = await createCheckoutSession();
+
+		expect(first.success).toBe(true);
+		expect(second.success).toBe(true);
+		if (!first.success || !second.success) throw new Error("expected success");
+
+		const [, optsFirst] = mockStripeCreate.mock.calls[0]!;
+		const [, optsSecond] = mockStripeCreate.mock.calls[1]!;
+		expect(optsFirst.idempotencyKey).toBe(optsSecond.idempotencyKey);
+		expect(first.clientSecret).toBe(second.clientSecret);
+	});
+
+	it("regenerates idempotencyKey when cart.updatedAt changes (user modified cart)", async () => {
+		await createCheckoutSession();
+		const [, firstOpts] = mockStripeCreate.mock.calls[0]!;
+
+		// Cart modifié → updatedAt change → nouvelle session attendue.
+		mockPrisma.cart.findFirst.mockResolvedValueOnce({
+			id: "cart-1",
+			updatedAt: new Date("2026-05-14T11:00:00Z"), // +1h
+			appliedDiscountCode: null,
+			discountAmountCache: null,
+			items: [{ skuId: "sku-1", quantity: 2, priceAtAdd: 4500 }],
+		});
+
+		await createCheckoutSession();
+		const [, secondOpts] = mockStripeCreate.mock.calls[1]!;
+
+		expect(firstOpts.idempotencyKey).not.toBe(secondOpts.idempotencyKey);
+	});
+
+	it("uses Stripe customer cache (no creation) when stripeCustomerId already linked", async () => {
+		mockGetSession.mockResolvedValue({
+			user: { id: "user-1", email: "user@example.com", role: "USER", name: "Jean Dupont" },
+		});
+		mockPrisma.user.findUnique.mockResolvedValue({ stripeCustomerId: "cus_cached" });
+
+		await createCheckoutSession();
+
+		// Cache hit : on ne doit PAS recréer un customer.
+		expect(mockGetOrCreateStripeCustomer).not.toHaveBeenCalled();
+		const [params] = mockStripeCreate.mock.calls[0]!;
+		expect(params.customer).toBe("cus_cached");
+		expect(params.customer_creation).toBeUndefined();
+	});
+
+	it("rejects when rate limit is exceeded", async () => {
+		mockCheckRateLimit.mockResolvedValue({
+			success: false,
+			error: "Trop de tentatives, réessayez dans 60s",
+		});
+
+		const result = await createCheckoutSession();
+
+		expect(result.success).toBe(false);
+		if (result.success) throw new Error("expected error");
+		expect(result.error).toMatch(/Trop de tentatives/);
+		expect(mockStripeCreate).not.toHaveBeenCalled();
 	});
 });

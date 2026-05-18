@@ -23,12 +23,29 @@ import {
 	formatDiscountUsage,
 	formatDiscountValue,
 } from "@/modules/discounts/constants/discount.constants";
-import { Ticket } from "lucide-react";
+import type { DiscountStatus } from "@/modules/discounts/types/discount.types";
+import {
+	CalendarClock,
+	CheckCircle,
+	CircleOff,
+	TicketX,
+	Timer,
+	Ticket,
+	type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { DiscountRowActions } from "./discount-row-actions";
 import { DiscountsBulkActionsBar } from "./discounts-bulk-actions-bar";
 import { CreateDiscountButton } from "./create-discount-button";
 import { getDiscountStatus } from "@/modules/discounts/services/discount-validation.service";
+
+const DISCOUNT_STATUS_ICONS: Record<DiscountStatus, LucideIcon> = {
+	active: CheckCircle,
+	inactive: CircleOff,
+	scheduled: CalendarClock,
+	expired: Timer,
+	exhausted: TicketX,
+};
 
 interface DiscountsDataTableProps {
 	discountsPromise: Promise<GetDiscountsReturn>;
@@ -59,10 +76,10 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 					<DiscountsBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							aria-label="Liste des codes promo"
-							caption="Liste des remises"
+							caption="Liste des codes promo"
 							striped
-							className="min-w-full table-fixed"
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
@@ -123,13 +140,18 @@ export async function DiscountsDataTable({ discountsPromise, perPage }: Discount
 										</TableCell>
 										<TableCell className="text-center">
 											{(() => {
-												const status = DISCOUNT_STATUS_BADGE_CONFIG[getDiscountStatus(discount)];
+												const statusKey = getDiscountStatus(discount);
+												const { label, variant } = DISCOUNT_STATUS_BADGE_CONFIG[statusKey];
+												const Icon = DISCOUNT_STATUS_ICONS[statusKey];
 												return (
 													<Badge
-														variant={status.variant}
+														variant={variant}
+														role="status"
+														aria-label={`Statut : ${label}`}
 														style={{ viewTransitionName: `discount-status-${discount.id}` }}
 													>
-														{status.label}
+														<Icon aria-hidden="true" />
+														{label}
 													</Badge>
 												);
 											})()}

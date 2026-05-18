@@ -391,7 +391,7 @@ describe("StickyCartCTA", () => {
 					{
 						colorId: "c-1",
 						position: 0,
-						color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700" },
+						color: { id: "c-1", slug: "or", name: "Or", hex: "#FFD700", description: null },
 					},
 				],
 			});

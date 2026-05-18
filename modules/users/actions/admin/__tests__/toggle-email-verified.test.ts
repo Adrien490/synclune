@@ -171,7 +171,7 @@ describe("toggleEmailVerified", () => {
 			where: { id: "tz4a98xxat96iws9zmbrgj3a" },
 			data: { emailVerified: true },
 		});
-		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("verifie"));
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("vérifié"));
 	});
 
 	it("should flip true -> false", async () => {
@@ -181,7 +181,7 @@ describe("toggleEmailVerified", () => {
 			where: { id: "tz4a98xxat96iws9zmbrgj3a" },
 			data: { emailVerified: false },
 		});
-		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("retiree"));
+		expect(mockSuccess).toHaveBeenCalledWith(expect.stringContaining("retirée"));
 	});
 
 	it("should invalidate shared and per-user cache tags", async () => {

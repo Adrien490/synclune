@@ -33,13 +33,13 @@ export default function AdminError({
 					}
 					description={
 						<p className="text-muted-foreground text-lg md:text-xl">
-							Une erreur inattendue est survenue. L'erreur a ete signalee automatiquement.
+							Une erreur inattendue est survenue. L&apos;erreur a été signalée automatiquement.
 						</p>
 					}
 					actions={
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
 							<Button size="lg" onClick={reset}>
-								Reessayer
+								Réessayer
 							</Button>
 							<Button asChild variant="secondary" size="lg">
 								<Link href="/admin">Retour au tableau de bord</Link>

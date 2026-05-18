@@ -70,13 +70,19 @@ vi.mock("@/shared/components/ui/table", () => ({
 	Table: ({
 		children,
 		"aria-label": ariaLabel,
+		caption,
 	}: {
 		children: React.ReactNode;
 		"aria-label"?: string;
 		caption?: string;
 		striped?: boolean;
 		className?: string;
-	}) => <table aria-label={ariaLabel}>{children}</table>,
+	}) => (
+		<table aria-label={ariaLabel}>
+			{caption ? <caption>{caption}</caption> : null}
+			{children}
+		</table>
+	),
 	TableBody: ({ children }: { children: React.ReactNode }) => <tbody>{children}</tbody>,
 	TableCell: ({ children, className }: { children: React.ReactNode; className?: string }) => (
 		<td className={className}>{children}</td>
@@ -469,7 +475,7 @@ describe("ReviewsDataTable", () => {
 			}),
 		});
 		render(Component);
-		expect(screen.getByRole("table", { name: /Liste des avis produits/i })).toBeInTheDocument();
+		expect(screen.getByRole("table", { name: /Liste des avis/i })).toBeInTheDocument();
 	});
 
 	it("renders table column headers", async () => {

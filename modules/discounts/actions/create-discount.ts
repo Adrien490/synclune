@@ -88,7 +88,7 @@ export async function createDiscount(
 		// 6. Invalidation du cache
 		getDiscountInvalidationTags(discount.id).forEach((tag) => updateTag(tag));
 
-		return success(`Code promo "${discount.code}" créé avec succès`, { id: discount.id });
+		return success(`Code promo « ${discount.code} » créé`, { id: discount.id });
 	} catch (e) {
 		if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
 			return error(DISCOUNT_ERROR_MESSAGES.ALREADY_EXISTS);

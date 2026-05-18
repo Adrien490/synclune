@@ -1,0 +1,33 @@
+{
+	"id": "evt_test_async_succeeded",
+	"object": "event",
+	"api_version": "2025-09-30.clover",
+	"created": 1715760000,
+	"type": "checkout.session.async_payment_succeeded",
+	"livemode": false,
+	"pending_webhooks": 1,
+	"request": { "id": null, "idempotency_key": null },
+	"data": {
+		"object": {
+			"id": "cs_test_sepa_1",
+			"object": "checkout.session",
+			"mode": "payment",
+			"status": "complete",
+			"payment_status": "paid",
+			"amount_total": 8500,
+			"currency": "eur",
+			"customer": "cus_test_sepa",
+			"customer_email": "sepa@example.test",
+			"customer_details": {
+				"email": "sepa@example.test",
+				"name": "Sepa Payer",
+				"phone": null,
+				"address": null
+			},
+			"client_reference_id": null,
+			"metadata": { "cartId": "cart_test_sepa" },
+			"payment_intent": "pi_test_sepa",
+			"payment_method_types": ["sepa_debit"]
+		}
+	}
+}

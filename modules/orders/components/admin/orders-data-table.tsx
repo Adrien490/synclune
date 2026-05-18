@@ -25,10 +25,26 @@ import type { GetOrdersReturn } from "@/modules/orders/types/order.types";
 import { formatEuro } from "@/shared/utils/format-euro";
 import { formatDateShort } from "@/shared/utils/dates";
 import { Button } from "@/shared/components/ui/button";
-import { ShoppingBag } from "lucide-react";
+import {
+	Clock,
+	PackageCheck,
+	PackageOpen,
+	ShoppingBag,
+	Truck,
+	XCircle,
+	type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { OrderRowActions } from "./order-row-actions";
 import { OrdersBulkActionsBar } from "./orders-bulk-actions-bar";
+
+const ORDER_STATUS_ICONS: Record<OrderStatus, LucideIcon> = {
+	PENDING: Clock,
+	PROCESSING: PackageOpen,
+	SHIPPED: Truck,
+	DELIVERED: PackageCheck,
+	CANCELLED: XCircle,
+};
 
 interface OrdersDataTableProps {
 	ordersPromise: Promise<GetOrdersReturn>;
@@ -65,7 +81,12 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 				<BulkSelectionProvider pageItemIds={pageItemIds}>
 					<OrdersBulkActionsBar />
 					<TableScrollContainer>
-						<Table caption="Liste des commandes" striped className="min-w-full table-fixed">
+						<Table
+							caption="Liste des commandes"
+							striped
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
+						>
 							<TableHeader>
 								<TableRow>
 									<TableHead className="w-[4%]">
@@ -128,9 +149,21 @@ export async function OrdersDataTable({ ordersPromise, perPage }: OrdersDataTabl
 												</time>
 											</TableCell>
 											<TableCell>
-												<Badge variant={ORDER_STATUS_VARIANTS[order.status as OrderStatus]}>
-													{ORDER_STATUS_LABELS[order.status as OrderStatus]}
-												</Badge>
+												{(() => {
+													const status = order.status as OrderStatus;
+													const label = ORDER_STATUS_LABELS[status];
+													const Icon = ORDER_STATUS_ICONS[status];
+													return (
+														<Badge
+															variant={ORDER_STATUS_VARIANTS[status]}
+															role="status"
+															aria-label={`Statut : ${label}`}
+														>
+															<Icon aria-hidden="true" />
+															{label}
+														</Badge>
+													);
+												})()}
 											</TableCell>
 											<TableCell className="text-right">
 												<span className="text-sm font-bold">{formatEuro(order.total)}</span>

@@ -1,5 +1,6 @@
 import { updateTag } from "next/cache";
 import { prisma } from "@/shared/lib/prisma";
+import { TX_MAX_WAIT_LONG, TX_TIMEOUT_LONG } from "@/shared/lib/prisma-tx-options";
 import { logger } from "@/shared/lib/logger";
 import { deleteUploadThingFilesFromUrls } from "@/modules/media/services/delete-uploadthing-files.service";
 import { BATCH_DEADLINE_MS, BATCH_SIZE_LARGE, RETENTION } from "@/modules/cron/constants/limits";
@@ -78,14 +79,18 @@ export async function hardDeleteExpiredRecords(): Promise<CronResult> {
 			: [];
 
 	// 3. Run all DB deletes in a single transaction
-	const [reviewsResult, productsResult] = await prisma.$transaction([
-		prisma.productReview.deleteMany({
-			where: { id: { in: reviewIds.map((r) => r.id) } },
-		}),
-		prisma.product.deleteMany({
-			where: { id: { in: productIds.map((p) => p.id) } },
-		}),
-	]);
+	const [reviewsResult, productsResult] = await prisma.$transaction(
+		async (tx) => {
+			const reviews = await tx.productReview.deleteMany({
+				where: { id: { in: reviewIds.map((r) => r.id) } },
+			});
+			const products = await tx.product.deleteMany({
+				where: { id: { in: productIds.map((p) => p.id) } },
+			});
+			return [reviews, products] as const;
+		},
+		{ timeout: TX_TIMEOUT_LONG, maxWait: TX_MAX_WAIT_LONG },
+	);
 
 	logger.info("DB transaction completed", {
 		cronJob: "hard-delete-retention",

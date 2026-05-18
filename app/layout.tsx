@@ -13,10 +13,9 @@ import { CookieConsentStoreProvider } from "@/shared/providers/cookie-consent-st
 import { DialogStoreProvider } from "@/shared/providers/dialog-store-provider";
 import { MotionProvider } from "@/shared/providers/motion-provider";
 import { SheetStoreProvider } from "@/shared/providers/sheet-store-provider";
+import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { fraunces, figtree, caveat } from "@/shared/styles/fonts";
 import type { Metadata, Viewport } from "next";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Suspense } from "react";
 import "./globals.css";
 
@@ -55,12 +54,11 @@ export default function RootLayout({
 									</SheetStoreProvider>
 								</DialogStoreProvider>
 							</NavigationGuardProvider>
+							<ConditionalAnalytics />
 						</CookieConsentStoreProvider>
 						<AppToaster />
 					</MotionProvider>
 				</SerwistProvider>
-				<Analytics />
-				<SpeedInsights />
 				<WebVitalsReporter />
 			</body>
 		</html>

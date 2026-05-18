@@ -1,0 +1,50 @@
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "75...90"
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+        if_no_uploads: error
+        if_not_found: success
+      critical:
+        target: 85%
+        threshold: 0.5%
+        paths:
+          - modules/cart/
+          - modules/orders/
+          - modules/payments/
+          - modules/webhooks/
+          - modules/auth/
+          - modules/discounts/
+          - modules/refunds/
+    patch:
+      default:
+        target: 85%
+        threshold: 1%
+        if_no_uploads: error
+
+comment:
+  layout: "header, diff, flags, components, files, footer"
+  behavior: default
+  require_changes: false
+
+ignore:
+  - "**/__tests__/**"
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/*.d.ts"
+  - "**/types/**"
+  - "**/constants/**"
+  - "test/**"
+  - "e2e/**"
+  - "prisma/migrations/**"
+  - "app/generated/**"
+  - "shared/components/ui/**"

@@ -3,7 +3,6 @@ import { Navbar, NavbarSkeleton } from "@/app/(shop)/(home)/_components/navbar";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 
 import { AnnouncementBarWrapper } from "@/shared/components/announcement-bar-wrapper";
-import { ConditionalAnalytics } from "@/shared/components/conditional-analytics";
 import { CookieBanner } from "@/shared/components/cookie-banner";
 import { MaintenanceBanner } from "@/shared/components/maintenance-banner";
 import { Suspense } from "react";
@@ -31,7 +30,6 @@ export default async function LegalLayout({ children }: { children: React.ReactN
 				<Footer />
 			</Suspense>
 			<CookieBanner />
-			<ConditionalAnalytics />
 		</>
 	);
 }

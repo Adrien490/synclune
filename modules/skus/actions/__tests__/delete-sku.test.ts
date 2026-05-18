@@ -58,6 +58,20 @@ vi.mock("@/shared/lib/actions", () => ({
 		message: `${entity} introuvable`,
 	}),
 	validationError: (message: string) => ({ status: ActionStatus.VALIDATION_ERROR, message }),
+	validateInput: (schema: { safeParse: (data: unknown) => unknown }, data: unknown) => {
+		const result = schema.safeParse(data) as
+			| { success: true; data: unknown }
+			| { success: false; error: { issues: { message?: string }[] } };
+		if (!result.success) {
+			return {
+				error: {
+					status: ActionStatus.VALIDATION_ERROR,
+					message: result.error.issues[0]?.message ?? "Données invalides",
+				},
+			};
+		}
+		return { data: result.data };
+	},
 }));
 vi.mock("@/modules/media/services/delete-uploadthing-files.service", () => ({
 	deleteUploadThingFilesFromUrls: mockDeleteUploadThingFiles,
@@ -180,7 +194,7 @@ describe("deleteProductSku", () => {
 		);
 		const result = await deleteProductSku(undefined, validFormData);
 		expect(result.status).toBe(ActionStatus.ERROR);
-		expect(result.message).toContain("derniere variante");
+		expect(result.message).toContain("dernière variante");
 	});
 
 	it("should return error when SKU has order items", async () => {

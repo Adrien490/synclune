@@ -305,6 +305,7 @@ function AddressFormContent({ address, onClose, isDirtyRef }: AddressFormContent
 										enterKeyHint="next"
 										disabled={isPending}
 										maxLength={5}
+										description="5 chiffres (ex. 44000), sans espace ni tiret."
 										required
 									/>
 								)}

@@ -23,14 +23,14 @@ export default function LegalError({
 					Page temporairement indisponible
 				</h1>
 				<p className="text-muted-foreground text-lg">
-					Une erreur est survenue lors du chargement de cette page. Veuillez reessayer.
+					Une erreur est survenue lors du chargement de cette page. Veuillez réessayer.
 				</p>
 				<div className="flex flex-col justify-center gap-4 sm:flex-row">
 					<Button size="lg" onClick={reset}>
-						Reessayer
+						Réessayer
 					</Button>
 					<Button asChild variant="secondary" size="lg">
-						<Link href="/">Retour a l'accueil</Link>
+						<Link href="/">Retour à l&apos;accueil</Link>
 					</Button>
 				</div>
 			</div>

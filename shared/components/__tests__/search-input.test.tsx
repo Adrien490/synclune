@@ -268,13 +268,13 @@ describe("SearchInput", () => {
 	it("shows a live region with result count", () => {
 		render(<SearchInput paramName="q" mode="live" resultCount={5} />);
 
-		expect(screen.getByRole("status")).toHaveTextContent("5 resultats");
+		expect(screen.getByRole("status")).toHaveTextContent("5 résultats");
 	});
 
-	it("shows 'Aucun resultat' when resultCount is 0", () => {
+	it("shows 'Aucun résultat' when resultCount is 0", () => {
 		render(<SearchInput paramName="q" mode="live" resultCount={0} />);
 
-		expect(screen.getByRole("status")).toHaveTextContent("Aucun resultat");
+		expect(screen.getByRole("status")).toHaveTextContent("Aucun résultat");
 	});
 
 	it("applies custom ariaLabel to the input", () => {

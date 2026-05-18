@@ -294,7 +294,7 @@ export async function createProduct(
 	} catch (e) {
 		// Gestion spéciale des contraintes d'unicité (slug)
 		if (e instanceof Error && e.message.includes("Unique constraint")) {
-			return error("Une erreur technique est survenue. Veuillez reessayer.");
+			return error("Une erreur technique est survenue. Veuillez réessayer.");
 		}
 		return handleActionError(e, "Une erreur est survenue lors de la création du produit.");
 	}

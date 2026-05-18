@@ -420,8 +420,8 @@ function SearchInputInner({
 					? "Recherche en cours…"
 					: resultCount !== undefined
 						? resultCount === 0
-							? "Aucun resultat"
-							: `${resultCount} resultat${resultCount > 1 ? "s" : ""}`
+							? "Aucun résultat"
+							: `${resultCount} résultat${resultCount > 1 ? "s" : ""}`
 						: ""}
 			</span>
 		</form>

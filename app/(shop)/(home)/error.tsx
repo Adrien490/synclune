@@ -30,18 +30,18 @@ export default function HomeError({
 					}
 					title={
 						<h1 className="font-display text-foreground text-3xl font-normal md:text-4xl">
-							Oups, la page d'accueil n'a pas pu charger
+							Oups, la page d&apos;accueil n&apos;a pas pu charger
 						</h1>
 					}
 					description={
 						<p className="text-muted-foreground text-lg md:text-xl">
-							Une erreur inattendue est survenue. Pas de panique, mes creations sont toujours la !
+							Une erreur inattendue est survenue. Pas de panique, mes créations sont toujours là !
 						</p>
 					}
 					actions={
 						<div className="flex flex-col justify-center gap-4 sm:flex-row">
 							<Button size="lg" onClick={reset}>
-								Reessayer
+								Réessayer
 							</Button>
 							<Button asChild variant="secondary" size="lg">
 								<Link href="/produits">Voir la boutique</Link>

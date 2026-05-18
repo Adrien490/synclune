@@ -52,43 +52,22 @@ export function ColorsDataTable({ colorsPromise, perPage }: ColorsDataTableProps
 					<ColorsBulkActionsBar />
 					<TableScrollContainer>
 						<Table
-							role="table"
-							aria-label="Liste des couleurs"
 							caption="Liste des couleurs"
-							className="min-w-full table-fixed"
+							striped
+							noRegion
+							className="min-w-full table-fixed [&>caption]:sr-only"
 						>
 							<TableHeader>
 								<TableRow>
-									<TableHead key="select" scope="col" role="columnheader" className="w-[4%]">
+									<TableHead className="w-[4%]">
 										<BulkSelectionHeaderCheckbox itemsLabel="couleurs" />
 										<span className="sr-only">Sélection</span>
 									</TableHead>
-									<TableHead key="preview" scope="col" role="columnheader" className="w-[8%]">
-										Aperçu
-									</TableHead>
-									<TableHead key="name" scope="col" role="columnheader" className="w-[36%]">
-										Nom
-									</TableHead>
+									<TableHead className="w-[8%]">Aperçu</TableHead>
+									<TableHead className="w-[36%]">Nom</TableHead>
+									<TableHead className="w-[10%] text-center">Variantes</TableHead>
+									<TableHead className="w-[10%] text-center">Actif</TableHead>
 									<TableHead
-										key="skus"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Variantes
-									</TableHead>
-									<TableHead
-										key="active"
-										scope="col"
-										role="columnheader"
-										className="w-[10%] text-center"
-									>
-										Actif
-									</TableHead>
-									<TableHead
-										key="actions"
-										scope="col"
-										role="columnheader"
 										className="w-[8%] text-right"
 										aria-label="Actions disponibles pour chaque couleur"
 									>

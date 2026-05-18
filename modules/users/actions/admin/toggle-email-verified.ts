@@ -69,11 +69,11 @@ export async function toggleEmailVerified(
 		}
 
 		const message = newValue
-			? `Email de ${user.name ?? user.email} marque comme verifie.`
-			: `Verification email retiree pour ${user.name ?? user.email}.`;
+			? `Email de ${user.name ?? user.email} marqué comme vérifié.`
+			: `Vérification email retirée pour ${user.name ?? user.email}.`;
 
 		return success(message);
 	} catch (e) {
-		return handleActionError(e, "Erreur lors de la modification de la verification email");
+		return handleActionError(e, "Erreur lors de la modification de la vérification email");
 	}
 }

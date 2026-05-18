@@ -248,7 +248,7 @@ describe("deleteUser", () => {
 
 		const result = await deleteUser(undefined, validFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est deja supprime.");
+		expect(mockError).toHaveBeenCalledWith("Cet utilisateur est déjà supprimé.");
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.user.update).not.toHaveBeenCalled();
 	});

@@ -246,7 +246,7 @@ describe("changeUserRole", () => {
 		const result = await changeUserRole(undefined, promoteFormData);
 
 		expect(mockError).toHaveBeenCalledWith(
-			"Impossible de changer le role d'un utilisateur supprime.",
+			"Impossible de changer le rôle d'un utilisateur supprimé.",
 		);
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.user.update).not.toHaveBeenCalled();
@@ -258,7 +258,7 @@ describe("changeUserRole", () => {
 
 		const result = await changeUserRole(undefined, promoteFormData);
 
-		expect(mockError).toHaveBeenCalledWith("Cet utilisateur a deja le role ADMIN.");
+		expect(mockError).toHaveBeenCalledWith("Cet utilisateur a déjà le rôle ADMIN.");
 		expect(result.status).toBe(ActionStatus.ERROR);
 		expect(mockPrisma.user.update).not.toHaveBeenCalled();
 	});

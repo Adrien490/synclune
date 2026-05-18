@@ -73,7 +73,7 @@ export async function anonymizeUserImmediately(
 		}
 
 		if (user.accountStatus === "ANONYMIZED") {
-			return error("Cet utilisateur est deja anonymise.");
+			return error("Cet utilisateur est déjà anonymisé.");
 		}
 
 		await prisma.$transaction(async (tx) => {
