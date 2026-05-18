@@ -119,7 +119,7 @@ export function DesktopNav({ navItems, featuredProducts }: DesktopNavProps) {
 									"motion-reduce:animate-none",
 								)}
 							>
-								<div className="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+								<div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 									{item.dropdownType === "creations" && (
 										<MegaMenuCreations
 											productTypes={item.children}
