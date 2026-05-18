@@ -110,3 +110,10 @@ export const useMicroToastStore = create<MicroToastState>()(
 );
 
 export { DEFAULT_DURATION_MS as MICRO_TOAST_DURATION_MS };
+
+// Dev-only: expose le store sur window pour diagnostiquer in-situ sur device réel
+// (Safari Web Inspector USB → console iPhone → `__microToastStore.getState()`).
+if (process.env.NODE_ENV === "development" && typeof window !== "undefined") {
+	(window as unknown as { __microToastStore?: typeof useMicroToastStore }).__microToastStore =
+		useMicroToastStore;
+}

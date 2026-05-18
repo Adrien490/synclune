@@ -253,6 +253,24 @@ describe("<MicroToast />", () => {
 		});
 	});
 
+	describe("portal mounting (escapes ancestor stacking contexts)", () => {
+		it("renders the pastille as a direct child of document.body, not inside the test container", () => {
+			useMicroToastStore.setState({
+				visible: true,
+				message: "Portal check",
+				variant: "success",
+				key: 1,
+				count: 1,
+				currentDuration: 1200,
+			});
+			const { container } = render(<MicroToast />);
+			const button = screen.getByRole("button");
+			// La pastille DOIT être hors du container de rendu (= portal vers body)
+			expect(container.contains(button)).toBe(false);
+			expect(document.body.contains(button)).toBe(true);
+		});
+	});
+
 	describe("swipe-up to dismiss (G1)", () => {
 		it("calls hide() when offset.y exceeds the threshold", () => {
 			vi.useFakeTimers();

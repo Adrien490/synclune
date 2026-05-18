@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, m, useAnimationControls, useReducedMotion } from "motion/react";
 
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { toastIcons } from "@/shared/components/ui/toast-icons";
+import { useMounted } from "@/shared/hooks/use-mounted";
 import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
 import { cn } from "@/shared/utils/cn";
 
@@ -16,6 +18,11 @@ import { cn } from "@/shared/utils/cn";
  * remplace OU coalesce ×N si même message rapide). La couleur du variant est
  * portée par l'icône (`toastIcons`) pour rester cohérent avec la pillule
  * rounded-full (un border-l-2 dessinerait un arc maladroit).
+ *
+ * Rendu via `createPortal(document.body)` (pattern Radix/Sonner) pour échapper
+ * à tout stacking context ancêtre (ex: `SidebarInset` admin avec transform).
+ * Sans portal, un ancêtre avec `transform`/`filter`/`isolation: isolate` re-base
+ * `position: fixed` et peut masquer la pastille malgré `z-index: 200`.
  *
  * Position : `top: max(0.5rem, env(safe-area-inset-top))`, left 50%, translateX(-50%).
  * Animation : spring 380/28 (preset `MOTION_CONFIG.spring.toast`) sur entrée
@@ -51,6 +58,7 @@ export function MicroToast() {
 	const hide = useMicroToastStore((state) => state.hide);
 	const prefersReducedMotion = useReducedMotion();
 	const progressControls = useAnimationControls();
+	const mounted = useMounted();
 
 	useEffect(() => {
 		if (!visible || prefersReducedMotion) return;
@@ -91,7 +99,9 @@ export function MicroToast() {
 			? `Fermer la notification : ${message} (×${count})`
 			: `Fermer la notification : ${message}`;
 
-	return (
+	if (!mounted) return null;
+
+	return createPortal(
 		<AnimatePresence initial={false}>
 			{visible && (
 				<m.button
@@ -133,6 +143,7 @@ export function MicroToast() {
 					)}
 				</m.button>
 			)}
-		</AnimatePresence>
+		</AnimatePresence>,
+		document.body,
 	);
 }

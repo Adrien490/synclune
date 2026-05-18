@@ -341,7 +341,13 @@ describe("RemoveCartItemAlertDialog", () => {
 			mockIsMobile.value = true;
 		});
 
-		it("calls markAsTombstone (not showUndoToast) on successful removal", () => {
+		const submitForm = (container: HTMLElement) => {
+			const form = container.querySelector("form");
+			if (!form) throw new Error("form not found");
+			fireEvent.submit(form);
+		};
+
+		it("calls markAsTombstone on submit (not showUndoToast)", () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = {
 				cartItemId: "ci-42",
@@ -349,13 +355,36 @@ describe("RemoveCartItemAlertDialog", () => {
 				itemName: "Bague Lune",
 				quantity: 1,
 			};
-			render(<RemoveCartItemAlertDialog />);
-			mockOnSuccessCapture.current?.();
+			const { container } = render(<RemoveCartItemAlertDialog />);
+			submitForm(container);
 			expect(mockMarkAsTombstone).toHaveBeenCalledWith(
 				"ci-42",
-				expect.objectContaining({ displayName: "Bague Lune", onUndo: expect.any(Function) }),
+				expect.objectContaining({
+					displayName: "Bague Lune",
+					onUndo: expect.any(Function),
+					onExpire: expect.any(Function),
+				}),
 			);
 			expect(mockToastSuccess).not.toHaveBeenCalled();
+			expect(mockClose).toHaveBeenCalled();
+		});
+
+		it("defers the removeFromCart server action until onExpire fires", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-42",
+				skuId: "sku-42",
+				itemName: "Bague Lune",
+				quantity: 1,
+			};
+			const { container } = render(<RemoveCartItemAlertDialog />);
+			submitForm(container);
+			expect(mockAction).not.toHaveBeenCalled();
+			const tombstoneCall = mockMarkAsTombstone.mock.calls[0];
+			const onExpire = (tombstoneCall![1] as { onExpire: () => void }).onExpire;
+			onExpire();
+			expect(mockAction).toHaveBeenCalledTimes(1);
+			expect(mockAction).toHaveBeenCalledWith(expect.any(FormData));
 		});
 
 		it("the markAsTombstone onUndo handler restores via addToCart and cancels the tombstone", async () => {
@@ -367,8 +396,8 @@ describe("RemoveCartItemAlertDialog", () => {
 				quantity: 2,
 			};
 			mockAddToCart.mockResolvedValueOnce({ status: ActionStatus.SUCCESS, message: "ok" });
-			render(<RemoveCartItemAlertDialog />);
-			mockOnSuccessCapture.current?.();
+			const { container } = render(<RemoveCartItemAlertDialog />);
+			submitForm(container);
 			const tombstoneCall = mockMarkAsTombstone.mock.calls[0];
 			const undoHandler = (tombstoneCall![1] as { onUndo: () => void }).onUndo;
 			await undoHandler();
@@ -376,15 +405,17 @@ describe("RemoveCartItemAlertDialog", () => {
 			expect(mockAdjustCart).toHaveBeenCalledWith(2);
 			expect(mockAddToCart).toHaveBeenCalledWith(undefined, expect.any(FormData));
 			expect(mockToastSuccess).toHaveBeenCalledWith("Article restauré");
+			// Sanity: undo doit empêcher le server delete d'arriver (onExpire pas invoqué)
+			expect(mockAction).not.toHaveBeenCalled();
 		});
 
-		it("skips markAsTombstone when skuId is missing (no restoration possible)", () => {
+		it("falls back to direct action when skuId is missing (no restoration possible)", () => {
 			mockIsOpen.value = true;
 			mockDialogData.value = { cartItemId: "ci-1", itemName: "Bague", quantity: 1 };
-			render(<RemoveCartItemAlertDialog />);
-			mockOnSuccessCapture.current?.();
+			const { container } = render(<RemoveCartItemAlertDialog />);
+			submitForm(container);
 			expect(mockMarkAsTombstone).not.toHaveBeenCalled();
-			expect(mockToastSuccess).not.toHaveBeenCalled();
+			expect(mockAction).toHaveBeenCalled();
 		});
 
 		it("does NOT call updateOptimisticCart remove on submit (delayed until tombstone expire)", () => {
@@ -396,11 +427,10 @@ describe("RemoveCartItemAlertDialog", () => {
 				quantity: 1,
 			};
 			const { container } = render(<RemoveCartItemAlertDialog />);
-			const form = container.querySelector("form");
-			if (!form) throw new Error("form not found");
-			fireEvent.submit(form);
+			submitForm(container);
 			expect(mockOptimisticUpdate).not.toHaveBeenCalled();
-			expect(mockAction).toHaveBeenCalled();
+			expect(mockAction).not.toHaveBeenCalled();
+			expect(mockMarkAsTombstone).toHaveBeenCalled();
 		});
 	});
 

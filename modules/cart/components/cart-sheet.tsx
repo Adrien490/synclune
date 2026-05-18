@@ -271,12 +271,14 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 
 	const handleTombstoneExpire = useCallback(
 		(itemId: string) => {
+			const entry = tombstones.get(itemId);
 			cancelTombstone(itemId);
 			startTransition(() => {
 				updateOptimisticCart({ type: "remove", itemId });
 			});
+			entry?.onExpire?.();
 		},
-		[cancelTombstone, startTransition, updateOptimisticCart],
+		[cancelTombstone, startTransition, tombstones, updateOptimisticCart],
 	);
 
 	const cartOptimisticValue = {
@@ -305,9 +307,10 @@ export function CartSheet({ cart, recommendations }: CartSheetProps) {
 		} else {
 			haptic("selection");
 			close();
-			// Flush any pending tombstones — otherwise an entry survives the close
-			// and would either reappear with a reset countdown (if the server delete
-			// hasn't committed yet) or stay as an orphan Map entry (memory leak).
+			// Flush any pending tombstones — commit the deferred server delete now
+			// so the item doesn't reappear at the next sheet open (the server action
+			// hasn't been called yet at this point, the tombstone holds it).
+			tombstones.forEach((entry) => entry.onExpire?.());
 			setTombstones(new Map());
 			// Return focus to the saved element after Vaul/Radix portal teardown.
 			// Double rAF aligns with Vaul's animation cycle: first frame settles

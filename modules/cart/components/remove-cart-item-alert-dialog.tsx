@@ -77,18 +77,12 @@ export function RemoveCartItemAlertDialog() {
 	const { action, isPending } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
-			const { cartItemId, skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
+			// Desktop only — mobile shows tombstone at submit (before action fires)
+			// and defers the server call to `onExpire`, so onSuccess won't fire then.
+			const { skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
 			removeDialog.close();
 			if (!skuId) return;
-
-			if (isMobile && cartItemId && cartOptimistic) {
-				cartOptimistic.markAsTombstone(cartItemId, {
-					onUndo: buildUndoHandler(cartItemId, skuId, quantity),
-					displayName: itemName,
-				});
-			} else {
-				showUndoToast(skuId, quantity, itemName);
-			}
+			showUndoToast(skuId, quantity, itemName);
 		},
 	});
 
@@ -102,7 +96,22 @@ export function RemoveCartItemAlertDialog() {
 		e.preventDefault();
 		haptic("error");
 		const formData = new FormData(e.currentTarget);
-		const cartItemId = removeDialog.data?.cartItemId;
+		const { cartItemId, skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
+
+		if (isMobile && cartItemId && skuId && cartOptimistic) {
+			// Mobile : tombstone d'abord (pattern Gmail/iOS Mail). L'item reste rendu
+			// par cart-sheet (items.map → Tombstone si entry présente) pendant 5s, et
+			// la server action n'est appelée qu'à l'expiration via `onExpire` —
+			// sinon `updateTag` revalide le cart côté serveur et démonte le Tombstone
+			// avant qu'il n'ait été visible.
+			removeDialog.close();
+			cartOptimistic.markAsTombstone(cartItemId, {
+				onUndo: buildUndoHandler(cartItemId, skuId, quantity),
+				onExpire: () => action(formData),
+				displayName: itemName,
+			});
+			return;
+		}
 
 		if (!isMobile && cartItemId && cartOptimistic) {
 			// Desktop : optimistic remove immédiat → l'item disparaît avant l'action,
@@ -111,12 +120,11 @@ export function RemoveCartItemAlertDialog() {
 				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: cartItemId });
 				action(formData);
 			});
-		} else {
-			// Mobile : pas d'optimist remove → l'item reste visible jusqu'à `onSuccess`,
-			// qui le bascule en `Tombstone` (5s inline). L'expiration déclenche
-			// `updateOptimisticCart({type:"remove"})` via `handleTombstoneExpire`.
-			action(formData);
+			return;
 		}
+
+		// Fallback (pas de context optimistic, ex: tests isolés) : action directe.
+		action(formData);
 	};
 
 	return (

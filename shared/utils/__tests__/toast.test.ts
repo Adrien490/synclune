@@ -19,6 +19,7 @@ vi.mock("sonner", () => ({ toast: mockSonner }));
 vi.mock("@/shared/hooks/use-haptic", () => ({ triggerHaptic: mockHaptic }));
 
 import { toast, sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration } from "../toast";
+import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
 
 beforeEach(() => {
 	vi.clearAllMocks();
@@ -320,6 +321,30 @@ describe("toast wrapper", () => {
 			const p = Promise.resolve("data");
 			toast.promise(p, { loading: "Chargement…", success: "Réussi", error: "Échec" });
 			expect(mockSonner.promise).toHaveBeenCalled();
+		});
+
+		it("success() on mobile passes computeDuration to MicroToast store (not default 1200ms)", () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({ visible: false, message: "", currentDuration: 0, count: 1 });
+			const longMessage = "Nouveau bijou « Bague Saphir » dans l'atelier — publié";
+
+			toast.success(longMessage);
+
+			const state = useMicroToastStore.getState();
+			expect(state.visible).toBe(true);
+			expect(state.message).toContain("Nouveau bijou");
+			// computeDuration(8 mots, success) ≈ 3700ms, en tout cas > floor 2000
+			expect(state.currentDuration).toBe(computeDuration(longMessage, "success"));
+			expect(state.currentDuration).toBeGreaterThan(2000);
+		});
+
+		it("success() on mobile honors caller-provided duration override", () => {
+			stubMatchMedia(true);
+			useMicroToastStore.setState({ visible: false, message: "", currentDuration: 0, count: 1 });
+
+			toast.success("Bijou créé", { duration: 800 });
+
+			expect(useMicroToastStore.getState().currentDuration).toBe(800);
 		});
 	});
 });

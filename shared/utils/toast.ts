@@ -162,9 +162,8 @@ export const toast = {
 			triggerHaptic("light");
 			if (opts?.action) warnActionIgnored("success");
 			if (typeof message === "string") {
-				useMicroToastStore
-					.getState()
-					.show(message, opts?.microVariant ?? "success", opts?.duration);
+				const duration = opts?.duration ?? computeDuration(message, "success");
+				useMicroToastStore.getState().show(message, opts?.microVariant ?? "success", duration);
 			}
 			return undefined as never;
 		}
@@ -192,9 +191,8 @@ export const toast = {
 			triggerHaptic("medium");
 			if (opts?.action) warnActionIgnored("warning");
 			if (typeof message === "string") {
-				useMicroToastStore
-					.getState()
-					.show(message, opts?.microVariant ?? "warning", opts?.duration);
+				const duration = opts?.duration ?? computeDuration(message, "warning");
+				useMicroToastStore.getState().show(message, opts?.microVariant ?? "warning", duration);
 			}
 			return undefined as never;
 		}
@@ -213,7 +211,8 @@ export const toast = {
 		if (isMobileViewport()) {
 			if (opts?.action) warnActionIgnored("info");
 			if (typeof message === "string") {
-				useMicroToastStore.getState().show(message, opts?.microVariant ?? "info", opts?.duration);
+				const duration = opts?.duration ?? computeDuration(message, "info");
+				useMicroToastStore.getState().show(message, opts?.microVariant ?? "info", duration);
 			}
 			return undefined as never;
 		}

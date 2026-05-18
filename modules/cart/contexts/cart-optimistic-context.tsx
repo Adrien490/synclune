@@ -8,6 +8,12 @@ export type CartOptimisticAction =
 
 export interface CartTombstoneEntry {
 	onUndo: () => void;
+	/**
+	 * Server-side commit déclenché à l'expiration du countdown (ou au flush
+	 * sheet close). Mobile only — desktop fait son optimistic remove + server
+	 * action en synchrone via le toast Sonner.
+	 */
+	onExpire?: () => void;
 	displayName: string;
 }
 
