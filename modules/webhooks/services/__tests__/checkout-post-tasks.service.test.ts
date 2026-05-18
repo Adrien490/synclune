@@ -41,7 +41,6 @@ function makeOrder(overrides: Partial<OrderWithItems> = {}): OrderWithItems {
 			{
 				productTitle: "Collier Étoile",
 				skuColor: "Or",
-				skuColorHexes: "#FFD700",
 				skuMaterial: "Or 18k",
 				skuSize: "M",
 				quantity: 1,
@@ -164,7 +163,6 @@ describe("buildPostCheckoutTasks", () => {
 				{
 					productTitle: "X",
 					skuColor: null,
-					skuColorHexes: null,
 					skuMaterial: null,
 					skuSize: null,
 					quantity: 1,
@@ -186,7 +184,6 @@ describe("buildPostCheckoutTasks", () => {
 				{
 					productTitle: null,
 					skuColor: null,
-					skuColorHexes: null,
 					skuMaterial: null,
 					skuSize: null,
 					quantity: 2,

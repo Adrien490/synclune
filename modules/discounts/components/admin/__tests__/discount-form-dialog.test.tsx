@@ -109,6 +109,21 @@ vi.mock("@/shared/components/required-fields-note", () => ({
 	RequiredFieldsNote: () => <p data-testid="required-fields-note">* Champs obligatoires</p>,
 }));
 
+vi.mock("@/shared/components/ui/input-group", () => ({
+	InputGroupAddon: ({ children }: { children: React.ReactNode }) => (
+		<span data-testid="input-group-addon">{children}</span>
+	),
+}));
+
+vi.mock("@/shared/components/ui/card", () => ({
+	Card: ({ children, ...props }: { children: React.ReactNode } & Record<string, unknown>) => (
+		<section {...(props as Record<string, unknown>)}>{children}</section>
+	),
+	CardContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	CardHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+	CardTitle: ({ children }: { children: React.ReactNode }) => <h3>{children}</h3>,
+}));
+
 vi.mock("@/shared/components/forms", () => ({
 	FieldLabel: ({
 		children,
@@ -134,6 +149,7 @@ vi.mock("@/shared/components/forms", () => ({
 				name: string;
 				state: { value: unknown };
 				InputField: (props: Record<string, unknown>) => React.ReactNode;
+				InputGroupField: (props: Record<string, unknown>) => React.ReactNode;
 				SelectField: (props: Record<string, unknown>) => React.ReactNode;
 				DateTimeField: (props: Record<string, unknown>) => React.ReactNode;
 			}) => React.ReactNode;
@@ -157,6 +173,20 @@ vi.mock("@/shared/components/forms", () => ({
 						placeholder={placeholder as string | undefined}
 					/>
 				),
+				InputGroupField: ({
+					type,
+					placeholder,
+					children,
+				}: {
+					type?: string;
+					placeholder?: string;
+					children?: React.ReactNode;
+				}) => (
+					<div data-testid={`field-${name}`}>
+						<input type={type} placeholder={placeholder as string | undefined} />
+						{children}
+					</div>
+				),
 				SelectField: ({ placeholder }: { placeholder?: string }) => (
 					<select data-testid={`select-${name}`}>
 						<option value="">{placeholder}</option>
@@ -179,7 +209,7 @@ vi.mock("@/shared/components/forms", () => ({
 		}) => {
 			const mockState = {
 				canSubmit: true,
-				values: { type: "PERCENTAGE" },
+				values: { type: "PERCENTAGE", startsAt: "" },
 			};
 			const selected = selector(mockState as Record<string, unknown>);
 			return <>{children(selected)}</>;
@@ -350,6 +380,6 @@ describe("DiscountFormDialog", () => {
 
 	it("renders value field", () => {
 		render(<DiscountFormDialog />);
-		expect(screen.getByTestId("field-value")).toBeInTheDocument();
+		expect(screen.getByTestId("field-valueEuros")).toBeInTheDocument();
 	});
 });

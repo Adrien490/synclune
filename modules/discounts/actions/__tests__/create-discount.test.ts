@@ -105,7 +105,7 @@ function createFormData(data: Record<string, string>): FormData {
 const validFormData = createFormData({
 	code: "PROMO20",
 	type: "PERCENTAGE",
-	value: "20",
+	valueEuros: "20",
 });
 
 const validatedData = {

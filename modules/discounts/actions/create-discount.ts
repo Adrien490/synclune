@@ -37,14 +37,19 @@ export async function createDiscount(
 		const rateLimit = await enforceRateLimitForCurrentUser(ADMIN_DISCOUNT_LIMITS.CREATE);
 		if ("error" in rateLimit) return rateLimit.error;
 
-		// 2. Extraction des données
+		// 2. Extraction des données — euros (UX admin) → centimes (DB)
+		const type = safeFormGet(formData, "type");
+		const rawValueEuros = Number(formData.get("valueEuros"));
+		const rawMinOrderEuros = formData.get("minOrderAmountEuros");
+		const value =
+			type === "FIXED_AMOUNT" ? Math.round(rawValueEuros * 100) : Math.round(rawValueEuros);
+		const minOrderAmount = rawMinOrderEuros ? Math.round(Number(rawMinOrderEuros) * 100) : null;
+
 		const rawData = {
 			code: safeFormGet(formData, "code"),
-			type: safeFormGet(formData, "type"),
-			value: Number(formData.get("value")),
-			minOrderAmount: formData.get("minOrderAmount")
-				? Number(formData.get("minOrderAmount"))
-				: null,
+			type,
+			value,
+			minOrderAmount,
 			maxUsageCount: formData.get("maxUsageCount") ? Number(formData.get("maxUsageCount")) : null,
 			maxUsagePerUser: formData.get("maxUsagePerUser")
 				? Number(formData.get("maxUsagePerUser"))

@@ -65,6 +65,7 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 						productId={product.id}
 						isInWishlist={isInWishlist ?? false}
 						size="lg"
+						enableUndoToast
 					/>
 				</div>
 			</div>
@@ -100,6 +101,7 @@ export function ProductInfo({ product, isInWishlist, reviewStats }: ProductInfoP
 						productId={product.id}
 						isInWishlist={isInWishlist ?? false}
 						size="lg"
+						enableUndoToast
 					/>
 				</div>
 			</div>

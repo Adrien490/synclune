@@ -13,6 +13,9 @@ import {
 
 const mockContextValue: WishlistListOptimisticContextValue = {
 	onItemRemoved: vi.fn(),
+	tombstones: new Map(),
+	markAsTombstone: vi.fn(),
+	cancelTombstone: vi.fn(),
 };
 
 function withProvider(value: WishlistListOptimisticContextValue) {

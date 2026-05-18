@@ -9,10 +9,28 @@ import { ActionStatus } from "@/shared/types/server-action";
 import { useBadgeCountsStore } from "@/shared/stores/badge-counts-store";
 import { useWishlistListOptimistic } from "@/modules/wishlist/contexts/wishlist-list-optimistic-context";
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { showWishlistUndoToast } from "@/modules/wishlist/utils/show-wishlist-undo-toast";
+import {
+	FLY_HEART_EVENT,
+	type FlyHeartEventDetail,
+} from "@/shared/components/animations/fly-heart-to-badge.constants";
 
 interface UseWishlistToggleOptions {
 	initialIsInWishlist?: boolean;
 	onSuccess?: (action: "added" | "removed") => void;
+	/**
+	 * Affiche un toast « Annuler » à chaque retrait réussi. Recommandé sur PDP
+	 * (un seul produit en vue), déconseillé en grille (trop bruyant).
+	 */
+	enableUndoToast?: boolean;
+	/** Titre du produit injecté dans les toasts undo. */
+	productTitle?: string;
+	/**
+	 * Callback retournant le rect du bouton déclencheur — utilisé pour animer
+	 * un mini-heart depuis le bouton vers `WishlistBadge` au moment de l'ajout.
+	 * Retourner `null` désactive l'animation pour ce trigger.
+	 */
+	getTriggerRect?: () => DOMRect | null;
 }
 
 /**
@@ -21,7 +39,13 @@ interface UseWishlistToggleOptions {
  * Utilise useOptimistic pour une UX réactive avec rollback automatique en cas d'erreur
  */
 export function useWishlistToggle(options?: UseWishlistToggleOptions) {
-	const { initialIsInWishlist = false, onSuccess } = options ?? {};
+	const {
+		initialIsInWishlist = false,
+		onSuccess,
+		enableUndoToast = false,
+		productTitle,
+		getTriggerRect,
+	} = options ?? {};
 	const router = useRouter();
 	const pathname = usePathname();
 
@@ -41,6 +65,10 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	// Ref pour protéger contre les clics rapides (race condition)
 	const isProcessingRef = useRef(false);
 
+	// Ref pour exposer le productId courant au callback onSuccess (le payload
+	// server ne le renvoie pas, on le capture depuis le FormData côté hook).
+	const lastProductIdRef = useRef<string | null>(null);
+
 	// Mise à jour de la ref dans useEffect pour éviter setState pendant le render
 	useEffect(() => {
 		isInWishlistRef.current = optimisticIsInWishlist;
@@ -49,6 +77,7 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 	const [state, formAction, isActionPending] = useActionState(
 		withCallbacks(
 			toggleWishlistItem,
+			// eslint-disable-next-line react-hooks/refs -- refs are only read inside post-action callbacks
 			createToastCallbacks({
 				// Pas de toast succès, juste le callback
 				showSuccessToast: false,
@@ -62,6 +91,13 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 						"action" in result.data
 					) {
 						const actionType = result.data.action as "added" | "removed";
+						if (enableUndoToast && actionType === "removed" && lastProductIdRef.current) {
+							showWishlistUndoToast({
+								productId: lastProductIdRef.current,
+								productTitle,
+								onRestored: () => router.refresh(),
+							});
+						}
 						onSuccess?.(actionType);
 					}
 				},
@@ -109,6 +145,14 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 		}
 		isProcessingRef.current = true;
 
+		// Capture productId pour les callbacks (undo toast, optimistic remove)
+		const productIdFromForm = formData.get("productId");
+		const productId =
+			typeof productIdFromForm === "string" && productIdFromForm.length > 0
+				? productIdFromForm
+				: null;
+		lastProductIdRef.current = productId;
+
 		startTransition(() => {
 			// Utilise la ref pour lire l'état actuel (évite closure stale)
 			const currentState = isInWishlistRef.current;
@@ -122,11 +166,26 @@ export function useWishlistToggle(options?: UseWishlistToggleOptions) {
 			// Mise à jour optimistic du badge navbar (séparé pour éviter setState pendant render)
 			if (newState) {
 				incrementWishlist();
+
+				// Signature visuelle Synclune : mini-heart vole du bouton vers WishlistBadge.
+				// Le layer global FlyHeartToBadgeLayer écoute cet event. No-op si pas monté
+				// ou si prefers-reduced-motion (géré par le layer).
+				const triggerRect = getTriggerRect?.();
+				if (triggerRect && typeof window !== "undefined") {
+					const detail: FlyHeartEventDetail = {
+						fromRect: {
+							top: triggerRect.top,
+							left: triggerRect.left,
+							width: triggerRect.width,
+							height: triggerRect.height,
+						},
+					};
+					window.dispatchEvent(new CustomEvent(FLY_HEART_EVENT, { detail }));
+				}
 			} else {
 				decrementWishlist();
 				// Notifier la liste parente pour suppression visuelle immédiate
-				const productId = formData.get("productId");
-				if (productId && typeof productId === "string" && wishlistListOptimistic) {
+				if (productId && wishlistListOptimistic) {
 					wishlistListOptimistic.onItemRemoved(productId);
 				}
 			}

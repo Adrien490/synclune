@@ -21,7 +21,10 @@ vi.mock("@/shared/hooks/use-haptic", () => ({
 	__resetHapticCooldown: () => undefined,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => mockRouter }));
-vi.mock("@/shared/hooks/use-mobile", () => ({ useIsMobile: mockUseIsMobile }));
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: mockUseIsMobile,
+	MOBILE_BREAKPOINT: 768,
+}));
 vi.mock("@/shared/hooks/use-unsaved-changes", () => ({
 	useUnsavedChanges: mockUseUnsavedChanges,
 }));

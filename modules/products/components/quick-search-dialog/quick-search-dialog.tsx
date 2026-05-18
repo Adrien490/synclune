@@ -83,40 +83,73 @@ export function QuickSearchDialog({
 	const { add } = useAddRecentSearch({
 		onError: () => toast.error("Erreur lors de l'enregistrement"),
 	});
-	const { searches, remove, clear } = useRecentSearches({
+	const { searches, remove } = useRecentSearches({
 		initialSearches,
 		onRemoveError: () => toast.error("Erreur lors de la suppression"),
 		onClearError: () => toast.error("Erreur lors de la suppression"),
 	});
 
+	// Tombstone state : termes en attente de remove() effectif (5s).
+	// Remplace le toast undo en bas d'écran. Cf `Tombstone` SSOT.
+	// Cleanup : à la fermeture du dialog, on flush les pendings via `remove()`
+	// pour éviter qu'un terme reste indéfiniment dans `useRecentSearches`.
+	const [tombstonedTerms, setTombstonedTerms] = useState<ReadonlySet<string>>(() => new Set());
+	const tombstonedRef = useRef<ReadonlySet<string>>(tombstonedTerms);
+	useEffect(() => {
+		tombstonedRef.current = tombstonedTerms;
+	}, [tombstonedTerms]);
+
 	const handleRemoveRecent = (term: string) => {
-		remove(term);
-		toast.success("Recherche supprimée", {
-			action: {
-				label: "Annuler",
-				onClick: () => add(term),
-			},
-			duration: 5000,
+		setTombstonedTerms((prev) => {
+			if (prev.has(term)) return prev;
+			const next = new Set(prev);
+			next.add(term);
+			return next;
 		});
 	};
 
 	const handleClearRecent = () => {
-		const snapshot = [...searches];
-		clear();
-		if (snapshot.length === 0) return;
-		toast.success(
-			snapshot.length === 1 ? "Recherche effacée" : `${snapshot.length} recherches effacées`,
-			{
-				action: {
-					label: "Annuler",
-					onClick: () => {
-						snapshot.forEach((term) => add(term));
-					},
-				},
-				duration: 6000,
-			},
-		);
+		if (searches.length === 0) return;
+		setTombstonedTerms((prev) => {
+			const next = new Set(prev);
+			for (const term of searches) next.add(term);
+			return next;
+		});
 	};
+
+	const handleUndoTombstone = (term: string) => {
+		setTombstonedTerms((prev) => {
+			if (!prev.has(term)) return prev;
+			const next = new Set(prev);
+			next.delete(term);
+			return next;
+		});
+	};
+
+	const handleExpireTombstone = (term: string) => {
+		setTombstonedTerms((prev) => {
+			if (!prev.has(term)) return prev;
+			const next = new Set(prev);
+			next.delete(term);
+			return next;
+		});
+		remove(term);
+	};
+
+	// Flush au unmount / close : applique les remove() pour ne pas perdre
+	// silencieusement l'intention utilisateur si le dialog se ferme avant
+	// l'expiration des tombstones.
+	useEffect(() => {
+		if (isOpen) return;
+		const pending = tombstonedRef.current;
+		if (pending.size === 0) return;
+		for (const term of pending) remove(term);
+		setTombstonedTerms(new Set());
+		// On veut déclencher SEULEMENT à la fermeture du dialog, pas à chaque
+		// mutation de `remove`. Les call-sites de `remove` sont stables et
+		// l'objet `useRecentSearches` est mémorisé en pratique.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isOpen]);
 
 	const { contentRef, handleArrowNavigation, focusFirst, resetActiveIndex, activeDescendantId } =
 		useKeyboardNavigation();
@@ -465,6 +498,9 @@ export function QuickSearchDialog({
 									onRemoveSearch={handleRemoveRecent}
 									onClearSearches={handleClearRecent}
 									isPending={isPending}
+									tombstonedTerms={tombstonedTerms}
+									onUndoTombstone={handleUndoTombstone}
+									onExpireTombstone={handleExpireTombstone}
 								/>
 							</Fade>
 						)}

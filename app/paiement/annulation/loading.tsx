@@ -11,7 +11,7 @@ export default function CheckoutCancelLoading() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la page d'annulation"
-			className="relative min-h-dvh min-h-screen"
+			className="relative min-h-screen"
 		>
 			<span className="sr-only">Chargement…</span>
 			{/* Decorative background (matches page) */}

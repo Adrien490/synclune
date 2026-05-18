@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 import { Fade, HandDrawnUnderline } from "@/shared/components/animations";
 import { MOTION_CONFIG } from "@/shared/components/animations/motion.config";
 import { SectionTitle } from "@/shared/components/section-title";
@@ -90,12 +88,6 @@ export function HomeFaq() {
 					<span id="home-faq-cta-description" className="sr-only">
 						Envoyer un email à Synclune pour toute question non couverte par la FAQ
 					</span>
-					<Link
-						href="/aide"
-						className="text-muted-foreground hover:text-foreground text-sm underline underline-offset-4 transition-colors"
-					>
-						Voir toutes les questions
-					</Link>
 				</Fade>
 			</div>
 		</section>

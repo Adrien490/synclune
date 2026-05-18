@@ -31,6 +31,10 @@ interface DateTimeFieldProps {
 	dateOnly?: boolean;
 	/** Texte d'aide affiché sous le champ, lié via aria-describedby */
 	helpText?: string;
+	/** Borne min ISO datetime-local (ex: "2026-01-15T09:00"). Relayée à l'input natif + désactive les jours antérieurs sur le Calendar. */
+	min?: string;
+	/** Borne max ISO datetime-local (ex: "2026-12-31T23:59"). Relayée à l'input natif + désactive les jours postérieurs sur le Calendar. */
+	max?: string;
 }
 
 /**
@@ -61,6 +65,8 @@ export function DateTimeField({
 	className,
 	dateOnly = false,
 	helpText,
+	min,
+	max,
 }: DateTimeFieldProps) {
 	const field = useFieldContext<string>();
 	const helpTextId = helpText ? `${field.name}-help` : undefined;
@@ -88,8 +94,27 @@ export function DateTimeField({
 	};
 
 	const selectedDate = parseValue(field.state.value);
+	const minDate = parseValue(min);
+	const maxDate = parseValue(max);
 	const lastTimeRef = useRef("00:00");
 	const hasError = field.state.meta.errors.length > 0;
+
+	const isOutOfRange = (date: Date) => {
+		if (minDate) {
+			const minDay = new Date(minDate);
+			minDay.setHours(0, 0, 0, 0);
+			if (date < minDay) return true;
+		}
+		if (maxDate) {
+			const maxDay = new Date(maxDate);
+			maxDay.setHours(23, 59, 59, 999);
+			if (date > maxDay) return true;
+		}
+		return false;
+	};
+
+	const nativeMin = min ? (dateOnly ? min.slice(0, 10) : min.slice(0, 16)) : undefined;
+	const nativeMax = max ? (dateOnly ? max.slice(0, 10) : max.slice(0, 16)) : undefined;
 
 	// Extrait l'heure pour l'affichage (time input n'est rendu que quand selectedDate existe)
 	const displayTime = selectedDate
@@ -172,6 +197,8 @@ export function DateTimeField({
 					onBlur={field.handleBlur}
 					disabled={disabled}
 					required={required}
+					min={nativeMin}
+					max={nativeMax}
 					aria-invalid={hasError}
 					aria-describedby={describedBy}
 					aria-required={required}
@@ -216,6 +243,7 @@ export function DateTimeField({
 							mode="single"
 							selected={selectedDate}
 							onSelect={handleDateSelect}
+							disabled={minDate || maxDate ? isOutOfRange : undefined}
 							// eslint-disable-next-line jsx-a11y/no-autofocus -- Calendar in Popover: focus expected on explicit open
 							autoFocus
 						/>

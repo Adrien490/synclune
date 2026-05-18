@@ -31,11 +31,8 @@ type RemoveWishlistItemData = AlertDialogData & {
 /**
  * Dialog de confirmation pour supprimer un article de la wishlist
  *
- * Pattern :
- * - Utilise le store AlertDialog pour gérer l'état
- * - useRemoveFromWishlist pour l'action serveur
- * - Source de vérité unique (DB) pour éviter désynchronisations
- * - Toast de confirmation après suppression réussie
+ * Après succès, l'item passe en `Tombstone` inline (5s avec bouton Annuler)
+ * dans la liste — remplace le toast undo mobile qui masquait la bottom-bar.
  */
 export function RemoveWishlistItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveWishlistItemData>(WISHLIST_DIALOG_IDS.REMOVE_ITEM);
@@ -43,10 +40,10 @@ export function RemoveWishlistItemAlertDialog() {
 	const incrementWishlist = useBadgeCountsStore((state) => state.incrementWishlist);
 	const [, startUndoTransition] = useTransition();
 
-	// Connect to optimistic list context for immediate visual feedback
 	const wishlistListOptimistic = useWishlistListOptimistic();
 
 	const buildUndoHandler = (productId: string) => () => {
+		wishlistListOptimistic?.cancelTombstone(productId);
 		incrementWishlist();
 		const fd = new FormData();
 		fd.set("productId", productId);
@@ -54,7 +51,6 @@ export function RemoveWishlistItemAlertDialog() {
 			const result = await addToWishlist(undefined, fd);
 			if (result.status === ActionStatus.SUCCESS) {
 				router.refresh();
-				toast.success("Article restauré");
 			} else {
 				toast.error(result.message);
 			}
@@ -62,36 +58,25 @@ export function RemoveWishlistItemAlertDialog() {
 	};
 
 	const { action, isPending } = useRemoveFromWishlist({
-		onOptimisticRemove: wishlistListOptimistic?.onItemRemoved,
 		onSuccess: () => {
 			const productId = removeDialog.data?.productId;
+			const itemName = removeDialog.data?.itemName ?? "Article";
 			removeDialog.close();
-
-			// Toast de confirmation empathique avec undo 5s
-			toast.success("Article retiré de vos favoris", {
-				description: "Vous pourrez toujours le retrouver dans nos créations.",
-				duration: 5000,
-				action: productId
-					? {
-							label: "Annuler",
-							onClick: buildUndoHandler(productId),
-						}
-					: undefined,
-			});
+			if (productId && wishlistListOptimistic) {
+				wishlistListOptimistic.markAsTombstone(productId, {
+					onUndo: buildUndoHandler(productId),
+					displayName: itemName,
+				});
+			}
 		},
 	});
-	// Note : Les erreurs sont déjà gérées par createToastCallbacks dans le hook
 
-	// Wrapper de l'action pour fermer le dialog après soumission
 	const handleAction = async (formData: FormData) => {
-		// Guard: vérifier que productId est présent avant soumission
 		const productId = removeDialog.data?.productId;
 		if (!productId) {
 			removeDialog.close();
 			return;
 		}
-
-		// Appel de la server action (fermeture dialog gérée dans onSuccess callback)
 		await action(formData);
 	};
 

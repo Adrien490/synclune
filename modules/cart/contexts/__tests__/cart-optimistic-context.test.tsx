@@ -16,6 +16,9 @@ const mockContextValue: CartOptimisticContextValue = {
 	updateOptimisticCart: vi.fn(),
 	isPending: false,
 	startTransition: vi.fn() as React.TransitionStartFunction,
+	tombstones: new Map(),
+	markAsTombstone: vi.fn(),
+	cancelTombstone: vi.fn(),
 };
 
 function withProvider(value: CartOptimisticContextValue) {

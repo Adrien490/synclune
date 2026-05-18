@@ -2,84 +2,120 @@ import type Stripe from "stripe";
 import { logger } from "@/shared/lib/logger";
 import { prisma } from "@/shared/lib/prisma";
 import { stripe } from "@/shared/lib/stripe";
+import { getShippingRateName } from "@/modules/orders/constants/stripe-shipping-rates";
 
-// Re-export pour conserver l'API publique du module webhooks.
-export { createOrderFromCheckoutSession } from "./checkout-order-processing.service";
+// Re-export order processing functions (public API preserved)
+export {
+	processOrderTransaction,
+	processOrderFromPaymentIntent,
+} from "./checkout-order-processing.service";
 
-// Re-export post-checkout task builders
-export { buildPostCheckoutTasks } from "./checkout-post-tasks.service";
+// Re-export post-checkout task builders (public API preserved)
+export {
+	buildPostCheckoutTasks,
+	buildPostCheckoutTasksFromPI,
+} from "./checkout-post-tasks.service";
 
 /**
- * Rapatrie une Session Stripe avec les expansions nécessaires à la création de
- * l'`Order` Synclune (line_items, shipping, payment_intent, customer).
+ * Extracts shipping info from a Stripe Checkout Session.
  */
-export async function retrieveCheckoutSessionForOrder(
-	sessionId: string,
-): Promise<Stripe.Checkout.Session> {
-	return stripe.checkout.sessions.retrieve(sessionId, {
-		expand: [
-			"line_items",
-			"line_items.data.price.product",
-			"payment_intent",
-			"customer",
-			"shipping_cost.shipping_rate",
-			"total_details.breakdown.discounts",
-		],
-	});
+export async function extractShippingInfo(
+	session: Stripe.Checkout.Session,
+): Promise<{ shippingCost: number; shippingMethod: string; shippingRateId: string | undefined }> {
+	try {
+		const fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+			expand: ["shipping_cost.shipping_rate"],
+		});
+
+		const shippingCost = fullSession.total_details?.amount_shipping ?? 0;
+		const shippingRateId =
+			typeof fullSession.shipping_cost?.shipping_rate === "string"
+				? fullSession.shipping_cost.shipping_rate
+				: fullSession.shipping_cost?.shipping_rate?.id;
+
+		const shippingMethod = shippingRateId
+			? getShippingRateName(shippingRateId)
+			: "Livraison standard";
+
+		return { shippingCost, shippingMethod, shippingRateId };
+	} catch (error) {
+		logger.error(
+			`❌ [WEBHOOK] Failed to retrieve shipping info for session ${session.id}:`,
+			error,
+			{ service: "webhook" },
+		);
+		// Fallback to session-level data if Stripe API fails
+		const shippingCost = session.total_details?.amount_shipping ?? 0;
+		return { shippingCost, shippingMethod: "Livraison standard", shippingRateId: undefined };
+	}
 }
 
 /**
- * Marque la Session comme « expirée sans Order ». Utilisé par le webhook
- * `checkout.session.expired` lorsque le client a abandonné.
- *
- * Avant la migration vers Checkout Sessions API, un Order PENDING_PAYMENT était
- * créé en amont et il fallait le passer à CANCELLED. Désormais l'Order n'est
- * créé qu'au paiement réussi, donc cette fonction n'a quasiment rien à faire ;
- * elle reste pour les Orders rétrocompatibles encore associés à une Session.
+ * Marks an order as expired/cancelled.
  */
 export async function cancelExpiredOrder(
-	sessionId: string,
+	orderId: string,
 ): Promise<{ cancelled: boolean; orderNumber?: string }> {
-	const order = await prisma.order.findUnique({
-		where: { stripeCheckoutSessionId: sessionId },
-		select: { id: true, orderNumber: true, paymentStatus: true },
-	});
-
-	if (!order) {
-		logger.info(
-			`ℹ️  [WEBHOOK] No Order linked to expired session ${sessionId} (expected for new flow)`,
-			{ service: "webhook" },
-		);
-		return { cancelled: false };
-	}
-
-	if (order.paymentStatus !== "PENDING") {
-		logger.info(
-			`ℹ️  [WEBHOOK] Order ${order.id} for expired session ${sessionId} already ${order.paymentStatus}, skipping`,
-			{ service: "webhook" },
-		);
-		return { cancelled: false, orderNumber: order.orderNumber };
-	}
-
-	await prisma.$transaction(async (tx) => {
-		const discountUsages = await tx.discountUsage.findMany({
-			where: { orderId: order.id },
-			select: { id: true, discountId: true },
-		});
-		for (const usage of discountUsages) {
-			await tx.discount.update({
-				where: { id: usage.discountId },
-				data: { usageCount: { decrement: 1 } },
+	const result = await prisma.$transaction(
+		async (tx) => {
+			const order = await tx.order.findUnique({
+				where: { id: orderId },
+				select: { paymentStatus: true, orderNumber: true },
 			});
-		}
-		if (discountUsages.length > 0) {
-			await tx.discountUsage.deleteMany({ where: { orderId: order.id } });
-		}
-		await tx.order.update({
-			where: { id: order.id },
-			data: { status: "CANCELLED", paymentStatus: "EXPIRED" },
-		});
-	});
 
-	return { cancelled: true, orderNumber: order.orderNumber };
+			if (!order) {
+				logger.warn(`⚠️  [WEBHOOK] Order not found for expired session: ${orderId}`, {
+					service: "webhook",
+				});
+				return { cancelled: false } as const;
+			}
+
+			// Idempotence: only process if the order is still PENDING
+			if (order.paymentStatus !== "PENDING") {
+				logger.info(
+					`ℹ️  [WEBHOOK] Order ${orderId} already processed (status: ${order.paymentStatus}), skipping expiration`,
+					{ service: "webhook" },
+				);
+				return { cancelled: false, orderNumber: order.orderNumber } as const;
+			}
+
+			// Release discount usages
+			const discountUsages = await tx.discountUsage.findMany({
+				where: { orderId },
+				select: { id: true, discountId: true },
+			});
+
+			for (const usage of discountUsages) {
+				await tx.discount.update({
+					where: { id: usage.discountId },
+					data: { usageCount: { decrement: 1 } },
+				});
+			}
+
+			if (discountUsages.length > 0) {
+				await tx.discountUsage.deleteMany({ where: { orderId } });
+				logger.info(
+					`🔓 [WEBHOOK] Released ${discountUsages.length} discount usage(s) for expired order ${orderId}`,
+					{ service: "webhook" },
+				);
+			}
+
+			await tx.order.update({
+				where: { id: orderId },
+				data: {
+					status: "CANCELLED",
+					paymentStatus: "EXPIRED",
+				},
+			});
+
+			logger.info(
+				`✅ [WEBHOOK] Order ${orderId} (${order.orderNumber}) marked as cancelled due to session expiration`,
+				{ service: "webhook" },
+			);
+			return { cancelled: true, orderNumber: order.orderNumber } as const;
+		},
+		{ timeout: 10000 },
+	);
+
+	return result;
 }

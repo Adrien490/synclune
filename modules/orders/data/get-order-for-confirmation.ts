@@ -8,6 +8,7 @@ import { ORDERS_CACHE_TAGS } from "../constants/cache";
 const CONFIRMATION_ORDER_SELECT = {
 	id: true,
 	orderNumber: true,
+	customerEmail: true,
 	subtotal: true,
 	shippingCost: true,
 	discountAmount: true,

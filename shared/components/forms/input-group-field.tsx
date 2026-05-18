@@ -22,6 +22,8 @@ interface InputGroupFieldProps extends React.InputHTMLAttributes<HTMLInputElemen
 	 * La validation reste gérée par le schema Zod.
 	 */
 	required?: boolean;
+	/** Texte d'aide affiché sous le champ (relié via aria-describedby) */
+	description?: string;
 }
 
 /**
@@ -63,9 +65,15 @@ export const InputGroupField = ({
 	enterKeyHint,
 	autoComplete,
 	pattern,
+	description,
 	...props
 }: InputGroupFieldProps) => {
 	const field = useFieldContext<string | number | null>();
+
+	const hasError = field.state.meta.errors.length > 0;
+	const descId = description ? `${field.name}-desc` : null;
+	const errorId = hasError ? `${field.name}-error` : null;
+	const describedBy = [descId, errorId].filter(Boolean).join(" ") || undefined;
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (type === "number") {
@@ -88,7 +96,7 @@ export const InputGroupField = ({
 			: (field.state.value ?? "");
 
 	return (
-		<Field data-invalid={field.state.meta.errors.length > 0}>
+		<Field data-invalid={hasError}>
 			{label && (
 				<FieldLabel htmlFor={field.name} required={required} optional={optional}>
 					{label}
@@ -111,13 +119,18 @@ export const InputGroupField = ({
 					enterKeyHint={enterKeyHint}
 					autoComplete={autoComplete}
 					pattern={pattern}
-					aria-invalid={field.state.meta.errors.length > 0}
-					aria-describedby={field.state.meta.errors.length > 0 ? `${field.name}-error` : undefined}
+					aria-invalid={hasError}
+					aria-describedby={describedBy}
 					aria-required={required}
 					{...props}
 				/>
 				{children}
 			</InputGroup>
+			{description && (
+				<p id={descId!} className="text-muted-foreground text-xs">
+					{description}
+				</p>
+			)}
 			<FieldError id={`${field.name}-error`} errors={field.state.meta.errors} />
 		</Field>
 	);

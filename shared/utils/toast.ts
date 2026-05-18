@@ -3,12 +3,14 @@
 import { toast as sonnerToast } from "sonner";
 
 import { triggerHaptic } from "@/shared/hooks/use-haptic";
+import { MOBILE_BREAKPOINT } from "@/shared/hooks/use-mobile";
+import { useMicroToastStore } from "@/shared/stores/micro-toast-store";
 
 /**
  * Wrapper toast central pour Synclune — haptics natives + sanitisation d'erreurs
  * + annonce screen-reader + duration adaptative à la densité lexicale.
  *
- * API identique à `sonner` (drop-in replacement) avec quatre ajouts :
+ * API identique à `sonner` (drop-in replacement) avec cinq ajouts :
  * 1. Haptic feedback automatique sur success/error/warning (pattern `useHaptic`).
  *    Silencieux sur iOS Safari (Vibration API ignorée), actif sur Android & PWA.
  * 2. Sanitisation des messages techniques passés à `error(...)` : si le message
@@ -18,6 +20,12 @@ import { triggerHaptic } from "@/shared/hooks/use-haptic";
  *    Les régions DOM sont montées par `<AppToaster />` — cf toaster.tsx.
  * 4. Duration adaptative (WPS-based) : messages longs restent plus longtemps,
  *    erreurs persistent au moins 5s (parité iOS Live Activities).
+ * 5. Mobile (≤767px) : `success/info/warning` routent vers `<MicroToast />`
+ *    pastille top-center (1.2s, ne masque pas la bottom-bar). `error` reste
+ *    Sonner classique pour persister 5s+. Les undo doivent migrer vers le
+ *    pattern tombstone inline (cf `shared/components/ui/tombstone.tsx`) — un
+ *    `opts.action` passé en mode mobile est ignoré silencieusement en prod,
+ *    avec un `console.warn` en dev.
  */
 
 const GENERIC_ERROR_MESSAGE = "Une erreur est survenue. Merci de réessayer.";
@@ -90,15 +98,19 @@ function announceToScreenReader(message: unknown, level: "polite" | "assertive")
 }
 
 /**
- * Détecte un viewport mobile (≤ 767px) — aligné sur `MOBILE_BREAKPOINT` du hook
- * `useIsMobile`. Sur mobile, l'état pending des boutons (spinner + label) suffit ;
- * un toast loading consommerait l'unique slot visible (`visibleToasts: 1`) et
- * masquerait du contenu.
+ * Détecte un viewport mobile (< `MOBILE_BREAKPOINT`) — aligné sur le hook
+ * `useIsMobile`. Sur mobile, l'état pending des boutons (spinner + label)
+ * suffit ; un toast loading consommerait l'unique slot visible
+ * (`visibleToasts: 1`) et masquerait du contenu.
+ *
+ * Exporté pour les utilities qui doivent bifurquer leur logique mobile/desktop
+ * hors du wrapper (ex: `show-wishlist-undo-toast.ts` qui retire la description
+ * et l'action sur mobile car MicroToast est passive).
  */
-function isMobileViewport(): boolean {
+export function isMobileViewport(): boolean {
 	if (typeof window === "undefined") return false;
 	if (typeof window.matchMedia !== "function") return false;
-	return window.matchMedia("(max-width: 767px)").matches;
+	return window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`).matches;
 }
 
 /**
@@ -121,12 +133,45 @@ function clearPendingNonError(): void {
 type SonnerToast = typeof sonnerToast;
 type ExternalToastOptions = Parameters<SonnerToast["success"]>[1];
 
+/**
+ * Variant bijou Synclune utilisée uniquement par `<MicroToast />` mobile.
+ * Override la variant générique (success/info/warning) côté pastille mobile
+ * pour afficher une icône métier dédiée (cœur, sac, étiquette %).
+ * Ignoré sur desktop : Sonner garde l'icône success/info/warning classique.
+ */
+export type MicroVariantOverride = "wishlist" | "cart" | "discount";
+
+type ExternalToastOptionsWithMicroVariant = ExternalToastOptions & {
+	microVariant?: MicroVariantOverride;
+};
+
+function warnActionIgnored(method: "success" | "info" | "warning"): void {
+	if (process.env.NODE_ENV !== "development") return;
+	console.warn(
+		`[toast.${method}] action ignorée sur mobile — utilise le pattern tombstone inline (shared/components/ui/tombstone.tsx)`,
+	);
+}
+
 export const toast = {
-	success: (message: Parameters<SonnerToast["success"]>[0], opts?: ExternalToastOptions) => {
-		triggerHaptic("success");
+	success: (
+		message: Parameters<SonnerToast["success"]>[0],
+		opts?: ExternalToastOptionsWithMicroVariant,
+	) => {
 		announceToScreenReader(message, "polite");
+		if (isMobileViewport()) {
+			triggerHaptic("light");
+			if (opts?.action) warnActionIgnored("success");
+			if (typeof message === "string") {
+				useMicroToastStore
+					.getState()
+					.show(message, opts?.microVariant ?? "success", opts?.duration);
+			}
+			return undefined as never;
+		}
+		triggerHaptic("success");
 		const duration = opts?.duration ?? computeDuration(message, "success");
-		const id = sonnerToast.success(message, { ...opts, duration });
+		const { microVariant: _ignored, ...sonnerOpts } = opts ?? {};
+		const id = sonnerToast.success(message, { ...sonnerOpts, duration });
 		lastNonErrorToastId = id;
 		return id;
 	},
@@ -138,18 +183,43 @@ export const toast = {
 		const duration = opts?.duration ?? computeDuration(sanitized, "error");
 		return sonnerToast.error(sanitized, { ...opts, duration });
 	},
-	warning: (message: Parameters<SonnerToast["warning"]>[0], opts?: ExternalToastOptions) => {
-		triggerHaptic("medium");
+	warning: (
+		message: Parameters<SonnerToast["warning"]>[0],
+		opts?: ExternalToastOptionsWithMicroVariant,
+	) => {
 		announceToScreenReader(message, "polite");
+		if (isMobileViewport()) {
+			triggerHaptic("medium");
+			if (opts?.action) warnActionIgnored("warning");
+			if (typeof message === "string") {
+				useMicroToastStore
+					.getState()
+					.show(message, opts?.microVariant ?? "warning", opts?.duration);
+			}
+			return undefined as never;
+		}
+		triggerHaptic("medium");
 		const duration = opts?.duration ?? computeDuration(message, "warning");
-		const id = sonnerToast.warning(message, { ...opts, duration });
+		const { microVariant: _ignored, ...sonnerOpts } = opts ?? {};
+		const id = sonnerToast.warning(message, { ...sonnerOpts, duration });
 		lastNonErrorToastId = id;
 		return id;
 	},
-	info: ((message: Parameters<SonnerToast["info"]>[0], opts?: ExternalToastOptions) => {
+	info: ((
+		message: Parameters<SonnerToast["info"]>[0],
+		opts?: ExternalToastOptionsWithMicroVariant,
+	) => {
 		announceToScreenReader(message, "polite");
+		if (isMobileViewport()) {
+			if (opts?.action) warnActionIgnored("info");
+			if (typeof message === "string") {
+				useMicroToastStore.getState().show(message, opts?.microVariant ?? "info", opts?.duration);
+			}
+			return undefined as never;
+		}
 		const duration = opts?.duration ?? computeDuration(message, "info");
-		const id = sonnerToast.info(message, { ...opts, duration });
+		const { microVariant: _ignored, ...sonnerOpts } = opts ?? {};
+		const id = sonnerToast.info(message, { ...sonnerOpts, duration });
 		lastNonErrorToastId = id;
 		return id;
 	}) as SonnerToast["info"],
@@ -221,4 +291,4 @@ export const toast = {
 		sonnerToast.custom(...args)) as SonnerToast["custom"],
 };
 
-export { sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration };
+export { sanitizeErrorMessage, GENERIC_ERROR_MESSAGE, computeDuration, announceToScreenReader };

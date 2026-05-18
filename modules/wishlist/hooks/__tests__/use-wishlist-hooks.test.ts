@@ -13,6 +13,8 @@ const {
 	mockIncrementWishlist,
 	mockDecrementWishlist,
 	mockOnItemRemoved,
+	mockTriggerHaptic,
+	mockShowWishlistUndoToast,
 } = vi.hoisted(() => ({
 	mockToggleWishlistItem: vi.fn(),
 	mockRemoveFromWishlist: vi.fn(),
@@ -21,6 +23,8 @@ const {
 	mockIncrementWishlist: vi.fn(),
 	mockDecrementWishlist: vi.fn(),
 	mockOnItemRemoved: vi.fn(),
+	mockTriggerHaptic: vi.fn(),
+	mockShowWishlistUndoToast: vi.fn(),
 }));
 
 vi.mock("@/modules/wishlist/actions/toggle-wishlist-item", () => ({
@@ -61,6 +65,14 @@ vi.mock("sonner", () => ({
 		error: vi.fn(),
 		warning: vi.fn(),
 	},
+}));
+
+vi.mock("@/shared/hooks/use-haptic", () => ({
+	triggerHaptic: mockTriggerHaptic,
+}));
+
+vi.mock("@/modules/wishlist/utils/show-wishlist-undo-toast", () => ({
+	showWishlistUndoToast: mockShowWishlistUndoToast,
 }));
 
 // ============================================================================
@@ -191,6 +203,136 @@ describe("useWishlistToggle", () => {
 		});
 
 		expect(mockRouterPush).toHaveBeenCalledWith(expect.stringContaining("/connexion?callbackURL="));
+	});
+
+	it("calls triggerHaptic exactly once per add (G10 — single haptic rule)", async () => {
+		const { result } = renderHook(() => useWishlistToggle());
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("medium");
+	});
+
+	it("calls triggerHaptic exactly once per remove (G10 — single haptic rule)", async () => {
+		mockToggleWishlistItem.mockResolvedValue(SUCCESS_REMOVED);
+		const { result } = renderHook(() => useWishlistToggle({ initialIsInWishlist: true }));
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockTriggerHaptic).toHaveBeenCalledTimes(1);
+		expect(mockTriggerHaptic).toHaveBeenCalledWith("light");
+	});
+
+	it("shows undo toast on removed when enableUndoToast=true (G11)", async () => {
+		mockToggleWishlistItem.mockResolvedValue(SUCCESS_REMOVED);
+		const { result } = renderHook(() =>
+			useWishlistToggle({
+				initialIsInWishlist: true,
+				enableUndoToast: true,
+				productTitle: "Bague Lune",
+			}),
+		);
+		const formData = new FormData();
+		formData.append("productId", "prod-42");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockShowWishlistUndoToast).toHaveBeenCalledTimes(1);
+		expect(mockShowWishlistUndoToast).toHaveBeenCalledWith(
+			expect.objectContaining({
+				productId: "prod-42",
+				productTitle: "Bague Lune",
+				onRestored: expect.any(Function),
+			}),
+		);
+	});
+
+	it("does NOT show undo toast on add when enableUndoToast=true (G11 — added skips toast)", async () => {
+		const { result } = renderHook(() =>
+			useWishlistToggle({ enableUndoToast: true, productTitle: "Bague Lune" }),
+		);
+		const formData = new FormData();
+		formData.append("productId", "prod-42");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockShowWishlistUndoToast).not.toHaveBeenCalled();
+	});
+
+	it("does NOT show undo toast on remove when enableUndoToast=false (G11 — opt-in)", async () => {
+		mockToggleWishlistItem.mockResolvedValue(SUCCESS_REMOVED);
+		const { result } = renderHook(() => useWishlistToggle({ initialIsInWishlist: true }));
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		expect(mockShowWishlistUndoToast).not.toHaveBeenCalled();
+	});
+
+	it("dispatches fly-to-badge event on add when getTriggerRect is provided (G5)", async () => {
+		const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+		const fakeRect = { top: 100, left: 200, width: 44, height: 44 } as DOMRect;
+		const { result } = renderHook(() => useWishlistToggle({ getTriggerRect: () => fakeRect }));
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		const flyEvents = dispatchSpy.mock.calls
+			.map(([event]) => event)
+			.filter(
+				(event): event is CustomEvent =>
+					event instanceof CustomEvent && event.type === "wishlist:fly-to-badge",
+			);
+		expect(flyEvents).toHaveLength(1);
+		expect(flyEvents[0]?.detail).toEqual({
+			fromRect: { top: 100, left: 200, width: 44, height: 44 },
+		});
+
+		dispatchSpy.mockRestore();
+	});
+
+	it("does NOT dispatch fly-to-badge event on remove (G5 — add-only)", async () => {
+		const dispatchSpy = vi.spyOn(window, "dispatchEvent");
+		mockToggleWishlistItem.mockResolvedValue(SUCCESS_REMOVED);
+		const fakeRect = { top: 100, left: 200, width: 44, height: 44 } as DOMRect;
+		const { result } = renderHook(() =>
+			useWishlistToggle({ initialIsInWishlist: true, getTriggerRect: () => fakeRect }),
+		);
+		const formData = new FormData();
+		formData.append("productId", "prod-1");
+
+		await act(async () => {
+			result.current.action(formData);
+		});
+
+		const flyEvents = dispatchSpy.mock.calls
+			.map(([event]) => event)
+			.filter(
+				(event): event is CustomEvent =>
+					event instanceof CustomEvent && event.type === "wishlist:fly-to-badge",
+			);
+		expect(flyEvents).toHaveLength(0);
+
+		dispatchSpy.mockRestore();
 	});
 
 	it("second action call is ignored while processing (double-submit guard)", async () => {

@@ -14,6 +14,7 @@ import { useRemoveFromCart } from "../hooks/use-remove-from-cart";
 import { useAlertDialog } from "@/shared/providers/alert-dialog-store-provider";
 import { useCartOptimisticSafe } from "../contexts/cart-optimistic-context";
 import { useHaptic } from "@/shared/hooks/use-haptic";
+import { useIsMobile } from "@/shared/hooks/use-mobile";
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addToCart } from "@/modules/cart/actions/add-to-cart";
@@ -38,12 +39,14 @@ export function RemoveCartItemAlertDialog() {
 	const removeDialog = useAlertDialog<RemoveCartItemData>(REMOVE_CART_ITEM_DIALOG_ID);
 	const cartOptimistic = useCartOptimisticSafe();
 	const haptic = useHaptic();
+	const isMobile = useIsMobile();
 	const router = useRouter();
 	const adjustCart = useBadgeCountsStore((state) => state.adjustCart);
 	const [, startUndoTransition] = useTransition();
 
-	const showUndoToast = (skuId: string, quantity: number, itemName: string) => {
-		const handleUndo = () => {
+	const buildUndoHandler =
+		(cartItemId: string | undefined, skuId: string, quantity: number) => () => {
+			if (cartItemId) cartOptimistic?.cancelTombstone(cartItemId);
 			adjustCart(quantity);
 			const fd = new FormData();
 			fd.set("skuId", skuId);
@@ -60,18 +63,32 @@ export function RemoveCartItemAlertDialog() {
 			});
 		};
 
+	const showUndoToast = (skuId: string, quantity: number, itemName: string) => {
 		toast.success(`${itemName} retiré du panier`, {
 			duration: UNDO_TOAST_DURATION_MS,
-			action: { label: "Annuler", onClick: handleUndo },
+			microVariant: "cart",
+			action: {
+				label: "Annuler",
+				onClick: buildUndoHandler(undefined, skuId, quantity),
+			},
 		});
 	};
 
 	const { action, isPending } = useRemoveFromCart({
 		quantity: removeDialog.data?.quantity ?? 1,
 		onSuccess: () => {
-			const { skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
+			const { cartItemId, skuId, quantity = 1, itemName = "Article" } = removeDialog.data ?? {};
 			removeDialog.close();
-			if (skuId) showUndoToast(skuId, quantity, itemName);
+			if (!skuId) return;
+
+			if (isMobile && cartItemId && cartOptimistic) {
+				cartOptimistic.markAsTombstone(cartItemId, {
+					onUndo: buildUndoHandler(cartItemId, skuId, quantity),
+					displayName: itemName,
+				});
+			} else {
+				showUndoToast(skuId, quantity, itemName);
+			}
 		},
 	});
 
@@ -81,21 +98,23 @@ export function RemoveCartItemAlertDialog() {
 		}
 	};
 
-	// Handler pour soumettre avec optimistic update
 	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		haptic("error");
 		const formData = new FormData(e.currentTarget);
 		const cartItemId = removeDialog.data?.cartItemId;
 
-		if (cartItemId && cartOptimistic) {
-			// Optimistic update : supprimer visuellement l'item immédiatement
+		if (!isMobile && cartItemId && cartOptimistic) {
+			// Desktop : optimistic remove immédiat → l'item disparaît avant l'action,
+			// puis toast Sonner avec bouton "Annuler" en bas-droite.
 			cartOptimistic.startTransition(() => {
 				cartOptimistic.updateOptimisticCart({ type: "remove", itemId: cartItemId });
 				action(formData);
 			});
 		} else {
-			// Fallback si pas de contexte (ne devrait pas arriver)
+			// Mobile : pas d'optimist remove → l'item reste visible jusqu'à `onSuccess`,
+			// qui le bascule en `Tombstone` (5s inline). L'expiration déclenche
+			// `updateOptimisticCart({type:"remove"})` via `handleTombstoneExpire`.
 			action(formData);
 		}
 	};

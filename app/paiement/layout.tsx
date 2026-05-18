@@ -1,4 +1,5 @@
 import { isAdmin } from "@/modules/auth/utils/guards";
+import { CartAndSkuWrapper } from "@/modules/cart/components/cart-and-sku-wrapper";
 import { getStoreStatus } from "@/modules/store-settings/data/get-store-status";
 import { Logo } from "@/shared/components/logo";
 import { redirect } from "next/navigation";
@@ -65,6 +66,8 @@ export default async function CheckoutLayout({ children }: { children: React.Rea
 					</div>
 				</div>
 			</header>
+
+			<CartAndSkuWrapper />
 
 			{/* Contenu */}
 			<main id="main-content" tabIndex={-1} className="flex-1">

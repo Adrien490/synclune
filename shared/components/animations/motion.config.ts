@@ -98,6 +98,13 @@ export const MOTION_CONFIG = {
 			stiffness: 75,
 			damping: 15,
 		},
+
+		// Mobile pastille toast (top-center, single-slot, 1.2s)
+		toast: {
+			type: "spring" as const,
+			stiffness: 380,
+			damping: 28,
+		},
 	},
 
 	// Default distances and transforms

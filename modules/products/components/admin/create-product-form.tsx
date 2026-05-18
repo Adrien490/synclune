@@ -76,12 +76,17 @@ export function CreateProductForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(message || "Nouveau bijou dans l'atelier", {
-				action: {
-					label: "Voir les bijoux",
-					onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
-				},
-			});
+			toast.success(
+				message || "Nouveau bijou dans l'atelier",
+				isMobile
+					? undefined
+					: {
+							action: {
+								label: "Voir les bijoux",
+								onClick: () => navigateWithTransition(router, PRODUCTS_LIST_PATH),
+							},
+						},
+			);
 			form.reset();
 			setDeletedImageUrls([]);
 			clearFailedMediaUploads();

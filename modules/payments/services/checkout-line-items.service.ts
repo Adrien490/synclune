@@ -73,9 +73,6 @@ export function buildStripeLineItems(
 					},
 				},
 				unit_amount: unitAmount,
-				// Micro-entreprise : TVA non applicable (art. 293 B CGI).
-				// Le prix affiché inclut implicitement la TVA même si elle est nulle.
-				tax_behavior: "inclusive",
 			},
 			quantity: cartItem.quantity,
 		});

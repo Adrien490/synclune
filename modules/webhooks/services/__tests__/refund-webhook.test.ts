@@ -37,8 +37,6 @@ const { mockPrisma, mockSendAdminRefundFailedAlert, mockGetBaseUrl } = vi.hoiste
 
 vi.mock("@/shared/lib/prisma", () => ({
 	prisma: mockPrisma,
-	TX_TIMEOUT_LONG: 10_000,
-	TX_MAX_WAIT_LONG: 5_000,
 }));
 
 vi.mock("@/modules/emails/services/admin-emails", () => ({

@@ -1,219 +1,295 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type Stripe from "stripe";
+
+// ============================================================================
+// Hoisted mocks
+// ============================================================================
 
 const {
 	mockPrisma,
-	mockRetrieve,
-	mockCreateOrder,
-	mockBuildTasks,
+	mockExtractShippingInfo,
+	mockProcessOrderTransaction,
+	mockBuildPostCheckoutTasks,
 	mockCancelExpiredOrder,
-	mockCaptureWebhookError,
-	mockSendAdminOrderProcessingFailedAlert,
 } = vi.hoisted(() => ({
 	mockPrisma: {
-		user: { findUnique: vi.fn() },
+		order: { findUnique: vi.fn() },
 		orderNote: { create: vi.fn() },
 	},
-	mockRetrieve: vi.fn(),
-	mockCreateOrder: vi.fn(),
-	mockBuildTasks: vi.fn(),
+	mockExtractShippingInfo: vi.fn(),
+	mockProcessOrderTransaction: vi.fn(),
+	mockBuildPostCheckoutTasks: vi.fn(),
 	mockCancelExpiredOrder: vi.fn(),
-	mockCaptureWebhookError: vi.fn(),
-	mockSendAdminOrderProcessingFailedAlert: vi.fn(),
 }));
 
-vi.mock("@/shared/lib/prisma", () => ({ prisma: mockPrisma }));
-vi.mock("@/modules/webhooks/services/checkout.service", () => ({
-	retrieveCheckoutSessionForOrder: mockRetrieve,
-	createOrderFromCheckoutSession: mockCreateOrder,
-	buildPostCheckoutTasks: mockBuildTasks,
+vi.mock("@/shared/lib/prisma", () => ({
+	prisma: mockPrisma,
+}));
+
+vi.mock("../../services/checkout.service", () => ({
+	extractShippingInfo: mockExtractShippingInfo,
+	processOrderTransaction: mockProcessOrderTransaction,
+	buildPostCheckoutTasks: mockBuildPostCheckoutTasks,
 	cancelExpiredOrder: mockCancelExpiredOrder,
 }));
-vi.mock("@/modules/webhooks/utils/capture-webhook-error", () => ({
-	captureWebhookError: mockCaptureWebhookError,
-}));
-vi.mock("@/modules/emails/services/admin-emails", () => ({
-	sendAdminOrderProcessingFailedAlert: mockSendAdminOrderProcessingFailedAlert,
+
+vi.mock("@/modules/orders/constants/cache", () => ({
+	ORDERS_CACHE_TAGS: {
+		LIST: "orders-list",
+		NOTES: (orderId: string) => `order-notes-${orderId}`,
+	},
 }));
 
+vi.mock("@/shared/constants/cache-tags", () => ({
+	SHARED_CACHE_TAGS: {
+		ADMIN_BADGES: "admin-badges",
+		ADMIN_ORDERS_LIST: "admin-orders-list",
+	},
+}));
+
+vi.mock("@/modules/dashboard/constants/cache", () => ({
+	DASHBOARD_CACHE_TAGS: {
+		KPIS: "dashboard-kpis",
+		REVENUE_CHART: "dashboard-revenue-chart",
+		RECENT_ORDERS: "dashboard-recent-orders",
+	},
+}));
+
+vi.mock("@/modules/discounts/constants/cache", () => ({
+	DISCOUNT_CACHE_TAGS: {
+		LIST: "discounts-list",
+	},
+}));
+
+// Mock stripe to avoid API key requirement
+vi.mock("@/shared/lib/stripe", () => ({
+	stripe: {},
+}));
+
+import type Stripe from "stripe";
 import { handleCheckoutSessionCompleted, handleCheckoutSessionExpired } from "../checkout-handlers";
 
-function makeSession(overrides: Partial<Stripe.Checkout.Session> = {}): Stripe.Checkout.Session {
+// ============================================================================
+// Fixtures
+// ============================================================================
+
+function makeSession(overrides: Record<string, unknown> = {}) {
 	return {
-		id: "cs_test_1",
+		id: "cs_test_123",
+		object: "checkout.session",
 		payment_status: "paid",
-		payment_intent: "pi_test_1",
-		customer_details: { email: "buyer@example.test", name: "Jane Doe" },
+		metadata: { orderId: "order-1" },
+		client_reference_id: null,
 		customer_email: null,
-		metadata: {},
+		customer_details: null,
 		...overrides,
 	} as unknown as Stripe.Checkout.Session;
 }
 
-beforeEach(() => {
-	vi.clearAllMocks();
-	mockBuildTasks.mockReturnValue([]);
-	mockSendAdminOrderProcessingFailedAlert.mockResolvedValue(undefined);
-});
+// ============================================================================
+// handleCheckoutSessionCompleted
+// ============================================================================
 
 describe("handleCheckoutSessionCompleted", () => {
-	it("returns null and skips processing when payment_status is 'unpaid' (async payment)", async () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockExtractShippingInfo.mockResolvedValue({
+			shippingCost: 500,
+			shippingMethod: "standard",
+			shippingRateId: "shr_123",
+		});
+		mockProcessOrderTransaction.mockResolvedValue({
+			id: "order-1",
+			orderNumber: "SYN-001",
+		});
+		mockBuildPostCheckoutTasks.mockReturnValue([]);
+	});
+
+	it("should return null when payment_status is unpaid", async () => {
 		const session = makeSession({ payment_status: "unpaid" });
 
 		const result = await handleCheckoutSessionCompleted(session);
 
 		expect(result).toBeNull();
-		expect(mockRetrieve).not.toHaveBeenCalled();
-		expect(mockCreateOrder).not.toHaveBeenCalled();
+		expect(mockExtractShippingInfo).not.toHaveBeenCalled();
 	});
 
-	it("creates order and returns success with post-checkout tasks for paid session", async () => {
+	it("should throw when no orderId in metadata nor client_reference_id", async () => {
+		const session = makeSession({
+			metadata: {},
+			client_reference_id: null,
+		});
+
+		await expect(handleCheckoutSessionCompleted(session)).rejects.toThrow(
+			"No order ID found in checkout session metadata",
+		);
+	});
+
+	it("should use metadata.orderId in priority over client_reference_id", async () => {
+		const session = makeSession({
+			metadata: { orderId: "order-from-meta" },
+			client_reference_id: "order-from-ref",
+		});
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+
+		await handleCheckoutSessionCompleted(session);
+
+		expect(mockProcessOrderTransaction).toHaveBeenCalledWith(
+			"order-from-meta",
+			expect.anything(),
+			expect.anything(),
+			expect.anything(),
+		);
+	});
+
+	it("should use client_reference_id as fallback", async () => {
+		const session = makeSession({
+			metadata: {},
+			client_reference_id: "order-from-ref",
+		});
+		mockPrisma.order.findUnique.mockResolvedValue(null);
+
+		await handleCheckoutSessionCompleted(session);
+
+		expect(mockProcessOrderTransaction).toHaveBeenCalledWith(
+			"order-from-ref",
+			expect.anything(),
+			expect.anything(),
+			expect.anything(),
+		);
+	});
+
+	it("should call extractShippingInfo, processOrderTransaction, buildPostCheckoutTasks", async () => {
 		const session = makeSession();
-		const fullSession = { ...session, line_items: { data: [] } };
-		const order = { id: "order_1", userId: null };
-		mockRetrieve.mockResolvedValue(fullSession);
-		mockCreateOrder.mockResolvedValue(order);
-		mockBuildTasks.mockReturnValue([{ type: "INVALIDATE_CACHE", tags: ["orders-list"] }]);
+		const order = { id: "order-1", orderNumber: "SYN-001" };
+		mockProcessOrderTransaction.mockResolvedValue(order);
+		mockBuildPostCheckoutTasks.mockReturnValue([{ type: "ORDER_CONFIRMATION_EMAIL", data: {} }]);
+		mockPrisma.order.findUnique.mockResolvedValue(null);
 
 		const result = await handleCheckoutSessionCompleted(session);
 
-		expect(mockRetrieve).toHaveBeenCalledWith("cs_test_1");
-		expect(mockCreateOrder).toHaveBeenCalledWith(fullSession);
-		expect(mockBuildTasks).toHaveBeenCalledWith(order, fullSession);
-		expect(result).toEqual({
-			success: true,
-			tasks: [{ type: "INVALIDATE_CACHE", tags: ["orders-list"] }],
+		expect(mockExtractShippingInfo).toHaveBeenCalledWith(session);
+		expect(mockProcessOrderTransaction).toHaveBeenCalledWith("order-1", session, 500, "shr_123");
+		expect(mockBuildPostCheckoutTasks).toHaveBeenCalledWith(order, session);
+		expect(result?.success).toBe(true);
+	});
+
+	it("should create orderNote when email mismatch (anti-fraud)", async () => {
+		const session = makeSession({
+			customer_email: "stripe@example.com",
+		});
+		mockPrisma.order.findUnique.mockResolvedValue({
+			customerEmail: "order@example.com",
+		});
+
+		await handleCheckoutSessionCompleted(session);
+
+		expect(mockPrisma.orderNote.create).toHaveBeenCalledWith({
+			data: expect.objectContaining({
+				orderId: "order-1",
+				content: expect.stringContaining("ALERTE EMAIL"),
+				authorId: "00000000-0000-0000-0000-000000000000",
+			}),
 		});
 	});
 
-	it("creates anti-fraud OrderNote when Stripe email differs from user account email", async () => {
+	it("should not create orderNote when emails match (case-insensitive)", async () => {
 		const session = makeSession({
-			customer_details: { email: "stripe@example.test" } as NonNullable<
-				Stripe.Checkout.Session["customer_details"]
-			>,
+			customer_email: "Client@Example.com",
 		});
-		const fullSession = { ...session };
-		mockRetrieve.mockResolvedValue(fullSession);
-		mockCreateOrder.mockResolvedValue({ id: "order_1", userId: "user_1" });
-		mockPrisma.user.findUnique.mockResolvedValue({ email: "account@example.test" });
-
-		const result = await handleCheckoutSessionCompleted(session);
-
-		expect(mockPrisma.orderNote.create).toHaveBeenCalledOnce();
-		const noteCall = mockPrisma.orderNote.create.mock.calls[0]?.[0];
-		expect(noteCall.data.orderId).toBe("order_1");
-		expect(noteCall.data.content).toContain("ALERTE EMAIL");
-		expect(noteCall.data.content).toContain("stripe@example.test");
-		expect(noteCall.data.content).toContain("account@example.test");
-		expect(result?.tasks?.some((t) => t.type === "INVALIDATE_CACHE")).toBe(true);
-	});
-
-	it("does not create OrderNote when emails match (case-insensitive)", async () => {
-		const session = makeSession({
-			customer_details: { email: "Buyer@Example.Test" } as NonNullable<
-				Stripe.Checkout.Session["customer_details"]
-			>,
+		mockPrisma.order.findUnique.mockResolvedValue({
+			customerEmail: "client@example.com",
 		});
-		mockRetrieve.mockResolvedValue(session);
-		mockCreateOrder.mockResolvedValue({ id: "order_1", userId: "user_1" });
-		mockPrisma.user.findUnique.mockResolvedValue({ email: "buyer@example.test" });
 
 		await handleCheckoutSessionCompleted(session);
 
 		expect(mockPrisma.orderNote.create).not.toHaveBeenCalled();
 	});
 
-	it("does not lookup user when order is guest (userId=null)", async () => {
-		const session = makeSession();
-		mockRetrieve.mockResolvedValue(session);
-		mockCreateOrder.mockResolvedValue({ id: "order_1", userId: null });
+	it("should not create orderNote when no Stripe email", async () => {
+		const session = makeSession({
+			customer_email: null,
+			customer_details: null,
+		});
 
 		await handleCheckoutSessionCompleted(session);
 
-		expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
+		expect(mockPrisma.orderNote.create).not.toHaveBeenCalled();
 	});
 
-	it("captures error, fires admin alert non-blocking, and re-throws on createOrder failure", async () => {
-		const session = makeSession();
-		const err = new Error("DB transaction failed");
-		mockRetrieve.mockResolvedValue(session);
-		mockCreateOrder.mockRejectedValue(err);
-
-		await expect(handleCheckoutSessionCompleted(session)).rejects.toThrow("DB transaction failed");
-
-		expect(mockCaptureWebhookError).toHaveBeenCalledWith(err, {
-			handler: "handleCheckoutSessionCompleted",
-			eventType: "checkout.session.completed",
-			checkoutSessionId: "cs_test_1",
-			paymentIntentId: "pi_test_1",
+	it("should use customer_details.email as fallback for anti-fraud check", async () => {
+		const session = makeSession({
+			customer_email: null,
+			customer_details: { email: "details@example.com" },
 		});
-		expect(mockSendAdminOrderProcessingFailedAlert).toHaveBeenCalledOnce();
-		const alertArg = mockSendAdminOrderProcessingFailedAlert.mock.calls[0]?.[0];
-		expect(alertArg.errorMessage).toBe("DB transaction failed");
+		mockPrisma.order.findUnique.mockResolvedValue({
+			customerEmail: "order@example.com",
+		});
+
+		await handleCheckoutSessionCompleted(session);
+
+		expect(mockPrisma.orderNote.create).toHaveBeenCalled();
 	});
 
-	it("does NOT await the admin alert email — failure to send must not block response", async () => {
-		const session = makeSession();
-		const err = new Error("boom");
-		mockRetrieve.mockResolvedValue(session);
-		mockCreateOrder.mockRejectedValue(err);
-		// Simulate slow/failing email service
-		let alertResolved = false;
-		mockSendAdminOrderProcessingFailedAlert.mockImplementation(
-			() =>
-				new Promise<void>((resolve) => {
-					setTimeout(() => {
-						alertResolved = true;
-						resolve();
-					}, 100);
-				}),
+	it("should add INVALIDATE_CACHE for order notes on email mismatch", async () => {
+		const session = makeSession({
+			customer_email: "stripe@example.com",
+		});
+		mockPrisma.order.findUnique.mockResolvedValue({
+			customerEmail: "order@example.com",
+		});
+		mockBuildPostCheckoutTasks.mockReturnValue([]);
+
+		const result = await handleCheckoutSessionCompleted(session);
+
+		const cacheTask = result?.tasks?.find(
+			(t) => t.type === "INVALIDATE_CACHE" && "tags" in t && t.tags.includes("order-notes-order-1"),
 		);
-
-		await expect(handleCheckoutSessionCompleted(session)).rejects.toThrow("boom");
-
-		// Handler must throw BEFORE the alert email resolves (fire-and-forget pattern).
-		expect(alertResolved).toBe(false);
-	});
-
-	it("swallows admin alert email rejection without re-throwing", async () => {
-		const session = makeSession();
-		mockRetrieve.mockResolvedValue(session);
-		mockCreateOrder.mockRejectedValue(new Error("primary error"));
-		mockSendAdminOrderProcessingFailedAlert.mockRejectedValue(new Error("Resend down"));
-
-		// The handler throws "primary error", NOT "Resend down".
-		await expect(handleCheckoutSessionCompleted(session)).rejects.toThrow("primary error");
-
-		// Give the unhandled rejection time to settle and be caught by .catch()
-		await new Promise((r) => setTimeout(r, 10));
+		expect(cacheTask).toBeDefined();
 	});
 });
 
+// ============================================================================
+// handleCheckoutSessionExpired
+// ============================================================================
+
 describe("handleCheckoutSessionExpired", () => {
-	it("calls cancelExpiredOrder and returns success with cache invalidation tasks", async () => {
-		const session = { id: "cs_expired_1" } as Stripe.Checkout.Session;
-		mockCancelExpiredOrder.mockResolvedValue({ cancelled: false });
+	beforeEach(() => {
+		vi.clearAllMocks();
+	});
+
+	it("should throw when no orderId", async () => {
+		const session = makeSession({
+			metadata: {},
+			client_reference_id: null,
+		});
+
+		await expect(handleCheckoutSessionExpired(session)).rejects.toThrow(
+			"No order ID found in expired checkout session metadata",
+		);
+	});
+
+	it("should call cancelExpiredOrder", async () => {
+		const session = makeSession();
+		mockCancelExpiredOrder.mockResolvedValue(undefined);
+
+		await handleCheckoutSessionExpired(session);
+
+		expect(mockCancelExpiredOrder).toHaveBeenCalledWith("order-1");
+	});
+
+	it("should return correct cache invalidation tags", async () => {
+		const session = makeSession();
+		mockCancelExpiredOrder.mockResolvedValue(undefined);
 
 		const result = await handleCheckoutSessionExpired(session);
 
-		expect(mockCancelExpiredOrder).toHaveBeenCalledWith("cs_expired_1");
 		expect(result.success).toBe(true);
-		const cacheTask = result.tasks?.[0];
-		expect(cacheTask?.type).toBe("INVALIDATE_CACHE");
-		if (cacheTask?.type !== "INVALIDATE_CACHE") throw new Error("type guard");
-		expect(cacheTask.tags).toContain("orders-list");
-	});
-
-	it("captures error and re-throws on cancellation failure", async () => {
-		const session = { id: "cs_expired_err" } as Stripe.Checkout.Session;
-		const err = new Error("cancel failed");
-		mockCancelExpiredOrder.mockRejectedValue(err);
-
-		await expect(handleCheckoutSessionExpired(session)).rejects.toThrow("cancel failed");
-		expect(mockCaptureWebhookError).toHaveBeenCalledWith(err, {
-			handler: "handleCheckoutSessionExpired",
-			eventType: "checkout.session.expired",
-			checkoutSessionId: "cs_expired_err",
-		});
+		const cacheTask = result.tasks?.find((t) => t.type === "INVALIDATE_CACHE");
+		expect(cacheTask).toBeDefined();
+		if (cacheTask?.type === "INVALIDATE_CACHE") {
+			expect(cacheTask.tags).toContain("orders-list");
+			expect(cacheTask.tags).toContain("admin-badges");
+			expect(cacheTask.tags).toContain("discounts-list");
+		}
 	});
 });

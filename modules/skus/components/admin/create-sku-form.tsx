@@ -70,12 +70,17 @@ export function CreateProductVariantForm({
 		onSuccess: (message) => {
 			haptic("success");
 			allowNavigationRef.current?.();
-			toast.success(message || "Variante créée avec succès", {
-				action: {
-					label: "Voir les variantes",
-					onClick: () => navigateWithTransition(router, variantsListPath),
-				},
-			});
+			toast.success(
+				message || "Variante créée avec succès",
+				isMobile
+					? undefined
+					: {
+							action: {
+								label: "Voir les variantes",
+								onClick: () => navigateWithTransition(router, variantsListPath),
+							},
+						},
+			);
 			navigateWithTransition(router, variantsListPath);
 		},
 	});

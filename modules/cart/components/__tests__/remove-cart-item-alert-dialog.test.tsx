@@ -20,6 +20,9 @@ const {
 	mockToastError,
 	mockRouterRefresh,
 	mockAdjustCart,
+	mockIsMobile,
+	mockMarkAsTombstone,
+	mockCancelTombstone,
 } = vi.hoisted(() => ({
 	mockIsOpen: { value: false },
 	mockClose: vi.fn(),
@@ -42,6 +45,9 @@ const {
 	mockToastError: vi.fn(),
 	mockRouterRefresh: vi.fn(),
 	mockAdjustCart: vi.fn(),
+	mockIsMobile: { value: false },
+	mockMarkAsTombstone: vi.fn(),
+	mockCancelTombstone: vi.fn(),
 }));
 
 vi.mock("@/shared/hooks/use-haptic", () => ({
@@ -92,7 +98,14 @@ vi.mock("@/modules/cart/contexts/cart-optimistic-context", () => ({
 	useCartOptimisticSafe: () => ({
 		updateOptimisticCart: mockOptimisticUpdate,
 		startTransition: mockStartTransition,
+		markAsTombstone: mockMarkAsTombstone,
+		cancelTombstone: mockCancelTombstone,
 	}),
+}));
+
+vi.mock("@/shared/hooks/use-mobile", () => ({
+	useIsMobile: () => mockIsMobile.value,
+	MOBILE_BREAKPOINT: 768,
 }));
 
 vi.mock("@/shared/components/ui/alert-dialog", () => ({
@@ -175,6 +188,7 @@ describe("RemoveCartItemAlertDialog", () => {
 		mockIsOpen.value = false;
 		mockDialogData.value = null;
 		mockIsPending.value = false;
+		mockIsMobile.value = false;
 	});
 
 	it("renders nothing when dialog is closed", () => {
@@ -319,6 +333,96 @@ describe("RemoveCartItemAlertDialog", () => {
 			expect(mockAdjustCart).toHaveBeenNthCalledWith(2, -2);
 			expect(mockToastError).toHaveBeenCalledWith("Stock épuisé");
 			expect(mockRouterRefresh).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("mobile tombstone routing", () => {
+		beforeEach(() => {
+			mockIsMobile.value = true;
+		});
+
+		it("calls markAsTombstone (not showUndoToast) on successful removal", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-42",
+				skuId: "sku-42",
+				itemName: "Bague Lune",
+				quantity: 1,
+			};
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			expect(mockMarkAsTombstone).toHaveBeenCalledWith(
+				"ci-42",
+				expect.objectContaining({ displayName: "Bague Lune", onUndo: expect.any(Function) }),
+			);
+			expect(mockToastSuccess).not.toHaveBeenCalled();
+		});
+
+		it("the markAsTombstone onUndo handler restores via addToCart and cancels the tombstone", async () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-7",
+				skuId: "sku-7",
+				itemName: "Collier",
+				quantity: 2,
+			};
+			mockAddToCart.mockResolvedValueOnce({ status: ActionStatus.SUCCESS, message: "ok" });
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			const tombstoneCall = mockMarkAsTombstone.mock.calls[0];
+			const undoHandler = (tombstoneCall![1] as { onUndo: () => void }).onUndo;
+			await undoHandler();
+			expect(mockCancelTombstone).toHaveBeenCalledWith("ci-7");
+			expect(mockAdjustCart).toHaveBeenCalledWith(2);
+			expect(mockAddToCart).toHaveBeenCalledWith(undefined, expect.any(FormData));
+			expect(mockToastSuccess).toHaveBeenCalledWith("Article restauré");
+		});
+
+		it("skips markAsTombstone when skuId is missing (no restoration possible)", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = { cartItemId: "ci-1", itemName: "Bague", quantity: 1 };
+			render(<RemoveCartItemAlertDialog />);
+			mockOnSuccessCapture.current?.();
+			expect(mockMarkAsTombstone).not.toHaveBeenCalled();
+			expect(mockToastSuccess).not.toHaveBeenCalled();
+		});
+
+		it("does NOT call updateOptimisticCart remove on submit (delayed until tombstone expire)", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-9",
+				skuId: "sku-9",
+				itemName: "Bague",
+				quantity: 1,
+			};
+			const { container } = render(<RemoveCartItemAlertDialog />);
+			const form = container.querySelector("form");
+			if (!form) throw new Error("form not found");
+			fireEvent.submit(form);
+			expect(mockOptimisticUpdate).not.toHaveBeenCalled();
+			expect(mockAction).toHaveBeenCalled();
+		});
+	});
+
+	describe("desktop optimistic remove on submit", () => {
+		beforeEach(() => {
+			mockIsMobile.value = false;
+		});
+
+		it("calls updateOptimisticCart remove BEFORE the server action", () => {
+			mockIsOpen.value = true;
+			mockDialogData.value = {
+				cartItemId: "ci-3",
+				skuId: "sku-3",
+				itemName: "Collier",
+				quantity: 1,
+			};
+			const { container } = render(<RemoveCartItemAlertDialog />);
+			const form = container.querySelector("form");
+			if (!form) throw new Error("form not found");
+			fireEvent.submit(form);
+			expect(mockOptimisticUpdate).toHaveBeenCalledWith({ type: "remove", itemId: "ci-3" });
+			expect(mockAction).toHaveBeenCalled();
 		});
 	});
 });

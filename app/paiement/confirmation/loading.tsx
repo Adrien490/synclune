@@ -11,13 +11,13 @@ export default function CheckoutSuccessLoading() {
 			role="status"
 			aria-busy="true"
 			aria-label="Chargement de la confirmation de commande"
-			className="relative min-h-dvh min-h-screen"
+			className="relative min-h-screen"
 		>
 			<span className="sr-only">Chargement de la confirmation…</span>
 			{/* Decorative background (matches page) */}
 			<div className="from-primary/2 to-secondary/3 fixed inset-0 -z-10 bg-linear-to-br via-transparent" />
 
-			<section className="py-8 sm:py-10">
+			<section className="py-8 pb-[calc(env(safe-area-inset-bottom)+2rem)] sm:py-10 sm:pb-[calc(env(safe-area-inset-bottom)+2.5rem)]">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					<Card className="border-primary/20 from-primary/5 to-background rounded-2xl border-2 bg-linear-to-br shadow-md">
 						<CardHeader className="space-y-4 pb-6 text-center">
@@ -79,6 +79,7 @@ export default function CheckoutSuccessLoading() {
 									<Skeleton className="bg-muted/40 h-4 w-full max-w-xs" />
 									<Skeleton className="bg-muted/30 h-4 w-full max-w-md" />
 									<Skeleton className="bg-muted/30 h-4 w-full max-w-sm" />
+									<Skeleton className="bg-muted/30 h-4 w-20" />
 								</div>
 							</div>
 

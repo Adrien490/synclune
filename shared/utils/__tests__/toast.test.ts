@@ -292,10 +292,10 @@ describe("toast wrapper", () => {
 			await p;
 			await Promise.resolve();
 			expect(mockSonner.promise).not.toHaveBeenCalled();
-			expect(mockSonner.success).toHaveBeenCalledWith(
-				"Réussi",
-				expect.objectContaining({ duration: expect.any(Number) }),
-			);
+			// Sur mobile, `toast.success` ne route plus vers Sonner mais vers
+			// <MicroToast /> (cf shared/stores/micro-toast-store). On vérifie
+			// seulement que sonner.promise ET sonner.success ne sont PAS appelés.
+			expect(mockSonner.success).not.toHaveBeenCalled();
 		});
 
 		it("promise() rejects manually with toast.error on mobile (function error msg)", async () => {

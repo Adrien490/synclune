@@ -34,6 +34,7 @@ export function NavbarIconButtons({
 						href={ROUTES.ACCOUNT.FAVORITES}
 						className={cn("inline-flex", iconButtonClassName)}
 						aria-label="Accéder à mes favoris"
+						data-wishlist-badge
 					>
 						<Heart
 							size={20}

@@ -16,6 +16,7 @@ import { toast } from "@/shared/utils/toast";
 
 interface SwipeableWishlistItemProps {
 	productId: string;
+	itemName?: string;
 	children: React.ReactNode;
 }
 
@@ -26,8 +27,17 @@ interface SwipeableWishlistItemProps {
  * - Exceeding threshold triggers direct removal (no confirmation dialog)
  * - Only active on touch devices via @media(hover: none)
  * - Snaps back if threshold not met
+ *
+ * Post-suppression : si le contexte `WishlistListOptimisticContext` est dispo,
+ * l'item passe en `Tombstone` inline 5s (bouton Annuler) avant retrait visuel.
+ * Sinon (cas isolé), fallback historique : pas de feedback inline (le toast
+ * mobile a été supprimé pour ne pas masquer la bottom-bar).
  */
-export function SwipeableWishlistItem({ productId, children }: SwipeableWishlistItemProps) {
+export function SwipeableWishlistItem({
+	productId,
+	itemName,
+	children,
+}: SwipeableWishlistItemProps) {
 	const itemRef = useRef<HTMLDivElement>(null);
 	const router = useRouter();
 	const wishlistListOptimistic = useWishlistListOptimistic();
@@ -35,6 +45,7 @@ export function SwipeableWishlistItem({ productId, children }: SwipeableWishlist
 	const [, startUndoTransition] = useTransition();
 
 	const handleUndo = () => {
+		wishlistListOptimistic?.cancelTombstone(productId);
 		incrementWishlist();
 		const fd = new FormData();
 		fd.set("productId", productId);
@@ -42,7 +53,6 @@ export function SwipeableWishlistItem({ productId, children }: SwipeableWishlist
 			const result = await addToWishlist(undefined, fd);
 			if (result.status === ActionStatus.SUCCESS) {
 				router.refresh();
-				toast.success("Article restauré");
 			} else {
 				toast.error(result.message);
 			}
@@ -50,16 +60,13 @@ export function SwipeableWishlistItem({ productId, children }: SwipeableWishlist
 	};
 
 	const { action } = useRemoveFromWishlist({
-		onOptimisticRemove: wishlistListOptimistic?.onItemRemoved,
 		onSuccess: () => {
-			toast.success("Article retiré de vos favoris", {
-				description: "Vous pourrez toujours le retrouver dans nos créations.",
-				duration: 5000,
-				action: {
-					label: "Annuler",
-					onClick: handleUndo,
-				},
-			});
+			if (wishlistListOptimistic) {
+				wishlistListOptimistic.markAsTombstone(productId, {
+					onUndo: handleUndo,
+					displayName: itemName ?? "Article",
+				});
+			}
 		},
 	});
 

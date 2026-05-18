@@ -1,7 +1,6 @@
 interface OrderItem {
 	productTitle: string | null;
 	skuColor: string | null;
-	skuColorHexes: string | null;
 	skuMaterial: string | null;
 	skuSize: string | null;
 	quantity: number;

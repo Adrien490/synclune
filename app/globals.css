@@ -160,6 +160,7 @@ html[data-keyboard="open"] [data-hide-on-keyboard] {
 	--z-bar-desktop: 70;
 	--z-alert: 80;
 	--z-skip: 100;
+	--z-microtoast: 200;
 
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);

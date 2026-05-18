@@ -3,11 +3,20 @@
 import { type DiscountType } from "@/app/generated/prisma/browser";
 import { useAppForm } from "@/shared/components/forms";
 
+/**
+ * Valeurs internes du formulaire discount.
+ *
+ * `valueEuros` et `minOrderAmountEuros` sont saisis en **euros** (UX admin),
+ * convertis en **centimes** côté server action avant validation du `createDiscountSchema`.
+ *
+ * Pour PERCENTAGE, `valueEuros` représente en réalité un entier 1–100 (le label
+ * et le placeholder s'adaptent) — la conversion x100 n'est appliquée que pour FIXED_AMOUNT.
+ */
 export type DiscountFormValues = {
 	code: string;
 	type: DiscountType;
-	value: number | null;
-	minOrderAmount: number | null;
+	valueEuros: number | null;
+	minOrderAmountEuros: number | null;
 	maxUsageCount: number | null;
 	maxUsagePerUser: number | null;
 	startsAt: string;
@@ -28,13 +37,17 @@ export interface DiscountFormSeed {
 const formatDateTimeLocal = (date: Date | null): string =>
 	date ? date.toISOString().slice(0, 16) : "";
 
+/** Centimes DB → euros formulaire (uniquement pour FIXED_AMOUNT). */
+const centsToEuros = (value: number, type: DiscountType): number =>
+	type === "FIXED_AMOUNT" ? value / 100 : value;
+
 export function getDiscountFormDefaults(seed?: DiscountFormSeed | null): DiscountFormValues {
 	if (!seed) {
 		return {
 			code: "",
 			type: "PERCENTAGE" as DiscountType,
-			value: null,
-			minOrderAmount: null,
+			valueEuros: null,
+			minOrderAmountEuros: null,
 			maxUsageCount: null,
 			maxUsagePerUser: null,
 			startsAt: "",
@@ -44,8 +57,8 @@ export function getDiscountFormDefaults(seed?: DiscountFormSeed | null): Discoun
 	return {
 		code: seed.code,
 		type: seed.type,
-		value: seed.value,
-		minOrderAmount: seed.minOrderAmount,
+		valueEuros: centsToEuros(seed.value, seed.type),
+		minOrderAmountEuros: seed.minOrderAmount != null ? seed.minOrderAmount / 100 : null,
 		maxUsageCount: seed.maxUsageCount,
 		maxUsagePerUser: seed.maxUsagePerUser,
 		startsAt: formatDateTimeLocal(seed.startsAt),

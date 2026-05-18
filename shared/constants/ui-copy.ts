@@ -43,4 +43,8 @@ export const UI_COPY = {
 		searchWithQuery: (query: string) =>
 			`Aucun résultat pour « ${query} ». Essayez d'autres mots-clés ou parcourez les collections.`,
 	},
+	actions: {
+		undo: "Annuler",
+		expiresIn: (seconds: number) => `Expire dans ${seconds} seconde${seconds > 1 ? "s" : ""}`,
+	},
 } as const;
